@@ -1,5 +1,6 @@
 ---
 title: $effect
+tags: rune-effect
 ---
 
 Effects are functions that run when state updates, and can be used for things like calling third-party libraries, drawing on `<canvas>` elements, or making network requests. They only run in the browser, not during server-side rendering.
@@ -135,7 +136,7 @@ An effect only reruns when the object it reads changes, not when a property insi
 
 An effect only depends on the values that it read the last time it ran. This has interesting implications for effects that have conditional code.
 
-For instance, if `condition` is `true` in the code snippet below, the code inside the `if` block will run and `color` will be evaluated. As such, changes to either `condition` or `color` [will cause the effect to re-run](/playground/untitled#H4sIAAAAAAAAE21RQW6DMBD8ytaNBJHaJFLViwNIVZ8RcnBgXVk1xsILTYT4e20TQg89IOPZ2fHM7siMaJBx9tmaWpFqjQNlAKXEihx7YVJpdIyfRkY3G4gB8Pi97cPanRtQU8AuwuF_eNUaQuPlOMtc1SlLRWlKUo1tOwJflUikQHZtA0klzCDc64Imx0ANn8bInV1CDhtHgjClrsftcSXotluLybOUb3g4JJHhOZs5WZpuIS9gjNqkJKQP5e2ClrR4SMdZ13E4xZ8zTPOTJU2A2uE_PQ9COCI926_hTVarIU4hu_REPlBrKq2q73ycrf1N-vS4TMUsulaVg3EtR8H9rFgsg8uUsT1B2F9eshigZHBRpuaD0D3mY8Qm2BfB5N2YyRzdNEYVDy0Ja-WsFjcOUuP1HvFLWA6H3XuHTUSmmDV2--0TXonxsKbp7G9C6R__NONS-MFNvxj_d6mBAgAA).
+For instance, if `condition` is `true` in the code snippet below, the code inside the `if` block will run and `color` will be evaluated. This means that changes to either `condition` or `color` [will cause the effect to re-run](/playground/untitled#H4sIAAAAAAAAE21RQW6DMBD8ytaNBJHaJFLViwNIVZ8RcnBgXVk1xsILTYT4e20TQg89IOPZ2fHM7siMaJBx9tmaWpFqjQNlAKXEihx7YVJpdIyfRkY3G4gB8Pi97cPanRtQU8AuwuF_eNUaQuPlOMtc1SlLRWlKUo1tOwJflUikQHZtA0klzCDc64Imx0ANn8bInV1CDhtHgjClrsftcSXotluLybOUb3g4JJHhOZs5WZpuIS9gjNqkJKQP5e2ClrR4SMdZ13E4xZ8zTPOTJU2A2uE_PQ9COCI926_hTVarIU4hu_REPlBrKq2q73ycrf1N-vS4TMUsulaVg3EtR8H9rFgsg8uUsT1B2F9eshigZHBRpuaD0D3mY8Qm2BfB5N2YyRzdNEYVDy0Ja-WsFjcOUuP1HvFLWA6H3XuHTUSmmDV2--0TXonxsKbp7G9C6R__NONS-MFNvxj_d6mBAgAA).
 
 Conversely, if `condition` is `false`, `color` will not be evaluated, and the effect will _only_ re-run again when `condition` changes.
 
@@ -220,6 +221,21 @@ The `$effect.tracking` rune is an advanced feature that tells you whether or not
 ```
 
 It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svelte-reactivity#createSubscriber), which will create listeners to update reactive values but _only_ if those values are being tracked (rather than, for example, read inside an event handler).
+
+## `$effect.pending`
+
+When using [`await`](await-expressions) in components, the `$effect.pending()` rune tells you how many promises are pending in the current [boundary](svelte-boundary), not including child boundaries ([demo](/playground/untitled#H4sIAAAAAAAAE3WRMU_DMBCF_8rJdHDUqilILGkaiY2RgY0yOPYZWbiOFV8IleX_jpMUEAIWS_7u-d27c2ROnJBV7B6t7WDsequAozKEqmAbpo3FwKqnyOjsJ90EMr-8uvN-G97Q0sRaEfAvLjtH6CjbsDrI3nhqju5IFgkEHGAVSBDy62L_SdtvejPTzEU4Owl6cJJM50AoxcUG2gLiVM31URgChyM89N3JBORcF3BoICA9mhN2A3G9gdvdrij2UJYgejLaSCMsKLTivNj0SEOf7WEN7ZwnHV1dfqd2dTsQ5QCdk9bI10PkcxexXqcmH3W51Jt_le2kbH8os9Y3UaTcNLYpDx-Xab6GTHXpZ128MhpWqDVK2np0yrgXXqQpaLa4APDLBkIF8bd2sYql0Sn_DeE7sYr6AdNzvgljR-MUq7SwAdMHeUtgHR4CAAA=)):
+
+```svelte
+<button onclick={() => a++}>a++</button>
+<button onclick={() => b++}>b++</button>
+
+<p>{a} + {b} = {await add(a, b)}</p>
+
+{#if $effect.pending()}
+	<p>pending promises: {$effect.pending()}</p>
+{/if}
+```
 
 ## `$effect.root`
 

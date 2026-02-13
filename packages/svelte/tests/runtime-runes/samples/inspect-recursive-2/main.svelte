@@ -1,21 +1,15 @@
 <script>
 	class A {
-		toJSON(){
-			return {
-				a: this
-			}
+		constructor() {
+			this.a = this;
 		}
 	}
 	const state = $state(new A());
 	$inspect(state);
 
 	class B {
-		toJSON(){
-			return {
-				a: {
-					b: this
-				}
-			}
+		constructor() {
+			this.a = { b: this };
 		}
 	}
 	const state2 = $state(new B());

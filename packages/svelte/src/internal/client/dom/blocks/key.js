@@ -1,9 +1,10 @@
-/** @import { Effect, TemplateNode } from '#client' */
-import { UNINITIALIZED } from '../../../../constants.js';
-import { block, branch, pause_effect } from '../../reactivity/effects.js';
-import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
+/** @import { TemplateNode } from '#client' */
 import { is_runes } from '../../context.js';
-import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import { block } from '../../reactivity/effects.js';
+import { hydrate_next, hydrating } from '../hydration.js';
+import { BranchManager } from './branches.js';
+
+const NAN = Symbol('NaN');
 
 /**
  * @template V
@@ -12,32 +13,28 @@ import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
  * @param {(anchor: Node) => TemplateNode | void} render_fn
  * @returns {void}
  */
-export function key_block(node, get_key, render_fn) {
+export function key(node, get_key, render_fn) {
 	if (hydrating) {
 		hydrate_next();
 	}
 
-	var anchor = node;
+	var branches = new BranchManager(node);
 
-	/** @type {V | typeof UNINITIALIZED} */
-	var key = UNINITIALIZED;
-
-	/** @type {Effect} */
-	var effect;
-
-	var changed = is_runes() ? not_equal : safe_not_equal;
+	var legacy = !is_runes();
 
 	block(() => {
-		if (changed(key, (key = get_key()))) {
-			if (effect) {
-				pause_effect(effect);
-			}
+		var key = get_key();
 
-			effect = branch(() => render_fn(anchor));
+		// NaN !== NaN, hence we do this workaround to not trigger remounts unnecessarily
+		if (key !== key) {
+			key = /** @type {any} */ (NAN);
 		}
-	});
 
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
+		// key blocks in Svelte <5 had stupid semantics
+		if (legacy && key !== null && typeof key === 'object') {
+			key = /** @type {V} */ ({});
+		}
+
+		branches.ensure(key, render_fn);
+	});
 }

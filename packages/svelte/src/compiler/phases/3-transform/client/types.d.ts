@@ -12,6 +12,7 @@ import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { Template } from './transform-template/template.js';
+import type { Memoizer } from './visitors/shared/utils.js';
 
 export interface ClientTransformState extends TransformState {
 	/**
@@ -40,7 +41,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
-	readonly is_instance: boolean;
 	readonly store_to_invalidate?: string;
 
 	/** Stuff that happens before the render effect(s) */
@@ -49,8 +49,19 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
-	/** Expressions used inside the render effect */
-	readonly expressions: Expression[];
+	/** Transformed `{#snippets }` declarations */
+	readonly snippets: Statement[];
+	/** Transformed `{@const }` declarations */
+	readonly consts: Statement[];
+	/** Transformed async `{@const }` declarations (if any) and those coming after them */
+	async_consts?: {
+		id: Identifier;
+		thunks: Expression[];
+	};
+	/** Transformed `let:` directives */
+	readonly let_directives: Statement[];
+	/** Memoized expressions */
+	readonly memoizer: Memoizer;
 	/** The HTML template string */
 	readonly template: Template;
 	readonly metadata: {
@@ -72,6 +83,9 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly instance_level_snippets: VariableDeclaration[];
 	/** Snippets hoisted to the module */
 	readonly module_level_snippets: VariableDeclaration[];
+
+	/** True if the current node is a) a component or render tag and b) the sole child of a block  */
+	readonly is_standalone: boolean;
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;

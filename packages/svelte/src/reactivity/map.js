@@ -1,9 +1,8 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { set, source, state } from '../internal/client/reactivity/sources.js';
+import { set, source, state, increment } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { get } from '../internal/client/runtime.js';
-import { increment } from './utils.js';
+import { get, update_version } from '../internal/client/runtime.js';
 
 /**
  * A reactive version of the built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object.
@@ -56,6 +55,7 @@ export class SvelteMap extends Map {
 	#sources = new Map();
 	#version = state(0);
 	#size = state(0);
+	#update_version = update_version || -1;
 
 	/**
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
@@ -79,6 +79,19 @@ export class SvelteMap extends Map {
 		}
 	}
 
+	/**
+	 * If the source is being created inside the same reaction as the SvelteMap instance,
+	 * we use `state` so that it will not be a dependency of the reaction. Otherwise we
+	 * use `source` so it will be.
+	 *
+	 * @template T
+	 * @param {T} value
+	 * @returns {Source<T>}
+	 */
+	#source(value) {
+		return update_version === this.#update_version ? state(value) : source(value);
+	}
+
 	/** @param {K} key */
 	has(key) {
 		var sources = this.#sources;
@@ -87,7 +100,7 @@ export class SvelteMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(0);
+				s = this.#source(0);
 
 				if (DEV) {
 					tag(s, `SvelteMap get(${label(key)})`);
@@ -123,7 +136,7 @@ export class SvelteMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(0);
+				s = this.#source(0);
 
 				if (DEV) {
 					tag(s, `SvelteMap get(${label(key)})`);
@@ -154,7 +167,7 @@ export class SvelteMap extends Map {
 		var version = this.#version;
 
 		if (s === undefined) {
-			s = source(0);
+			s = this.#source(0);
 
 			if (DEV) {
 				tag(s, `SvelteMap get(${label(key)})`);
@@ -219,8 +232,7 @@ export class SvelteMap extends Map {
 		if (this.#size.v !== sources.size) {
 			for (var key of super.keys()) {
 				if (!sources.has(key)) {
-					var s = source(0);
-
+					var s = this.#source(0);
 					if (DEV) {
 						tag(s, `SvelteMap get(${label(key)})`);
 					}

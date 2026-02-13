@@ -7,6 +7,7 @@ import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { get_rune } from '../../scope.js';
+import { is_component_node } from '../../nodes.js';
 
 /**
  * @param {Identifier} node
@@ -93,7 +94,10 @@ export function Identifier(node, context) {
 			context.state.expression.references.add(binding);
 			context.state.expression.has_state ||=
 				binding.kind !== 'static' &&
-				!binding.is_function() &&
+				(binding.kind === 'prop' ||
+					binding.kind === 'bindable_prop' ||
+					binding.kind === 'rest_prop' ||
+					!binding.is_function()) &&
 				!context.state.scope.evaluate(node).is_known;
 		}
 
@@ -110,7 +114,8 @@ export function Identifier(node, context) {
 						binding.initial.arguments[0].type !== 'SpreadElement' &&
 						!should_proxy(binding.initial.arguments[0], context.state.scope)))) ||
 				binding.kind === 'raw_state' ||
-				binding.kind === 'derived') &&
+				binding.kind === 'derived' ||
+				binding.kind === 'prop') &&
 			// We're only concerned with reads here
 			(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 			parent.type !== 'UpdateExpression'
@@ -151,6 +156,38 @@ export function Identifier(node, context) {
 			binding.reassigned
 		) {
 			w.reactive_declaration_module_script_dependency(node);
+		}
+
+		if (binding.metadata?.is_template_declaration && context.state.options.experimental.async) {
+			let snippet_name;
+
+			// Find out if this references a {@const ...} declaration of an implicit children snippet
+			// when it is itself inside a snippet block at the same level. If so, error.
+			for (let i = context.path.length - 1; i >= 0; i--) {
+				const parent = context.path[i];
+				const grand_parent = context.path[i - 1];
+
+				if (parent.type === 'SnippetBlock') {
+					snippet_name = parent.expression.name;
+				} else if (
+					snippet_name &&
+					grand_parent &&
+					parent.type === 'Fragment' &&
+					(is_component_node(grand_parent) ||
+						(grand_parent.type === 'SvelteBoundary' &&
+							(snippet_name === 'failed' || snippet_name === 'pending')))
+				) {
+					if (
+						is_component_node(grand_parent)
+							? grand_parent.metadata.scopes.default === binding.scope
+							: context.state.scopes.get(parent) === binding.scope
+					) {
+						e.const_tag_invalid_reference(node, node.name);
+					} else {
+						break;
+					}
+				}
+			}
 		}
 	}
 }

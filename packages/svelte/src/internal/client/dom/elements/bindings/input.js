@@ -1,3 +1,4 @@
+/** @import { Batch } from '../../../reactivity/batch.js' */
 import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
@@ -5,8 +6,9 @@ import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
-import { untrack } from '../../../runtime.js';
+import { tick, untrack } from '../../../runtime.js';
 import { is_runes } from '../../../context.js';
+import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -15,9 +17,9 @@ import { is_runes } from '../../../context.js';
  * @returns {void}
  */
 export function bind_value(input, get, set = get) {
-	var runes = is_runes();
+	var batches = new WeakSet();
 
-	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
+	listen_to_event_and_reset_event(input, 'input', async (is_reset) => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
@@ -28,19 +30,35 @@ export function bind_value(input, get, set = get) {
 		value = is_numberlike_input(input) ? to_number(value) : value;
 		set(value);
 
-		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
-		// because we use mutable state which ensures the render effect always runs)
-		if (runes && value !== (value = get())) {
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
+
+		// Because `{#each ...}` blocks work by updating sources inside the flush,
+		// we need to wait a tick before checking to see if we should forcibly
+		// update the input and reset the selection state
+		await tick();
+
+		// Respect any validation in accessors
+		if (value !== (value = get())) {
 			var start = input.selectionStart;
 			var end = input.selectionEnd;
+			var length = input.value.length;
 
 			// the value is coerced on assignment
 			input.value = value ?? '';
 
 			// Restore selection
 			if (end !== null) {
-				input.selectionStart = start;
-				input.selectionEnd = Math.min(end, input.value.length);
+				var new_length = input.value.length;
+				// If cursor was at end and new input is longer, move cursor to new end
+				if (start === end && end === length && new_length > length) {
+					input.selectionStart = new_length;
+					input.selectionEnd = new_length;
+				} else {
+					input.selectionStart = start;
+					input.selectionEnd = Math.min(end, new_length);
+				}
 			}
 		}
 	});
@@ -54,6 +72,10 @@ export function bind_value(input, get, set = get) {
 		(untrack(get) == null && input.value)
 	) {
 		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
+
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
 	}
 
 	render_effect(() => {
@@ -63,6 +85,20 @@ export function bind_value(input, get, set = get) {
 		}
 
 		var value = get();
+
+		if (input === document.activeElement) {
+			// we need both, because in non-async mode, render effects run before previous_batch is set
+			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+
+			// Never rewrite the contents of a focused input. We can get here if, for example,
+			// an update is deferred because of async work depending on the input:
+			//
+			// <input bind:value={query}>
+			// <p>{await find(query)}</p>
+			if (batches.has(batch)) {
+				return;
+			}
+		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
@@ -219,6 +255,7 @@ export function bind_checked(input, get, set = get) {
  * @returns {V[]}
  */
 function get_binding_group_value(group, __value, checked) {
+	/** @type {Set<V>} */
 	var value = new Set();
 
 	for (var i = 0; i < group.length; i += 1) {

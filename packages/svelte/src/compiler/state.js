@@ -16,6 +16,14 @@ export let warnings = [];
  */
 export let filename;
 
+/**
+ * This is the fallback used when no filename is specified.
+ */
+export const UNKNOWN_FILENAME = '(unknown)';
+
+/**
+ * The name of the component that is used in the `export default function ...` statement.
+ */
 export let component_name = '<unknown>';
 
 /**
@@ -32,19 +40,28 @@ export let dev;
 
 export let runes = false;
 
-export let locator = getLocator('', { offsetLine: 1 });
+/** @type {(index: number) => Location} */
+export let locator;
 
 /** @param {string} value */
 export function set_source(value) {
 	source = value;
-	locator = getLocator(source, { offsetLine: 1 });
+
+	const l = getLocator(source, { offsetLine: 1 });
+
+	locator = (i) => {
+		const loc = l(i);
+		if (!loc) throw new Error('An impossible situation occurred');
+
+		return loc;
+	};
 }
 
 /**
  * @param {AST.SvelteNode & { start?: number | undefined }} node
  */
 export function locate_node(node) {
-	const loc = /** @type {Location} */ (locator(/** @type {number} */ (node.start)));
+	const loc = locator(/** @type {number} */ (node.start));
 	return `${sanitize_location(filename)}:${loc?.line}:${loc.column}`;
 }
 
@@ -78,17 +95,8 @@ export function pop_ignore() {
 }
 
 /**
- *
- * @param {(warning: Warning) => boolean} fn
- */
-export function reset_warnings(fn = () => true) {
-	warning_filter = fn;
-	warnings = [];
-}
-
-/**
  * @param {AST.SvelteNode | NodeLike} node
- * @param {import('../constants.js').IGNORABLE_RUNTIME_WARNINGS[number]} code
+ * @param {typeof import('../constants.js').IGNORABLE_RUNTIME_WARNINGS[number]} code
  * @returns
  */
 export function is_ignored(node, code) {
@@ -96,21 +104,35 @@ export function is_ignored(node, code) {
 }
 
 /**
+ * Call this to reset the compiler state. Should be called before each compilation.
+ * @param {{ warning?: (warning: Warning) => boolean; filename: string | undefined }} state
+ */
+export function reset(state) {
+	dev = false;
+	runes = false;
+	component_name = UNKNOWN_FILENAME;
+	source = '';
+	filename = (state.filename ?? UNKNOWN_FILENAME).replace(/\\/g, '/');
+	warning_filter = state.warning ?? (() => true);
+	warnings = [];
+}
+
+/**
+ * Adjust the compiler state based on the provided state object.
+ * Call this after parsing and basic analysis happened.
  * @param {{
  *   dev: boolean;
- *   filename: string;
  *   component_name?: string;
  *   rootDir?: string;
  *   runes: boolean;
  * }} state
  */
-export function reset(state) {
+export function adjust(state) {
 	const root_dir = state.rootDir?.replace(/\\/g, '/');
-	filename = state.filename.replace(/\\/g, '/');
 
 	dev = state.dev;
 	runes = state.runes;
-	component_name = state.component_name ?? '(unknown)';
+	component_name = state.component_name ?? UNKNOWN_FILENAME;
 
 	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {
 		// make filename relative to rootDir

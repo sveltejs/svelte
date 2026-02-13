@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { empty_comment, build_attribute_value } from './utils.js';
+import { empty_comment, build_attribute_value, PromiseOptimiser } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
@@ -72,16 +72,26 @@ export function build_inline_component(node, expression, context) {
 		}
 	}
 
+	const optimiser = new PromiseOptimiser();
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
 				lets.default.push(attribute);
 			}
 		} else if (attribute.type === 'SpreadAttribute') {
-			props_and_spreads.push(/** @type {Expression} */ (context.visit(attribute)));
+			let expression = /** @type {Expression} */ (context.visit(attribute));
+			props_and_spreads.push(optimiser.transform(expression, attribute.metadata.expression));
 		} else if (attribute.type === 'Attribute') {
+			const value = build_attribute_value(
+				attribute.value,
+				context,
+				optimiser.transform,
+				false,
+				true
+			);
+
 			if (attribute.name.startsWith('--')) {
-				const value = build_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
 			}
@@ -90,9 +100,17 @@ export function build_inline_component(node, expression, context) {
 				has_children_prop = true;
 			}
 
-			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
-		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
+		} else if (attribute.type === 'BindDirective') {
+			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
+			optimiser.check_blockers(attribute.metadata.expression);
+
+			if (attribute.name === 'this') {
+				// bind:this is client-only, but we still need to check for blockers to ensure
+				// the server generates matching hydration markers if the client wraps in $.async
+				continue;
+			}
+
 			if (attribute.expression.type === 'SequenceExpression') {
 				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
 					.expressions;
@@ -125,6 +143,10 @@ export function build_inline_component(node, expression, context) {
 					true
 				);
 			}
+		} else if (attribute.type === 'AttachTag') {
+			// While we don't run attachments on the server, on the client they might generate a surrounding blocker function which generates
+			// extra comments, and to prevent hydration mismatches we therefore have to account for them here to generate similar comments on the server.
+			optimiser.check_blockers(attribute.metadata.expression);
 		}
 	}
 
@@ -201,7 +223,7 @@ export function build_inline_component(node, expression, context) {
 		if (block.body.length === 0) continue;
 
 		/** @type {Pattern[]} */
-		const params = [b.id('$$payload')];
+		const params = [b.id('$$renderer')];
 
 		if (lets[slot_name].length > 0) {
 			const pattern = b.object_pattern(
@@ -274,44 +296,46 @@ export function build_inline_component(node, expression, context) {
 					b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p)))
 				);
 
+	const dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
+
 	/** @type {Statement} */
 	let statement = b.stmt(
-		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
-			expression,
-			b.id('$$payload'),
-			props_expression
-		)
+		(dynamic ? b.maybe_call : b.call)(expression, b.id('$$renderer'), props_expression)
 	);
 
 	if (snippet_declarations.length > 0) {
 		statement = b.block([...snippet_declarations, statement]);
 	}
 
-	const dynamic =
-		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
-
 	if (custom_css_props.length > 0) {
-		context.state.template.push(
-			b.stmt(
-				b.call(
-					'$.css_props',
-					b.id('$$payload'),
-					b.literal(context.state.namespace === 'svg' ? false : true),
-					b.object(custom_css_props),
-					b.thunk(b.block([statement])),
-					dynamic && b.true
-				)
+		statement = b.stmt(
+			b.call(
+				'$.css_props',
+				b.id('$$renderer'),
+				b.literal(context.state.namespace === 'svg' ? false : true),
+				b.object(custom_css_props),
+				b.thunk(b.block([statement])),
+				dynamic && b.true
 			)
 		);
-	} else {
-		if (dynamic) {
-			context.state.template.push(empty_comment);
-		}
+	}
 
-		context.state.template.push(statement);
+	if (node.type !== 'SvelteSelf') {
+		// Component name itself could be blocked on async values
+		optimiser.check_blockers(node.metadata.expression);
+	}
 
-		if (!context.state.skip_hydration_boundaries) {
-			context.state.template.push(empty_comment);
-		}
+	context.state.template.push(
+		...optimiser.render_block([
+			dynamic && custom_css_props.length === 0
+				? b.stmt(b.call('$$renderer.push', empty_comment))
+				: b.empty,
+			statement
+		])
+	);
+
+	if (!optimiser.is_async() && !context.state.is_standalone && custom_css_props.length === 0) {
+		context.state.template.push(empty_comment);
 	}
 }

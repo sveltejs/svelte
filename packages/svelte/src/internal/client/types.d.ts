@@ -1,6 +1,15 @@
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
-import type { Effect, Source, Value, Reaction } from './reactivity/types.js';
+import type { Effect, Source, Value } from './reactivity/types.js';
+
+declare global {
+	interface Window {
+		__svelte?: {
+			/** hydratables */
+			h?: Map<string, unknown>;
+		};
+	}
+}
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -14,16 +23,10 @@ export type ComponentContext = {
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
-	/** destroyed */
-	d: boolean;
 	/** deferred effects */
-	e: null | Array<{
-		fn: () => void | (() => void);
-		effect: null | Effect;
-		reaction: null | Reaction;
-	}>;
-	/** mounted */
-	m: boolean;
+	e: null | Array<() => void | (() => void)>;
+	/** True if initialized, i.e. pop() ran */
+	i: boolean;
 	/**
 	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
 	 * @deprecated remove in 6.0
@@ -51,9 +54,7 @@ export type ComponentContext = {
 			m: Array<() => any>;
 		};
 		/** `$:` statements */
-		r1: any[];
-		/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
-		r2: Source<boolean>;
+		$: any[];
 	};
 	/**
 	 * dev mode only: the component function
@@ -71,28 +72,31 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Dom = TemplateNode | TemplateNode[];
 
+export type EachOutroGroup = {
+	pending: Set<Effect>;
+	done: Set<Effect>;
+};
+
 export type EachState = {
+	/** the each block effect */
+	effect: Effect;
 	/** flags */
 	flags: number;
 	/** a key -> item lookup */
 	items: Map<any, EachItem>;
-	/** head of the linked list of items */
-	first: EachItem | null;
+	/** all outro groups that this item is a part of */
+	outrogroups: Set<EachOutroGroup> | null;
+	/** `{:else}` effect */
+	fallback: Effect | null;
 };
 
 export type EachItem = {
-	/** animation manager */
-	a: AnimationManager | null;
+	/** value */
+	v: Source<any> | null;
+	/** index */
+	i: Source<number> | null;
 	/** effect */
 	e: Effect;
-	/** item */
-	v: any | Source<any>;
-	/** index */
-	i: number | Source<number>;
-	/** key */
-	k: unknown;
-	prev: EachItem | null;
-	next: EachItem | null;
 };
 
 export interface TransitionManager {
@@ -186,5 +190,14 @@ export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 export type SourceLocation =
 	| [line: number, column: number]
 	| [line: number, column: number, SourceLocation[]];
+
+export interface DevStackEntry {
+	file: string;
+	type: 'component' | 'if' | 'each' | 'await' | 'key' | 'render';
+	line: number;
+	column: number;
+	parent: DevStackEntry | null;
+	componentTag?: string;
+}
 
 export * from './reactivity/types';

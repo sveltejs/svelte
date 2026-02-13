@@ -3,13 +3,15 @@
 /** @import { AST } from './public.js' */
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
-import { parse as _parse } from './phases/1-parse/index.js';
+import { parse as _parse, Parser } from './phases/1-parse/index.js';
 import { remove_typescript_nodes } from './phases/1-parse/remove_typescript_nodes.js';
+import { parse_stylesheet } from './phases/1-parse/read/style.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
 import { transform_component, transform_module } from './phases/3-transform/index.js';
 import { validate_component_options, validate_module_options } from './validate-options.js';
 import * as state from './state.js';
 export { default as preprocess } from './preprocess/index.js';
+export { print } from './print/index.js';
 
 /**
  * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -20,7 +22,7 @@ export { default as preprocess } from './preprocess/index.js';
  */
 export function compile(source, options) {
 	source = remove_bom(source);
-	state.reset_warnings(options.warningFilter);
+	state.reset({ warning: options.warningFilter, filename: options.filename });
 	const validated = validate_component_options(options, '');
 
 	let parsed = _parse(source);
@@ -63,7 +65,7 @@ export function compile(source, options) {
  */
 export function compileModule(source, options) {
 	source = remove_bom(source);
-	state.reset_warnings(options.warningFilter);
+	state.reset({ warning: options.warningFilter, filename: options.filename });
 	const validated = validate_module_options(options, '');
 
 	const analysis = analyze_module(source, validated);
@@ -111,10 +113,33 @@ export function compileModule(source, options) {
  */
 export function parse(source, { modern, loose } = {}) {
 	source = remove_bom(source);
-	state.reset_warnings(() => false);
+	state.reset({ warning: () => false, filename: undefined });
 
 	const ast = _parse(source, loose);
 	return to_public_ast(source, ast, modern);
+}
+
+/**
+ * The parseCss function parses a CSS stylesheet, returning its abstract syntax tree.
+ *
+ * @param {string} source The CSS source code
+ * @returns {AST.CSS.StyleSheetFile}
+ */
+export function parseCss(source) {
+	source = remove_bom(source);
+	state.reset({ warning: () => false, filename: undefined });
+
+	state.set_source(source);
+
+	const parser = Parser.forCss(source);
+	const children = parse_stylesheet(parser);
+
+	return {
+		type: 'StyleSheetFile',
+		start: 0,
+		end: source.length,
+		children
+	};
 }
 
 /**

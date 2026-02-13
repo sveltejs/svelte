@@ -41,7 +41,7 @@
 		}
 	}
 
-	/* ...wich is equivalent to `div :global { &.x { ...} }` ... */
+	/* ...which is equivalent to `div :global { &.x { ...} }` ... */
 	div :global {
 		&.x {
 			color: green;
@@ -53,7 +53,7 @@
 		color: green;
 	}
 
-	/* ...and therefore `div { :global.x { ... }` aswell */
+	/* ...and therefore `div { :global.x { ... }` as well */
 	div {
 		:global.x {
 			color: green;

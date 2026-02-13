@@ -19,6 +19,31 @@ export function assignment_value_stale(property, location) {
 }
 
 /**
+ * Detected reactivity loss when reading `%name%`. This happens when state is read in an async function after an earlier `await`
+ * @param {string} name
+ */
+export function await_reactivity_loss(name) {
+	if (DEV) {
+		console.warn(`%c[svelte] await_reactivity_loss\n%cDetected reactivity loss when reading \`${name}\`. This happens when state is read in an async function after an earlier \`await\`\nhttps://svelte.dev/e/await_reactivity_loss`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_reactivity_loss`);
+	}
+}
+
+/**
+ * An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+ * @param {string} name
+ * @param {string} location
+ */
+export function await_waterfall(name, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] await_waterfall\n%cAn async derived, \`${name}\` (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_waterfall`);
+	}
+}
+
+/**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
  * @param {string | undefined | null} [location]
@@ -59,6 +84,18 @@ export function event_handler_invalid(handler, suggestion) {
 		console.warn(`%c[svelte] event_handler_invalid\n%c${handler} should be a function. Did you mean to ${suggestion}?\nhttps://svelte.dev/e/event_handler_invalid`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/event_handler_invalid`);
+	}
+}
+
+/**
+ * Expected to find a hydratable with key `%key%` during hydration, but did not.
+ * @param {string} key
+ */
+export function hydratable_missing_but_expected(key) {
+	if (DEV) {
+		console.warn(`%c[svelte] hydratable_missing_but_expected\n%cExpected to find a hydratable with key \`${key}\` during hydration, but did not.\nhttps://svelte.dev/e/hydratable_missing_but_expected`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/hydratable_missing_but_expected`);
 	}
 }
 
@@ -196,6 +233,28 @@ export function state_proxy_equality_mismatch(operator) {
 		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results\nhttps://svelte.dev/e/state_proxy_equality_mismatch`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/state_proxy_equality_mismatch`);
+	}
+}
+
+/**
+ * Tried to unmount a state proxy, rather than a component
+ */
+export function state_proxy_unmount() {
+	if (DEV) {
+		console.warn(`%c[svelte] state_proxy_unmount\n%cTried to unmount a state proxy, rather than a component\nhttps://svelte.dev/e/state_proxy_unmount`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/state_proxy_unmount`);
+	}
+}
+
+/**
+ * A `<svelte:boundary>` `reset` function only resets the boundary the first time it is called
+ */
+export function svelte_boundary_reset_noop() {
+	if (DEV) {
+		console.warn(`%c[svelte] svelte_boundary_reset_noop\n%cA \`<svelte:boundary>\` \`reset\` function only resets the boundary the first time it is called\nhttps://svelte.dev/e/svelte_boundary_reset_noop`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/svelte_boundary_reset_noop`);
 	}
 }
 

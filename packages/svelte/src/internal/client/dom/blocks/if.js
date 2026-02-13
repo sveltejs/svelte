@@ -1,132 +1,82 @@
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { TemplateNode } from '#client' */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	hydrate_next,
-	hydrate_node,
 	hydrating,
 	read_hydration_instruction,
-	remove_nodes,
+	skip_nodes,
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { HYDRATION_START, HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
+import { block } from '../../reactivity/effects.js';
+import { BranchManager } from './branches.js';
+import { HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
  * @param {TemplateNode} node
- * @param {(branch: (fn: (anchor: Node, elseif?: [number,number]) => void, flag?: boolean) => void) => void} fn
- * @param {[number,number]} [elseif]
+ * @param {(branch: (fn: (anchor: Node) => void, key?: number | false) => void) => void} fn
+ * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block(node, fn, [root_index, hydrate_index] = [0, 0]) {
-	if (hydrating && root_index === 0) {
+export function if_block(node, fn, elseif = false) {
+	if (hydrating) {
 		hydrate_next();
 	}
 
-	var anchor = node;
+	var branches = new BranchManager(node);
+	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
-	/** @type {Effect | null} */
-	var consequent_effect = null;
+	/**
+	 * @param {number | false} key
+	 * @param {null | ((anchor: Node) => void)} fn
+	 */
+	function update_branch(key, fn) {
+		if (hydrating) {
+			const data = read_hydration_instruction(node);
 
-	/** @type {Effect | null} */
-	var alternate_effect = null;
+			/**
+			 * @type {number | false}
+			 * "[" = branch 0, "[1" = branch 1, "[2" = branch 2, ..., "[!" = else (false)
+			 */
+			var hydrated_key;
 
-	/** @type {UNINITIALIZED | boolean | null} */
-	var condition = UNINITIALIZED;
-
-	var flags = root_index > 0 ? EFFECT_TRANSPARENT : 0;
-
-	var has_branch = false;
-
-	const set_branch = (
-		/** @type {(anchor: Node, elseif?: [number,number]) => void} */ fn,
-		flag = true
-	) => {
-		has_branch = true;
-		update_branch(flag, fn);
-	};
-
-	const update_branch = (
-		/** @type {boolean | null} */ new_condition,
-		/** @type {null | ((anchor: Node, elseif?: [number,number]) => void)} */ fn
-	) => {
-		if (condition === (condition = new_condition)) return;
-
-		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
-
-		if (hydrating && hydrate_index !== -1) {
-			if (root_index === 0) {
-				const data = read_hydration_instruction(anchor);
-
-				if (data === HYDRATION_START) {
-					hydrate_index = 0;
-				} else if (data === HYDRATION_START_ELSE) {
-					hydrate_index = Infinity;
-				} else {
-					hydrate_index = parseInt(data.substring(1));
-					if (hydrate_index !== hydrate_index) {
-						// if hydrate_index is NaN
-						// we set an invalid index to force mismatch
-						hydrate_index = condition ? Infinity : -1;
-					}
-				}
+			if (data === HYDRATION_START) {
+				hydrated_key = 0;
+			} else if (data === HYDRATION_START_ELSE) {
+				hydrated_key = false;
+			} else {
+				hydrated_key = parseInt(data.substring(1)); // "[1", "[2", etc.
 			}
-			const is_else = hydrate_index > root_index;
 
-			if (!!condition === is_else) {
+			if (key !== hydrated_key) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
-				anchor = remove_nodes();
+				var anchor = skip_nodes();
 
 				set_hydrate_node(anchor);
+				branches.anchor = anchor;
+
 				set_hydrating(false);
-				mismatch = true;
-				hydrate_index = -1; // ignore hydration in next else if
+				branches.ensure(key, fn);
+				set_hydrating(true);
+
+				return;
 			}
 		}
 
-		if (condition) {
-			if (consequent_effect) {
-				resume_effect(consequent_effect);
-			} else if (fn) {
-				consequent_effect = branch(() => fn(anchor));
-			}
-
-			if (alternate_effect) {
-				pause_effect(alternate_effect, () => {
-					alternate_effect = null;
-				});
-			}
-		} else {
-			if (alternate_effect) {
-				resume_effect(alternate_effect);
-			} else if (fn) {
-				alternate_effect = branch(() => fn(anchor, [root_index + 1, hydrate_index]));
-			}
-
-			if (consequent_effect) {
-				pause_effect(consequent_effect, () => {
-					consequent_effect = null;
-				});
-			}
-		}
-
-		if (mismatch) {
-			// continue in hydration mode
-			set_hydrating(true);
-		}
-	};
+		branches.ensure(key, fn);
+	}
 
 	block(() => {
-		has_branch = false;
-		fn(set_branch);
+		var has_branch = false;
+
+		fn((fn, key = 0) => {
+			has_branch = true;
+			update_branch(key, fn);
+		});
+
 		if (!has_branch) {
-			update_branch(null, null);
+			update_branch(false, null);
 		}
 	}, flags);
-
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
 }

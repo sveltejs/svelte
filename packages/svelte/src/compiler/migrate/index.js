@@ -9,7 +9,7 @@ import { parse } from '../phases/1-parse/index.js';
 import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
-import { reset, reset_warnings } from '../state.js';
+import { reset, UNKNOWN_FILENAME } from '../state.js';
 import {
 	extract_identifiers,
 	extract_all_identifiers_from_expression,
@@ -134,7 +134,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 			return start + style_placeholder + end;
 		});
 
-		reset_warnings(() => false);
+		reset({ warning: () => false, filename });
 
 		let parsed = parse(source);
 
@@ -145,7 +145,10 @@ export function migrate(source, { filename, use_ts } = {}) {
 			...validate_component_options({}, ''),
 			...parsed_options,
 			customElementOptions,
-			filename: filename ?? '(unknown)'
+			filename: filename ?? UNKNOWN_FILENAME,
+			experimental: {
+				async: true
+			}
 		};
 
 		const str = new MagicString(source);
@@ -601,7 +604,7 @@ const instance_script = {
 						'Encountered an export declaration pattern that is not supported for automigration.'
 					);
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
-					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
+					// means that foo and bar are the props (i.e. the leaves are the prop names), not x and z.
 					// const tmp = b.id(state.scope.generate('tmp'));
 					// const paths = extract_paths(declarator.id, tmp);
 					// state.props_pre.push(
@@ -1055,8 +1058,6 @@ const template = {
 		handle_identifier(node, state, path);
 	},
 	RegularElement(node, { state, path, next }) {
-		migrate_slot_usage(node, path, state);
-		handle_events(node, state);
 		// Strip off any namespace from the beginning of the node name.
 		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
 
@@ -1064,8 +1065,12 @@ const template = {
 			let trimmed_position = node.end - 2;
 			while (state.str.original.charAt(trimmed_position - 1) === ' ') trimmed_position--;
 			state.str.remove(trimmed_position, node.end - 1);
-			state.str.appendRight(node.end, `</${node.name}>`);
+			state.str.appendLeft(node.end, `</${node.name}>`);
 		}
+
+		migrate_slot_usage(node, path, state);
+		handle_events(node, state);
+
 		next();
 	},
 	SvelteSelf(node, { state, next }) {
@@ -1704,14 +1709,14 @@ function extract_type_and_comment(declarator, state, path) {
 }
 
 // Ensure modifiers are applied in the same order as Svelte 4
-const modifier_order = [
+const modifier_order = /** @type {const} */ ([
 	'preventDefault',
 	'stopPropagation',
 	'stopImmediatePropagation',
 	'self',
 	'trusted',
 	'once'
-];
+]);
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteWindow | AST.SvelteDocument | AST.SvelteBody} element
@@ -1807,7 +1812,7 @@ function handle_events(element, state) {
 }
 
 /**
- * Returns start and end of the node. If the start is preceeded with white-space-only before a line break,
+ * Returns start and end of the node. If the start is preceded with white-space-only before a line break,
  * the start will be the start of the line.
  * @param {string} source
  * @param {LabeledStatement} node

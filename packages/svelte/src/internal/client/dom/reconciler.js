@@ -20,7 +20,7 @@ function create_trusted_html(html) {
  * @param {boolean} trusted
  */
 export function create_fragment_from_html(html, trusted = false) {
-	var elem = document.createElement('template');
+	var elem = create_element('template');
 	html = html.replaceAll('<!>', '<!---->'); // XHTML compliance
 	elem.innerHTML = trusted ? create_trusted_html(html) : html;
 	return elem.content;

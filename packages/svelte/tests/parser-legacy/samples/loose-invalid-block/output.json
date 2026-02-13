@@ -75,9 +75,21 @@
 				"end": 75,
 				"expression": {
 					"type": "Identifier",
+					"name": "",
 					"start": 63,
 					"end": 63,
-					"name": ""
+					"loc": {
+						"start": {
+							"line": 9,
+							"column": 10,
+							"character": 63
+						},
+						"end": {
+							"line": 9,
+							"column": 10,
+							"character": 63
+						}
+					}
 				},
 				"parameters": [],
 				"children": []
@@ -95,9 +107,21 @@
 				"end": 102,
 				"expression": {
 					"type": "Identifier",
+					"name": "foo",
 					"start": 87,
 					"end": 90,
-					"name": "foo"
+					"loc": {
+						"start": {
+							"line": 12,
+							"column": 10,
+							"character": 87
+						},
+						"end": {
+							"line": 12,
+							"column": 13,
+							"character": 90
+						}
+					}
 				},
 				"parameters": [],
 				"children": []

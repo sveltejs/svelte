@@ -46,6 +46,21 @@ export function VariableDeclarator(node, context) {
 								: path.is_rest
 									? 'rest_prop'
 									: 'prop';
+				if (rune === '$props' && binding.kind === 'rest_prop' && node.id.type === 'ObjectPattern') {
+					const { properties } = node.id;
+					/** @type {string[]} */
+					const exclude_props = [];
+					for (const property of properties) {
+						if (property.type === 'RestElement') {
+							continue;
+						}
+						const key = /** @type {Identifier | Literal & { value: string | number }} */ (
+							property.key
+						);
+						exclude_props.push(key.type === 'Identifier' ? key.name : key.value.toString());
+					}
+					(binding.metadata ??= {}).exclude_props = exclude_props;
+				}
 			}
 		}
 
@@ -131,5 +146,15 @@ export function VariableDeclarator(node, context) {
 		}
 	}
 
-	context.next();
+	if (node.init && get_rune(node.init, context.state.scope) === '$props') {
+		// prevent erroneous `state_referenced_locally` warnings on prop fallbacks
+		context.visit(node.id, {
+			...context.state,
+			function_depth: context.state.function_depth + 1
+		});
+
+		context.visit(node.init);
+	} else {
+		context.next();
+	}
 }

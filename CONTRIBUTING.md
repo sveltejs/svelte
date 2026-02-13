@@ -9,7 +9,7 @@ The [Open Source Guides](https://opensource.guide/) website has a collection of 
 
 ## Get involved
 
-There are many ways to contribute to Svelte, and many of them do not involve writing any code. Here's a few ideas to get started:
+There are many ways to contribute to Svelte, and many of them do not involve writing any code. Here are a few ideas to get started:
 
 - Simply start using Svelte. Go through the [Getting Started](https://svelte.dev/docs#getting-started) guide. Does everything work as expected? If not, we're always looking for improvements. Let us know by [opening an issue](#reporting-new-issues).
 - Look through the [open issues](https://github.com/sveltejs/svelte/issues). A good starting point would be issues tagged [good first issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). Provide workarounds, ask for clarification, or suggest labels. Help [triage issues](#triaging-issues-and-pull-requests).
@@ -90,9 +90,9 @@ A good test plan has the exact commands you ran and their output, provides scree
 
 #### Writing tests
 
-All tests are located in `/test` folder.
+All tests are located in the `/tests` folder.
 
-Test samples are kept in `/test/xxx/samples` folder.
+Test samples are kept in `/tests/xxx/samples` folders.
 
 #### Running tests
 
@@ -101,14 +101,14 @@ Test samples are kept in `/test/xxx/samples` folder.
 1. To run test, run `pnpm test`.
 1. To run a particular test suite, use `pnpm test <suite-name>`, for example:
 
-   ```bash
+   ```sh
    pnpm test validator
    ```
 
-1. To filter tests _within_ a test suite, use `pnpm test <suite-name> -- -t <test-name>`, for example:
+1. To filter tests _within_ a test suite, use `pnpm test <suite-name> -t <test-name>`, for example:
 
-   ```bash
-   pnpm test validator -- -t a11y-alt-text
+   ```sh
+   pnpm test validator -t a11y-alt-text
    ```
 
    (You can also do `FILTER=<test-name> pnpm test <suite-name>` which removes other tests rather than simply skipping them — this will result in faster and more compact test results, but it's non-idiomatic. Choose your fighter.)

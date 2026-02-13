@@ -1,4 +1,4 @@
-/** @import { Comment, Expression, Node, Program } from 'estree' */
+/** @import * as ESTree from 'estree' */
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
@@ -6,7 +6,12 @@ import { walk } from 'zimmerframe';
 import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { extract_identifiers } from '../../utils/ast.js';
+import {
+	extract_identifiers,
+	has_await_expression,
+	object,
+	unwrap_pattern
+} from '../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
@@ -19,9 +24,11 @@ import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { AnimateDirective } from './visitors/AnimateDirective.js';
 import { AttachTag } from './visitors/AttachTag.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
@@ -36,6 +43,7 @@ import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExportSpecifier } from './visitors/ExportSpecifier.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ExpressionTag } from './visitors/ExpressionTag.js';
+import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
 import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
@@ -135,11 +143,13 @@ const visitors = {
 			pop_ignore();
 		}
 	},
+	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,
 	AttachTag,
 	Attribute,
 	AwaitBlock,
+	AwaitExpression,
 	BindDirective,
 	CallExpression,
 	ClassBody,
@@ -154,6 +164,7 @@ const visitors = {
 	ExportSpecifier,
 	ExpressionStatement,
 	ExpressionTag,
+	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
 	HtmlTag,
@@ -202,7 +213,7 @@ const visitors = {
  * @returns {Js}
  */
 function js(script, root, allow_reactive_declarations, parent) {
-	/** @type {Program} */
+	/** @type {ESTree.Program} */
 	const ast = script?.content ?? {
 		type: 'Program',
 		sourceType: 'module',
@@ -211,9 +222,14 @@ function js(script, root, allow_reactive_declarations, parent) {
 		body: []
 	};
 
-	const { scope, scopes } = create_scopes(ast, root, allow_reactive_declarations, parent);
+	const { scope, scopes, has_await } = create_scopes(
+		ast,
+		root,
+		allow_reactive_declarations,
+		parent
+	);
 
-	return { ast, scope, scopes };
+	return { ast, scope, scopes, has_await };
 }
 
 /**
@@ -244,7 +260,7 @@ export function analyze_module(source, options) {
 	state.set_source(source);
 	const ast = parse(source, comments, false, false);
 
-	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
+	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -261,25 +277,26 @@ export function analyze_module(source, options) {
 
 	/** @type {Analysis} */
 	const analysis = {
-		module: { ast, scope, scopes },
+		module: { ast, scope, scopes, has_await },
 		name: options.filename,
 		accessors: false,
 		runes: true,
 		immutable: true,
 		tracing: false,
+		async_deriveds: new Set(),
 		comments,
-		classes: new Map()
+		classes: new Map(),
+		pickled_awaits: new Set()
 	};
 
-	state.reset({
+	state.adjust({
 		dev: options.dev,
-		filename: options.filename,
 		rootDir: options.rootDir,
 		runes: true
 	});
 
 	walk(
-		/** @type {Node} */ (ast),
+		/** @type {ESTree.Node} */ (ast),
 		{
 			scope,
 			scopes,
@@ -288,13 +305,15 @@ export function analyze_module(source, options) {
 			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
 			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
 			ast_type: /** @type {any} */ (null),
-			component_slots: new Set(),
+			component_slots: /** @type {Set<string>} */ (new Set()),
 			expression: null,
 			function_depth: 0,
 			has_props_rune: false,
 			options: /** @type {ValidatedCompileOptions} */ (options),
+			fragment: null,
 			parent_element: null,
-			reactive_statement: null
+			reactive_statement: null,
+			derived_function_depth: -1
 		},
 		visitors
 	);
@@ -314,7 +333,12 @@ export function analyze_component(root, source, options) {
 	const module = js(root.module, scope_root, false, null);
 	const instance = js(root.instance, scope_root, true, module.scope);
 
-	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, instance.scope);
+	const { scope, scopes, has_await } = create_scopes(
+		root.fragment,
+		scope_root,
+		false,
+		instance.scope
+	);
 
 	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };
@@ -330,7 +354,7 @@ export function analyze_component(root, source, options) {
 
 		const store_name = name.slice(1);
 		const declaration = instance.scope.get(store_name);
-		const init = /** @type {Node | undefined} */ (declaration?.initial);
+		const init = /** @type {ESTree.Node | undefined} */ (declaration?.initial);
 
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
@@ -390,7 +414,7 @@ export function analyze_component(root, source, options) {
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
 						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
 						// const state = $state(0) is valid
-						get_rune(/** @type {Node} */ (path.at(-1)), module.scope) === null
+						get_rune(/** @type {ESTree.Node} */ (path.at(-1)), module.scope) === null
 					) {
 						e.store_invalid_subscription(node);
 					}
@@ -422,7 +446,9 @@ export function analyze_component(root, source, options) {
 
 	const component_name = get_component_name(options.filename);
 
-	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+	const runes =
+		options.runes ??
+		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
 		for (let check of synthetic_stores_legacy_check) {
@@ -437,10 +463,21 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
+	const is_custom_element = !!options.customElementOptions || options.customElement;
+
+	const name = module.scope.generate(options.name ?? component_name);
+
+	state.adjust({
+		component_name: name,
+		dev: options.dev,
+		rootDir: options.rootDir,
+		runes
+	});
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
 	const analysis = {
-		name: module.scope.generate(options.name ?? component_name),
+		name,
 		root: scope_root,
 		module,
 		instance,
@@ -486,13 +523,13 @@ export function analyze_component(root, source, options) {
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
-		custom_element: options.customElementOptions ?? options.customElement,
-		inject_styles: options.css === 'injected' || options.customElement,
-		accessors: options.customElement
-			? true
-			: (runes ? false : !!options.accessors) ||
-				// because $set method needs accessors
-				options.compatibility?.componentApi === 4,
+		custom_element: is_custom_element,
+		inject_styles: options.css === 'injected' || is_custom_element,
+		accessors:
+			is_custom_element ||
+			(runes ? false : !!options.accessors) ||
+			// because $set method needs accessors
+			options.compatibility?.componentApi === 4,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
@@ -501,7 +538,7 @@ export function analyze_component(root, source, options) {
 			hash: root.css
 				? options.cssHash({
 						css: root.css.content.styles,
-						filename: options.filename,
+						filename: state.filename,
 						name: component_name,
 						hash
 					})
@@ -510,18 +547,17 @@ export function analyze_component(root, source, options) {
 			has_global: false
 		},
 		source,
-		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
-		snippets: new Set()
+		snippets: new Set(),
+		async_deriveds: new Set(),
+		pickled_awaits: new Set(),
+		instance_body: {
+			sync: [],
+			async: [],
+			declarations: [],
+			hoisted: []
+		}
 	};
-
-	state.reset({
-		component_name: analysis.name,
-		dev: options.dev,
-		filename: options.filename,
-		rootDir: options.rootDir,
-		runes: true
-	});
 
 	if (!runes) {
 		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
@@ -613,7 +649,7 @@ export function analyze_component(root, source, options) {
 							// @ts-expect-error
 							_: set_scope,
 							Identifier(node, context) {
-								const parent = /** @type {Expression} */ (context.path.at(-1));
+								const parent = /** @type {ESTree.Expression} */ (context.path.at(-1));
 
 								if (is_reference(node, parent)) {
 									const binding = context.state.scope.get(node.name);
@@ -621,7 +657,8 @@ export function analyze_component(root, source, options) {
 									if (
 										binding &&
 										binding.kind === 'normal' &&
-										binding.declaration_kind !== 'import'
+										binding.declaration_kind !== 'import' &&
+										binding.declaration_kind !== 'function'
 									) {
 										binding.kind = 'state';
 										binding.mutated = true;
@@ -653,6 +690,8 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
+	calculate_blockers(instance, analysis);
+
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
 		if (props_refs) {
@@ -672,13 +711,15 @@ export function analyze_component(root, source, options) {
 				analysis,
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
+				fragment: ast === template.ast ? ast : null,
 				parent_element: null,
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
 				state_fields: new Map(),
 				function_depth: scope.function_depth,
-				reactive_statement: null
+				reactive_statement: null,
+				derived_function_depth: -1
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
@@ -737,6 +778,7 @@ export function analyze_component(root, source, options) {
 				scopes,
 				analysis,
 				options,
+				fragment: ast === template.ast ? ast : null,
 				parent_element: null,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
@@ -744,7 +786,8 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				state_fields: new Map(),
-				function_depth: scope.function_depth
+				function_depth: scope.function_depth,
+				derived_function_depth: -1
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
@@ -771,9 +814,15 @@ export function analyze_component(root, source, options) {
 		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
 			for (const specifier of node.specifiers) {
 				if (specifier.local.type !== 'Identifier') continue;
-
-				const binding = analysis.module.scope.get(specifier.local.name);
-				if (!binding) e.export_undefined(specifier, specifier.local.name);
+				const name = specifier.local.name;
+				const binding = analysis.module.scope.get(name);
+				if (!binding) {
+					if ([...analysis.snippets].find((snippet) => snippet.expression.name === name)) {
+						e.snippet_invalid_export(specifier);
+					} else {
+						e.export_undefined(specifier, name);
+					}
+				}
 			}
 		}
 	}
@@ -852,7 +901,7 @@ export function analyze_component(root, source, options) {
 		// We need an empty class to generate the set_class() or class="" correctly
 		if (!has_spread && !has_class && (node.metadata.scoped || has_class_directive)) {
 			node.attributes.push(
-				create_attribute('class', -1, -1, [
+				create_attribute('class', null, -1, -1, [
 					{
 						type: 'Text',
 						data: '',
@@ -867,7 +916,7 @@ export function analyze_component(root, source, options) {
 		// We need an empty style to generate the set_style() correctly
 		if (!has_spread && !has_style && has_style_directive) {
 			node.attributes.push(
-				create_attribute('style', -1, -1, [
+				create_attribute('style', null, -1, -1, [
 					{
 						type: 'Text',
 						data: '',
@@ -884,6 +933,304 @@ export function analyze_component(root, source, options) {
 	// analysis.stylesheet.warn_on_unused_selectors(analysis);
 
 	return analysis;
+}
+
+/**
+ * Analyzes the instance's top level statements to calculate which bindings need to wait on which
+ * top level statements. This includes indirect blockers such as functions referencing async top level statements.
+ *
+ * @param {Js} instance
+ * @param {ComponentAnalysis} analysis
+ * @returns {void}
+ */
+function calculate_blockers(instance, analysis) {
+	/**
+	 * @param {ESTree.Node} expression
+	 * @param {Scope} scope
+	 * @param {Set<Binding>} touched
+	 * @param {Set<ESTree.Node>} seen
+	 */
+	const touch = (expression, scope, touched, seen = new Set()) => {
+		if (seen.has(expression)) return;
+		seen.add(expression);
+
+		walk(
+			expression,
+			{ scope },
+			{
+				_(node, context) {
+					const scope = instance.scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
+				ImportDeclaration(node) {},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							touched.add(binding);
+
+							for (const assignment of binding.assignments) {
+								touch(assignment.value, assignment.scope, touched, seen);
+							}
+						}
+					}
+				}
+			}
+		);
+	};
+
+	/**
+	 * @param {ESTree.Node} node
+	 * @param {Set<Binding>} reads
+	 * @param {Set<Binding>} writes
+	 * @param {Scope} scope
+	 */
+	const trace_references = (node, reads, writes, scope) => {
+		/**
+		 * @param {ESTree.Pattern} node
+		 * @param {Scope} scope
+		 */
+		function update(node, scope) {
+			for (const pattern of unwrap_pattern(node)) {
+				const node = object(pattern);
+				if (!node) return;
+
+				const binding = scope.get(node.name);
+				if (!binding) return;
+
+				writes.add(binding);
+			}
+		}
+
+		walk(
+			node,
+			{ scope },
+			{
+				_(node, context) {
+					const scope = instance.scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
+				AssignmentExpression(node, context) {
+					update(node.left, context.state.scope);
+				},
+				UpdateExpression(node, context) {
+					update(
+						/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
+						context.state.scope
+					);
+				},
+				CallExpression(node, context) {
+					// for now, assume everything touched by the callee ends up mutating the object
+					// TODO optimise this better
+
+					// special case — no need to peek inside effects as they only run once async work has completed
+					const rune = get_rune(node, context.state.scope);
+					if (rune === '$effect') return;
+
+					/** @type {Set<Binding>} */
+					const touched = new Set();
+					touch(node, context.state.scope, touched);
+
+					for (const b of touched) {
+						writes.add(b);
+					}
+				},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							reads.add(binding);
+						}
+					}
+				},
+				ReturnStatement(node, context) {
+					// We have to assume that anything returned from a function, even if it's a function itself,
+					// might be called immediately, so we have to touch all references within it. Example:
+					// function foo() { return () => blocker; } foo(); // blocker is touched
+					if (node.argument) {
+						touch(node.argument, context.state.scope, reads);
+					}
+				},
+				// don't look inside functions until they are called
+				ArrowFunctionExpression(_, context) {},
+				FunctionDeclaration(_, context) {},
+				FunctionExpression(_, context) {}
+			}
+		);
+	};
+
+	let awaited = false;
+
+	// TODO this should probably be attached to the scope?
+	const promises = b.id('$$promises');
+
+	/**
+	 * @param {ESTree.Identifier} id
+	 * @param {NonNullable<Binding['blocker']>} blocker
+	 */
+	function push_declaration(id, blocker) {
+		analysis.instance_body.declarations.push(id);
+
+		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+		binding.blocker = blocker;
+	}
+
+	/**
+	 * Analysis of blockers for functions is deferred until we know which statements are async/blockers
+	 * @type {Array<ESTree.FunctionDeclaration | ESTree.VariableDeclarator>}
+	 */
+	const functions = [];
+
+	for (let node of instance.ast.body) {
+		if (node.type === 'ImportDeclaration') {
+			analysis.instance_body.hoisted.push(node);
+			continue;
+		}
+
+		if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportAllDeclaration') {
+			// these can't exist inside `<script>` but TypeScript doesn't know that
+			continue;
+		}
+
+		if (node.type === 'ExportNamedDeclaration') {
+			if (node.declaration) {
+				node = node.declaration;
+			} else {
+				continue;
+			}
+		}
+
+		const has_await = has_await_expression(node);
+		awaited ||= has_await;
+
+		if (node.type === 'FunctionDeclaration') {
+			analysis.instance_body.sync.push(node);
+			functions.push(node);
+		} else if (node.type === 'VariableDeclaration') {
+			for (const declarator of node.declarations) {
+				if (get_rune(declarator.init, instance.scope) === '$props.id') {
+					// special case
+					continue;
+				}
+
+				if (
+					declarator.init?.type === 'ArrowFunctionExpression' ||
+					declarator.init?.type === 'FunctionExpression'
+				) {
+					// One declarator per declaration, makes things simpler. The ternary ensures more accurate source maps in the common case
+					analysis.instance_body.sync.push(
+						node.declarations.length === 1 ? node : b.declaration(node.kind, [declarator])
+					);
+					functions.push(declarator);
+				} else if (!awaited) {
+					// One declarator per declaration, makes things simpler. The ternary ensures more accurate source maps in the common case
+					analysis.instance_body.sync.push(
+						node.declarations.length === 1 ? node : b.declaration(node.kind, [declarator])
+					);
+				} else {
+					/** @type {Set<Binding>} */
+					const reads = new Set(); // TODO we're not actually using this yet
+
+					/** @type {Set<Binding>} */
+					const writes = new Set();
+
+					trace_references(declarator, reads, writes, instance.scope);
+
+					const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
+						b.member(promises, b.literal(analysis.instance_body.async.length), true)
+					);
+
+					for (const binding of writes) {
+						binding.blocker = blocker;
+					}
+
+					for (const id of extract_identifiers(declarator.id)) {
+						push_declaration(id, blocker);
+					}
+
+					// one declarator per declaration, makes things simpler
+					analysis.instance_body.async.push({
+						node: declarator,
+						has_await
+					});
+				}
+			}
+		} else if (awaited) {
+			/** @type {Set<Binding>} */
+			const reads = new Set(); // TODO we're not actually using this yet
+
+			/** @type {Set<Binding>} */
+			const writes = new Set();
+
+			trace_references(node, reads, writes, instance.scope);
+
+			const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
+				b.member(promises, b.literal(analysis.instance_body.async.length), true)
+			);
+
+			for (const binding of writes) {
+				binding.blocker = blocker;
+			}
+
+			if (node.type === 'ClassDeclaration') {
+				push_declaration(node.id, blocker);
+				analysis.instance_body.async.push({ node, has_await });
+			} else {
+				analysis.instance_body.async.push({ node, has_await });
+			}
+		} else {
+			analysis.instance_body.sync.push(node);
+		}
+	}
+
+	for (const fn of functions) {
+		/** @type {Set<Binding>} */
+		const reads_writes = new Set();
+		const init =
+			fn.type === 'VariableDeclarator'
+				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init)
+				: fn;
+
+		trace_references(
+			init.body,
+			reads_writes,
+			reads_writes,
+			/** @type {Scope} */ (instance.scopes.get(init))
+		);
+
+		const max = [...reads_writes].reduce((max, binding) => {
+			if (binding.blocker) {
+				let property = /** @type {ESTree.SimpleLiteral & { value: number }} */ (
+					binding.blocker.property
+				);
+
+				return Math.max(property.value, max);
+			}
+
+			return max;
+		}, -1);
+
+		if (max === -1) continue;
+
+		const blocker = b.member(promises, b.literal(max), true);
+		const binding = /** @type {Binding} */ (
+			fn.type === 'FunctionDeclaration'
+				? instance.scope.get(fn.id.name)
+				: instance.scope.get(/** @type {ESTree.Identifier} */ (fn.id).name)
+		);
+
+		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
+	}
 }
 
 /**

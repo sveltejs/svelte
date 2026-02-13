@@ -3,6 +3,23 @@
 import { DEV } from 'esm-env';
 
 /**
+ * Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
+ * @param {string} name
+ * @returns {never}
+ */
+export function experimental_async_required(name) {
+	if (DEV) {
+		const error = new Error(`experimental_async_required\nCannot use \`${name}(...)\` unless the \`experimental.async\` compiler option is \`true\`\nhttps://svelte.dev/e/experimental_async_required`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/experimental_async_required`);
+	}
+}
+
+/**
  * Cannot use `{@render children(...)}` if the parent component uses `let:` directives. Consider using a named snippet instead
  * @returns {never}
  */
@@ -48,6 +65,22 @@ export function lifecycle_outside_component(name) {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/lifecycle_outside_component`);
+	}
+}
+
+/**
+ * Context was not set in a parent component
+ * @returns {never}
+ */
+export function missing_context() {
+	if (DEV) {
+		const error = new Error(`missing_context\nContext was not set in a parent component\nhttps://svelte.dev/e/missing_context`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/missing_context`);
 	}
 }
 

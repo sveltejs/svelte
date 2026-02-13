@@ -22,9 +22,13 @@ const replacements = {
  * @returns {string}
  */
 export function attr(name, value, is_boolean = false) {
+	// attribute hidden for values other than "until-found" behaves like a boolean attribute
+	if (name === 'hidden' && value !== 'until-found') {
+		is_boolean = true;
+	}
 	if (value == null || (!value && is_boolean)) return '';
 	const normalized = (name in replacements && replacements[name].get(value)) || value;
-	const assignment = is_boolean ? '' : `="${escape_html(normalized, true)}"`;
+	const assignment = is_boolean ? `=""` : `="${escape_html(normalized, true)}"`;
 	return ` ${name}${assignment}`;
 }
 

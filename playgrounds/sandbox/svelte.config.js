@@ -1,5 +1,12 @@
 export default {
+	/** @type {import('svelte/compiler').CompileOptions} */
 	compilerOptions: {
-		hmr: true
+		css: 'injected',
+
+		hmr: false,
+
+		experimental: {
+			async: true
+		}
 	}
 };

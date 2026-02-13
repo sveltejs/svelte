@@ -43,6 +43,7 @@ export function create_deferred() {
 	/** @param {any} [reason] */
 	let reject = (reason) => {};
 
+	/** @type {Promise<any>} */
 	const promise = new Promise((f, r) => {
 		resolve = f;
 		reject = r;
@@ -86,7 +87,8 @@ export async function compile_directory(
 				const compiled = compileModule(text, {
 					filename: opts.filename,
 					generate: opts.generate,
-					dev: opts.dev
+					dev: opts.dev,
+					experimental: opts.experimental
 				});
 				write(out, compiled.js.code.replace(`v${VERSION}`, 'VERSION'));
 			} else {
@@ -192,6 +194,38 @@ if (typeof window !== 'undefined') {
 }
 
 export const fragments = /** @type {'html' | 'tree'} */ (process.env.FRAGMENTS) ?? 'html';
+
+export const async_mode = process.env.SVELTE_NO_ASYNC !== 'true';
+
+/**
+ * @param {any[]} logs
+ */
+export function normalise_inspect_logs(logs) {
+	/** @type {string[]} */
+	const normalised = [];
+
+	for (const log of logs) {
+		if (log === 'stack trace') {
+			// ignore `console.group('stack trace')` in default `$inspect(...)` output
+			continue;
+		}
+
+		if (log instanceof Error) {
+			const last_line = log.stack
+				?.trim()
+				.split('\n')
+				.filter((line) => !line.includes('at Module.get_stack'))[1];
+
+			const match = last_line && /(at .+) /.exec(last_line);
+
+			if (match) normalised.push(match[1]);
+		} else {
+			normalised.push(log);
+		}
+	}
+
+	return normalised;
+}
 
 /**
  * @param {any[]} logs

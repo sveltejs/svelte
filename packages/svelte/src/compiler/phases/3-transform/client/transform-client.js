@@ -12,6 +12,7 @@ import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { BinaryExpression } from './visitors/BinaryExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { BlockStatement } from './visitors/BlockStatement.js';
@@ -25,13 +26,13 @@ import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { ForOfStatement } from './visitors/ForOfStatement.js';
 import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
 import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
-import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
@@ -88,6 +89,7 @@ const visitors = {
 	AssignmentExpression,
 	Attribute,
 	AwaitBlock,
+	AwaitExpression,
 	BinaryExpression,
 	BindDirective,
 	BlockStatement,
@@ -101,13 +103,13 @@ const visitors = {
 	EachBlock,
 	ExportNamedDeclaration,
 	ExpressionStatement,
+	ForOfStatement,
 	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
 	HtmlTag,
 	Identifier,
 	IfBlock,
-	ImportDeclaration,
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
@@ -149,7 +151,7 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [b.import_all('$', 'svelte/internal/client')],
+		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -164,13 +166,17 @@ export function client_component(analysis, options) {
 		in_constructor: false,
 		instance_level_snippets: [],
 		module_level_snippets: [],
+		is_standalone: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
+		consts: /** @type {any} */ (null),
+		snippets: /** @type {any} */ (null),
+		let_directives: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
-		expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
-		template: /** @type {any} */ (null)
+		template: /** @type {any} */ (null),
+		memoizer: /** @type {any} */ (null)
 	};
 
 	const module = /** @type {ESTree.Program} */ (
@@ -206,7 +212,8 @@ export function client_component(analysis, options) {
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
-
+	/** @type {ESTree.Statement} */
+	let store_init = b.empty;
 	/** @type {ESTree.VariableDeclaration[]} */
 	const legacy_reactive_declarations = [];
 
@@ -224,8 +231,9 @@ export function client_component(analysis, options) {
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
 				needs_store_cleanup = true;
-				store_setup.push(
-					b.const(b.array_pattern([b.id('$$stores'), b.id('$$cleanup')]), b.call('$.setup_stores'))
+				store_init = b.const(
+					b.array_pattern([b.id('$$stores'), b.id('$$cleanup')]),
+					b.call('$.setup_stores')
 				);
 			}
 
@@ -350,17 +358,47 @@ export function client_component(analysis, options) {
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (dev) push_args.push(b.id(analysis.name));
 
-	const component_block = b.block([
-		...store_setup,
+	let component_block = b.block([
+		store_init,
 		...legacy_reactive_declarations,
-		...group_binding_declarations,
-		...state.instance_level_snippets,
-		.../** @type {ESTree.Statement[]} */ (instance.body),
-		analysis.runes || !analysis.needs_context
-			? b.empty
-			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
-		.../** @type {ESTree.Statement[]} */ (template.body)
+		...group_binding_declarations
 	]);
+
+	const should_inject_context =
+		dev ||
+		analysis.needs_context ||
+		analysis.reactive_statements.size > 0 ||
+		component_returned_object.length > 0;
+
+	component_block.body.push(
+		...state.instance_level_snippets,
+		.../** @type {ESTree.Statement[]} */ (instance.body)
+	);
+
+	if (should_inject_context && component_returned_object.length > 0) {
+		component_block.body.push(b.var('$$exports', b.object(component_returned_object)));
+	}
+	component_block.body.unshift(...store_setup);
+
+	if (!analysis.runes && analysis.needs_context) {
+		component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
+	}
+
+	component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
+
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
+		);
+	}
+
+	let should_inject_props =
+		should_inject_context ||
+		analysis.needs_props ||
+		analysis.uses_props ||
+		analysis.uses_rest_props ||
+		analysis.uses_slots ||
+		analysis.slot_names.size > 0;
 
 	// trick esrap into including comments
 	component_block.loc = instance.loc;
@@ -392,18 +430,6 @@ export function client_component(analysis, options) {
 		);
 	}
 
-	if (analysis.needs_mutation_validation) {
-		component_block.body.unshift(
-			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
-		);
-	}
-
-	const should_inject_context =
-		dev ||
-		analysis.needs_context ||
-		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0;
-
 	// we want the cleanup function for the stores to run as the very last thing
 	// so that it can effectively clean up the store subscription even after the user effects runs
 	if (should_inject_context) {
@@ -412,7 +438,7 @@ export function client_component(analysis, options) {
 		let to_push;
 
 		if (component_returned_object.length > 0) {
-			let pop_call = b.call('$.pop', b.object(component_returned_object));
+			let pop_call = b.call('$.pop', b.id('$$exports'));
 			to_push = needs_store_cleanup ? b.var('$$pop', pop_call) : b.return(pop_call);
 		} else {
 			to_push = b.stmt(b.call('$.pop'));
@@ -423,6 +449,7 @@ export function client_component(analysis, options) {
 
 	if (needs_store_cleanup) {
 		component_block.body.push(b.stmt(b.call('$$cleanup')));
+
 		if (component_returned_object.length > 0) {
 			component_block.body.push(b.return(b.id('$$pop')));
 		}
@@ -469,14 +496,6 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.const('$$slots', b.call('$.sanitize_slots', b.id('$$props'))));
 	}
 
-	let should_inject_props =
-		should_inject_context ||
-		analysis.needs_props ||
-		analysis.uses_props ||
-		analysis.uses_rest_props ||
-		analysis.uses_slots ||
-		analysis.slot_names.size > 0;
-
 	// Merge hoisted statements into module body.
 	// Ensure imports are on top, with the order preserved, then module body, then hoisted statements
 	/** @type {ESTree.ImportDeclaration[]} */
@@ -502,14 +521,9 @@ export function client_component(analysis, options) {
 
 	if (options.hmr) {
 		const id = b.id(analysis.name);
-		const HMR = b.id('$.HMR');
-
-		const existing = b.member(id, HMR, true);
-		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(b.assignment('=', b.member(incoming, 'source'), b.member(existing, 'source'))),
-			b.stmt(b.call('$.set', b.member(existing, 'source'), b.member(incoming, 'original')))
+			b.stmt(b.call(b.member(b.member(id, b.id('$.HMR'), true), 'update'), b.id('module.default')))
 		];
 
 		if (analysis.css.hash) {
@@ -518,8 +532,7 @@ export function client_component(analysis, options) {
 		}
 
 		const hmr = b.block([
-			b.stmt(b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, 'source'))))),
-
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id))),
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
 
@@ -535,6 +548,10 @@ export function client_component(analysis, options) {
 				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
+	}
+
+	if (options.experimental.async) {
+		body.unshift(b.imports([], 'svelte/internal/flags/async'));
 	}
 
 	if (!analysis.runes) {
@@ -578,8 +595,9 @@ export function client_component(analysis, options) {
 		);
 	}
 
-	if (analysis.custom_element) {
-		const ce = analysis.custom_element;
+	const ce = options.customElementOptions ?? options.customElement;
+
+	if (ce) {
 		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
 
 		/** @type {ESTree.Property[]} */
@@ -621,7 +639,16 @@ export function client_component(analysis, options) {
 		const accessors_str = b.array(
 			analysis.exports.map(({ name, alias }) => b.literal(alias ?? name))
 		);
-		const use_shadow_dom = typeof ce === 'boolean' || ce.shadow !== 'none' ? true : false;
+
+		/** @type {ESTree.ObjectExpression | undefined} */
+		let shadow_root_init;
+		if (typeof ce === 'boolean' || ce.shadow === 'open' || ce.shadow === undefined) {
+			shadow_root_init = b.object([b.init('mode', b.literal('open'))]);
+		} else if (ce.shadow === 'none') {
+			shadow_root_init = undefined;
+		} else {
+			shadow_root_init = ce.shadow;
+		}
 
 		const create_ce = b.call(
 			'$.create_custom_element',
@@ -629,7 +656,7 @@ export function client_component(analysis, options) {
 			b.object(props_str),
 			slots_str,
 			accessors_str,
-			b.literal(use_shadow_dom),
+			shadow_root_init,
 			/** @type {any} */ (typeof ce !== 'boolean' ? ce.extend : undefined)
 		);
 
@@ -670,7 +697,8 @@ export function client_module(analysis, options) {
 		scopes: analysis.module.scopes,
 		state_fields: new Map(),
 		transform: {},
-		in_constructor: false
+		in_constructor: false,
+		is_instance: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (

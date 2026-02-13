@@ -1,5 +1,6 @@
 ---
 title: class
+tags: template-style
 ---
 
 There are two ways to set classes on elements: the `class` attribute, and the `class:` directive.
@@ -71,7 +72,7 @@ The user of this component has the same flexibility to use a mixture of objects,
 </Button>
 ```
 
-Svelte also exposes the `ClassValue` type, which is the type of value that the `class` attribute on elements accept. This is useful if you want to use a type-safe class name in component props:
+Since Svelte 5.19, Svelte also exposes the `ClassValue` type, which is the type of value that the `class` attribute on elements accept. This is useful if you want to use a type-safe class name in component props:
 
 ```svelte
 <script lang="ts">

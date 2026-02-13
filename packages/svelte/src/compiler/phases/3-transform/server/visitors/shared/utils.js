@@ -1,4 +1,4 @@
-/** @import { AssignmentOperator, Expression, Identifier, Node, Statement } from 'estree' */
+/** @import { Expression, Identifier, Node, Statement, BlockStatement, ArrayExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
@@ -6,14 +6,20 @@ import { escape_html } from '../../../../../../escaping.js';
 import {
 	BLOCK_CLOSE,
 	BLOCK_OPEN,
+	BLOCK_OPEN_ELSE,
 	EMPTY_COMMENT
 } from '../../../../../../internal/server/hydration.js';
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
+import { has_await_expression } from '../../../../../utils/ast.js';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
+
+/** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
+export const block_open_else = b.literal(BLOCK_OPEN_ELSE);
 
 /** Closes an if/each block, so that we can remove nodes in the case of a mismatch. Also serves as an anchor for these blocks */
 export const block_close = b.literal(BLOCK_CLOSE);
@@ -32,6 +38,10 @@ export function process_children(nodes, { visit, state }) {
 	let sequence = [];
 
 	function flush() {
+		if (sequence.length === 0) {
+			return;
+		}
+
 		let quasi = b.quasi('', false);
 		const quasis = [quasi];
 
@@ -63,26 +73,36 @@ export function process_children(nodes, { visit, state }) {
 		}
 
 		state.template.push(b.template(quasis, expressions));
+		sequence = [];
 	}
 
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
+	for (const node of nodes) {
+		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
+			flush();
 
-		if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
-			sequence.push(node);
-		} else {
-			if (sequence.length > 0) {
-				flush();
-				sequence = [];
+			const expression = /** @type {Expression} */ (visit(node.expression));
+
+			let call = b.call(
+				'$$renderer.push',
+				b.thunk(b.call('$.escape', expression), node.metadata.expression.has_await)
+			);
+
+			const blockers = node.metadata.expression.blockers();
+
+			if (blockers.elements.length > 0) {
+				call = b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], call));
 			}
 
+			state.template.push(b.stmt(call));
+		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
+			sequence.push(node);
+		} else {
+			flush();
 			visit(node, { ...state });
 		}
 	}
 
-	if (sequence.length > 0) {
-		flush();
-	}
+	flush();
 }
 
 /**
@@ -95,11 +115,9 @@ function is_statement(node) {
 
 /**
  * @param {Array<Statement | Expression>} template
- * @param {Identifier} out
- * @param {AssignmentOperator} operator
  * @returns {Statement[]}
  */
-export function build_template(template, out = b.id('$$payload.out'), operator = '+=') {
+export function build_template(template) {
 	/** @type {string[]} */
 	let strings = [];
 
@@ -112,9 +130,8 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 	const flush = () => {
 		statements.push(
 			b.stmt(
-				b.assignment(
-					operator,
-					out,
+				b.call(
+					b.id('$$renderer.push'),
 					b.template(
 						strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
 						expressions
@@ -122,6 +139,7 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 				)
 			)
 		);
+
 		strings = [];
 		expressions = [];
 	};
@@ -164,6 +182,7 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
  *
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
  * @returns {Expression}
@@ -171,6 +190,7 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 export function build_attribute_value(
 	value,
 	context,
+	transform,
 	trim_whitespace = false,
 	is_component = false
 ) {
@@ -189,7 +209,10 @@ export function build_attribute_value(
 			return b.literal(is_component ? data : escape_html(data, true));
 		}
 
-		return /** @type {Expression} */ (context.visit(chunk.expression));
+		return transform(
+			/** @type {Expression} */ (context.visit(chunk.expression)),
+			chunk.metadata.expression
+		);
 	}
 
 	let quasi = b.quasi('', false);
@@ -202,17 +225,27 @@ export function build_attribute_value(
 		const node = value[i];
 
 		if (node.type === 'Text') {
-			quasi.value.raw += trim_whitespace
+			quasi.value.cooked += trim_whitespace
 				? node.data.replace(regex_whitespaces_strict, ' ')
 				: node.data;
 		} else {
 			expressions.push(
-				b.call('$.stringify', /** @type {Expression} */ (context.visit(node.expression)))
+				b.call(
+					'$.stringify',
+					transform(
+						/** @type {Expression} */ (context.visit(node.expression)),
+						node.metadata.expression
+					)
+				)
 			);
 
 			quasi = b.quasi('', i + 1 === value.length);
 			quasis.push(quasi);
 		}
+	}
+
+	for (const quasi of quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
 	return b.template(quasis, expressions);
@@ -242,4 +275,130 @@ export function build_getter(node, state) {
 	}
 
 	return node;
+}
+
+/**
+ * @param {Statement[]} statements
+ * @param {ArrayExpression} blockers
+ * @param {boolean} has_await
+ */
+export function create_child_block(statements, blockers, has_await) {
+	if (blockers.elements.length === 0 && !has_await) {
+		return statements;
+	}
+
+	const fn = b.arrow([b.id('$$renderer')], b.block(statements), has_await);
+
+	return blockers.elements.length > 0
+		? [b.stmt(b.call('$$renderer.async_block', blockers, fn))]
+		: [b.stmt(b.call('$$renderer.child_block', fn))];
+}
+
+/**
+ * A utility for optimising promises in templates. Without it code like
+ * `<Component foo={await fetch()} bar={await other()} />` would be transformed
+ * into two blocking promises, with it it's using `Promise.all` to await them.
+ * It also keeps track of blocking promises, i.e. those that need to be resolved before continuing.
+ */
+export class PromiseOptimiser {
+	/** @type {Expression[]} */
+	expressions = [];
+
+	has_await = false;
+
+	/** @type {Set<Expression>} */
+	#blockers = new Set();
+
+	/**
+	 * @param {Expression} expression
+	 * @param {ExpressionMetadata} metadata
+	 */
+	transform = (expression, metadata) => {
+		this.check_blockers(metadata);
+
+		if (metadata.has_await) {
+			this.has_await = true;
+
+			const length = this.expressions.push(expression);
+			return b.id(`$$${length - 1}`);
+		}
+
+		return expression;
+	};
+
+	/**
+	 * @param {ExpressionMetadata} metadata
+	 */
+	check_blockers(metadata) {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
+	}
+
+	#apply() {
+		if (this.expressions.length === 0) {
+			return b.empty;
+		}
+
+		if (this.expressions.length === 1) {
+			return b.const('$$0', this.expressions[0]);
+		}
+
+		const promises = b.array(
+			this.expressions.map((expression) => {
+				return expression.type === 'AwaitExpression' && !has_await_expression(expression.argument)
+					? expression.argument
+					: b.call(b.thunk(expression, true));
+			})
+		);
+
+		return b.const(
+			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
+			b.await(b.call('Promise.all', promises))
+		);
+	}
+
+	blockers() {
+		return b.array([...this.#blockers]);
+	}
+
+	is_async() {
+		return this.expressions.length > 0 || this.#blockers.size > 0;
+	}
+
+	/**
+	 * @param {Statement[]} statements
+	 * @returns {Statement[]}
+	 */
+	render(statements) {
+		if (!this.is_async()) {
+			return statements;
+		}
+
+		const fn = b.arrow(
+			[b.id('$$renderer')],
+			b.block([this.#apply(), ...statements]),
+			this.has_await
+		);
+
+		const blockers = this.blockers();
+
+		return blockers.elements.length > 0
+			? [b.stmt(b.call('$$renderer.async', blockers, fn))]
+			: [b.stmt(b.call('$$renderer.child', fn))];
+	}
+
+	/**
+	 * @param {Statement[]} statements
+	 * @returns {Statement[]}
+	 */
+	render_block(statements) {
+		if (!this.is_async()) {
+			return statements;
+		}
+
+		return create_child_block([this.#apply(), ...statements], this.blockers(), this.has_await);
+	}
 }

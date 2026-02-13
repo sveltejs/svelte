@@ -1,3 +1,13 @@
+## async_derived_orphan
+
+> Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+
+In Svelte there are two types of reaction — [`$derived`](/docs/svelte/$derived) and [`$effect`](/docs/svelte/$effect). Deriveds can be created anywhere, because they run _lazily_ and can be [garbage collected](https://developer.mozilla.org/en-US/docs/Glossary/Garbage_collection) if nothing references them. Effects, by contrast, keep running eagerly whenever their dependencies change, until they are destroyed.
+
+Because of this, effects can only be created inside other effects (or [effect roots](/docs/svelte/$effect#$effect.root), such as the one that is created when you first mount a component) so that Svelte knows when to destroy them.
+
+Some sleight of hand occurs when a derived contains an `await` expression: Since waiting until we read `{await getPromise()}` to call `getPromise` would be too late, we use an effect to instead call it proactively, notifying Svelte when the value is available. But since we're using an effect, we can only create asynchronous deriveds inside another effect.
+
 ## bind_invalid_checkbox_value
 
 > Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead
@@ -44,13 +54,88 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > `%rune%` can only be used inside an effect (e.g. during component initialisation)
 
+## effect_pending_outside_reaction
+
+> `$effect.pending()` can only be called inside an effect or derived
+
 ## effect_update_depth_exceeded
 
-> Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
+> Maximum update depth exceeded. This typically indicates that an effect reads and writes the same piece of state
+
+If an effect updates some state that it also depends on, it will re-run, potentially in a loop:
+
+```js
+let count = $state(0);
+
+$effect(() => {
+	// this both reads and writes `count`,
+	// so will run in an infinite loop
+	count += 1;
+});
+```
+
+(Svelte intervenes before this can crash your browser tab.)
+
+The same applies to array mutations, since these both read and write to the array:
+
+```js
+let array = $state(['hello']);
+
+$effect(() => {
+	array.push('goodbye');
+});
+```
+
+Note that it's fine for an effect to re-run itself as long as it 'settles':
+
+```js
+let array = ['a', 'b', 'c'];
+// ---cut---
+$effect(() => {
+	// this is okay, because sorting an already-sorted array
+	// won't result in a mutation
+	array.sort();
+});
+```
+
+Often when encountering this issue, the value in question shouldn't be state (for example, if you are pushing to a `logs` array in an effect, make `logs` a normal array rather than `$state([])`). In the rare cases where you really _do_ need to write to state in an effect — [which you should avoid]($effect#When-not-to-use-$effect) — you can read the state with [untrack](svelte#untrack) to avoid adding it as a dependency.
+
+## flush_sync_in_effect
+
+> Cannot use `flushSync` inside an effect
+
+The `flushSync()` function can be used to flush any pending effects synchronously. It cannot be used if effects are currently being flushed — in other words, you can call it after a state change but _not_ inside an effect.
+
+This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
+
+## fork_discarded
+
+> Cannot commit a fork that was already discarded
+
+## fork_timing
+
+> Cannot create a fork inside an effect or when state changes are pending
 
 ## get_abort_signal_outside_reaction
 
 > `getAbortSignal()` can only be called inside an effect or derived
+
+## hydratable_missing_but_required
+
+> Expected to find a hydratable with key `%key%` during hydration, but did not.
+
+This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
+
+```svelte
+<script>
+  import { hydratable } from 'svelte';
+
+	if (BROWSER) {
+		// bad! nothing can become interactive until this asynchronous work is done
+		await hydratable('foo', get_slow_random_number);
+	}
+</script>
+```
 
 ## hydration_failed
 
@@ -75,6 +160,12 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 ## rune_outside_svelte
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
+
+## set_context_after_init
+
+> `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+
+This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
 ## state_descriptors_fixed
 
@@ -118,3 +209,21 @@ let odd = $derived(!even);
 ```
 
 If side-effects are unavoidable, use [`$effect`]($effect) instead.
+
+## svelte_boundary_reset_onerror
+
+> A `<svelte:boundary>` `reset` function cannot be called while an error is still being handled
+
+If a [`<svelte:boundary>`](https://svelte.dev/docs/svelte/svelte-boundary) has an `onerror` function, it must not call the provided `reset` function synchronously since the boundary is still in a broken state. Typically, `reset()` is called later, once the error has been resolved.
+
+If it's possible to resolve the error inside the `onerror` callback, you must at least wait for the boundary to settle before calling `reset()`, for example using [`tick`](https://svelte.dev/docs/svelte/lifecycle-hooks#tick):
+
+```svelte
+<svelte:boundary onerror={async (error, reset) => {
+	fixTheError();
+	+++await tick();+++
+	reset();
+}}>
+
+</svelte:boundary>
+```

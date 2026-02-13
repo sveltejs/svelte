@@ -1,3 +1,5 @@
+/// <reference types="esrap" />
+
 declare module 'svelte' {
 	/**
 	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
@@ -348,6 +350,22 @@ declare module 'svelte' {
 				 */
 				props: Props;
 			});
+
+	/**
+	 * Represents work that is happening off-screen, such as data being preloaded
+	 * in anticipation of the user navigating
+	 * @since 5.42
+	 */
+	export interface Fork {
+		/**
+		 * Commit the fork. The promise will resolve once the state change has been applied
+		 */
+		commit(): Promise<void>;
+		/**
+		 * Discard the fork
+		 */
+		discard(): void;
+	}
 	/**
 	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
 	 *
@@ -434,6 +452,7 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
+	export function hydratable<T>(key: string, fn: () => T): T;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -449,26 +468,36 @@ declare module 'svelte' {
 	 * */
 	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 	/**
-	 * Returns a promise that resolves once any pending state changes have been applied.
-	 * */
-	export function tick(): Promise<void>;
-	/**
-	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
-	 * any state read inside `fn` will not be treated as a dependency.
+	 * Creates a 'fork', in which state changes are evaluated but not applied to the DOM.
+	 * This is useful for speculatively loading data (for example) when you suspect that
+	 * the user is about to take some action.
 	 *
-	 * ```ts
-	 * $effect(() => {
-	 *   // this will run when `data` changes, but not when `time` changes
-	 *   save(data, {
-	 *     timestamp: untrack(() => time)
-	 *   });
-	 * });
-	 * ```
-	 * */
-	export function untrack<T>(fn: () => T): T;
+	 * Frameworks like SvelteKit can use this to preload data when the user touches or
+	 * hovers over a link, making any subsequent navigation feel instantaneous.
+	 *
+	 * The `fn` parameter is a synchronous function that modifies some state. The
+	 * state changes will be reverted after the fork is initialised, then reapplied
+	 * if and when the fork is eventually committed.
+	 *
+	 * When it becomes clear that a fork will _not_ be committed (e.g. because the
+	 * user navigated elsewhere), it must be discarded to avoid leaking memory.
+	 *
+	 * @since 5.42
+	 */
+	export function fork(fn: () => void): Fork;
+	/**
+	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+	 *
+	 * `get` will throw an error if no parent component called `set`.
+	 *
+	 * @since 5.40.0
+	 */
+	export function createContext<T>(): [() => T, (context: T) => T];
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
+	 *
+	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
 	 *
 	 * */
 	export function getContext<T>(key: any): T;
@@ -478,6 +507,8 @@ declare module 'svelte' {
 	 * (including slotted content) with `getContext`.
 	 *
 	 * Like lifecycle functions, this must be called during component initialisation.
+	 *
+	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
 	 *
 	 * */
 	export function setContext<T>(key: any, context: T): T;
@@ -539,6 +570,30 @@ declare module 'svelte' {
 	export function unmount(component: Record<string, any>, options?: {
 		outro?: boolean;
 	} | undefined): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any pending state changes have been applied.
+	 * */
+	export function tick(): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+	 * have resolved and the DOM has been updated
+	 * @since 5.36
+	 */
+	export function settled(): Promise<void>;
+	/**
+	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
+	 * any state read inside `fn` will not be treated as a dependency.
+	 *
+	 * ```ts
+	 * $effect(() => {
+	 *   // this will run when `data` changes, but not when `time` changes
+	 *   save(data, {
+	 *     timestamp: untrack(() => time)
+	 *   });
+	 * });
+	 * ```
+	 * */
+	export function untrack<T>(fn: () => T): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
@@ -789,8 +844,9 @@ declare module 'svelte/attachments' {
 
 declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
-	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
+	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation } from 'estree';
 	import type { Location } from 'locate-character';
+	import type { default as ts } from 'esrap/languages/ts';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
 	 *
@@ -828,6 +884,12 @@ declare module 'svelte/compiler' {
 		modern?: false;
 		loose?: boolean;
 	} | undefined): Record<string, any>;
+	/**
+	 * The parseCss function parses a CSS stylesheet, returning its abstract syntax tree.
+	 *
+	 * @param source The CSS source code
+	 * */
+	export function parseCss(source: string): AST.CSS.StyleSheetFile;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
@@ -992,7 +1054,7 @@ declare module 'svelte/compiler' {
 		css?: 'injected' | 'external';
 		/**
 		 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-		 * It defaults to returning `svelte-${hash(css)}`.
+		 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 		 *
 		 * @default undefined
 		 */
@@ -1111,6 +1173,17 @@ declare module 'svelte/compiler' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning) => boolean;
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
+		experimental?: {
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -1161,7 +1234,7 @@ declare module 'svelte/compiler' {
 			css?: 'injected';
 			customElement?: {
 				tag?: string;
-				shadow?: 'open' | 'none';
+				shadow?: 'open' | 'none' | ObjectExpression | undefined;
 				props?: Record<
 					string,
 					{
@@ -1237,7 +1310,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** An `animate:` directive */
-		export interface AnimateDirective extends BaseNode {
+		export interface AnimateDirective extends BaseAttribute {
 			type: 'AnimateDirective';
 			/** The 'x' in `animate:x` */
 			name: string;
@@ -1246,7 +1319,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `bind:` directive */
-		export interface BindDirective extends BaseNode {
+		export interface BindDirective extends BaseAttribute {
 			type: 'BindDirective';
 			/** The 'x' in `bind:x` */
 			name: string;
@@ -1255,7 +1328,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `class:` directive */
-		export interface ClassDirective extends BaseNode {
+		export interface ClassDirective extends BaseAttribute {
 			type: 'ClassDirective';
 			/** The 'x' in `class:x` */
 			name: 'class';
@@ -1264,7 +1337,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `let:` directive */
-		export interface LetDirective extends BaseNode {
+		export interface LetDirective extends BaseAttribute {
 			type: 'LetDirective';
 			/** The 'x' in `let:x` */
 			name: string;
@@ -1273,17 +1346,27 @@ declare module 'svelte/compiler' {
 		}
 
 		/** An `on:` directive */
-		export interface OnDirective extends BaseNode {
+		export interface OnDirective extends BaseAttribute {
 			type: 'OnDirective';
 			/** The 'x' in `on:x` */
 			name: string;
 			/** The 'y' in `on:x={y}` */
 			expression: null | Expression;
-			modifiers: string[];
+			modifiers: Array<
+				| 'capture'
+				| 'nonpassive'
+				| 'once'
+				| 'passive'
+				| 'preventDefault'
+				| 'self'
+				| 'stopImmediatePropagation'
+				| 'stopPropagation'
+				| 'trusted'
+			>;
 		}
 
 		/** A `style:` directive */
-		export interface StyleDirective extends BaseNode {
+		export interface StyleDirective extends BaseAttribute {
 			type: 'StyleDirective';
 			/** The 'x' in `style:x` */
 			name: string;
@@ -1294,7 +1377,7 @@ declare module 'svelte/compiler' {
 
 		// TODO have separate in/out/transition directives
 		/** A `transition:`, `in:` or `out:` directive */
-		export interface TransitionDirective extends BaseNode {
+		export interface TransitionDirective extends BaseAttribute {
 			type: 'TransitionDirective';
 			/** The 'x' in `transition:x` */
 			name: string;
@@ -1308,7 +1391,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `use:` directive */
-		export interface UseDirective extends BaseNode {
+		export interface UseDirective extends BaseAttribute {
 			type: 'UseDirective';
 			/** The 'x' in `use:x` */
 			name: string;
@@ -1316,8 +1399,9 @@ declare module 'svelte/compiler' {
 			expression: null | Expression;
 		}
 
-		interface BaseElement extends BaseNode {
+		export interface BaseElement extends BaseNode {
 			name: string;
+			name_loc: SourceLocation;
 			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 			fragment: Fragment;
 		}
@@ -1442,9 +1526,13 @@ declare module 'svelte/compiler' {
 			body: Fragment;
 		}
 
-		export interface Attribute extends BaseNode {
-			type: 'Attribute';
+		export interface BaseAttribute extends BaseNode {
 			name: string;
+			name_loc: SourceLocation | null;
+		}
+
+		export interface Attribute extends BaseAttribute {
+			type: 'Attribute';
 			/**
 			 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 			 */
@@ -1543,6 +1631,18 @@ declare module 'svelte/compiler' {
 		filename?: string;
 	} | undefined): Promise<Processed>;
 	/**
+	 * `print` converts a Svelte AST node back into Svelte source code.
+	 * It is primarily intended for tools that parse and transform components using the compiler’s modern AST representation.
+	 *
+	 * `print(ast)` requires an AST node produced by parse with modern: true, or any sub-node within that modern AST.
+	 * The result contains the generated source and a corresponding source map.
+	 * The output is valid Svelte, but formatting details such as whitespace or quoting may differ from the original.
+	 * */
+	export function print(ast: AST.SvelteNode, options?: Options | undefined): {
+		code: string;
+		map: any;
+	};
+	/**
 	 * The current version, as set in package.json.
 	 * */
 	export const VERSION: string;
@@ -1573,10 +1673,17 @@ declare module 'svelte/compiler' {
 			end: number;
 		}
 
-		export interface StyleSheet extends BaseNode {
+		export interface StyleSheetBase extends BaseNode {
+			children: Array<Atrule | Rule>;
+		}
+
+		export interface StyleSheetFile extends StyleSheetBase {
+			type: 'StyleSheetFile';
+		}
+
+		export interface StyleSheet extends StyleSheetBase {
 			type: 'StyleSheet';
 			attributes: any[]; // TODO
-			children: Array<Atrule | Rule>;
 			content: {
 				start: number;
 				end: number;
@@ -1725,6 +1832,10 @@ declare module 'svelte/compiler' {
 			| SimpleSelector
 			| Declaration;
 	}
+	type Options = {
+		getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
+		getTrailingComments?: NonNullable<Parameters<typeof ts>[0]>['getTrailingComments'] | undefined;
+	};
 
 	export {};
 }
@@ -2318,10 +2429,13 @@ declare module 'svelte/reactivity' {
 		constructor(query: string, fallback?: boolean | undefined);
 	}
 	/**
-	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
-	 * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+	 * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
+	 * It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
 	 *
-	 * If `start` returns a function, it will be called when the effect is destroyed.
+	 * If `subscribe` is called inside an effect (including indirectly, for example inside a getter),
+	 * the `start` callback will be called with an `update` function. Whenever `update` is called, the effect re-runs.
+	 *
+	 * If `start` returns a cleanup function, it will be called when the effect is destroyed.
 	 *
 	 * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
 	 * are active, and the returned teardown function will only be called when all effects are destroyed.
@@ -2349,6 +2463,7 @@ declare module 'svelte/reactivity' {
 	 * 	}
 	 *
 	 * 	get current() {
+	 * 		// This makes the getter reactive, if read in an effect
 	 * 		this.#subscribe();
 	 *
 	 * 		// Return the current state of the query, whether or not we're in an effect
@@ -2451,6 +2566,7 @@ declare module 'svelte/server' {
 						props?: Omit<Props, '$$slots' | '$$events'>;
 						context?: Map<any, any>;
 						idPrefix?: string;
+						csp?: Csp;
 					}
 				]
 			: [
@@ -2459,17 +2575,27 @@ declare module 'svelte/server' {
 						props: Omit<Props, '$$slots' | '$$events'>;
 						context?: Map<any, any>;
 						idPrefix?: string;
+						csp?: Csp;
 					}
 				]
 	): RenderOutput;
-	interface RenderOutput {
+	type Csp = { nonce?: string; hash?: boolean };
+
+	type Sha256Source = `sha256-${string}`;
+
+	interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
 		/** @deprecated use `body` instead */
 		html: string;
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
+		hashes: {
+			script: Sha256Source[];
+		};
 	}
+
+	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
 
 	export {};
 }
@@ -2697,7 +2823,7 @@ declare module 'svelte/events' {
 	export function on<Type extends keyof WindowEventMap>(
 		window: Window,
 		type: Type,
-		handler: (this: Window, event: WindowEventMap[Type]) => any,
+		handler: (this: Window, event: WindowEventMap[Type] & { currentTarget: Window }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
@@ -2708,7 +2834,7 @@ declare module 'svelte/events' {
 	export function on<Type extends keyof DocumentEventMap>(
 		document: Document,
 		type: Type,
-		handler: (this: Document, event: DocumentEventMap[Type]) => any,
+		handler: (this: Document, event: DocumentEventMap[Type] & { currentTarget: Document }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
@@ -2719,7 +2845,7 @@ declare module 'svelte/events' {
 	export function on<Element extends HTMLElement, Type extends keyof HTMLElementEventMap>(
 		element: Element,
 		type: Type,
-		handler: (this: Element, event: HTMLElementEventMap[Type]) => any,
+		handler: (this: Element, event: HTMLElementEventMap[Type] & { currentTarget: Element }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
@@ -2730,7 +2856,7 @@ declare module 'svelte/events' {
 	export function on<Element extends MediaQueryList, Type extends keyof MediaQueryListEventMap>(
 		element: Element,
 		type: Type,
-		handler: (this: Element, event: MediaQueryListEventMap[Type]) => any,
+		handler: (this: Element, event: MediaQueryListEventMap[Type] & { currentTarget: Element }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
@@ -2902,7 +3028,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		css?: 'injected' | 'external';
 		/**
 		 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-		 * It defaults to returning `svelte-${hash(css)}`.
+		 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 		 *
 		 * @default undefined
 		 */
@@ -3021,6 +3147,17 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning_1) => boolean;
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
+		experimental?: {
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -3058,7 +3195,7 @@ declare module 'svelte/types/compiler/interfaces' {
  * let count = $state(0);
  * ```
  *
- * https://svelte.dev/docs/svelte/$state
+ * @see {@link https://svelte.dev/docs/svelte/$state Documentation}
  *
  * @param initial The initial value
  */
@@ -3127,20 +3264,34 @@ declare namespace $state {
 			? NonReactive<T>
 			: T extends { toJSON(): infer R }
 				? R
-				: T extends Array<infer U>
-					? Array<Snapshot<U>>
-					: T extends object
-						? T extends { [key: string]: any }
-							? { [K in keyof T]: Snapshot<T[K]> }
-							: never
-						: never;
+				: T extends readonly unknown[]
+					? { [K in keyof T]: Snapshot<T[K]> }
+					: T extends Array<infer U>
+						? Array<Snapshot<U>>
+						: T extends object
+							? T extends { [key: string]: any }
+								? { [K in keyof T]: Snapshot<T[K]> }
+								: never
+							: never;
 
+	/**
+	 * Returns the latest `value`, even if the rest of the UI is suspending
+	 * while async work (such as data loading) completes.
+	 *
+	 * ```svelte
+	 * <nav>
+	 *   <a href="/" aria-current={$state.eager(pathname) === '/' ? 'page' : null}>home</a>
+	 *   <a href="/about" aria-current={$state.eager(pathname) === '/about' ? 'page' : null}>about</a>
+	 * </nav>
+	 * ```
+	 */
+	export function eager<T>(value: T): T;
 	/**
 	 * Declares state that is _not_ made deeply reactive — instead of mutating it,
 	 * you must reassign it.
 	 *
 	 * Example:
-	 * ```ts
+	 * ```svelte
 	 * <script>
 	 *   let items = $state.raw([0]);
 	 *
@@ -3149,12 +3300,12 @@ declare namespace $state {
 	 *   };
 	 * </script>
 	 *
-	 * <button on:click={addItem}>
+	 * <button onclick={addItem}>
 	 *   {items.join(', ')}
 	 * </button>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$state#$state.raw
+	 * @see {@link https://svelte.dev/docs/svelte/$state#$state.raw Documentation}
 	 *
 	 * @param initial The initial value
 	 */
@@ -3164,7 +3315,7 @@ declare namespace $state {
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *
 	 * Example:
-	 * ```ts
+	 * ```svelte
 	 * <script>
 	 *   let counter = $state({ count: 0 });
 	 *
@@ -3175,7 +3326,7 @@ declare namespace $state {
 	 * </script>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$state#$state.snapshot
+	 * @see {@link https://svelte.dev/docs/svelte/$state#$state.snapshot Documentation}
 	 *
 	 * @param state The value to snapshot
 	 */
@@ -3201,6 +3352,9 @@ declare namespace $state {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3212,7 +3366,7 @@ declare namespace $state {
  * let double = $derived(count * 2);
  * ```
  *
- * https://svelte.dev/docs/svelte/$derived
+ * @see {@link https://svelte.dev/docs/svelte/$derived Documentation}
  *
  * @param expression The derived state expression
  */
@@ -3234,7 +3388,7 @@ declare namespace $derived {
 	 * });
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$derived#$derived.by
+	 * @see {@link https://svelte.dev/docs/svelte/$derived#$derived.by Documentation}
 	 */
 	export function by<T>(fn: () => T): T;
 
@@ -3258,6 +3412,9 @@ declare namespace $derived {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3271,9 +3428,9 @@ declare namespace $derived {
  *
  * If you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.
  *
- * Does not run during server side rendering.
+ * Does not run during server-side rendering.
  *
- * https://svelte.dev/docs/svelte/$effect
+ * @see {@link https://svelte.dev/docs/svelte/$effect Documentation}
  * @param fn The function to execute
  */
 declare function $effect(fn: () => void | (() => void)): void;
@@ -3290,12 +3447,19 @@ declare namespace $effect {
 	 *
 	 * If you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.
 	 *
-	 * Does not run during server side rendering.
+	 * Does not run during server-side rendering.
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.pre
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.pre Documentation}
 	 * @param fn The function to execute
 	 */
 	export function pre(fn: () => void | (() => void)): void;
+
+	/**
+	 * Returns the number of promises that are pending in the current boundary, not including child boundaries.
+	 *
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.pending Documentation}
+	 */
+	export function pending(): number;
 
 	/**
 	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
@@ -3315,7 +3479,7 @@ declare namespace $effect {
 	 *
 	 * This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.tracking
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.tracking Documentation}
 	 */
 	export function tracking(): boolean;
 
@@ -3330,20 +3494,20 @@ declare namespace $effect {
 	 *   let count = $state(0);
 	 *
 	 *   const cleanup = $effect.root(() => {
-	 *	    $effect(() => {
-	 *				console.log(count);
-	 *			})
+	 *     $effect(() => {
+	 *       console.log(count);
+	 *     })
 	 *
-	 *      return () => {
-	 *        console.log('effect root cleanup');
-	 * 			}
+	 *     return () => {
+	 *       console.log('effect root cleanup');
+	 *     }
 	 *   });
 	 * </script>
 	 *
 	 * <button onclick={() => cleanup()}>cleanup</button>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.root
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.root Documentation}
 	 */
 	export function root(fn: () => void | (() => void)): () => void;
 
@@ -3367,6 +3531,9 @@ declare namespace $effect {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3376,7 +3543,7 @@ declare namespace $effect {
  * let { optionalProp = 42, requiredProp, bindableProp = $bindable() }: { optionalProp?: number; requiredProps: string; bindableProp: boolean } = $props();
  * ```
  *
- * https://svelte.dev/docs/svelte/$props
+ * @see {@link https://svelte.dev/docs/svelte/$props Documentation}
  */
 declare function $props(): any;
 
@@ -3410,6 +3577,9 @@ declare namespace $props {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3419,7 +3589,7 @@ declare namespace $props {
  * let { propName = $bindable() }: { propName: boolean } = $props();
  * ```
  *
- * https://svelte.dev/docs/svelte/$bindable
+ * @see {@link https://svelte.dev/docs/svelte/$bindable Documentation}
  */
 declare function $bindable<T>(fallback?: T): T;
 
@@ -3444,6 +3614,9 @@ declare namespace $bindable {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3462,7 +3635,7 @@ declare namespace $bindable {
  * $inspect(x, y).with(() => { debugger; });
  * ```
  *
- * https://svelte.dev/docs/svelte/$inspect
+ * @see {@link https://svelte.dev/docs/svelte/$inspect Documentation}
  */
 declare function $inspect<T extends any[]>(
 	...values: T
@@ -3506,6 +3679,9 @@ declare namespace $inspect {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3525,7 +3701,7 @@ declare namespace $inspect {
  *
  * Only available inside custom element components, and only on the client-side.
  *
- * https://svelte.dev/docs/svelte/$host
+ * @see {@link https://svelte.dev/docs/svelte/$host Documentation}
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
 
@@ -3550,6 +3726,9 @@ declare namespace $host {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 //# sourceMappingURL=index.d.ts.map

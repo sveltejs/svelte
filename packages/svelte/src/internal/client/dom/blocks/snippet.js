@@ -1,8 +1,8 @@
 /** @import { Snippet } from 'svelte' */
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
 import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
-import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
+import { block, teardown } from '../../reactivity/effects.js';
 import {
 	dev_current_component_function,
 	set_dev_current_component_function
@@ -14,8 +14,8 @@ import * as w from '../../warnings.js';
 import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling } from '../operations.js';
-import { noop } from '../../../shared/utils.js';
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
+import { BranchManager } from './branches.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -25,33 +25,17 @@ import { prevent_snippet_stringification } from '../../../shared/validate.js';
  * @returns {void}
  */
 export function snippet(node, get_snippet, ...args) {
-	var anchor = node;
-
-	/** @type {SnippetFn | null | undefined} */
-	// @ts-ignore
-	var snippet = noop;
-
-	/** @type {Effect | null} */
-	var snippet_effect;
+	var branches = new BranchManager(node);
 
 	block(() => {
-		if (snippet === (snippet = get_snippet())) return;
-
-		if (snippet_effect) {
-			destroy_effect(snippet_effect);
-			snippet_effect = null;
-		}
+		const snippet = get_snippet() ?? null;
 
 		if (DEV && snippet == null) {
 			e.invalid_snippet();
 		}
 
-		snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
+		branches.ensure(snippet, snippet && ((anchor) => snippet(anchor, ...args)));
 	}, EFFECT_TRANSPARENT);
-
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
 }
 
 /**

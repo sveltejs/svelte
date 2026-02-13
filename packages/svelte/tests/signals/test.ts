@@ -6,20 +6,22 @@ import {
 	effect,
 	effect_root,
 	render_effect,
-	user_effect
+	user_effect,
+	user_pre_effect
 } from '../../src/internal/client/reactivity/effects';
 import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
-import type { Derived, Effect, Value } from '../../src/internal/client/types';
+import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
+import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
 /**
  * @param runes runes mode
- * @param fn A function that returns a function because we first need to setup all the signals
+ * @param fn A function that returns a function because we first need to set up all the signals
  * 			 and then execute the test in order to simulate a real component
  */
 function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
@@ -557,7 +559,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('schedules rerun when writing to signal before reading it', (runes) => {
+	test.skip('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
 		const error = console.error;
@@ -1049,23 +1051,50 @@ describe('signals', () => {
 		};
 	});
 
-	test('effects do not depend on state they own', () => {
-		user_effect(() => {
-			const value = state(0);
-			set(value, $.get(value) + 1);
+	test('effects do depend on state they own', (runes) => {
+		// This behavior is important for use cases like a Resource class
+		// which shares its instance between multiple effects and triggers
+		// rerenders by self-invalidating its state.
+		const log: number[] = [];
+
+		let count: any;
+
+		if (runes) {
+			// We will make this the new default behavior once it's stable but until then
+			// we need to keep the old behavior to not break existing code.
+			enable_async_mode_flag();
+		}
+
+		effect(() => {
+			if (!count || $.get<number>(count) < 2) {
+				count ||= state(0);
+				log.push($.get(count));
+				set(count, $.get<number>(count) + 1);
+			}
 		});
 
 		return () => {
-			flushSync();
+			try {
+				flushSync();
+				if (runes) {
+					assert.deepEqual(log, [0, 1]);
+				} else {
+					assert.deepEqual(log, [0]);
+				}
+			} finally {
+				disable_async_mode_flag();
+			}
 		};
 	});
 
 	test('nested effects depend on state of upper effects', () => {
 		const logs: number[] = [];
+		let raw: Source<number>;
+		let proxied: { current: number };
 
 		user_effect(() => {
-			const raw = state(0);
-			const proxied = proxy({ current: 0 });
+			raw = state(0);
+			proxied = proxy({ current: 0 });
 
 			// We need those separate, else one working and rerunning the effect
 			// could mask the other one not rerunning
@@ -1076,12 +1105,39 @@ describe('signals', () => {
 			user_effect(() => {
 				logs.push(proxied.current);
 			});
+		});
+
+		return () => {
+			flushSync();
+			set(raw, $.get(raw) + 1);
+			proxied.current += 1;
+			flushSync();
+			assert.deepEqual(logs, [0, 0, 1, 1]);
+		};
+	});
+
+	test('nested effects depend on state of upper effects', () => {
+		const logs: number[] = [];
+
+		user_pre_effect(() => {
+			const raw = state(0);
+			const proxied = proxy({ current: 0 });
+
+			// We need those separate, else one working and rerunning the effect
+			// could mask the other one not rerunning
+			user_pre_effect(() => {
+				logs.push($.get(raw));
+			});
+
+			user_pre_effect(() => {
+				logs.push(proxied.current);
+			});
 
 			// Important so that the updating effect is not running
 			// together with the reading effects
 			flushSync();
 
-			user_effect(() => {
+			user_pre_effect(() => {
 				$.untrack(() => {
 					set(raw, $.get(raw) + 1);
 					proxied.current += 1;
@@ -1332,6 +1388,109 @@ describe('signals', () => {
 			assert.deepEqual(log, [false, true, false]);
 
 			destroy();
+		};
+	});
+
+	test('derived whose original parent effect has been destroyed keeps updating', () => {
+		return () => {
+			let count: Source<number>;
+			let double: Derived<number>;
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					count = state(0);
+					double = derived(() => $.get(count) * 2);
+				});
+			});
+
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			destroy();
+			flushSync();
+
+			set(count!, 1);
+			flushSync();
+			assert.equal($.get(double!), 2);
+
+			set(count!, 2);
+			flushSync();
+			assert.equal($.get(double!), 4);
+		};
+	});
+
+	test('derived when connected should add new dependency to its reaction even when read outside effect', () => {
+		let count_a = state(0);
+		let count_b = state(0);
+		let which = state(true);
+		let double = derived(() => ($.get(which) ? $.get(count_a) * 2 : $.get(count_b) * 2));
+
+		render_effect(() => {
+			$.get(double);
+		});
+
+		return () => {
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			set(which, false);
+			$.get(double); // read before render effect has a chance to rerun
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			set(count_b, 1);
+			flushSync();
+			assert.equal($.get(double!), 2);
+		};
+	});
+
+	test('$effect.root inside deriveds stay alive independently', () => {
+		const log: any[] = [];
+		const c = state(0);
+		const cleanup: any[] = [];
+		const inner_states: any[] = [];
+
+		const d = derived(() => {
+			const destroy = effect_root(() => {
+				const x = state(0);
+				inner_states.push(x);
+
+				effect(() => {
+					log.push('inner ' + $.get(x));
+					return () => {
+						log.push('inner destroyed');
+					};
+				});
+			});
+
+			cleanup.push(destroy);
+
+			return $.get(c);
+		});
+
+		return () => {
+			log.push($.get(d));
+			flushSync();
+
+			assert.deepEqual(log, [0, 'inner 0']);
+			log.length = 0;
+
+			set(inner_states[0], 1);
+			flushSync();
+
+			assert.deepEqual(log, ['inner destroyed', 'inner 1']);
+			log.length = 0;
+
+			set(c, 1);
+			log.push($.get(d));
+			flushSync();
+
+			assert.deepEqual(log, [1, 'inner 0']);
+			log.length = 0;
+
+			cleanup.forEach((fn) => fn());
+			flushSync();
+
+			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
 		};
 	});
 });

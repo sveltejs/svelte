@@ -1,5 +1,6 @@
 ---
 title: Custom properties
+tags: styles-custom-properties
 ---
 
 You can pass CSS custom properties — both static and dynamic — to components:

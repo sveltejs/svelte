@@ -1,4 +1,12 @@
-import type { ComponentContext, Dom, Equals, TemplateNode, TransitionManager } from '#client';
+import type {
+	AnimationManager,
+	ComponentContext,
+	DevStackEntry,
+	Equals,
+	TemplateNode,
+	TransitionManager
+} from '#client';
+import type { Boundary } from '../dom/blocks/boundary';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -22,8 +30,8 @@ export interface Value<V = unknown> extends Signal {
 	label?: string;
 	/** An error with a stack trace showing when the source was created */
 	created?: Error | null;
-	/** An error with a stack trace showing when the source was last updated */
-	updated?: Error | null;
+	/** An map of errors with stack traces showing when the source was updated, keyed by the stack trace */
+	updated?: Map<string, { error: Error; count: number }> | null;
 	/**
 	 * Whether or not the source was set while running an effect — if so, we need to
 	 * increment the write version so that it shows up as dirty when the effect re-runs
@@ -47,10 +55,19 @@ export interface Reaction extends Signal {
 export interface Derived<V = unknown> extends Value<V>, Reaction {
 	/** The derived function */
 	fn: () => V;
-	/** Effects created inside this signal */
+	/** Effects created inside this signal. Used to destroy those effects when the derived reruns or is cleaned up */
 	effects: null | Effect[];
 	/** Parent effect or derived */
 	parent: Effect | Derived | null;
+}
+
+export interface EffectNodes {
+	start: TemplateNode;
+	end: TemplateNode | null;
+	/** $.animation */
+	a: AnimationManager | null;
+	/** $.transition */
+	t: TransitionManager[] | null;
 }
 
 export interface Effect extends Reaction {
@@ -60,14 +77,11 @@ export interface Effect extends Reaction {
 	 * block is reconciled. In the case of a single text/element node,
 	 * `start` and `end` will be the same.
 	 */
-	nodes_start: null | TemplateNode;
-	nodes_end: null | TemplateNode;
+	nodes: null | EffectNodes;
 	/** The effect function */
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
-	/** Transition managers created with `$.transition` */
-	transitions: null | TransitionManager[];
 	/** Next sibling child effect created inside the parent signal */
 	prev: null | Effect;
 	/** Next sibling child effect created inside the parent signal */
@@ -78,10 +92,19 @@ export interface Effect extends Reaction {
 	last: null | Effect;
 	/** Parent effect */
 	parent: Effect | null;
+	/** The boundary this effect belongs to */
+	b: Boundary | null;
 	/** Dev only */
 	component_function?: any;
+	/** Dev only. Only set for certain block effects. Contains a reference to the stack that represents the render tree */
+	dev_stack?: DevStackEntry | null;
 }
 
 export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
+
+export interface Blocker {
+	promise: Promise<any>;
+	settled: boolean;
+}

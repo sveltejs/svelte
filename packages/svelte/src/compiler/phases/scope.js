@@ -1,9 +1,9 @@
-/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super } from 'estree' */
+/** @import { BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super, SimpleLiteral, FunctionExpression, ArrowFunctionExpression } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
-import { create_expression_metadata } from './nodes.js';
+import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
 import * as e from '../errors.js';
 import {
@@ -18,11 +18,11 @@ import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
-export const NUMBER = Symbol('number');
-export const STRING = Symbol('string');
-export const FUNCTION = Symbol('string');
+const NUMBER = Symbol('number');
+const STRING = Symbol('string');
+const FUNCTION = Symbol('string');
 
-/** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
+/** @type {Record<string, [type: typeof NUMBER | typeof  STRING | typeof  UNKNOWN, fn?: Function]>} */
 const globals = {
 	BigInt: [NUMBER],
 	'Math.min': [NUMBER, Math.min],
@@ -109,10 +109,22 @@ export class Binding {
 	references = [];
 
 	/**
+	 * (Re)assignments of this binding. Includes declarations such as `function x() {}`.
+	 * @type {Array<{ value: Expression; scope: Scope }>}
+	 */
+	assignments = [];
+
+	/**
 	 * For `legacy_reactive`: its reactive dependencies
 	 * @type {Binding[]}
 	 */
 	legacy_dependencies = [];
+
+	/**
+	 * Bindings that should be invalidated when this binding is invalidated
+	 * @type {Set<Binding>}
+	 */
+	legacy_indirect_bindings = new Set();
 
 	/**
 	 * Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props()
@@ -122,12 +134,22 @@ export class Binding {
 
 	/**
 	 * Additional metadata, varies per binding type
-	 * @type {null | { inside_rest?: boolean }}
+	 * @type {null | { inside_rest?: boolean; is_template_declaration?: boolean; exclude_props?: string[] }}
 	 */
 	metadata = null;
 
 	mutated = false;
 	reassigned = false;
+
+	/**
+	 * Instance-level declarations may follow (or contain) a top-level `await`. In these cases,
+	 * any reads that occur in the template must wait for the corresponding promise to resolve
+	 * otherwise the initial value will not have been assigned.
+	 * It is a member expression of the form `$$blockers[n]`.
+	 * TODO the blocker is set during transform which feels a bit grubby
+	 * @type {MemberExpression | null}
+	 */
+	blocker = null;
 
 	/**
 	 *
@@ -143,6 +165,10 @@ export class Binding {
 		this.initial = initial;
 		this.kind = kind;
 		this.declaration_kind = declaration_kind;
+
+		if (initial) {
+			this.assignments.push({ value: /** @type {Expression} */ (initial), scope });
+		}
 	}
 
 	get updated() {
@@ -181,6 +207,13 @@ class Evaluation {
 	is_known = true;
 
 	/**
+	 * True if the possible values contains `UNKNOWN`
+	 * @readonly
+	 * @type {boolean}
+	 */
+	has_unknown = false;
+
+	/**
 	 * True if the value is known to not be null/undefined
 	 * @readonly
 	 * @type {boolean}
@@ -200,6 +233,13 @@ class Evaluation {
 	 * @type {boolean}
 	 */
 	is_number = true;
+
+	/**
+	 * True if the value is known to be a primitive
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_primitive = true;
 
 	/**
 	 * True if the value is known to be a function
@@ -250,6 +290,13 @@ class Evaluation {
 
 					if (binding.initial?.type === 'EachBlock' && binding.initial.index === expression.name) {
 						this.values.add(NUMBER);
+						break;
+					}
+
+					if (binding.initial?.type === 'SnippetBlock') {
+						this.is_defined = true;
+						this.is_known = false;
+						this.values.add(UNKNOWN);
 						break;
 					}
 
@@ -539,6 +586,11 @@ class Evaluation {
 
 			if (value == null || value === UNKNOWN) {
 				this.is_defined = false;
+			}
+
+			if (value === UNKNOWN) {
+				this.has_unknown = true;
+				this.is_primitive = false;
 			}
 		}
 
@@ -841,7 +893,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	/** @type {[Scope, { node: Identifier; path: AST.SvelteNode[] }][]} */
 	const references = [];
 
-	/** @type {[Scope, Pattern | MemberExpression][]} */
+	/** @type {[Scope, Pattern | MemberExpression, Expression][]} */
 	const updates = [];
 
 	/**
@@ -933,7 +985,25 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		}
 	};
 
+	let has_await = false;
+
 	walk(ast, state, {
+		AwaitExpression(node, context) {
+			// this doesn't _really_ belong here, but it allows us to
+			// automatically opt into runes mode on encountering
+			// blocking awaits, without doing an additional walk
+			// before the analysis occurs
+			// TODO remove this in Svelte 7.0 or whenever we get rid of legacy support
+			has_await ||= context.path.every(
+				({ type }) =>
+					type !== 'ArrowFunctionExpression' &&
+					type !== 'FunctionExpression' &&
+					type !== 'FunctionDeclaration'
+			);
+
+			context.next();
+		},
+
 		// references
 		Identifier(node, { path, state }) {
 			const parent = path.at(-1);
@@ -1003,7 +1073,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		Component: (node, context) => {
-			context.state.scope.reference(b.id(node.name), context.path);
+			context.state.scope.reference(b.id(node.name.split('.')[0]), context.path);
 			Component(node, context);
 		},
 		SvelteSelf: Component,
@@ -1011,12 +1081,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		// updates
 		AssignmentExpression(node, { state, next }) {
-			updates.push([state.scope, node.left]);
+			updates.push([state.scope, node.left, node.right]);
 			next();
 		},
 
 		UpdateExpression(node, { state, next }) {
-			updates.push([state.scope, /** @type {Identifier | MemberExpression} */ (node.argument)]);
+			const expression = /** @type {Identifier | MemberExpression} */ (node.argument);
+			updates.push([state.scope, expression, expression]);
 			next();
 		},
 
@@ -1092,6 +1163,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 						node.kind,
 						declarator.init
 					);
+					binding.metadata = { is_template_declaration: true };
 					bindings.push(binding);
 				}
 			}
@@ -1164,7 +1236,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (node.fallback) visit(node.fallback, { scope });
 
 			node.metadata = {
-				expression: create_expression_metadata(),
+				expression: new ExpressionMetadata(),
 				keyed: false,
 				contains_group_binding: false,
 				index: scope.root.unique('$$index'),
@@ -1236,10 +1308,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		BindDirective(node, context) {
-			updates.push([
-				context.state.scope,
-				/** @type {Identifier | MemberExpression} */ (node.expression)
-			]);
+			if (node.expression.type !== 'SequenceExpression') {
+				const expression = /** @type {Identifier | MemberExpression} */ (node.expression);
+				updates.push([context.state.scope, expression, expression]);
+			}
+
 			context.next();
 		},
 
@@ -1274,7 +1347,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		scope.reference(node, path);
 	}
 
-	for (const [scope, node] of updates) {
+	for (const [scope, node, value] of updates) {
 		for (const expression of unwrap_pattern(node)) {
 			const left = object(expression);
 			const binding = left && scope.get(left.name);
@@ -1282,6 +1355,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (binding !== null && left !== binding.node) {
 				if (left === expression) {
 					binding.reassigned = true;
+					binding.assignments.push({ value, scope });
 				} else {
 					binding.mutated = true;
 				}
@@ -1290,6 +1364,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	return {
+		has_await,
 		scope,
 		scopes
 	};
