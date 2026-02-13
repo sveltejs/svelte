@@ -1,4 +1,4 @@
-/** @import { TrustedTypePolicy } from 'trusted-types' */
+/** @import {} from 'trusted-types' */
 
 const policy = /* @__PURE__ */ globalThis?.window?.trustedTypes?.createPolicy(
 	'svelte-trusted-html',
