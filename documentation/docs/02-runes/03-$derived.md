@@ -51,7 +51,18 @@ In essence, `$derived(expression)` is equivalent to `$derived.by(() => expressio
 
 Anything read synchronously inside the `$derived` expression (or `$derived.by` function body) is considered a _dependency_ of the derived state. When the state changes, the derived will be marked as _dirty_ and recalculated when it is next read.
 
-To exempt a piece of state from being treated as a dependency, use [`untrack`](svelte#untrack).
+In async derived expressions/functions, only values read **synchronously during evaluation** are tracked automatically (reads that happen after an `await` are not). If you need a value to be a dependency, read it before awaiting (or split it out into its own derived):
+
+```svelte
+<script>
+	const slug = $derived(params.slug);          // tracked
+	const post = $derived(await getPost(slug));  // uses tracked slug
+</script>
+```
+
+In `$derived(await getPost(params.slug))`, `params.slug` is evaluated before the `await` yields, so it is part of the synchronous evaluation and can be tracked as a dependency.
+
+Avoid relying on `await` as a way to prevent tracking — if you intentionally want to exclude a value from being treated as a dependency, use [`untrack`](svelte#untrack) instead.
 
 ## Overriding derived values
 
