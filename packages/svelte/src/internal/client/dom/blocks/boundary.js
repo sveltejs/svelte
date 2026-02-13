@@ -37,7 +37,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, schedule_effect } from '../../reactivity/batch.js';
+import { Batch, flushSync, schedule_effect } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -164,7 +164,9 @@ export class Boundary {
 				} else {
 					this.#hydrate_resolved_content();
 
-					if (this.#pending_count === 0) {
+					// Match the non-hydrating logic: only stay pending if there's
+					// actual pending async work
+					if (this.#local_pending_count === 0) {
 						this.is_pending = false;
 					}
 				}
@@ -259,6 +261,15 @@ export class Boundary {
 
 	has_pending_snippet() {
 		return !!this.#props.pending;
+	}
+
+	/**
+	 * Returns true if there's pending async work in this boundary or any ancestor boundary
+	 * @returns {boolean}
+	 */
+	has_pending_async() {
+		if (this.#local_pending_count > 0) return true;
+		return this.parent ? this.parent.has_pending_async() : false;
 	}
 
 	/**
@@ -359,6 +370,33 @@ export class Boundary {
 		this.#update_pending_count(d);
 
 		this.#local_pending_count += d;
+
+		if (d === -1 && this.#local_pending_count === 0) {
+			// async work completed — if we don't have a pending snippet,
+			// we need to reschedule deferred effects here
+			if (!this.has_pending_snippet()) {
+				this.is_pending = false;
+
+				// Ensure there's a batch to process the rescheduled effects
+				Batch.ensure();
+
+				for (const e of this.#dirty_effects) {
+					set_signal_status(e, DIRTY);
+					schedule_effect(e);
+				}
+
+				for (const e of this.#maybe_dirty_effects) {
+					set_signal_status(e, MAYBE_DIRTY);
+					schedule_effect(e);
+				}
+
+				this.#dirty_effects.clear();
+				this.#maybe_dirty_effects.clear();
+
+				// Force flush the scheduled effects
+				flushSync();
+			}
+		}
 
 		if (!this.#effect_pending || this.#pending_count_update_queued) return;
 		this.#pending_count_update_queued = true;
