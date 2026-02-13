@@ -1,5 +1,7 @@
 /** @import {} from 'trusted-types' */
 
+import { create_element } from './operations.js';
+
 const policy = /* @__PURE__ */ globalThis?.window?.trustedTypes?.createPolicy(
 	'svelte-trusted-html',
 	{
