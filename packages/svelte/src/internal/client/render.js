@@ -149,8 +149,8 @@ export function hydrate(component, options) {
 	}
 }
 
-/** @type {Map<string, number>} */
-const document_listeners = new Map();
+/** @type {Map<EventTarget, Map<string, number>>} */
+const listeners = new Map();
 
 /**
  * @template {Record<string, any>} Exports
@@ -177,17 +177,25 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			// Add the event listener to both the container and the document.
 			// The container listener ensures we catch events from within in case
 			// the outer content stops propagation of the event.
-			target.addEventListener(event_name, handle_event_propagation, { passive });
+			//
+			// The document listener ensures we catch events that originate from elements that were
+			// manually moved outside of the container (e.g. via manual portals).
+			for (const node of [target, document]) {
+				var counts = listeners.get(node);
 
-			var n = document_listeners.get(event_name);
+				if (counts === undefined) {
+					counts = new Map();
+					listeners.set(node, counts);
+				}
 
-			if (n === undefined) {
-				// The document listener ensures we catch events that originate from elements that were
-				// manually moved outside of the container (e.g. via manual portals).
-				document.addEventListener(event_name, handle_event_propagation, { passive });
-				document_listeners.set(event_name, 1);
-			} else {
-				document_listeners.set(event_name, n + 1);
+				var count = counts.get(event_name);
+
+				if (count === undefined) {
+					node.addEventListener(event_name, handle_event_propagation, { passive });
+					counts.set(event_name, 1);
+				} else {
+					counts.set(event_name, count + 1);
+				}
 			}
 		}
 	};
@@ -245,15 +253,20 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 		return () => {
 			for (var event_name of registered_events) {
-				target.removeEventListener(event_name, handle_event_propagation);
+				for (const node of [target, document]) {
+					var counts = /** @type {Map<string, number>} */ (listeners.get(node));
+					var count = /** @type {number} */ (counts.get(event_name));
 
-				var n = /** @type {number} */ (document_listeners.get(event_name));
+					if (--count == 0) {
+						node.removeEventListener(event_name, handle_event_propagation);
+						counts.delete(event_name);
 
-				if (--n === 0) {
-					document.removeEventListener(event_name, handle_event_propagation);
-					document_listeners.delete(event_name);
-				} else {
-					document_listeners.set(event_name, n);
+						if (counts.size === 0) {
+							listeners.delete(node);
+						}
+					} else {
+						counts.set(event_name, count);
+					}
 				}
 			}
 
