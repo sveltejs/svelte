@@ -13,7 +13,7 @@ import {
 import { without_reactive_context } from './bindings/shared.js';
 import { can_delegate_event } from '../../../../utils.js';
 
-const event_symbol = Symbol('events');
+export const event_symbol = Symbol('events');
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -112,12 +112,6 @@ export function on(element, type, handler, options = {}) {
  * @returns {void}
  */
 export function event(event_name, dom, handler, capture, passive) {
-	if (can_delegate_event(event_name)) {
-		// @ts-expect-error
-		(dom[event_symbol] ??= {})[event_name] = handler;
-		return;
-	}
-
 	var options = { capture, passive };
 	var target_handler = create_event(event_name, dom, handler, options);
 
@@ -134,6 +128,17 @@ export function event(event_name, dom, handler, capture, passive) {
 			dom.removeEventListener(event_name, target_handler, options);
 		});
 	}
+}
+
+/**
+ * @param {string} event_name
+ * @param {Element} element
+ * @param {EventListener} [handler]
+ * @returns {void}
+ */
+export function delegated(event_name, element, handler) {
+	// @ts-expect-error
+	(element[event_symbol] ??= {})[event_name] = handler;
 }
 
 /**

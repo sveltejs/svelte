@@ -36,7 +36,8 @@ export function visit_event_attribute(node, context) {
 			context.state.node,
 			handler,
 			capture,
-			is_passive_event(event_name) ? true : undefined
+			is_passive_event(event_name) ? true : undefined,
+			true
 		)
 	);
 
@@ -57,10 +58,11 @@ export function visit_event_attribute(node, context) {
  * @param {Expression} handler
  * @param {boolean} capture
  * @param {boolean | undefined} passive
+ * @param {boolean | undefined} delegated
  */
-export function build_event(event_name, node, handler, capture, passive) {
+export function build_event(event_name, node, handler, capture, passive, delegated) {
 	return b.call(
-		'$.event',
+		delegated ? '$.delegated' : '$.event',
 		b.literal(event_name),
 		node,
 		handler,
