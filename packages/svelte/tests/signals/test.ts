@@ -21,7 +21,7 @@ import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/inter
 
 /**
  * @param runes runes mode
- * @param fn A function that returns a function because we first need to setup all the signals
+ * @param fn A function that returns a function because we first need to set up all the signals
  * 			 and then execute the test in order to simulate a real component
  */
 function run_test(runes: boolean, fn: (runes: boolean) => () => void) {

@@ -121,6 +121,12 @@ export class Binding {
 	legacy_dependencies = [];
 
 	/**
+	 * Bindings that should be invalidated when this binding is invalidated
+	 * @type {Set<Binding>}
+	 */
+	legacy_indirect_bindings = new Set();
+
+	/**
 	 * Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props()
 	 * @type {string | null}
 	 */
@@ -227,6 +233,13 @@ class Evaluation {
 	 * @type {boolean}
 	 */
 	is_number = true;
+
+	/**
+	 * True if the value is known to be a primitive
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_primitive = true;
 
 	/**
 	 * True if the value is known to be a function
@@ -577,6 +590,7 @@ class Evaluation {
 
 			if (value === UNKNOWN) {
 				this.has_unknown = true;
+				this.is_primitive = false;
 			}
 		}
 

@@ -483,6 +483,8 @@ export namespace AST {
 		alternate: Fragment | null;
 		/** @internal */
 		metadata: {
+			/** List of else-if blocks that can be flattened into this if block */
+			flattened?: IfBlock[];
 			expression: ExpressionMetadata;
 		};
 	}

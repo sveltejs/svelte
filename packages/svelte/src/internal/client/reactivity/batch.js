@@ -130,11 +130,13 @@ export class Batch {
 	#maybe_dirty_effects = new Set();
 
 	/**
-	 * A set of branches that still exist, but will be destroyed when this batch
-	 * is committed — we skip over these during `process`
-	 * @type {Set<Effect>}
+	 * A map of branches that still exist, but will be destroyed when this batch
+	 * is committed — we skip over these during `process`.
+	 * The value contains child effects that were dirty/maybe_dirty before being reset,
+	 * so they can be rescheduled if the branch survives.
+	 * @type {Map<Effect, { d: Effect[], m: Effect[] }>}
 	 */
-	skipped_effects = new Set();
+	#skipped_branches = new Map();
 
 	is_fork = false;
 
@@ -142,6 +144,38 @@ export class Batch {
 
 	is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
+	}
+
+	/**
+	 * Add an effect to the #skipped_branches map and reset its children
+	 * @param {Effect} effect
+	 */
+	skip_effect(effect) {
+		if (!this.#skipped_branches.has(effect)) {
+			this.#skipped_branches.set(effect, { d: [], m: [] });
+		}
+	}
+
+	/**
+	 * Remove an effect from the #skipped_branches map and reschedule
+	 * any tracked dirty/maybe_dirty child effects
+	 * @param {Effect} effect
+	 */
+	unskip_effect(effect) {
+		var tracked = this.#skipped_branches.get(effect);
+		if (tracked) {
+			this.#skipped_branches.delete(effect);
+
+			for (var e of tracked.d) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (e of tracked.m) {
+				set_signal_status(e, MAYBE_DIRTY);
+				schedule_effect(e);
+			}
+		}
 	}
 
 	/**
@@ -171,6 +205,10 @@ export class Batch {
 		if (this.is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
+
+			for (const [e, t] of this.#skipped_branches) {
+				reset_branch(e, t);
+			}
 		} else {
 			// append/remove branches
 			for (const fn of this.#commit_callbacks) fn();
@@ -216,7 +254,7 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
+			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_branches.has(effect);
 
 			// Inside a `<svelte:boundary>` with a pending snippet,
 			// all effects are deferred until the boundary resolves
@@ -609,8 +647,9 @@ function flush_effects() {
 			}
 		}
 	} finally {
-		is_flushing = false;
+		queued_root_effects = [];
 
+		is_flushing = false;
 		last_scheduled_effect = null;
 
 		if (DEV) {
@@ -662,16 +701,15 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.nodes === null) {
-				// if there's no teardown or abort controller we completely unlink
-				// the effect from the graph
-				if (effect.teardown === null && effect.ac === null) {
-					// remove this effect from the graph
-					unlink_effect(effect);
-				} else {
-					// keep the effect in the graph, but free up some memory
-					effect.fn = null;
-				}
+			if (
+				effect.deps === null &&
+				effect.first === null &&
+				effect.nodes === null &&
+				effect.teardown === null &&
+				effect.ac === null
+			) {
+				// remove this effect from the graph
+				unlink_effect(effect);
 			}
 
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
@@ -803,7 +841,8 @@ export function schedule_effect(signal) {
 		var flags = effect.f;
 
 		// if the effect is being scheduled because a parent (each/await/etc) block
-		// updated an internal source, bail out or we'll cause a second flush
+		// updated an internal source, or because a branch is being unskipped,
+		// bail out or we'll cause a second flush
 		if (
 			is_flushing &&
 			effect === active_effect &&
@@ -879,6 +918,34 @@ export function eager(fn) {
 	initial = false;
 
 	return value;
+}
+
+/**
+ * Mark all the effects inside a skipped branch CLEAN, so that
+ * they can be correctly rescheduled later. Tracks dirty and maybe_dirty
+ * effects so they can be rescheduled if the branch survives.
+ * @param {Effect} effect
+ * @param {{ d: Effect[], m: Effect[] }} tracked
+ */
+function reset_branch(effect, tracked) {
+	// clean branch = nothing dirty inside, no need to traverse further
+	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
+		return;
+	}
+
+	if ((effect.f & DIRTY) !== 0) {
+		tracked.d.push(effect);
+	} else if ((effect.f & MAYBE_DIRTY) !== 0) {
+		tracked.m.push(effect);
+	}
+
+	set_signal_status(effect, CLEAN);
+
+	var e = effect.first;
+	while (e !== null) {
+		reset_branch(e, tracked);
+		e = e.next;
+	}
 }
 
 /**
@@ -972,6 +1039,13 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
+			// cause any MAYBE_DIRTY deriveds to update
+			// if they depend on things thath changed
+			// inside the discarded fork
+			for (var source of batch.current.keys()) {
+				source.wv = increment_write_version();
+			}
+
 			if (!committed && batches.has(batch)) {
 				batches.delete(batch);
 				batch.discard();

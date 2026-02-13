@@ -85,6 +85,10 @@ export function RenderTag(node, context) {
 				)
 			)
 		);
+
+		if (context.state.is_standalone) {
+			context.state.init.push(b.stmt(b.call('$.next')));
+		}
 	} else {
 		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
 	}

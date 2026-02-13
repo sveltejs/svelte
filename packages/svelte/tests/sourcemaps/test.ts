@@ -8,9 +8,9 @@ import { decode } from '@jridgewell/sourcemap-codec';
 type SourceMapEntry =
 	| string
 	| {
-			/** If not the first occurence, but the nth should be found */
+			/** If not the first occurrence, but the nth should be found */
 			idxOriginal?: number;
-			/** If not the first occurence, but the nth should be found */
+			/** If not the first occurrence, but the nth should be found */
 			idxGenerated?: number;
 			/** The original string to find */
 			str: string;

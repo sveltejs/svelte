@@ -33,7 +33,7 @@ const no_compiler_imports = {
 	}
 };
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.Config[]} */
 export default [
 	...svelte_config,
 	{
@@ -102,6 +102,7 @@ export default [
 			'playgrounds/sandbox/**',
 			// exclude top level config files
 			'*.config.js',
+			'vitest-xhtml-environment.ts',
 			// documentation can contain invalid examples
 			'documentation',
 			'tmp/**'

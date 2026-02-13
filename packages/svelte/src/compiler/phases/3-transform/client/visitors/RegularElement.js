@@ -38,9 +38,11 @@ import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
-	context.state.template.push_element(node.name, node.start);
+	const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
+	const name = is_html ? node.name.toLowerCase() : node.name;
+	context.state.template.push_element(name, node.start, is_html);
 
-	if (node.name === 'noscript') {
+	if (name === 'noscript') {
 		context.state.template.pop_element();
 		return;
 	}
@@ -53,9 +55,9 @@ export function RegularElement(node, context) {
 	// Therefore we need to use importNode instead, which doesn't have this caveat.
 	// Additionally, Webkit browsers need importNode for video elements for autoplay
 	// to work correctly.
-	context.state.template.needs_import_node ||= node.name === 'video' || is_custom_element;
+	context.state.template.needs_import_node ||= name === 'video' || is_custom_element;
 
-	context.state.template.contains_script_tag ||= node.name === 'script';
+	context.state.template.contains_script_tag ||= name === 'script';
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -161,7 +163,7 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (node.name === 'input') {
+	if (name === 'input') {
 		const has_value_attribute = attributes.some(
 			(attribute) =>
 				attribute.type === 'Attribute' &&
@@ -190,17 +192,13 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (node.name === 'textarea') {
+	if (name === 'textarea') {
 		const attribute = lookup.get('value') ?? lookup.get('checked');
 		const needs_content_reset = attribute && !is_text_attribute(attribute);
 
 		if (has_spread || bindings.has('value') || needs_content_reset) {
 			context.state.init.push(b.stmt(b.call('$.remove_textarea_child', context.state.node)));
 		}
-	}
-
-	if (node.name === 'select' && bindings.has('value')) {
-		setup_select_synchronization(/** @type {AST.BindDirective} */ (bindings.get('value')), context);
 	}
 
 	// Let bindings first, they can be used on attributes
@@ -210,10 +208,7 @@ export function RegularElement(node, context) {
 
 	/** If true, needs `__value` for inputs */
 	const needs_special_value_handling =
-		node.name === 'option' ||
-		node.name === 'select' ||
-		bindings.has('group') ||
-		bindings.has('checked');
+		name === 'option' || name === 'select' || bindings.has('group') || bindings.has('checked');
 
 	if (has_spread) {
 		build_attribute_effect(
@@ -256,16 +251,12 @@ export function RegularElement(node, context) {
 				}
 
 				if (name !== 'class' || value) {
-					context.state.template.set_prop(
-						attribute.name,
-						is_boolean_attribute(name) && value === true ? undefined : value === true ? '' : value
-					);
+					context.state.template.set_prop(attribute.name, value === true ? '' : value);
 				}
 			} else if (name === 'autofocus') {
 				let { value } = build_attribute_value(attribute.value, context);
 				context.state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 			} else if (name === 'class') {
-				const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
 				build_set_class(node, node_id, attribute, class_directives, context, is_html);
 			} else if (name === 'style') {
 				build_set_style(node_id, attribute, style_directives, context);
@@ -286,7 +277,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (
-		is_load_error_element(node.name) &&
+		is_load_error_element(name) &&
 		(has_spread || has_use || lookup.has('onload') || lookup.has('onerror'))
 	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
@@ -314,8 +305,7 @@ export function RegularElement(node, context) {
 		...context.state,
 		metadata,
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
-		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
+		preserve_whitespace: context.state.preserve_whitespace || name === 'pre' || name === 'textarea'
 	};
 
 	const { hoisted, trimmed } = clean_nodes(
@@ -324,7 +314,7 @@ export function RegularElement(node, context) {
 		context.path,
 		state.metadata.namespace,
 		state,
-		node.name === 'script' || state.preserve_whitespace,
+		name === 'script' || state.preserve_whitespace,
 		state.options.preserveComments
 	);
 
@@ -370,7 +360,7 @@ export function RegularElement(node, context) {
 		context.state.template.push_comment();
 
 		// Create a separate template for the rich content
-		const template_name = context.state.scope.root.unique(`${node.name}_content`);
+		const template_name = context.state.scope.root.unique(`${name}_content`);
 		const fragment_id = b.id(context.state.scope.generate('fragment'));
 		const anchor_id = b.id(context.state.scope.generate('anchor'));
 
@@ -421,7 +411,7 @@ export function RegularElement(node, context) {
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
-		if (node.name === 'template') {
+		if (name === 'template') {
 			needs_reset = true;
 			child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
 			arg = b.member(arg, 'content');
@@ -458,7 +448,7 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(...element_state.after_update);
 	}
 
-	if (node.name === 'selectedcontent') {
+	if (name === 'selectedcontent') {
 		context.state.init.push(
 			b.stmt(
 				b.call(
@@ -490,11 +480,11 @@ export function RegularElement(node, context) {
 			// this node is an `option` that didn't have a `value` attribute, but had
 			// a single-expression child, so we treat the value of that expression as
 			// the value of the option
-			build_element_special_value_attribute(node.name, node_id, synthetic_attribute, context, true);
+			build_element_special_value_attribute(name, node_id, synthetic_attribute, context, true);
 		} else {
 			for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 				if (attribute.name === 'value') {
-					build_element_special_value_attribute(node.name, node_id, attribute, context);
+					build_element_special_value_attribute(name, node_id, attribute, context);
 					break;
 				}
 			}
@@ -502,62 +492,6 @@ export function RegularElement(node, context) {
 	}
 
 	context.state.template.pop_element();
-}
-
-/**
- * Special case: if we have a value binding on a select element, we need to set up synchronization
- * between the value binding and inner signals, for indirect updates
- * @param {AST.BindDirective} value_binding
- * @param {ComponentContext} context
- */
-function setup_select_synchronization(value_binding, context) {
-	if (context.state.analysis.runes) return;
-
-	let bound = value_binding.expression;
-
-	if (bound.type === 'SequenceExpression') {
-		return;
-	}
-
-	while (bound.type === 'MemberExpression') {
-		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
-	}
-
-	/** @type {string[]} */
-	const names = [];
-
-	for (const [name, refs] of context.state.scope.references) {
-		if (
-			refs.length > 0 &&
-			// prevent infinite loop
-			name !== bound.name
-		) {
-			names.push(name);
-		}
-	}
-
-	const invalidator = b.call(
-		'$.invalidate_inner_signals',
-		b.thunk(
-			b.block(
-				names.map((name) => {
-					const serialized = build_getter(b.id(name), context.state);
-					return b.stmt(serialized);
-				})
-			)
-		)
-	);
-
-	context.state.init.push(
-		b.stmt(
-			b.call(
-				'$.template_effect',
-				b.thunk(
-					b.block([b.stmt(/** @type {Expression} */ (context.visit(bound))), b.stmt(invalidator)])
-				)
-			)
-		)
-	);
 }
 
 /**

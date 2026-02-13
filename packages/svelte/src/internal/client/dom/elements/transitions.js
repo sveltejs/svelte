@@ -5,7 +5,7 @@ import { active_effect, untrack } from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '#client/constants';
+import { BLOCK_EFFECT, REACTION_RAN, EFFECT_TRANSPARENT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { without_reactive_context } from './bindings/shared.js';
 
@@ -239,8 +239,6 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 			}
 
-			dispatch_event(element, 'introstart');
-
 			intro = animate(element, get_options(), outro, 1, () => {
 				dispatch_event(element, 'introend');
 
@@ -259,8 +257,6 @@ export function transition(flags, element, get_fn, get_params) {
 			}
 
 			element.inert = true;
-
-			dispatch_event(element, 'outrostart');
 
 			outro = animate(element, get_options(), intro, 0, () => {
 				dispatch_event(element, 'outroend');
@@ -293,7 +289,7 @@ export function transition(flags, element, get_fn, get_params) {
 				}
 			}
 
-			run = !block || (block.f & EFFECT_RAN) !== 0;
+			run = !block || (block.f & REACTION_RAN) !== 0;
 		}
 
 		if (run) {
@@ -345,7 +341,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 	counterpart?.deactivate();
 
-	if (!options?.duration) {
+	if (!options?.duration && !options?.delay) {
+		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
 		on_finish();
 
 		return {
@@ -384,6 +381,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 	animation.onfinish = () => {
 		// remove dummy animation from the stack to prevent conflict with main animation
 		animation.cancel();
+
+		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
 
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro

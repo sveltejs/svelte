@@ -1,5 +1,6 @@
 ---
 title: $state
+tags: rune-state
 ---
 
 The `$state` rune allows you to create _reactive state_, which means that your UI _reacts_ when it changes.

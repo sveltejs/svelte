@@ -1,5 +1,6 @@
 ---
 title: $derived
+tags: rune-derived
 ---
 
 Derived state is declared with the `$derived` rune:

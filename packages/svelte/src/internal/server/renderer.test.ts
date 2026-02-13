@@ -187,7 +187,7 @@ test('selects an option with an explicit value', () => {
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('');
 	expect(body).toBe(
-		'<!--[--><select><option value="1">one</option><option value="2" selected>two</option><option value="3">three</option></select><!--]-->'
+		'<!--[--><select><option value="1">one</option><option value="2" selected="">two</option><option value="3">three</option></select><!--]-->'
 	);
 });
 
@@ -203,7 +203,7 @@ test('selects an option with an implicit value', () => {
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('');
 	expect(body).toBe(
-		'<!--[--><select><option>one</option><option selected>two</option><option>three</option></select><!--]-->'
+		'<!--[--><select><option>one</option><option selected="">two</option><option>three</option></select><!--]-->'
 	);
 });
 
@@ -221,7 +221,7 @@ test('select merges scoped css hash with static class', () => {
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('');
 	expect(body).toBe(
-		'<!--[--><select class="foo svelte-hash"><option value="foo" selected>foo</option></select><!--]-->'
+		'<!--[--><select class="foo svelte-hash"><option value="foo" selected="">foo</option></select><!--]-->'
 	);
 });
 
