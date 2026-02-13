@@ -32,8 +32,8 @@ export function visit_event_attribute(node, context) {
 
 	const statement = b.stmt(
 		build_event(
+			context,
 			event_name,
-			context.state.node,
 			handler,
 			capture,
 			is_passive_event(event_name) ? true : undefined,
@@ -53,20 +53,22 @@ export function visit_event_attribute(node, context) {
 
 /**
  * Creates a `$.event(...)` call for non-delegated event handlers
+ * @param {ComponentContext} context
  * @param {string} event_name
- * @param {Expression} node
  * @param {Expression} handler
  * @param {boolean} capture
  * @param {boolean | undefined} passive
  * @param {boolean | undefined} delegated
  */
-export function build_event(event_name, node, handler, capture, passive, delegated) {
+export function build_event(context, event_name, handler, capture, passive, delegated) {
 	let fn = handler;
 
 	if (dev && handler.type === 'ArrowFunctionExpression') {
-		// TODO do we need to generate a deconflicted name?
+		// create a named function for better debugging
+		const name = context.state.scope.generate(event_name);
+
 		fn = b.function(
-			b.id(event_name),
+			b.id(name),
 			handler.params,
 			handler.body.type === 'BlockStatement' ? handler.body : b.block([b.return(handler.body)])
 		);
@@ -75,7 +77,7 @@ export function build_event(event_name, node, handler, capture, passive, delegat
 	return b.call(
 		delegated ? '$.delegated' : '$.event',
 		b.literal(event_name),
-		node,
+		context.state.node,
 		fn,
 		capture && b.true,
 		passive === undefined ? undefined : b.literal(passive)
