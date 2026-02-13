@@ -273,7 +273,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 						target_listeners.delete(target);
 					}
 				} else {
-					target_map.set(event_name, target_count - 1);
+					target_map.set(event_name, target_count);
 				}
 
 				var document_count = /** @type {number} */ (document_listeners.get(event_name));
