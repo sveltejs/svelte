@@ -264,12 +264,11 @@ export class Boundary {
 	}
 
 	/**
-	 * Returns true if there's pending async work in this boundary or any ancestor boundary
+	 * Returns true if there's pending async work in this boundary
 	 * @returns {boolean}
 	 */
 	has_pending_async() {
-		if (this.#local_pending_count > 0) return true;
-		return this.parent ? this.parent.has_pending_async() : false;
+		return this.#local_pending_count > 0;
 	}
 
 	/**
