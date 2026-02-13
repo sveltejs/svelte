@@ -309,6 +309,27 @@ export class Boundary {
 		}
 	}
 
+	#reschedule_deferred_effects() {
+		this.is_pending = false;
+
+		// any effects that were encountered and deferred during traversal
+		// should be rescheduled — after the next traversal (which will happen
+		// immediately, due to the same update that brought us here)
+		// the effects will be flushed
+		for (const e of this.#dirty_effects) {
+			set_signal_status(e, DIRTY);
+			schedule_effect(e);
+		}
+
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			schedule_effect(e);
+		}
+
+		this.#dirty_effects.clear();
+		this.#maybe_dirty_effects.clear();
+	}
+
 	/**
 	 * Updates the pending count associated with the currently visible pending snippet,
 	 * if any, such that we can replace the snippet with content once work is done
@@ -327,24 +348,7 @@ export class Boundary {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.is_pending = false;
-
-			// any effects that were encountered and deferred during traversal
-			// should be rescheduled — after the next traversal (which will happen
-			// immediately, due to the same update that brought us here)
-			// the effects will be flushed
-			for (const e of this.#dirty_effects) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
-
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
-			}
-
-			this.#dirty_effects.clear();
-			this.#maybe_dirty_effects.clear();
+			this.#reschedule_deferred_effects();
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
@@ -370,27 +374,14 @@ export class Boundary {
 
 		this.#local_pending_count += d;
 
-		if (d === -1 && this.#local_pending_count === 0) {
+		if (this.#local_pending_count === 0) {
 			// async work completed — if we don't have a pending snippet,
 			// we need to reschedule deferred effects here
 			if (!this.has_pending_snippet()) {
-				this.is_pending = false;
-
 				// Ensure there's a batch to process the rescheduled effects
 				Batch.ensure();
 
-				for (const e of this.#dirty_effects) {
-					set_signal_status(e, DIRTY);
-					schedule_effect(e);
-				}
-
-				for (const e of this.#maybe_dirty_effects) {
-					set_signal_status(e, MAYBE_DIRTY);
-					schedule_effect(e);
-				}
-
-				this.#dirty_effects.clear();
-				this.#maybe_dirty_effects.clear();
+				this.#reschedule_deferred_effects();
 
 				// Force flush the scheduled effects
 				flushSync();
