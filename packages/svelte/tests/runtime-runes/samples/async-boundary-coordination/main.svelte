@@ -1,5 +1,5 @@
 <script>
-	let browser = typeof window !== 'undefined';
+	let { browser } = $props();
 
 	let a = Promise.withResolvers();
 	let b = Promise.withResolvers();
