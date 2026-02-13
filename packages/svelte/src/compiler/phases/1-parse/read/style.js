@@ -568,7 +568,7 @@ function read_attribute_value(parser) {
 }
 
 /**
- * https://www.w3.org/TR/css-syntax-3/#ident-token-diagram
+ * @see {@link https://www.w3.org/TR/css-syntax-3/#ident-token-diagram CSS Syntax Module Level 3}
  * @param {Parser} parser
  */
 function read_identifier(parser) {

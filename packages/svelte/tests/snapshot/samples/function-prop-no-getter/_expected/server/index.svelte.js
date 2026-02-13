@@ -13,11 +13,9 @@ export default function Function_prop_no_getter($$renderer) {
 		onmousedown: () => count += 1,
 		onmouseup,
 		onmouseenter: () => count = plusOne(count),
-
 		children: ($$renderer) => {
 			$$renderer.push(`<!---->clicks: ${$.escape(count)}`);
 		},
-
 		$$slots: { default: true }
 	});
 }

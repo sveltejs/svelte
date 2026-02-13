@@ -1,5 +1,6 @@
 ---
 title: $props
+tags: rune-props
 ---
 
 The inputs to a component are referred to as _props_, which is short for _properties_. You pass props to components just like you pass attributes to elements:

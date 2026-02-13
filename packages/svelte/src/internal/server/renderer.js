@@ -11,6 +11,7 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
+import { noop } from '../shared/utils.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -162,7 +163,21 @@ export class Renderer {
 			promises.push(promise);
 		}
 
+		// prevent unhandled rejections, and attach the promise to the renderer instance
+		// so that rejections correctly cause rendering to fail
+		promise.catch(noop);
+		this.promise = promise;
+
 		return promises;
+	}
+
+	/**
+	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
+	 */
+	child_block(fn) {
+		this.#out.push(BLOCK_OPEN);
+		this.child(fn);
+		this.#out.push(BLOCK_CLOSE);
 	}
 
 	/**
@@ -257,7 +272,7 @@ export class Renderer {
 			}
 
 			if (value === this.local.select_value) {
-				renderer.#out.push(' selected');
+				renderer.#out.push(' selected=""');
 			}
 
 			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
@@ -611,18 +626,14 @@ export class Renderer {
 
 		renderer.push(BLOCK_OPEN);
 
-		if (options.context) {
-			push();
-			/** @type {SSRContext} */ (ssr_context).c = options.context;
-			/** @type {SSRContext} */ (ssr_context).r = renderer;
-		}
+		push();
+		if (options.context) /** @type {SSRContext} */ (ssr_context).c = options.context;
+		/** @type {SSRContext} */ (ssr_context).r = renderer;
 
 		// @ts-expect-error
 		component(renderer, options.props ?? {});
 
-		if (options.context) {
-			pop();
-		}
+		pop();
 
 		renderer.push(BLOCK_CLOSE);
 

@@ -115,57 +115,17 @@ function base_element(node, context) {
 	const is_doctype_node = node.name.toLowerCase() === '!doctype';
 	const is_self_closing =
 		is_void(node.name) || (node.type === 'Component' && node.fragment.nodes.length === 0);
-	let multiline_content = false;
 
 	if (is_doctype_node) child_context.write(`>`);
 	else if (is_self_closing) {
 		child_context.write(`${multiline_attributes ? '' : ' '}/>`);
 	} else {
 		child_context.write('>');
-
-		// Process the element's content in a separate context for measurement
-		const content_context = child_context.new();
-		const allow_inline_content = child_context.measure() < LINE_BREAK_THRESHOLD;
-		block(content_context, node.fragment, allow_inline_content);
-
-		// Determine if content should be formatted on multiple lines
-		multiline_content = content_context.measure() > LINE_BREAK_THRESHOLD;
-
-		if (multiline_content) {
-			child_context.newline();
-
-			// Only indent if attributes are inline and content itself isn't already multiline
-			const should_indent = !multiline_attributes && !content_context.multiline;
-			if (should_indent) {
-				child_context.indent();
-			}
-
-			child_context.append(content_context);
-
-			if (should_indent) {
-				child_context.dedent();
-			}
-
-			child_context.newline();
-		} else {
-			child_context.append(content_context);
-		}
-
+		block(child_context, node.fragment, true);
 		child_context.write(`</${node.name}>`);
 	}
 
-	const break_line_after = child_context.measure() > LINE_BREAK_THRESHOLD;
-
-	if ((multiline_content || multiline_attributes) && !context.empty()) {
-		context.newline();
-	}
-
 	context.append(child_context);
-
-	if (is_self_closing) return;
-	if (multiline_content || multiline_attributes || break_line_after) {
-		context.newline();
-	}
 }
 
 /** @type {Visitors<AST.SvelteNode>} */
@@ -411,7 +371,23 @@ const svelte_visitors = {
 					}
 				}
 			} else {
+				const is_block_element =
+					child_node.type === 'RegularElement' ||
+					child_node.type === 'Component' ||
+					child_node.type === 'SvelteHead' ||
+					child_node.type === 'SvelteFragment' ||
+					child_node.type === 'SvelteBoundary' ||
+					child_node.type === 'SvelteDocument' ||
+					child_node.type === 'SvelteSelf' ||
+					child_node.type === 'SvelteWindow' ||
+					child_node.type === 'SvelteComponent' ||
+					child_node.type === 'SvelteElement' ||
+					child_node.type === 'SlotElement' ||
+					child_node.type === 'TitleElement';
+
+				if (is_block_element && sequence.length > 0) flush();
 				sequence.push(child_node);
+				if (is_block_element) flush();
 			}
 		}
 
@@ -420,18 +396,20 @@ const svelte_visitors = {
 		let multiline = false;
 		let width = 0;
 
-		const child_contexts = items.map((sequence) => {
-			const child_context = context.new();
+		const child_contexts = items
+			.filter((x) => x.length > 0)
+			.map((sequence) => {
+				const child_context = context.new();
 
-			for (const node of sequence) {
-				child_context.visit(node);
-				multiline ||= child_context.multiline;
-			}
+				for (const node of sequence) {
+					child_context.visit(node);
+					multiline ||= child_context.multiline;
+				}
 
-			width += child_context.measure();
+				width += child_context.measure();
 
-			return child_context;
-		});
+				return child_context;
+			});
 
 		multiline ||= width > LINE_BREAK_THRESHOLD;
 

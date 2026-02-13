@@ -197,6 +197,7 @@ async function run_test(
 		const page = await browser.newPage();
 		page.on('console', (message) => {
 			let method = message.type();
+			// @ts-ignore
 			if (method === 'warning') method = 'warn';
 			// @ts-ignore
 			console[method](message.text());
@@ -212,7 +213,7 @@ async function run_test(
 		}
 
 		// uncomment to see what was generated
-		// fs.writeFileSync(`${test_dir}/_actual.js`, build_result.outputFiles[0].text);
+		// fs.writeFileSync(`${test_dir}/_output/bundle-${hydrate}.js`, build_result.outputFiles[0].text);
 		const test_result = await page.evaluate(
 			build_result.outputFiles[0].text + ";test.default(document.querySelector('main'))"
 		);

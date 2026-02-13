@@ -461,7 +461,7 @@ export function build_component(node, component_name, loc, context) {
 		memoizer.check_blockers(node.metadata.expression);
 	}
 
-	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
+	let statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
 
 	if (is_component_dynamic) {
 		const prev = fn;
@@ -488,10 +488,10 @@ export function build_component(node, component_name, loc, context) {
 	if (Object.keys(custom_css_props).length > 0) {
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
-			context.state.template.push_element('g', node.start);
+			context.state.template.push_element('g', node.start, false);
 		} else {
 			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
-			context.state.template.push_element('svelte-css-wrapper', node.start);
+			context.state.template.push_element('svelte-css-wrapper', node.start, false);
 			context.state.template.set_prop('style', 'display: contents');
 		}
 
@@ -515,15 +515,21 @@ export function build_component(node, component_name, loc, context) {
 	const blockers = memoizer.blockers();
 
 	if (async_values || blockers) {
-		return b.stmt(
-			b.call(
-				'$.async',
-				anchor,
-				blockers,
-				async_values,
-				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+		statements = [
+			b.stmt(
+				b.call(
+					'$.async',
+					anchor,
+					blockers,
+					async_values,
+					b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+				)
 			)
-		);
+		];
+
+		if (context.state.is_standalone) {
+			statements.push(b.stmt(b.call('$.next')));
+		}
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

@@ -14,7 +14,6 @@ export default function Function_prop_no_getter($$anchor) {
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
 		onmouseenter: () => $.set(count, plusOne($.get(count)), true),
-
 		children: ($$anchor, $$slotProps) => {
 			$.next();
 
@@ -23,7 +22,6 @@ export default function Function_prop_no_getter($$anchor) {
 			$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ''}`));
 			$.append($$anchor, text);
 		},
-
 		$$slots: { default: true }
 	});
 }

@@ -19,11 +19,7 @@ export default function Async_const($$renderer) {
 		]);
 
 		$$renderer.push(`<p>`);
-
-		$$renderer.async([promises[1]], ($$renderer) => {
-			$$renderer.push(() => $.escape(b));
-		});
-
+		$$renderer.async([promises[1]], ($$renderer) => $$renderer.push(() => $.escape(b)));
 		$$renderer.push(`</p>`);
 	} else {
 		$$renderer.push('<!--[!-->');

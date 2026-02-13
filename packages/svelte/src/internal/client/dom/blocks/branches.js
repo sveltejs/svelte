@@ -200,17 +200,17 @@ export class BranchManager {
 		if (defer) {
 			for (const [k, effect] of this.#onscreen) {
 				if (k === key) {
-					batch.skipped_effects.delete(effect);
+					batch.unskip_effect(effect);
 				} else {
-					batch.skipped_effects.add(effect);
+					batch.skip_effect(effect);
 				}
 			}
 
 			for (const [k, branch] of this.#offscreen) {
 				if (k === key) {
-					batch.skipped_effects.delete(branch.effect);
+					batch.unskip_effect(branch.effect);
 				} else {
-					batch.skipped_effects.add(branch.effect);
+					batch.skip_effect(branch.effect);
 				}
 			}
 
