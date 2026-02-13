@@ -4,47 +4,32 @@ on:
     types: [opened, synchronize]
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Commit SHA to build'
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
-  # This job determines the environment to use for the build job. It ensures that:
-  # - For pushes to main, we use the "Publish pkg.pr.new (maintainers)" environment.
-  # - For PRs from the same repository, we also use the "Publish pkg.pr.new (maintainers)" environment, since these are trusted.
-  # - For PRs from forks, we use the "Publish pkg.pr.new (external contributors)" environment, which requires manual approval by a maintainer before the build job can run.
-  #   This protects us from running untrusted code while still allowing external contributors to use pkg.pr.new.
-  resolve-env:
-    runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.resolve.outputs.environment }}
-    steps:
-      - name: Determine environment
-        id: resolve
-        run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            echo "environment=Publish pkg.pr.new (maintainers)" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]]; then
-            echo "environment=Publish pkg.pr.new (maintainers)" >> "$GITHUB_OUTPUT"
-          else
-            echo "environment=Publish pkg.pr.new (external contributors)" >> "$GITHUB_OUTPUT"
-          fi
-
   build:
-    needs: resolve-env
+    # Skip pull_request_target events from forks — maintainers can use workflow_dispatch instead
+    if: >
+      github.event_name != 'pull_request_target' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    # This is the line that ensures forks require manual approval before running the build job
-    environment: ${{ needs.resolve-env.outputs.environment }}
-
     # No permissions — this job runs user-controlled code
     permissions: {}
 
     steps:
       - uses: actions/checkout@v6
         with:
-          # For pull_request_target, we must explicitly check out the PR head.
-          # This is safe because the environment gate above has already fired —
-          # an org member has approved this specific commit for external PRs.
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # For pull_request_target, check out the PR head.
+          # For workflow_dispatch, check out the manually specified SHA.
+          # For push, fall back to the push SHA.
+          ref: ${{ github.event.pull_request.head.sha || inputs.sha || github.sha }}
 
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
@@ -119,10 +104,11 @@ jobs:
 
   comment:
     needs: sanitize
-    if: github.event_name == 'pull_request_target'
+    if: github.event_name == 'pull_request_target' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     permissions:
+      contents: read
       pull-requests: write
 
     steps:
@@ -130,6 +116,37 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: sanitized-output
+
+      - name: Resolve PR number
+        id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            if (context.eventName === 'pull_request_target') {
+              core.setOutput('number', context.issue.number);
+              return;
+            }
+
+            const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: '${{ inputs.sha }}',
+            });
+
+            const open = pulls.filter(p => p.state === 'open');
+
+            if (open.length === 0) {
+              core.setFailed(`No open PR found for commit ${{ inputs.sha }}`);
+              return;
+            }
+
+            if (open.length > 1) {
+              const nums = open.map(p => `#${p.number}`).join(', ');
+              core.setFailed(`Multiple open PRs found for commit ${{ inputs.sha }}: ${nums}`);
+              return;
+            }
+
+            core.setOutput('number', open[0].number);
 
       - name: Post or update comment
         uses: actions/github-script@v8
@@ -144,8 +161,7 @@ jobs:
               return;
             }
 
-            // Issue number from trusted event context, never from the artifact
-            const issue_number = context.issue.number;
+            const issue_number = parseInt('${{ steps.pr.outputs.number }}', 10);
 
             const bot_comment_identifier = `<!-- pkg.pr.new comment -->`;
 
