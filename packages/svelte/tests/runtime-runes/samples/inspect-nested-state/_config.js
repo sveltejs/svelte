@@ -16,7 +16,7 @@ export default test({
 			[{ count: 0 }],
 			{ x: { count: 1 } },
 			[{ count: 1 }],
-			'at HTMLButtonElement.<anonymous>'
+			'at HTMLButtonElement.click'
 		]);
 	}
 });

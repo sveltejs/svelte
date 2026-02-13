@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { create_event, delegate } from './events.js';
+import { create_event, delegate, delegated, event, event_symbol } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { IS_XHTML, LOADING_ATTR_SYMBOL } from '#client/constants';
@@ -384,14 +384,14 @@ function set_attributes(
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = can_delegate_event(event_name);
+			var is_delegated = can_delegate_event(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
 				opts.capture = true;
 			}
 
-			if (!delegated && prev_value) {
+			if (!is_delegated && prev_value) {
 				// Listening to same event but different handler -> our handle function below takes care of this
 				// If we were to remove and add listeners in this case, it could happen that the event is "swallowed"
 				// (the browser seems to not know yet that a new one exists now) and doesn't reach the handler
@@ -402,25 +402,19 @@ function set_attributes(
 				current[event_handle_key] = null;
 			}
 
-			if (value != null) {
-				if (!delegated) {
-					/**
-					 * @this {any}
-					 * @param {Event} evt
-					 */
-					function handle(evt) {
-						current[key].call(this, evt);
-					}
-
-					current[event_handle_key] = create_event(event_name, element, handle, opts);
-				} else {
-					// @ts-ignore
-					element[`__${event_name}`] = value;
-					delegate([event_name]);
+			if (is_delegated) {
+				delegated(event_name, element, value);
+				delegate([event_name]);
+			} else if (value != null) {
+				/**
+				 * @this {any}
+				 * @param {Event} evt
+				 */
+				function handle(evt) {
+					current[key].call(this, evt);
 				}
-			} else if (delegated) {
-				// @ts-ignore
-				element[`__${event_name}`] = undefined;
+
+				current[event_handle_key] = create_event(event_name, element, handle, opts);
 			}
 		} else if (key === 'style') {
 			// avoid using the setter

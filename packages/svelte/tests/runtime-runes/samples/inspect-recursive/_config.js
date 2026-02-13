@@ -15,9 +15,9 @@ export default test({
 		assert.deepEqual(normalise_inspect_logs(logs), [
 			[],
 			[{}],
-			'at HTMLButtonElement.Main.button.__click',
+			'at HTMLButtonElement.click',
 			[{}, {}],
-			'at HTMLButtonElement.Main.button.__click'
+			'at HTMLButtonElement.click'
 		]);
 	}
 });

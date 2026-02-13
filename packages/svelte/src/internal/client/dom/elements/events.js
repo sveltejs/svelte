@@ -11,6 +11,9 @@ import {
 	set_active_reaction
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
+import { can_delegate_event } from '../../../../utils.js';
+
+export const event_symbol = Symbol('events');
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -125,6 +128,17 @@ export function event(event_name, dom, handler, capture, passive) {
 			dom.removeEventListener(event_name, target_handler, options);
 		});
 	}
+}
+
+/**
+ * @param {string} event_name
+ * @param {Element} element
+ * @param {EventListener} [handler]
+ * @returns {void}
+ */
+export function delegated(event_name, element, handler) {
+	// @ts-expect-error
+	(element[event_symbol] ??= {})[event_name] = handler;
 }
 
 /**
@@ -249,7 +263,7 @@ export function handle_event_propagation(event) {
 
 			try {
 				// @ts-expect-error
-				var delegated = current_target['__' + event_name];
+				var delegated = current_target[event_symbol]?.[event_name];
 
 				if (
 					delegated != null &&
