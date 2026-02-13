@@ -374,18 +374,10 @@ export class Boundary {
 
 		this.#local_pending_count += d;
 
-		if (this.#local_pending_count === 0) {
-			// async work completed — if we don't have a pending snippet,
-			// we need to reschedule deferred effects here
-			if (!this.has_pending_snippet()) {
-				// Ensure there's a batch to process the rescheduled effects
-				Batch.ensure();
-
-				this.#reschedule_deferred_effects();
-
-				// Force flush the scheduled effects
-				flushSync();
-			}
+		// async work completed — if we don't have a pending snippet,
+		// we need to reschedule deferred effects here
+		if (this.#local_pending_count === 0 && !this.has_pending_snippet()) {
+			this.#reschedule_deferred_effects();
 		}
 
 		if (!this.#effect_pending || this.#pending_count_update_queued) return;
