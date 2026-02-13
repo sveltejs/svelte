@@ -628,7 +628,11 @@ export function get(signal) {
 		var derived = /** @type {Derived} */ (signal);
 
 		if ((derived.f & REACTION_IS_UPDATING) !== 0) {
-			return derived.v === UNINITIALIZED ? undefined : derived.v;
+			return derived.v === UNINITIALIZED
+				? /** @type {V} */ (undefined)
+				: batch_values?.has(derived)
+					? batch_values.get(derived)
+					: derived.v;
 		}
 
 		if (is_destroying_effect) {
