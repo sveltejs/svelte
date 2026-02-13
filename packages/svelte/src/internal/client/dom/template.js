@@ -70,7 +70,7 @@ export function from_html(content, flags) {
 		}
 
 		if (node === undefined) {
-			node = create_fragment_from_html(has_start ? content : '<!>' + content);
+			node = create_fragment_from_html(has_start ? content : '<!>' + content, true);
 			if (!is_fragment) node = /** @type {TemplateNode} */ (get_first_child(node));
 		}
 
@@ -118,7 +118,7 @@ function from_namespace(content, flags, ns = 'svg') {
 		}
 
 		if (!node) {
-			var fragment = /** @type {DocumentFragment} */ (create_fragment_from_html(wrapped));
+			var fragment = /** @type {DocumentFragment} */ (create_fragment_from_html(wrapped, true));
 			var root = /** @type {Element} */ (get_first_child(fragment));
 
 			if (is_fragment) {
