@@ -13,6 +13,7 @@ import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import { clear } from '../../src/internal/client/reactivity/batch.js';
 import { hydrating } from '../../src/internal/client/dom/hydration.js';
+import { ssr_context } from '../../src/internal/server/context.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -358,6 +359,10 @@ async function run_test_variant(
 		let snapshot = undefined;
 
 		if (variant === 'hydrate' || variant === 'ssr' || variant === 'async-ssr') {
+			if (ssr_context !== null) {
+				throw new Error('ssr_context was not cleared');
+			}
+
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
@@ -386,6 +391,10 @@ async function run_test_variant(
 					// @ts-expect-error
 					snapshot = config.snapshot(target);
 				}
+			}
+
+			if (ssr_context !== null) {
+				throw new Error('ssr_context was not cleared');
 			}
 		} else {
 			target.innerHTML = '';
