@@ -25,10 +25,10 @@ export { createClassComponent };
  */
 export function asClassComponent(component) {
 	const component_constructor = as_class_component(component);
-	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; csp?: Csp }) => LegacyRenderResult & PromiseLike<LegacyRenderResult> } */
-	const _render = (props, { context, csp } = {}) => {
+	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; csp?: Csp; transformError?: (error: unknown) => unknown }) => LegacyRenderResult & PromiseLike<LegacyRenderResult> } */
+	const _render = (props, { context, csp, transformError } = {}) => {
 		// @ts-expect-error the typings are off, but this will work if the component is compiled in SSR mode
-		const result = render(component, { props, context, csp });
+		const result = render(component, { props, context, csp, transformError });
 
 		const munged = Object.defineProperties(
 			/** @type {LegacyRenderResult & PromiseLike<LegacyRenderResult>} */ ({}),
