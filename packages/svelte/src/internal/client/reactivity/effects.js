@@ -41,6 +41,8 @@ import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, current_batch, schedule_effect } from './batch.js';
+import { hydrating } from '../dom/hydration.js';
+import { async_mode_flag } from '../../flags/index.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -119,7 +121,23 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	if (sync) {
+	// During hydration, if we're inside a pending boundary with actual async work,
+	// defer render effects instead of running them immediately to avoid hydration mismatches.
+	// We only defer RENDER_EFFECT (and similar), not ASYNC effects which need to run
+	// to set up the async machinery. Also, only defer effects with an actual fn.
+	// Note: We use has_pending_async() instead of is_pending because is_pending can be
+	// true just because a pending snippet exists, even without actual async work.
+	var should_defer =
+		async_mode_flag &&
+		hydrating &&
+		fn !== null &&
+		(type & RENDER_EFFECT) !== 0 &&
+		effect.b?.has_pending_async();
+
+	if (should_defer) {
+		// Store the effect in the boundary so it can be rescheduled when async work completes
+		/** @type {import('../dom/blocks/boundary.js').Boundary} */ (effect.b).defer_effect(effect);
+	} else if (sync) {
 		try {
 			update_effect(effect);
 		} catch (e) {
@@ -136,8 +154,10 @@ function create_effect(type, fn, sync) {
 	// if an effect has already ran and doesn't need to be kept in the tree
 	// (because it won't re-run, has no DOM, and has no teardown etc)
 	// then we skip it and go to its child (if any)
+	// NOTE: We only do this pruning if the effect actually ran (!should_defer)
 	if (
 		sync &&
+		!should_defer &&
 		e.deps === null &&
 		e.teardown === null &&
 		e.nodes === null &&
