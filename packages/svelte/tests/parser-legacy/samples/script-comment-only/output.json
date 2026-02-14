@@ -51,5 +51,23 @@
 				}
 			]
 		}
-	}
+	},
+	"comments": [
+		{
+			"type": "Line",
+			"value": " TODO write some code",
+			"start": 10,
+			"end": 33,
+			"loc": {
+				"start": {
+					"line": 2,
+					"column": 1
+				},
+				"end": {
+					"line": 2,
+					"column": 24
+				}
+			}
+		}
+	]
 }
