@@ -25,7 +25,7 @@ const whitelist_attribute_selector = new Map([
 /**
  * HTML attributes whose enumerated values are case-insensitive per the HTML spec.
  * CSS attribute selectors match these values case-insensitively in HTML documents.
- * @see https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/Attribute_selectors#description
+ * @see {@link https://html.spec.whatwg.org/multipage/semantics-other.html#case-sensitivity-of-selectors HTML spec}
  */
 const case_insensitive_attributes = new Set([
 	'accept-charset',
