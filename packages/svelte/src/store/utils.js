@@ -1,10 +1,11 @@
-/** @import { Readable } from './public' */
+/** @import { Readable } from './public.js' */
+/** @import { InteropReadable } from './private.js' */
 import { untrack } from '../index-client.js';
 import { noop } from '../internal/shared/utils.js';
 
 /**
  * @template T
- * @param {Readable<T> | null | undefined} store
+ * @param {Readable<T> | InteropReadable<T> | null | undefined} store
  * @param {(value: T) => void} run
  * @param {(value: T) => void} [invalidate]
  * @returns {() => void}
@@ -31,6 +32,8 @@ export function subscribe_to_store(store, run, invalidate) {
 	);
 
 	// Also support RxJS
-	// @ts-expect-error TODO fix this in the types?
-	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+	if (unsub && 'unsubscribe' in unsub) {
+		return () => unsub.unsubscribe();
+	}
+	return /** @type {() => void} */ (unsub);
 }

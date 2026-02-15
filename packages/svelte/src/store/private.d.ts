@@ -10,4 +10,12 @@ type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<R
 type StoresValues<T> =
 	T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
-export { SubscribeInvalidateTuple, Stores, StoresValues };
+/** A store that doesn't use the Svelte-specific return type. */
+interface InteropReadable<T> {
+	subscribe(
+		run: Subscriber<T>,
+		invalidate?: (value?: T) => void
+	): { unsubscribe: () => void } | (() => void);
+}
+
+export { SubscribeInvalidateTuple, Stores, StoresValues, InteropReadable };
