@@ -567,9 +567,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						selector.name,
 						selector.value && unquote(selector.value),
 						selector.matcher,
-						((selector.flags?.includes('i') ?? false) ||
-						(!selector.flags?.includes('s') &&
-							case_insensitive_attributes.has(selector.name.toLowerCase())))
+						(selector.flags?.includes('i') ?? false) ||
+							(!selector.flags?.includes('s') &&
+								case_insensitive_attributes.has(selector.name.toLowerCase()))
 					)
 				) {
 					return false;
