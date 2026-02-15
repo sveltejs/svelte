@@ -1,5 +1,13 @@
 # svelte
 
+## 5.51.2
+
+### Patch Changes
+
+- fix: take async into consideration for dev delegated handlers ([#17710](https://github.com/sveltejs/svelte/pull/17710))
+
+- fix: emit state_referenced_locally warning for non-destructured props ([#17708](https://github.com/sveltejs/svelte/pull/17708))
+
 ## 5.51.1
 
 ### Patch Changes
