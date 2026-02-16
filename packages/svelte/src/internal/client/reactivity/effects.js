@@ -1,4 +1,3 @@
-/** @import { Boundary } from '../dom/blocks/boundary' */
 /** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	is_dirty,
@@ -42,8 +41,6 @@ import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, current_batch, schedule_effect } from './batch.js';
-import { hydrating } from '../dom/hydration.js';
-import { async_mode_flag } from '../../flags/index.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -122,18 +119,7 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	// During hydration, defer template effects until local promises have resolved
-	var should_defer =
-		async_mode_flag &&
-		hydrating &&
-		fn !== null &&
-		(type & RENDER_EFFECT) !== 0 &&
-		effect.b?.has_pending_async();
-
-	if (should_defer) {
-		// Store the effect in the boundary so it can be rescheduled when async work completes
-		/** @type {Boundary} */ (effect.b).defer_effect(effect);
-	} else if (sync) {
+	if (sync) {
 		try {
 			update_effect(effect);
 		} catch (e) {
@@ -150,10 +136,8 @@ function create_effect(type, fn, sync) {
 	// if an effect has already ran and doesn't need to be kept in the tree
 	// (because it won't re-run, has no DOM, and has no teardown etc)
 	// then we skip it and go to its child (if any)
-	// NOTE: We only do this pruning if the effect actually ran (!should_defer)
 	if (
 		sync &&
-		!should_defer &&
 		e.deps === null &&
 		e.teardown === null &&
 		e.nodes === null &&
