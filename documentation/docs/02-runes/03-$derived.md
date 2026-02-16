@@ -55,10 +55,19 @@ When you use `await` directly inside a `$derived(...)` expression (or a template
 
 ```svelte
 <script>
-	const slug = $derived(params.slug);          // tracked
-	const post = $derived(await getPost(slug));  // uses tracked slug
+	let id = $state(1);
+
+	async function getLater(get) {
+		await Promise.resolve(); // await inside helper
+		return get();            // reactive read happens after await
+	}
+
+	const trackedId = $derived(id); // tracked
+	const value = $derived(await getLater(() => trackedId));
 </script>
 ```
+
+Here, the helper `getLater` `await`s internally and only reads the reactive value afterwards via `get()`. Splitting `id` into `trackedId = $derived(id)` makes the dependency explicit before the async boundary, so `value` stays correctly tied to `id`.
 
 To exempt a piece of state from being treated as a dependency, use [`untrack`](svelte#untrack).
 
