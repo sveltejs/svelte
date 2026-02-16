@@ -146,7 +146,7 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		this.is_pending = !!this.#props.pending;
+		this.is_pending = this.has_pending_snippet();
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
@@ -269,7 +269,8 @@ export class Boundary {
 	}
 
 	/**
-	 * @param {() => Effect | null} fn
+	 * @template T
+	 * @param {() => T} fn
 	 */
 	#run(fn) {
 		var previous_effect = active_effect;
