@@ -152,12 +152,12 @@ export class Boundary {
 			/** @type {Effect} */ (active_effect).b = this;
 
 			if (hydrating) {
-				const comment = this.#hydrate_open;
+				const comment = /** @type {Comment} */ (this.#hydrate_open);
 				hydrate_next();
 
 				const server_rendered_pending =
-					/** @type {Comment} */ (comment).nodeType === COMMENT_NODE &&
-					/** @type {Comment} */ (comment).data === HYDRATION_START_ELSE;
+					comment.nodeType === COMMENT_NODE &&
+					comment.data === HYDRATION_START_ELSE;
 
 				if (server_rendered_pending) {
 					this.#hydrate_pending_content();
@@ -173,14 +173,14 @@ export class Boundary {
 
 				try {
 					this.#main_effect = branch(() => children(anchor));
+
+					if (this.#pending_count > 0) {
+						this.#show_pending_snippet();
+					} else {
+						this.is_pending = false;
+					}
 				} catch (error) {
 					this.error(error);
-				}
-
-				if (this.#pending_count > 0) {
-					this.#show_pending_snippet();
-				} else {
-					this.is_pending = false;
 				}
 			}
 
