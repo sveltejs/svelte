@@ -1,3 +1,4 @@
+/** @import { Boundary } from '../dom/blocks/boundary' */
 /** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	is_dirty,
@@ -121,12 +122,7 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	// During hydration, if we're inside a pending boundary with actual async work,
-	// defer render effects instead of running them immediately to avoid hydration mismatches.
-	// We only defer RENDER_EFFECT (and similar), not ASYNC effects which need to run
-	// to set up the async machinery. Also, only defer effects with an actual fn.
-	// Note: We use has_pending_async() instead of is_pending because is_pending can be
-	// true just because a pending snippet exists, even without actual async work.
+	// During hydration, defer template effects until local promises have resolved
 	var should_defer =
 		async_mode_flag &&
 		hydrating &&
@@ -136,7 +132,7 @@ function create_effect(type, fn, sync) {
 
 	if (should_defer) {
 		// Store the effect in the boundary so it can be rescheduled when async work completes
-		/** @type {import('../dom/blocks/boundary.js').Boundary} */ (effect.b).defer_effect(effect);
+		/** @type {Boundary} */ (effect.b).defer_effect(effect);
 	} else if (sync) {
 		try {
 			update_effect(effect);
