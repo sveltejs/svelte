@@ -223,7 +223,9 @@ export class Boundary {
 			this.#pending_count = 0;
 			this.#local_pending_count = 0;
 
-			this.#main_effect = branch(() => this.#children(anchor));
+			this.#main_effect = branch(() => {
+				this.#children(anchor);
+			});
 
 			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
