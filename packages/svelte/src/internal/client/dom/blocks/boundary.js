@@ -53,7 +53,7 @@ import { set_signal_status } from '../../reactivity/status.js';
  * }} BoundaryProps
  */
 
-var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
+var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED;
 
 /**
  * @param {TemplateNode} node
@@ -144,7 +144,7 @@ export class Boundary {
 			var effect = /** @type {Effect} */ (active_effect);
 
 			effect.b = this;
-			effect.f |= flags;
+			effect.f |= BOUNDARY_EFFECT;
 
 			children(anchor);
 		};
@@ -174,7 +174,7 @@ export class Boundary {
 			} else {
 				this.#render();
 			}
-		});
+		}, flags);
 
 		if (hydrating) {
 			this.#anchor = hydrate_node;
