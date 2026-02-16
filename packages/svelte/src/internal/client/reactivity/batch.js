@@ -293,6 +293,10 @@ export class Batch {
 				}
 			}
 
+			if (pending_boundary === effect) {
+				pending_boundary = null;
+			}
+
 			var parent = effect.parent;
 			effect = effect.next;
 

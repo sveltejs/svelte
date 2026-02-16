@@ -441,6 +441,12 @@ export class Boundary {
 
 					try {
 						return branch(() => {
+							// errors in `failed` snippets cause the boundary to error again
+							var effect = /** @type {Effect} */ (active_effect);
+
+							effect.b = this;
+							effect.f |= BOUNDARY_EFFECT;
+
 							failed(
 								this.#anchor,
 								() => error,
