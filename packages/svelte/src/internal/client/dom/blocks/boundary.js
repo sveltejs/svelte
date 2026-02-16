@@ -153,10 +153,7 @@ export class Boundary {
 				const comment = /** @type {Comment} */ (this.#hydrate_open);
 				hydrate_next();
 
-				const server_rendered_pending =
-					comment.nodeType === COMMENT_NODE && comment.data === HYDRATION_START_ELSE;
-
-				if (server_rendered_pending) {
+				if (comment.data === HYDRATION_START_ELSE) {
 					this.#hydrate_pending_content();
 				} else {
 					this.#hydrate_resolved_content();
