@@ -294,7 +294,7 @@ export class Batch {
 			}
 
 			while (effect !== null) {
-				if (pending_boundary === effect) {
+				if (effect === pending_boundary) {
 					pending_boundary = null;
 				}
 
