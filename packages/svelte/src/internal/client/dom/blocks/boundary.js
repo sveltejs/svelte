@@ -169,19 +169,7 @@ export class Boundary {
 					}
 				}
 			} else {
-				var anchor = this.#get_anchor();
-
-				try {
-					this.#main_effect = branch(() => children(anchor));
-
-					if (this.#pending_count > 0) {
-						this.#show_pending_snippet();
-					} else {
-						this.is_pending = false;
-					}
-				} catch (error) {
-					this.error(error);
-				}
+				this.#render();
 			}
 
 			return () => {
@@ -226,6 +214,25 @@ export class Boundary {
 				this.is_pending = false;
 			}
 		});
+	}
+
+	#render() {
+		var anchor = this.#get_anchor();
+
+		try {
+			this.#pending_count = 0;
+			this.#local_pending_count = 0;
+
+			this.#main_effect = branch(() => this.#children(anchor));
+
+			if (this.#pending_count > 0) {
+				this.#show_pending_snippet();
+			} else {
+				this.is_pending = false;
+			}
+		} catch (error) {
+			this.error(error);
+		}
 	}
 
 	#get_anchor() {
