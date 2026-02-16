@@ -197,16 +197,23 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
-			var anchor = this.#get_anchor();
+			// TODO remove once no longer load-bearing
+			this.#get_anchor();
+
+			var fragment = this.#offscreen_fragment = document.createDocumentFragment();
+			var anchor = create_text();
+
+			fragment.append(anchor);
 
 			this.#main_effect = this.#run(() => {
 				Batch.ensure();
 				return branch(() => this.#children(anchor));
 			});
 
-			if (this.#pending_count > 0) {
-				this.#show_pending_snippet();
-			} else {
+			if (this.#pending_count === 0) {
+				this.#anchor.before(fragment);
+				this.#offscreen_fragment = null;
+
 				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
 					this.#pending_effect = null;
 				});
@@ -217,18 +224,23 @@ export class Boundary {
 	}
 
 	#render() {
-		var anchor = this.#get_anchor();
+		// TODO remove this once it is no longer load-bearing
+		this.#get_anchor();
 
 		try {
 			this.#pending_count = 0;
 			this.#local_pending_count = 0;
 
 			this.#main_effect = branch(() => {
-				this.#children(anchor);
+				this.#children(this.#anchor);
 			});
 
 			if (this.#pending_count > 0) {
-				this.#show_pending_snippet();
+				var fragment = this.#offscreen_fragment = document.createDocumentFragment();
+				move_effect(this.#main_effect, fragment);
+
+				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
+				this.#pending_effect = branch(() => pending(this.#anchor));
 			} else {
 				this.is_pending = false;
 			}
@@ -433,31 +445,18 @@ export class Boundary {
 				e.svelte_boundary_reset_onerror();
 			}
 
-			// If the failure happened while flushing effects, current_batch can be null
-			Batch.ensure();
-
-			this.#local_pending_count = 0;
-
 			if (this.#failed_effect !== null) {
 				pause_effect(this.#failed_effect, () => {
 					this.#failed_effect = null;
 				});
 			}
 
-			// we intentionally do not try to find the nearest pending boundary. If this boundary has one, we'll render it on reset
-			// but it would be really weird to show the parent's boundary on a child reset.
-			this.is_pending = this.has_pending_snippet();
+			this.#run(() => {
+				// If the failure happened while flushing effects, current_batch can be null
+				Batch.ensure();
 
-			this.#main_effect = this.#run(() => {
-				this.#is_creating_fallback = false;
-				return branch(() => this.#children(this.#anchor));
+				this.#render();
 			});
-
-			if (this.#pending_count > 0) {
-				this.#show_pending_snippet();
-			} else {
-				this.is_pending = false;
-			}
 		};
 
 		queue_micro_task(() => {
