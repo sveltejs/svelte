@@ -148,8 +148,6 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		this.is_pending = this.has_pending_snippet();
-
 		this.#effect = block(() => {
 			if (hydrating) {
 				const comment = /** @type {Comment} */ (this.#hydrate_open);
@@ -162,10 +160,6 @@ export class Boundary {
 					this.#hydrate_pending_content();
 				} else {
 					this.#hydrate_resolved_content();
-
-					if (this.#pending_count === 0) {
-						this.is_pending = false;
-					}
 				}
 			} else {
 				this.#render();
@@ -189,6 +183,7 @@ export class Boundary {
 		const pending = this.#props.pending;
 		if (!pending) return;
 
+		this.is_pending = true;
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
@@ -217,6 +212,7 @@ export class Boundary {
 
 	#render() {
 		try {
+			this.is_pending = this.has_pending_snippet();
 			this.#pending_count = 0;
 			this.#local_pending_count = 0;
 
