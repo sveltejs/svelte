@@ -19,17 +19,21 @@
 </button>
 
 <svelte:boundary>
+	{#if true}
+		<p>hello from {browser ? 'browser' : 'server'}</p>
+	{/if}
+
 	{#if await a.promise}
 		<p>hello from {browser ? 'browser' : 'server'}</p>
 	{/if}
-
-	<p>hello from {browser ? 'browser' : 'server'}</p>
 </svelte:boundary>
 
 <svelte:boundary>
-	{#if await b.promise}
+	{#if true}
 		<p>hello from {browser ? 'browser' : 'server'}</p>
 	{/if}
 
-	<p>hello from {browser ? 'browser' : 'server'}</p>
+	{#if await b.promise}
+		<p>hello from {browser ? 'browser' : 'server'}</p>
+	{/if}
 </svelte:boundary>
