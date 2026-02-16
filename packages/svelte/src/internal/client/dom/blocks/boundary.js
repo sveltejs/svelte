@@ -307,20 +307,6 @@ export class Boundary {
 		}
 	}
 
-	#show_pending_snippet() {
-		const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
-
-		if (this.#main_effect !== null) {
-			this.#offscreen_fragment = document.createDocumentFragment();
-			this.#offscreen_fragment.append(/** @type {TemplateNode} */ (this.#pending_anchor));
-			move_effect(this.#main_effect, this.#offscreen_fragment);
-		}
-
-		if (this.#pending_effect === null) {
-			this.#pending_effect = branch(() => pending(this.#anchor));
-		}
-	}
-
 	/**
 	 * Updates the pending count associated with the currently visible pending snippet,
 	 * if any, such that we can replace the snippet with content once work is done
