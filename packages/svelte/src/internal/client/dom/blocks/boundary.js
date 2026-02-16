@@ -139,15 +139,21 @@ export class Boundary {
 	constructor(node, props, children) {
 		this.#anchor = node;
 		this.#props = props;
-		this.#children = children;
+
+		this.#children = (anchor) => {
+			var effect = /** @type {Effect} */ (active_effect);
+
+			effect.b = this;
+			effect.f |= flags;
+
+			children(anchor);
+		};
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.is_pending = this.has_pending_snippet();
 
 		this.#effect = block(() => {
-			/** @type {Effect} */ (active_effect).b = this;
-
 			if (hydrating) {
 				const comment = /** @type {Comment} */ (this.#hydrate_open);
 				hydrate_next();
@@ -168,7 +174,7 @@ export class Boundary {
 			} else {
 				this.#render();
 			}
-		}, flags);
+		});
 
 		if (hydrating) {
 			this.#anchor = hydrate_node;
