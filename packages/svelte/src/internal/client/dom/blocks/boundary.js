@@ -1,6 +1,5 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 import {
-	BLOCK_EFFECT,
 	BOUNDARY_EFFECT,
 	COMMENT_NODE,
 	DIRTY,
@@ -102,8 +101,6 @@ export class Boundary {
 	#pending_count = 0;
 	#pending_count_update_queued = false;
 
-	#is_creating_fallback = false;
-
 	/** @type {Set<Effect>} */
 	#dirty_effects = new Set();
 
@@ -159,8 +156,7 @@ export class Boundary {
 				hydrate_next();
 
 				const server_rendered_pending =
-					comment.nodeType === COMMENT_NODE &&
-					comment.data === HYDRATION_START_ELSE;
+					comment.nodeType === COMMENT_NODE && comment.data === HYDRATION_START_ELSE;
 
 				if (server_rendered_pending) {
 					this.#hydrate_pending_content();
@@ -196,7 +192,7 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
-			var fragment = this.#offscreen_fragment = document.createDocumentFragment();
+			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
 
 			fragment.append(anchor);
@@ -229,7 +225,7 @@ export class Boundary {
 			});
 
 			if (this.#pending_count > 0) {
-				var fragment = this.#offscreen_fragment = document.createDocumentFragment();
+				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 				move_effect(this.#main_effect, fragment);
 
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
@@ -371,7 +367,7 @@ export class Boundary {
 
 		// If we have nothing to capture the error, or if we hit an error while
 		// rendering the fallback, re-throw for another boundary to handle
-		if (this.#is_creating_fallback || (!onerror && !failed)) {
+		if (!onerror && !failed) {
 			throw error;
 		}
 
@@ -437,7 +433,6 @@ export class Boundary {
 			if (failed) {
 				this.#failed_effect = this.#run(() => {
 					Batch.ensure();
-					this.#is_creating_fallback = true;
 
 					try {
 						return branch(() => {
@@ -456,8 +451,6 @@ export class Boundary {
 					} catch (error) {
 						invoke_error_boundary(error, /** @type {Effect} */ (this.#effect.parent));
 						return null;
-					} finally {
-						this.#is_creating_fallback = false;
 					}
 				});
 			}
