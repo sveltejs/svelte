@@ -98,9 +98,6 @@ export class Boundary {
 	/** @type {DocumentFragment | null} */
 	#offscreen_fragment = null;
 
-	/** @type {TemplateNode | null} */
-	#pending_anchor = null;
-
 	#local_pending_count = 0;
 	#pending_count = 0;
 	#pending_count_update_queued = false;
@@ -171,10 +168,6 @@ export class Boundary {
 			} else {
 				this.#render();
 			}
-
-			return () => {
-				this.#pending_anchor?.remove();
-			};
 		}, flags);
 
 		if (hydrating) {
@@ -197,9 +190,6 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
-			// TODO remove once no longer load-bearing
-			this.#get_anchor();
-
 			var fragment = this.#offscreen_fragment = document.createDocumentFragment();
 			var anchor = create_text();
 
@@ -224,9 +214,6 @@ export class Boundary {
 	}
 
 	#render() {
-		// TODO remove this once it is no longer load-bearing
-		this.#get_anchor();
-
 		try {
 			this.#pending_count = 0;
 			this.#local_pending_count = 0;
@@ -247,19 +234,6 @@ export class Boundary {
 		} catch (error) {
 			this.error(error);
 		}
-	}
-
-	#get_anchor() {
-		var anchor = this.#anchor;
-
-		if (this.is_pending) {
-			this.#pending_anchor = create_text();
-			this.#anchor.before(this.#pending_anchor);
-
-			anchor = this.#pending_anchor;
-		}
-
-		return anchor;
 	}
 
 	/**
