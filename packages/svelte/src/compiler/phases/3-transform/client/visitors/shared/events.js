@@ -70,7 +70,8 @@ export function build_event(context, event_name, handler, capture, passive, dele
 		fn = b.function(
 			b.id(name),
 			handler.params,
-			handler.body.type === 'BlockStatement' ? handler.body : b.block([b.return(handler.body)])
+			handler.body.type === 'BlockStatement' ? handler.body : b.block([b.return(handler.body)]),
+			handler.async
 		);
 	}
 

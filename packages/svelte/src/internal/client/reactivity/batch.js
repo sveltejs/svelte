@@ -293,16 +293,19 @@ export class Batch {
 				}
 			}
 
-			var parent = effect.parent;
-			effect = effect.next;
-
-			while (effect === null && parent !== null) {
-				if (parent === pending_boundary) {
+			while (effect !== null) {
+				if (effect === pending_boundary) {
 					pending_boundary = null;
 				}
 
-				effect = parent.next;
-				parent = parent.parent;
+				var next = effect.next;
+
+				if (next !== null) {
+					effect = next;
+					break;
+				}
+
+				effect = effect.parent;
 			}
 		}
 	}

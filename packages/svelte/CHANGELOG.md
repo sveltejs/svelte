@@ -1,5 +1,33 @@
 # svelte
 
+## 5.51.3
+
+### Patch Changes
+
+- fix: prevent event delegation logic conflicting between svelte instances ([#17728](https://github.com/sveltejs/svelte/pull/17728))
+
+- fix: treat CSS attribute selectors as case-insensitive for HTML enumerated attributes ([#17712](https://github.com/sveltejs/svelte/pull/17712))
+
+- fix: locate Rollup annontaion friendly to JS downgraders ([#17724](https://github.com/sveltejs/svelte/pull/17724))
+
+- fix: run effects in pending snippets ([#17719](https://github.com/sveltejs/svelte/pull/17719))
+
+## 5.51.2
+
+### Patch Changes
+
+- fix: take async into consideration for dev delegated handlers ([#17710](https://github.com/sveltejs/svelte/pull/17710))
+
+- fix: emit state_referenced_locally warning for non-destructured props ([#17708](https://github.com/sveltejs/svelte/pull/17708))
+
+## 5.51.1
+
+### Patch Changes
+
+- fix: don't crash on undefined `document.contentType` ([#17707](https://github.com/sveltejs/svelte/pull/17707))
+
+- fix: use symbols for encapsulated event delegation ([#17703](https://github.com/sveltejs/svelte/pull/17703))
+
 ## 5.51.0
 
 ### Minor Changes

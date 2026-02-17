@@ -22,6 +22,50 @@ const whitelist_attribute_selector = new Map([
 	['dialog', ['open']]
 ]);
 
+/**
+ * HTML attributes whose enumerated values are case-insensitive per the HTML spec.
+ * CSS attribute selectors match these values case-insensitively in HTML documents.
+ * @see {@link https://html.spec.whatwg.org/multipage/semantics-other.html#case-sensitivity-of-selectors HTML spec}
+ */
+const case_insensitive_attributes = new Set([
+	'accept-charset',
+	'autocapitalize',
+	'autocomplete',
+	'behavior',
+	'charset',
+	'crossorigin',
+	'decoding',
+	'dir',
+	'direction',
+	'draggable',
+	'enctype',
+	'enterkeyhint',
+	'fetchpriority',
+	'formenctype',
+	'formmethod',
+	'formtarget',
+	'hidden',
+	'http-equiv',
+	'inputmode',
+	'kind',
+	'loading',
+	'method',
+	'preload',
+	'referrerpolicy',
+	'rel',
+	'rev',
+	'role',
+	'rules',
+	'scope',
+	'shape',
+	'spellcheck',
+	'target',
+	'translate',
+	'type',
+	'valign',
+	'wrap'
+]);
+
 /** @type {Compiler.AST.CSS.Combinator} */
 const descendant_combinator = {
 	type: 'Combinator',
@@ -523,7 +567,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						selector.name,
 						selector.value && unquote(selector.value),
 						selector.matcher,
-						selector.flags?.includes('i') ?? false
+						(selector.flags?.includes('i') ?? false) ||
+							(!selector.flags?.includes('s') &&
+								case_insensitive_attributes.has(selector.name.toLowerCase()))
 					)
 				) {
 					return false;
