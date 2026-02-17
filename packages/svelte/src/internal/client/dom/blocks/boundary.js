@@ -1,7 +1,6 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 import {
 	BOUNDARY_EFFECT,
-	COMMENT_NODE,
 	DIRTY,
 	EFFECT_PRESERVED,
 	EFFECT_TRANSPARENT,
@@ -202,7 +201,7 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.is_pending = false;
+				this.#resolve();
 			}
 		});
 	}
@@ -224,11 +223,31 @@ export class Boundary {
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 				this.#pending_effect = branch(() => pending(this.#anchor));
 			} else {
-				this.is_pending = false;
+				this.#resolve();
 			}
 		} catch (error) {
 			this.error(error);
 		}
+	}
+
+	#resolve() {
+		this.is_pending = false;
+
+		// any effects that were previously deferred should be rescheduled —
+		// after the next traversal (which will happen immediately, due to the
+		// same update that brought us here) the effects will be flushed
+		for (const e of this.#dirty_effects) {
+			set_signal_status(e, DIRTY);
+			schedule_effect(e);
+		}
+
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			schedule_effect(e);
+		}
+
+		this.#dirty_effects.clear();
+		this.#maybe_dirty_effects.clear();
 	}
 
 	/**
@@ -294,24 +313,7 @@ export class Boundary {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.is_pending = false;
-
-			// any effects that were encountered and deferred during traversal
-			// should be rescheduled — after the next traversal (which will happen
-			// immediately, due to the same update that brought us here)
-			// the effects will be flushed
-			for (const e of this.#dirty_effects) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
-
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
-			}
-
-			this.#dirty_effects.clear();
-			this.#maybe_dirty_effects.clear();
+			this.#resolve();
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
