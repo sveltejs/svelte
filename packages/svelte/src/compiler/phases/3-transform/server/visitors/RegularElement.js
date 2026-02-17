@@ -15,6 +15,7 @@ import { is_customizable_select_element } from '../../../nodes.js';
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
+	const name = context.state.namespace === 'html' ? node.name.toLowerCase() : node.name;
 	const namespace = determine_namespace_for_children(node, context.state.namespace);
 
 	/** @type {ComponentServerTransformState} */
@@ -27,7 +28,7 @@ export function RegularElement(node, context) {
 		template: []
 	};
 
-	const node_is_void = is_void(node.name);
+	const node_is_void = is_void(name);
 
 	const optimiser = new PromiseOptimiser();
 
@@ -35,28 +36,28 @@ export function RegularElement(node, context) {
 	// avoid calling build_element_attributes here to prevent evaluating/awaiting
 	// attribute expressions twice. We'll handle attributes in the special branch.
 	const is_select_special =
-		node.name === 'select' &&
+		name === 'select' &&
 		node.attributes.some(
 			(attribute) =>
 				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
 					attribute.name === 'value') ||
 				attribute.type === 'SpreadAttribute'
 		);
-	const is_option_special = node.name === 'option';
+	const is_option_special = name === 'option';
 	const is_special = is_select_special || is_option_special;
 
 	let body = /** @type {Expression | null} */ (null);
 	if (!is_special) {
 		// only open the tag in the non-special path
-		state.template.push(b.literal(`<${node.name}`));
+		state.template.push(b.literal(`<${name}`));
 		body = build_element_attributes(node, { ...context, state }, optimiser.transform);
 		state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 	}
 
-	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
+	if ((name === 'script' || name === 'style') && node.fragment.nodes.length === 1) {
 		state.template.push(
 			b.literal(/** @type {AST.Text} */ (node.fragment.nodes[0]).data),
-			b.literal(`</${node.name}>`)
+			b.literal(`</${name}>`)
 		);
 
 		context.state.template.push(
@@ -90,7 +91,7 @@ export function RegularElement(node, context) {
 				b.call(
 					'$.push_element',
 					b.id('$$renderer'),
-					b.literal(node.name),
+					b.literal(name),
 					b.literal(location.line),
 					b.literal(location.column)
 				)
@@ -142,7 +143,7 @@ export function RegularElement(node, context) {
 						b.call(
 							'$.push_element',
 							b.id('$$renderer'),
-							b.literal(node.name),
+							b.literal(name),
 							b.literal(location.line),
 							b.literal(location.column)
 						)
@@ -191,16 +192,13 @@ export function RegularElement(node, context) {
 	} else {
 		// For optgroup or select with rich content, add hydration marker at the start
 		process_children(trimmed, { ...context, state });
-		if (
-			(node.name === 'optgroup' || node.name === 'select') &&
-			is_customizable_select_element(node)
-		) {
+		if ((name === 'optgroup' || name === 'select') && is_customizable_select_element(node)) {
 			state.template.push(b.literal('<!>'));
 		}
 	}
 
 	if (!node_is_void) {
-		state.template.push(b.literal(`</${node.name}>`));
+		state.template.push(b.literal(`</${name}>`));
 	}
 
 	if (dev) {

@@ -897,7 +897,7 @@ declare module 'svelte/compiler' {
 	 *
 	 * @param source The CSS source code
 	 * */
-	export function parseCss(source: string): Omit<AST.CSS.StyleSheet, "attributes" | "content">;
+	export function parseCss(source: string): AST.CSS.StyleSheetFile;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
@@ -1681,10 +1681,17 @@ declare module 'svelte/compiler' {
 			end: number;
 		}
 
-		export interface StyleSheet extends BaseNode {
+		export interface StyleSheetBase extends BaseNode {
+			children: Array<Atrule | Rule>;
+		}
+
+		export interface StyleSheetFile extends StyleSheetBase {
+			type: 'StyleSheetFile';
+		}
+
+		export interface StyleSheet extends StyleSheetBase {
 			type: 'StyleSheet';
 			attributes: any[]; // TODO
-			children: Array<Atrule | Rule>;
 			content: {
 				start: number;
 				end: number;

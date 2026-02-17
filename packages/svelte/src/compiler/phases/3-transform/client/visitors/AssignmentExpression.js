@@ -8,7 +8,7 @@ import {
 	is_event_attribute
 } from '../../../../utils/ast.js';
 import { dev, locate_node } from '../../../../state.js';
-import { should_proxy } from '../utils.js';
+import { build_getter, should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 import { validate_mutation } from './shared/utils.js';
 import { get_rune } from '../../../scope.js';
@@ -147,7 +147,7 @@ function build_assignment(operator, left, right, context) {
 
 	// mutation
 	if (transform?.mutate) {
-		return transform.mutate(
+		let mutation = transform.mutate(
 			object,
 			b.assignment(
 				operator,
@@ -155,6 +155,25 @@ function build_assignment(operator, left, right, context) {
 				/** @type {Expression} */ (context.visit(right))
 			)
 		);
+
+		if (binding.legacy_indirect_bindings.size > 0) {
+			mutation = b.sequence([
+				mutation,
+				b.call(
+					'$.invalidate_inner_signals',
+					b.arrow(
+						[],
+						b.block(
+							Array.from(binding.legacy_indirect_bindings).map((binding) =>
+								b.stmt(build_getter({ ...binding.node }, context.state))
+							)
+						)
+					)
+				)
+			]);
+		}
+
+		return mutation;
 	}
 
 	// in cases like `(object.items ??= []).push(value)`, we may need to warn

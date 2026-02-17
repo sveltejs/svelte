@@ -27,55 +27,59 @@ export function visit_event_attribute(node, context) {
 	let handler = build_event_handler(tag.expression, tag.metadata.expression, context);
 
 	if (node.metadata.delegated) {
-		if (!context.state.events.has(event_name)) {
-			context.state.events.add(event_name);
-		}
+		context.state.events.add(event_name);
+	}
 
-		context.state.init.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(context.state.node, b.id('__' + event_name, node.name_loc)),
-					handler
-				)
-			)
-		);
+	const statement = b.stmt(
+		build_event(
+			context,
+			event_name,
+			handler,
+			capture,
+			is_passive_event(event_name) ? true : undefined,
+			node.metadata.delegated
+		)
+	);
+
+	const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
+
+	if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
+		// These nodes are above the component tree, and its events should run parent first
+		context.state.init.push(statement);
 	} else {
-		const statement = b.stmt(
-			build_event(
-				event_name,
-				context.state.node,
-				handler,
-				capture,
-				is_passive_event(event_name) ? true : undefined
-			)
-		);
-
-		const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
-
-		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
-			// These nodes are above the component tree, and its events should run parent first
-			context.state.init.push(statement);
-		} else {
-			context.state.after_update.push(statement);
-		}
+		context.state.after_update.push(statement);
 	}
 }
 
 /**
  * Creates a `$.event(...)` call for non-delegated event handlers
+ * @param {ComponentContext} context
  * @param {string} event_name
- * @param {Expression} node
  * @param {Expression} handler
  * @param {boolean} capture
  * @param {boolean | undefined} passive
+ * @param {boolean | undefined} delegated
  */
-export function build_event(event_name, node, handler, capture, passive) {
+export function build_event(context, event_name, handler, capture, passive, delegated) {
+	let fn = handler;
+
+	if (dev && handler.type === 'ArrowFunctionExpression') {
+		// create a named function for better debugging
+		const name = context.state.scope.generate(event_name);
+
+		fn = b.function(
+			b.id(name),
+			handler.params,
+			handler.body.type === 'BlockStatement' ? handler.body : b.block([b.return(handler.body)]),
+			handler.async
+		);
+	}
+
 	return b.call(
-		'$.event',
+		delegated ? '$.delegated' : '$.event',
 		b.literal(event_name),
-		node,
-		handler,
+		context.state.node,
+		fn,
 		capture && b.true,
 		passive === undefined ? undefined : b.literal(passive)
 	);

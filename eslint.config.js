@@ -33,7 +33,7 @@ const no_compiler_imports = {
 	}
 };
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.Config[]} */
 export default [
 	...svelte_config,
 	{

@@ -27,10 +27,10 @@ export const DIRTY = 1 << 11;
 export const MAYBE_DIRTY = 1 << 12;
 export const INERT = 1 << 13;
 export const DESTROYED = 1 << 14;
+/** Set once a reaction has run for the first time */
+export const REACTION_RAN = 1 << 15;
 
 // Flags exclusive to effects
-/** Set once an effect that should run synchronously has run */
-export const EFFECT_RAN = 1 << 15;
 /**
  * 'Transparent' effects do not create a transition boundary.
  * This is on a block effect 99% of the time but may also be on a branch effect if its parent block effect was pruned
@@ -48,7 +48,7 @@ export const EFFECT_OFFSCREEN = 1 << 25;
  * Will be lifted during execution of the derived and during checking its dirty state (both are necessary
  * because a derived might be checked but not executed).
  */
-export const WAS_MARKED = 1 << 15;
+export const WAS_MARKED = 1 << 16;
 
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
@@ -67,6 +67,10 @@ export const STALE_REACTION = new (class StaleReactionError extends Error {
 	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
 })();
 
+export const IS_XHTML =
+	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location
+	!!globalThis.document?.contentType &&
+	/* @__PURE__ */ globalThis.document.contentType.includes('xml');
 export const ELEMENT_NODE = 1;
 export const TEXT_NODE = 3;
 export const COMMENT_NODE = 8;
