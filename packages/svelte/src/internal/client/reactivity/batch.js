@@ -859,6 +859,15 @@ export function schedule_effect(signal) {
 			if ((flags & CLEAN) === 0) return;
 			effect.f ^= CLEAN;
 		}
+
+		if ((flags & BOUNDARY_EFFECT) !== 0) {
+			var boundary = /** @type {Boundary} */ (effect.b);
+
+			if (boundary.is_pending && ((signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0)) {
+				boundary.defer_effect(signal);
+				return;
+			}
+		}
 	}
 
 	queued_root_effects.push(effect);
