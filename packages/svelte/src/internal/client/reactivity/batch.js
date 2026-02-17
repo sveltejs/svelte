@@ -820,7 +820,11 @@ export function schedule_effect(signal) {
 
 	// defer render effects inside a pending boundary
 	// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
-	if (boundary?.is_pending && ((signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0) && (signal.f & REACTION_RAN) === 0) {
+	if (
+		boundary?.is_pending &&
+		(signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
+		(signal.f & REACTION_RAN) === 0
+	) {
 		boundary.defer_effect(signal);
 		return;
 	}
