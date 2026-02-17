@@ -183,13 +183,16 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	});
 
 	/** @type {V[]} */
-	var array;
+	var array = [];
+
+	/** @type {any[]} */
+	var key_list = [];
 
 	var first_run = true;
 
 	function commit() {
 		state.fallback = fallback;
-		reconcile(state, array, anchor, flags, get_key);
+		reconcile(state, array, key_list, anchor, flags);
 
 		if (fallback !== null) {
 			if (array.length === 0) {
@@ -231,6 +234,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		var keys = new Set();
+		key_list = new Array(length);
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
 
@@ -249,6 +253,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 			var value = array[index];
 			var key = get_key(value, index);
+			key_list[index] = key;
 
 			var item = first_run ? null : items.get(key);
 
@@ -363,12 +368,12 @@ function skip_to_branch(effect) {
  * @template V
  * @param {EachState} state
  * @param {Array<V>} array
+ * @param {any[]} key_list
  * @param {Element | Comment | Text} anchor
  * @param {number} flags
- * @param {(value: V, index: number) => any} get_key
  * @returns {void}
  */
-function reconcile(state, array, anchor, flags, get_key) {
+function reconcile(state, array, key_list, anchor, flags) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 
 	var length = array.length;
@@ -405,7 +410,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 	if (is_animated) {
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
-			key = get_key(value, i);
+			key = key_list[i];
 			effect = /** @type {EachItem} */ (items.get(key)).e;
 
 			// offscreen == coming in now, no animation in that case,
@@ -419,7 +424,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 	for (i = 0; i < length; i += 1) {
 		value = array[i];
-		key = get_key(value, i);
+		key = key_list[i];
 
 		effect = /** @type {EachItem} */ (items.get(key)).e;
 
