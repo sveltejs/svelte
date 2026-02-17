@@ -142,7 +142,7 @@ export class Batch {
 
 	#decrement_queued = false;
 
-	is_deferred() {
+	#is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
 
@@ -202,7 +202,7 @@ export class Batch {
 			// log_inconsistent_branches(root);
 		}
 
-		if (this.is_deferred()) {
+		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
@@ -475,7 +475,7 @@ export class Batch {
 		queue_micro_task(() => {
 			this.#decrement_queued = false;
 
-			if (!this.is_deferred()) {
+			if (!this.#is_deferred()) {
 				// we only reschedule previously-deferred effects if we expect
 				// to be able to run them after processing the batch
 				this.revive();
