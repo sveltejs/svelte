@@ -1,6 +1,8 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 import {
 	BOUNDARY_EFFECT,
+	BRANCH_EFFECT,
+	CLEAN,
 	COMMENT_NODE,
 	DIRTY,
 	EFFECT_PRESERVED,
@@ -202,7 +204,7 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.is_pending = false;
+				this.#resolve();
 			}
 		});
 	}
@@ -224,11 +226,34 @@ export class Boundary {
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 				this.#pending_effect = branch(() => pending(this.#anchor));
 			} else {
-				this.is_pending = false;
+				this.#resolve();
 			}
 		} catch (error) {
 			this.error(error);
 		}
+	}
+
+	#resolve() {
+		this.is_pending = false;
+
+		reset_branch(/** @type {Effect} */ (this.#main_effect));
+
+		// any effects that were encountered and deferred during traversal
+		// should be rescheduled — after the next traversal (which will happen
+		// immediately, due to the same update that brought us here)
+		// the effects will be flushed
+		for (const e of this.#dirty_effects) {
+			set_signal_status(e, DIRTY);
+			schedule_effect(e);
+		}
+
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			schedule_effect(e);
+		}
+
+		this.#dirty_effects.clear();
+		this.#maybe_dirty_effects.clear();
 	}
 
 	/**
@@ -294,24 +319,7 @@ export class Boundary {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.is_pending = false;
-
-			// any effects that were encountered and deferred during traversal
-			// should be rescheduled — after the next traversal (which will happen
-			// immediately, due to the same update that brought us here)
-			// the effects will be flushed
-			for (const e of this.#dirty_effects) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
-
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
-			}
-
-			this.#dirty_effects.clear();
-			this.#maybe_dirty_effects.clear();
+			this.#resolve();
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
@@ -464,4 +472,26 @@ export function pending() {
 	}
 
 	return boundary.get_effect_pending();
+}
+
+/**
+ * TODO remove this - when we fully switch to a lazy scheduling approach,
+ * we won't have dirtied the branches in the first place. But for now
+ * it is necessary to keep the tests passing
+ * @param {Effect} effect
+ * @deprecated
+ */
+function reset_branch(effect) {
+	// clean branch = nothing dirty inside, no need to traverse further
+	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
+		return;
+	}
+
+	set_signal_status(effect, CLEAN);
+
+	var e = effect.first;
+	while (e !== null) {
+		reset_branch(e);
+		e = e.next;
+	}
 }
