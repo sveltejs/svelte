@@ -209,6 +209,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 		);
 
+		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
 		/** @type {Set<string>} */
 		var registered_events = new Set();
 
