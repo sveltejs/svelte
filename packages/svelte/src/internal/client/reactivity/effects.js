@@ -44,6 +44,7 @@ import { Batch, current_batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
+import { get_boundary } from '../dom/blocks/boundary.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -379,11 +380,21 @@ export function deferred_template_effect(fn, sync = [], async = [], blockers = [
 	var batch = /** @type {Batch} */ (current_batch);
 	var is_async = async.length > 0 || blockers.length > 0;
 
-	if (is_async) batch.increment(true);
+	if (is_async) {
+		var boundary = get_boundary();
+		var blocking = boundary.is_rendered();
+
+		boundary.update_pending_count(1);
+		batch.increment(blocking);
+	}
 
 	flatten(blockers, sync, async, (values) => {
 		create_effect(EFFECT, () => fn(...values.map(get)), false);
-		if (is_async) batch.decrement(true);
+
+		if (is_async) {
+			boundary.update_pending_count(-1);
+			batch.decrement(blocking);
+		}
 	});
 }
 
