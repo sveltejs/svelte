@@ -3,6 +3,7 @@
 import { create_element } from './operations.js';
 
 const policy =
+	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location
 	globalThis?.window?.trustedTypes &&
 	/* @__PURE__ */ globalThis.window.trustedTypes.createPolicy('svelte-trusted-html', {
 		/** @param {string} html */
