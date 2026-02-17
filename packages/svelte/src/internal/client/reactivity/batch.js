@@ -18,7 +18,8 @@ import {
 	EAGER_EFFECT,
 	HEAD_EFFECT,
 	ERROR_VALUE,
-	MANAGED_EFFECT
+	MANAGED_EFFECT,
+	REACTION_RAN
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -833,13 +834,18 @@ export function schedule_effect(signal) {
 			is_flushing &&
 			effect === active_effect &&
 			(flags & BLOCK_EFFECT) !== 0 &&
-			(flags & HEAD_EFFECT) === 0
+			(flags & HEAD_EFFECT) === 0 &&
+			(flags & REACTION_RAN) !== 0
 		) {
 			return;
 		}
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) return;
+			if ((flags & CLEAN) === 0) {
+				// branch is already dirty, bail
+				return;
+			}
+
 			effect.f ^= CLEAN;
 		}
 	}
