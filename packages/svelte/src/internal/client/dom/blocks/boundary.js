@@ -452,10 +452,6 @@ export class Boundary {
 	}
 }
 
-export function get_boundary() {
-	return /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
-}
-
 export function pending() {
 	if (active_effect === null) {
 		e.effect_pending_outside_reaction();
