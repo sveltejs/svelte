@@ -430,6 +430,7 @@ export class Boundary {
 					try {
 						return branch(() => {
 							// errors in `failed` snippets cause the boundary to error again
+							// TODO Svelte 6: revisit this decision, most likely better to go to parent boundary instead
 							var effect = /** @type {Effect} */ (active_effect);
 
 							effect.b = this;
