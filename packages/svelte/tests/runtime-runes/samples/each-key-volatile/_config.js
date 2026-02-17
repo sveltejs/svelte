@@ -1,4 +1,3 @@
-import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -8,11 +7,5 @@ export default test({
 
 	mode: ['client'],
 
-	test({ assert, target }) {
-		const button = target.querySelector('button');
-
-		button?.click();
-
-		assert.throws(flushSync, /each_key_volatile/);
-	}
+	error: 'each_key_volatile'
 });
