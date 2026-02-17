@@ -2,15 +2,15 @@
 
 import { create_element } from './operations.js';
 
-const policy = /* @__PURE__ */ globalThis?.window?.trustedTypes?.createPolicy(
-	'svelte-trusted-html',
-	{
+const policy =
+	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location
+	globalThis?.window?.trustedTypes &&
+	/* @__PURE__ */ globalThis.window.trustedTypes.createPolicy('svelte-trusted-html', {
 		/** @param {string} html */
 		createHTML: (html) => {
 			return html;
 		}
-	}
-);
+	});
 
 /** @param {string} html */
 function create_trusted_html(html) {
