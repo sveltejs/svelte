@@ -246,9 +246,6 @@ export class Batch {
 
 		var effect = root.first;
 
-		/** @type {Effect | null} */
-		var pending_boundary = null;
-
 		while (effect !== null) {
 			var flags = effect.f;
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
@@ -256,26 +253,9 @@ export class Batch {
 
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_branches.has(effect);
 
-			// Inside a `<svelte:boundary>` with a pending snippet,
-			// all effects are deferred until the boundary resolves
-			// (except block/async effects, which run immediately)
-			if (
-				async_mode_flag &&
-				pending_boundary === null &&
-				(flags & BOUNDARY_EFFECT) !== 0 &&
-				effect.b?.is_pending
-			) {
-				pending_boundary = effect;
-			}
-
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
-				} else if (
-					pending_boundary !== null &&
-					(flags & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0
-				) {
-					/** @type {Boundary} */ (pending_boundary.b).defer_effect(effect);
 				} else if ((flags & EFFECT) !== 0) {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
@@ -294,10 +274,6 @@ export class Batch {
 			}
 
 			while (effect !== null) {
-				if (effect === pending_boundary) {
-					pending_boundary = null;
-				}
-
 				var next = effect.next;
 
 				if (next !== null) {
@@ -839,6 +815,13 @@ function depends_on(reaction, sources, checked) {
 export function schedule_effect(signal) {
 	var effect = (last_scheduled_effect = signal);
 
+	var boundary = effect.b;
+
+	if (boundary?.is_pending && ((signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0)) {
+		boundary.defer_effect(signal);
+		return;
+	}
+
 	while (effect.parent !== null) {
 		effect = effect.parent;
 		var flags = effect.f;
@@ -858,15 +841,6 @@ export function schedule_effect(signal) {
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
 			if ((flags & CLEAN) === 0) return;
 			effect.f ^= CLEAN;
-		}
-
-		if ((flags & BOUNDARY_EFFECT) !== 0) {
-			var boundary = /** @type {Boundary} */ (effect.b);
-
-			if (boundary.is_pending && ((signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0)) {
-				boundary.defer_effect(signal);
-				return;
-			}
 		}
 	}
 

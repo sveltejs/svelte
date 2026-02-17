@@ -236,8 +236,6 @@ export class Boundary {
 	#resolve() {
 		this.is_pending = false;
 
-		reset_branch(/** @type {Effect} */ (this.#main_effect));
-
 		// any effects that were encountered and deferred during traversal
 		// should be rescheduled — after the next traversal (which will happen
 		// immediately, due to the same update that brought us here)
@@ -472,26 +470,4 @@ export function pending() {
 	}
 
 	return boundary.get_effect_pending();
-}
-
-/**
- * TODO remove this - when we fully switch to a lazy scheduling approach,
- * we won't have dirtied the branches in the first place. But for now
- * it is necessary to keep the tests passing
- * @param {Effect} effect
- * @deprecated
- */
-function reset_branch(effect) {
-	// clean branch = nothing dirty inside, no need to traverse further
-	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
-		return;
-	}
-
-	set_signal_status(effect, CLEAN);
-
-	var e = effect.first;
-	while (e !== null) {
-		reset_branch(e);
-		e = e.next;
-	}
 }
