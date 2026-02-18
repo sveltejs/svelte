@@ -83,7 +83,7 @@ export function createRawSnippet(fn) {
 			hydrate_next();
 		} else {
 			var html = snippet.render().trim();
-			var fragment = create_fragment_from_html(html, true);
+			var fragment = create_fragment_from_html(html);
 			element = /** @type {Element} */ (get_first_child(fragment));
 
 			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== ELEMENT_NODE)) {
