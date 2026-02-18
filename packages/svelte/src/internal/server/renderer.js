@@ -12,7 +12,8 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { noop } from '../shared/utils.js';
+import { has_own_property, noop } from '../shared/utils.js';
+import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -215,9 +216,14 @@ export class Renderer {
 		set_ssr_context(parent);
 
 		if (result instanceof Promise) {
+			result.finally(() => {
+				set_ssr_context(null);
+			});
+
 			if (child.global.mode === 'sync') {
 				e.await_invalid();
 			}
+
 			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
 			result.catch(() => {});
 			child.promise = result;
@@ -355,7 +361,7 @@ export class Renderer {
 		 * @param {{ head?: string, body: any }} content
 		 */
 		const close = (renderer, value, { head, body }) => {
-			if ('value' in attrs) {
+			if (has_own_property.call(attrs, 'value')) {
 				value = attrs.value;
 			}
 
@@ -386,7 +392,7 @@ export class Renderer {
 				}
 			});
 		} else {
-			close(this, body, { body });
+			close(this, body, { body: escape_html(body) });
 		}
 	}
 
@@ -737,29 +743,31 @@ export class Renderer {
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
-		const renderer = new Renderer(
-			new SSRState(
-				mode,
-				options.idPrefix ? options.idPrefix + '-' : '',
-				options.csp,
-				options.transformError
-			)
-		);
+		var previous_context = ssr_context;
 
-		renderer.push(BLOCK_OPEN);
+		try {
+			const renderer = new Renderer(
+				new SSRState(
+          mode,
+          options.idPrefix ? options.idPrefix + '-' : '',
+          options.csp,
+  				options.transformError
+        )
+			);
 
-		push();
-		if (options.context) /** @type {SSRContext} */ (ssr_context).c = options.context;
-		/** @type {SSRContext} */ (ssr_context).r = renderer;
+			/** @type {SSRContext} */
+			const context = { p: null, c: options.context ?? null, r: renderer };
+			set_ssr_context(context);
 
-		// @ts-expect-error
-		component(renderer, options.props ?? {});
+			renderer.push(BLOCK_OPEN);
+			// @ts-expect-error
+			component(renderer, options.props ?? {});
+			renderer.push(BLOCK_CLOSE);
 
-		pop();
-
-		renderer.push(BLOCK_CLOSE);
-
-		return renderer;
+			return renderer;
+		} finally {
+			set_ssr_context(previous_context);
+		}
 	}
 
 	/**

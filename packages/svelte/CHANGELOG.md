@@ -1,5 +1,53 @@
 # svelte
 
+## 5.52.0
+
+### Minor Changes
+
+- feat: support TrustedHTML in `{@html}` expressions ([#17701](https://github.com/sveltejs/svelte/pull/17701))
+
+### Patch Changes
+
+- fix: repair dynamic component truthy/falsy hydration mismatches ([#17737](https://github.com/sveltejs/svelte/pull/17737))
+
+- fix: re-run non-render-bound deriveds on the server ([#17674](https://github.com/sveltejs/svelte/pull/17674))
+
+## 5.51.5
+
+### Patch Changes
+
+- fix: check to make sure `svelte:element` tags are valid during SSR ([`73098bb26c6f06e7fd1b0746d817d2c5ee90755f`](https://github.com/sveltejs/svelte/commit/73098bb26c6f06e7fd1b0746d817d2c5ee90755f))
+
+- fix: misc option escaping and backwards compatibility ([#17741](https://github.com/sveltejs/svelte/pull/17741))
+
+- fix: strip event handlers during SSR ([`a0c7f289156e9fafaeaf5ca14af6c06fe9b9eae5`](https://github.com/sveltejs/svelte/commit/a0c7f289156e9fafaeaf5ca14af6c06fe9b9eae5))
+
+- fix: replace usage of `for in` with `for of Object.keys` ([`f89c7ddd7eebaa1ef3cc540400bec2c9140b330c`](https://github.com/sveltejs/svelte/commit/f89c7ddd7eebaa1ef3cc540400bec2c9140b330c))
+
+- fix: always escape option body in SSR ([`f7c80da18c215e3727c2a611b0b8744cc6e504c5`](https://github.com/sveltejs/svelte/commit/f7c80da18c215e3727c2a611b0b8744cc6e504c5))
+
+- chore: upgrade `devalue` ([#17739](https://github.com/sveltejs/svelte/pull/17739))
+
+## 5.51.4
+
+### Patch Changes
+
+- chore: proactively defer effects in pending boundary ([#17734](https://github.com/sveltejs/svelte/pull/17734))
+
+- fix: detect and error on non-idempotent each block keys in dev mode ([#17732](https://github.com/sveltejs/svelte/pull/17732))
+
+## 5.51.3
+
+### Patch Changes
+
+- fix: prevent event delegation logic conflicting between svelte instances ([#17728](https://github.com/sveltejs/svelte/pull/17728))
+
+- fix: treat CSS attribute selectors as case-insensitive for HTML enumerated attributes ([#17712](https://github.com/sveltejs/svelte/pull/17712))
+
+- fix: locate Rollup annontaion friendly to JS downgraders ([#17724](https://github.com/sveltejs/svelte/pull/17724))
+
+- fix: run effects in pending snippets ([#17719](https://github.com/sveltejs/svelte/pull/17719))
+
 ## 5.51.2
 
 ### Patch Changes
