@@ -216,18 +216,14 @@ export class Renderer {
 		set_ssr_context(parent);
 
 		if (result instanceof Promise) {
-			result
-				.finally(() => {
-					set_ssr_context(null);
-				})
-				.catch(() => {}); // avoid unhandled promise rejections
+			// catch to avoid unhandled promise rejections - we'll end up throwing in `collect_async` if something fails
+			result.catch(noop);
+			result.finally(() => set_ssr_context(null)).catch(noop);
 
 			if (child.global.mode === 'sync') {
 				e.await_invalid();
 			}
 
-			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
-			result.catch(() => {});
 			child.promise = result;
 		}
 
