@@ -748,11 +748,11 @@ export class Renderer {
 		try {
 			const renderer = new Renderer(
 				new SSRState(
-          mode,
-          options.idPrefix ? options.idPrefix + '-' : '',
-          options.csp,
-  				options.transformError
-        )
+					mode,
+					options.idPrefix ? options.idPrefix + '-' : '',
+					options.csp,
+					options.transformError
+				)
 			);
 
 			/** @type {SSRContext} */
