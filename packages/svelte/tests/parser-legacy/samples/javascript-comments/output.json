@@ -881,7 +881,7 @@
 			"sourceType": "module"
 		}
 	},
-	"comments": [
+	"_comments": [
 		{
 			"type": "Line",
 			"value": " a leading comment",
