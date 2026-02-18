@@ -6,7 +6,7 @@ export default test({
 		await tick();
 
 		const p = target.querySelector('p');
-		assert.equal(p.innerHTML, 'hello');
+		assert.equal(p?.innerHTML, 'hello');
 		assert.equal(window.document.title, 'hello');
 	}
 });
