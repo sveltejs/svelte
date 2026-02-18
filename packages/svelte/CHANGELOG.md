@@ -1,5 +1,17 @@
 # svelte
 
+## 5.51.3
+
+### Patch Changes
+
+- fix: prevent event delegation logic conflicting between svelte instances ([#17728](https://github.com/sveltejs/svelte/pull/17728))
+
+- fix: treat CSS attribute selectors as case-insensitive for HTML enumerated attributes ([#17712](https://github.com/sveltejs/svelte/pull/17712))
+
+- fix: locate Rollup annontaion friendly to JS downgraders ([#17724](https://github.com/sveltejs/svelte/pull/17724))
+
+- fix: run effects in pending snippets ([#17719](https://github.com/sveltejs/svelte/pull/17719))
+
 ## 5.51.2
 
 ### Patch Changes
