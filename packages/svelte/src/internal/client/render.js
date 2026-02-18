@@ -81,6 +81,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ *		transformError?: (error: unknown) => unknown;
  * 	} : {
  * 		target: Document | Element | ShadowRoot;
  * 		props: Props;
@@ -88,6 +89,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ *		transformError?: (error: unknown) => unknown;
  * 	}} options
  * @returns {Exports}
  */
@@ -158,7 +160,10 @@ const listeners = new Map();
  * @param {MountOptions} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
+function _mount(
+	Component,
+	{ target, anchor, props = {}, events, context, intro = true, transformError }
+) {
 	init_operations();
 
 	/** @type {Exports} */
@@ -206,7 +211,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				}
 
 				pop();
-			}
+			},
+			transformError
 		);
 
 		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
