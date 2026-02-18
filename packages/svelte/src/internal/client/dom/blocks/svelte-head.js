@@ -2,7 +2,7 @@
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { create_text, get_first_child, get_next_sibling } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
-import { COMMENT_NODE, HEAD_EFFECT } from '#client/constants';
+import { COMMENT_NODE, EFFECT_PRESERVED, HEAD_EFFECT } from '#client/constants';
 
 /**
  * @param {string} hash
@@ -49,7 +49,9 @@ export function head(hash, render_fn) {
 	}
 
 	try {
-		block(() => render_fn(anchor), HEAD_EFFECT);
+		// normally a branch is the child of a block and would have the EFFECT_PRESERVED flag,
+		// but since head blocks don't necessarily only have direct branch children we add it on the block itself
+		block(() => render_fn(anchor), HEAD_EFFECT | EFFECT_PRESERVED);
 	} finally {
 		if (was_hydrating) {
 			set_hydrating(true);
