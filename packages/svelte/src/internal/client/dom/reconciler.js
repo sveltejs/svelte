@@ -13,7 +13,7 @@ const policy =
 	});
 
 /** @param {string} html */
-function create_trusted_html(html) {
+export function create_trusted_html(html) {
 	return /** @type {string} */ (policy?.createHTML(html) ?? html);
 }
 
