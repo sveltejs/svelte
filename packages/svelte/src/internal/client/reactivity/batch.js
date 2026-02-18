@@ -91,7 +91,7 @@ export class Batch {
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
-	 * @type {Set<() => void>}
+	 * @type {Set<(batch: Batch) => void>}
 	 */
 	#commit_callbacks = new Set();
 
@@ -212,7 +212,7 @@ export class Batch {
 			}
 		} else {
 			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn();
+			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
 
 			if (this.#pending === 0) {
@@ -329,13 +329,12 @@ export class Batch {
 	}
 
 	flush() {
-		this.activate();
-
 		if (queued_root_effects.length > 0) {
+			this.activate();
 			flush_effects();
 		} else if (this.#pending === 0 && !this.is_fork) {
 			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn();
+			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
 
 			this.#commit();
@@ -485,7 +484,7 @@ export class Batch {
 		this.flush();
 	}
 
-	/** @param {() => void} fn */
+	/** @param {(batch: Batch) => void} fn */
 	oncommit(fn) {
 		this.#commit_callbacks.add(fn);
 	}
