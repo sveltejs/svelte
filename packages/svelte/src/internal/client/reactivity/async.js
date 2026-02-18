@@ -66,7 +66,6 @@ export function flatten(blockers, sync, async, fn) {
 			}
 		}
 
-		batch?.deactivate();
 		unset_context();
 	}
 
@@ -207,10 +206,11 @@ export async function* for_await_track_reactivity_loss(iterable) {
 	}
 }
 
-export function unset_context() {
+export function unset_context(deactivate_batch = true) {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
+	if (deactivate_batch) current_batch?.deactivate();
 
 	if (DEV) {
 		set_from_async_derived(null);
@@ -271,9 +271,7 @@ export function run(thunks) {
 
 		promise.finally(() => {
 			blocker.settled = true;
-
 			unset_context();
-			current_batch?.deactivate();
 		});
 	}
 

@@ -133,17 +133,7 @@ export function async_derived(fn, label, location) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn())
-				.then(d.resolve, d.reject)
-				.then(() => {
-					if (batch === current_batch && batch.committed) {
-						// if the batch was rejected as stale, we need to cleanup
-						// after any `$.save(...)` calls inside `fn()`
-						batch.deactivate();
-					}
-
-					unset_context();
-				});
+			Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
 		} catch (error) {
 			d.reject(error);
 			unset_context();
