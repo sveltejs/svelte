@@ -15,6 +15,19 @@ export function async_local_storage_unavailable() {
 }
 
 /**
+ * `<svelte:element this="%tag%">` is not a valid element name — the element will not be rendered
+ * @param {string} tag
+ * @returns {never}
+ */
+export function dynamic_element_invalid_tag(tag) {
+	const error = new Error(`dynamic_element_invalid_tag\n\`<svelte:element this="${tag}">\` is not a valid element name — the element will not be rendered\nhttps://svelte.dev/e/dynamic_element_invalid_tag`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * Encountered asynchronous work while rendering synchronously.
  * @returns {never}
  */

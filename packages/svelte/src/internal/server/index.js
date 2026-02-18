@@ -13,9 +13,14 @@ import {
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
+import {
+	is_boolean_attribute,
+	is_raw_text_element,
+	is_void,
+	REGEX_VALID_TAG_NAME
+} from '../../utils.js';
 import { Renderer } from './renderer.js';
 import * as e from './errors.js';
 
@@ -35,6 +40,9 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
 	renderer.push('<!---->');
 
 	if (tag) {
+		if (!REGEX_VALID_TAG_NAME.test(tag)) {
+			e.dynamic_element_invalid_tag(tag);
+		}
 		renderer.push(`<${tag}`);
 		attributes_fn();
 		renderer.push(`>`);
