@@ -118,3 +118,27 @@ export function to_array(value, n) {
 
 	return array;
 }
+
+/**
+ * @param {Record<string | symbol, unknown>} obj
+ * @param {Array<string | symbol>} keys
+ * @returns {Record<string | symbol, unknown>}
+ */
+export function exclude_from_object(obj, keys) {
+	/** @type {Record<string | symbol, unknown>} */
+	var result = {};
+
+	for (var key in obj) {
+		if (!keys.includes(key)) {
+			result[key] = obj[key];
+		}
+	}
+
+	for (var symbol of Object.getOwnPropertySymbols(obj)) {
+		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
+			result[symbol] = obj[symbol];
+		}
+	}
+
+	return result;
+}
