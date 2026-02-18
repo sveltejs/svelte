@@ -135,15 +135,7 @@ export function async_derived(fn, label, location) {
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
 			Promise.resolve(fn())
 				.then(d.resolve, d.reject)
-				.then(() => {
-					if (batch === current_batch && batch.committed) {
-						// if the batch was rejected as stale, we need to cleanup
-						// after any `$.save(...)` calls inside `fn()`
-						batch.deactivate();
-					}
-
-					unset_context();
-				});
+				.then(() => unset_context());
 		} catch (error) {
 			d.reject(error);
 			unset_context();
