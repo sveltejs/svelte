@@ -12,6 +12,7 @@ import { get_render_context, with_render_context, init_render_context } from './
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { noop } from '../shared/utils.js';
+import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -275,7 +276,7 @@ export class Renderer {
 				renderer.#out.push(' selected=""');
 			}
 
-			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
+			renderer.#out.push(`>${escape_html(body)}${is_rich ? '<!>' : ''}</option>`);
 
 			// super edge case, but may as well handle it
 			if (head) {
