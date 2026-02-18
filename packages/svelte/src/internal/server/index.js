@@ -64,7 +64,7 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
  * @param {Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
+ * @param {{ props?: Props; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {

@@ -395,7 +395,7 @@ export class Renderer {
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
+	 * @param {{ props?: Props; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
@@ -518,7 +518,7 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
+	 * @param {{ props?: NoInfer<Props>; context?: Map<any, any>; idPrefix?: string }} options
 	 * @returns {AccumulatedContent}
 	 */
 	static #render(component, options) {
@@ -539,7 +539,7 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
+	 * @param {{ props?: Props; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
 	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
 	 */
 	static async #render_async(component, options) {
@@ -617,7 +617,7 @@ export class Renderer {
 	 * @template {Record<string, any>} Props
 	 * @param {'sync' | 'async'} mode
 	 * @param {import('svelte').Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
+	 * @param {{ props?: Props; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
