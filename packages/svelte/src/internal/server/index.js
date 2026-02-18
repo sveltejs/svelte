@@ -105,16 +105,16 @@ export function css_props(renderer, is_html, props, component, dynamic = false) 
 		renderer.push(`<g style="${styles}">`);
 	}
 
-	if (dynamic) {
+	component();
+
+	if (!dynamic) {
 		renderer.push('<!---->');
 	}
 
-	component();
-
 	if (is_html) {
-		renderer.push(`<!----></svelte-css-wrapper>`);
+		renderer.push('</svelte-css-wrapper>');
 	} else {
-		renderer.push(`<!----></g>`);
+		renderer.push('</g>');
 	}
 }
 
