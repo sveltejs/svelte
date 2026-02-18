@@ -1,5 +1,6 @@
 import { escape_html } from '../../escaping.js';
 import { clsx as _clsx } from 'clsx';
+import { has_own_property } from './utils.js';
 
 /**
  * `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
@@ -27,7 +28,8 @@ export function attr(name, value, is_boolean = false) {
 		is_boolean = true;
 	}
 	if (value == null || (!value && is_boolean)) return '';
-	const normalized = (Object.hasOwn(replacements, name) && replacements[name].get(value)) || value;
+	const normalized =
+		(has_own_property.call(replacements, name) && replacements[name].get(value)) || value;
 	const assignment = is_boolean ? `=""` : `="${escape_html(normalized, true)}"`;
 	return ` ${name}${assignment}`;
 }
