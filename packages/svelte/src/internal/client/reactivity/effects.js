@@ -127,6 +127,7 @@ function create_effect(type, fn, sync) {
 			throw e;
 		}
 	} else if (fn !== null) {
+		Batch.ensure();
 		schedule_effect(effect);
 	}
 

@@ -302,6 +302,11 @@ export function increment_pending() {
 	batch.increment(blocking);
 
 	return () => {
+		// TODO we don't really want to activate here, because we don't
+		// flush the batch until the next microtask. But for now it's
+		// necessary to keep the tests passing
+		batch.activate();
+
 		boundary.update_pending_count(-1);
 		batch.decrement(blocking);
 	};

@@ -465,6 +465,10 @@ export class Batch {
 	}
 
 	revive() {
+		// TODO we activate here, before scheduling, but this means the
+		// `activate` in `flush` is presumably redundant
+		this.activate();
+
 		for (const e of this.#dirty_effects) {
 			this.#maybe_dirty_effects.delete(e);
 			set_signal_status(e, DIRTY);
