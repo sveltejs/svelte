@@ -11,7 +11,8 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { noop } from '../shared/utils.js';
+import { has_own_property, noop } from '../shared/utils.js';
+import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -267,12 +268,12 @@ export class Renderer {
 		 * @param {{ head?: string, body: any }} content
 		 */
 		const close = (renderer, value, { head, body }) => {
-			if ('value' in attrs) {
+			if (has_own_property.call(attrs, 'value')) {
 				value = attrs.value;
 			}
 
 			if (value === this.local.select_value) {
-				renderer.#out.push(' selected');
+				renderer.#out.push(' selected=""');
 			}
 
 			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
@@ -298,7 +299,7 @@ export class Renderer {
 				}
 			});
 		} else {
-			close(this, body, { body });
+			close(this, body, { body: escape_html(body) });
 		}
 	}
 

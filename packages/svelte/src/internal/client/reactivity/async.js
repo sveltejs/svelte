@@ -8,7 +8,7 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
-import { get_boundary } from '../dom/blocks/boundary.js';
+import { Boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -224,12 +224,7 @@ export function unset_context() {
 export function run(thunks) {
 	const restore = capture();
 
-	var boundary = get_boundary();
-	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = boundary.is_rendered();
-
-	boundary.update_pending_count(1);
-	batch.increment(blocking);
+	const decrement_pending = increment_pending();
 
 	var active = /** @type {Effect} */ (active_effect);
 
@@ -286,10 +281,7 @@ export function run(thunks) {
 		// wait one more tick, so that template effects are
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
-		.finally(() => {
-			boundary.update_pending_count(-1);
-			batch.decrement(blocking);
-		});
+		.finally(decrement_pending);
 
 	return blockers;
 }
@@ -299,4 +291,18 @@ export function run(thunks) {
  */
 export function wait(blockers) {
 	return Promise.all(blockers.map((b) => b.promise));
+}
+
+export function increment_pending() {
+	var boundary = /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
+	var batch = /** @type {Batch} */ (current_batch);
+	var blocking = boundary.is_rendered();
+
+	boundary.update_pending_count(1);
+	batch.increment(blocking);
+
+	return () => {
+		boundary.update_pending_count(-1);
+		batch.decrement(blocking);
+	};
 }

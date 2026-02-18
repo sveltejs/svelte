@@ -149,8 +149,8 @@ export function hydrate(component, options) {
 	}
 }
 
-/** @type {Map<string, number>} */
-const document_listeners = new Map();
+/** @type {Map<EventTarget, Map<string, number>>} */
+const listeners = new Map();
 
 /**
  * @template {Record<string, any>} Exports
@@ -160,40 +160,6 @@ const document_listeners = new Map();
  */
 function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
-
-	/** @type {Set<string>} */
-	var registered_events = new Set();
-
-	/** @param {Array<string>} events */
-	var event_handle = (events) => {
-		for (var i = 0; i < events.length; i++) {
-			var event_name = events[i];
-
-			if (registered_events.has(event_name)) continue;
-			registered_events.add(event_name);
-
-			var passive = is_passive_event(event_name);
-
-			// Add the event listener to both the container and the document.
-			// The container listener ensures we catch events from within in case
-			// the outer content stops propagation of the event.
-			target.addEventListener(event_name, handle_event_propagation, { passive });
-
-			var n = document_listeners.get(event_name);
-
-			if (n === undefined) {
-				// The document listener ensures we catch events that originate from elements that were
-				// manually moved outside of the container (e.g. via manual portals).
-				document.addEventListener(event_name, handle_event_propagation, { passive });
-				document_listeners.set(event_name, 1);
-			} else {
-				document_listeners.set(event_name, n + 1);
-			}
-		}
-	};
-
-	event_handle(array_from(all_registered_events));
-	root_event_handles.add(event_handle);
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
@@ -243,17 +209,65 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 		);
 
+		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
+		/** @type {Set<string>} */
+		var registered_events = new Set();
+
+		/** @param {Array<string>} events */
+		var event_handle = (events) => {
+			for (var i = 0; i < events.length; i++) {
+				var event_name = events[i];
+
+				if (registered_events.has(event_name)) continue;
+				registered_events.add(event_name);
+
+				var passive = is_passive_event(event_name);
+
+				// Add the event listener to both the container and the document.
+				// The container listener ensures we catch events from within in case
+				// the outer content stops propagation of the event.
+				//
+				// The document listener ensures we catch events that originate from elements that were
+				// manually moved outside of the container (e.g. via manual portals).
+				for (const node of [target, document]) {
+					var counts = listeners.get(node);
+
+					if (counts === undefined) {
+						counts = new Map();
+						listeners.set(node, counts);
+					}
+
+					var count = counts.get(event_name);
+
+					if (count === undefined) {
+						node.addEventListener(event_name, handle_event_propagation, { passive });
+						counts.set(event_name, 1);
+					} else {
+						counts.set(event_name, count + 1);
+					}
+				}
+			}
+		};
+
+		event_handle(array_from(all_registered_events));
+		root_event_handles.add(event_handle);
+
 		return () => {
 			for (var event_name of registered_events) {
-				target.removeEventListener(event_name, handle_event_propagation);
+				for (const node of [target, document]) {
+					var counts = /** @type {Map<string, number>} */ (listeners.get(node));
+					var count = /** @type {number} */ (counts.get(event_name));
 
-				var n = /** @type {number} */ (document_listeners.get(event_name));
+					if (--count == 0) {
+						node.removeEventListener(event_name, handle_event_propagation);
+						counts.delete(event_name);
 
-				if (--n === 0) {
-					document.removeEventListener(event_name, handle_event_propagation);
-					document_listeners.delete(event_name);
-				} else {
-					document_listeners.set(event_name, n);
+						if (counts.size === 0) {
+							listeners.delete(node);
+						}
+					} else {
+						counts.set(event_name, count);
+					}
 				}
 			}
 

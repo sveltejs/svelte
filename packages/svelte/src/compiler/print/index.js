@@ -414,9 +414,23 @@ const svelte_visitors = (comments) => ({
 					}
 				}
 			} else {
-				sequence.push(child_node);
+				const is_block_element =
+					child_node.type === 'RegularElement' ||
+					child_node.type === 'Component' ||
+					child_node.type === 'SvelteHead' ||
+					child_node.type === 'SvelteFragment' ||
+					child_node.type === 'SvelteBoundary' ||
+					child_node.type === 'SvelteDocument' ||
+					child_node.type === 'SvelteSelf' ||
+					child_node.type === 'SvelteWindow' ||
+					child_node.type === 'SvelteComponent' ||
+					child_node.type === 'SvelteElement' ||
+					child_node.type === 'SlotElement' ||
+					child_node.type === 'TitleElement';
 
-				if (child_node.type === 'RegularElement') flush();
+				if (is_block_element && sequence.length > 0) flush();
+				sequence.push(child_node);
+				if (is_block_element) flush();
 			}
 		}
 

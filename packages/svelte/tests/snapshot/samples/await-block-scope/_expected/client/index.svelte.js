@@ -13,9 +13,6 @@ export default function Await_block_scope($$anchor) {
 
 	var fragment = root();
 	var button = $.first_child(fragment);
-
-	button.__click = increment;
-
 	var text = $.child(button);
 
 	$.reset(button);
@@ -31,6 +28,7 @@ export default function Await_block_scope($$anchor) {
 		$.set_text(text_1, ` ${counter.count ?? ''}`);
 	});
 
+	$.delegated('click', button, increment);
 	$.append($$anchor, fragment);
 }
 

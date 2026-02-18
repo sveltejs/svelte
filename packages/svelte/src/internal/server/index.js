@@ -13,9 +13,14 @@ import {
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
+import {
+	is_boolean_attribute,
+	is_raw_text_element,
+	is_void,
+	REGEX_VALID_TAG_NAME
+} from '../../utils.js';
 import { Renderer } from './renderer.js';
 import * as e from './errors.js';
 
@@ -35,6 +40,9 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
 	renderer.push('<!---->');
 
 	if (tag) {
+		if (!REGEX_VALID_TAG_NAME.test(tag)) {
+			e.dynamic_element_invalid_tag(tag);
+		}
 		renderer.push(`<${tag}`);
 		attributes_fn();
 		renderer.push(`>`);
@@ -138,7 +146,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
 	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
 
-	for (name in attrs) {
+	for (name of Object.keys(attrs)) {
 		// omit functions, internal svelte properties and invalid attribute names
 		if (typeof attrs[name] === 'function') continue;
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
@@ -149,6 +157,9 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		if (lowercase) {
 			name = name.toLowerCase();
 		}
+
+		// omit event handler attributes
+		if (name.length > 2 && name.startsWith('on')) continue;
 
 		if (is_input) {
 			if (name === 'defaultvalue' || name === 'defaultchecked') {
@@ -174,7 +185,8 @@ export function spread_props(props) {
 
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
-		for (key in obj) {
+		if (obj == null) continue;
+		for (key of Object.keys(obj)) {
 			const desc = Object.getOwnPropertyDescriptor(obj, key);
 			if (desc) {
 				Object.defineProperty(merged_props, key, desc);
@@ -302,7 +314,7 @@ export function update_store_pre(store_values, store_name, store, d = 1) {
 
 /** @param {Record<string, [any, any, any]>} store_values */
 export function unsubscribe_stores(store_values) {
-	for (const store_name in store_values) {
+	for (const store_name of Object.keys(store_values)) {
 		store_values[store_name][1]();
 	}
 }
@@ -338,7 +350,7 @@ export function rest_props(props, rest) {
 	/** @type {Record<string, unknown>} */
 	const rest_props = {};
 	let key;
-	for (key in props) {
+	for (key of Object.keys(props)) {
 		if (!rest.includes(key)) {
 			rest_props[key] = props[key];
 		}
@@ -363,7 +375,7 @@ export function sanitize_slots(props) {
 	/** @type {Record<string, boolean>} */
 	const sanitized = {};
 	if (props.children) sanitized.default = true;
-	for (const key in props.$$slots) {
+	for (const key of Object.keys(props.$$slots || {})) {
 		sanitized[key] = true;
 	}
 	return sanitized;
@@ -376,7 +388,7 @@ export function sanitize_slots(props) {
  * @param {Record<string, unknown>} props_now
  */
 export function bind_props(props_parent, props_now) {
-	for (const key in props_now) {
+	for (const key of Object.keys(props_now)) {
 		const initial_value = props_parent[key];
 		const value = props_now[key];
 		if (

@@ -13,11 +13,11 @@ export default function Delegated_locally_declared_shadowed($$anchor) {
 
 		$.set_attribute(button, 'data-index', index);
 
-		button.__click = (e) => {
+		$.delegated('click', button, (e) => {
 			const index = Number(e.currentTarget.dataset.index);
 
 			console.log(index);
-		};
+		});
 
 		$.append($$anchor, button);
 	});

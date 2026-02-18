@@ -12,6 +12,7 @@ export var object_prototype = Object.prototype;
 export var array_prototype = Array.prototype;
 export var get_prototype_of = Object.getPrototypeOf;
 export var is_extensible = Object.isExtensible;
+export var has_own_property = Object.prototype.hasOwnProperty;
 
 /**
  * @param {any} thing

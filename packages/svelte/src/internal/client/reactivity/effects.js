@@ -19,7 +19,7 @@ import {
 	EFFECT,
 	DESTROYED,
 	INERT,
-	EFFECT_RAN,
+	REACTION_RAN,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	EFFECT_TRANSPARENT,
@@ -40,8 +40,8 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, current_batch, schedule_effect } from './batch.js';
-import { flatten } from './async.js';
+import { Batch, schedule_effect } from './batch.js';
+import { flatten, increment_pending } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
 
@@ -122,7 +122,6 @@ function create_effect(type, fn, sync) {
 	if (sync) {
 		try {
 			update_effect(effect);
-			effect.f |= EFFECT_RAN;
 		} catch (e) {
 			destroy_effect(effect);
 			throw e;
@@ -206,7 +205,7 @@ export function user_effect(fn) {
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
 	var flags = /** @type {Effect} */ (active_effect).f;
-	var defer = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & EFFECT_RAN) === 0;
+	var defer = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & REACTION_RAN) === 0;
 
 	if (defer) {
 		// Top-level `$effect(...)` in an unmounted component — defer until mount
@@ -377,14 +376,16 @@ export function template_effect(fn, sync = [], async = [], blockers = []) {
  * @param {Blocker[]} blockers
  */
 export function deferred_template_effect(fn, sync = [], async = [], blockers = []) {
-	var batch = /** @type {Batch} */ (current_batch);
-	var is_async = async.length > 0 || blockers.length > 0;
-
-	if (is_async) batch.increment(true);
+	if (async.length > 0 || blockers.length > 0) {
+		var decrement_pending = increment_pending();
+	}
 
 	flatten(blockers, sync, async, (values) => {
 		create_effect(EFFECT, () => fn(...values.map(get)), false);
-		if (is_async) batch.decrement(true);
+
+		if (decrement_pending) {
+			decrement_pending();
+		}
 	});
 }
 
