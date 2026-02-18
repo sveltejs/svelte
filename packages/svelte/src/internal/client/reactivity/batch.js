@@ -575,7 +575,9 @@ export function flushSync(fn) {
 				}
 			}
 
-			flush_effects();
+			if (current_batch !== null) {
+				flush_effects();
+			}
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
