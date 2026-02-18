@@ -333,11 +333,6 @@ export class Batch {
 
 		if (queued_root_effects.length > 0) {
 			flush_effects();
-
-			if (current_batch !== null && current_batch !== this) {
-				// this can happen if a new batch was created during `flush_effects()`
-				return;
-			}
 		} else if (this.#pending === 0 && !this.is_fork) {
 			// append/remove branches
 			for (const fn of this.#commit_callbacks) fn();
