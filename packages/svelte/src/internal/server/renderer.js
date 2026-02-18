@@ -267,7 +267,7 @@ export class Renderer {
 		 * @param {{ head?: string, body: any }} content
 		 */
 		const close = (renderer, value, { head, body }) => {
-			if ('value' in attrs) {
+			if (Object.hasOwn(attrs, 'value')) {
 				value = attrs.value;
 			}
 

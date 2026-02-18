@@ -138,7 +138,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
 	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
 
-	for (name in attrs) {
+	for (name of Object.keys(attrs)) {
 		// omit functions, internal svelte properties and invalid attribute names
 		if (typeof attrs[name] === 'function') continue;
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
@@ -174,7 +174,8 @@ export function spread_props(props) {
 
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
-		for (key in obj) {
+		if (obj == null) continue;
+		for (key of Object.keys(obj)) {
 			const desc = Object.getOwnPropertyDescriptor(obj, key);
 			if (desc) {
 				Object.defineProperty(merged_props, key, desc);
@@ -302,7 +303,7 @@ export function update_store_pre(store_values, store_name, store, d = 1) {
 
 /** @param {Record<string, [any, any, any]>} store_values */
 export function unsubscribe_stores(store_values) {
-	for (const store_name in store_values) {
+	for (const store_name of Object.keys(store_values)) {
 		store_values[store_name][1]();
 	}
 }
@@ -338,7 +339,7 @@ export function rest_props(props, rest) {
 	/** @type {Record<string, unknown>} */
 	const rest_props = {};
 	let key;
-	for (key in props) {
+	for (key of Object.keys(props)) {
 		if (!rest.includes(key)) {
 			rest_props[key] = props[key];
 		}
@@ -363,7 +364,7 @@ export function sanitize_slots(props) {
 	/** @type {Record<string, boolean>} */
 	const sanitized = {};
 	if (props.children) sanitized.default = true;
-	for (const key in props.$$slots) {
+	for (const key of Object.keys(props.$$slots || {})) {
 		sanitized[key] = true;
 	}
 	return sanitized;
@@ -376,7 +377,7 @@ export function sanitize_slots(props) {
  * @param {Record<string, unknown>} props_now
  */
 export function bind_props(props_parent, props_now) {
-	for (const key in props_now) {
+	for (const key of Object.keys(props_now)) {
 		const initial_value = props_parent[key];
 		const value = props_now[key];
 		if (
