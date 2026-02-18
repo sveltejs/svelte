@@ -216,9 +216,11 @@ export class Renderer {
 		set_ssr_context(parent);
 
 		if (result instanceof Promise) {
-			result.finally(() => {
-				set_ssr_context(null);
-			});
+			result
+				.finally(() => {
+					set_ssr_context(null);
+				})
+				.catch(() => {}); // avoid unhandled promise rejections
 
 			if (child.global.mode === 'sync') {
 				e.await_invalid();
