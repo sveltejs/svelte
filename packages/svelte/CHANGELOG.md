@@ -1,5 +1,11 @@
 # svelte
 
+## 5.53.1
+
+### Patch Changes
+
+- fix: handle shadowed function names correctly ([#17753](https://github.com/sveltejs/svelte/pull/17753))
+
 ## 5.53.0
 
 ### Minor Changes
