@@ -10,7 +10,7 @@
 
 ### Patch Changes
 
-- fix: use TrustedHTML to test for customizable <select> support, where necessary ([#17743](https://github.com/sveltejs/svelte/pull/17743))
+- fix: use TrustedHTML to test for customizable `<select>` support, where necessary ([#17743](https://github.com/sveltejs/svelte/pull/17743))
 
 - fix: ensure head effects are kept in the effect tree ([#17746](https://github.com/sveltejs/svelte/pull/17746))
 
