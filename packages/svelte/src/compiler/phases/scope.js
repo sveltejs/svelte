@@ -1101,14 +1101,20 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const scope = state.scope.child();
 			scopes.set(node, scope);
 
-			if (node.id) scope.declare(node.id, 'normal', 'function');
+			if (node.id) {
+				scopes.set(node.id, state.scope); // so that declarations within with the same name are not confused with the function name
+				scope.declare(node.id, 'normal', 'function');
+			}
 
 			add_params(scope, node.params);
 			next({ scope });
 		},
 
 		FunctionDeclaration(node, { state, next }) {
-			if (node.id) state.scope.declare(node.id, 'normal', 'function', node);
+			if (node.id) {
+				scopes.set(node.id, state.scope); // so that declarations within with the same name are not confused with the function name
+				state.scope.declare(node.id, 'normal', 'function', node);
+			}
 
 			const scope = state.scope.child();
 			scopes.set(node, scope);
