@@ -18,7 +18,8 @@ import {
 	EAGER_EFFECT,
 	HEAD_EFFECT,
 	ERROR_VALUE,
-	MANAGED_EFFECT
+	MANAGED_EFFECT,
+	REACTION_RAN
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -71,8 +72,6 @@ let is_flushing = false;
 export let is_flushing_sync = false;
 
 export class Batch {
-	committed = false;
-
 	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
@@ -142,7 +141,7 @@ export class Batch {
 
 	#decrement_queued = false;
 
-	is_deferred() {
+	#is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
 
@@ -202,7 +201,7 @@ export class Batch {
 			// log_inconsistent_branches(root);
 		}
 
-		if (this.is_deferred()) {
+		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
@@ -246,9 +245,6 @@ export class Batch {
 
 		var effect = root.first;
 
-		/** @type {Effect | null} */
-		var pending_boundary = null;
-
 		while (effect !== null) {
 			var flags = effect.f;
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
@@ -256,26 +252,9 @@ export class Batch {
 
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_branches.has(effect);
 
-			// Inside a `<svelte:boundary>` with a pending snippet,
-			// all effects are deferred until the boundary resolves
-			// (except block/async effects, which run immediately)
-			if (
-				async_mode_flag &&
-				pending_boundary === null &&
-				(flags & BOUNDARY_EFFECT) !== 0 &&
-				effect.b?.is_pending
-			) {
-				pending_boundary = effect;
-			}
-
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
-				} else if (
-					pending_boundary !== null &&
-					(flags & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0
-				) {
-					/** @type {Boundary} */ (pending_boundary.b).defer_effect(effect);
 				} else if ((flags & EFFECT) !== 0) {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
@@ -293,16 +272,15 @@ export class Batch {
 				}
 			}
 
-			var parent = effect.parent;
-			effect = effect.next;
+			while (effect !== null) {
+				var next = effect.next;
 
-			while (effect === null && parent !== null) {
-				if (parent === pending_boundary) {
-					pending_boundary = null;
+				if (next !== null) {
+					effect = next;
+					break;
 				}
 
-				effect = parent.next;
-				parent = parent.parent;
+				effect = effect.parent;
 			}
 		}
 	}
@@ -445,7 +423,6 @@ export class Batch {
 			batch_values = previous_batch_values;
 		}
 
-		this.committed = true;
 		batches.delete(this);
 	}
 
@@ -472,7 +449,7 @@ export class Batch {
 		queue_micro_task(() => {
 			this.#decrement_queued = false;
 
-			if (!this.is_deferred()) {
+			if (!this.#is_deferred()) {
 				// we only reschedule previously-deferred effects if we expect
 				// to be able to run them after processing the batch
 				this.revive();
@@ -836,6 +813,19 @@ function depends_on(reaction, sources, checked) {
 export function schedule_effect(signal) {
 	var effect = (last_scheduled_effect = signal);
 
+	var boundary = effect.b;
+
+	// defer render effects inside a pending boundary
+	// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
+	if (
+		boundary?.is_pending &&
+		(signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
+		(signal.f & REACTION_RAN) === 0
+	) {
+		boundary.defer_effect(signal);
+		return;
+	}
+
 	while (effect.parent !== null) {
 		effect = effect.parent;
 		var flags = effect.f;
@@ -847,13 +837,18 @@ export function schedule_effect(signal) {
 			is_flushing &&
 			effect === active_effect &&
 			(flags & BLOCK_EFFECT) !== 0 &&
-			(flags & HEAD_EFFECT) === 0
+			(flags & HEAD_EFFECT) === 0 &&
+			(flags & REACTION_RAN) !== 0
 		) {
 			return;
 		}
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) return;
+			if ((flags & CLEAN) === 0) {
+				// branch is already dirty, bail
+				return;
+			}
+
 			effect.f ^= CLEAN;
 		}
 	}

@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.51.0",
+  "version": "5.53.0",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -175,7 +175,7 @@
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
-    "devalue": "^5.6.2",
+    "devalue": "^5.6.3",
     "esm-env": "^1.2.1",
     "esrap": "^2.2.2",
     "is-reference": "^3.0.3",

@@ -164,7 +164,8 @@ export default function Select_with_rich_content($$renderer) {
 		$$renderer.push('<!--[!-->');
 	}
 
-	$$renderer.push(`<!--]--></select> <select><!--[-->`);
+	$$renderer.push(`<!--]--></select> <select>`);
+	$$renderer.push(`<!--[-->`);
 
 	{
 		$$renderer.option({}, ($$renderer) => {
@@ -172,7 +173,9 @@ export default function Select_with_rich_content($$renderer) {
 		});
 	}
 
-	$$renderer.push(`<!--]--></select> <select><!--[-->`);
+	$$renderer.push(`<!--]-->`);
+	$$renderer.push(`</select> <select>`);
+	$$renderer.push(`<!--[-->`);
 
 	{
 		$$renderer.option(
@@ -188,7 +191,8 @@ export default function Select_with_rich_content($$renderer) {
 		);
 	}
 
-	$$renderer.push(`<!--]--></select> <select>`);
+	$$renderer.push(`<!--]-->`);
+	$$renderer.push(`</select> <select>`);
 	Option($$renderer, {});
 	$$renderer.push(`<!----><!></select>  <select>`);
 	option_snippet($$renderer);

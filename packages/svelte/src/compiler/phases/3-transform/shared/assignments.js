@@ -3,7 +3,6 @@
 /** @import { Context as ServerContext } from '../server/types.js' */
 import { extract_paths, is_expression_async } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { get_value } from '../client/visitors/shared/declarations.js';
 
 /**
  * @template {ClientContext | ServerContext} Context
