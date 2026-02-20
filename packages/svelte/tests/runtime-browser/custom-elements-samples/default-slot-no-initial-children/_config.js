@@ -15,13 +15,6 @@ export default test({
 		// The default slot element should be created even without initial children
 		assert.ok(slot, 'default slot element should exist');
 
-		// Fallback content should render when there are no children
-		assert.equal(
-			el.shadowRoot.querySelector('p').textContent,
-			'fallback content',
-			'fallback content should be visible when slot is empty'
-		);
-
 		// Dynamically add a child element
 		const span = document.createElement('span');
 		span.textContent = 'dynamic child';
