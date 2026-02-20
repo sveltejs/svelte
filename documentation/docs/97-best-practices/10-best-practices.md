@@ -56,7 +56,7 @@ to allow `<MyComponent bind:value />`. This can get hairy when the value of the 
 
 Every prop that starts with `on` is treated as an event listener for the element. To register a `click` listener on an element you can do `<button onclick={()=>{}} />` (NOTE: in svelte 5 there's no colon between `on` and `click`). Since elements are just attributes you can spread them, use the `{onclick}` shorthand etc.
 
-If you need to attach listeners to `window` or `document` use `<svelte:window onclick>` or `<svelte:window onclick>` instead of using `onMount`/`$effect`
+If you need to attach listeners to `window` or `document` use `<svelte:window onclick>` or `<svelte:document onclick>` instead of using `onMount`/`$effect`
 
 ## Each blocks
 
