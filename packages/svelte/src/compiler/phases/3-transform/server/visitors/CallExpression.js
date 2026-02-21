@@ -23,7 +23,7 @@ export function CallExpression(node, context) {
 		return b.void0;
 	}
 
-	if (rune === '$effect.tracking') {
+	if (rune === '$effect.tracking' || rune === '$effect.allowed') {
 		return b.false;
 	}
 
