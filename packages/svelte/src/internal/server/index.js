@@ -505,6 +505,35 @@ export function derived(fn) {
 }
 
 /**
+ * @template {number | bigint} T
+ * @param {(value?: T) => T} derived
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update_derived(derived, d = 1) {
+	const value = derived();
+	let increase = typeof value === 'bigint' ? BigInt(d) : d;
+	// for some reason TS is mad even if T is always number or bigint
+	derived(value + /** @type {*} */ (increase));
+	return value;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {(value?: T) => T} derived
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update_derived_pre(derived, d = 1) {
+	const old_value = derived();
+	let increase = typeof old_value === 'bigint' ? BigInt(d) : d;
+	// for some reason TS is mad even if T is always number or bigint
+	const value = old_value + /** @type {*} */ (increase);
+	derived(value);
+	return value;
+}
+
+/**
  * @template T
  * @param {()=>T} fn
  */
