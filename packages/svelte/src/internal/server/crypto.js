@@ -5,11 +5,11 @@ let text_encoder;
 let crypto;
 
 /**
- * @param {string} module_name 
+ * @param {string} module_name
  * @returns {Promise<any>}
  */
 function opaque_import(module_name) {
-	return import(module_name)
+	return import(module_name);
 }
 
 /** @param {string} data */
