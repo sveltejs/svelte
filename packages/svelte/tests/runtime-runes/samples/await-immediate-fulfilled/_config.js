@@ -7,8 +7,7 @@ export default test({
 			target.querySelectorAll('button');
 
 		rejectTimeout.click();
-		await tick();
-		await tick();
+		await new Promise((resolve) => setTimeout(resolve, 1));
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -34,8 +33,7 @@ export default test({
 		);
 
 		resolveTimeout.click();
-		await tick();
-		await tick();
+		await new Promise((resolve) => setTimeout(resolve, 1));
 		assert.htmlEqual(
 			target.innerHTML,
 			`
