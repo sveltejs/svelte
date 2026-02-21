@@ -170,7 +170,10 @@ export function is_dirty(reaction) {
 		for (var i = 0; i < length; i++) {
 			var dependency = dependencies[i];
 
-			if (is_dirty(/** @type {Derived} */ (dependency))) {
+			if (
+				(dependency.f & REACTION_IS_UPDATING) === 0 &&
+				is_dirty(/** @type {Derived} */ (dependency))
+			) {
 				update_derived(/** @type {Derived} */ (dependency));
 			}
 
@@ -623,6 +626,14 @@ export function get(signal) {
 
 	if (is_derived) {
 		var derived = /** @type {Derived} */ (signal);
+
+		if ((derived.f & REACTION_IS_UPDATING) !== 0) {
+			return derived.v === UNINITIALIZED
+				? /** @type {V} */ (undefined)
+				: batch_values?.has(derived)
+					? batch_values.get(derived)
+					: derived.v;
+		}
 
 		if (is_destroying_effect) {
 			var value = derived.v;
