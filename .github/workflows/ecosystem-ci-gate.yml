@@ -1,7 +1,7 @@
 name: ecosystem-ci gate
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
   issue_comment:
     types: [created]
@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   gate:
-    if: github.repository == 'sveltejs/svelte' && (github.event_name == 'pull_request_target' || github.event.issue.pull_request)
+    if: github.repository == 'sveltejs/svelte' && ((github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'changeset-release/main') || (github.event_name == 'issue_comment' && github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run')))
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
