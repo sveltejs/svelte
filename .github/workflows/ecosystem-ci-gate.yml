@@ -1,0 +1,108 @@
+name: ecosystem-ci gate
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+jobs:
+  gate:
+    if: github.repository == 'sveltejs/svelte' && (github.event_name == 'pull_request_target' || github.event.issue.pull_request)
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      issues: read
+      contents: read
+    steps:
+      - name: Evaluate gate
+        id: evaluate
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const allowed_roles = new Set(['admin', 'maintain', 'write'])
+
+            const pull_number = context.payload.pull_request
+              ? context.payload.pull_request.number
+              : context.issue.number
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number,
+            })
+
+            const is_release_pr = pr.head.ref === 'changeset-release/main'
+            if (!is_release_pr) {
+              core.notice(`PR #${pull_number} is not a release PR (${pr.head.ref}). Gate not required.`)
+              core.setOutput('should_fail', 'false')
+              core.setOutput('reason', 'Gate is only required for changeset-release/main')
+              return
+            }
+
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number,
+              per_page: 250,
+            })
+
+            const last_commit = commits[commits.length - 1]
+            const last_commit_time = new Date(last_commit.commit.committer.date)
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number,
+              per_page: 100,
+            })
+
+            let has_valid_command = false
+            for (const comment of comments) {
+              if (!(comment.body || '').trim().startsWith('/ecosystem-ci run')) {
+                continue
+              }
+
+              const comment_time = new Date(comment.created_at)
+              if (comment_time <= last_commit_time) {
+                continue
+              }
+
+              let permission
+              try {
+                const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  username: comment.user.login,
+                })
+                permission = data.permission
+              } catch {
+                permission = 'none'
+              }
+
+              if (allowed_roles.has(permission)) {
+                has_valid_command = true
+                break
+              }
+            }
+
+            if (has_valid_command) {
+              core.setOutput('should_fail', 'false')
+              core.setOutput('reason', 'Valid maintainer /ecosystem-ci run command found after latest commit')
+              return
+            }
+
+            core.setOutput('should_fail', 'true')
+            core.setOutput('reason', 'Release PRs require a maintainer to run /ecosystem-ci after the latest commit')
+
+      - name: Enforce gate
+        if: steps.evaluate.outputs.should_fail == 'true'
+        run: |
+          echo "${{ steps.evaluate.outputs.reason }}"
+          exit 1
+
+      - name: Gate satisfied
+        if: steps.evaluate.outputs.should_fail != 'true'
+        run: echo "${{ steps.evaluate.outputs.reason }}"
