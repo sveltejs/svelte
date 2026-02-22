@@ -45,12 +45,12 @@ export function set_should_intro(value) {
  */
 export function set_text(text, value) {
 	// For objects, we apply string coercion (which might make things like $state array references in the template reactive) before diffing
-	var str = value == null ? '' : typeof value === 'object' ? value + '' : value;
+	var str = value == null ? '' : typeof value === 'object' ? `${value}` : value;
 	// @ts-expect-error
 	if (str !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
 		text.__t = str;
-		text.nodeValue = str + '';
+		text.nodeValue = `${str}`;
 	}
 }
 
