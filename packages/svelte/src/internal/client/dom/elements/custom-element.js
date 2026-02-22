@@ -114,13 +114,13 @@ if (typeof HTMLElement === 'function') {
 				const $$slots = {};
 				const existing_slots = get_custom_elements_slots(this);
 				for (const name of this.$$s) {
-					if (name in existing_slots) {
-						if (name === 'default' && !this.$$d.children) {
-							this.$$d.children = create_slot(name);
-							$$slots.default = true;
-						} else {
-							$$slots[name] = create_slot(name);
-						}
+					if (name === 'default' && !this.$$d.children) {
+						// Always create the default slot, even if no children are present initially,
+						// because children may be added dynamically later (fixes #13638)
+						this.$$d.children = create_slot(name);
+						$$slots.default = true;
+					} else if (name !== 'default' && name in existing_slots) {
+						$$slots[name] = create_slot(name);
 					}
 				}
 				for (const attribute of this.attributes) {
