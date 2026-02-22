@@ -87,7 +87,7 @@ importers:
         specifier: ^8.12.1
         version: 8.15.0
       aria-query:
-        specifier: ^5.3.1
+        specifier: 5.3.1
         version: 5.3.1
       axobject-query:
         specifier: ^4.1.0
