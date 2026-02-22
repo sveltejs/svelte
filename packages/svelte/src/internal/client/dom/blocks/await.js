@@ -102,7 +102,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				(e) => {
 					resolve(() => {
 						internal_set(error, e);
-						branches.ensure(THEN, catch_fn && ((target) => catch_fn(target, error)));
+						branches.ensure(CATCH, catch_fn && ((target) => catch_fn(target, error)));
 
 						if (!catch_fn) {
 							// Rethrow the error if no catch block exists
