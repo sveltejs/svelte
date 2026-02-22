@@ -1,5 +1,15 @@
 # svelte
 
+## 5.53.3
+
+### Patch Changes
+
+- fix: render `:catch` of `#await` block with correct key ([#17769](https://github.com/sveltejs/svelte/pull/17769))
+
+- chore: pin aria-query@5.3.1 ([#17772](https://github.com/sveltejs/svelte/pull/17772))
+
+- fix: make string coercion consistent to `toString` ([#17774](https://github.com/sveltejs/svelte/pull/17774))
+
 ## 5.53.2
 
 ### Patch Changes
