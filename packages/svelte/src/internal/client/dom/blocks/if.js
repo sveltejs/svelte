@@ -6,7 +6,8 @@ import {
 	read_hydration_instruction,
 	skip_nodes,
 	set_hydrate_node,
-	set_hydrating
+	set_hydrating,
+	hydrate_node
 } from '../hydration.js';
 import { block } from '../../reactivity/effects.js';
 import { BranchManager } from './branches.js';
@@ -19,7 +20,10 @@ import { HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js'
  * @returns {void}
  */
 export function if_block(node, fn, elseif = false) {
+	/** @type {TemplateNode | undefined} */
+	var marker;
 	if (hydrating) {
+		marker = hydrate_node;
 		hydrate_next();
 	}
 
@@ -32,8 +36,7 @@ export function if_block(node, fn, elseif = false) {
 	 */
 	function update_branch(key, fn) {
 		if (hydrating) {
-			const data = read_hydration_instruction(node);
-
+			var data = read_hydration_instruction(/** @type {TemplateNode} */ (marker));
 			/**
 			 * @type {number | false}
 			 * "[" = branch 0, "[1" = branch 1, "[2" = branch 2, ..., "[!" = else (false)

@@ -1,5 +1,81 @@
 # svelte
 
+## 5.53.3
+
+### Patch Changes
+
+- fix: render `:catch` of `#await` block with correct key ([#17769](https://github.com/sveltejs/svelte/pull/17769))
+
+- chore: pin aria-query@5.3.1 ([#17772](https://github.com/sveltejs/svelte/pull/17772))
+
+- fix: make string coercion consistent to `toString` ([#17774](https://github.com/sveltejs/svelte/pull/17774))
+
+## 5.53.2
+
+### Patch Changes
+
+- fix: update expressions on server deriveds ([#17767](https://github.com/sveltejs/svelte/pull/17767))
+
+- fix: further obfuscate `node:crypto` import from overzealous static analysis ([#17763](https://github.com/sveltejs/svelte/pull/17763))
+
+## 5.53.1
+
+### Patch Changes
+
+- fix: handle shadowed function names correctly ([#17753](https://github.com/sveltejs/svelte/pull/17753))
+
+## 5.53.0
+
+### Minor Changes
+
+- feat: allow comments in tags ([#17671](https://github.com/sveltejs/svelte/pull/17671))
+
+- feat: allow error boundaries to work on the server ([#17672](https://github.com/sveltejs/svelte/pull/17672))
+
+### Patch Changes
+
+- fix: use TrustedHTML to test for customizable `<select>` support, where necessary ([#17743](https://github.com/sveltejs/svelte/pull/17743))
+
+- fix: ensure head effects are kept in the effect tree ([#17746](https://github.com/sveltejs/svelte/pull/17746))
+
+- chore: deactivate current_batch by default in unset_context ([#17738](https://github.com/sveltejs/svelte/pull/17738))
+
+## 5.52.0
+
+### Minor Changes
+
+- feat: support TrustedHTML in `{@html}` expressions ([#17701](https://github.com/sveltejs/svelte/pull/17701))
+
+### Patch Changes
+
+- fix: repair dynamic component truthy/falsy hydration mismatches ([#17737](https://github.com/sveltejs/svelte/pull/17737))
+
+- fix: re-run non-render-bound deriveds on the server ([#17674](https://github.com/sveltejs/svelte/pull/17674))
+
+## 5.51.5
+
+### Patch Changes
+
+- fix: check to make sure `svelte:element` tags are valid during SSR ([`73098bb26c6f06e7fd1b0746d817d2c5ee90755f`](https://github.com/sveltejs/svelte/commit/73098bb26c6f06e7fd1b0746d817d2c5ee90755f))
+
+- fix: misc option escaping and backwards compatibility ([#17741](https://github.com/sveltejs/svelte/pull/17741))
+
+- fix: strip event handlers during SSR ([`a0c7f289156e9fafaeaf5ca14af6c06fe9b9eae5`](https://github.com/sveltejs/svelte/commit/a0c7f289156e9fafaeaf5ca14af6c06fe9b9eae5))
+
+- fix: replace usage of `for in` with `for of Object.keys` ([`f89c7ddd7eebaa1ef3cc540400bec2c9140b330c`](https://github.com/sveltejs/svelte/commit/f89c7ddd7eebaa1ef3cc540400bec2c9140b330c))
+
+- fix: always escape option body in SSR ([`f7c80da18c215e3727c2a611b0b8744cc6e504c5`](https://github.com/sveltejs/svelte/commit/f7c80da18c215e3727c2a611b0b8744cc6e504c5))
+
+- chore: upgrade `devalue` ([#17739](https://github.com/sveltejs/svelte/pull/17739))
+
+## 5.51.4
+
+### Patch Changes
+
+- chore: proactively defer effects in pending boundary ([#17734](https://github.com/sveltejs/svelte/pull/17734))
+
+- fix: detect and error on non-idempotent each block keys in dev mode ([#17732](https://github.com/sveltejs/svelte/pull/17732))
+
 ## 5.51.3
 
 ### Patch Changes
