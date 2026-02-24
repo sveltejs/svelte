@@ -293,6 +293,7 @@ export class Renderer {
 				}
 
 				child.promise = /** @type {Promise<unknown>} */ (result).then((transformed) => {
+					set_ssr_context(parent_context);
 					child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(transformed)}-->`);
 					failed_snippet(child, transformed, noop);
 					child.#out.push(BLOCK_CLOSE);
