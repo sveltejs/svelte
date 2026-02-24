@@ -2,7 +2,6 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	solo: true,
 	mode: ['hydrate', 'async-server', 'client'],
 	ssrHtml: '<p>caught: error (hello)</p>',
 	transformError: () => {
