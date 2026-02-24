@@ -60,7 +60,7 @@ If you _do_ need to use the comma operator for some reason, wrap the sequence in
 <div class={(size, color)}>...</div>
 ```
 
-> [!NOTE] This will evaluate to `color`, ignoring `size`.
+Note that this will evaluate to `color`, ignoring `size`.
 
 ## attribute_invalid_type
 
