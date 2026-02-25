@@ -72,7 +72,7 @@ When using an each block to iterate over some value prefer using the item withou
 {/each}
 ```
 
-The key MUST actually uniquely identify the object DO NOT use the index.
+> [!NOTE] The key _must_ actually uniquely identify the object — _do not_ use the index.
 
 ## Snippet
 
