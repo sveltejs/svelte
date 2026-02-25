@@ -91,9 +91,9 @@ Every snippet created as a child of a component will be automatically passed as 
 
 Read [the `@attach` docs](/docs/svelte/@attach) for documentation on using the imperative DOM API with elements in a Svelte component.
 
-## Use dynamic variables in css
+## Using JavaScript variables in CSS
 
-If you have a JS variable that you want to use inside CSS you can do so by using the `style:` directive.
+If you have a JS variable that you want to use inside CSS you can do so with the `style:` directive.
 
 ```svelte
 <div style:--columns={columns}></div>
@@ -103,7 +103,7 @@ this will add a style attribute with the `--columns:` variable that you can use 
 
 ## Dynamic classes
 
-Since `svelte@5.16.0` you can use `clsx` style directly in the `class` attribute of an element
+Since `svelte@5.16.0` you can use `clsx` styles directly in the `class` attribute of an element. This means that arrays and objects can be used to declaratively define classes for an element without having to do manual string concatenation. 
 
 ```svelte
 <script>
@@ -123,7 +123,7 @@ Arrays can contain arrays and objects, and clsx will flatten them.
 
 ## Await expressions
 
-If you are using `svelte@5.36` or higher you can read everything about await expressions in [this document](/docs/svelte/await-expressions/llms.txt) to learn how to use `await` in your component and [this file](https://svelte.dev/docs/svelte/hydratable) to learn how to properly hydrate them.
+If you are using `svelte@5.36` or higher, you can read everything about await expressions in [this document](/docs/svelte/await-expressions) to learn how to use `await` in your component and [this file](/docs/svelte/hydratable) to learn how to properly hydrate them without unnecessarily rerunning asynchronous tasks.
 
 ## Styling child components
 
