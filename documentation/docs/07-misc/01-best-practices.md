@@ -15,6 +15,7 @@ Objects and arrays (`$state({...})` or `$state([...])`) are made deeply reactive
 To compute something from state, use `$derived` rather than `$effect`:
 
 ```js
+// @errors: 2451
 // do this
 let square = $derived(num * num);
 
@@ -48,6 +49,7 @@ Never wrap the contents of an effect in `if (browser) {...}` or similar — effe
 Treat props as though they will change. For example, values that depend on props should usually use `$derived`:
 
 ```js
+// @errors: 2451
 let { type } = $props();
 
 // do this
