@@ -69,6 +69,9 @@ let last_scheduled_effect = null;
 let is_flushing = false;
 export let is_flushing_sync = false;
 
+/** @type {Effect[] | null} */
+export let current_effects = null;
+
 export class Batch {
 	/**
 	 * The current values of any sources that are updated in this batch
@@ -185,7 +188,7 @@ export class Batch {
 		this.apply();
 
 		/** @type {Effect[]} */
-		var effects = [];
+		var effects = (current_effects = []);
 
 		/** @type {Effect[]} */
 		var render_effects = [];
@@ -198,6 +201,8 @@ export class Batch {
 			// Helpful for debugging reactivity loss that has to do with branches being skipped:
 			// log_inconsistent_branches(root);
 		}
+
+		current_effects = null;
 
 		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
