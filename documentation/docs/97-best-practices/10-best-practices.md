@@ -160,7 +160,7 @@ If a component uses CSS variables in his styling you can automatically pass them
 
 In Svelte 4 stores were THE way to allow interactivity outside of a `.svelte` file. In Svelte 5 that changed and you can now use a `.svelte.{ts|js}` file with universal reactivity.
 
-When possible prefer to use universal reactivity instead of creating a store. Some projects might have stores already in use consider that when writing a new utility.
+When possible, prefer to use universal reactivity instead of stores. If you're writing a utility that may be used across multiple projects, keep in mind that some projects may still use stores, and try to make your utilities backwards-compatible.
 
 ## Context
 
