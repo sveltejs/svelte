@@ -37,9 +37,9 @@ If the derived expression is an object or array, it will be returned as-is — i
 
 ## `$effect`
 
-Effects are an escape hatch and should mostly be avoided. In particular, avoid writing state inside effects.
+Effects are an escape hatch and should mostly be avoided. In particular, avoid updating state inside effects.
 
-- If you need to sync state to an external library such as D3, it is often neater to use [`{@attach ...}`](attach)
+- If you need to sync state to an external library such as D3, it is often neater to use [`{@attach ...}`](@attach)
 - If you need to run some code in response to user interaction, put the code directly in an event handler or use a [function binding](bind#Function-bindings) as appropriate
 - If you need to log values for debugging purposes, use [`$inspect`](inspect)
 - If you need to observe something external to Svelte, use [`createSubscriber`](svelte-reactivity#createSubscriber)
@@ -131,7 +131,7 @@ Use `createContext` rather than `setContext` and `getContext`, as it provides ty
 
 ## Async Svelte
 
-If using `svelte@5.36` or higher, you can use [await expressions](/docs/svelte/await-expressions) and [hydratable](/docs/svelte/hydratable) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in `svelte.config.js` as they are not yet considered fully stable.
+If using version 5.36 or higher, you can use [await expressions](/docs/svelte/await-expressions) and [hydratable](/docs/svelte/hydratable) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in `svelte.config.js` as they are not yet considered fully stable.
 
 ## Avoid legacy features
 
