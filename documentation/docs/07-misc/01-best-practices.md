@@ -67,9 +67,26 @@ let color = type === 'danger' ? 'red' : 'green';
 
 ## Events
 
-Any element attribute starting with `on` is treated as an event listener (e.g. `<button onclick={() => {...}}>`). Beyond that, they are regular attributes which means they work with shorthand (`<button {onclick}>`), spread (`<button {...props}>`) and so on.
+Any element attribute starting with `on` is treated as an event listener:
 
-If you need to attach listeners to `window` or `document` you can use `<svelte:window onclick={...}>` or `<svelte:document onclick={...}>`. Avoid using `onMount` or `$effect` for this.
+```svelte
+<button onclick={() => {...}}>click me</button>
+
+<!-- attribute shorthand also works -->
+<button {onclick}>...</button>
+
+<!-- so do spread attributes -->
+<button {...props}>...</button>
+```
+
+If you need to attach listeners to `window` or `document` you can use `<svelte:window>` and `<svelte:document>`:
+
+```svelte
+<svelte:window onkeydown={...} />
+<svelte:document onvisibilitychange={...} />
+```
+
+Avoid using `onMount` or `$effect` for this.
 
 ## Each blocks
 
