@@ -1,5 +1,17 @@
 # svelte
 
+## 5.53.4
+
+### Patch Changes
+
+- fix: set server context after async transformError ([#17799](https://github.com/sveltejs/svelte/pull/17799))
+
+- fix: hydrate if blocks correctly ([#17784](https://github.com/sveltejs/svelte/pull/17784))
+
+- fix: handle default parameters scope leaks ([#17788](https://github.com/sveltejs/svelte/pull/17788))
+
+- fix: prevent flushed effects from running again ([#17787](https://github.com/sveltejs/svelte/pull/17787))
+
 ## 5.53.3
 
 ### Patch Changes
