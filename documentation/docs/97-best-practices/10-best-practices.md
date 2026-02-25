@@ -26,7 +26,7 @@ Like `$derived`, `$effect` automatically has every stateful variable (declared w
 
 If you want to log a value whenever the reactive variable changes use `$inspect` instead.
 
-For more information on when not to use `$effect` read [this document](/docs/svelte/$effect).
+For more information on when not to use `$effect` read [this document](/docs/svelte/$effect#When-not-to-use-$effect).
 
 `$effect` only runs on the client so you don't need to guard with `browser` or `typeof window === "undefined"`
 
