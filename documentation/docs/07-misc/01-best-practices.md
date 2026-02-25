@@ -1,5 +1,5 @@
 ---
-title: Overview
+title: Best practices
 ---
 
 This document is meant to collect a series of best practices to write not only correct but good Svelte code. The content of this page was originally created as a `SKILL.md` file but given it's content it can (and should) be used as a reference by human developers that wish to write the best possible Svelte code.
@@ -54,9 +54,9 @@ to allow `<MyComponent bind:value />`. This can get hairy when the value of the 
 
 ## Events on elements
 
-Every prop that starts with `on` is treated as an event listener for the element. To register a `click` listener on an element you can do `<button onclick={() => {}} />` 
+Every prop that starts with `on` is treated as an event listener for the element. To register a `click` listener on an element you can do `<button onclick={() => {}} />`
 
-> [!NOTE] In Svelte 5, `on` is no longer a directive, so you can't use `on:event`, you have to use `onevent`. 
+> [!NOTE] In Svelte 5, `on` is no longer a directive, so you can't use `on:event`, you have to use `onevent`.
 
 Since elements are just attributes you can spread them, use the `{onclick}` shorthand, etc.
 
@@ -103,7 +103,7 @@ this will add a style attribute with the `--columns:` variable that you can use 
 
 ## Dynamic classes
 
-Since `svelte@5.16.0` you can use `clsx` styles directly in the `class` attribute of an element. This means that arrays and objects can be used to declaratively define classes for an element without having to do manual string concatenation. 
+Since `svelte@5.16.0` you can use `clsx` styles directly in the `class` attribute of an element. This means that arrays and objects can be used to declaratively define classes for an element without having to do manual string concatenation.
 
 ```svelte
 <script>
