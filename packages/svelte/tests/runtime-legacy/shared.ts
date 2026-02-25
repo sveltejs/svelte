@@ -13,6 +13,7 @@ import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import { clear } from '../../src/internal/client/reactivity/batch.js';
 import { hydrating } from '../../src/internal/client/dom/hydration.js';
+import { ssr_context } from '../../src/internal/server/context.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -101,6 +102,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean | 'only-strip-comments';
 	recover?: boolean;
+	transformError?: (error: unknown) => unknown;
 }
 
 declare global {
@@ -358,12 +360,17 @@ async function run_test_variant(
 		let snapshot = undefined;
 
 		if (variant === 'hydrate' || variant === 'ssr' || variant === 'async-ssr') {
+			if (ssr_context !== null) {
+				throw new Error('ssr_context was not cleared');
+			}
+
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
 			const render_result = render(SsrSvelteComponent, {
 				props: config.server_props ?? config.props ?? {},
-				idPrefix: config.id_prefix
+				idPrefix: config.id_prefix,
+				transformError: config.transformError
 			});
 			const rendered =
 				variant === 'async-ssr' || (variant === 'hydrate' && compileOptions.experimental?.async)
@@ -386,6 +393,10 @@ async function run_test_variant(
 					// @ts-expect-error
 					snapshot = config.snapshot(target);
 				}
+			}
+
+			if (ssr_context !== null) {
+				throw new Error('ssr_context was not cleared');
 			}
 		} else {
 			target.innerHTML = '';
@@ -462,7 +473,8 @@ async function run_test_variant(
 						target,
 						props,
 						intro: config.intro,
-						recover: config.recover ?? false
+						recover: config.recover ?? false,
+						transformError: config.transformError
 					});
 				}
 			} else {

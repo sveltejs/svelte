@@ -68,35 +68,52 @@ function build_assignment(operator, left, right, context) {
 		object = object.object;
 	}
 
-	if (object.type !== 'Identifier' || !is_store_name(object.name)) {
+	if (object.type !== 'Identifier') {
 		return null;
 	}
 
-	const name = object.name.slice(1);
+	if (is_store_name(object.name)) {
+		const name = object.name.slice(1);
 
-	if (!context.state.scope.get(name)) {
-		return null;
+		if (!context.state.scope.get(name)) {
+			return null;
+		}
+
+		if (object === left) {
+			let value = /** @type {Expression} */ (
+				context.visit(build_assignment_value(operator, left, right))
+			);
+
+			return b.call('$.store_set', b.id(name), value);
+		}
+
+		return b.call(
+			'$.store_mutate',
+			b.assignment('??=', b.id('$$store_subs'), b.object([])),
+			b.literal(object.name),
+			b.id(name),
+			b.assignment(
+				operator,
+				/** @type {Pattern} */ (context.visit(left)),
+				/** @type {Expression} */ (context.visit(right))
+			)
+		);
 	}
 
-	if (object === left) {
+	const binding = context.state.scope.get(object.name);
+
+	// TODO 6.0 this won't work perfectly: once a derived is written to, it will
+	// no longer recompute. It might be better to disallow writing to deriveds
+	// on the server, to prevent this bug occurring
+	if (binding?.kind === 'derived' && object === left) {
 		let value = /** @type {Expression} */ (
 			context.visit(build_assignment_value(operator, left, right))
 		);
 
-		return b.call('$.store_set', b.id(name), value);
+		return b.call(binding.node, value);
 	}
 
-	return b.call(
-		'$.store_mutate',
-		b.assignment('??=', b.id('$$store_subs'), b.object([])),
-		b.literal(object.name),
-		b.id(name),
-		b.assignment(
-			operator,
-			/** @type {Pattern} */ (context.visit(left)),
-			/** @type {Expression} */ (context.visit(right))
-		)
-	);
+	return null;
 }
 
 /**

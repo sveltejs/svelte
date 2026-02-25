@@ -1,6 +1,5 @@
 /** @import { Fork } from 'svelte' */
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
-/** @import { Boundary } from '../dom/blocks/boundary' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -14,7 +13,6 @@ import {
 	ROOT_EFFECT,
 	MAYBE_DIRTY,
 	DERIVED,
-	BOUNDARY_EFFECT,
 	EAGER_EFFECT,
 	HEAD_EFFECT,
 	ERROR_VALUE,
@@ -72,8 +70,6 @@ let is_flushing = false;
 export let is_flushing_sync = false;
 
 export class Batch {
-	committed = false;
-
 	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
@@ -226,6 +222,10 @@ export class Batch {
 
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
+
+			// Clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
+			this.#dirty_effects.clear();
+			this.#maybe_dirty_effects.clear();
 
 			previous_batch = null;
 
@@ -426,7 +426,7 @@ export class Batch {
 			batch_values = previous_batch_values;
 		}
 
-		this.committed = true;
+		this.#skipped_branches.clear();
 		batches.delete(this);
 	}
 
