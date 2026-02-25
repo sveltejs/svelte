@@ -89,7 +89,7 @@ Every snippet created as a child of a component will be automatically passed as 
 
 ## Attachments
 
-Read [this document](/docs/svelte/@attach) if you need to use imperative DOM api.
+Read [the `@attach` docs](/docs/svelte/@attach) for documentation on using the imperative DOM API with elements in a Svelte component.
 
 ## Use dynamic variables in css
 
