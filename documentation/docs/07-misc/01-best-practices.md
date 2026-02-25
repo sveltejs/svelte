@@ -41,7 +41,7 @@ Effects are an escape hatch and should mostly be avoided. In particular, avoid u
 
 - If you need to sync state to an external library such as D3, it is often neater to use [`{@attach ...}`](@attach)
 - If you need to run some code in response to user interaction, put the code directly in an event handler or use a [function binding](bind#Function-bindings) as appropriate
-- If you need to log values for debugging purposes, use [`$inspect`](inspect)
+- If you need to log values for debugging purposes, use [`$inspect`]($inspect)
 - If you need to observe something external to Svelte, use [`createSubscriber`](svelte-reactivity#createSubscriber)
 
 Never wrap the contents of an effect in `if (browser) {...}` or similar — effects do not run on the server.
