@@ -74,7 +74,7 @@ When using an each block to iterate over some value, prefer using the item witho
 
 > [!NOTE] The key _must_ actually uniquely identify the object — _do not_ use the index.
 
-## Snippet
+## Snippets
 
 You can think of snippets like functions that render markup when invoked with the `{@render}` tag. You can declare snippets in the template part of a Svelte component and they will be available as a variable in the `script` tag. If they don't contain any state created in the `script` tag they will also be available in the `script module`.
 
