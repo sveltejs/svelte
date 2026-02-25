@@ -2,166 +2,144 @@
 title: Best practices
 ---
 
-This document is meant to collect a series of best practices to write not only correct but good Svelte code. The content of this page was originally created as a `SKILL.md` file but given it's content it can (and should) be used as a reference by human developers that wish to write the best possible Svelte code.
+This document outlines some best practices that will help you write fast, robust Svelte apps. It is also available as a `svelte-best-practices` skill for your agents.
 
->[!NOTE] This document will be also synchronized with the [mcp repository](https://github.com/sveltejs/mcp) to serve as a SKILL. To follow the rules of progressive discovery a few paragraph of this page that are only useful in specific situations during svelte development will merely link to other sections of the documentation.
+## `$state`
 
-## `$state` and `$derived`
+Only use the `$state` rune for variables that should be _reactive_ — in other words, variables that cause an `$effect`, `$derived` or template expression to update. Everything else can be a normal variable.
 
-When writing a Svelte component, each variable used inside an `$effect`, `$derived` or in the template must be declared with `$state`. Objects and arrays are automatically deeply reactive, and reactivity can be triggered via mutation. If you don't need mutations triggering reactivity, consider using `$state.raw` to improve performance. Not every variable must be stateful; if a variable is never used in an `$effect`, `$derived` or the template you can avoid using `$state` completely.
+Objects and arrays (`$state({...})` or `$state([...])`) are made deeply reactive, meaning mutation will trigger updates. This has a trade-off: in exchange for fine-grained reactivity, the objects must be proxied, which has performance overhead. In cases where you're dealing with large objects that are only ever reassigned (rather than mutated), use `$state.raw` instead. This is often the case with API responses, for example.
 
-If one stateful variable depends on another stateful variable, you must use `$derived` to create this new piece of state. `$derived` accepts an expression as input. If you want to use a function, you must use `$derived.by`. Only the stateful variables that are read within a derived actually count as a dependency of that derived. This means that if you guard the read of a stateful variable with an `if`, that stateful variable will only be a dependency when the condition is true. The value of a derived can be overridden; When overridden, the value will change immediately and trigger a DOM update. But when one of the dependencies changes, the value will be recalculated and the DOM updated once again. If a component is receiving a prop and you want a piece of state to be initialised from that prop, usually it's a good idea to use a derived because if that prop is a stateful variable, when it changes, Svelte will just update the value, not remount the component; If the value could be an object, a class, or an array, the suggestion is to use `$state.snapshot` to clone them (`$state.snapshot` is using `structuredClone` under the hood so it might not always be a good idea).
+## `$derived`
 
-## The `$effect` rune
+To compute something from state, use `$derived` rather than `$effect`:
 
-`$effect` is generally considered a malpractice in Svelte. You should almost never use `$effect` to sync between stateful variables (use a `$derived` for that) and reassigning state within an `$effect` is especially bad. When encountering an `$effect` asks yourself if that's really needed. It can usually be substituted by:
+```js
+// do this
+let square = $derived(num * num);
 
-- A `$derived`
-- An `@attach`
-- A class that uses `createSubscriber`
+// don't do this
+let square;
 
-The valid use cases for `$effect` are mainly to sync Svelte reactivity with a non-reactive system (like a D3 class, `localStorage`, or inside an attachment to do imperative DOM operations).
-
-Like `$derived`, `$effect` automatically has every stateful variable (declared with `$state` or `$derived`) as a dependency when it's read (if you guard the read of a stateful variable with an `if`, that stateful variable will only be a dependency when the condition is true)
-
-If you want to log a value whenever the reactive variable changes use `$inspect` instead.
-
-For more information on when not to use `$effect` read [this document](/docs/svelte/$effect#When-not-to-use-$effect).
-
-`$effect` only runs on the client so you don't need to guard with [`browser`](/docs/kit/$app-environment#browser) or `typeof window === "undefined"`
-
-## `$bindable`
-
-You can use `$bindable` inside `MyComponent.svelte` like this
-
-```svelte
-<script>
-	let { value = $bindable() } = $props();
-</script>
+$effect(() => {
+	square = num * num;
+});
 ```
 
-to allow `<MyComponent bind:value />`. This can get hairy when the value of the prop is not a literal value; try to use callbacks in that case.
+> [!NOTE] `$derived` is given an expression, _not_ a function. If you need to use a function (because the expression is complex, for example) use `$derived.by`.
 
-```svelte
-<script>
-	let { value, onchange } = $props();
-</script>
+Deriveds are writable — you can assign to them, just like `$state`, except that they will re-evaluate when their expression changes.
+
+If the derived expression is an object or array, it will be returned as-is — it is _not_ made deeply reactive. You can, however, use `$state` inside `$derived.by` in the rare cases that you need this.
+
+## `$effect`
+
+Effects are an escape hatch and should mostly be avoided. In particular, avoid writing state inside effects.
+
+- If you need to sync state to an external library such as D3, it is often neater to use [`{@attach ...}`](attach)
+- If you need to run some code in response to user interaction, put the code directly in an event handler or use a [function binding](bind#Function-bindings) as appropriate
+- If you need to log values for debugging purposes, use [`$inspect`](inspect)
+- If you need to observe something external to Svelte, use [`createSubscriber`](svelte-reactivity#createSubscriber)
+
+Never wrap the contents of an effect in `if (browser) {...}` or similar — effects do not run on the server.
+
+## `$props`
+
+Treat props as though they will change. For example, values that depend on props should usually use `$derived`:
+
+```js
+let { type } = $props();
+
+// do this
+let color = $derived(type === 'danger' ? 'red' : 'green');
+
+// don't do this — `color` will not update if `type` changes
+let color = type === 'danger' ? 'red' : 'green';
 ```
 
 ## `$inspect.trace`
 
-`$inspect.trace` is a debugging tool for reactivity. If something is not updating properly or running more than it should you can put `$inspect.trace("[yourlabel]")` as the first line of an `$effect` or `$derived.by` to get detailed logs about the dependencies of it.
+`$inspect.trace` is a debugging tool for reactivity. If something is not updating properly or running more than it should you can add `$inspect.trace(label)` as the first line of an `$effect` or `$derived.by` (or any function they call) to trace their dependencies and discover which one triggered an update.
 
-## Events on elements
+## Events
 
-Every prop that starts with `on` is treated as an event listener for the element. To register a `click` listener on an element you can do `<button onclick={() => {}} />`
+Any element attribute starting with `on` is treated as an event listener (e.g. `<button onclick={() => {...}}>`). Beyond that, they are regular attributes which means they work with shorthand (`<button {onclick}>`), spread (`<button {...props}>`) and so on.
 
-> [!NOTE] In Svelte 5, `on` is no longer a directive, so you can't use `on:event`, you have to use `onevent`.
-
-Since elements are just attributes you can spread them, use the `{onclick}` shorthand, etc.
-
-If you need to attach listeners to `window` or `document` use `<svelte:window onclick>` or `<svelte:document onclick>` instead of using `onMount`/`$effect`
+If you need to attach listeners to `window` or `document` you can use `<svelte:window onclick={...}>` or `<svelte:document onclick={...}>`. Avoid using `onMount` or `$effect` for this.
 
 ## Each blocks
 
-When using an each block to iterate over some value, prefer using the item without destructuring it in case you want to bind that value to an attribute. Prefer using a [keyed each block](/docs/svelte/each#Keyed-each-blocks) if possible— this will improve performance because Svelte will just compare the keys to know if it needs to update the DOM of that specific element.
+Prefer to use [keyed each blocks](/docs/svelte/each#Keyed-each-blocks) — this improves performance by allowing Svelte to surgically insert or remove items rather than updating the DOM belonging to existing items.
 
-```svelte
-{#each items as item (item.id)}
-	<li>{item.name} x {item.qty}</li>
-{/each}
-```
+> [!NOTE] The key _must_ uniquely identify the object. Do not use the index as a key.
 
-> [!NOTE] The key _must_ actually uniquely identify the object — _do not_ use the index.
-
-## Snippets
-
-You can think of snippets like functions that render markup when invoked with the `{@render}` tag. You can declare snippets in the template of a Svelte component and they will be available as a variable in the `<script>` tag. If they don't contain any state created in the `<script>` tag they will also be available in the [`<script module>`](/docs/svelte/svelte-files#script-module).
-
-Every snippet created as a child of a component will be automatically passed as a prop to that component
-
-```svelte
-<MyComponent>
-	<!--This will be passed as a `test` prop-->
-	{#snippet test()}{/snippet}
-</MyComponent>
-```
-
-## Attachments
-
-Read [the `@attach` docs](/docs/svelte/@attach) for documentation on using the imperative DOM API with elements in a Svelte component.
+Avoid destructuring if you need to mutate the item (with something like `bind:value={item.count}`, for example).
 
 ## Using JavaScript variables in CSS
 
-If you have a JS variable that you want to use inside CSS you can do so with the `style:` directive.
+If you have a JS variable that you want to use inside CSS you can set a CSS custom property with the `style:` directive.
 
 ```svelte
-<div style:--columns={columns}></div>
+<div style:--columns={columns}>...</div>
 ```
 
-this will add a style attribute with the `--columns:` variable that you can use in your `<style>` tag.
-
-## Dynamic classes
-
-Since `svelte@5.16.0` you can use `clsx` styles directly in the `class` attribute of an element. This means that arrays and objects can be used to declaratively define classes for an element without having to do manual string concatenation.
-
-```svelte
-<script>
-	let { cool } = $props();
-</script>
-
-<!-- results in `class="cool"` if `cool` is truthy,
-	 `class="lame"` otherwise -->
-<div class={{ cool, lame: !cool }}>...</div>
-
-<!-- if `faded` and `large` are both truthy, results in
-	 `class="saturate-0 opacity-50 scale-200"` -->
-<div class={[faded && 'saturate-0 opacity-50', large && 'scale-200']}>...</div>
-```
-
-Arrays can contain arrays and objects, and clsx will flatten them.
-
-## Await expressions
-
-If you are using `svelte@5.36` or higher, you can read everything about await expressions in [this document](/docs/svelte/await-expressions) to learn how to use `await` in your component and [this file](/docs/svelte/hydratable) to learn how to properly hydrate them without unnecessarily rerunning asynchronous tasks.
+You can then reference `var(--columns)` inside the component's `<style>`.
 
 ## Styling child components
 
-Styles are generally scoped in Svelte components and if possible they should remain so...in the rare case where you might want to style a child from the parent there are a few possibilities:
-
-### Use `:global`
-
-`:global` allows you to prevent css pruning in svelte...however using global at the "top level" of a stylesheet will make it truly global. A nice trick to prevent completely global styles is to nest the `global` selector inside a scoped element
+The CSS in a component's `<style>` is scoped to that component. If a parent component needs to control the child's styles, the preferred way is to use CSS custom properties:
 
 ```svelte
-<div>
-	<Component />
-</div>
+<!-- Parent.svelte -->
+<Child --color="red" />
+
+<!-- Child.svelte -->
+<h1>Hello</h1>
 
 <style>
-	div :global(span){
-		color: red;
+	h1 {
+		color: var(--color);
 	}
 </style>
 ```
 
-### Use style props
-
-If a component uses CSS variables in his styling you can automatically pass them using a style prop.
+If this impossible (for example, the child component comes from a library) you can use `:global` to override styles:
 
 ```svelte
-<Slider
-	--track-color="black"
-	--thumb-color="rgb({r} {g} {b})"
-/>
+<div>
+	<Child />
+</div>
+
+<style>
+	div :global {
+		h1 {
+			color: red;
+		}
+	}
+</style>
 ```
-
-## Stores
-
-In Svelte 4, stores were the only way to allow reactivity outside of a `.svelte` file. In Svelte 5, you can use runes in [`.svelte.{ts|js}`](/docs/svelte/svelte-js-files) files with universal reactivity.
-
-When possible, prefer to use universal reactivity instead of stores. If you're writing a utility that may be used across multiple projects, keep in mind that some projects may still use stores, and try to make your utilities backwards-compatible.
 
 ## Context
 
-Context is useful to have some state scoped to a component tree. If you have a situation where you need to have some "global" state consider using context and read [this document](/docs/svelte/context)
+Consider using context instead of declaring state in a shared module. This will scope the state to the part of the app that needs it, and eliminate the possibility of it leaking between users when server-side rendering.
+
+Use `createContext` rather than `setContext` and `getContext`, as it provides type safety.
+
+## Async Svelte
+
+If using `svelte@5.36` or higher, you can use [await expressions](/docs/svelte/await-expressions) and [hydratable](/docs/svelte/hydratable) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in `svelte.config.js` as they are not yet considered fully stable.
+
+## Avoid legacy features
+
+Always use runes mode for new code, and avoid features that have more modern replacements:
+
+- use `$state` instead of implicit reactivity (e.g. `let count = 0; count += 1`)
+- use `$derived` and `$effect` instead of `$:` assignments and statements (but only use effects when there is no better solution)
+- use `$props` instead of `export let`, `$$props` and `$$restProps`
+- use `onclick={...}` instead of `on:click={...}`
+- use `{#snippet ...}` and `{@render ...}` instead of `<slot>` and `$$slots` and `<svelte:fragment>`
+- use `<DynamicComponent>` instead of `<svelte:component this={DynamicComponent}>`
+- use `import Self from './ThisComponent.svelte'` and `<Self>` instead of `<svelte:self>`
+- use classes with `$state` fields to share reactivity between components, instead of using stores
+- use `{@attach ...}` instead of `use:action`
+- use clsx-style arrays and objects in `class` attributes, instead of the `class:` directive
