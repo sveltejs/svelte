@@ -64,7 +64,7 @@ If you need to attach listeners to `window` or `document` use `<svelte:window on
 
 ## Each blocks
 
-When using an each block to iterate over some value prefer using the item without destructuring it in case you want to bind that value to an attribute. Prefer using a keyed each block if possible, this will improve performance because svelte will just compare the keys to know if it needs to update the dom of that specific element.
+When using an each block to iterate over some value, prefer using the item without destructuring it in case you want to bind that value to an attribute. Prefer using a [keyed each block](/docs/svelte/each#Keyed-each-blocks) if possible— this will improve performance because Svelte will just compare the keys to know if it needs to update the DOM of that specific element.
 
 ```svelte
 {#each items as item (item.id)}
