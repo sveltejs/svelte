@@ -16,6 +16,8 @@ To compute something from state, use `$derived` rather than `$effect`:
 
 ```js
 // @errors: 2451
+declare let num: number;
+// ---cut---
 // do this
 let square = $derived(num * num);
 
