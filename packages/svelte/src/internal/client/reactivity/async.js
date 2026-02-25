@@ -248,6 +248,7 @@ export function run(thunks) {
 
 	promise.finally(() => {
 		blocker.settled = true;
+		unset_context();
 	});
 
 	for (const fn of thunks.slice(1)) {
