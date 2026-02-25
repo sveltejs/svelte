@@ -36,7 +36,6 @@ import {
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
@@ -45,11 +44,11 @@ import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
-export let current_async_effect = null;
+export let active_async_effect = null;
 
 /** @param {Effect | null} v */
-export function set_from_async_derived(v) {
-	current_async_effect = v;
+export function set_active_async_effect(v) {
+	active_async_effect = v;
 }
 
 export const recent_async_deriveds = new Set();
@@ -123,7 +122,7 @@ export function async_derived(fn, label, location) {
 	var deferreds = new Map();
 
 	async_effect(() => {
-		if (DEV) current_async_effect = active_effect;
+		if (DEV) active_async_effect = active_effect;
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
@@ -139,7 +138,7 @@ export function async_derived(fn, label, location) {
 			unset_context();
 		}
 
-		if (DEV) current_async_effect = null;
+		if (DEV) active_async_effect = null;
 
 		var batch = /** @type {Batch} */ (current_batch);
 
@@ -156,7 +155,7 @@ export function async_derived(fn, label, location) {
 		 * @param {unknown} error
 		 */
 		const handler = (value, error = undefined) => {
-			current_async_effect = null;
+			if (DEV) active_async_effect = null;
 
 			batch.activate();
 
