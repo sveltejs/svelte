@@ -27,7 +27,7 @@ import {
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
-	active_async_effect,
+	reactivity_loss_tracker,
 	execute_derived,
 	freeze_derived_effects,
 	recent_async_deriveds,
@@ -571,9 +571,12 @@ export function get(signal) {
 	if (DEV) {
 		if (
 			!untracking &&
-			active_async_effect &&
-			(active_async_effect.f & REACTION_IS_UPDATING) === 0
+			reactivity_loss_tracker &&
+			!reactivity_loss_tracker.warned &&
+			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0
 		) {
+			reactivity_loss_tracker.warned = true;
+
 			w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
 			var trace = get_error('traced at');

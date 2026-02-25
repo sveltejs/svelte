@@ -19,7 +19,7 @@ import {
 import { Batch, current_batch } from './batch.js';
 import {
 	async_derived,
-	active_async_effect,
+	reactivity_loss_tracker,
 	derived,
 	derived_safe_equal,
 	set_active_async_effect
@@ -152,7 +152,7 @@ export async function save(promise) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
-	var previous_async_effect = active_async_effect;
+	var previous_async_effect = reactivity_loss_tracker;
 	var value = await promise;
 
 	return () => {

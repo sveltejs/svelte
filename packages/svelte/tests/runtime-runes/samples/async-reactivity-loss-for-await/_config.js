@@ -16,12 +16,6 @@ export default test({
 		assert.deepEqual(normalise_trace_logs(warnings), [
 			{
 				log: 'Detected reactivity loss when reading `values.length`. This happens when state is read in an async function after an earlier `await`'
-			},
-			{
-				log: 'Detected reactivity loss when reading `values[1]`. This happens when state is read in an async function after an earlier `await`'
-			},
-			{
-				log: 'Detected reactivity loss when reading `values.length`. This happens when state is read in an async function after an earlier `await`'
 			}
 		]);
 	}
