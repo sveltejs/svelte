@@ -20,7 +20,7 @@ If one stateful variable depends on another stateful variable, you must use `$de
 - An `@attach`
 - A class that uses `createSubscriber`
 
-The valid use cases for `$effect` are mainly to sync svelte reactivity with a non-reactive system (like a D3 class or the local storage or inside an attachment to do imperative DOM operations).
+The valid use cases for `$effect` are mainly to sync Svelte reactivity with a non-reactive system (like a D3 class, `localStorage`, or inside an attachment to do imperative DOM operations).
 
 Like `$derived`, `$effect` automatically has every stateful variable (declared with `$state` or `$derived`) as a dependency when it's read (if you guard the read of a stateful variable with an `if`, that stateful variable will only be a dependency when the condition is true)
 
