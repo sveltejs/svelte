@@ -233,14 +233,30 @@ describe('boundary hydration comment escaping', () => {
 	const transform = (error: unknown) => ({ message: (error as Error).message });
 
 	const payloads = [
-		{ name: 'escapes -->', input: '--><img src=x onerror=alert(1)><!--', expected: '{"message":"--\\u003e\\u003cimg src=x onerror=alert(1)\\u003e\\u003c!--"}' },
-		{ name: 'escapes <!--', input: '<!--<script>alert(1)</script>', expected: '{"message":"\\u003c!--\\u003cscript\\u003ealert(1)\\u003c/script\\u003e"}' },
-		{ name: 'escapes <!-->',  input: '<!-->', expected: '{"message":"\\u003c!--\\u003e"}' },
-		{ name: 'escapes <!--->',  input: '<!--->', expected: '{"message":"\\u003c!---\\u003e"}' },
-		{ name: 'escapes multiple -->', input: '-->one-->two-->', expected: '{"message":"--\\u003eone--\\u003etwo--\\u003e"}' },
+		{
+			name: 'escapes -->',
+			input: '--><img src=x onerror=alert(1)><!--',
+			expected: '{"message":"--\\u003e\\u003cimg src=x onerror=alert(1)\\u003e\\u003c!--"}'
+		},
+		{
+			name: 'escapes <!--',
+			input: '<!--<script>alert(1)</script>',
+			expected: '{"message":"\\u003c!--\\u003cscript\\u003ealert(1)\\u003c/script\\u003e"}'
+		},
+		{ name: 'escapes <!-->', input: '<!-->', expected: '{"message":"\\u003c!--\\u003e"}' },
+		{ name: 'escapes <!--->', input: '<!--->', expected: '{"message":"\\u003c!---\\u003e"}' },
+		{
+			name: 'escapes multiple -->',
+			input: '-->one-->two-->',
+			expected: '{"message":"--\\u003eone--\\u003etwo--\\u003e"}'
+		},
 		{ name: 'escapes --->', input: '--->', expected: '{"message":"---\\u003e"}' },
 		{ name: 'no double-encoding', input: '--\\u003e', expected: '{"message":"--\\\\u003e"}' },
-		{ name: 'the terrifying special pointy boy', input: '--!>ooh, what an exotic closing comment tag', expected: '{"message":"--!\\u003eooh, what an exotic closing comment tag"}' }
+		{
+			name: 'the terrifying special pointy boy',
+			input: '--!>ooh, what an exotic closing comment tag',
+			expected: '{"message":"--!\\u003eooh, what an exotic closing comment tag"}'
+		}
 	];
 
 	type RenderFn = (input: string) => Promise<string> | string;
@@ -251,9 +267,14 @@ describe('boundary hydration comment escaping', () => {
 			async: false,
 			render: (input) => {
 				const component = (renderer: Renderer) => {
-					renderer.boundary({ failed: failed_snippet }, () => { throw new Error(input); });
+					renderer.boundary({ failed: failed_snippet }, () => {
+						throw new Error(input);
+					});
 				};
-				return Renderer.render(component as unknown as Component, { transformError: transform } as any).body;
+				return Renderer.render(
+					component as unknown as Component,
+					{ transformError: transform } as any
+				).body;
 			}
 		},
 		{
@@ -261,11 +282,18 @@ describe('boundary hydration comment escaping', () => {
 			async: true,
 			render: async (input) => {
 				const component = (renderer: Renderer) => {
-					renderer.boundary({ failed: failed_snippet }, () => { throw new Error(input); });
+					renderer.boundary({ failed: failed_snippet }, () => {
+						throw new Error(input);
+					});
 				};
-				return (await Renderer.render(component as unknown as Component, {
-					transformError: (error: unknown) => Promise.resolve(transform(error))
-				} as any)).body;
+				return (
+					await Renderer.render(
+						component as unknown as Component,
+						{
+							transformError: (error: unknown) => Promise.resolve(transform(error))
+						} as any
+					)
+				).body;
 			}
 		},
 		{
@@ -278,9 +306,14 @@ describe('boundary hydration comment escaping', () => {
 						throw new Error(input);
 					});
 				};
-				return (await Renderer.render(component as unknown as Component, {
-					transformError: transform
-				} as any)).body;
+				return (
+					await Renderer.render(
+						component as unknown as Component,
+						{
+							transformError: transform
+						} as any
+					)
+				).body;
 			}
 		}
 	];
