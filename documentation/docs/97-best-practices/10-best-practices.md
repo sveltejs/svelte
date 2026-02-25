@@ -125,7 +125,7 @@ Arrays can contain arrays and objects, and clsx will flatten them.
 
 If you are using `svelte@5.36` or higher you can read everything about await expressions in [this document](/docs/svelte/await-expressions/llms.txt) to learn how to use `await` in your component and [this file](https://svelte.dev/docs/svelte/hydratable) to learn how to properly hydrate them.
 
-## Styling Child components
+## Styling child components
 
 Styles are generally scoped in Svelte components and if possible they should remain so...in the rare case where you might want to style a child from the parent there are a few possibilities:
 
