@@ -69,8 +69,13 @@ let last_scheduled_effect = null;
 let is_flushing = false;
 export let is_flushing_sync = false;
 
-/** @type {Effect[] | null} */
-export let current_effects = null;
+/**
+ * During traversal, this is an array. Newly created effects are (if not immediately
+ * executed) pushed to this array, rather than going through the scheduling
+ * rigamarole that would cause another turn of the flush loop.
+ * @type {Effect[] | null}
+ */
+export let collected_effects = null;
 
 export class Batch {
 	/**
@@ -188,7 +193,7 @@ export class Batch {
 		this.apply();
 
 		/** @type {Effect[]} */
-		var effects = (current_effects = []);
+		var effects = (collected_effects = []);
 
 		/** @type {Effect[]} */
 		var render_effects = [];
@@ -202,7 +207,7 @@ export class Batch {
 			// log_inconsistent_branches(root);
 		}
 
-		current_effects = null;
+		collected_effects = null;
 
 		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
@@ -643,6 +648,7 @@ function flush_effects() {
 
 		is_flushing = false;
 		last_scheduled_effect = null;
+		collected_effects = null;
 
 		if (DEV) {
 			for (const source of /** @type {Set<Source>} */ (source_stacks)) {
@@ -848,13 +854,7 @@ export function schedule_effect(signal) {
 		// if the effect is being scheduled because a parent (each/await/etc) block
 		// updated an internal source, or because a branch is being unskipped,
 		// bail out or we'll cause a second flush
-		if (
-			is_flushing &&
-			effect === active_effect &&
-			(flags & BLOCK_EFFECT) !== 0 &&
-			(flags & HEAD_EFFECT) === 0 &&
-			(flags & REACTION_RAN) !== 0
-		) {
+		if (collected_effects !== null && effect === active_effect) {
 			return;
 		}
 
