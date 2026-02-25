@@ -28,7 +28,7 @@ If you want to log a value whenever the reactive variable changes use `$inspect`
 
 For more information on when not to use `$effect` read [this document](/docs/svelte/$effect#When-not-to-use-$effect).
 
-`$effect` only runs on the client so you don't need to guard with `browser` or `typeof window === "undefined"`
+`$effect` only runs on the client so you don't need to guard with [`browser`](/docs/kit/$app-environment#browser) or `typeof window === "undefined"`
 
 ## `$bindable`
 
