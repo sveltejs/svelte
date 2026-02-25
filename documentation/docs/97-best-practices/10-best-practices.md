@@ -6,7 +6,7 @@ This document is meant to collect a series of best practices to write not only c
 
 >[!NOTE] This document will be also synchronized with the [mcp repository](https://github.com/sveltejs/mcp) to serve as a SKILL. To follow the rules of progressive discovery a few paragraph of this page that are only useful in specific situations during svelte development will merely link to other sections of the documentation.
 
-## State and Deriveds
+## `$state` and `$derived`
 
 When writing a Svelte component, each variable that needs to be used inside an effect a derived or in the template must be declared with `$state`. Objects and arrays are automatically deeply reactive, and you can just mutate properties or push to them to trigger reactivity. If you are not mutating or pushing, consider using `$state.raw` to improve performance. Not every variable must be stateful, if a variable is only used to store information and never in an `$effect`, `$derived` or in the template you can avoid using `$state` completely.
 
