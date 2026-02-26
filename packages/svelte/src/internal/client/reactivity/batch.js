@@ -848,7 +848,12 @@ export function schedule_effect(signal) {
 		// updated an internal source, or because a branch is being unskipped,
 		// bail out or we'll cause a second flush
 		if (collected_effects !== null && effect === active_effect) {
-			return;
+			// in sync mode, render effects run during traversal. in an extreme edge case
+			// they can be made dirty after they have already been visited, in which
+			// case we shouldn't bail out
+			if (async_mode_flag || (signal.f & RENDER_EFFECT) === 0) {
+				return;
+			}
 		}
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
