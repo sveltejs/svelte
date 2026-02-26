@@ -689,16 +689,16 @@ Previously, Svelte employed a very complicated algorithm to determine if whitesp
   - `foo- bar` in Svelte 5
 
   You can reintroduce the missing space by moving it outside the `<span>`...
-  
+
   ```svelte
   <p>foo <span>- bar</span></p>
   ```
 
-...or, if necessary for styling reasons, including it as an expression:
+  ...or, if necessary for styling reasons, including it as an expression:
 
-```svelte
+  ```svelte
   <p>foo<span>{' '}- bar</span></p>
-```
+  ```
 
 - Certain exceptions apply such as keeping whitespace inside `pre` tags
 
