@@ -119,6 +119,9 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
+	/** @type {Effect | null} */
+	var e = effect;
+
 	if (sync) {
 		try {
 			update_effect(effect);
@@ -126,31 +129,27 @@ function create_effect(type, fn, sync) {
 			destroy_effect(effect);
 			throw e;
 		}
+
+		// if an effect has already ran and doesn't need to be kept in the tree
+		// (because it won't re-run, has no DOM, and has no teardown etc)
+		// then we skip it and go to its child (if any)
+		if (
+			e.deps === null &&
+			e.teardown === null &&
+			e.nodes === null &&
+			e.first === e.last && // either `null`, or a singular child
+			(e.f & EFFECT_PRESERVED) === 0
+		) {
+			e = e.first;
+			if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
+				e.f |= EFFECT_TRANSPARENT;
+			}
+		}
 	} else if ((type & EFFECT) !== 0) {
 		if (collected_effects !== null) {
 			collected_effects.push(effect);
 		} else {
 			schedule_effect(effect);
-		}
-	}
-
-	/** @type {Effect | null} */
-	var e = effect;
-
-	// if an effect has already ran and doesn't need to be kept in the tree
-	// (because it won't re-run, has no DOM, and has no teardown etc)
-	// then we skip it and go to its child (if any)
-	if (
-		sync &&
-		e.deps === null &&
-		e.teardown === null &&
-		e.nodes === null &&
-		e.first === e.last && // either `null`, or a singular child
-		(e.f & EFFECT_PRESERVED) === 0
-	) {
-		e = e.first;
-		if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
-			e.f |= EFFECT_TRANSPARENT;
 		}
 	}
 
