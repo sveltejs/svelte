@@ -340,7 +340,7 @@ export class Batch {
 
 	flush() {
 		if (queued_root_effects.length > 0) {
-			this.activate();
+			current_batch = this;
 			flush_effects();
 		} else if (this.#pending === 0 && !this.is_fork) {
 			// append/remove branches
