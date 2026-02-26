@@ -339,17 +339,18 @@ export class Batch {
 	}
 
 	flush() {
-		this.activate();
-
 		if (queued_root_effects.length > 0) {
+			this.activate();
 			flush_effects();
+		} else if (this.#pending === 0 && !this.is_fork) {
+			// append/remove branches
+			for (const fn of this.#commit_callbacks) fn(this);
+			this.#commit_callbacks.clear();
 
-			if (current_batch !== null && current_batch !== this) {
-				// this can happen if a new batch was created during `flush_effects()`
-				return;
-			}
-		} else if (this.#pending === 0) {
-			this.process([]); // TODO this feels awkward
+			this.#commit();
+
+			this.#deferred?.resolve();
+			batch_values = null;
 		}
 
 		this.deactivate();
