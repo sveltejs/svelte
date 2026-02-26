@@ -1,0 +1,11 @@
+	form[method="get"].svelte-xyz h1:where(.svelte-xyz) {
+		color: red;
+	}
+
+	form[method="post"].svelte-xyz h1:where(.svelte-xyz) {
+		color: blue;
+	}
+
+	input[type="text"].svelte-xyz {
+		color: green;
+	}

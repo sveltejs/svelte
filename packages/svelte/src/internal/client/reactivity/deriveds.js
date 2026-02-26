@@ -40,7 +40,7 @@ import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
-import { unset_context } from './async.js';
+import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
@@ -111,8 +111,6 @@ export function async_derived(fn, label, location) {
 		e.async_derived_orphan();
 	}
 
-	var boundary = /** @type {Boundary} */ (parent.b);
-
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
@@ -135,17 +133,7 @@ export function async_derived(fn, label, location) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn())
-				.then(d.resolve, d.reject)
-				.then(() => {
-					if (batch === current_batch && batch.committed) {
-						// if the batch was rejected as stale, we need to cleanup
-						// after any `$.save(...)` calls inside `fn()`
-						batch.deactivate();
-					}
-
-					unset_context();
-				});
+			Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
 		} catch (error) {
 			d.reject(error);
 			unset_context();
@@ -156,10 +144,7 @@ export function async_derived(fn, label, location) {
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
-			var blocking = boundary.is_rendered();
-
-			boundary.update_pending_count(1);
-			batch.increment(blocking);
+			var decrement_pending = increment_pending();
 
 			deferreds.get(batch)?.reject(STALE_REACTION);
 			deferreds.delete(batch); // delete to ensure correct order in Map iteration below
@@ -208,9 +193,8 @@ export function async_derived(fn, label, location) {
 				}
 			}
 
-			if (should_suspend) {
-				boundary.update_pending_count(-1);
-				batch.decrement(blocking);
+			if (decrement_pending) {
+				decrement_pending();
 			}
 		};
 
