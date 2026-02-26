@@ -348,9 +348,7 @@ export class Batch {
 			this.#commit_callbacks.clear();
 
 			this.#commit();
-
 			this.#deferred?.resolve();
-			batch_values = null;
 		}
 
 		this.deactivate();
