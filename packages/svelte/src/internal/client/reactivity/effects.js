@@ -122,7 +122,17 @@ function create_effect(type, fn, sync) {
 	/** @type {Effect | null} */
 	var e = effect;
 
-	if (sync) {
+	if ((type & EFFECT) !== 0) {
+		// effects with this flag should not run immediately
+		if (collected_effects !== null) {
+			// created during traversal — collect and run afterwards
+			collected_effects.push(effect);
+		} else {
+			// schedule for later
+			schedule_effect(effect);
+		}
+	} else if (fn !== null) {
+		// all other effects should run immediately
 		try {
 			update_effect(effect);
 		} catch (e) {
@@ -130,8 +140,8 @@ function create_effect(type, fn, sync) {
 			throw e;
 		}
 
-		// if an effect has already ran and doesn't need to be kept in the tree
-		// (because it won't re-run, has no DOM, and has no teardown etc)
+		// if an effect doesn't need to be kept in the tree (because it
+		// won't re-run, has no DOM, and has no teardown etc)
 		// then we skip it and go to its child (if any)
 		if (
 			e.deps === null &&
@@ -144,12 +154,6 @@ function create_effect(type, fn, sync) {
 			if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
 				e.f |= EFFECT_TRANSPARENT;
 			}
-		}
-	} else if ((type & EFFECT) !== 0) {
-		if (collected_effects !== null) {
-			collected_effects.push(effect);
-		} else {
-			schedule_effect(effect);
 		}
 	}
 
