@@ -119,15 +119,15 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	if (fn !== null) {
-		if (sync) {
-			try {
-				update_effect(effect);
-			} catch (e) {
-				destroy_effect(effect);
-				throw e;
-			}
-		} else if (collected_effects !== null) {
+	if (sync) {
+		try {
+			update_effect(effect);
+		} catch (e) {
+			destroy_effect(effect);
+			throw e;
+		}
+	} else if (fn !== null) {
+		if (collected_effects !== null) {
 			collected_effects.push(effect);
 		} else {
 			schedule_effect(effect);
