@@ -1098,25 +1098,19 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		FunctionExpression(node, { state, next }) {
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
-			if (node.id) {
-				scopes.set(node.id, state.scope); // so that declarations within with the same name are not confused with the function name
-				scope.declare(node.id, 'normal', 'function');
-			}
+			if (node.id) scope.declare(node.id, 'normal', 'function');
 
 			add_params(scope, node.params);
 			next({ scope });
 		},
 
 		FunctionDeclaration(node, { state, next }) {
-			if (node.id) {
-				scopes.set(node.id, state.scope); // so that declarations within with the same name are not confused with the function name
-				state.scope.declare(node.id, 'normal', 'function', node);
-			}
+			if (node.id) state.scope.declare(node.id, 'normal', 'function', node);
 
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
@@ -1124,7 +1118,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		ArrowFunctionExpression(node, { state, next }) {
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
@@ -1142,8 +1136,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				parent?.type === 'FunctionExpression' ||
 				parent?.type === 'ArrowFunctionExpression'
 			) {
-				// We already created a new scope for the function
-				context.next();
+				// The scopes created for the function nodes above handle the function identifier and
+				// parameters, but the block statement itself holds the non-porous function scope
+				const scope = context.state.scope.child();
+				scopes.set(node, scope);
+				context.next({ scope });
 			} else {
 				create_block_scope(node, context);
 			}

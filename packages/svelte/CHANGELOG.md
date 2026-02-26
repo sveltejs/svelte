@@ -1,5 +1,25 @@
 # svelte
 
+## 5.53.5
+
+### Patch Changes
+
+- fix: escape `innerText` and `textContent` bindings of `contenteditable` ([`0df5abcae223058ceb95491470372065fb87951d`](https://github.com/sveltejs/svelte/commit/0df5abcae223058ceb95491470372065fb87951d))
+
+- fix: sanitize `transformError` values prior to embedding in HTML comments ([`0298e979371bb583855c9810db79a70a551d22b9`](https://github.com/sveltejs/svelte/commit/0298e979371bb583855c9810db79a70a551d22b9))
+
+## 5.53.4
+
+### Patch Changes
+
+- fix: set server context after async transformError ([#17799](https://github.com/sveltejs/svelte/pull/17799))
+
+- fix: hydrate if blocks correctly ([#17784](https://github.com/sveltejs/svelte/pull/17784))
+
+- fix: handle default parameters scope leaks ([#17788](https://github.com/sveltejs/svelte/pull/17788))
+
+- fix: prevent flushed effects from running again ([#17787](https://github.com/sveltejs/svelte/pull/17787))
+
 ## 5.53.3
 
 ### Patch Changes
