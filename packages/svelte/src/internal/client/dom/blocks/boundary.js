@@ -1,12 +1,8 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 import {
 	BOUNDARY_EFFECT,
-<<<<<<< HEAD
 	BRANCH_EFFECT,
 	CLEAN,
-	COMMENT_NODE,
-=======
->>>>>>> main
 	DIRTY,
 	EFFECT_PRESERVED,
 	EFFECT_TRANSPARENT,
