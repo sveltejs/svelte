@@ -358,6 +358,7 @@ export class Batch {
 		if (batches.size > 1) {
 			this.previous.clear();
 
+			var previous_batch = current_batch;
 			var previous_batch_values = batch_values;
 			var is_earlier = true;
 
@@ -421,7 +422,7 @@ export class Batch {
 				}
 			}
 
-			current_batch = null;
+			current_batch = previous_batch;
 			batch_values = previous_batch_values;
 		}
 
