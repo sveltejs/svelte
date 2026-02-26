@@ -159,7 +159,7 @@
     "@types/node": "^20.11.5",
     "dts-buddy": "^0.5.5",
     "esbuild": "^0.25.10",
-    "rollup": "^4.22.4",
+    "rollup": "^4.59.0",
     "source-map": "^0.7.4",
     "tinyglobby": "^0.2.12",
     "typescript": "^5.5.4",
