@@ -87,7 +87,7 @@ export class Batch {
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
-	 * @type {Set<() => void>}
+	 * @type {Set<(batch: Batch) => void>}
 	 */
 	#commit_callbacks = new Set();
 
@@ -207,18 +207,18 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
+			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
+			// newly updated sources, which could lead to infinite loops when effects run over and over again.
+			previous_batch = this;
+			current_batch = null;
+
 			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn();
+			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
 
 			if (this.#pending === 0) {
 				this.#commit();
 			}
-
-			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
-			// newly updated sources, which could lead to infinite loops when effects run over and over again.
-			previous_batch = this;
-			current_batch = null;
 
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
@@ -479,7 +479,7 @@ export class Batch {
 		this.flush();
 	}
 
-	/** @param {() => void} fn */
+	/** @param {(batch: Batch) => void} fn */
 	oncommit(fn) {
 		this.#commit_callbacks.add(fn);
 	}
