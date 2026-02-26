@@ -126,7 +126,7 @@ function create_effect(type, fn, sync) {
 			destroy_effect(effect);
 			throw e;
 		}
-	} else if ((flags & EFFECT) !== 0 && collected_effects !== null) {
+	} else if ((type & EFFECT) !== 0 && collected_effects !== null) {
 		collected_effects.push(effect);
 	} else if (fn !== null) {
 		schedule_effect(effect);
