@@ -16,6 +16,14 @@ Encountered asynchronous work while rendering synchronously.
 
 You (or the framework you're using) called [`render(...)`](svelte-server#render) with a component containing an `await` expression. Either `await` the result of `render` or wrap the `await` (or the component containing it) in a [`<svelte:boundary>`](svelte-boundary) with a `pending` snippet.
 
+### dynamic_element_invalid_tag
+
+```
+`<svelte:element this="%tag%">` is not a valid element name — the element will not be rendered
+```
+
+The value passed to the `this` prop of `<svelte:element>` must be a valid HTML element, SVG element, MathML element, or custom element name. A value containing invalid characters (such as whitespace or special characters) was provided, which could be a security risk. Ensure only valid tag names are passed.
+
 ### html_deprecated
 
 ```

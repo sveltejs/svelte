@@ -13,11 +13,17 @@ import {
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
+import {
+	is_boolean_attribute,
+	is_raw_text_element,
+	is_void,
+	REGEX_VALID_TAG_NAME
+} from '../../utils.js';
 import { Renderer } from './renderer.js';
 import * as e from './errors.js';
+import { ssr_context } from './context.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -35,6 +41,9 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
 	renderer.push('<!---->');
 
 	if (tag) {
+		if (!REGEX_VALID_TAG_NAME.test(tag)) {
+			e.dynamic_element_invalid_tag(tag);
+		}
 		renderer.push(`<${tag}`);
 		attributes_fn();
 		renderer.push(`>`);
@@ -56,7 +65,7 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
  * @param {Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
@@ -97,16 +106,16 @@ export function css_props(renderer, is_html, props, component, dynamic = false) 
 		renderer.push(`<g style="${styles}">`);
 	}
 
-	if (dynamic) {
+	component();
+
+	if (!dynamic) {
 		renderer.push('<!---->');
 	}
 
-	component();
-
 	if (is_html) {
-		renderer.push(`<!----></svelte-css-wrapper>`);
+		renderer.push('</svelte-css-wrapper>');
 	} else {
-		renderer.push(`<!----></g>`);
+		renderer.push('</g>');
 	}
 }
 
@@ -138,7 +147,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
 	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
 
-	for (name in attrs) {
+	for (name of Object.keys(attrs)) {
 		// omit functions, internal svelte properties and invalid attribute names
 		if (typeof attrs[name] === 'function') continue;
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
@@ -149,6 +158,9 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		if (lowercase) {
 			name = name.toLowerCase();
 		}
+
+		// omit event handler attributes
+		if (name.length > 2 && name.startsWith('on')) continue;
 
 		if (is_input) {
 			if (name === 'defaultvalue' || name === 'defaultchecked') {
@@ -174,7 +186,8 @@ export function spread_props(props) {
 
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
-		for (key in obj) {
+		if (obj == null) continue;
+		for (key of Object.keys(obj)) {
 			const desc = Object.getOwnPropertyDescriptor(obj, key);
 			if (desc) {
 				Object.defineProperty(merged_props, key, desc);
@@ -302,7 +315,7 @@ export function update_store_pre(store_values, store_name, store, d = 1) {
 
 /** @param {Record<string, [any, any, any]>} store_values */
 export function unsubscribe_stores(store_values) {
-	for (const store_name in store_values) {
+	for (const store_name of Object.keys(store_values)) {
 		store_values[store_name][1]();
 	}
 }
@@ -338,7 +351,7 @@ export function rest_props(props, rest) {
 	/** @type {Record<string, unknown>} */
 	const rest_props = {};
 	let key;
-	for (key in props) {
+	for (key of Object.keys(props)) {
 		if (!rest.includes(key)) {
 			rest_props[key] = props[key];
 		}
@@ -363,7 +376,7 @@ export function sanitize_slots(props) {
 	/** @type {Record<string, boolean>} */
 	const sanitized = {};
 	if (props.children) sanitized.default = true;
-	for (const key in props.$$slots) {
+	for (const key of Object.keys(props.$$slots || {})) {
 		sanitized[key] = true;
 	}
 	return sanitized;
@@ -376,7 +389,7 @@ export function sanitize_slots(props) {
  * @param {Record<string, unknown>} props_now
  */
 export function bind_props(props_parent, props_now) {
-	for (const key in props_now) {
+	for (const key of Object.keys(props_now)) {
 		const initial_value = props_parent[key];
 		const value = props_now[key];
 		if (
@@ -457,7 +470,7 @@ export { push_element, pop_element, validate_snippet_args } from './dev.js';
 
 export { snapshot } from '../shared/clone.js';
 
-export { fallback, to_array } from '../shared/utils.js';
+export { fallback, to_array, exclude_from_object } from '../shared/utils.js';
 
 export {
 	invalid_default_snippet,
@@ -474,17 +487,58 @@ export { escape_html as escape };
  * @returns {(new_value?: T) => (T | void)}
  */
 export function derived(fn) {
-	const get_value = once(fn);
-	/**
-	 * @type {T | undefined}
-	 */
+	// deriveds created during render are memoized,
+	// deriveds created outside (e.g. SvelteKit `page` stuff) are not
+	const get_value = ssr_context === null ? fn : once(fn);
+
+	/** @type {T | undefined} */
 	let updated_value;
 
 	return function (new_value) {
 		if (arguments.length === 0) {
 			return updated_value ?? get_value();
 		}
+
 		updated_value = new_value;
 		return updated_value;
 	};
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {(value?: T) => T} derived
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update_derived(derived, d = 1) {
+	const value = derived();
+	let increase = typeof value === 'bigint' ? BigInt(d) : d;
+	// for some reason TS is mad even if T is always number or bigint
+	derived(value + /** @type {*} */ (increase));
+	return value;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {(value?: T) => T} derived
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update_derived_pre(derived, d = 1) {
+	const old_value = derived();
+	let increase = typeof old_value === 'bigint' ? BigInt(d) : d;
+	// for some reason TS is mad even if T is always number or bigint
+	const value = old_value + /** @type {*} */ (increase);
+	derived(value);
+	return value;
+}
+
+/**
+ * @template T
+ * @param {()=>T} fn
+ */
+export function async_derived(fn) {
+	return Promise.resolve(fn()).then((value) => {
+		return () => value;
+	});
 }

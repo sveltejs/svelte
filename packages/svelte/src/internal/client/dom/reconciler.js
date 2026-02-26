@@ -1,5 +1,3 @@
-/** @import {} from 'trusted-types' */
-
 import { create_element } from './operations.js';
 
 const policy =
@@ -13,17 +11,15 @@ const policy =
 	});
 
 /** @param {string} html */
-function create_trusted_html(html) {
+export function create_trusted_html(html) {
 	return /** @type {string} */ (policy?.createHTML(html) ?? html);
 }
 
 /**
  * @param {string} html
- * @param {boolean} trusted
  */
-export function create_fragment_from_html(html, trusted = false) {
+export function create_fragment_from_html(html) {
 	var elem = create_element('template');
-	html = html.replaceAll('<!>', '<!---->'); // XHTML compliance
-	elem.innerHTML = trusted ? create_trusted_html(html) : html;
+	elem.innerHTML = create_trusted_html(html.replaceAll('<!>', '<!---->')); // XHTML compliance
 	return elem.content;
 }

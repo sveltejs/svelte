@@ -20,6 +20,7 @@ declare module 'svelte' {
 		sync?: boolean;
 		idPrefix?: string;
 		$$inline?: boolean;
+		transformError?: (error: unknown) => unknown;
 	}
 
 	/**
@@ -337,6 +338,11 @@ declare module 'svelte' {
 		 * @default true
 		 */
 		intro?: boolean;
+		/**
+		 * A function that transforms errors caught by error boundaries before they are passed to the `failed` snippet.
+		 * Defaults to the identity function.
+		 */
+		transformError?: (error: unknown) => unknown | Promise<unknown>;
 	} & ({} extends Props
 		? {
 				/**
@@ -542,6 +548,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
+		transformError?: (error: unknown) => unknown;
 	} : {
 		target: Document | Element | ShadowRoot;
 		props: Props;
@@ -549,6 +556,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
+		transformError?: (error: unknown) => unknown;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
@@ -2567,6 +2575,7 @@ declare module 'svelte/server' {
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
+						transformError?: (error: unknown) => unknown | Promise<unknown>;
 					}
 				]
 			: [
@@ -2576,6 +2585,7 @@ declare module 'svelte/server' {
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
+						transformError?: (error: unknown) => unknown | Promise<unknown>;
 					}
 				]
 	): RenderOutput;

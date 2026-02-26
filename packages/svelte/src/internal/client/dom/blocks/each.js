@@ -250,6 +250,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			var value = array[index];
 			var key = get_key(value, index);
 
+			if (DEV) {
+				// Check that the key function is idempotent (returns the same value when called twice)
+				var key_again = get_key(value, index);
+				if (key !== key_again) {
+					e.each_key_volatile(String(index), String(key), String(key_again));
+				}
+			}
+
 			var item = first_run ? null : items.get(key);
 
 			if (item) {

@@ -1,7 +1,14 @@
 /** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { empty_comment, build_attribute_value, PromiseOptimiser } from './utils.js';
+import {
+	empty_comment,
+	build_attribute_value,
+	PromiseOptimiser,
+	block_open_else,
+	block_open,
+	block_close
+} from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
@@ -300,9 +307,22 @@ export function build_inline_component(node, expression, context) {
 		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
 
 	/** @type {Statement} */
-	let statement = b.stmt(
-		(dynamic ? b.maybe_call : b.call)(expression, b.id('$$renderer'), props_expression)
-	);
+	let statement = b.stmt(b.call(expression, b.id('$$renderer'), props_expression));
+
+	if (dynamic) {
+		statement = b.if(
+			expression,
+			b.block([
+				b.stmt(b.call('$$renderer.push', block_open)),
+				statement,
+				b.stmt(b.call('$$renderer.push', block_close))
+			]),
+			b.block([
+				b.stmt(b.call('$$renderer.push', block_open_else)),
+				b.stmt(b.call('$$renderer.push', block_close))
+			])
+		);
+	}
 
 	if (snippet_declarations.length > 0) {
 		statement = b.block([...snippet_declarations, statement]);
@@ -326,16 +346,14 @@ export function build_inline_component(node, expression, context) {
 		optimiser.check_blockers(node.metadata.expression);
 	}
 
-	context.state.template.push(
-		...optimiser.render_block([
-			dynamic && custom_css_props.length === 0
-				? b.stmt(b.call('$$renderer.push', empty_comment))
-				: b.empty,
-			statement
-		])
-	);
+	context.state.template.push(...optimiser.render_block([statement]));
 
-	if (!optimiser.is_async() && !context.state.is_standalone && custom_css_props.length === 0) {
+	if (
+		!dynamic &&
+		!optimiser.is_async() &&
+		!context.state.is_standalone &&
+		custom_css_props.length === 0
+	) {
 		context.state.template.push(empty_comment);
 	}
 }

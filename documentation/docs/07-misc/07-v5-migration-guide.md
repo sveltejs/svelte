@@ -682,6 +682,24 @@ Previously, Svelte employed a very complicated algorithm to determine if whitesp
 
 - Whitespace between nodes is collapsed to one whitespace
 - Whitespace at the start and end of a tag is removed completely
+
+  This new behavior is slightly different from native HTML rendering. For example, `<p>foo<span> - bar</span></p>` will render:
+
+  - `foo - bar` in HTML
+  - `foo- bar` in Svelte 5
+
+  You can reintroduce the missing space by moving it outside the `<span>`...
+  
+  ```svelte
+  <p>foo <span>- bar</span></p>
+  ```
+
+...or, if necessary for styling reasons, including it as an expression:
+
+```svelte
+  <p>foo<span>{' '}- bar</span></p>
+```
+
 - Certain exceptions apply such as keeping whitespace inside `pre` tags
 
 As before, you can disable whitespace trimming by setting the `preserveWhitespace` option in your compiler settings or on a per-component basis in `<svelte:options>`.

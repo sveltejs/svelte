@@ -12,7 +12,7 @@ import {
 import { queue_micro_task } from '../task.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { is_runes } from '../../context.js';
-import { Batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
+import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
 import { capture, unset_context } from '../../reactivity/async.js';
 
@@ -84,7 +84,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				try {
 					fn();
 				} finally {
-					unset_context();
+					unset_context(false);
 
 					// without this, the DOM does not update until two ticks after the promise
 					// resolves, which is unexpected behaviour (and somewhat irksome to test)
@@ -102,7 +102,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				(e) => {
 					resolve(() => {
 						internal_set(error, e);
-						branches.ensure(THEN, catch_fn && ((target) => catch_fn(target, error)));
+						branches.ensure(CATCH, catch_fn && ((target) => catch_fn(target, error)));
 
 						if (!catch_fn) {
 							// Rethrow the error if no catch block exists

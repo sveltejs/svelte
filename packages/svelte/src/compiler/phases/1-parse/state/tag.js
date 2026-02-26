@@ -10,7 +10,7 @@ import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
 import { match_bracket } from '../utils/bracket.js';
 
-const regex_whitespace_with_closing_curly_brace = /^\s*}/;
+const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 
 const pointy_bois = { '<': '>' };
 
