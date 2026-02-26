@@ -80,10 +80,9 @@ function push_effect(effect, parent_effect) {
 /**
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
- * @param {boolean} sync
  * @returns {Effect}
  */
-function create_effect(type, fn, sync) {
+function create_effect(type, fn) {
 	var parent = active_effect;
 
 	if (DEV) {
@@ -119,41 +118,40 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	if (sync) {
+	/** @type {Effect | null} */
+	var e = effect;
+
+	if ((type & EFFECT) !== 0) {
+		if (collected_effects !== null) {
+			// created during traversal — collect and run afterwards
+			collected_effects.push(effect);
+		} else {
+			// schedule for later
+			Batch.ensure();
+			schedule_effect(effect);
+		}
+	} else if (fn !== null) {
 		try {
 			update_effect(effect);
 		} catch (e) {
 			destroy_effect(effect);
 			throw e;
 		}
-	} else if ((type & EFFECT) !== 0 && collected_effects !== null) {
-		collected_effects.push(effect);
-	} else if (fn !== null) {
-		if (collected_effects !== null) {
-			collected_effects.push(effect);
-		} else {
-			Batch.ensure();
-			schedule_effect(effect);
-		}
-	}
 
-	/** @type {Effect | null} */
-	var e = effect;
-
-	// if an effect has already ran and doesn't need to be kept in the tree
-	// (because it won't re-run, has no DOM, and has no teardown etc)
-	// then we skip it and go to its child (if any)
-	if (
-		sync &&
-		e.deps === null &&
-		e.teardown === null &&
-		e.nodes === null &&
-		e.first === e.last && // either `null`, or a singular child
-		(e.f & EFFECT_PRESERVED) === 0
-	) {
-		e = e.first;
-		if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
-			e.f |= EFFECT_TRANSPARENT;
+		// if an effect doesn't need to be kept in the tree (because it
+		// won't re-run, has no DOM, and has no teardown etc)
+		// then we skip it and go to its child (if any)
+		if (
+			e.deps === null &&
+			e.teardown === null &&
+			e.nodes === null &&
+			e.first === e.last && // either `null`, or a singular child
+			(e.f & EFFECT_PRESERVED) === 0
+		) {
+			e = e.first;
+			if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
+				e.f |= EFFECT_TRANSPARENT;
+			}
 		}
 	}
 
@@ -190,7 +188,7 @@ export function effect_tracking() {
  * @param {() => void} fn
  */
 export function teardown(fn) {
-	const effect = create_effect(RENDER_EFFECT, null, false);
+	const effect = create_effect(RENDER_EFFECT, null);
 	set_signal_status(effect, CLEAN);
 	effect.teardown = fn;
 	return effect;
@@ -228,7 +226,7 @@ export function user_effect(fn) {
  * @param {() => void | (() => void)} fn
  */
 export function create_user_effect(fn) {
-	return create_effect(EFFECT | USER_EFFECT, fn, false);
+	return create_effect(EFFECT | USER_EFFECT, fn);
 }
 
 /**
@@ -243,12 +241,12 @@ export function user_pre_effect(fn) {
 			value: '$effect.pre'
 		});
 	}
-	return create_effect(RENDER_EFFECT | USER_EFFECT, fn, true);
+	return create_effect(RENDER_EFFECT | USER_EFFECT, fn);
 }
 
 /** @param {() => void | (() => void)} fn */
 export function eager_effect(fn) {
-	return create_effect(EAGER_EFFECT, fn, true);
+	return create_effect(EAGER_EFFECT, fn);
 }
 
 /**
@@ -258,7 +256,7 @@ export function eager_effect(fn) {
  */
 export function effect_root(fn) {
 	Batch.ensure();
-	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn, true);
+	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn);
 
 	return () => {
 		destroy_effect(effect);
@@ -272,7 +270,7 @@ export function effect_root(fn) {
  */
 export function component_root(fn) {
 	Batch.ensure();
-	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn, true);
+	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn);
 
 	return (options = {}) => {
 		return new Promise((fulfil) => {
@@ -294,7 +292,7 @@ export function component_root(fn) {
  * @returns {Effect}
  */
 export function effect(fn) {
-	return create_effect(EFFECT, fn, false);
+	return create_effect(EFFECT, fn);
 }
 
 /**
@@ -352,7 +350,7 @@ export function legacy_pre_effect_reset() {
  * @returns {Effect}
  */
 export function async_effect(fn) {
-	return create_effect(ASYNC | EFFECT_PRESERVED, fn, true);
+	return create_effect(ASYNC | EFFECT_PRESERVED, fn);
 }
 
 /**
@@ -360,7 +358,7 @@ export function async_effect(fn) {
  * @returns {Effect}
  */
 export function render_effect(fn, flags = 0) {
-	return create_effect(RENDER_EFFECT | flags, fn, true);
+	return create_effect(RENDER_EFFECT | flags, fn);
 }
 
 /**
@@ -371,7 +369,7 @@ export function render_effect(fn, flags = 0) {
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)), true);
+		create_effect(RENDER_EFFECT, () => fn(...values.map(get)));
 	});
 }
 
@@ -388,7 +386,7 @@ export function deferred_template_effect(fn, sync = [], async = [], blockers = [
 	}
 
 	flatten(blockers, sync, async, (values) => {
-		create_effect(EFFECT, () => fn(...values.map(get)), false);
+		create_effect(EFFECT, () => fn(...values.map(get)));
 
 		if (decrement_pending) {
 			decrement_pending();
@@ -401,7 +399,7 @@ export function deferred_template_effect(fn, sync = [], async = [], blockers = [
  * @param {number} flags
  */
 export function block(fn, flags = 0) {
-	var effect = create_effect(BLOCK_EFFECT | flags, fn, true);
+	var effect = create_effect(BLOCK_EFFECT | flags, fn);
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
@@ -413,7 +411,7 @@ export function block(fn, flags = 0) {
  * @param {number} flags
  */
 export function managed(fn, flags = 0) {
-	var effect = create_effect(MANAGED_EFFECT | flags, fn, true);
+	var effect = create_effect(MANAGED_EFFECT | flags, fn);
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
@@ -424,7 +422,7 @@ export function managed(fn, flags = 0) {
  * @param {(() => void)} fn
  */
 export function branch(fn) {
-	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn, true);
+	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn);
 }
 
 /**
