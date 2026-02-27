@@ -276,13 +276,6 @@ export function destroy_derived_effects(derived) {
 }
 
 /**
- * The currently updating deriveds, used to detect infinite recursion
- * in dev mode and provide a nicer error than 'too much recursion'
- * @type {Derived[]}
- */
-let stack = [];
-
-/**
  * @param {Derived} derived
  * @returns {Effect | null}
  */
@@ -305,40 +298,17 @@ function get_derived_parent_effect(derived) {
  * @returns {T}
  */
 export function execute_derived(derived) {
-	var value;
 	var prev_active_effect = active_effect;
 
 	set_active_effect(get_derived_parent_effect(derived));
 
-	if (DEV) {
-		let prev_eager_effects = eager_effects;
-		set_eager_effects(new Set());
-		try {
-			if (includes.call(stack, derived)) {
-				e.derived_references_self();
-			}
-
-			stack.push(derived);
-
-			derived.f &= ~WAS_MARKED;
-			destroy_derived_effects(derived);
-			value = update_reaction(derived);
-		} finally {
-			set_active_effect(prev_active_effect);
-			set_eager_effects(prev_eager_effects);
-			stack.pop();
-		}
-	} else {
-		try {
-			derived.f &= ~WAS_MARKED;
-			destroy_derived_effects(derived);
-			value = update_reaction(derived);
-		} finally {
-			set_active_effect(prev_active_effect);
-		}
+	try {
+		derived.f &= ~WAS_MARKED;
+		destroy_derived_effects(derived);
+		return update_reaction(derived);
+	} finally {
+		set_active_effect(prev_active_effect);
 	}
-
-	return value;
 }
 
 /**
