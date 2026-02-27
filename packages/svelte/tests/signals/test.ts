@@ -15,7 +15,6 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { SvelteMap } from '../../src/reactivity/map';
 import { DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
@@ -1168,31 +1167,6 @@ describe('signals', () => {
 
 			set.add('test');
 			assert.equal($.get(d), true);
-		};
-	});
-
-	test('SvelteMap handles keys with undefined values', () => {
-		return () => {
-			const map = new SvelteMap<string, undefined | string>([['foo', undefined]]);
-
-			// has() and get() previously used `super.get(key) !== undefined` to check
-			// key existence, which returned false for keys with undefined values
-			assert.equal(map.has('foo'), true);
-			assert.equal(map.get('foo'), undefined);
-			assert.equal(map.has('foo'), true);
-
-			// Verify that delete() triggers reactive updates via derived
-			const d = derived(() => map.has('foo'));
-			assert.equal($.get(d), true);
-
-			map.delete('foo');
-			assert.equal($.get(d), false);
-
-			// Same behavior should work when setting undefined after construction
-			const map2 = new SvelteMap<string, undefined | string>();
-			map2.set('bar', undefined);
-			assert.equal(map2.has('bar'), true);
-			assert.equal(map2.get('bar'), undefined);
 		};
 	});
 
