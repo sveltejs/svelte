@@ -132,11 +132,13 @@ function pause_effects(state, to_destroy, controlled_anchor) {
  * @param {boolean} remove_dom
  */
 function destroy_effects(state, to_destroy, remove_dom = true) {
-	/** @type {Set<Effect>} */
-	var preserved_effects = new Set();
+	/** @type {Set<Effect> | undefined} */
+	var preserved_effects;
 
 	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
 	if (state.pending.size > 0) {
+		preserved_effects = new Set();
+
 		for (const keys of state.pending.values()) {
 			for (const key of keys) {
 				preserved_effects.add(/** @type {EachItem} */ (state.items.get(key)).e);
@@ -147,7 +149,7 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 	for (var i = 0; i < to_destroy.length; i++) {
 		var e = to_destroy[i];
 
-		if (preserved_effects.has(e)) {
+		if (preserved_effects?.has(e)) {
 			e.f |= EFFECT_OFFSCREEN;
 
 			const fragment = document.createDocumentFragment();
