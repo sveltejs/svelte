@@ -11,6 +11,7 @@ import {
 	DIRTY,
 	MAYBE_DIRTY,
 	CLEAN,
+	HAS_EAGER,
 	DERIVED,
 	DESTROYED,
 	BRANCH_EFFECT,
@@ -23,6 +24,7 @@ import {
 	ERROR_VALUE,
 	WAS_MARKED,
 	MANAGED_EFFECT,
+	ONLY_EAGER,
 	REACTION_RAN
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
@@ -289,6 +291,35 @@ export function update_reaction(reaction) {
 			deps.length = skipped_deps;
 		}
 
+		if ((reaction.f & ONLY_EAGER) === 0 && (reaction.f & DERIVED) !== 0) {
+			reaction.f &= ~HAS_EAGER;
+
+			if (deps !== null && deps.length > 0) {
+				let has_eager = false;
+				let only_eager = true;
+
+				for (const dep of deps) {
+					if ((dep.f & ONLY_EAGER) !== 0) {
+						has_eager = true;
+						continue;
+					}
+
+					if ((dep.f & HAS_EAGER) !== 0) {
+						has_eager = true;
+					}
+
+					only_eager = false;
+				}
+
+				if (has_eager) {
+					reaction.f |= HAS_EAGER;
+					if (only_eager) {
+						reaction.f |= ONLY_EAGER;
+					}
+				}
+			}
+		}
+
 		// If we're inside an effect and we have untracked writes, then we need to
 		// ensure that if any of those untracked writes result in re-invalidation
 		// of the current effect, then that happens accordingly
@@ -474,6 +505,7 @@ export function update_effect(effect) {
 	} finally {
 		is_updating_effect = was_updating_effect;
 		active_effect = previous_effect;
+		effect.f &= ~(HAS_EAGER | ONLY_EAGER);
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);

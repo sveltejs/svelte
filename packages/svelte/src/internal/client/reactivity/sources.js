@@ -27,7 +27,9 @@ import {
 	ROOT_EFFECT,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	ONLY_EAGER,
+	HAS_EAGER
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -362,6 +364,33 @@ function mark_reactions(signal, status) {
 		} else if (not_dirty) {
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
 				eager_block_effects.add(/** @type {Effect} */ (reaction));
+			}
+
+			var deps = reaction.deps;
+
+			if (deps !== null && deps.length > 0) {
+				let has_eager = false;
+				let only_eager = true;
+
+				for (const dep of deps) {
+					if ((dep.f & ONLY_EAGER) !== 0) {
+						has_eager = true;
+						continue;
+					}
+
+					if ((dep.f & HAS_EAGER) !== 0) {
+						has_eager = true;
+					}
+
+					only_eager = false;
+				}
+
+				if (has_eager) {
+					reaction.f |= HAS_EAGER;
+					if (only_eager) {
+						reaction.f |= ONLY_EAGER;
+					}
+				}
 			}
 
 			schedule_effect(/** @type {Effect} */ (reaction));

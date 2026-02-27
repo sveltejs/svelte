@@ -8,13 +8,13 @@ import {
 	DIRTY,
 	EFFECT,
 	ASYNC,
+	HAS_EAGER,
 	INERT,
+	ONLY_EAGER,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
 	MAYBE_DIRTY,
 	DERIVED,
-	EAGER_EFFECT,
-	HEAD_EFFECT,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN
@@ -32,8 +32,9 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
-import { eager_effect, unlink_effect } from './effects.js';
+import { old_values } from './sources.js';
+import { unlink_effect } from './effects.js';
+import { derived } from './deriveds.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
@@ -210,8 +211,62 @@ export class Batch {
 		collected_effects = null;
 
 		if (this.#is_deferred()) {
-			this.#defer_effects(render_effects);
-			this.#defer_effects(effects);
+			/** @type {Effect[]} */
+			var eager_render_effects = [];
+
+			/** @type {Effect[]} */
+			var deferred_render_effects = [];
+
+			/** @type {Effect[]} */
+			var eager_and_deferred_render_effects = [];
+
+			for (const effect of render_effects) {
+				if (!this.is_fork && (effect.f & HAS_EAGER) !== 0) {
+					if ((effect.f & ONLY_EAGER) === 0) {
+						eager_and_deferred_render_effects.push(effect);
+					}
+					eager_render_effects.push(effect);
+				} else {
+					deferred_render_effects.push(effect);
+				}
+			}
+
+			/** @type {Effect[]} */
+			var eager_effects = [];
+
+			/** @type {Effect[]} */
+			var deferred_effects = [];
+
+			/** @type {Effect[]} */
+			var eager_and_deferred_effects = [];
+
+			for (const effect of effects) {
+				if (!this.is_fork && (effect.f & HAS_EAGER) !== 0) {
+					if ((effect.f & ONLY_EAGER) === 0) {
+						eager_and_deferred_effects.push(effect);
+					}
+					eager_effects.push(effect);
+				} else {
+					deferred_effects.push(effect);
+				}
+			}
+
+			// TODO this whole thing (above and here) can be written with less code, I'm certain
+			this.#defer_effects(deferred_render_effects, true);
+			this.#defer_effects(eager_and_deferred_render_effects, false);
+			this.#defer_effects(deferred_effects, true);
+			this.#defer_effects(eager_and_deferred_effects, false);
+			if (!this.is_fork) {
+				if (batch_values) {
+					for (const [source, previous] of this.previous) {
+						batch_values?.set(source, previous);
+					}
+				} else {
+					batch_values = new Map(this.previous);
+				}
+			}
+			flush_queued_effects(eager_render_effects);
+			flush_queued_effects(eager_effects);
 
 			for (const [e, t] of this.#skipped_branches) {
 				reset_branch(e, t);
@@ -299,10 +354,11 @@ export class Batch {
 
 	/**
 	 * @param {Effect[]} effects
+	 * @param {boolean} reset_status
 	 */
-	#defer_effects(effects) {
+	#defer_effects(effects, reset_status) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(effects[i], this.#dirty_effects, this.#maybe_dirty_effects);
+			defer_effect(effects[i], this.#dirty_effects, this.#maybe_dirty_effects, reset_status);
 		}
 	}
 
@@ -772,28 +828,6 @@ function mark_effects(value, sources, marked, checked) {
 }
 
 /**
- * When committing a fork, we need to trigger eager effects so that
- * any `$state.eager(...)` expressions update immediately. This
- * function allows us to discover them
- * @param {Value} value
- * @param {Set<Effect>} effects
- */
-function mark_eager_effects(value, effects) {
-	if (value.reactions === null) return;
-
-	for (const reaction of value.reactions) {
-		const flags = reaction.f;
-
-		if ((flags & DERIVED) !== 0) {
-			mark_eager_effects(/** @type {Derived} */ (reaction), effects);
-		} else if ((flags & EAGER_EFFECT) !== 0) {
-			set_signal_status(reaction, DIRTY);
-			effects.add(/** @type {Effect} */ (reaction));
-		}
-	}
-}
-
-/**
  * @param {Reaction} reaction
  * @param {Source[]} sources
  * @param {Map<Reaction, boolean>} checked
@@ -869,21 +903,6 @@ export function schedule_effect(signal) {
 	queued_root_effects.push(effect);
 }
 
-/** @type {Source<number>[]} */
-let eager_versions = [];
-
-function eager_flush() {
-	try {
-		flushSync(() => {
-			for (const version of eager_versions) {
-				update(version);
-			}
-		});
-	} finally {
-		eager_versions = [];
-	}
-}
-
 /**
  * Implementation of `$state.eager(fn())`
  * @template T
@@ -891,41 +910,18 @@ function eager_flush() {
  * @returns {T}
  */
 export function eager(fn) {
-	var version = source(0);
-	var initial = true;
-	var value = /** @type {T} */ (undefined);
+	const signal = derived(() => {
+		var previous_batch_values = batch_values;
 
-	get(version);
-
-	eager_effect(() => {
-		if (initial) {
-			// the first time this runs, we create an eager effect
-			// that will run eagerly whenever the expression changes
-			var previous_batch_values = batch_values;
-
-			try {
-				batch_values = null;
-				value = fn();
-			} finally {
-				batch_values = previous_batch_values;
-			}
-
-			return;
+		try {
+			batch_values = null;
+			return fn();
+		} finally {
+			batch_values = previous_batch_values;
 		}
-
-		// the second time this effect runs, it's to schedule a
-		// `version` update. since this will recreate the effect,
-		// we don't need to evaluate the expression here
-		if (eager_versions.length === 0) {
-			queue_micro_task(eager_flush);
-		}
-
-		eager_versions.push(version);
 	});
-
-	initial = false;
-
-	return value;
+	signal.f |= HAS_EAGER | ONLY_EAGER;
+	return get(signal);
 }
 
 /**
@@ -1025,23 +1021,6 @@ export function fork(fn) {
 				source.v = value;
 				source.wv = increment_write_version();
 			}
-
-			// trigger any `$state.eager(...)` expressions with the new state.
-			// eager effects don't get scheduled like other effects, so we
-			// can't just encounter them during traversal, we need to
-			// proactively flush them
-			// TODO maybe there's a better implementation?
-			flushSync(() => {
-				/** @type {Set<Effect>} */
-				var eager_effects = new Set();
-
-				for (var source of batch.current.keys()) {
-					mark_eager_effects(source, eager_effects);
-				}
-
-				set_eager_effects(eager_effects);
-				flush_eager_effects();
-			});
 
 			batch.revive();
 			await settled;

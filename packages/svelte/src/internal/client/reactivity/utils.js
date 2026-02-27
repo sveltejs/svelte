@@ -1,5 +1,5 @@
 /** @import { Derived, Effect, Value } from '#client' */
-import { CLEAN, DERIVED, DIRTY, MAYBE_DIRTY, WAS_MARKED } from '#client/constants';
+import { CLEAN, DERIVED, DIRTY, MAYBE_DIRTY, ONLY_EAGER, WAS_MARKED } from '#client/constants';
 import { set_signal_status } from './status.js';
 
 /**
@@ -23,8 +23,9 @@ function clear_marked(deps) {
  * @param {Effect} effect
  * @param {Set<Effect>} dirty_effects
  * @param {Set<Effect>} maybe_dirty_effects
+ * @param {boolean} reset_status
  */
-export function defer_effect(effect, dirty_effects, maybe_dirty_effects) {
+export function defer_effect(effect, dirty_effects, maybe_dirty_effects, reset_status = true) {
 	if ((effect.f & DIRTY) !== 0) {
 		dirty_effects.add(effect);
 	} else if ((effect.f & MAYBE_DIRTY) !== 0) {
@@ -35,6 +36,8 @@ export function defer_effect(effect, dirty_effects, maybe_dirty_effects) {
 	// so that other batches can correctly reach these effects during their own traversal
 	clear_marked(effect.deps);
 
-	// mark as clean so they get scheduled if they depend on pending async state
-	set_signal_status(effect, CLEAN);
+	if (reset_status) {
+		// mark as clean so they get scheduled if they depend on pending async state
+		set_signal_status(effect, CLEAN);
+	}
 }

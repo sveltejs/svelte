@@ -5,7 +5,7 @@ import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor, is_extensible } from '../../shared/utils.js';
 import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
-import { TEXT_NODE, REACTION_RAN } from '#client/constants';
+import { TEXT_NODE, REACTION_RAN, HAS_EAGER } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
 
@@ -221,14 +221,14 @@ export function clear_text_content(node) {
  * Returns `true` if we're updating the current block, for example `condition` in
  * an `{#if condition}` block just changed. In this case, the branch should be
  * appended (or removed) at the same time as other updates within the
- * current `<svelte:boundary>`
+ * current `<svelte:boundary>`. The other case is that we're reading from an eager effect.
  */
 export function should_defer_append() {
 	if (!async_mode_flag) return false;
 	if (eager_block_effects !== null) return false;
 
 	var flags = /** @type {Effect} */ (active_effect).f;
-	return (flags & REACTION_RAN) !== 0;
+	return (flags & REACTION_RAN) !== 0 && (flags & HAS_EAGER) === 0;
 }
 
 /**
