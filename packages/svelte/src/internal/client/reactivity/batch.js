@@ -529,13 +529,32 @@ export class Batch {
 		// we need to override values with the ones in this batch...
 		batch_values = new Map(this.current);
 
-		// ...and undo changes belonging to other batches
-		for (const batch of batches) {
-			if (batch === this) continue;
+		var is_earlier = true;
 
-			for (const [source, previous] of batch.previous) {
-				if (!batch_values.has(source)) {
-					batch_values.set(source, previous);
+		// ...and undo changes belonging to other batches
+		// that don't coincide with this batch
+		for (const batch of batches) {
+			if (batch === this) {
+				is_earlier = false;
+				continue;
+			}
+
+			var coincides = false;
+
+			if (is_earlier) {
+				for (const source of batch.current.keys()) {
+					if (this.current.has(source)) {
+						coincides = true;
+						break;
+					}
+				}
+			}
+
+			if (!coincides) {
+				for (const [source, previous] of batch.previous) {
+					if (!batch_values.has(source)) {
+						batch_values.set(source, previous);
+					}
 				}
 			}
 		}
