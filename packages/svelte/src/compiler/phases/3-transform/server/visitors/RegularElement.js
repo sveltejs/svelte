@@ -126,7 +126,7 @@ export function RegularElement(node, context) {
 
 		if (node.metadata.synthetic_value_node) {
 			body = optimiser.transform(
-				node.metadata.synthetic_value_node.expression,
+				/** @type {Expression} */ (context.visit(node.metadata.synthetic_value_node.expression)),
 				node.metadata.synthetic_value_node.metadata.expression
 			);
 		} else {
