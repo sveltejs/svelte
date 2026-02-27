@@ -1,16 +1,21 @@
 <script>
 	let href = $state('');
+ 
+	const resolvers = [];
 
-	async function load(href) {
+	function push(value) {
 		if (!href) return '';
-		await new Promise(r => setTimeout(r, 100));
-		return href;
+		const { promise, resolve } = Promise.withResolvers();
+		resolvers.push(() => resolve(value));
+		return promise;
 	}
 
-	const loaded = $derived(await load(href));
+	const loaded = $derived(await push(href));
 </script>
 
-{#if $state.eager(href) === '/a'}
+<button onclick={() => resolvers.shift()()}>resolve</button>
+
+{#if $state.eager(href) === '/a' && $state.eager(href) !== href}
 	<p>Loading...</p>
 {:else}
 	<button class="a" onclick={() => { 
@@ -18,7 +23,7 @@
 	}}>/a</button>
 {/if}
 
-{#if $state.eager(href) === '/b'}
+{#if $state.eager(href) === '/b' && $state.eager(href) !== href}
 	<p>Loading...</p>
 {:else}
 	<button class="b" onclick={() => { 
