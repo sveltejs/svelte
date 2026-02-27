@@ -83,15 +83,37 @@ export let ignore_stack = [];
 export let ignore_map = new Map();
 
 /**
+ * Cached snapshot of the ignore_stack. Only re-created when the stack changes
+ * (i.e. when push_ignore or pop_ignore is called), avoiding a structuredClone
+ * on every node visit during analysis.
+ * @type {Set<string>[] | null}
+ */
+let cached_ignore_snapshot = null;
+
+/**
+ * Returns a snapshot of the current ignore_stack, reusing a cached copy
+ * when the stack hasn't changed since the last call.
+ * @returns {Set<string>[]}
+ */
+export function get_ignore_snapshot() {
+	if (cached_ignore_snapshot === null) {
+		cached_ignore_snapshot = ignore_stack.map((s) => new Set(s));
+	}
+	return cached_ignore_snapshot;
+}
+
+/**
  * @param {string[]} ignores
  */
 export function push_ignore(ignores) {
 	const next = new Set([...(ignore_stack.at(-1) || []), ...ignores]);
 	ignore_stack.push(next);
+	cached_ignore_snapshot = null;
 }
 
 export function pop_ignore() {
 	ignore_stack.pop();
+	cached_ignore_snapshot = null;
 }
 
 /**
@@ -141,4 +163,5 @@ export function adjust(state) {
 
 	ignore_stack = [];
 	ignore_map.clear();
+	cached_ignore_snapshot = null;
 }

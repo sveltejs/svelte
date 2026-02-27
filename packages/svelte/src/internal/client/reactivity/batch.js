@@ -66,7 +66,6 @@ let queued_root_effects = [];
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
-let is_flushing = false;
 export let is_flushing_sync = false;
 
 /**
@@ -608,8 +607,6 @@ export function flushSync(fn) {
 }
 
 function flush_effects() {
-	is_flushing = true;
-
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
@@ -658,7 +655,6 @@ function flush_effects() {
 	} finally {
 		queued_root_effects = [];
 
-		is_flushing = false;
 		last_scheduled_effect = null;
 		collected_effects = null;
 
