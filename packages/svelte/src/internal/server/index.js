@@ -154,13 +154,12 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
 		var value = attrs[name];
+		var lower = name.toLowerCase();
 
-		if (lowercase) {
-			name = name.toLowerCase();
-		}
+		if (lowercase) name = lower;
 
 		// omit event handler attributes
-		if (name.length > 2 && name.toLowerCase().startsWith('on')) continue;
+		if (lower.length > 2 && lower.startsWith('on')) continue;
 
 		if (is_input) {
 			if (name === 'defaultvalue' || name === 'defaultchecked') {
