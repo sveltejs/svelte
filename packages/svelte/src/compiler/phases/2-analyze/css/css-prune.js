@@ -125,9 +125,9 @@ const seen = new Set();
 /**
  *
  * @param {Compiler.AST.CSS.StyleSheet} stylesheet
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Iterable<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} elements
  */
-export function prune(stylesheet, element) {
+export function prune(stylesheet, elements) {
 	walk_readonly(/** @type {Compiler.AST.CSS.Node} */ (stylesheet), null, {
 		Rule(node, context) {
 			if (node.metadata.is_global_block) {
@@ -139,17 +139,19 @@ export function prune(stylesheet, element) {
 		ComplexSelector(node) {
 			const selectors = get_relative_selectors(node);
 
-			seen.clear();
+			for (const element of elements) {
+				seen.clear();
 
-			if (
-				apply_selector(
-					selectors,
-					/** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule),
-					element,
-					BACKWARD
-				)
-			) {
-				node.metadata.used = true;
+				if (
+					apply_selector(
+						selectors,
+						/** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule),
+						element,
+						BACKWARD
+					)
+				) {
+					node.metadata.used = true;
+				}
 			}
 
 			// note: we don't call context.next() here, we only recurse into

@@ -21,7 +21,7 @@ import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
+import { ignore_map, get_ignore_snapshot, pop_ignore, push_ignore } from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -134,7 +134,7 @@ const visitors = {
 			push_ignore(ignores);
 		}
 
-		ignore_map.set(node, structuredClone(ignore_stack));
+		ignore_map.set(node, get_ignore_snapshot());
 
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
@@ -856,9 +856,7 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		for (const node of analysis.elements) {
-			prune(analysis.css.ast, node);
-		}
+		prune(analysis.css.ast, analysis.elements);
 
 		const { comment } = analysis.css.ast.content;
 		const should_ignore_unused =
