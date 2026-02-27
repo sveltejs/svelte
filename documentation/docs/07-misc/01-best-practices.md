@@ -94,7 +94,7 @@ Avoid using `onMount` or `$effect` for this.
 
 ## Each blocks
 
-Prefer to use [keyed each blocks](/docs/svelte/each#Keyed-each-blocks) — this improves performance by allowing Svelte to surgically insert or remove items rather than updating the DOM belonging to existing items.
+Prefer to use [keyed each blocks](each#Keyed-each-blocks) — this improves performance by allowing Svelte to surgically insert or remove items rather than updating the DOM belonging to existing items.
 
 > [!NOTE] The key _must_ uniquely identify the object. Do not use the index as a key.
 
@@ -152,7 +152,7 @@ Use `createContext` rather than `setContext` and `getContext`, as it provides ty
 
 ## Async Svelte
 
-If using version 5.36 or higher, you can use [await expressions](/docs/svelte/await-expressions) and [hydratable](/docs/svelte/hydratable) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in `svelte.config.js` as they are not yet considered fully stable.
+If using version 5.36 or higher, you can use [await expressions](await-expressions) and [hydratable](hydratable) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in `svelte.config.js` as they are not yet considered fully stable.
 
 ## Avoid legacy features
 
