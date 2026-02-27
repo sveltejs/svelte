@@ -29,6 +29,7 @@ import {
 	block,
 	branch,
 	destroy_effect,
+	move_effect,
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
@@ -83,7 +84,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 					if (group.pending.size === 0) {
 						var groups = /** @type {Set<EachOutroGroup>} */ (state.outrogroups);
 
-						destroy_effects(array_from(group.done));
+						destroy_effects(state, array_from(group.done));
 						groups.delete(group);
 
 						if (groups.size === 0) {
@@ -114,7 +115,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 			state.items.clear();
 		}
 
-		destroy_effects(to_destroy, !fast_path);
+		destroy_effects(state, to_destroy, !fast_path);
 	} else {
 		group = {
 			pending: new Set(to_destroy),
@@ -126,14 +127,34 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 }
 
 /**
+ * @param {EachState} state
  * @param {Effect[]} to_destroy
  * @param {boolean} remove_dom
  */
-function destroy_effects(to_destroy, remove_dom = true) {
-	// TODO only destroy effects if no pending batch needs them. otherwise,
-	// just re-add the `EFFECT_OFFSCREEN` flag
+function destroy_effects(state, to_destroy, remove_dom = true) {
+	/** @type {Set<Effect>} */
+	var preserved_effects = new Set();
+
+	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
+	if (state.pending.size > 0) {
+		for (const keys of state.pending.values()) {
+			for (const key of keys) {
+				preserved_effects.add(/** @type {EachItem} */ (state.items.get(key)).e);
+			}
+		}
+	}
+
 	for (var i = 0; i < to_destroy.length; i++) {
-		destroy_effect(to_destroy[i], remove_dom);
+		var e = to_destroy[i];
+
+		if (preserved_effects.has(e)) {
+			e.f |= EFFECT_OFFSCREEN;
+
+			const fragment = document.createDocumentFragment();
+			move_effect(e, fragment);
+		} else {
+			destroy_effect(to_destroy[i], remove_dom);
+		}
 	}
 }
 
@@ -185,9 +206,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	/** @type {V[]} */
 	var array;
 
+	/** @type {Map<Batch, Set<any>>} */
+	var pending = new Map();
+
 	var first_run = true;
 
-	function commit() {
+	/**
+	 * @param {Batch} batch
+	 */
+	function commit(batch) {
+		state.pending.delete(batch);
+
 		state.fallback = fallback;
 		reconcile(state, array, anchor, flags, get_key);
 
@@ -314,6 +343,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!first_run) {
+			pending.set(batch, keys);
+
 			if (defer) {
 				for (const [key, item] of items) {
 					if (!keys.has(key)) {
@@ -326,7 +357,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					// TODO presumably we need to do something here?
 				});
 			} else {
-				commit();
+				commit(batch);
 			}
 		}
 
@@ -345,7 +376,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	});
 
 	/** @type {EachState} */
-	var state = { effect, flags, items, outrogroups: null, fallback };
+	var state = { effect, flags, items, pending, outrogroups: null, fallback };
 
 	first_run = false;
 
@@ -544,7 +575,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 	if (state.outrogroups !== null) {
 		for (const group of state.outrogroups) {
 			if (group.pending.size === 0) {
-				destroy_effects(array_from(group.done));
+				destroy_effects(state, array_from(group.done));
 				state.outrogroups?.delete(group);
 			}
 		}
