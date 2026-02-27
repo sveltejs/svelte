@@ -231,13 +231,19 @@ test('map.has() and map.get() with undefined values', () => {
 	});
 
 	assert.deepEqual(log, [
-		'has', true,
-		'get', undefined,
-		'has', false,
-		'get', undefined,
+		'has',
+		true,
+		'get',
+		undefined,
+		'has',
+		false,
+		'get',
+		undefined,
 		// set('bar') bumps version, causing has('foo')/get('foo') effects to re-run
-		'has', false,
-		'get', undefined
+		'has',
+		false,
+		'get',
+		undefined
 	]);
 
 	assert.equal(map.has('bar'), true);
