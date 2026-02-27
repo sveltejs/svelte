@@ -204,24 +204,6 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 
 Apart from the timing, `$effect.pre` works exactly like `$effect`.
 
-## `$effect.tracking`
-
-The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/playground/untitled#H4sIAAAAAAAACn3PwYrCMBDG8VeZDYIt2PYeY8Dn2HrIhqkU08nQjItS-u6buAt7UDzmz8ePyaKGMWBS-nNRcmdU-hHUTpGbyuvI3KZvDFLal0v4qvtIgiSZUSb5eWSxPfWSc4oB2xDP1XYk8HHiSHkICeXKeruDDQ4Demlldv4y0rmq6z10HQwuJMxGVv4mVVXDwcJS0jP9u3knynwtoKz1vifT_Z9Jhm0WBCcOTlDD8kyspmML5qNpHg40jc3fFryJ0iWsp_UHgz3180oBAAA=)):
-
-```svelte
-<script>
-	console.log('in component setup:', $effect.tracking()); // false
-
-	$effect(() => {
-		console.log('in effect:', $effect.tracking()); // true
-	});
-</script>
-
-<p>in template: {$effect.tracking()}</p> <!-- true -->
-```
-
-It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svelte-reactivity#createSubscriber), which will create listeners to update reactive values but _only_ if those values are being tracked (rather than, for example, read inside an event handler).
-
 ## `$effect.pending`
 
 When using [`await`](await-expressions) in components, the `$effect.pending()` rune tells you how many promises are pending in the current [boundary](svelte-boundary), not including child boundaries ([demo](/playground/untitled#H4sIAAAAAAAAE3WRMU_DMBCF_8rJdHDUqilILGkaiY2RgY0yOPYZWbiOFV8IleX_jpMUEAIWS_7u-d27c2ROnJBV7B6t7WDsequAozKEqmAbpo3FwKqnyOjsJ90EMr-8uvN-G97Q0sRaEfAvLjtH6CjbsDrI3nhqju5IFgkEHGAVSBDy62L_SdtvejPTzEU4Owl6cJJM50AoxcUG2gLiVM31URgChyM89N3JBORcF3BoICA9mhN2A3G9gdvdrij2UJYgejLaSCMsKLTivNj0SEOf7WEN7ZwnHV1dfqd2dTsQ5QCdk9bI10PkcxexXqcmH3W51Jt_le2kbH8os9Y3UaTcNLYpDx-Xab6GTHXpZ128MhpWqDVK2np0yrgXXqQpaLa4APDLBkIF8bd2sYql0Sn_DeE7sYr6AdNzvgljR-MUq7SwAdMHeUtgHR4CAAA=)):
@@ -255,6 +237,54 @@ const destroy = $effect.root(() => {
 // later...
 destroy();
 ```
+
+Effect roots are also created when you [`mount`](imperative-component-api#mount) or [`hydrate`](imperative-component-api#hydrate) a component.
+
+## `$effect.tracking`
+
+The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/playground/untitled#H4sIAAAAAAAACn3PwYrCMBDG8VeZDYIt2PYeY8Dn2HrIhqkU08nQjItS-u6buAt7UDzmz8ePyaKGMWBS-nNRcmdU-hHUTpGbyuvI3KZvDFLal0v4qvtIgiSZUSb5eWSxPfWSc4oB2xDP1XYk8HHiSHkICeXKeruDDQ4Demlldv4y0rmq6z10HQwuJMxGVv4mVVXDwcJS0jP9u3knynwtoKz1vifT_Z9Jhm0WBCcOTlDD8kyspmML5qNpHg40jc3fFryJ0iWsp_UHgz3180oBAAA=)):
+
+```svelte
+<script>
+	console.log('in component setup:', $effect.tracking()); // false
+
+	$effect(() => {
+		console.log('in effect:', $effect.tracking()); // true
+	});
+</script>
+
+<p>in template: {$effect.tracking()}</p> <!-- true -->
+```
+
+It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svelte-reactivity#createSubscriber), which will create listeners to update reactive values but _only_ if those values are being tracked (rather than, for example, read inside an event handler).
+
+## `$effect.allowed`
+
+The `$effect.allowed` rune is an advanced feature that indicates whether or not an effect (or [async `$derived`](await-expressions)) can be created — in other words, that we are inside the context of an effect root.
+
+```svelte
+<script>
+	console.log('in component setup', $effect.allowed()); // true
+
+	function onclick() {
+		console.log('after component setup', $effect.allowed()); // false
+
+		const destroy = $effect.root(() => {
+			console.log('in root effect', $effect.allowed()); // true
+
+			return () => {
+				console.log('in effect teardown', $effect.allowed()); // false
+			};
+		});
+
+		destroy();
+	}
+</script>
+
+<button {onclick}>Click me!</button>
+```
+
+The difference between `$effect.allowed()` and `$effect.tracking()` is that `$effect.tracking()` will return `false` at the top level of a component (or directly inside an effect root), since reading state at that moment will _not_ cause anything to re-run when the state changes.
 
 ## When not to use `$effect`
 

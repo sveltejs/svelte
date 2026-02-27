@@ -258,6 +258,36 @@ declare function $effect(fn: () => void | (() => void)): void;
 
 declare namespace $effect {
 	/**
+	 * The `$effect.allowed` rune is an advanced feature that indicates whether an effect or async `$derived` can be created in the current context.
+	 * Effects and async deriveds can only be created in root effects, which are created during component setup, or can be programmatically created via `$effect.root`.
+	 *
+	 * Example:
+	 * ```svelte
+	 * <script>
+	 *   console.log('in component setup', $effect.allowed()); // true
+	 *
+	 *   function onclick() {
+	 *     console.log('after component setup', $effect.allowed()); // false
+	 *
+	 *     const destroy = $effect.root(() => {
+	 *       console.log('in root effect', $effect.allowed()); // true
+	 *
+	 *       return () => {
+	 *         console.log('in effect teardown', $effect.allowed()); // false
+	 *       };
+	 *     });
+	 *
+	 *     destroy();
+	 *   }
+	 * </script>
+	 *
+	 * <button {onclick}>Click me!</button>
+	 * ```
+	 *
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.allowed Documentation}
+	 */
+	export function allowed(): boolean;
+	/**
 	 * Runs code right before a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.
 	 * The timing of the execution is right before the DOM is updated.
 	 *
