@@ -241,6 +241,13 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 	}
 
+	/**
+	 * @param {Batch} batch
+	 */
+	function discard(batch) {
+		state.pending.delete(batch);
+	}
+
 	var effect = block(() => {
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
@@ -355,9 +362,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				}
 
 				batch.oncommit(commit);
-				batch.ondiscard(() => {
-					// TODO presumably we need to do something here?
-				});
+				batch.ondiscard(discard);
 			} else {
 				commit(batch);
 			}
