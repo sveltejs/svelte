@@ -78,6 +78,8 @@ export let is_flushing_sync = false;
  */
 export let collected_effects = null;
 
+let did_read_eager = false;
+
 export class Batch {
 	/**
 	 * The current values of any sources that are updated in this batch
@@ -326,9 +328,28 @@ export class Batch {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
-				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
-					update_effect(effect);
+				} else {
+					var prev_did_read_eager = did_read_eager;
+					did_read_eager = false;
+					if (is_dirty(effect)) {
+						if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
+
+						update_effect(effect);
+					}
+
+					// TODO this doesn't work because we would have to re-dirty/reschedule every derived and the effect itself
+					if ((flags & BLOCK_EFFECT) !== 0) {
+						if (did_read_eager && !this.is_fork) {
+							var prev = batch_values;
+							batch_values = new Map(batch_values);
+							for (const [source, previous] of this.previous) {
+								batch_values?.set(source, previous);
+							}
+							update_effect(effect);
+							batch_values = prev;
+						}
+					}
+					did_read_eager = prev_did_read_eager;
 				}
 
 				var child = effect.first;
@@ -914,6 +935,7 @@ export function eager(fn) {
 		var previous_batch_values = batch_values;
 
 		try {
+			did_read_eager = true;
 			batch_values = null;
 			return fn();
 		} finally {
