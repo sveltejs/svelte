@@ -524,13 +524,7 @@ export class Batch {
 	}
 
 	apply() {
-		if (!batches.has(this)) {
-			console.warn('wtf', this.id);
-		}
-
 		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) return;
-
-		console.log(this.id, batches.size);
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
@@ -556,8 +550,6 @@ export class Batch {
 					}
 				}
 			}
-
-			console.log(batch.id, { coincides });
 
 			if (!coincides) {
 				for (const [source, previous] of batch.previous) {
