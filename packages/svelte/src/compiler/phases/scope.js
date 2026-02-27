@@ -1,8 +1,8 @@
 /** @import { BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super, SimpleLiteral, FunctionExpression, ArrowFunctionExpression } from 'estree' */
-/** @import { Context, Visitor } from 'zimmerframe' */
+/** @import { ReadonlyContext, ReadonlyVisitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
-import { walk } from 'zimmerframe';
+import { walk_readonly } from 'zimmerframe';
 import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
 import * as e from '../errors.js';
@@ -915,7 +915,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	/**
-	 * @type {Visitor<Node, State, AST.SvelteNode>}
+	 * @type {ReadonlyVisitor<Node, State, AST.SvelteNode>}
 	 */
 	const create_block_scope = (node, { state, next }) => {
 		const scope = state.scope.child(true);
@@ -925,7 +925,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.ElementLike, State, AST.SvelteNode>}
+	 * @type {ReadonlyVisitor<AST.ElementLike, State, AST.SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
 		const scope = state.scope.child();
@@ -934,7 +934,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, AST.SvelteNode>}
+	 * @type {ReadonlyVisitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, AST.SvelteNode>}
 	 */
 	const Component = (node, context) => {
 		node.metadata.scopes = {
@@ -975,7 +975,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, AST.SvelteNode>}
+	 * @type {ReadonlyVisitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, AST.SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
 		state.scope.reference(b.id(node.name.split('.')[0]), path);
@@ -987,7 +987,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 	let has_await = false;
 
-	walk(ast, state, {
+	walk_readonly(ast, state, {
 		AwaitExpression(node, context) {
 			// this doesn't _really_ belong here, but it allows us to
 			// automatically opt into runes mode on encountering
@@ -1203,7 +1203,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 					let inside_rest = false;
 					let is_rest_id = false;
-					walk(node.context, null, {
+					walk_readonly(node.context, null, {
 						Identifier(node) {
 							if (inside_rest && node === id) {
 								is_rest_id = true;
@@ -1376,7 +1376,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 /**
  * @template {{ scope: Scope, scopes: Map<AST.SvelteNode, Scope> }} State
  * @param {AST.SvelteNode} node
- * @param {Context<AST.SvelteNode, State>} context
+ * @param {ReadonlyContext<AST.SvelteNode, State>} context
  */
 export function set_scope(node, { next, state }) {
 	const scope = state.scopes.get(node);

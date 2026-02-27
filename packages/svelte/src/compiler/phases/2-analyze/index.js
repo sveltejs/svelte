@@ -2,7 +2,7 @@
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
-import { walk } from 'zimmerframe';
+import { walk_readonly } from 'zimmerframe';
 import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
@@ -295,7 +295,7 @@ export function analyze_module(source, options) {
 		runes: true
 	});
 
-	walk(
+	walk_readonly(
 		/** @type {ESTree.Node} */ (ast),
 		{
 			scope,
@@ -637,7 +637,7 @@ export function analyze_component(root, source, options) {
 
 		// more legacy nonsense: if an `each` binding is reassigned/mutated,
 		// treat the expression as being mutated as well
-		walk(/** @type {AST.SvelteNode} */ (template.ast), null, {
+		walk_readonly(/** @type {AST.SvelteNode} */ (template.ast), null, {
 			EachBlock(node) {
 				const scope = /** @type {Scope} */ (template.scopes.get(node));
 
@@ -645,7 +645,7 @@ export function analyze_component(root, source, options) {
 					if (binding.updated) {
 						const state = { scope: /** @type {Scope} */ (scope.parent), scopes: template.scopes };
 
-						walk(node.expression, state, {
+						walk_readonly(node.expression, state, {
 							// @ts-expect-error
 							_: set_scope,
 							Identifier(node, context) {
@@ -722,7 +722,7 @@ export function analyze_component(root, source, options) {
 				derived_function_depth: -1
 			};
 
-			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
+			walk_readonly(/** @type {AST.SvelteNode} */ (ast), state, visitors);
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -790,7 +790,7 @@ export function analyze_component(root, source, options) {
 				derived_function_depth: -1
 			};
 
-			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
+			walk_readonly(/** @type {AST.SvelteNode} */ (ast), state, visitors);
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
@@ -954,7 +954,7 @@ function calculate_blockers(instance, analysis) {
 		if (seen.has(expression)) return;
 		seen.add(expression);
 
-		walk(
+		walk_readonly(
 			expression,
 			{ scope },
 			{
@@ -1007,7 +1007,7 @@ function calculate_blockers(instance, analysis) {
 			}
 		}
 
-		walk(
+		walk_readonly(
 			node,
 			{ scope },
 			{
