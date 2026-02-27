@@ -1173,32 +1173,22 @@ describe('signals', () => {
 
 	test('SvelteMap handles keys with undefined values', () => {
 		return () => {
-			// Bug: SvelteMap.has() and .get() use super.get(key) !== undefined
-			// to check key existence, which fails for keys with undefined values
 			const map = new SvelteMap<string, undefined | string>([['foo', undefined]]);
 
-			// has() should return true for a key that exists with value undefined
+			// has() and get() previously used `super.get(key) !== undefined` to check
+			// key existence, which returned false for keys with undefined values
 			assert.equal(map.has('foo'), true);
-
-			// get() should return undefined (the value) and create proper tracking
 			assert.equal(map.get('foo'), undefined);
-
-			// has() should still return true after get()
 			assert.equal(map.has('foo'), true);
 
-			// delete() should work and trigger reactivity
-			const log: string[] = [];
-			const d = derived(() => {
-				log.push(`has:${map.has('foo')}`);
-				return map.has('foo');
-			});
-
+			// Verify that delete() triggers reactive updates via derived
+			const d = derived(() => map.has('foo'));
 			assert.equal($.get(d), true);
 
 			map.delete('foo');
 			assert.equal($.get(d), false);
 
-			// Also test set() with undefined value after construction
+			// Same behavior should work when setting undefined after construction
 			const map2 = new SvelteMap<string, undefined | string>();
 			map2.set('bar', undefined);
 			assert.equal(map2.has('bar'), true);
