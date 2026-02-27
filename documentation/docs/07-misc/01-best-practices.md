@@ -92,6 +92,20 @@ If you need to attach listeners to `window` or `document` you can use `<svelte:w
 
 Avoid using `onMount` or `$effect` for this.
 
+## Snippets
+
+[Snippets](snippet) are a way to define reusable chunks of markup that can be instantiated with the [`{@render ...}`](@render) tag, or passed to components as props. They must be declared within the template.
+
+```svelte
+{#snippet greeting(name)}
+  <p>hello {name}!</p>
+{/snippet}
+
+{@render greeting('world')}
+```
+
+> [!NOTE] Snippets declared at the top level of a component (i.e. not inside elements or blocks) can be referenced inside `<script>`. A snippet that doesn't reference component state is also available in a `<script module>`, in which case it can be exported for use by other components.
+
 ## Each blocks
 
 Prefer to use [keyed each blocks](each#Keyed-each-blocks) — this improves performance by allowing Svelte to surgically insert or remove items rather than updating the DOM belonging to existing items.
