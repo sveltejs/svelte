@@ -160,7 +160,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		}
 
 		// omit event handler attributes
-		if (name.length > 2 && name.startsWith('on')) continue;
+		if (name.length > 2 && name.toLowerCase().startsWith('on')) continue;
 
 		if (is_input) {
 			if (name === 'defaultvalue' || name === 'defaultchecked') {
