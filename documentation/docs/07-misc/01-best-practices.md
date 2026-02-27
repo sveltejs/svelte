@@ -5,7 +5,7 @@ description: Guidance on writing fast, robust, modern Svelte code. Load this ski
 ---
 
 <!-- llm-ignore-start -->
-This document outlines some best practices that will help you write fast, robust Svelte apps. It is also available as a `svelte-best-practices` skill for your agents.
+This document outlines some best practices that will help you write fast, robust Svelte apps. It is also available as a `svelte-core-bestpractices` skill for your agents.
 <!-- llm-ignore-end -->
 
 ## `$state`
