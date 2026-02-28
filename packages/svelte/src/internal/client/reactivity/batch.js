@@ -1054,6 +1054,37 @@ export function fork(fn) {
 				batches.delete(batch);
 				batch.discard();
 			}
+		},
+		isCommitted: () => committed,
+		isDiscarded: () => !committed && !batches.has(batch),
+		run: async (fn) => {
+			if (committed) {
+				// TODO error instead?
+				await settled;
+				fn();
+			} else {
+				// We want to start with the current state of the world, not the
+				// state back when the fork was created. Also important to
+				// correctly revert state changes later
+				const previous = batch.previous;
+				batch.previous = new Map();
+				batch.activate();
+
+				flushSync(fn);
+
+				// revert state changes
+				for (var [source, value] of batch.previous) {
+					source.v = value;
+				}
+
+				// merge 'previous' map
+				// TODO is this correct?
+				for (const [source, value] of previous) {
+					if (!batch.previous.has(source)) {
+						batch.previous.set(source, value);
+					}
+				}
+			}
 		}
 	};
 }
