@@ -65,17 +65,21 @@ Svelte will do as much asynchronous work as it can in parallel. For example if y
 
 ...both functions will run at the same time, as they are independent expressions, even though they are _visually_ sequential.
 
-This does not apply to sequential `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript. An exception is that independent `$derived` expressions will update independently, even though they will run sequentially when they are first created:
+This does not apply to sequential `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript.
+
+`$derived` is a special case: each derived updates independently when its dependencies change, but JavaScript still evaluates declarations in order.
 
 ```js
-async function one() { return 1; }
-async function two() { return 2; }
+async function one(x) { return x; }
+async function two(y) { return y; }
 // ---cut---
-// these will run sequentially the first time,
-// but will update independently
-let a = $derived(await one());
-let b = $derived(await two());
+let x = $state(1);
+let y = $state(2);
+let a = $derived(await one(x));
+let b = $derived(await two(y));
 ```
+
+Here, `b` will not be created until the `await one(x)` has resolved. Once created, `a` and `b` update independently — changes to `x` will only re-run `one(x)`, and changes to `y` will only re-run `two(y)`.
 
 > [!NOTE] If you write code like this, expect Svelte to give you an [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) warning
 
