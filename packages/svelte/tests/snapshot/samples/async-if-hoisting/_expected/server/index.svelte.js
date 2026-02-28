@@ -4,10 +4,10 @@ import * as $ from 'svelte/internal/server';
 export default function Async_if_hoisting($$renderer) {
 	$$renderer.child_block(async ($$renderer) => {
 		if ((await $.save(Promise.resolve(true)))()) {
-			$$renderer.push('<!--[-->');
+			$$renderer.push('<!--[0-->');
 			$$renderer.push(async () => $.escape(await Promise.resolve('yes yes yes')));
 		} else {
-			$$renderer.push('<!--[!-->');
+			$$renderer.push('<!--[-1-->');
 			$$renderer.push(async () => $.escape(await Promise.reject('no no no')));
 		}
 	});

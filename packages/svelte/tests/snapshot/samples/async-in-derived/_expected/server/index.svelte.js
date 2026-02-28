@@ -18,7 +18,7 @@ export default function Async_in_derived($$renderer, $$props) {
 		]);
 
 		if (true) {
-			$$renderer.push('<!--[-->');
+			$$renderer.push('<!--[0-->');
 
 			let yes1;
 			let yes2;
@@ -47,7 +47,7 @@ export default function Async_in_derived($$renderer, $$props) {
 				}
 			]);
 		} else {
-			$$renderer.push('<!--[!-->');
+			$$renderer.push('<!--[-1-->');
 		}
 
 		$$renderer.push(`<!--]-->`);

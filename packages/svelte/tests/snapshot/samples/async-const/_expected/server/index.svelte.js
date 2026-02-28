@@ -3,7 +3,7 @@ import * as $ from 'svelte/internal/server';
 
 export default function Async_const($$renderer) {
 	if (true) {
-		$$renderer.push('<!--[-->');
+		$$renderer.push('<!--[0-->');
 
 		let a;
 		let b;
@@ -22,7 +22,7 @@ export default function Async_const($$renderer) {
 		$$renderer.async([promises[1]], ($$renderer) => $$renderer.push(() => $.escape(b)));
 		$$renderer.push(`</p>`);
 	} else {
-		$$renderer.push('<!--[!-->');
+		$$renderer.push('<!--[-1-->');
 	}
 
 	$$renderer.push(`<!--]-->`);

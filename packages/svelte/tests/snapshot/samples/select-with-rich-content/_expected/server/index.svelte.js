@@ -57,13 +57,13 @@ export default function Select_with_rich_content($$renderer) {
 	$$renderer.push(`<!--]--></select> <select>`);
 
 	if (show) {
-		$$renderer.push('<!--[-->');
+		$$renderer.push('<!--[0-->');
 
 		$$renderer.option({}, ($$renderer) => {
 			$$renderer.push(`Visible`);
 		});
 	} else {
-		$$renderer.push('<!--[!-->');
+		$$renderer.push('<!--[-1-->');
 	}
 
 	$$renderer.push(`<!--]--></select> <select><!---->`);
@@ -148,7 +148,7 @@ export default function Select_with_rich_content($$renderer) {
 	$$renderer.push(`<!--]--></select> <select>`);
 
 	if (show) {
-		$$renderer.push('<!--[-->');
+		$$renderer.push('<!--[0-->');
 		$$renderer.push(`<!--[-->`);
 
 		const each_array_4 = $.ensure_array_like(items);
@@ -161,7 +161,7 @@ export default function Select_with_rich_content($$renderer) {
 
 		$$renderer.push(`<!--]-->`);
 	} else {
-		$$renderer.push('<!--[!-->');
+		$$renderer.push('<!--[-1-->');
 	}
 
 	$$renderer.push(`<!--]--></select> <select>`);
@@ -227,10 +227,10 @@ export default function Select_with_rich_content($$renderer) {
 	$$renderer.push(`<!--]--><!></select>  <select>`);
 
 	if (show) {
-		$$renderer.push('<!--[-->');
+		$$renderer.push('<!--[0-->');
 		conditional_option($$renderer);
 	} else {
-		$$renderer.push('<!--[!-->');
+		$$renderer.push('<!--[-1-->');
 	}
 
 	$$renderer.push(`<!--]--><!></select>`);
