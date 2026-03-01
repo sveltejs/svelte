@@ -79,6 +79,7 @@ export let collected_effects = null;
 let uid = 1;
 
 export class Batch {
+	// for debugging. TODO remove once async is stable
 	id = uid++;
 
 	/**
