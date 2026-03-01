@@ -37,7 +37,6 @@ import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
-import { log_effect_tree } from '../dev/debug.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
