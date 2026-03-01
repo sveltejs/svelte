@@ -76,7 +76,11 @@ export let is_flushing_sync = false;
  */
 export let collected_effects = null;
 
+let uid = 1;
+
 export class Batch {
+	id = uid++;
+
 	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
