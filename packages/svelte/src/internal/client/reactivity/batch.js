@@ -266,14 +266,19 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_branches.has(effect);
+			var skip = is_skippable_branch || this.#skipped_branches.has(effect);
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
-					effect.f ^= CLEAN;
+					if ((flags & INERT) === 0) {
+						effect.f ^= CLEAN;
+					}
 				} else if ((flags & EFFECT) !== 0) {
 					effects.push(effect);
-				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
+				} else if (
+					(flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
+					(async_mode_flag || (flags & INERT) !== 0)
+				) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
 					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
