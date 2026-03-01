@@ -2,17 +2,17 @@
 /** @import { Parser } from '../index.js' */
 import * as e from '../../../errors.js';
 
-const REGEX_MATCHER = /^[~^$*|]?=/;
+const REGEX_MATCHER = /[~^$*|]?=/y;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
-const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today, but make it future-proof
-const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
-const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
+const REGEX_ATTRIBUTE_FLAGS = /[a-zA-Z]+/y; // only `i` and `s` are valid today, but make it future-proof
+const REGEX_COMBINATOR = /(\+|~|>|\|\|)/y;
+const REGEX_PERCENTAGE = /\d+(\.\d+)?%/y;
 const REGEX_NTH_OF =
-	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
+	/(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/y;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
-const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
+const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/y;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
-const REGEX_UNICODE_SEQUENCE = /^\\[0-9a-fA-F]{1,6}(\r\n|\s)?/;
+const REGEX_UNICODE_SEQUENCE = /\\[0-9a-fA-F]{1,6}(\r\n|\s)?/y;
 const REGEX_COMMENT_CLOSE = /\*\//;
 const REGEX_HTML_COMMENT_CLOSE = /-->/;
 
@@ -28,7 +28,7 @@ export default function read_style(parser, start, attributes) {
 	const content_end = parser.index;
 
 	parser.eat('</style', true);
-	parser.read(/^\s*>/);
+	parser.read(/\s*>/y);
 
 	return {
 		type: 'StyleSheet',

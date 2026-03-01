@@ -1,5 +1,27 @@
 # svelte
 
+## 5.53.6
+
+### Patch Changes
+
+- perf: optimize parser hot paths for faster compilation ([#17811](https://github.com/sveltejs/svelte/pull/17811))
+
+- fix: `SvelteMap` incorrectly handles keys with `undefined` values ([#17826](https://github.com/sveltejs/svelte/pull/17826))
+
+- fix: SvelteURL `search` setter now returns the normalized value, matching native URL behavior ([#17828](https://github.com/sveltejs/svelte/pull/17828))
+
+- fix: visit synthetic value node during ssr ([#17824](https://github.com/sveltejs/svelte/pull/17824))
+
+- fix: always case insensitive event handlers during ssr ([#17822](https://github.com/sveltejs/svelte/pull/17822))
+
+- chore: more efficient effect scheduling ([#17808](https://github.com/sveltejs/svelte/pull/17808))
+
+- perf: optimize compiler analysis phase ([#17823](https://github.com/sveltejs/svelte/pull/17823))
+
+- fix: skip redundant batch.apply ([#17816](https://github.com/sveltejs/svelte/pull/17816))
+
+- chore: null out current_batch before committing branches ([#17809](https://github.com/sveltejs/svelte/pull/17809))
+
 ## 5.53.5
 
 ### Patch Changes

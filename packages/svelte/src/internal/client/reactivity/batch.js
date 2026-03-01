@@ -66,7 +66,6 @@ let queued_root_effects = [];
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
-let is_flushing = false;
 export let is_flushing_sync = false;
 
 /**
@@ -77,7 +76,12 @@ export let is_flushing_sync = false;
  */
 export let collected_effects = null;
 
+let uid = 1;
+
 export class Batch {
+	// for debugging. TODO remove once async is stable
+	id = uid++;
+
 	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
@@ -340,7 +344,7 @@ export class Batch {
 
 	flush() {
 		if (queued_root_effects.length > 0) {
-			this.activate();
+			current_batch = this;
 			flush_effects();
 		} else if (this.#pending === 0 && !this.is_fork) {
 			// append/remove branches
@@ -595,8 +599,6 @@ export function flushSync(fn) {
 }
 
 function flush_effects() {
-	is_flushing = true;
-
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
@@ -645,7 +647,6 @@ function flush_effects() {
 	} finally {
 		queued_root_effects = [];
 
-		is_flushing = false;
 		last_scheduled_effect = null;
 		collected_effects = null;
 

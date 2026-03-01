@@ -141,13 +141,15 @@ const default_brackets = {
 	'[': ']'
 };
 
+const default_close = new Set(Object.values(default_brackets));
+
 /**
  * @param {Parser} parser
  * @param {number} start
  * @param {Record<string, string>} brackets
  */
 export function match_bracket(parser, start, brackets = default_brackets) {
-	const close = Object.values(brackets);
+	const close = brackets === default_brackets ? default_close : new Set(Object.values(brackets));
 	const bracket_stack = [];
 
 	let i = start;
@@ -162,7 +164,7 @@ export function match_bracket(parser, start, brackets = default_brackets) {
 
 		if (char in brackets) {
 			bracket_stack.push(char);
-		} else if (close.includes(char)) {
+		} else if (close.has(char)) {
 			const popped = /** @type {string} */ (bracket_stack.pop());
 			const expected = /** @type {string} */ (brackets[popped]);
 

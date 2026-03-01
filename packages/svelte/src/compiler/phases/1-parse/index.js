@@ -4,7 +4,6 @@
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
-import { regex_whitespace } from '../patterns.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
@@ -13,6 +12,25 @@ import { disallow_children } from '../2-analyze/visitors/shared/special-element.
 import * as state from '../../state.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
+
+/** @param {number} cc */
+function is_whitespace(cc) {
+	// fast path for common whitespace
+	if (cc === 32 || (cc <= 13 && cc >= 9)) return true;
+	// rare whitespace — \u00a0, \u1680, \u2000-\u200a, \u2028, \u2029, \u202f, \u205f, \u3000, \ufeff
+	if (cc < 160) return false;
+	return (
+		cc === 160 ||
+		cc === 5760 ||
+		(cc >= 8192 && cc <= 8202) ||
+		cc === 8232 ||
+		cc === 8233 ||
+		cc === 8239 ||
+		cc === 8287 ||
+		cc === 12288 ||
+		cc === 65279
+	);
+}
 
 const regex_lang_attribute =
 	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
@@ -191,22 +209,26 @@ export class Parser {
 			return this.template[this.index] === str;
 		}
 
-		return this.template.slice(this.index, this.index + length) === str;
+		return this.template.startsWith(str, this.index);
 	}
 
 	/**
 	 * Match a regex at the current index
-	 * @param {RegExp} pattern  Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 * @param {RegExp} pattern  Should have the sticky (`y`) flag so that it only matches at the current index
 	 */
 	match_regex(pattern) {
-		const match = pattern.exec(this.template.slice(this.index));
-		if (!match || match.index !== 0) return null;
+		pattern.lastIndex = this.index;
+		const match = pattern.exec(this.template);
+		if (!match || match.index !== this.index) return null;
 
 		return match[0];
 	}
 
 	allow_whitespace() {
-		while (this.index < this.template.length && regex_whitespace.test(this.template[this.index])) {
+		while (
+			this.index < this.template.length &&
+			is_whitespace(this.template.charCodeAt(this.index))
+		) {
 			this.index++;
 		}
 	}
@@ -282,7 +304,7 @@ export class Parser {
 	}
 
 	require_whitespace() {
-		if (!regex_whitespace.test(this.template[this.index])) {
+		if (!is_whitespace(this.template.charCodeAt(this.index))) {
 			e.expected_whitespace(this.index);
 		}
 
