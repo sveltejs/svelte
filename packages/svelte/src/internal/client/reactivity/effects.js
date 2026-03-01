@@ -44,6 +44,7 @@ import { Batch, collected_effects, schedule_effect } from './batch.js';
 import { flatten, increment_pending } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
+import { async_mode_flag } from '../../flags/index.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -664,6 +665,10 @@ export function resume_effect(effect) {
 function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
+
+	if (async_mode_flag && (effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) === 0) {
+		effect.f ^= CLEAN;
+	}
 
 	var child = effect.first;
 
