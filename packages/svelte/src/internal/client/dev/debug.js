@@ -72,15 +72,22 @@ function effect_label(effect, append_effect = false) {
  *
  * @param {Effect} effect
  */
-export function log_effect_tree(effect, depth = 0) {
+export function log_effect_tree(effect, depth = 0, is_reachable = true) {
 	const flags = effect.f;
-	const label = effect_label(effect);
+	let label = effect_label(effect);
 
 	let status =
 		(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
 
+	let styles = [`font-weight: ${status === 'clean' ? 'normal' : 'bold'}`];
+
+	if (status !== 'clean' && !is_reachable) {
+		label = `⚠️ ${label}`;
+		styles.push(`color: red`);
+	}
+
 	// eslint-disable-next-line no-console
-	console.group(`%c${label} (${status})`, `font-weight: ${status === 'clean' ? 'normal' : 'bold'}`);
+	console.group(`%c${label} (${status})`, styles.join('; '));
 
 	if (depth === 0) {
 		const callsite = new Error().stack
@@ -120,9 +127,11 @@ export function log_effect_tree(effect, depth = 0) {
 		}
 	}
 
+	var child_is_reachable = (flags & BRANCH_EFFECT) === 0 || (flags & CLEAN) === 0;
+
 	let child = effect.first;
 	while (child !== null) {
-		log_effect_tree(child, depth + 1);
+		log_effect_tree(child, depth + 1, child_is_reachable);
 		child = child.next;
 	}
 
