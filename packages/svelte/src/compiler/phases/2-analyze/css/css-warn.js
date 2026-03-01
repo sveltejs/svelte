@@ -1,6 +1,6 @@
-/** @import { Visitors } from 'zimmerframe' */
+/** @import { ReadonlyVisitors } from 'zimmerframe' */
 /** @import { AST } from '#compiler' */
-import { walk } from 'zimmerframe';
+import { walk_readonly } from 'zimmerframe';
 import * as w from '../../../warnings.js';
 import { is_keyframes_node } from '../../css.js';
 
@@ -8,10 +8,10 @@ import { is_keyframes_node } from '../../css.js';
  * @param {AST.CSS.StyleSheet} stylesheet
  */
 export function warn_unused(stylesheet) {
-	walk(stylesheet, { stylesheet }, visitors);
+	walk_readonly(stylesheet, { stylesheet }, visitors);
 }
 
-/** @type {Visitors<AST.CSS.Node, { stylesheet: AST.CSS.StyleSheet }>} */
+/** @type {ReadonlyVisitors<AST.CSS.Node, { stylesheet: AST.CSS.StyleSheet }>} */
 const visitors = {
 	Atrule(node, context) {
 		if (!is_keyframes_node(node)) {

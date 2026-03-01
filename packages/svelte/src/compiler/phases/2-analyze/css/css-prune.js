@@ -1,5 +1,5 @@
 /** @import * as Compiler from '#compiler' */
-import { walk } from 'zimmerframe';
+import { walk_readonly } from 'zimmerframe';
 import {
 	get_parent_rules,
 	get_possible_values,
@@ -128,7 +128,7 @@ const seen = new Set();
  * @param {Iterable<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} elements
  */
 export function prune(stylesheet, elements) {
-	walk(/** @type {Compiler.AST.CSS.Node} */ (stylesheet), null, {
+	walk_readonly(/** @type {Compiler.AST.CSS.Node} */ (stylesheet), null, {
 		Rule(node, context) {
 			if (node.metadata.is_global_block) {
 				context.visit(node.prelude);
@@ -176,7 +176,7 @@ function get_relative_selectors(node) {
 
 		// nesting could be inside pseudo classes like :is, :has or :where
 		for (let selector of selectors) {
-			walk(selector, null, {
+			walk_readonly(selector, null, {
 				// @ts-ignore
 				NestingSelector() {
 					has_explicit_nesting_selector = true;
@@ -495,7 +495,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				// with descendants, in which case we scope them all.
 				if (name === 'not' && selector.args) {
 					for (const complex_selector of selector.args.children) {
-						walk(complex_selector, null, {
+						walk_readonly(complex_selector, null, {
 							ComplexSelector(node, context) {
 								node.metadata.used = true;
 								context.next();
@@ -830,7 +830,7 @@ function get_ancestor_elements(node, adjacent_only, seen = new Set()) {
 				if (select_element && (!adjacent_only || is_direct_child)) {
 					/** @type {Compiler.AST.RegularElement | null} */
 					let selectedcontent_element = null;
-					walk(select_element, null, {
+					walk_readonly(select_element, null, {
 						RegularElement(child, context) {
 							if (child.name === 'selectedcontent') {
 								selectedcontent_element = child;
@@ -873,7 +873,7 @@ function get_descendant_elements(node, adjacent_only, seen = new Set()) {
 	 * @param {Compiler.AST.SvelteNode} node
 	 */
 	function walk_children(node) {
-		walk(node, null, {
+		walk_readonly(node, null, {
 			_(node, context) {
 				if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
 					descendants.push(node);
@@ -907,7 +907,7 @@ function get_descendant_elements(node, adjacent_only, seen = new Set()) {
 		);
 
 		if (select_element) {
-			walk(
+			walk_readonly(
 				select_element,
 				{ inside_option: false },
 				{
