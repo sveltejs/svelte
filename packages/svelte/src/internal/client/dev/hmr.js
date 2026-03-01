@@ -38,21 +38,26 @@ export function hmr(fn) {
 				destroy_effect(effect);
 			}
 
-			effect = branch(() => {
-				// when the component is invalidated, replace it without transitions
-				if (ran) set_should_intro(false);
+			try {
+				effect = branch(() => {
+					// when the component is invalidated, replace it without transitions
+					if (ran) set_should_intro(false);
 
-				// preserve getters/setters
-				Object.defineProperties(
-					instance,
-					Object.getOwnPropertyDescriptors(
-						// @ts-expect-error
-						new.target ? new component(anchor, props) : component(anchor, props)
-					)
-				);
+					// preserve getters/setters
+					Object.defineProperties(
+						instance,
+						Object.getOwnPropertyDescriptors(
+							// @ts-expect-error
+							new.target ? new component(anchor, props) : component(anchor, props)
+						)
+					);
 
-				if (ran) set_should_intro(true);
-			});
+					if (ran) set_should_intro(true);
+				});
+			} catch (e) {
+				// eslint-disable-next-line no-console
+				console.error(e);
+			}
 		}, EFFECT_TRANSPARENT);
 
 		ran = true;
