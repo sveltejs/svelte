@@ -88,7 +88,7 @@ export class BranchManager {
 			// effect is currently offscreen. put it in the DOM
 			var offscreen = this.#offscreen.get(key);
 
-			if (offscreen) {
+			if (offscreen && (offscreen.effect.f & INERT) === 0) {
 				this.#onscreen.set(key, offscreen.effect);
 				this.#offscreen.delete(key);
 
