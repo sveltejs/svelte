@@ -666,6 +666,8 @@ function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
+	// Mark branches as clean so that effects can be scheduled, but only in async mode
+	// (in legacy mode, effect resumption happens during traversal)
 	if (async_mode_flag && (effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) === 0) {
 		effect.f ^= CLEAN;
 	}
