@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+import { INERT } from '#client/constants';
 import { Batch, current_batch } from '../../reactivity/batch.js';
 import {
 	branch,
@@ -123,6 +124,9 @@ export class BranchManager {
 			// ...except the one that was just committed
 			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
 			if (k === key || this.#outroing.has(k)) continue;
+
+			// don't destroy branches that are inside outroing blocks
+			if ((effect.f & INERT) !== 0) continue;
 
 			const on_destroy = () => {
 				const keys = Array.from(this.#batches.values());

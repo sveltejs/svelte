@@ -37,6 +37,7 @@ import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
+import { log_effect_tree } from '../dev/debug.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -277,8 +278,15 @@ export class Batch {
 				} else if ((flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0 && (async_mode_flag || inert)) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
 					update_effect(effect);
+
+					if ((flags & BLOCK_EFFECT) !== 0) {
+						this.#maybe_dirty_effects.add(effect);
+
+						// if this is inside an outroing block, ensure that the block
+						// re-runs if the outro is later aborted
+						if (inert) set_signal_status(effect, DIRTY);
+					}
 				}
 
 				var child = effect.first;
