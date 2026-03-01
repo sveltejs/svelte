@@ -19,10 +19,10 @@ import {
 import { Batch, current_batch } from './batch.js';
 import {
 	async_derived,
-	current_async_effect,
+	reactivity_loss_tracker,
 	derived,
 	derived_safe_equal,
-	set_from_async_derived
+	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
 
@@ -120,7 +120,7 @@ export function capture() {
 		if (activate_batch) previous_batch?.activate();
 
 		if (DEV) {
-			set_from_async_derived(null);
+			set_reactivity_loss_tracker(null);
 			set_dev_stack(previous_dev_stack);
 		}
 	};
@@ -152,11 +152,11 @@ export async function save(promise) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
-	var previous_async_effect = current_async_effect;
+	var previous_async_effect = reactivity_loss_tracker;
 	var value = await promise;
 
 	return () => {
-		set_from_async_derived(previous_async_effect);
+		set_reactivity_loss_tracker(previous_async_effect);
 		return value;
 	};
 }
@@ -213,7 +213,7 @@ export function unset_context(deactivate_batch = true) {
 	if (deactivate_batch) current_batch?.deactivate();
 
 	if (DEV) {
-		set_from_async_derived(null);
+		set_reactivity_loss_tracker(null);
 		set_dev_stack(null);
 	}
 }
