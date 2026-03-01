@@ -127,7 +127,7 @@ export function log_effect_tree(effect, depth = 0, is_reachable = true) {
 		}
 	}
 
-	var child_is_reachable = (flags & BRANCH_EFFECT) === 0 || (flags & CLEAN) === 0;
+	var child_is_reachable = is_reachable && ((flags & BRANCH_EFFECT) === 0 || (flags & CLEAN) === 0);
 
 	let child = effect.first;
 	while (child !== null) {
