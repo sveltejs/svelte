@@ -11,7 +11,6 @@ import {
 } from '../hydration.js';
 import { block } from '../../reactivity/effects.js';
 import { BranchManager } from './branches.js';
-import { HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
  * @param {TemplateNode} node
@@ -37,21 +36,9 @@ export function if_block(node, fn, elseif = false) {
 	function update_branch(key, fn) {
 		if (hydrating) {
 			var data = read_hydration_instruction(/** @type {TemplateNode} */ (marker));
-			/**
-			 * @type {number | false}
-			 * "[" = branch 0, "[1" = branch 1, "[2" = branch 2, ..., "[!" = else (false)
-			 */
-			var hydrated_key;
 
-			if (data === HYDRATION_START) {
-				hydrated_key = 0;
-			} else if (data === HYDRATION_START_ELSE) {
-				hydrated_key = false;
-			} else {
-				hydrated_key = parseInt(data.substring(1)); // "[1", "[2", etc.
-			}
-
-			if (key !== hydrated_key) {
+			// "[n" = branch n, "[-1" = else
+			if (key !== parseInt(data.substring(1))) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
 				var anchor = skip_nodes();
@@ -79,7 +66,7 @@ export function if_block(node, fn, elseif = false) {
 		});
 
 		if (!has_branch) {
-			update_branch(false, null);
+			update_branch(-1, null);
 		}
 	}, flags);
 }
