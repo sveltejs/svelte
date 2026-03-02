@@ -58,3 +58,11 @@ response.headers.set(
 ```
 
 We recommend using `nonce` over hash if you can, as `hash` will interfere with streaming SSR in the future.
+
+## Trusted Types
+
+When using Content Security Policy (CSP) with Trusted Types enabled, Svelte supports the `svelte-trusted-html` policy. This allows you to safely handle HTML content in your templates.
+
+Use `trusted-types svelte-trusted-html` directive to enable Trusted Types policy for Svelte-generated HTML:
+
+You can also utilize `{@html policy.createHTML(html)}` to create trusted HTML strings that comply with your CSP policy
