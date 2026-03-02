@@ -68,11 +68,12 @@ function effect_label(effect, append_effect = false) {
 
 	return label;
 }
+
 /**
- *
  * @param {Effect} effect
+ * @param {Effect[]} highlighted
  */
-export function log_effect_tree(effect, depth = 0, is_reachable = true) {
+export function log_effect_tree(effect, highlighted = [], depth = 0, is_reachable = true) {
 	const flags = effect.f;
 	let label = effect_label(effect);
 
@@ -84,6 +85,14 @@ export function log_effect_tree(effect, depth = 0, is_reachable = true) {
 	if (status !== 'clean' && !is_reachable) {
 		label = `⚠️ ${label}`;
 		styles.push(`color: red`);
+	}
+
+	if ((flags & INERT) !== 0) {
+		styles.push('font-style: italic');
+	}
+
+	if (highlighted.includes(effect)) {
+		styles.push('background-color: yellow');
 	}
 
 	// eslint-disable-next-line no-console
@@ -131,7 +140,7 @@ export function log_effect_tree(effect, depth = 0, is_reachable = true) {
 
 	let child = effect.first;
 	while (child !== null) {
-		log_effect_tree(child, depth + 1, child_is_reachable);
+		log_effect_tree(child, highlighted, depth + 1, child_is_reachable);
 		child = child.next;
 	}
 
