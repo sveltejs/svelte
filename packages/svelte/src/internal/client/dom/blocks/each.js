@@ -414,7 +414,9 @@ function reconcile(state, array, anchor, flags, get_key) {
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
-			effect = /** @type {EachItem} */ (items.get(key)).e;
+			var animated_item = items.get(key);
+			if (animated_item === undefined) continue;
+			effect = animated_item.e;
 
 			// offscreen == coming in now, no animation in that case,
 			// else this would happen https://github.com/sveltejs/svelte/issues/17181
@@ -429,7 +431,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 		value = array[i];
 		key = get_key(value, i);
 
-		effect = /** @type {EachItem} */ (items.get(key)).e;
+		var item = items.get(key);
+		// Branch teardown can race with deferred each reconciliation
+		// (for example after an error boundary reset).
+		if (item === undefined) continue;
+		effect = item.e;
 
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
