@@ -3,6 +3,12 @@ import * as state from '../state.js';
 
 const regex_tabs = /^\t+/;
 
+/** @type {string} */
+let cached_source = '';
+
+/** @type {string[]} */
+let cached_lines = [];
+
 /**
  * @param {string} str
  */
@@ -16,7 +22,11 @@ function tabs_to_spaces(str) {
  * @param {number} column
  */
 function get_code_frame(source, line, column) {
-	const lines = source.split('\n');
+	if (source !== cached_source) {
+		cached_source = source;
+		cached_lines = source.split('\n');
+	}
+	const lines = cached_lines;
 	const frame_start = Math.max(0, line - 2);
 	const frame_end = Math.min(line + 3, lines.length);
 	const digits = String(frame_end + 1).length;
