@@ -33,6 +33,12 @@ export let component_name = '<unknown>';
 export let source;
 
 /**
+ * The source code split into lines (set by `set_source`)
+ * @type {string[]}
+ */
+export let source_lines = [];
+
+/**
  * True if compiling with `dev: true`
  * @type {boolean}
  */
@@ -46,6 +52,7 @@ export let locator;
 /** @param {string} value */
 export function set_source(value) {
 	source = value;
+	source_lines = source.split('\n');
 
 	const l = getLocator(source, { offsetLine: 1 });
 
@@ -134,6 +141,7 @@ export function reset(state) {
 	runes = false;
 	component_name = UNKNOWN_FILENAME;
 	source = '';
+	source_lines = [];
 	filename = (state.filename ?? UNKNOWN_FILENAME).replace(/\\/g, '/');
 	warning_filter = state.warning ?? (() => true);
 	warnings = [];

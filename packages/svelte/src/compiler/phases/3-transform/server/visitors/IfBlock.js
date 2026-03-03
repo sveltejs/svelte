@@ -1,8 +1,8 @@
-/** @import { BlockStatement, Expression, IfStatement, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, IfStatement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, block_open, block_open_else, create_child_block } from './shared/utils.js';
+import { block_close, create_child_block } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
@@ -10,7 +10,7 @@ import { block_close, block_open, block_open_else, create_child_block } from './
  */
 export function IfBlock(node, context) {
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
-	consequent.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open)));
+	consequent.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), b.literal(`<!--[0-->`))));
 
 	/** @type {IfStatement} */
 	let if_statement = b.if(/** @type {Expression} */ (context.visit(node.test)), consequent);
@@ -34,7 +34,7 @@ export function IfBlock(node, context) {
 	// Handle final else (or remaining async chain)
 	const final_alternate = alt ? /** @type {BlockStatement} */ (context.visit(alt)) : b.block([]);
 
-	final_alternate.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
+	final_alternate.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), b.literal(`<!--[-1-->`))));
 	current_if.alternate = final_alternate;
 
 	context.state.template.push(
