@@ -3,7 +3,7 @@
 import { subscribe_to_store } from '../../../store/utils.js';
 import { get as get_store } from '../../../store/shared/index.js';
 import { define_property, noop } from '../../shared/utils.js';
-import { get } from '../runtime.js';
+import { active_effect, get, set_active_effect } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 import { DEV } from 'esm-env';
@@ -102,8 +102,19 @@ export function store_unsub(store, store_name, stores) {
  * @returns {V}
  */
 export function store_set(store, value) {
-	store.set(value);
-	return value;
+	let previous_effect = active_effect;
+
+	try {
+		// we temporarily pretend `active_effect === null` so that
+		// we don't bail out of rescheduling if this occurs inside
+		// a `$:` statement that causes already-traversed effects
+		// to re-run as a result of the change
+		set_active_effect(null);
+		store.set(value);
+		return value;
+	} finally {
+		set_active_effect(previous_effect);
+	}
 }
 
 /**
