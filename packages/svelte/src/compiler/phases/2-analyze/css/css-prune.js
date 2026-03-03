@@ -240,7 +240,14 @@ function truncate(node) {
  * @param {number} [to]
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element, direction, from = 0, to = relative_selectors.length) {
+function apply_selector(
+	relative_selectors,
+	rule,
+	element,
+	direction,
+	from = 0,
+	to = relative_selectors.length
+) {
 	if (from >= to) return false;
 
 	const selector_index = direction === FORWARD ? from : to - 1;
@@ -250,7 +257,15 @@ function apply_selector(relative_selectors, rule, element, direction, from = 0, 
 
 	const matched =
 		relative_selector_might_apply_to_node(relative_selector, rule, element, direction) &&
-		apply_combinator(relative_selector, relative_selectors, rest_from, rest_to, rule, element, direction);
+		apply_combinator(
+			relative_selector,
+			relative_selectors,
+			rest_from,
+			rest_to,
+			rule,
+			element,
+			direction
+		);
 
 	if (matched) {
 		if (!is_outer_global(relative_selector)) {
@@ -276,7 +291,9 @@ function apply_selector(relative_selectors, rule, element, direction, from = 0, 
 function apply_combinator(relative_selector, relative_selectors, from, to, rule, node, direction) {
 	const combinator =
 		direction == FORWARD
-			? (from < to ? relative_selectors[from].combinator : undefined)
+			? from < to
+				? relative_selectors[from].combinator
+				: undefined
 			: relative_selector.combinator;
 	if (!combinator) return true;
 
@@ -320,7 +337,9 @@ function apply_combinator(relative_selector, relative_selectors, from, to, rule,
 					if (to - from === 1 && relative_selectors[from].metadata.is_global) {
 						sibling_matched = true;
 					}
-				} else if (apply_selector(relative_selectors, rule, possible_sibling, direction, from, to)) {
+				} else if (
+					apply_selector(relative_selectors, rule, possible_sibling, direction, from, to)
+				) {
 					sibling_matched = true;
 				}
 			}
