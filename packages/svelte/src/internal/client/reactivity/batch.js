@@ -628,13 +628,17 @@ export function flushSync(fn) {
 }
 
 function flush_effects() {
+	if (queued_root_effects.length === 0) {
+		return;
+	}
+
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
 		var flush_count = 0;
 
-		while (queued_root_effects.length > 0) {
-			var batch = Batch.ensure();
+		while (current_batch !== null) {
+			var batch = current_batch;
 
 			if (flush_count++ > 1000) {
 				if (DEV) {
