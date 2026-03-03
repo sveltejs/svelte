@@ -77,6 +77,14 @@ export let is_flushing_sync = false;
  */
 export let collected_effects = null;
 
+/**
+ * An array of effects that are marked during traversal as a result of a `set`
+ * (not `internal_set`) call. These will be added to the next batch and
+ * trigger another turn of the `flush_effects` merry-go-round
+ * @type {Effect[] | null}
+ */
+export let legacy_updates = null;
+
 let uid = 1;
 
 export class Batch {
@@ -203,6 +211,8 @@ export class Batch {
 		/** @type {Effect[]} */
 		var render_effects = [];
 
+		legacy_updates = [];
+
 		for (const root of root_effects) {
 			this.#traverse_effect_tree(root, effects, render_effects);
 			// Note: #traverse_effect_tree runs block effects eagerly, which can schedule effects,
@@ -212,7 +222,17 @@ export class Batch {
 			// log_inconsistent_branches(root);
 		}
 
+		current_batch = null;
+
+		if (legacy_updates.length > 0) {
+			Batch.ensure();
+			for (const e of legacy_updates) {
+				schedule_effect(e);
+			}
+		}
+
 		collected_effects = null;
+		legacy_updates = null;
 
 		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
@@ -225,7 +245,6 @@ export class Batch {
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
-			current_batch = null;
 
 			// append/remove branches
 			for (const fn of this.#commit_callbacks) fn(this);
@@ -659,6 +678,7 @@ function flush_effects() {
 
 		last_scheduled_effect = null;
 		collected_effects = null;
+		legacy_updates = null;
 
 		if (DEV) {
 			for (const source of /** @type {Set<Source>} */ (source_stacks)) {
