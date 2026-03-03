@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { INERT } from '#client/constants';
-import { Batch, current_batch } from '../../reactivity/batch.js';
+import { Batch, current_batch, schedule_effect } from '../../reactivity/batch.js';
 import {
 	branch,
 	destroy_effect,
@@ -84,6 +84,10 @@ export class BranchManager {
 			// effect is already in the DOM — abort any current outro
 			resume_effect(onscreen);
 			this.#outroing.delete(key);
+
+			// After resume, INERT is cleared but the subtree was skipped during
+			// traversal. Re-schedule so a subsequent traversal processes it.
+			schedule_effect(onscreen);
 		} else {
 			// effect is currently offscreen. put it in the DOM
 			var offscreen = this.#offscreen.get(key);

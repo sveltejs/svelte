@@ -6,6 +6,7 @@ import {
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
+	INERT,
 	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
@@ -346,6 +347,14 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
+	// If the derived's parent effect is INERT (e.g. inside a paused {#if} block),
+	// skip re-evaluation and return stale value. This prevents downstream effects
+	// from pulling on dirty deriveds inside blocks that are about to be torn down.
+	var parent = get_derived_parent_effect(derived);
+	if (parent !== null && (parent.f & INERT) !== 0) {
+		return;
+	}
+
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
