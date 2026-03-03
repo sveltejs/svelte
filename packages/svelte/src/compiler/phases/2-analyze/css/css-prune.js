@@ -669,23 +669,8 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 	switch (operator) {
 		case '=':
 			return value === expected_value;
-		case '~=': {
-			if (value === expected_value) return true;
-			const len = expected_value.length;
-			let start = 0;
-			while (true) {
-				const idx = value.indexOf(expected_value, start);
-				if (idx === -1) return false;
-				const end = idx + len;
-				if (
-					(idx === 0 || value.charCodeAt(idx - 1) <= 32) &&
-					(end === value.length || value.charCodeAt(end) <= 32)
-				) {
-					return true;
-				}
-				start = end;
-			}
-		}
+		case '~=':
+			return value.split(/\s/).includes(expected_value);
 		case '|=':
 			return `${value}-`.startsWith(`${expected_value}-`);
 		case '^=':
