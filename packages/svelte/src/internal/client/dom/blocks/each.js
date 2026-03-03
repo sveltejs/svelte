@@ -35,7 +35,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { BRANCH_EFFECT, COMMENT_NODE, EFFECT_OFFSCREEN, INERT } from '#client/constants';
+import { BRANCH_EFFECT, COMMENT_NODE, DESTROYED, EFFECT_OFFSCREEN, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
@@ -217,6 +217,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	 * @param {Batch} batch
 	 */
 	function commit(batch) {
+		if ((state.effect.f & DESTROYED) !== 0) {
+			return;
+		}
+
 		state.pending.delete(batch);
 
 		state.fallback = fallback;
@@ -452,9 +456,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
-			var animated_item = items.get(key);
-			if (animated_item === undefined) continue;
-			effect = animated_item.e;
+			effect = /** @type {EachItem} */ (items.get(key)).e;
 
 			// offscreen == coming in now, no animation in that case,
 			// else this would happen https://github.com/sveltejs/svelte/issues/17181
@@ -469,11 +471,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		value = array[i];
 		key = get_key(value, i);
 
-		var item = items.get(key);
-		// Branch teardown can race with deferred each reconciliation
-		// (for example after an error boundary reset).
-		if (item === undefined) continue;
-		effect = item.e;
+		effect = /** @type {EachItem} */ (items.get(key)).e;
 
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
