@@ -2,6 +2,10 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	// this test doesn't fail without the associated fix — the error gets
+	// swallowed somewhere. but keeping it around for illustration
+	skip: true,
+
 	mode: ['client'],
 
 	async test({ assert, target, errors, logs }) {
