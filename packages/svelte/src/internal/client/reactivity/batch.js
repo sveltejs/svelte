@@ -23,6 +23,7 @@ import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
 import {
 	active_effect,
+	active_reaction,
 	get,
 	increment_write_version,
 	is_dirty,
@@ -867,7 +868,7 @@ export function schedule_effect(signal) {
 			// in sync mode, render effects run during traversal. in an extreme edge case
 			// they can be made dirty after they have already been visited, in which
 			// case we shouldn't bail out
-			if (async_mode_flag || (signal.f & RENDER_EFFECT) === 0) {
+			if (async_mode_flag || active_reaction === null || (active_reaction.f & DERIVED) === 0) {
 				return;
 			}
 		}

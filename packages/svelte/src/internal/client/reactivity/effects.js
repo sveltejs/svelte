@@ -10,7 +10,8 @@ import {
 	set_active_reaction,
 	set_is_destroying_effect,
 	untrack,
-	untracking
+	untracking,
+	set_active_effect
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -317,7 +318,15 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		untrack(fn);
+
+		var effect = /** @type {Effect} */ (active_effect);
+
+		try {
+			set_active_effect(effect.parent);
+			untrack(fn);
+		} finally {
+			set_active_effect(effect);
+		}
 	});
 }
 
