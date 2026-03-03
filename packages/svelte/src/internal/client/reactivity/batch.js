@@ -414,6 +414,8 @@ export class Batch {
 				// Re-run async/block effects that depend on distinct values changed in both batches
 				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 				if (others.length > 0) {
+					current_batch = batch;
+
 					// Avoid running queued root effects on the wrong branch
 					var prev_queued_root_effects = queued_root_effects;
 					queued_root_effects = [];
@@ -427,7 +429,6 @@ export class Batch {
 					}
 
 					if (queued_root_effects.length > 0) {
-						current_batch = batch;
 						batch.apply();
 
 						for (const root of queued_root_effects) {
