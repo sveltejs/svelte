@@ -236,16 +236,36 @@ function truncate(node) {
  * @param {Compiler.AST.CSS.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Direction} direction
+ * @param {number} [from]
+ * @param {number} [to]
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element, direction) {
-	const rest_selectors = relative_selectors.slice();
-	const relative_selector = direction === FORWARD ? rest_selectors.shift() : rest_selectors.pop();
+function apply_selector(
+	relative_selectors,
+	rule,
+	element,
+	direction,
+	from = 0,
+	to = relative_selectors.length
+) {
+	if (from >= to) return false;
+
+	const selector_index = direction === FORWARD ? from : to - 1;
+	const relative_selector = relative_selectors[selector_index];
+	const rest_from = direction === FORWARD ? from + 1 : from;
+	const rest_to = direction === FORWARD ? to : to - 1;
 
 	const matched =
-		!!relative_selector &&
 		relative_selector_might_apply_to_node(relative_selector, rule, element, direction) &&
-		apply_combinator(relative_selector, rest_selectors, rule, element, direction);
+		apply_combinator(
+			relative_selector,
+			relative_selectors,
+			rest_from,
+			rest_to,
+			rule,
+			element,
+			direction
+		);
 
 	if (matched) {
 		if (!is_outer_global(relative_selector)) {
@@ -260,15 +280,21 @@ function apply_selector(relative_selectors, rule, element, direction) {
 
 /**
  * @param {Compiler.AST.CSS.RelativeSelector} relative_selector
- * @param {Compiler.AST.CSS.RelativeSelector[]} rest_selectors
+ * @param {Compiler.AST.CSS.RelativeSelector[]} relative_selectors
+ * @param {number} from
+ * @param {number} to
  * @param {Compiler.AST.CSS.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {Direction} direction
  * @returns {boolean}
  */
-function apply_combinator(relative_selector, rest_selectors, rule, node, direction) {
+function apply_combinator(relative_selector, relative_selectors, from, to, rule, node, direction) {
 	const combinator =
-		direction == FORWARD ? rest_selectors[0]?.combinator : relative_selector.combinator;
+		direction == FORWARD
+			? from < to
+				? relative_selectors[from].combinator
+				: undefined
+			: relative_selector.combinator;
 	if (!combinator) return true;
 
 	switch (combinator.name) {
@@ -282,7 +308,7 @@ function apply_combinator(relative_selector, rest_selectors, rule, node, directi
 			let parent_matched = false;
 
 			for (const parent of parents) {
-				if (apply_selector(rest_selectors, rule, parent, direction)) {
+				if (apply_selector(relative_selectors, rule, parent, direction, from, to)) {
 					parent_matched = true;
 				}
 			}
@@ -291,7 +317,7 @@ function apply_combinator(relative_selector, rest_selectors, rule, node, directi
 				parent_matched ||
 				(direction === BACKWARD &&
 					(!is_adjacent || parents.length === 0) &&
-					rest_selectors.every((selector) => is_global(selector, rule)))
+					every_is_global(relative_selectors, from, to, rule))
 			);
 		}
 
@@ -308,10 +334,12 @@ function apply_combinator(relative_selector, rest_selectors, rule, node, directi
 					possible_sibling.type === 'Component'
 				) {
 					// `{@render foo()}<p>foo</p>` with `:global(.x) + p` is a match
-					if (rest_selectors.length === 1 && rest_selectors[0].metadata.is_global) {
+					if (to - from === 1 && relative_selectors[from].metadata.is_global) {
 						sibling_matched = true;
 					}
-				} else if (apply_selector(rest_selectors, rule, possible_sibling, direction)) {
+				} else if (
+					apply_selector(relative_selectors, rule, possible_sibling, direction, from, to)
+				) {
 					sibling_matched = true;
 				}
 			}
@@ -320,7 +348,7 @@ function apply_combinator(relative_selector, rest_selectors, rule, node, directi
 				sibling_matched ||
 				(direction === BACKWARD &&
 					get_element_parent(node) === null &&
-					rest_selectors.every((selector) => is_global(selector, rule)))
+					every_is_global(relative_selectors, from, to, rule))
 			);
 		}
 
@@ -328,6 +356,20 @@ function apply_combinator(relative_selector, rest_selectors, rule, node, directi
 			// TODO other combinators
 			return true;
 	}
+}
+
+/**
+ * @param {Compiler.AST.CSS.RelativeSelector[]} relative_selectors
+ * @param {number} from
+ * @param {number} to
+ * @param {Compiler.AST.CSS.Rule} rule
+ * @returns {boolean}
+ */
+function every_is_global(relative_selectors, from, to, rule) {
+	for (let i = from; i < to; i++) {
+		if (!is_global(relative_selectors[i], rule)) return false;
+	}
+	return true;
 }
 
 /**
@@ -392,42 +434,37 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @returns {boolean}
  */
 function relative_selector_might_apply_to_node(relative_selector, rule, element, direction) {
-	// Sort :has(...) selectors in one bucket and everything else into another
-	const has_selectors = [];
-	const other_selectors = [];
+	/** @type {boolean | undefined} */
+	let include_self;
 
 	for (const selector of relative_selector.selectors) {
+		// Handle :has(...) selectors inline to avoid allocating temporary arrays
 		if (selector.type === 'PseudoClassSelector' && selector.name === 'has' && selector.args) {
-			has_selectors.push(selector);
-		} else {
-			other_selectors.push(selector);
-		}
-	}
+			// Lazy-compute include_self on first :has encounter
+			if (include_self === undefined) {
+				// If this is a :has inside a global selector, we gotta include the element itself, too,
+				// because the global selector might be for an element that's outside the component,
+				// e.g. :root:has(.scoped), :global(.foo):has(.scoped), or :root { &:has(.scoped) {} }
+				const rules = get_parent_rules(rule);
+				include_self =
+					rules.some((r) =>
+						r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))
+					) ||
+					rules[rules.length - 1].prelude.children.some((c) =>
+						c.children.some((r) =>
+							r.selectors.some(
+								(s) =>
+									s.type === 'PseudoClassSelector' &&
+									(s.name === 'root' || (s.name === 'global' && s.args))
+							)
+						)
+					);
+			}
 
-	// If we're called recursively from a :has(...) selector, we're on the way of checking if the other selectors match.
-	// In that case ignore this check (because we just came from this) to avoid an infinite loop.
-	if (has_selectors.length > 0) {
-		// If this is a :has inside a global selector, we gotta include the element itself, too,
-		// because the global selector might be for an element that's outside the component,
-		// e.g. :root:has(.scoped), :global(.foo):has(.scoped), or :root { &:has(.scoped) {} }
-		const rules = get_parent_rules(rule);
-		const include_self =
-			rules.some((r) => r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))) ||
-			rules[rules.length - 1].prelude.children.some((c) =>
-				c.children.some((r) =>
-					r.selectors.some(
-						(s) =>
-							s.type === 'PseudoClassSelector' &&
-							(s.name === 'root' || (s.name === 'global' && s.args))
-					)
-				)
-			);
-
-		// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
-		// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
-		// selector in a way that is similar to ancestor matching. In a sense, we're treating `.x:has(.y)` as `.x .y`.
-		for (const has_selector of has_selectors) {
-			const complex_selectors = /** @type {Compiler.AST.CSS.SelectorList} */ (has_selector.args)
+			// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
+			// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
+			// selector in a way that is similar to ancestor matching. In a sense, we're treating `.x:has(.y)` as `.x .y`.
+			const complex_selectors = /** @type {Compiler.AST.CSS.SelectorList} */ (selector.args)
 				.children;
 			let matched = false;
 
@@ -465,13 +502,15 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			if (!matched) {
 				return false;
 			}
-		}
-	}
 
-	for (const selector of other_selectors) {
+			continue;
+		}
+
 		if (selector.type === 'Percentage' || selector.type === 'Nth') continue;
 
-		const name = selector.name.replace(regex_backslash_and_following_character, '$1');
+		const name = selector.name.includes('\\')
+			? selector.name.replace(regex_backslash_and_following_character, '$1')
+			: selector.name;
 
 		switch (selector.type) {
 			case 'PseudoClassSelector': {
@@ -672,11 +711,11 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
  * @param {boolean} case_insensitive
  */
 function attribute_matches(node, name, expected_value, operator, case_insensitive) {
+	const name_lower = name.toLowerCase();
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'SpreadAttribute') return true;
 		if (attribute.type === 'BindDirective' && attribute.name === name) return true;
-
-		const name_lower = name.toLowerCase();
 		// match attributes against the corresponding directive but bail out on exact matching
 		if (attribute.type === 'StyleDirective' && name_lower === 'style') return true;
 		if (attribute.type === 'ClassDirective' && name_lower === 'class') {
