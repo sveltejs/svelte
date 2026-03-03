@@ -1,5 +1,23 @@
 # svelte
 
+## 5.53.7
+
+### Patch Changes
+
+- fix: correctly add \_\_svelte_meta after else-if chains ([#17830](https://github.com/sveltejs/svelte/pull/17830))
+
+- perf: cache element interactivity and source line splitting in compiler ([#17839](https://github.com/sveltejs/svelte/pull/17839))
+
+- chore: avoid rescheduling effects during branch commit ([#17837](https://github.com/sveltejs/svelte/pull/17837))
+
+- perf: optimize CSS selector pruning ([#17846](https://github.com/sveltejs/svelte/pull/17846))
+
+- fix: preserve original boundary errors when keyed each rows are removed during async updates ([#17843](https://github.com/sveltejs/svelte/pull/17843))
+
+- perf: avoid O(n²) name scanning in scope `generate` and `unique` ([#17844](https://github.com/sveltejs/svelte/pull/17844))
+
+- fix: preserve each items that are needed by pending batches ([#17819](https://github.com/sveltejs/svelte/pull/17819))
+
 ## 5.53.6
 
 ### Patch Changes
