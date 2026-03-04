@@ -578,6 +578,55 @@ export class Batch {
 			}
 		}
 	}
+
+	/**
+	 *
+	 * @param {Effect} signal
+	 */
+	schedule(signal) {
+		var effect = (last_scheduled_effect = signal);
+
+		var boundary = effect.b;
+
+		// defer render effects inside a pending boundary
+		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
+		if (
+			boundary?.is_pending &&
+			(signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
+			(signal.f & REACTION_RAN) === 0
+		) {
+			boundary.defer_effect(signal);
+			return;
+		}
+
+		while (effect.parent !== null) {
+			effect = effect.parent;
+			var flags = effect.f;
+
+			// if the effect is being scheduled because a parent (each/await/etc) block
+			// updated an internal source, or because a branch is being unskipped,
+			// bail out or we'll cause a second flush
+			if (collected_effects !== null && effect === active_effect) {
+				// in sync mode, render effects run during traversal. in an extreme edge case
+				// they can be made dirty after they have already been visited, in which
+				// case we shouldn't bail out
+				if (async_mode_flag || active_reaction === null || (active_reaction.f & DERIVED) === 0) {
+					return;
+				}
+			}
+
+			if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
+				if ((flags & CLEAN) === 0) {
+					// branch is already dirty, bail
+					return;
+				}
+
+				effect.f ^= CLEAN;
+			}
+		}
+
+		queued_root_effects.push(effect);
+	}
 }
 
 /**
@@ -862,52 +911,11 @@ function depends_on(reaction, sources, checked) {
 }
 
 /**
- * @param {Effect} signal
+ * @param {Effect} effect
  * @returns {void}
  */
-export function schedule_effect(signal) {
-	var effect = (last_scheduled_effect = signal);
-
-	var boundary = effect.b;
-
-	// defer render effects inside a pending boundary
-	// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
-	if (
-		boundary?.is_pending &&
-		(signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
-		(signal.f & REACTION_RAN) === 0
-	) {
-		boundary.defer_effect(signal);
-		return;
-	}
-
-	while (effect.parent !== null) {
-		effect = effect.parent;
-		var flags = effect.f;
-
-		// if the effect is being scheduled because a parent (each/await/etc) block
-		// updated an internal source, or because a branch is being unskipped,
-		// bail out or we'll cause a second flush
-		if (collected_effects !== null && effect === active_effect) {
-			// in sync mode, render effects run during traversal. in an extreme edge case
-			// they can be made dirty after they have already been visited, in which
-			// case we shouldn't bail out
-			if (async_mode_flag || active_reaction === null || (active_reaction.f & DERIVED) === 0) {
-				return;
-			}
-		}
-
-		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) {
-				// branch is already dirty, bail
-				return;
-			}
-
-			effect.f ^= CLEAN;
-		}
-	}
-
-	queued_root_effects.push(effect);
+export function schedule_effect(effect) {
+	/** @type {Batch} */ (current_batch).schedule(effect);
 }
 
 /** @type {Source<number>[]} */
