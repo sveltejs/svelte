@@ -41,7 +41,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, schedule_effect } from './batch.js';
+import { Batch, collected_effects } from './batch.js';
 import { flatten, increment_pending } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -129,8 +129,7 @@ function create_effect(type, fn) {
 			collected_effects.push(effect);
 		} else {
 			// schedule for later
-			Batch.ensure();
-			schedule_effect(effect);
+			Batch.ensure().schedule(effect);
 		}
 	} else if (fn !== null) {
 		try {

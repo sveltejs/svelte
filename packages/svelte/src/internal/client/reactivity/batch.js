@@ -186,12 +186,12 @@ export class Batch {
 
 			for (var e of tracked.d) {
 				set_signal_status(e, DIRTY);
-				schedule_effect(e);
+				this.schedule(e);
 			}
 
 			for (e of tracked.m) {
 				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
+				this.schedule(e);
 			}
 		}
 	}
@@ -225,9 +225,9 @@ export class Batch {
 		current_batch = null;
 
 		if (legacy_updates.length > 0) {
-			Batch.ensure();
+			var next_batch = Batch.ensure();
 			for (const e of legacy_updates) {
-				schedule_effect(e);
+				next_batch.schedule(e);
 			}
 		}
 
@@ -515,12 +515,12 @@ export class Batch {
 		for (const e of this.#dirty_effects) {
 			this.#maybe_dirty_effects.delete(e);
 			set_signal_status(e, DIRTY);
-			schedule_effect(e);
+			this.schedule(e);
 		}
 
 		for (const e of this.#maybe_dirty_effects) {
 			set_signal_status(e, MAYBE_DIRTY);
-			schedule_effect(e);
+			this.schedule(e);
 		}
 
 		this.flush();
