@@ -644,7 +644,7 @@ export function flushSync(fn) {
 		var result;
 
 		if (fn) {
-			if (current_batch !== null) {
+			if (current_batch !== null && !current_batch.is_fork) {
 				flush_effects();
 			}
 
@@ -677,10 +677,6 @@ export function flushSync(fn) {
 }
 
 function flush_effects() {
-	if (queued_root_effects.length === 0) {
-		return;
-	}
-
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
