@@ -67,15 +67,16 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 
 		// Remove all nodes in @html's managed region (between boundary and anchor).
 		// This removes both tracked nodes and any externally-added nodes (e.g. from contenteditable)
-		var first = boundary === null
-			? /** @type {TemplateNode | null} */ (anchor.parentNode?.firstChild ?? null)
-			: /** @type {TemplateNode | null} */ (get_next_sibling(boundary));
+		var first =
+			boundary === null
+				? /** @type {TemplateNode | null} */ (anchor.parentNode?.firstChild ?? null)
+				: /** @type {TemplateNode | null} */ (get_next_sibling(boundary));
 
 		while (first !== null && first !== anchor) {
 			/** @type {TemplateNode | null} */
-			var next = get_next_sibling(first);
+			var next_node = get_next_sibling(first);
 			first.remove();
-			first = next;
+			first = next_node;
 		}
 
 		effect.nodes = null;
