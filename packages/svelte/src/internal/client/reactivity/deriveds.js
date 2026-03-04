@@ -6,12 +6,12 @@ import {
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	INERT,
 	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN
+	CLEAN,
+	INERT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -306,10 +306,21 @@ function get_derived_parent_effect(derived) {
  * @returns {T}
  */
 export function execute_derived(derived) {
+	var parent_effect = get_derived_parent_effect(derived);
+
+	if (
+		!async_mode_flag &&
+		!is_destroying_effect &&
+		parent_effect !== null &&
+		(parent_effect.f & INERT) !== 0
+	) {
+		return derived.v;
+	}
+
 	var value;
 	var prev_active_effect = active_effect;
 
-	set_active_effect(get_derived_parent_effect(derived));
+	set_active_effect(parent_effect);
 
 	if (DEV) {
 		let prev_eager_effects = eager_effects;
@@ -347,14 +358,6 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
-	// If the derived's parent effect is INERT (e.g. inside a paused {#if} block),
-	// skip re-evaluation and return stale value. This prevents downstream effects
-	// from pulling on dirty deriveds inside blocks that are about to be torn down.
-	var parent = get_derived_parent_effect(derived);
-	if (parent !== null && (parent.f & INERT) !== 0) {
-		return;
-	}
-
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {

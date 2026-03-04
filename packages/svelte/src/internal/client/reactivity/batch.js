@@ -267,10 +267,7 @@ export class Batch {
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
 			var inert = (flags & INERT) !== 0;
-			var skip =
-				is_skippable_branch ||
-				this.#skipped_branches.has(effect) ||
-				((flags & BRANCH_EFFECT) !== 0 && inert);
+			var skip = is_skippable_branch || this.#skipped_branches.has(effect);
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {

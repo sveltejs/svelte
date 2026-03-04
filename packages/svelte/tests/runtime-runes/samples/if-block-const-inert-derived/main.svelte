@@ -1,11 +1,18 @@
 <script>
-	import Inner from './Inner.svelte';
-
 	let value = $state('hello');
 
 	function compute(v) {
 		console.log(v);
 		return { data: v, ready: true };
+	}
+
+	function fade(node) {
+		return {
+			duration: 100,
+			tick: (t) => {
+				node.style.opacity = String(t);
+			}
+		};
 	}
 </script>
 
@@ -18,6 +25,8 @@
 {#if value}
 	{@const result = compute(value)}
 	{#if result.ready}
-		<Inner data={result} />
+		<div out:fade|global>
+			<p>{result.data}</p>
+		</div>
 	{/if}
 {/if}
