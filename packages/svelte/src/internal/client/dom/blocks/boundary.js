@@ -225,7 +225,6 @@ export class Boundary {
 			fragment.append(anchor);
 
 			this.#main_effect = this.#run(() => {
-				Batch.ensure();
 				return branch(() => this.#children(anchor));
 			});
 
@@ -320,6 +319,7 @@ export class Boundary {
 		set_component_context(this.#effect.ctx);
 
 		try {
+			Batch.ensure();
 			return fn();
 		} catch (e) {
 			handle_error(e);
@@ -445,9 +445,6 @@ export class Boundary {
 			}
 
 			this.#run(() => {
-				// If the failure happened while flushing effects, current_batch can be null
-				Batch.ensure();
-
 				this.#render();
 			});
 		};
@@ -464,8 +461,6 @@ export class Boundary {
 
 			if (failed) {
 				this.#failed_effect = this.#run(() => {
-					Batch.ensure();
-
 					try {
 						return branch(() => {
 							// errors in `failed` snippets cause the boundary to error again
