@@ -275,8 +275,10 @@ export class Batch {
 		batch_values = null;
 		is_processing = false;
 
-		if (current_batch !== null) {
-			batches.add(current_batch);
+		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
+
+		if (next_batch !== null) {
+			batches.add(next_batch);
 
 			if (DEV) {
 				for (const source of this.current.keys()) {
@@ -284,7 +286,7 @@ export class Batch {
 				}
 			}
 
-			current_batch.process();
+			next_batch.process();
 		} else {
 			old_values.clear();
 		}
