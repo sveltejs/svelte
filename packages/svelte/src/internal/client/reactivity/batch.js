@@ -64,6 +64,7 @@ export let batch_values = null;
 let last_scheduled_effect = null;
 
 export let is_flushing_sync = false;
+let is_processing = false;
 
 /**
  * During traversal, this is an array. Newly created effects are (if not immediately
@@ -196,6 +197,7 @@ export class Batch {
 	}
 
 	process() {
+		is_processing = true;
 		const root_effects = this.#queued_root_effects;
 		this.#queued_root_effects = [];
 
@@ -264,6 +266,7 @@ export class Batch {
 		}
 
 		batch_values = null;
+		is_processing = false;
 	}
 
 	/**
@@ -536,7 +539,7 @@ export class Batch {
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
 
-			if (!is_flushing_sync) {
+			if (!is_flushing_sync && !is_processing) {
 				queue_micro_task(() => {
 					if (current_batch !== batch) {
 						// a flushSync happened in the meantime
@@ -708,6 +711,9 @@ function flush_effects() {
 		last_scheduled_effect = null;
 		collected_effects = null;
 		legacy_updates = null;
+		is_processing = false;
+
+		current_batch = null;
 
 		if (DEV) {
 			for (const source of /** @type {Set<Source>} */ (source_stacks)) {
