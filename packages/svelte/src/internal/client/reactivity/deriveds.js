@@ -10,7 +10,9 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN
+	CLEAN,
+	INERT,
+	BRANCH_EFFECT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -302,9 +304,7 @@ function get_derived_parent_effect(derived) {
 	var parent = derived.parent;
 	while (parent !== null) {
 		if ((parent.f & DERIVED) === 0) {
-			// The original parent effect might've been destroyed but the derived
-			// is used elsewhere now - do not return the destroyed effect in that case
-			return (parent.f & DESTROYED) === 0 ? /** @type {Effect} */ (parent) : null;
+			return /** @type {Effect} */ (parent);
 		}
 		parent = parent.parent;
 	}
@@ -317,6 +317,20 @@ function get_derived_parent_effect(derived) {
  * @returns {T}
  */
 export function execute_derived(derived) {
+	var raw_parent = get_derived_parent_effect(derived);
+	var parent_effect = raw_parent !== null && (raw_parent.f & DESTROYED) !== 0 ? null : raw_parent;
+
+	// don't update deriveds inside a destroyed branch (e.g. {#if} or {#each}) —
+	// the branch scope is invalid and evaluating could trigger side effects
+	// with stale values.
+	if (
+		!is_destroying_effect &&
+		raw_parent !== null &&
+		(raw_parent.f & (DESTROYED | BRANCH_EFFECT)) === (DESTROYED | BRANCH_EFFECT)
+	) {
+		return derived.v;
+	}
+
 	var value;
 	var prev_active_effect = active_effect;
 
