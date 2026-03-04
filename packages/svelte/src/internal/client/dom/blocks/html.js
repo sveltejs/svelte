@@ -6,7 +6,7 @@ import {
 	NAMESPACE_SVG,
 	NAMESPACE_MATHML
 } from '../../../../constants.js';
-import { remove_effect_dom, template_effect } from '../../reactivity/effects.js';
+import { template_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 
 import { assign_nodes } from '../template.js';
@@ -53,6 +53,10 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 	/** @type {string | TrustedHTML} */
 	var value = '';
 
+	// Track the node immediately before @html's managed region so we can
+	// clean up any nodes added externally (e.g. by contenteditable)
+	var boundary = anchor.previousSibling;
+
 	template_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
@@ -61,10 +65,20 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			return;
 		}
 
-		if (effect.nodes !== null) {
-			remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
-			effect.nodes = null;
+		// Remove all nodes in @html's managed region (between boundary and anchor).
+		// This removes both tracked nodes and any externally-added nodes (e.g. from contenteditable)
+		var first = boundary === null
+			? /** @type {TemplateNode | null} */ (anchor.parentNode?.firstChild ?? null)
+			: /** @type {TemplateNode | null} */ (get_next_sibling(boundary));
+
+		while (first !== null && first !== anchor) {
+			/** @type {TemplateNode | null} */
+			var next = get_next_sibling(first);
+			first.remove();
+			first = next;
 		}
+
+		effect.nodes = null;
 
 		if (value === '') return;
 
