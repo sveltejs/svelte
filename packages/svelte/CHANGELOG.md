@@ -1,5 +1,65 @@
 # svelte
 
+## 5.53.7
+
+### Patch Changes
+
+- fix: correctly add \_\_svelte_meta after else-if chains ([#17830](https://github.com/sveltejs/svelte/pull/17830))
+
+- perf: cache element interactivity and source line splitting in compiler ([#17839](https://github.com/sveltejs/svelte/pull/17839))
+
+- chore: avoid rescheduling effects during branch commit ([#17837](https://github.com/sveltejs/svelte/pull/17837))
+
+- perf: optimize CSS selector pruning ([#17846](https://github.com/sveltejs/svelte/pull/17846))
+
+- fix: preserve original boundary errors when keyed each rows are removed during async updates ([#17843](https://github.com/sveltejs/svelte/pull/17843))
+
+- perf: avoid O(n²) name scanning in scope `generate` and `unique` ([#17844](https://github.com/sveltejs/svelte/pull/17844))
+
+- fix: preserve each items that are needed by pending batches ([#17819](https://github.com/sveltejs/svelte/pull/17819))
+
+## 5.53.6
+
+### Patch Changes
+
+- perf: optimize parser hot paths for faster compilation ([#17811](https://github.com/sveltejs/svelte/pull/17811))
+
+- fix: `SvelteMap` incorrectly handles keys with `undefined` values ([#17826](https://github.com/sveltejs/svelte/pull/17826))
+
+- fix: SvelteURL `search` setter now returns the normalized value, matching native URL behavior ([#17828](https://github.com/sveltejs/svelte/pull/17828))
+
+- fix: visit synthetic value node during ssr ([#17824](https://github.com/sveltejs/svelte/pull/17824))
+
+- fix: always case insensitive event handlers during ssr ([#17822](https://github.com/sveltejs/svelte/pull/17822))
+
+- chore: more efficient effect scheduling ([#17808](https://github.com/sveltejs/svelte/pull/17808))
+
+- perf: optimize compiler analysis phase ([#17823](https://github.com/sveltejs/svelte/pull/17823))
+
+- fix: skip redundant batch.apply ([#17816](https://github.com/sveltejs/svelte/pull/17816))
+
+- chore: null out current_batch before committing branches ([#17809](https://github.com/sveltejs/svelte/pull/17809))
+
+## 5.53.5
+
+### Patch Changes
+
+- fix: escape `innerText` and `textContent` bindings of `contenteditable` ([`0df5abcae223058ceb95491470372065fb87951d`](https://github.com/sveltejs/svelte/commit/0df5abcae223058ceb95491470372065fb87951d))
+
+- fix: sanitize `transformError` values prior to embedding in HTML comments ([`0298e979371bb583855c9810db79a70a551d22b9`](https://github.com/sveltejs/svelte/commit/0298e979371bb583855c9810db79a70a551d22b9))
+
+## 5.53.4
+
+### Patch Changes
+
+- fix: set server context after async transformError ([#17799](https://github.com/sveltejs/svelte/pull/17799))
+
+- fix: hydrate if blocks correctly ([#17784](https://github.com/sveltejs/svelte/pull/17784))
+
+- fix: handle default parameters scope leaks ([#17788](https://github.com/sveltejs/svelte/pull/17788))
+
+- fix: prevent flushed effects from running again ([#17787](https://github.com/sveltejs/svelte/pull/17787))
+
 ## 5.53.3
 
 ### Patch Changes

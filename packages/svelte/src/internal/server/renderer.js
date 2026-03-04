@@ -294,13 +294,13 @@ export class Renderer {
 
 				child.promise = /** @type {Promise<unknown>} */ (result).then((transformed) => {
 					set_ssr_context(parent_context);
-					child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(transformed)}-->`);
+					child.#out.push(Renderer.#serialize_failed_boundary(transformed));
 					failed_snippet(child, transformed, noop);
 					child.#out.push(BLOCK_CLOSE);
 				});
 				child.promise.catch(noop);
 			} else {
-				child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(result)}-->`);
+				child.#out.push(Renderer.#serialize_failed_boundary(result));
 				failed_snippet(child, result, noop);
 				child.#out.push(BLOCK_CLOSE);
 			}
@@ -480,6 +480,21 @@ export class Renderer {
 
 	get length() {
 		return this.#out.length;
+	}
+
+	/**
+	 * Creates the hydration comment that marks the start of a failed boundary.
+	 * The error is JSON-serialized and embedded inside an HTML comment for the client
+	 * to parse during hydration. The JSON is escaped to prevent `-->` or `<!--` sequences
+	 * from breaking out of the comment (XSS). Uses unicode escapes which `JSON.parse()`
+	 * handles transparently.
+	 * @param {unknown} error
+	 * @returns {string}
+	 */
+	static #serialize_failed_boundary(error) {
+		var json = JSON.stringify(error);
+		var escaped = json.replace(/>/g, '\\u003e').replace(/</g, '\\u003c');
+		return `<!--${HYDRATION_START_FAILED}${escaped}-->`;
 	}
 
 	/**
@@ -701,9 +716,7 @@ export class Renderer {
 						// Render the failed snippet instead of the partial children content
 						const failed_renderer = new Renderer(item.global, item);
 						failed_renderer.type = item.type;
-						failed_renderer.#out.push(
-							`<!--${HYDRATION_START_FAILED}${JSON.stringify(transformed)}-->`
-						);
+						failed_renderer.#out.push(Renderer.#serialize_failed_boundary(transformed));
 						failed(failed_renderer, transformed, noop);
 						failed_renderer.#out.push(BLOCK_CLOSE);
 						await failed_renderer.#collect_content_async(content);

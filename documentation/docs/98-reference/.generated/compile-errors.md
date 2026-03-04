@@ -63,8 +63,28 @@ Event attribute must be a JavaScript expression, not a string
 ### attribute_invalid_sequence_expression
 
 ```
-Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
+Comma-separated expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
 ```
+
+An attribute value cannot be a comma-separated sequence of expressions — in other words this is disallowed:
+
+```svelte
+<div class={size, color}>...</div>
+```
+
+Instead, make sure that the attribute value contains a single expression. In the example above it's likely that this was intended (see the [class documentation](class) for more details):
+
+```svelte
+<div class={[size, color]}>...</div>
+```
+
+If you _do_ need to use the comma operator for some reason, wrap the sequence in parentheses:
+
+```svelte
+<div class={(size, color)}>...</div>
+```
+
+Note that this will evaluate to `color`, ignoring `size`.
 
 ### attribute_invalid_type
 

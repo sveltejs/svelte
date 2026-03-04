@@ -17,19 +17,22 @@ import { list } from '../../../utils/string.js';
 import { locator } from '../../../state.js';
 import * as b from '#compiler/builders';
 
-const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
-const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
+const regex_invalid_unquoted_attribute_value = /(\/>|[\s"'=<>`])/y;
+const regex_closing_textarea_tag = /<\/textarea(\s[^>]*)?>/iy;
 const regex_closing_comment = /-->/;
 const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 const regex_token_ending_character = /[\s=/>"']/;
-const regex_starts_with_quote_characters = /^["']/;
-const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
+const regex_starts_with_quote_characters = /["']/y;
+const regex_attribute_value = /(?:"([^"]*)"|'([^'])*'|([^>\s]+))/y;
+const regex_doctype_name = /^![a-zA-Z]+$/;
+const regex_namespaced_name = /^[a-zA-Z][a-zA-Z0-9]*:[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9]$/;
+
 /** @param {string} name */
 function is_valid_element_name(name) {
 	// DOCTYPE (e.g. !DOCTYPE)
-	if (/^![a-zA-Z]+$/.test(name)) return true;
+	if (regex_doctype_name.test(name)) return true;
 	// svelte:* meta tags (e.g. svelte:element, svelte:head)
-	if (/^[a-zA-Z][a-zA-Z0-9]*:[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(name)) return true;
+	if (regex_namespaced_name.test(name)) return true;
 	// standard HTML/SVG/MathML elements and custom elements
 	return REGEX_VALID_TAG_NAME.test(name);
 }
@@ -399,7 +402,10 @@ export default function element(parser) {
 		// special case
 		element.fragment.nodes = read_sequence(
 			parser,
-			() => regex_closing_textarea_tag.test(parser.template.slice(parser.index)),
+			() => {
+				regex_closing_textarea_tag.lastIndex = parser.index;
+				return regex_closing_textarea_tag.test(parser.template);
+			},
 			'inside <textarea>'
 		);
 		parser.read(regex_closing_textarea_tag);
@@ -407,7 +413,13 @@ export default function element(parser) {
 	} else if (tag.name === 'script' || tag.name === 'style') {
 		// special case
 		const start = parser.index;
-		const data = parser.read_until(new RegExp(`</${tag.name}>`));
+		const close_tag = `</${tag.name}>`;
+		const close_index = parser.template.indexOf(close_tag, parser.index);
+		const data = parser.template.slice(
+			parser.index,
+			close_index === -1 ? parser.template.length : close_index
+		);
+		parser.index = close_index === -1 ? parser.template.length : close_index;
 		const end = parser.index;
 
 		/** @type {AST.Text} */
@@ -849,7 +861,8 @@ function read_sequence(parser, done, location) {
 
 	/** @param {number} end */
 	function flush(end) {
-		if (current_chunk.raw) {
+		if (end > current_chunk.start) {
+			current_chunk.raw = parser.template.slice(current_chunk.start, end);
 			current_chunk.data = decode_character_references(current_chunk.raw, true);
 			current_chunk.end = end;
 			chunks.push(current_chunk);
@@ -903,7 +916,7 @@ function read_sequence(parser, done, location) {
 				data: ''
 			};
 		} else {
-			current_chunk.raw += parser.template[parser.index++];
+			parser.index++;
 		}
 	}
 
