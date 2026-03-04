@@ -77,10 +77,13 @@ export let collected_effects = null;
 /**
  * An array of effects that are marked during traversal as a result of a `set`
  * (not `internal_set`) call. These will be added to the next batch and
- * trigger another turn of the `flush_effects` merry-go-round
+ * trigger another `batch.process()`
  * @type {Effect[] | null}
  */
 export let legacy_updates = null;
+
+var flush_count = 0;
+var source_stacks = DEV ? new Set() : null;
 
 let uid = 1;
 
@@ -197,6 +200,10 @@ export class Batch {
 	}
 
 	process() {
+		if (flush_count++ > 1000) {
+			infinite_loop_guard();
+		}
+
 		is_processing = true;
 		const root_effects = this.#queued_root_effects;
 		this.#queued_root_effects = [];
@@ -270,7 +277,17 @@ export class Batch {
 
 		if (current_batch !== null) {
 			batches.add(current_batch);
+
+			if (DEV) {
+				for (const source of this.current.keys()) {
+					/** @type {Set<Source>} */ (source_stacks).add(source);
+				}
+			}
+
+			current_batch.process();
 		}
+
+		old_values.clear();
 	}
 
 	/**
@@ -375,18 +392,8 @@ export class Batch {
 	}
 
 	flush() {
-		if (this.#queued_root_effects.length > 0) {
-			current_batch = this;
-			flush_effects();
-		} else if (this.#pending === 0 && !this.is_fork) {
-			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn(this);
-			this.#commit_callbacks.clear();
-
-			this.#commit();
-			this.#deferred?.resolve();
-		}
-
+		current_batch = this;
+		flush_effects();
 		this.deactivate();
 	}
 
@@ -672,49 +679,9 @@ function flush_effects() {
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
-		var flush_count = 0;
-
-		while (current_batch !== null) {
-			var batch = current_batch;
-
-			if (flush_count++ > 1000) {
-				if (DEV) {
-					var updates = new Map();
-
-					for (const source of batch.current.keys()) {
-						for (const [stack, update] of source.updated ?? []) {
-							var entry = updates.get(stack);
-
-							if (!entry) {
-								entry = { error: update.error, count: 0 };
-								updates.set(stack, entry);
-							}
-
-							entry.count += update.count;
-						}
-					}
-
-					for (const update of updates.values()) {
-						if (update.error) {
-							// eslint-disable-next-line no-console
-							console.error(update.error);
-						}
-					}
-				}
-
-				infinite_loop_guard();
-			}
-
-			batch.process();
-			old_values.clear();
-
-			if (DEV) {
-				for (const source of batch.current.keys()) {
-					/** @type {Set<Source>} */ (source_stacks).add(source);
-				}
-			}
-		}
+		current_batch.process();
 	} finally {
+		flush_count = 0;
 		last_scheduled_effect = null;
 		collected_effects = null;
 		legacy_updates = null;
@@ -731,6 +698,30 @@ function flush_effects() {
 }
 
 function infinite_loop_guard() {
+	if (DEV) {
+		var updates = new Map();
+
+		for (const source of /** @type {Batch} */ (current_batch).current.keys()) {
+			for (const [stack, update] of source.updated ?? []) {
+				var entry = updates.get(stack);
+
+				if (!entry) {
+					entry = { error: update.error, count: 0 };
+					updates.set(stack, entry);
+				}
+
+				entry.count += update.count;
+			}
+		}
+
+		for (const update of updates.values()) {
+			if (update.error) {
+				// eslint-disable-next-line no-console
+				console.error(update.error);
+			}
+		}
+	}
+
 	try {
 		e.effect_update_depth_exceeded();
 	} catch (error) {
