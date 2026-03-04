@@ -285,9 +285,9 @@ export class Batch {
 			}
 
 			current_batch.process();
+		} else {
+			old_values.clear();
 		}
-
-		old_values.clear();
 	}
 
 	/**
@@ -679,7 +679,7 @@ function flush_effects() {
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
-		current_batch.process();
+		/** @type {Batch} */ (current_batch).process();
 	} finally {
 		flush_count = 0;
 		last_scheduled_effect = null;
