@@ -224,9 +224,9 @@ export class Batch {
 		current_batch = null;
 
 		if (updates.length > 0) {
-			var next_batch = Batch.ensure();
+			var batch = Batch.ensure();
 			for (const e of updates) {
-				next_batch.schedule(e);
+				batch.schedule(e);
 			}
 		}
 
@@ -267,6 +267,10 @@ export class Batch {
 
 		batch_values = null;
 		is_processing = false;
+
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
 	}
 
 	/**
@@ -537,17 +541,20 @@ export class Batch {
 	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
-			batches.add(current_batch);
 
-			if (!is_flushing_sync && !is_processing) {
-				queue_micro_task(() => {
-					if (current_batch !== batch) {
-						// a flushSync happened in the meantime
-						return;
-					}
+			if (!is_processing) {
+				batches.add(current_batch);
 
-					batch.flush();
-				});
+				if (!is_flushing_sync) {
+					queue_micro_task(() => {
+						if (current_batch !== batch) {
+							// a flushSync happened in the meantime
+							return;
+						}
+
+						batch.flush();
+					});
+				}
 			}
 		}
 
