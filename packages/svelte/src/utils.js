@@ -480,6 +480,19 @@ export function is_raw_text_element(name) {
 	return RAW_TEXT_ELEMENTS.includes(/** @type {typeof RAW_TEXT_ELEMENTS[number]} */ (name));
 }
 
+// Matches valid HTML/SVG/MathML element names and custom element names.
+// https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
+//
+// Standard elements: ASCII alpha start, followed by ASCII alphanumerics.
+// Custom elements: ASCII alpha start, followed by any mix of PCENChar (which
+// includes ASCII alphanumerics, `-`, `.`, `_`, and specified Unicode ranges),
+// with at least one hyphen required somewhere after the first character.
+//
+// Rejects strings containing whitespace, quotes, angle brackets, slashes, equals,
+// or other characters that could break out of a tag-name token and enable markup injection.
+export const REGEX_VALID_TAG_NAME =
+	/^[a-zA-Z][a-zA-Z0-9]*(-[a-zA-Z0-9.\-_\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]+)*$/u;
+
 /**
  * Prevent devtools trying to make `location` a clickable link by inserting a zero-width space
  * @template {string | undefined} T

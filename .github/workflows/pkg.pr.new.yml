@@ -10,6 +10,10 @@ on:
         description: 'Commit SHA to build'
         required: true
         type: string
+      pr:
+        description: 'PR number to comment on'
+        required: true
+        type: number
 
 permissions: {}
 
@@ -127,26 +131,16 @@ jobs:
               return;
             }
 
-            const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: '${{ inputs.sha }}',
-            });
-
-            const open = pulls.filter(p => p.state === 'open');
-
-            if (open.length === 0) {
-              core.setFailed(`No open PR found for commit ${{ inputs.sha }}`);
+            // For workflow_dispatch, use the explicitly provided PR number.
+            // We can't use listPullRequestsAssociatedWithCommit because fork
+            // commits don't exist in the base repo, so the API returns nothing.
+            const pr = Number('${{ inputs.pr }}');
+            if (!pr || isNaN(pr)) {
+              core.setFailed('workflow_dispatch requires a valid pr input');
               return;
             }
 
-            if (open.length > 1) {
-              const nums = open.map(p => `#${p.number}`).join(', ');
-              core.setFailed(`Multiple open PRs found for commit ${{ inputs.sha }}: ${nums}`);
-              return;
-            }
-
-            core.setOutput('number', open[0].number);
+            core.setOutput('number', pr);
 
       - name: Post or update comment
         uses: actions/github-script@v8

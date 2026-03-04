@@ -101,7 +101,12 @@ export function convert(source, ast) {
 					},
 					instance,
 					module,
-					css: ast.css ? visit(ast.css) : undefined
+					css: ast.css ? visit(ast.css) : undefined,
+					// put it on _comments not comments because the latter is checked by prettier and then fails
+					// if we don't adjust stuff accordingly in our prettier plugin, and so it would be kind of an
+					// indirect breaking change for people updating their Svelte version but not their prettier plugin version.
+					// We can keep it as comments for the modern AST because the modern AST is not used in the plugin yet.
+					_comments: ast.comments?.length > 0 ? ast.comments : undefined
 				};
 			},
 			AnimateDirective(node) {

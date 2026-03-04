@@ -3,15 +3,17 @@
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
-import { pop, push, set_ssr_context, ssr_context, save } from './context.js';
+import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { noop } from '../shared/utils.js';
+import { has_own_property, noop } from '../shared/utils.js';
+import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -47,6 +49,17 @@ export class Renderer {
 	 * @type {boolean}
 	 */
 	#is_component_body = false;
+
+	/**
+	 * If set, this renderer is an error boundary. When async collection
+	 * of the children fails, the failed snippet is rendered instead.
+	 * @type {{
+	 * 	failed: (renderer: Renderer, error: unknown, reset: () => void) => void;
+	 * 	transformError: (error: unknown) => unknown;
+	 * 	context: SSRContext | null;
+	 * } | null}
+	 */
+	#boundary = null;
 
 	/**
 	 * The type of string content that this renderer is accumulating.
@@ -203,15 +216,95 @@ export class Renderer {
 		set_ssr_context(parent);
 
 		if (result instanceof Promise) {
+			// catch to avoid unhandled promise rejections - we'll end up throwing in `collect_async` if something fails
+			result.catch(noop);
+			result.finally(() => set_ssr_context(null)).catch(noop);
+
 			if (child.global.mode === 'sync') {
 				e.await_invalid();
 			}
-			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
-			result.catch(() => {});
+
 			child.promise = result;
 		}
 
 		return child;
+	}
+
+	/**
+	 * Render children inside an error boundary. If the children throw and the API-level
+	 * `transformError` transform handles the error (doesn't re-throw), the `failed` snippet is
+	 * rendered instead. Otherwise the error propagates.
+	 *
+	 * @param {{ failed?: (renderer: Renderer, error: unknown, reset: () => void) => void }} props
+	 * @param {(renderer: Renderer) => MaybePromise<void>} children_fn
+	 */
+	boundary(props, children_fn) {
+		// Create a child renderer for the boundary content.
+		// Mark it as a boundary so that #collect_content_async can catch
+		// errors from nested async children and render the failed snippet.
+		const child = new Renderer(this.global, this);
+		this.#out.push(child);
+
+		const parent_context = ssr_context;
+
+		if (props.failed) {
+			child.#boundary = {
+				failed: props.failed,
+				transformError: this.global.transformError,
+				context: parent_context
+			};
+		}
+
+		set_ssr_context({
+			...ssr_context,
+			p: parent_context,
+			c: null,
+			r: child
+		});
+
+		try {
+			const result = children_fn(child);
+
+			set_ssr_context(parent_context);
+
+			if (result instanceof Promise) {
+				if (child.global.mode === 'sync') {
+					e.await_invalid();
+				}
+				result.catch(noop);
+				child.promise = result;
+			}
+		} catch (error) {
+			// synchronous errors are handled here, async errors will be handled in #collect_content_async
+			set_ssr_context(parent_context);
+
+			const failed_snippet = props.failed;
+
+			if (!failed_snippet) throw error;
+
+			const result = this.global.transformError(error);
+
+			child.#out.length = 0;
+			child.#boundary = null;
+
+			if (result instanceof Promise) {
+				if (this.global.mode === 'sync') {
+					e.await_invalid();
+				}
+
+				child.promise = /** @type {Promise<unknown>} */ (result).then((transformed) => {
+					set_ssr_context(parent_context);
+					child.#out.push(Renderer.#serialize_failed_boundary(transformed));
+					failed_snippet(child, transformed, noop);
+					child.#out.push(BLOCK_CLOSE);
+				});
+				child.promise.catch(noop);
+			} else {
+				child.#out.push(Renderer.#serialize_failed_boundary(result));
+				failed_snippet(child, result, noop);
+				child.#out.push(BLOCK_CLOSE);
+			}
+		}
 	}
 
 	/**
@@ -267,7 +360,7 @@ export class Renderer {
 		 * @param {{ head?: string, body: any }} content
 		 */
 		const close = (renderer, value, { head, body }) => {
-			if ('value' in attrs) {
+			if (has_own_property.call(attrs, 'value')) {
 				value = attrs.value;
 			}
 
@@ -298,7 +391,7 @@ export class Renderer {
 				}
 			});
 		} else {
-			close(this, body, { body });
+			close(this, body, { body: escape_html(body) });
 		}
 	}
 
@@ -387,6 +480,21 @@ export class Renderer {
 
 	get length() {
 		return this.#out.length;
+	}
+
+	/**
+	 * Creates the hydration comment that marks the start of a failed boundary.
+	 * The error is JSON-serialized and embedded inside an HTML comment for the client
+	 * to parse during hydration. The JSON is escaped to prevent `-->` or `<!--` sequences
+	 * from breaking out of the comment (XSS). Uses unicode escapes which `JSON.parse()`
+	 * handles transparently.
+	 * @param {unknown} error
+	 * @returns {string}
+	 */
+	static #serialize_failed_boundary(error) {
+		var json = JSON.stringify(error);
+		var escaped = json.replace(/>/g, '\\u003e').replace(/</g, '\\u003c');
+		return `<!--${HYDRATION_START_FAILED}${escaped}-->`;
 	}
 
 	/**
@@ -588,7 +696,34 @@ export class Renderer {
 			if (typeof item === 'string') {
 				content[this.type] += item;
 			} else if (item instanceof Renderer) {
-				await item.#collect_content_async(content);
+				if (item.#boundary) {
+					// This renderer is an error boundary - collect into a separate
+					// accumulator so we can discard partial content on error
+					/** @type {AccumulatedContent} */
+					const boundary_content = { head: '', body: '' };
+
+					try {
+						await item.#collect_content_async(boundary_content);
+						// Success - merge into the main content
+						content.head += boundary_content.head;
+						content.body += boundary_content.body;
+					} catch (error) {
+						const { context, failed, transformError } = item.#boundary;
+
+						set_ssr_context(context);
+						let transformed = await transformError(error);
+
+						// Render the failed snippet instead of the partial children content
+						const failed_renderer = new Renderer(item.global, item);
+						failed_renderer.type = item.type;
+						failed_renderer.#out.push(Renderer.#serialize_failed_boundary(transformed));
+						failed(failed_renderer, transformed, noop);
+						failed_renderer.#out.push(BLOCK_CLOSE);
+						await failed_renderer.#collect_content_async(content);
+					}
+				} else {
+					await item.#collect_content_async(content);
+				}
 			}
 		}
 
@@ -616,28 +751,35 @@ export class Renderer {
 	 * @template {Record<string, any>} Props
 	 * @param {'sync' | 'async'} mode
 	 * @param {import('svelte').Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} options
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
-		const renderer = new Renderer(
-			new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : '', options.csp)
-		);
+		var previous_context = ssr_context;
 
-		renderer.push(BLOCK_OPEN);
+		try {
+			const renderer = new Renderer(
+				new SSRState(
+					mode,
+					options.idPrefix ? options.idPrefix + '-' : '',
+					options.csp,
+					options.transformError
+				)
+			);
 
-		push();
-		if (options.context) /** @type {SSRContext} */ (ssr_context).c = options.context;
-		/** @type {SSRContext} */ (ssr_context).r = renderer;
+			/** @type {SSRContext} */
+			const context = { p: null, c: options.context ?? null, r: renderer };
+			set_ssr_context(context);
 
-		// @ts-expect-error
-		component(renderer, options.props ?? {});
+			renderer.push(BLOCK_OPEN);
+			// @ts-expect-error
+			component(renderer, options.props ?? {});
+			renderer.push(BLOCK_CLOSE);
 
-		pop();
-
-		renderer.push(BLOCK_CLOSE);
-
-		return renderer;
+			return renderer;
+		} finally {
+			set_ssr_context(previous_context);
+		}
 	}
 
 	/**
@@ -733,6 +875,13 @@ export class SSRState {
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
 
+	/**
+	 * `transformError` passed to `render`. Called when an error boundary catches an error.
+	 * Throws by default if unset in `render`.
+	 * @type {(error: unknown) => unknown}
+	 */
+	transformError;
+
 	/** @type {{ path: number[], value: string }} */
 	#title = { path: [], value: '' };
 
@@ -740,10 +889,17 @@ export class SSRState {
 	 * @param {'sync' | 'async'} mode
 	 * @param {string} id_prefix
 	 * @param {Csp} csp
+	 * @param {((error: unknown) => unknown) | undefined} [transformError]
 	 */
-	constructor(mode, id_prefix = '', csp = { hash: false }) {
+	constructor(mode, id_prefix = '', csp = { hash: false }, transformError) {
 		this.mode = mode;
 		this.csp = { ...csp, script_hashes: [] };
+
+		this.transformError =
+			transformError ??
+			((error) => {
+				throw error;
+			});
 
 		let uid = 1;
 		this.uid = () => `${id_prefix}s${uid++}`;

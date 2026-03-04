@@ -115,6 +115,35 @@ test('url.searchParams', () => {
 	cleanup();
 });
 
+test('url.search normalizes value', () => {
+	const url = new SvelteURL('https://svelte.dev');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.search);
+		});
+	});
+
+	flushSync(() => {
+		// setting without ? prefix — URL normalizes to "?foo=bar"
+		url.search = 'foo=bar';
+	});
+
+	flushSync(() => {
+		url.search = '?baz=qux';
+	});
+
+	flushSync(() => {
+		// lone "?" is normalized to ""
+		url.search = '?';
+	});
+
+	assert.deepEqual(log, ['', '?foo=bar', '?baz=qux', '']);
+
+	cleanup();
+});
+
 test('SvelteURL instanceof URL', () => {
 	assert.ok(new SvelteURL('https://svelte.dev') instanceof URL);
 });

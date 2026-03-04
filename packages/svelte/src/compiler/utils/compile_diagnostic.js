@@ -11,12 +11,11 @@ function tabs_to_spaces(str) {
 }
 
 /**
- * @param {string} source
  * @param {number} line
  * @param {number} column
  */
-function get_code_frame(source, line, column) {
-	const lines = source.split('\n');
+function get_code_frame(line, column) {
+	const lines = state.source_lines;
 	const frame_start = Math.max(0, line - 2);
 	const frame_end = Math.min(line + 3, lines.length);
 	const digits = String(frame_end + 1).length;
@@ -70,7 +69,7 @@ export class CompileDiagnostic {
 			this.start = state.locator(position[0]);
 			this.end = state.locator(position[1]);
 			if (this.start && this.end) {
-				this.frame = get_code_frame(state.source, this.start.line - 1, this.end.column);
+				this.frame = get_code_frame(this.start.line - 1, this.end.column);
 			}
 		}
 	}

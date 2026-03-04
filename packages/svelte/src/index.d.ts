@@ -21,6 +21,7 @@ export interface ComponentConstructorOptions<
 	sync?: boolean;
 	idPrefix?: string;
 	$$inline?: boolean;
+	transformError?: (error: unknown) => unknown;
 }
 
 /**
@@ -338,6 +339,11 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 * @default true
 	 */
 	intro?: boolean;
+	/**
+	 * A function that transforms errors caught by error boundaries before they are passed to the `failed` snippet.
+	 * Defaults to the identity function.
+	 */
+	transformError?: (error: unknown) => unknown | Promise<unknown>;
 } & ({} extends Props
 	? {
 			/**
