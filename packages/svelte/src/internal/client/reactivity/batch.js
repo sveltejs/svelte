@@ -60,10 +60,6 @@ export let previous_batch = null;
  */
 export let batch_values = null;
 
-// TODO this should really be a property of `batch`
-/** @type {Effect[]} */
-let queued_root_effects = [];
-
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
@@ -135,6 +131,9 @@ export class Batch {
 	 */
 	#deferred = null;
 
+	/** @type {Effect[]} */
+	#queued_root_effects = [];
+
 	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
 	 * @type {Set<Effect>}
@@ -196,12 +195,9 @@ export class Batch {
 		}
 	}
 
-	/**
-	 *
-	 * @param {Effect[]} root_effects
-	 */
-	process(root_effects) {
-		queued_root_effects = [];
+	process() {
+		const root_effects = this.#queued_root_effects;
+		this.#queued_root_effects = [];
 
 		this.apply();
 
@@ -372,7 +368,7 @@ export class Batch {
 	}
 
 	flush() {
-		if (queued_root_effects.length > 0) {
+		if (this.#queued_root_effects.length > 0) {
 			current_batch = this;
 			flush_effects();
 		} else if (this.#pending === 0 && !this.is_fork) {
@@ -437,10 +433,6 @@ export class Batch {
 				if (others.length > 0) {
 					current_batch = batch;
 
-					// Avoid running queued root effects on the wrong branch
-					var prev_queued_root_effects = queued_root_effects;
-					queued_root_effects = [];
-
 					/** @type {Set<Value>} */
 					const marked = new Set();
 					/** @type {Map<Reaction, boolean>} */
@@ -449,10 +441,10 @@ export class Batch {
 						mark_effects(source, others, marked, checked);
 					}
 
-					if (queued_root_effects.length > 0) {
+					if (batch.#queued_root_effects.length > 0) {
 						batch.apply();
 
-						for (const root of queued_root_effects) {
+						for (const root of batch.#queued_root_effects) {
 							batch.#traverse_effect_tree(root, [], []);
 						}
 
@@ -460,8 +452,6 @@ export class Batch {
 
 						batch.deactivate();
 					}
-
-					queued_root_effects = prev_queued_root_effects;
 				}
 			}
 
@@ -500,7 +490,7 @@ export class Batch {
 				// we only reschedule previously-deferred effects if we expect
 				// to be able to run them after processing the batch
 				this.revive();
-			} else if (queued_root_effects.length > 0) {
+			} else if (this.#queued_root_effects.length > 0) {
 				// if other effects are scheduled, process the batch _without_
 				// rescheduling the previously-deferred effects
 				this.flush();
@@ -626,7 +616,7 @@ export class Batch {
 			}
 		}
 
-		queued_root_effects.push(effect);
+		this.#queued_root_effects.push(effect);
 	}
 }
 
@@ -705,7 +695,7 @@ function flush_effects() {
 				infinite_loop_guard();
 			}
 
-			batch.process(queued_root_effects);
+			batch.process();
 			old_values.clear();
 
 			if (DEV) {
@@ -715,8 +705,6 @@ function flush_effects() {
 			}
 		}
 	} finally {
-		queued_root_effects = [];
-
 		last_scheduled_effect = null;
 		collected_effects = null;
 		legacy_updates = null;
