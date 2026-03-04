@@ -10,7 +10,8 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN
+	CLEAN,
+	INERT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -305,10 +306,22 @@ function get_derived_parent_effect(derived) {
  * @returns {T}
  */
 export function execute_derived(derived) {
+	var parent_effect = get_derived_parent_effect(derived);
+
+	// don't update `{@const ...}` in an outroing block
+	if (
+		!async_mode_flag &&
+		!is_destroying_effect &&
+		parent_effect !== null &&
+		(parent_effect.f & INERT) !== 0
+	) {
+		return derived.v;
+	}
+
 	var value;
 	var prev_active_effect = active_effect;
 
-	set_active_effect(get_derived_parent_effect(derived));
+	set_active_effect(parent_effect);
 
 	if (DEV) {
 		let prev_eager_effects = eager_effects;
