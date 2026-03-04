@@ -308,6 +308,7 @@ function get_derived_parent_effect(derived) {
 export function execute_derived(derived) {
 	var parent_effect = get_derived_parent_effect(derived);
 
+	// don't update `{@const ...}` in an outroing block
 	if (
 		!async_mode_flag &&
 		!is_destroying_effect &&
