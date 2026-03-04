@@ -713,8 +713,18 @@ export class Scope {
 		}
 
 		preferred_name = preferred_name.replace(/[^a-zA-Z0-9_$]/g, '_').replace(/^[0-9]/, '_');
-		let name = preferred_name;
-		let n = 1;
+
+		// Use cached counter to skip names already known to be taken (avoids O(n²) scanning)
+		let n = this.root.next_counter(preferred_name);
+		let name;
+
+		if (n === 0) {
+			name = preferred_name;
+			n = 1;
+		} else {
+			name = `${preferred_name}_${n}`;
+			n++;
+		}
 
 		while (
 			this.references.has(name) ||
@@ -725,6 +735,7 @@ export class Scope {
 			name = `${preferred_name}_${n++}`;
 		}
 
+		this.root.set_counter(preferred_name, n);
 		this.references.set(name, []);
 		this.root.conflicts.add(name);
 		return name;
@@ -853,17 +864,48 @@ export class ScopeRoot {
 	conflicts = new Set();
 
 	/**
+	 * Tracks the next suffix counter per name to avoid O(n) rescanning in generate/unique.
+	 * @type {Map<string, number>}
+	 */
+	#name_counters = new Map();
+
+	/**
+	 * @param {string} name
+	 * @returns {number}
+	 */
+	next_counter(name) {
+		return this.#name_counters.get(name) ?? 0;
+	}
+
+	/**
+	 * @param {string} name
+	 * @param {number} value
+	 */
+	set_counter(name, value) {
+		this.#name_counters.set(name, value);
+	}
+
+	/**
 	 * @param {string} preferred_name
 	 */
 	unique(preferred_name) {
 		preferred_name = preferred_name.replace(/[^a-zA-Z0-9_$]/g, '_');
-		let final_name = preferred_name;
-		let n = 1;
+		let n = this.#name_counters.get(preferred_name) ?? 0;
+		let final_name;
+
+		if (n === 0) {
+			final_name = preferred_name;
+			n = 1;
+		} else {
+			final_name = `${preferred_name}_${n}`;
+			n++;
+		}
 
 		while (this.conflicts.has(final_name)) {
 			final_name = `${preferred_name}_${n++}`;
 		}
 
+		this.#name_counters.set(preferred_name, n);
 		this.conflicts.add(final_name);
 		const id = b.id(final_name);
 		return id;
@@ -1098,7 +1140,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		FunctionExpression(node, { state, next }) {
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
 			if (node.id) scope.declare(node.id, 'normal', 'function');
@@ -1110,7 +1152,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		FunctionDeclaration(node, { state, next }) {
 			if (node.id) state.scope.declare(node.id, 'normal', 'function', node);
 
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
@@ -1118,7 +1160,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		ArrowFunctionExpression(node, { state, next }) {
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
@@ -1136,8 +1178,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				parent?.type === 'FunctionExpression' ||
 				parent?.type === 'ArrowFunctionExpression'
 			) {
-				// We already created a new scope for the function
-				context.next();
+				// The scopes created for the function nodes above handle the function identifier and
+				// parameters, but the block statement itself holds the non-porous function scope
+				const scope = context.state.scope.child();
+				scopes.set(node, scope);
+				context.next({ scope });
 			} else {
 				create_block_scope(node, context);
 			}

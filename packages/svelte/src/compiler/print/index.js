@@ -18,15 +18,17 @@ const LINE_BREAK_THRESHOLD = 50;
  * @param {import('./types.js').Options | undefined} options
  */
 export function print(ast, options = undefined) {
+	const comments = (ast.type === 'Root' && ast.comments) || [];
+
 	return esrap.print(
 		ast,
 		/** @type {Visitors<AST.SvelteNode>} */ ({
 			...ts({
-				comments: ast.type === 'Root' ? ast.comments : [],
+				comments,
 				getLeadingComments: options?.getLeadingComments,
 				getTrailingComments: options?.getTrailingComments
 			}),
-			...svelte_visitors,
+			...svelte_visitors(comments),
 			...css_visitors
 		})
 	);
@@ -57,35 +59,72 @@ function block(context, node, allow_inline = false) {
 }
 
 /**
+ * @param {AST.BaseNode} node
  * @param {AST.BaseElement['attributes']} attributes
  * @param {Context} context
+ * @param {AST.JSComment[]} comments
  * @returns {boolean} true if attributes were formatted on multiple lines
  */
-function attributes(attributes, context) {
+function attributes(node, attributes, context, comments) {
 	if (attributes.length === 0) {
 		return false;
 	}
 
-	// Measure total width of all attributes when rendered inline
-	const child_context = context.new();
+	let length = -1;
 
-	for (const attribute of attributes) {
-		child_context.write(' ');
-		child_context.visit(attribute);
+	let comment_index = comments.findIndex((comment) => comment.start > node.start);
+
+	if (comment_index === -1) {
+		comment_index = comments.length;
 	}
 
-	const multiline = child_context.measure() > LINE_BREAK_THRESHOLD;
+	const separator = context.new();
+
+	const children = attributes.map((attribute) => {
+		const child_context = context.new();
+
+		while (comment_index < comments.length) {
+			const comment = comments[comment_index];
+
+			if (comment.start < attribute.start) {
+				if (comment.type === 'Line') {
+					child_context.write('//' + comment.value);
+					child_context.newline();
+				} else {
+					child_context.write('/*' + comment.value + '*/'); // TODO match indentation?
+					child_context.append(separator);
+				}
+
+				comment_index += 1;
+			} else {
+				break;
+			}
+		}
+
+		child_context.visit(attribute);
+
+		length += child_context.measure() + 1;
+
+		return child_context;
+	});
+
+	let multiline = context.multiline || length > LINE_BREAK_THRESHOLD;
 
 	if (multiline) {
+		separator.newline();
 		context.indent();
-		for (const attribute of attributes) {
+		for (const child of children) {
 			context.newline();
-			context.visit(attribute);
+			context.append(child);
 		}
 		context.dedent();
 		context.newline();
 	} else {
-		context.append(child_context);
+		separator.write(' ');
+		for (const child of children) {
+			context.write(' ');
+			context.append(child);
+		}
 	}
 
 	return multiline;
@@ -94,8 +133,9 @@ function attributes(attributes, context) {
 /**
  * @param {AST.BaseElement} node
  * @param {Context} context
+ * @param {AST.JSComment[]} comments
  */
-function base_element(node, context) {
+function base_element(node, context, comments) {
 	const child_context = context.new();
 
 	child_context.write('<' + node.name);
@@ -111,7 +151,7 @@ function base_element(node, context) {
 		child_context.write('}');
 	}
 
-	const multiline_attributes = attributes(node.attributes, child_context);
+	const multiline_attributes = attributes(node, node.attributes, child_context, comments);
 	const is_doctype_node = node.name.toLowerCase() === '!doctype';
 	const is_self_closing =
 		is_void(node.name) || (node.type === 'Component' && node.fragment.nodes.length === 0);
@@ -284,8 +324,11 @@ const css_visitors = {
 	}
 };
 
-/** @type {Visitors<AST.SvelteNode>} */
-const svelte_visitors = {
+/**
+ * @param {AST.JSComment[]} comments
+ * @returns {Visitors<AST.SvelteNode>}
+ */
+const svelte_visitors = (comments) => ({
 	Root(node, context) {
 		if (node.options) {
 			context.write('<svelte:options');
@@ -315,7 +358,7 @@ const svelte_visitors = {
 
 	Script(node, context) {
 		context.write('<script');
-		attributes(node.attributes, context);
+		attributes(node, node.attributes, context, comments);
 		context.write('>');
 		block(context, node.content);
 		context.write('</script>');
@@ -371,9 +414,23 @@ const svelte_visitors = {
 					}
 				}
 			} else {
-				sequence.push(child_node);
+				const is_block_element =
+					child_node.type === 'RegularElement' ||
+					child_node.type === 'Component' ||
+					child_node.type === 'SvelteHead' ||
+					child_node.type === 'SvelteFragment' ||
+					child_node.type === 'SvelteBoundary' ||
+					child_node.type === 'SvelteDocument' ||
+					child_node.type === 'SvelteSelf' ||
+					child_node.type === 'SvelteWindow' ||
+					child_node.type === 'SvelteComponent' ||
+					child_node.type === 'SvelteElement' ||
+					child_node.type === 'SlotElement' ||
+					child_node.type === 'TitleElement';
 
-				if (child_node.type === 'RegularElement') flush();
+				if (is_block_element && sequence.length > 0) flush();
+				sequence.push(child_node);
+				if (is_block_element) flush();
 			}
 		}
 
@@ -531,7 +588,7 @@ const svelte_visitors = {
 	},
 
 	Component(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	ConstTag(node, context) {
@@ -667,7 +724,7 @@ const svelte_visitors = {
 	},
 
 	RegularElement(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	RenderTag(node, context) {
@@ -677,7 +734,7 @@ const svelte_visitors = {
 	},
 
 	SlotElement(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	SnippetBlock(node, context) {
@@ -733,7 +790,7 @@ const svelte_visitors = {
 
 	StyleSheet(node, context) {
 		context.write('<style');
-		attributes(node.attributes, context);
+		attributes(node, node.attributes, context, comments);
 		context.write('>');
 
 		if (node.children.length > 0) {
@@ -760,7 +817,7 @@ const svelte_visitors = {
 	},
 
 	SvelteBoundary(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	SvelteComponent(node, context) {
@@ -769,7 +826,7 @@ const svelte_visitors = {
 		context.write(' this={');
 		context.visit(node.expression);
 		context.write('}');
-		attributes(node.attributes, context);
+		attributes(node, node.attributes, context, comments);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -780,7 +837,7 @@ const svelte_visitors = {
 	},
 
 	SvelteDocument(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	SvelteElement(node, context) {
@@ -789,7 +846,7 @@ const svelte_visitors = {
 		context.write('this={');
 		context.visit(node.tag);
 		context.write('}');
-		attributes(node.attributes, context);
+		attributes(node, node.attributes, context, comments);
 
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
@@ -801,19 +858,19 @@ const svelte_visitors = {
 	},
 
 	SvelteFragment(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	SvelteHead(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	SvelteSelf(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	SvelteWindow(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	Text(node, context) {
@@ -821,7 +878,7 @@ const svelte_visitors = {
 	},
 
 	TitleElement(node, context) {
-		base_element(node, context);
+		base_element(node, context, comments);
 	},
 
 	TransitionDirective(node, context) {
@@ -851,4 +908,4 @@ const svelte_visitors = {
 			context.write('}');
 		}
 	}
-};
+});

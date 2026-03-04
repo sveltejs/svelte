@@ -84,22 +84,57 @@ export function VariableDeclaration(node, context) {
 			const args = /** @type {CallExpression} */ (init).arguments;
 			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
 
-			if (rune === '$derived.by') {
-				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), b.call(value))
-				);
+			if (rune === '$derived' || rune === '$derived.by') {
+				const is_async =
+					rune === '$derived' &&
+					context.state.analysis.async_deriveds.has(
+						/** @type {CallExpression} */ (declarator.init)
+					);
+
+				let init = is_async
+					? b.await(b.call('$.async_derived', b.thunk(value, true)))
+					: b.call('$.derived', rune === '$derived' ? b.thunk(value) : value);
+
+				if (declarator.id.type === 'Identifier') {
+					declarations.push(
+						b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), init)
+					);
+				} else {
+					const call = /** @type {CallExpression} */ (declarator.init);
+
+					let rhs = value;
+
+					if (rune !== '$derived' || call.arguments[0].type !== 'Identifier') {
+						const id = b.id(context.state.scope.generate('$$d'));
+
+						rhs = b.call(id);
+						declarations.push(b.declarator(id, init));
+					}
+
+					const { inserts, paths } = extract_paths(declarator.id, rhs);
+
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$derived_array');
+
+						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+						const call = b.call('$.derived', expression);
+
+						declarations.push(b.declarator(id, call));
+					}
+
+					for (const path of paths) {
+						const expression = /** @type {Expression} */ (context.visit(path.expression));
+						const call = b.call('$.derived', b.thunk(expression));
+
+						declarations.push(b.declarator(path.node, call));
+					}
+				}
+
 				continue;
 			}
 
 			if (declarator.id.type === 'Identifier') {
 				declarations.push(b.declarator(declarator.id, value));
-				continue;
-			}
-
-			if (rune === '$derived') {
-				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), value)
-				);
 				continue;
 			}
 

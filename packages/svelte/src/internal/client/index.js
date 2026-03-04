@@ -40,7 +40,7 @@ export {
 	STYLE
 } from './dom/elements/attributes.js';
 export { set_class } from './dom/elements/class.js';
-export { apply, event, delegate, replay_events } from './dom/elements/events.js';
+export { apply, event, delegated, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { customizable_select, selectedcontent } from './dom/elements/customizable-select.js';
 export { set_style } from './dom/elements/style.js';
@@ -153,7 +153,6 @@ export {
 	safe_get,
 	tick,
 	untrack,
-	exclude_from_object,
 	deep_read,
 	deep_read_state,
 	active_effect
@@ -171,7 +170,7 @@ export {
 } from './dom/operations.js';
 export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
-export { noop, fallback, to_array } from '../shared/utils.js';
+export { noop, fallback, to_array, exclude_from_object } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,

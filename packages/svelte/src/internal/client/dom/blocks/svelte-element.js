@@ -7,7 +7,7 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { create_text, get_first_child } from '../operations.js';
+import { create_element, create_text, get_first_child } from '../operations.js';
 import { block, teardown } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { active_effect } from '../../runtime.js';
@@ -57,7 +57,11 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	block(() => {
 		const next_tag = get_tag() || null;
-		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? NAMESPACE_SVG : null;
+		var ns = get_namespace
+			? get_namespace()
+			: is_svg || next_tag === 'svg'
+				? NAMESPACE_SVG
+				: undefined;
 
 		if (next_tag === null) {
 			branches.ensure(null, null);
@@ -67,11 +71,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 		branches.ensure(next_tag, (anchor) => {
 			if (next_tag) {
-				element = hydrating
-					? /** @type {Element} */ (element)
-					: ns
-						? document.createElementNS(ns, next_tag)
-						: document.createElement(next_tag);
+				element = hydrating ? /** @type {Element} */ (element) : create_element(next_tag, ns);
 
 				if (DEV && location) {
 					// @ts-expect-error

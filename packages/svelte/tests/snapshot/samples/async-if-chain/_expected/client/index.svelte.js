@@ -35,7 +35,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node, ($$render) => {
-			if (foo) $$render(consequent); else if (bar) $$render(consequent_1, 1); else $$render(alternate, false);
+			if (foo) $$render(consequent); else if (bar) $$render(consequent_1, 1); else $$render(alternate, -1);
 		});
 	});
 
@@ -74,7 +74,7 @@ export default function Async_if_chain($$anchor) {
 				$.if(
 					node_2,
 					($$render) => {
-						if ($.get($$condition)) $$render(consequent_4); else $$render(alternate_1, false);
+						if ($.get($$condition)) $$render(consequent_4); else $$render(alternate_1, -1);
 					},
 					true
 				);
@@ -84,7 +84,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_1, ($$render) => {
-			if ($.get($$condition)) $$render(consequent_2); else if (bar) $$render(consequent_3, 1); else $$render(alternate_2, false);
+			if ($.get($$condition)) $$render(consequent_2); else if (bar) $$render(consequent_3, 1); else $$render(alternate_2, -1);
 		});
 	});
 
@@ -123,7 +123,7 @@ export default function Async_if_chain($$anchor) {
 				$.if(
 					node_4,
 					($$render) => {
-						if ($.get($$condition)) $$render(consequent_7); else $$render(alternate_3, false);
+						if ($.get($$condition)) $$render(consequent_7); else $$render(alternate_3, -1);
 					},
 					true
 				);
@@ -133,7 +133,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_3, ($$render) => {
-			if ($.get($$condition)) $$render(consequent_5); else if (bar) $$render(consequent_6, 1); else $$render(alternate_4, false);
+			if ($.get($$condition)) $$render(consequent_5); else if (bar) $$render(consequent_6, 1); else $$render(alternate_4, -1);
 		});
 	});
 
@@ -167,7 +167,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_5, ($$render) => {
-			if (simple1) $$render(consequent_8); else if (simple2 > 10) $$render(consequent_9, 1); else if ($.get(d)) $$render(consequent_10, 2); else $$render(alternate_5, false);
+			if (simple1) $$render(consequent_8); else if (simple2 > 10) $$render(consequent_9, 1); else if ($.get(d)) $$render(consequent_10, 2); else $$render(alternate_5, -1);
 		});
 	}
 
@@ -193,7 +193,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_6, ($$render) => {
-			if ($.get(blocking) > 10) $$render(consequent_11); else if ($.get(blocking) > 5) $$render(consequent_12, 1); else $$render(alternate_6, false);
+			if ($.get(blocking) > 10) $$render(consequent_11); else if ($.get(blocking) > 5) $$render(consequent_12, 1); else $$render(alternate_6, -1);
 		});
 	});
 

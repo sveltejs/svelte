@@ -22,13 +22,16 @@ import {
 	STALE_REACTION,
 	ERROR_VALUE,
 	WAS_MARKED,
-	MANAGED_EFFECT
+	MANAGED_EFFECT,
+	REACTION_RAN
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	execute_derived,
+	freeze_derived_effects,
 	recent_async_deriveds,
+	unfreeze_derived_effects,
 	update_derived
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
@@ -253,6 +256,7 @@ export function update_reaction(reaction) {
 		reaction.f |= REACTION_IS_UPDATING;
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
+		reaction.f |= REACTION_RAN;
 		var deps = reaction.deps;
 
 		// Don't remove reactions during fork;
@@ -396,8 +400,10 @@ function remove_reaction(signal, dependency) {
 
 		update_derived_status(derived);
 
+		// freeze any effects inside this derived
+		freeze_derived_effects(derived);
+
 		// Disconnect any reactions owned by this reaction
-		destroy_derived_effects(derived);
 		remove_reactions(derived, 0);
 	}
 }
@@ -643,7 +649,7 @@ export function get(signal) {
 			active_reaction !== null &&
 			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
 
-		var is_new = derived.deps === null;
+		var is_new = (derived.f & REACTION_RAN) === 0;
 
 		if (is_dirty(derived)) {
 			if (should_connect) {
@@ -656,6 +662,7 @@ export function get(signal) {
 		}
 
 		if (should_connect && !is_new) {
+			unfreeze_derived_effects(derived);
 			reconnect(derived);
 		}
 	}
@@ -677,14 +684,15 @@ export function get(signal) {
  * @param {Derived} derived
  */
 function reconnect(derived) {
-	if (derived.deps === null) return;
-
 	derived.f |= CONNECTED;
+
+	if (derived.deps === null) return;
 
 	for (const dep of derived.deps) {
 		(dep.reactions ??= []).push(derived);
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
+			unfreeze_derived_effects(/** @type {Derived} */ (dep));
 			reconnect(/** @type {Derived} */ (dep));
 		}
 	}
@@ -742,30 +750,6 @@ export function untrack(fn) {
 	} finally {
 		untracking = previous_untracking;
 	}
-}
-
-/**
- * @param {Record<string | symbol, unknown>} obj
- * @param {Array<string | symbol>} keys
- * @returns {Record<string | symbol, unknown>}
- */
-export function exclude_from_object(obj, keys) {
-	/** @type {Record<string | symbol, unknown>} */
-	var result = {};
-
-	for (var key in obj) {
-		if (!keys.includes(key)) {
-			result[key] = obj[key];
-		}
-	}
-
-	for (var symbol of Object.getOwnPropertySymbols(obj)) {
-		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
-			result[symbol] = obj[symbol];
-		}
-	}
-
-	return result;
 }
 
 /**

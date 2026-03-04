@@ -123,9 +123,13 @@ export function build_element_attributes(node, context, transform) {
 
 			expression = transform(expression, attribute.metadata.expression);
 
-			if (is_content_editable_binding(attribute.name)) {
+			if (attribute.name === 'innerHTML') {
+				// innerHTML is the only binding we don't escape
 				content = expression;
-			} else if (attribute.name === 'value' && node.name === 'textarea') {
+			} else if (
+				is_content_editable_binding(attribute.name) ||
+				(attribute.name === 'value' && node.name === 'textarea')
+			) {
 				content = b.call('$.escape', expression);
 			} else if (attribute.name === 'group' && attribute.expression.type !== 'SequenceExpression') {
 				const value_attribute = /** @type {AST.Attribute | undefined} */ (
@@ -235,7 +239,7 @@ export function build_element_attributes(node, context, transform) {
 
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						b.literal(` ${attribute.name}="${literal_value === true ? '' : String(literal_value)}"`)
+						b.literal(` ${name}="${literal_value === true ? '' : String(literal_value)}"`)
 					);
 				}
 

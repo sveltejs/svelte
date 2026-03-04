@@ -5,7 +5,7 @@ import { active_effect, active_reaction } from './runtime.js';
 import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
-import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
+import { BRANCH_EFFECT, REACTION_RAN } from './constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;

@@ -187,7 +187,7 @@ test('selects an option with an explicit value', () => {
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('');
 	expect(body).toBe(
-		'<!--[--><select><option value="1">one</option><option value="2" selected>two</option><option value="3">three</option></select><!--]-->'
+		'<!--[--><select><option value="1">one</option><option value="2" selected="">two</option><option value="3">three</option></select><!--]-->'
 	);
 });
 
@@ -203,7 +203,7 @@ test('selects an option with an implicit value', () => {
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('');
 	expect(body).toBe(
-		'<!--[--><select><option>one</option><option selected>two</option><option>three</option></select><!--]-->'
+		'<!--[--><select><option>one</option><option selected="">two</option><option>three</option></select><!--]-->'
 	);
 });
 
@@ -221,8 +221,120 @@ test('select merges scoped css hash with static class', () => {
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('');
 	expect(body).toBe(
-		'<!--[--><select class="foo svelte-hash"><option value="foo" selected>foo</option></select><!--]-->'
+		'<!--[--><select class="foo svelte-hash"><option value="foo" selected="">foo</option></select><!--]-->'
 	);
+});
+
+describe('boundary hydration comment escaping', () => {
+	const failed_snippet = (renderer: Renderer, error: unknown) => {
+		renderer.push(`<p>${(error as { message: string }).message}</p>`);
+	};
+
+	const transform = (error: unknown) => ({ message: (error as Error).message });
+
+	const payloads = [
+		{
+			name: 'escapes -->',
+			input: '--><img src=x onerror=alert(1)><!--',
+			expected: '{"message":"--\\u003e\\u003cimg src=x onerror=alert(1)\\u003e\\u003c!--"}'
+		},
+		{
+			name: 'escapes <!--',
+			input: '<!--<script>alert(1)</script>',
+			expected: '{"message":"\\u003c!--\\u003cscript\\u003ealert(1)\\u003c/script\\u003e"}'
+		},
+		{ name: 'escapes <!-->', input: '<!-->', expected: '{"message":"\\u003c!--\\u003e"}' },
+		{ name: 'escapes <!--->', input: '<!--->', expected: '{"message":"\\u003c!---\\u003e"}' },
+		{
+			name: 'escapes multiple -->',
+			input: '-->one-->two-->',
+			expected: '{"message":"--\\u003eone--\\u003etwo--\\u003e"}'
+		},
+		{ name: 'escapes --->', input: '--->', expected: '{"message":"---\\u003e"}' },
+		{ name: 'no double-encoding', input: '--\\u003e', expected: '{"message":"--\\\\u003e"}' },
+		{
+			name: 'the terrifying special pointy boy',
+			input: '--!>ooh, what an exotic closing comment tag',
+			expected: '{"message":"--!\\u003eooh, what an exotic closing comment tag"}'
+		}
+	];
+
+	type RenderFn = (input: string) => Promise<string> | string;
+
+	const paths: Array<{ path: string; async: boolean; render: RenderFn }> = [
+		{
+			path: 'sync children, sync transformError',
+			async: false,
+			render: (input) => {
+				const component = (renderer: Renderer) => {
+					renderer.boundary({ failed: failed_snippet }, () => {
+						throw new Error(input);
+					});
+				};
+				return Renderer.render(
+					component as unknown as Component,
+					{ transformError: transform } as any
+				).body;
+			}
+		},
+		{
+			path: 'sync children, async transformError',
+			async: true,
+			render: async (input) => {
+				const component = (renderer: Renderer) => {
+					renderer.boundary({ failed: failed_snippet }, () => {
+						throw new Error(input);
+					});
+				};
+				return (
+					await Renderer.render(
+						component as unknown as Component,
+						{
+							transformError: (error: unknown) => Promise.resolve(transform(error))
+						} as any
+					)
+				).body;
+			}
+		},
+		{
+			path: 'async children throw',
+			async: true,
+			render: async (input) => {
+				const component = (renderer: Renderer) => {
+					renderer.boundary({ failed: failed_snippet }, async () => {
+						await Promise.resolve();
+						throw new Error(input);
+					});
+				};
+				return (
+					await Renderer.render(
+						component as unknown as Component,
+						{
+							transformError: transform
+						} as any
+					)
+				).body;
+			}
+		}
+	];
+
+	describe.each(paths)('$path', ({ async: needs_async, render }) => {
+		if (needs_async) {
+			beforeAll(() => enable_async_mode_flag());
+			afterAll(() => disable_async_mode_flag());
+		}
+
+		test.each(payloads)('$name', async ({ input, expected }) => {
+			const body = await render(input);
+
+			// Extract the content between <!--[? and the first -->
+			// If escaping is broken, an unescaped --> in the JSON will truncate
+			// the match and the content won't equal the expected escaped JSON.
+			const match = body.match(/<!--\[\?(.+?)-->/);
+			expect(match, 'expected a hydration comment in output').toBeTruthy();
+			expect(match![1]).toBe(expected);
+		});
+	});
 });
 
 describe('async', () => {

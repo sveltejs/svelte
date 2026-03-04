@@ -62,6 +62,14 @@ Keyed each block has duplicate key at indexes %a% and %b%
 Keyed each block has duplicate key `%value%` at indexes %a% and %b%
 ```
 
+### each_key_volatile
+
+```
+Keyed each block has key that is not idempotent — the key for item at index %index% was `%a%` but is now `%b%`. Keys must be the same each time for a given item
+```
+
+The key expression in a keyed each block must return the same value when called multiple times for the same item. Using expressions like `[item.a, item.b]` creates a new array each time, which will never be equal to itself. Instead, use a primitive value or create a stable key like `item.a + '-' + item.b`.
+
 ### effect_in_teardown
 
 ```

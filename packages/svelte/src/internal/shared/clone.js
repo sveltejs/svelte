@@ -89,7 +89,7 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 				cloned.set(original, copy);
 			}
 
-			for (var key in value) {
+			for (var key of Object.keys(value)) {
 				copy[key] = clone(
 					// @ts-expect-error
 					value[key],
