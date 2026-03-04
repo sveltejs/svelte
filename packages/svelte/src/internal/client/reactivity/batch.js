@@ -211,7 +211,8 @@ export class Batch {
 		/** @type {Effect[]} */
 		var render_effects = [];
 
-		legacy_updates = [];
+		/** @type {Effect[]} */
+		var updates = (legacy_updates = []);
 
 		for (const root of root_effects) {
 			this.#traverse_effect_tree(root, effects, render_effects);
@@ -224,9 +225,9 @@ export class Batch {
 
 		current_batch = null;
 
-		if (legacy_updates.length > 0) {
+		if (updates.length > 0) {
 			var next_batch = Batch.ensure();
-			for (const e of legacy_updates) {
+			for (const e of updates) {
 				next_batch.schedule(e);
 			}
 		}
@@ -654,23 +655,14 @@ export function flushSync(fn) {
 		while (true) {
 			flush_tasks();
 
-			if (queued_root_effects.length === 0) {
-				current_batch?.flush();
-
-				// we need to check again, in case we just updated an `$effect.pending()`
-				if (queued_root_effects.length === 0) {
-					// this would be reset in `flush_effects()` but since we are early returning here,
-					// we need to reset it here as well in case the first time there's 0 queued root effects
-					last_scheduled_effect = null;
-
-					return /** @type {T} */ (result);
-				}
+			if (current_batch === null) {
+				break;
 			}
 
-			if (current_batch !== null) {
-				flush_effects();
-			}
+			flush_effects();
 		}
+
+		return /** @type {T} */ (result);
 	} finally {
 		is_flushing_sync = was_flushing_sync;
 	}
