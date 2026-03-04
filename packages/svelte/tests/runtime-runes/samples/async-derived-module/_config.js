@@ -14,17 +14,6 @@ export default test({
 		const [reset, a, b, increment] = target.querySelectorAll('button');
 
 		a.click();
-
-		// TODO why is this necessary? why isn't `await tick()` enough?
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		flushSync();
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,

@@ -1,4 +1,4 @@
-/** @import { ComponentContext, Effect, TemplateNode } from '#client' */
+/** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
 import { DEV } from 'esm-env';
 import {
@@ -11,26 +11,20 @@ import {
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { active_effect } from './runtime.js';
 import { push, pop, component_context } from './context.js';
-import { component_root, branch } from './reactivity/effects.js';
-import {
-	hydrate_next,
-	hydrate_node,
-	hydrating,
-	set_hydrate_node,
-	set_hydrating
-} from './dom/hydration.js';
+import { component_root } from './reactivity/effects.js';
+import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from './dom/hydration.js';
 import { array_from } from '../shared/utils.js';
 import {
 	all_registered_events,
 	handle_event_propagation,
 	root_event_handles
 } from './dom/elements/events.js';
-import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
-import { COMMENT_NODE } from './constants.js';
+import { COMMENT_NODE, STATE_SYMBOL } from './constants.js';
+import { boundary } from './dom/blocks/boundary.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -51,12 +45,12 @@ export function set_should_intro(value) {
  */
 export function set_text(text, value) {
 	// For objects, we apply string coercion (which might make things like $state array references in the template reactive) before diffing
-	var str = value == null ? '' : typeof value === 'object' ? value + '' : value;
+	var str = value == null ? '' : typeof value === 'object' ? `${value}` : value;
 	// @ts-expect-error
 	if (str !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
 		text.__t = str;
-		text.nodeValue = str + '';
+		text.nodeValue = `${str}`;
 	}
 }
 
@@ -87,6 +81,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ *		transformError?: (error: unknown) => unknown;
  * 	} : {
  * 		target: Document | Element | ShadowRoot;
  * 		props: Props;
@@ -94,6 +89,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ *		transformError?: (error: unknown) => unknown;
  * 	}} options
  * @returns {Exports}
  */
@@ -105,12 +101,13 @@ export function hydrate(component, options) {
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		var anchor = /** @type {TemplateNode} */ (get_first_child(target));
+		var anchor = get_first_child(target);
+
 		while (
 			anchor &&
 			(anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 		) {
-			anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor));
+			anchor = get_next_sibling(anchor);
 		}
 
 		if (!anchor) {
@@ -119,46 +116,43 @@ export function hydrate(component, options) {
 
 		set_hydrating(true);
 		set_hydrate_node(/** @type {Comment} */ (anchor));
-		hydrate_next();
 
 		const instance = _mount(component, { ...options, anchor });
-
-		if (
-			hydrate_node === null ||
-			hydrate_node.nodeType !== COMMENT_NODE ||
-			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
-		) {
-			w.hydration_mismatch();
-			throw HYDRATION_ERROR;
-		}
 
 		set_hydrating(false);
 
 		return /**  @type {Exports} */ (instance);
 	} catch (error) {
-		if (error === HYDRATION_ERROR) {
-			if (options.recover === false) {
-				e.hydration_failed();
-			}
-
-			// If an error occured above, the operations might not yet have been initialised.
-			init_operations();
-			clear_text_content(target);
-
-			set_hydrating(false);
-			return mount(component, options);
+		// re-throw Svelte errors - they are certainly not related to hydration
+		if (
+			error instanceof Error &&
+			error.message.split('\n').some((line) => line.startsWith('https://svelte.dev/e/'))
+		) {
+			throw error;
+		}
+		if (error !== HYDRATION_ERROR) {
+			// eslint-disable-next-line no-console
+			console.warn('Failed to hydrate: ', error);
 		}
 
-		throw error;
+		if (options.recover === false) {
+			e.hydration_failed();
+		}
+
+		// If an error occurred above, the operations might not yet have been initialised.
+		init_operations();
+		clear_text_content(target);
+
+		set_hydrating(false);
+		return mount(component, options);
 	} finally {
 		set_hydrating(was_hydrating);
 		set_hydrate_node(previous_hydrate_node);
-		reset_head_anchor();
 	}
 }
 
-/** @type {Map<string, number>} */
-const document_listeners = new Map();
+/** @type {Map<EventTarget, Map<string, number>>} */
+const listeners = new Map();
 
 /**
  * @template {Record<string, any>} Exports
@@ -166,41 +160,11 @@ const document_listeners = new Map();
  * @param {MountOptions} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
+function _mount(
+	Component,
+	{ target, anchor, props = {}, events, context, intro = true, transformError }
+) {
 	init_operations();
-
-	var registered_events = new Set();
-
-	/** @param {Array<string>} events */
-	var event_handle = (events) => {
-		for (var i = 0; i < events.length; i++) {
-			var event_name = events[i];
-
-			if (registered_events.has(event_name)) continue;
-			registered_events.add(event_name);
-
-			var passive = is_passive_event(event_name);
-
-			// Add the event listener to both the container and the document.
-			// The container listener ensures we catch events from within in case
-			// the outer content stops propagation of the event.
-			target.addEventListener(event_name, handle_event_propagation, { passive });
-
-			var n = document_listeners.get(event_name);
-
-			if (n === undefined) {
-				// The document listener ensures we catch events that originate from elements that were
-				// manually moved outside of the container (e.g. via manual portals).
-				document.addEventListener(event_name, handle_event_propagation, { passive });
-				document_listeners.set(event_name, 1);
-			} else {
-				document_listeners.set(event_name, n + 1);
-			}
-		}
-	};
-
-	event_handle(array_from(all_registered_events));
-	root_event_handles.add(event_handle);
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
@@ -209,47 +173,107 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	var unmount = component_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
-		branch(() => {
-			if (context) {
+		boundary(
+			/** @type {TemplateNode} */ (anchor_node),
+			{
+				pending: () => {}
+			},
+			(anchor_node) => {
 				push({});
 				var ctx = /** @type {ComponentContext} */ (component_context);
-				ctx.c = context;
-			}
+				if (context) ctx.c = context;
 
-			if (events) {
-				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-				/** @type {any} */ (props).$$events = events;
-			}
+				if (events) {
+					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+					/** @type {any} */ (props).$$events = events;
+				}
 
-			if (hydrating) {
-				assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
-			}
+				if (hydrating) {
+					assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
+				}
 
-			should_intro = intro;
-			// @ts-expect-error the public typings are not what the actual function looks like
-			component = Component(anchor_node, props) || {};
-			should_intro = true;
+				should_intro = intro;
+				// @ts-expect-error the public typings are not what the actual function looks like
+				component = Component(anchor_node, props) || {};
+				should_intro = true;
 
-			if (hydrating) {
-				/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
-			}
+				if (hydrating) {
+					/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = hydrate_node;
 
-			if (context) {
+					if (
+						hydrate_node === null ||
+						hydrate_node.nodeType !== COMMENT_NODE ||
+						/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+					) {
+						w.hydration_mismatch();
+						throw HYDRATION_ERROR;
+					}
+				}
+
 				pop();
+			},
+			transformError
+		);
+
+		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
+		/** @type {Set<string>} */
+		var registered_events = new Set();
+
+		/** @param {Array<string>} events */
+		var event_handle = (events) => {
+			for (var i = 0; i < events.length; i++) {
+				var event_name = events[i];
+
+				if (registered_events.has(event_name)) continue;
+				registered_events.add(event_name);
+
+				var passive = is_passive_event(event_name);
+
+				// Add the event listener to both the container and the document.
+				// The container listener ensures we catch events from within in case
+				// the outer content stops propagation of the event.
+				//
+				// The document listener ensures we catch events that originate from elements that were
+				// manually moved outside of the container (e.g. via manual portals).
+				for (const node of [target, document]) {
+					var counts = listeners.get(node);
+
+					if (counts === undefined) {
+						counts = new Map();
+						listeners.set(node, counts);
+					}
+
+					var count = counts.get(event_name);
+
+					if (count === undefined) {
+						node.addEventListener(event_name, handle_event_propagation, { passive });
+						counts.set(event_name, 1);
+					} else {
+						counts.set(event_name, count + 1);
+					}
+				}
 			}
-		});
+		};
+
+		event_handle(array_from(all_registered_events));
+		root_event_handles.add(event_handle);
 
 		return () => {
 			for (var event_name of registered_events) {
-				target.removeEventListener(event_name, handle_event_propagation);
+				for (const node of [target, document]) {
+					var counts = /** @type {Map<string, number>} */ (listeners.get(node));
+					var count = /** @type {number} */ (counts.get(event_name));
 
-				var n = /** @type {number} */ (document_listeners.get(event_name));
+					if (--count == 0) {
+						node.removeEventListener(event_name, handle_event_propagation);
+						counts.delete(event_name);
 
-				if (--n === 0) {
-					document.removeEventListener(event_name, handle_event_propagation);
-					document_listeners.delete(event_name);
-				} else {
-					document_listeners.set(event_name, n);
+						if (counts.size === 0) {
+							listeners.delete(node);
+						}
+					} else {
+						counts.set(event_name, count);
+					}
 				}
 			}
 
@@ -300,7 +324,11 @@ export function unmount(component, options) {
 	}
 
 	if (DEV) {
-		w.lifecycle_double_unmount();
+		if (STATE_SYMBOL in component) {
+			w.state_proxy_unmount();
+		} else {
+			w.lifecycle_double_unmount();
+		}
 	}
 
 	return Promise.resolve();

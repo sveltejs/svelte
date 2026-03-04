@@ -1,7 +1,6 @@
 import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
-var on_click = (_, count) => $.update(count);
 var root = $.from_html(`<h1></h1> <b></b> <button> </button> <h1></h1>`, 1);
 
 export default function Nullish_coallescence_omittance($$anchor) {
@@ -17,9 +16,6 @@ export default function Nullish_coallescence_omittance($$anchor) {
 	b.textContent = '123';
 
 	var button = $.sibling(b, 2);
-
-	button.__click = [on_click, count];
-
 	var text = $.child(button);
 
 	$.reset(button);
@@ -28,6 +24,7 @@ export default function Nullish_coallescence_omittance($$anchor) {
 
 	h1_1.textContent = 'Hello, world';
 	$.template_effect(() => $.set_text(text, `Count is ${$.get(count) ?? ''}`));
+	$.delegated('click', button, () => $.update(count));
 	$.append($$anchor, fragment);
 }
 

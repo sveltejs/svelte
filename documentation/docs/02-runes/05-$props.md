@@ -1,5 +1,6 @@
 ---
 title: $props
+tags: rune-props
 ---
 
 The inputs to a component are referred to as _props_, which is short for _properties_. You pass props to components just like you pass attributes to elements:
@@ -197,6 +198,8 @@ You can, of course, separate the type declaration from the annotation:
 ```
 
 > [!NOTE] Interfaces for native DOM elements are provided in the `svelte/elements` module (see [Typing wrapper components](typescript#Typing-wrapper-components))
+
+If your component exposes [snippet](snippet) props like `children`, these should be typed using the `Snippet` interface imported from `'svelte'` — see [Typing snippets](snippet#Typing-snippets) for examples.
 
 Adding types is recommended, as it ensures that people using your component can easily discover which props they should provide.
 

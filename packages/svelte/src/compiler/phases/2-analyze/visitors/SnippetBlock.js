@@ -35,11 +35,6 @@ export function SnippetBlock(node, context) {
 	if (can_hoist) {
 		const binding = /** @type {Binding} */ (context.state.scope.get(name));
 		context.state.analysis.module.scope.declarations.set(name, binding);
-	} else {
-		const undefined_export = context.state.analysis.undefined_exports.get(name);
-		if (undefined_export) {
-			e.snippet_invalid_export(undefined_export);
-		}
 	}
 
 	node.metadata.can_hoist = can_hoist;
@@ -86,8 +81,13 @@ export function SnippetBlock(node, context) {
 function can_hoist_snippet(scope, scopes, visited = new Set()) {
 	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
+		if (!binding) continue;
 
-		if (!binding || binding.scope.function_depth === 0) {
+		if (binding.blocker) {
+			return false;
+		}
+
+		if (binding.scope.function_depth === 0) {
 			continue;
 		}
 

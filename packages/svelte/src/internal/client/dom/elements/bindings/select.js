@@ -3,6 +3,7 @@ import { listen_to_event_and_reset_event } from './shared.js';
 import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
+import { Batch, current_batch, previous_batch } from '../../../reactivity/batch.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
@@ -83,6 +84,7 @@ export function init_select(select) {
  * @returns {void}
  */
 export function bind_select_value(select, get, set = get) {
+	var batches = new WeakSet();
 	var mounting = true;
 
 	listen_to_event_and_reset_event(select, 'change', (is_reset) => {
@@ -102,11 +104,30 @@ export function bind_select_value(select, get, set = get) {
 		}
 
 		set(value);
+
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
 	});
 
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
 	effect(() => {
 		var value = get();
+
+		if (select === document.activeElement) {
+			// we need both, because in non-async mode, render effects run before previous_batch is set
+			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+
+			// Don't update the <select> if it is focused. We can get here if, for example,
+			// an update is deferred because of async work depending on the select:
+			//
+			// <select bind:value={selected}>...</select>
+			// <p>{await find(selected)}</p>
+			if (batches.has(batch)) {
+				return;
+			}
+		}
+
 		select_option(select, value, mounting);
 
 		// Mounting and value undefined -> take selection from dom

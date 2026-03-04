@@ -1,9 +1,9 @@
 /** @import { AST } from '#compiler' */
-/** @import { Comment } from 'estree' */
+/** @import { Location } from 'locate-character' */
+/** @import * as ESTree from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
-import { regex_whitespace } from '../patterns.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
@@ -12,6 +12,25 @@ import { disallow_children } from '../2-analyze/visitors/shared/special-element.
 import * as state from '../../state.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
+
+/** @param {number} cc */
+function is_whitespace(cc) {
+	// fast path for common whitespace
+	if (cc === 32 || (cc <= 13 && cc >= 9)) return true;
+	// rare whitespace — \u00a0, \u1680, \u2000-\u200a, \u2028, \u2029, \u202f, \u205f, \u3000, \ufeff
+	if (cc < 160) return false;
+	return (
+		cc === 160 ||
+		cc === 5760 ||
+		(cc >= 8192 && cc <= 8202) ||
+		cc === 8232 ||
+		cc === 8233 ||
+		cc === 8239 ||
+		cc === 8287 ||
+		cc === 12288 ||
+		cc === 65279
+	);
+}
 
 const regex_lang_attribute =
 	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
@@ -24,12 +43,6 @@ export class Parser {
 	template;
 
 	/**
-	 * @readonly
-	 * @type {string}
-	 */
-	template_untrimmed;
-
-	/**
 	 * Whether or not we're in loose parsing mode, in which
 	 * case we try to continue parsing as much as possible
 	 * @type {boolean}
@@ -38,6 +51,20 @@ export class Parser {
 
 	/** */
 	index = 0;
+
+	/**
+	 * Creates a minimal parser instance for CSS-only parsing.
+	 * Skips Svelte component parsing setup.
+	 * @param {string} source
+	 * @returns {Parser}
+	 */
+	static forCss(source) {
+		const parser = Object.create(Parser.prototype);
+		parser.template = source;
+		parser.index = 0;
+		parser.loose = false;
+		return parser;
+	}
 
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
@@ -67,7 +94,6 @@ export class Parser {
 		}
 
 		this.loose = loose;
-		this.template_untrimmed = template;
 		this.template = template.trimEnd();
 
 		let match_lang;
@@ -123,21 +149,8 @@ export class Parser {
 			e.unexpected_eof(this.index);
 		}
 
-		if (this.root.fragment.nodes.length) {
-			let start = /** @type {number} */ (this.root.fragment.nodes[0].start);
-			while (regex_whitespace.test(template[start])) start += 1;
-
-			let end = /** @type {number} */ (
-				this.root.fragment.nodes[this.root.fragment.nodes.length - 1].end
-			);
-			while (regex_whitespace.test(template[end - 1])) end -= 1;
-
-			this.root.start = start;
-			this.root.end = end;
-		} else {
-			// @ts-ignore
-			this.root.start = this.root.end = null;
-		}
+		this.root.start = 0;
+		this.root.end = template.length;
 
 		const options_index = this.root.fragment.nodes.findIndex(
 			/** @param {any} thing */
@@ -196,22 +209,26 @@ export class Parser {
 			return this.template[this.index] === str;
 		}
 
-		return this.template.slice(this.index, this.index + length) === str;
+		return this.template.startsWith(str, this.index);
 	}
 
 	/**
 	 * Match a regex at the current index
-	 * @param {RegExp} pattern  Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 * @param {RegExp} pattern  Should have the sticky (`y`) flag so that it only matches at the current index
 	 */
 	match_regex(pattern) {
-		const match = pattern.exec(this.template.slice(this.index));
-		if (!match || match.index !== 0) return null;
+		pattern.lastIndex = this.index;
+		const match = pattern.exec(this.template);
+		if (!match || match.index !== this.index) return null;
 
 		return match[0];
 	}
 
 	allow_whitespace() {
-		while (this.index < this.template.length && regex_whitespace.test(this.template[this.index])) {
+		while (
+			this.index < this.template.length &&
+			is_whitespace(this.template.charCodeAt(this.index))
+		) {
 			this.index++;
 		}
 	}
@@ -226,31 +243,45 @@ export class Parser {
 		return result;
 	}
 
-	/** @param {any} allow_reserved */
-	read_identifier(allow_reserved = false) {
+	/**
+	 * @returns {ESTree.Identifier & { start: number, end: number, loc: { start: Location, end: Location } }}
+	 */
+	read_identifier() {
 		const start = this.index;
+		let end = start;
+		let name = '';
 
-		let i = this.index;
+		const code = /** @type {number} */ (this.template.codePointAt(this.index));
 
-		const code = /** @type {number} */ (this.template.codePointAt(i));
-		if (!isIdentifierStart(code, true)) return null;
+		if (isIdentifierStart(code, true)) {
+			let i = this.index;
+			end += code <= 0xffff ? 1 : 2;
 
-		i += code <= 0xffff ? 1 : 2;
+			while (end < this.template.length) {
+				const code = /** @type {number} */ (this.template.codePointAt(end));
 
-		while (i < this.template.length) {
-			const code = /** @type {number} */ (this.template.codePointAt(i));
+				if (!isIdentifierChar(code, true)) break;
+				end += code <= 0xffff ? 1 : 2;
+			}
 
-			if (!isIdentifierChar(code, true)) break;
-			i += code <= 0xffff ? 1 : 2;
+			name = this.template.slice(start, end);
+			this.index = end;
+
+			if (is_reserved(name)) {
+				e.unexpected_reserved_word(start, name);
+			}
 		}
 
-		const identifier = this.template.slice(this.index, (this.index = i));
-
-		if (!allow_reserved && is_reserved(identifier)) {
-			e.unexpected_reserved_word(start, identifier);
-		}
-
-		return identifier;
+		return {
+			type: 'Identifier',
+			name,
+			start,
+			end,
+			loc: {
+				start: state.locator(start),
+				end: state.locator(end)
+			}
+		};
 	}
 
 	/** @param {RegExp} pattern */
@@ -273,7 +304,7 @@ export class Parser {
 	}
 
 	require_whitespace() {
-		if (!regex_whitespace.test(this.template[this.index])) {
+		if (!is_whitespace(this.template.charCodeAt(this.index))) {
 			e.expected_whitespace(this.index);
 		}
 

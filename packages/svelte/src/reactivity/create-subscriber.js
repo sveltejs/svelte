@@ -82,6 +82,10 @@ export function createSubscriber(start) {
 						if (subscribers === 0) {
 							stop?.();
 							stop = undefined;
+							// Increment the version to ensure any dependent deriveds are marked dirty when the subscription is picked up again later.
+							// If we didn't do this then the comparison of write versions would determine that the derived has a later version than
+							// the subscriber, and it would not be re-run.
+							increment(version);
 						}
 					});
 				};

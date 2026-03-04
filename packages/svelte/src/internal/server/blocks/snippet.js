@@ -1,5 +1,5 @@
 /** @import { Snippet } from 'svelte' */
-/** @import { Payload } from '../payload' */
+/** @import { Renderer } from '../renderer' */
 /** @import { Getters } from '#shared' */
 
 /**
@@ -13,9 +13,9 @@
  */
 export function createRawSnippet(fn) {
 	// @ts-expect-error the types are a lie
-	return (/** @type {Payload} */ payload, /** @type {Params} */ ...args) => {
+	return (/** @type {Renderer} */ renderer, /** @type {Params} */ ...args) => {
 		var getters = /** @type {Getters<Params>} */ (args.map((value) => () => value));
-		payload.out.push(
+		renderer.push(
 			fn(...getters)
 				.render()
 				.trim()

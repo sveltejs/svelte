@@ -278,18 +278,6 @@
 	{
 		"code": "a11y_no_redundant_roles",
 		"end": {
-			"column": 17,
-			"line": 25
-		},
-		"message": "Redundant role 'list'",
-		"start": {
-			"column": 6,
-			"line": 25
-		}
-	},
-	{
-		"code": "a11y_no_redundant_roles",
-		"end": {
 			"column": 22,
 			"line": 26
 		},

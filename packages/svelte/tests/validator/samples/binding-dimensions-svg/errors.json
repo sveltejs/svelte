@@ -1,7 +1,7 @@
 [
 	{
 		"code": "bind_invalid_target",
-		"message": "`bind:offsetWidth` can only be used with non-<svg> elements. Use 'clientWidth' for <svg> instead",
+		"message": "`bind:offsetWidth` can only be used with non-`<svg>` elements. Use `bind:clientWidth` for `<svg>` instead",
 		"start": {
 			"line": 5,
 			"column": 5

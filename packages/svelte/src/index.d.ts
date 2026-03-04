@@ -21,6 +21,7 @@ export interface ComponentConstructorOptions<
 	sync?: boolean;
 	idPrefix?: string;
 	$$inline?: boolean;
+	transformError?: (error: unknown) => unknown;
 }
 
 /**
@@ -338,6 +339,11 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 * @default true
 	 */
 	intro?: boolean;
+	/**
+	 * A function that transforms errors caught by error boundaries before they are passed to the `failed` snippet.
+	 * Defaults to the identity function.
+	 */
+	transformError?: (error: unknown) => unknown | Promise<unknown>;
 } & ({} extends Props
 	? {
 			/**
@@ -351,5 +357,21 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 			 */
 			props: Props;
 		});
+
+/**
+ * Represents work that is happening off-screen, such as data being preloaded
+ * in anticipation of the user navigating
+ * @since 5.42
+ */
+export interface Fork {
+	/**
+	 * Commit the fork. The promise will resolve once the state change has been applied
+	 */
+	commit(): Promise<void>;
+	/**
+	 * Discard the fork
+	 */
+	discard(): void;
+}
 
 export * from './index-client.js';

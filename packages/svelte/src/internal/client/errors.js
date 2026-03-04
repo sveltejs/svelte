@@ -148,6 +148,25 @@ export function each_key_duplicate(a, b, value) {
 }
 
 /**
+ * Keyed each block has key that is not idempotent — the key for item at index %index% was `%a%` but is now `%b%`. Keys must be the same each time for a given item
+ * @param {string} index
+ * @param {string} a
+ * @param {string} b
+ * @returns {never}
+ */
+export function each_key_volatile(index, a, b) {
+	if (DEV) {
+		const error = new Error(`each_key_volatile\nKeyed each block has key that is not idempotent — the key for item at index ${index} was \`${a}\` but is now \`${b}\`. Keys must be the same each time for a given item\nhttps://svelte.dev/e/each_key_volatile`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/each_key_volatile`);
+	}
+}
+
+/**
  * `%rune%` cannot be used inside an effect cleanup function
  * @param {string} rune
  * @returns {never}
@@ -246,6 +265,38 @@ export function flush_sync_in_effect() {
 }
 
 /**
+ * Cannot commit a fork that was already discarded
+ * @returns {never}
+ */
+export function fork_discarded() {
+	if (DEV) {
+		const error = new Error(`fork_discarded\nCannot commit a fork that was already discarded\nhttps://svelte.dev/e/fork_discarded`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_discarded`);
+	}
+}
+
+/**
+ * Cannot create a fork inside an effect or when state changes are pending
+ * @returns {never}
+ */
+export function fork_timing() {
+	if (DEV) {
+		const error = new Error(`fork_timing\nCannot create a fork inside an effect or when state changes are pending\nhttps://svelte.dev/e/fork_timing`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_timing`);
+	}
+}
+
+/**
  * `getAbortSignal()` can only be called inside an effect or derived
  * @returns {never}
  */
@@ -258,6 +309,23 @@ export function get_abort_signal_outside_reaction() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/get_abort_signal_outside_reaction`);
+	}
+}
+
+/**
+ * Expected to find a hydratable with key `%key%` during hydration, but did not.
+ * @param {string} key
+ * @returns {never}
+ */
+export function hydratable_missing_but_required(key) {
+	if (DEV) {
+		const error = new Error(`hydratable_missing_but_required\nExpected to find a hydratable with key \`${key}\` during hydration, but did not.\nhttps://svelte.dev/e/hydratable_missing_but_required`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/hydratable_missing_but_required`);
 	}
 }
 

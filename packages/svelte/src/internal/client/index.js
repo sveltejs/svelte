@@ -28,7 +28,6 @@ export { attach } from './dom/elements/attachments.js';
 export {
 	remove_input_defaults,
 	set_attribute,
-	set_attributes,
 	attribute_effect,
 	set_custom_element_data,
 	set_xlink_attribute,
@@ -41,8 +40,9 @@ export {
 	STYLE
 } from './dom/elements/attributes.js';
 export { set_class } from './dom/elements/class.js';
-export { apply, event, delegate, replay_events } from './dom/elements/events.js';
+export { apply, event, delegated, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
+export { customizable_select, selectedcontent } from './dom/elements/customizable-select.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
 export { bind_active_element } from './dom/elements/bindings/document.js';
@@ -98,8 +98,15 @@ export {
 	props_id,
 	with_script
 } from './dom/template.js';
-export { save, track_reactivity_loss } from './reactivity/async.js';
-export { flushSync as flush, suspend } from './reactivity/batch.js';
+export {
+	for_await_track_reactivity_loss,
+	run,
+	save,
+	track_reactivity_loss,
+	run_after_blockers,
+	wait
+} from './reactivity/async.js';
+export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
 	async_derived,
 	user_derived as derived,
@@ -113,6 +120,7 @@ export {
 	legacy_pre_effect_reset,
 	render_effect,
 	template_effect,
+	deferred_template_effect,
 	effect,
 	user_effect,
 	user_pre_effect
@@ -145,11 +153,11 @@ export {
 	safe_get,
 	tick,
 	untrack,
-	exclude_from_object,
 	deep_read,
-	deep_read_state
+	deep_read_state,
+	active_effect
 } from './runtime.js';
-export { validate_binding, validate_each_keys } from './validate.js';
+export { validate_binding } from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
@@ -162,7 +170,7 @@ export {
 } from './dom/operations.js';
 export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
-export { noop, fallback, to_array } from '../shared/utils.js';
+export { noop, fallback, to_array, exclude_from_object } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
@@ -172,3 +180,4 @@ export {
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
+export { invoke_error_boundary } from './error-handling.js';

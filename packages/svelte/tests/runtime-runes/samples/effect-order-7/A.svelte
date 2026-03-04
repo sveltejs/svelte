@@ -1,9 +1,9 @@
 <script>
 	import B from './B.svelte';
 
-	let { boolean, closed } = $props();
+	let { boolean, closed, close } = $props();
 </script>
 
-<span>{boolean}</span>
+<span>{boolean} {closed}</span>
 
-<B {closed} />
+<B {closed} {close} />

@@ -21,14 +21,6 @@ export interface ClientTransformState extends TransformState {
 	 */
 	readonly in_constructor: boolean;
 
-	/**
-	 * True if we're directly inside a `$derived(...)` expression (but not `$derived.by(...)`)
-	 */
-	readonly in_derived: boolean;
-
-	/** `true` if we're transforming the contents of `<script>` */
-	readonly is_instance: boolean;
-
 	readonly transform: Record<
 		string,
 		{
@@ -57,6 +49,17 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
+	/** Transformed `{#snippets }` declarations */
+	readonly snippets: Statement[];
+	/** Transformed `{@const }` declarations */
+	readonly consts: Statement[];
+	/** Transformed async `{@const }` declarations (if any) and those coming after them */
+	async_consts?: {
+		id: Identifier;
+		thunks: Expression[];
+	};
+	/** Transformed `let:` directives */
+	readonly let_directives: Statement[];
 	/** Memoized expressions */
 	readonly memoizer: Memoizer;
 	/** The HTML template string */
@@ -80,6 +83,9 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly instance_level_snippets: VariableDeclaration[];
 	/** Snippets hoisted to the module */
 	readonly module_level_snippets: VariableDeclaration[];
+
+	/** True if the current node is a) a component or render tag and b) the sole child of a block  */
+	readonly is_standalone: boolean;
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;

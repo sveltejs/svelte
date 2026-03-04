@@ -46,10 +46,11 @@ function levenshtein(str1, str2) {
 	/** @type {number[]} */
 	const current = [];
 	let prev = 0;
-	let value = 0;
 
 	for (let i = 0; i <= str2.length; i++) {
 		for (let j = 0; j <= str1.length; j++) {
+			let value;
+
 			if (i && j) {
 				if (str1.charAt(j - 1) === str2.charAt(i - 1)) {
 					value = prev;

@@ -8,7 +8,7 @@ import {
 	is_event_attribute
 } from '../../../../utils/ast.js';
 import { dev, locate_node } from '../../../../state.js';
-import { should_proxy } from '../utils.js';
+import { build_getter, should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 import { validate_mutation } from './shared/utils.js';
 import { get_rune } from '../../../scope.js';
@@ -147,7 +147,7 @@ function build_assignment(operator, left, right, context) {
 
 	// mutation
 	if (transform?.mutate) {
-		return transform.mutate(
+		let mutation = transform.mutate(
 			object,
 			b.assignment(
 				operator,
@@ -155,6 +155,25 @@ function build_assignment(operator, left, right, context) {
 				/** @type {Expression} */ (context.visit(right))
 			)
 		);
+
+		if (binding.legacy_indirect_bindings.size > 0) {
+			mutation = b.sequence([
+				mutation,
+				b.call(
+					'$.invalidate_inner_signals',
+					b.arrow(
+						[],
+						b.block(
+							Array.from(binding.legacy_indirect_bindings).map((binding) =>
+								b.stmt(build_getter({ ...binding.node }, context.state))
+							)
+						)
+					)
+				)
+			]);
+		}
+
+		return mutation;
 	}
 
 	// in cases like `(object.items ??= []).push(value)`, we may need to warn
@@ -162,7 +181,10 @@ function build_assignment(operator, left, right, context) {
 	// will be pushed to. we do this by transforming it to something like
 	// `$.assign_nullish(object, 'items', [])`
 	let should_transform =
-		dev && path.at(-1) !== 'ExpressionStatement' && is_non_coercive_operator(operator);
+		dev &&
+		path.at(-1) !== 'ExpressionStatement' &&
+		is_non_coercive_operator(operator) &&
+		!context.state.scope.evaluate(right).is_primitive;
 
 	// special case — ignore `onclick={() => (...)}`
 	if (
@@ -192,17 +214,18 @@ function build_assignment(operator, left, right, context) {
 		path.at(-1) === 'Component' ||
 		path.at(-1) === 'SvelteComponent' ||
 		(path.at(-1) === 'ArrowFunctionExpression' &&
-			path.at(-2) === 'SequenceExpression' &&
-			(path.at(-3) === 'Component' ||
-				path.at(-3) === 'SvelteComponent' ||
-				path.at(-3) === 'BindDirective'))
+			(path.at(-2) === 'BindDirective' ||
+				(path.at(-2) === 'Component' && path.at(-3) === 'Fragment') ||
+				(path.at(-2) === 'SequenceExpression' &&
+					(path.at(-3) === 'Component' ||
+						path.at(-3) === 'SvelteComponent' ||
+						path.at(-3) === 'BindDirective'))))
 	) {
 		should_transform = false;
 	}
 
 	if (left.type === 'MemberExpression' && should_transform) {
 		const callee = callees[operator];
-
 		return /** @type {Expression} */ (
 			context.visit(
 				b.call(

@@ -1,14 +1,14 @@
 [
 	{
-		"code": "state_field_invalid_assignment",
-		"message": "Cannot assign to a state field before its declaration",
+		"code": "duplicate_class_field",
+		"message": "`count` has already been declared",
 		"start": {
-			"line": 2,
-			"column": 1
+			"line": 5,
+			"column": 2
 		},
 		"end": {
-			"line": 2,
-			"column": 12
+			"line": 5,
+			"column": 24
 		}
 	}
 ]

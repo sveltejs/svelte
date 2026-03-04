@@ -5,6 +5,7 @@ import { suite, type BaseTest } from '../suite';
 import { read_file } from '../helpers.js';
 
 interface CompilerErrorTest extends BaseTest {
+	async?: boolean;
 	error: {
 		code: string;
 		message: string;
@@ -29,7 +30,8 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 
 		try {
 			compile(read_file(`${cwd}/main.svelte`), {
-				generate: 'client'
+				generate: 'client',
+				experimental: { async: config.async ?? false }
 			});
 		} catch (e) {
 			const error = e as CompileError;

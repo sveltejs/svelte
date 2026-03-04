@@ -33,7 +33,7 @@ export function BindDirective(node, context) {
 				e.bind_invalid_target(
 					node,
 					node.name,
-					property.valid_elements.map((valid_element) => `<${valid_element}>`).join(', ')
+					property.valid_elements.map((valid_element) => `\`<${valid_element}>\``).join(', ')
 				);
 			}
 
@@ -67,11 +67,15 @@ export function BindDirective(node, context) {
 					}
 				} else {
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-						e.bind_invalid_target(node, node.name, '<input type="checkbox">');
+						e.bind_invalid_target(
+							node,
+							node.name,
+							`\`<input type="checkbox">\`${type?.value[0].data === 'radio' ? ` — for \`<input type="radio">\`, use \`bind:group\`` : ''}`
+						);
 					}
 
 					if (node.name === 'files' && type?.value[0].data !== 'file') {
-						e.bind_invalid_target(node, node.name, '<input type="file">');
+						e.bind_invalid_target(node, node.name, '`<input type="file">`');
 					}
 				}
 			}
@@ -94,7 +98,7 @@ export function BindDirective(node, context) {
 				e.bind_invalid_target(
 					node,
 					node.name,
-					`non-<svg> elements. Use 'clientWidth' for <svg> instead`
+					`non-\`<svg>\` elements. Use \`bind:clientWidth\` for \`<svg>\` instead`
 				);
 			}
 
@@ -155,6 +159,22 @@ export function BindDirective(node, context) {
 
 		mark_subtree_dynamic(context.path);
 
+		const [get, set] = node.expression.expressions;
+		// We gotta jump across the getter/setter functions to avoid the expression metadata field being reset to null
+		// as we want to collect the functions' blocker/async info
+		context.visit(get.type === 'ArrowFunctionExpression' ? get.body : get, {
+			...context.state,
+			expression: node.metadata.expression
+		});
+		context.visit(set.type === 'ArrowFunctionExpression' ? set.body : set, {
+			...context.state,
+			expression: node.metadata.expression
+		});
+
+		if (node.metadata.expression.has_await) {
+			e.illegal_await_expression(node);
+		}
+
 		return;
 	}
 
@@ -168,6 +188,7 @@ export function BindDirective(node, context) {
 	}
 
 	const binding = context.state.scope.get(left.name);
+	node.metadata.binding = binding;
 
 	if (assignee.type === 'Identifier') {
 		// reassignment
@@ -242,7 +263,8 @@ export function BindDirective(node, context) {
 
 		node.metadata = {
 			binding_group_name: group_name,
-			parent_each_blocks: each_blocks
+			parent_each_blocks: each_blocks,
+			expression: node.metadata.expression
 		};
 	}
 
@@ -250,5 +272,9 @@ export function BindDirective(node, context) {
 		w.bind_invalid_each_rest(binding.node, binding.node.name);
 	}
 
-	context.next();
+	context.next({ ...context.state, expression: node.metadata.expression });
+
+	if (node.metadata.expression.has_await) {
+		e.illegal_await_expression(node);
+	}
 }

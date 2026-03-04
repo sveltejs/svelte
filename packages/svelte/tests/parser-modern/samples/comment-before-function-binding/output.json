@@ -1,7 +1,7 @@
 {
 	"css": null,
 	"js": [],
-	"start": 37,
+	"start": 0,
 	"end": 117,
 	"type": "Root",
 	"fragment": {
@@ -19,12 +19,36 @@
 				"start": 37,
 				"end": 117,
 				"name": "input",
+				"name_loc": {
+					"start": {
+						"line": 5,
+						"column": 1,
+						"character": 38
+					},
+					"end": {
+						"line": 5,
+						"column": 6,
+						"character": 43
+					}
+				},
 				"attributes": [
 					{
 						"start": 44,
 						"end": 114,
 						"type": "BindDirective",
 						"name": "value",
+						"name_loc": {
+							"start": {
+								"line": 5,
+								"column": 7,
+								"character": 44
+							},
+							"end": {
+								"line": 5,
+								"column": 17,
+								"character": 54
+							}
+						},
 						"expression": {
 							"type": "SequenceExpression",
 							"start": 68,
@@ -248,7 +272,7 @@
 				},
 				"end": {
 					"line": 3,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [

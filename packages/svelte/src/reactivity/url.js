@@ -171,7 +171,7 @@ export class SvelteURL extends URL {
 
 	set search(value) {
 		super.search = value;
-		set(this.#search, value);
+		set(this.#search, super.search);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 

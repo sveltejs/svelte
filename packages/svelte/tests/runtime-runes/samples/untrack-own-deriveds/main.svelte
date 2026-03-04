@@ -17,10 +17,14 @@
 	$effect(() => {
 		foo = new Foo();
 	});
+
+	let bar = $derived(new Foo());
 </script>
 
-<button onclick={() => foo.increment()}>increment</button>
+<button onclick={() => {foo.increment(); bar.increment()}}>increment</button>
 
 {#if foo}
 	<p>{foo.value}/{foo.double}</p>
 {/if}
+
+<p>{bar.value}/{bar.double}</p>

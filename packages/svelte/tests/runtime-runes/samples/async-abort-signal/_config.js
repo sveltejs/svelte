@@ -6,7 +6,7 @@ export default test({
 		const [reset, resolve] = target.querySelectorAll('button');
 
 		reset.click();
-		await settled();
+		await tick();
 		assert.deepEqual(logs, ['aborted']);
 
 		resolve.click();

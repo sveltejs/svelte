@@ -24,4 +24,23 @@ export function IfBlock(node, context) {
 
 	context.visit(node.consequent);
 	if (node.alternate) context.visit(node.alternate);
+
+	// Check if we can flatten branches
+	const alt = node.alternate;
+
+	if (alt && alt.nodes.length === 1 && alt.nodes[0].type === 'IfBlock' && alt.nodes[0].elseif) {
+		const elseif = alt.nodes[0];
+
+		// Don't flatten if this else-if has an await expression or new blockers
+		// TODO would be nice to check the await expression itself to see if it's awaiting the same thing as a previous if expression
+		if (
+			!elseif.metadata.expression.has_await &&
+			!elseif.metadata.expression.has_more_blockers_than(node.metadata.expression)
+		) {
+			// Roll the existing flattened branches (if any) into this one, then delete those of the else-if block
+			// to avoid processing them multiple times as we walk down the chain during code transformation.
+			node.metadata.flattened = [elseif, ...(elseif.metadata.flattened ?? [])];
+			elseif.metadata.flattened = undefined;
+		}
+	}
 }

@@ -81,7 +81,7 @@ Coding for the keyboard is important for users with physical disabilities who ca
 ### a11y_consider_explicit_label
 
 ```
-Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
+Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
 ```
 
 ### a11y_distracting_elements
@@ -679,11 +679,11 @@ In HTML, there's [no such thing as a self-closing tag](https://jakearchibald.com
 </div>
 ```
 
-Some templating languages (including Svelte) will 'fix' HTML by turning `<span />` into `<span></span>`. Others adhere to the spec. Both result in ambiguity and confusion when copy-pasting code between different contexts, and as such Svelte prompts you to resolve the ambiguity directly by having an explicit closing tag.
+Some templating languages (including Svelte) will 'fix' HTML by turning `<span />` into `<span></span>`. Others adhere to the spec. Both result in ambiguity and confusion when copy-pasting code between different contexts, so Svelte prompts you to resolve the ambiguity directly by having an explicit closing tag.
 
 To automate this, run the dedicated migration:
 
-```bash
+```sh
 npx sv migrate self-closing-tags
 ```
 

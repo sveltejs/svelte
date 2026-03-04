@@ -1,6 +1,6 @@
 # Test repo
 
-This repo tries to migrate as many tests from the currente Svelte project over to test against the new compiler/runtime.
+This repo tries to migrate as many tests from the current Svelte project over to test against the new compiler/runtime.
 
 ## Differences to the old test suite
 

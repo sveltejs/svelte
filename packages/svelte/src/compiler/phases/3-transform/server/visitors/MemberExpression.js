@@ -7,11 +7,7 @@ import * as b from '#compiler/builders';
  * @param {Context} context
  */
 export function MemberExpression(node, context) {
-	if (
-		context.state.analysis.runes &&
-		node.object.type === 'ThisExpression' &&
-		node.property.type === 'PrivateIdentifier'
-	) {
+	if (context.state.analysis.runes && node.property.type === 'PrivateIdentifier') {
 		const field = context.state.state_fields?.get(`#${node.property.name}`);
 
 		if (field?.type === '$derived' || field?.type === '$derived.by') {

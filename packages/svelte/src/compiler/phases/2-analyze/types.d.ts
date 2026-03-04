@@ -1,6 +1,7 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type { AST, ExpressionMetadata, StateField, ValidatedCompileOptions } from '#compiler';
+import type { AST, StateField, ValidatedCompileOptions } from '#compiler';
+import type { ExpressionMetadata } from '../nodes.js';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -8,6 +9,7 @@ export interface AnalysisState {
 	analysis: ComponentAnalysis;
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
+	fragment: AST.Fragment | null;
 	/**
 	 * Tag name of the parent element. `null` if the parent is `svelte:element`, `#snippet`, a component or the root.
 	 * Parent doesn't necessarily mean direct path predecessor because there could be `#each`, `#if` etc in-between.
@@ -26,6 +28,11 @@ export interface AnalysisState {
 
 	// legacy stuff
 	reactive_statement: null | ReactiveStatement;
+
+	/**
+	 * Set when we're inside a `$derived(...)` expression (but not `$derived.by(...)`) or `@const`
+	 */
+	derived_function_depth: number;
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

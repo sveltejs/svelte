@@ -12,21 +12,57 @@
 				"start": 0,
 				"end": 14,
 				"name": "div",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 1,
+						"character": 1
+					},
+					"end": {
+						"line": 1,
+						"column": 4,
+						"character": 4
+					}
+				},
 				"attributes": [
 					{
 						"type": "Attribute",
 						"start": 5,
 						"end": 7,
 						"name": "",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 6,
+								"character": 6
+							},
+							"end": {
+								"line": 1,
+								"column": 6,
+								"character": 6
+							}
+						},
 						"value": {
 							"type": "ExpressionTag",
 							"start": 6,
 							"end": 6,
 							"expression": {
+								"type": "Identifier",
+								"name": "",
 								"start": 6,
 								"end": 6,
-								"type": "Identifier",
-								"name": ""
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 6,
+										"character": 6
+									},
+									"end": {
+										"line": 1,
+										"column": 6,
+										"character": 6
+									}
+								}
 							}
 						}
 					}
@@ -48,12 +84,36 @@
 				"start": 15,
 				"end": 33,
 				"name": "div",
+				"name_loc": {
+					"start": {
+						"line": 2,
+						"column": 1,
+						"character": 16
+					},
+					"end": {
+						"line": 2,
+						"column": 4,
+						"character": 19
+					}
+				},
 				"attributes": [
 					{
 						"type": "Attribute",
 						"start": 20,
 						"end": 26,
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 2,
+								"column": 5,
+								"character": 20
+							},
+							"end": {
+								"line": 2,
+								"column": 8,
+								"character": 23
+							}
+						},
 						"value": {
 							"type": "ExpressionTag",
 							"start": 24,
@@ -84,12 +144,36 @@
 				"start": 35,
 				"end": 55,
 				"name": "div",
+				"name_loc": {
+					"start": {
+						"line": 4,
+						"column": 1,
+						"character": 36
+					},
+					"end": {
+						"line": 4,
+						"column": 4,
+						"character": 39
+					}
+				},
 				"attributes": [
 					{
 						"type": "Attribute",
 						"start": 40,
 						"end": 48,
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 4,
+								"column": 5,
+								"character": 40
+							},
+							"end": {
+								"line": 4,
+								"column": 8,
+								"character": 43
+							}
+						},
 						"value": {
 							"type": "ExpressionTag",
 							"start": 44,
@@ -120,12 +204,36 @@
 				"start": 56,
 				"end": 80,
 				"name": "div",
+				"name_loc": {
+					"start": {
+						"line": 5,
+						"column": 1,
+						"character": 57
+					},
+					"end": {
+						"line": 5,
+						"column": 4,
+						"character": 60
+					}
+				},
 				"attributes": [
 					{
 						"type": "Attribute",
 						"start": 61,
 						"end": 73,
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 5,
+								"column": 5,
+								"character": 61
+							},
+							"end": {
+								"line": 5,
+								"column": 8,
+								"character": 64
+							}
+						},
 						"value": {
 							"type": "ExpressionTag",
 							"start": 65,
@@ -156,12 +264,36 @@
 				"start": 81,
 				"end": 113,
 				"name": "Component",
+				"name_loc": {
+					"start": {
+						"line": 6,
+						"column": 1,
+						"character": 82
+					},
+					"end": {
+						"line": 6,
+						"column": 10,
+						"character": 91
+					}
+				},
 				"attributes": [
 					{
 						"type": "Attribute",
 						"start": 92,
 						"end": 110,
 						"name": "onclick",
+						"name_loc": {
+							"start": {
+								"line": 6,
+								"column": 11,
+								"character": 92
+							},
+							"end": {
+								"line": 6,
+								"column": 18,
+								"character": 99
+							}
+						},
 						"value": {
 							"type": "ExpressionTag",
 							"start": 100,
@@ -192,12 +324,36 @@
 				"start": 115,
 				"end": 140,
 				"name": "input",
+				"name_loc": {
+					"start": {
+						"line": 8,
+						"column": 1,
+						"character": 116
+					},
+					"end": {
+						"line": 8,
+						"column": 6,
+						"character": 121
+					}
+				},
 				"attributes": [
 					{
 						"start": 122,
 						"end": 137,
 						"type": "BindDirective",
 						"name": "value",
+						"name_loc": {
+							"start": {
+								"line": 8,
+								"column": 7,
+								"character": 122
+							},
+							"end": {
+								"line": 8,
+								"column": 17,
+								"character": 132
+							}
+						},
 						"expression": {
 							"type": "Identifier",
 							"start": 134,
@@ -307,6 +463,7 @@
 					"type": "Identifier",
 					"name": "item",
 					"start": 197,
+					"end": 201,
 					"loc": {
 						"start": {
 							"line": 15,
@@ -318,8 +475,7 @@
 							"column": 20,
 							"character": 201
 						}
-					},
-					"end": 201
+					}
 				},
 				"key": {
 					"type": "Identifier",
@@ -353,6 +509,7 @@
 					"type": "Identifier",
 					"name": "item",
 					"start": 234,
+					"end": 238,
 					"loc": {
 						"start": {
 							"line": 17,
@@ -364,8 +521,7 @@
 							"column": 19,
 							"character": 238
 						}
-					},
-					"end": 238
+					}
 				}
 			},
 			{
@@ -415,6 +571,7 @@
 					"type": "Identifier",
 					"name": "y",
 					"start": 285,
+					"end": 286,
 					"loc": {
 						"start": {
 							"line": 21,
@@ -426,8 +583,7 @@
 							"column": 17,
 							"character": 286
 						}
-					},
-					"end": 286
+					}
 				},
 				"error": null,
 				"pending": null,
@@ -459,6 +615,7 @@
 					"type": "Identifier",
 					"name": "y",
 					"start": 314,
+					"end": 315,
 					"loc": {
 						"start": {
 							"line": 23,
@@ -470,8 +627,7 @@
 							"column": 18,
 							"character": 315
 						}
-					},
-					"end": 315
+					}
 				},
 				"pending": null,
 				"then": null,

@@ -44,6 +44,7 @@
 					"type": "Identifier",
 					"name": "𐊧",
 					"start": 17,
+					"end": 19,
 					"loc": {
 						"start": {
 							"line": 1,
@@ -55,8 +56,7 @@
 							"column": 19,
 							"character": 19
 						}
-					},
-					"end": 19
+					}
 				},
 				"expression": {
 					"type": "Identifier",

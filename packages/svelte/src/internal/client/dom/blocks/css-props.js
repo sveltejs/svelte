@@ -1,5 +1,4 @@
-/** @import { TemplateNode } from '#client' */
-import { render_effect, teardown } from '../../reactivity/effects.js';
+import { render_effect } from '../../reactivity/effects.js';
 import { hydrating, set_hydrate_node } from '../hydration.js';
 import { get_first_child } from '../operations.js';
 
@@ -10,7 +9,7 @@ import { get_first_child } from '../operations.js';
  */
 export function css_props(element, get_styles) {
 	if (hydrating) {
-		set_hydrate_node(/** @type {TemplateNode} */ (get_first_child(element)));
+		set_hydrate_node(get_first_child(element));
 	}
 
 	render_effect(() => {

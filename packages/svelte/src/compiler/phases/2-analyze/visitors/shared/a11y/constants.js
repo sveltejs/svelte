@@ -67,7 +67,21 @@ export const a11y_interactive_handlers = [
 	'mousemove',
 	'mouseout',
 	'mouseover',
-	'mouseup'
+	'mouseup',
+	// Pointer events
+	'pointerdown',
+	'pointerup',
+	'pointermove',
+	'pointerenter',
+	'pointerleave',
+	'pointerover',
+	'pointerout',
+	'pointercancel',
+	// Touch events
+	'touchstart',
+	'touchend',
+	'touchmove',
+	'touchcancel'
 ];
 
 export const a11y_recommended_interactive_handlers = [
@@ -160,6 +174,7 @@ export const input_type_to_implicit_role = new Map([
 export const a11y_non_interactive_element_to_interactive_role_exceptions = {
 	ul: ['listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree', 'treegrid'],
 	ol: ['listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree', 'treegrid'],
+	menu: ['listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree', 'treegrid'],
 	li: ['menuitem', 'option', 'row', 'tab', 'treeitem'],
 	table: ['grid'],
 	td: ['gridcell'],

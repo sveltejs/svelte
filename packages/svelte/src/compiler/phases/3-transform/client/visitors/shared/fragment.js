@@ -1,4 +1,4 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Identifier, SourceLocation } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { cannot_be_set_statically } from '../../../../../../utils.js';
@@ -42,13 +42,14 @@ export function process_children(nodes, initial, is_element, context) {
 	/**
 	 * @param {boolean} is_text
 	 * @param {string} name
+	 * @param {SourceLocation | null} [loc]
 	 */
-	function flush_node(is_text, name) {
+	function flush_node(is_text, name, loc) {
 		const expression = get_node(is_text);
 		let id = expression;
 
 		if (id.type !== 'Identifier') {
-			id = b.id(context.state.scope.generate(name));
+			id = b.id(context.state.scope.generate(name), loc);
 			context.state.init.push(b.var(id, expression));
 		}
 
@@ -97,12 +98,24 @@ export function process_children(nodes, initial, is_element, context) {
 
 			let child_state = context.state;
 
-			if (is_static_element(node, context.state)) {
+			if (is_static_element(node)) {
 				skipped += 1;
-			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
+			} else if (
+				node.type === 'EachBlock' &&
+				nodes.length === 1 &&
+				is_element &&
+				// In case it's wrapped in async the async logic will want to skip sibling nodes up until the end, hence we cannot make this controlled
+				// TODO switch this around and instead optimize for elements with a single block child and not require extra comments (neither for async nor normally)
+				!node.metadata.expression.is_async()
+			) {
 				node.metadata.is_controlled = true;
 			} else {
-				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
+				const id = flush_node(
+					false,
+					node.type === 'RegularElement' ? node.name : 'node',
+					node.type === 'RegularElement' ? node.name_loc : null
+				);
+
 				child_state = { ...context.state, node: id };
 			}
 
@@ -124,9 +137,8 @@ export function process_children(nodes, initial, is_element, context) {
 
 /**
  * @param {AST.SvelteNode} node
- * @param {ComponentContext["state"]} state
  */
-function is_static_element(node, state) {
+export function is_static_element(node) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
 	if (is_custom_element_node(node)) return false; // we're setting all attributes on custom elements through properties

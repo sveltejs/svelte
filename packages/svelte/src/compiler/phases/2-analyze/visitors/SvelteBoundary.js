@@ -1,6 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 const valid = ['onerror', 'failed', 'pending'];
 
@@ -22,6 +23,8 @@ export function SvelteBoundary(node, context) {
 			e.svelte_boundary_invalid_attribute_value(attribute);
 		}
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	context.next();
 }

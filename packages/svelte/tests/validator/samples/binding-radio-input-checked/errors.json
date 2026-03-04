@@ -1,0 +1,14 @@
+[
+	{
+		"code": "bind_invalid_target",
+		"message": "`bind:checked` can only be used with `<input type=\"checkbox\">` — for `<input type=\"radio\">`, use `bind:group`",
+		"start": {
+			"line": 5,
+			"column": 20
+		},
+		"end": {
+			"line": 5,
+			"column": 38
+		}
+	}
+]

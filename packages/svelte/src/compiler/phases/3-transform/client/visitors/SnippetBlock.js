@@ -14,16 +14,11 @@ export function SnippetBlock(node, context) {
 	// TODO hoist where possible
 	/** @type {(Identifier | AssignmentPattern)[]} */
 	const args = [b.id('$$anchor')];
-
 	/** @type {BlockStatement} */
 	let body;
 
 	/** @type {Statement[]} */
 	const declarations = [];
-
-	if (dev) {
-		declarations.push(b.stmt(b.call('$.validate_snippet_args', b.spread(b.id('arguments')))));
-	}
 
 	const transform = { ...context.state.transform };
 	const child_state = { ...context.state, transform };
@@ -72,10 +67,11 @@ export function SnippetBlock(node, context) {
 			}
 		}
 	}
-
+	const block = /** @type {BlockStatement} */ (context.visit(node.body, child_state)).body;
 	body = b.block([
+		dev ? b.stmt(b.call('$.validate_snippet_args', b.spread(b.id('arguments')))) : b.empty,
 		...declarations,
-		.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body
+		...block
 	]);
 
 	// in dev we use a FunctionExpression (not arrow function) so we can use `arguments`
@@ -93,6 +89,6 @@ export function SnippetBlock(node, context) {
 			context.state.instance_level_snippets.push(declaration);
 		}
 	} else {
-		context.state.init.push(declaration);
+		context.state.snippets.push(declaration);
 	}
 }

@@ -11,7 +11,9 @@ import { build_expression } from './shared/utils.js';
 export function HtmlTag(node, context) {
 	context.state.template.push_comment();
 
-	const { has_await } = node.metadata.expression;
+	const has_await = node.metadata.expression.has_await;
+	const has_blockers = node.metadata.expression.has_blockers();
+
 	const expression = build_expression(context, node.expression, node.metadata.expression);
 	const html = has_await ? b.call('$.get', b.id('$$html')) : expression;
 
@@ -30,14 +32,18 @@ export function HtmlTag(node, context) {
 	);
 
 	// push into init, so that bindings run afterwards, which might trigger another run and override hydration
-	if (node.metadata.expression.has_await) {
+	if (has_await || has_blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
-					b.array([b.thunk(expression, true)]),
-					b.arrow([context.state.node, b.id('$$html')], b.block([statement]))
+					node.metadata.expression.blockers(),
+					has_await ? b.array([b.thunk(expression, true)]) : b.void0,
+					b.arrow(
+						has_await ? [context.state.node, b.id('$$html')] : [context.state.node],
+						b.block([statement])
+					)
 				)
 			)
 		);

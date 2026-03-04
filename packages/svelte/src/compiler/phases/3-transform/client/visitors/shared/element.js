@@ -1,5 +1,5 @@
 /** @import { Expression, Identifier, ObjectExpression } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { escape_html } from '../../../../../../escaping.js';
 import { normalize_attribute } from '../../../../../../utils.js';
@@ -8,6 +8,7 @@ import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { build_class_directives_object, build_style_directives_object } from '../RegularElement.js';
 import { build_expression, build_template_chunk, Memoizer } from './utils.js';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
@@ -16,6 +17,7 @@ import { build_expression, build_template_chunk, Memoizer } from './utils.js';
  * @param {ComponentContext} context
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} element_id
+ * @param {boolean} [should_remove_defaults]
  */
 export function build_attribute_effect(
 	attributes,
@@ -23,7 +25,8 @@ export function build_attribute_effect(
 	style_directives,
 	context,
 	element,
-	element_id
+	element_id,
+	should_remove_defaults = false
 ) {
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
@@ -33,7 +36,7 @@ export function build_attribute_effect(
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
 			const { value } = build_attribute_value(attribute.value, context, (value, metadata) =>
-				metadata.has_call || metadata.has_await ? memoizer.add(value, metadata.has_await) : value
+				memoizer.add(value, metadata)
 			);
 
 			if (
@@ -50,9 +53,7 @@ export function build_attribute_effect(
 		} else {
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
-			if (attribute.metadata.expression.has_call || attribute.metadata.expression.has_await) {
-				value = memoizer.add(value, attribute.metadata.expression.has_await);
-			}
+			value = memoizer.add(value, attribute.metadata.expression);
 
 			values.push(b.spread(value));
 		}
@@ -88,9 +89,11 @@ export function build_attribute_effect(
 				b.arrow(ids, b.object(values)),
 				memoizer.sync_values(),
 				memoizer.async_values(),
+				memoizer.blockers(),
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
 					b.literal(context.state.analysis.css.hash),
+				should_remove_defaults && b.true,
 				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		)
@@ -119,7 +122,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 
 		return {
 			value: memoize(expression, chunk.metadata.expression),
-			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.has_await
+			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.is_async()
 		};
 	}
 
@@ -152,9 +155,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 			value = b.call('$.clsx', value);
 		}
 
-		return metadata.has_call || metadata.has_await
-			? context.state.memoizer.add(value, metadata.has_await)
-			: value;
+		return context.state.memoizer.add(value, metadata);
 	});
 
 	/** @type {Identifier | undefined} */
@@ -163,13 +164,13 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 	/** @type {ObjectExpression | Identifier | undefined} */
 	let prev;
 
-	/** @type {ObjectExpression | Identifier | undefined} */
+	/** @type {Expression | undefined} */
 	let next;
 
 	if (class_directives.length) {
 		next = build_class_directives_object(class_directives, context);
 		has_state ||= class_directives.some(
-			(d) => d.metadata.expression.has_state || d.metadata.expression.has_await
+			(d) => d.metadata.expression.has_state || d.metadata.expression.is_async()
 		);
 
 		if (has_state) {
@@ -224,7 +225,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
  */
 export function build_set_style(node_id, attribute, style_directives, context) {
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? context.state.memoizer.add(value, metadata.has_await) : value
+		context.state.memoizer.add(value, metadata)
 	);
 
 	/** @type {Identifier | undefined} */
@@ -239,7 +240,7 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 	if (style_directives.length) {
 		next = build_style_directives_object(style_directives, context);
 		has_state ||= style_directives.some(
-			(d) => d.metadata.expression.has_state || d.metadata.expression.has_await
+			(d) => d.metadata.expression.has_state || d.metadata.expression.is_async()
 		);
 
 		if (has_state) {

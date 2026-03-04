@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
+import { normalise_inspect_logs } from '../../../helpers.js';
 
 export default test({
 	compileOptions: {
@@ -13,6 +14,6 @@ export default test({
 			button?.click();
 		});
 
-		assert.deepEqual(logs, ['init', [1, 2, 3, 7], 'update', [2, 3, 7]]);
+		assert.deepEqual(normalise_inspect_logs(logs), [[1, 2, 3, 7], [2, 3, 7], 'at Object.doSplice']);
 	}
 });

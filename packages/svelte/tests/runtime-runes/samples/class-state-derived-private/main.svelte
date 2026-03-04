@@ -9,7 +9,8 @@
 		}
 
 		get embiggened1() {
-			return this.#doubled;
+			const self = this;
+			return self.#doubled;
 		}
 
 		get embiggened2() {

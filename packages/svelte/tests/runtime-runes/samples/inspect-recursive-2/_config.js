@@ -18,6 +18,6 @@ export default test({
 		};
 		b.a.b = b;
 
-		assert.deepEqual(logs, ['init', a, 'init', b]);
+		assert.deepEqual(logs, [a, b]);
 	}
 });

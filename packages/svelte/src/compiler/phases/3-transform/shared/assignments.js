@@ -3,7 +3,6 @@
 /** @import { Context as ServerContext } from '../server/types.js' */
 import { extract_paths, is_expression_async } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { get_value } from '../client/visitors/shared/declarations.js';
 
 /**
  * @template {ClientContext | ServerContext} Context
@@ -65,13 +64,14 @@ export function visit_assignment_expression(node, context, build_assignment) {
 				statements.push(b.return(rhs));
 			}
 
-			const iife = b.arrow([rhs], b.block(statements));
-
-			const iife_is_async =
+			const async =
 				is_expression_async(value) ||
 				assignments.some((assignment) => is_expression_async(assignment));
 
-			return iife_is_async ? b.await(b.call(b.async(iife), value)) : b.call(iife, value);
+			const iife = b.arrow([rhs], b.block(statements), async);
+			const call = b.call(iife, value);
+
+			return async ? b.await(call) : call;
 		}
 
 		const sequence = b.sequence(assignments);

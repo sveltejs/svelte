@@ -44,6 +44,7 @@
 					"type": "Identifier",
 					"name": "todo",
 					"start": 16,
+					"end": 20,
 					"loc": {
 						"start": {
 							"line": 1,
@@ -55,8 +56,7 @@
 							"column": 20,
 							"character": 20
 						}
-					},
-					"end": 20
+					}
 				},
 				"expression": {
 					"type": "Identifier",

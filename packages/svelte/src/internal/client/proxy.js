@@ -19,13 +19,14 @@ import {
 	state as source,
 	set,
 	increment,
-	flush_inspect_effects,
-	set_inspect_effects_deferred
+	flush_eager_effects,
+	set_eager_effects_deferred
 } from './reactivity/sources.js';
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
-import { get_stack, tag } from './dev/tracing.js';
+import { tag } from './dev/tracing.js';
+import { get_error } from '../shared/dev.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
 // TODO move all regexes into shared module?
@@ -53,7 +54,7 @@ export function proxy(value) {
 	var is_proxied_array = is_array(value);
 	var version = source(0);
 
-	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
+	var stack = DEV && tracing_mode_flag ? get_error('created at') : null;
 	var parent_version = update_version;
 
 	/**
@@ -93,9 +94,11 @@ export function proxy(value) {
 
 	/** Used in dev for $inspect.trace() */
 	var path = '';
-
+	let updating = false;
 	/** @param {string} new_path */
 	function update_path(new_path) {
+		if (updating) return;
+		updating = true;
 		path = new_path;
 
 		tag(version, `${path} version`);
@@ -104,6 +107,7 @@ export function proxy(value) {
 		for (const [prop, source] of sources) {
 			tag(source, get_label(path, prop));
 		}
+		updating = false;
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
@@ -122,7 +126,7 @@ export function proxy(value) {
 			}
 			var s = sources.get(prop);
 			if (s === undefined) {
-				s = with_parent(() => {
+				with_parent(() => {
 					var s = source(descriptor.value, stack);
 					sources.set(prop, s);
 					if (DEV && typeof prop === 'string') {
@@ -264,7 +268,7 @@ export function proxy(value) {
 					if (other_s !== undefined) {
 						set(other_s, UNINITIALIZED);
 					} else if (i in target) {
-						// If the item exists in the original, we need to create a uninitialized source,
+						// If the item exists in the original, we need to create an uninitialized source,
 						// else a later read of the property would result in a source being created with
 						// the value of the original item at that index.
 						other_s = with_parent(() => source(UNINITIALIZED, stack));
@@ -284,13 +288,13 @@ export function proxy(value) {
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
 					s = with_parent(() => source(undefined, stack));
-					set(s, proxy(value));
-
-					sources.set(prop, s);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
 					}
+					set(s, proxy(value));
+
+					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
@@ -418,9 +422,9 @@ function inspectable_array(array) {
 			 * @param {any[]} args
 			 */
 			return function (...args) {
-				set_inspect_effects_deferred();
+				set_eager_effects_deferred();
 				var result = value.apply(this, args);
-				flush_inspect_effects();
+				flush_eager_effects();
 				return result;
 			};
 		}

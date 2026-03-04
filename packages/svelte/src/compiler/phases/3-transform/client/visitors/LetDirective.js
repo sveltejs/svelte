@@ -21,22 +21,24 @@ export function LetDirective(node, context) {
 			};
 		}
 
-		return b.const(
-			name,
-			b.call(
-				'$.derived',
-				b.thunk(
-					b.block([
-						b.let(
-							/** @type {Expression} */ (node.expression).type === 'ObjectExpression'
-								? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-									b.object_pattern(node.expression.properties)
-								: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-									b.array_pattern(node.expression.elements),
-							b.member(b.id('$$slotProps'), node.name)
-						),
-						b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
-					])
+		context.state.let_directives.push(
+			b.const(
+				name,
+				b.call(
+					'$.derived',
+					b.thunk(
+						b.block([
+							b.let(
+								/** @type {Expression} */ (node.expression).type === 'ObjectExpression'
+									? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
+										b.object_pattern(node.expression.properties)
+									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
+										b.array_pattern(node.expression.elements),
+								b.member(b.id('$$slotProps'), node.name)
+							),
+							b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
+						])
+					)
 				)
 			)
 		);
@@ -46,9 +48,8 @@ export function LetDirective(node, context) {
 			read: (node) => b.call('$.get', node)
 		};
 
-		return b.const(
-			name,
-			create_derived(context.state, b.thunk(b.member(b.id('$$slotProps'), node.name)))
+		context.state.let_directives.push(
+			b.const(name, create_derived(context.state, b.member(b.id('$$slotProps'), node.name)))
 		);
 	}
 }

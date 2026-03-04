@@ -137,7 +137,7 @@ Transitions are now local by default to prevent confusion around page navigation
 {/if}
 ```
 
-To make transitions global, add the `|global` modifier - then they will play when _any_ control flow block above is created/destroyed. The migration script will do this automatically for you. ([#6686](https://github.com/sveltejs/svelte/issues/6686))
+To make transitions global, add the `|global` modifier — then they will play when _any_ control flow block above is created/destroyed. The migration script will do this automatically for you. ([#6686](https://github.com/sveltejs/svelte/issues/6686))
 
 ## Default slot bindings
 
@@ -150,10 +150,10 @@ Default slot bindings are no longer exposed to named slots and vice versa:
 
 <Nested let:count>
 	<p>
-		count in default slot - is available: {count}
+		count in default slot — is available: {count}
 	</p>
 	<p slot="bar">
-		count in bar slot - is not available: {count}
+		count in bar slot — is not available: {count}
 	</p>
 </Nested>
 ```

@@ -1,13 +1,13 @@
-/** @import { Effect } from '#client' */
+/** @import { Blocker, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { create_event, delegate } from './events.js';
+import { create_event, delegate, delegated, event, event_symbol } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
-import { LOADING_ATTR_SYMBOL } from '#client/constants';
-import { queue_idle_task } from '../task.js';
-import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import { IS_XHTML, LOADING_ATTR_SYMBOL } from '#client/constants';
+import { queue_micro_task } from '../task.js';
+import { is_capture_event, can_delegate_event, normalize_attribute } from '../../../../utils.js';
 import {
 	active_effect,
 	active_reaction,
@@ -19,8 +19,8 @@ import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
-import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
-import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
+import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
+import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
 import { init_select, select_option } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
 
@@ -29,6 +29,12 @@ export const STYLE = Symbol('style');
 
 const IS_CUSTOM_ELEMENT = Symbol('is custom element');
 const IS_HTML = Symbol('is html');
+
+const LINK_TAG = IS_XHTML ? 'link' : 'LINK';
+const INPUT_TAG = IS_XHTML ? 'input' : 'INPUT';
+const OPTION_TAG = IS_XHTML ? 'option' : 'OPTION';
+const SELECT_TAG = IS_XHTML ? 'select' : 'SELECT';
+const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -65,7 +71,7 @@ export function remove_input_defaults(input) {
 
 	// @ts-expect-error
 	input.__on_r = remove_defaults;
-	queue_idle_task(remove_defaults);
+	queue_micro_task(remove_defaults);
 	add_form_reset_listener();
 }
 
@@ -83,7 +89,7 @@ export function set_value(element, value) {
 				value ?? undefined) ||
 		// @ts-expect-error
 		// `progress` elements always need their value set when it's `0`
-		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
+		(element.value === value && (value !== 0 || element.nodeName !== PROGRESS_TAG))
 	) {
 		return;
 	}
@@ -168,7 +174,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		if (
 			attribute === 'src' ||
 			attribute === 'srcset' ||
-			(attribute === 'href' && element.nodeName === 'LINK')
+			(attribute === 'href' && element.nodeName === LINK_TAG)
 		) {
 			if (!skip_warning) {
 				check_src_in_dev_hydration(element, attribute, value ?? '');
@@ -238,10 +244,10 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			(setters_cache.has(node.nodeName) ||
+			(setters_cache.has(node.getAttribute('is') || node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
-			customElements.get(node.tagName.toLowerCase())
+			customElements.get(node.getAttribute('is') || node.nodeName.toLowerCase())
 				? get_setters(node).includes(prop)
 				: value && typeof value === 'object')
 		) {
@@ -268,10 +274,27 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string | symbol, any> | undefined} prev
  * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, css_hash, skip_warning = false) {
+function set_attributes(
+	element,
+	prev,
+	next,
+	css_hash,
+	should_remove_defaults = false,
+	skip_warning = false
+) {
+	if (hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
+		var input = /** @type {HTMLInputElement} */ (element);
+		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
+
+		if (!(attribute in next)) {
+			remove_input_defaults(input);
+		}
+	}
+
 	var attributes = get_attributes(element);
 
 	var is_custom_element = attributes[IS_CUSTOM_ELEMENT];
@@ -285,7 +308,7 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 	}
 
 	var current = prev || {};
-	var is_option_element = element.tagName === 'OPTION';
+	var is_option_element = element.nodeName === OPTION_TAG;
 
 	for (var key in prev) {
 		if (!(key in next)) {
@@ -361,14 +384,14 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = is_delegated(event_name);
+			var is_delegated = can_delegate_event(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
 				opts.capture = true;
 			}
 
-			if (!delegated && prev_value) {
+			if (!is_delegated && prev_value) {
 				// Listening to same event but different handler -> our handle function below takes care of this
 				// If we were to remove and add listeners in this case, it could happen that the event is "swallowed"
 				// (the browser seems to not know yet that a new one exists now) and doesn't reach the handler
@@ -379,25 +402,19 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 				current[event_handle_key] = null;
 			}
 
-			if (value != null) {
-				if (!delegated) {
-					/**
-					 * @this {any}
-					 * @param {Event} evt
-					 */
-					function handle(evt) {
-						current[key].call(this, evt);
-					}
-
-					current[event_handle_key] = create_event(event_name, element, handle, opts);
-				} else {
-					// @ts-ignore
-					element[`__${event_name}`] = value;
-					delegate([event_name]);
+			if (is_delegated) {
+				delegated(event_name, element, value);
+				delegate([event_name]);
+			} else if (value != null) {
+				/**
+				 * @this {any}
+				 * @param {Event} evt
+				 */
+				function handle(evt) {
+					current[key].call(this, evt);
 				}
-			} else if (delegated) {
-				// @ts-ignore
-				element[`__${event_name}`] = undefined;
+
+				current[event_handle_key] = create_event(event_name, element, handle, opts);
 			}
 		} else if (key === 'style') {
 			// avoid using the setter
@@ -446,6 +463,8 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			) {
 				// @ts-ignore
 				element[name] = value;
+				// remove it from attributes's cache
+				if (name in attributes) attributes[name] = UNINITIALIZED;
 			} else if (typeof value !== 'function') {
 				set_attribute(element, name, value, skip_warning);
 			}
@@ -464,7 +483,9 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
+ * @param {Blocker[]} blockers
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  */
 export function attribute_effect(
@@ -472,23 +493,32 @@ export function attribute_effect(
 	fn,
 	sync = [],
 	async = [],
+	blockers = [],
 	css_hash,
+	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	flatten(sync, async, (values) => {
+	flatten(blockers, sync, async, (values) => {
 		/** @type {Record<string | symbol, any> | undefined} */
 		var prev = undefined;
 
 		/** @type {Record<symbol, Effect>} */
 		var effects = {};
 
-		var is_select = element.nodeName === 'SELECT';
+		var is_select = element.nodeName === SELECT_TAG;
 		var inited = false;
 
-		block(() => {
+		managed(() => {
 			var next = fn(...values.map(get));
 			/** @type {Record<string | symbol, any>} */
-			var current = set_attributes(element, prev, next, css_hash, skip_warning);
+			var current = set_attributes(
+				element,
+				prev,
+				next,
+				css_hash,
+				should_remove_defaults,
+				skip_warning
+			);
 
 			if (inited && is_select && 'value' in next) {
 				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
@@ -544,9 +574,10 @@ var setters_cache = new Map();
 
 /** @param {Element} element */
 function get_setters(element) {
-	var setters = setters_cache.get(element.nodeName);
+	var cache_key = element.getAttribute('is') || element.nodeName;
+	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
-	setters_cache.set(element.nodeName, (setters = []));
+	setters_cache.set(cache_key, (setters = []));
 
 	var descriptors;
 	var proto = element; // In the case of custom elements there might be setters on the instance

@@ -137,7 +137,7 @@ const DELEGATED_EVENTS = [
  * Returns `true` if `event_name` is a delegated event
  * @param {string} event_name
  */
-export function is_delegated(event_name) {
+export function can_delegate_event(event_name) {
 	return DELEGATED_EVENTS.includes(event_name);
 }
 
@@ -154,7 +154,6 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'default',
 	'disabled',
 	'formnovalidate',
-	'hidden',
 	'indeterminate',
 	'inert',
 	'ismap',
@@ -437,6 +436,7 @@ const STATE_CREATION_RUNES = /** @type {const} */ ([
 
 const RUNES = /** @type {const} */ ([
 	...STATE_CREATION_RUNES,
+	'$state.eager',
 	'$state.snapshot',
 	'$props',
 	'$props.id',
@@ -452,7 +452,7 @@ const RUNES = /** @type {const} */ ([
 	'$host'
 ]);
 
-/** @typedef {RUNES[number]} RuneName */
+/** @typedef {typeof RUNES[number]} RuneName */
 
 /**
  * @param {string} name
@@ -462,7 +462,7 @@ export function is_rune(name) {
 	return RUNES.includes(/** @type {RuneName} */ (name));
 }
 
-/** @typedef {STATE_CREATION_RUNES[number]} StateCreationRuneName */
+/** @typedef {typeof STATE_CREATION_RUNES[number]} StateCreationRuneName */
 
 /**
  * @param {string} name
@@ -477,8 +477,21 @@ const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 
 
 /** @param {string} name */
 export function is_raw_text_element(name) {
-	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
+	return RAW_TEXT_ELEMENTS.includes(/** @type {typeof RAW_TEXT_ELEMENTS[number]} */ (name));
 }
+
+// Matches valid HTML/SVG/MathML element names and custom element names.
+// https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
+//
+// Standard elements: ASCII alpha start, followed by ASCII alphanumerics.
+// Custom elements: ASCII alpha start, followed by any mix of PCENChar (which
+// includes ASCII alphanumerics, `-`, `.`, `_`, and specified Unicode ranges),
+// with at least one hyphen required somewhere after the first character.
+//
+// Rejects strings containing whitespace, quotes, angle brackets, slashes, equals,
+// or other characters that could break out of a tag-name token and enable markup injection.
+export const REGEX_VALID_TAG_NAME =
+	/^[a-zA-Z][a-zA-Z0-9]*(-[a-zA-Z0-9.\-_\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]+)*$/u;
 
 /**
  * Prevent devtools trying to make `location` a clickable link by inserting a zero-width space

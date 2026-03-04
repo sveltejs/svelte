@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+concurrency:
+  # prevent two release workflows from running at once
+  # race conditions here can result in releases failing
+  group: ${{ github.workflow }}
+
 permissions: {}
 jobs:
   release:
@@ -17,17 +22,16 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 18.x
+          node-version: 24.x
           cache: pnpm
 
       - name: Install
@@ -45,4 +49,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

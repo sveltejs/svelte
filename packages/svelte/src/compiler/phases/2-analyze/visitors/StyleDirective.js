@@ -23,6 +23,9 @@ export function StyleDirective(node, context) {
 			if (binding.kind !== 'normal') {
 				node.metadata.expression.has_state = true;
 			}
+			if (binding.blocker) {
+				node.metadata.expression.dependencies.add(binding);
+			}
 		}
 	} else {
 		context.next();
@@ -30,9 +33,7 @@ export function StyleDirective(node, context) {
 		for (const chunk of get_attribute_chunks(node.value)) {
 			if (chunk.type !== 'ExpressionTag') continue;
 
-			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
-			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
-			node.metadata.expression.has_await ||= chunk.metadata.expression.has_await;
+			node.metadata.expression.merge(chunk.metadata.expression);
 		}
 	}
 }

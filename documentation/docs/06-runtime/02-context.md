@@ -83,28 +83,45 @@ Svelte will warn you if you get it wrong.
 
 ## Type-safe context
 
-A useful pattern is to wrap the calls to `setContext` and `getContext` inside helper functions that let you preserve type safety:
+As an alternative to using `setContext` and `getContext` directly, you can use them via `createContext`. This gives you type safety and makes it unnecessary to use a key:
 
-```js
-/// file: context.js
+```ts
+/// file: context.ts
 // @filename: ambient.d.ts
 interface User {}
 
-// @filename: index.js
+// @filename: index.ts
 // ---cut---
-import { getContext, setContext } from 'svelte';
+import { createContext } from 'svelte';
 
-const key = {};
-
-/** @param {User} user */
-export function setUserContext(user) {
-	setContext(key, user);
-}
-
-export function getUserContext() {
-	return /** @type {User} */ (getContext(key));
-}
+export const [getUserContext, setUserContext] = createContext<User>();
 ```
+
+When writing [component tests](testing#Unit-and-component-tests-with-Vitest-Component-testing), it can be useful to create a wrapper component that sets the context in order to check the behaviour of a component that uses it. As of version 5.49, you can do this sort of thing:
+
+```js
+import { mount, unmount } from 'svelte';
+import { expect, test } from 'vitest';
+import { setUserContext } from './context';
+import MyComponent from './MyComponent.svelte';
+
+test('MyComponent', () => {
+	function Wrapper(...args) {
+		setUserContext({ name: 'Bob' });
+		return MyComponent(...args);
+	}
+
+	const component = mount(Wrapper, {
+		target: document.body
+	});
+
+	expect(document.body.innerHTML).toBe('<h1>Hello Bob!</h1>');
+
+	unmount(component);
+});
+```
+
+This approach also works with [`hydrate`](imperative-component-api#hydrate) and [`render`](imperative-component-api#render).
 
 ## Replacing global state
 

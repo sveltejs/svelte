@@ -1,5 +1,6 @@
 ---
 title: transition:
+tags: transitions
 ---
 
 A _transition_ is triggered by an element entering or leaving the DOM as a result of a state change.

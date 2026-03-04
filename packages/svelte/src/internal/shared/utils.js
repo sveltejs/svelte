@@ -2,6 +2,7 @@
 // to de-opt (this occurs often when using popular extensions).
 export var is_array = Array.isArray;
 export var index_of = Array.prototype.indexOf;
+export var includes = Array.prototype.includes;
 export var array_from = Array.from;
 export var object_keys = Object.keys;
 export var define_property = Object.defineProperty;
@@ -11,6 +12,7 @@ export var object_prototype = Object.prototype;
 export var array_prototype = Array.prototype;
 export var get_prototype_of = Object.getPrototypeOf;
 export var is_extensible = Object.isExtensible;
+export var has_own_property = Object.prototype.hasOwnProperty;
 
 /**
  * @param {any} thing
@@ -48,7 +50,7 @@ export function run_all(arr) {
 
 /**
  * TODO replace with Promise.withResolvers once supported widely enough
- * @template T
+ * @template [T=void]
  */
 export function deferred() {
 	/** @type {(value: T) => void} */
@@ -115,4 +117,28 @@ export function to_array(value, n) {
 	}
 
 	return array;
+}
+
+/**
+ * @param {Record<string | symbol, unknown>} obj
+ * @param {Array<string | symbol>} keys
+ * @returns {Record<string | symbol, unknown>}
+ */
+export function exclude_from_object(obj, keys) {
+	/** @type {Record<string | symbol, unknown>} */
+	var result = {};
+
+	for (var key in obj) {
+		if (!keys.includes(key)) {
+			result[key] = obj[key];
+		}
+	}
+
+	for (var symbol of Object.getOwnPropertySymbols(obj)) {
+		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
+			result[symbol] = obj[symbol];
+		}
+	}
+
+	return result;
 }

@@ -1,6 +1,7 @@
-<video><track kind="captions"/></video>
-<video></video>
-<video><track /></video>
+<video src="x"><track kind="captions"/></video>
+<video src="x"></video>
+<video src="x"><track /></video>
 <audio></audio>
-<video aria-hidden="true"></video>
-<video aria-hidden="false"></video>
+<video src="x" aria-hidden="true"></video>
+<video src="x" aria-hidden="false"></video>
+<video></video> <!-- no src -->

@@ -2,8 +2,8 @@
 /** @import { Processed } from '../preprocess/public.js' */
 /** @import { SourceMap } from 'magic-string' */
 /** @import { Source } from '../preprocess/private.js' */
-/** @import { DecodedSourceMap, SourceMapSegment, RawSourceMap } from '@ampproject/remapping' */
-import remapping from '@ampproject/remapping';
+/** @import { DecodedSourceMap, SourceMapSegment, RawSourceMap } from '@jridgewell/remapping' */
+import remapping from '@jridgewell/remapping';
 import { push_array } from './push_array.js';
 
 /**

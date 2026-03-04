@@ -174,11 +174,11 @@ export function a11y_click_events_have_key_events(node) {
 }
 
 /**
- * Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
+ * Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
  * @param {null | NodeLike} node
  */
 export function a11y_consider_explicit_label(node) {
-	w(node, 'a11y_consider_explicit_label', `Buttons and links should either contain text or have an \`aria-label\` or \`aria-labelledby\` attribute\nhttps://svelte.dev/e/a11y_consider_explicit_label`);
+	w(node, 'a11y_consider_explicit_label', `Buttons and links should either contain text or have an \`aria-label\`, \`aria-labelledby\` or \`title\` attribute\nhttps://svelte.dev/e/a11y_consider_explicit_label`);
 }
 
 /**

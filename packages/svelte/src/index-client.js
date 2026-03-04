@@ -160,10 +160,14 @@ export function createEventDispatcher() {
 		e.lifecycle_outside_component('createEventDispatcher');
 	}
 
+	/**
+	 * @param [detail]
+	 * @param [options]
+	 */
 	return (type, detail, options) => {
 		const events = /** @type {Record<string, Function | Function[]>} */ (
 			active_component_context.s.$$events
-		)?.[/** @type {any} */ (type)];
+		)?.[/** @type {string} */ (type)];
 
 		if (events) {
 			const callbacks = is_array(events) ? events.slice() : [events];
@@ -237,8 +241,15 @@ function init_update_callbacks(context) {
 	return (l.u ??= { a: [], b: [], m: [] });
 }
 
-export { flushSync } from './internal/client/reactivity/batch.js';
-export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
+export { flushSync, fork } from './internal/client/reactivity/batch.js';
+export {
+	createContext,
+	getContext,
+	getAllContexts,
+	hasContext,
+	setContext
+} from './internal/client/context.js';
+export { hydratable } from './internal/client/hydratable.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
 export { tick, untrack, settled } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

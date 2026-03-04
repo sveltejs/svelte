@@ -29,6 +29,7 @@
 					"type": "Identifier",
 					"name": "theError",
 					"start": 47,
+					"end": 55,
 					"loc": {
 						"start": {
 							"line": 3,
@@ -40,8 +41,7 @@
 							"column": 16,
 							"character": 55
 						}
-					},
-					"end": 55
+					}
 				},
 				"pending": {
 					"type": "PendingBlock",

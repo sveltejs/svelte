@@ -3,14 +3,14 @@
 import * as b from '#compiler/builders';
 import { build_event, build_event_handler } from './shared/events.js';
 
-const modifiers = [
+const modifiers = /** @type {const} */ ([
 	'stopPropagation',
 	'stopImmediatePropagation',
 	'preventDefault',
 	'self',
 	'trusted',
 	'once'
-];
+]);
 
 /**
  * @param {AST.OnDirective} node
@@ -34,5 +34,5 @@ export function OnDirective(node, context) {
 		node.modifiers.includes('passive') ||
 		(node.modifiers.includes('nonpassive') ? false : undefined);
 
-	return build_event(node.name, context.state.node, handler, capture, passive);
+	return build_event(context, node.name, handler, capture, passive, false);
 }

@@ -9,12 +9,12 @@ export default test({
 			start: {
 				line: 73,
 				column: 1,
-				character: 964
+				character: 966
 			},
 			end: {
 				line: 73,
 				column: 16,
-				character: 979
+				character: 981
 			}
 		},
 		{
@@ -23,12 +23,12 @@ export default test({
 			start: {
 				line: 104,
 				column: 29,
-				character: 1270
+				character: 1272
 			},
 			end: {
 				line: 104,
 				column: 43,
-				character: 1284
+				character: 1286
 			}
 		}
 	]

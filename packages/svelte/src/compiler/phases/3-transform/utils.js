@@ -1,36 +1,17 @@
-/** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
 /** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
-/** @import { Node, Expression, CallExpression } from 'estree' */
+/** @import { Node, Expression, CallExpression, MemberExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
-	regex_starts_with_newline,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
-import * as b from '#compiler/builders';
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';
 import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
-import { dev } from '../../state.js';
-
-/**
- * @param {Node} node
- * @returns {boolean}
- */
-export function is_hoisted_function(node) {
-	if (
-		node.type === 'ArrowFunctionExpression' ||
-		node.type === 'FunctionExpression' ||
-		node.type === 'FunctionDeclaration'
-	) {
-		return node.metadata?.hoisted === true;
-	}
-	return false;
-}
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
@@ -452,30 +433,19 @@ export function determine_namespace_for_children(node, namespace) {
 }
 
 /**
- * @template {TransformState} T
+ * @param {'$inspect' | '$inspect().with'} rune
  * @param {CallExpression} node
- * @param {Context<any, T>} context
+ * @param {(node: AST.SvelteNode) => AST.SvelteNode} visit
  */
-export function transform_inspect_rune(node, context) {
-	const { state, visit } = context;
-	const as_fn = state.options.generate === 'client';
+export function get_inspect_args(rune, node, visit) {
+	const call =
+		rune === '$inspect'
+			? node
+			: /** @type {CallExpression} */ (/** @type {MemberExpression} */ (node.callee).object);
 
-	if (!dev) return b.empty;
-
-	if (node.callee.type === 'MemberExpression') {
-		const raw_inspect_args = /** @type {CallExpression} */ (node.callee.object).arguments;
-		const inspect_args =
-			/** @type {Array<Expression>} */
-			(raw_inspect_args.map((arg) => visit(arg)));
-		const with_arg = /** @type {Expression} */ (visit(node.arguments[0]));
-
-		return b.call(
-			'$.inspect',
-			as_fn ? b.thunk(b.array(inspect_args)) : b.array(inspect_args),
-			with_arg
-		);
-	} else {
-		const arg = node.arguments.map((arg) => /** @type {Expression} */ (visit(arg)));
-		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
-	}
+	return {
+		args: call.arguments.map((arg) => /** @type {Expression} */ (visit(arg))),
+		inspector:
+			rune === '$inspect' ? 'console.log' : /** @type {Expression} */ (visit(node.arguments[0]))
+	};
 }

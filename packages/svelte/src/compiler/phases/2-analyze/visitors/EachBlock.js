@@ -1,3 +1,4 @@
+/** @import { Expression } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
@@ -28,6 +29,10 @@ export function EachBlock(node, context) {
 			node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
 	}
 
+	if (node.metadata.keyed && !node.context) {
+		e.each_key_without_as(/** @type {Expression} */ (node.key));
+	}
+
 	// evaluate expression in parent scope
 	context.visit(node.expression, {
 		...context.state,
@@ -49,7 +54,9 @@ export function EachBlock(node, context) {
 
 		// collect transitive dependencies...
 		for (const binding of node.metadata.expression.dependencies) {
-			collect_transitive_dependencies(binding, node.metadata.transitive_deps);
+			if (binding.declaration_kind !== 'function') {
+				collect_transitive_dependencies(binding, node.metadata.transitive_deps);
+			}
 		}
 
 		// ...and ensure they are marked as state, so they can be turned

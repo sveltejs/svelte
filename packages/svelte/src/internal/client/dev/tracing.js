@@ -1,7 +1,6 @@
 /** @import { Derived, Reaction, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
-import { define_property } from '../../shared/utils.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, untrack } from '../runtime.js';
@@ -57,8 +56,10 @@ function log_entry(signal, entry) {
 
 	if (dirty && signal.updated) {
 		for (const updated of signal.updated.values()) {
-			// eslint-disable-next-line no-console
-			console.log(updated.error);
+			if (updated.error) {
+				// eslint-disable-next-line no-console
+				console.log(updated.error);
+			}
 		}
 	}
 
@@ -127,50 +128,6 @@ export function trace(label, fn) {
 	} finally {
 		tracing_expressions = previously_tracing_expressions;
 	}
-}
-
-/**
- * @param {string} label
- * @returns {Error & { stack: string } | null}
- */
-export function get_stack(label) {
-	let error = Error();
-	const stack = error.stack;
-
-	if (!stack) return null;
-
-	const lines = stack.split('\n');
-	const new_lines = ['\n'];
-
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
-
-		if (line === 'Error') {
-			continue;
-		}
-		if (line.includes('validate_each_keys')) {
-			return null;
-		}
-		if (line.includes('svelte/src/internal')) {
-			continue;
-		}
-		new_lines.push(line);
-	}
-
-	if (new_lines.length === 1) {
-		return null;
-	}
-
-	define_property(error, 'stack', {
-		value: new_lines.join('\n')
-	});
-
-	define_property(error, 'name', {
-		// 'Error' suffix is required for stack traces to be rendered properly
-		value: `${label}Error`
-	});
-
-	return /** @type {Error & { stack: string }} */ (error);
 }
 
 /**

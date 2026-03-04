@@ -17,3 +17,6 @@
 <div on:keydown={() => {}}></div>
 <!-- svelte-ignore a11y_missing_attribute -->
 <a on:mousedown={() => {}} on:mouseup={() => {}} on:copy={() => {}}>link</a>
+<div on:pointerdown={() => {}}></div>
+<div on:pointerenter={() => {}}></div>
+<div on:touchstart={() => {}}></div>

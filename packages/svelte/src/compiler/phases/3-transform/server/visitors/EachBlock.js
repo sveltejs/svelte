@@ -1,9 +1,8 @@
 /** @import { BlockStatement, Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import { BLOCK_OPEN_ELSE } from '../../../../../internal/server/hydration.js';
 import * as b from '#compiler/builders';
-import { block_close, block_open } from './shared/utils.js';
+import { block_close, block_open, block_open_else, create_child_block } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -18,7 +17,9 @@ export function EachBlock(node, context) {
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 
 	const array_id = state.scope.root.unique('each_array');
-	state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
+
+	/** @type {Statement[]} */
+	let statements = [b.const(array_id, b.call('$.ensure_array_like', collection))];
 
 	/** @type {Statement[]} */
 	const each = [];
@@ -31,7 +32,9 @@ export function EachBlock(node, context) {
 		each.push(b.let(node.index, index));
 	}
 
-	each.push(.../** @type {BlockStatement} */ (context.visit(node.body)).body);
+	const new_body = /** @type {BlockStatement} */ (context.visit(node.body)).body;
+
+	if (node.body) each.push(...new_body);
 
 	const for_loop = b.for(
 		b.declaration('let', [
@@ -44,23 +47,30 @@ export function EachBlock(node, context) {
 	);
 
 	if (node.fallback) {
-		const open = b.stmt(b.call(b.member(b.id('$$payload.out'), b.id('push')), block_open));
+		const open = b.stmt(b.call(b.id('$$renderer.push'), block_open));
 
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
-		fallback.body.unshift(
-			b.stmt(b.call(b.member(b.id('$$payload.out'), b.id('push')), b.literal(BLOCK_OPEN_ELSE)))
-		);
+		fallback.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
 
-		state.template.push(
+		statements.push(
 			b.if(
 				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
 				b.block([open, for_loop]),
 				fallback
-			),
-			block_close
+			)
 		);
 	} else {
-		state.template.push(block_open, for_loop, block_close);
+		state.template.push(block_open);
+		statements.push(for_loop);
 	}
+
+	state.template.push(
+		...create_child_block(
+			statements,
+			node.metadata.expression.blockers(),
+			node.metadata.expression.has_await
+		),
+		block_close
+	);
 }

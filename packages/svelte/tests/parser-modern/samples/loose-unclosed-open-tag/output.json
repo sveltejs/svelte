@@ -12,6 +12,18 @@
 				"start": 0,
 				"end": 29,
 				"name": "div",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 1,
+						"character": 1
+					},
+					"end": {
+						"line": 1,
+						"column": 4,
+						"character": 4
+					}
+				},
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",
@@ -28,12 +40,36 @@
 							"start": 7,
 							"end": 23,
 							"name": "Comp",
+							"name_loc": {
+								"start": {
+									"line": 2,
+									"column": 2,
+									"character": 8
+								},
+								"end": {
+									"line": 2,
+									"column": 6,
+									"character": 12
+								}
+							},
 							"attributes": [
 								{
 									"type": "Attribute",
 									"start": 13,
 									"end": 22,
 									"name": "foo",
+									"name_loc": {
+										"start": {
+											"line": 2,
+											"column": 7,
+											"character": 13
+										},
+										"end": {
+											"line": 2,
+											"column": 10,
+											"character": 16
+										}
+									},
 									"value": {
 										"type": "ExpressionTag",
 										"start": 17,
@@ -77,6 +113,18 @@
 				"start": 31,
 				"end": 60,
 				"name": "div",
+				"name_loc": {
+					"start": {
+						"line": 5,
+						"column": 1,
+						"character": 32
+					},
+					"end": {
+						"line": 5,
+						"column": 4,
+						"character": 35
+					}
+				},
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",
@@ -93,12 +141,36 @@
 							"start": 38,
 							"end": 54,
 							"name": "span",
+							"name_loc": {
+								"start": {
+									"line": 6,
+									"column": 2,
+									"character": 39
+								},
+								"end": {
+									"line": 6,
+									"column": 6,
+									"character": 43
+								}
+							},
 							"attributes": [
 								{
 									"type": "Attribute",
 									"start": 44,
 									"end": 53,
 									"name": "foo",
+									"name_loc": {
+										"start": {
+											"line": 6,
+											"column": 7,
+											"character": 44
+										},
+										"end": {
+											"line": 6,
+											"column": 10,
+											"character": 47
+										}
+									},
 									"value": {
 										"type": "ExpressionTag",
 										"start": 48,
@@ -173,12 +245,36 @@
 							"start": 73,
 							"end": 89,
 							"name": "Comp",
+							"name_loc": {
+								"start": {
+									"line": 10,
+									"column": 2,
+									"character": 74
+								},
+								"end": {
+									"line": 10,
+									"column": 6,
+									"character": 78
+								}
+							},
 							"attributes": [
 								{
 									"type": "Attribute",
 									"start": 79,
 									"end": 88,
 									"name": "foo",
+									"name_loc": {
+										"start": {
+											"line": 10,
+											"column": 7,
+											"character": 79
+										},
+										"end": {
+											"line": 10,
+											"column": 10,
+											"character": 82
+										}
+									},
 									"value": {
 										"type": "ExpressionTag",
 										"start": 83,
@@ -254,12 +350,36 @@
 							"start": 107,
 							"end": 124,
 							"name": "Comp",
+							"name_loc": {
+								"start": {
+									"line": 14,
+									"column": 2,
+									"character": 108
+								},
+								"end": {
+									"line": 14,
+									"column": 6,
+									"character": 112
+								}
+							},
 							"attributes": [
 								{
 									"type": "Attribute",
 									"start": 113,
 									"end": 122,
 									"name": "foo",
+									"name_loc": {
+										"start": {
+											"line": 14,
+											"column": 7,
+											"character": 113
+										},
+										"end": {
+											"line": 14,
+											"column": 10,
+											"character": 116
+										}
+									},
 									"value": {
 										"type": "ExpressionTag",
 										"start": 117,
@@ -374,12 +494,36 @@
 				"start": 156,
 				"end": 170,
 				"name": "div",
+				"name_loc": {
+					"start": {
+						"line": 20,
+						"column": 1,
+						"character": 157
+					},
+					"end": {
+						"line": 20,
+						"column": 4,
+						"character": 160
+					}
+				},
 				"attributes": [
 					{
 						"type": "Attribute",
 						"start": 161,
 						"end": 170,
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 20,
+								"column": 5,
+								"character": 161
+							},
+							"end": {
+								"line": 20,
+								"column": 8,
+								"character": 164
+							}
+						},
 						"value": {
 							"type": "ExpressionTag",
 							"start": 165,
