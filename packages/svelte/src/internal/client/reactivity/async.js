@@ -109,7 +109,7 @@ export function run_after_blockers(blockers, fn) {
  * causes `b` to be registered as a dependency).
  */
 export function capture() {
-	var previous_effect = active_effect;
+	var previous_effect = /** @type {Effect} */ (active_effect);
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 	var previous_batch = /** @type {Batch} */ (current_batch);
@@ -123,7 +123,7 @@ export function capture() {
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 
-		if (activate_batch) {
+		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
 			// TODO we only need optional chaining here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
 			previous_batch?.activate();

@@ -161,7 +161,7 @@ export function async_derived(fn, label, location) {
 		const handler = (value, error = undefined) => {
 			if (DEV) current_async_effect = null;
 
-			if (error === STALE_REACTION) {
+			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
 				return;
 			}
 
