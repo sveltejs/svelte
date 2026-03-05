@@ -157,7 +157,7 @@ export function async_derived(fn, label, location) {
 		 * @param {unknown} error
 		 */
 		const handler = (value, error = undefined) => {
-			current_async_effect = null;
+			if (DEV) current_async_effect = null;
 
 			batch.activate();
 
