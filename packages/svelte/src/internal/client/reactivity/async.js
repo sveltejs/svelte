@@ -43,7 +43,6 @@ export function flatten(blockers, sync, async, fn) {
 		return;
 	}
 
-	var batch = current_batch;
 	var parent = /** @type {Effect} */ (active_effect);
 
 	var restore = capture();
