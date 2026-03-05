@@ -395,7 +395,6 @@ export class Batch {
 	flush() {
 		current_batch = this;
 		flush_effects();
-		this.deactivate();
 	}
 
 	discard() {
