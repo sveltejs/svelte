@@ -109,7 +109,7 @@ export function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
-	var previous_batch = current_batch;
+	var previous_batch = /** @type {Batch} */ (current_batch);
 
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
@@ -121,8 +121,8 @@ export function capture() {
 		set_component_context(previous_component_context);
 
 		if (activate_batch) {
-			previous_batch?.activate();
-			previous_batch?.apply();
+			previous_batch.activate();
+			previous_batch.apply();
 		}
 
 		if (DEV) {
