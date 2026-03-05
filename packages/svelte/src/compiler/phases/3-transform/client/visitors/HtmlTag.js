@@ -9,7 +9,11 @@ import { build_expression } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {
-	context.state.template.push_comment();
+	const is_controlled = node.metadata.is_controlled;
+
+	if (!is_controlled) {
+		context.state.template.push_comment();
+	}
 
 	const has_await = node.metadata.expression.has_await;
 	const has_blockers = node.metadata.expression.has_blockers();
@@ -27,7 +31,8 @@ export function HtmlTag(node, context) {
 			b.thunk(html),
 			is_svg && b.true,
 			is_mathml && b.true,
-			is_ignored(node, 'hydration_html_changed') && b.true
+			is_ignored(node, 'hydration_html_changed') && b.true,
+			is_controlled && b.true
 		)
 	);
 

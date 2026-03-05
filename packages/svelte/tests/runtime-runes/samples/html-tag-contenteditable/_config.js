@@ -2,7 +2,7 @@ import { flushSync } from '../../../../src/index-client';
 import { test } from '../../test';
 
 export default test({
-	html: `<div id="editable" contenteditable="true"></div><p id="output"></p>`,
+	html: `<div id="editable" contenteditable="true"><!----></div><p id="output"></p>`,
 
 	async test({ assert, target }) {
 		const div = /** @type {HTMLDivElement} */ (target.querySelector('#editable'));

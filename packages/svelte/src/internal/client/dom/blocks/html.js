@@ -6,7 +6,7 @@ import {
 	NAMESPACE_SVG,
 	NAMESPACE_MATHML
 } from '../../../../constants.js';
-import { template_effect } from '../../reactivity/effects.js';
+import { remove_effect_dom, template_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 
 import { assign_nodes } from '../template.js';
@@ -47,15 +47,26 @@ function check_hash(element, server_hash, value) {
  * @param {boolean} [skip_warning]
  * @returns {void}
  */
-export function html(node, get_value, svg = false, mathml = false, skip_warning = false) {
+export function html(
+	node,
+	get_value,
+	svg = false,
+	mathml = false,
+	skip_warning = false,
+	is_controlled = false
+) {
 	var anchor = node;
 
 	/** @type {string | TrustedHTML} */
 	var value = '';
 
-	// Track the node immediately before @html's managed region so we can
-	// clean up any nodes added externally (e.g. by contenteditable)
-	var boundary = anchor.previousSibling;
+	if (is_controlled) {
+		var parent_node = /** @type {Element} */ (node);
+
+		anchor = hydrating
+			? set_hydrate_node(get_first_child(parent_node))
+			: parent_node.appendChild(document.createComment(''));
+	}
 
 	template_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
@@ -65,21 +76,29 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			return;
 		}
 
-		// Remove all nodes in @html's managed region (between boundary and anchor).
-		// This removes both tracked nodes and any externally-added nodes (e.g. from contenteditable)
-		var first =
-			boundary === null
-				? /** @type {TemplateNode | null} */ (anchor.parentNode?.firstChild ?? null)
-				: /** @type {TemplateNode | null} */ (get_next_sibling(boundary));
+		if (is_controlled && !hydrating) {
+			// When @html is the only child, use innerHTML directly.
+			// This also handles contenteditable, where the user may delete the anchor comment.
+			effect.nodes = null;
+			parent_node.innerHTML = /** @type {any} */ (value === '' ? '' : value);
 
-		while (first !== null && first !== anchor) {
-			/** @type {TemplateNode | null} */
-			var next_node = get_next_sibling(first);
-			first.remove();
-			first = next_node;
+			if (value !== '') {
+				// Re-append the anchor comment (innerHTML removes it)
+				anchor = parent_node.appendChild(document.createComment(''));
+
+				assign_nodes(
+					/** @type {TemplateNode} */ (get_first_child(parent_node)),
+					/** @type {TemplateNode} */ (anchor.previousSibling)
+				);
+			}
+
+			return;
 		}
 
-		effect.nodes = null;
+		if (effect.nodes !== null) {
+			remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
+			effect.nodes = null;
+		}
 
 		if (value === '') return;
 
