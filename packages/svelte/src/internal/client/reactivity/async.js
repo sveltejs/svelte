@@ -124,8 +124,10 @@ export function capture() {
 		set_component_context(previous_component_context);
 
 		if (activate_batch) {
-			previous_batch.activate();
-			previous_batch.apply();
+			// TODO we only need optional chaining here because `{#await ...}` blocks
+			// are anomalous. Once we retire them we can get rid of it
+			previous_batch?.activate();
+			previous_batch?.apply();
 		}
 
 		if (DEV) {
