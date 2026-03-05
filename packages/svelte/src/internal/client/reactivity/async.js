@@ -119,7 +119,11 @@ export function capture() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
-		if (activate_batch) previous_batch?.activate();
+
+		if (activate_batch) {
+			previous_batch?.activate();
+			previous_batch?.apply();
+		}
 
 		if (DEV) {
 			set_from_async_derived(null);

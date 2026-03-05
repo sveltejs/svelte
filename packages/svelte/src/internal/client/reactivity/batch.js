@@ -381,7 +381,6 @@ export class Batch {
 
 	activate() {
 		current_batch = this;
-		this.apply();
 	}
 
 	deactivate() {
