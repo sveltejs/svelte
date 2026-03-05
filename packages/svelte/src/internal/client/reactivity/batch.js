@@ -256,12 +256,12 @@ export class Batch {
 			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
 
+			flush_queued_effects(render_effects);
+			flush_queued_effects(effects);
+
 			if (this.#pending === 0) {
 				this.#commit();
 			}
-
-			flush_queued_effects(render_effects);
-			flush_queued_effects(effects);
 
 			// Clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
 			this.#dirty_effects.clear();
