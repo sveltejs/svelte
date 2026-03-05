@@ -303,6 +303,9 @@ export function wait(blockers) {
 	return Promise.all(blockers.map((b) => b.promise));
 }
 
+/**
+ * @returns {(skip: boolean) => void}
+ */
 export function increment_pending() {
 	var boundary = /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
 	var batch = /** @type {Batch} */ (current_batch);
@@ -311,8 +314,8 @@ export function increment_pending() {
 	boundary.update_pending_count(1, batch);
 	batch.increment(blocking);
 
-	return () => {
+	return (skip) => {
 		boundary.update_pending_count(-1, batch);
-		batch.decrement(blocking);
+		batch.decrement(blocking, skip);
 	};
 }

@@ -441,7 +441,7 @@ export class Batch {
 				// Re-run async/block effects that depend on distinct values changed in both batches
 				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 				if (others.length > 0) {
-					current_batch = batch;
+					batch.activate();
 
 					/** @type {Set<Value>} */
 					const marked = new Set();
@@ -459,9 +459,9 @@ export class Batch {
 						}
 
 						// TODO do we need to do anything with the dummy effect arrays?
-
-						batch.deactivate();
 					}
+
+					batch.deactivate();
 				}
 			}
 
@@ -483,14 +483,14 @@ export class Batch {
 	}
 
 	/**
-	 *
 	 * @param {boolean} blocking
+	 * @param {boolean} skip - whether to skip updates (because this is triggered by a stale reaction)
 	 */
-	decrement(blocking) {
+	decrement(blocking, skip) {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		if (this.#decrement_queued) return;
+		if (this.#decrement_queued || skip) return;
 		this.#decrement_queued = true;
 
 		queue_micro_task(() => {

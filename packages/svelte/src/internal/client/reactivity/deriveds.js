@@ -161,6 +161,13 @@ export function async_derived(fn, label, location) {
 		const handler = (value, error = undefined) => {
 			if (DEV) current_async_effect = null;
 
+			if (decrement_pending) {
+				// don't trigger an update if we're only here because
+				// the promise was superseded before it could resolve
+				var skip = error === STALE_REACTION;
+				decrement_pending(skip);
+			}
+
 			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
 				return;
 			}
@@ -196,10 +203,6 @@ export function async_derived(fn, label, location) {
 						}
 					});
 				}
-			}
-
-			if (decrement_pending) {
-				decrement_pending();
 			}
 
 			batch.deactivate();
