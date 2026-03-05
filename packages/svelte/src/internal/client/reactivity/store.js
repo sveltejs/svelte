@@ -3,11 +3,16 @@
 import { subscribe_to_store } from '../../../store/utils.js';
 import { get as get_store } from '../../../store/shared/index.js';
 import { define_property, noop } from '../../shared/utils.js';
-import { active_effect, get, set_active_effect } from '../runtime.js';
+import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 import { DEV } from 'esm-env';
-import { without_reactive_context } from '../dom/elements/bindings/shared.js';
+
+/**
+ * We set this to `true` when updating a store so that we correctly
+ * schedule effects if the update takes place inside a `$:` effect
+ */
+export let legacy_is_updating_store = false;
 
 /**
  * Whether or not the prop currently being read is a store binding, as in
@@ -103,11 +108,8 @@ export function store_unsub(store, store_name, stores) {
  * @returns {V}
  */
 export function store_set(store, value) {
-	// we temporarily pretend `active_effect === null` so that
-	// we don't bail out of rescheduling if this occurs inside
-	// a `$:` statement that causes already-traversed effects
-	// to re-run as a result of the change
-	return without_reactive_context(() => (store.set(value), value));
+	update_with_flag(store, value);
+	return value;
 }
 
 /**
@@ -146,6 +148,21 @@ export function setup_stores() {
 }
 
 /**
+ * @param {Store<V>} store
+ * @param {V} value
+ * @template V
+ */
+function update_with_flag(store, value) {
+	legacy_is_updating_store = true;
+
+	try {
+		store.set(value);
+	} finally {
+		legacy_is_updating_store = false;
+	}
+}
+
+/**
  * Updates a store with a new value.
  * @param {Store<V>} store  the store to update
  * @param {any} expression  the expression that mutates the store
@@ -153,7 +170,8 @@ export function setup_stores() {
  * @template V
  */
 export function store_mutate(store, expression, new_value) {
-	return without_reactive_context(() => (store.set(new_value), expression));
+	update_with_flag(store, new_value);
+	return expression;
 }
 
 /**
@@ -163,7 +181,8 @@ export function store_mutate(store, expression, new_value) {
  * @returns {number}
  */
 export function update_store(store, store_value, d = 1) {
-	return without_reactive_context(() => (store.set(store_value + d), store_value));
+	update_with_flag(store, store_value + d);
+	return store_value;
 }
 
 /**
@@ -173,11 +192,9 @@ export function update_store(store, store_value, d = 1) {
  * @returns {number}
  */
 export function update_pre_store(store, store_value, d = 1) {
-	return without_reactive_context(() => {
-		const value = store_value + d;
-		store.set(value);
-		return value;
-	});
+	const value = store_value + d;
+	update_with_flag(store, value);
+	return value;
 }
 
 /**

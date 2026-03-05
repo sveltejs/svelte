@@ -37,6 +37,7 @@ import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
+import { legacy_is_updating_store } from './store.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -612,10 +613,18 @@ export class Batch {
 			// updated an internal source, or because a branch is being unskipped,
 			// bail out or we'll cause a second flush
 			if (collected_effects !== null && effect === active_effect) {
+				if (async_mode_flag) return;
+
 				// in sync mode, render effects run during traversal. in an extreme edge case
+				// — namely that we're setting a value inside a derived read during traversal —
 				// they can be made dirty after they have already been visited, in which
-				// case we shouldn't bail out
-				if (async_mode_flag || active_reaction === null || (active_reaction.f & DERIVED) === 0) {
+				// case we shouldn't bail out. we also shouldn't bail out if we're
+				// updating a store inside a `$:`, since this might invalidate
+				// effects that were already visited
+				if (
+					(active_reaction === null || (active_reaction.f & DERIVED) === 0) &&
+					!legacy_is_updating_store
+				) {
 					return;
 				}
 			}
