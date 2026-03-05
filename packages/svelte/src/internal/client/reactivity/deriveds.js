@@ -161,15 +161,17 @@ export function async_derived(fn, label, location) {
 		const handler = (value, error = undefined) => {
 			if (DEV) current_async_effect = null;
 
+			if (error === STALE_REACTION) {
+				return;
+			}
+
 			batch.activate();
 
 			if (error) {
-				if (error !== STALE_REACTION) {
-					signal.f |= ERROR_VALUE;
+				signal.f |= ERROR_VALUE;
 
-					// @ts-expect-error the error is the wrong type, but we don't care
-					internal_set(signal, error);
-				}
+				// @ts-expect-error the error is the wrong type, but we don't care
+				internal_set(signal, error);
 			} else {
 				if ((signal.f & ERROR_VALUE) !== 0) {
 					signal.f ^= ERROR_VALUE;
