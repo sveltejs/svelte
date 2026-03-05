@@ -11,7 +11,8 @@ import {
 	WAS_MARKED,
 	DESTROYED,
 	CLEAN,
-	INERT
+	INERT,
+	REACTION_RAN
 } from '#client/constants';
 import {
 	active_reaction,
@@ -37,7 +38,6 @@ import {
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
@@ -126,6 +126,8 @@ export function async_derived(fn, label, location) {
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
+		var effect = /** @type {Effect} */ (active_effect);
+
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
 		promise = d.promise;
@@ -144,7 +146,7 @@ export function async_derived(fn, label, location) {
 
 		var batch = /** @type {Batch} */ (current_batch);
 
-		if (should_suspend) {
+		if (should_suspend && (effect.f & REACTION_RAN) !== 0) {
 			var decrement_pending = increment_pending();
 
 			deferreds.get(batch)?.reject(STALE_REACTION);

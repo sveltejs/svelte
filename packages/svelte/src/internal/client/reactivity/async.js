@@ -74,11 +74,14 @@ export function flatten(blockers, sync, async, fn) {
 		return;
 	}
 
+	var decrement_pending = increment_pending();
+
 	// Full path: has async expressions
 	function run() {
 		Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => finish([...sync.map(d), ...result]))
-			.catch((error) => invoke_error_boundary(error, parent));
+			.catch((error) => invoke_error_boundary(error, parent))
+			.finally(decrement_pending);
 	}
 
 	if (blocker_promise) {
