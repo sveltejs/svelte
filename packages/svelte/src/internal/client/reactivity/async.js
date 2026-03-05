@@ -299,16 +299,11 @@ export function increment_pending() {
 	var batch = /** @type {Batch} */ (current_batch);
 	var blocking = boundary.is_rendered();
 
-	boundary.update_pending_count(1);
+	boundary.update_pending_count(1, batch);
 	batch.increment(blocking);
 
 	return () => {
-		// TODO we don't really want to activate here, because we don't
-		// flush the batch until the next microtask. But for now it's
-		// necessary to keep the tests passing
-		batch.activate();
-
-		boundary.update_pending_count(-1);
+		boundary.update_pending_count(-1, batch);
 		batch.decrement(blocking);
 	};
 }
