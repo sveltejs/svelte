@@ -207,7 +207,7 @@ export class BranchManager {
 				if (k === key) {
 					batch.unskip_effect(effect);
 				} else {
-					batch.skip_effect(effect);
+					batch.skip_effect(effect, this.#discard);
 				}
 			}
 
@@ -215,7 +215,7 @@ export class BranchManager {
 				if (k === key) {
 					batch.unskip_effect(branch.effect);
 				} else {
-					batch.skip_effect(branch.effect);
+					batch.skip_effect(branch.effect, this.#discard);
 				}
 			}
 

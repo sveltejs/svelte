@@ -6,6 +6,7 @@ import type {
 	TemplateNode,
 	TransitionManager
 } from '#client';
+import type { Batch } from './batch.js';
 import type { Boundary } from '../dom/blocks/boundary';
 
 export interface Signal {
@@ -16,6 +17,8 @@ export interface Signal {
 }
 
 export interface Value<V = unknown> extends Signal {
+	/** The batch this value currently belongs to */
+	batch: Batch | null;
 	/** Equality function */
 	equals: Equals;
 	/** Signals that read from this signal */
@@ -42,6 +45,8 @@ export interface Value<V = unknown> extends Signal {
 }
 
 export interface Reaction extends Signal {
+	/** The batch this reaction currently belongs to */
+	batch: Batch | null;
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The reaction function */

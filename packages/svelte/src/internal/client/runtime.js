@@ -341,6 +341,10 @@ export function update_reaction(reaction) {
 			reaction.f ^= ERROR_VALUE;
 		}
 
+		if (current_batch !== null && !current_batch.is_fork) {
+			reaction.batch = current_batch;
+		}
+
 		return result;
 	} catch (error) {
 		return handle_error(error);
