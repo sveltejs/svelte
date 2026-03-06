@@ -186,6 +186,14 @@ export function effect_tracking() {
 }
 
 /**
+ * Internal representation of `$effect.allowed()`
+ * @returns {boolean}
+ */
+export function effect_allowed() {
+	return active_effect !== null && !is_destroying_effect;
+}
+
+/**
  * @param {() => void} fn
  */
 export function teardown(fn) {
