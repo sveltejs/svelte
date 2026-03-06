@@ -64,9 +64,9 @@ export function html(
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);
 
-		anchor = hydrating
-			? set_hydrate_node(get_first_child(parent_node))
-			: parent_node.appendChild(document.createComment(''));
+		if (hydrating) {
+			anchor = set_hydrate_node(get_first_child(parent_node));
+		}
 	}
 
 	template_effect(() => {
