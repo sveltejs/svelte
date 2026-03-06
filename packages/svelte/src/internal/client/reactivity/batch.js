@@ -226,11 +226,6 @@ export class Batch {
 
 		for (const root of roots) {
 			this.#traverse_effect_tree(root, effects, render_effects);
-			// Note: #traverse_effect_tree runs block effects eagerly, which can schedule effects,
-			// which means queued_root_effects now may be filled again.
-
-			// Helpful for debugging reactivity loss that has to do with branches being skipped:
-			// log_inconsistent_branches(root);
 		}
 
 		// any writes should take effect in a subsequent batch
@@ -254,6 +249,10 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
+			// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
+			this.#dirty_effects.clear();
+			this.#maybe_dirty_effects.clear();
+
 			// append/remove branches
 			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
@@ -266,10 +265,6 @@ export class Batch {
 			if (this.#pending === 0) {
 				this.#commit();
 			}
-
-			// Clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
-			this.#dirty_effects.clear();
-			this.#maybe_dirty_effects.clear();
 
 			this.#deferred?.resolve();
 		}
