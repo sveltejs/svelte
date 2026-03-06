@@ -10,7 +10,8 @@ import {
 	set_active_reaction,
 	set_is_destroying_effect,
 	untrack,
-	untracking
+	untracking,
+	set_active_effect
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -316,7 +317,19 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		untrack(fn);
+
+		var effect = /** @type {Effect} */ (active_effect);
+
+		// here, we lie: by setting `active_effect` to be the parent branch, any writes
+		// that happen inside `fn` will _not_ cause an unnecessary reschedule, because
+		// the affected effects will be children of `active_effect`. this is safe
+		// because these effects are known to run in the correct order
+		try {
+			set_active_effect(effect.parent);
+			untrack(fn);
+		} finally {
+			set_active_effect(effect);
+		}
 	});
 }
 
