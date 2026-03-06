@@ -225,7 +225,7 @@ export class Batch {
 		var updates = (legacy_updates = []);
 
 		for (const root of roots) {
-			this.#traverse_effect_tree(root, effects, render_effects);
+			this.#traverse(root, effects, render_effects);
 		}
 
 		// any writes should take effect in a subsequent batch
@@ -291,7 +291,7 @@ export class Batch {
 	 * @param {Effect[]} effects
 	 * @param {Effect[]} render_effects
 	 */
-	#traverse_effect_tree(root, effects, render_effects) {
+	#traverse(root, effects, render_effects) {
 		root.f ^= CLEAN;
 
 		var effect = root.first;
@@ -386,6 +386,22 @@ export class Batch {
 		try {
 			is_processing = true;
 			current_batch = this;
+
+			// we only reschedule previously-deferred effects if we expect
+			// to be able to run them after processing the batch
+			if (!this.#is_deferred()) {
+				for (const e of this.#dirty_effects) {
+					this.#maybe_dirty_effects.delete(e);
+					set_signal_status(e, DIRTY);
+					this.schedule(e);
+				}
+
+				for (const e of this.#maybe_dirty_effects) {
+					set_signal_status(e, MAYBE_DIRTY);
+					this.schedule(e);
+				}
+			}
+
 			this.#process();
 		} finally {
 			flush_count = 0;
@@ -469,7 +485,7 @@ export class Batch {
 						batch.apply();
 
 						for (const root of batch.#roots) {
-							batch.#traverse_effect_tree(root, [], []);
+							batch.#traverse(root, [], []);
 						}
 
 						// TODO do we need to do anything with the dummy effect arrays?
@@ -509,32 +525,8 @@ export class Batch {
 
 		queue_micro_task(() => {
 			this.#decrement_queued = false;
-
-			if (!this.#is_deferred()) {
-				// we only reschedule previously-deferred effects if we expect
-				// to be able to run them after processing the batch
-				this.revive();
-			} else if (this.#roots.length > 0) {
-				// if other effects are scheduled, process the batch _without_
-				// rescheduling the previously-deferred effects
-				this.flush();
-			}
+			this.flush();
 		});
-	}
-
-	revive() {
-		for (const e of this.#dirty_effects) {
-			this.#maybe_dirty_effects.delete(e);
-			set_signal_status(e, DIRTY);
-			this.schedule(e);
-		}
-
-		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			this.schedule(e);
-		}
-
-		this.flush();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
@@ -1062,7 +1054,7 @@ export function fork(fn) {
 				flush_eager_effects();
 			});
 
-			batch.revive();
+			batch.flush();
 			await settled;
 		},
 		discard: () => {
