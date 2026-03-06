@@ -21,8 +21,10 @@ export function HtmlTag(node, context) {
 	const expression = build_expression(context, node.expression, node.metadata.expression);
 	const html = has_await ? b.call('$.get', b.id('$$html')) : expression;
 
-	const is_svg = context.state.metadata.namespace === 'svg';
-	const is_mathml = context.state.metadata.namespace === 'mathml';
+	// When is_controlled, the parent node already provides the correct namespace,
+	// so is_svg/is_mathml are only needed for the non-controlled path's wrapper element
+	const is_svg = !is_controlled && context.state.metadata.namespace === 'svg';
+	const is_mathml = !is_controlled && context.state.metadata.namespace === 'mathml';
 
 	const statement = b.stmt(
 		b.call(
