@@ -203,12 +203,10 @@ export class Batch {
 		}
 	}
 
-	process() {
+	#process() {
 		if (flush_count++ > 1000) {
 			infinite_loop_guard();
 		}
-
-		is_processing = true;
 
 		const roots = this.#roots;
 		this.#roots = [];
@@ -280,9 +278,6 @@ export class Batch {
 			this.#deferred?.resolve();
 		}
 
-		batch_values = null;
-		is_processing = false;
-
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
 		if (next_batch !== null) {
@@ -294,9 +289,7 @@ export class Batch {
 				}
 			}
 
-			next_batch.process();
-		} else {
-			old_values.clear();
+			next_batch.#process();
 		}
 	}
 
@@ -400,8 +393,9 @@ export class Batch {
 		var source_stacks = DEV ? new Set() : null;
 
 		try {
+			is_processing = true;
 			current_batch = this;
-			this.process();
+			this.#process();
 		} finally {
 			flush_count = 0;
 			last_scheduled_effect = null;
@@ -410,6 +404,9 @@ export class Batch {
 			is_processing = false;
 
 			current_batch = null;
+			batch_values = null;
+
+			old_values.clear();
 
 			if (DEV) {
 				for (const source of /** @type {Set<Source>} */ (source_stacks)) {
