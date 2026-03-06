@@ -1,5 +1,7 @@
 import { STATE_SYMBOL } from '#client/constants';
+import { capture_signals } from '../../../legacy.js';
 import { effect, render_effect } from '../../../reactivity/effects.js';
+import { old_values } from '../../../reactivity/sources.js';
 import { untrack } from '../../../runtime.js';
 import { queue_micro_task } from '../../task.js';
 
@@ -48,12 +50,16 @@ export function bind_this(element_or_component = {}, update, get_value, get_part
 		});
 
 		return () => {
-			// We cannot use effects in the teardown phase, we we use a microtask instead.
-			queue_micro_task(() => {
-				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
-					update(null, ...parts);
-				}
-			});
+			const signals = capture_signals(get_value);
+
+			if (parts && is_bound_this(get_value(...parts), element_or_component)) {
+				update(null, ...parts);
+			}
+
+			if (signals && signals.size === 1) {
+				const [signal] = [...signals];
+				old_values.set(signal, element_or_component);
+			}
 		};
 	});
 
