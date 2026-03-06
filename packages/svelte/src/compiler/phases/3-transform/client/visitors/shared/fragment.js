@@ -112,8 +112,7 @@ export function process_children(nodes, initial, is_element, context) {
 			} else if (
 				node.type === 'HtmlTag' &&
 				nodes.length === 1 &&
-				is_element &&
-				!node.metadata.expression.is_async()
+				is_element
 			) {
 				node.metadata.is_controlled = true;
 			} else {
