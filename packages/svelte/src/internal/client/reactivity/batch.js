@@ -589,32 +589,32 @@ export class Batch {
 
 	/**
 	 *
-	 * @param {Effect} signal
+	 * @param {Effect} effect
 	 */
-	schedule(signal) {
-		var effect = (last_scheduled_effect = signal);
-
-		var boundary = effect.b;
+	schedule(effect) {
+		last_scheduled_effect = effect;
 
 		// defer render effects inside a pending boundary
 		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
 		if (
-			boundary?.is_pending &&
-			(signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
-			(signal.f & REACTION_RAN) === 0
+			effect.b?.is_pending &&
+			(effect.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
+			(effect.f & REACTION_RAN) === 0
 		) {
-			boundary.defer_effect(signal);
+			effect.b.defer_effect(effect);
 			return;
 		}
 
-		while (effect.parent !== null) {
-			effect = effect.parent;
-			var flags = effect.f;
+		var e = effect;
+
+		while (e.parent !== null) {
+			e = e.parent;
+			var flags = e.f;
 
 			// if the effect is being scheduled because a parent (each/await/etc) block
 			// updated an internal source, or because a branch is being unskipped,
 			// bail out or we'll cause a second flush
-			if (collected_effects !== null && effect === active_effect) {
+			if (collected_effects !== null && e === active_effect) {
 				if (async_mode_flag) return;
 
 				// in sync mode, render effects run during traversal. in an extreme edge case
@@ -637,11 +637,11 @@ export class Batch {
 					return;
 				}
 
-				effect.f ^= CLEAN;
+				e.f ^= CLEAN;
 			}
 		}
 
-		this.#roots.push(effect);
+		this.#roots.push(e);
 	}
 }
 
