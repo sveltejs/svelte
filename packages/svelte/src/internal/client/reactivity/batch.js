@@ -46,8 +46,7 @@ const batches = new Set();
 export let current_batch = null;
 
 /**
- * This is needed to avoid overwriting inputs in non-async mode
- * TODO 6.0 remove this, as non-async mode will go away
+ * This is needed to avoid overwriting inputs
  * @type {Batch | null}
  */
 export let previous_batch = null;
@@ -255,14 +254,14 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
-			previous_batch = this;
-
 			// append/remove branches
 			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
 
+			previous_batch = this;
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
+			previous_batch = null;
 
 			if (this.#pending === 0) {
 				this.#commit();
@@ -271,8 +270,6 @@ export class Batch {
 			// Clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
 			this.#dirty_effects.clear();
 			this.#maybe_dirty_effects.clear();
-
-			previous_batch = null;
 
 			this.#deferred?.resolve();
 		}
