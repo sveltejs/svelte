@@ -397,8 +397,26 @@ export class Batch {
 	}
 
 	flush() {
-		current_batch = this;
-		flush_effects();
+		var source_stacks = DEV ? new Set() : null;
+
+		try {
+			current_batch = this;
+			this.process();
+		} finally {
+			flush_count = 0;
+			last_scheduled_effect = null;
+			collected_effects = null;
+			legacy_updates = null;
+			is_processing = false;
+
+			current_batch = null;
+
+			if (DEV) {
+				for (const source of /** @type {Set<Source>} */ (source_stacks)) {
+					source.updated = null;
+				}
+			}
+		}
 	}
 
 	discard() {
@@ -661,7 +679,7 @@ export function flushSync(fn) {
 
 		if (fn) {
 			if (current_batch !== null && !current_batch.is_fork) {
-				flush_effects();
+				current_batch.flush();
 			}
 
 			result = fn();
@@ -674,32 +692,10 @@ export function flushSync(fn) {
 				return /** @type {T} */ (result);
 			}
 
-			flush_effects();
+			current_batch.flush();
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
-	}
-}
-
-function flush_effects() {
-	var source_stacks = DEV ? new Set() : null;
-
-	try {
-		/** @type {Batch} */ (current_batch).process();
-	} finally {
-		flush_count = 0;
-		last_scheduled_effect = null;
-		collected_effects = null;
-		legacy_updates = null;
-		is_processing = false;
-
-		current_batch = null;
-
-		if (DEV) {
-			for (const source of /** @type {Set<Source>} */ (source_stacks)) {
-				source.updated = null;
-			}
-		}
 	}
 }
 
