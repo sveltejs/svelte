@@ -35,7 +35,14 @@ import { includes } from '../../shared/utils.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
+import {
+	Batch,
+	batch_values,
+	current_batch,
+	eager_block_effects,
+	schedule_effect,
+	set_current_batch
+} from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -69,6 +76,7 @@ export function set_eager_effects_deferred() {
 export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
+		batch: null,
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
@@ -183,9 +191,6 @@ export function internal_set(source, value) {
 
 		source.v = value;
 
-		var batch = Batch.ensure();
-		batch.capture(source, old_value);
-
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
 				source.updated ??= new Map();
@@ -232,6 +237,11 @@ export function internal_set(source, value) {
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
 		mark_reactions(source, DIRTY);
+
+		var batch = Batch.ensure();
+		batch.capture(source, old_value);
+		if (!batch.is_fork) source.batch = batch;
+		batch.reschedule();
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -329,6 +339,11 @@ function mark_reactions(signal, status) {
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
+		var reaction_batch = reaction.batch;
+
+		if (current_batch === null && reaction_batch !== null && !reaction_batch.finished()) {
+			set_current_batch(reaction_batch);
+		}
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;

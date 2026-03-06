@@ -16,7 +16,8 @@ import {
 	EAGER_EFFECT,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
-	REACTION_RAN
+	REACTION_RAN,
+	STALE_REACTION
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -44,6 +45,13 @@ const batches = new Set();
 
 /** @type {Batch | null} */
 export let current_batch = null;
+
+/**
+ * @param {Batch | null} batch
+ */
+export function set_current_batch(batch) {
+	current_batch = batch;
+}
 
 /**
  * This is needed to avoid overwriting inputs in non-async mode
@@ -144,7 +152,7 @@ export class Batch {
 	 * is committed — we skip over these during `process`.
 	 * The value contains child effects that were dirty/maybe_dirty before being reset,
 	 * so they can be rescheduled if the branch survives.
-	 * @type {Map<Effect, { d: Effect[], m: Effect[] }>}
+	 * @type {Map<Effect, { d: Effect[], m: Effect[], on_discard: (batch: Batch) => void }>}
 	 */
 	#skipped_branches = new Map();
 
@@ -156,13 +164,18 @@ export class Batch {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
 
+	finished() {
+		return this.#pending === 0 && !this.is_fork && this.#commit_callbacks.size === 0;
+	}
+
 	/**
 	 * Add an effect to the #skipped_branches map and reset its children
 	 * @param {Effect} effect
+	 * @param {(batch: Batch) => void} on_discard
 	 */
-	skip_effect(effect) {
+	skip_effect(effect, on_discard) {
 		if (!this.#skipped_branches.has(effect)) {
-			this.#skipped_branches.set(effect, { d: [], m: [] });
+			this.#skipped_branches.set(effect, { d: [], m: [], on_discard });
 		}
 	}
 
@@ -326,6 +339,8 @@ export class Batch {
 	 * @param {any} value
 	 */
 	capture(source, value) {
+		if (!this.is_fork) source.batch = this;
+
 		if (value !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, value);
 		}
@@ -448,6 +463,9 @@ export class Batch {
 			batch_values = previous_batch_values;
 		}
 
+		for (const { on_discard } of this.#skipped_branches.values()) {
+			on_discard(this);
+		}
 		this.#skipped_branches.clear();
 		batches.delete(this);
 	}
@@ -534,6 +552,18 @@ export class Batch {
 		}
 
 		return current_batch;
+	}
+
+	#scheduling = false;
+
+	reschedule() {
+		if (!is_flushing_sync && !this.#scheduling && this.#is_deferred()) {
+			this.#scheduling = true;
+			queue_micro_task(() => {
+				this.#scheduling = false;
+				this.revive();
+			});
+		}
 	}
 
 	apply() {
@@ -954,9 +984,22 @@ export function eager(fn) {
  * @param {{ d: Effect[], m: Effect[] }} tracked
  */
 function reset_branch(effect, tracked) {
-	// clean branch = nothing dirty inside, no need to traverse further
-	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
+	// Clean branches normally need no traversal. But if a branch belongs to the
+	// current batch, we still need to walk it to cancel stale async effects.
+	if (
+		(effect.f & BRANCH_EFFECT) !== 0 &&
+		(effect.f & CLEAN) !== 0 &&
+		effect.batch !== current_batch
+	) {
 		return;
+	}
+
+	// This branch is stale for the current batch. Cancel async effects that
+	// belong to this batch so pending async work is rejected/discarded,
+	// which is important for getting the batch's pending count to 0.
+	if ((effect.f & ASYNC) !== 0 && effect.batch === current_batch) {
+		effect.ac?.abort(STALE_REACTION);
+		effect.ac = null;
 	}
 
 	if ((effect.f & DIRTY) !== 0) {

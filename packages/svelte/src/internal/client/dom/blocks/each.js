@@ -361,7 +361,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			if (defer) {
 				for (const [key, item] of items) {
 					if (!keys.has(key)) {
-						batch.skip_effect(item.e);
+						batch.skip_effect(item.e, discard);
 					}
 				}
 
