@@ -12,7 +12,8 @@ import {
 	DESTROYED,
 	CLEAN,
 	INERT,
-	BRANCH_EFFECT
+	BRANCH_EFFECT,
+	CONST_TAG
 } from '#client/constants';
 import {
 	active_reaction,
@@ -64,10 +65,6 @@ export const recent_async_deriveds = new Set();
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	var flags = DERIVED | DIRTY;
-	var parent_derived =
-		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
-			? /** @type {Derived} */ (active_reaction)
-			: null;
 
 	if (active_effect !== null) {
 		// Since deriveds are evaluated lazily, any effects created inside them are
@@ -87,7 +84,7 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
-		parent: parent_derived ?? active_effect,
+		parent: active_effect,
 		ac: null
 	};
 
@@ -96,6 +93,17 @@ export function derived(fn) {
 	}
 
 	return signal;
+}
+
+/**
+ * @template V
+ * @param {Derived<V>} d
+ * @returns {Derived<V>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function const_tag(d) {
+	d.f |= CONST_TAG;
+	return d;
 }
 
 /**
@@ -285,46 +293,18 @@ export function destroy_derived_effects(derived) {
 let stack = [];
 
 /**
- * @param {Derived} derived
- * @returns {Effect | null}
- */
-function get_derived_parent_effect(derived) {
-	var parent = derived.parent;
-	while (parent !== null) {
-		if ((parent.f & DERIVED) === 0) {
-			return /** @type {Effect} */ (parent);
-		}
-		parent = parent.parent;
-	}
-	return null;
-}
-
-/**
  * @template T
  * @param {Derived} derived
  * @returns {T}
  */
 export function execute_derived(derived) {
-	var raw_parent = get_derived_parent_effect(derived);
-	var parent_effect = raw_parent !== null && (raw_parent.f & DESTROYED) !== 0 ? null : raw_parent;
+	var parent_effect = derived.parent;
 
-	// don't update `{@const ...}` in an outroing block
+	// don't update `{@const ...}` in an outroing or destroyed block
 	if (
-		!async_mode_flag &&
-		!is_destroying_effect &&
+		(derived.f & CONST_TAG) !== 0 &&
 		parent_effect !== null &&
-		(parent_effect.f & INERT) !== 0
-	) {
-		return derived.v;
-	}
-
-	// don't update deriveds inside a destroyed branch (e.g. {#if} or {#each}) —
-	// the branch scope is invalid and evaluating could trigger side effects
-	// with stale values.
-	if (
-		!is_destroying_effect &&
-		raw_parent !== null &&
-		(raw_parent.f & (DESTROYED | BRANCH_EFFECT)) === (DESTROYED | BRANCH_EFFECT)
+		(parent_effect.f & (INERT | DESTROYED)) !== 0
 	) {
 		return derived.v;
 	}

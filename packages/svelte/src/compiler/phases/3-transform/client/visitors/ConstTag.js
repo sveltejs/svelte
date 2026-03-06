@@ -19,7 +19,10 @@ export function ConstTag(node, context) {
 	if (declaration.id.type === 'Identifier') {
 		const init = build_expression(context, declaration.init, node.metadata.expression);
 
-		let expression = create_derived(context.state, init, node.metadata.expression.has_await);
+		let expression = b.call(
+			'$.const_tag',
+			create_derived(context.state, init, node.metadata.expression.has_await)
+		);
 
 		if (dev) {
 			expression = b.call('$.tag', expression, b.literal(declaration.id.name));

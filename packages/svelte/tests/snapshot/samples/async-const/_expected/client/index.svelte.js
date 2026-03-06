@@ -14,8 +14,8 @@ export default function Async_const($$anchor) {
 			let b;
 
 			var promises = $.run([
-				async () => a = (await $.save($.async_derived(async () => (await $.save(1))())))(),
-				() => b = $.derived(() => $.get(a) + 1)
+				async () => a = $.const_tag((await $.save($.async_derived(async () => (await $.save(1))())))()),
+				() => b = $.const_tag($.derived(() => $.get(a) + 1))
 			]);
 
 			var p = root_1();

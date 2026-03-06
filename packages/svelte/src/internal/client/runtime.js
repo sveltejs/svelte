@@ -527,12 +527,7 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		// if we're in a derived that is being read inside an _async_ derived,
-		// it's possible that the effect was already destroyed. In this case,
-		// we don't add the dependency, because that would create a memory leak
-		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
-
-		if (!destroyed && (current_sources === null || !includes.call(current_sources, signal))) {
+		if (current_sources === null || !includes.call(current_sources, signal)) {
 			var deps = active_reaction.deps;
 
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {

@@ -49,6 +49,7 @@ export const EFFECT_OFFSCREEN = 1 << 25;
  * because a derived might be checked but not executed).
  */
 export const WAS_MARKED = 1 << 16;
+export const CONST_TAG = 1 << 26;
 
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;

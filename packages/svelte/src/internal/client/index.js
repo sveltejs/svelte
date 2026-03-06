@@ -109,6 +109,7 @@ export {
 export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
 	async_derived,
+	const_tag,
 	user_derived as derived,
 	derived_safe_equal
 } from './reactivity/deriveds.js';

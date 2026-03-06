@@ -138,7 +138,7 @@ export default function Select_with_rich_content($$anchor) {
 	var select_5 = $.sibling(select_4, 2);
 
 	$.each(select_5, 5, () => items, $.index, ($$anchor, item) => {
-		const x = $.derived_safe_equal(() => $.get(item) * 2);
+		const x = $.const_tag($.derived_safe_equal(() => $.get(item) * 2));
 		var option_8 = root_8();
 		var text_1 = $.child(option_8, true);
 
