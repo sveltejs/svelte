@@ -81,7 +81,7 @@ export function flatten(blockers, sync, async, fn) {
 		Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => finish([...sync.map(d), ...result]))
 			.catch((error) => invoke_error_boundary(error, parent))
-			.finally(decrement_pending);
+			.finally(() => decrement_pending());
 	}
 
 	if (blocker_promise) {
@@ -291,7 +291,7 @@ export function run(thunks) {
 		// wait one more tick, so that template effects are
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
-		.finally(decrement_pending);
+		.finally(() => decrement_pending());
 
 	return blockers;
 }
@@ -304,7 +304,7 @@ export function wait(blockers) {
 }
 
 /**
- * @returns {(skip: boolean) => void}
+ * @returns {(skip?: boolean) => void}
  */
 export function increment_pending() {
 	var boundary = /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
@@ -314,7 +314,7 @@ export function increment_pending() {
 	boundary.update_pending_count(1, batch);
 	batch.increment(blocking);
 
-	return (skip) => {
+	return (skip = false) => {
 		boundary.update_pending_count(-1, batch);
 		batch.decrement(blocking, skip);
 	};
