@@ -136,8 +136,11 @@ export class Batch {
 	 */
 	#deferred = null;
 
-	/** @type {Effect[]} */
-	#queued_root_effects = [];
+	/**
+	 * The root effects that need to be flushed
+	 * @type {Effect[]}
+	 */
+	#roots = [];
 
 	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
@@ -206,8 +209,9 @@ export class Batch {
 		}
 
 		is_processing = true;
-		const root_effects = this.#queued_root_effects;
-		this.#queued_root_effects = [];
+
+		const roots = this.#roots;
+		this.#roots = [];
 
 		this.apply();
 
@@ -223,7 +227,7 @@ export class Batch {
 		 */
 		var updates = (legacy_updates = []);
 
-		for (const root of root_effects) {
+		for (const root of roots) {
 			this.#traverse_effect_tree(root, effects, render_effects);
 			// Note: #traverse_effect_tree runs block effects eagerly, which can schedule effects,
 			// which means queued_root_effects now may be filled again.
@@ -455,10 +459,10 @@ export class Batch {
 						mark_effects(source, others, marked, checked);
 					}
 
-					if (batch.#queued_root_effects.length > 0) {
+					if (batch.#roots.length > 0) {
 						batch.apply();
 
-						for (const root of batch.#queued_root_effects) {
+						for (const root of batch.#roots) {
 							batch.#traverse_effect_tree(root, [], []);
 						}
 
@@ -504,7 +508,7 @@ export class Batch {
 				// we only reschedule previously-deferred effects if we expect
 				// to be able to run them after processing the batch
 				this.revive();
-			} else if (this.#queued_root_effects.length > 0) {
+			} else if (this.#roots.length > 0) {
 				// if other effects are scheduled, process the batch _without_
 				// rescheduling the previously-deferred effects
 				this.flush();
@@ -637,7 +641,7 @@ export class Batch {
 			}
 		}
 
-		this.#queued_root_effects.push(effect);
+		this.#roots.push(effect);
 	}
 }
 
