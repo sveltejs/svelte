@@ -234,6 +234,7 @@ export class Batch {
 			// log_inconsistent_branches(root);
 		}
 
+		// any writes should take effect in a subsequent batch
 		current_batch = null;
 
 		if (updates.length > 0) {
@@ -254,8 +255,6 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
-			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
-			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
 
 			// append/remove branches
