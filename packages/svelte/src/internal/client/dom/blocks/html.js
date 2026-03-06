@@ -42,6 +42,7 @@ function check_hash(element, server_hash, value) {
 /**
  * @param {Element | Text | Comment} node
  * @param {() => string | TrustedHTML} get_value
+ * @param {boolean} [is_controlled]
  * @param {boolean} [svg]
  * @param {boolean} [mathml]
  * @param {boolean} [skip_warning]
@@ -50,10 +51,10 @@ function check_hash(element, server_hash, value) {
 export function html(
 	node,
 	get_value,
+	is_controlled = false,
 	svg = false,
 	mathml = false,
-	skip_warning = false,
-	is_controlled = false
+	skip_warning = false
 ) {
 	var anchor = node;
 
@@ -80,15 +81,12 @@ export function html(
 			// When @html is the only child, use innerHTML directly.
 			// This also handles contenteditable, where the user may delete the anchor comment.
 			effect.nodes = null;
-			parent_node.innerHTML = /** @type {any} */ (value === '' ? '' : value);
+			parent_node.innerHTML = /** @type {string} */ (value);
 
 			if (value !== '') {
-				// Re-append the anchor comment (innerHTML removes it)
-				anchor = parent_node.appendChild(document.createComment(''));
-
 				assign_nodes(
 					/** @type {TemplateNode} */ (get_first_child(parent_node)),
-					/** @type {TemplateNode} */ (anchor.previousSibling)
+					/** @type {TemplateNode} */ (parent_node.lastChild)
 				);
 			}
 

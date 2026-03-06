@@ -29,10 +29,10 @@ export function HtmlTag(node, context) {
 			'$.html',
 			context.state.node,
 			b.thunk(html),
+			is_controlled && b.true,
 			is_svg && b.true,
 			is_mathml && b.true,
-			is_ignored(node, 'hydration_html_changed') && b.true,
-			is_controlled && b.true
+			is_ignored(node, 'hydration_html_changed') && b.true
 		)
 	);
 
