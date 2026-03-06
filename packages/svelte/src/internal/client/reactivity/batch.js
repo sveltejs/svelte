@@ -671,13 +671,11 @@ export function flushSync(fn) {
 			flush_tasks();
 
 			if (current_batch === null) {
-				break;
+				return /** @type {T} */ (result);
 			}
 
 			flush_effects();
 		}
-
-		return /** @type {T} */ (result);
 	} finally {
 		is_flushing_sync = was_flushing_sync;
 	}
