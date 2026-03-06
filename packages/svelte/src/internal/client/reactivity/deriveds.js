@@ -196,6 +196,8 @@ export function async_derived(fn, label, location) {
 			if (decrement_pending) {
 				decrement_pending();
 			}
+
+			batch.deactivate();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
