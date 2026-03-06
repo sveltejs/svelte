@@ -79,6 +79,7 @@ export let collected_effects = null;
  * (not `internal_set`) call. These will be added to the next batch and
  * trigger another `batch.process()`
  * @type {Effect[] | null}
+ * @deprecated when we get rid of runes mode and stores, we can get rid of this
  */
 export let legacy_updates = null;
 
@@ -216,7 +217,10 @@ export class Batch {
 		/** @type {Effect[]} */
 		var render_effects = [];
 
-		/** @type {Effect[]} */
+		/**
+		 * @type {Effect[]}
+		 * @deprecated when we get rid of runes mode and stores, we can get rid of this
+		 */
 		var updates = (legacy_updates = []);
 
 		for (const root of root_effects) {
