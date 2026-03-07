@@ -48,10 +48,30 @@ export function hydrate_next() {
 export function reset(node) {
 	if (!hydrating) return;
 
-	// If the node has remaining siblings, something has gone wrong
-	if (get_next_sibling(hydrate_node) !== null) {
+	var next = get_next_sibling(hydrate_node);
+
+	if (next !== null) {
 		w.hydration_mismatch();
-		throw HYDRATION_ERROR;
+
+		// If the remaining sibling is a comment node (a Svelte hydration marker), this is a
+		// genuine structural mismatch between server and client rendering — bail out
+		if (next.nodeType === COMMENT_NODE) {
+			throw HYDRATION_ERROR;
+		}
+
+		// Otherwise, extra non-comment siblings may have been inserted by browser tools such as
+		// translation extensions (e.g. Google Translate wraps text nodes in <font> elements).
+		// Remove them rather than failing hydration completely.
+		while (next !== null && next.nodeType !== COMMENT_NODE) {
+			var following = get_next_sibling(next);
+			next.remove();
+			next = following;
+		}
+
+		// If there is still a remaining sibling (a comment node), something is genuinely wrong
+		if (next !== null) {
+			throw HYDRATION_ERROR;
+		}
 	}
 
 	hydrate_node = node;
