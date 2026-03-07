@@ -23,6 +23,13 @@ export function append_styles(anchor, css) {
 			style.id = css.hash;
 			style.textContent = css.code;
 
+			// Propagate nonce to the style element for CSP compliance.
+			// Browsers allow reading `element.nonce` from JS but hide it from CSS selectors,
+			// so we can find a nonce from any existing script/style element on the page.
+			var doc = /** @type {Document} */ (/** @type {ShadowRoot} */ (root).host ? root.ownerDocument : root);
+			var nonce = /** @type {HTMLElement | null} */ (doc?.querySelector('[nonce]'))?.nonce;
+			if (nonce) style.nonce = nonce;
+
 			target.appendChild(style);
 
 			if (DEV) {
