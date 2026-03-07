@@ -68,6 +68,10 @@ export class Boundary {
 	/** @type {Boundary | null} */
 	parent;
 
+	/**
+	 * True if the boundary has a `pending` snippet, is not yet resolved, and either
+	 * a) is mounting or b) is hydrating a server-rendered `pending` snippet
+	 */
 	is_pending = false;
 
 	/**
