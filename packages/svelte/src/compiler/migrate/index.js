@@ -1,10 +1,10 @@
 /** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
-/** @import { Visitors } from 'zimmerframe' */
+/** @import { ReadonlyVisitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope } from '../phases/scope.js' */
 /** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
-import { walk } from 'zimmerframe';
+import { walk_readonly } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
 import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
@@ -213,11 +213,11 @@ export function migrate(source, { filename, use_ts } = {}) {
 		}
 
 		if (parsed.instance) {
-			walk(parsed.instance.content, state, instance_script);
+			walk_readonly(parsed.instance.content, state, instance_script);
 		}
 
 		state = { ...state, scope: analysis.template.scope };
-		walk(parsed.fragment, state, template);
+		walk_readonly(parsed.fragment, state, template);
 
 		let insertion_point = parsed.instance
 			? /** @type {number} */ (parsed.instance.content.start)
@@ -481,7 +481,7 @@ export function migrate(source, { filename, use_ts } = {}) {
  * }} State
  */
 
-/** @type {Visitors<AST.SvelteNode, State>} */
+/** @type {ReadonlyVisitors<AST.SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -1052,7 +1052,7 @@ function trim_block(state, start, end) {
 	}
 }
 
-/** @type {Visitors<AST.SvelteNode, State>} */
+/** @type {ReadonlyVisitors<AST.SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
