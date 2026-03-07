@@ -11,6 +11,7 @@ import {
 	WAS_MARKED,
 	DESTROYED,
 	CLEAN,
+	INERT,
 	REACTION_RAN,
 	BRANCH_EFFECT
 } from '#client/constants';
@@ -44,6 +45,7 @@ import { batch_values, collected_effects, current_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
+import { Boundary } from '../dom/blocks/boundary.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
