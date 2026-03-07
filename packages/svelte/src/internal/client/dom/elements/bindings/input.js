@@ -89,7 +89,7 @@ export function bind_value(input, get, set = get) {
 
 		if (input === document.activeElement) {
 			// In sync mode render effects are executed during tree traversal -> needs current_batch
-            // In async mode render effects are flushed once batch resolved, at which point current_batch is null -> needs previous_batch
+			// In async mode render effects are flushed once batch resolved, at which point current_batch is null -> needs previous_batch
 			var batch = /** @type {Batch} */ (async_mode_flag ? previous_batch : current_batch);
 
 			// Never rewrite the contents of a focused input. We can get here if, for example,

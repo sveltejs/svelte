@@ -116,8 +116,8 @@ export function bind_select_value(select, get, set = get) {
 		var value = get();
 
 		if (select === document.activeElement) {
-			// In sync mode render effects are executed during tree traversal -> needs current_batch  
-			// In async mode render effects are flushed once batch resolved, at which point current_batch is null -> needs previous_batch  
+			// In sync mode render effects are executed during tree traversal -> needs current_batch
+			// In async mode render effects are flushed once batch resolved, at which point current_batch is null -> needs previous_batch
 			var batch = /** @type {Batch} */ (async_mode_flag ? previous_batch : current_batch);
 
 			// Don't update the <select> if it is focused. We can get here if, for example,
