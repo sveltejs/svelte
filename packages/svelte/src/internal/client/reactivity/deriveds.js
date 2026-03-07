@@ -41,7 +41,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
+import { batch_values, collected_effects, current_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -334,7 +334,7 @@ export function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
 
-	set_active_effect(get_derived_parent_effect(derived));
+	set_active_effect(parent_effect);
 
 	if (DEV) {
 		let prev_eager_effects = eager_effects;
@@ -372,6 +372,32 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
+	// Don't re-evaluate deriveds inside INERT (outroing) branches when the
+	// read originates from outside the branch. Re-evaluating would use stale
+	// dependency values (e.g. a prop that became `undefined` when the branch
+	// condition changed), violating the `{#if}` contract.
+	//
+	// In non-async mode, INERT branches are never walked by the scheduler,
+	// so any read is necessarily external — block unconditionally.
+	//
+	// In async mode, INERT branches ARE walked (to keep transitions alive),
+	// so we only block reads during effect flushing (collected_effects === null
+	// and active_effect === null), which indicates the reader is an external
+	// effect, not the branch's own traversal.
+	if (!is_destroying_effect) {
+		var dominated_by_inert = async_mode_flag
+			? collected_effects === null && active_effect === null
+			: true;
+
+		if (dominated_by_inert) {
+			var parent = get_derived_parent_effect(derived);
+
+			if (parent !== null && (parent.f & INERT) !== 0 && (parent.f & DESTROYED) === 0) {
+				return;
+			}
+		}
+	}
+
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
