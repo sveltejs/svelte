@@ -1,5 +1,15 @@
 # svelte
 
+## 5.53.8
+
+### Patch Changes
+
+- fix: `{@html}` no longer duplicates content inside `contenteditable` elements ([#17853](https://github.com/sveltejs/svelte/pull/17853))
+
+- fix: handle asnyc updates within pending boundary ([#17873](https://github.com/sveltejs/svelte/pull/17873))
+
+- perf: avoid re-traversing the effect tree after `$:` assignments ([#17848](https://github.com/sveltejs/svelte/pull/17848))
+
 ## 5.53.7
 
 ### Patch Changes
