@@ -322,8 +322,14 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 		queue_micro_task(() => {
 			if (aborted) return;
+			// Abort the counterpart before calling the deferred transition function.
+			// This ensures that getBoundingClientRect() — called inside functions like
+			// crossfade — returns the natural layout position rather than an animated
+			// (mid-transition) position, which would cause the transition to animate
+			// to/from incorrect positions when a new transition starts mid-flight.
+			counterpart?.abort();
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t2, on_finish);
+			a = animate(element, o, undefined, t2, on_finish);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -333,9 +339,9 @@ function animate(element, options, counterpart, t2, on_finish) {
 				aborted = true;
 				a?.abort();
 			},
-			deactivate: () => a.deactivate(),
-			reset: () => a.reset(),
-			t: () => a.t()
+			deactivate: () => a?.deactivate(),
+			reset: () => a?.reset(),
+			t: () => a?.t() ?? (1 - t2)
 		};
 	}
 
