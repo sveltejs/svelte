@@ -324,11 +324,7 @@ export function prop(props, key, flags, fallback) {
 
 		if (setter) {
 			if (runes) e.props_invalid_value(key);
-			effect(() => {
-				untrack(() => {
-					setter(initial_value);
-				});
-			});
+			setter(initial_value);
 		}
 	}
 
