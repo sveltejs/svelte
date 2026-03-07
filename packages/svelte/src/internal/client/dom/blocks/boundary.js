@@ -35,7 +35,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, schedule_effect } from '../../reactivity/batch.js';
+import { Batch, current_batch, schedule_effect } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -218,6 +218,8 @@ export class Boundary {
 		this.is_pending = true;
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
+		var batch = /** @type {Batch} */ (current_batch);
+
 		queue_micro_task(() => {
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
@@ -236,12 +238,14 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.#resolve();
+				this.#resolve(batch);
 			}
 		});
 	}
 
 	#render() {
+		var batch = /** @type {Batch} */ (current_batch);
+
 		try {
 			this.is_pending = this.has_pending_snippet();
 			this.#pending_count = 0;
@@ -258,14 +262,17 @@ export class Boundary {
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 				this.#pending_effect = branch(() => pending(this.#anchor));
 			} else {
-				this.#resolve();
+				this.#resolve(batch);
 			}
 		} catch (error) {
 			this.error(error);
 		}
 	}
 
-	#resolve() {
+	/**
+	 * @param {Batch} batch
+	 */
+	#resolve(batch) {
 		this.is_pending = false;
 
 		// any effects that were previously deferred should be rescheduled —
@@ -273,12 +280,12 @@ export class Boundary {
 		// same update that brought us here) the effects will be flushed
 		for (const e of this.#dirty_effects) {
 			set_signal_status(e, DIRTY);
-			schedule_effect(e);
+			batch.schedule(e);
 		}
 
 		for (const e of this.#maybe_dirty_effects) {
 			set_signal_status(e, MAYBE_DIRTY);
-			schedule_effect(e);
+			batch.schedule(e);
 		}
 
 		this.#dirty_effects.clear();
@@ -335,11 +342,12 @@ export class Boundary {
 	 * Updates the pending count associated with the currently visible pending snippet,
 	 * if any, such that we can replace the snippet with content once work is done
 	 * @param {1 | -1} d
+	 * @param {Batch} batch
 	 */
-	#update_pending_count(d) {
+	#update_pending_count(d, batch) {
 		if (!this.has_pending_snippet()) {
 			if (this.parent) {
-				this.parent.#update_pending_count(d);
+				this.parent.#update_pending_count(d, batch);
 			}
 
 			// if there's no parent, we're in a scope with no pending snippet
@@ -349,7 +357,7 @@ export class Boundary {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.#resolve();
+			this.#resolve(batch);
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
@@ -369,9 +377,10 @@ export class Boundary {
 	 * and controls when the current `pending` snippet (if any) is removed.
 	 * Do not call from inside the class
 	 * @param {1 | -1} d
+	 * @param {Batch} batch
 	 */
-	update_pending_count(d) {
-		this.#update_pending_count(d);
+	update_pending_count(d, batch) {
+		this.#update_pending_count(d, batch);
 
 		this.#local_pending_count += d;
 
