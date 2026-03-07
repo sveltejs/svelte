@@ -145,6 +145,9 @@ export function async_derived(fn, label, location) {
 
 		var batch = /** @type {Batch} */ (current_batch);
 
+		// we only increment the batch's pending state for updates, not creation, otherwise
+		// we will decrement to zero before the work that depends on this promise (e.g. a
+		// template effect) has initialized, causing the batch to resolve prematurely
 		if (should_suspend && (effect.f & REACTION_RAN) !== 0) {
 			var decrement_pending = increment_pending();
 
