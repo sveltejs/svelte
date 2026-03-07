@@ -146,7 +146,7 @@ export function async_derived(fn, label, location) {
 		if (should_suspend) {
 			var decrement_pending = increment_pending();
 
-			if (/** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b).is_rendered()) {
+			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
 				deferreds.get(batch)?.reject(STALE_REACTION);
 				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 			} else {
