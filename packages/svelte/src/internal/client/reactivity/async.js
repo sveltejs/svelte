@@ -74,11 +74,14 @@ export function flatten(blockers, sync, async, fn) {
 		return;
 	}
 
+	var decrement_pending = increment_pending();
+
 	// Full path: has async expressions
 	function run() {
 		Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => finish([...sync.map(d), ...result]))
-			.catch((error) => invoke_error_boundary(error, parent));
+			.catch((error) => invoke_error_boundary(error, parent))
+			.finally(() => decrement_pending());
 	}
 
 	if (blocker_promise) {
@@ -106,10 +109,10 @@ export function run_after_blockers(blockers, fn) {
  * causes `b` to be registered as a dependency).
  */
 export function capture() {
-	var previous_effect = active_effect;
+	var previous_effect = /** @type {Effect} */ (active_effect);
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
-	var previous_batch = current_batch;
+	var previous_batch = /** @type {Batch} */ (current_batch);
 
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
@@ -119,7 +122,13 @@ export function capture() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
-		if (activate_batch) previous_batch?.activate();
+
+		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
+			// TODO we only need optional chaining here because `{#await ...}` blocks
+			// are anomalous. Once we retire them we can get rid of it
+			previous_batch?.activate();
+			previous_batch?.apply();
+		}
 
 		if (DEV) {
 			set_from_async_derived(null);
@@ -282,7 +291,7 @@ export function run(thunks) {
 		// wait one more tick, so that template effects are
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
-		.finally(decrement_pending);
+		.finally(() => decrement_pending());
 
 	return blockers;
 }
@@ -294,16 +303,19 @@ export function wait(blockers) {
 	return Promise.all(blockers.map((b) => b.promise));
 }
 
+/**
+ * @returns {(skip?: boolean) => void}
+ */
 export function increment_pending() {
 	var boundary = /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
 	var batch = /** @type {Batch} */ (current_batch);
 	var blocking = boundary.is_rendered();
 
-	boundary.update_pending_count(1);
+	boundary.update_pending_count(1, batch);
 	batch.increment(blocking);
 
-	return () => {
-		boundary.update_pending_count(-1);
-		batch.decrement(blocking);
+	return (skip = false) => {
+		boundary.update_pending_count(-1, batch);
+		batch.decrement(blocking, skip);
 	};
 }
