@@ -45,7 +45,6 @@ import { Batch, collected_effects } from './batch.js';
 import { flatten, increment_pending } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
-import { async_mode_flag } from '../../flags/index.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -679,10 +678,13 @@ function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
-	// Mark branches as clean so that effects can be scheduled, but only in async mode
-	// (in legacy mode, effect resumption happens during traversal)
-	if (async_mode_flag && (effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) === 0) {
-		effect.f ^= CLEAN;
+	// If a dependency of this effect changed while it was paused,
+	// schedule the effect to update. we don't use `is_dirty`
+	// here because we don't want to eagerly recompute a derived like
+	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
+	if ((effect.f & CLEAN) === 0) {
+		set_signal_status(effect, DIRTY);
+		Batch.ensure().schedule(effect); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
 	}
 
 	var child = effect.first;
