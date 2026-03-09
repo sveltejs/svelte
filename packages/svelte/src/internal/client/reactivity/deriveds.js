@@ -146,14 +146,14 @@ export function async_derived(fn, label, location) {
 
 		var batch = /** @type {Batch} */ (current_batch);
 
-		// we only increment the batch's pending state for updates, not creation, otherwise
-		// we will decrement to zero before the work that depends on this promise (e.g. a
-		// template effect) has initialized, causing the batch to resolve prematurely
-		if (should_suspend && (effect.f & REACTION_RAN) !== 0) {
-			var decrement_pending = increment_pending();
-		}
-
 		if (should_suspend) {
+			// we only increment the batch's pending state for updates, not creation, otherwise
+			// we will decrement to zero before the work that depends on this promise (e.g. a
+			// template effect) has initialized, causing the batch to resolve prematurely
+			if ((effect.f & REACTION_RAN) !== 0) {
+				var decrement_pending = increment_pending();
+			}
+
 			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
 				deferreds.get(batch)?.reject(STALE_REACTION);
 				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
