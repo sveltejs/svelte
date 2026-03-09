@@ -253,27 +253,10 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 	const transform = { ...state.transform };
 
-	// Extract computed member expression keys from the bind:this target so that teardown
-	// uses captured values instead of re-reading reactive state from a potentially destroyed scope.
-	// For `bind:this={obj[expr]}`, we capture `expr` as a part and replace it with a parameter.
-	const target = getter ?? expression;
-	if (target.type === 'MemberExpression' && target.computed && target.property.type !== 'Literal') {
-		const key_id = b.id('$$key');
-		ids.push(key_id);
-		values.push(/** @type {Expression} */ (visit(target.property)));
-
-		// Replace the computed property with the parameter in the expression.
-		// We mutate a clone so the original AST is not affected.
-		if (!getter) {
-			expression = /** @type {typeof expression} */ (JSON.parse(JSON.stringify(expression)));
-			/** @type {MemberExpression} */ (expression).property = key_id;
-			/** @type {MemberExpression} */ (expression).computed = true;
-		}
-	}
-
-	// Pass in context variables to the get/set functions, so that we can null out old values on
-	// teardown using the captured (non-stale) parts. Without this, bind:this teardown re-reads
-	// reactive state from a potentially destroyed scope, causing crashes.
+	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
+	// Note that we only do this for each context variables, the consequence is that the value might be stale in
+	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
+	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
 	walk(getter ?? expression, null, {
 		Identifier(node, { path }) {
 			if (seen.includes(node.name)) return;
@@ -286,7 +269,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 			if (!binding) return;
 
 			for (const [owner, scope] of state.scopes) {
-				if (scope === binding.scope) {
+				if (owner.type === 'EachBlock' && scope === binding.scope) {
 					ids.push(node);
 					values.push(/** @type {Expression} */ (visit(node)));
 
