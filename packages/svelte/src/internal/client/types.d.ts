@@ -38,6 +38,8 @@ export type ComponentContext = {
 	 * @deprecated remove in 6.0
 	 */
 	x: Record<string, any> | null;
+	/** The parent effect of this component */
+	r: Effect;
 	/**
 	 * legacy stuff
 	 * @deprecated remove in 6.0

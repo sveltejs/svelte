@@ -34,7 +34,8 @@ import {
 	USER_EFFECT,
 	ASYNC,
 	CONNECTED,
-	MANAGED_EFFECT
+	MANAGED_EFFECT,
+	DESTROYING
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -520,9 +521,9 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
+	set_signal_status(effect, DESTROYING);
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
-	set_signal_status(effect, DESTROYED);
 
 	var transitions = effect.nodes && effect.nodes.t;
 
@@ -533,6 +534,9 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	execute_effect_teardown(effect);
+
+	effect.f ^= DESTROYING;
+	set_signal_status(effect, DESTROYED);
 
 	var parent = effect.parent;
 
