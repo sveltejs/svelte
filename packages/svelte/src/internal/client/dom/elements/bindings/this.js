@@ -55,6 +55,8 @@ export function bind_this(element_or_component = {}, update, get_value, get_part
 			// When the bind:this effect is destroyed, we go up the effect parent chain until we find the last parent effect that is destroyed,
 			// or the effect containing the component bind:this is in (whichever comes first). That way we can time the nulling of the binding
 			// as close to user/developer expectation as possible.
+			// TODO Svelte 6: Decide if we want to keep this logic or just always null the binding in the component effect's teardown
+			// (which would be simpler, but less intuitive in some cases, and breaks the `ondestroy-before-cleanup` test)
 			let p = parent;
 			while (p !== component_effect && p.parent !== null && p.parent.f & DESTROYING) {
 				p = p.parent;
