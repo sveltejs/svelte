@@ -536,7 +536,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	execute_effect_teardown(effect);
 
 	effect.f ^= DESTROYING;
-	set_signal_status(effect, DESTROYED);
+	effect.f |= DESTROYED;
 
 	var parent = effect.parent;
 
