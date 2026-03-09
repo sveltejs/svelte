@@ -1,5 +1,6 @@
 /** @import { Derived, Effect, Source } from '#client' */
 /** @import { Batch } from './batch.js'; */
+/** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
@@ -150,7 +151,9 @@ export function async_derived(fn, label, location) {
 		// template effect) has initialized, causing the batch to resolve prematurely
 		if (should_suspend && (effect.f & REACTION_RAN) !== 0) {
 			var decrement_pending = increment_pending();
+		}
 
+		if (should_suspend) {
 			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
 				deferreds.get(batch)?.reject(STALE_REACTION);
 				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
