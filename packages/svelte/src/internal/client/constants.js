@@ -29,6 +29,8 @@ export const INERT = 1 << 13;
 export const DESTROYED = 1 << 14;
 /** Set once a reaction has run for the first time */
 export const REACTION_RAN = 1 << 15;
+/** Effect is in the process of getting destroyed. Can be observed in child teardown functions */
+export const DESTROYING = 1 << 25;
 
 // Flags exclusive to effects
 /**

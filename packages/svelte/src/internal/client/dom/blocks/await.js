@@ -45,7 +45,14 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var branches = new BranchManager(node);
 
 	block(() => {
+		var batch = /** @type {Batch} */ (current_batch);
+
+		// we null out `current_batch` because otherwise `save(...)` will incorrectly restore it —
+		// the batch will already have been committed by the time it resolves
+		batch.deactivate();
 		var input = get_input();
+		batch.activate();
+
 		var destroyed = false;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */

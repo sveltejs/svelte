@@ -14,7 +14,6 @@ import {
 	MAYBE_DIRTY,
 	DERIVED,
 	EAGER_EFFECT,
-	HEAD_EFFECT,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN
@@ -23,6 +22,7 @@ import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
 import {
 	active_effect,
+	active_reaction,
 	get,
 	increment_write_version,
 	is_dirty,
@@ -37,6 +37,7 @@ import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
+import { legacy_is_updating_store } from './store.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -45,8 +46,7 @@ const batches = new Set();
 export let current_batch = null;
 
 /**
- * This is needed to avoid overwriting inputs in non-async mode
- * TODO 6.0 remove this, as non-async mode will go away
+ * This is needed to avoid overwriting inputs
  * @type {Batch | null}
  */
 export let previous_batch = null;
@@ -59,14 +59,11 @@ export let previous_batch = null;
  */
 export let batch_values = null;
 
-// TODO this should really be a property of `batch`
-/** @type {Effect[]} */
-let queued_root_effects = [];
-
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
 export let is_flushing_sync = false;
+let is_processing = false;
 
 /**
  * During traversal, this is an array. Newly created effects are (if not immediately
@@ -75,6 +72,18 @@ export let is_flushing_sync = false;
  * @type {Effect[] | null}
  */
 export let collected_effects = null;
+
+/**
+ * An array of effects that are marked during traversal as a result of a `set`
+ * (not `internal_set`) call. These will be added to the next batch and
+ * trigger another `batch.process()`
+ * @type {Effect[] | null}
+ * @deprecated when we get rid of legacy mode and stores, we can get rid of this
+ */
+export let legacy_updates = null;
+
+var flush_count = 0;
+var source_stacks = DEV ? new Set() : null;
 
 let uid = 1;
 
@@ -127,6 +136,12 @@ export class Batch {
 	#deferred = null;
 
 	/**
+	 * The root effects that need to be flushed
+	 * @type {Effect[]}
+	 */
+	#roots = [];
+
+	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
 	 * @type {Set<Effect>}
 	 */
@@ -177,22 +192,23 @@ export class Batch {
 
 			for (var e of tracked.d) {
 				set_signal_status(e, DIRTY);
-				schedule_effect(e);
+				this.schedule(e);
 			}
 
 			for (e of tracked.m) {
 				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
+				this.schedule(e);
 			}
 		}
 	}
 
-	/**
-	 *
-	 * @param {Effect[]} root_effects
-	 */
-	process(root_effects) {
-		queued_root_effects = [];
+	#process() {
+		if (flush_count++ > 1000) {
+			infinite_loop_guard();
+		}
+
+		const roots = this.#roots;
+		this.#roots = [];
 
 		this.apply();
 
@@ -202,16 +218,28 @@ export class Batch {
 		/** @type {Effect[]} */
 		var render_effects = [];
 
-		for (const root of root_effects) {
-			this.#traverse_effect_tree(root, effects, render_effects);
-			// Note: #traverse_effect_tree runs block effects eagerly, which can schedule effects,
-			// which means queued_root_effects now may be filled again.
+		/**
+		 * @type {Effect[]}
+		 * @deprecated when we get rid of legacy mode and stores, we can get rid of this
+		 */
+		var updates = (legacy_updates = []);
 
-			// Helpful for debugging reactivity loss that has to do with branches being skipped:
-			// log_inconsistent_branches(root);
+		for (const root of roots) {
+			this.#traverse(root, effects, render_effects);
+		}
+
+		// any writes should take effect in a subsequent batch
+		current_batch = null;
+
+		if (updates.length > 0) {
+			var batch = Batch.ensure();
+			for (const e of updates) {
+				batch.schedule(e);
+			}
 		}
 
 		collected_effects = null;
+		legacy_updates = null;
 
 		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
@@ -221,32 +249,39 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
-			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
-			// newly updated sources, which could lead to infinite loops when effects run over and over again.
-			previous_batch = this;
-			current_batch = null;
+			// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
+			this.#dirty_effects.clear();
+			this.#maybe_dirty_effects.clear();
 
 			// append/remove branches
 			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
 
+			previous_batch = this;
+			flush_queued_effects(render_effects);
+			flush_queued_effects(effects);
+			previous_batch = null;
+
 			if (this.#pending === 0) {
 				this.#commit();
 			}
 
-			flush_queued_effects(render_effects);
-			flush_queued_effects(effects);
-
-			// Clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
-			this.#dirty_effects.clear();
-			this.#maybe_dirty_effects.clear();
-
-			previous_batch = null;
-
 			this.#deferred?.resolve();
 		}
 
-		batch_values = null;
+		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
+
+		if (next_batch !== null) {
+			batches.add(next_batch);
+
+			if (DEV) {
+				for (const source of this.current.keys()) {
+					/** @type {Set<Source>} */ (source_stacks).add(source);
+				}
+			}
+
+			next_batch.#process();
+		}
 	}
 
 	/**
@@ -256,7 +291,7 @@ export class Batch {
 	 * @param {Effect[]} effects
 	 * @param {Effect[]} render_effects
 	 */
-	#traverse_effect_tree(root, effects, render_effects) {
+	#traverse(root, effects, render_effects) {
 		root.f ^= CLEAN;
 
 		var effect = root.first;
@@ -266,26 +301,18 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var inert = (flags & INERT) !== 0;
-			var skip = is_skippable_branch || this.#skipped_branches.has(effect);
+			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_branches.has(effect);
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
-					if (!inert) effect.f ^= CLEAN;
+					effect.f ^= CLEAN;
 				} else if ((flags & EFFECT) !== 0) {
 					effects.push(effect);
-				} else if ((flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0 && (async_mode_flag || inert)) {
+				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
+					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
 					update_effect(effect);
-
-					if ((flags & BLOCK_EFFECT) !== 0) {
-						this.#maybe_dirty_effects.add(effect);
-
-						// if this is inside an outroing block, ensure that the block
-						// re-runs if the outro is later aborted
-						if (inert) set_signal_status(effect, DIRTY);
-					}
 				}
 
 				var child = effect.first;
@@ -338,32 +365,54 @@ export class Batch {
 
 	activate() {
 		current_batch = this;
-		this.apply();
 	}
 
 	deactivate() {
-		// If we're not the current batch, don't deactivate,
-		// else we could create zombie batches that are never flushed
-		if (current_batch !== this) return;
-
 		current_batch = null;
 		batch_values = null;
 	}
 
 	flush() {
-		if (queued_root_effects.length > 0) {
+		var source_stacks = DEV ? new Set() : null;
+
+		try {
+			is_processing = true;
 			current_batch = this;
-			flush_effects();
-		} else if (this.#pending === 0 && !this.is_fork) {
-			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn(this);
-			this.#commit_callbacks.clear();
 
-			this.#commit();
-			this.#deferred?.resolve();
+			// we only reschedule previously-deferred effects if we expect
+			// to be able to run them after processing the batch
+			if (!this.#is_deferred()) {
+				for (const e of this.#dirty_effects) {
+					this.#maybe_dirty_effects.delete(e);
+					set_signal_status(e, DIRTY);
+					this.schedule(e);
+				}
+
+				for (const e of this.#maybe_dirty_effects) {
+					set_signal_status(e, MAYBE_DIRTY);
+					this.schedule(e);
+				}
+			}
+
+			this.#process();
+		} finally {
+			flush_count = 0;
+			last_scheduled_effect = null;
+			collected_effects = null;
+			legacy_updates = null;
+			is_processing = false;
+
+			current_batch = null;
+			batch_values = null;
+
+			old_values.clear();
+
+			if (DEV) {
+				for (const source of /** @type {Set<Source>} */ (source_stacks)) {
+					source.updated = null;
+				}
+			}
 		}
-
-		this.deactivate();
 	}
 
 	discard() {
@@ -414,9 +463,7 @@ export class Batch {
 				// Re-run async/block effects that depend on distinct values changed in both batches
 				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 				if (others.length > 0) {
-					// Avoid running queued root effects on the wrong branch
-					var prev_queued_root_effects = queued_root_effects;
-					queued_root_effects = [];
+					batch.activate();
 
 					/** @type {Set<Value>} */
 					const marked = new Set();
@@ -426,20 +473,17 @@ export class Batch {
 						mark_effects(source, others, marked, checked);
 					}
 
-					if (queued_root_effects.length > 0) {
-						current_batch = batch;
+					if (batch.#roots.length > 0) {
 						batch.apply();
 
-						for (const root of queued_root_effects) {
-							batch.#traverse_effect_tree(root, [], []);
+						for (const root of batch.#roots) {
+							batch.#traverse(root, [], []);
 						}
 
 						// TODO do we need to do anything with the dummy effect arrays?
-
-						batch.deactivate();
 					}
 
-					queued_root_effects = prev_queued_root_effects;
+					batch.deactivate();
 				}
 			}
 
@@ -461,44 +505,20 @@ export class Batch {
 	}
 
 	/**
-	 *
 	 * @param {boolean} blocking
+	 * @param {boolean} skip - whether to skip updates (because this is triggered by a stale reaction)
 	 */
-	decrement(blocking) {
+	decrement(blocking, skip) {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		if (this.#decrement_queued) return;
+		if (this.#decrement_queued || skip) return;
 		this.#decrement_queued = true;
 
 		queue_micro_task(() => {
 			this.#decrement_queued = false;
-
-			if (!this.#is_deferred()) {
-				// we only reschedule previously-deferred effects if we expect
-				// to be able to run them after processing the batch
-				this.revive();
-			} else if (queued_root_effects.length > 0) {
-				// if other effects are scheduled, process the batch _without_
-				// rescheduling the previously-deferred effects
-				this.flush();
-			}
+			this.flush();
 		});
-	}
-
-	revive() {
-		for (const e of this.#dirty_effects) {
-			this.#maybe_dirty_effects.delete(e);
-			set_signal_status(e, DIRTY);
-			schedule_effect(e);
-		}
-
-		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			schedule_effect(e);
-		}
-
-		this.flush();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
@@ -518,17 +538,20 @@ export class Batch {
 	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
-			batches.add(current_batch);
 
-			if (!is_flushing_sync) {
-				queue_micro_task(() => {
-					if (current_batch !== batch) {
-						// a flushSync happened in the meantime
-						return;
-					}
+			if (!is_processing) {
+				batches.add(current_batch);
 
-					batch.flush();
-				});
+				if (!is_flushing_sync) {
+					queue_micro_task(() => {
+						if (current_batch !== batch) {
+							// a flushSync happened in the meantime
+							return;
+						}
+
+						batch.flush();
+					});
+				}
 			}
 		}
 
@@ -553,6 +576,63 @@ export class Batch {
 			}
 		}
 	}
+
+	/**
+	 *
+	 * @param {Effect} effect
+	 */
+	schedule(effect) {
+		last_scheduled_effect = effect;
+
+		// defer render effects inside a pending boundary
+		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
+		if (
+			effect.b?.is_pending &&
+			(effect.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
+			(effect.f & REACTION_RAN) === 0
+		) {
+			effect.b.defer_effect(effect);
+			return;
+		}
+
+		var e = effect;
+
+		while (e.parent !== null) {
+			e = e.parent;
+			var flags = e.f;
+
+			// if the effect is being scheduled because a parent (each/await/etc) block
+			// updated an internal source, or because a branch is being unskipped,
+			// bail out or we'll cause a second flush
+			if (collected_effects !== null && e === active_effect) {
+				if (async_mode_flag) return;
+
+				// in sync mode, render effects run during traversal. in an extreme edge case
+				// — namely that we're setting a value inside a derived read during traversal —
+				// they can be made dirty after they have already been visited, in which
+				// case we shouldn't bail out. we also shouldn't bail out if we're
+				// updating a store inside a `$:`, since this might invalidate
+				// effects that were already visited
+				if (
+					(active_reaction === null || (active_reaction.f & DERIVED) === 0) &&
+					!legacy_is_updating_store
+				) {
+					return;
+				}
+			}
+
+			if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
+				if ((flags & CLEAN) === 0) {
+					// branch is already dirty, bail
+					return;
+				}
+
+				e.f ^= CLEAN;
+			}
+		}
+
+		this.#roots.push(e);
+	}
 }
 
 /**
@@ -570,8 +650,8 @@ export function flushSync(fn) {
 		var result;
 
 		if (fn) {
-			if (current_batch !== null) {
-				flush_effects();
+			if (current_batch !== null && !current_batch.is_fork) {
+				current_batch.flush();
 			}
 
 			result = fn();
@@ -580,87 +660,42 @@ export function flushSync(fn) {
 		while (true) {
 			flush_tasks();
 
-			if (queued_root_effects.length === 0) {
-				current_batch?.flush();
-
-				// we need to check again, in case we just updated an `$effect.pending()`
-				if (queued_root_effects.length === 0) {
-					// this would be reset in `flush_effects()` but since we are early returning here,
-					// we need to reset it here as well in case the first time there's 0 queued root effects
-					last_scheduled_effect = null;
-
-					return /** @type {T} */ (result);
-				}
+			if (current_batch === null) {
+				return /** @type {T} */ (result);
 			}
 
-			flush_effects();
+			current_batch.flush();
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
 	}
 }
 
-function flush_effects() {
-	var source_stacks = DEV ? new Set() : null;
+function infinite_loop_guard() {
+	if (DEV) {
+		var updates = new Map();
 
-	try {
-		var flush_count = 0;
+		for (const source of /** @type {Batch} */ (current_batch).current.keys()) {
+			for (const [stack, update] of source.updated ?? []) {
+				var entry = updates.get(stack);
 
-		while (queued_root_effects.length > 0) {
-			var batch = Batch.ensure();
-
-			if (flush_count++ > 1000) {
-				if (DEV) {
-					var updates = new Map();
-
-					for (const source of batch.current.keys()) {
-						for (const [stack, update] of source.updated ?? []) {
-							var entry = updates.get(stack);
-
-							if (!entry) {
-								entry = { error: update.error, count: 0 };
-								updates.set(stack, entry);
-							}
-
-							entry.count += update.count;
-						}
-					}
-
-					for (const update of updates.values()) {
-						if (update.error) {
-							// eslint-disable-next-line no-console
-							console.error(update.error);
-						}
-					}
+				if (!entry) {
+					entry = { error: update.error, count: 0 };
+					updates.set(stack, entry);
 				}
 
-				infinite_loop_guard();
-			}
-
-			batch.process(queued_root_effects);
-			old_values.clear();
-
-			if (DEV) {
-				for (const source of batch.current.keys()) {
-					/** @type {Set<Source>} */ (source_stacks).add(source);
-				}
+				entry.count += update.count;
 			}
 		}
-	} finally {
-		queued_root_effects = [];
 
-		last_scheduled_effect = null;
-		collected_effects = null;
-
-		if (DEV) {
-			for (const source of /** @type {Set<Source>} */ (source_stacks)) {
-				source.updated = null;
+		for (const update of updates.values()) {
+			if (update.error) {
+				// eslint-disable-next-line no-console
+				console.error(update.error);
 			}
 		}
 	}
-}
 
-function infinite_loop_guard() {
 	try {
 		e.effect_update_depth_exceeded();
 	} catch (error) {
@@ -830,52 +865,11 @@ function depends_on(reaction, sources, checked) {
 }
 
 /**
- * @param {Effect} signal
+ * @param {Effect} effect
  * @returns {void}
  */
-export function schedule_effect(signal) {
-	var effect = (last_scheduled_effect = signal);
-
-	var boundary = effect.b;
-
-	// defer render effects inside a pending boundary
-	// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
-	if (
-		boundary?.is_pending &&
-		(signal.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
-		(signal.f & REACTION_RAN) === 0
-	) {
-		boundary.defer_effect(signal);
-		return;
-	}
-
-	while (effect.parent !== null) {
-		effect = effect.parent;
-		var flags = effect.f;
-
-		// if the effect is being scheduled because a parent (each/await/etc) block
-		// updated an internal source, or because a branch is being unskipped,
-		// bail out or we'll cause a second flush
-		if (collected_effects !== null && effect === active_effect) {
-			// in sync mode, render effects run during traversal. in an extreme edge case
-			// they can be made dirty after they have already been visited, in which
-			// case we shouldn't bail out
-			if (async_mode_flag || (signal.f & RENDER_EFFECT) === 0) {
-				return;
-			}
-		}
-
-		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) {
-				// branch is already dirty, bail
-				return;
-			}
-
-			effect.f ^= CLEAN;
-		}
-	}
-
-	queued_root_effects.push(effect);
+export function schedule_effect(effect) {
+	/** @type {Batch} */ (current_batch).schedule(effect);
 }
 
 /** @type {Source<number>[]} */
@@ -1052,7 +1046,7 @@ export function fork(fn) {
 				flush_eager_effects();
 			});
 
-			batch.revive();
+			batch.flush();
 			await settled;
 		},
 		discard: () => {
