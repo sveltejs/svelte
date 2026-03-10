@@ -269,7 +269,12 @@ export class Batch {
 			this.#deferred?.resolve();
 		}
 
-		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
+		var next_batch =
+			/** @type {Batch | null} */ (/** @type {unknown} */ (current_batch)) ??
+			// Edge case: During traversal new branches might create effects that run immediately and set state,
+			// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
+			// once more in that case - most of the time this will just clean up dirty branches.
+			(this.#roots.length > 0 ? this : null);
 
 		if (next_batch !== null) {
 			batches.add(next_batch);
