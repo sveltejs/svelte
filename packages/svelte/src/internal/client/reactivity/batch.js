@@ -269,12 +269,15 @@ export class Batch {
 			this.#deferred?.resolve();
 		}
 
-		var next_batch =
-			/** @type {Batch | null} */ (/** @type {unknown} */ (current_batch)) ??
-			// Edge case: During traversal new branches might create effects that run immediately and set state,
-			// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
-			// once more in that case - most of the time this will just clean up dirty branches.
-			(this.#roots.length > 0 ? this : null);
+		let next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
+
+		// Edge case: During traversal new branches might create effects that run immediately and set state,
+		// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
+		// once more in that case - most of the time this will just clean up dirty branches.
+		if (this.#roots.length > 0) {
+			const batch = (next_batch ??= this);
+			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
+		}
 
 		if (next_batch !== null) {
 			batches.add(next_batch);
@@ -283,13 +286,6 @@ export class Batch {
 				for (const source of this.current.keys()) {
 					/** @type {Set<Source>} */ (source_stacks).add(source);
 				}
-			}
-
-			// Merge the roots of the current batch into the next one, that way everything's processed at once
-			if (this.#roots.length > 0) {
-				next_batch.#roots.push(
-					...this.#roots.filter((r) => !(/** @type {Batch} */ (next_batch).#roots.includes(r)))
-				);
 			}
 
 			next_batch.#process();
