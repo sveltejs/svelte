@@ -1,5 +1,11 @@
 # svelte
 
+## 5.53.9
+
+### Patch Changes
+
+- fix: better `bind:this` cleanup timing ([#17885](https://github.com/sveltejs/svelte/pull/17885))
+
 ## 5.53.8
 
 ### Patch Changes
