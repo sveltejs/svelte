@@ -622,16 +622,19 @@ export class Batch {
 			}
 
 			if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-				if ((flags & CLEAN) === 0) {
-					// branch is already dirty, bail
-					return;
+				// Only mark dirty if currently clean
+				if ((flags & CLEAN) !== 0) {
+					e.f ^= CLEAN;
 				}
-
-				e.f ^= CLEAN;
+				// Don't bail if branch is dirty — the root may not be scheduled
+				// in THIS batch (e.g. state write during flush creates a new batch)
 			}
 		}
 
-		this.#roots.push(e);
+		// Ensure root is in #roots (avoid duplicates)
+		if (!includes.call(this.#roots, e)) {
+			this.#roots.push(e);
+		}
 	}
 }
 
