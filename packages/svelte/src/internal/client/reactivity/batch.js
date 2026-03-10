@@ -225,7 +225,12 @@ export class Batch {
 		var updates = (legacy_updates = []);
 
 		for (const root of roots) {
-			this.#traverse(root, effects, render_effects);
+			try {
+				this.#traverse(root, effects, render_effects);
+			} catch (e) {
+				reset_all(root);
+				throw e;
+			}
 		}
 
 		// any writes should take effect in a subsequent batch
@@ -955,6 +960,20 @@ function reset_branch(effect, tracked) {
 	var e = effect.first;
 	while (e !== null) {
 		reset_branch(e, tracked);
+		e = e.next;
+	}
+}
+
+/**
+ * Mark an entire effect tree clean following an error
+ * @param {Effect} effect
+ */
+function reset_all(effect) {
+	set_signal_status(effect, CLEAN);
+
+	var e = effect.first;
+	while (e !== null) {
+		reset_all(e);
 		e = e.next;
 	}
 }
