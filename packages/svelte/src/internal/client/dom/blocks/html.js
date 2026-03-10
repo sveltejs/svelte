@@ -42,22 +42,54 @@ function check_hash(element, server_hash, value) {
 /**
  * @param {Element | Text | Comment} node
  * @param {() => string | TrustedHTML} get_value
+ * @param {boolean} [is_controlled]
  * @param {boolean} [svg]
  * @param {boolean} [mathml]
  * @param {boolean} [skip_warning]
  * @returns {void}
  */
-export function html(node, get_value, svg = false, mathml = false, skip_warning = false) {
+export function html(
+	node,
+	get_value,
+	is_controlled = false,
+	svg = false,
+	mathml = false,
+	skip_warning = false
+) {
 	var anchor = node;
 
 	/** @type {string | TrustedHTML} */
 	var value = '';
+
+	if (is_controlled) {
+		var parent_node = /** @type {Element} */ (node);
+
+		if (hydrating) {
+			anchor = set_hydrate_node(get_first_child(parent_node));
+		}
+	}
 
 	template_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
 		if (value === (value = get_value() ?? '')) {
 			if (hydrating) hydrate_next();
+			return;
+		}
+
+		if (is_controlled && !hydrating) {
+			// When @html is the only child, use innerHTML directly.
+			// This also handles contenteditable, where the user may delete the anchor comment.
+			effect.nodes = null;
+			parent_node.innerHTML = /** @type {string} */ (value);
+
+			if (value !== '') {
+				assign_nodes(
+					/** @type {TemplateNode} */ (get_first_child(parent_node)),
+					/** @type {TemplateNode} */ (parent_node.lastChild)
+				);
+			}
+
 			return;
 		}
 

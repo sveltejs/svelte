@@ -10,7 +10,8 @@ import {
 	set_active_reaction,
 	set_is_destroying_effect,
 	untrack,
-	untracking
+	untracking,
+	set_active_effect
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -33,18 +34,18 @@ import {
 	USER_EFFECT,
 	ASYNC,
 	CONNECTED,
-	MANAGED_EFFECT
+	MANAGED_EFFECT,
+	DESTROYING
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, current_batch, schedule_effect } from './batch.js';
+import { Batch, collected_effects, current_batch } from './batch.js';
 import { flatten, increment_pending } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
-import { async_mode_flag } from '../../flags/index.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -129,7 +130,7 @@ function create_effect(type, fn) {
 			collected_effects.push(effect);
 		} else {
 			// schedule for later
-			schedule_effect(effect);
+			Batch.ensure().schedule(effect);
 		}
 	} else if (fn !== null) {
 		try {
@@ -317,7 +318,19 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		untrack(fn);
+
+		var effect = /** @type {Effect} */ (active_effect);
+
+		// here, we lie: by setting `active_effect` to be the parent branch, any writes
+		// that happen inside `fn` will _not_ cause an unnecessary reschedule, because
+		// the affected effects will be children of `active_effect`. this is safe
+		// because these effects are known to run in the correct order
+		try {
+			set_active_effect(effect.parent);
+			untrack(fn);
+		} finally {
+			set_active_effect(effect);
+		}
 	});
 }
 
@@ -509,9 +522,9 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
+	set_signal_status(effect, DESTROYING);
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
-	set_signal_status(effect, DESTROYED);
 
 	var transitions = effect.nodes && effect.nodes.t;
 
@@ -522,6 +535,9 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	execute_effect_teardown(effect);
+
+	effect.f ^= DESTROYING;
+	effect.f |= DESTROYED;
 
 	var parent = effect.parent;
 
@@ -667,10 +683,13 @@ function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
-	// Mark branches as clean so that effects can be scheduled, but only in async mode
-	// (in legacy mode, effect resumption happens during traversal)
-	if (async_mode_flag && (effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) === 0) {
-		effect.f ^= CLEAN;
+	// If a dependency of this effect changed while it was paused,
+	// schedule the effect to update. we don't use `is_dirty`
+	// here because we don't want to eagerly recompute a derived like
+	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
+	if ((effect.f & CLEAN) === 0) {
+		set_signal_status(effect, DIRTY);
+		Batch.ensure().schedule(effect); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
 	}
 
 	var child = effect.first;

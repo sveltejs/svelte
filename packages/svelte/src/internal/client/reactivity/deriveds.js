@@ -1,5 +1,6 @@
 /** @import { Derived, Effect, Source } from '#client' */
 /** @import { Batch } from './batch.js'; */
+/** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
@@ -10,7 +11,8 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN
+	CLEAN,
+	REACTION_RAN
 } from '#client/constants';
 import {
 	active_reaction,
@@ -36,7 +38,6 @@ import {
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
@@ -142,6 +143,8 @@ export function async_derived(fn, label, location) {
 			{ once: true }
 		);
 
+		var effect = /** @type {Effect} */ (active_effect);
+
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
 		promise = d.promise;
@@ -159,10 +162,25 @@ export function async_derived(fn, label, location) {
 		if (DEV) current_async_effect = null;
 
 		if (should_suspend) {
-			var decrement_pending = increment_pending();
+			// we only increment the batch's pending state for updates, not creation, otherwise
+			// we will decrement to zero before the work that depends on this promise (e.g. a
+			// template effect) has initialized, causing the batch to resolve prematurely
+			if ((effect.f & REACTION_RAN) !== 0) {
+				var decrement_pending = increment_pending();
+			}
 
-			deferreds.get(batch)?.reject(STALE_REACTION);
-			deferreds.delete(batch); // delete to ensure correct order in Map iteration below
+			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
+				deferreds.get(batch)?.reject(STALE_REACTION);
+				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
+			} else {
+				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
+				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
+				for (const d of deferreds.values()) {
+					d.reject(STALE_REACTION);
+				}
+				deferreds.clear();
+			}
+
 			deferreds.set(batch, d);
 		}
 
@@ -171,17 +189,26 @@ export function async_derived(fn, label, location) {
 		 * @param {unknown} error
 		 */
 		const handler = (value, error = undefined) => {
-			current_async_effect = null;
+			if (DEV) current_async_effect = null;
+
+			if (decrement_pending) {
+				// don't trigger an update if we're only here because
+				// the promise was superseded before it could resolve
+				var skip = error === STALE_REACTION;
+				decrement_pending(skip);
+			}
+
+			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
+				return;
+			}
 
 			batch.activate();
 
 			if (error) {
-				if (error !== STALE_REACTION) {
-					signal.f |= ERROR_VALUE;
+				signal.f |= ERROR_VALUE;
 
-					// @ts-expect-error the error is the wrong type, but we don't care
-					internal_set(signal, error);
-				}
+				// @ts-expect-error the error is the wrong type, but we don't care
+				internal_set(signal, error);
 			} else {
 				if ((signal.f & ERROR_VALUE) !== 0) {
 					signal.f ^= ERROR_VALUE;
@@ -208,9 +235,7 @@ export function async_derived(fn, label, location) {
 				}
 			}
 
-			if (decrement_pending) {
-				decrement_pending();
-			}
+			batch.deactivate();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));

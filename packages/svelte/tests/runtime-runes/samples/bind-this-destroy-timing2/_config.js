@@ -2,12 +2,11 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	html: `
-		<p>pending</p>
-	`,
-
 	async test({ assert, target }) {
+		const [btn] = target.querySelectorAll('button');
+
+		btn.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p data-foo="bar">hello</p>');
+		assert.htmlEqual(target.innerHTML, `<button>clear</button>`);
 	}
 });

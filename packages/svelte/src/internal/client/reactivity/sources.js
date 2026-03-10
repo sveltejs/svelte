@@ -41,7 +41,8 @@ import {
 	current_batch,
 	eager_block_effects,
 	schedule_effect,
-	set_current_batch
+	set_current_batch,
+	legacy_updates
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -170,16 +171,17 @@ export function set(source, value, should_proxy = false) {
 		tag_proxy(new_value, /** @type {string} */ (source.label));
 	}
 
-	return internal_set(source, new_value);
+	return internal_set(source, new_value, legacy_updates);
 }
 
 /**
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}
  */
-export function internal_set(source, value) {
+export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
 
@@ -236,7 +238,7 @@ export function internal_set(source, value) {
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
-		mark_reactions(source, DIRTY);
+		mark_reactions(source, DIRTY, updated_during_traversal);
 
 		var batch = Batch.ensure();
 		batch.capture(source, old_value);
@@ -327,9 +329,10 @@ export function increment(source) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {Effect[] | null} updated_during_traversal
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+function mark_reactions(signal, status, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -372,14 +375,20 @@ function mark_reactions(signal, status) {
 					reaction.f |= WAS_MARKED;
 				}
 
-				mark_reactions(derived, MAYBE_DIRTY);
+				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 			}
 		} else if (not_dirty) {
+			var effect = /** @type {Effect} */ (reaction);
+
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
-				eager_block_effects.add(/** @type {Effect} */ (reaction));
+				eager_block_effects.add(effect);
 			}
 
-			schedule_effect(/** @type {Effect} */ (reaction));
+			if (updated_during_traversal !== null) {
+				updated_during_traversal.push(effect);
+			} else {
+				schedule_effect(effect);
+			}
 		}
 	}
 }
