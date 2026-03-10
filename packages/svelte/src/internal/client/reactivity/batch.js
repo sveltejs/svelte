@@ -437,9 +437,6 @@ export class Batch {
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
-		var previous_batch = current_batch;
-		var previous_batch_values = batch_values;
-
 		for (const batch of batches) {
 			var is_earlier = batch.id < this.id;
 
@@ -491,9 +488,6 @@ export class Batch {
 				batch.deactivate();
 			}
 		}
-
-		current_batch = previous_batch;
-		batch_values = previous_batch_values;
 	}
 
 	/**
@@ -560,7 +554,10 @@ export class Batch {
 	}
 
 	apply() {
-		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) return;
+		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) {
+			batch_values = null;
+			return;
+		}
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
