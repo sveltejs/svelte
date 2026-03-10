@@ -441,7 +441,7 @@ export class Batch {
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
-			const sources = [];
+			var sources = [];
 
 			for (const [source, value] of this.current) {
 				if (batch.current.has(source)) {
@@ -463,22 +463,24 @@ export class Batch {
 			}
 
 			// Re-run async/block effects that depend on distinct values changed in both batches
-			const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
+			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 			if (others.length > 0) {
 				batch.activate();
 
 				/** @type {Set<Value>} */
-				const marked = new Set();
+				var marked = new Set();
+
 				/** @type {Map<Reaction, boolean>} */
-				const checked = new Map();
-				for (const source of sources) {
+				var checked = new Map();
+
+				for (var source of sources) {
 					mark_effects(source, others, marked, checked);
 				}
 
 				if (batch.#roots.length > 0) {
 					batch.apply();
 
-					for (const root of batch.#roots) {
+					for (var root of batch.#roots) {
 						batch.#traverse(root, [], []);
 					}
 
