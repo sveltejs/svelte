@@ -249,6 +249,10 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
+			if (this.#pending === 0) {
+				batches.delete(this);
+			}
+
 			// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
 			this.#dirty_effects.clear();
 			this.#maybe_dirty_effects.clear();
@@ -261,10 +265,6 @@ export class Batch {
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
 			previous_batch = null;
-
-			if (this.#pending === 0) {
-				this.#commit();
-			}
 
 			this.#deferred?.resolve();
 		}
@@ -289,6 +289,10 @@ export class Batch {
 			}
 
 			next_batch.#process();
+		}
+
+		if (!batches.has(this)) {
+			this.#commit();
 		}
 	}
 
@@ -433,74 +437,59 @@ export class Batch {
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
-		if (batches.size > 1) {
-			this.previous.clear();
+		for (const batch of batches) {
+			var is_earlier = batch.id < this.id;
 
-			var previous_batch = current_batch;
-			var previous_batch_values = batch_values;
-			var is_earlier = true;
+			/** @type {Source[]} */
+			var sources = [];
 
-			for (const batch of batches) {
-				if (batch === this) {
-					is_earlier = false;
-					continue;
-				}
-
-				/** @type {Source[]} */
-				const sources = [];
-
-				for (const [source, value] of this.current) {
-					if (batch.current.has(source)) {
-						if (is_earlier && value !== batch.current.get(source)) {
-							// bring the value up to date
-							batch.current.set(source, value);
-						} else {
-							// same value or later batch has more recent value,
-							// no need to re-run these effects
-							continue;
-						}
+			for (const [source, value] of this.current) {
+				if (batch.current.has(source)) {
+					if (is_earlier && value !== batch.current.get(source)) {
+						// bring the value up to date
+						batch.current.set(source, value);
+					} else {
+						// same value or later batch has more recent value,
+						// no need to re-run these effects
+						continue;
 					}
-
-					sources.push(source);
 				}
 
-				if (sources.length === 0) {
-					continue;
-				}
-
-				// Re-run async/block effects that depend on distinct values changed in both batches
-				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
-				if (others.length > 0) {
-					batch.activate();
-
-					/** @type {Set<Value>} */
-					const marked = new Set();
-					/** @type {Map<Reaction, boolean>} */
-					const checked = new Map();
-					for (const source of sources) {
-						mark_effects(source, others, marked, checked);
-					}
-
-					if (batch.#roots.length > 0) {
-						batch.apply();
-
-						for (const root of batch.#roots) {
-							batch.#traverse(root, [], []);
-						}
-
-						// TODO do we need to do anything with the dummy effect arrays?
-					}
-
-					batch.deactivate();
-				}
+				sources.push(source);
 			}
 
-			current_batch = previous_batch;
-			batch_values = previous_batch_values;
-		}
+			if (sources.length === 0) {
+				continue;
+			}
 
-		this.#skipped_branches.clear();
-		batches.delete(this);
+			// Re-run async/block effects that depend on distinct values changed in both batches
+			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
+			if (others.length > 0) {
+				batch.activate();
+
+				/** @type {Set<Value>} */
+				var marked = new Set();
+
+				/** @type {Map<Reaction, boolean>} */
+				var checked = new Map();
+
+				for (var source of sources) {
+					mark_effects(source, others, marked, checked);
+				}
+
+				if (batch.#roots.length > 0) {
+					batch.apply();
+
+					for (var root of batch.#roots) {
+						batch.#traverse(root, [], []);
+					}
+
+					// TODO do we need to do anything with the dummy effect arrays?
+				}
+
+				batch.deactivate();
+			}
+		}
 	}
 
 	/**
@@ -567,7 +556,10 @@ export class Batch {
 	}
 
 	apply() {
-		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) return;
+		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) {
+			batch_values = null;
+			return;
+		}
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
