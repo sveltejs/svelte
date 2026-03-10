@@ -2,7 +2,7 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target }) {
+	async test({ assert, target, compileOptions }) {
 		const [toggle, increment] = target.querySelectorAll('button');
 
 		flushSync(() => increment.click());
@@ -25,7 +25,7 @@ export default test({
 			`
 				<button>toggle</button>
 				<button>count: 2</button>
-				<p>show: false</p>
+				<p>show: ${compileOptions.experimental?.async ? 'false' : 'true'}</p>
 			`
 		);
 	}
