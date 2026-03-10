@@ -1,5 +1,11 @@
 # svelte
 
+## 5.53.10
+
+### Patch Changes
+
+- fix: re-process batch if new root effects were scheduled ([#17895](https://github.com/sveltejs/svelte/pull/17895))
+
 ## 5.53.9
 
 ### Patch Changes
