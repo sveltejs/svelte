@@ -271,6 +271,14 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
+		// Edge case: During traversal new branches might create effects that run immediately and set state,
+		// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
+		// once more in that case - most of the time this will just clean up dirty branches.
+		if (this.#roots.length > 0) {
+			const batch = (next_batch ??= this);
+			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
+		}
+
 		if (next_batch !== null) {
 			batches.add(next_batch);
 
