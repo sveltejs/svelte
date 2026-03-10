@@ -27,7 +27,10 @@ import {
 	ROOT_EFFECT,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	RENDER_EFFECT,
+	USER_EFFECT,
+	TEMPLATE_EFFECT
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -38,10 +41,8 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
-	current_batch,
 	eager_block_effects,
 	schedule_effect,
-	set_current_batch,
 	legacy_updates
 } from './batch.js';
 import { proxy } from '../proxy.js';
@@ -342,11 +343,8 @@ function mark_reactions(signal, status, updated_during_traversal) {
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
-		var reaction_batch = reaction.batch;
 
-		if (current_batch === null && reaction_batch !== null && !reaction_batch.finished()) {
-			set_current_batch(reaction_batch);
-		}
+		reaction.batch = Batch.upsert(reaction);
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;

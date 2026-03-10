@@ -101,6 +101,12 @@ export class Batch {
 	id = uid++;
 
 	/**
+	 * @type {Batch | null}
+	 * If this batch is merged into another batch, successor points to the batch it was merged into.
+	 */
+	successor = null;
+
+	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
 	 * @type {Map<Source, any>}
@@ -389,6 +395,11 @@ export class Batch {
 	}
 
 	flush() {
+		if (this.successor) {
+			this.successor.flush();
+			return;
+		}
+
 		var source_stacks = DEV ? new Set() : null;
 
 		try {
@@ -552,6 +563,103 @@ export class Batch {
 
 	settled() {
 		return (this.#deferred ??= deferred()).promise;
+	}
+
+	/**
+	 * Ensure there is a current batch for scheduling work triggered by `reaction`.
+	 * If both the current batch and the reaction batch are active, merge them.
+	 * @param {Reaction} reaction
+	 */
+	static upsert(reaction) {
+		var reaction_batch = reaction.batch;
+		var has_reaction_batch = reaction_batch !== null && !reaction_batch.finished();
+
+		if (current_batch === null) {
+			if (has_reaction_batch) {
+				current_batch = reaction_batch;
+				return reaction_batch;
+			}
+
+			return Batch.ensure();
+		}
+
+		var batch = current_batch;
+
+		if (!has_reaction_batch || reaction_batch === batch) {
+			return batch;
+		}
+
+		// Fork batches are isolated speculative environments and should not entangle.
+		if (batch.is_fork || /** @type {Batch} */ (reaction_batch).is_fork) {
+			return batch;
+		}
+
+		Batch.merge(batch, /** @type {Batch} */ (reaction_batch));
+		current_batch = reaction_batch;
+		return reaction_batch;
+	}
+
+	/**
+	 * Merge `from` into `to` and retire `from`.
+	 * @param {Batch} from
+	 * @param {Batch} to
+	 */
+	static merge(from, to) {
+		if (from === to) return;
+
+		for (const [source, value] of from.previous) {
+			if (!to.previous.has(source)) {
+				to.previous.set(source, value);
+			}
+		}
+
+		for (const [source, value] of from.current) {
+			to.current.set(source, value);
+			if (!to.is_fork) source.batch = to;
+		}
+
+		to.#pending += from.#pending;
+		to.#blocking_pending += from.#blocking_pending;
+
+		to.#roots.push(...from.#roots);
+
+		for (const e of from.#dirty_effects) to.#dirty_effects.add(e);
+		for (const e of from.#maybe_dirty_effects) to.#maybe_dirty_effects.add(e);
+
+		for (const fn of from.#commit_callbacks) to.#commit_callbacks.add(fn);
+		for (const fn of from.#discard_callbacks) to.#discard_callbacks.add(fn);
+
+		for (const [effect, tracked] of from.#skipped_branches) {
+			var existing = to.#skipped_branches.get(effect);
+			if (existing) {
+				existing.d.push(...tracked.d);
+				existing.m.push(...tracked.m);
+			} else {
+				to.#skipped_branches.set(effect, tracked);
+			}
+		}
+
+		if (from.#deferred !== null) {
+			var deferred = from.#deferred;
+			to.settled().then(deferred.resolve, deferred.reject);
+		}
+
+		from.current.clear();
+		from.previous.clear();
+		from.#roots = [];
+		from.#dirty_effects.clear();
+		from.#maybe_dirty_effects.clear();
+		from.#commit_callbacks.clear();
+		from.#discard_callbacks.clear();
+		from.#skipped_branches.clear();
+		from.#pending = 0;
+		from.#blocking_pending = 0;
+		from.#deferred = null;
+		from.#decrement_queued = false;
+		from.successor = to;
+
+		batches.delete(from);
+		batches.add(to);
 	}
 
 	static ensure() {

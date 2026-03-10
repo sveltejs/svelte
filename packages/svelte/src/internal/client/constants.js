@@ -2,6 +2,7 @@
 export const DERIVED = 1 << 1;
 export const EFFECT = 1 << 2;
 export const RENDER_EFFECT = 1 << 3;
+export const TEMPLATE_EFFECT = 1 << 26;
 /**
  * An effect that does not destroy its child effects when it reruns.
  * Runs as part of render effects, i.e. not eagerly as part of tree traversal or effect flushing.

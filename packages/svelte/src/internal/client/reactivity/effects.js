@@ -35,7 +35,8 @@ import {
 	ASYNC,
 	CONNECTED,
 	MANAGED_EFFECT,
-	DESTROYING
+	DESTROYING,
+	TEMPLATE_EFFECT
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -383,7 +384,7 @@ export function render_effect(fn, flags = 0) {
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)));
+		create_effect(RENDER_EFFECT | TEMPLATE_EFFECT, () => fn(...values.map(get)));
 	});
 }
 
