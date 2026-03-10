@@ -1,7 +1,8 @@
-import { STATE_SYMBOL } from '#client/constants';
+/** @import { ComponentContext, Effect } from '#client' */
+import { DESTROYING, STATE_SYMBOL } from '#client/constants';
+import { component_context } from '../../../context.js';
 import { effect, render_effect } from '../../../reactivity/effects.js';
-import { untrack } from '../../../runtime.js';
-import { queue_micro_task } from '../../task.js';
+import { active_effect, untrack } from '../../../runtime.js';
 
 /**
  * @param {any} bound_value
@@ -23,6 +24,9 @@ function is_bound_this(bound_value, element_or_component) {
  * @returns {void}
  */
 export function bind_this(element_or_component = {}, update, get_value, get_parts) {
+	var component_effect = /** @type {ComponentContext} */ (component_context).r;
+	var parent = /** @type {Effect} */ (active_effect);
+
 	effect(() => {
 		/** @type {unknown[]} */
 		var old_parts;
@@ -48,12 +52,25 @@ export function bind_this(element_or_component = {}, update, get_value, get_part
 		});
 
 		return () => {
-			// We cannot use effects in the teardown phase, we we use a microtask instead.
-			queue_micro_task(() => {
+			// When the bind:this effect is destroyed, we go up the effect parent chain until we find the last parent effect that is destroyed,
+			// or the effect containing the component bind:this is in (whichever comes first). That way we can time the nulling of the binding
+			// as close to user/developer expectation as possible.
+			// TODO Svelte 6: Decide if we want to keep this logic or just always null the binding in the component effect's teardown
+			// (which would be simpler, but less intuitive in some cases, and breaks the `ondestroy-before-cleanup` test)
+			let p = parent;
+			while (p !== component_effect && p.parent !== null && p.parent.f & DESTROYING) {
+				p = p.parent;
+			}
+			const teardown = () => {
 				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
 					update(null, ...parts);
 				}
-			});
+			};
+			const original_teardown = p.teardown;
+			p.teardown = () => {
+				teardown();
+				original_teardown?.();
+			};
 		};
 	});
 

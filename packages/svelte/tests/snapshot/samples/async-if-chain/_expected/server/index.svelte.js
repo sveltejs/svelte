@@ -12,13 +12,13 @@ export default function Async_if_chain($$renderer) {
 
 	$$renderer.async_block([$$promises[0]], ($$renderer) => {
 		if (foo) {
-			$$renderer.push('<!--[-->');
+			$$renderer.push('<!--[0-->');
 			$$renderer.push(`foo`);
 		} else if (bar) {
 			$$renderer.push('<!--[1-->');
 			$$renderer.push(`bar`);
 		} else {
-			$$renderer.push('<!--[!-->');
+			$$renderer.push('<!--[-1-->');
 			$$renderer.push(`else`);
 		}
 	});
@@ -27,20 +27,20 @@ export default function Async_if_chain($$renderer) {
 
 	$$renderer.async_block([$$promises[0]], async ($$renderer) => {
 		if ((await $.save(foo))()) {
-			$$renderer.push('<!--[-->');
+			$$renderer.push('<!--[0-->');
 			$$renderer.push(`foo`);
 		} else if (bar) {
 			$$renderer.push('<!--[1-->');
 			$$renderer.push(`bar`);
 		} else {
-			$$renderer.push('<!--[!-->');
+			$$renderer.push('<!--[-1-->');
 
 			$$renderer.child_block(async ($$renderer) => {
 				if ((await $.save(baz))()) {
-					$$renderer.push('<!--[-->');
+					$$renderer.push('<!--[0-->');
 					$$renderer.push(`baz`);
 				} else {
-					$$renderer.push('<!--[!-->');
+					$$renderer.push('<!--[-1-->');
 					$$renderer.push(`else`);
 				}
 			});
@@ -53,20 +53,20 @@ export default function Async_if_chain($$renderer) {
 
 	$$renderer.async_block([$$promises[0]], async ($$renderer) => {
 		if ((await $.save(foo))() > 10) {
-			$$renderer.push('<!--[-->');
+			$$renderer.push('<!--[0-->');
 			$$renderer.push(`foo`);
 		} else if (bar) {
 			$$renderer.push('<!--[1-->');
 			$$renderer.push(`bar`);
 		} else {
-			$$renderer.push('<!--[!-->');
+			$$renderer.push('<!--[-1-->');
 
 			$$renderer.async_block([$$promises[0]], async ($$renderer) => {
 				if ((await $.save(foo))() > 5) {
-					$$renderer.push('<!--[-->');
+					$$renderer.push('<!--[0-->');
 					$$renderer.push(`baz`);
 				} else {
-					$$renderer.push('<!--[!-->');
+					$$renderer.push('<!--[-1-->');
 					$$renderer.push(`else`);
 				}
 			});
@@ -78,7 +78,7 @@ export default function Async_if_chain($$renderer) {
 	$$renderer.push(`<!--]--> `);
 
 	if (simple1) {
-		$$renderer.push('<!--[-->');
+		$$renderer.push('<!--[0-->');
 		$$renderer.push(`foo`);
 	} else if (simple2 > 10) {
 		$$renderer.push('<!--[1-->');
@@ -87,7 +87,7 @@ export default function Async_if_chain($$renderer) {
 		$$renderer.push('<!--[2-->');
 		$$renderer.push(`baz`);
 	} else {
-		$$renderer.push('<!--[!-->');
+		$$renderer.push('<!--[-1-->');
 		$$renderer.push(`else`);
 	}
 
@@ -95,13 +95,13 @@ export default function Async_if_chain($$renderer) {
 
 	$$renderer.async_block([$$promises[0]], ($$renderer) => {
 		if (blocking() > 10) {
-			$$renderer.push('<!--[-->');
+			$$renderer.push('<!--[0-->');
 			$$renderer.push(`foo`);
 		} else if (blocking() > 5) {
 			$$renderer.push('<!--[1-->');
 			$$renderer.push(`bar`);
 		} else {
-			$$renderer.push('<!--[!-->');
+			$$renderer.push('<!--[-1-->');
 			$$renderer.push(`else`);
 		}
 	});

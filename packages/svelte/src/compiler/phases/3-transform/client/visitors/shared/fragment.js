@@ -109,6 +109,8 @@ export function process_children(nodes, initial, is_element, context) {
 				!node.metadata.expression.is_async()
 			) {
 				node.metadata.is_controlled = true;
+			} else if (node.type === 'HtmlTag' && nodes.length === 1 && is_element) {
+				node.metadata.is_controlled = true;
 			} else {
 				const id = flush_node(
 					false,
