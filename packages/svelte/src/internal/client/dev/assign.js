@@ -21,7 +21,7 @@ function compare(a, b, property, location) {
 /**
  * @param {any} object
  * @param {string} property
- * @param {() => any} getter
+ * @param {() => any} rhs_getter
  * @param {string} location
  */
 export function assign(object, property, rhs_getter, location) {
