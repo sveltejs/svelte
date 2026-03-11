@@ -529,7 +529,6 @@ export class Batch {
 		if (blocking) this.#blocking_pending -= 1;
 
 		if (this.#decrement_queued || skip) return;
-
 		this.#decrement_queued = true;
 
 		queue_micro_task(() => {
