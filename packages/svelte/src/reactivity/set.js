@@ -98,8 +98,10 @@ export class SvelteSet extends Set {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
+				// Materialize current values into a temporary Set since values are stored in #sources
+				var set = new Set(this.values());
 				// @ts-ignore
-				return set_proto[method].apply(this, v);
+				return set_proto[method].apply(set, v);
 			};
 		}
 
@@ -107,8 +109,10 @@ export class SvelteSet extends Set {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
+				// Materialize current values into a temporary Set since values are stored in #sources
+				var materialized = new Set(this.values());
 				// @ts-ignore
-				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
+				var set = /** @type {Set<T>} */ (set_proto[method].apply(materialized, v));
 				return new SvelteSet(set);
 			};
 		}
