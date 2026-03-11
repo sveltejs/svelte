@@ -384,7 +384,10 @@ export function render_effect(fn, flags = 0) {
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(RENDER_EFFECT | TEMPLATE_EFFECT, () => fn(...values.map(get)));
+		const e = create_effect(RENDER_EFFECT | TEMPLATE_EFFECT, () => fn(...values.map(get)));
+		if (DEV) {
+			e.original_fn = fn;
+		}
 	});
 }
 

@@ -2,7 +2,7 @@
 export const DERIVED = 1 << 1;
 export const EFFECT = 1 << 2;
 export const RENDER_EFFECT = 1 << 3;
-export const TEMPLATE_EFFECT = 1 << 26;
+export const TEMPLATE_EFFECT = 1 << 26; // TODO we might not need this after all
 /**
  * An effect that does not destroy its child effects when it reruns.
  * Runs as part of render effects, i.e. not eagerly as part of tree traversal or effect flushing.
@@ -58,6 +58,18 @@ export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;
 
 export const ERROR_VALUE = 1 << 23;
+
+export const ANY_EFFECT =
+	EFFECT |
+	RENDER_EFFECT |
+	TEMPLATE_EFFECT |
+	MANAGED_EFFECT |
+	BLOCK_EFFECT |
+	BRANCH_EFFECT |
+	ROOT_EFFECT |
+	BOUNDARY_EFFECT |
+	// proxy for async effects, because we can't use ASYNC, because it's also set on the source
+	EFFECT_PRESERVED;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');

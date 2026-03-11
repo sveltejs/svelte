@@ -27,10 +27,7 @@ import {
 	ROOT_EFFECT,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED,
-	RENDER_EFFECT,
-	USER_EFFECT,
-	TEMPLATE_EFFECT
+	CONNECTED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -43,7 +40,8 @@ import {
 	batch_values,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	current_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -78,7 +76,7 @@ export function set_eager_effects_deferred() {
 export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
-		batch: null,
+		batch: current_batch,
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
@@ -243,7 +241,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 		var batch = Batch.ensure();
 		batch.capture(source, old_value);
-		if (!batch.is_fork) source.batch = batch;
 		batch.reschedule();
 
 		// It's possible that the current reaction might not have up-to-date dependencies

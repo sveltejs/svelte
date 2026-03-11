@@ -17,7 +17,8 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	STALE_REACTION
+	STALE_REACTION,
+	USER_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -185,7 +186,13 @@ export class Batch {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
 
+	/** @returns {boolean} */
 	finished() {
+		// TODO instead of littering this class with if(this.successor) checks, it's probably less code/better to use Batch.find(batch).x() in the relevant places
+		if (this.successor) {
+			return this.successor.finished();
+		}
+
 		return this.#pending === 0 && !this.is_fork && this.#commit_callbacks.size === 0;
 	}
 
@@ -195,6 +202,11 @@ export class Batch {
 	 * @param {(batch: Batch) => void} on_discard
 	 */
 	skip_effect(effect, on_discard) {
+		if (this.successor) {
+			this.successor.skip_effect(effect, on_discard);
+			return;
+		}
+
 		if (!this.#skipped_branches.has(effect)) {
 			this.#skipped_branches.set(effect, { d: [], m: [], on_discard });
 		}
@@ -206,6 +218,11 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	unskip_effect(effect) {
+		if (this.successor) {
+			this.successor.unskip_effect(effect);
+			return;
+		}
+
 		var tracked = this.#skipped_branches.get(effect);
 		if (tracked) {
 			this.#skipped_branches.delete(effect);
@@ -244,6 +261,8 @@ export class Batch {
 		 */
 		var updates = (legacy_updates = []);
 
+		if (this.id === 5) debugger;
+
 		for (const root of roots) {
 			this.#traverse(root, effects, render_effects);
 		}
@@ -261,13 +280,16 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
-		if (this.#is_deferred()) {
+		if (this.#is_deferred() || this.successor) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
 			for (const [e, t] of this.#skipped_branches) {
 				reset_branch(e, t);
 			}
+
+			// Once more for the potential new (render) effects
+			if (this.successor) Batch.merge(this, this.successor);
 		} else {
 			// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
 			this.#dirty_effects.clear();
@@ -372,7 +394,12 @@ export class Batch {
 	 * @param {any} value
 	 */
 	capture(source, value) {
-		if (!this.is_fork) source.batch = this;
+		if (this.successor) {
+			this.successor.capture(source, value);
+			return;
+		}
+
+		if (!this.is_fork) source.batch = Batch.upsert(source);
 
 		if (value !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, value);
@@ -386,10 +413,20 @@ export class Batch {
 	}
 
 	activate() {
+		if (this.successor) {
+			this.successor.activate();
+			return;
+		}
+
 		current_batch = this;
 	}
 
 	deactivate() {
+		if (this.successor) {
+			this.successor.deactivate();
+			return;
+		}
+
 		current_batch = null;
 		batch_values = null;
 	}
@@ -443,6 +480,11 @@ export class Batch {
 	}
 
 	discard() {
+		if (this.successor) {
+			this.successor.discard();
+			return;
+		}
+
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
 	}
@@ -530,6 +572,11 @@ export class Batch {
 	 * @param {boolean} blocking
 	 */
 	increment(blocking) {
+		if (this.successor) {
+			this.successor.increment(blocking);
+			return;
+		}
+
 		this.#pending += 1;
 		if (blocking) this.#blocking_pending += 1;
 	}
@@ -539,6 +586,11 @@ export class Batch {
 	 * @param {boolean} skip - whether to skip updates (because this is triggered by a stale reaction)
 	 */
 	decrement(blocking, skip) {
+		if (this.successor) {
+			this.successor.decrement(blocking, skip);
+			return;
+		}
+
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
@@ -553,26 +605,60 @@ export class Batch {
 
 	/** @param {(batch: Batch) => void} fn */
 	oncommit(fn) {
+		if (this.successor) {
+			this.successor.oncommit(fn);
+			return;
+		}
+
 		this.#commit_callbacks.add(fn);
 	}
 
 	/** @param {(batch: Batch) => void} fn */
 	ondiscard(fn) {
+		if (this.successor) {
+			this.successor.ondiscard(fn);
+			return;
+		}
+
 		this.#discard_callbacks.add(fn);
 	}
 
+	/** @returns {Promise<void>} */
 	settled() {
+		if (this.successor) {
+			return this.successor.settled();
+		}
+
 		return (this.#deferred ??= deferred()).promise;
 	}
 
 	/**
 	 * Ensure there is a current batch for scheduling work triggered by `reaction`.
 	 * If both the current batch and the reaction batch are active, merge them.
-	 * @param {Reaction} reaction
+	 * @param {Value | Reaction} reaction
 	 */
 	static upsert(reaction) {
+		if (reaction.f & RENDER_EFFECT && !(reaction.f & USER_EFFECT)) {
+			return Batch.ensure();
+		}
+
+		var existing_batch = [...batches].find(
+			(b) => !b.is_fork && b.current.has(/** @type {any} */ (reaction))
+		);
+
 		var reaction_batch = reaction.batch;
 		var has_reaction_batch = reaction_batch !== null && !reaction_batch.finished();
+
+		if (existing_batch) {
+			if (reaction_batch) {
+				Batch.merge(reaction_batch, existing_batch);
+			}
+			if (current_batch) {
+				Batch.merge(current_batch, existing_batch);
+			}
+			current_batch = existing_batch;
+			return existing_batch;
+		}
 
 		if (current_batch === null) {
 			if (has_reaction_batch) {
@@ -605,6 +691,8 @@ export class Batch {
 	 * @param {Batch} to
 	 */
 	static merge(from, to) {
+		// from = Batch.find(from);
+		to = Batch.find(to);
 		if (from === to) return;
 
 		for (const [source, value] of from.previous) {
@@ -614,14 +702,13 @@ export class Batch {
 		}
 
 		for (const [source, value] of from.current) {
-			to.current.set(source, value);
+			to.current.set(source, value); // TODO do we somehow need to know which one's more recent here?
 			if (!to.is_fork) source.batch = to;
 		}
 
-		to.#pending += from.#pending;
 		to.#blocking_pending += from.#blocking_pending;
-
-		to.#roots.push(...from.#roots);
+		to.#pending += from.#pending;
+		to.#roots.push(...from.#roots.filter((r) => !to.#roots.includes(r)));
 
 		for (const e of from.#dirty_effects) to.#dirty_effects.add(e);
 		for (const e of from.#maybe_dirty_effects) to.#maybe_dirty_effects.add(e);
@@ -658,8 +745,19 @@ export class Batch {
 		from.#decrement_queued = false;
 		from.successor = to;
 
+		// Apply before modifying batches, else apply might erronously bail because there's only one batch left
+		if (batch_values !== null) to.apply();
+
 		batches.delete(from);
 		batches.add(to);
+	}
+
+	/** @param {Batch} batch */
+	static find(batch) {
+		while (batch.successor) {
+			batch = batch.successor;
+		}
+		return batch;
 	}
 
 	static ensure() {
@@ -682,16 +780,15 @@ export class Batch {
 			}
 		}
 
-		return current_batch;
+		return Batch.find(current_batch);
 	}
 
-	#scheduling = false;
-
+	// TODO do we need this or can we assume decrement does what we want?
 	reschedule() {
-		if (!is_flushing_sync && !this.#scheduling && this.#is_deferred()) {
-			this.#scheduling = true;
+		if (!is_flushing_sync && !this.#decrement_queued && this.#is_deferred()) {
+			this.#decrement_queued = true;
 			queue_micro_task(() => {
-				this.#scheduling = false;
+				this.#decrement_queued = false;
 				this.flush();
 			});
 		}
@@ -721,6 +818,11 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	schedule(effect) {
+		if (this.successor) {
+			this.successor.schedule(effect);
+			return;
+		}
+
 		last_scheduled_effect = effect;
 
 		// defer render effects inside a pending boundary
@@ -1078,20 +1180,15 @@ export function eager(fn) {
  * @param {{ d: Effect[], m: Effect[] }} tracked
  */
 function reset_branch(effect, tracked) {
-	// Clean branches normally need no traversal. But if a branch belongs to the
-	// current batch, we still need to walk it to cancel stale async effects.
-	if (
-		(effect.f & BRANCH_EFFECT) !== 0 &&
-		(effect.f & CLEAN) !== 0 &&
-		effect.batch !== current_batch
-	) {
+	// Clean branches normally need no traversal.
+	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
 		return;
 	}
 
-	// This branch is stale for the current batch. Cancel async effects that
-	// belong to this batch so pending async work is rejected/discarded,
-	// which is important for getting the batch's pending count to 0.
-	if ((effect.f & ASYNC) !== 0 && effect.batch === current_batch) {
+	// This branch is stale for the current batch. Cancel async effects so
+	// pending async work is rejected/discarded, which is important for getting
+	// the batch's pending count to 0.
+	if ((effect.f & ASYNC) !== 0) {
 		effect.ac?.abort(STALE_REACTION);
 		effect.ac = null;
 	}
