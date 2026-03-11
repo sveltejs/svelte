@@ -1,8 +1,9 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set, state, increment } from '../internal/client/reactivity/sources.js';
+import { source, set, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get, update_version } from '../internal/client/runtime.js';
+import { async_mode_flag } from '../internal/flags/index.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -47,8 +48,8 @@ var inited = false;
 export class SvelteSet extends Set {
 	/** @type {Map<T, Source<boolean>>} */
 	#sources = new Map();
-	#version = state(0);
-	#size = state(0);
+	/** @type {Source<Set<T>>} */
+	#items = state(new Set());
 	#update_version = update_version || -1;
 
 	/**
@@ -57,19 +58,16 @@ export class SvelteSet extends Set {
 	constructor(value) {
 		super();
 
-		if (DEV) {
-			// If the value is invalid then the native exception will fire here
-			value = new Set(value);
+		this.#items = state(new Set(value));
 
-			tag(this.#version, 'SvelteSet version');
-			tag(this.#size, 'SvelteSet.size');
+		var sources = this.#sources;
+
+		for (const value of this.#items.v) {
+			sources.set(value, this.#source(true));
 		}
 
-		if (value) {
-			for (var element of value) {
-				super.add(element);
-			}
-			this.#size.v = super.size;
+		if (DEV) {
+			tag(this.#items, 'SvelteSet items');
 		}
 
 		if (!inited) this.#init();
@@ -98,18 +96,16 @@ export class SvelteSet extends Set {
 		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
-				get(this.#version);
 				// @ts-ignore
-				return set_proto[method].apply(this, v);
+				return set_proto[method].apply(get(this.#items), v);
 			};
 		}
 
 		for (const method of set_like_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
-				get(this.#version);
 				// @ts-ignore
-				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
+				var set = /** @type {Set<T>} */ (set_proto[method].apply(get(this.#items), v));
 				return new SvelteSet(set);
 			};
 		}
@@ -117,19 +113,18 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
-		var has = super.has(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
 
 		if (s === undefined) {
-			if (!has) {
+			if (!async_mode_flag) {
 				// If the value doesn't exist, track the version in case it's added later
 				// but don't create sources willy-nilly to track all possible values
-				get(this.#version);
+				get(this.#items);
 				return false;
 			}
 
-			s = this.#source(true);
+			s = this.#source(get(this.#items).has(value));
 
 			if (DEV) {
 				tag(s, `SvelteSet has(${label(value)})`);
@@ -138,16 +133,25 @@ export class SvelteSet extends Set {
 			sources.set(value, s);
 		}
 
-		get(s);
-		return has;
+		return get(s);
 	}
 
 	/** @param {T} value */
 	add(value) {
-		if (!super.has(value)) {
-			super.add(value);
-			set(this.#size, super.size);
-			increment(this.#version);
+		var sources = this.#sources;
+		var s = sources.get(value);
+
+		if (s !== undefined) {
+			set(s, true);
+		} else {
+			sources.set(value, this.#source(true));
+		}
+
+		if (!get(this.#items).has(value)) {
+			const clone = new Set(get(this.#items));
+			clone.add(value);
+
+			set(this.#items, clone);
 		}
 
 		return this;
@@ -155,7 +159,7 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	delete(value) {
-		var deleted = super.delete(value);
+		var has = get(this.#items).has(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
 
@@ -164,20 +168,24 @@ export class SvelteSet extends Set {
 			set(s, false);
 		}
 
-		if (deleted) {
-			set(this.#size, super.size);
-			increment(this.#version);
+		if (has) {
+			const clone = new Set(get(this.#items));
+			clone.delete(value);
+
+			set(this.#items, clone);
 		}
 
-		return deleted;
+		return has;
 	}
 
 	clear() {
-		if (super.size === 0) {
+		if (get(this.#items).size === 0) {
 			return;
 		}
+
 		// Clear first, so we get nice console.log outputs with $inspect
-		super.clear();
+		set(this.#items, new Set());
+
 		var sources = this.#sources;
 
 		for (var s of sources.values()) {
@@ -185,8 +193,6 @@ export class SvelteSet extends Set {
 		}
 
 		sources.clear();
-		set(this.#size, 0);
-		increment(this.#version);
 	}
 
 	keys() {
@@ -194,20 +200,18 @@ export class SvelteSet extends Set {
 	}
 
 	values() {
-		get(this.#version);
-		return super.values();
+		return get(this.#items).values();
 	}
 
 	entries() {
-		get(this.#version);
-		return super.entries();
+		return get(this.#items).entries();
 	}
 
 	[Symbol.iterator]() {
-		return this.keys();
+		return this.values();
 	}
 
 	get size() {
-		return get(this.#size);
+		return get(this.#items).size;
 	}
 }
