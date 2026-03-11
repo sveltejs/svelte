@@ -36,12 +36,12 @@ export function assign(object, property, value, location) {
 /**
  * @param {any} object
  * @param {string} property
- * @param {any} value
+ * @param {() => any} rhs_getter
  * @param {string} location
  */
-export function assign_and(object, property, value, location) {
+export function assign_and(object, property, rhs_getter, location) {
 	return compare(
-		(object[property] &&= value),
+		(object[property] &&= rhs_getter()),
 		untrack(() => object[property]),
 		property,
 		location
@@ -51,12 +51,12 @@ export function assign_and(object, property, value, location) {
 /**
  * @param {any} object
  * @param {string} property
- * @param {any} value
+ * @param {() => any} rhs_getter
  * @param {string} location
  */
-export function assign_or(object, property, value, location) {
+export function assign_or(object, property, rhs_getter, location) {
 	return compare(
-		(object[property] ||= value),
+		(object[property] ||= rhs_getter()),
 		untrack(() => object[property]),
 		property,
 		location
@@ -66,12 +66,12 @@ export function assign_or(object, property, value, location) {
 /**
  * @param {any} object
  * @param {string} property
- * @param {any} value
+ * @param {() => any} rhs_getter
  * @param {string} location
  */
-export function assign_nullish(object, property, value, location) {
+export function assign_nullish(object, property, rhs_getter, location) {
 	return compare(
-		(object[property] ??= value),
+		(object[property] ??= rhs_getter()),
 		untrack(() => object[property]),
 		property,
 		location
