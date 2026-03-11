@@ -503,6 +503,7 @@ export class Batch {
 				batch.#blockers.delete(this);
 
 				if (batch.#blockers.size === 0 && !batch.#is_deferred()) {
+					batch.activate();
 					batch.#revive();
 					batch.#process();
 				}
@@ -527,9 +528,7 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		if (this.#decrement_queued || skip) {
-			return;
-		}
+		if (this.#decrement_queued || skip) return;
 
 		this.#decrement_queued = true;
 
