@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: preserve each items that are needed by pending batches
+fix: defer batch resolution until earlier intersecting batches have committed
