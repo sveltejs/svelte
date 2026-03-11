@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { source, set, state, increment } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { active_effect, get, untrack, update_version } from '../internal/client/runtime.js';
+import { active_reaction, get, update_version } from '../internal/client/runtime.js';
 import { async_mode_flag } from '../internal/flags/index.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
@@ -48,8 +48,7 @@ var inited = false;
 export class SvelteSet extends Set {
 	/** @type {Map<T, Source<boolean>>} */
 	#sources = new Map();
-	/** @type {Source<Set<T>>} */
-	#items = state(new Set());
+	#version = state(0);
 	#update_version = update_version || -1;
 
 	/**
@@ -58,10 +57,18 @@ export class SvelteSet extends Set {
 	constructor(value) {
 		super();
 
-		this.#items = state(new Set(value))
-
 		if (DEV) {
-			tag(this.#items, 'SvelteSet items');
+			// If the value is invalid then the native exception will fire here
+			value = new Set(value);
+
+			tag(this.#version, 'SvelteSet version');
+		}
+
+		if (value) {
+			var sources = this.#sources;
+			for (var element of value) {
+				sources.set(element, this.#source(true));
+			}
 		}
 
 		if (!inited) this.#init();
@@ -90,7 +97,7 @@ export class SvelteSet extends Set {
 		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
-				get(this.#items);
+				get(this.#version);
 				// @ts-ignore
 				return set_proto[method].apply(this, v);
 			};
@@ -99,7 +106,7 @@ export class SvelteSet extends Set {
 		for (const method of set_like_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
-				get(this.#items);
+				get(this.#version);
 				// @ts-ignore
 				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
 				return new SvelteSet(set);
@@ -113,14 +120,14 @@ export class SvelteSet extends Set {
 		var s = sources.get(value);
 
 		if (s === undefined) {
-			if (active_effect === null && (!async_mode_flag || !untrack(() => get(this.#items)).has(value))) {
+			if (active_reaction === null && (!async_mode_flag)) {
 				// If the value doesn't exist, track the version in case it's added later
 				// but don't create sources willy-nilly to track all possible values
-				get(this.#items);
+				get(this.#version);
 				return false;
 			}
 
-			s = this.#source((get(this.#items)).has(value));
+			s = this.#source(false);
 
 			if (DEV) {
 				tag(s, `SvelteSet has(${label(value)})`);
@@ -134,17 +141,18 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	add(value) {
-		if (!get(this.#items).has(value)) {
-			const clone = new Set(get(this.#items));
-			clone.add(value);
-
-			set(this.#items, clone);
-		}
-
-		var s = this.#sources.get(value);
+		var sources = this.#sources;
+		var s = sources.get(value);
 
 		if (s !== undefined) {
-			set(s, true);
+			if (!get(s)) {
+				set(s, true);
+				increment(this.#version);
+			}
+		} else {
+			s = this.#source(true);
+			sources.set(value, s);
+			increment(this.#version);
 		}
 
 		return this;
@@ -152,52 +160,63 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	delete(value) {
-		var has = get(this.#items).has(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
 
 		if (s !== undefined) {
 			sources.delete(value);
-			set(s, false);
+
+			if (get(s)) {
+				set(s, false);
+				increment(this.#version);
+
+				return true;
+			}
 		}
 
-		if (has) {
-			const clone = new Set(get(this.#items));
-			clone.delete(value);
-
-			set(this.#items, clone);
-		}
-
-		return has;
+		return false;
 	}
 
 	clear() {
-		if (get(this.#items).size === 0) {
-			return;
-		}
-
-		// Clear first, so we get nice console.log outputs with $inspect
-		set(this.#items, new Set());
-
 		var sources = this.#sources;
+		var array = [];
 
 		for (var s of sources.values()) {
-			set(s, false);
+			if (s.v) array.push(s);
 		}
 
-		sources.clear();
+		if (array.length > 0) {
+			// Clear first, so we get nice console.log outputs with $inspect
+			sources.clear();
+			increment(this.#version);
+
+			for (const s of array) {
+				set(s, false);
+			}
+		}
 	}
 
 	keys() {
 		return this.values();
 	}
 
-	values() {
-		return get(this.#items).values();
+	/**
+	 * @returns {SetIterator<T>}
+	 */
+	*values() {
+		get(this.#version);
+		for (const [value, source] of this.#sources) {
+			if (get(source)) yield value;
+		}
 	}
 
-	entries() {
-		return get(this.#items).entries();
+	/**
+	 * @returns {SetIterator<[T, T]>}
+	 */
+	*entries() {
+		for (const value of this.values()) {
+			yield [value, value];
+		}
 	}
 
 	[Symbol.iterator]() {
@@ -205,6 +224,10 @@ export class SvelteSet extends Set {
 	}
 
 	get size() {
-		return get(this.#items).size;
+		var size = 0;
+		for (const value of this.values()) {
+			size += 1;
+		}
+		return size;
 	}
 }
