@@ -90,18 +90,16 @@ export class SvelteSet extends Set {
 		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
-				get(this.#items);
 				// @ts-ignore
-				return set_proto[method].apply(this, v);
+				return set_proto[method].apply(get(this.#items), v);
 			};
 		}
 
 		for (const method of set_like_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
-				get(this.#items);
 				// @ts-ignore
-				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
+				var set = /** @type {Set<T>} */ (set_proto[method].apply(get(this.#items), v));
 				return new SvelteSet(set);
 			};
 		}
