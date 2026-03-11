@@ -387,6 +387,19 @@ export class Batch {
 		batch_values = null;
 	}
 
+	#revive() {
+		for (const e of this.#dirty_effects) {
+			this.#maybe_dirty_effects.delete(e);
+			set_signal_status(e, DIRTY);
+			this.schedule(e);
+		}
+
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			this.schedule(e);
+		}
+	}
+
 	flush() {
 		var source_stacks = DEV ? new Set() : null;
 
@@ -397,16 +410,7 @@ export class Batch {
 			// we only reschedule previously-deferred effects if we expect
 			// to be able to run them after processing the batch
 			if (!this.#is_deferred()) {
-				for (const e of this.#dirty_effects) {
-					this.#maybe_dirty_effects.delete(e);
-					set_signal_status(e, DIRTY);
-					this.schedule(e);
-				}
-
-				for (const e of this.#maybe_dirty_effects) {
-					set_signal_status(e, MAYBE_DIRTY);
-					this.schedule(e);
-				}
+				this.#revive();
 			}
 
 			this.#process();
@@ -487,10 +491,21 @@ export class Batch {
 						batch.#traverse(root, [], []);
 					}
 
-					// TODO do we need to do anything with the dummy effect arrays?
+					batch.#roots.length = 0;
 				}
 
 				batch.deactivate();
+			}
+		}
+
+		for (const batch of batches) {
+			if (batch.#blockers.has(this)) {
+				batch.#blockers.delete(this);
+
+				if (batch.#blockers.size === 0 && !batch.#is_deferred()) {
+					batch.#revive();
+					batch.#process();
+				}
 			}
 		}
 	}
@@ -562,8 +577,6 @@ export class Batch {
 	}
 
 	apply() {
-		this.#blockers.clear();
-
 		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) {
 			batch_values = null;
 			return;
