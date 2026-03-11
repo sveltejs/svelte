@@ -179,7 +179,7 @@ function build_assignment(operator, left, right, context) {
 	// in cases like `(object.items ??= []).push(value)`, we may need to warn
 	// if the value gets proxified, since the proxy _isn't_ the thing that
 	// will be pushed to. we do this by transforming it to something like
-	// `$.assign_nullish(object, 'items', [])`
+	// `$.assign_nullish(object, 'items', () => [])`
 	let should_transform =
 		dev &&
 		path.at(-1) !== 'ExpressionStatement' &&
@@ -236,7 +236,7 @@ function build_assignment(operator, left, right, context) {
 							? left.property
 							: b.literal(/** @type {Identifier} */ (left.property).name)
 					),
-					right,
+					b.arrow([], right),
 					b.literal(locate_node(left))
 				)
 			)
