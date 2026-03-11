@@ -1,8 +1,8 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set, state, increment } from '../internal/client/reactivity/sources.js';
+import { source, set, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { active_effect, active_reaction, get, untrack, update_version } from '../internal/client/runtime.js';
+import { get, update_version } from '../internal/client/runtime.js';
 import { async_mode_flag } from '../internal/flags/index.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
@@ -138,13 +138,6 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	add(value) {
-		if (!get(this.#items).has(value)) {
-			const clone = new Set(get(this.#items));
-			clone.add(value);
-
-			set(this.#items, clone);
-		}
-
 		var sources = this.#sources;
 		var s = sources.get(value);
 
@@ -152,6 +145,13 @@ export class SvelteSet extends Set {
 			set(s, true);
 		} else {
 			sources.set(value, this.#source(true));
+		}
+
+		if (!get(this.#items).has(value)) {
+			const clone = new Set(get(this.#items));
+			clone.add(value);
+
+			set(this.#items, clone);
 		}
 
 		return this;
