@@ -503,6 +503,7 @@ export class Batch {
 				batch.#blockers.delete(this);
 
 				if (batch.#blockers.size === 0 && !batch.#is_deferred()) {
+					batch.activate();
 					batch.#revive();
 					batch.#process();
 				}
