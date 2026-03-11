@@ -124,7 +124,7 @@ export class SvelteSet extends Set {
 				return false;
 			}
 
-			s = this.#source((get(this.#items)).has(value));
+			s = this.#source(get(this.#items).has(value));
 
 			if (DEV) {
 				tag(s, `SvelteSet has(${label(value)})`);
