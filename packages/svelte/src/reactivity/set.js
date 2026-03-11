@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { source, set, state, increment } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { active_effect, get, untrack, update_version } from '../internal/client/runtime.js';
+import { active_effect, active_reaction, get, untrack, update_version } from '../internal/client/runtime.js';
 import { async_mode_flag } from '../internal/flags/index.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
@@ -58,7 +58,13 @@ export class SvelteSet extends Set {
 	constructor(value) {
 		super();
 
-		this.#items = state(new Set(value))
+		this.#items = state(new Set(value));
+
+		var sources = this.#sources;
+
+		for (const value of this.#items.v) {
+			sources.set(value, this.#source(true));
+		}
 
 		if (DEV) {
 			tag(this.#items, 'SvelteSet items');
@@ -111,7 +117,7 @@ export class SvelteSet extends Set {
 		var s = sources.get(value);
 
 		if (s === undefined) {
-			if (active_effect === null && (!async_mode_flag || !untrack(() => get(this.#items)).has(value))) {
+			if (!async_mode_flag) {
 				// If the value doesn't exist, track the version in case it's added later
 				// but don't create sources willy-nilly to track all possible values
 				get(this.#items);
@@ -139,10 +145,13 @@ export class SvelteSet extends Set {
 			set(this.#items, clone);
 		}
 
-		var s = this.#sources.get(value);
+		var sources = this.#sources;
+		var s = sources.get(value);
 
 		if (s !== undefined) {
 			set(s, true);
+		} else {
+			sources.set(value, this.#source(true));
 		}
 
 		return this;
