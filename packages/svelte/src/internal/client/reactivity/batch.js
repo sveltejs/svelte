@@ -166,6 +166,9 @@ export class Batch {
 
 	#decrement_queued = false;
 
+	/** @type {Set<Batch>} */
+	#blockers = new Set();
+
 	#is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
@@ -241,7 +244,7 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
-		if (this.#is_deferred()) {
+		if (this.#is_deferred() || this.#blockers.size > 0) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
@@ -509,7 +512,10 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		if (this.#decrement_queued || skip) return;
+		if (this.#decrement_queued || skip) {
+			return;
+		}
+
 		this.#decrement_queued = true;
 
 		queue_micro_task(() => {
@@ -556,6 +562,8 @@ export class Batch {
 	}
 
 	apply() {
+		this.#blockers.clear();
+
 		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) {
 			batch_values = null;
 			return;
@@ -575,18 +583,19 @@ export class Batch {
 				continue;
 			}
 
-			var coincides = false;
+			var intersects = false;
+			var differs = false;
 
 			if (is_earlier) {
 				for (const source of batch.current.keys()) {
-					if (this.current.has(source)) {
-						coincides = true;
-						break;
-					}
+					intersects ||= this.current.has(source);
+					differs ||= !this.current.has(source);
 				}
 			}
 
-			if (!coincides) {
+			if (intersects && differs) {
+				this.#blockers.add(batch);
+			} else {
 				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, previous);
