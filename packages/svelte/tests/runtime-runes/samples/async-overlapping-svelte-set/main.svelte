@@ -24,7 +24,7 @@
 
 <p>
 	pending={$effect.pending()}
-	values.length={values.size}
+	values.size={values.size}
 	values=[{Array.from(values)}]
 </p>
 
