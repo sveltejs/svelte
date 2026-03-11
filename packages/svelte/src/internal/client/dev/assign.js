@@ -21,12 +21,12 @@ function compare(a, b, property, location) {
 /**
  * @param {any} object
  * @param {string} property
- * @param {any} value
+ * @param {() => any} getter
  * @param {string} location
  */
-export function assign(object, property, value, location) {
+export function assign(object, property, rhs_getter, location) {
 	return compare(
-		(object[property] = value),
+		(object[property] = rhs_getter()),
 		untrack(() => object[property]),
 		property,
 		location
