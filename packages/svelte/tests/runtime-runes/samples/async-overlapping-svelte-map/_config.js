@@ -25,7 +25,7 @@ export default test({
 				<p>4: false ...</p>
 				<p>5: false ...</p>
 				<hr>
-				<p>1</p>
+				<p>10</p>
 			`
 		);
 
@@ -45,8 +45,8 @@ export default test({
 				<p>4: false ...</p>
 				<p>5: false ...</p>
 				<hr>
-				<p>1</p>
-				<p>2</p>
+				<p>10</p>
+				<p>20</p>
 			`
 		);
 
@@ -66,9 +66,9 @@ export default test({
 				<p>4: false ...</p>
 				<p>5: false ...</p>
 				<hr>
-				<p>1</p>
-				<p>2</p>
-				<p>3</p>
+				<p>10</p>
+				<p>20</p>
+				<p>30</p>
 			`
 		);
 
@@ -90,9 +90,9 @@ export default test({
 				<p>4: false ...</p>
 				<p>5: false ...</p>
 				<hr>
-				<p>1</p>
-				<p>2</p>
-				<p>3</p>
+				<p>10</p>
+				<p>20</p>
+				<p>30</p>
 			`
 		);
 
@@ -112,9 +112,9 @@ export default test({
 				<p>4: false ...</p>
 				<p>5: false ...</p>
 				<hr>
-				<p>1</p>
-				<p>2</p>
-				<p>3</p>
+				<p>10</p>
+				<p>20</p>
+				<p>30</p>
 			`
 		);
 
@@ -134,11 +134,11 @@ export default test({
 				<p>4: true 40</p>
 				<p>5: true 50</p>
 				<hr>
-				<p>1</p>
-				<p>2</p>
-				<p>3</p>
-				<p>4</p>
-				<p>5</p>
+				<p>10</p>
+				<p>20</p>
+				<p>30</p>
+				<p>40</p>
+				<p>50</p>
 			`
 		);
 	}
