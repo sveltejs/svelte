@@ -188,9 +188,9 @@ export function is_dirty(reaction) {
 
 		if (
 			(flags & CONNECTED) !== 0 &&
-			// During time traveling we don't want to reset the status so that
+			// During forking we don't want to reset the status so that
 			// traversal of the graph in the other batches still happens
-			batch_values === null
+			!current_batch?.is_fork
 		) {
 			set_signal_status(reaction, CLEAN);
 		}
