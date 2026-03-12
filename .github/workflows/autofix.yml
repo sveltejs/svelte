@@ -1,0 +1,69 @@
+name: Autofix Lint
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  autofix-lint:
+    permissions:
+      contents: write # to push the generated types commit
+      pull-requests: read # to resolve the PR head ref
+    # prevents this action from running on forks
+    if: |
+      github.repository == 'sveltejs/svelte' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event.issue.pull_request != null &&
+          github.event.comment.body == '/autofix' &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+        )
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR ref
+        if: github.event_name != 'workflow_dispatch'
+        id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: pull } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            if (pull.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: 'Cannot autofix: this PR is from a forked repository. The autofix workflow can only push to branches within this repository.'
+              });
+              core.setFailed('PR is from a fork');
+            }
+            core.setOutput('ref', pull.head.ref);
+      - uses: actions/checkout@v6
+        if: github.event_name == 'workflow_dispatch' || steps.pr.outcome == 'success'
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || steps.pr.outputs.ref }}
+      - uses: pnpm/action-setup@v4.3.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run prettier
+        run: pnpm format
+      - name: Generate types
+        run: pnpm -F @sveltejs/svelte generate
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "chore: autofix"
+          git push origin HEAD
