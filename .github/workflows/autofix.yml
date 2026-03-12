@@ -59,7 +59,7 @@ jobs:
       - name: Run prettier
         run: pnpm format
       - name: Generate types
-        run: pnpm -F @sveltejs/svelte generate
+        run: pnpm -F svelte generate
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
