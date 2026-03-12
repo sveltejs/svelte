@@ -636,6 +636,8 @@ export class Batch {
 	 * @param {Value | Reaction} reaction
 	 */
 	static upsert(reaction) {
+		if (current_batch?.is_fork) return reaction.batch;
+
 		if (reaction.f & RENDER_EFFECT && !(reaction.f & USER_EFFECT)) {
 			return Batch.ensure();
 		}
@@ -1152,11 +1154,14 @@ export function eager(fn) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
+			var previous_current_batch = current_batch;
 
 			try {
+				current_batch = null;
 				batch_values = null;
 				value = fn();
 			} finally {
+				current_batch = previous_current_batch;
 				batch_values = previous_batch_values;
 			}
 
