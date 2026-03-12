@@ -366,11 +366,11 @@ export class Batch {
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
 	 * @param {Source} source
-	 * @param {any} value
+	 * @param {any} old_value
 	 */
-	capture(source, value) {
-		if (value !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, value);
+	capture(source, old_value) {
+		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
+			this.previous.set(source, old_value);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
@@ -572,7 +572,7 @@ export class Batch {
 
 		// ...and undo changes belonging to other batches
 		for (const batch of batches) {
-			if (batch === this) continue;
+			if (batch === this || batch.is_fork) continue;
 
 			for (const [source, previous] of batch.previous) {
 				if (!batch_values.has(source)) {
@@ -1018,13 +1018,6 @@ export function fork(fn) {
 	// revert state changes
 	for (var [source, value] of batch.previous) {
 		source.v = value;
-	}
-
-	// make writable deriveds dirty, so they recalculate correctly
-	for (source of batch.current.keys()) {
-		if ((source.f & DERIVED) !== 0) {
-			set_signal_status(source, DIRTY);
-		}
 	}
 
 	return {
