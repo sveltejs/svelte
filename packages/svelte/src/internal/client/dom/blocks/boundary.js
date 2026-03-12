@@ -218,8 +218,6 @@ export class Boundary {
 		this.is_pending = true;
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
-		var batch = /** @type {Batch} */ (current_batch);
-
 		queue_micro_task(() => {
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
@@ -238,14 +236,12 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.#resolve(batch);
+				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		});
 	}
 
 	#render() {
-		var batch = /** @type {Batch} */ (current_batch);
-
 		try {
 			this.is_pending = this.has_pending_snippet();
 			this.#pending_count = 0;
@@ -262,7 +258,7 @@ export class Boundary {
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 				this.#pending_effect = branch(() => pending(this.#anchor));
 			} else {
-				this.#resolve(batch);
+				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		} catch (error) {
 			this.error(error);

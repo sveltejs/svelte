@@ -231,7 +231,11 @@ export function internal_set(source, value, updated_during_traversal = null) {
 				execute_derived(derived);
 			}
 
-			update_derived_status(derived);
+			// During time traveling we don't want to reset the status so that
+			// traversal of the graph in the other batches still happens
+			if (batch_values === null) {
+				update_derived_status(derived);
+			}
 		}
 
 		source.wv = increment_write_version();

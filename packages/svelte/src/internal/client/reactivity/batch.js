@@ -228,7 +228,12 @@ export class Batch {
 		var updates = (legacy_updates = []);
 
 		for (const root of roots) {
-			this.#traverse(root, effects, render_effects);
+			try {
+				this.#traverse(root, effects, render_effects);
+			} catch (e) {
+				reset_all(root);
+				throw e;
+			}
 		}
 
 		// any writes should take effect in a subsequent batch
@@ -364,11 +369,11 @@ export class Batch {
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
 	 * @param {Source} source
-	 * @param {any} value
+	 * @param {any} old_value
 	 */
-	capture(source, value) {
-		if (value !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, value);
+	capture(source, old_value) {
+		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
+			this.previous.set(source, old_value);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
@@ -586,7 +591,7 @@ export class Batch {
 
 		// ...and undo changes belonging to other batches unless they block this one
 		for (const batch of batches) {
-			if (batch === this) continue;
+			if (batch === this || batch.is_fork) continue;
 
 			var intersects = false;
 			var differs = false;
@@ -993,6 +998,20 @@ function reset_branch(effect, tracked) {
 }
 
 /**
+ * Mark an entire effect tree clean following an error
+ * @param {Effect} effect
+ */
+function reset_all(effect) {
+	set_signal_status(effect, CLEAN);
+
+	var e = effect.first;
+	while (e !== null) {
+		reset_all(e);
+		e = e.next;
+	}
+}
+
+/**
  * Creates a 'fork', in which state changes are evaluated but not applied to the DOM.
  * This is useful for speculatively loading data (for example) when you suspect that
  * the user is about to take some action.
@@ -1032,13 +1051,6 @@ export function fork(fn) {
 	// revert state changes
 	for (var [source, value] of batch.previous) {
 		source.v = value;
-	}
-
-	// make writable deriveds dirty, so they recalculate correctly
-	for (source of batch.current.keys()) {
-		if ((source.f & DERIVED) !== 0) {
-			set_signal_status(source, DIRTY);
-		}
 	}
 
 	return {
