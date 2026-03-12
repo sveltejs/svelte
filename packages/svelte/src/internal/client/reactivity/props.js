@@ -419,9 +419,7 @@ export function prop(props, key, flags, fallback) {
 
 			// special case — avoid recalculating the derived if we're in a
 			// teardown function and the prop was overridden locally, or the
-			// component was already destroyed (this latter part is necessary
-			// because `bind:this` can read props after the component has
-			// been destroyed. TODO simplify `bind:this`
+			// component was already destroyed (people could access props in a timeout)
 			if ((is_destroying_effect && overridden) || (parent_effect.f & DESTROYED) !== 0) {
 				return d.v;
 			}
