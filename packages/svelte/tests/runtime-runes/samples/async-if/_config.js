@@ -27,7 +27,7 @@ export default test({
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
-			'<button>shift</button><button>true</button><button>false</button><h1>no</h1>'
+			'<button>shift</button><button>true</button><button>false</button><h1>yes</h1>'
 		);
 
 		shift.click();

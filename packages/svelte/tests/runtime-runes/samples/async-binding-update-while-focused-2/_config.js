@@ -27,7 +27,7 @@ export default test({
 
 		shift.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `<button>shift</button><input type="number" /> <p>1</p>`);
+		assert.htmlEqual(target.innerHTML, `<button>shift</button><input type="number" /> <p>0</p>`);
 		assert.equal(input.value, '2');
 
 		shift.click();

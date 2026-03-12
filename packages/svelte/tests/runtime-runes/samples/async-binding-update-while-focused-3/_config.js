@@ -58,7 +58,7 @@ export default test({
 					<option>two</option>
 					<option>three</option>
 				</select>
-				<p>three</p>
+				<p>two</p>
 			`
 		);
 		assert.equal(select.value, 'one');
