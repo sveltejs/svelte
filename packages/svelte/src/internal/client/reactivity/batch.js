@@ -179,10 +179,12 @@ export class Batch {
 
 	is_fork = false;
 
+	eager = false;
+
 	#decrement_queued = false;
 
 	#is_deferred() {
-		return this.is_fork || this.#blocking_pending > 0;
+		return !this.eager && (this.is_fork || this.#blocking_pending > 0);
 	}
 
 	/** @returns {boolean} */
@@ -259,8 +261,6 @@ export class Batch {
 		 * @deprecated when we get rid of legacy mode and stores, we can get rid of this
 		 */
 		var updates = (legacy_updates = []);
-
-		if (this.id === 5) debugger;
 
 		for (const root of roots) {
 			this.#traverse(root, effects, render_effects);
@@ -692,6 +692,9 @@ export class Batch {
 		// from = Batch.find(from);
 		to = Batch.find(to);
 		if (from === to) return;
+		if (from.is_fork || to.is_fork || (from.eager && !to.eager) || (to.eager && !from.eager)) {
+			return from;
+		}
 
 		for (const [source, value] of from.previous) {
 			if (!to.previous.has(source)) {
@@ -1120,6 +1123,8 @@ let eager_versions = [];
 function eager_flush() {
 	try {
 		flushSync(() => {
+			var batch = Batch.ensure();
+			batch.eager = true;
 			for (const version of eager_versions) {
 				update(version);
 			}

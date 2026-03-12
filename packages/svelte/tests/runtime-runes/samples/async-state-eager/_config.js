@@ -23,11 +23,11 @@ export default test({
 
 		shift.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `<button>3</button><button>shift</button><p>1</p>`);
+		assert.htmlEqual(target.innerHTML, `<button>3</button><button>shift</button><p>0</p>`);
 
 		shift.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `<button>3</button><button>shift</button><p>2</p>`);
+		assert.htmlEqual(target.innerHTML, `<button>3</button><button>shift</button><p>0</p>`);
 
 		shift.click();
 		await tick();
