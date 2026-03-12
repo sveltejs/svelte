@@ -269,3 +269,14 @@ export function transition_slide_display(value) {
 		console.warn(`https://svelte.dev/e/transition_slide_display`);
 	}
 }
+
+/**
+ * Reading a derived belonging to a now-destroyed effect may result in stale values
+ */
+export function derived_inert() {
+	if (DEV) {
+		console.warn(`%c[svelte] derived_inert\n%cReading a derived belonging to a now-destroyed effect may result in stale values\nhttps://svelte.dev/e/derived_inert`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/derived_inert`);
+	}
+}
