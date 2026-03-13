@@ -5,7 +5,8 @@ import * as b from '#compiler/builders';
 import {
 	build_assignment_value,
 	get_attribute_expression,
-	is_event_attribute
+	is_event_attribute,
+	is_expression_async
 } from '../../../../utils/ast.js';
 import { dev, locate_node } from '../../../../state.js';
 import { build_getter, should_proxy } from '../utils.js';
@@ -35,14 +36,6 @@ export function AssignmentExpression(node, context) {
 function is_non_coercive_operator(operator) {
 	return ['=', '||=', '&&=', '??='].includes(operator);
 }
-
-/** @type {Record<string, string>} */
-const callees = {
-	'=': '$.assign',
-	'&&=': '$.assign_and',
-	'||=': '$.assign_or',
-	'??=': '$.assign_nullish'
-};
 
 /**
  * @param {AssignmentOperator} operator
@@ -179,7 +172,7 @@ function build_assignment(operator, left, right, context) {
 	// in cases like `(object.items ??= []).push(value)`, we may need to warn
 	// if the value gets proxified, since the proxy _isn't_ the thing that
 	// will be pushed to. we do this by transforming it to something like
-	// `$.assign_nullish(object, 'items', () => [])`
+	// `$.assign(object, 'items', '??=', () => [])`
 	let should_transform =
 		dev &&
 		path.at(-1) !== 'ExpressionStatement' &&
@@ -225,22 +218,23 @@ function build_assignment(operator, left, right, context) {
 	}
 
 	if (left.type === 'MemberExpression' && should_transform) {
-		const callee = callees[operator];
-		return /** @type {Expression} */ (
-			context.visit(
-				b.call(
-					callee,
-					/** @type {Expression} */ (left.object),
-					/** @type {Expression} */ (
-						left.computed
-							? left.property
-							: b.literal(/** @type {Identifier} */ (left.property).name)
-					),
-					b.arrow([], right),
-					b.literal(locate_node(left))
-				)
-			)
+		const needs_lazy_getter = operator !== '=';
+		const needs_async = needs_lazy_getter && is_expression_async(right);
+		/** @type {Expression} */
+		let e = b.call(
+			needs_async ? '$.assign_async' : '$.assign',
+			/** @type {Expression} */ (left.object),
+			/** @type {Expression} */ (
+				left.computed ? left.property : b.literal(/** @type {Identifier} */ (left.property).name)
+			),
+			b.literal(operator),
+			needs_lazy_getter ? b.arrow([], right, needs_async) : right,
+			b.literal(locate_node(left))
 		);
+		if (needs_async) {
+			e = b.await(e);
+		}
+		return /** @type {Expression} */ (context.visit(e));
 	}
 
 	return null;

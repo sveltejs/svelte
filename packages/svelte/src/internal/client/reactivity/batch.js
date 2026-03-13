@@ -38,6 +38,8 @@ import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
+import { invariant } from '../../shared/dev.js';
+import { log_effect_tree } from '../dev/debug.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -207,7 +209,23 @@ export class Batch {
 
 	#process() {
 		if (flush_count++ > 1000) {
+			batches.delete(this);
 			infinite_loop_guard();
+		}
+
+		// we only reschedule previously-deferred effects if we expect
+		// to be able to run them after processing the batch
+		if (!this.#is_deferred()) {
+			for (const e of this.#dirty_effects) {
+				this.#maybe_dirty_effects.delete(e);
+				set_signal_status(e, DIRTY);
+				this.schedule(e);
+			}
+
+			for (const e of this.#maybe_dirty_effects) {
+				set_signal_status(e, MAYBE_DIRTY);
+				this.schedule(e);
+			}
 		}
 
 		const roots = this.#roots;
@@ -392,31 +410,12 @@ export class Batch {
 		batch_values = null;
 	}
 
-	#revive() {
-		for (const e of this.#dirty_effects) {
-			this.#maybe_dirty_effects.delete(e);
-			set_signal_status(e, DIRTY);
-			this.schedule(e);
-		}
-
-		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			this.schedule(e);
-		}
-	}
-
 	flush() {
 		var source_stacks = DEV ? new Set() : null;
 
 		try {
 			is_processing = true;
 			current_batch = this;
-
-			// we only reschedule previously-deferred effects if we expect
-			// to be able to run them after processing the batch
-			if (!this.#is_deferred()) {
-				this.#revive();
-			}
 
 			this.#process();
 		} finally {
@@ -477,6 +476,10 @@ export class Batch {
 			// Re-run async/block effects that depend on distinct values changed in both batches
 			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 			if (others.length > 0) {
+				if (DEV) {
+					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
+				}
+
 				batch.activate();
 
 				/** @type {Set<Value>} */
@@ -489,6 +492,7 @@ export class Batch {
 					mark_effects(source, others, marked, checked);
 				}
 
+				// Only apply and traverse when we know we triggered async work with marking the effects
 				if (batch.#roots.length > 0) {
 					batch.apply();
 
@@ -496,7 +500,7 @@ export class Batch {
 						batch.#traverse(root, [], []);
 					}
 
-					batch.#roots.length = 0;
+					batch.#roots = [];
 				}
 
 				batch.deactivate();
@@ -509,7 +513,6 @@ export class Batch {
 
 				if (batch.#blockers.size === 0 && !batch.#is_deferred()) {
 					batch.activate();
-					batch.#revive();
 					batch.#process();
 				}
 			}
@@ -540,6 +543,23 @@ export class Batch {
 			this.#decrement_queued = false;
 			this.flush();
 		});
+	}
+
+	/**
+	 * @param {Set<Effect>} dirty_effects
+	 * @param {Set<Effect>} maybe_dirty_effects
+	 */
+	transfer_effects(dirty_effects, maybe_dirty_effects) {
+		for (const e of dirty_effects) {
+			this.#dirty_effects.add(e);
+		}
+
+		for (const e of maybe_dirty_effects) {
+			this.#maybe_dirty_effects.add(e);
+		}
+
+		dirty_effects.clear();
+		maybe_dirty_effects.clear();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
