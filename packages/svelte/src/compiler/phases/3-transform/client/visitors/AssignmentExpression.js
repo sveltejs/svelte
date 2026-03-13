@@ -52,6 +52,19 @@ const callees = {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
+	if (
+		operator === '??=' &&
+		right.type === 'AwaitExpression'
+	) {
+		const l = /** @type {Expression} */ (context.visit(left));
+		const r = /** @type {Expression} */ (context.visit(right));
+
+		return b.logical(
+			'??',
+			l,
+			b.assignment('=', /** @type {Pattern} */ (l), r)
+		);
+	}
 	if (context.state.analysis.runes && left.type === 'MemberExpression') {
 		const name = get_name(left.property);
 		const field = name && context.state.state_fields.get(name);
@@ -134,14 +147,14 @@ function build_assignment(operator, left, right, context) {
 			object,
 			value,
 			!is_primitive &&
-				binding.kind !== 'prop' &&
-				binding.kind !== 'bindable_prop' &&
-				binding.kind !== 'raw_state' &&
-				binding.kind !== 'derived' &&
-				binding.kind !== 'store_sub' &&
-				context.state.analysis.runes &&
-				should_proxy(right, context.state.scope) &&
-				is_non_coercive_operator(operator)
+			binding.kind !== 'prop' &&
+			binding.kind !== 'bindable_prop' &&
+			binding.kind !== 'raw_state' &&
+			binding.kind !== 'derived' &&
+			binding.kind !== 'store_sub' &&
+			context.state.analysis.runes &&
+			should_proxy(right, context.state.scope) &&
+			is_non_coercive_operator(operator)
 		);
 	}
 
@@ -151,8 +164,8 @@ function build_assignment(operator, left, right, context) {
 			object,
 			b.assignment(
 				operator,
-				/** @type {Pattern} */ (context.visit(left)),
-				/** @type {Expression} */ (context.visit(right))
+				/** @type {Pattern} */(context.visit(left)),
+				/** @type {Expression} */(context.visit(right))
 			)
 		);
 
@@ -230,11 +243,11 @@ function build_assignment(operator, left, right, context) {
 			context.visit(
 				b.call(
 					callee,
-					/** @type {Expression} */ (left.object),
-					/** @type {Expression} */ (
+					/** @type {Expression} */(left.object),
+					/** @type {Expression} */(
 						left.computed
 							? left.property
-							: b.literal(/** @type {Identifier} */ (left.property).name)
+							: b.literal(/** @type {Identifier} */(left.property).name)
 					),
 					b.arrow([], right),
 					b.literal(locate_node(left))
