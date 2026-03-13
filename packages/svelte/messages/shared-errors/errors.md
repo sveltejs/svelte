@@ -36,7 +36,7 @@ Here, `List.svelte` is using `{@render children(item)` which means it expects `P
 
 ## invariant_violation
 
-> An invariant violation occurred, meaning Svelte's internal assumptions were flawed. This is a bug in Svelte, not your app — please open an issue at https://github.com/sveltejs/svelte, citing the following message: "%message%"
+> An invariant violation occurred, meaning Svelte's internal assumptions were flawed. This is a bug in Svelte, not your app — please open an issue at https://github.com/sveltejs/svelte, citing the following message: "%message%"
 
 ## lifecycle_outside_component
 
