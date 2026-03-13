@@ -271,21 +271,9 @@ export class Boundary {
 	#resolve(batch) {
 		this.is_pending = false;
 
-		// any effects that were previously deferred should be rescheduled —
-		// after the next traversal (which will happen immediately, due to the
-		// same update that brought us here) the effects will be flushed
-		for (const e of this.#dirty_effects) {
-			set_signal_status(e, DIRTY);
-			batch.schedule(e);
-		}
-
-		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			batch.schedule(e);
-		}
-
-		this.#dirty_effects.clear();
-		this.#maybe_dirty_effects.clear();
+		// any effects that were previously deferred should be transferred
+		// to the batch, which will flush in the next microtask
+		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
 	}
 
 	/**
