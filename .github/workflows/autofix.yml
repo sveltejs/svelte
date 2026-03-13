@@ -56,10 +56,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm -F svelte build
       - name: Run prettier
         run: pnpm format
-      - name: Generate types
-        run: pnpm -F svelte generate
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
