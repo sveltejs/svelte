@@ -35,7 +35,13 @@ import { includes } from '../../shared/utils.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
+import {
+	Batch,
+	batch_values,
+	eager_block_effects,
+	schedule_effect,
+	legacy_updates
+} from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -162,16 +168,17 @@ export function set(source, value, should_proxy = false) {
 		tag_proxy(new_value, /** @type {string} */ (source.label));
 	}
 
-	return internal_set(source, new_value);
+	return internal_set(source, new_value, legacy_updates);
 }
 
 /**
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}
  */
-export function internal_set(source, value) {
+export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
 
@@ -224,14 +231,18 @@ export function internal_set(source, value) {
 				execute_derived(derived);
 			}
 
-			update_derived_status(derived);
+			// During time traveling we don't want to reset the status so that
+			// traversal of the graph in the other batches still happens
+			if (batch_values === null) {
+				update_derived_status(derived);
+			}
 		}
 
 		source.wv = increment_write_version();
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
-		mark_reactions(source, DIRTY);
+		mark_reactions(source, DIRTY, updated_during_traversal);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -317,9 +328,10 @@ export function increment(source) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {Effect[] | null} updated_during_traversal
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+function mark_reactions(signal, status, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -357,14 +369,20 @@ function mark_reactions(signal, status) {
 					reaction.f |= WAS_MARKED;
 				}
 
-				mark_reactions(derived, MAYBE_DIRTY);
+				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 			}
 		} else if (not_dirty) {
+			var effect = /** @type {Effect} */ (reaction);
+
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
-				eager_block_effects.add(/** @type {Effect} */ (reaction));
+				eager_block_effects.add(effect);
 			}
 
-			schedule_effect(/** @type {Effect} */ (reaction));
+			if (updated_during_traversal !== null) {
+				updated_during_traversal.push(effect);
+			} else {
+				schedule_effect(effect);
+			}
 		}
 	}
 }

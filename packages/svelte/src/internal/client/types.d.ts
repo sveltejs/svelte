@@ -39,6 +39,12 @@ export type ComponentContext = {
 	 */
 	x: Record<string, any> | null;
 	/**
+	 * The parent effect of this component
+	 * TODO 6.0 this is used to control `bind:this` timing that might change,
+	 * in which case we can remove this property
+	 */
+	r: Effect;
+	/**
 	 * legacy stuff
 	 * @deprecated remove in 6.0
 	 */

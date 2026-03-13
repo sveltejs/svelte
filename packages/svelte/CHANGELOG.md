@@ -1,5 +1,45 @@
 # svelte
 
+## 5.53.11
+
+### Patch Changes
+
+- fix: remove `untrack` circular dependency ([#17910](https://github.com/sveltejs/svelte/pull/17910))
+
+- fix: recover from errors that leave a corrupted effect tree ([#17888](https://github.com/sveltejs/svelte/pull/17888))
+
+- fix: properly lazily evaluate RHS when checking for `assignment_value_stale` ([#17906](https://github.com/sveltejs/svelte/pull/17906))
+
+- fix: resolve boundary in correct batch when hydrating ([#17914](https://github.com/sveltejs/svelte/pull/17914))
+
+- chore: rebase batches after process, not during ([#17900](https://github.com/sveltejs/svelte/pull/17900))
+
+## 5.53.10
+
+### Patch Changes
+
+- fix: re-process batch if new root effects were scheduled ([#17895](https://github.com/sveltejs/svelte/pull/17895))
+
+## 5.53.9
+
+### Patch Changes
+
+- fix: better `bind:this` cleanup timing ([#17885](https://github.com/sveltejs/svelte/pull/17885))
+
+## 5.53.8
+
+### Patch Changes
+
+- fix: `{@html}` no longer duplicates content inside `contenteditable` elements ([#17853](https://github.com/sveltejs/svelte/pull/17853))
+
+- fix: don't access inert block effects ([#17882](https://github.com/sveltejs/svelte/pull/17882))
+
+- fix: handle asnyc updates within pending boundary ([#17873](https://github.com/sveltejs/svelte/pull/17873))
+
+- perf: avoid re-traversing the effect tree after `$:` assignments ([#17848](https://github.com/sveltejs/svelte/pull/17848))
+
+- chore: simplify scheduling logic ([#17805](https://github.com/sveltejs/svelte/pull/17805))
+
 ## 5.53.7
 
 ### Patch Changes
