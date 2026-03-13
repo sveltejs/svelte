@@ -223,7 +223,7 @@ function build_assignment(operator, left, right, context) {
 		/** @type {Expression} */
 		let e = b.call(
 			needs_lazy_getter ? (needs_async ? '$.assign_lazy_async' : '$.assign_lazy') : '$.assign',
-			b.literal(operator),
+			...(needs_lazy_getter ? [b.literal(operator)] : []),
 			/** @type {Expression} */ (left.object),
 			/** @type {Expression} */ (
 				left.computed ? left.property : b.literal(/** @type {Identifier} */ (left.property).name)
