@@ -227,57 +227,22 @@ function build_assignment(operator, left, right, context) {
 
 	if (left.type === 'MemberExpression' && should_transform) {
 		const callee = callees[operator];
-		if (operator === '=') {
-			return /** @type {Expression} */ (
-				context.visit(
-					b.call(
-						'$.assign',
-						/** @type {Expression} */ (left.object),
-						/** @type {Expression} */ (
-							left.computed
-								? left.property
-								: b.literal(/** @type {Identifier} */ (left.property).name)
-						),
-						right,
-						b.literal(locate_node(left))
-					)
-				)
-			);
-		} else if (is_expression_async(right)) {
-			return /** @type {Expression} */ (
-				context.visit(
-					b.await(
-						b.call(
-							callee + '_async',
-							/** @type {Expression} */ (left.object),
-							/** @type {Expression} */ (
-								left.computed
-									? left.property
-									: b.literal(/** @type {Identifier} */ (left.property).name)
-							),
-							b.arrow([], right, true),
-							b.literal(locate_node(left))
-						)
-					)
-				)
-			);
-		} else {
-			return /** @type {Expression} */ (
-				context.visit(
-					b.call(
-						callee,
-						/** @type {Expression} */ (left.object),
-						/** @type {Expression} */ (
-							left.computed
-								? left.property
-								: b.literal(/** @type {Identifier} */ (left.property).name)
-						),
-						b.arrow([], right),
-						b.literal(locate_node(left))
-					)
-				)
-			);
+		const needs_lazy_getter = operator !== '=';
+		const needs_async = needs_lazy_getter && is_expression_async(right);
+		/** @type {Expression} */
+		let e = b.call(
+			needs_async ? callee + '_async' : callee,
+			/** @type {Expression} */ (left.object),
+			/** @type {Expression} */ (
+				left.computed ? left.property : b.literal(/** @type {Identifier} */ (left.property).name)
+			),
+			needs_lazy_getter ? b.arrow([], right, needs_async) : right,
+			b.literal(locate_node(left))
+		);
+		if (needs_async) {
+			e = b.await(e);
 		}
+		return /** @type {Expression} */ (context.visit(e));
 	}
 
 	return null;
