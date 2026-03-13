@@ -472,6 +472,9 @@ export class Batch {
 			if (others.length > 0) {
 				batch.activate();
 
+				/** @type {true[]} */
+				var scheduled = [];
+
 				/** @type {Set<Value>} */
 				var marked = new Set();
 
@@ -479,17 +482,20 @@ export class Batch {
 				var checked = new Map();
 
 				for (var source of sources) {
-					mark_effects(source, others, marked, checked);
+					mark_effects(source, others, marked, checked, scheduled);
 				}
 
-				if (batch.#roots.length > 0) {
+				// Only apply and traverse when we know we triggered async work with marking the effects
+				if (scheduled.length > 0) {
 					batch.apply();
 
 					for (var root of batch.#roots) {
 						batch.#traverse(root, [], []);
 					}
 
-					// TODO do we need to do anything with the dummy effect arrays?
+					// If we don't clear it, a root might get traversed again if the batch is flushed somehow later, and it might be clean
+					// at that point, causing #traverse to flip it to unclean, breaking reactivity.
+					batch.#roots = [];
 				}
 
 				batch.deactivate();
@@ -797,8 +803,9 @@ function flush_queued_effects(effects) {
  * @param {Source[]} sources
  * @param {Set<Value>} marked
  * @param {Map<Reaction, boolean>} checked
+ * @param {true[]} scheduled
  */
-function mark_effects(value, sources, marked, checked) {
+function mark_effects(value, sources, marked, checked, scheduled) {
 	if (marked.has(value)) return;
 	marked.add(value);
 
@@ -807,12 +814,13 @@ function mark_effects(value, sources, marked, checked) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
+				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked, scheduled);
 			} else if (
 				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
 				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
+				scheduled.push(true);
 				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
