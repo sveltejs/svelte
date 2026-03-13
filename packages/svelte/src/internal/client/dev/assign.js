@@ -21,12 +21,12 @@ function compare(a, b, property, location) {
 /**
  * @param {any} object
  * @param {string} property
- * @param {() => any} rhs_getter
+ * @param {any} rhs
  * @param {string} location
  */
-export function assign(object, property, rhs_getter, location) {
+export function assign(object, property, rhs, location) {
 	return compare(
-		(object[property] = rhs_getter()),
+		(object[property] = rhs),
 		untrack(() => object[property]),
 		property,
 		location
@@ -54,6 +54,21 @@ export function assign_and(object, property, rhs_getter, location) {
  * @param {() => any} rhs_getter
  * @param {string} location
  */
+export async function assign_and_async(object, property, rhs_getter, location) {
+	return compare(
+		(object[property] &&= await rhs_getter()),
+		untrack(() => object[property]),
+		property,
+		location
+	);
+}
+
+/**
+ * @param {any} object
+ * @param {string} property
+ * @param {() => any} rhs_getter
+ * @param {string} location
+ */
 export function assign_or(object, property, rhs_getter, location) {
 	return compare(
 		(object[property] ||= rhs_getter()),
@@ -69,9 +84,39 @@ export function assign_or(object, property, rhs_getter, location) {
  * @param {() => any} rhs_getter
  * @param {string} location
  */
+export async function assign_or_async(object, property, rhs_getter, location) {
+	return compare(
+		(object[property] ||= await rhs_getter()),
+		untrack(() => object[property]),
+		property,
+		location
+	);
+}
+
+/**
+ * @param {any} object
+ * @param {string} property
+ * @param {() => any} rhs_getter
+ * @param {string} location
+ */
 export function assign_nullish(object, property, rhs_getter, location) {
 	return compare(
 		(object[property] ??= rhs_getter()),
+		untrack(() => object[property]),
+		property,
+		location
+	);
+}
+
+/**
+ * @param {any} object
+ * @param {string} property
+ * @param {() => any} rhs_getter
+ * @param {string} location
+ */
+export async function assign_nullish_async(object, property, rhs_getter, location) {
+	return compare(
+		(object[property] ??= await rhs_getter()),
 		untrack(() => object[property]),
 		property,
 		location

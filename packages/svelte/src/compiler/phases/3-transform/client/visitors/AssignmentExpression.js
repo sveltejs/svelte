@@ -5,7 +5,8 @@ import * as b from '#compiler/builders';
 import {
 	build_assignment_value,
 	get_attribute_expression,
-	is_event_attribute
+	is_event_attribute,
+	is_expression_async
 } from '../../../../utils/ast.js';
 import { dev, locate_node } from '../../../../state.js';
 import { build_getter, should_proxy } from '../utils.js';
@@ -226,21 +227,57 @@ function build_assignment(operator, left, right, context) {
 
 	if (left.type === 'MemberExpression' && should_transform) {
 		const callee = callees[operator];
-		return /** @type {Expression} */ (
-			context.visit(
-				b.call(
-					callee,
-					/** @type {Expression} */ (left.object),
-					/** @type {Expression} */ (
-						left.computed
-							? left.property
-							: b.literal(/** @type {Identifier} */ (left.property).name)
-					),
-					b.arrow([], right),
-					b.literal(locate_node(left))
+		if (operator === '=') {
+			return /** @type {Expression} */ (
+				context.visit(
+					b.call(
+						'$.assign',
+						/** @type {Expression} */ (left.object),
+						/** @type {Expression} */ (
+							left.computed
+								? left.property
+								: b.literal(/** @type {Identifier} */ (left.property).name)
+						),
+						right,
+						b.literal(locate_node(left))
+					)
 				)
-			)
-		);
+			);
+		} else if (is_expression_async(right)) {
+			return /** @type {Expression} */ (
+				context.visit(
+					b.await(
+						b.call(
+							callee + '_async',
+							/** @type {Expression} */ (left.object),
+							/** @type {Expression} */ (
+								left.computed
+									? left.property
+									: b.literal(/** @type {Identifier} */ (left.property).name)
+							),
+							b.arrow([], right, true),
+							b.literal(locate_node(left))
+						)
+					)
+				)
+			);
+		} else {
+			return /** @type {Expression} */ (
+				context.visit(
+					b.call(
+						callee,
+						/** @type {Expression} */ (left.object),
+						/** @type {Expression} */ (
+							left.computed
+								? left.property
+								: b.literal(/** @type {Identifier} */ (left.property).name)
+						),
+						b.arrow([], right),
+						b.literal(locate_node(left))
+					)
+				)
+			);
+		}
 	}
 
 	return null;
