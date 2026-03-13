@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: keep select.__value current when effect is deferred
+fix: update `select.__value` on `change`
