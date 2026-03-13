@@ -13,10 +13,7 @@
 </script>
 
 <button onclick={() => items.push(String.fromCharCode(97 + items.length))}>add</button>
-<button onclick={() => {
-	select?.focus();
-	resolvers.shift()?.();
-}}>shift</button>
+<button onclick={() => resolvers.shift()?.()}>shift</button>
 <button onclick={() => selected = 'a'}>reset</button>
 
 <svelte:boundary>

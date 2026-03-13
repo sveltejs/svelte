@@ -48,7 +48,7 @@ export default test({
 		shift.click();
 		await tick();
 		// commented out because this doesn't appear to work in JSDOM, but it _does_ work IRL
-		// assert.equal(select.value, 'a');
+		assert.equal(select.value, 'a');
 		assert.equal(p.textContent, 'a');
 	}
 });
