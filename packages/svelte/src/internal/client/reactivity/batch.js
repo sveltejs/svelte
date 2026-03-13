@@ -38,6 +38,7 @@ import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
+import { invariant } from '../../shared/dev.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -470,6 +471,10 @@ export class Batch {
 			// Re-run async/block effects that depend on distinct values changed in both batches
 			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 			if (others.length > 0) {
+				if (DEV) {
+					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
+				}
+
 				batch.activate();
 
 				/** @type {Set<Value>} */
