@@ -5,6 +5,7 @@ export default test({
 	compileOptions: {
 		dev: true
 	},
+	skip_no_async: true,
 	async test({ assert, target }) {
 		const button = /** @type {HTMLElement} */ (target.querySelector('button'));
 		await tick();
