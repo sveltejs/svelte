@@ -205,6 +205,7 @@ export class Batch {
 
 	#process() {
 		if (flush_count++ > 1000) {
+			batches.delete(this);
 			infinite_loop_guard();
 		}
 
