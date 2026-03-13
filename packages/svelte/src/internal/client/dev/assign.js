@@ -19,14 +19,23 @@ function compare(a, b, property, location) {
 }
 
 /**
+ * @param {string} operator
  * @param {any} object
  * @param {string} property
  * @param {any} rhs
  * @param {string} location
  */
-export function assign(object, property, rhs, location) {
+export function assign(operator, object, property, rhs, location) {
 	return compare(
-		(object[property] = rhs),
+		operator === '='
+			? (object[property] = rhs)
+			: operator === '&&='
+				? (object[property] &&= rhs())
+				: operator === '||='
+					? (object[property] ||= rhs())
+					: operator === '??='
+						? (object[property] ??= rhs())
+						: null,
 		untrack(() => object[property]),
 		property,
 		location
@@ -37,40 +46,20 @@ export function assign(object, property, rhs, location) {
  * @param {string} operator
  * @param {any} object
  * @param {string} property
- * @param {() => any} rhs_getter
+ * @param {any} rhs
  * @param {string} location
  */
-export function assign_lazy(operator, object, property, rhs_getter, location) {
+export async function assign_async(operator, object, property, rhs, location) {
 	return compare(
-		operator === '&&='
-			? (object[property] &&= rhs_getter())
-			: operator === '||='
-				? (object[property] ||= rhs_getter())
-				: operator === '??='
-					? (object[property] ??= rhs_getter())
-					: null,
-		untrack(() => object[property]),
-		property,
-		location
-	);
-}
-
-/**
- * @param {string} operator
- * @param {any} object
- * @param {string} property
- * @param {() => any} rhs_getter
- * @param {string} location
- */
-export async function assign_lazy_async(operator, object, property, rhs_getter, location) {
-	return compare(
-		operator === '&&='
-			? (object[property] &&= await rhs_getter())
-			: operator === '||='
-				? (object[property] ||= await rhs_getter())
-				: operator === '??='
-					? (object[property] ??= await rhs_getter())
-					: null,
+		operator === '='
+			? (object[property] = await rhs)
+			: operator === '&&='
+				? (object[property] &&= await rhs())
+				: operator === '||='
+					? (object[property] ||= await rhs())
+					: operator === '??='
+						? (object[property] ??= await rhs())
+						: null,
 		untrack(() => object[property]),
 		property,
 		location
