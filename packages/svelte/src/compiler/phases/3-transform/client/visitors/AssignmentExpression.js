@@ -172,7 +172,7 @@ function build_assignment(operator, left, right, context) {
 	// in cases like `(object.items ??= []).push(value)`, we may need to warn
 	// if the value gets proxified, since the proxy _isn't_ the thing that
 	// will be pushed to. we do this by transforming it to something like
-	// `$.assign_lazy('??=', object, 'items', () => [])`
+	// `$.assign(object, 'items', '??=', () => [])`
 	let should_transform =
 		dev &&
 		path.at(-1) !== 'ExpressionStatement' &&
