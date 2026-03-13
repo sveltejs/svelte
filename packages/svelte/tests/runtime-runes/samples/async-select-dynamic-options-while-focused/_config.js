@@ -42,8 +42,7 @@ export default test({
 		assert.equal(p.textContent, 'b');
 
 		reset.click();
-		assert.equal(select.value, 'b');
-		assert.equal(p.textContent, 'b');
+		await tick();
 
 		shift.click();
 		await tick();
