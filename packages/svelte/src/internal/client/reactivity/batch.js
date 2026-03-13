@@ -39,6 +39,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
+import { log_effect_tree } from '../dev/debug.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -207,6 +208,21 @@ export class Batch {
 		if (flush_count++ > 1000) {
 			batches.delete(this);
 			infinite_loop_guard();
+		}
+
+		// we only reschedule previously-deferred effects if we expect
+		// to be able to run them after processing the batch
+		if (!this.#is_deferred()) {
+			for (const e of this.#dirty_effects) {
+				this.#maybe_dirty_effects.delete(e);
+				set_signal_status(e, DIRTY);
+				this.schedule(e);
+			}
+
+			for (const e of this.#maybe_dirty_effects) {
+				set_signal_status(e, MAYBE_DIRTY);
+				this.schedule(e);
+			}
 		}
 
 		const roots = this.#roots;
@@ -397,21 +413,6 @@ export class Batch {
 		try {
 			is_processing = true;
 			current_batch = this;
-
-			// we only reschedule previously-deferred effects if we expect
-			// to be able to run them after processing the batch
-			if (!this.#is_deferred()) {
-				for (const e of this.#dirty_effects) {
-					this.#maybe_dirty_effects.delete(e);
-					set_signal_status(e, DIRTY);
-					this.schedule(e);
-				}
-
-				for (const e of this.#maybe_dirty_effects) {
-					set_signal_status(e, MAYBE_DIRTY);
-					this.schedule(e);
-				}
-			}
 
 			this.#process();
 		} finally {
