@@ -3,12 +3,13 @@ import { test } from '../../test';
 
 export default test({
 	async test({ assert, target }) {
-		const add = /** @type {HTMLButtonElement} */ (target.querySelector('#add'));
-		const shift = /** @type {HTMLButtonElement} */ (target.querySelector('#shift'));
+		const [add, shift, reset] = target.querySelectorAll('button');
 
 		// resolve initial pending state
 		shift.click();
 		await tick();
+
+		const [p] = target.querySelectorAll('p');
 
 		const select = /** @type {HTMLSelectElement} */ (target.querySelector('select'));
 		assert.equal(select.value, 'a');
@@ -23,8 +24,8 @@ export default test({
 		select.dispatchEvent(new InputEvent('change', { bubbles: true }));
 		await tick();
 
-		// the select should still show 'b'
 		assert.equal(select.value, 'b');
+		assert.equal(p.textContent, 'a');
 
 		// add option 'd', making items ['a', 'b', 'c', 'd']
 		// this triggers MutationObserver which uses select.__value
@@ -33,5 +34,21 @@ export default test({
 
 		// select should still show 'b', not snap to a stale value
 		assert.equal(select.value, 'b');
+		assert.equal(p.textContent, 'a');
+
+		shift.click();
+		await tick();
+		assert.equal(select.value, 'b');
+		assert.equal(p.textContent, 'b');
+
+		reset.click();
+		assert.equal(select.value, 'b');
+		assert.equal(p.textContent, 'b');
+
+		shift.click();
+		await tick();
+		// commented out because this doesn't appear to work in JSDOM, but it _does_ work IRL
+		// assert.equal(select.value, 'a');
+		assert.equal(p.textContent, 'a');
 	}
 });

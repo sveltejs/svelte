@@ -12,11 +12,12 @@
 	}
 </script>
 
-<button id="add" onclick={() => items.push(String.fromCharCode(97 + items.length))}>add</button>
-<button id="shift" onclick={() => {
+<button onclick={() => items.push(String.fromCharCode(97 + items.length))}>add</button>
+<button onclick={() => {
 	select?.focus();
 	resolvers.shift()?.();
 }}>shift</button>
+<button onclick={() => selected = 'a'}>reset</button>
 
 <svelte:boundary>
 	<select bind:this={select} bind:value={selected}>
