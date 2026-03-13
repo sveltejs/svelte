@@ -19,13 +19,13 @@ function compare(a, b, property, location) {
 }
 
 /**
- * @param {string} operator
  * @param {any} object
  * @param {string} property
+ * @param {string} operator
  * @param {any} rhs
  * @param {string} location
  */
-export function assign(operator, object, property, rhs, location) {
+export function assign(object, property, operator, rhs, location) {
 	return compare(
 		operator === '='
 			? (object[property] = rhs)
@@ -43,13 +43,13 @@ export function assign(operator, object, property, rhs, location) {
 }
 
 /**
- * @param {string} operator
  * @param {any} object
  * @param {string} property
+ * @param {string} operator
  * @param {any} rhs
  * @param {string} location
  */
-export async function assign_async(operator, object, property, rhs, location) {
+export async function assign_async(object, property, operator, rhs, location) {
 	return compare(
 		operator === '='
 			? (object[property] = await rhs)
