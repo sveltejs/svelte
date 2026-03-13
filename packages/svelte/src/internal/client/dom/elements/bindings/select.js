@@ -129,8 +129,6 @@ export function bind_select_value(select, get, set = get) {
 			// <select bind:value={selected}>...</select>
 			// <p>{await find(selected)}</p>
 			if (batches.has(batch)) {
-				// @ts-ignore
-				select.__value = value;
 				return;
 			}
 		}
