@@ -37,14 +37,6 @@ function is_non_coercive_operator(operator) {
 	return ['=', '||=', '&&=', '??='].includes(operator);
 }
 
-/** @type {Record<string, string>} */
-const callees = {
-	'=': '$.assign',
-	'&&=': '$.assign_and',
-	'||=': '$.assign_or',
-	'??=': '$.assign_nullish'
-};
-
 /**
  * @param {AssignmentOperator} operator
  * @param {Pattern} left
@@ -180,7 +172,7 @@ function build_assignment(operator, left, right, context) {
 	// in cases like `(object.items ??= []).push(value)`, we may need to warn
 	// if the value gets proxified, since the proxy _isn't_ the thing that
 	// will be pushed to. we do this by transforming it to something like
-	// `$.assign_nullish(object, 'items', () => [])`
+	// `$.assign_lazy('??=', object, 'items', () => [])`
 	let should_transform =
 		dev &&
 		path.at(-1) !== 'ExpressionStatement' &&
@@ -226,12 +218,12 @@ function build_assignment(operator, left, right, context) {
 	}
 
 	if (left.type === 'MemberExpression' && should_transform) {
-		const callee = callees[operator];
 		const needs_lazy_getter = operator !== '=';
 		const needs_async = needs_lazy_getter && is_expression_async(right);
 		/** @type {Expression} */
 		let e = b.call(
-			needs_async ? callee + '_async' : callee,
+			needs_lazy_getter ? (needs_async ? '$.assign_lazy_async' : '$.assign_lazy') : '$.assign',
+			b.literal(operator),
 			/** @type {Expression} */ (left.object),
 			/** @type {Expression} */ (
 				left.computed ? left.property : b.literal(/** @type {Identifier} */ (left.property).name)

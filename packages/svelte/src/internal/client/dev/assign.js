@@ -34,14 +34,21 @@ export function assign(object, property, rhs, location) {
 }
 
 /**
+ * @param {string} operator
  * @param {any} object
  * @param {string} property
  * @param {() => any} rhs_getter
  * @param {string} location
  */
-export function assign_and(object, property, rhs_getter, location) {
+export function assign_lazy(operator, object, property, rhs_getter, location) {
 	return compare(
-		(object[property] &&= rhs_getter()),
+		operator === '&&='
+			? (object[property] &&= rhs_getter())
+			: operator === '||='
+				? (object[property] ||= rhs_getter())
+				: operator === '??='
+					? (object[property] ??= rhs_getter())
+					: null,
 		untrack(() => object[property]),
 		property,
 		location
@@ -49,74 +56,21 @@ export function assign_and(object, property, rhs_getter, location) {
 }
 
 /**
+ * @param {string} operator
  * @param {any} object
  * @param {string} property
  * @param {() => any} rhs_getter
  * @param {string} location
  */
-export async function assign_and_async(object, property, rhs_getter, location) {
+export async function assign_lazy_async(operator, object, property, rhs_getter, location) {
 	return compare(
-		(object[property] &&= await rhs_getter()),
-		untrack(() => object[property]),
-		property,
-		location
-	);
-}
-
-/**
- * @param {any} object
- * @param {string} property
- * @param {() => any} rhs_getter
- * @param {string} location
- */
-export function assign_or(object, property, rhs_getter, location) {
-	return compare(
-		(object[property] ||= rhs_getter()),
-		untrack(() => object[property]),
-		property,
-		location
-	);
-}
-
-/**
- * @param {any} object
- * @param {string} property
- * @param {() => any} rhs_getter
- * @param {string} location
- */
-export async function assign_or_async(object, property, rhs_getter, location) {
-	return compare(
-		(object[property] ||= await rhs_getter()),
-		untrack(() => object[property]),
-		property,
-		location
-	);
-}
-
-/**
- * @param {any} object
- * @param {string} property
- * @param {() => any} rhs_getter
- * @param {string} location
- */
-export function assign_nullish(object, property, rhs_getter, location) {
-	return compare(
-		(object[property] ??= rhs_getter()),
-		untrack(() => object[property]),
-		property,
-		location
-	);
-}
-
-/**
- * @param {any} object
- * @param {string} property
- * @param {() => any} rhs_getter
- * @param {string} location
- */
-export async function assign_nullish_async(object, property, rhs_getter, location) {
-	return compare(
-		(object[property] ??= await rhs_getter()),
+		operator === '&&='
+			? (object[property] &&= await rhs_getter())
+			: operator === '||='
+				? (object[property] ||= await rhs_getter())
+				: operator === '??='
+					? (object[property] ??= await rhs_getter())
+					: null,
 		untrack(() => object[property]),
 		property,
 		location
