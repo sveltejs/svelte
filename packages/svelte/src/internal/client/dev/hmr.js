@@ -5,7 +5,8 @@ import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
-import { get } from '../runtime.js';
+import { active_effect, get } from '../runtime.js';
+import { assign_nodes } from '../dom/template.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
@@ -38,6 +39,8 @@ export function hmr(fn) {
 				destroy_effect(effect);
 			}
 
+			var parent_effect = /** @type {Effect} */ (active_effect);
+
 			effect = branch(() => {
 				// when the component is invalidated, replace it without transitions
 				if (ran) set_should_intro(false);
@@ -52,6 +55,8 @@ export function hmr(fn) {
 				);
 
 				if (ran) set_should_intro(true);
+
+				parent_effect.nodes = /** @type {Effect} */ (active_effect).nodes;
 			});
 		}, EFFECT_TRANSPARENT);
 
