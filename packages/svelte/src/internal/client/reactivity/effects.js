@@ -30,7 +30,6 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
-	STALE_REACTION,
 	USER_EFFECT,
 	ASYNC,
 	CONNECTED,
@@ -43,7 +42,7 @@ import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, collected_effects } from './batch.js';
-import { flatten, increment_pending } from './async.js';
+import { flatten, increment_pending, StaleReactionError } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
 
@@ -471,7 +470,7 @@ export function destroy_effect_children(signal, remove_dom = false) {
 
 		if (controller !== null) {
 			without_reactive_context(() => {
-				controller.abort(STALE_REACTION);
+				controller.abort(new StaleReactionError());
 			});
 		}
 

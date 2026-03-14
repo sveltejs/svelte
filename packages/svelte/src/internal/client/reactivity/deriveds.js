@@ -7,7 +7,6 @@ import {
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
@@ -41,7 +40,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
-import { increment_pending, unset_context } from './async.js';
+import { increment_pending, StaleReactionError, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
@@ -155,13 +154,13 @@ export function async_derived(fn, label, location) {
 			}
 
 			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
-				deferreds.get(batch)?.reject(STALE_REACTION);
+				deferreds.get(batch)?.reject(new StaleReactionError());
 				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
 				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
 				for (const d of deferreds.values()) {
-					d.reject(STALE_REACTION);
+					d.reject(new StaleReactionError());
 				}
 				deferreds.clear();
 			}
@@ -179,11 +178,11 @@ export function async_derived(fn, label, location) {
 			if (decrement_pending) {
 				// don't trigger an update if we're only here because
 				// the promise was superseded before it could resolve
-				var skip = error === STALE_REACTION;
+				var skip = error instanceof StaleReactionError;
 				decrement_pending(skip);
 			}
 
-			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
+			if (error instanceof StaleReactionError || (effect.f & DESTROYED) !== 0) {
 				return;
 			}
 
@@ -205,7 +204,7 @@ export function async_derived(fn, label, location) {
 				for (const [b, d] of deferreds) {
 					deferreds.delete(b);
 					if (b === batch) break;
-					d.reject(STALE_REACTION);
+					d.reject(new StaleReactionError());
 				}
 
 				if (DEV && location !== undefined) {
@@ -228,7 +227,7 @@ export function async_derived(fn, label, location) {
 
 	teardown(() => {
 		for (const d of deferreds.values()) {
-			d.reject(STALE_REACTION);
+			d.reject(new StaleReactionError());
 		}
 	});
 
@@ -422,7 +421,7 @@ export function freeze_derived_effects(derived) {
 		// if the effect has a teardown function or abort signal, call it
 		if (e.teardown || e.ac) {
 			e.teardown?.();
-			e.ac?.abort(STALE_REACTION);
+			e.ac?.abort(new StaleReactionError());
 
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence

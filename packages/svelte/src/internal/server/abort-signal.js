@@ -1,10 +1,10 @@
-import { STALE_REACTION } from '#client/constants';
+import { StaleReactionError } from '../client/reactivity/async.js';
 
 /** @type {AbortController | null} */
 let controller = null;
 
 export function abort() {
-	controller?.abort(STALE_REACTION);
+	controller?.abort(new StaleReactionError());
 	controller = null;
 }
 
