@@ -7,6 +7,7 @@ import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { active_effect, get } from '../runtime.js';
 import { assign_nodes } from '../dom/template.js';
+import { create_comment } from '../dom/operations.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
@@ -28,6 +29,11 @@ export function hmr(fn) {
 
 		let ran = false;
 
+		let start = create_comment();
+		let end = create_comment();
+
+		anchor.before(start);
+
 		block(() => {
 			if (component === (component = get(current))) {
 				return;
@@ -38,8 +44,6 @@ export function hmr(fn) {
 				for (var k in instance) delete instance[k];
 				destroy_effect(effect);
 			}
-
-			var parent_effect = /** @type {Effect} */ (active_effect);
 
 			effect = branch(() => {
 				// when the component is invalidated, replace it without transitions
@@ -55,8 +59,6 @@ export function hmr(fn) {
 				);
 
 				if (ran) set_should_intro(true);
-
-				parent_effect.nodes = /** @type {Effect} */ (active_effect).nodes;
 			});
 		}, EFFECT_TRANSPARENT);
 
@@ -65,6 +67,10 @@ export function hmr(fn) {
 		if (hydrating) {
 			anchor = hydrate_node;
 		}
+
+		anchor.before(end);
+
+		assign_nodes(start, end);
 
 		return instance;
 	}
