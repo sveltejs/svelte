@@ -176,23 +176,22 @@ export function async_derived(fn, label, location) {
 			if (DEV) current_async_effect = null;
 
 			if (decrement_pending) {
-				// don't trigger an update if we're only here because
-				// the promise was superseded before it could resolve
-				var skip = error instanceof StaleReactionError;
-				decrement_pending(skip);
-			}
-
-			if (error instanceof StaleReactionError || (effect.f & DESTROYED) !== 0) {
-				return;
+				decrement_pending();
 			}
 
 			batch.activate();
 
 			if (error) {
-				signal.f |= ERROR_VALUE;
+				if (error instanceof StaleReactionError) {
+					if (error.batch !== null) {
+						error.batch.absorb(batch);
+					}
+				} else {
+					signal.f |= ERROR_VALUE;
 
-				// @ts-expect-error the error is the wrong type, but we don't care
-				internal_set(signal, error);
+					// @ts-expect-error the error is the wrong type, but we don't care
+					internal_set(signal, error);
+				}
 			} else {
 				if ((signal.f & ERROR_VALUE) !== 0) {
 					signal.f ^= ERROR_VALUE;
