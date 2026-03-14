@@ -5,7 +5,6 @@ import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
-import { active_effect, get } from '../runtime.js';
 import { assign_nodes } from '../dom/template.js';
 import { create_comment } from '../dom/operations.js';
 
