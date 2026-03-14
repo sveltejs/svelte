@@ -438,6 +438,8 @@ export class Batch {
 	discard() {
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
+
+		batches.delete(this);
 	}
 
 	#commit() {
@@ -466,13 +468,15 @@ export class Batch {
 				sources.push(source);
 			}
 
-			if (sources.length === 0) {
-				continue;
-			}
-
 			// Re-run async/block effects that depend on distinct values changed in both batches
 			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
-			if (others.length > 0) {
+
+			if (others.length === 0) {
+				if (is_earlier) {
+					// this batch is now obsolete and can be discarded
+					batch.discard();
+				}
+			} else if (sources.length > 0) {
 				if (DEV) {
 					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
 				}
@@ -1095,7 +1099,6 @@ export function fork(fn) {
 			}
 
 			if (!committed && batches.has(batch)) {
-				batches.delete(batch);
 				batch.discard();
 			}
 		}
