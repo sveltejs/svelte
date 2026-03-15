@@ -81,6 +81,35 @@ export { test };
 
 await run(__dirname);
 
+it('rejects invalid runes option values', () => {
+	expect(() => {
+		compile('<div>hello</div>', { filename: 'foo.svelte', runes: 'invalid' as any });
+	}).toThrow();
+});
+
+it('accepts runes: "user_land" option', () => {
+	// user code (not in node_modules) — should compile in runes mode
+	const user_result = compile('<script>let count = $state(0);</script>{count}', {
+		filename: '/my/project/src/App.svelte',
+		runes: 'user_land'
+	});
+	expect(user_result.metadata.runes).toBe(true);
+
+	// node_modules code without runes usage — should infer as non-runes
+	const lib_result = compile('<script>export let count = 0;</script>{count}', {
+		filename: '/my/project/node_modules/lib/Component.svelte',
+		runes: 'user_land'
+	});
+	expect(lib_result.metadata.runes).toBe(false);
+
+	// node_modules code with runes usage — should infer as runes
+	const lib_runes_result = compile('<script>let count = $state(0);</script>{count}', {
+		filename: '/my/project/node_modules/lib/Component.svelte',
+		runes: 'user_land'
+	});
+	expect(lib_runes_result.metadata.runes).toBe(true);
+});
+
 it('resets the compiler state including filename', () => {
 	// start with something that succeeds
 	compile('<div>hello</div>', { filename: 'foo.svelte' });

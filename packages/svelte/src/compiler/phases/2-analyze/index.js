@@ -446,8 +446,13 @@ export function analyze_component(root, source, options) {
 
 	const component_name = get_component_name(options.filename);
 
+	const resolved_runes =
+		options.runes === 'user_land'
+			? !options.filename?.split(/[/\\]/).includes('node_modules')
+			: options.runes;
+
 	const runes =
-		options.runes ??
+		resolved_runes ??
 		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {

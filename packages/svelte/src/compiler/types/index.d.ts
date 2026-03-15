@@ -135,14 +135,16 @@ export interface CompileOptions extends ModuleCompileOptions {
 	/**
 	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
+	 * Set to `'user_land'` to enable runes mode only for user code (i.e. files not inside `node_modules`).
+	 * This is the recommended setting for `svelte.config.js` — it enables runes for your project code
+	 * while letting library components use their own mode.
 	 * Set to `undefined` (the default) to infer runes mode from the component code.
 	 * Is always `true` for JS/TS modules compiled with Svelte.
 	 * Will be `true` by default in Svelte 6.
-	 * Note that setting this to `true` in your `svelte.config.js` will force runes mode for your entire project, including components in `node_modules`,
-	 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
+	 * For more complex per-file logic, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 	 * @default undefined
 	 */
-	runes?: boolean | undefined;
+	runes?: boolean | 'user_land' | undefined;
 	/**
 	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 	 *

@@ -107,7 +107,12 @@ const component_options = {
 
 	preserveWhitespace: boolean(false),
 
-	runes: boolean(undefined),
+	runes: validator(undefined, (input, keypath) => {
+		if (input !== true && input !== false && input !== 'user_land') {
+			throw_error(`${keypath} should be true, false, or "user_land", if specified`);
+		}
+		return input;
+	}),
 
 	hmr: boolean(false),
 
