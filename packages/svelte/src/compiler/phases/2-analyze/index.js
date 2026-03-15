@@ -448,7 +448,9 @@ export function analyze_component(root, source, options) {
 
 	const resolved_runes =
 		options.runes === 'user_land'
-			? !options.filename?.split(/[/\\]/).includes('node_modules')
+			? options.filename?.split(/[/\\]/).includes('node_modules')
+				? undefined
+				: true
 			: options.runes;
 
 	const runes =
