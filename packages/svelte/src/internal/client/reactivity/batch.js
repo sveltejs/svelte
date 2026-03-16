@@ -121,14 +121,16 @@ export class Batch {
 	#discard_callbacks = new Set();
 
 	/**
-	 * The number of async effects that are currently in flight
+	 * Async effects that are currently in flight
+	 * @type {Map<Effect, number>}
 	 */
-	#pending = 0;
+	#pending = new Map();
 
 	/**
-	 * The number of async effects that are currently in flight, _not_ inside a pending boundary
+	 * Async effects that are currently in flight, _not_ inside a pending boundary
+	 * @type {Map<Effect, number>}
 	 */
-	#blocking_pending = 0;
+	#blocking_pending = new Map();
 
 	/**
 	 * A deferred that resolves when the batch is committed, used with `settled()`
@@ -172,7 +174,7 @@ export class Batch {
 	#blockers = new Set();
 
 	#is_deferred() {
-		return this.is_fork || this.#blocking_pending > 0;
+		return this.is_fork || this.#blocking_pending.size > 0;
 	}
 
 	/**
@@ -275,7 +277,7 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
-			if (this.#pending === 0) {
+			if (this.#pending.size === 0) {
 				batches.delete(this);
 			}
 
@@ -527,21 +529,42 @@ export class Batch {
 	}
 
 	/**
-	 *
 	 * @param {boolean} blocking
+	 * @param {Effect} effect
 	 */
-	increment(blocking) {
-		this.#pending += 1;
-		if (blocking) this.#blocking_pending += 1;
+	increment(blocking, effect) {
+		let pending_count = this.#pending.get(effect) ?? 0;
+		this.#pending.set(effect, pending_count + 1);
+
+		if (blocking) {
+			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
+			this.#blocking_pending.set(effect, blocking_pending_count + 1);
+		}
 	}
 
 	/**
 	 * @param {boolean} blocking
+	 * @param {Effect} effect
 	 * @param {boolean} skip - whether to skip updates (because this is triggered by a stale reaction)
 	 */
-	decrement(blocking, skip) {
-		this.#pending -= 1;
-		if (blocking) this.#blocking_pending -= 1;
+	decrement(blocking, effect, skip) {
+		let pending_count = this.#pending.get(effect) ?? 0;
+
+		if (pending_count === 1) {
+			this.#pending.delete(effect);
+		} else {
+			this.#pending.set(effect, pending_count - 1);
+		}
+
+		if (blocking) {
+			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
+
+			if (blocking_pending_count === 1) {
+				this.#blocking_pending.delete(effect);
+			} else {
+				this.#blocking_pending.set(effect, blocking_pending_count - 1);
+			}
+		}
 
 		if (this.#decrement_queued || skip) return;
 		this.#decrement_queued = true;
