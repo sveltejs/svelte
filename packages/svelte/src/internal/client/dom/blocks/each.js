@@ -500,6 +500,14 @@ function reconcile(state, array, anchor, flags, get_key) {
 				move(effect, next, anchor);
 				prev = effect;
 
+				if ((effect.f & INERT) !== 0) {
+					resume_effect(effect);
+					if (is_animated) {
+						effect.nodes?.a?.unfix();
+						(to_animate ??= new Set()).delete(effect);
+					}
+				}
+
 				matched = [];
 				stashed = [];
 
