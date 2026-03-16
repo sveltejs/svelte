@@ -82,16 +82,16 @@ export class Memoizer {
 
 	async_values() {
 		if (this.#async.length === 0) return;
-		// Keep these as real closures (i.e. don't use b.thunk) so deferred async/template effects
-		// read live bindings rather than a potentially uninitialized snapshot value.
-		return b.array(this.#async.map((memo) => b.arrow([], memo.expression, true)));
+		// Keep wrapper closures when the expression looks like `id(...)`, so deferred
+		// async/template effects read live bindings rather than a possibly stale snapshot.
+		return b.array(this.#async.map((memo) => b.thunk(memo.expression, true, true)));
 	}
 
 	sync_values() {
 		if (this.#sync.length === 0) return;
-		// Keep these as real closures (i.e. don't use b.thunk) so deferred async/template effects
-		// read live bindings rather than a potentially uninitialized snapshot value.
-		return b.array(this.#sync.map((memo) => b.arrow([], memo.expression)));
+		// Keep wrapper closures when the expression looks like `id(...)`, so deferred
+		// async/template effects read live bindings rather than a possibly stale snapshot.
+		return b.array(this.#sync.map((memo) => b.thunk(memo.expression, false, true)));
 	}
 }
 

@@ -450,26 +450,29 @@ export function template(elements, expressions) {
 /**
  * @param {ESTree.Expression | ESTree.BlockStatement} expression
  * @param {boolean} [async]
+ * @param {boolean} [preserve_id_call_expr]
  * @returns {ESTree.Expression}
  */
-export function thunk(expression, async = false) {
-	return unthunk(arrow([], expression, async));
+export function thunk(expression, async = false, preserve_id_call_expr = false) {
+	return unthunk(arrow([], expression, async), preserve_id_call_expr);
 }
 
 /**
  * Replace "(arg) => func(arg)" to "func"
  * @param {ESTree.ArrowFunctionExpression} expression
+ * @param {boolean} [preserve_id_call_expr]
  * @returns {ESTree.Expression}
  */
-export function unthunk(expression) {
+export function unthunk(expression, preserve_id_call_expr = false) {
 	// optimize `async () => await x()`, but not `async () => await x(await y)`
 	if (expression.async && expression.body.type === 'AwaitExpression') {
 		if (!has_await_expression(expression.body.argument)) {
-			return unthunk(arrow(expression.params, expression.body.argument));
+			return unthunk(arrow(expression.params, expression.body.argument), preserve_id_call_expr);
 		}
 	}
 
 	if (
+		!preserve_id_call_expr &&
 		expression.async === false &&
 		expression.body.type === 'CallExpression' &&
 		expression.body.callee.type === 'Identifier' &&
