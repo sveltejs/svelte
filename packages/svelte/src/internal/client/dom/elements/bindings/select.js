@@ -106,6 +106,9 @@ export function bind_select_value(select, get, set = get) {
 
 		set(value);
 
+		// @ts-ignore
+		select.__value = value;
+
 		if (current_batch !== null) {
 			batches.add(current_batch);
 		}

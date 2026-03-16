@@ -394,6 +394,7 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
+	var old_value = derived.v;
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
@@ -406,6 +407,7 @@ export function update_derived(derived) {
 		if (!current_batch?.is_fork || derived.deps === null) {
 			derived.v = value;
 			derived.batch = current_batch;
+			current_batch?.capture(derived, old_value); // TODO came in from main merge; check if correct still
 
 			// deriveds without dependencies should never be recomputed
 			if (derived.deps === null) {

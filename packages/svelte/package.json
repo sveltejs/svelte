@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.53.10",
+  "version": "5.53.12",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -138,14 +138,15 @@
     "templating"
   ],
   "scripts": {
-    "build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
+    "build": "rollup -c && pnpm generate",
     "dev": "node scripts/process-messages -w & rollup -cw",
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:tsgo": "tsgo --project tsconfig.runtime.json --skipLibCheck && tsgo --skipLibCheck",
     "check:watch": "tsc --watch",
+    "generate": "node scripts/process-messages && node ./scripts/generate-types.js",
     "generate:version": "node ./scripts/generate-version.js",
     "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
-    "prepublishOnly": "pnpm build",
+    "prepublishOnly": "pnpm build && node scripts/check-treeshakeability.js",
     "knip": "pnpm dlx knip"
   },
   "devDependencies": {
@@ -175,7 +176,7 @@
     "aria-query": "5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
-    "devalue": "^5.6.3",
+    "devalue": "^5.6.4",
     "esm-env": "^1.2.1",
     "esrap": "^2.2.2",
     "is-reference": "^3.0.3",

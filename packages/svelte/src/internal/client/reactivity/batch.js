@@ -40,6 +40,8 @@ import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
+import { invariant } from '../../shared/dev.js';
+import { log_effect_tree } from '../dev/debug.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -242,7 +244,23 @@ export class Batch {
 
 	#process() {
 		if (flush_count++ > 1000) {
+			batches.delete(this);
 			infinite_loop_guard();
+		}
+
+		// we only reschedule previously-deferred effects if we expect
+		// to be able to run them after processing the batch
+		if (!this.#is_deferred()) {
+			for (const e of this.#dirty_effects) {
+				this.#maybe_dirty_effects.delete(e);
+				set_signal_status(e, DIRTY);
+				this.schedule(e);
+			}
+
+			for (const e of this.#maybe_dirty_effects) {
+				set_signal_status(e, MAYBE_DIRTY);
+				this.schedule(e);
+			}
 		}
 
 		const roots = this.#roots;
@@ -263,7 +281,12 @@ export class Batch {
 		var updates = (legacy_updates = []);
 
 		for (const root of roots) {
-			this.#traverse(root, effects, render_effects);
+			try {
+				this.#traverse(root, effects, render_effects);
+			} catch (e) {
+				reset_all(root);
+				throw e;
+			}
 		}
 
 		// any writes should take effect in a subsequent batch
@@ -401,18 +424,16 @@ export class Batch {
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
 	 * @param {Source} source
-	 * @param {any} value
+	 * @param {any} old_value
 	 */
-	capture(source, value) {
+	capture(source, old_value) {
 		if (this.successor) {
-			this.successor.capture(source, value);
+			this.successor.capture(source, old_value);
 			return;
 		}
 
-		if (!this.is_fork) source.batch = Batch.upsert(source);
-
-		if (value !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, value);
+		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
+			this.previous.set(source, old_value);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
@@ -453,21 +474,6 @@ export class Batch {
 			is_processing = true;
 			current_batch = this;
 
-			// we only reschedule previously-deferred effects if we expect
-			// to be able to run them after processing the batch
-			if (!this.#is_deferred()) {
-				for (const e of this.#dirty_effects) {
-					this.#maybe_dirty_effects.delete(e);
-					set_signal_status(e, DIRTY);
-					this.schedule(e);
-				}
-
-				for (const e of this.#maybe_dirty_effects) {
-					set_signal_status(e, MAYBE_DIRTY);
-					this.schedule(e);
-				}
-			}
-
 			this.#process();
 		} finally {
 			flush_count = 0;
@@ -497,6 +503,8 @@ export class Batch {
 
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
+
+		batches.delete(this);
 	}
 
 	#commit() {
@@ -540,6 +548,23 @@ export class Batch {
 			this.#decrement_queued = false;
 			this.flush();
 		});
+	}
+
+	/**
+	 * @param {Set<Effect>} dirty_effects
+	 * @param {Set<Effect>} maybe_dirty_effects
+	 */
+	transfer_effects(dirty_effects, maybe_dirty_effects) {
+		for (const e of dirty_effects) {
+			this.#dirty_effects.add(e);
+		}
+
+		for (const e of maybe_dirty_effects) {
+			this.#maybe_dirty_effects.add(e);
+		}
+
+		dirty_effects.clear();
+		maybe_dirty_effects.clear();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
@@ -750,7 +775,7 @@ export class Batch {
 
 		// ...and undo changes belonging to other batches
 		for (const batch of batches) {
-			if (batch === this) continue;
+			if (batch === this || batch.is_fork) continue;
 
 			for (const [source, previous] of batch.previous) {
 				if (!batch_values.has(source)) {
@@ -1103,6 +1128,20 @@ function reset_branch(effect, tracked) {
 }
 
 /**
+ * Mark an entire effect tree clean following an error
+ * @param {Effect} effect
+ */
+function reset_all(effect) {
+	set_signal_status(effect, CLEAN);
+
+	var e = effect.first;
+	while (e !== null) {
+		reset_all(e);
+		e = e.next;
+	}
+}
+
+/**
  * Creates a 'fork', in which state changes are evaluated but not applied to the DOM.
  * This is useful for speculatively loading data (for example) when you suspect that
  * the user is about to take some action.
@@ -1142,13 +1181,6 @@ export function fork(fn) {
 	// revert state changes
 	for (var [source, value] of batch.previous) {
 		source.v = value;
-	}
-
-	// make writable deriveds dirty, so they recalculate correctly
-	for (source of batch.current.keys()) {
-		if ((source.f & DERIVED) !== 0) {
-			set_signal_status(source, DIRTY);
-		}
 	}
 
 	return {
@@ -1209,7 +1241,6 @@ export function fork(fn) {
 			}
 
 			if (!committed && batches.has(batch)) {
-				batches.delete(batch);
 				batch.discard();
 			}
 		}
