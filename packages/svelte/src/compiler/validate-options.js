@@ -1,12 +1,8 @@
+/** @import { Validator } from '@sveltejs/config/validate' */
 /** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions } from '#compiler' */
+import { string, boolean, object, validator, ValidateError } from '@sveltejs/config/validate';
 import * as e from './errors.js';
 import * as w from './warnings.js';
-
-/**
- * @template [Input=any]
- * @template [Output=Input]
- * @typedef {(input: Input, keypath: string) => Required<Output>} Validator
- */
 
 const common_options = {
 	filename: string('(unknown)'),
@@ -27,7 +23,7 @@ const common_options = {
 
 	dev: boolean(false),
 
-	generate: validator('client', (input, keypath) => {
+	generate: validator(/** @type {string | false} */ ('client'), (input, keypath) => {
 		if (input === 'dom' || input === 'ssr') {
 			warn_once(w.options_renamed_ssr_dom);
 			return input === 'dom' ? 'client' : 'server';
@@ -38,7 +34,7 @@ const common_options = {
 			throw_error(`${keypath} must be "client", "server" or false`);
 		}
 
-		return input;
+		return /** @type {'client' | 'server' | false} */ (input);
 	}),
 
 	warningFilter: fun(() => true),
@@ -52,6 +48,7 @@ const component_options = {
 	accessors: deprecate(w.options_deprecated_accessors, boolean(false)),
 
 	css: validator('external', (input) => {
+		// @ts-expect-error
 		if (input === true || input === false) {
 			throw_error(
 				'The boolean options have been removed from the css option. Use "external" instead of false and "injected" instead of true'
@@ -149,7 +146,7 @@ const component_options = {
 	)
 };
 
-export const validate_module_options =
+const module_options_validator =
 	/** @type {Validator<ModuleCompileOptions, ValidatedModuleCompileOptions>} */ (
 		object({
 			...common_options,
@@ -157,8 +154,8 @@ export const validate_module_options =
 		})
 	);
 
-export const validate_component_options =
-	/** @type {Validator<CompileOptions, ValidatedCompileOptions>} */ (
+const component_options_validator =
+	/** @type {Validator<CompileOptions, Omit<ValidatedCompileOptions, 'customElementOptions'>>} */ (
 		object({
 			...common_options,
 			...component_options
@@ -166,8 +163,39 @@ export const validate_component_options =
 	);
 
 /**
+ * @param {ModuleCompileOptions} options
+ */
+export function validate_module_options(options) {
+	try {
+		return module_options_validator(options);
+	} catch (e) {
+		if (e instanceof ValidateError) {
+			throw_error(e.message);
+		}
+
+		throw e;
+	}
+}
+
+/**
+ * @param {CompileOptions} options
+ */
+export function validate_component_options(options) {
+	try {
+		return component_options_validator(options);
+	} catch (e) {
+		if (e instanceof ValidateError) {
+			throw_error(e.message);
+		}
+
+		throw e;
+	}
+}
+
+/**
+ * @template T
  * @param {string} msg
- * @returns {Validator}
+ * @returns {Validator<T>}
  */
 function removed(msg) {
 	return (input) => {
@@ -189,8 +217,9 @@ function warn_once(fn) {
 }
 
 /**
+ * @template T
  * @param {(node: null) => void} fn
- * @returns {Validator}
+ * @returns {Validator<T>}
  */
 function warn_removed(fn) {
 	return (input) => {
@@ -200,9 +229,10 @@ function warn_removed(fn) {
 }
 
 /**
+ * @template T
  * @param {(node: null) => void} fn
- * @param {Validator} validator
- * @returns {Validator}
+ * @param {Validator<T>} validator
+ * @returns {Validator<T>}
  */
 function deprecate(fn, validator) {
 	return (input, keypath) => {
@@ -212,84 +242,9 @@ function deprecate(fn, validator) {
 }
 
 /**
- * @param {Record<string, Validator>} children
- * @param {boolean} [allow_unknown]
- * @returns {Validator}
- */
-function object(children, allow_unknown = false) {
-	return (input, keypath) => {
-		/** @type {Record<string, any>} */
-		const output = {};
-
-		if ((input && typeof input !== 'object') || Array.isArray(input)) {
-			throw_error(`${keypath} should be an object`);
-		}
-
-		for (const key in input) {
-			if (!(key in children)) {
-				if (allow_unknown) {
-					output[key] = input[key];
-				} else {
-					e.options_unrecognised(null, `${keypath ? `${keypath}.${key}` : key}`);
-				}
-			}
-		}
-
-		for (const key in children) {
-			const validator = children[key];
-			output[key] = validator(input && input[key], keypath ? `${keypath}.${key}` : key);
-		}
-
-		return output;
-	};
-}
-
-/**
- * @param {any} fallback
- * @param {(value: any, keypath: string) => any} fn
- * @returns {Validator}
- */
-function validator(fallback, fn) {
-	return (input, keypath) => {
-		return input === undefined ? fallback : fn(input, keypath);
-	};
-}
-
-/**
- * @param {string | undefined} fallback
- * @param {boolean} allow_empty
- * @returns {Validator}
- */
-function string(fallback, allow_empty = true) {
-	return validator(fallback, (input, keypath) => {
-		if (typeof input !== 'string') {
-			throw_error(`${keypath} should be a string, if specified`);
-		}
-
-		if (!allow_empty && input === '') {
-			throw_error(`${keypath} cannot be empty`);
-		}
-
-		return input;
-	});
-}
-
-/**
- * @param {boolean | undefined} fallback
- * @returns {Validator}
- */
-function boolean(fallback) {
-	return validator(fallback, (input, keypath) => {
-		if (typeof input !== 'boolean') {
-			throw_error(`${keypath} should be true or false, if specified`);
-		}
-		return input;
-	});
-}
-
-/**
- * @param {Array<boolean | string | number>} options
- * @returns {Validator}
+ * @template {boolean | string | number} T
+ * @param {T[]} options
+ * @returns {Validator<T>}
  */
 function list(options, fallback = options[0]) {
 	return validator(fallback, (input, keypath) => {
@@ -307,7 +262,7 @@ function list(options, fallback = options[0]) {
 
 /**
  * @param {(...args: any) => any} fallback
- * @returns {Validator}
+ * @returns {Validator<(...args: any) => any>}
  */
 function fun(fallback) {
 	return validator(fallback, (input, keypath) => {

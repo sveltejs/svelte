@@ -23,6 +23,7 @@ export { print } from './print/index.js';
 export function compile(source, options) {
 	source = remove_bom(source);
 	state.reset({ warning: options.warningFilter, filename: options.filename });
+
 	const validated = validate_component_options(options, '');
 
 	let parsed = _parse(source);
