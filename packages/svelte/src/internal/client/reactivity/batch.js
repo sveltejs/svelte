@@ -177,6 +177,30 @@ export class Batch {
 		return this.is_fork || this.#blocking_pending.size > 0;
 	}
 
+	#is_blocked() {
+		for (const batch of this.#blockers) {
+			for (const effect of batch.#blocking_pending.keys()) {
+				var skipped = false;
+				var e = effect;
+
+				while (e.parent !== null) {
+					if (this.#skipped_branches.has(e)) {
+						skipped = true;
+						break;
+					}
+
+					e = e.parent;
+				}
+
+				if (!skipped) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Add an effect to the #skipped_branches map and reset its children
 	 * @param {Effect} effect
@@ -269,7 +293,7 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
-		if (this.#is_deferred() || this.#blockers.size > 0) {
+		if (this.#is_deferred() || this.#is_blocked()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
