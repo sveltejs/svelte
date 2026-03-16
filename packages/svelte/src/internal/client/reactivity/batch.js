@@ -90,7 +90,6 @@ var source_stacks = DEV ? new Set() : null;
 let uid = 1;
 
 export class Batch {
-	// for debugging. TODO remove once async is stable
 	id = uid++;
 
 	/**
@@ -624,6 +623,7 @@ export class Batch {
 		for (const batch of batches) {
 			if (batch === this || batch.is_fork) continue;
 
+			// A batch is blocked on an earlier batch if it overlaps with the earlier batch's changes but is not a superset
 			var intersects = false;
 			var differs = false;
 
