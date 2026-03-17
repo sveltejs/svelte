@@ -6,6 +6,8 @@ import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
+import { assign_nodes } from '../dom/template.js';
+import { create_comment } from '../dom/operations.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
@@ -26,6 +28,13 @@ export function hmr(fn) {
 		let effect;
 
 		let ran = false;
+
+		// Surround the wrapped effects with comments and assign the nodes
+		// on the wrapping effects so the parent can properly do DOM operations.
+		let start = create_comment();
+		let end = create_comment();
+
+		anchor.before(start);
 
 		block(() => {
 			if (component === (component = get(current))) {
@@ -60,6 +69,10 @@ export function hmr(fn) {
 		if (hydrating) {
 			anchor = hydrate_node;
 		}
+
+		anchor.before(end);
+
+		assign_nodes(start, end);
 
 		return instance;
 	}

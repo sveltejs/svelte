@@ -95,7 +95,8 @@ export function transform_body(instance_body, runner, transform) {
 				);
 
 				if (expression.type === 'EmptyStatement') {
-					return null;
+					// Keep indices stable for async sequencing while avoiding array holes in run([...]).
+					return b.thunk(b.void0, false);
 				}
 
 				return expression.type === 'AwaitExpression'

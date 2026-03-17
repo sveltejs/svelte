@@ -3,7 +3,7 @@ import * as $ from 'svelte/internal/server';
 
 export default function Async_top_level_inspect_server($$renderer) {
 	var data;
-	var $$promises = $$renderer.run([async () => data = await Promise.resolve(42),,]);
+	var $$promises = $$renderer.run([async () => data = await Promise.resolve(42), () => void 0]);
 
 	$$renderer.push(`<p>`);
 	$$renderer.async([$$promises[1]], ($$renderer) => $$renderer.push(() => $.escape(data)));
