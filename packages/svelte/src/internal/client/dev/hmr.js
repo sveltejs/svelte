@@ -29,6 +29,8 @@ export function hmr(fn) {
 
 		let ran = false;
 
+		// Surround the wrapped effects with comments and assign the nodes
+		// on the wrapping effects so the parent can properly do DOM operations.
 		let start = create_comment();
 		let end = create_comment();
 
