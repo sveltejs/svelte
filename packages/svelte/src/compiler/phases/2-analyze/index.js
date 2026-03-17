@@ -465,8 +465,10 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	const is_custom_element =
-		!!options.customElementOptions || options.customElement({ filename: options.filename });
+	const custom_element_from_option = options.customElement({ filename: options.filename });
+	const css = options.css({ filename: options.filename });
+	const custom_element = options.customElementOptions ?? custom_element_from_option;
+	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
 
 	const name = module.scope.generate(options.name ?? component_name);
 
@@ -526,8 +528,8 @@ export function analyze_component(root, source, options) {
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
-		custom_element: is_custom_element,
-		inject_styles: options.css({ filename: options.filename }) === 'injected' || is_custom_element,
+		custom_element,
+		inject_styles: css === 'injected' || is_custom_element,
 		accessors:
 			is_custom_element ||
 			(runes ? false : !!options.accessors) ||
@@ -683,10 +685,7 @@ export function analyze_component(root, source, options) {
 				w.options_deprecated_accessors(attribute);
 			}
 
-			if (
-				attribute.name === 'customElement' &&
-				!options.customElement({ filename: options.filename })
-			) {
+			if (attribute.name === 'customElement' && !custom_element_from_option) {
 				w.options_missing_custom_element(attribute);
 			}
 

@@ -595,7 +595,7 @@ export function client_component(analysis, options) {
 		);
 	}
 
-	const ce = options.customElementOptions ?? options.customElement({ filename: options.filename });
+	const ce = analysis.custom_element;
 
 	if (ce) {
 		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
