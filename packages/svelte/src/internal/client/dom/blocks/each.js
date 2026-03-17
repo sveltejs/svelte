@@ -480,6 +480,14 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		}
 
+		if ((effect.f & INERT) !== 0) {
+			resume_effect(effect);
+			if (is_animated) {
+				effect.nodes?.a?.unfix();
+				(to_animate ??= new Set()).delete(effect);
+			}
+		}
+
 		if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
 			effect.f ^= EFFECT_OFFSCREEN;
 
@@ -500,27 +508,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 				move(effect, next, anchor);
 				prev = effect;
 
-				if ((effect.f & INERT) !== 0) {
-					resume_effect(effect);
-					if (is_animated) {
-						effect.nodes?.a?.unfix();
-						(to_animate ??= new Set()).delete(effect);
-					}
-				}
-
 				matched = [];
 				stashed = [];
 
 				current = skip_to_branch(prev.next);
 				continue;
-			}
-		}
-
-		if ((effect.f & INERT) !== 0) {
-			resume_effect(effect);
-			if (is_animated) {
-				effect.nodes?.a?.unfix();
-				(to_animate ??= new Set()).delete(effect);
 			}
 		}
 
