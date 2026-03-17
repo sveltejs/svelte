@@ -19,7 +19,6 @@ import {
 	ROOT_EFFECT,
 	CONNECTED,
 	REACTION_IS_UPDATING,
-	STALE_REACTION,
 	ERROR_VALUE,
 	WAS_MARKED,
 	MANAGED_EFFECT,
@@ -58,6 +57,7 @@ import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
+import { StaleReactionError } from './reactivity/async.js';
 
 let is_updating_effect = false;
 
@@ -246,7 +246,7 @@ export function update_reaction(reaction) {
 
 	if (reaction.ac !== null) {
 		without_reactive_context(() => {
-			/** @type {AbortController} */ (reaction.ac).abort(STALE_REACTION);
+			/** @type {AbortController} */ (reaction.ac).abort(new StaleReactionError());
 		});
 
 		reaction.ac = null;

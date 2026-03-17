@@ -442,6 +442,27 @@ export class Batch {
 		batches.delete(this);
 	}
 
+	/**
+	 * @param {Batch} batch
+	 */
+	absorb(batch) {
+		for (const [source, value] of batch.current) {
+			if (!this.current.has(source)) {
+				this.current.set(source, value);
+			}
+		}
+
+		for (const [source, value] of batch.previous) {
+			this.previous.set(source, value);
+		}
+
+		batch.current.clear();
+		batch.previous.clear();
+
+		// TODO it's possible that we need to absorb deferred effects as well
+		// batches.delete(batch);
+	}
+
 	#commit() {
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly

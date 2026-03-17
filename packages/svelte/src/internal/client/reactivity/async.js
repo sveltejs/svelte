@@ -1,5 +1,5 @@
 /** @import { Blocker, Effect, Value } from '#client' */
-import { DESTROYED, STALE_REACTION } from '#client/constants';
+import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -270,7 +270,7 @@ export function run(thunks) {
 				}
 
 				if (aborted(active)) {
-					throw STALE_REACTION;
+					throw new StaleReactionError();
 				}
 
 				restore();
@@ -318,4 +318,11 @@ export function increment_pending() {
 		boundary.update_pending_count(-1, batch);
 		batch.decrement(blocking, skip);
 	};
+}
+
+export class StaleReactionError extends Error {
+	// allow users to ignore aborted signal errors if `reason.name === 'StaleReactionError`
+	name = 'StaleReactionError';
+	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
+	batch = current_batch;
 }
