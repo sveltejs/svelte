@@ -77,9 +77,6 @@ importers:
       '@sveltejs/acorn-typescript':
         specifier: ^1.0.5
         version: 1.0.5(acorn@8.15.0)
-      '@sveltejs/config':
-        specifier: file:../../../config
-        version: file:../config
       '@types/estree':
         specifier: ^1.0.5
         version: 1.0.8
@@ -893,9 +890,6 @@ packages:
     resolution: {integrity: sha512-IwQk4yfwLdibDlrXVE04jTZYlLnwsTT2PIOQQGNLWfjavGifnk1JD1LcZjZaBTRcxZu2FfPfNLOE04DSu9lqtQ==}
     peerDependencies:
       acorn: ^8.9.0
-
-  '@sveltejs/config@file:../config':
-    resolution: {directory: ../config, type: directory}
 
   '@sveltejs/eslint-config@9.0.0':
     resolution: {integrity: sha512-3u9VUYlU0Mc/8Bhc7eRAPgJuUBMaKHzoE8r50WrnVujoxBLW4zfPckR/BFGGNeVUh0F7QGAtxGkV/5pL6CE1Ng==}
@@ -3172,8 +3166,6 @@ snapshots:
   '@sveltejs/acorn-typescript@1.0.5(acorn@8.15.0)':
     dependencies:
       acorn: 8.15.0
-
-  '@sveltejs/config@file:../config': {}
 
   '@sveltejs/eslint-config@9.0.0(@eslint/js@10.0.1(eslint@10.0.0))(@stylistic/eslint-plugin-js@1.8.0(eslint@10.0.0))(eslint-config-prettier@9.1.0(eslint@10.0.0))(eslint-plugin-n@17.24.0(eslint@10.0.0)(typescript@5.5.4))(eslint-plugin-svelte@3.15.0(eslint@10.0.0)(svelte@packages+svelte))(eslint@10.0.0)(typescript-eslint@8.56.0(eslint@10.0.0)(typescript@5.5.4))(typescript@5.5.4)':
     dependencies:
