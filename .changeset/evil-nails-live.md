@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: use `@sveltejs/config` package for options validation
+chore: allow `css`, `runes`, `customElement` compiler options to be functions

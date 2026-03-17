@@ -1,8 +1,12 @@
-/** @import { Validator } from '@sveltejs/config/validate' */
 /** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions } from '#compiler' */
-import { string, boolean, object, fn, validator, ValidateError } from '@sveltejs/config/validate';
 import * as e from './errors.js';
 import * as w from './warnings.js';
+
+/**
+ * @template Input
+ * @template {Input} Output
+ * @typedef {(input: Input, keypath: string) => Output} Validator
+ */
 
 const common_options = {
 	filename: string('(unknown)'),
@@ -37,7 +41,7 @@ const common_options = {
 		return /** @type {'client' | 'server' | false} */ (input);
 	}),
 
-	warningFilter: fn(() => true),
+	warningFilter: fun(() => true),
 
 	experimental: object({
 		async: boolean(false)
@@ -70,7 +74,7 @@ const component_options = {
 		}
 	),
 
-	cssHash: fn(({ css, filename, hash }) => {
+	cssHash: fun(({ css, filename, hash }) => {
 		return `svelte-${hash(filename === '(unknown)' ? css : filename ?? css)}`;
 	}),
 
@@ -160,7 +164,7 @@ const component_options = {
 	)
 };
 
-const module_options_validator =
+export const module_options_validator =
 	/** @type {Validator<ModuleCompileOptions, ValidatedModuleCompileOptions>} */ (
 		object({
 			...common_options,
@@ -168,7 +172,7 @@ const module_options_validator =
 		})
 	);
 
-const component_options_validator =
+export const component_options_validator =
 	/** @type {Validator<CompileOptions, Omit<ValidatedCompileOptions, 'customElementOptions'>>} */ (
 		object({
 			...common_options,
@@ -177,39 +181,9 @@ const component_options_validator =
 	);
 
 /**
- * @param {ModuleCompileOptions} options
- */
-export function validate_module_options(options) {
-	try {
-		return module_options_validator(options);
-	} catch (e) {
-		if (e instanceof ValidateError) {
-			throw_error(e.message);
-		}
-
-		throw e;
-	}
-}
-
-/**
- * @param {CompileOptions} options
- */
-export function validate_component_options(options) {
-	try {
-		return component_options_validator(options);
-	} catch (e) {
-		if (e instanceof ValidateError) {
-			throw_error(e.message);
-		}
-
-		throw e;
-	}
-}
-
-/**
  * @template T
  * @param {string} msg
- * @returns {Validator<T>}
+ * @returns {Validator<T, T>}
  */
 function removed(msg) {
 	return (input) => {
@@ -233,7 +207,7 @@ function warn_once(fn) {
 /**
  * @template T
  * @param {(node: null) => void} fn
- * @returns {Validator<T>}
+ * @returns {Validator<T, T>}
  */
 function warn_removed(fn) {
 	return (input) => {
@@ -245,8 +219,8 @@ function warn_removed(fn) {
 /**
  * @template T
  * @param {(node: null) => void} fn
- * @param {Validator<T>} validator
- * @returns {Validator<T>}
+ * @param {Validator<T, T>} validator
+ * @returns {Validator<T, T>}
  */
 function deprecate(fn, validator) {
 	return (input, keypath) => {
@@ -256,9 +230,97 @@ function deprecate(fn, validator) {
 }
 
 /**
+ * @template T
+ * @typedef {T extends Validator<infer Input, any> ? Input : never} InputOf
+ */
+
+/**
+ * @template T
+ * @typedef {T extends Validator<any, infer Output> ? Output : never} OutputOf
+ */
+
+/**
+ * @template {Record<string, Validator<any, any>>} Shape
+ * @param {Shape} children
+ * @param {boolean} [allow_unknown=false]
+ * @returns {Validator<Partial<{ [K in keyof Shape]: InputOf<Shape[K]> }>, { [K in keyof Shape]: OutputOf<Shape[K]> }>}
+ */
+function object(children, allow_unknown = false) {
+	return (input, keypath) => {
+		/** @type {Record<string, any>} */
+		const output = {};
+
+		if ((input && typeof input !== 'object') || Array.isArray(input)) {
+			throw_error(`${keypath} should be an object`);
+		}
+
+		for (const key in input) {
+			if (!(key in children)) {
+				if (allow_unknown) {
+					output[key] = input[key];
+				} else {
+					e.options_unrecognised(null, `${keypath ? `${keypath}.${key}` : key}`);
+				}
+			}
+		}
+
+		for (const key in children) {
+			const validator = children[key];
+			output[key] = validator(input && input[key], keypath ? `${keypath}.${key}` : key);
+		}
+
+		return output;
+	};
+}
+
+/**
+ * @template T
+ * @param {T} fallback
+ * @param {(value: T, keypath: string) => T} fn
+ * @returns {Validator<T, T>}
+ */
+function validator(fallback, fn) {
+	return (input, keypath) => {
+		return input === undefined ? fallback : fn(input, keypath);
+	};
+}
+
+/**
+ * @param {string | undefined} fallback
+ * @param {boolean} allow_empty
+ * @returns {Validator<string | undefined, string | undefined>}
+ */
+function string(fallback, allow_empty = true) {
+	return validator(fallback, (input, keypath) => {
+		if (typeof input !== 'string') {
+			throw_error(`${keypath} should be a string, if specified`);
+		}
+
+		if (!allow_empty && input === '') {
+			throw_error(`${keypath} cannot be empty`);
+		}
+
+		return input;
+	});
+}
+
+/**
+ * @param {boolean} fallback
+ * @returns {Validator<boolean | undefined, boolean>}
+ */
+function boolean(fallback) {
+	return validator(fallback, (input, keypath) => {
+		if (typeof input !== 'boolean') {
+			throw_error(`${keypath} should be true or false, if specified`);
+		}
+		return input;
+	});
+}
+
+/**
  * @template {boolean | string | number} T
  * @param {T[]} options
- * @returns {Validator<T>}
+ * @returns {Validator<T, T>}
  */
 function list(options, fallback = options[0]) {
 	return validator(fallback, (input, keypath) => {
@@ -269,6 +331,20 @@ function list(options, fallback = options[0]) {
 				: `${keypath} should be either "${options[0]}" or "${options[1]}"`;
 
 			throw_error(msg);
+		}
+		return input;
+	});
+}
+
+/**
+ * @template {(...args: any) => any} T
+ * @param {T} fallback
+ * @returns {Validator<T, T>}
+ */
+function fun(fallback) {
+	return validator(fallback, (input, keypath) => {
+		if (typeof input !== 'function') {
+			throw_error(`${keypath} should be a function, if specified`);
 		}
 		return input;
 	});
@@ -296,7 +372,10 @@ function parametric(fallback, normalize = (value) => /** @type {ReturnType<F>} *
 	});
 }
 
-/** @param {string} msg */
+/**
+ * @param {string} msg
+ * @returns {never}
+ */
 function throw_error(msg) {
 	e.options_invalid_value(null, msg);
 }
