@@ -139,6 +139,19 @@ const visitors = {
 };
 
 /**
+ * @param {string} custom_renderer_module
+ */
+function custom_renderer_imports(custom_renderer_module) {
+	const imports = [
+		b.import_all('$', 'svelte/internal/client'),
+	]
+	if(custom_renderer_module){
+		imports.push(b.imports([['$renderer', '$renderer', true]], custom_renderer_module));
+	}
+	return imports;
+}
+
+/**
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
  * @returns {ESTree.Program}
@@ -151,7 +164,9 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
+		hoisted: [
+			...custom_renderer_imports(options.customRenderer), ...analysis.instance_body.hoisted
+		],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -392,6 +407,13 @@ export function client_component(analysis, options) {
 		);
 	}
 
+	if (options.customRenderer) {
+		component_block.body.unshift(
+			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
+		);
+		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
+	}
+
 	let should_inject_props =
 		should_inject_context ||
 		analysis.needs_props ||
@@ -562,7 +584,9 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
 	}
 
-	if (options.discloseVersion) {
+	// disclose version attach the svelte version to `window` which is not guaranteed
+	// to be a thing in custom renderers environments
+	if (options.discloseVersion && !options.customRenderer) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 

@@ -47,7 +47,8 @@ export function RegularElement(node, context) {
 		return;
 	}
 
-	const is_custom_element = is_custom_element_node(node);
+	// we never treat elements as custom element in custom renderers, since we don't want to apply special handling to them (e.g. class merging)
+	const is_custom_element = is_custom_element_node(node) && !context.state.options.customRenderer;
 
 	// cloneNode is faster, but it does not instantiate the underlying class of the
 	// custom element until the template is connected to the dom, which would

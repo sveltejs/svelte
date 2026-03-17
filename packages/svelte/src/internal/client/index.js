@@ -181,3 +181,4 @@ export {
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
 export { invoke_error_boundary } from './error-handling.js';
+export { push_renderer } from "./custom-renderer/state.js"

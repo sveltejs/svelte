@@ -36,6 +36,10 @@ export default function read_options(node) {
 				e.svelte_options_deprecated_tag(attribute);
 				break; // eslint doesn't know this is unnecessary
 			}
+			case 'customRenderer': {
+				component_options.customRenderer = get_static_value(attribute);
+				break;
+			}
 			case 'customElement': {
 				/** @type {AST.SvelteOptions['customElement']} */
 				const ce = {};

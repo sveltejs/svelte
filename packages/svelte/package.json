@@ -91,6 +91,10 @@
       "types": "./types/index.d.ts",
       "default": "./src/reactivity/window/index.js"
     },
+	"./renderer": {
+      "types": "./types/index.d.ts",
+      "default": "./src/renderer/index.js"
+    },
     "./server": {
       "types": "./types/index.d.ts",
       "default": "./src/server/index.js"

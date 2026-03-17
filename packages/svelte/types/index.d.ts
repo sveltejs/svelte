@@ -1090,6 +1090,10 @@ declare module 'svelte/compiler' {
 		 */
 		fragments?: 'html' | 'tree';
 		/**
+		 *  Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
+		 */
+		customRenderer?: string;
+		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -1240,9 +1244,10 @@ declare module 'svelte/compiler' {
 			preserveWhitespace?: boolean;
 			namespace?: Namespace;
 			css?: 'injected';
+			customRenderer?: string;
 			customElement?: {
 				tag?: string;
-				shadow?: 'open' | 'none' | ObjectExpression | undefined;
+				shadow?: 'open' | 'none';
 				props?: Record<
 					string,
 					{
@@ -2557,6 +2562,12 @@ declare module 'svelte/reactivity/window' {
 	export {};
 }
 
+declare module 'svelte/renderer' {
+	export function createRenderer(renderer: any): any;
+
+	export {};
+}
+
 declare module 'svelte/server' {
 	import type { ComponentProps, Component, SvelteComponent, ComponentType } from 'svelte';
 	/**
@@ -3065,6 +3076,10 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @since 5.33
 		 */
 		fragments?: 'html' | 'tree';
+		/**
+		 *  Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
+		 */
+		customRenderer?: string;
 		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.

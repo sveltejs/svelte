@@ -59,8 +59,11 @@ export function Attribute(node, context) {
 				context.state.analysis.uses_event_attributes = true;
 			}
 
-			node.metadata.delegated =
-				parent?.type === 'RegularElement' && can_delegate_event(node.name.slice(2));
+			// we can't delegate event handlers in a non dom environment
+			if (!context.state.options.customRenderer) {
+				node.metadata.delegated =
+					parent?.type === 'RegularElement' && can_delegate_event(node.name.slice(2));
+			}
 		}
 	}
 }

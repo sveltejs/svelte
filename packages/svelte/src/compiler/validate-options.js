@@ -83,6 +83,8 @@ const component_options = {
 
 	immutable: deprecate(w.options_deprecated_immutable, boolean(false)),
 
+	customRenderer: string(undefined),
+
 	legacy: removed(
 		'The legacy option has been removed. If you are using this because of legacy.componentApi, use compatibility.componentApi instead'
 	),
