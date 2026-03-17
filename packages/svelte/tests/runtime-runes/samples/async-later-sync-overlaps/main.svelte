@@ -5,9 +5,9 @@
 
 	function push(value) {
 		if (!value) return value;
-		const deferred = Promise.withResolvers();
-		deferreds.push({ deferred, value });
-		return deferred.promise;
+		return new Promise(resolve => {
+			deferreds.push(() => resolve(value));
+		});
 	}
 </script>
 
