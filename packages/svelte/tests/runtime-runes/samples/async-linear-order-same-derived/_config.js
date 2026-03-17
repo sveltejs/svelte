@@ -18,7 +18,7 @@ export default test({
 		pop.click();
 		await tick();
 
-		assert.htmlEqual(p.innerHTML, '1 + 3 = 4');
+		assert.htmlEqual(p.innerHTML, '1 + 2 = 3');
 
 		pop.click();
 		await tick();
