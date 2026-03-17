@@ -123,6 +123,19 @@ export function async_derived(fn, label, location) {
 	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Map();
 
+	/**
+	 * @param {Batch} subset
+	 * @param {Batch} superset
+	 */
+	function is_batch_subset(subset, superset) {
+		for (const source of subset.current.keys()) {
+			if ((source.f & DERIVED) !== 0) continue;
+			if (!superset.current.has(source)) return false;
+		}
+
+		return true;
+	}
+
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
@@ -132,19 +145,27 @@ export function async_derived(fn, label, location) {
 		var d = deferred();
 		promise = d.promise;
 
+		var batch = /** @type {Batch} */ (current_batch);
+
 		try {
-			// If this code is changed at some point, make sure to still access the then property
-			// of fn() to read any signals it might access, so that we track them as dependencies.
-			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
+			// TODO async-nested-derived test shows that we can get here without a current_batch, figure out
+			// how to handle this case (either throw an error signaling the user they do something wrong or
+			// turn this into a one-time async derived run). In the meantime defensively call the function.
+			var restore = batch?.unset_batch_values();
+			try {
+				// If this code is changed at some point, make sure to still access the then property
+				// of fn() to read any signals it might access, so that we track them as dependencies.
+				// We call `unset_context` to undo any `save` calls that happen inside `fn()`
+				Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
+			} finally {
+				restore?.();
+			}
 		} catch (error) {
 			d.reject(error);
 			unset_context();
 		}
 
 		if (DEV) current_async_effect = null;
-
-		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
@@ -173,10 +194,24 @@ export function async_derived(fn, label, location) {
 		 * @param {any} value
 		 * @param {unknown} error
 		 */
-		const handler = (value, error = undefined) => {
+		const handler = async (value, error = undefined) => {
 			if (DEV) current_async_effect = null;
 
 			if (decrement_pending) {
+				/** @type {Promise<unknown>[]} */
+				const waits = [];
+
+				for (const [b, d] of deferreds) {
+					if (b === batch) break;
+					if (error || !is_batch_subset(b, batch)) {
+						waits.push(d.promise);
+					}
+				}
+
+				if (waits.length > 0) {
+					await Promise.allSettled(waits);
+				}
+
 				// don't trigger an update if we're only here because
 				// the promise was superseded before it could resolve
 				var skip = error === STALE_REACTION;
@@ -205,6 +240,7 @@ export function async_derived(fn, label, location) {
 				for (const [b, d] of deferreds) {
 					deferreds.delete(b);
 					if (b === batch) break;
+					if (is_batch_subset(b, batch)) b.discard();
 					d.reject(STALE_REACTION);
 				}
 

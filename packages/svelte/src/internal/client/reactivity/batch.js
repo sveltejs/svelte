@@ -313,10 +313,6 @@ export class Batch {
 
 			next_batch.#process();
 		}
-
-		if (!batches.has(this)) {
-			this.#commit();
-		}
 	}
 
 	/**
@@ -442,73 +438,6 @@ export class Batch {
 		batches.delete(this);
 	}
 
-	#commit() {
-		// If there are other pending batches, they now need to be 'rebased' —
-		// in other words, we re-run block/async effects with the newly
-		// committed state, unless the batch in question has a more
-		// recent value for a given source
-		for (const batch of batches) {
-			var is_earlier = batch.id < this.id;
-
-			/** @type {Source[]} */
-			var sources = [];
-
-			for (const [source, value] of this.current) {
-				if (batch.current.has(source)) {
-					if (is_earlier && value !== batch.current.get(source)) {
-						// bring the value up to date
-						batch.current.set(source, value);
-					} else {
-						// same value or later batch has more recent value,
-						// no need to re-run these effects
-						continue;
-					}
-				}
-
-				sources.push(source);
-			}
-
-			// Re-run async/block effects that depend on distinct values changed in both batches
-			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
-
-			if (others.length === 0) {
-				if (is_earlier) {
-					// this batch is now obsolete and can be discarded
-					batch.discard();
-				}
-			} else if (sources.length > 0) {
-				if (DEV) {
-					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
-				}
-
-				batch.activate();
-
-				/** @type {Set<Value>} */
-				var marked = new Set();
-
-				/** @type {Map<Reaction, boolean>} */
-				var checked = new Map();
-
-				for (var source of sources) {
-					mark_effects(source, others, marked, checked);
-				}
-
-				// Only apply and traverse when we know we triggered async work with marking the effects
-				if (batch.#roots.length > 0) {
-					batch.apply();
-
-					for (var root of batch.#roots) {
-						batch.#traverse(root, [], []);
-					}
-
-					batch.#roots = [];
-				}
-
-				batch.deactivate();
-			}
-		}
-	}
-
 	/**
 	 *
 	 * @param {boolean} blocking
@@ -550,6 +479,14 @@ export class Batch {
 
 		dirty_effects.clear();
 		maybe_dirty_effects.clear();
+	}
+
+	unset_batch_values() {
+		const prev = batch_values;
+		batch_values = null;
+		return () => {
+			batch_values = prev;
+		};
 	}
 
 	/** @param {(batch: Batch) => void} fn */
@@ -819,37 +756,6 @@ function flush_queued_effects(effects) {
 }
 
 /**
- * This is similar to `mark_reactions`, but it only marks async/block effects
- * depending on `value` and at least one of the other `sources`, so that
- * these effects can re-run after another batch has been committed
- * @param {Value} value
- * @param {Source[]} sources
- * @param {Set<Value>} marked
- * @param {Map<Reaction, boolean>} checked
- */
-function mark_effects(value, sources, marked, checked) {
-	if (marked.has(value)) return;
-	marked.add(value);
-
-	if (value.reactions !== null) {
-		for (const reaction of value.reactions) {
-			const flags = reaction.f;
-
-			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
-			} else if (
-				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
-				(flags & DIRTY) === 0 &&
-				depends_on(reaction, sources, checked)
-			) {
-				set_signal_status(reaction, DIRTY);
-				schedule_effect(/** @type {Effect} */ (reaction));
-			}
-		}
-	}
-}
-
-/**
  * When committing a fork, we need to trigger eager effects so that
  * any `$state.eager(...)` expressions update immediately. This
  * function allows us to discover them
@@ -869,33 +775,6 @@ function mark_eager_effects(value, effects) {
 			effects.add(/** @type {Effect} */ (reaction));
 		}
 	}
-}
-
-/**
- * @param {Reaction} reaction
- * @param {Source[]} sources
- * @param {Map<Reaction, boolean>} checked
- */
-function depends_on(reaction, sources, checked) {
-	const depends = checked.get(reaction);
-	if (depends !== undefined) return depends;
-
-	if (reaction.deps !== null) {
-		for (const dep of reaction.deps) {
-			if (includes.call(sources, dep)) {
-				return true;
-			}
-
-			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources, checked)) {
-				checked.set(/** @type {Derived} */ (dep), true);
-				return true;
-			}
-		}
-	}
-
-	checked.set(reaction, false);
-
-	return false;
 }
 
 /**
