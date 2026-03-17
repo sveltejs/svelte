@@ -47,25 +47,28 @@ const common_options = {
 const component_options = {
 	accessors: deprecate(w.options_deprecated_accessors, boolean(false)),
 
-	css: validator('external', (input) => {
-		// @ts-expect-error
-		if (input === true || input === false) {
-			throw_error(
-				'The boolean options have been removed from the css option. Use "external" instead of false and "injected" instead of true'
-			);
-		}
-		if (input === 'none') {
-			throw_error(
-				'css: "none" is no longer a valid option. If this was crucial for you, please open an issue on GitHub with your use case.'
-			);
-		}
+	/** @type {Validator<'injected' | 'external' | ((options: { filename: string }) => 'injected' | 'external'), (options: { filename: string }) => 'injected' | 'external'>} */
+	css: parametric(
+		/** @type {(options: { filename: string }) => 'injected' | 'external'} */ (() => 'external'),
+		(input) => {
+			if (input === true || input === false) {
+				throw_error(
+					'The boolean options have been removed from the css option. Use "external" instead of false and "injected" instead of true'
+				);
+			}
+			if (input === 'none') {
+				throw_error(
+					'css: "none" is no longer a valid option. If this was crucial for you, please open an issue on GitHub with your use case.'
+				);
+			}
 
-		if (input !== 'external' && input !== 'injected') {
-			throw_error(`css should be either "external" (default, recommended) or "injected"`);
-		}
+			if (input !== 'external' && input !== 'injected') {
+				throw_error(`css should be either "external" (default, recommended) or "injected"`);
+			}
 
-		return input;
-	}),
+			return /** @type {'external' | 'injected'} */ (input);
+		}
+	),
 
 	cssHash: fn(({ css, filename, hash }) => {
 		return `svelte-${hash(filename === '(unknown)' ? css : filename ?? css)}`;
@@ -264,16 +267,20 @@ function list(options, fallback = options[0]) {
 /**
  * @template {(...args: any[]) => any} F
  * @param {F} fallback
+ * @param {(value: unknown, keypath: string) => ReturnType<F>} [normalize]
  * @returns {Validator<ReturnType<F> | F, F>}
  */
-function parametric(fallback) {
-	return validator(fallback, (input) => {
+function parametric(fallback, normalize = (value) => /** @type {ReturnType<F>} */ (value)) {
+	return validator(fallback, (input, keypath) => {
 		if (typeof input === 'function') {
-			return /** @type {F} */ (input);
+			/** @type {(...args: Parameters<F>) => ReturnType<F>} */
+			const normalized = (...args) => normalize(input(...args), keypath);
+
+			return /** @type {F} */ (/** @type {unknown} */ (normalized));
 		}
 
 		/** @type {(...args: Parameters<F>) => ReturnType<F>} */
-		const normalized = (..._args) => /** @type {ReturnType<F>} */ (input);
+		const normalized = (..._args) => normalize(input, keypath);
 
 		return /** @type {F} */ (/** @type {unknown} */ (normalized));
 	});

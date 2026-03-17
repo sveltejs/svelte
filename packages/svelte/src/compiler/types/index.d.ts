@@ -101,8 +101,10 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * - `'injected'`: styles will be included in the `head` when using `render(...)`, and injected into the document (if not already present) when the component mounts. For components compiled as custom elements, styles are injected to the shadow root.
 	 * - `'external'`: the CSS will only be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
 	 * This is always `'injected'` when compiling with `customElement` mode.
+	 *
+	 * You can also pass a function that receives `{ filename }` and returns either `'injected'` or `'external'`.
 	 */
-	css?: 'injected' | 'external';
+	css?: 'injected' | 'external' | ((options: { filename: string }) => 'injected' | 'external');
 	/**
 	 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
 	 * It defaults to returning `svelte-${hash(filename ?? css)}`.
@@ -252,6 +254,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		| 'outputFilename'
 		| 'cssOutputFilename'
 		| 'sourcemap'
+		| 'css'
 		| 'runes'
 	> & {
 		name: CompileOptions['name'];
@@ -259,6 +262,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		cssOutputFilename: CompileOptions['cssOutputFilename'];
 		sourcemap: CompileOptions['sourcemap'];
 		compatibility: Required<Required<CompileOptions>['compatibility']>;
+		css: (options: { filename: string }) => 'injected' | 'external';
 		runes: (options: { filename: string }) => boolean | undefined;
 		customElementOptions: AST.SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];

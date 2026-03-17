@@ -35,6 +35,7 @@ export function compile(source, options) {
 		...validated,
 		...parsed_options,
 		customElementOptions,
+		css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : validated.css,
 		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes
 	};
 

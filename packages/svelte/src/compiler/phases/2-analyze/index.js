@@ -526,7 +526,7 @@ export function analyze_component(root, source, options) {
 		event_directive_node: null,
 		uses_event_attributes: false,
 		custom_element: is_custom_element,
-		inject_styles: options.css === 'injected' || is_custom_element,
+		inject_styles: options.css({ filename: options.filename }) === 'injected' || is_custom_element,
 		accessors:
 			is_custom_element ||
 			(runes ? false : !!options.accessors) ||
