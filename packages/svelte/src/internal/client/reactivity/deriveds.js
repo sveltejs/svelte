@@ -76,6 +76,7 @@ export function derived(fn) {
 
 	/** @type {Derived<V>} */
 	const signal = {
+		batch: current_batch,
 		ctx: component_context,
 		deps: null,
 		effects: null,
@@ -121,10 +122,26 @@ export function async_derived(fn, label, location) {
 	var should_suspend = !active_reaction;
 
 	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
-	var deferreds = new Map();
+	var deferreds = new Map(); // TODO this can only be one batch at a time now
 
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
+		var effect = /** @type {Effect} */ (active_effect);
+		var batch = /** @type {Batch} */ (current_batch);
+		var controller = new AbortController();
+		effect.ac = controller;
+
+		controller.signal.addEventListener(
+			'abort',
+			() => {
+				for (const d of deferreds.values()) {
+					d.reject(STALE_REACTION);
+				}
+
+				deferreds.clear();
+			},
+			{ once: true }
+		);
 
 		var effect = /** @type {Effect} */ (active_effect);
 
@@ -143,8 +160,6 @@ export function async_derived(fn, label, location) {
 		}
 
 		if (DEV) current_async_effect = null;
-
-		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
@@ -226,10 +241,13 @@ export function async_derived(fn, label, location) {
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
 	});
 
+	const t = deferred();
+
 	teardown(() => {
 		for (const d of deferreds.values()) {
 			d.reject(STALE_REACTION);
 		}
+		t.resolve();
 	});
 
 	if (DEV) {
@@ -241,8 +259,13 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
-			function go() {
+			/** @param {unknown} [error] */
+			function go(error) {
 				if (p === promise) {
+					if (error === STALE_REACTION) {
+						return t.promise;
+					}
+
 					fulfil(signal);
 				} else {
 					// if the effect re-runs before the initial promise
@@ -251,7 +274,7 @@ export function async_derived(fn, label, location) {
 				}
 			}
 
-			p.then(go, go);
+			p.then(() => go(), go);
 		}
 
 		next(promise);
@@ -383,7 +406,8 @@ export function update_derived(derived) {
 		// change, `derived.equals` may incorrectly return `true`
 		if (!current_batch?.is_fork || derived.deps === null) {
 			derived.v = value;
-			current_batch?.capture(derived, old_value);
+			derived.batch = current_batch;
+			current_batch?.capture(derived, old_value); // TODO came in from main merge; check if correct still
 
 			// deriveds without dependencies should never be recomputed
 			if (derived.deps === null) {

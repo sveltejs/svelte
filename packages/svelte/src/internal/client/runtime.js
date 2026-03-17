@@ -23,7 +23,8 @@ import {
 	ERROR_VALUE,
 	WAS_MARKED,
 	MANAGED_EFFECT,
-	REACTION_RAN
+	REACTION_RAN,
+	ANY_EFFECT
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -154,6 +155,12 @@ export function increment_write_version() {
  */
 export function is_dirty(reaction) {
 	var flags = reaction.f;
+	var is_effect = (flags & ANY_EFFECT) !== 0;
+
+	// We don't want to create/merge batches when flushing (render) effects, only during batch.#traverse()
+	if (current_batch !== null && !is_effect) {
+		reaction.batch = Batch.upsert(reaction);
+	}
 
 	if ((flags & DIRTY) !== 0) {
 		return true;
@@ -164,7 +171,7 @@ export function is_dirty(reaction) {
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		var dependencies = /** @type {Value[]} */ (reaction.deps);
+		var dependencies = /** @type {Value<unknown>[]} */ (reaction.deps);
 		var length = dependencies.length;
 
 		for (var i = 0; i < length; i++) {
@@ -181,9 +188,9 @@ export function is_dirty(reaction) {
 
 		if (
 			(flags & CONNECTED) !== 0 &&
-			// During time traveling we don't want to reset the status so that
+			// During forking we don't want to reset the status so that
 			// traversal of the graph in the other batches still happens
-			batch_values === null
+			!current_batch?.is_fork
 		) {
 			set_signal_status(reaction, CLEAN);
 		}
@@ -339,6 +346,11 @@ export function update_reaction(reaction) {
 
 		if ((reaction.f & ERROR_VALUE) !== 0) {
 			reaction.f ^= ERROR_VALUE;
+		}
+
+		// TODO needed?
+		if (current_batch !== null && !current_batch.is_fork) {
+			reaction.batch = current_batch;
 		}
 
 		return result;
@@ -551,6 +563,10 @@ export function get(signal) {
 						new_deps.push(signal);
 					}
 				}
+
+				// Do this here so that it's invoked while executing deriveds and effects during batch.#traverse().
+				// A potential merge will adjust batch_values correctly, which is crucial.
+				if (current_batch !== null) signal.batch = Batch.upsert(signal);
 			} else {
 				// we're adding a dependency outside the init/update cycle
 				// (i.e. after an `await`)

@@ -33,7 +33,7 @@ export default test({
 			`
 				<button>increment</button>
 				<button>shift</button>
-				<p>2</p>
+				<p>delayed: 3</p>
 			`
 		);
 

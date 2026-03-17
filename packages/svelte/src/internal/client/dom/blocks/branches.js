@@ -68,10 +68,23 @@ export class BranchManager {
 		this.#transition = transition;
 	}
 
+	#consolidate() {
+		// Without this, .has/.get/.set could return false negatives when
+		// #commit/#discard are called with the successor of an obsolete batch
+		for (const [batch, key] of this.#batches) {
+			const live = Batch.find(batch);
+			if (live !== batch) {
+				this.#batches.set(live, key);
+				this.#batches.delete(batch);
+			}
+		}
+	}
+
 	/**
 	 * @param {Batch} batch
 	 */
 	#commit = (batch) => {
+		this.#consolidate();
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
 
@@ -156,6 +169,7 @@ export class BranchManager {
 	 * @param {Batch} batch
 	 */
 	#discard = (batch) => {
+		this.#consolidate();
 		this.#batches.delete(batch);
 
 		const keys = Array.from(this.#batches.values());
@@ -203,7 +217,7 @@ export class BranchManager {
 				if (k === key) {
 					batch.unskip_effect(effect);
 				} else {
-					batch.skip_effect(effect);
+					batch.skip_effect(effect, this.#discard);
 				}
 			}
 
@@ -211,7 +225,7 @@ export class BranchManager {
 				if (k === key) {
 					batch.unskip_effect(branch.effect);
 				} else {
-					batch.skip_effect(branch.effect);
+					batch.skip_effect(branch.effect, this.#discard);
 				}
 			}
 
