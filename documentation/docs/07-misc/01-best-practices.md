@@ -1,5 +1,6 @@
 ---
 title: Best practices
+skill: true
 name: svelte-core-bestpractices
 description: Guidance on writing fast, robust, modern Svelte code. Load this skill whenever in a Svelte project and asked to write/edit or analyze a Svelte component or module. Covers reactivity, event handling, styling, integration with libraries and more.
 ---
@@ -142,7 +143,7 @@ The CSS in a component's `<style>` is scoped to that component. If a parent comp
 </style>
 ```
 
-If this impossible (for example, the child component comes from a library) you can use `:global` to override styles:
+If this is impossible (for example, the child component comes from a library) you can use `:global` to override styles:
 
 ```svelte
 <div>

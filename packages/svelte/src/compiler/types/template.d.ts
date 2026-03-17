@@ -133,6 +133,8 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
+			/** If `true`, the `{@html}` block is the only child of its parent element and can use `parent.innerHTML` directly */
+			is_controlled?: boolean;
 		};
 	}
 

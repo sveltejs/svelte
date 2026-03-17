@@ -9,7 +9,11 @@ import { build_expression } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {
-	context.state.template.push_comment();
+	const is_controlled = node.metadata.is_controlled;
+
+	if (!is_controlled) {
+		context.state.template.push_comment();
+	}
 
 	const has_await = node.metadata.expression.has_await;
 	const has_blockers = node.metadata.expression.has_blockers();
@@ -17,14 +21,17 @@ export function HtmlTag(node, context) {
 	const expression = build_expression(context, node.expression, node.metadata.expression);
 	const html = has_await ? b.call('$.get', b.id('$$html')) : expression;
 
-	const is_svg = context.state.metadata.namespace === 'svg';
-	const is_mathml = context.state.metadata.namespace === 'mathml';
+	// When is_controlled, the parent node already provides the correct namespace,
+	// so is_svg/is_mathml are only needed for the non-controlled path's wrapper element
+	const is_svg = !is_controlled && context.state.metadata.namespace === 'svg';
+	const is_mathml = !is_controlled && context.state.metadata.namespace === 'mathml';
 
 	const statement = b.stmt(
 		b.call(
 			'$.html',
 			context.state.node,
 			b.thunk(html),
+			is_controlled && b.true,
 			is_svg && b.true,
 			is_mathml && b.true,
 			is_ignored(node, 'hydration_html_changed') && b.true

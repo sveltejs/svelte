@@ -35,7 +35,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, schedule_effect } from '../../reactivity/batch.js';
+import { Batch, current_batch, schedule_effect } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -225,7 +225,6 @@ export class Boundary {
 			fragment.append(anchor);
 
 			this.#main_effect = this.#run(() => {
-				Batch.ensure();
 				return branch(() => this.#children(anchor));
 			});
 
@@ -237,7 +236,7 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.#resolve();
+				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		});
 	}
@@ -259,31 +258,22 @@ export class Boundary {
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 				this.#pending_effect = branch(() => pending(this.#anchor));
 			} else {
-				this.#resolve();
+				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		} catch (error) {
 			this.error(error);
 		}
 	}
 
-	#resolve() {
+	/**
+	 * @param {Batch} batch
+	 */
+	#resolve(batch) {
 		this.is_pending = false;
 
-		// any effects that were previously deferred should be rescheduled —
-		// after the next traversal (which will happen immediately, due to the
-		// same update that brought us here) the effects will be flushed
-		for (const e of this.#dirty_effects) {
-			set_signal_status(e, DIRTY);
-			schedule_effect(e);
-		}
-
-		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			schedule_effect(e);
-		}
-
-		this.#dirty_effects.clear();
-		this.#maybe_dirty_effects.clear();
+		// any effects that were previously deferred should be transferred
+		// to the batch, which will flush in the next microtask
+		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
 	}
 
 	/**
@@ -320,6 +310,7 @@ export class Boundary {
 		set_component_context(this.#effect.ctx);
 
 		try {
+			Batch.ensure();
 			return fn();
 		} catch (e) {
 			handle_error(e);
@@ -335,11 +326,12 @@ export class Boundary {
 	 * Updates the pending count associated with the currently visible pending snippet,
 	 * if any, such that we can replace the snippet with content once work is done
 	 * @param {1 | -1} d
+	 * @param {Batch} batch
 	 */
-	#update_pending_count(d) {
+	#update_pending_count(d, batch) {
 		if (!this.has_pending_snippet()) {
 			if (this.parent) {
-				this.parent.#update_pending_count(d);
+				this.parent.#update_pending_count(d, batch);
 			}
 
 			// if there's no parent, we're in a scope with no pending snippet
@@ -349,7 +341,7 @@ export class Boundary {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.#resolve();
+			this.#resolve(batch);
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
@@ -369,9 +361,10 @@ export class Boundary {
 	 * and controls when the current `pending` snippet (if any) is removed.
 	 * Do not call from inside the class
 	 * @param {1 | -1} d
+	 * @param {Batch} batch
 	 */
-	update_pending_count(d) {
-		this.#update_pending_count(d);
+	update_pending_count(d, batch) {
+		this.#update_pending_count(d, batch);
 
 		this.#local_pending_count += d;
 
@@ -445,9 +438,6 @@ export class Boundary {
 			}
 
 			this.#run(() => {
-				// If the failure happened while flushing effects, current_batch can be null
-				Batch.ensure();
-
 				this.#render();
 			});
 		};
@@ -464,8 +454,6 @@ export class Boundary {
 
 			if (failed) {
 				this.#failed_effect = this.#run(() => {
-					Batch.ensure();
-
 					try {
 						return branch(() => {
 							// errors in `failed` snippets cause the boundary to error again

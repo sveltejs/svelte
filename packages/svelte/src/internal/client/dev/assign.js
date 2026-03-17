@@ -21,12 +21,21 @@ function compare(a, b, property, location) {
 /**
  * @param {any} object
  * @param {string} property
- * @param {any} value
+ * @param {string} operator
+ * @param {any} rhs
  * @param {string} location
  */
-export function assign(object, property, value, location) {
+export function assign(object, property, operator, rhs, location) {
 	return compare(
-		(object[property] = value),
+		operator === '='
+			? (object[property] = rhs)
+			: operator === '&&='
+				? (object[property] &&= rhs())
+				: operator === '||='
+					? (object[property] ||= rhs())
+					: operator === '??='
+						? (object[property] ??= rhs())
+						: null,
 		untrack(() => object[property]),
 		property,
 		location
@@ -36,42 +45,21 @@ export function assign(object, property, value, location) {
 /**
  * @param {any} object
  * @param {string} property
- * @param {any} value
+ * @param {string} operator
+ * @param {any} rhs
  * @param {string} location
  */
-export function assign_and(object, property, value, location) {
+export async function assign_async(object, property, operator, rhs, location) {
 	return compare(
-		(object[property] &&= value),
-		untrack(() => object[property]),
-		property,
-		location
-	);
-}
-
-/**
- * @param {any} object
- * @param {string} property
- * @param {any} value
- * @param {string} location
- */
-export function assign_or(object, property, value, location) {
-	return compare(
-		(object[property] ||= value),
-		untrack(() => object[property]),
-		property,
-		location
-	);
-}
-
-/**
- * @param {any} object
- * @param {string} property
- * @param {any} value
- * @param {string} location
- */
-export function assign_nullish(object, property, value, location) {
-	return compare(
-		(object[property] ??= value),
+		operator === '='
+			? (object[property] = await rhs)
+			: operator === '&&='
+				? (object[property] &&= await rhs())
+				: operator === '||='
+					? (object[property] ||= await rhs())
+					: operator === '??='
+						? (object[property] ??= await rhs())
+						: null,
 		untrack(() => object[property]),
 		property,
 		location

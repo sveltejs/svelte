@@ -9,6 +9,7 @@ import { hydrating } from '../../hydration.js';
 import { tick, untrack } from '../../../runtime.js';
 import { is_runes } from '../../../context.js';
 import { current_batch, previous_batch } from '../../../reactivity/batch.js';
+import { async_mode_flag } from '../../../../flags/index.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -87,8 +88,9 @@ export function bind_value(input, get, set = get) {
 		var value = get();
 
 		if (input === document.activeElement) {
-			// we need both, because in non-async mode, render effects run before previous_batch is set
-			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+			// In sync mode render effects are executed during tree traversal -> needs current_batch
+			// In async mode render effects are flushed once batch resolved, at which point current_batch is null -> needs previous_batch
+			var batch = /** @type {Batch} */ (async_mode_flag ? previous_batch : current_batch);
 
 			// Never rewrite the contents of a focused input. We can get here if, for example,
 			// an update is deferred because of async work depending on the input:
