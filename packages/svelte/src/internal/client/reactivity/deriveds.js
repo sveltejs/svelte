@@ -187,8 +187,7 @@ export function async_derived(fn, label, location) {
 		const handler = (value, error = undefined) => {
 			if (DEV) {
 				reactivity_loss_tracker = null;
-				current_async_effect = null;
-      }
+			}
 
 			if (decrement_pending) {
 				// don't trigger an update if we're only here because
