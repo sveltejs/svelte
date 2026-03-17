@@ -104,7 +104,7 @@ const component_options = {
 
 	preserveWhitespace: boolean(false),
 
-	/** @type {Validator<boolean | undefined | () => boolean | undefined, () => boolean | undefined>} */
+	/** @type {Validator<boolean | undefined | (() => boolean | undefined), () => boolean | undefined>} */
 	runes: parametric(() => /** @type {boolean | undefined} */ (undefined)),
 
 	hmr: boolean(false),
