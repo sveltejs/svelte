@@ -177,10 +177,11 @@ export class Parser {
 
 	/**
 	 * @param {any} err
+	 * @param {string} [suffix]
 	 * @returns {never}
 	 */
-	acorn_error(err) {
-		e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
+	acorn_error(err, suffix = '') {
+		e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, '') + suffix);
 	}
 
 	/**
