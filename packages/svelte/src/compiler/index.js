@@ -34,7 +34,8 @@ export function compile(source, options) {
 	const combined_options = {
 		...validated,
 		...parsed_options,
-		customElementOptions
+		customElementOptions,
+		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes
 	};
 
 	if (parsed.metadata.ts) {

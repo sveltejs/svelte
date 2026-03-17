@@ -142,10 +142,11 @@ export function migrate(source, { filename, use_ts } = {}) {
 
 		/** @type {ValidatedCompileOptions} */
 		const combined_options = {
-			...validate_component_options({}, ''),
+			...validate_component_options({}),
 			...parsed_options,
 			customElementOptions,
 			filename: filename ?? UNKNOWN_FILENAME,
+			runes: 'runes' in parsed_options ? () => parsed_options.runes : () => undefined,
 			experimental: {
 				async: true
 			}

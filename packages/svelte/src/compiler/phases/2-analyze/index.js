@@ -345,6 +345,8 @@ export function analyze_component(root, source, options) {
 
 	let synthetic_stores_legacy_check = [];
 
+	const runes_option = options.runes?.({ filename: options.filename });
+
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -359,7 +361,7 @@ export function analyze_component(root, source, options) {
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
 		if (
-			options.runes === false ||
+			runes_option === false ||
 			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
@@ -395,7 +397,7 @@ export function analyze_component(root, source, options) {
 				e.store_invalid_scoped_subscription(is_nested_store_subscription_node);
 			}
 
-			if (options.runes !== false) {
+			if (runes_option !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					e.global_reference_invalid(references[0].node, name);
 				} else if (declaration !== null && is_rune(name)) {
@@ -447,7 +449,7 @@ export function analyze_component(root, source, options) {
 	const component_name = get_component_name(options.filename);
 
 	const runes =
-		options.runes ??
+		runes_option ??
 		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
@@ -491,7 +493,7 @@ export function analyze_component(root, source, options) {
 		maybe_runes:
 			!runes &&
 			// if they explicitly disabled runes, use the legacy behavior
-			options.runes !== false &&
+			runes_option !== false &&
 			![...module.scope.references.keys()].some((name) =>
 				['$$props', '$$restProps'].includes(name)
 			) &&

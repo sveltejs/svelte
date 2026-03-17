@@ -142,7 +142,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 	 * @default undefined
 	 */
-	runes?: boolean | undefined;
+	runes?: boolean | undefined | ((options: { filename: string }) => boolean | undefined);
 	/**
 	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 	 *
@@ -259,7 +259,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		cssOutputFilename: CompileOptions['cssOutputFilename'];
 		sourcemap: CompileOptions['sourcemap'];
 		compatibility: Required<Required<CompileOptions>['compatibility']>;
-		runes: CompileOptions['runes'];
+		runes: (options: { filename: string }) => boolean | undefined;
 		customElementOptions: AST.SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];
 	};

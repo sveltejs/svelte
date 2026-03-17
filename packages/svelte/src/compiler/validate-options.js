@@ -1,6 +1,6 @@
 /** @import { Validator } from '@sveltejs/config/validate' */
 /** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions } from '#compiler' */
-import { string, boolean, object, validator, ValidateError } from '@sveltejs/config/validate';
+import { string, boolean, object, fn, validator, ValidateError } from '@sveltejs/config/validate';
 import * as e from './errors.js';
 import * as w from './warnings.js';
 
@@ -37,7 +37,7 @@ const common_options = {
 		return /** @type {'client' | 'server' | false} */ (input);
 	}),
 
-	warningFilter: fun(() => true),
+	warningFilter: fn(() => true),
 
 	experimental: object({
 		async: boolean(false)
@@ -67,7 +67,7 @@ const component_options = {
 		return input;
 	}),
 
-	cssHash: fun(({ css, filename, hash }) => {
+	cssHash: fn(({ css, filename, hash }) => {
 		return `svelte-${hash(filename === '(unknown)' ? css : filename ?? css)}`;
 	}),
 
@@ -104,7 +104,8 @@ const component_options = {
 
 	preserveWhitespace: boolean(false),
 
-	runes: boolean(undefined),
+	/** @type {Validator<boolean | undefined | () => boolean | undefined, () => boolean | undefined>} */
+	runes: parametric(() => /** @type {boolean | undefined} */ (undefined)),
 
 	hmr: boolean(false),
 
@@ -261,15 +262,20 @@ function list(options, fallback = options[0]) {
 }
 
 /**
- * @param {(...args: any) => any} fallback
- * @returns {Validator<(...args: any) => any>}
+ * @template {(...args: any[]) => any} F
+ * @param {F} fallback
+ * @returns {Validator<ReturnType<F> | F, F>}
  */
-function fun(fallback) {
-	return validator(fallback, (input, keypath) => {
-		if (typeof input !== 'function') {
-			throw_error(`${keypath} should be a function, if specified`);
+function parametric(fallback) {
+	return validator(fallback, (input) => {
+		if (typeof input === 'function') {
+			return /** @type {F} */ (input);
 		}
-		return input;
+
+		/** @type {(...args: Parameters<F>) => ReturnType<F>} */
+		const normalized = (..._args) => /** @type {ReturnType<F>} */ (input);
+
+		return /** @type {F} */ (/** @type {unknown} */ (normalized));
 	});
 }
 
