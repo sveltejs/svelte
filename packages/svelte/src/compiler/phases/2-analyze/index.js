@@ -465,7 +465,8 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	const is_custom_element = !!options.customElementOptions || options.customElement;
+	const is_custom_element =
+		!!options.customElementOptions || options.customElement({ filename: options.filename });
 
 	const name = module.scope.generate(options.name ?? component_name);
 
@@ -682,7 +683,10 @@ export function analyze_component(root, source, options) {
 				w.options_deprecated_accessors(attribute);
 			}
 
-			if (attribute.name === 'customElement' && !options.customElement) {
+			if (
+				attribute.name === 'customElement' &&
+				!options.customElement({ filename: options.filename })
+			) {
 				w.options_missing_custom_element(attribute);
 			}
 

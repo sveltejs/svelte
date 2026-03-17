@@ -77,7 +77,17 @@ const component_options = {
 	// TODO this is a sourcemap option, would be good to put under a sourcemap namespace
 	cssOutputFilename: string(undefined),
 
-	customElement: boolean(false),
+	/** @type {Validator<boolean | ((options: { filename: string }) => boolean), (options: { filename: string }) => boolean>} */
+	customElement: parametric(
+		/** @type {(options: { filename: string }) => boolean} */ (() => false),
+		(input, keypath) => {
+			if (typeof input !== 'boolean') {
+				throw_error(`${keypath} should be true or false`);
+			}
+
+			return /** @type {boolean} */ (input);
+		}
+	),
 
 	discloseVersion: boolean(true),
 

@@ -73,9 +73,11 @@ export interface CompileOptions extends ModuleCompileOptions {
 	/**
 	 * If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.
 	 *
+	 * You can also pass a function that receives `{ filename }` and returns a boolean.
+	 *
 	 * @default false
 	 */
-	customElement?: boolean;
+	customElement?: boolean | ((options: { filename: string }) => boolean);
 	/**
 	 * If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.
 	 *
@@ -250,6 +252,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		Required<CompileOptions>,
 		| keyof ModuleCompileOptions
 		| 'name'
+		| 'customElement'
 		| 'compatibility'
 		| 'outputFilename'
 		| 'cssOutputFilename'
@@ -258,6 +261,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		| 'runes'
 	> & {
 		name: CompileOptions['name'];
+		customElement: (options: { filename: string }) => boolean;
 		outputFilename: CompileOptions['outputFilename'];
 		cssOutputFilename: CompileOptions['cssOutputFilename'];
 		sourcemap: CompileOptions['sourcemap'];

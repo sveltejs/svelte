@@ -303,7 +303,7 @@ export function server_component(analysis, options) {
 	if (
 		analysis.css.ast !== null &&
 		options.css({ filename: options.filename }) === 'injected' &&
-		!options.customElement
+		!options.customElement({ filename: options.filename })
 	) {
 		const hash = b.literal(analysis.css.hash);
 		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
