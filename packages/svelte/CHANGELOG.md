@@ -1,5 +1,15 @@
 # svelte
 
+## 5.54.0
+
+### Minor Changes
+
+- feat: allow `css`, `runes`, `customElement` compiler options to be functions ([#17951](https://github.com/sveltejs/svelte/pull/17951))
+
+### Patch Changes
+
+- fix: reinstate reactivity loss tracking ([#17801](https://github.com/sveltejs/svelte/pull/17801))
+
 ## 5.53.13
 
 ### Patch Changes
