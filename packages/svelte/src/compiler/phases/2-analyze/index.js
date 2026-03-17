@@ -345,6 +345,8 @@ export function analyze_component(root, source, options) {
 
 	let synthetic_stores_legacy_check = [];
 
+	const runes_option = options.runes?.({ filename: options.filename });
+
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -359,7 +361,7 @@ export function analyze_component(root, source, options) {
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
 		if (
-			options.runes === false ||
+			runes_option === false ||
 			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
@@ -395,7 +397,7 @@ export function analyze_component(root, source, options) {
 				e.store_invalid_scoped_subscription(is_nested_store_subscription_node);
 			}
 
-			if (options.runes !== false) {
+			if (runes_option !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					e.global_reference_invalid(references[0].node, name);
 				} else if (declaration !== null && is_rune(name)) {
@@ -447,7 +449,7 @@ export function analyze_component(root, source, options) {
 	const component_name = get_component_name(options.filename);
 
 	const runes =
-		options.runes ??
+		runes_option ??
 		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
@@ -463,7 +465,10 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	const is_custom_element = !!options.customElementOptions || options.customElement;
+	const custom_element_from_option = options.customElement({ filename: options.filename });
+	const css = options.css({ filename: options.filename });
+	const custom_element = options.customElementOptions ?? custom_element_from_option;
+	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
 
 	const name = module.scope.generate(options.name ?? component_name);
 
@@ -491,7 +496,7 @@ export function analyze_component(root, source, options) {
 		maybe_runes:
 			!runes &&
 			// if they explicitly disabled runes, use the legacy behavior
-			options.runes !== false &&
+			runes_option !== false &&
 			![...module.scope.references.keys()].some((name) =>
 				['$$props', '$$restProps'].includes(name)
 			) &&
@@ -523,8 +528,8 @@ export function analyze_component(root, source, options) {
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
-		custom_element: is_custom_element,
-		inject_styles: options.css === 'injected' || is_custom_element,
+		custom_element,
+		inject_styles: css === 'injected' || is_custom_element,
 		accessors:
 			is_custom_element ||
 			(runes ? false : !!options.accessors) ||
@@ -680,7 +685,7 @@ export function analyze_component(root, source, options) {
 				w.options_deprecated_accessors(attribute);
 			}
 
-			if (attribute.name === 'customElement' && !options.customElement) {
+			if (attribute.name === 'customElement' && !custom_element_from_option) {
 				w.options_missing_custom_element(attribute);
 			}
 
