@@ -61,6 +61,26 @@ export let previous_batch = null;
  */
 export let batch_values = null;
 
+/** @type {boolean | null} */
+export let has_batch_value_differences = null;
+
+/** @type {boolean} */
+export let ignore_batch_values = false;
+
+/**
+ * @param {boolean | null} value
+ */
+export function set_has_batch_value_differences(value) {
+	has_batch_value_differences = value;
+}
+
+/**
+ * @param {boolean} value
+ */
+export function set_ignore_batch_values(value) {
+	ignore_batch_values = value;
+}
+
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
@@ -228,6 +248,7 @@ export class Batch {
 		const roots = this.#roots;
 		this.#roots = [];
 
+		// TODO if we move this below traverse only one test fails - is this good (close to being able to do this) or bad (not enough test coverage)?
 		this.apply();
 
 		/** @type {Effect[]} */
@@ -341,9 +362,21 @@ export class Batch {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
-				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
-					update_effect(effect);
+				} else {
+					// ASYNC effects should read canonical signal values instead of batch overlays
+					// while they run.
+					var previous_ignore_batch_values = ignore_batch_values;
+					if ((flags & ASYNC) !== 0) {
+						set_ignore_batch_values(true);
+					}
+					try {
+						if (is_dirty(effect)) {
+							if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
+							update_effect(effect);
+						}
+					} finally {
+						set_ignore_batch_values(previous_ignore_batch_values);
+					}
 				}
 
 				var child = effect.first;
@@ -479,14 +512,6 @@ export class Batch {
 
 		dirty_effects.clear();
 		maybe_dirty_effects.clear();
-	}
-
-	unset_batch_values() {
-		const prev = batch_values;
-		batch_values = null;
-		return () => {
-			batch_values = prev;
-		};
 	}
 
 	/** @param {(batch: Batch) => void} fn */

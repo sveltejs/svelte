@@ -27,7 +27,6 @@ import {
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
-	destroy_derived_effects,
 	execute_derived,
 	freeze_derived_effects,
 	recent_async_deriveds,
@@ -51,6 +50,9 @@ import {
 	batch_values,
 	current_batch,
 	flushSync,
+	has_batch_value_differences,
+	ignore_batch_values,
+	set_has_batch_value_differences,
 	schedule_effect
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
@@ -667,8 +669,12 @@ export function get(signal) {
 		}
 	}
 
-	if (batch_values?.has(signal)) {
-		return batch_values.get(signal);
+	if (!ignore_batch_values && batch_values?.has(signal)) {
+		var value = batch_values.get(signal);
+		if (has_batch_value_differences === false && value !== signal.v) {
+			set_has_batch_value_differences(true);
+		}
+		return value;
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {

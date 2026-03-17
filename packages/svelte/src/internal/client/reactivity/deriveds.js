@@ -40,7 +40,14 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
+import {
+	batch_values,
+	current_batch,
+	has_batch_value_differences,
+	ignore_batch_values,
+	set_has_batch_value_differences
+} from './batch.js';
+import { set_ignore_batch_values } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -151,14 +158,15 @@ export function async_derived(fn, label, location) {
 			// TODO async-nested-derived test shows that we can get here without a current_batch, figure out
 			// how to handle this case (either throw an error signaling the user they do something wrong or
 			// turn this into a one-time async derived run). In the meantime defensively call the function.
-			var restore = batch?.unset_batch_values();
+			var previous_ignore_batch_values = ignore_batch_values;
+			set_ignore_batch_values(true);
 			try {
 				// If this code is changed at some point, make sure to still access the then property
 				// of fn() to read any signals it might access, so that we track them as dependencies.
 				// We call `unset_context` to undo any `save` calls that happen inside `fn()`
 				Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
 			} finally {
-				restore?.();
+				set_ignore_batch_values(previous_ignore_batch_values);
 			}
 		} catch (error) {
 			d.reject(error);
@@ -408,7 +416,31 @@ export function execute_derived(derived) {
  */
 export function update_derived(derived) {
 	var old_value = derived.v;
-	var value = execute_derived(derived);
+
+	// We run the derived first to get the value in the context of the curren batch (if any).
+	// If batch_values shows that there could be differences in the result of the computation,
+	// we rerun it again ignoring the batch values. The former value is store in batch_values
+	// and the latter on derived.v
+	var value;
+	var scoped_value;
+	var previous_ignore_batch_values = ignore_batch_values;
+	var previous_has_batch_value_differences = has_batch_value_differences;
+
+	set_has_batch_value_differences(false);
+	set_ignore_batch_values(false);
+
+	try {
+		value = execute_derived(derived);
+		scoped_value = value;
+
+		if (has_batch_value_differences || previous_ignore_batch_values) {
+			set_ignore_batch_values(true);
+			value = execute_derived(derived);
+		}
+	} finally {
+		set_ignore_batch_values(previous_ignore_batch_values);
+		set_has_batch_value_differences(previous_has_batch_value_differences);
+	}
 
 	if (!derived.equals(value)) {
 		derived.wv = increment_write_version();
@@ -441,7 +473,7 @@ export function update_derived(derived) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
+			batch_values.set(derived, scoped_value);
 		}
 	} else {
 		update_derived_status(derived);
