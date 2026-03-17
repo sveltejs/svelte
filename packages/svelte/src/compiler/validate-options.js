@@ -3,9 +3,9 @@ import * as e from './errors.js';
 import * as w from './warnings.js';
 
 /**
- * @template Input
- * @template {Input} Output
- * @typedef {(input: Input, keypath: string) => Output} Validator
+ * @template [Input=any]
+ * @template [Output=Input]
+ * @typedef {(input: Input, keypath: string) => Required<Output>} Validator
  */
 
 const common_options = {
@@ -27,7 +27,7 @@ const common_options = {
 
 	dev: boolean(false),
 
-	generate: validator(/** @type {string | false} */ ('client'), (input, keypath) => {
+	generate: validator('client', (input, keypath) => {
 		if (input === 'dom' || input === 'ssr') {
 			warn_once(w.options_renamed_ssr_dom);
 			return input === 'dom' ? 'client' : 'server';
@@ -38,7 +38,7 @@ const common_options = {
 			throw_error(`${keypath} must be "client", "server" or false`);
 		}
 
-		return /** @type {'client' | 'server' | false} */ (input);
+		return input;
 	}),
 
 	warningFilter: fun(() => true),
@@ -164,7 +164,7 @@ const component_options = {
 	)
 };
 
-export const module_options_validator =
+export const validate_module_options =
 	/** @type {Validator<ModuleCompileOptions, ValidatedModuleCompileOptions>} */ (
 		object({
 			...common_options,
@@ -172,8 +172,8 @@ export const module_options_validator =
 		})
 	);
 
-export const component_options_validator =
-	/** @type {Validator<CompileOptions, Omit<ValidatedCompileOptions, 'customElementOptions'>>} */ (
+export const validate_component_options =
+	/** @type {Validator<CompileOptions, ValidatedCompileOptions>} */ (
 		object({
 			...common_options,
 			...component_options
@@ -181,9 +181,8 @@ export const component_options_validator =
 	);
 
 /**
- * @template T
  * @param {string} msg
- * @returns {Validator<T, T>}
+ * @returns {Validator}
  */
 function removed(msg) {
 	return (input) => {
@@ -205,9 +204,8 @@ function warn_once(fn) {
 }
 
 /**
- * @template T
  * @param {(node: null) => void} fn
- * @returns {Validator<T, T>}
+ * @returns {Validator}
  */
 function warn_removed(fn) {
 	return (input) => {
@@ -217,10 +215,9 @@ function warn_removed(fn) {
 }
 
 /**
- * @template T
  * @param {(node: null) => void} fn
- * @param {Validator<T, T>} validator
- * @returns {Validator<T, T>}
+ * @param {Validator} validator
+ * @returns {Validator}
  */
 function deprecate(fn, validator) {
 	return (input, keypath) => {
@@ -230,20 +227,9 @@ function deprecate(fn, validator) {
 }
 
 /**
- * @template T
- * @typedef {T extends Validator<infer Input, any> ? Input : never} InputOf
- */
-
-/**
- * @template T
- * @typedef {T extends Validator<any, infer Output> ? Output : never} OutputOf
- */
-
-/**
- * @template {Record<string, Validator<any, any>>} Shape
- * @param {Shape} children
- * @param {boolean} [allow_unknown=false]
- * @returns {Validator<Partial<{ [K in keyof Shape]: InputOf<Shape[K]> }>, { [K in keyof Shape]: OutputOf<Shape[K]> }>}
+ * @param {Record<string, Validator>} children
+ * @param {boolean} [allow_unknown]
+ * @returns {Validator}
  */
 function object(children, allow_unknown = false) {
 	return (input, keypath) => {
@@ -274,10 +260,9 @@ function object(children, allow_unknown = false) {
 }
 
 /**
- * @template T
- * @param {T} fallback
- * @param {(value: T, keypath: string) => T} fn
- * @returns {Validator<T, T>}
+ * @param {any} fallback
+ * @param {(value: any, keypath: string) => any} fn
+ * @returns {Validator}
  */
 function validator(fallback, fn) {
 	return (input, keypath) => {
@@ -288,7 +273,7 @@ function validator(fallback, fn) {
 /**
  * @param {string | undefined} fallback
  * @param {boolean} allow_empty
- * @returns {Validator<string | undefined, string | undefined>}
+ * @returns {Validator}
  */
 function string(fallback, allow_empty = true) {
 	return validator(fallback, (input, keypath) => {
@@ -305,8 +290,8 @@ function string(fallback, allow_empty = true) {
 }
 
 /**
- * @param {boolean} fallback
- * @returns {Validator<boolean | undefined, boolean>}
+ * @param {boolean | undefined} fallback
+ * @returns {Validator}
  */
 function boolean(fallback) {
 	return validator(fallback, (input, keypath) => {
@@ -318,9 +303,8 @@ function boolean(fallback) {
 }
 
 /**
- * @template {boolean | string | number} T
- * @param {T[]} options
- * @returns {Validator<T, T>}
+ * @param {Array<boolean | string | number>} options
+ * @returns {Validator}
  */
 function list(options, fallback = options[0]) {
 	return validator(fallback, (input, keypath) => {
@@ -337,9 +321,8 @@ function list(options, fallback = options[0]) {
 }
 
 /**
- * @template {(...args: any) => any} T
- * @param {T} fallback
- * @returns {Validator<T, T>}
+ * @param {(...args: any) => any} fallback
+ * @returns {Validator}
  */
 function fun(fallback) {
 	return validator(fallback, (input, keypath) => {
@@ -354,7 +337,7 @@ function fun(fallback) {
  * @template {(...args: any[]) => any} F
  * @param {F} fallback
  * @param {(value: unknown, keypath: string) => ReturnType<F>} [normalize]
- * @returns {Validator<ReturnType<F> | F, F>}
+ * @returns {Validator}
  */
 function parametric(fallback, normalize = (value) => /** @type {ReturnType<F>} */ (value)) {
 	return validator(fallback, (input, keypath) => {
@@ -372,10 +355,7 @@ function parametric(fallback, normalize = (value) => /** @type {ReturnType<F>} *
 	});
 }
 
-/**
- * @param {string} msg
- * @returns {never}
- */
+/** @param {string} msg */
 function throw_error(msg) {
 	e.options_invalid_value(null, msg);
 }

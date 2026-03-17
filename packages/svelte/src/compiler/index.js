@@ -24,7 +24,7 @@ export function compile(source, options) {
 	source = remove_bom(source);
 	state.reset({ warning: options.warningFilter, filename: options.filename });
 
-	const validated = validate_component_options(options);
+	const validated = validate_component_options(options, '');
 
 	let parsed = _parse(source);
 
@@ -69,7 +69,7 @@ export function compile(source, options) {
 export function compileModule(source, options) {
 	source = remove_bom(source);
 	state.reset({ warning: options.warningFilter, filename: options.filename });
-	const validated = validate_module_options(options);
+	const validated = validate_module_options(options, '');
 
 	const analysis = analyze_module(source, validated);
 	return transform_module(analysis, source, validated);
