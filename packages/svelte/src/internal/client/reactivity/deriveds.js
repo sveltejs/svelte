@@ -52,12 +52,16 @@ import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
-/** @type {Effect | null} */
-export let current_async_effect = null;
+/**
+ * This allows us to track 'reactivity loss' that occurs when signals
+ * are read after a non-context-restoring `await`. Dev-only
+ * @type {{ effect: Effect, warned: boolean } | null}
+ */
+export let reactivity_loss_tracker = null;
 
-/** @param {Effect | null} v */
-export function set_from_async_derived(v) {
-	current_async_effect = v;
+/** @param {{ effect: Effect, warned: boolean } | null} v */
+export function set_reactivity_loss_tracker(v) {
+	reactivity_loss_tracker = v;
 }
 
 export const recent_async_deriveds = new Set();
@@ -144,7 +148,12 @@ export function async_derived(fn, label, location) {
 	}
 
 	async_effect(() => {
-		if (DEV) current_async_effect = active_effect;
+		if (DEV) {
+			reactivity_loss_tracker = {
+				effect: /** @type {Effect} */ (active_effect),
+				warned: false
+			};
+		}
 
 		var effect = /** @type {Effect} */ (active_effect);
 
@@ -173,7 +182,9 @@ export function async_derived(fn, label, location) {
 			unset_context();
 		}
 
-		if (DEV) current_async_effect = null;
+		if (DEV) {
+			reactivity_loss_tracker = null;
+		}
 
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
@@ -203,7 +214,9 @@ export function async_derived(fn, label, location) {
 		 * @param {unknown} error
 		 */
 		const handler = async (value, error = undefined) => {
-			if (DEV) current_async_effect = null;
+			if (DEV) {
+				reactivity_loss_tracker = null;
+			}
 
 			if (decrement_pending) {
 				/** @type {Promise<unknown>[]} */
