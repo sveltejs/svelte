@@ -45,9 +45,9 @@ import {
 	current_batch,
 	has_batch_value_differences,
 	ignore_batch_values,
-	set_has_batch_value_differences
+	set_has_batch_value_differences,
+	set_ignore_batch_values
 } from './batch.js';
-import { set_ignore_batch_values } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';

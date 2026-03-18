@@ -630,7 +630,7 @@ export function get(signal) {
 		var derived = /** @type {Derived} */ (signal);
 
 		if (is_destroying_effect) {
-			var value = derived.v;
+			let value = derived.v;
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
@@ -673,7 +673,7 @@ export function get(signal) {
 	}
 
 	if (!ignore_batch_values && batch_values?.has(signal)) {
-		var value = batch_values.get(signal);
+		let value = batch_values.get(signal);
 		if (has_batch_value_differences === false && value !== signal.v) {
 			set_has_batch_value_differences(true);
 		}
