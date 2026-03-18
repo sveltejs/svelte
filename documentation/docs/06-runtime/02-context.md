@@ -84,33 +84,31 @@ In addition to [`setContext`](svelte#setContext) and [`getContext`](svelte#getCo
 
 ## Using context with state
 
-You can store reactive state in context ([demo](/playground/untitled#H4sIAAAAAAAAE41R0W6DMAz8FSuaBNUQdK8MkKZ-wh7HHihzu6hgosRMm1D-fUpSVNq12x4iEvvOx_kmQU2PIhfP3DCCJGgHYvxkkYid7NCI_GUS_KUcxhVEMjOelErNB3bsatvG4LW6n0ZsRC4K02qpuKqpZtmrQTNMYJA3QRAs7PTQQxS40eMCt3mX3duxnWb-lS5h7nTI0A4jMWoo4c44P_Hku-zrOazdy64chWo-ScfRkRgl8wgHKrLTH1OxHZkHgoHaTraHcopXUFYzPPVfuC_hwQaD1GrskdiNCdQwJljJqlvXfyqVsA5CGg0uRUQifHw56xFtciO75QrP07vo_JXf_tf8yK2ezDKY_ZWt_1y2qqYzv7bI1IW1V_sN19m-07wCAAA=))...
+You can store reactive state in context ([demo](/playground/untitled#H4sIAAAAAAAAE41R0W6DMAz8FSuaBNUQdK8MkKZ-wh7HHihzu6hgosRMm1D-fUpSVNq12x4iEvvOx_kmQU2PIhfP3DCCJGgHYvxkkYid7NCI_GUS_KUcxhVEMjOelErNB3bsatvG4LW6n0ZsRC4K02qpuKqpZtmrQTNMYJA3QRAs7PTQQxS40eMCt3mX3duxnWb-lS5h7nTI0A4jMWoo4c44P_Hku-zrOazdy64chWo-ScfRkRgl8wgHKrLTH1OxHZkHgoHaTraHcopXUFYzPPVfuC_hwQaD1GrskdiNCdQwJljJqlvXfyqVsA5CGg0uRUQifHw56xFtciO75QrP07vo_JXf_tf8yK2ezDKY_ZWt_1y2qqYzv7bI1IW1V_sN19m-07wCAAA=)):
 
 ```svelte
 <script>
 	import { setUserContext } from './context';
 	import Child from './Child.svelte';
 
-	let counter = $state({
-		count: 0
+	let user = $state({
+		name: 'world'
 	});
 
-	setUserContext(counter);
+	setUserContext(user);
 </script>
 
-<button onclick={() => counter.count += 1}>
-	increment
+<button onclick={() => user.name = 'svelte'}>
+	change name
 </button>
 
 <Child />
-<Child />
-<Child />
 ```
 
-...though note that if you _reassign_ `counter` instead of updating it, you will 'break the link' — in other words instead of this...
+...though note that if you _reassign_ `user` instead of updating it, you will 'break the link' — in other words instead of this...
 
 ```svelte
-<button onclick={() => counter = { count: 0 }}>
+<button onclick={() => user = { name: 'svelte' }}>
 	reset
 </button>
 ```
@@ -118,7 +116,7 @@ You can store reactive state in context ([demo](/playground/untitled#H4sIAAAAAAA
 ...you must do this:
 
 ```svelte
-<button onclick={() => +++counter.count = 0+++}>
+<button onclick={() => +++user.name = 'svelte'+++}>
 	reset
 </button>
 ```
