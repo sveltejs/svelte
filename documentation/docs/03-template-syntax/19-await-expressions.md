@@ -71,8 +71,8 @@ This does not apply to sequential `await` expressions inside your `<script>` or 
 async function one() { return 1; }
 async function two() { return 2; }
 // ---cut---
-// these will run sequentially the first time,
-// but will update independently
+// `b` will not be created until `a` has resolved,
+// but once created they will update independently
 let a = $derived(await one());
 let b = $derived(await two());
 ```
