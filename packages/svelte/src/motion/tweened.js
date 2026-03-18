@@ -1,6 +1,5 @@
 /** @import { Task } from '../internal/client/types' */
-/** @import { Tweened } from './public' */
-/** @import { TweenedOptions } from './private' */
+/** @import { Tweened, TweenedOptions } from './public' */
 import { writable } from '../store/shared/index.js';
 import { raf } from '../internal/client/timing.js';
 import { loop } from '../internal/client/loop.js';

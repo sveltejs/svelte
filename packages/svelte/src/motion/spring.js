@@ -1,6 +1,6 @@
 /** @import { Task } from '#client' */
-/** @import { SpringOpts, SpringUpdateOpts, TickContext } from './private.js' */
-/** @import { Spring as SpringStore } from './public.js' */
+/** @import { TickContext } from './private.js' */
+/** @import { Spring as SpringStore, SpringOpts, SpringUpdateOpts } from './public.js' */
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';

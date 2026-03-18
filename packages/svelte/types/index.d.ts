@@ -2005,6 +2005,40 @@ declare module 'svelte/legacy' {
 
 declare module 'svelte/motion' {
 	import type { MediaQuery } from 'svelte/reactivity';
+	export interface SpringOpts {
+		stiffness?: number;
+		damping?: number;
+		precision?: number;
+	}
+
+	export interface SpringUpdateOpts {
+		/**
+		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+		 */
+		hard?: any;
+		/**
+		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+		 */
+		soft?: string | number | boolean;
+		/**
+		 * Only use this for the Spring class; does nothing when set on the spring store
+		 */
+		instant?: boolean;
+		/**
+		 * Only use this for the Spring class; does nothing when set on the spring store
+		 */
+		preserveMomentum?: number;
+	}
+
+	export type Updater<T> = (target_value: T, value: T) => T;
+
+	export interface TweenedOptions<T> {
+		delay?: number;
+		duration?: number | ((from: T, to: T) => number);
+		easing?: (t: number) => number;
+		interpolate?: (a: T, b: T) => (t: number) => T;
+	}
+
 	// TODO we do declaration merging here in order to not have a breaking change (renaming the Spring interface)
 	// this means both the Spring class and the Spring interface are merged into one with some things only
 	// existing on one side. In Svelte 6, remove the type definition and move the jsdoc onto the class in spring.js
@@ -2102,39 +2136,6 @@ declare module 'svelte/motion' {
 		 * @param invalidate cleanup callback
 		 */
 		subscribe(this: void, run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
-	}
-	interface SpringOpts {
-		stiffness?: number;
-		damping?: number;
-		precision?: number;
-	}
-
-	interface SpringUpdateOpts {
-		/**
-		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
-		 */
-		hard?: any;
-		/**
-		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
-		 */
-		soft?: string | number | boolean;
-		/**
-		 * Only use this for the Spring class; does nothing when set on the spring store
-		 */
-		instant?: boolean;
-		/**
-		 * Only use this for the Spring class; does nothing when set on the spring store
-		 */
-		preserveMomentum?: number;
-	}
-
-	type Updater<T> = (target_value: T, value: T) => T;
-
-	interface TweenedOptions<T> {
-		delay?: number;
-		duration?: number | ((from: T, to: T) => number);
-		easing?: (t: number) => number;
-		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
 	/**
 	 * A [media query](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery) that matches if the user [prefers reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion).

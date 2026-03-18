@@ -1,5 +1,38 @@
 import { Readable, type Unsubscriber } from '../store/public.js';
-import { SpringUpdateOpts, TweenedOptions, Updater, SpringOpts } from './private.js';
+
+export interface SpringOpts {
+	stiffness?: number;
+	damping?: number;
+	precision?: number;
+}
+
+export interface SpringUpdateOpts {
+	/**
+	 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+	 */
+	hard?: any;
+	/**
+	 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+	 */
+	soft?: string | number | boolean;
+	/**
+	 * Only use this for the Spring class; does nothing when set on the spring store
+	 */
+	instant?: boolean;
+	/**
+	 * Only use this for the Spring class; does nothing when set on the spring store
+	 */
+	preserveMomentum?: number;
+}
+
+export type Updater<T> = (target_value: T, value: T) => T;
+
+export interface TweenedOptions<T> {
+	delay?: number;
+	duration?: number | ((from: T, to: T) => number);
+	easing?: (t: number) => number;
+	interpolate?: (a: T, b: T) => (t: number) => T;
+}
 
 // TODO we do declaration merging here in order to not have a breaking change (renaming the Spring interface)
 // this means both the Spring class and the Spring interface are merged into one with some things only
