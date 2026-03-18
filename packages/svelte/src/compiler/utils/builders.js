@@ -36,6 +36,13 @@ export function assignment_pattern(left, right) {
  * @returns {ESTree.ArrowFunctionExpression}
  */
 export function arrow(params, body, async = false) {
+	// optimize `async () => await x()`, but not `async () => await x(await y)`
+	if (async && body.type === 'AwaitExpression') {
+		if (!has_await_expression(body.argument)) {
+			return arrow(params, body.argument);
+		}
+	}
+
 	return {
 		type: 'ArrowFunctionExpression',
 		params,
@@ -462,13 +469,6 @@ export function thunk(expression, async = false) {
  * @returns {ESTree.Expression}
  */
 export function unthunk(expression) {
-	// optimize `async () => await x()`, but not `async () => await x(await y)`
-	if (expression.async && expression.body.type === 'AwaitExpression') {
-		if (!has_await_expression(expression.body.argument)) {
-			return unthunk(arrow(expression.params, expression.body.argument));
-		}
-	}
-
 	if (
 		expression.async === false &&
 		expression.body.type === 'CallExpression' &&
