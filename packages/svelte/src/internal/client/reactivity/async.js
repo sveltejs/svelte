@@ -307,15 +307,16 @@ export function wait(blockers) {
  * @returns {(skip?: boolean) => void}
  */
 export function increment_pending() {
-	var boundary = /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
+	var effect = /** @type {Effect} */ (active_effect);
+	var boundary = /** @type {Boundary} */ (effect.b);
 	var batch = /** @type {Batch} */ (current_batch);
 	var blocking = boundary.is_rendered();
 
 	boundary.update_pending_count(1, batch);
-	batch.increment(blocking);
+	batch.increment(blocking, effect);
 
 	return (skip = false) => {
 		boundary.update_pending_count(-1, batch);
-		batch.decrement(blocking, skip);
+		batch.decrement(blocking, effect, skip);
 	};
 }
