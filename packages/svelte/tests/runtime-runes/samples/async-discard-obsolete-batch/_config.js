@@ -14,6 +14,7 @@ export default test({
 				<button>shift</button>
 				<button>pop</button>
 				<p>1 = 1</p>
+				<p>hello</p>
 			`
 		);
 
@@ -29,6 +30,7 @@ export default test({
 				<button>shift</button>
 				<button>pop</button>
 				<p>1 = 1</p>
+				<p>hello</p>
 			`
 		);
 
@@ -42,6 +44,7 @@ export default test({
 				<button>shift</button>
 				<button>pop</button>
 				<p>1 = 1</p>
+				<p>hello</p>
 			`
 		);
 
@@ -55,6 +58,7 @@ export default test({
 				<button>shift</button>
 				<button>pop</button>
 				<p>3 = 3</p>
+				<p>goodbye</p>
 			`
 		);
 
@@ -70,6 +74,7 @@ export default test({
 				<button>shift</button>
 				<button>pop</button>
 				<p>3 = 3</p>
+				<p>goodbye</p>
 			`
 		);
 
@@ -83,6 +88,7 @@ export default test({
 				<button>shift</button>
 				<button>pop</button>
 				<p>5 = 5</p>
+				<p>goodbye</p>
 			`
 		);
 	}
