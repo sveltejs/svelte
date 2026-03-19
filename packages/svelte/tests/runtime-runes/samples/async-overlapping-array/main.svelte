@@ -11,18 +11,14 @@
 		return p.promise;
 	}
 
-	function shift() {
-		const fn = queue.shift();
-		if (fn) fn();
-	}
-
 	function addValue() {
 		values.push(values.length+1);
 	}
 </script>
 
 <button onclick={addValue}>add</button>
-<button onclick={shift}>shift</button>
+<button onclick={() => queue.shift()?.()}>shift</button>
+<button onclick={() => queue.pop()?.()}>pop</button>
 
 <p>
 	pending={$effect.pending()}

@@ -396,7 +396,7 @@ export function update_derived(derived) {
 		// change, `derived.equals` may incorrectly return `true`
 		if (!current_batch?.is_fork || derived.deps === null) {
 			derived.v = value;
-			current_batch?.capture(derived, old_value);
+			current_batch?.capture(derived, old_value, true);
 
 			// deriveds without dependencies should never be recomputed
 			if (derived.deps === null) {
