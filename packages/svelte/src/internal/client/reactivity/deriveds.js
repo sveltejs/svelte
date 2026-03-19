@@ -184,17 +184,39 @@ export function async_derived(fn, label, location) {
 		 * @param {any} value
 		 * @param {unknown} error
 		 */
-		const handler = (value, error = undefined) => {
+		const handler = async (value, error = undefined) => {
 			if (DEV) {
 				reactivity_loss_tracker = null;
 			}
 
 			if (decrement_pending) {
+				var skip = error === STALE_REACTION;
+
+				debugger;
+				if (!skip) {
+					/** @type {Promise<unknown>[]} */
+					const waits = [];
+
+					// All prior async derived runs are now stale,
+					// but we have to wait for the corresponding batch to resolve before proceeding
+					for (const [b, d] of deferreds) {
+						if (b === batch) break;
+						deferreds.delete(b);
+						waits.push(b.settled());
+						d.reject(STALE_REACTION);
+					}
+
+					if (waits.length > 0) {
+						await Promise.all(waits);
+					}
+				}
+
 				// don't trigger an update if we're only here because
 				// the promise was superseded before it could resolve
-				var skip = error === STALE_REACTION;
 				decrement_pending(skip);
 			}
+
+			deferreds.delete(batch);
 
 			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
 				return;
@@ -213,13 +235,6 @@ export function async_derived(fn, label, location) {
 				}
 
 				internal_set(signal, value);
-
-				// All prior async derived runs are now stale
-				for (const [b, d] of deferreds) {
-					deferreds.delete(b);
-					if (b === batch) break;
-					d.reject(STALE_REACTION);
-				}
 
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);

@@ -51,6 +51,7 @@ import {
 	batch_values,
 	current_batch,
 	flushSync,
+	mark_current_batch_blocked_by_prior_signal,
 	schedule_effect
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
@@ -525,6 +526,17 @@ export function get(signal) {
 	var is_derived = (flags & DERIVED) !== 0;
 
 	captured_signals?.add(signal);
+
+	// A first-run reaction that touches a signal from an earlier batch
+	// introduces a cross-batch dependency and must wait on that batch.
+	if (
+		async_mode_flag &&
+		current_batch !== null &&
+		active_reaction !== null &&
+		(active_reaction.f & REACTION_RAN) === 0
+	) {
+		mark_current_batch_blocked_by_prior_signal(signal);
+	}
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
