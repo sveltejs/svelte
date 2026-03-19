@@ -165,18 +165,32 @@ export function async_derived(fn, label, location) {
 				var decrement_pending = increment_pending();
 			}
 
+			batch.async_deriveds.delete(d.reject);
+
 			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
-				deferreds.get(batch)?.reject(STALE_REACTION);
+				// Reject own batch directly without calling mark_async_derived_outdated,
+				// we don't want it to check if it needs to merge into some other batch.
+				var stale = deferreds.get(batch);
+				if (stale) {
+					stale.reject(STALE_REACTION);
+					batch.async_deriveds.delete(stale.reject);
+				}
 				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
 				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
-				for (const d of deferreds.values()) {
+				for (const [b, d] of deferreds) {
 					d.reject(STALE_REACTION);
+					if (b === batch) {
+						batch.async_deriveds.delete(d.reject);
+					} else {
+						b.mark_async_derived_outdated(d.reject);
+					}
 				}
 				deferreds.clear();
 			}
 
+			batch.register_async_derived(d.reject);
 			deferreds.set(batch, d);
 		}
 
@@ -192,18 +206,17 @@ export function async_derived(fn, label, location) {
 			if (decrement_pending) {
 				var skip = error === STALE_REACTION;
 
-				debugger;
 				if (!skip) {
 					/** @type {Promise<unknown>[]} */
 					const waits = [];
 
-					// All prior async derived runs are now stale,
-					// but we have to wait for the corresponding batch to resolve before proceeding
+					// All prior async derived runs are now stale, but we have to
+					// wait for the corresponding batches to resolve before proceeding
 					for (const [b, d] of deferreds) {
 						if (b === batch) break;
 						deferreds.delete(b);
 						waits.push(b.settled());
-						d.reject(STALE_REACTION);
+						b.mark_async_derived_outdated(d.reject);
 					}
 
 					if (waits.length > 0) {
@@ -219,6 +232,7 @@ export function async_derived(fn, label, location) {
 			deferreds.delete(batch);
 
 			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
+				batch.mark_async_derived_outdated(d.reject);
 				return;
 			}
 
@@ -255,8 +269,9 @@ export function async_derived(fn, label, location) {
 	});
 
 	teardown(() => {
-		for (const d of deferreds.values()) {
-			d.reject(STALE_REACTION);
+		for (const [batch, d] of deferreds) {
+			batch.mark_async_derived_outdated(d.reject);
+			d.reject(STALE_REACTION); // reject directly, prevent handler above from succeeding
 		}
 	});
 
