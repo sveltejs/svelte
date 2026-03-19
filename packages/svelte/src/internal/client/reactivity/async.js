@@ -127,7 +127,7 @@ export function capture() {
 			// TODO we only need optional chaining here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
 			previous_batch?.activate();
-			previous_batch?.apply();
+			previous_batch?.apply(false);
 		}
 
 		if (DEV) {
