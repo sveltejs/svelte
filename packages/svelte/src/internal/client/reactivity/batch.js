@@ -665,7 +665,7 @@ export class Batch {
 	 * so this one is obsolete and we discard it.
 	 * @param {(reason: unknown) => void} reject
 	 */
-	mark_async_derived_outdated(reject) {
+	reject_async(reject) {
 		if (!this.async_deriveds.has(reject)) return;
 
 		this.async_deriveds.set(reject, true);

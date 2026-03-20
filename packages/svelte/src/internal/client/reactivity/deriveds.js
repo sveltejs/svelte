@@ -184,7 +184,7 @@ export function async_derived(fn, label, location) {
 					if (b === batch) {
 						batch.async_deriveds.delete(d.reject);
 					} else {
-						b.mark_async_derived_outdated(d.reject);
+						b.reject_async(d.reject);
 					}
 				}
 				deferreds.clear();
@@ -211,12 +211,13 @@ export function async_derived(fn, label, location) {
 					const waits = [];
 
 					// All prior async derived runs are now stale, but we have to
-					// wait for the corresponding batches to resolve before proceeding
-					for (const [b, d] of deferreds) {
+					// wait for the corresponding batches to resolve before proceeding.
+					// We sort because batch order is important, not in which order the
+					// corresponding async work started.
+					for (const [b, d] of [...deferreds].sort(([a], [b]) => a.id - b.id)) {
 						if (b === batch) break;
-						deferreds.delete(b);
 						waits.push(b.settled());
-						b.mark_async_derived_outdated(d.reject);
+						b.reject_async(d.reject);
 					}
 
 					if (waits.length > 0) {
@@ -232,7 +233,7 @@ export function async_derived(fn, label, location) {
 			deferreds.delete(batch);
 
 			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
-				batch.mark_async_derived_outdated(d.reject);
+				batch.reject_async(d.reject);
 				return;
 			}
 
@@ -270,7 +271,7 @@ export function async_derived(fn, label, location) {
 
 	teardown(() => {
 		for (const [batch, d] of deferreds) {
-			batch.mark_async_derived_outdated(d.reject);
+			batch.reject_async(d.reject);
 			d.reject(STALE_REACTION); // reject directly, prevent handler above from succeeding
 		}
 	});
