@@ -44,6 +44,7 @@ import { batch_values, current_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
+import { queue_micro_task } from '../dom/task.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -127,7 +128,7 @@ export function async_derived(fn, label, location) {
 	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Map();
 
-	async_effect(() => {
+	var async_e = async_effect(() => {
 		if (DEV) {
 			reactivity_loss_tracker = {
 				effect: /** @type {Effect} */ (active_effect),
@@ -160,7 +161,8 @@ export function async_derived(fn, label, location) {
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
 			// we will decrement to zero before the work that depends on this promise (e.g. a
-			// template effect) has initialized, causing the batch to resolve prematurely
+			// template effect) has initialized, causing the batch to resolve prematurely.
+			// Also see test async-overlap-multiple-6
 			if ((effect.f & REACTION_RAN) !== 0) {
 				var decrement_pending = increment_pending();
 			}
@@ -192,6 +194,21 @@ export function async_derived(fn, label, location) {
 
 			batch.register_async_derived(d.reject);
 			deferreds.set(batch, d);
+
+			// Check if a later batch started work earlier than an earlier one.
+			// This could happen when two batches write to the same async derived
+			// but the earlier one is only writing to it after going through another
+			// async derived, while the later one is writing to it immediately.
+			// In that case, to ensure the order is preserved and the later batch
+			// is invoked with the right values, we have to restart the later batch's async derived.
+			for (const b of deferreds.keys()) {
+				if (b === batch) break;
+				if (b.id > batch.id) {
+					set_signal_status(async_e, DIRTY);
+					b.schedule(async_e);
+					queue_micro_task(() => b.flush());
+				}
+			}
 		}
 
 		/**
@@ -212,12 +229,10 @@ export function async_derived(fn, label, location) {
 
 					// All prior async derived runs are now stale, but we have to
 					// wait for the corresponding batches to resolve before proceeding.
-					// We sort because batch order is important, not in which order the
-					// corresponding async work started.
-					for (const [b, d] of [...deferreds].sort(([a], [b]) => a.id - b.id)) {
-						if (b === batch) break;
-						waits.push(b.settled());
-						b.reject_async(d.reject);
+					for (const [other_batch, other_d] of deferreds) {
+						if (other_batch === batch) break;
+						waits.push(other_batch.settled());
+						other_batch.reject_async(other_d.reject);
 					}
 
 					if (waits.length > 0) {
