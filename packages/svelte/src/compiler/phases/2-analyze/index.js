@@ -1176,7 +1176,7 @@ function calculate_blockers(instance, analysis) {
 
 					if (has_await) {
 						// one declarator per declaration, makes things simpler
-						analysis.instance_body.async.push({ nodes: [node], has_await: true });
+						analysis.instance_body.async.push({ nodes: [declarator], has_await: true });
 					} else {
 						sync_group.push(declarator);
 					}
