@@ -1099,14 +1099,6 @@ function calculate_blockers(instance, analysis) {
 	}
 
 	/**
-	 * @param {ESTree.Statement | ESTree.VariableDeclarator} node
-	 */
-	function push_async_entry(node) {
-		flush_sync_group();
-		analysis.instance_body.async.push({ nodes: [node], has_await: true });
-	}
-
-	/**
 	 * Analysis of blockers for functions is deferred until we know which statements are async/blockers
 	 * @type {Array<ESTree.FunctionDeclaration | ESTree.VariableDeclarator>}
 	 */
@@ -1167,6 +1159,9 @@ function calculate_blockers(instance, analysis) {
 
 					trace_references(declarator, reads, writes, instance.scope);
 
+					// Needs to happen before blocker computation
+					if (has_await) flush_sync_group();
+
 					const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 						b.member(promises, b.literal(analysis.instance_body.async.length), true)
 					);
@@ -1181,7 +1176,7 @@ function calculate_blockers(instance, analysis) {
 
 					if (has_await) {
 						// one declarator per declaration, makes things simpler
-						push_async_entry(declarator);
+						analysis.instance_body.async.push({ nodes: [node], has_await: true });
 					} else {
 						sync_group.push(declarator);
 					}
@@ -1196,6 +1191,9 @@ function calculate_blockers(instance, analysis) {
 
 			trace_references(node, reads, writes, instance.scope);
 
+			// Needs to happen before blocker computation
+			if (has_await) flush_sync_group();
+
 			const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 				b.member(promises, b.literal(analysis.instance_body.async.length), true)
 			);
@@ -1209,7 +1207,7 @@ function calculate_blockers(instance, analysis) {
 			}
 
 			if (has_await) {
-				push_async_entry(node);
+				analysis.instance_body.async.push({ nodes: [node], has_await: true });
 			} else {
 				sync_group.push(node);
 			}

@@ -85,22 +85,20 @@ function transform_async_node(node, transform) {
 			transform(b.var(node.id, node.init))
 		);
 
-		return (
-			visited.type === 'VariableDeclaration'
-				? visited.declarations.map((node) => {
-						if (
-							node.id.type === 'Identifier' &&
-							(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
-						) {
-							// This intermediate declaration is created in VariableDeclaration.js;
-							// subsequent statements may depend on it.
-							return b.var(node.id, node.init);
-						}
+		return visited.type === 'VariableDeclaration'
+			? visited.declarations.map((node) => {
+					if (
+						node.id.type === 'Identifier' &&
+						(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
+					) {
+						// This intermediate declaration is created in VariableDeclaration.js;
+						// subsequent statements may depend on it.
+						return b.var(node.id, node.init);
+					}
 
-						return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
-					})
-				: []
-		);
+					return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
+				})
+			: [];
 	}
 
 	if (node.type === 'ClassDeclaration') {
