@@ -584,85 +584,8 @@ export class Batch {
 	}
 
 	/**
-	 * Merge this batch's state into a newer superseding batch.
-	 * @param {Batch} target
-	 */
-	#merge_into(target) {
-		if (target === this) return;
-
-		for (const [source, info] of this.current) {
-			if (!target.current.has(source)) {
-				target.current.set(source, info);
-			}
-		}
-
-		for (const [source, value] of this.previous) {
-			target.previous.set(source, value);
-		}
-
-		target.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
-
-		for (const fn of this.#commit_callbacks) {
-			target.#commit_callbacks.add(fn);
-		}
-		this.#commit_callbacks.clear();
-
-		for (const fn of this.#discard_callbacks) {
-			target.#discard_callbacks.add(fn);
-		}
-		this.#discard_callbacks.clear();
-
-		for (const [effect, tracked] of this.#skipped_branches) {
-			var existing = target.#skipped_branches.get(effect);
-
-			if (existing === undefined) {
-				target.#skipped_branches.set(effect, tracked);
-			} else {
-				for (const e of tracked.d) {
-					existing.d.add(e);
-				}
-
-				for (const e of tracked.m) {
-					existing.m.add(e);
-				}
-			}
-		}
-		this.#skipped_branches.clear();
-
-		for (const root of this.#roots) {
-			if (!target.#roots.includes(root)) {
-				target.#roots.push(root);
-			}
-		}
-		this.#roots = [];
-
-		// No need to merge pending/block_pending, these are already at 0 and obsolete else we couldn't merge into the target batch
-
-		for (const blocker of this.blockers) {
-			if (blocker !== target) {
-				target.blockers.add(blocker);
-			}
-		}
-		this.blockers.clear();
-
-		batches.delete(this);
-
-		for (const batch of batches) {
-			if (!batch.blockers.has(this)) continue;
-
-			batch.blockers.delete(this);
-			if (batch !== target) {
-				batch.blockers.add(target);
-			}
-		}
-
-		this.#deferred?.resolve();
-	}
-
-	/**
-	 * Marks an async run as outdated. If all async runs are outdated, either merges this batch into a newer one
-	 * that is blocked on this one, or if noone is blocked by this batch we know a later batch is a superset
-	 * so this one is obsolete and we discard it.
+	 * Marks an async run as outdated. If all async runs are outdated, the batch as a whole is obsolete.
+	 * All its async deriveds then have resolved successors which means we discard this batch.
 	 * @param {(reason: unknown) => void} reject
 	 */
 	reject_async(reject) {
@@ -679,15 +602,7 @@ export class Batch {
 		}
 
 		this.async_deriveds.clear();
-
-		// Merge target is the first successor that is blocked on this one.
-		// This ensure working through async work in linear order where they depend on each other.
-		var merge_target = [...batches].find((batch) => batch.blockers.has(this));
-		if (merge_target !== undefined) {
-			this.#merge_into(merge_target);
-		} else {
-			this.discard();
-		}
+		this.discard();
 	}
 
 	settled() {
