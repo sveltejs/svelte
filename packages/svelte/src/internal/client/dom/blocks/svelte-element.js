@@ -117,13 +117,15 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// need to call `render_fn` in order to run actions etc. If the element
 					// contains children, it's a user error (which is warned on elsewhere)
 					// and the DOM will be silently discarded
-					render_fn(element, child_anchor);
+					try {
+						render_fn(element, child_anchor);
+					} finally {
+						if (comment !== null) {
+							comment.remove();
+						}
 
-					if (comment !== null) {
-						comment.remove();
+						set_animation_effect_override(null);
 					}
-
-					set_animation_effect_override(null);
 				}
 
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
