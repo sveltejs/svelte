@@ -181,6 +181,9 @@ export class Batch {
 	/** @type {Set<Batch>} */
 	blockers = new Set();
 
+	/** True if this batch was made obsolete because subsequent batches combined cover all async work this one did */
+	obsolete = false;
+
 	#is_deferred() {
 		return this.is_fork || this.#blocking_pending.size > 0;
 	}
@@ -269,7 +272,7 @@ export class Batch {
 		this.#roots = [];
 
 		// For #traverse we want to ignore previous values of prior batches, i.e. we want to see the latest values up to this batch
-		this.apply(false);
+		this.#apply(false);
 
 		/** @type {Effect[]} */
 		var effects = (collected_effects = []);
@@ -325,7 +328,7 @@ export class Batch {
 			// During deferred effect flushing, also account for prior batches' previous values.
 			// This is necessary because an earlier batch could be independent to this one with
 			// respects to the sources etc it touches, so the later one can resolve before the earlier one.
-			this.apply(true);
+			this.#apply(true);
 
 			if (this.#pending.size === 0) {
 				batches.delete(this);
@@ -456,6 +459,7 @@ export class Batch {
 
 	activate() {
 		current_batch = this;
+		this.#apply(false);
 	}
 
 	deactivate() {
@@ -603,6 +607,7 @@ export class Batch {
 
 		this.async_deriveds.clear();
 		this.discard();
+		this.obsolete = true;
 	}
 
 	settled() {
@@ -635,7 +640,7 @@ export class Batch {
 	/**
 	 * @param {boolean} include_prior_previous
 	 */
-	apply(include_prior_previous) {
+	#apply(include_prior_previous) {
 		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) {
 			batch_values = null;
 			return;
@@ -1088,6 +1093,9 @@ export function fork(fn) {
 				await settled;
 				return;
 			}
+
+			// Don't error if batch was made obsolete; user cannot really know
+			if (batch.obsolete) return;
 
 			if (!batches.has(batch)) {
 				e.fork_discarded();

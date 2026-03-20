@@ -231,7 +231,7 @@ export function async_derived(fn, label, location) {
 					// wait for the corresponding batches to resolve before proceeding.
 					for (const [other_batch, other_d] of deferreds) {
 						if (other_batch === batch) break;
-						waits.push(other_batch.settled());
+						if (!other_batch.is_fork) waits.push(other_batch.settled());
 						other_batch.reject_async(other_d.reject);
 					}
 
