@@ -88,9 +88,13 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				assign_nodes(element, element);
 
 				if (render_fn) {
+					/** @type {Comment | null} */
+					var comment = null;
+
 					if (hydrating && is_raw_text_element(next_tag)) {
 						// prevent hydration glitches
-						element.append(document.createComment(''));
+						comment = document.createComment('');
+						element.append(comment);
 					}
 
 					// If hydrating, use the existing ssr comment as the anchor so that the
@@ -114,6 +118,10 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// contains children, it's a user error (which is warned on elsewhere)
 					// and the DOM will be silently discarded
 					render_fn(element, child_anchor);
+
+					if (comment !== null) {
+						comment.remove();
+					}
 
 					set_animation_effect_override(null);
 				}
