@@ -218,8 +218,6 @@ export class Boundary {
 		this.is_pending = true;
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
-		var batch = /** @type {Batch} */ (current_batch);
-
 		queue_micro_task(() => {
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
@@ -238,14 +236,12 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.#resolve(batch);
+				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		});
 	}
 
 	#render() {
-		var batch = /** @type {Batch} */ (current_batch);
-
 		try {
 			this.is_pending = this.has_pending_snippet();
 			this.#pending_count = 0;
@@ -262,7 +258,7 @@ export class Boundary {
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 				this.#pending_effect = branch(() => pending(this.#anchor));
 			} else {
-				this.#resolve(batch);
+				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		} catch (error) {
 			this.error(error);
@@ -275,21 +271,9 @@ export class Boundary {
 	#resolve(batch) {
 		this.is_pending = false;
 
-		// any effects that were previously deferred should be rescheduled —
-		// after the next traversal (which will happen immediately, due to the
-		// same update that brought us here) the effects will be flushed
-		for (const e of this.#dirty_effects) {
-			set_signal_status(e, DIRTY);
-			batch.schedule(e);
-		}
-
-		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			batch.schedule(e);
-		}
-
-		this.#dirty_effects.clear();
-		this.#maybe_dirty_effects.clear();
+		// any effects that were previously deferred should be transferred
+		// to the batch, which will flush in the next microtask
+		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
 	}
 
 	/**
