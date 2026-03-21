@@ -57,9 +57,11 @@ Like function declarations, snippets can have an arbitrary number of parameters,
 
 ## Snippet scope
 
-Snippets can be declared anywhere inside your component. They can reference values declared outside themselves, for example in the `<script>` tag or in `{#each ...}` blocks ([demo](/playground/untitled#H4sIAAAAAAAAE12P0QrCMAxFfyWrwhSEvc8p-h1OcG5RC10bmkyQ0n-3HQPBx3vCPUmCemiDrOpLULYbUdXqTKR2Sj6UA7_RCKbMbvJ9Jg33XpMcW9uKQYEAIzJ3T4QD3LSUDE-PnYA4YET4uOkGMc3W5B3xZrtvbVP9HDas2GqiZHqhMW6Tr9jGbG_oOCMImcUCwrIpFk1FqRyqpRpn0cmjHdAvnrIzuscyq_4nd3dPPD01ukE_NA6qFj9hvMYvGjJADw8BAAA=))...
+Snippets can be declared anywhere inside your component. They can reference values declared outside themselves, for example in the `<script>` tag or in `{#each ...}` blocks...
 
+<!-- codeblock:start {"title":"Snippets"} -->
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let { message = `it's great to see you!` } = $props();
 </script>
@@ -71,6 +73,7 @@ Snippets can be declared anywhere inside your component. They can reference valu
 {@render hello('alice')}
 {@render hello('bob')}
 ```
+<!-- codeblock:end -->
 
 ...and they are 'visible' to everything in the same lexical scope (i.e. siblings, and children of those siblings):
 
@@ -91,9 +94,11 @@ Snippets can be declared anywhere inside your component. They can reference valu
 {@render x()}
 ```
 
-Snippets can reference themselves and each other ([demo](/playground/untitled#H4sIAAAAAAAAE2WPTQqDMBCFrxLiRqH1Zysi7TlqF1YnENBJSGJLCYGeo5tesUeosfYH3c2bee_jjaWMd6BpfrAU6x5oTvdS0g01V-mFPkNnYNRaDKrxGxto5FKCIaeu1kYwFkauwsoUWtZYPh_3W5FMY4U2mb3egL9kIwY0rbhgiO-sDTgjSEqSTvIDs-jiOP7i_MHuFGAL6p9BtiSbOTl0GtzCuihqE87cqtyam6WRGz_vRcsZh5bmRg3gju4Fptq_kzQBAAA=)):
+Snippets can reference themselves and each other:
 
+<!-- codeblock:start {"title":"Self-referencing snippets"} -->
 ```svelte
+<!--- file: App.svelte --->
 {#snippet blastoff()}
 	<span>🚀</span>
 {/snippet}
@@ -109,14 +114,17 @@ Snippets can reference themselves and each other ([demo](/playground/untitled#H4
 
 {@render countdown(10)}
 ```
+<!-- codeblock:end -->
 
 ## Passing snippets to components
 
 ### Explicit props
 
-Within the template, snippets are values just like any other. As such, they can be passed to components as props ([demo](/playground/untitled#H4sIAAAAAAAAE3VS247aMBD9lZGpBGwDASRegonaPvQL2qdlH5zYEKvBNvbQLbL875VzAcKyj3PmzJnLGU8UOwqSkd8KJdaCk4TsZS0cyV49wYuJuQiQpGd-N2bu_ooaI1YwJ57hpVYoFDqSEepKKw3mO7VDeTTaIvxiRS1gb_URxvO0ibrS8WanIrHUyiHs7Vmigy28RmyHHmKvDMbMmFq4cQInvGSwTsBYWYoMVhCSB2rBFFPsyl0uruTlR3JZCWvlTXl1Yy_mawiR_rbZKZrellJ-5JQ0RiBUgnFhJ9OGR7HKmwVoilXeIye8DOJGfYCgRlZ3iE876TBsZPX7hPdteO75PC4QaIo8vwNPePmANQ2fMeEFHrLD7rR1jTNkW986E8C3KwfwVr8HSHOSEBT_kGRozyIkn_zQveXDL3rIfPJHtUDwzShJd_Qk3gQCbOGLsdq4yfTRJopRuin3I7nv6kL7ARRjmLdBDG3uv1mhuLA3V2mKtqNEf_oCn8p9aN-WYqH5peP4kWBl1UwJzAEPT9U7K--0fRrrWnPTXpCm1_EVdXjpNmlA8G1hPPyM1fKgMqjFHjctXGjLhZ05w0qpDhksGrybuNEHtJnCalZWsuaTlfq6nPaaBSv_HKw-K57BjzOiVj9ZKQYKzQjZodYFqydYTRN4gPhVzTDO2xnma3HsVWjaLjT8nbfwHy7Q5f2dBAAA)):
+Within the template, snippets are values just like any other. As such, they can be passed to components as props:
 
+<!-- codeblock:start {"title":"Explicit snippet props"} -->
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import Table from './Table.svelte';
 
@@ -141,8 +149,45 @@ Within the template, snippets are values just like any other. As such, they can 
 	<td>{d.qty * d.price}</td>
 {/snippet}
 
-<Table data={fruits} {header} {row} />
+<Table data={fruits} +++{header} {row}+++ />
 ```
+
+```svelte
+<!--- file: Table.svelte --->
+<script>
+	let { data, header, row } = $props();
+</script>
+
+<table>
+	{#if header}
+		<thead>
+			<tr>{@render header()}</tr>
+		</thead>
+	{/if}
+
+	<tbody>
+		{#each data as d}
+			<tr>{@render row(d)}</tr>
+		{/each}
+	</tbody>
+</table>
+
+<style>
+	table {
+		text-align: left;
+		border-spacing: 0;
+	}
+
+	tbody tr:nth-child(2n+1) {
+		background: ButtonFace;
+	}
+
+	table :global(th), table :global(td) {
+		padding: 0.5em;
+	}
+</style>
+```
+<!-- codeblock:end -->
 
 Think about it like passing content instead of data to a component. The concept is similar to slots in web components.
 
@@ -150,8 +195,19 @@ Think about it like passing content instead of data to a component. The concept 
 
 As an authoring convenience, snippets declared directly _inside_ a component implicitly become props _on_ the component ([demo](/playground/untitled#H4sIAAAAAAAAE3VSTa_aMBD8Kyu_SkAbCA-JSzBR20N_QXt6vIMTO8SqsY29tI2s_PcqTiB8vaPHs7MzuxuIZgdBMvJLo0QlOElIJZXwJHsLBBvb_XUASc7Mb9Yu_B-hsMMK5sUzvDQahUZPMkJ96aTFfKd3KA_WOISfrFACKmcOMFmk8TWUTjY73RFLoz1C5U4SPWzhrcN2GKDrlcGEWauEnyRwxCaDdQLWyVJksII2uaMWTDPNLtzX5YX8-kgua-GcHJVXI3u5WEPb0d83O03TMZSmfRzOkG1Db7mNacOL19JagVALxoWbztq-H8U6j0SaYp2P2BGbOyQ2v8PQIFMXLKRDk177pq0zf6d8bMrzwBdd0pamyPMb-IjNEzS2f86Gz_Dwf-2F9nvNSUJQ_EOSoTuJNvngqK5v4Pas7n4-OCwlEEJcQTIMO-nSQwtb-GSdsX46e9gbRoP9yGQ11I0rEuycunu6PHx1QnPhxm3SFN15MOlYEFJZtf0dUywMbwZOeBGsrKNLYB54-1R9WNqVdki7usim6VmQphf7mnpshiQRhNAXdoOfMyX3OgMlKtz0cGEcF27uLSul3mewjPjgOOoDukxjPS9rqfh0pb-8zs6aBSt_7505aZ7B9xOi0T9YKW4UooVsr0zB1BTrWQJ3EL-oWcZ572GxFoezCk37QLe3897-B2i2U62uBAAA)):
 
+<!-- codeblock:start {"title":"Implicit snippet props"} -->
 ```svelte
-<!-- this is semantically the same as the above -->
+<!--- file: App.svelte --->
+<script>
+	import Table from './Table.svelte';
+
+	const fruits = [
+		{ name: 'apples', qty: 5, price: 2 },
+		{ name: 'bananas', qty: 10, price: 1 },
+		{ name: 'cherries', qty: 20, price: 0.5 }
+	];
+</script>
+
 <Table data={fruits}>
 	{#snippet header()}
 		<th>fruit</th>
@@ -169,12 +225,54 @@ As an authoring convenience, snippets declared directly _inside_ a component imp
 </Table>
 ```
 
+```svelte
+<!--- file: Table.svelte --->
+<script>
+	let { data, header, row } = $props();
+</script>
+
+<table>
+	{#if header}
+		<thead>
+			<tr>{@render header()}</tr>
+		</thead>
+	{/if}
+
+	<tbody>
+		{#each data as d}
+			<tr>{@render row(d)}</tr>
+		{/each}
+	</tbody>
+</table>
+
+<style>
+	table {
+		text-align: left;
+		border-spacing: 0;
+	}
+
+	tbody tr:nth-child(2n+1) {
+		background: ButtonFace;
+	}
+
+	table :global(th), table :global(td) {
+		padding: 0.5em;
+	}
+</style>
+```
+<!-- codeblock:end -->
+
 ### Implicit `children` snippet
 
 Any content inside the component tags that is _not_ a snippet declaration implicitly becomes part of the `children` snippet ([demo](/playground/untitled#H4sIAAAAAAAAE3WOQQrCMBBFrzIMggql3ddY1Du4si5sOmIwnYRkFKX07lKqglqX8_7_w2uRDw1hjlsWI5ZqTPBoLEXMdy3K3fdZDzB5Ndfep_FKVnpWHSKNce1YiCVijirqYLwUJQOYxrsgsLmIOIZjcA1M02w4n-PpomSVvTclqyEutDX6DA2pZ7_ABIVugrmEC3XJH92P55_G39GodCmWBFrQJ2PrQAwdLGHig_NxNv9xrQa1dhWIawrv1Wzeqawa8953D-8QOmaEAQAA)):
 
+<!-- codeblock:start {"title":"Implicit children snippet","selected":"Button.svelte"} -->
 ```svelte
 <!--- file: App.svelte --->
+<script>
+	import Button from './Button.svelte';
+</script>
+
 <Button>click me</Button>
 ```
 
@@ -187,6 +285,7 @@ Any content inside the component tags that is _not_ a snippet declaration implic
 <!-- result will be <button>click me</button> -->
 <button>{@render children()}</button>
 ```
+<!-- codeblock:end -->
 
 > [!NOTE] Note that you cannot have a prop called `children` if you also have content inside the component — for this reason, you should avoid having props with that name
 
