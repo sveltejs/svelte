@@ -66,7 +66,7 @@ let { a, b, c, ...others } = $props();
 
 References to a prop inside a component update when the prop itself updates — when `count` changes in `App.svelte`, it will also change inside `Child.svelte`. But the child component is able to temporarily override the prop value, which can be useful for unsaved ephemeral state:
 
-<!-- codeblock:start {"title":"Temporarily updating props"} -->
+<!-- codeblock:start {"title":"Temporarily updating props","selected":"Child.svelte"} -->
 ```svelte
 <!--- file: App.svelte --->
 <script>
@@ -98,7 +98,7 @@ While you can temporarily _reassign_ props, you should not _mutate_ props unless
 
 If the prop is a regular object, the mutation will have no effect:
 
-<!-- codeblock:start {"title":"Non-reactive props"} -->
+<!-- codeblock:start {"title":"Non-reactive props","selected":"Child.svelte"} -->
 ```svelte
 <!--- file: App.svelte --->
 <script>
@@ -125,7 +125,7 @@ If the prop is a regular object, the mutation will have no effect:
 
 If the prop is a reactive state proxy, however, then mutations _will_ have an effect but you will see an [`ownership_invalid_mutation`](runtime-warnings#Client-warnings-ownership_invalid_mutation) warning, because the component is mutating state that does not 'belong' to it:
 
-<!-- codeblock:start {"title":"Invalid mutation"} -->
+<!-- codeblock:start {"title":"Invalid mutation","selected":"Child.svelte"} -->
 ```svelte
 <!--- file: App.svelte --->
 <script>
@@ -156,7 +156,7 @@ If the prop is a reactive state proxy, however, then mutations _will_ have an ef
 
 The fallback value of a prop not declared with `$bindable` is left untouched — it is not turned into a reactive state proxy — meaning mutations will not cause updates:
 
-<!-- codeblock:start {"title":"Non-reactive fallback props"} -->
+<!-- codeblock:start {"title":"Non-reactive fallback props","selected":"Child.svelte"} -->
 ```svelte
 <!--- file: App.svelte --->
 <script>
