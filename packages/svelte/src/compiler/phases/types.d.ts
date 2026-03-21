@@ -131,7 +131,7 @@ export interface ComponentAnalysis extends Analysis {
 	instance_body: {
 		hoisted: Array<Statement | ModuleDeclaration>;
 		sync: Array<Statement | ModuleDeclaration | VariableDeclaration>;
-		async: Array<{ node: Statement | VariableDeclarator; has_await: boolean }>;
+		async: Array<{ nodes: Array<Statement | VariableDeclarator>; has_await: boolean }>;
 		declarations: Array<Identifier>;
 	};
 }
