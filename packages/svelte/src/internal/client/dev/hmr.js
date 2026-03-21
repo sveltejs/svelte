@@ -34,7 +34,13 @@ export function hmr(fn) {
 		let start = create_comment();
 		let end = create_comment();
 
-		anchor.before(start);
+		// During hydration, inserting the start comment before the anchor could
+		// corrupt the DOM tree that the hydration walker is navigating (e.g. when
+		// a component is inside a CSS props wrapper gh-issue#17972). We defer the insertion until
+		// after the component has hydrated.
+		if (!hydrating) {
+			anchor.before(start);
+		}
 
 		block(() => {
 			if (component === (component = get(current))) {
@@ -52,13 +58,13 @@ export function hmr(fn) {
 				if (ran) set_should_intro(false);
 
 				// preserve getters/setters
-				Object.defineProperties(
-					instance,
-					Object.getOwnPropertyDescriptors(
-						// @ts-expect-error
-						new.target ? new component(anchor, props) : component(anchor, props)
-					)
-				);
+				var result =
+					// @ts-expect-error
+					new.target ? new component(anchor, props) : component(anchor, props);
+				// a component is not guaranteed to return something and we can't invoke getOwnPropertyDescriptors on undefined
+				if (result) {
+					Object.defineProperties(instance, Object.getOwnPropertyDescriptors(result));
+				}
 
 				if (ran) set_should_intro(true);
 			});
@@ -67,6 +73,9 @@ export function hmr(fn) {
 		ran = true;
 
 		if (hydrating) {
+			// Insert start comment now that hydration is done, so it doesn't
+			// corrupt the hydration walk
+			anchor.before(start);
 			anchor = hydrate_node;
 		}
 
