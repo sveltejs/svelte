@@ -159,7 +159,7 @@ Inputs that work together can use `bind:group`:
 	let fillings = $state([]);
 </script>
 
-<h1>Customise your burrito</h1>
+<h1>Customize your burrito</h1>
 
 <!-- grouped radio inputs are mutually exclusive -->
 <label><input type="radio" bind:group={tortilla} value="Plain" /> Plain</label>
