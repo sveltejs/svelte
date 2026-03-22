@@ -1074,6 +1074,9 @@ function calculate_blockers(instance, analysis) {
 
 	let awaited = false;
 
+	/** @type {Array<ESTree.Statement | ESTree.VariableDeclarator>} */
+	let sync_group = [];
+
 	// TODO this should probably be attached to the scope?
 	const promises = b.id('$$promises');
 
@@ -1086,6 +1089,13 @@ function calculate_blockers(instance, analysis) {
 
 		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
 		binding.blocker = blocker;
+	}
+
+	function flush_sync_group() {
+		if (sync_group.length === 0) return;
+
+		analysis.instance_body.async.push({ nodes: sync_group, has_await: false });
+		sync_group = [];
 	}
 
 	/**
@@ -1149,6 +1159,9 @@ function calculate_blockers(instance, analysis) {
 
 					trace_references(declarator, reads, writes, instance.scope);
 
+					// Needs to happen before blocker computation
+					if (has_await) flush_sync_group();
+
 					const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 						b.member(promises, b.literal(analysis.instance_body.async.length), true)
 					);
@@ -1161,11 +1174,12 @@ function calculate_blockers(instance, analysis) {
 						push_declaration(id, blocker);
 					}
 
-					// one declarator per declaration, makes things simpler
-					analysis.instance_body.async.push({
-						node: declarator,
-						has_await
-					});
+					if (has_await) {
+						// one declarator per declaration, makes things simpler
+						analysis.instance_body.async.push({ nodes: [declarator], has_await: true });
+					} else {
+						sync_group.push(declarator);
+					}
 				}
 			}
 		} else if (awaited) {
@@ -1177,6 +1191,9 @@ function calculate_blockers(instance, analysis) {
 
 			trace_references(node, reads, writes, instance.scope);
 
+			// Needs to happen before blocker computation
+			if (has_await) flush_sync_group();
+
 			const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 				b.member(promises, b.literal(analysis.instance_body.async.length), true)
 			);
@@ -1187,14 +1204,19 @@ function calculate_blockers(instance, analysis) {
 
 			if (node.type === 'ClassDeclaration') {
 				push_declaration(node.id, blocker);
-				analysis.instance_body.async.push({ node, has_await });
+			}
+
+			if (has_await) {
+				analysis.instance_body.async.push({ nodes: [node], has_await: true });
 			} else {
-				analysis.instance_body.async.push({ node, has_await });
+				sync_group.push(node);
 			}
 		} else {
 			analysis.instance_body.sync.push(node);
 		}
 	}
+
+	flush_sync_group();
 
 	for (const fn of functions) {
 		/** @type {Set<Binding>} */

@@ -559,6 +559,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.fn =
 		effect.nodes =
 		effect.ac =
+		effect.b =
 			null;
 }
 
