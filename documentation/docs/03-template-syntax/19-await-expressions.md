@@ -59,8 +59,8 @@ Updates can overlap — a fast update will be reflected in the UI while an earli
 Svelte will do as much asynchronous work as it can in parallel. For example if you have two `await` expressions in your markup...
 
 ```svelte
-<p>{await one()}</p>
-<p>{await two()}</p>
+<p>{await one(x)}</p>
+<p>{await two(y)}</p>
 ```
 
 ...both functions will run at the same time, as they are independent expressions, even though they are _visually_ sequential.
