@@ -1,21 +1,21 @@
 import {
-	type TweenedOptions,
-	type SpringOpts,
-	type SpringUpdateOpts,
+	type TweenOptions,
+	type SpringOptions,
+	type SpringUpdateOptions,
 	type Updater
 } from 'svelte/motion';
 
-let tweenOptions: TweenedOptions<number> = {
+let tweenOptions: TweenOptions<number> = {
 	delay: 100,
 	duration: 400
 };
 
-let springOptions: SpringOpts = {
+let springOptions: SpringOptions = {
 	stiffness: 0.1,
 	damping: 0.5
 };
 
-let springUpdateOptions: SpringUpdateOpts = {
+let springUpdateOptions: SpringUpdateOptions = {
 	instant: true
 };
 
