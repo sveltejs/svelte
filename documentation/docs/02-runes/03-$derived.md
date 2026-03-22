@@ -49,25 +49,18 @@ In essence, `$derived(expression)` is equivalent to `$derived.by(() => expressio
 
 ## Understanding dependencies
 
-Anything read inside the `$derived` expression (or `$derived.by` function body) is considered a _dependency_ of the derived state. When the state changes, the derived will be marked as _dirty_ and recalculated when it is next read.
+Anything read synchronously inside the `$derived` expression (or `$derived.by` function body) is considered a _dependency_ of the derived state. When the state changes, the derived will be marked as _dirty_ and recalculated when it is next read.
 
-When you use `await` directly inside a `$derived(...)` expression (or a template expression), Svelte preserves dependency tracking across the `await`. Reactivity issues can occur if the `await` happens inside a helper function and reactive state is only read after that `await` — in those cases, access the reactive value before awaiting, or move it into its own `$derived` so that Svelte can clearly track it.
+In addition, if an expression contains an [`await`](await-expressions), Svelte transforms it such that any state _after_ the `await` is also tracked — in other words, in a case like this...
 
-```svelte
-<script>
-	let id = $state(1);
-
-	async function getLater(get) {
-		await Promise.resolve(); // await inside helper
-		return get();            // reactive read happens after await
-	}
-
-	const trackedId = $derived(id); // tracked
-	const value = $derived(await getLater(() => trackedId));
-</script>
+```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
+let total = $derived(await a + b);
 ```
 
-Here, the helper `getLater` `await`s internally and only reads the reactive value afterwards via `get()`. Splitting `id` into `trackedId = $derived(id)` makes the dependency explicit before the async boundary, so `value` stays correctly tied to `id`.
+...both `a` and `b` are tracked, even though `b` is only read once `a` has resolved, after the initial execution. (This does not apply to `await` in functions that are called by the expression, only the expression itself.)
 
 To exempt a piece of state from being treated as a dependency, use [`untrack`](svelte#untrack).
 
