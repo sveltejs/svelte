@@ -70,14 +70,15 @@ This does not apply to sequential `await` expressions inside your `<script>` or 
 ```js
 async function one(x) { return x; }
 async function two(y) { return y; }
-// ---cut---
 let x = $state(1);
 let y = $state(2);
+// ---cut---
+// `b` will not be created until `a` has resolved,
+// but once created they will update independently
+// even if `x` and `y` update simultaneously
 let a = $derived(await one(x));
 let b = $derived(await two(y));
 ```
-
-Here, `b` will not be created until the `await one(x)` has resolved. Once created, `a` and `b` update independently — changes to `x` will only re-run `one(x)`, and changes to `y` will only re-run `two(y)`.
 
 > [!NOTE] If you write code like this, expect Svelte to give you an [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) warning
 
