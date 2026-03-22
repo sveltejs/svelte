@@ -1,5 +1,5 @@
 ---
-'svelte': patch
+'svelte': minor
 ---
 
-fix: export TweenOptions, SpringOptions, SpringUpdateOptions and Updater from svelte/motion
+feat: export TweenOptions, SpringOptions, SpringUpdateOptions and Updater from svelte/motion
