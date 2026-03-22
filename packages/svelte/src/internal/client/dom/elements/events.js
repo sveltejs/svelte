@@ -12,6 +12,12 @@ import {
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
 
+/**
+ * Used on elements, as a map of event type -> event handler,
+ * and on events themselves to track which element handled an event
+ */
+export const event_symbol = Symbol('events');
+
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
 
@@ -128,6 +134,17 @@ export function event(event_name, dom, handler, capture, passive) {
 }
 
 /**
+ * @param {string} event_name
+ * @param {Element} element
+ * @param {EventListener} [handler]
+ * @returns {void}
+ */
+export function delegated(event_name, element, handler) {
+	// @ts-expect-error
+	(element[event_symbol] ??= {})[event_name] = handler;
+}
+
+/**
  * @param {Array<string>} events
  * @returns {void}
  */
@@ -163,8 +180,8 @@ export function handle_event_propagation(event) {
 	last_propagated_event = event;
 
 	// composedPath contains list of nodes the event has propagated through.
-	// We check __root to skip all nodes below it in case this is a
-	// parent of the __root node, which indicates that there's nested
+	// We check `event_symbol` to skip all nodes below it in case this is a
+	// parent of the `event_symbol` node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
 	var path_idx = 0;
 
@@ -172,7 +189,7 @@ export function handle_event_propagation(event) {
 	// without it the variable will be DCE'd and things will
 	// fail mysteriously in Firefox
 	// @ts-expect-error is added below
-	var handled_at = last_propagated_event === event && event.__root;
+	var handled_at = last_propagated_event === event && event[event_symbol];
 
 	if (handled_at) {
 		var at_idx = path.indexOf(handled_at);
@@ -184,7 +201,7 @@ export function handle_event_propagation(event) {
 			// -> ignore, but set handle_at to document/window so that we're resetting the event
 			// chain in case someone manually dispatches the same event object again.
 			// @ts-expect-error
-			event.__root = handler_element;
+			event[event_symbol] = handler_element;
 			return;
 		}
 
@@ -249,7 +266,7 @@ export function handle_event_propagation(event) {
 
 			try {
 				// @ts-expect-error
-				var delegated = current_target['__' + event_name];
+				var delegated = current_target[event_symbol]?.[event_name];
 
 				if (
 					delegated != null &&
@@ -284,7 +301,7 @@ export function handle_event_propagation(event) {
 		}
 	} finally {
 		// @ts-expect-error is used above
-		event.__root = handler_element;
+		event[event_symbol] = handler_element;
 		// @ts-ignore remove proxy on currentTarget
 		delete event.currentTarget;
 		set_active_reaction(previous_reaction);

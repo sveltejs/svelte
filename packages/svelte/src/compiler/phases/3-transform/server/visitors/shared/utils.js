@@ -225,7 +225,7 @@ export function build_attribute_value(
 		const node = value[i];
 
 		if (node.type === 'Text') {
-			quasi.value.raw += trim_whitespace
+			quasi.value.cooked += trim_whitespace
 				? node.data.replace(regex_whitespaces_strict, ' ')
 				: node.data;
 		} else {
@@ -242,6 +242,10 @@ export function build_attribute_value(
 			quasi = b.quasi('', i + 1 === value.length);
 			quasis.push(quasi);
 		}
+	}
+
+	for (const quasi of quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
 	return b.template(quasis, expressions);
@@ -268,6 +272,10 @@ export function build_getter(node, state) {
 			b.literal(node.name),
 			build_getter(store_id, state)
 		);
+	}
+
+	if (binding.kind === 'derived') {
+		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(binding.node);
 	}
 
 	return node;

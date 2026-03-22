@@ -1,5 +1,6 @@
 /** @import { Derived, Effect, Source } from '#client' */
 /** @import { Batch } from './batch.js'; */
+/** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
@@ -10,7 +11,8 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN
+	CLEAN,
+	REACTION_RAN
 } from '#client/constants';
 import {
 	active_reaction,
@@ -19,29 +21,40 @@ import {
 	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
-	is_destroying_effect
+	is_destroying_effect,
+	update_effect,
+	remove_reactions
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
+import {
+	async_effect,
+	destroy_effect,
+	destroy_effect_children,
+	effect_tracking,
+	teardown
+} from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
-import { unset_context } from './async.js';
-import { deferred, includes } from '../../shared/utils.js';
+import { increment_pending, unset_context } from './async.js';
+import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
-/** @type {Effect | null} */
-export let current_async_effect = null;
+/**
+ * This allows us to track 'reactivity loss' that occurs when signals
+ * are read after a non-context-restoring `await`. Dev-only
+ * @type {{ effect: Effect, warned: boolean } | null}
+ */
+export let reactivity_loss_tracker = null;
 
-/** @param {Effect | null} v */
-export function set_from_async_derived(v) {
-	current_async_effect = v;
+/** @param {{ effect: Effect, warned: boolean } | null} v */
+export function set_reactivity_loss_tracker(v) {
+	reactivity_loss_tracker = v;
 }
 
 export const recent_async_deriveds = new Set();
@@ -103,8 +116,6 @@ export function async_derived(fn, label, location) {
 		e.async_derived_orphan();
 	}
 
-	var boundary = /** @type {Boundary} */ (parent.b);
-
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
@@ -117,7 +128,14 @@ export function async_derived(fn, label, location) {
 	var deferreds = new Map();
 
 	async_effect(() => {
-		if (DEV) current_async_effect = active_effect;
+		if (DEV) {
+			reactivity_loss_tracker = {
+				effect: /** @type {Effect} */ (active_effect),
+				warned: false
+			};
+		}
+
+		var effect = /** @type {Effect} */ (active_effect);
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
@@ -127,34 +145,38 @@ export function async_derived(fn, label, location) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn())
-				.then(d.resolve, d.reject)
-				.then(() => {
-					if (batch === current_batch && batch.committed) {
-						// if the batch was rejected as stale, we need to cleanup
-						// after any `$.save(...)` calls inside `fn()`
-						batch.deactivate();
-					}
-
-					unset_context();
-				});
+			Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
 		} catch (error) {
 			d.reject(error);
 			unset_context();
 		}
 
-		if (DEV) current_async_effect = null;
+		if (DEV) {
+			reactivity_loss_tracker = null;
+		}
 
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
-			var blocking = boundary.is_rendered();
+			// we only increment the batch's pending state for updates, not creation, otherwise
+			// we will decrement to zero before the work that depends on this promise (e.g. a
+			// template effect) has initialized, causing the batch to resolve prematurely
+			if ((effect.f & REACTION_RAN) !== 0) {
+				var decrement_pending = increment_pending();
+			}
 
-			boundary.update_pending_count(1);
-			batch.increment(blocking);
+			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
+				deferreds.get(batch)?.reject(STALE_REACTION);
+				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
+			} else {
+				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
+				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
+				for (const d of deferreds.values()) {
+					d.reject(STALE_REACTION);
+				}
+				deferreds.clear();
+			}
 
-			deferreds.get(batch)?.reject(STALE_REACTION);
-			deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 			deferreds.set(batch, d);
 		}
 
@@ -163,17 +185,28 @@ export function async_derived(fn, label, location) {
 		 * @param {unknown} error
 		 */
 		const handler = (value, error = undefined) => {
-			current_async_effect = null;
+			if (DEV) {
+				reactivity_loss_tracker = null;
+			}
+
+			if (decrement_pending) {
+				// don't trigger an update if we're only here because
+				// the promise was superseded before it could resolve
+				var skip = error === STALE_REACTION;
+				decrement_pending(skip);
+			}
+
+			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
+				return;
+			}
 
 			batch.activate();
 
 			if (error) {
-				if (error !== STALE_REACTION) {
-					signal.f |= ERROR_VALUE;
+				signal.f |= ERROR_VALUE;
 
-					// @ts-expect-error the error is the wrong type, but we don't care
-					internal_set(signal, error);
-				}
+				// @ts-expect-error the error is the wrong type, but we don't care
+				internal_set(signal, error);
 			} else {
 				if ((signal.f & ERROR_VALUE) !== 0) {
 					signal.f ^= ERROR_VALUE;
@@ -200,10 +233,7 @@ export function async_derived(fn, label, location) {
 				}
 			}
 
-			if (should_suspend) {
-				boundary.update_pending_count(-1);
-				batch.decrement(blocking);
-			}
+			batch.deactivate();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -354,6 +384,7 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
+	var old_value = derived.v;
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
@@ -365,6 +396,7 @@ export function update_derived(derived) {
 		// change, `derived.equals` may incorrectly return `true`
 		if (!current_batch?.is_fork || derived.deps === null) {
 			derived.v = value;
+			current_batch?.capture(derived, old_value, true);
 
 			// deriveds without dependencies should never be recomputed
 			if (derived.deps === null) {
@@ -390,5 +422,45 @@ export function update_derived(derived) {
 		}
 	} else {
 		update_derived_status(derived);
+	}
+}
+
+/**
+ * @param {Derived} derived
+ */
+export function freeze_derived_effects(derived) {
+	if (derived.effects === null) return;
+
+	for (const e of derived.effects) {
+		// if the effect has a teardown function or abort signal, call it
+		if (e.teardown || e.ac) {
+			e.teardown?.();
+			e.ac?.abort(STALE_REACTION);
+
+			// make it a noop so it doesn't get called again if the derived
+			// is unfrozen. we don't set it to `null`, because the existence
+			// of a teardown function is what determines whether the
+			// effect runs again during unfreezing
+			e.teardown = noop;
+			e.ac = null;
+
+			remove_reactions(e, 0);
+			destroy_effect_children(e);
+		}
+	}
+}
+
+/**
+ * @param {Derived} derived
+ */
+export function unfreeze_derived_effects(derived) {
+	if (derived.effects === null) return;
+
+	for (const e of derived.effects) {
+		// if the effect was previously frozen — indicated by the presence
+		// of a teardown function — unfreeze it
+		if (e.teardown) {
+			update_effect(e);
+		}
 	}
 }

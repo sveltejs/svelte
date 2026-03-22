@@ -23,6 +23,7 @@ export { print } from './print/index.js';
 export function compile(source, options) {
 	source = remove_bom(source);
 	state.reset({ warning: options.warningFilter, filename: options.filename });
+
 	const validated = validate_component_options(options, '');
 
 	let parsed = _parse(source);
@@ -33,7 +34,9 @@ export function compile(source, options) {
 	const combined_options = {
 		...validated,
 		...parsed_options,
-		customElementOptions
+		customElementOptions,
+		css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : validated.css,
+		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes
 	};
 
 	if (parsed.metadata.ts) {
@@ -123,7 +126,7 @@ export function parse(source, { modern, loose } = {}) {
  * The parseCss function parses a CSS stylesheet, returning its abstract syntax tree.
  *
  * @param {string} source The CSS source code
- * @returns {Omit<AST.CSS.StyleSheet, 'attributes' | 'content'>}
+ * @returns {AST.CSS.StyleSheetFile}
  */
 export function parseCss(source) {
 	source = remove_bom(source);
@@ -135,7 +138,7 @@ export function parseCss(source) {
 	const children = parse_stylesheet(parser);
 
 	return {
-		type: 'StyleSheet',
+		type: 'StyleSheetFile',
 		start: 0,
 		end: source.length,
 		children

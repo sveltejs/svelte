@@ -32,7 +32,7 @@ export default function Main($$anchor) {
 			$.set_attribute(div_1, 'foobar', $0);
 			$.set_attribute(svg_1, 'viewBox', $1);
 		},
-		[y, y]
+		[() => y(), () => y()]
 	);
 
 	$.append($$anchor, fragment);

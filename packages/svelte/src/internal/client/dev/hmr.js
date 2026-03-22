@@ -6,6 +6,8 @@ import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
+import { assign_nodes } from '../dom/template.js';
+import { create_comment } from '../dom/operations.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
@@ -27,6 +29,19 @@ export function hmr(fn) {
 
 		let ran = false;
 
+		// Surround the wrapped effects with comments and assign the nodes
+		// on the wrapping effects so the parent can properly do DOM operations.
+		let start = create_comment();
+		let end = create_comment();
+
+		// During hydration, inserting the start comment before the anchor could
+		// corrupt the DOM tree that the hydration walker is navigating (e.g. when
+		// a component is inside a CSS props wrapper gh-issue#17972). We defer the insertion until
+		// after the component has hydrated.
+		if (!hydrating) {
+			anchor.before(start);
+		}
+
 		block(() => {
 			if (component === (component = get(current))) {
 				return;
@@ -43,13 +58,13 @@ export function hmr(fn) {
 				if (ran) set_should_intro(false);
 
 				// preserve getters/setters
-				Object.defineProperties(
-					instance,
-					Object.getOwnPropertyDescriptors(
-						// @ts-expect-error
-						new.target ? new component(anchor, props) : component(anchor, props)
-					)
-				);
+				var result =
+					// @ts-expect-error
+					new.target ? new component(anchor, props) : component(anchor, props);
+				// a component is not guaranteed to return something and we can't invoke getOwnPropertyDescriptors on undefined
+				if (result) {
+					Object.defineProperties(instance, Object.getOwnPropertyDescriptors(result));
+				}
 
 				if (ran) set_should_intro(true);
 			});
@@ -58,8 +73,15 @@ export function hmr(fn) {
 		ran = true;
 
 		if (hydrating) {
+			// Insert start comment now that hydration is done, so it doesn't
+			// corrupt the hydration walk
+			anchor.before(start);
 			anchor = hydrate_node;
 		}
+
+		anchor.before(end);
+
+		assign_nodes(start, end);
 
 		return instance;
 	}

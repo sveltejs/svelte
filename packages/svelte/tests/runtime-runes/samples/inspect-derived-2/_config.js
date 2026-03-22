@@ -30,7 +30,7 @@ export default test({
 				},
 				derived: [1]
 			},
-			'at HTMLButtonElement.Main.button.__click'
+			'at HTMLButtonElement.click'
 		]);
 	}
 });

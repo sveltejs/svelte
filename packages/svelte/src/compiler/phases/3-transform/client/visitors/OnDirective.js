@@ -34,5 +34,5 @@ export function OnDirective(node, context) {
 		node.modifiers.includes('passive') ||
 		(node.modifiers.includes('nonpassive') ? false : undefined);
 
-	return build_event(node.name, context.state.node, handler, capture, passive);
+	return build_event(context, node.name, handler, capture, passive, false);
 }

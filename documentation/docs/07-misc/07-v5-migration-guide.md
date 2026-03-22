@@ -324,7 +324,7 @@ When spreading props, local event handlers must go _after_ the spread, or they r
 >
 > It was always possible to use component callback props, but because you had to listen to DOM events using `on:`, it made sense to use `createEventDispatcher` for component events due to syntactical consistency. Now that we have event attributes (`onclick`), it's the other way around: Callback props are now the more sensible thing to do.
 >
-> The removal of event modifiers is arguably one of the changes that seems like a step back for those who've liked the shorthand syntax of event modifiers. Given that they are not used that frequently, we traded a smaller surface area for more explicitness. Modifiers also were inconsistent, because most of them were only useable on DOM elements.
+> The removal of event modifiers is arguably one of the changes that seems like a step back for those who've liked the shorthand syntax of event modifiers. Given that they are not used that frequently, we traded a smaller surface area for more explicitness. Modifiers also were inconsistent, because most of them were only usable on DOM elements.
 >
 > Multiple listeners for the same event are also no longer possible, but it was something of an anti-pattern anyway, since it impedes readability: if there are many attributes, it becomes harder to spot that there are two handlers unless they are right next to each other. It also implies that the two handlers are independent, when in fact something like `event.stopImmediatePropagation()` inside `one` would prevent `two` from being called.
 >
@@ -682,6 +682,24 @@ Previously, Svelte employed a very complicated algorithm to determine if whitesp
 
 - Whitespace between nodes is collapsed to one whitespace
 - Whitespace at the start and end of a tag is removed completely
+
+  This new behavior is slightly different from native HTML rendering. For example, `<p>foo<span> - bar</span></p>` will render:
+
+  - `foo - bar` in HTML
+  - `foo- bar` in Svelte 5
+
+  You can reintroduce the missing space by moving it outside the `<span>`...
+
+  ```svelte
+  <p>foo <span>- bar</span></p>
+  ```
+
+  ...or, if necessary for styling reasons, including it as an expression:
+
+  ```svelte
+  <p>foo<span>{' '}- bar</span></p>
+  ```
+
 - Certain exceptions apply such as keeping whitespace inside `pre` tags
 
 As before, you can disable whitespace trimming by setting the `preserveWhitespace` option in your compiler settings or on a per-component basis in `<svelte:options>`.

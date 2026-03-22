@@ -5,7 +5,7 @@ import { active_effect, active_reaction } from './runtime.js';
 import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
-import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
+import { BRANCH_EFFECT } from './constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -182,6 +182,7 @@ export function push(props, runes = false, fn) {
 		e: null,
 		s: props,
 		x: null,
+		r: /** @type {Effect} */ (active_effect),
 		l: legacy_mode_flag && !runes ? { s: null, u: null, $: [] } : null
 	};
 

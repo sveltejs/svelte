@@ -68,9 +68,10 @@ export class BranchManager {
 		this.#transition = transition;
 	}
 
-	#commit = () => {
-		var batch = /** @type {Batch} */ (current_batch);
-
+	/**
+	 * @param {Batch} batch
+	 */
+	#commit = (batch) => {
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
 
@@ -221,7 +222,7 @@ export class BranchManager {
 				this.anchor = hydrate_node;
 			}
 
-			this.#commit();
+			this.#commit(batch);
 		}
 	}
 }

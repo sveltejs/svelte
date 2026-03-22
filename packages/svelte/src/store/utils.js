@@ -1,5 +1,5 @@
 /** @import { Readable } from './public' */
-import { untrack } from '../index-client.js';
+import { untrack } from '../internal/client/runtime.js';
 import { noop } from '../internal/shared/utils.js';
 
 /**

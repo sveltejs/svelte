@@ -21,7 +21,7 @@ import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
+import { ignore_map, get_ignore_snapshot, pop_ignore, push_ignore } from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -134,7 +134,7 @@ const visitors = {
 			push_ignore(ignores);
 		}
 
-		ignore_map.set(node, structuredClone(ignore_stack));
+		ignore_map.set(node, get_ignore_snapshot());
 
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
@@ -345,6 +345,8 @@ export function analyze_component(root, source, options) {
 
 	let synthetic_stores_legacy_check = [];
 
+	const runes_option = options.runes?.({ filename: options.filename });
+
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -359,7 +361,7 @@ export function analyze_component(root, source, options) {
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
 		if (
-			options.runes === false ||
+			runes_option === false ||
 			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
@@ -395,7 +397,7 @@ export function analyze_component(root, source, options) {
 				e.store_invalid_scoped_subscription(is_nested_store_subscription_node);
 			}
 
-			if (options.runes !== false) {
+			if (runes_option !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					e.global_reference_invalid(references[0].node, name);
 				} else if (declaration !== null && is_rune(name)) {
@@ -447,7 +449,7 @@ export function analyze_component(root, source, options) {
 	const component_name = get_component_name(options.filename);
 
 	const runes =
-		options.runes ??
+		runes_option ??
 		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
@@ -463,7 +465,10 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	const is_custom_element = !!options.customElementOptions || options.customElement;
+	const custom_element_from_option = options.customElement({ filename: options.filename });
+	const css = options.css({ filename: options.filename });
+	const custom_element = options.customElementOptions ?? custom_element_from_option;
+	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
 
 	const name = module.scope.generate(options.name ?? component_name);
 
@@ -491,7 +496,7 @@ export function analyze_component(root, source, options) {
 		maybe_runes:
 			!runes &&
 			// if they explicitly disabled runes, use the legacy behavior
-			options.runes !== false &&
+			runes_option !== false &&
 			![...module.scope.references.keys()].some((name) =>
 				['$$props', '$$restProps'].includes(name)
 			) &&
@@ -523,8 +528,8 @@ export function analyze_component(root, source, options) {
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
-		custom_element: is_custom_element,
-		inject_styles: options.css === 'injected' || is_custom_element,
+		custom_element,
+		inject_styles: css === 'injected' || is_custom_element,
 		accessors:
 			is_custom_element ||
 			(runes ? false : !!options.accessors) ||
@@ -680,7 +685,7 @@ export function analyze_component(root, source, options) {
 				w.options_deprecated_accessors(attribute);
 			}
 
-			if (attribute.name === 'customElement' && !options.customElement) {
+			if (attribute.name === 'customElement' && !custom_element_from_option) {
 				w.options_missing_custom_element(attribute);
 			}
 
@@ -690,7 +695,7 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	calculate_blockers(instance, scopes, analysis);
+	calculate_blockers(instance, analysis);
 
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
@@ -856,9 +861,7 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		for (const node of analysis.elements) {
-			prune(analysis.css.ast, node);
-		}
+		prune(analysis.css.ast, analysis.elements);
 
 		const { comment } = analysis.css.ast.content;
 		const should_ignore_unused =
@@ -940,11 +943,10 @@ export function analyze_component(root, source, options) {
  * top level statements. This includes indirect blockers such as functions referencing async top level statements.
  *
  * @param {Js} instance
- * @param {Map<AST.SvelteNode, Scope>} scopes
  * @param {ComponentAnalysis} analysis
  * @returns {void}
  */
-function calculate_blockers(instance, scopes, analysis) {
+function calculate_blockers(instance, analysis) {
 	/**
 	 * @param {ESTree.Node} expression
 	 * @param {Scope} scope
@@ -959,6 +961,14 @@ function calculate_blockers(instance, scopes, analysis) {
 			expression,
 			{ scope },
 			{
+				_(node, context) {
+					const scope = instance.scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
 				ImportDeclaration(node) {},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
@@ -979,14 +989,11 @@ function calculate_blockers(instance, scopes, analysis) {
 
 	/**
 	 * @param {ESTree.Node} node
-	 * @param {Set<ESTree.Node>} seen
 	 * @param {Set<Binding>} reads
 	 * @param {Set<Binding>} writes
+	 * @param {Scope} scope
 	 */
-	const trace_references = (node, reads, writes, seen = new Set()) => {
-		if (seen.has(node)) return;
-		seen.add(node);
-
+	const trace_references = (node, reads, writes, scope) => {
 		/**
 		 * @param {ESTree.Pattern} node
 		 * @param {Scope} scope
@@ -1005,10 +1012,10 @@ function calculate_blockers(instance, scopes, analysis) {
 
 		walk(
 			node,
-			{ scope: instance.scope },
+			{ scope },
 			{
 				_(node, context) {
-					const scope = scopes.get(node);
+					const scope = instance.scopes.get(node);
 					if (scope) {
 						context.next({ scope });
 					} else {
@@ -1040,10 +1047,6 @@ function calculate_blockers(instance, scopes, analysis) {
 						writes.add(b);
 					}
 				},
-				// don't look inside functions until they are called
-				ArrowFunctionExpression(_, context) {},
-				FunctionDeclaration(_, context) {},
-				FunctionExpression(_, context) {},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
 					if (is_reference(node, parent)) {
@@ -1052,12 +1055,27 @@ function calculate_blockers(instance, scopes, analysis) {
 							reads.add(binding);
 						}
 					}
-				}
+				},
+				ReturnStatement(node, context) {
+					// We have to assume that anything returned from a function, even if it's a function itself,
+					// might be called immediately, so we have to touch all references within it. Example:
+					// function foo() { return () => blocker; } foo(); // blocker is touched
+					if (node.argument) {
+						touch(node.argument, context.state.scope, reads);
+					}
+				},
+				// don't look inside functions until they are called
+				ArrowFunctionExpression(_, context) {},
+				FunctionDeclaration(_, context) {},
+				FunctionExpression(_, context) {}
 			}
 		);
 	};
 
 	let awaited = false;
+
+	/** @type {Array<ESTree.Statement | ESTree.VariableDeclarator>} */
+	let sync_group = [];
 
 	// TODO this should probably be attached to the scope?
 	const promises = b.id('$$promises');
@@ -1071,6 +1089,13 @@ function calculate_blockers(instance, scopes, analysis) {
 
 		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
 		binding.blocker = blocker;
+	}
+
+	function flush_sync_group() {
+		if (sync_group.length === 0) return;
+
+		analysis.instance_body.async.push({ nodes: sync_group, has_await: false });
+		sync_group = [];
 	}
 
 	/**
@@ -1132,7 +1157,10 @@ function calculate_blockers(instance, scopes, analysis) {
 					/** @type {Set<Binding>} */
 					const writes = new Set();
 
-					trace_references(declarator, reads, writes);
+					trace_references(declarator, reads, writes, instance.scope);
+
+					// Needs to happen before blocker computation
+					if (has_await) flush_sync_group();
 
 					const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 						b.member(promises, b.literal(analysis.instance_body.async.length), true)
@@ -1146,11 +1174,12 @@ function calculate_blockers(instance, scopes, analysis) {
 						push_declaration(id, blocker);
 					}
 
-					// one declarator per declaration, makes things simpler
-					analysis.instance_body.async.push({
-						node: declarator,
-						has_await
-					});
+					if (has_await) {
+						// one declarator per declaration, makes things simpler
+						analysis.instance_body.async.push({ nodes: [declarator], has_await: true });
+					} else {
+						sync_group.push(declarator);
+					}
 				}
 			}
 		} else if (awaited) {
@@ -1160,7 +1189,10 @@ function calculate_blockers(instance, scopes, analysis) {
 			/** @type {Set<Binding>} */
 			const writes = new Set();
 
-			trace_references(node, reads, writes);
+			trace_references(node, reads, writes, instance.scope);
+
+			// Needs to happen before blocker computation
+			if (has_await) flush_sync_group();
 
 			const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 				b.member(promises, b.literal(analysis.instance_body.async.length), true)
@@ -1172,24 +1204,34 @@ function calculate_blockers(instance, scopes, analysis) {
 
 			if (node.type === 'ClassDeclaration') {
 				push_declaration(node.id, blocker);
-				analysis.instance_body.async.push({ node, has_await });
+			}
+
+			if (has_await) {
+				analysis.instance_body.async.push({ nodes: [node], has_await: true });
 			} else {
-				analysis.instance_body.async.push({ node, has_await });
+				sync_group.push(node);
 			}
 		} else {
 			analysis.instance_body.sync.push(node);
 		}
 	}
 
+	flush_sync_group();
+
 	for (const fn of functions) {
 		/** @type {Set<Binding>} */
 		const reads_writes = new Set();
-		const body =
+		const init =
 			fn.type === 'VariableDeclarator'
-				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init).body
-				: fn.body;
+				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init)
+				: fn;
 
-		trace_references(body, reads_writes, reads_writes);
+		trace_references(
+			init.body,
+			reads_writes,
+			reads_writes,
+			/** @type {Scope} */ (instance.scopes.get(init))
+		);
 
 		const max = [...reads_writes].reduce((max, binding) => {
 			if (binding.blocker) {

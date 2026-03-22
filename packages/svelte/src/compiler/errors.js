@@ -785,12 +785,12 @@ export function attribute_invalid_name(node, name) {
 }
 
 /**
- * Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
+ * Comma-separated expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function attribute_invalid_sequence_expression(node) {
-	e(node, 'attribute_invalid_sequence_expression', `Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses\nhttps://svelte.dev/e/attribute_invalid_sequence_expression`);
+	e(node, 'attribute_invalid_sequence_expression', `Comma-separated expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses\nhttps://svelte.dev/e/attribute_invalid_sequence_expression`);
 }
 
 /**

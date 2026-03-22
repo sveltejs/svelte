@@ -22,7 +22,16 @@ import {
 	TEMPLATE_USE_MATHML,
 	TEMPLATE_USE_SVG
 } from '../../../constants.js';
-import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, EFFECT_RAN, TEXT_NODE } from '#client/constants';
+import {
+	COMMENT_NODE,
+	DOCUMENT_FRAGMENT_NODE,
+	IS_XHTML,
+	REACTION_RAN,
+	TEXT_NODE
+} from '#client/constants';
+
+const TEMPLATE_TAG = IS_XHTML ? 'template' : 'TEMPLATE';
+const SCRIPT_TAG = IS_XHTML ? 'script' : 'SCRIPT';
 
 /**
  * @param {TemplateNode} start
@@ -186,12 +195,12 @@ function fragment_from_tree(structure, ns) {
 
 		if (children.length > 0) {
 			var target =
-				element.tagName === 'TEMPLATE'
+				element.nodeName === TEMPLATE_TAG
 					? /** @type {HTMLTemplateElement} */ (element).content
 					: element;
 
 			target.append(
-				fragment_from_tree(children, element.tagName === 'foreignObject' ? undefined : namespace)
+				fragment_from_tree(children, element.nodeName === 'foreignObject' ? undefined : namespace)
 			);
 		}
 
@@ -268,14 +277,14 @@ function run_scripts(node) {
 
 	const is_fragment = node.nodeType === DOCUMENT_FRAGMENT_NODE;
 	const scripts =
-		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
+		/** @type {HTMLElement} */ (node).nodeName === SCRIPT_TAG
 			? [/** @type {HTMLScriptElement} */ (node)]
 			: node.querySelectorAll('script');
 
 	const effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
 	for (const script of scripts) {
-		const clone = document.createElement('script');
+		const clone = create_element('script');
 		for (var attribute of script.attributes) {
 			clone.setAttribute(attribute.name, attribute.value);
 		}
@@ -353,7 +362,7 @@ export function append(anchor, dom) {
 		// When hydrating and outer component and an inner component is async, i.e. blocked on a promise,
 		// then by the time the inner resolves we have already advanced to the end of the hydrated nodes
 		// of the parent component. Check for defined for that reason to avoid rewinding the parent's end marker.
-		if ((effect.f & EFFECT_RAN) === 0 || effect.nodes.end === null) {
+		if ((effect.f & REACTION_RAN) === 0 || effect.nodes.end === null) {
 			effect.nodes.end = hydrate_node;
 		}
 

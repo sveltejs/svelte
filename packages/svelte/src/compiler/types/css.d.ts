@@ -6,10 +6,17 @@ export namespace _CSS {
 		end: number;
 	}
 
-	export interface StyleSheet extends BaseNode {
+	export interface StyleSheetBase extends BaseNode {
+		children: Array<Atrule | Rule>;
+	}
+
+	export interface StyleSheetFile extends StyleSheetBase {
+		type: 'StyleSheetFile';
+	}
+
+	export interface StyleSheet extends StyleSheetBase {
 		type: 'StyleSheet';
 		attributes: any[]; // TODO
-		children: Array<Atrule | Rule>;
 		content: {
 			start: number;
 			end: number;
