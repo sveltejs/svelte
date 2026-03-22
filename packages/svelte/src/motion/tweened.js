@@ -1,5 +1,5 @@
 /** @import { Task } from '../internal/client/types' */
-/** @import { Tweened, TweenedOptions } from './public' */
+/** @import { Tweened, TweenOptions } from './public' */
 import { writable } from '../store/shared/index.js';
 import { raf } from '../internal/client/timing.js';
 import { loop } from '../internal/client/loop.js';
@@ -83,7 +83,7 @@ function get_interpolator(a, b) {
  * @deprecated Use [`Tween`](https://svelte.dev/docs/svelte/svelte-motion#Tween) instead
  * @template T
  * @param {T} [value]
- * @param {TweenedOptions<T>} [defaults]
+ * @param {TweenOptions<T>} [defaults]
  * @returns {Tweened<T>}
  */
 export function tweened(value, defaults = {}) {
@@ -93,7 +93,7 @@ export function tweened(value, defaults = {}) {
 	let target_value = value;
 	/**
 	 * @param {T} new_value
-	 * @param {TweenedOptions<T>} [opts]
+	 * @param {TweenOptions<T>} [opts]
 	 */
 	function set(new_value, opts) {
 		target_value = new_value;
@@ -179,7 +179,7 @@ export class Tween {
 	#current;
 	#target;
 
-	/** @type {TweenedOptions<T>} */
+	/** @type {TweenOptions<T>} */
 	#defaults;
 
 	/** @type {import('../internal/client/types').Task | null} */
@@ -187,7 +187,7 @@ export class Tween {
 
 	/**
 	 * @param {T} value
-	 * @param {TweenedOptions<T>} options
+	 * @param {TweenOptions<T>} options
 	 */
 	constructor(value, options = {}) {
 		this.#current = state(value);
@@ -215,7 +215,7 @@ export class Tween {
 	 * ```
 	 * @template U
 	 * @param {() => U} fn
-	 * @param {TweenedOptions<U>} [options]
+	 * @param {TweenOptions<U>} [options]
 	 */
 	static of(fn, options) {
 		const tween = new Tween(fn(), options);
@@ -232,7 +232,7 @@ export class Tween {
 	 *
 	 * If `options` are provided, they will override the tween's defaults.
 	 * @param {T} value
-	 * @param {TweenedOptions<T>} [options]
+	 * @param {TweenOptions<T>} [options]
 	 * @returns
 	 */
 	set(value, options) {

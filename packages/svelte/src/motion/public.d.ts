@@ -1,12 +1,12 @@
 import { Readable, type Unsubscriber } from '../store/public.js';
 
-export interface SpringOpts {
+export interface SpringOptions {
 	stiffness?: number;
 	damping?: number;
 	precision?: number;
 }
 
-export interface SpringUpdateOpts {
+export interface SpringUpdateOptions {
 	/**
 	 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
 	 */
@@ -27,7 +27,7 @@ export interface SpringUpdateOpts {
 
 export type Updater<T> = (target_value: T, value: T) => T;
 
-export interface TweenedOptions<T> {
+export interface TweenOptions<T> {
 	delay?: number;
 	duration?: number | ((from: T, to: T) => number);
 	easing?: (t: number) => number;
@@ -39,11 +39,11 @@ export interface TweenedOptions<T> {
 // existing on one side. In Svelte 6, remove the type definition and move the jsdoc onto the class in spring.js
 
 export interface Spring<T> extends Readable<T> {
-	set(new_value: T, opts?: SpringUpdateOpts): Promise<void>;
+	set(new_value: T, opts?: SpringUpdateOptions): Promise<void>;
 	/**
 	 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
 	 */
-	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
+	update: (fn: Updater<T>, opts?: SpringUpdateOptions) => Promise<void>;
 	/**
 	 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
 	 */
@@ -70,7 +70,7 @@ export interface Spring<T> extends Readable<T> {
  * @since 5.8.0
  */
 export class Spring<T> {
-	constructor(value: T, options?: SpringOpts);
+	constructor(value: T, options?: SpringOptions);
 
 	/**
 	 * Create a spring whose value is bound to the return value of `fn`. This must be called
@@ -86,7 +86,7 @@ export class Spring<T> {
 	 * </script>
 	 * ```
 	 */
-	static of<U>(fn: () => U, options?: SpringOpts): Spring<U>;
+	static of<U>(fn: () => U, options?: SpringOptions): Spring<U>;
 
 	/**
 	 * Sets `spring.target` to `value` and returns a `Promise` that resolves if and when `spring.current` catches up to it.
@@ -96,7 +96,7 @@ export class Spring<T> {
 	 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
 	 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 	 */
-	set(value: T, options?: SpringUpdateOpts): Promise<void>;
+	set(value: T, options?: SpringUpdateOptions): Promise<void>;
 
 	damping: number;
 	precision: number;
@@ -114,8 +114,8 @@ export class Spring<T> {
 }
 
 export interface Tweened<T> extends Readable<T> {
-	set(value: T, opts?: TweenedOptions<T>): Promise<void>;
-	update(updater: Updater<T>, opts?: TweenedOptions<T>): Promise<void>;
+	set(value: T, opts?: TweenOptions<T>): Promise<void>;
+	update(updater: Updater<T>, opts?: TweenOptions<T>): Promise<void>;
 }
 
 export { prefersReducedMotion, spring, tweened, Tween } from './index.js';
