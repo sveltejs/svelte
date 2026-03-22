@@ -737,6 +737,21 @@ export class Batch {
 
 		this.#roots.push(e);
 	}
+
+	/**
+	 * If an effect/derived is running for the first time and reads a signal that
+	 * belongs to an earlier batch, this batch must wait for that earlier batch.
+	 * @param {Value} signal
+	 */
+	mark_blocked_by(signal) {
+		for (const batch of batches) {
+			if (batch === this) break;
+
+			if (!batch.is_fork && batch.current.has(signal)) {
+				this.blockers.add(batch);
+			}
+		}
+	}
 }
 
 /**
@@ -916,25 +931,6 @@ function mark_eager_effects(value, effects) {
  */
 export function schedule_effect(effect) {
 	/** @type {Batch} */ (current_batch).schedule(effect);
-}
-
-/**
- * If an effect/derived is running for the first time and reads a signal that
- * belongs to an earlier batch, this batch must wait for that earlier batch.
- * @param {Value} signal
- */
-export function mark_current_batch_blocked_by_prior_signal(signal) {
-	if (current_batch === null) return;
-
-	for (const batch of batches) {
-		if (batch === current_batch || batch.is_fork || batch.id >= current_batch.id) {
-			continue;
-		}
-
-		if (batch.current.has(signal)) {
-			current_batch.blockers.add(batch);
-		}
-	}
 }
 
 /** @type {Source<number>[]} */
