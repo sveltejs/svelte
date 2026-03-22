@@ -68,7 +68,9 @@ Svelte will do as much asynchronous work as it can in parallel. For example if y
 This does not apply to sequential `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript. An exception is that independent `$derived` expressions will update independently, even though they will run sequentially when they are first created:
 
 ```js
+/** @param {number} x */
 async function one(x) { return x; }
+/** @param {number} y */
 async function two(y) { return y; }
 let x = $state(1);
 let y = $state(2);
