@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: export TweenedOptions, SpringOpts, SpringUpdateOpts, and Updater from svelte/motion (#16151)
+fix: export TweenOptions, SpringOptions, SpringUpdateOptions and Updater from svelte/motion
