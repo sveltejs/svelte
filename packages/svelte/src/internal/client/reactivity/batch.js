@@ -581,13 +581,6 @@ export class Batch {
 	}
 
 	/**
-	 * @param {(reason: unknown) => void} reject
-	 */
-	register_async_derived(reject) {
-		this.async_deriveds.set(reject, false);
-	}
-
-	/**
 	 * Marks an async run as outdated. If all async runs are outdated, the batch as a whole is obsolete.
 	 * All its async deriveds then have resolved successors which means we discard this batch.
 	 * @param {(reason: unknown) => void} reject

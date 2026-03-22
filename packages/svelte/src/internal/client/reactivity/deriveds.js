@@ -167,32 +167,16 @@ export function async_derived(fn, label, location) {
 				var decrement_pending = increment_pending();
 			}
 
-			batch.async_deriveds.delete(d.reject);
-
-			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
-				// Reject own batch directly without calling mark_async_derived_outdated,
+			var stale = deferreds.get(batch);
+			if (stale) {
+				// Reject own batch directly without calling reject_async,
 				// we don't want it to check if it needs to merge into some other batch.
-				var stale = deferreds.get(batch);
-				if (stale) {
-					stale.reject(STALE_REACTION);
-					batch.async_deriveds.delete(stale.reject);
-				}
+				stale.reject(STALE_REACTION);
+				batch.async_deriveds.delete(stale.reject);
 				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
-			} else {
-				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
-				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
-				for (const [b, d] of deferreds) {
-					d.reject(STALE_REACTION);
-					if (b === batch) {
-						batch.async_deriveds.delete(d.reject);
-					} else {
-						b.reject_async(d.reject);
-					}
-				}
-				deferreds.clear();
 			}
 
-			batch.register_async_derived(d.reject);
+			batch.async_deriveds.set(d.reject, false);
 			deferreds.set(batch, d);
 
 			// Check if a later batch started work earlier than an earlier one.
@@ -285,9 +269,10 @@ export function async_derived(fn, label, location) {
 	});
 
 	teardown(() => {
-		for (const [batch, d] of deferreds) {
-			batch.reject_async(d.reject);
-			d.reject(STALE_REACTION); // reject directly, prevent handler above from succeeding
+		for (const d of deferreds.values()) {
+			// reject directly, prevent handler above from succeeding,
+			// they will call batch.reject_async instead.
+			d.reject(STALE_REACTION);
 		}
 	});
 
