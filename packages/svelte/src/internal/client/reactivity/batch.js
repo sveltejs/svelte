@@ -611,7 +611,7 @@ export class Batch {
 		for (const batch of batches) {
 			if (batch.id <= this.id) continue;
 
-			if (batch.async_deriveds.values().some((e) => e === effect)) {
+			if ([...batch.async_deriveds.values()].some((e) => e === effect)) {
 				this.#merge_into(batch);
 				return;
 			}
