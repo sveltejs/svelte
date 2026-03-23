@@ -176,7 +176,7 @@ export function async_derived(fn, label, location) {
 				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 			}
 
-			batch.async_deriveds.set(d.reject, false);
+			batch.async_deriveds.set(d.reject, effect);
 			deferreds.set(batch, d);
 
 			// Check if a later batch started work earlier than an earlier one.
@@ -216,7 +216,7 @@ export function async_derived(fn, label, location) {
 					for (const [other_batch, other_d] of deferreds) {
 						if (other_batch === batch) break;
 						if (!other_batch.is_fork) waits.push(other_batch.settled());
-						other_batch.reject_async(other_d.reject);
+						other_batch.reject_async(other_d.reject); // TODO once committed we need to reject this
 					}
 
 					if (waits.length > 0) {

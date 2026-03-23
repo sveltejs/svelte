@@ -142,7 +142,7 @@ export class Batch {
 	/**
 	 * Async derived reject handlers currently associated with this batch.
 	 * Value indicates whether the corresponding async derived is outdated.
-	 * @type {Map<(reason: unknown) => void, boolean>}
+	 * @type {Map<(reason: unknown) => void, Effect | null>}
 	 */
 	async_deriveds = new Map();
 
@@ -180,6 +180,7 @@ export class Batch {
 	#skipped_branches = new Map();
 
 	is_fork = false;
+	was_fork = false;
 
 	#decrement_queued = false;
 
@@ -594,10 +595,10 @@ export class Batch {
 	reject_async(reject) {
 		if (!this.async_deriveds.has(reject)) return;
 
-		this.async_deriveds.set(reject, true);
+		this.async_deriveds.set(reject, null);
 
-		for (const outdated of this.async_deriveds.values()) {
-			if (!outdated) return;
+		for (const effect of this.async_deriveds.values()) {
+			if (effect) return;
 		}
 
 		for (const reject of this.async_deriveds.keys()) {
@@ -756,21 +757,42 @@ export class Batch {
 	 * which depend on a signal modified by that prior batch. Else
 	 * the prior batch wouldn't know of these effects and could not
 	 * update them, resulting in e.g. stale values being rendered.
+	 *
+	 * We need this in addition to the `mark_blocked_by`-logic because
+	 * the `mark_blocked_by`-logic cannot handle forks committing
+	 * after a new branch was created and comitted in another batch
+	 * (see test async-state-new-branch-4/5), and this logic cannot handle
+	 * blocking on prior batches to prevent showing pending values
+	 * on new branches (see test async-state-new-branch-1/2/3).
+	 *
+	 * If this was a fork that's now committed, also reschedule async deriveds
+	 * in other batches that depend on a fork's current value, because they
+	 * might be pending with an outdated value otherwise.
 	 */
 	#schedule_new_effects_on_prior_batches() {
-		if (this.#new_effects.length === 0) return;
-
 		for (const batch of batches) {
-			// this batch can be gone from the batches set at this point already
-			if (batch.id >= this.id) break;
+			if (batch === this) continue;
 
-			for (const effect of this.#new_effects) {
-				if (
-					(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
-					reaction_depends_on_signals(effect, batch.current, new Set())
-				) {
-					set_signal_status(effect, DIRTY);
-					batch.schedule(effect);
+			if (batch.id < this.id) {
+				for (const effect of this.#new_effects) {
+					if (
+						(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
+						// TODO filter batch.current down to only the signals that are not equal to this.current?
+						reaction_depends_on_signals(effect, batch.current, new Set())
+					) {
+						set_signal_status(effect, DIRTY);
+						batch.schedule(effect);
+					}
+				}
+			}
+
+			if (this.was_fork) {
+				for (const effect of batch.async_deriveds.values()) {
+					// TODO filter this.current down to only the signals that are not equal to batch.current?
+					if (effect && reaction_depends_on_signals(effect, this.current, new Set())) {
+						set_signal_status(effect, DIRTY);
+						batch.schedule(effect);
+					}
 				}
 			}
 		}
@@ -1136,7 +1158,7 @@ export function fork(fn) {
 	}
 
 	var batch = Batch.ensure();
-	batch.is_fork = true;
+	batch.is_fork = batch.was_fork = true;
 	batch_values = new Map();
 
 	var committed = false;
