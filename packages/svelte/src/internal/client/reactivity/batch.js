@@ -595,6 +595,7 @@ export class Batch {
 	reject_async(reject) {
 		if (!this.async_deriveds.has(reject)) return;
 
+		const effect = this.async_deriveds.get(reject);
 		this.async_deriveds.set(reject, null);
 
 		for (const effect of this.async_deriveds.values()) {
@@ -606,8 +607,94 @@ export class Batch {
 		}
 
 		this.async_deriveds.clear();
-		this.discard();
+
+		for (const batch of batches) {
+			if (batch.id <= this.id) continue;
+
+			if (batch.async_deriveds.values().some((e) => e === effect)) {
+				this.#merge_into(batch);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Merge this batch's state into a newer superseding batch.
+	 * @param {Batch} target
+	 */
+	#merge_into(target) {
+		if (target === this) return;
+
+		// TODO check what of this we actually need to merge, maybe we can shrink this method a bit
+
+		for (const [source, info] of this.current) {
+			if (!target.current.has(source)) {
+				target.current.set(source, info);
+			}
+		}
+
+		for (const [source, value] of this.previous) {
+			target.previous.set(source, value);
+		}
+
+		target.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
+
+		for (const fn of this.#commit_callbacks) {
+			target.#commit_callbacks.add(() => fn(this));
+		}
+		this.#commit_callbacks.clear();
+
+		for (const fn of this.#discard_callbacks) {
+			target.#discard_callbacks.add(() => fn(this));
+		}
+		this.#discard_callbacks.clear();
+
+		for (const [effect, tracked] of this.#skipped_branches) {
+			var existing = target.#skipped_branches.get(effect);
+
+			if (existing === undefined) {
+				target.#skipped_branches.set(effect, tracked);
+			} else {
+				for (const e of tracked.d) {
+					existing.d.add(e);
+				}
+
+				for (const e of tracked.m) {
+					existing.m.add(e);
+				}
+			}
+		}
+		this.#skipped_branches.clear();
+
+		for (const root of this.#roots) {
+			if (!target.#roots.includes(root)) {
+				target.#roots.push(root);
+			}
+		}
+		this.#roots = [];
+
+		// No need to merge pending/block_pending, these are already at 0 and obsolete else we couldn't merge into the target batch
+
+		for (const blocker of this.blockers) {
+			if (blocker !== target) {
+				target.blockers.add(blocker);
+			}
+		}
+		this.blockers.clear();
+
+		batches.delete(this);
 		this.obsolete = true;
+
+		for (const batch of batches) {
+			if (!batch.blockers.has(this)) continue;
+
+			batch.blockers.delete(this);
+			if (batch !== target) {
+				batch.blockers.add(target);
+			}
+		}
+
+		this.#deferred?.resolve();
 	}
 
 	settled() {

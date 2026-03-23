@@ -1,0 +1,73 @@
+import { tick } from 'svelte';
+import { test } from '../../test';
+
+export default test({
+	async test({ assert, target }) {
+		const [x, y, shift, pop, commit] = target.querySelectorAll('button');
+
+		y.click();
+		await tick();
+
+		x.click();
+		await tick();
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<button>x</button>
+			<button>y++</button>
+			<button>shift</button>
+			<button>pop</button>
+			<button>commit</button>
+			<hr>
+		`
+		);
+
+		commit.click();
+		await tick();
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<button>x</button>
+			<button>y++</button>
+			<button>shift</button>
+			<button>pop</button>
+			<button>commit</button>
+			<hr>
+		`
+		);
+
+		console.log('pop1');
+		pop.click();
+		await tick();
+		console.log('pop2');
+		pop.click();
+		await tick();
+		console.log('pop3');
+		pop.click();
+		await tick();
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<button>x</button>
+			<button>y++</button>
+			<button>shift</button>
+			<button>pop</button>
+			<button>commit</button>
+			universe
+			universe
+			"universe"
+			universe
+			universe
+			universe
+			"universe"
+			<hr>
+			universe
+			"universe"
+			universe
+			universe
+			universe
+			"universe"
+		`
+		);
+	}
+});
