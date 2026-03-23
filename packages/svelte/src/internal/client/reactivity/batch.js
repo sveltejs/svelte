@@ -20,7 +20,7 @@ import {
 	STALE_REACTION
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property, includes } from '../../shared/utils.js';
+import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
 	active_reaction,
@@ -39,7 +39,6 @@ import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
-import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
 
 /** @type {Set<Batch>} */
@@ -152,6 +151,12 @@ export class Batch {
 	 * @type {Effect[]}
 	 */
 	#roots = [];
+
+	/**
+	 * Effects created while this batch was active.
+	 * @type {Effect[]}
+	 */
+	#new_effects = [];
 
 	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
@@ -346,6 +351,7 @@ export class Batch {
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
 			previous_batch = null;
+			this.#schedule_new_effects_on_prior_batches();
 
 			this.#deferred?.resolve();
 			// TODO can a source within a branch contributing to this.#pending (instead of this.#blocking_pending) be the reason for blocking the batch?
@@ -739,6 +745,42 @@ export class Batch {
 	}
 
 	/**
+	 * @param {Effect} effect
+	 */
+	register_created_effect(effect) {
+		this.#new_effects.push(effect);
+	}
+
+	/**
+	 * Schedule those effects created in this batch on prior batches
+	 * which depend on a signal modified by that prior batch. Else
+	 * the prior batch wouldn't know of these effects and could not
+	 * update them, resulting in e.g. stale values being rendered.
+	 */
+	#schedule_new_effects_on_prior_batches() {
+		if (this.#new_effects.length === 0) return;
+
+		for (const batch of batches) {
+			// this batch can be gone from the batches set at this point already
+			if (batch.id >= this.id) break;
+
+			for (const effect of this.#new_effects) {
+				if (
+					(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
+					reaction_depends_on_signals(effect, batch.current, new Set())
+				) {
+					set_signal_status(effect, DIRTY);
+					batch.schedule(effect);
+				}
+			}
+		}
+
+		this.#new_effects = [];
+		// No need to flush here, if those batches are still in the set,
+		// they are pending and so will be flushed at some point
+	}
+
+	/**
 	 * If an effect/derived is running for the first time and reads a signal that
 	 * belongs to an earlier batch, this batch must wait for that earlier batch.
 	 * @param {Value} signal
@@ -901,6 +943,37 @@ function flush_queued_effects(effects) {
 	}
 
 	eager_block_effects = null;
+}
+
+/**
+ * Returns true if `reaction` depends (directly or via deriveds) on any signal in `signals`.
+ * @param {Reaction} reaction
+ * @param {Pick<Map<Value, any>, 'has'>} signals
+ * @param {Set<Derived>} visited
+ * @returns {boolean}
+ */
+function reaction_depends_on_signals(reaction, signals, visited) {
+	var deps = reaction.deps;
+	if (deps === null) return false;
+
+	for (const dep of deps) {
+		if (signals.has(dep)) {
+			return true;
+		}
+
+		if ((dep.f & DERIVED) !== 0) {
+			var derived = /** @type {Derived} */ (dep);
+
+			if (visited.has(derived)) continue;
+			visited.add(derived);
+
+			if (reaction_depends_on_signals(derived, signals, visited)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /**
