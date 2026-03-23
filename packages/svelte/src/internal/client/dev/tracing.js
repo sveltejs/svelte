@@ -136,6 +136,16 @@ export function trace(label, fn) {
  */
 export function tag(source, label) {
 	source.label = label;
+
+	// HMR state preservation: if $.hmr() captured state from the
+	// previous component, restore the signal value here — before
+	// template effects render the DOM with the default value.
+	/** @type {Map<string, any> | undefined} */
+	var preserved = /** @type {any} */ (globalThis).__hmr_preserved_state__;
+	if (preserved !== undefined && preserved.has(label)) {
+		source.v = preserved.get(label);
+	}
+
 	tag_proxy(source.v, label);
 
 	return source;
