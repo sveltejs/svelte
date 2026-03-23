@@ -5,9 +5,7 @@ import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
-import { get } from '../runtime.js';
-import { assign_nodes } from '../dom/template.js';
-import { create_comment } from '../dom/operations.js';
+import { active_effect, get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
@@ -28,19 +26,6 @@ export function hmr(fn) {
 		let effect;
 
 		let ran = false;
-
-		// Surround the wrapped effects with comments and assign the nodes
-		// on the wrapping effects so the parent can properly do DOM operations.
-		let start = create_comment();
-		let end = create_comment();
-
-		// During hydration, inserting the start comment before the anchor could
-		// corrupt the DOM tree that the hydration walker is navigating (e.g. when
-		// a component is inside a CSS props wrapper gh-issue#17972). We defer the insertion until
-		// after the component has hydrated.
-		if (!hydrating) {
-			anchor.before(start);
-		}
 
 		block(() => {
 			if (component === (component = get(current))) {
@@ -68,20 +53,18 @@ export function hmr(fn) {
 
 				if (ran) set_should_intro(true);
 			});
+
+			// Forward the nodes from the inner effect to the outer active effect which would
+			// get them if the HMR wrapper wasn't there. Do this inside the block not outside
+			// so that HMR updates to the component will also update the nodes on the active effect.
+			/** @type {Effect} */ (active_effect).nodes = effect.nodes;
 		}, EFFECT_TRANSPARENT);
 
 		ran = true;
 
 		if (hydrating) {
-			// Insert start comment now that hydration is done, so it doesn't
-			// corrupt the hydration walk
-			anchor.before(start);
 			anchor = hydrate_node;
 		}
-
-		anchor.before(end);
-
-		assign_nodes(start, end);
 
 		return instance;
 	}
