@@ -901,8 +901,14 @@ export class SSRState {
 				throw error;
 			});
 
+		// Sanitize id_prefix to prevent HTML comment injection. The uid is embedded
+		// verbatim in a `<!--$uid-->` hydration marker by props_id(), so `<` and `>`
+		// must be removed to prevent `-->` or `--!>` sequences from breaking out of
+		// the comment and injecting arbitrary HTML into SSR output.
+		const safe_prefix = id_prefix.replace(/[<>]/g, '');
+
 		let uid = 1;
-		this.uid = () => `${id_prefix}s${uid++}`;
+		this.uid = () => `${safe_prefix}s${uid++}`;
 	}
 
 	get_title() {
