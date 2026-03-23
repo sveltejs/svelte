@@ -292,12 +292,11 @@ export function check_element(node, context) {
 	if (handlers.has('click')) {
 		const is_non_presentation_role =
 			role_static_value !== null && !is_presentation_role(role_static_value);
-		const is_table_cell_or_row = node.name === 'tr' || node.name === 'td' || node.name === 'th';
 		if (
 			!is_dynamic_element &&
 			!is_hidden_from_screen_reader(node.name, attribute_map) &&
 			(!role || is_non_presentation_role) &&
-			(!is_interactive || is_table_cell_or_row) &&
+			!is_interactive &&
 			!has_spread
 		) {
 			const has_key_event =
@@ -614,6 +613,12 @@ function has_disabled_attribute(attribute_map) {
  * @returns {typeof ElementInteractivity[keyof typeof ElementInteractivity]}
  */
 function element_interactivity(tag_name, attribute_map) {
+	if (tag_name === 'tr' || tag_name === 'td' || tag_name === 'th') {
+		return attribute_map.has('role')
+			? ElementInteractivity.Static
+			: ElementInteractivity.NonInteractive;
+	}
+
 	if (
 		interactive_element_role_schemas.some((schema) => match_schema(schema, tag_name, attribute_map))
 	) {

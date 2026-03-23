@@ -26,8 +26,11 @@
 <footer on:click={noop}></footer>
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <footer on:click={noop}></footer>
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <tr on:click={noop}></tr>
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <td on:click={noop}></td>
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <th on:click={noop}></th>
 
 <!-- should not warn -->
