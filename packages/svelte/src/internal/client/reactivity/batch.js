@@ -36,7 +36,6 @@ import { flush_eager_effects, old_values, set_eager_effects, source, update } fr
 import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
 import { log_effect_tree, root } from '../dev/debug.js';
@@ -222,12 +221,10 @@ export class Batch {
 			this.#skipped_branches.delete(effect);
 
 			for (var e of tracked.d) {
-				set_signal_status(e, DIRTY);
 				this.schedule(e);
 			}
 
 			for (e of tracked.m) {
-				set_signal_status(e, MAYBE_DIRTY);
 				this.schedule(e);
 			}
 		}
@@ -244,12 +241,10 @@ export class Batch {
 		if (!this.#is_deferred()) {
 			for (const e of this.#dirty_effects) {
 				this.#maybe_dirty_effects.delete(e);
-				set_signal_status(e, DIRTY);
 				this.schedule(e);
 			}
 
 			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
 				this.schedule(e);
 			}
 		}
@@ -928,7 +923,6 @@ function mark_effects(value, sources, marked, checked) {
 				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
-				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
 		}
@@ -951,7 +945,6 @@ function mark_eager_effects(value, effects) {
 		if ((flags & DERIVED) !== 0) {
 			mark_eager_effects(/** @type {Derived} */ (reaction), effects);
 		} else if ((flags & EAGER_EFFECT) !== 0) {
-			set_signal_status(reaction, DIRTY);
 			effects.add(/** @type {Effect} */ (reaction));
 		}
 	}
@@ -1070,8 +1063,6 @@ function reset_branch(effect, tracked) {
 		tracked.m.push(effect);
 	}
 
-	set_signal_status(effect, CLEAN);
-
 	var e = effect.first;
 	while (e !== null) {
 		reset_branch(e, tracked);
@@ -1084,8 +1075,6 @@ function reset_branch(effect, tracked) {
  * @param {Effect} effect
  */
 function reset_all(effect) {
-	set_signal_status(effect, CLEAN);
-
 	var e = effect.first;
 	while (e !== null) {
 		reset_all(e);

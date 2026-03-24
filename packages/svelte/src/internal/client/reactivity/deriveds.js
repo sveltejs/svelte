@@ -44,7 +44,6 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
-import { set_signal_status, update_derived_status } from './status.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -404,7 +403,6 @@ export function update_derived(derived) {
 
 			// deriveds without dependencies should never be recomputed
 			if (derived.deps === null) {
-				set_signal_status(derived, CLEAN);
 				return;
 			}
 		}
@@ -424,8 +422,6 @@ export function update_derived(derived) {
 		if (effect_tracking() || current_batch?.is_fork) {
 			batch_values.set(derived, value);
 		}
-	} else {
-		update_derived_status(derived);
 	}
 }
 

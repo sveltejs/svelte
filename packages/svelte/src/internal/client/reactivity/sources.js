@@ -44,7 +44,6 @@ import {
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
-import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();
@@ -231,12 +230,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			if ((source.f & DIRTY) !== 0) {
 				execute_derived(derived);
 			}
-
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			if (batch_values === null) {
-				update_derived_status(derived);
-			}
 		}
 
 		source.wv = source.cv = increment_write_version();
@@ -274,12 +267,6 @@ export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
 	for (const effect of eager_effects) {
-		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-		// instead of just updating the effects - this way we avoid overfiring.
-		if ((effect.f & CLEAN) !== 0) {
-			set_signal_status(effect, MAYBE_DIRTY);
-		}
-
 		if (is_dirty(effect)) {
 			update_effect(effect);
 		}
@@ -350,13 +337,6 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		if (DEV && (flags & EAGER_EFFECT) !== 0) {
 			eager_effects.add(reaction);
 			continue;
-		}
-
-		var not_dirty = (flags & DIRTY) === 0;
-
-		// don't set a DIRTY reaction to MAYBE_DIRTY
-		if (not_dirty) {
-			set_signal_status(reaction, status);
 		}
 
 		if ((flags & DERIVED) !== 0) {

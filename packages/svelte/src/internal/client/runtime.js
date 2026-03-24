@@ -57,7 +57,6 @@ import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
-import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
 
 let is_updating_effect = false;
@@ -182,15 +181,6 @@ export function is_dirty(reaction) {
 				return true;
 			}
 		}
-
-		if (
-			(flags & CONNECTED) !== 0 &&
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			batch_values === null
-		) {
-			set_signal_status(reaction, CLEAN);
-		}
 	}
 
 	reaction.cv = write_version;
@@ -217,11 +207,6 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
-			if (root) {
-				set_signal_status(reaction, DIRTY);
-			} else if ((reaction.f & CLEAN) !== 0) {
-				set_signal_status(reaction, MAYBE_DIRTY);
-			}
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
@@ -404,8 +389,6 @@ function remove_reaction(signal, dependency) {
 			derived.f &= ~WAS_MARKED;
 		}
 
-		update_derived_status(derived);
-
 		// freeze any effects inside this derived
 		freeze_derived_effects(derived);
 
@@ -438,8 +421,6 @@ export function update_effect(effect) {
 	if ((flags & DESTROYED) !== 0) {
 		return;
 	}
-
-	set_signal_status(effect, CLEAN);
 
 	var previous_effect = active_effect;
 	var was_updating_effect = is_updating_effect;

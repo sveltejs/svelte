@@ -41,7 +41,6 @@ import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
 import { defer_effect } from '../../reactivity/utils.js';
-import { set_signal_status } from '../../reactivity/status.js';
 
 /**
  * @typedef {{
