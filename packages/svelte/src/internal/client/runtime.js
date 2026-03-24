@@ -468,6 +468,10 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
+		if (!is_runes()) {
+			effect.cv = write_version;
+		}
+
 		effect.wv = write_version; // TODO should this be assigned before the update?
 
 		// In DEV, increment versions of any sources that were written to during the effect,
