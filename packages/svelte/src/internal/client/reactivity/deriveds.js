@@ -41,7 +41,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
+import { batch_values, batch_wvs, current_batch, set_cv } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 
@@ -120,7 +120,7 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label;
+	if (DEV) signal.label = label ?? '{await ...}';
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
@@ -385,12 +385,12 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
-	var old_value = derived.v;
 	var value = execute_derived(derived);
 
-	derived.cv = write_version;
+	set_cv(derived);
 
 	if (!derived.equals(value)) {
+		batch_wvs?.set(derived, write_version);
 		derived.wv = write_version;
 
 		// in a fork, we don't update the underlying value, just `batch_values`.

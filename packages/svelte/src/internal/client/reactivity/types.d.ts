@@ -11,8 +11,6 @@ import type { Boundary } from '../dom/blocks/boundary';
 export interface Signal {
 	/** Flags bitmask */
 	f: number;
-	/** Write version */
-	wv: number;
 }
 
 export interface Value<V = unknown> extends Signal {
@@ -36,6 +34,8 @@ export interface Value<V = unknown> extends Signal {
 	set_during_effect?: boolean;
 	/** A function that retrieves the underlying source, used for each block item signals */
 	trace?: null | (() => void);
+	/** Write version */
+	wv: number;
 	/** Read version */
 	rv: number;
 }

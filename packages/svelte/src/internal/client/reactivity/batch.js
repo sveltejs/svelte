@@ -26,13 +26,21 @@ import {
 	get,
 	increment_write_version,
 	is_dirty,
-	update_effect
+	update_effect,
+	write_version
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
+import {
+	flush_eager_effects,
+	mark_reactions,
+	old_values,
+	set_eager_effects,
+	source,
+	update
+} from './sources.js';
 import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
@@ -59,6 +67,16 @@ export let previous_batch = null;
  * @type {Map<Value, any> | null}
  */
 export let batch_values = null;
+
+/**
+ * @type {Map<Reaction, number> | null}
+ */
+export let batch_cvs = null;
+
+/**
+ * @type {Map<Value, number> | null}
+ */
+export let batch_wvs = null;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -161,6 +179,12 @@ export class Batch {
 	 */
 	#maybe_dirty_effects = new Set();
 
+	/** @type {Map<Value, number>} */
+	wvs = new Map();
+
+	/** @type {Map<Reaction, number>} */
+	cvs = new Map();
+
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`.
@@ -239,6 +263,10 @@ export class Batch {
 		if (flush_count++ > 1000) {
 			batches.delete(this);
 			infinite_loop_guard();
+		}
+
+		for (const source of this.current.keys()) {
+			mark_reactions(source, null);
 		}
 
 		// we only reschedule previously-deferred effects if we expect
@@ -414,9 +442,8 @@ export class Batch {
 	 * batch, noting its previous and current values
 	 * @param {Value} source
 	 * @param {any} old_value
-	 * @param {boolean} [is_derived]
 	 */
-	capture(source, old_value, is_derived = false) {
+	capture(source, old_value) {
 		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, old_value);
 		}
@@ -426,6 +453,11 @@ export class Batch {
 			this.current.set(source, source.v);
 			batch_values?.set(source, source.v);
 		}
+
+		var version = increment_write_version();
+
+		source.wv = version;
+		this.wvs.set(source, version);
 	}
 
 	/**
@@ -450,7 +482,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
-		batch_values = null;
+		batch_values = batch_cvs = batch_wvs = null;
 	}
 
 	flush() {
@@ -469,7 +501,7 @@ export class Batch {
 			is_processing = false;
 
 			current_batch = null;
-			batch_values = null;
+			batch_values = batch_cvs = batch_wvs = null;
 
 			old_values.clear();
 
@@ -672,7 +704,7 @@ export class Batch {
 	apply() {
 		if (!async_mode_flag) {
 			// TODO previously we bailed here if there was only one (non-fork) batch... maybe we can reinstate that
-			batch_values = null;
+			batch_values = batch_cvs = batch_wvs = null;
 			return;
 		}
 
@@ -682,6 +714,9 @@ export class Batch {
 		for (const [source, value] of this.current) {
 			batch_values.set(source, value);
 		}
+
+		batch_cvs = this.cvs;
+		batch_wvs = this.wvs;
 
 		// ...and undo changes belonging to other batches unless they block this one
 		for (const batch of batches) {
@@ -716,6 +751,10 @@ export class Batch {
 	 */
 	schedule(effect) {
 		last_scheduled_effect = effect;
+
+		if (!this.cvs.has(effect)) {
+			this.cvs.set(effect, effect.cv);
+		}
 
 		// defer render effects inside a pending boundary
 		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
@@ -1036,12 +1075,16 @@ export function eager(fn) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
+			var previous_batch_cvs = batch_cvs;
+			var previous_batch_wvs = batch_wvs;
 
 			try {
-				batch_values = null;
+				batch_values = batch_cvs = batch_wvs = null;
 				value = fn();
 			} finally {
 				batch_values = previous_batch_values;
+				batch_cvs = previous_batch_cvs;
+				batch_wvs = previous_batch_wvs;
 			}
 
 			return;
@@ -1196,6 +1239,14 @@ export function fork(fn) {
 			}
 		}
 	};
+}
+
+/**
+ * @param {Reaction} reaction
+ */
+export function set_cv(reaction) {
+	batch_cvs?.set(reaction, write_version);
+	reaction.cv = write_version;
 }
 
 /**

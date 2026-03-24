@@ -111,7 +111,6 @@ function create_effect(type, fn) {
 		b: parent && parent.b,
 		prev: null,
 		teardown: null,
-		wv: 0,
 		cv: -1,
 		ac: null
 	};

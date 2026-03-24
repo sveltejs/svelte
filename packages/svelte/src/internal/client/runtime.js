@@ -48,10 +48,13 @@ import {
 } from './context.js';
 import {
 	Batch,
+	batch_cvs,
 	batch_values,
+	batch_wvs,
 	current_batch,
 	flushSync,
-	schedule_effect
+	schedule_effect,
+	set_cv
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
@@ -165,26 +168,31 @@ export function is_dirty(reaction) {
 
 	var dependencies = /** @type {Value[]} */ (reaction.deps);
 
-	if (dependencies !== null) {
-		var length = dependencies.length;
+	if (dependencies === null) {
+		return false;
+	}
 
-		for (var i = 0; i < length; i++) {
-			var dependency = dependencies[i];
+	var cv = batch_cvs?.get(reaction) ?? reaction.cv;
 
-			if ((dependency.f & DERIVED) !== 0) {
-				if (is_dirty(/** @type {Derived} */ (dependency))) {
-					update_derived(/** @type {Derived} */ (dependency));
-				}
+	var length = dependencies.length;
+
+	for (var i = 0; i < length; i++) {
+		var dependency = dependencies[i];
+
+		if ((dependency.f & DERIVED) !== 0) {
+			if (is_dirty(/** @type {Derived} */ (dependency))) {
+				update_derived(/** @type {Derived} */ (dependency));
 			}
+		}
 
-			if (dependency.wv > reaction.cv) {
-				return true;
-			}
+		var wv = batch_wvs?.get(dependency) ?? dependency.wv;
+
+		if (wv > cv) {
+			return true;
 		}
 	}
 
-	reaction.cv = write_version;
-
+	set_cv(reaction);
 	return false;
 }
 
@@ -443,17 +451,15 @@ export function update_effect(effect) {
 			destroy_effect_children(effect);
 		}
 
-		effect.cv = write_version;
+		set_cv(effect);
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
 		if (!is_runes()) {
-			effect.cv = write_version;
+			set_cv(effect);
 		}
-
-		effect.wv = write_version; // TODO should this be assigned before the update?
 
 		// In DEV, increment versions of any sources that were written to during the effect,
 		// so that they are correctly marked as dirty when the effect re-runs
