@@ -386,10 +386,10 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
-	derived.cv = write_version;
-
 	var old_value = derived.v;
 	var value = execute_derived(derived);
+
+	derived.cv = write_version;
 
 	if (!derived.equals(value)) {
 		derived.wv = write_version;
