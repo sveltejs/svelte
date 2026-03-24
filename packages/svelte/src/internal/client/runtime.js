@@ -326,13 +326,13 @@ export function update_reaction(reaction) {
 			// so that they are not added again
 			if (previous_reaction.deps !== null) {
 				for (let i = 0; i < previous_skipped_deps; i += 1) {
-					previous_reaction.deps[i].rv = read_version;
+					// previous_reaction.deps[i].rv = read_version;
 				}
 			}
 
 			if (previous_deps !== null) {
 				for (const dep of previous_deps) {
-					dep.rv = read_version;
+					// dep.rv = read_version;
 				}
 			}
 
@@ -546,7 +546,7 @@ export function get(signal) {
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
 				// we're in the effect init/update cycle
 				if (signal.rv < read_version) {
-					signal.rv = read_version;
+					// signal.rv = read_version;
 
 					// If the signal is accessing the same dependencies in the same
 					// order as it did last time, increment `skipped_deps`
