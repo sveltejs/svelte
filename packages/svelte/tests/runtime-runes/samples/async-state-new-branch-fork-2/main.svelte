@@ -24,7 +24,6 @@
 <button onclick={() => deferred.pop()?.()}>pop</button>
 <button onclick={() => f.commit()}>commit</button>
 
-
 {#if x === 'universe'}
 	{await delay(x)}
 	<Child {x} />

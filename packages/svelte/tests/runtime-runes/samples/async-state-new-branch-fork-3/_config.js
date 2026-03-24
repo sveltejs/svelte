@@ -36,13 +36,10 @@ export default test({
 		`
 		);
 
-		console.log('pop1');
 		pop.click();
 		await tick();
-		console.log('pop2');
 		pop.click();
 		await tick();
-		console.log('pop3');
 		pop.click();
 		await tick();
 		assert.htmlEqual(
