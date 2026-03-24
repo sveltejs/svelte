@@ -156,26 +156,25 @@ export function increment_write_version() {
 export function is_dirty(reaction) {
 	var flags = reaction.f;
 
-	if ((flags & DIRTY) !== 0) {
-		return true;
-	}
-
 	if (flags & DERIVED) {
 		reaction.f &= ~WAS_MARKED;
 	}
 
-	if ((flags & MAYBE_DIRTY) !== 0) {
-		var dependencies = /** @type {Value[]} */ (reaction.deps);
+	var dependencies = /** @type {Value[]} */ (reaction.deps);
+
+	if (dependencies !== null) {
 		var length = dependencies.length;
 
 		for (var i = 0; i < length; i++) {
 			var dependency = dependencies[i];
 
-			if (is_dirty(/** @type {Derived} */ (dependency))) {
-				update_derived(/** @type {Derived} */ (dependency));
+			if ((dependency.f & DERIVED) !== 0) {
+				if (is_dirty(/** @type {Derived} */ (dependency))) {
+					update_derived(/** @type {Derived} */ (dependency));
+				}
 			}
 
-			if (dependency.wv > reaction.wv) {
+			if (dependency.wv > reaction.rv) {
 				return true;
 			}
 		}
@@ -189,6 +188,8 @@ export function is_dirty(reaction) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
+
+	reaction.rv = write_version;
 
 	return false;
 }
@@ -254,6 +255,8 @@ export function update_reaction(reaction) {
 	}
 
 	try {
+		reaction.wv = reaction.rv = write_version;
+
 		reaction.f |= REACTION_IS_UPDATING;
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();

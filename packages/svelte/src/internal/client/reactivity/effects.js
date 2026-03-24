@@ -103,7 +103,7 @@ function create_effect(type, fn) {
 		ctx: component_context,
 		deps: null,
 		nodes: null,
-		f: type | DIRTY | CONNECTED,
+		f: type | CLEAN | CONNECTED,
 		first: null,
 		fn,
 		last: null,
@@ -113,6 +113,7 @@ function create_effect(type, fn) {
 		prev: null,
 		teardown: null,
 		wv: 0,
+		rv: -1,
 		ac: null
 	};
 

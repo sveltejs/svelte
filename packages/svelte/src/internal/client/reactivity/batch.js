@@ -39,7 +39,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
-import { log_effect_tree } from '../dev/debug.js';
+import { log_effect_tree, root } from '../dev/debug.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();

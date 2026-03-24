@@ -11,6 +11,8 @@ import type { Boundary } from '../dom/blocks/boundary';
 export interface Signal {
 	/** Flags bitmask */
 	f: number;
+	/** Read version */
+	rv: number;
 	/** Write version */
 	wv: number;
 }
@@ -20,11 +22,8 @@ export interface Value<V = unknown> extends Signal {
 	equals: Equals;
 	/** Signals that read from this signal */
 	reactions: null | Reaction[];
-	/** Read version */
-	rv: number;
 	/** The latest value for this signal */
 	v: V;
-
 	// dev-only
 	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */
 	label?: string;

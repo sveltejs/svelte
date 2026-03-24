@@ -8,7 +8,7 @@ const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
  * @param {number} status
  */
 export function set_signal_status(signal, status) {
-	signal.f = (signal.f & STATUS_MASK) | status;
+	// signal.f = (signal.f & STATUS_MASK) | status;
 }
 
 /**

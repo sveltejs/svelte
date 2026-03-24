@@ -371,7 +371,7 @@ function mark_reactions(signal, status, updated_during_traversal) {
 
 				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 			}
-		} else if (not_dirty) {
+		} else {
 			var effect = /** @type {Effect} */ (reaction);
 
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
