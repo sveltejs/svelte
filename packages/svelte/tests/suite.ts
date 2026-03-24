@@ -4,6 +4,7 @@ import { it } from 'vitest';
 export interface BaseTest {
 	skip?: boolean;
 	solo?: boolean;
+	timeout?: number;
 }
 
 /**
@@ -30,7 +31,7 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 			await for_each_dir<Test>(cwd, samples_dir, (config, dir) => {
 				let it_fn = config.skip ? it.skip : config.solo ? it.only : it;
 
-				it_fn(dir, () => fn(config, `${cwd}/${samples_dir}/${dir}`));
+				it_fn(dir, () => fn(config, `${cwd}/${samples_dir}/${dir}`), config.timeout);
 			});
 		}
 	};
@@ -57,13 +58,17 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 					const solo = config.solo;
 					let it_fn = skip ? it.skip : solo ? it.only : it;
 
-					it_fn(`${dir} (${variant})`, async () => {
-						if (!called_common) {
-							called_common = true;
-							common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`);
-						}
-						return fn(config, `${cwd}/${samples_dir}/${dir}`, variant, common);
-					});
+					it_fn(
+						`${dir} (${variant})`,
+						async () => {
+							if (!called_common) {
+								called_common = true;
+								common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`);
+							}
+							return fn(config, `${cwd}/${samples_dir}/${dir}`, variant, common);
+						},
+						config.timeout
+					);
 				}
 			});
 		}
