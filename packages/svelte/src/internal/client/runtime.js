@@ -162,6 +162,9 @@ export function is_dirty(reaction) {
 
 	if (flags & DERIVED) {
 		reaction.f &= ~WAS_MARKED;
+		// When time traveling, it's possible that a derived is reverted to UNINITIALIZED but cannot
+		// be reverted to DIRTY (for reasons of not unnecessarily rerunning them in other places)
+		if (/** @type {Derived} */ (reaction).v === UNINITIALIZED) return true;
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
