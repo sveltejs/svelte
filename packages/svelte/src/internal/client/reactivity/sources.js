@@ -13,7 +13,8 @@ import {
 	is_dirty,
 	untracking,
 	is_destroying_effect,
-	push_reaction_value
+	push_reaction_value,
+	write_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -40,10 +41,12 @@ import {
 	batch_values,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	set_cv
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();
@@ -179,6 +182,7 @@ export function set(source, value, should_proxy = false) {
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
+		var batch = Batch.ensure();
 		var old_value = source.v;
 
 		if (is_destroying_effect) {
@@ -187,9 +191,21 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			old_values.set(source, old_value);
 		}
 
+		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
+			if (derived.v === UNINITIALIZED) {
+				// assigning before first read — execute to track dependencies
+				execute_derived(derived);
+			}
+
+			set_cv(derived);
+			batch.wvs.set(derived, write_version);
+			derived.wv = write_version;
+		}
+
 		source.v = value;
 
-		var batch = Batch.ensure();
 		batch.capture(source, old_value);
 
 		if (DEV) {
@@ -219,15 +235,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 			if (active_effect !== null) {
 				source.set_during_effect = true;
-			}
-		}
-
-		if ((source.f & DERIVED) !== 0) {
-			const derived = /** @type {Derived} */ (source);
-
-			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
-			if ((source.f & DIRTY) !== 0) {
-				execute_derived(derived);
 			}
 		}
 

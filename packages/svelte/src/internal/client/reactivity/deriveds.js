@@ -390,7 +390,7 @@ export function update_derived(derived) {
 	set_cv(derived);
 
 	if (!derived.equals(value)) {
-		batch_wvs?.set(derived, write_version);
+		current_batch?.wvs.set(derived, write_version);
 		derived.wv = write_version;
 
 		// in a fork, we don't update the underlying value, just `batch_values`.

@@ -1245,7 +1245,7 @@ export function fork(fn) {
  * @param {Reaction} reaction
  */
 export function set_cv(reaction) {
-	batch_cvs?.set(reaction, write_version);
+	current_batch?.cvs.set(reaction, write_version);
 	reaction.cv = write_version;
 }
 
