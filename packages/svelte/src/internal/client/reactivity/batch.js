@@ -260,6 +260,8 @@ export class Batch {
 	}
 
 	#process() {
+		current_batch = this;
+
 		if (flush_count++ > 1000) {
 			batches.delete(this);
 			infinite_loop_guard();
@@ -490,8 +492,6 @@ export class Batch {
 
 		try {
 			is_processing = true;
-			current_batch = this;
-
 			this.#process();
 		} finally {
 			flush_count = 0;
