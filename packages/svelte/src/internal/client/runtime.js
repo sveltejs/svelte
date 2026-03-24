@@ -156,6 +156,10 @@ export function increment_write_version() {
 export function is_dirty(reaction) {
 	var flags = reaction.f;
 
+	if ((flags & REACTION_RAN) === 0) {
+		return true;
+	}
+
 	if (flags & DERIVED) {
 		reaction.f &= ~WAS_MARKED;
 	}
