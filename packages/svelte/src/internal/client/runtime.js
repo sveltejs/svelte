@@ -259,8 +259,6 @@ export function update_reaction(reaction) {
 	}
 
 	try {
-		reaction.wv = reaction.rv = write_version;
-
 		reaction.f |= REACTION_IS_UPDATING;
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
@@ -464,10 +462,13 @@ export function update_effect(effect) {
 			destroy_effect_children(effect);
 		}
 
+		effect.rv = write_version;
+
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-		effect.wv = write_version;
+
+		effect.wv = write_version; // TODO should this be assigned before the update?
 
 		// In DEV, increment versions of any sources that were written to during the effect,
 		// so that they are correctly marked as dirty when the effect re-runs

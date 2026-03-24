@@ -238,7 +238,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		source.wv = increment_write_version();
+		source.wv = source.rv = increment_write_version();
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);

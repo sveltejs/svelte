@@ -23,7 +23,8 @@ import {
 	push_reaction_value,
 	is_destroying_effect,
 	update_effect,
-	remove_reactions
+	remove_reactions,
+	write_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -384,11 +385,13 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
+	derived.rv = write_version;
+
 	var old_value = derived.v;
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		derived.wv = increment_write_version();
+		derived.wv = write_version;
 
 		// in a fork, we don't update the underlying value, just `batch_values`.
 		// the underlying value will be updated when the fork is committed.
