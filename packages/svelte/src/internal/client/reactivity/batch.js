@@ -95,9 +95,14 @@ export class Batch {
 	 * The current values of any signals that are updated in this batch.
 	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
 	 * They keys of this map are identical to `this.#previous`
-	 * @type {Map<Value, [any, boolean]>}
+	 * @type {Map<Value, any>}
 	 */
 	current = new Map();
+
+	/**
+	 * @type {Map<Derived, any>}
+	 */
+	current_deriveds = new Map();
 
 	/**
 	 * The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
@@ -418,8 +423,24 @@ export class Batch {
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, [source.v, is_derived]);
+			this.current.set(source, source.v);
 			batch_values?.set(source, source.v);
+		}
+	}
+
+	/**
+	 * @param {Derived} derived
+	 * @param {any} value
+	 * @deprecated
+	 */
+	capture_derived(derived, value) {
+		if (derived.v !== UNINITIALIZED && !this.previous.has(derived)) {
+			this.previous.set(derived, derived.v);
+		}
+
+		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
+		if ((derived.f & ERROR_VALUE) === 0) {
+			batch_values?.set(derived, value);
 		}
 	}
 
@@ -478,13 +499,13 @@ export class Batch {
 			/** @type {Source[]} */
 			var sources = [];
 
-			for (const [source, [value, is_derived]] of this.current) {
+			for (const [source, value] of this.current) {
 				if (batch.current.has(source)) {
-					var batch_value = /** @type {[any, boolean]} */ (batch.current.get(source))[0]; // faster than destructuring
+					var batch_value = batch.current.get(source);
 
 					if (is_earlier && value !== batch_value) {
 						// bring the value up to date
-						batch.current.set(source, [value, is_derived]);
+						batch.current.set(source, value);
 					} else {
 						// same value or later batch has more recent value,
 						// no need to re-run these effects
@@ -657,7 +678,7 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map();
-		for (const [source, [value]] of this.current) {
+		for (const [source, value] of this.current) {
 			batch_values.set(source, value);
 		}
 
@@ -670,11 +691,7 @@ export class Batch {
 			var differs = false;
 
 			if (batch.id < this.id) {
-				for (const [source, [, is_derived]] of batch.current) {
-					// Derived values don't partake in the blocking mechanism, because a derived could
-					// be triggered in one batch already but not the other one yet, causing a false-positive
-					if (is_derived) continue;
-
+				for (const source of batch.current.keys()) {
 					intersects ||= this.current.has(source);
 					differs ||= !this.current.has(source);
 				}
@@ -1140,7 +1157,7 @@ export function fork(fn) {
 			batch.is_fork = false;
 
 			// apply changes and update write versions so deriveds see the change
-			for (var [source, [value]] of batch.current) {
+			for (var [source, value] of batch.current) {
 				source.v = value;
 				source.wv = increment_write_version();
 			}
