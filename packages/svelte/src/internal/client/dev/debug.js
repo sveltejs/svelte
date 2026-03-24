@@ -19,7 +19,7 @@ import {
 	MANAGED_EFFECT
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
-import { untrack } from '../runtime.js';
+import { is_dirty, untrack } from '../runtime.js';
 
 /**
  *
@@ -77,8 +77,15 @@ export function log_effect_tree(effect, highlighted = [], depth = 0, is_reachabl
 	const flags = effect.f;
 	let label = effect_label(effect);
 
-	let status =
-		(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+	let status = 'clean';
+
+	if ((flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0) {
+		if ((flags & CLEAN) === 0) status = 'dirty';
+	} else {
+		if (is_dirty(effect)) {
+			status = 'dirty';
+		}
+	}
 
 	let styles = [`font-weight: ${status === 'clean' ? 'normal' : 'bold'}`];
 
