@@ -526,6 +526,17 @@ export function get(signal) {
 
 	captured_signals?.add(signal);
 
+	// A first-run reaction that touches a signal from an earlier batch
+	// introduces a cross-batch dependency and must wait on that batch.
+	if (
+		async_mode_flag &&
+		current_batch !== null &&
+		active_reaction !== null &&
+		(active_reaction.f & REACTION_RAN) === 0
+	) {
+		current_batch.mark_blocked_by(signal);
+	}
+
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
 		// if we're in a derived that is being read inside an _async_ derived,
