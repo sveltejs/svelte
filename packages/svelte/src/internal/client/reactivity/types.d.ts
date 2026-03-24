@@ -11,8 +11,6 @@ import type { Boundary } from '../dom/blocks/boundary';
 export interface Signal {
 	/** Flags bitmask */
 	f: number;
-	/** Check version */
-	cv: number;
 	/** Write version */
 	wv: number;
 }
@@ -51,6 +49,8 @@ export interface Reaction extends Signal {
 	deps: null | Value[];
 	/** An AbortController that aborts when the signal is destroyed */
 	ac: null | AbortController;
+	/** Check version */
+	cv: number;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {

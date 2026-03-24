@@ -78,7 +78,6 @@ export function source(v, stack) {
 		v,
 		reactions: null,
 		equals,
-		cv: 0,
 		rv: 0,
 		wv: 0
 	};
@@ -232,7 +231,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		source.wv = source.cv = increment_write_version();
+		source.wv = increment_write_version();
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);

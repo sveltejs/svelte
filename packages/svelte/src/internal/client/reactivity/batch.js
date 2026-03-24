@@ -670,7 +670,8 @@ export class Batch {
 	}
 
 	apply() {
-		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) {
+		if (!async_mode_flag) {
+			// TODO previously we bailed here if there was only one (non-fork) batch... maybe we can reinstate that
 			batch_values = null;
 			return;
 		}
