@@ -88,9 +88,10 @@ export function derived(fn) {
 		f: flags,
 		fn,
 		reactions: null,
-		rv: -1,
-		v: /** @type {V} */ (UNINITIALIZED),
+		cv: -1,
+		rv: 0,
 		wv: 0,
+		v: /** @type {V} */ (UNINITIALIZED),
 		parent: parent_derived ?? active_effect,
 		ac: null
 	};
@@ -385,7 +386,7 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
-	derived.rv = write_version;
+	derived.cv = write_version;
 
 	var old_value = derived.v;
 	var value = execute_derived(derived);

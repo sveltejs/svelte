@@ -113,7 +113,7 @@ function create_effect(type, fn) {
 		prev: null,
 		teardown: null,
 		wv: 0,
-		rv: -1,
+		cv: -1,
 		ac: null
 	};
 
