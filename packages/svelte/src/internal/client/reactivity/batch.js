@@ -760,6 +760,29 @@ export class Batch {
 				}
 			}
 		}
+
+		// console.group('batch_values');
+		// for (const [value, v] of batch_values) {
+		// 	console.log(this.current.has(value), value.label, v);
+		// }
+		// console.groupEnd();
+
+		// console.group('batch_cvs');
+		// for (const [reaction, cv] of batch_cvs) {
+		// 	console.log(
+		// 		this.cvs.has(reaction),
+		// 		cv,
+		// 		reaction.deps?.map((d) => d.label),
+		// 		reaction.label ?? reaction.fn
+		// 	);
+		// }
+		// console.groupEnd();
+
+		// console.group('batch_wvs');
+		// for (const [value, wv] of batch_wvs) {
+		// 	console.log(this.wvs.has(value), wv, value.label);
+		// }
+		// console.groupEnd();
 	}
 
 	/**

@@ -192,7 +192,6 @@ export function is_dirty(reaction) {
 		}
 	}
 
-	set_cv(reaction);
 	return false;
 }
 
