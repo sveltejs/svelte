@@ -23,7 +23,8 @@ import {
 	ERROR_VALUE,
 	WAS_MARKED,
 	MANAGED_EFFECT,
-	REACTION_RAN
+	REACTION_RAN,
+	EFFECT_LEGACY
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -116,9 +117,9 @@ export function push_reaction_value(value) {
  * and until a new dependency is accessed — we track this via `skipped_deps`
  * @type {null | Value[]}
  */
-let new_deps = null;
+export let new_deps = null;
 
-let skipped_deps = 0;
+export let skipped_deps = 0;
 
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
@@ -465,7 +466,7 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		if (is_runes()) {
+		if (is_runes() && (effect.f & EFFECT_LEGACY) === 0) {
 			set_cv(effect, cv);
 		} else {
 			// in legacy mode, prevent the effect re-running immediately
