@@ -1221,17 +1221,11 @@ export function fork(fn) {
 
 	var batch = Batch.ensure();
 	batch.is_fork = true;
-	batch_values = new Map();
 
 	var committed = false;
 	var settled = batch.settled();
 
 	flushSync(fn);
-
-	// revert state changes
-	for (var [source, value] of batch.previous) {
-		source.v = value;
-	}
 
 	return {
 		commit: async () => {
@@ -1248,10 +1242,17 @@ export function fork(fn) {
 
 			batch.is_fork = false;
 
-			// apply changes and update write versions so deriveds see the change
-			for (var [source, value] of batch.current) {
-				source.v = value;
-				source.wv = increment_write_version();
+			for (var [reaction, cv] of batch.cvs) {
+				if (cv > reaction.cv) {
+					reaction.cv = cv;
+				}
+			}
+
+			for (var [value, wv] of batch.wvs) {
+				if (wv > value.wv) {
+					value.wv = increment_write_version();
+					value.v = batch.current.get(value);
+				}
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
