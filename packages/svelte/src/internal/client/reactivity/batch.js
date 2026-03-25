@@ -453,24 +453,28 @@ export class Batch {
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
 	 * @param {Value} source
-	 * @param {any} old_value
+	 * @param {any} value
 	 */
-	capture(source, old_value) {
-		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, old_value);
+	capture(source, value) {
+		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
+			this.previous.set(source, source.v);
 			this.previous_wvs.set(source, source.wv);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, source.v);
-			batch_values?.set(source, source.v);
+			this.current.set(source, value);
+			batch_values?.set(source, value);
 		}
 
 		var version = increment_write_version();
 
-		source.wv = version;
 		this.wvs.set(source, version);
+
+		if (!this.is_fork) {
+			source.v = value;
+			source.wv = version;
+		}
 	}
 
 	/**

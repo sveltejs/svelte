@@ -204,9 +204,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			derived.wv = write_version;
 		}
 
-		source.v = value;
-
-		batch.capture(source, old_value);
+		batch.capture(source, value);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
