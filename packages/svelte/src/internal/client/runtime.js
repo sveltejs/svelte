@@ -158,6 +158,10 @@ export function increment_write_version() {
 export function is_dirty(reaction) {
 	var flags = reaction.f;
 
+	if ((flags & REACTION_IS_UPDATING) !== 0) {
+		return false;
+	}
+
 	if ((flags & REACTION_RAN) === 0) {
 		return true;
 	}

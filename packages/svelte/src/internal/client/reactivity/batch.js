@@ -266,6 +266,8 @@ export class Batch {
 	}
 
 	#process() {
+		// console.group('process', this.id);
+
 		current_batch = this;
 
 		if (flush_count++ > 1000) {
@@ -382,6 +384,8 @@ export class Batch {
 		if (!batches.has(this)) {
 			this.#commit();
 		}
+
+		// console.groupEnd();
 	}
 
 	/**
