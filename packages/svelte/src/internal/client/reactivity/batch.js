@@ -185,6 +185,12 @@ export class Batch {
 	/** @type {Map<Reaction, number>} */
 	cvs = new Map();
 
+	/** @type {Map<Value, number>} */
+	previous_wvs = new Map();
+
+	/** @type {Map<Reaction, number>} */
+	previous_cvs = new Map();
+
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`.
@@ -448,6 +454,7 @@ export class Batch {
 	capture(source, old_value) {
 		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, old_value);
+			this.previous_wvs.set(source, source.wv);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
@@ -470,6 +477,7 @@ export class Batch {
 	capture_derived(derived, value) {
 		if (derived.v !== UNINITIALIZED && !this.previous.has(derived)) {
 			this.previous.set(derived, derived.v);
+			this.previous_cvs.set(derived, derived.cv);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
@@ -710,13 +718,10 @@ export class Batch {
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
-		batch_values = new Map();
-		for (const [source, value] of this.current) {
-			batch_values.set(source, value);
-		}
+		batch_values = new Map(this.current);
 
-		batch_cvs = this.cvs;
-		batch_wvs = this.wvs;
+		batch_cvs = new Map(this.cvs);
+		batch_wvs = new Map(this.wvs);
 
 		// ...and undo changes belonging to other batches unless they block this one
 		for (const batch of batches) {
@@ -739,6 +744,18 @@ export class Batch {
 				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, previous);
+					}
+				}
+
+				for (const [reaction, cv] of batch.previous_cvs) {
+					if (!batch_cvs.has(reaction)) {
+						batch_cvs.set(reaction, cv);
+					}
+				}
+
+				for (const [value, wv] of batch.previous_wvs) {
+					if (!batch_wvs.has(value)) {
+						batch_wvs.set(value, wv);
 					}
 				}
 			}
@@ -1246,6 +1263,7 @@ export function fork(fn) {
  */
 export function set_cv(reaction) {
 	current_batch?.cvs.set(reaction, write_version);
+	batch_cvs?.set(reaction, write_version);
 	reaction.cv = write_version;
 }
 

@@ -11,14 +11,12 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN,
 	REACTION_RAN
 } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
 	update_reaction,
-	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
 	is_destroying_effect,
@@ -391,6 +389,7 @@ export function update_derived(derived) {
 
 	if (!derived.equals(value)) {
 		current_batch?.wvs.set(derived, write_version);
+		batch_wvs?.set(derived, write_version);
 		derived.wv = write_version;
 
 		// in a fork, we don't update the underlying value, just `batch_values`.
