@@ -468,10 +468,14 @@ export class Renderer {
 		}
 
 		this.local = other.local;
-		this.#out = other.#out.map((item) => {
-			if (item instanceof Renderer) {
-				item.subsume(item);
+		this.#out = other.#out.map((item, i) => {
+			const current = this.#out[i];
+
+			if (current instanceof Renderer && item instanceof Renderer) {
+				current.subsume(item);
+				return current;
 			}
+
 			return item;
 		});
 		this.promise = other.promise;
