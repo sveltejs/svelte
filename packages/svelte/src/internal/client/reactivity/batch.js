@@ -61,6 +61,26 @@ export let previous_batch = null;
  */
 export let batch_values = null;
 
+/** @type {boolean | null} */
+export let has_batch_value_differences = null;
+
+/** @type {boolean} */
+export let ignore_batch_values = false;
+
+/**
+ * @param {boolean | null} value
+ */
+export function set_has_batch_value_differences(value) {
+	has_batch_value_differences = value;
+}
+
+/**
+ * @param {boolean} value
+ */
+export function set_ignore_batch_values(value) {
+	ignore_batch_values = value;
+}
+
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
@@ -257,6 +277,7 @@ export class Batch {
 		const roots = this.#roots;
 		this.#roots = [];
 
+		// TODO if we move this below traverse only one test fails - is this good (close to being able to do this) or bad (not enough test coverage)?
 		this.apply();
 
 		/** @type {Effect[]} */
@@ -342,10 +363,6 @@ export class Batch {
 
 			next_batch.#process();
 		}
-
-		if (!batches.has(this)) {
-			this.#commit();
-		}
 	}
 
 	/**
@@ -374,9 +391,21 @@ export class Batch {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
-				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
-					update_effect(effect);
+				} else {
+					// ASYNC effects should read canonical signal values instead of batch overlays
+					// while they run.
+					var previous_ignore_batch_values = ignore_batch_values;
+					if ((flags & ASYNC) !== 0) {
+						set_ignore_batch_values(true);
+					}
+					try {
+						if (is_dirty(effect)) {
+							if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
+							update_effect(effect);
+						}
+					} finally {
+						set_ignore_batch_values(previous_ignore_batch_values);
+					}
 				}
 
 				var child = effect.first;
@@ -470,86 +499,6 @@ export class Batch {
 		this.#discard_callbacks.clear();
 
 		batches.delete(this);
-	}
-
-	#commit() {
-		// If there are other pending batches, they now need to be 'rebased' —
-		// in other words, we re-run block/async effects with the newly
-		// committed state, unless the batch in question has a more
-		// recent value for a given source
-		for (const batch of batches) {
-			var is_earlier = batch.id < this.id;
-
-			/** @type {Source[]} */
-			var sources = [];
-
-			for (const [source, [value, is_derived]] of this.current) {
-				if (batch.current.has(source)) {
-					var batch_value = /** @type {[any, boolean]} */ (batch.current.get(source))[0]; // faster than destructuring
-
-					if (is_earlier && value !== batch_value) {
-						// bring the value up to date
-						batch.current.set(source, [value, is_derived]);
-					} else {
-						// same value or later batch has more recent value,
-						// no need to re-run these effects
-						continue;
-					}
-				}
-
-				sources.push(source);
-			}
-
-			// Re-run async/block effects that depend on distinct values changed in both batches
-			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
-
-			if (others.length === 0) {
-				if (is_earlier) {
-					// this batch is now obsolete and can be discarded
-					batch.discard();
-				}
-			} else if (sources.length > 0) {
-				if (DEV) {
-					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
-				}
-
-				batch.activate();
-
-				/** @type {Set<Value>} */
-				var marked = new Set();
-
-				/** @type {Map<Reaction, boolean>} */
-				var checked = new Map();
-
-				for (var source of sources) {
-					mark_effects(source, others, marked, checked);
-				}
-
-				// Only apply and traverse when we know we triggered async work with marking the effects
-				if (batch.#roots.length > 0) {
-					batch.apply();
-
-					for (var root of batch.#roots) {
-						batch.#traverse(root, [], []);
-					}
-
-					batch.#roots = [];
-				}
-
-				batch.deactivate();
-			}
-		}
-
-		for (const batch of batches) {
-			if (batch.#blockers.has(this)) {
-				batch.#blockers.delete(this);
-
-				if (batch.#blockers.size === 0 && !batch.#is_deferred()) {
-					batch.activate();
-					batch.#process();
-				}
-			}
-		}
 	}
 
 	/**
@@ -905,37 +854,6 @@ function flush_queued_effects(effects) {
 }
 
 /**
- * This is similar to `mark_reactions`, but it only marks async/block effects
- * depending on `value` and at least one of the other `sources`, so that
- * these effects can re-run after another batch has been committed
- * @param {Value} value
- * @param {Source[]} sources
- * @param {Set<Value>} marked
- * @param {Map<Reaction, boolean>} checked
- */
-function mark_effects(value, sources, marked, checked) {
-	if (marked.has(value)) return;
-	marked.add(value);
-
-	if (value.reactions !== null) {
-		for (const reaction of value.reactions) {
-			const flags = reaction.f;
-
-			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
-			} else if (
-				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
-				(flags & DIRTY) === 0 &&
-				depends_on(reaction, sources, checked)
-			) {
-				set_signal_status(reaction, DIRTY);
-				schedule_effect(/** @type {Effect} */ (reaction));
-			}
-		}
-	}
-}
-
-/**
  * When committing a fork, we need to trigger eager effects so that
  * any `$state.eager(...)` expressions update immediately. This
  * function allows us to discover them
@@ -955,33 +873,6 @@ function mark_eager_effects(value, effects) {
 			effects.add(/** @type {Effect} */ (reaction));
 		}
 	}
-}
-
-/**
- * @param {Reaction} reaction
- * @param {Source[]} sources
- * @param {Map<Reaction, boolean>} checked
- */
-function depends_on(reaction, sources, checked) {
-	const depends = checked.get(reaction);
-	if (depends !== undefined) return depends;
-
-	if (reaction.deps !== null) {
-		for (const dep of reaction.deps) {
-			if (includes.call(sources, dep)) {
-				return true;
-			}
-
-			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources, checked)) {
-				checked.set(/** @type {Derived} */ (dep), true);
-				return true;
-			}
-		}
-	}
-
-	checked.set(reaction, false);
-
-	return false;
 }
 
 /**

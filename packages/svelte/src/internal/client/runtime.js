@@ -51,6 +51,9 @@ import {
 	batch_values,
 	current_batch,
 	flushSync,
+	has_batch_value_differences,
+	ignore_batch_values,
+	set_has_batch_value_differences,
 	schedule_effect
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
@@ -627,7 +630,7 @@ export function get(signal) {
 		var derived = /** @type {Derived} */ (signal);
 
 		if (is_destroying_effect) {
-			var value = derived.v;
+			let value = derived.v;
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
@@ -669,8 +672,12 @@ export function get(signal) {
 		}
 	}
 
-	if (batch_values?.has(signal)) {
-		return batch_values.get(signal);
+	if (!ignore_batch_values && batch_values?.has(signal)) {
+		let value = batch_values.get(signal);
+		if (has_batch_value_differences === false && value !== signal.v) {
+			set_has_batch_value_differences(true);
+		}
+		return value;
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {

@@ -40,7 +40,14 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
+import {
+	batch_values,
+	current_batch,
+	has_batch_value_differences,
+	ignore_batch_values,
+	set_has_batch_value_differences,
+	set_ignore_batch_values
+} from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -127,6 +134,19 @@ export function async_derived(fn, label, location) {
 	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Map();
 
+	/**
+	 * @param {Batch} subset
+	 * @param {Batch} superset
+	 */
+	function is_batch_subset(subset, superset) {
+		for (const source of subset.current.keys()) {
+			if ((source.f & DERIVED) !== 0) continue;
+			if (!superset.current.has(source)) return false;
+		}
+
+		return true;
+	}
+
 	async_effect(() => {
 		if (DEV) {
 			reactivity_loss_tracker = {
@@ -141,11 +161,22 @@ export function async_derived(fn, label, location) {
 		var d = deferred();
 		promise = d.promise;
 
+		var batch = /** @type {Batch} */ (current_batch);
+
 		try {
-			// If this code is changed at some point, make sure to still access the then property
-			// of fn() to read any signals it might access, so that we track them as dependencies.
-			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
+			// TODO async-nested-derived test shows that we can get here without a current_batch, figure out
+			// how to handle this case (either throw an error signaling the user they do something wrong or
+			// turn this into a one-time async derived run). In the meantime defensively call the function.
+			var previous_ignore_batch_values = ignore_batch_values;
+			set_ignore_batch_values(true);
+			try {
+				// If this code is changed at some point, make sure to still access the then property
+				// of fn() to read any signals it might access, so that we track them as dependencies.
+				// We call `unset_context` to undo any `save` calls that happen inside `fn()`
+				Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
+			} finally {
+				set_ignore_batch_values(previous_ignore_batch_values);
+			}
 		} catch (error) {
 			d.reject(error);
 			unset_context();
@@ -154,8 +185,6 @@ export function async_derived(fn, label, location) {
 		if (DEV) {
 			reactivity_loss_tracker = null;
 		}
-
-		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
@@ -184,12 +213,26 @@ export function async_derived(fn, label, location) {
 		 * @param {any} value
 		 * @param {unknown} error
 		 */
-		const handler = (value, error = undefined) => {
+		const handler = async (value, error = undefined) => {
 			if (DEV) {
 				reactivity_loss_tracker = null;
 			}
 
 			if (decrement_pending) {
+				/** @type {Promise<unknown>[]} */
+				const waits = [];
+
+				for (const [b, d] of deferreds) {
+					if (b === batch) break;
+					if (error || !is_batch_subset(b, batch)) {
+						waits.push(d.promise);
+					}
+				}
+
+				if (waits.length > 0) {
+					await Promise.allSettled(waits);
+				}
+
 				// don't trigger an update if we're only here because
 				// the promise was superseded before it could resolve
 				var skip = error === STALE_REACTION;
@@ -218,6 +261,7 @@ export function async_derived(fn, label, location) {
 				for (const [b, d] of deferreds) {
 					deferreds.delete(b);
 					if (b === batch) break;
+					if (is_batch_subset(b, batch)) b.discard();
 					d.reject(STALE_REACTION);
 				}
 
@@ -385,7 +429,31 @@ export function execute_derived(derived) {
  */
 export function update_derived(derived) {
 	var old_value = derived.v;
-	var value = execute_derived(derived);
+
+	// We run the derived first to get the value in the context of the curren batch (if any).
+	// If batch_values shows that there could be differences in the result of the computation,
+	// we rerun it again ignoring the batch values. The former value is store in batch_values
+	// and the latter on derived.v
+	var value;
+	var scoped_value;
+	var previous_ignore_batch_values = ignore_batch_values;
+	var previous_has_batch_value_differences = has_batch_value_differences;
+
+	set_has_batch_value_differences(false);
+	set_ignore_batch_values(false);
+
+	try {
+		value = execute_derived(derived);
+		scoped_value = value;
+
+		if (has_batch_value_differences || previous_ignore_batch_values) {
+			set_ignore_batch_values(true);
+			value = execute_derived(derived);
+		}
+	} finally {
+		set_ignore_batch_values(previous_ignore_batch_values);
+		set_has_batch_value_differences(previous_has_batch_value_differences);
+	}
 
 	if (!derived.equals(value)) {
 		derived.wv = increment_write_version();
@@ -418,7 +486,7 @@ export function update_derived(derived) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
+			batch_values.set(derived, scoped_value);
 		}
 	} else {
 		update_derived_status(derived);
