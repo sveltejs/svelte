@@ -32,7 +32,8 @@ import {
 	freeze_derived_effects,
 	recent_async_deriveds,
 	unfreeze_derived_effects,
-	update_derived
+	update_derived,
+	derived_stack
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions } from './dev/tracing.js';
@@ -62,6 +63,7 @@ import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import * as w from './warnings.js';
+import * as e from './errors.js';
 
 let is_updating_effect = false;
 
@@ -633,6 +635,10 @@ export function get(signal) {
 
 	if (is_derived) {
 		var derived = /** @type {Derived} */ (signal);
+
+		if (derived_stack !== null && includes.call(derived_stack, derived)) {
+			e.derived_references_self();
+		}
 
 		if (is_destroying_effect) {
 			var value = derived.v;
