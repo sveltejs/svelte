@@ -1286,12 +1286,26 @@ export function fork(fn) {
 }
 
 /**
+ * @param {Value} value
+ */
+export function get_wv(value) {
+	return batch_wvs?.get(value) ?? value.wv;
+}
+
+/**
  * @param {Reaction} reaction
  */
-export function set_cv(reaction) {
-	current_batch?.cvs.set(reaction, write_version);
-	batch_cvs?.set(reaction, write_version);
-	reaction.cv = write_version;
+export function get_cv(reaction) {
+	return batch_cvs?.get(reaction) ?? reaction.cv;
+}
+
+/**
+ * @param {Reaction} reaction
+ */
+export function set_cv(reaction, cv = write_version) {
+	current_batch?.cvs.set(reaction, cv);
+	batch_cvs?.set(reaction, cv);
+	reaction.cv = cv;
 }
 
 /**

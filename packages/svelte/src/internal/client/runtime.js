@@ -53,6 +53,7 @@ import {
 	batch_wvs,
 	current_batch,
 	flushSync,
+	get_cv,
 	schedule_effect,
 	set_cv
 } from './reactivity/batch.js';
@@ -176,7 +177,7 @@ export function is_dirty(reaction) {
 		return false;
 	}
 
-	var cv = batch_cvs?.get(reaction) ?? reaction.cv;
+	var cv = get_cv(reaction);
 
 	var length = dependencies.length;
 
@@ -454,13 +455,18 @@ export function update_effect(effect) {
 			destroy_effect_children(effect);
 		}
 
-		set_cv(effect);
+		// get this now, so that any writes during execution cause a re-run,
+		// but don't set it yet so that `$inspect.trace` works
+		const cv = write_version;
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		if (!is_runes()) {
+		if (is_runes()) {
+			set_cv(effect, cv);
+		} else {
+			// in legacy mode, prevent the effect re-running immediately
 			set_cv(effect);
 		}
 
