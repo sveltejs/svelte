@@ -1260,6 +1260,8 @@ export function fork(fn) {
 			// can't just encounter them during traversal, we need to
 			// proactively flush them
 			// TODO maybe there's a better implementation?
+			// e.g. maybe we can just schedule them so that they run
+			// with everything else during batch.flush?
 			flushSync(() => {
 				/** @type {Set<Effect>} */
 				var eager_effects = new Set();
