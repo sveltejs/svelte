@@ -208,7 +208,7 @@ export const myGlobalState = $state({
 In many cases this is perfectly fine, but there is a risk: if you mutate the state during server-side rendering (which is discouraged, but entirely possible!)...
 
 ```svelte
-<!--- file: App.svelte ---->
+<!--- file: App.svelte --->
 <script>
 	import { myGlobalState } from './state.svelte.js';
 
