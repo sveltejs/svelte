@@ -221,6 +221,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
+		var array = get(each_array);
+
 		state.pending.delete(batch);
 
 		state.fallback = fallback;
