@@ -332,6 +332,7 @@ export class Batch {
 		legacy_updates = null;
 
 		if (this.#is_deferred() || this.#is_blocked()) {
+			// console.log(this.#is_deferred() ? 'deferred' : 'blocked');
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
@@ -339,6 +340,7 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
+			// console.log('resolved');
 			if (this.#pending.size === 0) {
 				batches.delete(this);
 			}
@@ -348,8 +350,10 @@ export class Batch {
 			this.#maybe_dirty_effects.clear();
 
 			// append/remove branches
+			// console.group('branches');
 			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
+			// console.groupEnd();
 
 			previous_batch = this;
 			flush_queued_effects(render_effects);
