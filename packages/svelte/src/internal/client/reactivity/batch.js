@@ -168,6 +168,12 @@ export class Batch {
 	#roots = [];
 
 	/**
+	 * Effects created while this batch was active.
+	 * @type {Effect[]}
+	 */
+	#new_effects = [];
+
+	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
 	 * @type {Set<Effect>}
 	 */
@@ -540,6 +546,13 @@ export class Batch {
 		batches.delete(this);
 	}
 
+	/**
+	 * @param {Effect} effect
+	 */
+	register_created_effect(effect) {
+		this.#new_effects.push(effect);
+	}
+
 	#commit() {
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
@@ -591,6 +604,25 @@ export class Batch {
 
 				for (var source of sources) {
 					mark_effects(source, others, marked, checked);
+				}
+
+				checked = new Map();
+				var current_unequal = [...batch.current.keys()].filter((c) =>
+					this.current.has(c) ? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c : true
+				);
+
+				for (const effect of this.#new_effects) {
+					if (
+						(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
+						depends_on(effect, current_unequal, checked)
+					) {
+						if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
+							set_signal_status(effect, DIRTY);
+							batch.schedule(effect);
+						} else {
+							batch.#dirty_effects.add(effect);
+						}
+					}
 				}
 
 				// Only apply and traverse when we know we triggered async work with marking the effects
