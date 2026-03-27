@@ -266,7 +266,7 @@ export class Batch {
 	}
 
 	#process() {
-		// console.group('process', this.id);
+		console.group('process', this.id);
 
 		current_batch = this;
 
@@ -332,7 +332,7 @@ export class Batch {
 		legacy_updates = null;
 
 		if (this.#is_deferred() || this.#is_blocked()) {
-			// console.log(this.#is_deferred() ? 'deferred' : 'blocked');
+			console.log(this.#is_deferred() ? 'deferred' : 'blocked');
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
@@ -340,7 +340,7 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
-			// console.log('resolved');
+			console.log('resolved');
 			if (this.#pending.size === 0) {
 				batches.delete(this);
 			}
@@ -389,7 +389,7 @@ export class Batch {
 			this.#commit();
 		}
 
-		// console.groupEnd();
+		console.groupEnd();
 	}
 
 	/**
@@ -773,28 +773,28 @@ export class Batch {
 			}
 		}
 
-		// console.group('batch_values');
-		// for (const [value, v] of batch_values) {
-		// 	console.log(this.current.has(value), value.label, v);
-		// }
-		// console.groupEnd();
+		console.group('batch_values');
+		for (const [value, v] of batch_values) {
+			console.log(this.current.has(value), value.label, v);
+		}
+		console.groupEnd();
 
-		// console.group('batch_cvs');
-		// for (const [reaction, cv] of batch_cvs) {
-		// 	console.log(
-		// 		this.cvs.has(reaction),
-		// 		cv,
-		// 		reaction.deps?.map((d) => d.label),
-		// 		reaction.label ?? reaction.fn
-		// 	);
-		// }
-		// console.groupEnd();
+		console.group('batch_cvs');
+		for (const [reaction, cv] of batch_cvs) {
+			console.log(
+				this.cvs.has(reaction),
+				cv,
+				reaction.deps?.map((d) => d.label),
+				reaction.label ?? reaction.fn
+			);
+		}
+		console.groupEnd();
 
-		// console.group('batch_wvs');
-		// for (const [value, wv] of batch_wvs) {
-		// 	console.log(this.wvs.has(value), wv, value.label);
-		// }
-		// console.groupEnd();
+		console.group('batch_wvs');
+		for (const [value, wv] of batch_wvs) {
+			console.log(this.wvs.has(value), wv, value.label);
+		}
+		console.groupEnd();
 	}
 
 	/**
@@ -1121,6 +1121,10 @@ export function eager(fn) {
 	var value = /** @type {T} */ (undefined);
 
 	get(version);
+
+	if (DEV) {
+		version.label = '<eager>';
+	}
 
 	eager_effect(() => {
 		if (initial) {
