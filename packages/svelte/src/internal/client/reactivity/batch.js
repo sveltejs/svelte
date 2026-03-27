@@ -1170,14 +1170,12 @@ export function eager(fn) {
  */
 function reset_branch(effect, tracked) {
 	// clean branch = nothing dirty inside, no need to traverse further
-	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
-		return;
-	}
-
-	if ((effect.f & DIRTY) !== 0) {
-		tracked.d.push(effect);
-	} else if ((effect.f & MAYBE_DIRTY) !== 0) {
-		tracked.m.push(effect);
+	if ((effect.f & BRANCH_EFFECT) !== 0) {
+		if ((effect.f & CLEAN) === 0) {
+			effect.f ^= CLEAN;
+		} else {
+			return;
+		}
 	}
 
 	var e = effect.first;
