@@ -2010,16 +2010,50 @@ declare module 'svelte/legacy' {
 
 declare module 'svelte/motion' {
 	import type { MediaQuery } from 'svelte/reactivity';
+	export interface SpringOptions {
+		stiffness?: number;
+		damping?: number;
+		precision?: number;
+	}
+
+	export interface SpringUpdateOptions {
+		/**
+		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+		 */
+		hard?: any;
+		/**
+		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+		 */
+		soft?: string | number | boolean;
+		/**
+		 * Only use this for the Spring class; does nothing when set on the spring store
+		 */
+		instant?: boolean;
+		/**
+		 * Only use this for the Spring class; does nothing when set on the spring store
+		 */
+		preserveMomentum?: number;
+	}
+
+	export type Updater<T> = (target_value: T, value: T) => T;
+
+	export interface TweenOptions<T> {
+		delay?: number;
+		duration?: number | ((from: T, to: T) => number);
+		easing?: (t: number) => number;
+		interpolate?: (a: T, b: T) => (t: number) => T;
+	}
+
 	// TODO we do declaration merging here in order to not have a breaking change (renaming the Spring interface)
 	// this means both the Spring class and the Spring interface are merged into one with some things only
 	// existing on one side. In Svelte 6, remove the type definition and move the jsdoc onto the class in spring.js
 
 	export interface Spring<T> extends Readable<T> {
-		set(new_value: T, opts?: SpringUpdateOpts): Promise<void>;
+		set(new_value: T, opts?: SpringUpdateOptions): Promise<void>;
 		/**
 		 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
 		 */
-		update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
+		update: (fn: Updater<T>, opts?: SpringUpdateOptions) => Promise<void>;
 		/**
 		 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
 		 */
@@ -2046,7 +2080,7 @@ declare module 'svelte/motion' {
 	 * @since 5.8.0
 	 */
 	export class Spring<T> {
-		constructor(value: T, options?: SpringOpts);
+		constructor(value: T, options?: SpringOptions);
 
 		/**
 		 * Create a spring whose value is bound to the return value of `fn`. This must be called
@@ -2062,7 +2096,7 @@ declare module 'svelte/motion' {
 		 * </script>
 		 * ```
 		 */
-		static of<U>(fn: () => U, options?: SpringOpts): Spring<U>;
+		static of<U>(fn: () => U, options?: SpringOptions): Spring<U>;
 
 		/**
 		 * Sets `spring.target` to `value` and returns a `Promise` that resolves if and when `spring.current` catches up to it.
@@ -2072,7 +2106,7 @@ declare module 'svelte/motion' {
 		 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
 		 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 		 */
-		set(value: T, options?: SpringUpdateOpts): Promise<void>;
+		set(value: T, options?: SpringUpdateOptions): Promise<void>;
 
 		damping: number;
 		precision: number;
@@ -2090,8 +2124,8 @@ declare module 'svelte/motion' {
 	}
 
 	export interface Tweened<T> extends Readable<T> {
-		set(value: T, opts?: TweenedOptions<T>): Promise<void>;
-		update(updater: Updater<T>, opts?: TweenedOptions<T>): Promise<void>;
+		set(value: T, opts?: TweenOptions<T>): Promise<void>;
+		update(updater: Updater<T>, opts?: TweenOptions<T>): Promise<void>;
 	}
 	/** Callback to inform of a value updates. */
 	type Subscriber<T> = (value: T) => void;
@@ -2107,39 +2141,6 @@ declare module 'svelte/motion' {
 		 * @param invalidate cleanup callback
 		 */
 		subscribe(this: void, run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
-	}
-	interface SpringOpts {
-		stiffness?: number;
-		damping?: number;
-		precision?: number;
-	}
-
-	interface SpringUpdateOpts {
-		/**
-		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
-		 */
-		hard?: any;
-		/**
-		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
-		 */
-		soft?: string | number | boolean;
-		/**
-		 * Only use this for the Spring class; does nothing when set on the spring store
-		 */
-		instant?: boolean;
-		/**
-		 * Only use this for the Spring class; does nothing when set on the spring store
-		 */
-		preserveMomentum?: number;
-	}
-
-	type Updater<T> = (target_value: T, value: T) => T;
-
-	interface TweenedOptions<T> {
-		delay?: number;
-		duration?: number | ((from: T, to: T) => number);
-		easing?: (t: number) => number;
-		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
 	/**
 	 * A [media query](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery) that matches if the user [prefers reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion).
@@ -2170,13 +2171,13 @@ declare module 'svelte/motion' {
 	 *
 	 * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
 	 * */
-	export function spring<T = any>(value?: T | undefined, opts?: SpringOpts | undefined): Spring<T>;
+	export function spring<T = any>(value?: T | undefined, opts?: SpringOptions | undefined): Spring<T>;
 	/**
 	 * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
 	 *
 	 * @deprecated Use [`Tween`](https://svelte.dev/docs/svelte/svelte-motion#Tween) instead
 	 * */
-	export function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): Tweened<T>;
+	export function tweened<T>(value?: T | undefined, defaults?: TweenOptions<T> | undefined): Tweened<T>;
 	/**
 	 * A wrapper for a value that tweens smoothly to its target value. Changes to `tween.target` will cause `tween.current` to
 	 * move towards it over time, taking account of the `delay`, `duration` and `easing` options.
@@ -2209,15 +2210,15 @@ declare module 'svelte/motion' {
 		 * ```
 		 * 
 		 */
-		static of<U>(fn: () => U, options?: TweenedOptions<U> | undefined): Tween<U>;
+		static of<U>(fn: () => U, options?: TweenOptions<U> | undefined): Tween<U>;
 		
-		constructor(value: T, options?: TweenedOptions<T>);
+		constructor(value: T, options?: TweenOptions<T>);
 		/**
 		 * Sets `tween.target` to `value` and returns a `Promise` that resolves if and when `tween.current` catches up to it.
 		 *
 		 * If `options` are provided, they will override the tween's defaults.
 		 * */
-		set(value: T, options?: TweenedOptions<T> | undefined): Promise<void>;
+		set(value: T, options?: TweenOptions<T> | undefined): Promise<void>;
 		get current(): T;
 		set target(v: T);
 		get target(): T;
