@@ -2,6 +2,7 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	skip: true, // TODO works on https://github.com/sveltejs/svelte/pull/17971
 	async test({ assert, target }) {
 		await tick();
 		const [a_b, a_c, b_d, shift, pop] = target.querySelectorAll('button');

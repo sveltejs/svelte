@@ -24,13 +24,9 @@
 	}
 
 	let n = $state(1);
-	let message = $state('hello');
 </script>
 
-<button onclick={() => {
-	n++;
-	message = 'goodbye';
-}}>
+<button onclick={() => n++}>
 	{$state.eager(n)}
 </button>
 
@@ -38,4 +34,3 @@
 <button onclick={pop}>pop</button>
 
 <p>{n} = {await push(n)}</p>
-<p>{message}</p>
