@@ -607,9 +607,11 @@ export class Batch {
 				}
 
 				checked = new Map();
-				var current_unequal = [...batch.current.keys()].filter((c) =>
-					this.current.has(c) ? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c : true
-				);
+				var current_unequal = [
+					...[...batch.current.keys()].filter((c) =>
+						this.current.has(c) ? /** @type {any} */ (this.current.get(c)) !== c : true
+					)
+				];
 
 				for (const effect of this.#new_effects) {
 					if (
@@ -617,11 +619,12 @@ export class Batch {
 						depends_on(effect, current_unequal, checked)
 					) {
 						if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
-							set_signal_status(effect, DIRTY);
 							batch.schedule(effect);
 						} else {
 							batch.#dirty_effects.add(effect);
 						}
+
+						batch.cvs.set(effect, -1);
 					}
 				}
 
