@@ -10,13 +10,15 @@ export default function Async_in_derived($$anchor, $$props) {
 	var $$promises = $.run([
 		async () => yes1 = await $.async_derived(() => 1),
 		async () => yes2 = await $.async_derived(async () => foo(await 1)),
-		() => no1 = $.derived(async () => {
-			return await 1;
-		}),
+		() => {
+			no1 = $.derived(async () => {
+				return await 1;
+			});
 
-		() => no2 = $.derived(() => async () => {
-			return await 1;
-		})
+			no2 = $.derived(() => async () => {
+				return await 1;
+			});
+		}
 	]);
 
 	var fragment = $.comment();
