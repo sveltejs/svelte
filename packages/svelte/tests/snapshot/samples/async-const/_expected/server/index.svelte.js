@@ -7,16 +7,7 @@ export default function Async_const($$renderer) {
 
 		let a;
 		let b;
-
-		var promises = $$renderer.run([
-			async () => {
-				a = (await $.save(1))();
-			},
-
-			() => {
-				b = a + 1;
-			}
-		]);
+		var promises = $$renderer.run([async () => a = (await $.save(1))(), () => b = a + 1]);
 
 		$$renderer.push(`<p>`);
 		$$renderer.async([promises[1]], ($$renderer) => $$renderer.push(() => $.escape(b)));

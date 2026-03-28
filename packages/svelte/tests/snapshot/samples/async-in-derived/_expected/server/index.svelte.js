@@ -28,25 +28,15 @@ export default function Async_in_derived($$renderer, $$props) {
 			let no2;
 
 			var promises = $$renderer.run([
-				async () => {
-					yes1 = (await $.save(1))();
-				},
+				async () => yes1 = (await $.save(1))(),
+				async () => yes2 = foo((await $.save(1))()),
+				() => no1 = (async () => {
+					return await 1;
+				})(),
 
-				async () => {
-					yes2 = foo((await $.save(1))());
-				},
-
-				() => {
-					no1 = (async () => {
-						return await 1;
-					})();
-				},
-
-				() => {
-					no2 = (async () => {
-						return await 1;
-					})();
-				}
+				() => no2 = (async () => {
+					return await 1;
+				})()
 			]);
 		} else {
 			$$renderer.push('<!--[-1-->');
