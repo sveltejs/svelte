@@ -69,6 +69,7 @@ export const STALE_REACTION = new (class StaleReactionError extends Error {
 	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
 })();
 
+// TODO: DOM access
 export const IS_XHTML =
 	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location
 	!!globalThis.document?.contentType &&
@@ -77,3 +78,10 @@ export const ELEMENT_NODE = 1;
 export const TEXT_NODE = 3;
 export const COMMENT_NODE = 8;
 export const DOCUMENT_FRAGMENT_NODE = 11;
+
+export const CUSTOM_RENDERER_NODE_TYPE_MAP = /** @type {const} */ ({
+	fragment: DOCUMENT_FRAGMENT_NODE,
+	element: ELEMENT_NODE,
+	text: TEXT_NODE,
+	comment: COMMENT_NODE
+});
