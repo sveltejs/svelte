@@ -161,7 +161,6 @@ export function ensure_no_module_import_conflict(node, state) {
 			state.scope === state.analysis.instance.scope &&
 			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
 		) {
-			// TODO fix the message here
 			e.declaration_duplicate_module_import(node.id);
 		}
 	}
