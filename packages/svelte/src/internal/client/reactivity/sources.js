@@ -193,6 +193,12 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		var batch = Batch.ensure();
 		batch.capture(source, old_value);
 
+		// In a fork we don't want to update the source's value until the batch commits
+		if (batch.is_fork) {
+			/** @type {Map<Value<any>, any>} */ (batch_values).set(source, value);
+			source.v = old_value;
+		}
+
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
 				source.updated ??= new Map();

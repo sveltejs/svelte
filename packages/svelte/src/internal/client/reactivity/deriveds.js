@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source } from '#client' */
+/** @import { Derived, Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
 /** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
@@ -390,19 +390,23 @@ export function update_derived(derived) {
 	if (!derived.equals(value)) {
 		derived.wv = increment_write_version();
 
-		// in a fork, we don't update the underlying value, just `batch_values`.
-		// the underlying value will be updated when the fork is committed.
-		// otherwise, the next time we get here after a 'real world' state
-		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.deps === null) {
-			derived.v = value;
-			current_batch?.capture(derived, old_value, true);
+		derived.v = value;
+		current_batch?.capture(derived, old_value, true);
 
-			// deriveds without dependencies should never be recomputed
-			if (derived.deps === null) {
-				set_signal_status(derived, CLEAN);
-				return;
-			}
+		// in a fork, we don't update the underlying value.
+		// The underlying value will be updated when the fork is committed.
+		// Otherwise, the next time we get here after a 'real world' state
+		// change, `derived.equals` may incorrectly return `true`, or we
+		// incorrectly write out the fork value during render.
+		if (current_batch?.is_fork) {
+			/** @type {Map<Value<any>, any>} */ (batch_values).set(derived, value);
+			derived.v = old_value;
+		}
+
+		// deriveds without dependencies should never be recomputed
+		if (derived.deps === null) {
+			set_signal_status(derived, CLEAN);
+			return;
 		}
 	}
 
@@ -417,7 +421,7 @@ export function update_derived(derived) {
 	if (batch_values !== null) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking() || current_batch?.is_fork) {
+		if (effect_tracking()) {
 			batch_values.set(derived, value);
 		}
 	} else {

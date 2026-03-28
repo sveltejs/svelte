@@ -263,7 +263,7 @@ export class Batch {
 		const roots = this.#roots;
 		this.#roots = [];
 
-		this.apply();
+		this.#apply();
 
 		/** @type {Effect[]} */
 		var effects = (collected_effects = []);
@@ -423,7 +423,7 @@ export class Batch {
 	 * @param {boolean} [is_derived]
 	 */
 	capture(source, old_value, is_derived = false) {
-		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
+		if (!this.previous.has(source)) {
 			this.previous.set(source, old_value);
 		}
 
@@ -436,6 +436,7 @@ export class Batch {
 
 	activate() {
 		current_batch = this;
+		this.#apply();
 	}
 
 	deactivate() {
@@ -559,7 +560,7 @@ export class Batch {
 
 				// Only apply and traverse when we know we triggered async work with marking the effects
 				if (batch.#roots.length > 0) {
-					batch.apply();
+					batch.#apply();
 
 					for (var root of batch.#roots) {
 						batch.#traverse(root, [], []);
@@ -685,7 +686,7 @@ export class Batch {
 		return current_batch;
 	}
 
-	apply() {
+	#apply() {
 		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) {
 			batch_values = null;
 			return;
@@ -722,7 +723,7 @@ export class Batch {
 			} else {
 				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
-						batch_values.set(source, previous);
+						if (previous !== UNINITIALIZED) batch_values.set(source, previous);
 					}
 				}
 			}
@@ -1162,11 +1163,6 @@ export function fork(fn) {
 
 	flushSync(fn);
 
-	// revert state changes
-	for (var [source, value] of batch.previous) {
-		source.v = value;
-	}
-
 	return {
 		commit: async () => {
 			if (committed) {
@@ -1185,6 +1181,7 @@ export function fork(fn) {
 			// apply changes and update write versions so deriveds see the change
 			for (var [source, [value]] of batch.current) {
 				source.v = value;
+				// TODO increment still necessary now that deriveds are also part of current?
 				source.wv = increment_write_version();
 			}
 
@@ -1212,8 +1209,8 @@ export function fork(fn) {
 			// cause any MAYBE_DIRTY deriveds to update
 			// if they depend on things thath changed
 			// inside the discarded fork
-			for (var source of batch.current.keys()) {
-				source.wv = increment_write_version();
+			for (var [source, [_, is_derived]] of batch.current) {
+				if (!is_derived) source.wv = increment_write_version();
 			}
 
 			if (!committed && batches.has(batch)) {

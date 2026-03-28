@@ -2,6 +2,7 @@
 
 /** @type {Equals} */
 export function equals(value) {
+	// TODO if this is fork should we compare batch_values against value instead?
 	return value === this.v;
 }
 
