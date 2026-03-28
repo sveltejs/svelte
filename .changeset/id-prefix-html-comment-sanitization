@@ -1,0 +1,5 @@
+---
+'svelte': patch
+---
+
+fix: sanitize id_prefix to prevent HTML comment injection in SSR output
