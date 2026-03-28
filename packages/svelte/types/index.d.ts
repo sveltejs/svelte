@@ -2568,7 +2568,94 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export function createRenderer(renderer: any): any;
+	export function createRenderer<const TFragment = unknown, const TElement = unknown, const TTextNode = unknown, const TComment = unknown>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
+		render: (Component: any, options: {
+			target: TFragment | TElement | TTextNode | TComment;
+			props?: any;
+		}) => () => void;
+	};
+	export type Renderer<TFragment = any, TElement = any, TTextNode = any, TComment = any, TNode = TFragment | TElement | TTextNode | TComment> = {
+		/**
+		 * - Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of it's children.
+		 */
+		createFragment: () => TFragment;
+		/**
+		 * - Creates an element with the given name.
+		 */
+		createElement: (name: string) => TElement;
+		/**
+		 * - Creates a text node with the given data.
+		 */
+		createTextNode: (data: string) => TTextNode;
+		/**
+		 * - Creates a comment node with the given data. This is often used as an anchor for inserting elements, it doesn't necessarily need to be rendered
+		 */
+		createComment: (data: string) => TComment;
+		/**
+		 * - Should return the type of the node in string form ("fragment", "element", "text", "comment").
+		 */
+		nodeType: (node: TNode) => "fragment" | "element" | "text" | "comment";
+		/**
+		 * - Return the value of the node...this should be the text value of a text node, the data value of a comment, null for elements and fragments
+		 */
+		getNodeValue: (node: TNode) => string | null;
+		/**
+		 * - Return the value of the attribute with the given name on the element, or null if it doesn't exist
+		 */
+		getAttribute: (element: TElement, name: string) => string | null;
+		/**
+		 * - Set the attribute with the given name and value on the element
+		 */
+		setAttribute: (element: TElement, key: string, value: any) => void;
+		/**
+		 * - Remove the attribute with the given name from the element
+		 */
+		removeAttribute: (element: TElement, name: string) => void;
+		/**
+		 * - Return true if the element has an attribute with the given name
+		 */
+		hasAttribute: (element: TElement, name: string) => boolean;
+		/**
+		 * - Set the text content of the node to the given value. This should work for both text nodes and elements (setting text content on an element should replace all of it's children with a single text node)
+		 */
+		setText: (node: TNode, text: string) => void;
+		/**
+		 * - Return the first child of the element, or null if it has no children. This should work for both elements and fragments
+		 */
+		getFirstChild: (element: TElement | TFragment) => TNode;
+		/**
+		 * - Return the last child of the element, or null if it has no children. This should work for both elements and fragments
+		 */
+		getLastChild: (element: TElement | TFragment) => TNode;
+		/**
+		 * - Return the next sibling of the node, or null if it has no next sibling
+		 */
+		getNextSibling: (element: TNode) => TNode;
+		/**
+		 * - Insert the element into the parent before the anchor (if the anchor is null, insert at the end). This should work for both elements and fragments as parents
+		 */
+		insert: (parent: TElement | TFragment, element: TNode, anchor: TNode | null) => void;
+		/**
+		 * - Remove the node from the tree
+		 */
+		remove: (node: TNode) => void;
+		/**
+		 * - Return the parent of the element, or null if it has no parent
+		 */
+		getParent: (element: TNode) => TNode;
+		/**
+		 * - Return a clone of the node. If deep is true, all of the node's children should also be cloned
+		 */
+		cloneNode: (node: TNode, deep: boolean) => TNode;
+		/**
+		 * - Add an event listener of the given type and handler to the target node, with optional options
+		 */
+		addEventListener: (target: TNode, type: string, handler: any, options?: any) => void;
+		/**
+		 * - Remove an event listener of the given type and handler from the target node, with optional options
+		 */
+		removeEventListener: (target: TNode, type: string, handler: any, options?: any) => void;
+	};
 
 	export {};
 }
