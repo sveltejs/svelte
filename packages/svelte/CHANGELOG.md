@@ -1,5 +1,15 @@
 # svelte
 
+## 5.55.1
+
+### Patch Changes
+
+- fix: prevent hydration error on async `{@html ...}` ([#17999](https://github.com/sveltejs/svelte/pull/17999))
+
+- fix: cleanup `superTypeParameters` in `ClassDeclarations`/`ClassExpression` ([#18015](https://github.com/sveltejs/svelte/pull/18015))
+
+- fix: reschedule new effects in prior batches ([#18021](https://github.com/sveltejs/svelte/pull/18021))
+
 ## 5.55.0
 
 ### Minor Changes
