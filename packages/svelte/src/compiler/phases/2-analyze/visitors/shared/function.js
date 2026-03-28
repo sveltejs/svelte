@@ -16,9 +16,14 @@ export function visit_function(node, context) {
 		}
 	}
 
+	const keep_expression_tracking =
+		context.state.expression &&
+		!context.state.analysis.runes &&
+		context.state.derived_function_depth === context.state.function_depth;
+
 	context.next({
 		...context.state,
 		function_depth: context.state.function_depth + 1,
-		expression: null
+		expression: keep_expression_tracking ? context.state.expression : null
 	});
 }
