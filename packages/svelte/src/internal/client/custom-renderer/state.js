@@ -5,15 +5,7 @@
 /**
  * @type {Renderer | null}
  */
-let renderer = null;
-
-/**
- *
- * @returns {Renderer | null}
- */
-export function get_renderer() {
-	return renderer;
-}
+export let renderer = null;
 
 /**
  *
