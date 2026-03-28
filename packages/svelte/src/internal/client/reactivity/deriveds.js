@@ -12,7 +12,9 @@ import {
 	WAS_MARKED,
 	DESTROYED,
 	CLEAN,
-	REACTION_RAN
+	INERT,
+	REACTION_RAN,
+	BRANCH_EFFECT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -40,7 +42,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
+import { batch_values, collected_effects, current_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -328,9 +330,7 @@ function get_derived_parent_effect(derived) {
 	var parent = derived.parent;
 	while (parent !== null) {
 		if ((parent.f & DERIVED) === 0) {
-			// The original parent effect might've been destroyed but the derived
-			// is used elsewhere now - do not return the destroyed effect in that case
-			return (parent.f & DESTROYED) === 0 ? /** @type {Effect} */ (parent) : null;
+			return /** @type {Effect} */ (parent);
 		}
 		parent = parent.parent;
 	}
@@ -343,10 +343,24 @@ function get_derived_parent_effect(derived) {
  * @returns {T}
  */
 export function execute_derived(derived) {
+	var raw_parent = get_derived_parent_effect(derived);
+	var parent_effect = raw_parent !== null && (raw_parent.f & DESTROYED) !== 0 ? null : raw_parent;
+
+	// don't update deriveds inside a destroyed branch (e.g. {#if} or {#each}) —
+	// the branch scope is invalid and evaluating could trigger side effects
+	// with stale values.
+	if (
+		!is_destroying_effect &&
+		raw_parent !== null &&
+		(raw_parent.f & (DESTROYED | BRANCH_EFFECT)) === (DESTROYED | BRANCH_EFFECT)
+	) {
+		return derived.v;
+	}
+
 	var value;
 	var prev_active_effect = active_effect;
 
-	set_active_effect(get_derived_parent_effect(derived));
+	set_active_effect(parent_effect);
 
 	if (DEV) {
 		let prev_eager_effects = eager_effects;
@@ -384,6 +398,32 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
+	// Don't re-evaluate deriveds inside INERT (outroing) branches when the
+	// read originates from outside the branch. Re-evaluating would use stale
+	// dependency values (e.g. a prop that became `undefined` when the branch
+	// condition changed), violating the `{#if}` contract.
+	//
+	// In non-async mode, INERT branches are never walked by the scheduler,
+	// so any read is necessarily external — block unconditionally.
+	//
+	// In async mode, INERT branches ARE walked (to keep transitions alive),
+	// so we only block reads during effect flushing (collected_effects === null
+	// and active_effect === null), which indicates the reader is an external
+	// effect, not the branch's own traversal.
+	if (!is_destroying_effect) {
+		var dominated_by_inert = async_mode_flag
+			? collected_effects === null && active_effect === null
+			: true;
+
+		if (dominated_by_inert) {
+			var parent = get_derived_parent_effect(derived);
+
+			if (parent !== null && (parent.f & INERT) !== 0 && (parent.f & DESTROYED) === 0) {
+				return;
+			}
+		}
+	}
+
 	var old_value = derived.v;
 	var value = execute_derived(derived);
 
