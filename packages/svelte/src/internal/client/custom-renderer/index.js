@@ -1,5 +1,5 @@
-import { branch, effect_root } from '../reactivity/effects';
-import { push_renderer } from './state';
+import { branch, effect_root } from '../reactivity/effects.js';
+import { push_renderer } from './state.js';
 
 /**
  * @template [TFragment=any]
