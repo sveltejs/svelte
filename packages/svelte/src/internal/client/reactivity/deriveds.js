@@ -253,8 +253,8 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
-			function go() {
-				if (p === promise) {
+			function go(v) {
+				if (p === promise || v !== STALE_REACTION) {
 					fulfil(signal);
 				} else {
 					// if the effect re-runs before the initial promise
