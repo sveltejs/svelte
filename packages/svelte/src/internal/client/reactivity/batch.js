@@ -174,6 +174,12 @@ export class Batch {
 	#new_effects = [];
 
 	/**
+	 * Deriveds created while this batch was active.
+	 * @type {Derived[]}
+	 */
+	#new_deriveds = [];
+
+	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
 	 * @type {Set<Effect>}
 	 */
@@ -362,6 +368,7 @@ export class Batch {
 			// console.groupEnd();
 
 			previous_batch = this;
+
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
 			previous_batch = null;
@@ -553,6 +560,13 @@ export class Batch {
 		this.#new_effects.push(effect);
 	}
 
+	/**
+	 * @param {Derived} derived
+	 */
+	register_created_derived(derived) {
+		this.#new_deriveds.push(derived);
+	}
+
 	#commit() {
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
@@ -626,6 +640,10 @@ export class Batch {
 
 						batch.cvs.set(effect, -1);
 					}
+				}
+
+				for (const derived of this.#new_deriveds) {
+					batch.cvs.set(derived, -1);
 				}
 
 				// Only apply and traverse when we know we triggered async work with marking the effects
@@ -819,7 +837,7 @@ export class Batch {
 		// 	console.log(
 		// 		this.cvs.has(reaction),
 		// 		cv,
-		// 		reaction.deps?.map((d) => d.label),
+		// 		reaction.deps?.map((d) => d.label ?? batch_values?.get(d)),
 		// 		reaction.label ?? reaction.fn
 		// 	);
 		// }
@@ -827,7 +845,7 @@ export class Batch {
 
 		// console.group('batch_wvs');
 		// for (const [value, wv] of batch_wvs) {
-		// 	console.log(this.wvs.has(value), wv, value.label);
+		// 	console.log(this.wvs.has(value), wv, value.label ?? value.v);
 		// }
 		// console.groupEnd();
 	}
