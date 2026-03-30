@@ -1,29 +1,39 @@
 import { DEV } from 'esm-env';
 import { register_style } from '../dev/css.js';
 import { effect } from '../reactivity/effects.js';
-import { create_element } from './operations.js';
+import {
+	create_element,
+	get_root_node,
+	query_selector,
+	append_child,
+	set_text_content
+} from './operations.js';
 
 /**
  * @param {Node} anchor
  * @param {{ hash: string, code: string }} css
  */
 export function append_styles(anchor, css) {
+	// TODO RENDERER: disallow css inject with custom renderer?
 	// Use `queue_micro_task` to ensure `anchor` is in the DOM, otherwise getRootNode() will yield wrong results
 	effect(() => {
-		var root = anchor.getRootNode();
+		var root = get_root_node(anchor);
 
+		// TODO: DOM access
 		var target = /** @type {ShadowRoot} */ (root).host
 			? /** @type {ShadowRoot} */ (root)
-			: /** @type {Document} */ (root).head ?? /** @type {Document} */ (root.ownerDocument).head;
+			: // TODO: DOM access
+				/** @type {Document} */ (root).head ?? /** @type {Document} */ (root.ownerDocument).head;
 
 		// Always querying the DOM is roughly the same perf as additionally checking for presence in a map first assuming
 		// that you'll get cache hits half of the time, so we just always query the dom for simplicity and code savings.
-		if (!target.querySelector('#' + css.hash)) {
+		if (!query_selector(/** @type {Element} */ (target), '#' + css.hash)) {
 			const style = create_element('style');
+			// TODO: DOM access
 			style.id = css.hash;
-			style.textContent = css.code;
+			set_text_content(style, css.code);
 
-			target.appendChild(style);
+			append_child(target, style);
 
 			if (DEV) {
 				register_style(css.hash, style);

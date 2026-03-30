@@ -13,7 +13,7 @@ import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
-import { get_first_child, get_next_sibling } from '../operations.js';
+import { get_first_child, get_next_sibling, insert_before, node_type } from '../operations.js';
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
 import { BranchManager } from './branches.js';
 
@@ -71,6 +71,7 @@ export function wrap_snippet(component, fn) {
  * @returns {Snippet<Params>}
  */
 export function createRawSnippet(fn) {
+	// TODO RENDERER: throw an error for createRawSnippet in a non-browser environment, as it relies on DOM APIs
 	// @ts-expect-error the types are a lie
 	return (/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
 		var snippet = fn(...params);
@@ -86,11 +87,11 @@ export function createRawSnippet(fn) {
 			var fragment = create_fragment_from_html(html);
 			element = /** @type {Element} */ (get_first_child(fragment));
 
-			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== ELEMENT_NODE)) {
+			if (DEV && (get_next_sibling(element) !== null || node_type(element) !== ELEMENT_NODE)) {
 				w.invalid_raw_snippet_render();
 			}
 
-			anchor.before(element);
+			insert_before(anchor, element);
 		}
 
 		const result = snippet.setup?.(element);

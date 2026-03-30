@@ -208,7 +208,7 @@ function fragment_from_tree(structure, ns) {
 		if (children.length > 0) {
 			var target =
 				node_name(element) === TEMPLATE_TAG
-					? // TODO: DOM access
+					? // this is safe for custom renderers because the name will never be `template` due to how `node_name` works
 						/** @type {HTMLTemplateElement} */ (element).content
 					: element;
 
@@ -283,6 +283,7 @@ export function from_tree(structure, flags) {
  * @param {() => Element | DocumentFragment} fn
  */
 export function with_script(fn) {
+	// TODO RENDERER: never emit this for custom renderers
 	return () => run_scripts(fn());
 }
 
@@ -293,6 +294,7 @@ export function with_script(fn) {
  * @returns {Node | Node[]}
  */
 function run_scripts(node) {
+	// this should be custom renderer safe since we never emit `with_script` in that case
 	// scripts were SSR'd, in which case they will run
 	if (hydrating) return node;
 
@@ -307,12 +309,11 @@ function run_scripts(node) {
 
 	for (const script of scripts) {
 		const clone = create_element('script');
-		// TODO: DOM access
+
 		for (var attribute of script.attributes) {
 			set_attribute(clone, attribute.name, attribute.value);
 		}
 
-		// TODO: DOM access
 		set_text_content(clone, script.textContent ?? '');
 
 		// The script has changed - if it's at the edges, the effect now points at dead nodes

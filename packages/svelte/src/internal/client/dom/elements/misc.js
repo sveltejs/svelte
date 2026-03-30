@@ -1,5 +1,5 @@
 import { hydrating } from '../hydration.js';
-import { clear_text_content, get_first_child } from '../operations.js';
+import { clear_text_content, get_first_child, focus, add_event_listener } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 
 /**
@@ -14,7 +14,7 @@ export function autofocus(dom, value) {
 
 		queue_micro_task(() => {
 			if (document.activeElement === body) {
-				dom.focus();
+				focus(dom);
 			}
 		});
 	}
@@ -27,6 +27,7 @@ export function autofocus(dom, value) {
  * @returns {void}
  */
 export function remove_textarea_child(dom) {
+	// TODO RENDERER: never output in custom render mode
 	if (hydrating && get_first_child(dom) !== null) {
 		clear_text_content(dom);
 	}
@@ -35,15 +36,19 @@ export function remove_textarea_child(dom) {
 let listening_to_form_reset = false;
 
 export function add_form_reset_listener() {
+	// TODO RENDERER: never output in custom render mode
 	if (!listening_to_form_reset) {
 		listening_to_form_reset = true;
-		document.addEventListener(
+		// TODO: DOM access
+		add_event_listener(
+			document,
 			'reset',
 			(evt) => {
 				// Needs to happen one tick later or else the dom properties of the form
 				// elements have not updated to their reset values yet
 				Promise.resolve().then(() => {
 					if (!evt.defaultPrevented) {
+						// TODO: DOM access
 						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
 							// @ts-expect-error
 							e.__on_r?.();

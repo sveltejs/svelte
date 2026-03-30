@@ -69,7 +69,6 @@ export const STALE_REACTION = new (class StaleReactionError extends Error {
 	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
 })();
 
-// TODO: DOM access
 export const IS_XHTML =
 	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location
 	!!globalThis.document?.contentType &&
