@@ -1309,8 +1309,8 @@ export function fork(fn) {
 
 			for (var [value, wv] of batch.wvs) {
 				if (wv > value.wv) {
-					value.wv = increment_write_version();
 					value.v = batch.current.get(value);
+					value.wv = increment_write_version(); // TODO this causes async-fork-derived-writable to fail, because `d` should _not_ be recomputed
 				}
 			}
 
