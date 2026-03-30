@@ -541,6 +541,80 @@ export function get_node_value(node) {
 }
 
 /**
+ * Sets the `value` property on an element. For custom renderers, uses `setAttribute`.
+ * @param {Element} element
+ * @param {any} value
+ */
+export function set_element_value(element, value) {
+	if (renderer) {
+		renderer.setAttribute(element, 'value', value ?? '');
+		return;
+	}
+	// @ts-expect-error
+	element.value = value ?? '';
+}
+
+/**
+ * Sets the `checked` property on an element. For custom renderers, uses `setAttribute`.
+ * @param {Element} element
+ * @param {boolean} checked
+ */
+export function set_element_checked(element, checked) {
+	if (renderer) {
+		if (checked) {
+			renderer.setAttribute(element, 'checked', '');
+		} else {
+			renderer.removeAttribute(element, 'checked');
+		}
+		return;
+	}
+	// @ts-expect-error
+	element.checked = checked;
+}
+
+/**
+ * Sets the `defaultValue` property on an element without affecting the current `value`.
+ * For custom renderers, uses `setAttribute` on `defaultvalue`.
+ * @param {Element} element
+ * @param {string} value
+ */
+export function set_element_default_value(element, value) {
+	if (renderer) {
+		renderer.setAttribute(element, 'defaultvalue', value);
+		return;
+	}
+	// @ts-expect-error
+	const existing_value = element.value;
+	// @ts-expect-error
+	element.defaultValue = value;
+	// @ts-expect-error
+	element.value = existing_value;
+}
+
+/**
+ * Sets the `defaultChecked` property on an element without affecting the current `checked` state.
+ * For custom renderers, uses `setAttribute` on `defaultchecked`.
+ * @param {Element} element
+ * @param {boolean} checked
+ */
+export function set_element_default_checked(element, checked) {
+	if (renderer) {
+		if (checked) {
+			renderer.setAttribute(element, 'defaultchecked', '');
+		} else {
+			renderer.removeAttribute(element, 'defaultchecked');
+		}
+		return;
+	}
+	// @ts-expect-error
+	const existing_value = element.checked;
+	// @ts-expect-error
+	element.defaultChecked = checked;
+	// @ts-expect-error
+	element.checked = existing_value;
+}
+
+/**
  * @param {Element} element
  * @param {string} name
  * @returns {string | null}

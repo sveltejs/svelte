@@ -270,7 +270,14 @@ export function RegularElement(node, context) {
 					(value, metadata) => context.state.memoizer.add(value, metadata)
 				);
 
-				const update = build_element_attribute_update(node, node_id, name, value, attributes);
+				const update = build_element_attribute_update(
+					node,
+					node_id,
+					name,
+					value,
+					attributes,
+					!!context.state.options.customRenderer
+				);
 
 				(has_state ? context.state.update : context.state.init).push(b.stmt(update));
 			}
@@ -597,7 +604,14 @@ export function build_style_directives_object(
  * @param {Expression} value
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  */
-function build_element_attribute_update(element, node_id, name, value, attributes) {
+function build_element_attribute_update(
+	element,
+	node_id,
+	name,
+	value,
+	attributes,
+	custom_renderer = false
+) {
 	if (name === 'muted') {
 		// Special case for Firefox who needs it set as a property in order to work
 		return b.assignment('=', b.member(node_id, b.id('muted')), value);
@@ -644,7 +658,7 @@ function build_element_attribute_update(element, node_id, name, value, attribute
 	}
 
 	return b.call(
-		name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute',
+		name.startsWith('xlink') && !custom_renderer ? '$.set_xlink_attribute' : '$.set_attribute',
 		node_id,
 		b.literal(name),
 		value,
