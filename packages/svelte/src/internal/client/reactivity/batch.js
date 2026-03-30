@@ -783,9 +783,8 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map(this.current);
-
-		batch_cvs = new Map(this.cvs);
-		batch_wvs = new Map(this.wvs);
+		batch_cvs = this.cvs;
+		batch_wvs = this.wvs;
 
 		// ...and undo changes belonging to other batches unless they block this one
 		for (const batch of batches) {
