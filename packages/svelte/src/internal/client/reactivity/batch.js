@@ -1205,14 +1205,18 @@ export function eager(fn) {
 			return;
 		}
 
-		// the second time this effect runs, it's to schedule a
-		// `version` update. since this will recreate the effect,
-		// we don't need to evaluate the expression here
-		if (eager_versions.length === 0) {
-			queue_micro_task(eager_flush);
-		}
+		if (!current_batch?.is_fork) {
+			// the second time this effect runs, it's to schedule a
+			// `version` update. since this will recreate the effect,
+			// we don't need to evaluate the expression here
+			if (eager_versions.length === 0) {
+				queue_micro_task(eager_flush);
+			}
 
-		eager_versions.push(version);
+			eager_versions.push(version);
+		} else {
+			fn();
+		}
 	});
 
 	initial = false;
@@ -1314,14 +1318,8 @@ export function fork(fn) {
 			}
 
 			for (var [value, wv] of batch.wvs) {
-				if (wv > value.wv) {
-					value.v = batch.current.get(value);
-					value.wv = increment_write_version();
-
-					if ((value.f & DERIVED) !== 0) {
-						/** @type {Derived} */ (value).cv = value.wv;
-					}
-				}
+				value.v = batch.current.get(value);
+				value.wv = wv;
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
@@ -1381,7 +1379,10 @@ export function get_cv(reaction) {
 export function set_cv(reaction, cv = write_version) {
 	current_batch?.cvs.set(reaction, cv);
 	batch_cvs?.set(reaction, cv);
-	reaction.cv = cv;
+
+	if (!current_batch?.is_fork) {
+		reaction.cv = cv;
+	}
 }
 
 /**

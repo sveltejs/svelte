@@ -39,7 +39,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, batch_wvs, current_batch, set_cv } from './batch.js';
+import { batch_values, batch_wvs, current_batch, get_wv, set_cv } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 
@@ -388,7 +388,7 @@ export function execute_derived(derived) {
 export function update_derived(derived) {
 	var value = execute_derived(derived);
 
-	set_cv(derived);
+	set_cv(derived, derived.deps === null ? Infinity : Math.max(...derived.deps.map(get_wv)));
 
 	if (!derived.equals(value)) {
 		batch_wvs?.set(derived, write_version);
