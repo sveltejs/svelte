@@ -5,6 +5,7 @@ import { compile_directory } from '../helpers.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
 import renderer, { create_root, serialize, dispatch_event } from './renderer.js';
+import { writeFile } from 'node:fs/promises';
 
 export interface CustomRendererTest extends BaseTest {
 	html?: string;
@@ -121,6 +122,18 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 			}
 			throw err;
 		}
+
+		writeFile(
+			path.join(cwd, '_output/client/output.json'),
+			JSON.stringify(
+				target,
+				(key, value) => {
+					if (key === 'parent') return undefined;
+					return value;
+				},
+				'\t'
+			)
+		);
 
 		if (config.error) {
 			unintended_error = true;
