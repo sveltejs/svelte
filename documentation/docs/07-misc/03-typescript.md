@@ -53,7 +53,7 @@ const config = {
 export default config;
 ```
 
-### SvelteKit (Recommended)
+### SvelteKit
 
 The easiest way to get started is scaffolding a new SvelteKit project by typing `npx sv create`, following the prompts and choosing the TypeScript option.
 
@@ -63,7 +63,7 @@ If you don't need or want all the features SvelteKit has to offer, you can scaff
 
 ### Other build tools
 
-If you're using tools like Rollup or Webpack instead, install their respective Svelte plugins. For Rollup that's [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) and for Webpack that's [svelte-loader](https://github.com/sveltejs/svelte-loader). For both, you need to install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config (see the respective READMEs for more info).
+For existing or legacy projects using Rollup or Webpack, you need to install `typescript` and `svelte-preprocess`. Then install their respective Svelte plugins and add the preprocessor to the plugin config. (See the respective READMEs for more info.) For Rollup, that's [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte); for Webpack, that's [svelte-loader](https://github.com/sveltejs/svelte-loader).
 
 ## tsconfig.json settings
 
