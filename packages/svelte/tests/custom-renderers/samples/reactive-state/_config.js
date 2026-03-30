@@ -13,6 +13,6 @@ export default test({
 		flushSync();
 
 		const html = serialize(target);
-		assert.equal(html, '<root><button>clicks: 1</button></root>');
+		assert.equal(html, '<button>clicks: 1</button>');
 	}
 });

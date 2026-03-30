@@ -25,9 +25,6 @@ export default test({
 		flushSync();
 
 		const html = serialize(target);
-		assert.equal(
-			html,
-			'<root><p>hello</p> <p>Something inside</p> <p>Something outside</p></root>'
-		);
+		assert.equal(html, '<p>hello</p> <p>Something inside</p> <p>Something outside</p>');
 	}
 });

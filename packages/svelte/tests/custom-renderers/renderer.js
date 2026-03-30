@@ -176,10 +176,10 @@ const renderer = createRenderer({
 
 /**
  * Create a root object for mounting components into.
- * @returns {ObjElement}
+ * @returns {ObjFragment}
  */
 export function create_root() {
-	return renderer.createElement('root');
+	return renderer.createFragment();
 }
 
 /**

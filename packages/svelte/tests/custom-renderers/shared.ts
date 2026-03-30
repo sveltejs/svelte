@@ -129,7 +129,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 
 		if (config.html) {
 			const html = serialize(target);
-			assert.equal(html, `<root>${config.html}</root>`);
+			assert.equal(html, config.html);
 		}
 
 		try {
@@ -160,11 +160,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 
 			// After unmount the target should be empty (only comments remain, which serialize to '')
 			const remaining = serialize(target);
-			assert.equal(
-				remaining,
-				'<root></root>',
-				'Expected component to leave nothing behind after unmount'
-			);
+			assert.equal(remaining, '', 'Expected component to leave nothing behind after unmount');
 		}
 	} catch (err) {
 		if (config.runtime_error) {

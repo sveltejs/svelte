@@ -13,12 +13,12 @@ export default test({
 		flushSync();
 
 		let html = serialize(target);
-		assert.equal(html, '<root><p>hidden</p> <button>toggle</button></root>');
+		assert.equal(html, '<p>hidden</p> <button>toggle</button>');
 
 		dispatch_event(button, 'click');
 		flushSync();
 
 		html = serialize(target);
-		assert.equal(html, '<root><p>visible</p> <button>toggle</button></root>');
+		assert.equal(html, '<p>visible</p> <button>toggle</button>');
 	}
 });

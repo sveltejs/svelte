@@ -5,7 +5,7 @@ export default test({
 		const html = serialize(target);
 		assert.equal(
 			html,
-			'<root><div class="container" data-color="red"><span id="label">colored</span></div></root>'
+			'<div class="container" data-color="red"><span id="label">colored</span></div>'
 		);
 
 		// Verify individual attribute access on the object node

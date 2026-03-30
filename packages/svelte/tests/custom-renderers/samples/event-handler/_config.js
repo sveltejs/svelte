@@ -13,13 +13,13 @@ export default test({
 		flushSync();
 
 		const html = serialize(target);
-		assert.equal(html, '<root><button>click me</button> <p>1</p></root>');
+		assert.equal(html, '<button>click me</button> <p>1</p>');
 
 		dispatch_event(button, 'click');
 		dispatch_event(button, 'click');
 		flushSync();
 
 		const html2 = serialize(target);
-		assert.equal(html2, '<root><button>click me</button> <p>3</p></root>');
+		assert.equal(html2, '<button>click me</button> <p>3</p>');
 	}
 });
