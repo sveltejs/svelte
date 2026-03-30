@@ -20,22 +20,21 @@ import { push_renderer } from './state.js';
  * @property {(element: TElement, name: string)=>void} removeAttribute - Remove the attribute with the given name from the element
  * @property {(element: TElement, name: string)=>boolean} hasAttribute - Return true if the element has an attribute with the given name
  * @property {(node: TNode, text: string)=>void} setText - Set the text content of the node to the given value. This should work for both text nodes and elements (setting text content on an element should replace all of it's children with a single text node)
- * @property {(element: TElement | TFragment)=>TNode} getFirstChild - Return the first child of the element, or null if it has no children. This should work for both elements and fragments
- * @property {(element: TElement | TFragment)=>TNode} getLastChild - Return the last child of the element, or null if it has no children. This should work for both elements and fragments
- * @property {(element: TNode)=>TNode} getNextSibling - Return the next sibling of the node, or null if it has no next sibling
+ * @property {(element: TElement | TFragment)=>TNode | null} getFirstChild - Return the first child of the element, or null if it has no children. This should work for both elements and fragments
+ * @property {(element: TElement | TFragment)=>TNode | null} getLastChild - Return the last child of the element, or null if it has no children. This should work for both elements and fragments
+ * @property {(element: TNode)=>TNode | null} getNextSibling - Return the next sibling of the node, or null if it has no next sibling
  * @property {(parent: TElement | TFragment, element: TNode, anchor: TNode | null)=>void} insert - Insert the element into the parent before the anchor (if the anchor is null, insert at the end). This should work for both elements and fragments as parents
  * @property {(node: TNode)=>void} remove - Remove the node from the tree
- * @property {(element: TNode)=>TNode} getParent - Return the parent of the element, or null if it has no parent
- * @property {(node: TNode, deep: boolean)=>TNode} cloneNode - Return a clone of the node. If deep is true, all of the node's children should also be cloned
+ * @property {(element: TNode)=>TNode | null} getParent - Return the parent of the element, or null if it has no parent
  * @property {(target: TNode, type: string, handler: any, options?: any)=>void} addEventListener - Add an event listener of the given type and handler to the target node, with optional options
  * @property {(target: TNode, type: string, handler: any, options?: any)=>void} removeEventListener - Remove an event listener of the given type and handler from the target node, with optional options
  */
 
 /**
- * @template [const TFragment=unknown]
- * @template [const TElement=unknown]
- * @template [const TTextNode=unknown]
- * @template [const TComment=unknown]
+ * @template [TFragment=unknown]
+ * @template [TElement=unknown]
+ * @template [TTextNode=unknown]
+ * @template [TComment=unknown]
  * @param {Renderer<TFragment, TElement, TTextNode, TComment>} renderer
  * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: (Component: any, options: { target: TFragment | TElement | TTextNode | TComment, props?: any }) => () => void }}
  */

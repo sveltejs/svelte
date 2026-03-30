@@ -2568,7 +2568,7 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export function createRenderer<const TFragment = unknown, const TElement = unknown, const TTextNode = unknown, const TComment = unknown>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
+	export function createRenderer<TFragment = unknown, TElement = unknown, TTextNode = unknown, TComment = unknown>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
 		render: (Component: any, options: {
 			target: TFragment | TElement | TTextNode | TComment;
 			props?: any;
@@ -2622,15 +2622,15 @@ declare module 'svelte/renderer' {
 		/**
 		 * - Return the first child of the element, or null if it has no children. This should work for both elements and fragments
 		 */
-		getFirstChild: (element: TElement | TFragment) => TNode;
+		getFirstChild: (element: TElement | TFragment) => TNode | null;
 		/**
 		 * - Return the last child of the element, or null if it has no children. This should work for both elements and fragments
 		 */
-		getLastChild: (element: TElement | TFragment) => TNode;
+		getLastChild: (element: TElement | TFragment) => TNode | null;
 		/**
 		 * - Return the next sibling of the node, or null if it has no next sibling
 		 */
-		getNextSibling: (element: TNode) => TNode;
+		getNextSibling: (element: TNode) => TNode | null;
 		/**
 		 * - Insert the element into the parent before the anchor (if the anchor is null, insert at the end). This should work for both elements and fragments as parents
 		 */
@@ -2642,7 +2642,7 @@ declare module 'svelte/renderer' {
 		/**
 		 * - Return the parent of the element, or null if it has no parent
 		 */
-		getParent: (element: TNode) => TNode;
+		getParent: (element: TNode) => TNode | null;
 		/**
 		 * - Add an event listener of the given type and handler to the target node, with optional options
 		 */
