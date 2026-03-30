@@ -2644,10 +2644,6 @@ declare module 'svelte/renderer' {
 		 */
 		getParent: (element: TNode) => TNode;
 		/**
-		 * - Return a clone of the node. If deep is true, all of the node's children should also be cloned
-		 */
-		cloneNode: (node: TNode, deep: boolean) => TNode;
-		/**
 		 * - Add an event listener of the given type and handler to the target node, with optional options
 		 */
 		addEventListener: (target: TNode, type: string, handler: any, options?: any) => void;
