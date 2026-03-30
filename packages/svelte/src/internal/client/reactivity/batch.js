@@ -786,6 +786,12 @@ export class Batch {
 			return;
 		}
 
+		// console.group('apply', this.id);
+
+		// console.groupCollapsed('trace');
+		// console.trace();
+		// console.groupEnd();
+
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map(this.current);
@@ -851,6 +857,8 @@ export class Batch {
 		// for (const [value, wv] of batch_wvs) {
 		// 	console.log(this.wvs.has(value), wv, value.label ?? value.v);
 		// }
+		// console.groupEnd();
+
 		// console.groupEnd();
 	}
 
