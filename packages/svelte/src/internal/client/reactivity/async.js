@@ -1,4 +1,4 @@
-/** @import { Blocker, Effect, Value } from '#client' */
+/** @import { Blocker, Effect, Source, Value } from '#client' */
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -53,12 +53,15 @@ export function flatten(blockers, sync, async, fn) {
 				? Promise.all(pending.map((b) => b.promise))
 				: null;
 
-	/** @param {Value[]} values */
-	function finish(values) {
+	/**
+	 * @param {Array<() => any>} sync
+	 * @param {Source[]} async
+	 */
+	function finish(sync, async) {
 		restore();
 
 		try {
-			fn(values);
+			fn([...sync.map(d), ...async]);
 		} catch (error) {
 			if ((parent.f & DESTROYED) === 0) {
 				invoke_error_boundary(error, parent);
@@ -70,7 +73,7 @@ export function flatten(blockers, sync, async, fn) {
 
 	// Fast path: blockers but no async expressions
 	if (async.length === 0) {
-		/** @type {Promise<any>} */ (blocker_promise).then(() => finish(sync.map(d)));
+		/** @type {Promise<any>} */ (blocker_promise).then(() => finish(sync, []));
 		return;
 	}
 
@@ -79,7 +82,7 @@ export function flatten(blockers, sync, async, fn) {
 	// Full path: has async expressions
 	function run() {
 		Promise.all(async.map((expression) => async_derived(expression)))
-			.then((result) => finish([...sync.map(d), ...result]))
+			.then((result) => finish(sync, result))
 			.catch((error) => invoke_error_boundary(error, parent))
 			.finally(() => decrement_pending());
 	}
