@@ -510,6 +510,11 @@ export class Batch {
 		if ((derived.f & ERROR_VALUE) === 0) {
 			batch_values?.set(derived, value);
 		}
+
+		if (!this.is_fork || derived.deps === null) {
+			derived.v = value;
+			derived.wv = write_version;
+		}
 	}
 
 	activate() {

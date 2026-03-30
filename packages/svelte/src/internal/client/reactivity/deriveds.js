@@ -391,38 +391,13 @@ export function update_derived(derived) {
 	set_cv(derived);
 
 	if (!derived.equals(value)) {
-		current_batch?.wvs.set(derived, write_version);
 		batch_wvs?.set(derived, write_version);
-		derived.wv = write_version;
 
-		// in a fork, we don't update the underlying value, just `batch_values`.
-		// the underlying value will be updated when the fork is committed.
-		// otherwise, the next time we get here after a 'real world' state
-		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.deps === null) {
-			current_batch?.capture_derived(derived, value);
+		if (current_batch !== null) {
+			current_batch.capture_derived(derived, value);
+		} else {
 			derived.v = value;
-
-			// deriveds without dependencies should never be recomputed
-			if (derived.deps === null) {
-				return;
-			}
-		}
-	}
-
-	// don't mark derived clean if we're reading it inside a
-	// cleanup function, or it will cache a stale value
-	if (is_destroying_effect) {
-		return;
-	}
-
-	// During time traveling we don't want to reset the status so that
-	// traversal of the graph in the other batches still happens
-	if (batch_values !== null) {
-		// only cache the value if we're in a tracking context, otherwise we won't
-		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
+			derived.wv = write_version;
 		}
 	}
 }
