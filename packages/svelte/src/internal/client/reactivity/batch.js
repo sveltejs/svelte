@@ -618,8 +618,10 @@ export class Batch {
 				/** @type {Map<Reaction, boolean>} */
 				var checked = new Map();
 
+				var scheduled = [];
+
 				for (var source of sources) {
-					mark_effects(source, others, marked, checked);
+					mark_effects(source, others, marked, checked, scheduled);
 				}
 
 				checked = new Map();
@@ -1074,7 +1076,7 @@ function flush_queued_effects(effects) {
  * @param {Set<Value>} marked
  * @param {Map<Reaction, boolean>} checked
  */
-function mark_effects(value, sources, marked, checked) {
+function mark_effects(value, sources, marked, checked, scheduled = []) {
 	if (marked.has(value)) return;
 	marked.add(value);
 
@@ -1083,13 +1085,15 @@ function mark_effects(value, sources, marked, checked) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
+				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked, scheduled);
 			} else if (
 				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
 				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
+				scheduled.push(reaction);
 				schedule_effect(/** @type {Effect} */ (reaction));
+				current_batch?.cvs.set(reaction, -1);
 			}
 		}
 	}
