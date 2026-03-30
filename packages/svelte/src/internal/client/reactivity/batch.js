@@ -278,6 +278,8 @@ export class Batch {
 	}
 
 	#process() {
+		if (this.#committed) return;
+
 		// console.group('process', this.id);
 
 		current_batch = this;
