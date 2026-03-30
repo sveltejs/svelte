@@ -575,7 +575,13 @@ export class Batch {
 		this.#new_deriveds.push(derived);
 	}
 
+	#committed = false;
+
 	#commit() {
+		// TODO seems like a bug that we can end up here more than once
+		if (this.#committed) return;
+		this.#committed = true;
+
 		// console.group('commit', this.id);
 
 		// If there are other pending batches, they now need to be 'rebased' —
