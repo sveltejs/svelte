@@ -346,9 +346,25 @@ export function RegularElement(node, context) {
 		const empty_string = value.type === 'Literal' && value.value === '';
 
 		if (!empty_string) {
-			child_state.init.push(
-				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
-			);
+			if (context.state.options.customRenderer) {
+				// custom renderers need to use the method to invoke the renderer
+				context.state.template.push_text([
+					{
+						type: 'Text',
+						data: '',
+						raw: '',
+						start: -1,
+						end: -1
+					}
+				]);
+				const text = context.state.scope.generate('text');
+				context.state.init.push(b.var(text, b.call('$.child', node_id)));
+				context.state.init.push(b.stmt(b.call('$.set_text', b.id(text), value)));
+			} else {
+				child_state.init.push(
+					b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
+				);
+			}
 		}
 	} else if (is_customizable_select_element(node)) {
 		// For <option>, <optgroup>, or <select> elements with rich content, we need to branch based on browser support.
