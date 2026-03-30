@@ -486,6 +486,7 @@ export class Batch {
 
 		var version = increment_write_version();
 
+		this.wvs.delete(source); // order must be preserved
 		this.wvs.set(source, version);
 
 		if (!this.is_fork) {
@@ -1310,7 +1311,11 @@ export function fork(fn) {
 			for (var [value, wv] of batch.wvs) {
 				if (wv > value.wv) {
 					value.v = batch.current.get(value);
-					value.wv = increment_write_version(); // TODO this causes async-fork-derived-writable to fail, because `d` should _not_ be recomputed
+					value.wv = increment_write_version();
+
+					if ((value.f & DERIVED) !== 0) {
+						/** @type {Derived} */ (value).cv = value.wv;
+					}
 				}
 			}
 
