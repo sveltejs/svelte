@@ -6,12 +6,12 @@ export default () => {
 	const mux = $.derived(() => {
 		return Object.fromEntries(heads.map((h) => $.get(h)).entries());
 	});
-	const splited = heads
+	const split = heads
 		.map((_, index) => $.derived(() => $.get(mux)[index]))
 		.map((x) => $.derived(() => $.get(x) + 1));
 
 	const destroy = $.effect_root(() => {
-		splited.forEach((x) => {
+		split.forEach((x) => {
 			$.render_effect(() => {
 				$.get(x);
 			});
@@ -25,13 +25,13 @@ export default () => {
 				$.flush(() => {
 					$.set(heads[i], i);
 				});
-				assert.equal($.get(splited[i]), i + 1);
+				assert.equal($.get(split[i]), i + 1);
 			}
 			for (let i = 0; i < 10; i++) {
 				$.flush(() => {
 					$.set(heads[i], i * 2);
 				});
-				assert.equal($.get(splited[i]), i * 2 + 1);
+				assert.equal($.get(split[i]), i * 2 + 1);
 			}
 		}
 	};

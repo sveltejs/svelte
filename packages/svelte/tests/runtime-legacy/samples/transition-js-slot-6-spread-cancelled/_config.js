@@ -3,7 +3,7 @@ import { test } from '../../test';
 
 // updated props in the middle of transitions
 // and cancelled the transition halfway
-// with spreaded props
+// with spread props
 
 export default test({
 	html: `

@@ -17,7 +17,7 @@ if (DEV) {
 		if (!(rune in globalThis)) {
 			// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
 			/** @type {any} */
-			let value; // let's hope noone modifies this global, but belts and braces
+			let value; // let's hope no one modifies this global, but belts and braces
 			Object.defineProperty(globalThis, rune, {
 				configurable: true,
 				// eslint-disable-next-line getter-return
