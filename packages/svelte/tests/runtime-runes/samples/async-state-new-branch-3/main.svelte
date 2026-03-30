@@ -31,4 +31,3 @@
 {#if y > 0}
 	<Child x={await delay2(x)} />
 {/if}
- 
