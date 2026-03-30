@@ -466,11 +466,13 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		if (is_runes() && (effect.f & EFFECT_LEGACY) === 0) {
-			set_cv(effect, cv);
-		} else {
-			// in legacy mode, prevent the effect re-running immediately
-			set_cv(effect);
+		if (effect.deps !== null) {
+			if (is_runes() && (effect.f & EFFECT_LEGACY) === 0) {
+				set_cv(effect, cv);
+			} else {
+				// in legacy mode, prevent the effect re-running immediately
+				set_cv(effect);
+			}
 		}
 
 		// In DEV, increment versions of any sources that were written to during the effect,
