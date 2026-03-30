@@ -184,7 +184,7 @@ export async function track_reactivity_loss(promise) {
  */
 export async function* for_await_track_reactivity_loss(iterable) {
 	// This is based on the algorithms described in ECMA-262:
-	// ForIn/OfBodyEvaluation
+	// foreign/OfBodyEvaluation
 	// https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset
 	// AsyncIteratorClose
 	// https://tc39.es/ecma262/multipage/abstract-operations.html#sec-asynciteratorclose

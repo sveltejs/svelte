@@ -2107,7 +2107,7 @@ packages:
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
 
-  sade@1.8.1:
+  sad@1.8.1:
     resolution: {integrity: sha512-xal3CZX1Xlo/k4ApwCFrHVACi9fBqJ7V+mwhBsuf/1IOKbBy098Fex+Wa/5QMubw09pSZ/u8EY8PWgevJsXp1A==}
     engines: {node: '>=6'}
 
@@ -3578,7 +3578,7 @@ snapshots:
       kleur: 4.1.5
       locate-character: 3.0.0
       magic-string: 0.30.17
-      sade: 1.8.1
+      sad: 1.8.1
       tinyglobby: 0.2.15
       ts-api-utils: 1.3.0(typescript@5.5.4)
       typescript: 5.5.4
@@ -4440,7 +4440,7 @@ snapshots:
     dependencies:
       queue-microtask: 1.2.3
 
-  sade@1.8.1:
+  sad@1.8.1:
     dependencies:
       mri: 1.2.0
 

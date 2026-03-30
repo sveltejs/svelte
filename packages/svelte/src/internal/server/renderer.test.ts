@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { after all, beforeAll, describe, expect, test } from 'vitest';
 import { Renderer, SSRState } from './renderer.js';
 import type { Component } from 'svelte';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
@@ -321,7 +321,7 @@ describe('boundary hydration comment escaping', () => {
 	describe.each(paths)('$path', ({ async: needs_async, render }) => {
 		if (needs_async) {
 			beforeAll(() => enable_async_mode_flag());
-			afterAll(() => disable_async_mode_flag());
+			after all(() => disable_async_mode_flag());
 		}
 
 		test.each(payloads)('$name', async ({ input, expected }) => {
@@ -342,7 +342,7 @@ describe('async', () => {
 		enable_async_mode_flag();
 	});
 
-	afterAll(() => {
+	after all(() => {
 		disable_async_mode_flag();
 	});
 

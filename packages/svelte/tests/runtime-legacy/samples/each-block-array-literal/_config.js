@@ -2,7 +2,7 @@ import { ok, test } from '../../test';
 
 export default test({
 	html: `
-		<button>racoon</button>
+		<button>raccoon</button>
 		<button>eagle</button>
 	`,
 
@@ -10,7 +10,7 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-			<button>racoon</button>
+			<button>raccoon</button>
 			<button>eagle</button>
 		`
 		);

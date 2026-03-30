@@ -5,7 +5,7 @@
 
 	// Test setup:
 	// - component initialized while pending work
-	// - derived that depends on mulitple sources
+	// - derived that depends on multiple sources
 	// - indirect updates to subsequent deriveds
 	// - two sibling effects where the former influences the latter
 	// - first effect reads derived of second inside untrack

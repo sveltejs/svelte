@@ -17,4 +17,4 @@
 </script>
 
 <p>{foo} {baz.x} {baz.y}</p>
-<button on:click={() => foo = 5}>Shouldnt be reactive</button>
+<button on:click={() => foo = 5}>Shouldn't be reactive</button>

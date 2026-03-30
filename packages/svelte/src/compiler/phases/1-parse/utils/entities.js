@@ -1211,7 +1211,7 @@ export default {
 	'cuepr;': 8926,
 	'cuesc;': 8927,
 	'cupor;': 10821,
-	curren: 164,
+	current: 164,
 	'cuvee;': 8910,
 	'cuwed;': 8911,
 	'cwint;': 8753,

@@ -4,7 +4,7 @@ import { test } from '../../test';
 export default test({
 	html: `
   <p>1 4 0</p>
-  <button>Shouldnt be reactive</button>
+  <button>Shouldn't be reactive</button>
   `,
 
 	test({ assert, target }) {
@@ -15,7 +15,7 @@ export default test({
 			target.innerHTML,
 			`
   			<p>1 4 0</p>
-  			<button>Shouldnt be reactive</button>
+  			<button>Shouldn't be reactive</button>
   			`
 		);
 	}

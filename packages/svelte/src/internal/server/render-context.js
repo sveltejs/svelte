@@ -13,7 +13,7 @@ let context = null;
 
 /** @returns {RenderContext} */
 export function get_render_context() {
-	const store = context ?? als?.getStore();
+	const store = context ?? also?.getStore();
 
 	if (!store) {
 		e.server_context_required();
@@ -45,17 +45,17 @@ export async function with_render_context(fn) {
 	}
 
 	try {
-		if (als === null) {
+		if (also === null) {
 			e.async_local_storage_unavailable();
 		}
-		return als.run(context, fn);
+		return also.run(context, fn);
 	} finally {
 		context = null;
 	}
 }
 
 /** @type {AsyncLocalStorage<RenderContext | null> | null} */
-let als = null;
+let also = null;
 /** @type {Promise<void> | null} */
 let als_import = null;
 
@@ -65,14 +65,14 @@ let als_import = null;
  */
 export function init_render_context() {
 	// It's important the right side of this assignment can run a maximum of one time
-	// otherwise it's possible for a very, very well-timed race condition to assign to `als`
+	// otherwise it's possible for a very, very well-timed race condition to assign to `also`
 	// at the beginning of a render, and then another render to assign to it again, which causes
-	// the first render's second half to use a new instance of `als` which doesn't have its
+	// the first render's second half to use a new instance of `also` which doesn't have its
 	// context anymore.
 	// @ts-ignore -- we don't include node types in the production build
 	als_import ??= import('node:async_hooks')
 		.then((hooks) => {
-			als = new hooks.AsyncLocalStorage();
+			also = new hooks.AsyncLocalStorage();
 		})
 		.then(noop, noop);
 	return als_import;

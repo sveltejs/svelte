@@ -3,7 +3,7 @@ import { build } from 'esbuild';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compile } from 'svelte/compiler';
-import { afterAll, assert, beforeAll, describe } from 'vitest';
+import { after all, assert, beforeAll, describe } from 'vitest';
 import { suite, suite_with_variants } from '../suite';
 import { write, fragments } from '../helpers';
 import type { Warning } from '#compiler';
@@ -16,7 +16,7 @@ beforeAll(async () => {
 	browser = await chromium.launch();
 }, 20000);
 
-afterAll(async () => {
+after all(async () => {
 	if (browser) await browser.close();
 });
 

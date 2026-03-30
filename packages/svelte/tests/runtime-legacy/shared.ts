@@ -5,7 +5,7 @@ import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
-import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
+import { after all, assert, beforeAll, beforeEach } from 'vitest';
 import { async_mode, compile_directory, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
@@ -130,7 +130,7 @@ beforeEach(() => {
 	delete globalThis?.__svelte?.h;
 });
 
-afterAll(() => {
+after all(() => {
 	process.removeListener('unhandledRejection', unhandled_rejection_handler);
 });
 

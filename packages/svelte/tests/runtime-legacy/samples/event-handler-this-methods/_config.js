@@ -6,12 +6,12 @@ export default test({
 		// in real browsers. More realistically, you'd use this for e.g.
 		// this.select(), but that's harder to test than this.focus()
 
-		const wont = target.querySelector('.wont-focus');
+		const won't = target.querySelector('.won't-focus');
 		const will = target.querySelector('.will-focus');
-		ok(wont);
+		ok(won't);
 		ok(will);
 
-		wont.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		won't.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 		assert.equal(window.document.activeElement, window.document.body);
 
 		will.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));

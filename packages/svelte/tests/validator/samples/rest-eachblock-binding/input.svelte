@@ -1,5 +1,5 @@
 <script>
-	let objArray = [{foo: '1', id: 0, innerValue: "test"}, {foo: '2', id:1, innerValue: "Somethin"}]
+	let objArray = [{foo: '1', id: 0, innerValue: "test"}, {foo: '2', id:1, innerValue: "Something"}]
 </script>
 
 {#each objArray as { id, ...rest } (id)}
