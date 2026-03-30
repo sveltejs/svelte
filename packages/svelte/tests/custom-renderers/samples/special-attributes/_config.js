@@ -2,10 +2,7 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	test({ assert, target, serialize, dispatch_event }) {
-		// Initial state
-		const html = serialize(target);
-
+	test({ assert, target, dispatch_event }) {
 		// Find all inputs and the button
 		const inputs = target.children.filter(
 			(/** @type {any} */ n) => n.type === 'element' && n.name === 'input'
@@ -22,6 +19,8 @@ export default test({
 		assert.equal(input_value.attributes['value'], 'hello');
 		assert.equal(input_value.attributes['class'], 'hello');
 		assert.equal(input_value.attributes['style'], 'color: blue');
+		assert.equal(input_value.attributes['autofocus'], 'true');
+		assert.equal(input_value.attributes['muted'], 'true');
 
 		// Input 2: type="checkbox" checked=""
 		const input_checked = inputs[1];

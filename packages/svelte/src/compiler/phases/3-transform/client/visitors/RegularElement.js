@@ -257,7 +257,7 @@ export function RegularElement(node, context) {
 				if (name !== 'class' || value) {
 					context.state.template.set_prop(attribute.name, value === true ? '' : value);
 				}
-			} else if (name === 'autofocus') {
+			} else if (name === 'autofocus' && !context.state.options.customRenderer) {
 				let { value } = build_attribute_value(attribute.value, context);
 				context.state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 			} else if (name === 'class') {
@@ -615,7 +615,7 @@ function build_element_attribute_update(
 	attributes,
 	custom_renderer = false
 ) {
-	if (name === 'muted') {
+	if (name === 'muted' && !custom_renderer) {
 		// Special case for Firefox who needs it set as a property in order to work
 		return b.assignment('=', b.member(node_id, b.id('muted')), value);
 	}
@@ -656,7 +656,7 @@ function build_element_attribute_update(
 		return b.call('$.set_default_checked', node_id, value);
 	}
 
-	if (is_dom_property(name)) {
+	if (is_dom_property(name) && !custom_renderer) {
 		return b.assignment('=', b.member(node_id, name), value);
 	}
 

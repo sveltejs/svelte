@@ -8,7 +8,7 @@
 	let spread = $derived({value, class: class_name, style});
 </script>
 
-<input {value} class={class_name} {style} />
+<input autofocus muted {value} class={class_name} {style} />
 <input type="checkbox" checked={checked} />
 <input value="fixed" defaultValue={default_value} />
 <input type="checkbox" checked defaultChecked={default_checked} />
