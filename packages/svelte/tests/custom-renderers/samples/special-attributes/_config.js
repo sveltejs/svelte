@@ -20,6 +20,8 @@ export default test({
 		// Input 1: value="hello"
 		const input_value = inputs[0];
 		assert.equal(input_value.attributes['value'], 'hello');
+		assert.equal(input_value.attributes['class'], 'hello');
+		assert.equal(input_value.attributes['style'], 'color: blue');
 
 		// Input 2: type="checkbox" checked=""
 		const input_checked = inputs[1];
@@ -40,6 +42,8 @@ export default test({
 		// Input 5: spread attributes
 		const input_spread = inputs[4];
 		assert.equal(input_spread.attributes['value'], 'hello');
+		assert.equal(input_spread.attributes['class'], 'hello');
+		assert.equal(input_spread.attributes['style'], 'color: blue');
 
 		// Click the button to update all values
 		dispatch_event(button, 'click');
@@ -48,7 +52,8 @@ export default test({
 		// After update:
 		// Input 1: value="world"
 		assert.equal(input_value.attributes['value'], 'world');
-
+		assert.equal(input_value.attributes['class'], 'world');
+		assert.equal(input_value.attributes['style'], 'color: red');
 		// Input 2: checked should be removed
 		assert.equal(input_checked.attributes['checked'], undefined);
 
@@ -61,5 +66,7 @@ export default test({
 
 		// Input 5: spread attributes should update value to "world"
 		assert.equal(input_spread.attributes['value'], 'world');
+		assert.equal(input_spread.attributes['class'], 'world');
+		assert.equal(input_spread.attributes['style'], 'color: red');
 	}
 });

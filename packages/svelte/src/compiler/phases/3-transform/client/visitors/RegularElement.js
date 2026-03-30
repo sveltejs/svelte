@@ -38,7 +38,10 @@ import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
-	const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
+	const is_html =
+		context.state.metadata.namespace === 'html' &&
+		node.name !== 'svg' &&
+		!context.state.options.customRenderer;
 	const name = is_html ? node.name.toLowerCase() : node.name;
 	context.state.template.push_element(name, node.start, is_html);
 
