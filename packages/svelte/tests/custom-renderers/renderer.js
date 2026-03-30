@@ -9,10 +9,10 @@
 import { createRenderer } from '../../src/renderer/index.js';
 
 /**
- * @typedef {{ type: 'element', name: string, attributes: Record<string, string>, children: ObjNode[], listeners: Record<string, Array<{handler: any, options?: any}>>, parent: ObjNode | null, next_sibling: ObjNode | null, prev_sibling: ObjNode | null }} ObjElement
- * @typedef {{ type: 'text', value: string, parent: ObjNode | null, next_sibling: ObjNode | null, prev_sibling: ObjNode | null }} ObjText
- * @typedef {{ type: 'comment', value: string, parent: ObjNode | null, next_sibling: ObjNode | null, prev_sibling: ObjNode | null }} ObjComment
- * @typedef {{ type: 'fragment', children: ObjNode[], parent: ObjNode | null, next_sibling: ObjNode | null, prev_sibling: ObjNode | null }} ObjFragment
+ * @typedef {{ type: 'element', name: string, attributes: Record<string, string>, children: ObjNode[], listeners: Record<string, Array<{handler: any, options?: any}>>, parent: ObjNode | null }} ObjElement
+ * @typedef {{ type: 'text', value: string, parent: ObjNode | null }} ObjText
+ * @typedef {{ type: 'comment', value: string, parent: ObjNode | null }} ObjComment
+ * @typedef {{ type: 'fragment', children: ObjNode[], parent: ObjNode | null }} ObjFragment
  * @typedef {ObjElement | ObjText | ObjComment | ObjFragment} ObjNode
  */
 
@@ -39,24 +39,10 @@ function insert_node(parent, node, anchor) {
 	node.parent = parent;
 
 	if (anchor === null) {
-		const last = children[children.length - 1] ?? null;
-		if (last) {
-			last.next_sibling = node;
-			node.prev_sibling = last;
-		}
-		node.next_sibling = null;
 		children.push(node);
 	} else {
 		const idx = children.indexOf(anchor);
 		if (idx === -1) throw new Error('Anchor not found in parent');
-
-		const prev = children[idx - 1] ?? null;
-		if (prev) {
-			prev.next_sibling = node;
-			node.prev_sibling = prev;
-		}
-		node.next_sibling = anchor;
-		anchor.prev_sibling = node;
 		children.splice(idx, 0, node);
 	}
 }
@@ -70,13 +56,6 @@ function remove_from_parent(node) {
 	const idx = children.indexOf(node);
 	if (idx === -1) return;
 
-	const prev = children[idx - 1] ?? null;
-	const next = children[idx + 1] ?? null;
-	if (prev) prev.next_sibling = next;
-	if (next) next.prev_sibling = prev;
-
-	node.prev_sibling = null;
-	node.next_sibling = null;
 	node.parent = null;
 
 	children.splice(idx, 1);
@@ -87,9 +66,7 @@ const renderer = createRenderer({
 		return /** @type {ObjFragment} */ ({
 			type: 'fragment',
 			children: [],
-			parent: null,
-			next_sibling: null,
-			prev_sibling: null
+			parent: null
 		});
 	},
 
@@ -100,9 +77,7 @@ const renderer = createRenderer({
 			attributes: {},
 			children: [],
 			listeners: {},
-			parent: null,
-			next_sibling: null,
-			prev_sibling: null
+			parent: null
 		});
 	},
 
@@ -110,9 +85,7 @@ const renderer = createRenderer({
 		return /** @type {ObjText} */ ({
 			type: 'text',
 			value: data,
-			parent: null,
-			next_sibling: null,
-			prev_sibling: null
+			parent: null
 		});
 	},
 
@@ -120,9 +93,7 @@ const renderer = createRenderer({
 		return /** @type {ObjComment} */ ({
 			type: 'comment',
 			value: data,
-			parent: null,
-			next_sibling: null,
-			prev_sibling: null
+			parent: null
 		});
 	},
 
@@ -167,7 +138,10 @@ const renderer = createRenderer({
 	},
 
 	getNextSibling(node) {
-		return node.next_sibling ?? null;
+		const parent = node.parent;
+		if (!parent || !('children' in parent)) return null;
+		const idx = parent.children.indexOf(node);
+		return parent.children[idx + 1] ?? null;
 	},
 
 	insert(parent, element, anchor) {
