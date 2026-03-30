@@ -114,7 +114,7 @@
 
 - fix: don't access inert block effects ([#17882](https://github.com/sveltejs/svelte/pull/17882))
 
-- fix: handle asnyc updates within pending boundary ([#17873](https://github.com/sveltejs/svelte/pull/17873))
+- fix: handle async updates within pending boundary ([#17873](https://github.com/sveltejs/svelte/pull/17873))
 
 - perf: avoid re-traversing the effect tree after `$:` assignments ([#17848](https://github.com/sveltejs/svelte/pull/17848))
 
@@ -1266,7 +1266,7 @@ Not published due to CI issue
 
 ### Patch Changes
 
-- fix: allow instrinsic `<svelte:...>` elements to inherit from `SvelteHTMLElements` ([#16424](https://github.com/sveltejs/svelte/pull/16424))
+- fix: allow intrinsic `<svelte:...>` elements to inherit from `SvelteHTMLElements` ([#16424](https://github.com/sveltejs/svelte/pull/16424))
 
 ## 5.36.6
 
@@ -1438,7 +1438,7 @@ Not published due to CI issue
 
 ### Patch Changes
 
-- fix: don't set state withing `with_parent` in proxy ([#16176](https://github.com/sveltejs/svelte/pull/16176))
+- fix: don't set state within `with_parent` in proxy ([#16176](https://github.com/sveltejs/svelte/pull/16176))
 
 - fix: use compiler-driven reactivity in legacy mode template expressions ([#16100](https://github.com/sveltejs/svelte/pull/16100))
 
@@ -1692,7 +1692,7 @@ Not published due to CI issue
 
 ### Patch Changes
 
-- fix: remove unncessary guards that require CSP privilege when removing event attributes ([#15846](https://github.com/sveltejs/svelte/pull/15846))
+- fix: remove unnecessary guards that require CSP privilege when removing event attributes ([#15846](https://github.com/sveltejs/svelte/pull/15846))
 
 - fix: rewrite destructuring logic to handle iterators ([#15813](https://github.com/sveltejs/svelte/pull/15813))
 
@@ -2207,7 +2207,7 @@ Not published due to CI issue
 
 ### Patch Changes
 
-- fix: omit unnecessary nullish coallescing in template expressions ([#15056](https://github.com/sveltejs/svelte/pull/15056))
+- fix: omit unnecessary nullish coalescing in template expressions ([#15056](https://github.com/sveltejs/svelte/pull/15056))
 
 - fix: more efficient template effect grouping ([#15050](https://github.com/sveltejs/svelte/pull/15050))
 
@@ -2581,7 +2581,7 @@ Not published due to CI issue
 
 - fix: better error messages for invalid HTML trees ([#14445](https://github.com/sveltejs/svelte/pull/14445))
 
-- fix: remove spreaded event handlers when they become nullish ([#14546](https://github.com/sveltejs/svelte/pull/14546))
+- fix: remove spread event handlers when they become nullish ([#14546](https://github.com/sveltejs/svelte/pull/14546))
 
 - fix: respect the unidirectional nature of time ([#14541](https://github.com/sveltejs/svelte/pull/14541))
 
@@ -4371,7 +4371,7 @@ For more details check out the [Svelte docs](https://svelte-omnisite.vercel.app/
 
 - feat: defer tasks without creating effects ([#11960](https://github.com/sveltejs/svelte/pull/11960))
 
-- fix: enusre dev validation in dynamic component works as intended ([#11985](https://github.com/sveltejs/svelte/pull/11985))
+- fix: ensure dev validation in dynamic component works as intended ([#11985](https://github.com/sveltejs/svelte/pull/11985))
 
 - feat: detach inert effects ([#11955](https://github.com/sveltejs/svelte/pull/11955))
 
@@ -4747,7 +4747,7 @@ For more details check out the [Svelte docs](https://svelte-omnisite.vercel.app/
 
 - fix: only warn about non-reactive state in runes mode ([#11434](https://github.com/sveltejs/svelte/pull/11434))
 
-- fix: prevent ownership validation from infering with component context ([#11438](https://github.com/sveltejs/svelte/pull/11438))
+- fix: prevent ownership validation from inferring with component context ([#11438](https://github.com/sveltejs/svelte/pull/11438))
 
 - fix: ensure $inspect untracks inspected object ([#11432](https://github.com/sveltejs/svelte/pull/11432))
 
@@ -5501,7 +5501,7 @@ For more details check out the [Svelte docs](https://svelte-omnisite.vercel.app/
 
 - fix: disallow exporting props, derived and reassigned state from within components ([#10430](https://github.com/sveltejs/svelte/pull/10430))
 
-- fix: improve indexed each array reconcilation ([#10422](https://github.com/sveltejs/svelte/pull/10422))
+- fix: improve indexed each array reconciliation ([#10422](https://github.com/sveltejs/svelte/pull/10422))
 
 - fix: add compiler error for each block mutations in runes mode ([#10428](https://github.com/sveltejs/svelte/pull/10428))
 
@@ -5731,7 +5731,7 @@ For more details check out the [Svelte docs](https://svelte-omnisite.vercel.app/
 
 - fix: keep intermediate number value representations ([`d171a39b0`](https://github.com/sveltejs/svelte/commit/d171a39b0ad97e2a05de1f38bc76a3d345e2b3d5))
 
-- feat: allow modifiying derived props ([#10080](https://github.com/sveltejs/svelte/pull/10080))
+- feat: allow modifying derived props ([#10080](https://github.com/sveltejs/svelte/pull/10080))
 
 - fix: improve signal consumer tracking behavior ([#10121](https://github.com/sveltejs/svelte/pull/10121))
 
