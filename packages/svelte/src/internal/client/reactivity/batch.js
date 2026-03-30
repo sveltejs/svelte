@@ -618,10 +618,8 @@ export class Batch {
 				/** @type {Map<Reaction, boolean>} */
 				var checked = new Map();
 
-				var scheduled = [];
-
 				for (var source of sources) {
-					mark_effects(source, others, marked, checked, scheduled);
+					mark_effects(batch, source, others, marked, checked);
 				}
 
 				checked = new Map();
@@ -636,12 +634,7 @@ export class Batch {
 						(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
 						depends_on(effect, current_unequal, checked)
 					) {
-						if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
-							batch.schedule(effect);
-						} else {
-							batch.#dirty_effects.add(effect);
-						}
-
+						batch.schedule(effect);
 						batch.cvs.set(effect, -1);
 					}
 				}
@@ -1071,12 +1064,13 @@ function flush_queued_effects(effects) {
  * This is similar to `mark_reactions`, but it only marks async/block effects
  * depending on `value` and at least one of the other `sources`, so that
  * these effects can re-run after another batch has been committed
+ * @param {Batch} batch
  * @param {Value} value
  * @param {Source[]} sources
  * @param {Set<Value>} marked
  * @param {Map<Reaction, boolean>} checked
  */
-function mark_effects(value, sources, marked, checked, scheduled = []) {
+function mark_effects(batch, value, sources, marked, checked) {
 	if (marked.has(value)) return;
 	marked.add(value);
 
@@ -1085,15 +1079,14 @@ function mark_effects(value, sources, marked, checked, scheduled = []) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked, scheduled);
+				mark_effects(batch, /** @type {Derived} */ (reaction), sources, marked, checked);
 			} else if (
 				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
 				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
-				scheduled.push(reaction);
-				schedule_effect(/** @type {Effect} */ (reaction));
-				current_batch?.cvs.set(reaction, -1);
+				batch.schedule(/** @type {Effect} */ (reaction));
+				batch.cvs.set(reaction, -1);
 			}
 		}
 	}
