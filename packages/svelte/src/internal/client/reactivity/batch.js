@@ -369,8 +369,10 @@ export class Batch {
 
 			previous_batch = this;
 
+			// console.group('flush effects');
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
+			// console.groupEnd();
 			previous_batch = null;
 
 			this.#deferred?.resolve();
@@ -1164,6 +1166,8 @@ export function schedule_effect(effect) {
 /** @type {Source<number>[]} */
 let eager_versions = [];
 
+let running_eager_effect = false;
+
 function eager_flush() {
 	try {
 		flushSync(() => {
@@ -1200,14 +1204,17 @@ export function eager(fn) {
 			var previous_batch_values = batch_values;
 			var previous_batch_cvs = batch_cvs;
 			var previous_batch_wvs = batch_wvs;
+			var previous_running_eager_effect = running_eager_effect;
 
 			try {
+				running_eager_effect = true;
 				batch_values = batch_cvs = batch_wvs = null;
 				value = fn();
 			} finally {
 				batch_values = previous_batch_values;
 				batch_cvs = previous_batch_cvs;
 				batch_wvs = previous_batch_wvs;
+				running_eager_effect = previous_running_eager_effect;
 			}
 
 			return;
@@ -1388,7 +1395,7 @@ export function set_cv(reaction, cv = write_version) {
 	current_batch?.cvs.set(reaction, cv);
 	batch_cvs?.set(reaction, cv);
 
-	if (!current_batch?.is_fork) {
+	if (!current_batch?.is_fork && !running_eager_effect) {
 		reaction.cv = cv;
 	}
 }

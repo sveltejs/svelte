@@ -269,9 +269,7 @@ export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
 	for (const effect of eager_effects) {
-		if (is_dirty(effect)) {
-			update_effect(effect);
-		}
+		update_effect(effect);
 	}
 
 	eager_effects.clear();
