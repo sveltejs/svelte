@@ -1,3 +1,4 @@
+import { boundary } from '../dom/blocks/boundary.js';
 import { branch, effect_root } from '../reactivity/effects.js';
 import { push_renderer } from './state.js';
 
@@ -50,8 +51,10 @@ export function createRenderer(renderer) {
 			const unmount = effect_root(() => {
 				var anchor = renderer.createComment('');
 				renderer.insert(target, anchor, null);
-				branch(() => {
-					Component(anchor, props);
+				boundary(/** @type {*} */ (anchor), { pending: () => {} }, (anchor) => {
+					branch(() => {
+						Component(anchor, props);
+					});
 				});
 			});
 			cleanup();
