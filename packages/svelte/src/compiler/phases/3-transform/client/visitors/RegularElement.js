@@ -376,7 +376,7 @@ export function RegularElement(node, context) {
 				);
 			}
 		}
-	} else if (is_customizable_select_element(node)) {
+	} else if (is_customizable_select_element(node) && !context.state.options.customRenderer) {
 		// For <option>, <optgroup>, or <select> elements with rich content, we need to branch based on browser support.
 		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
 		// We create a separate template for the rich content and append it to the element.
