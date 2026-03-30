@@ -8,6 +8,13 @@
 export let renderer = null;
 
 /**
+ * @param {Renderer | null} $renderer
+ */
+export function set_renderer($renderer) {
+	renderer = $renderer;
+}
+
+/**
  *
  * @param {Renderer} $renderer
  */
