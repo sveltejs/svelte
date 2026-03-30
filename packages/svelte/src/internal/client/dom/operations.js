@@ -351,6 +351,8 @@ export function node_type(node) {
 export function node_name(node) {
 	if (node == null) return undefined;
 	if (renderer) {
+		// for custom renderers we don't need to return the node name since all the
+		// checks that we do on specific node names are meant to be for the HTML
 		return '';
 	}
 	return node?.nodeName;
@@ -589,7 +591,9 @@ export function set_inner_html(element, value) {
  * @returns {Node}
  */
 export function clone_node(node, deep) {
-	if (renderer) return renderer.cloneNode(node, deep);
+	if (renderer) {
+		throw new Error('cloneNode is not supported with custom renderers');
+	}
 	return node.cloneNode(deep);
 }
 
@@ -599,7 +603,9 @@ export function clone_node(node, deep) {
  * @returns {Node}
  */
 export function import_node(node, deep) {
-	if (renderer) return renderer.cloneNode(node, deep);
+	if (renderer) {
+		throw new Error('importNode is not supported with custom renderers');
+	}
 	return document.importNode(node, deep);
 }
 
