@@ -512,6 +512,7 @@ export class Batch {
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((derived.f & ERROR_VALUE) === 0) {
+			this.current.set(derived, value);
 			batch_values?.set(derived, value);
 		}
 
@@ -848,7 +849,7 @@ export class Batch {
 
 		// console.group('batch_values');
 		// for (const [value, v] of batch_values) {
-		// 	console.log(this.current.has(value), value.label, v);
+		// 	console.log(this.current.has(value), value.label, snapshot(v, true));
 		// }
 		// console.groupEnd();
 
@@ -865,7 +866,7 @@ export class Batch {
 
 		// console.group('batch_wvs');
 		// for (const [value, wv] of batch_wvs) {
-		// 	console.log(this.wvs.has(value), wv, value.label ?? value.v);
+		// 	console.log(this.wvs.has(value), wv, value.label ?? snapshot(value.v, true));
 		// }
 		// console.groupEnd();
 
