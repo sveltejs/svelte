@@ -15,7 +15,7 @@ Don't worry if you don't know Svelte yet! You can ignore all the nice features S
 
 ## Alternatives to SvelteKit
 
-You can also use Svelte directly with Vite via [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) by running `npm create vite@latest` and selecting the `svelte` option. With this, `npm run build` will generate HTML, JS, and CSS files inside the `dist` directory. In most cases, you will probably need to [choose a routing library](/packages#routing) as well.
+You can also use Svelte directly with Vite via [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) by running `npm create vite@latest` and selecting the `svelte` option (or, if working with an existing project, adding the plugin to your `vite.config.js` file). With this, `npm run build` will generate HTML, JS, and CSS files inside the `dist` directory. In most cases, you will probably need to [choose a routing library](/packages#routing) as well.
 
 >[!NOTE] Vite is often used in standalone mode to build [single page apps (SPAs)](../kit/glossary#SPA), which you can also [build with SvelteKit](../kit/single-page-apps).
 
