@@ -1,5 +1,7 @@
+/** @import { ComponentContext } from '#client' */
 import { boundary } from '../dom/blocks/boundary.js';
 import { branch, effect_root } from '../reactivity/effects.js';
+import { push, pop, component_context } from '../context.js';
 import { push_renderer } from './state.js';
 
 /**
@@ -36,7 +38,7 @@ import { push_renderer } from './state.js';
  * @template {object} [TTextNode=object]
  * @template {object} [TComment=object]
  * @param {Renderer<TFragment, TElement, TTextNode, TComment>} renderer
- * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: (Component: any, options: { target: TFragment | TElement | TTextNode | TComment, props?: any }) => () => void }}
+ * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: (Component: any, options: { target: TFragment | TElement | TTextNode | TComment, props?: any, context?: Map<any, any> }) => () => void }}
  */
 export function createRenderer(renderer) {
 	return {
@@ -45,15 +47,19 @@ export function createRenderer(renderer) {
 		 * @param {*} Component
 		 * @param {*} options
 		 */
-		render(Component, { target, props }) {
+		render(Component, { target, props, context }) {
 			var cleanup = push_renderer(renderer);
 			const unmount = effect_root(() => {
 				var anchor = renderer.createComment('');
 				renderer.insert(target, anchor, null);
 				boundary(/** @type {*} */ (anchor), { pending: () => {} }, (anchor) => {
+					push({});
+					var ctx = /** @type {ComponentContext} */ (component_context);
+					if (context) ctx.c = context;
 					branch(() => {
 						Component(anchor, props);
 					});
+					pop();
 				});
 			});
 			cleanup();

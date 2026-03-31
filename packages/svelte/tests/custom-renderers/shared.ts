@@ -11,6 +11,7 @@ export interface CustomRendererTest extends BaseTest {
 	html?: string;
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
+	context?: Map<any, any>;
 	error?: string;
 	compile_error?: string;
 	runtime_error?: string;
@@ -136,7 +137,8 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 		try {
 			unmount = renderer.render(mod.default, {
 				target,
-				props: config.props ?? {}
+				props: config.props ?? {},
+				context: config.context
 			});
 		} catch (err) {
 			if (config.error) {
