@@ -7,6 +7,9 @@
  */
 export let renderer = null;
 
+// to use with $props.id()
+export let custom_renderer_window = {};
+
 /**
  * @param {Renderer<any, any, any, any> | null} $renderer
  */

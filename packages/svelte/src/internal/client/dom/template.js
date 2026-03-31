@@ -20,7 +20,8 @@ import {
 	replace_with,
 	node_type,
 	get_node_value,
-	node_name
+	node_name,
+	get_window
 } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
@@ -417,7 +418,8 @@ export function props_id() {
 		return id;
 	}
 
-	// TODO RENDERER: figure out what to do here
+	let window = get_window();
+
 	// @ts-expect-error This way we ensure the id is unique even across Svelte runtimes
 	(window.__svelte ??= {}).uid ??= 1;
 
