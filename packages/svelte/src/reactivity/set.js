@@ -49,7 +49,7 @@ export class SvelteSet extends Set {
 	/** @type {Map<T, Source<boolean>>} */
 	#sources = new Map();
 	/** @type {Source<Set<T>>} */
-	#items = state(new Set());
+	#items;
 	#update_version = update_version || -1;
 
 	/**
@@ -147,8 +147,10 @@ export class SvelteSet extends Set {
 			sources.set(value, this.#source(true));
 		}
 
-		if (!get(this.#items).has(value)) {
-			const clone = new Set(get(this.#items));
+		var items = get(this.#items);
+
+		if (!items.has(value)) {
+			const clone = new Set(items);
 			clone.add(value);
 
 			set(this.#items, clone);
@@ -159,7 +161,8 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	delete(value) {
-		var has = get(this.#items).has(value);
+		var items = get(this.#items);
+		var has = items.has(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
 
@@ -169,7 +172,7 @@ export class SvelteSet extends Set {
 		}
 
 		if (has) {
-			const clone = new Set(get(this.#items));
+			const clone = new Set(items);
 			clone.delete(value);
 
 			set(this.#items, clone);

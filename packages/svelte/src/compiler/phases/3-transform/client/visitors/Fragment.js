@@ -63,6 +63,7 @@ export function Fragment(node, context) {
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
+		is_standalone,
 		init: [],
 		snippets: [],
 		consts: [],
@@ -128,7 +129,7 @@ export function Fragment(node, context) {
 			// no need to create a template, we can just use the existing block's anchor
 			process_children(trimmed, () => b.id('$$anchor'), false, {
 				...context,
-				state: { ...state, is_standalone }
+				state
 			});
 		} else {
 			/** @type {(is_text: boolean) => Expression} */

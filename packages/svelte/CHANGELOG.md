@@ -1,5 +1,99 @@
 # svelte
 
+## 5.55.1
+
+### Patch Changes
+
+- fix: correctly handle bindings on the server ([#18009](https://github.com/sveltejs/svelte/pull/18009))
+
+- fix: prevent hydration error on async `{@html ...}` ([#17999](https://github.com/sveltejs/svelte/pull/17999))
+
+- fix: cleanup `superTypeParameters` in `ClassDeclarations`/`ClassExpression` ([#18015](https://github.com/sveltejs/svelte/pull/18015))
+
+- fix: improve duplicate module import error message ([#18016](https://github.com/sveltejs/svelte/pull/18016))
+
+- fix: reschedule new effects in prior batches ([#18021](https://github.com/sveltejs/svelte/pull/18021))
+
+## 5.55.0
+
+### Minor Changes
+
+- feat: export TweenOptions, SpringOptions, SpringUpdateOptions and Updater from svelte/motion ([#17967](https://github.com/sveltejs/svelte/pull/17967))
+
+### Patch Changes
+
+- fix: ensure HMR wrapper forwards correct start/end nodes to active effect ([#17985](https://github.com/sveltejs/svelte/pull/17985))
+
+## 5.54.1
+
+### Patch Changes
+
+- fix: hydration comments during hmr ([#17975](https://github.com/sveltejs/svelte/pull/17975))
+
+- fix: null out `effect.b` in `destroy_effect` ([#17980](https://github.com/sveltejs/svelte/pull/17980))
+
+- fix: group sync statements ([#17977](https://github.com/sveltejs/svelte/pull/17977))
+
+- fix: defer batch resolution until earlier intersecting batches have committed ([#17162](https://github.com/sveltejs/svelte/pull/17162))
+
+- fix: properly invoke `iterator.return()` during reactivity loss check ([#17966](https://github.com/sveltejs/svelte/pull/17966))
+
+- fix: remove trailing semicolon from {@const} tag printer ([#17962](https://github.com/sveltejs/svelte/pull/17962))
+
+## 5.54.0
+
+### Minor Changes
+
+- feat: allow `css`, `runes`, `customElement` compiler options to be functions ([#17951](https://github.com/sveltejs/svelte/pull/17951))
+
+### Patch Changes
+
+- fix: reinstate reactivity loss tracking ([#17801](https://github.com/sveltejs/svelte/pull/17801))
+
+## 5.53.13
+
+### Patch Changes
+
+- fix: ensure `$inspect` after top level await doesn't break builds ([#17943](https://github.com/sveltejs/svelte/pull/17943))
+
+- fix: resume inert effects when they come from offscreen ([#17942](https://github.com/sveltejs/svelte/pull/17942))
+
+- fix: don't eagerly access not-yet-initialized functions in template ([#17938](https://github.com/sveltejs/svelte/pull/17938))
+
+- fix: discard batches made obsolete by commit ([#17934](https://github.com/sveltejs/svelte/pull/17934))
+
+- fix: ensure "is standalone child" is correctly reset ([#17944](https://github.com/sveltejs/svelte/pull/17944))
+
+- fix: remove nodes in boundary when work is pending and HMR is active ([#17932](https://github.com/sveltejs/svelte/pull/17932))
+
+## 5.53.12
+
+### Patch Changes
+
+- fix: update `select.__value` on `change` ([#17745](https://github.com/sveltejs/svelte/pull/17745))
+
+- chore: add `invariant` helper for debugging ([#17929](https://github.com/sveltejs/svelte/pull/17929))
+
+- fix: ensure deriveds values are correct across batches ([#17917](https://github.com/sveltejs/svelte/pull/17917))
+
+- fix: handle async RHS in `assignment_value_stale` ([#17925](https://github.com/sveltejs/svelte/pull/17925))
+
+- fix: avoid traversing clean roots ([#17928](https://github.com/sveltejs/svelte/pull/17928))
+
+## 5.53.11
+
+### Patch Changes
+
+- fix: remove `untrack` circular dependency ([#17910](https://github.com/sveltejs/svelte/pull/17910))
+
+- fix: recover from errors that leave a corrupted effect tree ([#17888](https://github.com/sveltejs/svelte/pull/17888))
+
+- fix: properly lazily evaluate RHS when checking for `assignment_value_stale` ([#17906](https://github.com/sveltejs/svelte/pull/17906))
+
+- fix: resolve boundary in correct batch when hydrating ([#17914](https://github.com/sveltejs/svelte/pull/17914))
+
+- chore: rebase batches after process, not during ([#17900](https://github.com/sveltejs/svelte/pull/17900))
+
 ## 5.53.10
 
 ### Patch Changes
