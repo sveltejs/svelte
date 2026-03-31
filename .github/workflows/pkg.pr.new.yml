@@ -35,7 +35,7 @@ jobs:
           # For push, fall back to the push SHA.
           ref: ${{ github.event.pull_request.head.sha || inputs.sha || github.sha }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4
       - uses: actions/setup-node@v6
         with:
           node-version: 22.x
