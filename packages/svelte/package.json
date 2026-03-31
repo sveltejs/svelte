@@ -91,7 +91,7 @@
       "types": "./types/index.d.ts",
       "default": "./src/reactivity/window/index.js"
     },
-	"./renderer": {
+    "./renderer": {
       "types": "./types/index.d.ts",
       "default": "./src/renderer/index.js"
     },
