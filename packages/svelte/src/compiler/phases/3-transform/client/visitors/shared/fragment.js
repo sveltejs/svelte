@@ -83,7 +83,7 @@ export function process_children(nodes, initial, is_element, context) {
 		if (has_state && !within_bound_contenteditable) {
 			context.state.update.push(update);
 		} else {
-			if (context.state.options.experimental.customRenderer) {
+			if (context.state.analysis.custom_renderer) {
 				// custom renderers need to use the method to invoke the renderer
 				context.state.init.push(update);
 			} else {

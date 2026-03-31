@@ -110,10 +110,7 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		if (
-			is_customizable_select_element(node) &&
-			!context.state.options.experimental.customRenderer
-		) {
+		if (is_customizable_select_element(node) && !context.state.analysis.custom_renderer) {
 			rest.push(b.true);
 		}
 
@@ -160,10 +157,7 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		if (
-			is_customizable_select_element(node) &&
-			!context.state.options.experimental.customRenderer
-		) {
+		if (is_customizable_select_element(node) && !context.state.analysis.custom_renderer) {
 			rest.push(b.true);
 		}
 
@@ -201,7 +195,7 @@ export function RegularElement(node, context) {
 		if (
 			(name === 'optgroup' || name === 'select') &&
 			is_customizable_select_element(node) &&
-			!context.state.options.experimental.customRenderer
+			!context.state.analysis.custom_renderer
 		) {
 			state.template.push(b.literal('<!>'));
 		}

@@ -45,7 +45,15 @@ const common_options = {
 
 	experimental: object({
 		async: boolean(false),
-		customRenderer: string(undefined)
+		customRenderer: parametric(
+			/** @type {(options: { filename: string }) => string | undefined} */ (() => undefined),
+			(input, keypath) => {
+				if (input != null && typeof input !== 'string') {
+					throw_error(`${keypath} should be a string, if specified`);
+				}
+				return /** @type {string | undefined} */ (input);
+			}
+		)
 	})
 };
 

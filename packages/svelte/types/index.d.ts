@@ -1198,7 +1198,7 @@ declare module 'svelte/compiler' {
 			/**
 			 * Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
 			 */
-			customRenderer?: string;
+			customRenderer?: string | ((options: { filename: string }) => string | undefined);
 		};
 	}
 	/**
@@ -3273,7 +3273,7 @@ declare module 'svelte/types/compiler/interfaces' {
 			/**
 			 * Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
 			 */
-			customRenderer?: string;
+			customRenderer?: string | ((options: { filename: string }) => string | undefined);
 		};
 	}
 	/**

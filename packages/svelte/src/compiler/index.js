@@ -30,7 +30,7 @@ export function compile(source, options) {
 
 	const {
 		customElement: customElementOptions,
-		customRenderer,
+		customRenderer: custom_renderer,
 		...parsed_options
 	} = parsed.options || {};
 
@@ -43,7 +43,7 @@ export function compile(source, options) {
 		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes,
 		experimental: {
 			...validated.experimental,
-			...(customRenderer !== undefined ? { customRenderer } : {})
+			...(custom_renderer !== undefined ? { customRenderer: () => custom_renderer } : {})
 		}
 	};
 

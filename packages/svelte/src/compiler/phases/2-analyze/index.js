@@ -467,6 +467,7 @@ export function analyze_component(root, source, options) {
 
 	const custom_element_from_option = options.customElement({ filename: options.filename });
 	const css = options.css({ filename: options.filename });
+	const custom_renderer = options.experimental.customRenderer({ filename: options.filename });
 	const custom_element = options.customElementOptions ?? custom_element_from_option;
 	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
 
@@ -529,6 +530,7 @@ export function analyze_component(root, source, options) {
 		event_directive_node: null,
 		uses_event_attributes: false,
 		custom_element,
+		custom_renderer,
 		inject_styles: css === 'injected' || is_custom_element,
 		accessors:
 			is_custom_element ||

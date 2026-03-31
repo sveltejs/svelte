@@ -112,7 +112,7 @@ export function RegularElement(node, context) {
 	// We mark the subtree as dynamic so parent elements properly include the child init code
 	if (
 		(is_customizable_select_element(node) || node.name === 'selectedcontent') &&
-		!context.state.options.experimental.customRenderer
+		!context.state.analysis.custom_renderer
 	) {
 		// Mark the element's own fragment as dynamic so it's not treated as static
 		node.fragment.metadata.dynamic = true;

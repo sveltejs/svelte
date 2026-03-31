@@ -60,7 +60,7 @@ export function Attribute(node, context) {
 			}
 
 			// we can't delegate event handlers in a non dom environment
-			if (!context.state.options.experimental.customRenderer) {
+			if (!context.state.analysis.custom_renderer) {
 				node.metadata.delegated =
 					parent?.type === 'RegularElement' && can_delegate_event(node.name.slice(2));
 			}
