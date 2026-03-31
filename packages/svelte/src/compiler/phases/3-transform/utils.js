@@ -1,113 +1,12 @@
 /** @import { TransformState } from './types.js' */
-/** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
-/** @import { Node, Expression, CallExpression, MemberExpression } from 'estree' */
+/** @import { AST, Namespace, ValidatedCompileOptions } from '#compiler' */
+/** @import { Expression, CallExpression, MemberExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
-import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
-import { extract_identifiers } from '../../utils/ast.js';
-import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
-import is_reference from 'is-reference';
-import { set_scope } from '../scope.js';
-
-/**
- * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
- * @param {AST.SvelteNode[]} nodes
- * @param {TransformState} state
- */
-function sort_const_tags(nodes, state) {
-	/**
-	 * @typedef {{
-	 *   node: AST.ConstTag;
-	 *   deps: Set<Binding>;
-	 * }} Tag
-	 */
-
-	const other = [];
-
-	/** @type {Map<Binding, Tag>} */
-	const tags = new Map();
-
-	for (const node of nodes) {
-		if (node.type === 'ConstTag') {
-			const declaration = node.declaration.declarations[0];
-
-			const bindings = extract_identifiers(declaration.id).map((id) => {
-				return /** @type {Binding} */ (state.scope.get(id.name));
-			});
-
-			/** @type {Set<Binding>} */
-			const deps = new Set();
-
-			walk(declaration.init, state, {
-				// @ts-expect-error don't know, don't care
-				_: set_scope,
-				Identifier(node, context) {
-					const parent = /** @type {Expression} */ (context.path.at(-1));
-
-					if (is_reference(node, parent)) {
-						const binding = context.state.scope.get(node.name);
-						if (binding) deps.add(binding);
-					}
-				}
-			});
-
-			for (const binding of bindings) {
-				tags.set(binding, { node, deps });
-			}
-		} else {
-			other.push(node);
-		}
-	}
-
-	if (tags.size === 0) {
-		return nodes;
-	}
-
-	/** @type {Array<[Binding, Binding]>} */
-	const edges = [];
-
-	for (const [id, tag] of tags) {
-		for (const dep of tag.deps) {
-			if (tags.has(dep)) {
-				edges.push([id, dep]);
-			}
-		}
-	}
-
-	const cycle = check_graph_for_cycles(edges);
-	if (cycle?.length) {
-		const tag = /** @type {Tag} */ (tags.get(cycle[0]));
-		e.const_tag_cycle(tag.node, cycle.map((binding) => binding.node.name).join(' → '));
-	}
-
-	/** @type {AST.ConstTag[]} */
-	const sorted = [];
-
-	/** @param {Tag} tag */
-	function add(tag) {
-		if (sorted.includes(tag.node)) {
-			return;
-		}
-
-		for (const dep of tag.deps) {
-			const dep_tag = tags.get(dep);
-			if (dep_tag) add(dep_tag);
-		}
-
-		sorted.push(tag.node);
-	}
-
-	for (const tag of tags.values()) {
-		add(tag);
-	}
-
-	return [...sorted, ...other];
-}
-
 /**
  * Extract nodes that are hoisted and trim whitespace according to the following rules:
  * - trim leading and trailing whitespace, regardless of surroundings
@@ -135,10 +34,6 @@ export function clean_nodes(
 	preserve_whitespace,
 	preserve_comments
 ) {
-	if (!state.analysis.runes) {
-		nodes = sort_const_tags(nodes, state);
-	}
-
 	/** @type {AST.SvelteNode[]} */
 	const hoisted = [];
 
@@ -150,8 +45,8 @@ export function clean_nodes(
 			continue;
 		}
 
+		// ConstTags are filtered out since they are handled via Fragment.metadata.consts
 		if (
-			node.type === 'ConstTag' ||
 			node.type === 'DebugTag' ||
 			node.type === 'SvelteBody' ||
 			node.type === 'SvelteWindow' ||
@@ -162,7 +57,7 @@ export function clean_nodes(
 		) {
 			// TODO others?
 			hoisted.push(node);
-		} else {
+		} else if (node.type !== 'ConstTag') {
 			regular.push(node);
 		}
 	}

@@ -1,9 +1,4 @@
-import type {
-	Expression,
-	Statement,
-	ModuleDeclaration,
-	LabeledStatement
-} from 'estree';
+import type { Expression, Statement, ModuleDeclaration, LabeledStatement } from 'estree';
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';

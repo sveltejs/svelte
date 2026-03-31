@@ -67,6 +67,7 @@ export function SvelteBoundary(node, context) {
 
 				if (!context.state.options.experimental.async && const_tags.length > 0) {
 					child.body.nodes.unshift(...const_tags);
+					child.body.metadata.consts.sync.push(...const_tags);
 				}
 
 				context.visit(child, { ...context.state, snippets: statements });
