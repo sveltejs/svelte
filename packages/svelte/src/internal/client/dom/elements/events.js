@@ -63,10 +63,21 @@ export function replay_events(dom) {
  * @param {AddEventListenerOptions} [options]
  */
 export function create_event(event_name, dom, handler, options = {}) {
+	// Capture whether a custom renderer is active at creation time (during mount),
+	// since `renderer` will be null when the event actually fires
+	var is_custom_renderer = renderer != null;
+
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
+		if (is_custom_renderer) {
+			// Custom renderers don't use DOM event propagation/delegation,
+			// so just call the handler directly
+			return without_reactive_context(() => {
+				return handler?.call(this, event);
+			});
+		}
 		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation.call(dom, event);
