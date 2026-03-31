@@ -106,6 +106,18 @@ export function invalid_csp() {
 }
 
 /**
+ * The `idPrefix` option cannot include `-->`.
+ * @returns {never}
+ */
+export function invalid_id_prefix() {
+	const error = new Error(`invalid_id_prefix\nThe \`idPrefix\` option cannot include \`-->\`.\nhttps://svelte.dev/e/invalid_id_prefix`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}
@@ -124,18 +136,6 @@ export function lifecycle_function_unavailable(name) {
  */
 export function server_context_required() {
 	const error = new Error(`server_context_required\nCould not resolve \`render\` context.\nhttps://svelte.dev/e/server_context_required`);
-
-	error.name = 'Svelte error';
-
-	throw error;
-}
-
-/**
- * The `idPrefix` option cannot include `-->`.
- * @returns {never}
- */
-export function invalid_id_prefix() {
-	const error = new Error(`invalid_id_prefix\nThe \`idPrefix\` option cannot include \`-->\`.\nhttps://svelte.dev/e/invalid_id_prefix`);
 
 	error.name = 'Svelte error';
 
