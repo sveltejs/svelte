@@ -579,7 +579,7 @@ export function set_element_checked(element, checked) {
  */
 export function set_element_default_value(element, value) {
 	if (renderer) {
-		renderer.setAttribute(element, 'defaultvalue', value);
+		renderer.setAttribute(element, 'defaultValue', value);
 		return;
 	}
 	// @ts-expect-error
@@ -599,9 +599,9 @@ export function set_element_default_value(element, value) {
 export function set_element_default_checked(element, checked) {
 	if (renderer) {
 		if (checked) {
-			renderer.setAttribute(element, 'defaultchecked', '');
+			renderer.setAttribute(element, 'defaultChecked', '');
 		} else {
-			renderer.removeAttribute(element, 'defaultchecked');
+			renderer.removeAttribute(element, 'defaultChecked');
 		}
 		return;
 	}

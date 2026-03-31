@@ -132,9 +132,10 @@ export function build_attribute_value(value, context, memoize = (value) => value
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {AST.Attribute} attribute
+ * @param {boolean} [custom_renderer]
  */
-export function get_attribute_name(element, attribute) {
-	if (!element.metadata.svg && !element.metadata.mathml) {
+export function get_attribute_name(element, attribute, custom_renderer) {
+	if (!custom_renderer && !element.metadata.svg && !element.metadata.mathml) {
 		return normalize_attribute(attribute.name);
 	}
 

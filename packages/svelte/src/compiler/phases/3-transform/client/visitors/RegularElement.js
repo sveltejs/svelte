@@ -235,7 +235,7 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
-			const name = get_attribute_name(node, attribute);
+			const name = get_attribute_name(node, attribute, !!context.state.analysis.custom_renderer);
 
 			if (
 				!is_custom_element &&

@@ -27,16 +27,16 @@ export default test({
 		assert.equal(input_checked.attributes['type'], 'checkbox');
 		assert.equal(input_checked.attributes['checked'], '');
 
-		// Input 3: value="fixed" defaultvalue="default_val"
+		// Input 3: value="fixed" defaultValue="default_val"
 		const input_default_value = inputs[2];
 		assert.equal(input_default_value.attributes['value'], 'fixed');
-		assert.equal(input_default_value.attributes['defaultvalue'], 'default_val');
+		assert.equal(input_default_value.attributes['defaultValue'], 'default_val');
 
-		// Input 4: type="checkbox" checked="" defaultchecked=""
+		// Input 4: type="checkbox" checked="" defaultChecked=""
 		const input_default_checked = inputs[3];
 		assert.equal(input_default_checked.attributes['type'], 'checkbox');
 		assert.equal(input_default_checked.attributes['checked'], '');
-		assert.equal(input_default_checked.attributes['defaultchecked'], '');
+		assert.equal(input_default_checked.attributes['defaultChecked'], '');
 
 		// Input 5: spread attributes
 		const input_spread = inputs[4];
@@ -56,12 +56,12 @@ export default test({
 		// Input 2: checked should be removed
 		assert.equal(input_checked.attributes['checked'], undefined);
 
-		// Input 3: defaultvalue="new_default", value still "fixed"
+		// Input 3: defaultValue="new_default", value still "fixed"
 		assert.equal(input_default_value.attributes['value'], 'fixed');
-		assert.equal(input_default_value.attributes['defaultvalue'], 'new_default');
+		assert.equal(input_default_value.attributes['defaultValue'], 'new_default');
 
-		// Input 4: defaultchecked should be removed
-		assert.equal(input_default_checked.attributes['defaultchecked'], undefined);
+		// Input 4: defaultChecked should be removed
+		assert.equal(input_default_checked.attributes['defaultChecked'], undefined);
 
 		// Input 5: spread attributes should update value to "world"
 		assert.equal(input_spread.attributes['value'], 'world');
