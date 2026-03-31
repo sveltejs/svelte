@@ -1,6 +1,6 @@
 <script>
-	function increment(e) {
-		console.log(e);
+	function increment(...args) {
+		console.log(...args);
 	}
 </script>
 

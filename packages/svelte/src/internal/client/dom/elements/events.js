@@ -69,15 +69,17 @@ export function create_event(event_name, dom, handler, options = {}) {
 
 	/**
 	 * @this {EventTarget}
+	 * @param  {...any} args
 	 */
-	function target_handler(/** @type {Event} */ event) {
+	function target_handler(...args) {
 		if (is_custom_renderer) {
 			// Custom renderers don't use DOM event propagation/delegation,
 			// so just call the handler directly
 			return without_reactive_context(() => {
-				return handler?.call(this, event);
+				return handler?.apply(this, /** @type {any} */ (args));
 			});
 		}
+		var event = /** @type {Event} */ (args[0]);
 		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation.call(dom, event);

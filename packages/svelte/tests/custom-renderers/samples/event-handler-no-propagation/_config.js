@@ -11,14 +11,14 @@ export default test({
 		const listeners = button.listeners?.click;
 		assert.ok(listeners, 'button should have click listeners');
 
-		// Call the handler with a plain object that is NOT a DOM Event.
-		// If handle_event_propagation is called, it will fail because
-		// it tries to access DOM-specific properties like composedPath, ownerDocument, etc.
+		// Call the handler with multiple arguments.
+		// Custom renderers may pass multiple arguments to event handlers,
+		// so we need to make sure all arguments are forwarded.
 		for (const { handler } of listeners) {
-			handler.call(button, { type: 'click' });
+			handler.call(button, { type: 'click' }, 'extra', 42);
 		}
 		flushSync();
 
-		assert.deepEqual(logs, [{ type: 'click' }]);
+		assert.deepEqual(logs, [{ type: 'click' }, 'extra', 42]);
 	}
 });
