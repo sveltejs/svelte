@@ -419,18 +419,18 @@ export class Batch {
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
 	 * @param {Value} source
-	 * @param {any} old_value
+	 * @param {any} value
 	 * @param {boolean} [is_derived]
 	 */
-	capture(source, old_value, is_derived = false) {
-		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, old_value);
+	capture(source, value, is_derived = false) {
+		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
+			this.previous.set(source, source.v);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, [source.v, is_derived]);
-			batch_values?.set(source, source.v);
+			this.current.set(source, [value, is_derived]);
+			batch_values?.set(source, value);
 		}
 	}
 

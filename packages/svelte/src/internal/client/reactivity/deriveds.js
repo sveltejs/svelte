@@ -384,7 +384,6 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
-	var old_value = derived.v;
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
@@ -395,8 +394,8 @@ export function update_derived(derived) {
 		// otherwise, the next time we get here after a 'real world' state
 		// change, `derived.equals` may incorrectly return `true`
 		if (!current_batch?.is_fork || derived.deps === null) {
+			current_batch?.capture(derived, value, true);
 			derived.v = value;
-			current_batch?.capture(derived, old_value, true);
 
 			// deriveds without dependencies should never be recomputed
 			if (derived.deps === null) {

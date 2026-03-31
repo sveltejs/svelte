@@ -188,10 +188,9 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			old_values.set(source, old_value);
 		}
 
-		source.v = value;
-
 		var batch = Batch.ensure();
-		batch.capture(source, old_value);
+		batch.capture(source, value);
+		source.v = value;
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
