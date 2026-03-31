@@ -689,6 +689,12 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 - `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
 - `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
+### options_css_injected_with_custom_renderer
+
+```
+`css: "injected"` is not compatible with `customRenderer` — custom renderers do not support CSS injection
+```
+
 ### options_invalid_value
 
 ```

@@ -48,6 +48,15 @@ function e(node, code, message) {
 }
 
 /**
+ * `css: "injected"` is not compatible with `customRenderer` — custom renderers do not support CSS injection
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function options_css_injected_with_custom_renderer(node) {
+	e(node, 'options_css_injected_with_custom_renderer', `\`css: "injected"\` is not compatible with \`customRenderer\` — custom renderers do not support CSS injection\nhttps://svelte.dev/e/options_css_injected_with_custom_renderer`);
+}
+
+/**
  * Invalid compiler option: %details%
  * @param {null | number | NodeLike} node
  * @param {string} details

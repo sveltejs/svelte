@@ -197,6 +197,14 @@ export default function read_options(node) {
 		}
 	}
 
+	if (component_options.css === 'injected' && component_options.customRenderer !== undefined) {
+		// Find the css attribute node for the error position
+		const css_attribute = node.attributes.find(
+			(/** @type {any} */ a) => a.type === 'Attribute' && a.name === 'css'
+		);
+		e.options_css_injected_with_custom_renderer(css_attribute ?? node);
+	}
+
 	return component_options;
 }
 

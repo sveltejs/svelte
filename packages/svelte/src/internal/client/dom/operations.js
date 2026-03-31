@@ -151,7 +151,6 @@ export function first_child(node, is_text = false) {
 		var first = get_first_child(node);
 
 		// TODO prevent user comments with the empty string when preserveComments is true
-		// TODO RENDERER: can we find another way to not have an `isComment` on the renderer?
 		if (is_comment(first) && get_node_value(first) === '') return get_next_sibling(first);
 
 		return first;
@@ -642,8 +641,6 @@ export function remove_attribute(element, name) {
  * @returns {boolean}
  */
 export function has_attribute(element, name) {
-	// TODO RENDERER: could be worth removing and just using get?
-
 	if (renderer) return renderer.hasAttribute(element, name);
 	return element.hasAttribute(name);
 }
@@ -793,39 +790,14 @@ export function class_list_toggle(element, name, force) {
 }
 
 /**
- * @param {Element} element
- * @param {string} selector
- */
-export function query_selector(element, selector) {
-	if (renderer) {
-		// TODO RENDERER: just used with css inject which doesn't make sense with custom renderers
-		throw new Error('querySelector is not supported with custom renderers');
-	}
-	return element.querySelector(selector);
-}
-
-/**
  * @param {Element | DocumentFragment} element
  * @param {string} selector
  */
 export function query_selector_all(element, selector) {
 	if (renderer) {
-		// TODO RENDERER: just used with css inject which doesn't make sense with custom renderers
 		throw new Error('querySelectorAll is not supported with custom renderers');
 	}
 	return element.querySelectorAll(selector);
-}
-
-/**
- * @param {Node} node
- * @returns {Node}
- */
-export function get_root_node(node) {
-	if (renderer) {
-		// TODO RENDERER: just used with css inject which doesn't make sense with custom renderers
-		throw new Error('getRootNode is not supported with custom renderers');
-	}
-	return node.getRootNode();
 }
 
 /**

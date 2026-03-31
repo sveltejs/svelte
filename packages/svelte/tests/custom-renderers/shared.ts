@@ -12,6 +12,7 @@ export interface CustomRendererTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
 	error?: string;
+	compile_error?: string;
 	runtime_error?: string;
 	warnings?: string[];
 	test?: (args: {
@@ -35,7 +36,7 @@ const console_warn = console.warn;
 const renderer_path = path.resolve(import.meta.dirname, 'renderer.js');
 
 export function custom_renderer_suite() {
-	return suite_with_variants<CustomRendererTest, 'custom-renderer', CompileOptions>(
+	return suite_with_variants<CustomRendererTest, 'custom-renderer', CompileOptions | null>(
 		['custom-renderer'],
 		(_variant, _config) => {
 			return false;
@@ -44,12 +45,23 @@ export function custom_renderer_suite() {
 			return common_setup(cwd, config);
 		},
 		async (config, cwd, _variant, common) => {
+			if (common === null) {
+				// compile_error was expected and matched — test passed
+				return;
+			}
+			if (config.compile_error) {
+				// compile_error was expected but common_setup didn't throw
+				assert.fail('Expected a compile error');
+			}
 			await run_test(cwd, config, common);
 		}
 	);
 }
 
-async function common_setup(cwd: string, config: CustomRendererTest) {
+async function common_setup(
+	cwd: string,
+	config: CustomRendererTest
+): Promise<CompileOptions | null> {
 	const compile_options: CompileOptions = {
 		generate: 'client',
 		rootDir: cwd,
@@ -61,7 +73,15 @@ async function common_setup(cwd: string, config: CustomRendererTest) {
 		}
 	};
 
-	await compile_directory(cwd, 'client', compile_options);
+	try {
+		await compile_directory(cwd, 'client', compile_options);
+	} catch (err) {
+		if (config.compile_error) {
+			assert.include((err as Error).message, config.compile_error);
+			return null;
+		}
+		throw err;
+	}
 
 	return compile_options;
 }
