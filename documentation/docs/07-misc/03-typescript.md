@@ -40,6 +40,10 @@ If you want to use one of these features, you need to setup up a `script` prepro
 
 To use non-type-only TypeScript features within Svelte components, you need to add a preprocessor that will turn TypeScript into JavaScript.
 
+### Using Vite
+
+If you're using SvelteKit, or Vite _without_ SvelteKit, you can use `vitePreprocess` from `@sveltejs/vite-plugin-svelte` in your config file:
+
 ```ts
 /// file: svelte.config.js
 // @noErrors
@@ -53,17 +57,9 @@ const config = {
 export default config;
 ```
 
-### SvelteKit
+### Using other build tools
 
-The easiest way to get started is scaffolding a new SvelteKit project by typing `npx sv create`, following the prompts and choosing the TypeScript option.
-
-### Vite
-
-If you don't need or want all the features SvelteKit has to offer, you can scaffold a Svelte-flavoured Vite project instead by typing `npm create vite@latest` and selecting the `svelte-ts` option.
-
-### Other build tools
-
-If you're using tools like Rollup or Webpack instead, install their respective Svelte plugins. For Rollup that's [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) and for Webpack that's [svelte-loader](https://github.com/sveltejs/svelte-loader). For both, you need to install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config (see the respective READMEs for more info).
+If you're using tools like Rollup or Webpack instead, install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config. See the respective READMEs for more info.
 
 > [!NOTE] If you're starting a new project, we recommend using SvelteKit or Vite instead
 
