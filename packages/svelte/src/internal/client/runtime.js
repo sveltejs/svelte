@@ -9,8 +9,6 @@ import {
 } from './reactivity/effects.js';
 import {
 	DIRTY,
-	MAYBE_DIRTY,
-	CLEAN,
 	DERIVED,
 	DESTROYED,
 	BRANCH_EFFECT,
@@ -50,7 +48,6 @@ import {
 } from './context.js';
 import {
 	Batch,
-	batch_cvs,
 	batch_values,
 	batch_wvs,
 	current_batch,
@@ -154,8 +151,7 @@ export function increment_write_version() {
 }
 
 /**
- * Determines whether a derived or effect is dirty.
- * If it is MAYBE_DIRTY, will set the status to CLEAN
+ * Determines whether a reaction is dirty
  * @param {Reaction} reaction
  * @returns {boolean}
  */
@@ -303,7 +299,7 @@ export function update_reaction(reaction) {
 			untracked_writes !== null &&
 			!untracking &&
 			deps !== null &&
-			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
+			(reaction.f & (DERIVED | DIRTY)) === 0
 		) {
 			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
 				schedule_possible_effect_self_invalidation(

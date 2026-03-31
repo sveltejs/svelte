@@ -14,7 +14,6 @@ import {
 	set_active_effect
 } from '../runtime.js';
 import {
-	DIRTY,
 	BRANCH_EFFECT,
 	RENDER_EFFECT,
 	EFFECT,
@@ -28,7 +27,6 @@ import {
 	CLEAN,
 	EAGER_EFFECT,
 	HEAD_EFFECT,
-	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	USER_EFFECT,

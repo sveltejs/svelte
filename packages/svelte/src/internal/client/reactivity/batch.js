@@ -11,7 +11,6 @@ import {
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	MAYBE_DIRTY,
 	DERIVED,
 	EAGER_EFFECT,
 	ERROR_VALUE,
@@ -1380,9 +1379,8 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
-			// cause any MAYBE_DIRTY deriveds to update
-			// if they depend on things thath changed
-			// inside the discarded fork
+			// cause any deriveds to update if they depend on
+			// things that changed inside the discarded fork
 			for (var source of batch.current.keys()) {
 				source.wv = increment_write_version();
 			}

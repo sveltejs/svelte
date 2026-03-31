@@ -24,7 +24,6 @@ export const BOUNDARY_EFFECT = 1 << 7;
 export const CONNECTED = 1 << 9;
 export const CLEAN = 1 << 10;
 export const DIRTY = 1 << 11;
-export const MAYBE_DIRTY = 1 << 12;
 export const INERT = 1 << 13;
 export const DESTROYED = 1 << 14;
 /** Set once a reaction has run for the first time */

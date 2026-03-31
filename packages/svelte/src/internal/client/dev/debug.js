@@ -7,12 +7,10 @@ import {
 	CLEAN,
 	CONNECTED,
 	DERIVED,
-	DIRTY,
 	EFFECT,
 	ASYNC,
 	DESTROYED,
 	INERT,
-	MAYBE_DIRTY,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
 	WAS_MARKED,
@@ -208,8 +206,6 @@ export function log_reactions(signal) {
 		const names = [];
 
 		if ((flags & CLEAN) !== 0) names.push('CLEAN');
-		if ((flags & DIRTY) !== 0) names.push('DIRTY');
-		if ((flags & MAYBE_DIRTY) !== 0) names.push('MAYBE_DIRTY');
 		if ((flags & CONNECTED) !== 0) names.push('CONNECTED');
 		if ((flags & WAS_MARKED) !== 0) names.push('WAS_MARKED');
 		if ((flags & INERT) !== 0) names.push('INERT');
@@ -266,7 +262,7 @@ export function log_reactions(signal) {
 				} else {
 					// It's an effect
 					const label = effect_label(/** @type {Effect} */ (reaction), true);
-					const status = (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+					const status = is_dirty(reaction) ? 'dirty' : 'clean';
 
 					// Collect parent statuses
 					/** @type {string[]} */
@@ -387,8 +383,7 @@ export function log_inconsistent_branches(effect) {
 		const is_branch = (flags & BRANCH_EFFECT) !== 0;
 
 		if (is_branch) {
-			const status =
-				(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+			const status = (flags & CLEAN) !== 0 ? 'clean' : 'dirty';
 
 			/** @type {BranchInfo[]} */
 			const child_branches = [];

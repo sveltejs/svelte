@@ -7,7 +7,6 @@ import {
 	get,
 	set_untracked_writes,
 	untrack,
-	increment_write_version,
 	update_effect,
 	current_sources,
 	is_dirty,
@@ -20,10 +19,8 @@ import { equals, safe_equals } from './equality.js';
 import {
 	CLEAN,
 	DERIVED,
-	DIRTY,
 	BRANCH_EFFECT,
 	EAGER_EFFECT,
-	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	ASYNC,
