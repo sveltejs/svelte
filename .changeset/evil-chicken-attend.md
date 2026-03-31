@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: disallow `-->` in `idPrefix`
+fix: disallow `--` in `idPrefix`
