@@ -1323,6 +1323,7 @@ export function fork(fn) {
 	var committed = false;
 	var settled = batch.settled();
 
+	batch.apply();
 	flushSync(fn);
 
 	return {
