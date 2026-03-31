@@ -467,7 +467,7 @@ export function analyze_component(root, source, options) {
 
 	const custom_element_from_option = options.customElement({ filename: options.filename });
 	const css = options.css({ filename: options.filename });
-	const custom_renderer = options.experimental.customRenderer({ filename: options.filename });
+	const custom_renderer = options.experimental.customRenderer?.({ filename: options.filename });
 	const custom_element = options.customElementOptions ?? custom_element_from_option;
 	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
 
