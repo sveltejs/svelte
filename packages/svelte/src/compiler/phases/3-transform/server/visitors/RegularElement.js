@@ -6,6 +6,7 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
+import { serialize_async_const_tag, serialize_sync_const_tag } from './ConstTag.js';
 import { build_element_attributes, prepare_element_spread_object } from './shared/element.js';
 import { process_children, build_template, PromiseOptimiser } from './shared/utils.js';
 import { is_customizable_select_element } from '../../../nodes.js';
@@ -80,7 +81,30 @@ export function RegularElement(node, context) {
 		state.options.preserveComments
 	);
 
+	for (const const_tag of node.fragment.metadata.consts.sync) {
+		state.init.push(...serialize_sync_const_tag(const_tag, { ...context, state }));
+	}
+
+	const promise_id = node.fragment.metadata.consts.promise_id;
+	if (promise_id && node.fragment.metadata.consts.async.length > 0) {
+		/** @type {Expression[]} */
+		const thunks = [];
+
+		for (const const_tag of node.fragment.metadata.consts.async) {
+			const { declarations, thunk } = serialize_async_const_tag(
+				const_tag,
+				{ ...context, state },
+				promise_id
+			);
+			state.init.push(...declarations);
+			thunks.push(thunk);
+		}
+
+		state.init.push(b.var(promise_id, b.call('$$renderer.run', b.array(thunks))));
+	}
+
 	for (const node of hoisted) {
+		if (node.type === 'ConstTag') continue;
 		context.visit(node, state);
 	}
 

@@ -36,10 +36,6 @@ export function Fragment(node, context) {
 		state.init.push(...serialize_sync_const_tag(const_tag, { ...context, state }));
 	}
 
-	for (const const_tag of node.metadata.consts.sync_duplicated) {
-		state.init.push(...serialize_sync_const_tag(const_tag, { ...context, state }));
-	}
-
 	const promise_id = node.metadata.consts.promise_id;
 	if (promise_id && node.metadata.consts.async.length > 0) {
 		/** @type {import('estree').Expression[]} */

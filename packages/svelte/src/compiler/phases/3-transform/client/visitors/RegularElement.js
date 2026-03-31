@@ -32,6 +32,7 @@ import { visit_event_attribute } from './shared/events.js';
 import { Template } from '../transform-template/template.js';
 import { transform_template } from '../transform-template/index.js';
 import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
+import { serialize_async_const_tag, serialize_sync_const_tag } from './ConstTag.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -321,7 +322,38 @@ export function RegularElement(node, context) {
 	/** @type {typeof state} */
 	const child_state = { ...state, init: [], update: [], after_update: [], snippets: [] };
 
+	for (const const_tag of node.fragment.metadata.consts.sync) {
+		child_state.init.push(
+			...serialize_sync_const_tag(const_tag, { ...context, state: child_state })
+		);
+	}
+
+	for (const const_tag of node.fragment.metadata.consts.sync_duplicated) {
+		child_state.init.push(
+			...serialize_sync_const_tag(const_tag, { ...context, state: child_state }, true)
+		);
+	}
+
+	const promise_id = node.fragment.metadata.consts.promise_id;
+	if (promise_id && node.fragment.metadata.consts.async.length > 0) {
+		/** @type {Expression[]} */
+		const thunks = [];
+
+		for (const const_tag of node.fragment.metadata.consts.async) {
+			const { declarations, thunk } = serialize_async_const_tag(
+				const_tag,
+				{ ...context, state: child_state },
+				promise_id
+			);
+			child_state.init.push(...declarations);
+			thunks.push(thunk);
+		}
+
+		child_state.init.push(b.var(promise_id, b.call('$.run', b.array(thunks))));
+	}
+
 	for (const node of hoisted) {
+		if (node.type === 'ConstTag') continue;
 		context.visit(node, child_state);
 	}
 

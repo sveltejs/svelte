@@ -211,12 +211,32 @@ export function build_inline_component(node, expression, context) {
 
 	// Serialize each slot
 	for (const slot_name of Object.keys(children)) {
+		const fragment_nodes = children[slot_name];
+		const sync_consts = node.fragment.metadata.consts.sync.filter((const_tag) =>
+			fragment_nodes.includes(const_tag)
+		);
+		const sync_duplicated_consts = node.fragment.metadata.consts.sync_duplicated.filter((const_tag) =>
+			fragment_nodes.includes(const_tag)
+		);
+		const async_consts = node.fragment.metadata.consts.async.filter((const_tag) =>
+			fragment_nodes.includes(const_tag)
+		);
+
 		const block = /** @type {BlockStatement} */ (
 			context.visit(
 				{
 					...node.fragment,
+					metadata: {
+						...node.fragment.metadata,
+						consts: {
+							sync: sync_consts,
+							sync_duplicated: sync_duplicated_consts,
+							async: async_consts,
+							promise_id: async_consts.length > 0 ? node.fragment.metadata.consts.promise_id : undefined
+						}
+					},
 					// @ts-expect-error
-					nodes: children[slot_name]
+					nodes: fragment_nodes
 				},
 				slot_name === 'default'
 					? child_state

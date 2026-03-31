@@ -35,6 +35,8 @@ function sort_const_tags(nodes, state) {
 
 	/** @type {Map<Binding, Tag>} */
 	const tags = new Map();
+	/** @type {Tag[]} */
+	const all_tags = [];
 
 	for (const node of nodes) {
 		const declaration = node.declaration.declarations[0];
@@ -59,12 +61,17 @@ function sort_const_tags(nodes, state) {
 			}
 		});
 
+		const tag = { node, deps };
+		all_tags.push(tag);
+
 		for (const binding of bindings) {
-			tags.set(binding, { node, deps });
+			if (binding) {
+				tags.set(binding, tag);
+			}
 		}
 	}
 
-	if (tags.size === 0) {
+	if (all_tags.length === 0) {
 		return nodes;
 	}
 
@@ -102,7 +109,7 @@ function sort_const_tags(nodes, state) {
 		sorted.push(tag.node);
 	}
 
-	for (const tag of tags.values()) {
+	for (const tag of all_tags) {
 		add(tag);
 	}
 
