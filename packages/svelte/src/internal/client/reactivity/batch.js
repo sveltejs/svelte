@@ -432,6 +432,10 @@ export class Batch {
 			this.current.set(source, [value, is_derived]);
 			batch_values?.set(source, value);
 		}
+
+		if (!this.is_fork) {
+			source.v = value;
+		}
 	}
 
 	activate() {
@@ -1161,11 +1165,6 @@ export function fork(fn) {
 	var settled = batch.settled();
 
 	flushSync(fn);
-
-	// revert state changes
-	for (var [source, value] of batch.previous) {
-		source.v = value;
-	}
 
 	return {
 		commit: async () => {
