@@ -18,7 +18,6 @@ import { COMMENT_NODE, EFFECT_PRESERVED, HEAD_EFFECT } from '#client/constants';
  * @returns {void}
  */
 export function head(hash, render_fn) {
-	// TODO RENDERER: throw in case we are using custom renderers as this rely on the head element
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
 	let previous_hydrate_node = null;

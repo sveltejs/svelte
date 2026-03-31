@@ -51,7 +51,7 @@ export function transform_template(state, namespace, flags = 0) {
 		flags ? b.literal(flags) : undefined
 	);
 
-	if (state.template.contains_script_tag) {
+	if (state.template.contains_script_tag && !state.analysis.custom_renderer) {
 		call = b.call(`$.with_script`, call);
 	}
 

@@ -1186,6 +1186,16 @@ export function illegal_element_attribute(node, name) {
 }
 
 /**
+ * %message% is not compatible with `customRenderer`
+ * @param {null | number | NodeLike} node
+ * @param {string} message
+ * @returns {never}
+ */
+export function incompatible_with_custom_renderer(node, message) {
+	e(node, 'incompatible_with_custom_renderer', `${message} is not compatible with \`customRenderer\`\nhttps://svelte.dev/e/incompatible_with_custom_renderer`);
+}
+
+/**
  * %message%
  * @param {null | number | NodeLike} node
  * @param {string} message
