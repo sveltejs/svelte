@@ -16,7 +16,8 @@ import {
 	EAGER_EFFECT,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
-	REACTION_RAN
+	REACTION_RAN,
+	CONNECTED
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -512,7 +513,11 @@ export class Batch {
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((derived.f & ERROR_VALUE) === 0) {
-			this.current.set(derived, value);
+			// TODO not totally sure about the CONNECTED condition, seems like it should be irrelevant
+			if ((derived.f & CONNECTED) !== 0) {
+				this.current.set(derived, value);
+			}
+
 			batch_values?.set(derived, value);
 		}
 
