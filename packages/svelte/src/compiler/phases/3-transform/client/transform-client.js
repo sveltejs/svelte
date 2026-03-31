@@ -139,13 +139,11 @@ const visitors = {
 };
 
 /**
- * @param {string} custom_renderer_module
+ * @param {string | undefined} custom_renderer_module
  */
 function custom_renderer_imports(custom_renderer_module) {
-	const imports = [
-		b.import_all('$', 'svelte/internal/client'),
-	]
-	if(custom_renderer_module){
+	const imports = [b.import_all('$', 'svelte/internal/client')];
+	if (custom_renderer_module) {
 		imports.push(b.imports([['$renderer', '$renderer', true]], custom_renderer_module));
 	}
 	return imports;
@@ -165,7 +163,8 @@ export function client_component(analysis, options) {
 		scopes: analysis.module.scopes,
 		is_instance: false,
 		hoisted: [
-			...custom_renderer_imports(options.customRenderer), ...analysis.instance_body.hoisted
+			...custom_renderer_imports(options.experimental.customRenderer),
+			...analysis.instance_body.hoisted
 		],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
@@ -407,7 +406,7 @@ export function client_component(analysis, options) {
 		);
 	}
 
-	if (options.customRenderer) {
+	if (options.experimental.customRenderer) {
 		component_block.body.unshift(
 			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
 		);
@@ -586,7 +585,7 @@ export function client_component(analysis, options) {
 
 	// disclose version attach the svelte version to `window` which is not guaranteed
 	// to be a thing in custom renderers environments
-	if (options.discloseVersion && !options.customRenderer) {
+	if (options.discloseVersion && !options.experimental.customRenderer) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 

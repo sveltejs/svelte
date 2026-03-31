@@ -36,7 +36,7 @@ function build_locations(nodes) {
  */
 export function transform_template(state, namespace, flags = 0) {
 	// custom renderers needs a tree to work because there's no template element we can use
-	const tree = state.options.fragments === 'tree' || !!state.options.customRenderer;
+	const tree = state.options.fragments === 'tree' || !!state.options.experimental.customRenderer;
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
 

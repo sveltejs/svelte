@@ -41,7 +41,7 @@ export function RegularElement(node, context) {
 	const is_html =
 		context.state.metadata.namespace === 'html' &&
 		node.name !== 'svg' &&
-		!context.state.options.customRenderer;
+		!context.state.options.experimental.customRenderer;
 	const name = is_html ? node.name.toLowerCase() : node.name;
 	context.state.template.push_element(name, node.start, is_html);
 
@@ -51,7 +51,8 @@ export function RegularElement(node, context) {
 	}
 
 	// we never treat elements as custom element in custom renderers, since we don't want to apply special handling to them (e.g. class merging)
-	const is_custom_element = is_custom_element_node(node) && !context.state.options.customRenderer;
+	const is_custom_element =
+		is_custom_element_node(node) && !context.state.options.experimental.customRenderer;
 
 	// cloneNode is faster, but it does not instantiate the underlying class of the
 	// custom element until the template is connected to the dom, which would
@@ -257,7 +258,7 @@ export function RegularElement(node, context) {
 				if (name !== 'class' || value) {
 					context.state.template.set_prop(attribute.name, value === true ? '' : value);
 				}
-			} else if (name === 'autofocus' && !context.state.options.customRenderer) {
+			} else if (name === 'autofocus' && !context.state.options.experimental.customRenderer) {
 				let { value } = build_attribute_value(attribute.value, context);
 				context.state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 			} else if (name === 'class') {
@@ -279,7 +280,7 @@ export function RegularElement(node, context) {
 					name,
 					value,
 					attributes,
-					!!context.state.options.customRenderer
+					!!context.state.options.experimental.customRenderer
 				);
 
 				(has_state ? context.state.update : context.state.init).push(b.stmt(update));
@@ -356,7 +357,7 @@ export function RegularElement(node, context) {
 		const empty_string = value.type === 'Literal' && value.value === '';
 
 		if (!empty_string) {
-			if (context.state.options.customRenderer) {
+			if (context.state.options.experimental.customRenderer) {
 				// custom renderers need to use the method to invoke the renderer
 				context.state.template.push_text([
 					{
@@ -376,7 +377,10 @@ export function RegularElement(node, context) {
 				);
 			}
 		}
-	} else if (is_customizable_select_element(node) && !context.state.options.customRenderer) {
+	} else if (
+		is_customizable_select_element(node) &&
+		!context.state.options.experimental.customRenderer
+	) {
 		// For <option>, <optgroup>, or <select> elements with rich content, we need to branch based on browser support.
 		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
 		// We create a separate template for the rich content and append it to the element.

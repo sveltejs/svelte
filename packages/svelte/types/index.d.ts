@@ -1094,10 +1094,6 @@ declare module 'svelte/compiler' {
 		 */
 		fragments?: 'html' | 'tree';
 		/**
-		 *  Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
-		 */
-		customRenderer?: string;
-		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -1199,6 +1195,10 @@ declare module 'svelte/compiler' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
+			 */
+			customRenderer?: string;
 		};
 	}
 	/**
@@ -3169,10 +3169,6 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		fragments?: 'html' | 'tree';
 		/**
-		 *  Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
-		 */
-		customRenderer?: string;
-		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -3274,6 +3270,10 @@ declare module 'svelte/types/compiler/interfaces' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
+			 */
+			customRenderer?: string;
 		};
 	}
 	/**

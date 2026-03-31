@@ -28,7 +28,11 @@ export function compile(source, options) {
 
 	let parsed = _parse(source);
 
-	const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
+	const {
+		customElement: customElementOptions,
+		customRenderer,
+		...parsed_options
+	} = parsed.options || {};
 
 	/** @type {ValidatedCompileOptions} */
 	const combined_options = {
@@ -36,7 +40,11 @@ export function compile(source, options) {
 		...parsed_options,
 		customElementOptions,
 		css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : validated.css,
-		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes
+		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes,
+		experimental: {
+			...validated.experimental,
+			...(customRenderer !== undefined ? { customRenderer } : {})
+		}
 	};
 
 	if (parsed.metadata.ts) {

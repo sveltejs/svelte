@@ -54,8 +54,11 @@ async function common_setup(cwd: string, config: CustomRendererTest) {
 		generate: 'client',
 		rootDir: cwd,
 		runes: true,
-		customRenderer: renderer_path,
-		...config.compileOptions
+		...config.compileOptions,
+		experimental: {
+			...config.compileOptions?.experimental,
+			customRenderer: renderer_path
+		}
 	};
 
 	await compile_directory(cwd, 'client', compile_options);

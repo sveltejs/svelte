@@ -44,7 +44,8 @@ const common_options = {
 	warningFilter: fun(() => true),
 
 	experimental: object({
-		async: boolean(false)
+		async: boolean(false),
+		customRenderer: string(undefined)
 	})
 };
 
@@ -96,8 +97,6 @@ const component_options = {
 	discloseVersion: boolean(true),
 
 	immutable: deprecate(w.options_deprecated_immutable, boolean(false)),
-
-	customRenderer: string(undefined),
 
 	legacy: removed(
 		'The legacy option has been removed. If you are using this because of legacy.componentApi, use compatibility.componentApi instead'
