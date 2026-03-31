@@ -275,8 +275,6 @@ export class Batch {
 	#process() {
 		if (this.#committed) return;
 
-		// console.group('process', this.id);
-
 		current_batch = this;
 
 		if (flush_count++ > 1000) {
@@ -336,7 +334,6 @@ export class Batch {
 		legacy_updates = null;
 
 		if (this.#is_deferred() || this.#is_blocked()) {
-			// console.log(this.#is_deferred() ? 'deferred' : 'blocked');
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
@@ -344,7 +341,6 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
-			// console.log('resolved');
 			if (this.#pending.size === 0) {
 				batches.delete(this);
 			}
@@ -353,17 +349,13 @@ export class Batch {
 			this.#dirty_effects.clear();
 
 			// append/remove branches
-			// console.group('branches');
 			for (const fn of this.#commit_callbacks) fn(this);
 			this.#commit_callbacks.clear();
-			// console.groupEnd();
 
 			previous_batch = this;
 
-			// console.group('flush effects');
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
-			// console.groupEnd();
 			previous_batch = null;
 
 			this.#deferred?.resolve();
@@ -394,8 +386,6 @@ export class Batch {
 		if (!batches.has(this)) {
 			this.#commit();
 		}
-
-		// console.groupEnd();
 	}
 
 	/**
@@ -577,8 +567,6 @@ export class Batch {
 		if (this.#committed) return;
 		this.#committed = true;
 
-		// console.group('commit', this.id);
-
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
@@ -677,8 +665,6 @@ export class Batch {
 				}
 			}
 		}
-
-		// console.groupEnd();
 	}
 
 	/**
@@ -783,12 +769,6 @@ export class Batch {
 			return;
 		}
 
-		// console.group('apply', this.id);
-
-		// console.groupCollapsed('trace');
-		// console.trace();
-		// console.groupEnd();
-
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map(this.current);
@@ -832,31 +812,6 @@ export class Batch {
 				}
 			}
 		}
-
-		// console.group('batch_values');
-		// for (const [value, v] of batch_values) {
-		// 	console.log(this.current.has(value), value.label, snapshot(v, true));
-		// }
-		// console.groupEnd();
-
-		// console.group('batch_cvs');
-		// for (const [reaction, cv] of batch_cvs) {
-		// 	console.log(
-		// 		this.cvs.has(reaction),
-		// 		cv,
-		// 		reaction.deps?.map((d) => d.label ?? batch_values?.get(d)),
-		// 		reaction.label ?? reaction.fn
-		// 	);
-		// }
-		// console.groupEnd();
-
-		// console.group('batch_wvs');
-		// for (const [value, wv] of batch_wvs) {
-		// 	console.log(this.wvs.has(value), wv, value.label ?? snapshot(value.v, true));
-		// }
-		// console.groupEnd();
-
-		// console.groupEnd();
 	}
 
 	/**
