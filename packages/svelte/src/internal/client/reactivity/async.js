@@ -19,10 +19,10 @@ import {
 import { Batch, current_batch } from './batch.js';
 import {
 	async_derived,
-	current_async_effect,
+	reactivity_loss_tracker,
 	derived,
 	derived_safe_equal,
-	set_from_async_derived
+	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
 
@@ -131,7 +131,7 @@ export function capture() {
 		}
 
 		if (DEV) {
-			set_from_async_derived(null);
+			set_reactivity_loss_tracker(null);
 			set_dev_stack(previous_dev_stack);
 		}
 	};
@@ -163,11 +163,11 @@ export async function save(promise) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
-	var previous_async_effect = current_async_effect;
+	var previous_async_effect = reactivity_loss_tracker;
 	var value = await promise;
 
 	return () => {
-		set_from_async_derived(previous_async_effect);
+		set_reactivity_loss_tracker(previous_async_effect);
 		return value;
 	};
 }
@@ -209,8 +209,8 @@ export async function* for_await_track_reactivity_loss(iterable) {
 			yield value;
 		}
 	} finally {
-		// If the iterator had a normal completion and `return` is defined on the iterator, call it and return the value
-		if (normal_completion && iterator.return !== undefined) {
+		// If the iterator had an abrupt completion and `return` is defined on the iterator, call it and return the value
+		if (!normal_completion && iterator.return !== undefined) {
 			// eslint-disable-next-line no-unsafe-finally
 			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))().value);
 		}
@@ -224,7 +224,7 @@ export function unset_context(deactivate_batch = true) {
 	if (deactivate_batch) current_batch?.deactivate();
 
 	if (DEV) {
-		set_from_async_derived(null);
+		set_reactivity_loss_tracker(null);
 		set_dev_stack(null);
 	}
 }
@@ -307,15 +307,16 @@ export function wait(blockers) {
  * @returns {(skip?: boolean) => void}
  */
 export function increment_pending() {
-	var boundary = /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
+	var effect = /** @type {Effect} */ (active_effect);
+	var boundary = /** @type {Boundary} */ (effect.b);
 	var batch = /** @type {Batch} */ (current_batch);
 	var blocking = boundary.is_rendered();
 
 	boundary.update_pending_count(1, batch);
-	batch.increment(blocking);
+	batch.increment(blocking, effect);
 
 	return (skip = false) => {
 		boundary.update_pending_count(-1, batch);
-		batch.decrement(blocking, skip);
+		batch.decrement(blocking, effect, skip);
 	};
 }

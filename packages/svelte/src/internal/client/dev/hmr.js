@@ -5,7 +5,7 @@ import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
-import { get } from '../runtime.js';
+import { active_effect, get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
@@ -43,16 +43,21 @@ export function hmr(fn) {
 				if (ran) set_should_intro(false);
 
 				// preserve getters/setters
-				Object.defineProperties(
-					instance,
-					Object.getOwnPropertyDescriptors(
-						// @ts-expect-error
-						new.target ? new component(anchor, props) : component(anchor, props)
-					)
-				);
+				var result =
+					// @ts-expect-error
+					new.target ? new component(anchor, props) : component(anchor, props);
+				// a component is not guaranteed to return something and we can't invoke getOwnPropertyDescriptors on undefined
+				if (result) {
+					Object.defineProperties(instance, Object.getOwnPropertyDescriptors(result));
+				}
 
 				if (ran) set_should_intro(true);
 			});
+
+			// Forward the nodes from the inner effect to the outer active effect which would
+			// get them if the HMR wrapper wasn't there. Do this inside the block not outside
+			// so that HMR updates to the component will also update the nodes on the active effect.
+			/** @type {Effect} */ (active_effect).nodes = effect.nodes;
 		}, EFFECT_TRANSPARENT);
 
 		ran = true;
