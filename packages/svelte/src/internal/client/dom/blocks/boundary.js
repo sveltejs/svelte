@@ -104,9 +104,6 @@ export class Boundary {
 	/** @type {Set<Effect>} */
 	#dirty_effects = new Set();
 
-	/** @type {Set<Effect>} */
-	#maybe_dirty_effects = new Set();
-
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
 	 * Only created if `$effect.pending()` is used inside the boundary,
@@ -266,7 +263,7 @@ export class Boundary {
 
 		// any effects that were previously deferred should be transferred
 		// to the batch, which will flush in the next microtask
-		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
+		batch.transfer_effects(this.#dirty_effects);
 	}
 
 	/**
@@ -274,7 +271,7 @@ export class Boundary {
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
+		defer_effect(effect, this.#dirty_effects);
 	}
 
 	/**

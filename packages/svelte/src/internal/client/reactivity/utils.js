@@ -21,9 +21,8 @@ function clear_marked(deps) {
 /**
  * @param {Effect} effect
  * @param {Set<Effect>} dirty_effects
- * @param {Set<Effect>} maybe_dirty_effects
  */
-export function defer_effect(effect, dirty_effects, maybe_dirty_effects) {
+export function defer_effect(effect, dirty_effects) {
 	dirty_effects.add(effect);
 
 	// Since we're not executing these effects now, we need to clear any WAS_MARKED flags

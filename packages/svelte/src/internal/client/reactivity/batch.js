@@ -186,12 +186,6 @@ export class Batch {
 	 */
 	#dirty_effects = new Set();
 
-	/**
-	 * Deferred effects that are MAYBE_DIRTY
-	 * @type {Set<Effect>}
-	 */
-	#maybe_dirty_effects = new Set();
-
 	/** @type {Map<Value, number>} */
 	wvs = new Map();
 
@@ -298,11 +292,6 @@ export class Batch {
 		// to be able to run them after processing the batch
 		if (!this.#is_deferred()) {
 			for (const e of this.#dirty_effects) {
-				this.#maybe_dirty_effects.delete(e);
-				this.schedule(e);
-			}
-
-			for (const e of this.#maybe_dirty_effects) {
 				this.schedule(e);
 			}
 		}
@@ -362,7 +351,6 @@ export class Batch {
 
 			// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
 			this.#dirty_effects.clear();
-			this.#maybe_dirty_effects.clear();
 
 			// append/remove branches
 			// console.group('branches');
@@ -437,7 +425,6 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
 					update_effect(effect);
 				}
 
@@ -467,7 +454,7 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(effects[i], this.#dirty_effects, this.#maybe_dirty_effects);
+			defer_effect(effects[i], this.#dirty_effects);
 		}
 	}
 
@@ -743,19 +730,13 @@ export class Batch {
 
 	/**
 	 * @param {Set<Effect>} dirty_effects
-	 * @param {Set<Effect>} maybe_dirty_effects
 	 */
-	transfer_effects(dirty_effects, maybe_dirty_effects) {
+	transfer_effects(dirty_effects) {
 		for (const e of dirty_effects) {
 			this.#dirty_effects.add(e);
 		}
 
-		for (const e of maybe_dirty_effects) {
-			this.#maybe_dirty_effects.add(e);
-		}
-
 		dirty_effects.clear();
-		maybe_dirty_effects.clear();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
