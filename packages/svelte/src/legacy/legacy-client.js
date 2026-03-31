@@ -1,6 +1,6 @@
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
 /** @import { Derived, Value } from '#client' */
-import { DERIVED, DIRTY, EFFECT_LEGACY, LEGACY_PROPS } from '../internal/client/constants.js';
+import { DERIVED, EFFECT_LEGACY, LEGACY_PROPS } from '../internal/client/constants.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
@@ -9,10 +9,9 @@ import {
 	get,
 	new_deps,
 	skipped_deps,
-	untracked_writes,
-	write_version
+	untracked_writes
 } from '../internal/client/runtime.js';
-import { flushSync, get_cv } from '../internal/client/reactivity/batch.js';
+import { flushSync } from '../internal/client/reactivity/batch.js';
 import { define_property, is_array } from '../internal/shared/utils.js';
 import * as e from '../internal/client/errors.js';
 import * as w from '../internal/client/warnings.js';

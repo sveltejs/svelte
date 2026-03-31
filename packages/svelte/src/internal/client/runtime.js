@@ -8,7 +8,6 @@ import {
 	execute_effect_teardown
 } from './reactivity/effects.js';
 import {
-	DIRTY,
 	DERIVED,
 	DESTROYED,
 	BRANCH_EFFECT,
@@ -299,7 +298,7 @@ export function update_reaction(reaction) {
 			untracked_writes !== null &&
 			!untracking &&
 			deps !== null &&
-			(reaction.f & (DERIVED | DIRTY)) === 0
+			(reaction.f & DERIVED) === 0
 		) {
 			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
 				schedule_possible_effect_self_invalidation(
@@ -473,7 +472,7 @@ export function update_effect(effect) {
 
 		// In DEV, increment versions of any sources that were written to during the effect,
 		// so that they are correctly marked as dirty when the effect re-runs
-		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && effect.deps !== null) {
+		if (DEV && tracing_mode_flag && effect.deps !== null) {
 			for (var dep of effect.deps) {
 				if (dep.set_during_effect) {
 					dep.wv = increment_write_version();

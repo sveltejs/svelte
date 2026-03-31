@@ -5,7 +5,6 @@ import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
 	DERIVED,
-	DIRTY,
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	ASYNC,
@@ -19,7 +18,6 @@ import {
 	update_reaction,
 	set_active_effect,
 	push_reaction_value,
-	is_destroying_effect,
 	update_effect,
 	remove_reactions,
 	write_version
@@ -27,21 +25,15 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import {
-	async_effect,
-	destroy_effect,
-	destroy_effect_children,
-	effect_tracking,
-	teardown
-} from './effects.js';
+import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, batch_wvs, current_batch, get_wv, set_cv } from './batch.js';
+import { batch_wvs, current_batch, get_wv, set_cv } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
-import { deferred, includes, noop } from '../../shared/utils.js';
+import { deferred, noop } from '../../shared/utils.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -64,7 +56,6 @@ export const recent_async_deriveds = new Set();
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
-	var flags = DERIVED | DIRTY;
 	var parent_derived =
 		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
 			? /** @type {Derived} */ (active_reaction)
@@ -82,7 +73,7 @@ export function derived(fn) {
 		deps: null,
 		effects: null,
 		equals,
-		f: flags,
+		f: DERIVED,
 		fn,
 		reactions: null,
 		cv: -1,

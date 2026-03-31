@@ -5,7 +5,6 @@ import {
 	BRANCH_EFFECT,
 	CLEAN,
 	DESTROYED,
-	DIRTY,
 	EFFECT,
 	ASYNC,
 	INERT,
@@ -180,7 +179,7 @@ export class Batch {
 	#new_deriveds = [];
 
 	/**
-	 * Deferred effects (which run after async work has completed) that are DIRTY
+	 * Deferred effects (which run after async work has completed) that are dirty
 	 * @type {Set<Effect>}
 	 */
 	#dirty_effects = new Set();
@@ -1044,11 +1043,7 @@ function mark_effects(batch, value, sources, marked, checked) {
 
 			if ((flags & DERIVED) !== 0) {
 				mark_effects(batch, /** @type {Derived} */ (reaction), sources, marked, checked);
-			} else if (
-				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
-				(flags & DIRTY) === 0 &&
-				depends_on(reaction, sources, checked)
-			) {
+			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources, checked)) {
 				batch.schedule(/** @type {Effect} */ (reaction));
 				batch.cvs.set(reaction, -1);
 			}
