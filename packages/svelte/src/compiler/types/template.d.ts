@@ -55,6 +55,11 @@ export namespace AST {
 			consts: {
 				/** All synchronous up until the first async const tag */
 				sync: ConstTag[];
+				/**
+				 * Non-async mode: const tags of main Svelte boundary content duplicated into failed/loading snippet
+				 * @deprecated Remove once async is no longer experimental
+				 */
+				sync_duplicated: ConstTag[];
 				/** All const tags starting with the first async; even if synchronous appear after */
 				async: ConstTag[];
 				/** Set if async const tags exist */

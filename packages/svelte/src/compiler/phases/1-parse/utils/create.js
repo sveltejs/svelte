@@ -13,6 +13,7 @@ export function create_fragment(transparent = false) {
 			dynamic: false,
 			consts: {
 				sync: [],
+				sync_duplicated: [],
 				async: [],
 				promise_id: undefined
 			}

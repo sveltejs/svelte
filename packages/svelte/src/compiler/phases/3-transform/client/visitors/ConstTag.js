@@ -11,9 +11,10 @@ import { build_expression } from './shared/utils.js';
 /**
  * @param {AST.ConstTag} node
  * @param {ComponentContext} context
+ * @param {boolean} [is_duplicated]
  * @returns {Statement[]}
  */
-export function serialize_sync_const_tag(node, context) {
+export function serialize_sync_const_tag(node, context, is_duplicated = false) {
 	const serialized = serialize_const_tag(node, context);
 
 	/** @type {Statement[]} */
@@ -21,7 +22,7 @@ export function serialize_sync_const_tag(node, context) {
 
 	// we need to eagerly evaluate the expression in order to hit any
 	// 'Cannot access x before initialization' errors
-	if (dev) {
+	if (dev && !is_duplicated) {
 		statements.push(b.stmt(b.call('$.get', serialized.id)));
 	}
 
