@@ -44,6 +44,7 @@ export const HEAD_EFFECT = 1 << 18;
 export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
 export const EFFECT_OFFSCREEN = 1 << 25;
+export const STATE_EAGER_EFFECT = 1 << 27;
 
 // Flags exclusive to deriveds
 /**

@@ -17,7 +17,8 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	CONNECTED
+	CONNECTED,
+	STATE_EAGER_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -1211,7 +1212,7 @@ export function eager(fn) {
 		version.label = '<eager>';
 	}
 
-	eager_effect(() => {
+	var effect = eager_effect(() => {
 		if (initial) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
@@ -1247,6 +1248,10 @@ export function eager(fn) {
 			fn();
 		}
 	});
+
+	// TODO ideally this wouldn't be necessary. I haven't figured out a way for these
+	// effects to correctly be marked dirty when `$state.eager(...)` arguments change
+	effect.f |= STATE_EAGER_EFFECT;
 
 	initial = false;
 

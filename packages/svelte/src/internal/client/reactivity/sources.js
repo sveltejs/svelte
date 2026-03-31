@@ -28,7 +28,8 @@ import {
 	ROOT_EFFECT,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	STATE_EAGER_EFFECT
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -269,7 +270,7 @@ export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
 	for (const effect of eager_effects) {
-		if (is_dirty(effect)) {
+		if ((effect.f & STATE_EAGER_EFFECT) !== 0 || is_dirty(effect)) {
 			update_effect(effect);
 		}
 	}
