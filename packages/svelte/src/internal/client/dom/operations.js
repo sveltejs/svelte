@@ -790,17 +790,6 @@ export function class_list_toggle(element, name, force) {
 }
 
 /**
- * @param {Element | DocumentFragment} element
- * @param {string} selector
- */
-export function query_selector_all(element, selector) {
-	if (renderer) {
-		throw new Error('querySelectorAll is not supported with custom renderers');
-	}
-	return element.querySelectorAll(selector);
-}
-
-/**
  * @param {HTMLElement} element
  */
 export function focus(element) {

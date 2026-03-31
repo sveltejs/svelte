@@ -629,7 +629,6 @@ function check_src_in_dev_hydration(element, attribute, value) {
 
 	w.hydration_attribute_changed(
 		attribute,
-		// TODO RENDERER figure out what to do here
 		element.outerHTML.replace(element.innerHTML, element.innerHTML && '...'),
 		String(value)
 	);

@@ -19,7 +19,6 @@ import {
 	set_text_content,
 	replace_with,
 	node_type,
-	query_selector_all,
 	get_node_value,
 	node_name
 } from './operations.js';
@@ -283,7 +282,6 @@ export function from_tree(structure, flags) {
  * @param {() => Element | DocumentFragment} fn
  */
 export function with_script(fn) {
-	// TODO RENDERER: never emit this for custom renderers
 	return () => run_scripts(fn());
 }
 
@@ -300,10 +298,9 @@ function run_scripts(node) {
 
 	const is_fragment = node_type(node) === DOCUMENT_FRAGMENT_NODE;
 	const scripts =
-		// TODO RENDERER: figure out what to do here
 		node_name(node) === SCRIPT_TAG
 			? [/** @type {HTMLScriptElement} */ (node)]
-			: query_selector_all(node, 'script');
+			: node.querySelectorAll('script');
 
 	const effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
