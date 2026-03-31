@@ -46,24 +46,23 @@ export function ConstTag(node, context) {
 	});
 
 	const has_await = node.metadata.expression.has_await;
+	const consts = /** @type {AST.Fragment} */ (context.state.fragment).metadata.consts;
 	const blockers = [...node.metadata.expression.dependencies]
 		.map((dep) => dep.blocker)
-		.filter((b) => b !== null && b.object !== context.state.async_consts?.id);
+		.filter((b) => b !== null && b.object !== consts.promise_id);
 
-	if (has_await || context.state.async_consts || blockers.length > 0) {
-		const run = (context.state.async_consts ??= {
-			id: b.id(context.state.scope.generate('promises')),
-			nrOfDeclarations: 0
-		});
-		node.metadata.promises_id = run.id;
+	if (has_await || consts.promise_id || blockers.length > 0) {
+		const promise_id = (consts.promise_id ??= b.id(context.state.scope.generate('promises')));
 
 		const bindings = context.state.scope.get_bindings(declaration);
 
-		// keep the counter in sync with the number of thunks pushed in ConstTag in transform
-		const length = run.nrOfDeclarations++;
-		const blocker = b.member(run.id, b.literal(length), true);
+		const blocker = b.member(promise_id, b.literal(consts.async.length), true);
 		for (const binding of bindings) {
 			binding.blocker = blocker;
 		}
+
+		consts.async.push(node);
+	} else {
+		consts.sync.push(node);
 	}
 }

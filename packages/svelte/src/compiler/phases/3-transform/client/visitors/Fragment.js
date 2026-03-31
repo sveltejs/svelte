@@ -6,6 +6,7 @@ import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../cons
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { transform_template } from '../transform-template/index.js';
 import { Template } from '../transform-template/template.js';
+import { serialize_async_const_tag, serialize_sync_const_tag } from './ConstTag.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
 
@@ -66,7 +67,6 @@ export function Fragment(node, context) {
 		is_standalone,
 		init: [],
 		snippets: [],
-		consts: [],
 		let_directives: [],
 		update: [],
 		after_update: [],
@@ -76,11 +76,33 @@ export function Fragment(node, context) {
 		metadata: {
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
-		},
-		async_consts: undefined
+		}
 	};
 
+	for (const const_tag of node.metadata.consts.sync) {
+		body.push(...serialize_sync_const_tag(const_tag, { ...context, state }));
+	}
+
+	const promise_id = node.metadata.consts.promise_id;
+	if (promise_id && node.metadata.consts.async.length > 0) {
+		/** @type {Expression[]} */
+		const thunks = [];
+
+		for (const const_tag of node.metadata.consts.async) {
+			const { declarations, thunk } = serialize_async_const_tag(
+				const_tag,
+				{ ...context, state },
+				promise_id
+			);
+			body.push(...declarations);
+			thunks.push(thunk);
+		}
+
+		body.push(b.var(promise_id, b.call('$.run', b.array(thunks))));
+	}
+
 	for (const node of hoisted) {
+		if (node.type === 'ConstTag') continue;
 		context.visit(node, state);
 	}
 
@@ -157,11 +179,7 @@ export function Fragment(node, context) {
 		}
 	}
 
-	body.push(...state.snippets, ...state.let_directives, ...state.consts);
-
-	if (state.async_consts && state.async_consts.thunks.length > 0) {
-		body.push(b.var(state.async_consts.id, b.call('$.run', b.array(state.async_consts.thunks))));
-	}
+	body.push(...state.snippets, ...state.let_directives);
 
 	if (is_text_first) {
 		// skip over inserted comment

@@ -51,13 +51,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly after_update: Statement[];
 	/** Transformed `{#snippets }` declarations */
 	readonly snippets: Statement[];
-	/** Transformed `{@const }` declarations */
-	readonly consts: Statement[];
-	/** Transformed async `{@const }` declarations (if any) and those coming after them */
-	async_consts?: {
-		id: Identifier;
-		thunks: Expression[];
-	};
 	/** Transformed `let:` directives */
 	readonly let_directives: Statement[];
 	/** Memoized expressions */

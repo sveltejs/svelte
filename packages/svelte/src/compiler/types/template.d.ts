@@ -49,6 +49,17 @@ export namespace AST {
 			 * Whether or not we need to traverse into the fragment during mount/hydrate
 			 */
 			dynamic: boolean;
+			/**
+			 * Information about child `{@const ...}` tags.
+			 */
+			consts: {
+				/** All synchronous up until the first async const tag */
+				sync: ConstTag[];
+				/** All const tags starting with the first async; even if synchronous appear after */
+				async: ConstTag[];
+				/** Set if async const tags exist */
+				promise_id?: Identifier;
+			};
 		};
 	}
 
@@ -155,8 +166,6 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
-			/** If this const tag contains an await expression, or needs to wait on other async, this is set */
-			promises_id?: Identifier;
 		};
 	}
 

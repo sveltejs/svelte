@@ -1,7 +1,6 @@
-/** @import { BlockStatement, Statement, Expression, VariableDeclaration } from 'estree' */
+/** @import { BlockStatement, Expression, Statement, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { dev } from '../../../../state.js';
 import * as b from '#compiler/builders';
 
 /**
@@ -33,7 +32,10 @@ export function SvelteBoundary(node, context) {
 
 	const nodes = [];
 
-	/** @type {Statement[]} */
+	// const tags need to live inside the boundary, but might also be referenced in hoisted snippets.
+	// to resolve this we cheat: we duplicate const tags inside snippets
+	// We'll revert this behavior in the future, it was a mistake to allow this (Component snippets also don't do this).
+	/** @type {AST.ConstTag[]} */
 	const const_tags = [];
 
 	/** @type {Statement[]} */
@@ -41,26 +43,12 @@ export function SvelteBoundary(node, context) {
 
 	let has_const = false;
 
-	// const tags need to live inside the boundary, but might also be referenced in hoisted snippets.
-	// to resolve this we cheat: we duplicate const tags inside snippets
-	// We'll revert this behavior in the future, it was a mistake to allow this (Component snippets also don't do this).
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'ConstTag') {
 			has_const = true;
+			nodes.push(child);
 			if (!context.state.options.experimental.async) {
-				context.visit(child, {
-					...context.state,
-					consts: const_tags,
-					scope: context.state.scopes.get(node.fragment) ?? context.state.scope
-				});
-			}
-		}
-	}
-
-	for (const child of node.fragment.nodes) {
-		if (child.type === 'ConstTag') {
-			if (context.state.options.experimental.async) {
-				nodes.push(child);
+				const_tags.push(child);
 			}
 			continue;
 		}
@@ -77,20 +65,13 @@ export function SvelteBoundary(node, context) {
 				/** @type {Statement[]} */
 				const statements = [];
 
+				if (!context.state.options.experimental.async && const_tags.length > 0) {
+					child.body.nodes.unshift(...const_tags);
+				}
+
 				context.visit(child, { ...context.state, snippets: statements });
 
 				const snippet = /** @type {VariableDeclaration} */ (statements[0]);
-
-				const snippet_fn = dev
-					? // @ts-expect-error we know this shape is correct
-						snippet.declarations[0].init.arguments[1]
-					: snippet.declarations[0].init;
-
-				if (!context.state.options.experimental.async) {
-					snippet_fn.body.body.unshift(
-						...const_tags.filter((node) => node.type === 'VariableDeclaration')
-					);
-				}
 
 				if (['failed', 'pending'].includes(child.expression.name)) {
 					props.properties.push(b.prop('init', child.expression, child.expression));
@@ -112,10 +93,6 @@ export function SvelteBoundary(node, context) {
 			{ ...context.state, scope: context.state.scopes.get(node.fragment) ?? context.state.scope }
 		)
 	);
-
-	if (!context.state.options.experimental.async) {
-		block.body.unshift(...const_tags);
-	}
 
 	const boundary = b.stmt(
 		b.call('$.boundary', context.state.node, props, b.arrow([b.id('$$anchor')], block))

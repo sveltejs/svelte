@@ -21,7 +21,6 @@ import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { Comment } from './visitors/Comment.js';
 import { Component } from './visitors/Component.js';
-import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
@@ -98,7 +97,6 @@ const visitors = {
 	ClassBody,
 	Comment,
 	Component,
-	ConstTag,
 	DebugTag,
 	EachBlock,
 	ExportNamedDeclaration,
@@ -170,7 +168,6 @@ export function client_component(analysis, options) {
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
-		consts: /** @type {any} */ (null),
 		snippets: /** @type {any} */ (null),
 		let_directives: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),

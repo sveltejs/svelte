@@ -10,7 +10,12 @@ export function create_fragment(transparent = false) {
 		nodes: [],
 		metadata: {
 			transparent,
-			dynamic: false
+			dynamic: false,
+			consts: {
+				sync: [],
+				async: [],
+				promise_id: undefined
+			}
 		}
 	};
 }

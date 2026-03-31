@@ -2,6 +2,7 @@
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import * as b from '#compiler/builders';
+import { serialize_async_const_tag, serialize_sync_const_tag } from './ConstTag.js';
 import { empty_comment, process_children, build_template } from './shared/utils.js';
 
 /**
@@ -28,11 +29,33 @@ export function Fragment(node, context) {
 		init: [],
 		template: [],
 		namespace,
-		is_standalone,
-		async_consts: undefined
+		is_standalone
 	};
 
+	for (const const_tag of node.metadata.consts.sync) {
+		state.init.push(...serialize_sync_const_tag(const_tag, { ...context, state }));
+	}
+
+	const promise_id = node.metadata.consts.promise_id;
+	if (promise_id && node.metadata.consts.async.length > 0) {
+		/** @type {import('estree').Expression[]} */
+		const thunks = [];
+
+		for (const const_tag of node.metadata.consts.async) {
+			const { declarations, thunk } = serialize_async_const_tag(
+				const_tag,
+				{ ...context, state },
+				promise_id
+			);
+			state.init.push(...declarations);
+			thunks.push(thunk);
+		}
+
+		state.init.push(b.var(promise_id, b.call('$$renderer.run', b.array(thunks))));
+	}
+
 	for (const node of hoisted) {
+		if (node.type === 'ConstTag') continue;
 		context.visit(node, state);
 	}
 
@@ -42,12 +65,6 @@ export function Fragment(node, context) {
 	}
 
 	process_children(trimmed, { ...context, state });
-
-	if (state.async_consts && state.async_consts.thunks.length > 0) {
-		state.init.push(
-			b.var(state.async_consts.id, b.call('$$renderer.run', b.array(state.async_consts.thunks)))
-		);
-	}
 
 	return b.block([...state.init, ...build_template(state.template)]);
 }
