@@ -27,7 +27,6 @@ export function autofocus(dom, value) {
  * @returns {void}
  */
 export function remove_textarea_child(dom) {
-	// TODO RENDERER: never output in custom render mode
 	if (hydrating && get_first_child(dom) !== null) {
 		clear_text_content(dom);
 	}
@@ -36,10 +35,8 @@ export function remove_textarea_child(dom) {
 let listening_to_form_reset = false;
 
 export function add_form_reset_listener() {
-	// TODO RENDERER: never output in custom render mode
 	if (!listening_to_form_reset) {
 		listening_to_form_reset = true;
-		// TODO: DOM access
 		add_event_listener(
 			document,
 			'reset',
