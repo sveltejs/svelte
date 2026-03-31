@@ -55,7 +55,7 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 
 ## invalid_id_prefix
 
-> The `idPrefix` option cannot include `-->`.
+> The `idPrefix` option cannot include `--`.
 
 ## lifecycle_function_unavailable
 

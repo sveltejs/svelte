@@ -759,7 +759,7 @@ export class Renderer {
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
-		if (options.idPrefix?.includes('-->')) {
+		if (options.idPrefix?.includes('--')) {
 			e.invalid_id_prefix();
 		}
 

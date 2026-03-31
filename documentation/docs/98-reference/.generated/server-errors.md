@@ -72,7 +72,7 @@ Cause:
 ### invalid_id_prefix
 
 ```
-The `idPrefix` option cannot include `-->`.
+The `idPrefix` option cannot include `--`.
 ```
 
 ### lifecycle_function_unavailable
