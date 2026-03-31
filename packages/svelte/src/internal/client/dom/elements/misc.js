@@ -1,5 +1,5 @@
 import { hydrating } from '../hydration.js';
-import { clear_text_content, get_first_child, focus, add_event_listener } from '../operations.js';
+import { clear_text_content, get_first_child, add_event_listener } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 
 /**
@@ -14,7 +14,7 @@ export function autofocus(dom, value) {
 
 		queue_micro_task(() => {
 			if (document.activeElement === body) {
-				focus(dom);
+				dom.focus();
 			}
 		});
 	}

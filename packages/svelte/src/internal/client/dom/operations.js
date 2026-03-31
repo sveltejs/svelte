@@ -788,14 +788,3 @@ export function class_list_toggle(element, name, force) {
 	}
 	element.classList.toggle(name, force);
 }
-
-/**
- * @param {HTMLElement} element
- */
-export function focus(element) {
-	if (renderer) {
-		// doesn't make sense with custom renderers
-		throw new Error('focus is not supported with custom renderers');
-	}
-	element.focus();
-}
