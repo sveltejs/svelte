@@ -16,6 +16,7 @@ import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling, insert_before, node_type } from '../operations.js';
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
 import { BranchManager } from './branches.js';
+import { renderer } from '../../custom-renderer/state.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -71,9 +72,11 @@ export function wrap_snippet(component, fn) {
  * @returns {Snippet<Params>}
  */
 export function createRawSnippet(fn) {
-	// TODO RENDERER: throw an error for createRawSnippet in a non-browser environment, as it relies on DOM APIs
 	// @ts-expect-error the types are a lie
 	return (/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
+		if (renderer != null) {
+			e.invalid_snippet_in_custom_renderer();
+		}
 		var snippet = fn(...params);
 
 		/** @type {Element} */
