@@ -59,7 +59,7 @@ export default config;
 
 ### Using other build tools
 
-If you're using tools like Rollup or Webpack instead, install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config. See the respective READMEs for more info.
+If you're using tools like Rollup (via [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte)) or Webpack (via [svelte-loader](https://github.com/sveltejs/svelte-loader)) instead, install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config. See the respective plugin READMEs for more info.
 
 > [!NOTE] If you're starting a new project, we recommend using SvelteKit or Vite instead
 
