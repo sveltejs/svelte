@@ -349,7 +349,8 @@ export class Batch {
 			next_batch.#process();
 		}
 
-		if (!batches.has(this)) {
+		// In sync mode flushSync can cause #commit wrongfully think that there needs to be a rebase, so we only do it in async mode
+		if (async_mode_flag && !batches.has(this)) {
 			this.#commit();
 		}
 	}
@@ -787,6 +788,7 @@ export class Batch {
 	}
 }
 
+// TODO Svelte@6 think about removing the callback argument.
 /**
  * Synchronously flush any pending updates.
  * Returns void if no callback is provided, otherwise returns the result of calling the callback.
