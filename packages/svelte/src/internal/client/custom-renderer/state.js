@@ -3,12 +3,12 @@
  */
 
 /**
- * @type {Renderer | null}
+ * @type {Renderer<any, any, any, any> | null}
  */
 export let renderer = null;
 
 /**
- * @param {Renderer | null} $renderer
+ * @param {Renderer<any, any, any, any> | null} $renderer
  */
 export function set_renderer($renderer) {
 	renderer = $renderer;
@@ -16,7 +16,7 @@ export function set_renderer($renderer) {
 
 /**
  *
- * @param {Renderer} $renderer
+ * @param {Renderer<any, any, any, any>} $renderer
  */
 export function push_renderer($renderer) {
 	let old_renderer = renderer;

@@ -34,7 +34,6 @@ export function add_locations(fn, filename, locations) {
  */
 function assign_location(element, filename, location) {
 	// @ts-expect-error
-	// TODO RENDERER: what if the element is not an object?
 	element.__svelte_meta = {
 		parent: dev_stack,
 		loc: { file: filename, line: location[0], column: location[1] }

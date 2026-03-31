@@ -2568,13 +2568,13 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export function createRenderer<TFragment = unknown, TElement = unknown, TTextNode = unknown, TComment = unknown>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
+	export function createRenderer<TFragment extends object = object, TElement extends object = object, TTextNode extends object = object, TComment extends object = object>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
 		render: (Component: any, options: {
 			target: TFragment | TElement | TTextNode | TComment;
 			props?: any;
 		}) => () => void;
 	};
-	export type Renderer<TFragment = any, TElement = any, TTextNode = any, TComment = any, TNode = TFragment | TElement | TTextNode | TComment> = {
+	export type Renderer<TFragment extends object = object, TElement extends object = object, TTextNode extends object = object, TComment extends object = object, TNode = TFragment | TElement | TTextNode | TComment> = {
 		/**
 		 * - Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of it's children.
 		 */

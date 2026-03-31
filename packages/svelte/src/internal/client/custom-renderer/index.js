@@ -3,10 +3,10 @@ import { branch, effect_root } from '../reactivity/effects.js';
 import { push_renderer } from './state.js';
 
 /**
- * @template [TFragment=any]
- * @template [TElement=any]
- * @template [TTextNode=any]
- * @template [TComment=any]
+ * @template {object} [TFragment=object]
+ * @template {object} [TElement=object]
+ * @template {object} [TTextNode=object]
+ * @template {object} [TComment=object]
  * @template [TNode=TFragment | TElement | TTextNode | TComment]
  * @typedef {Object} Renderer
  * @property {()=>TFragment} createFragment - Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of it's children.
@@ -31,10 +31,10 @@ import { push_renderer } from './state.js';
  */
 
 /**
- * @template [TFragment=unknown]
- * @template [TElement=unknown]
- * @template [TTextNode=unknown]
- * @template [TComment=unknown]
+ * @template {object} [TFragment=object]
+ * @template {object} [TElement=object]
+ * @template {object} [TTextNode=object]
+ * @template {object} [TComment=object]
  * @param {Renderer<TFragment, TElement, TTextNode, TComment>} renderer
  * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: (Component: any, options: { target: TFragment | TElement | TTextNode | TComment, props?: any }) => () => void }}
  */
