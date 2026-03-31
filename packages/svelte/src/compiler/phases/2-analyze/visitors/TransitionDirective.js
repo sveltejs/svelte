@@ -9,6 +9,11 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  * @param {Context} context
  */
 export function TransitionDirective(node, context) {
+	if (context.state.analysis.custom_renderer) {
+		const directive = node.intro && node.outro ? '`transition:`' : node.intro ? '`in:`' : '`out:`';
+		e.incompatible_with_custom_renderer(node, directive);
+	}
+
 	mark_subtree_dynamic(context.path);
 
 	context.next({ ...context.state, expression: node.metadata.expression });

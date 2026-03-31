@@ -27,6 +27,9 @@ export function BindDirective(node, context) {
 		parent?.type === 'SvelteDocument' ||
 		parent?.type === 'SvelteBody'
 	) {
+		if (context.state.analysis.custom_renderer) {
+			e.incompatible_with_custom_renderer(node, '`bind:`');
+		}
 		if (node.name in binding_properties) {
 			const property = binding_properties[node.name];
 			if (property.valid_elements && !property.valid_elements.includes(parent.name)) {
