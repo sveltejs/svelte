@@ -45,7 +45,6 @@ export function add_form_reset_listener() {
 				// elements have not updated to their reset values yet
 				Promise.resolve().then(() => {
 					if (!evt.defaultPrevented) {
-						// TODO: DOM access
 						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
 							// @ts-expect-error
 							e.__on_r?.();

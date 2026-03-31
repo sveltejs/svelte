@@ -12,17 +12,14 @@ export function append_styles(anchor, css) {
 	effect(() => {
 		var root = anchor.getRootNode();
 
-		// TODO: DOM access
 		var target = /** @type {ShadowRoot} */ (root).host
 			? /** @type {ShadowRoot} */ (root)
-			: // TODO: DOM access
-				/** @type {Document} */ (root).head ?? /** @type {Document} */ (root.ownerDocument).head;
+			: /** @type {Document} */ (root).head ?? /** @type {Document} */ (root.ownerDocument).head;
 
 		// Always querying the DOM is roughly the same perf as additionally checking for presence in a map first assuming
 		// that you'll get cache hits half of the time, so we just always query the dom for simplicity and code savings.
 		if (!(/** @type {Element} */ (target).querySelector('#' + css.hash))) {
 			const style = create_element('style');
-			// TODO: DOM access
 			style.id = css.hash;
 			set_text_content(style, css.code);
 
