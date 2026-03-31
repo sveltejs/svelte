@@ -53,6 +53,10 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 
 > `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
 
+## invalid_id_prefix
+
+> The `idPrefix` option cannot include `-->`.
+
 ## lifecycle_function_unavailable
 
 > `%name%(...)` is not available on the server
