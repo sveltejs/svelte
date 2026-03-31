@@ -63,7 +63,9 @@ If you don't need or want all the features SvelteKit has to offer, you can scaff
 
 ### Other build tools
 
-For existing or legacy projects using Rollup or Webpack, you need to install `typescript` and `svelte-preprocess`. Then install their respective Svelte plugins and add the preprocessor to the plugin config. (See the respective READMEs for more info.) For Rollup, that's [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte); for Webpack, that's [svelte-loader](https://github.com/sveltejs/svelte-loader).
+If you're using tools like Rollup or Webpack instead, install their respective Svelte plugins. For Rollup that's [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) and for Webpack that's [svelte-loader](https://github.com/sveltejs/svelte-loader). For both, you need to install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config (see the respective READMEs for more info).
+
+> [!NOTE] If you're starting a new project, we recommend using SvelteKit or Vite instead
 
 ## tsconfig.json settings
 
