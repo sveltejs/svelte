@@ -15,7 +15,6 @@ export function add_locations(fn, filename, locations) {
 	return (/** @type {any[]} */ ...args) => {
 		const dom = fn(...args);
 
-		// check here
 		var node = hydrating
 			? dom
 			: node_type(dom) === DOCUMENT_FRAGMENT_NODE
