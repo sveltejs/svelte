@@ -88,8 +88,6 @@ export function derived(fn) {
 		signal.created = get_error('created at');
 	}
 
-	current_batch?.register_created_derived(signal);
-
 	return signal;
 }
 

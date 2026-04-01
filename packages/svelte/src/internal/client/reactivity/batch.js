@@ -173,12 +173,6 @@ export class Batch {
 	#new_effects = [];
 
 	/**
-	 * Deriveds created while this batch was active.
-	 * @type {Derived[]}
-	 */
-	#new_deriveds = [];
-
-	/**
 	 * Deferred effects (which run after async work has completed) that are dirty
 	 * @type {Set<Effect>}
 	 */
@@ -551,13 +545,6 @@ export class Batch {
 		this.#new_effects.push(effect);
 	}
 
-	/**
-	 * @param {Derived} derived
-	 */
-	register_created_derived(derived) {
-		this.#new_deriveds.push(derived);
-	}
-
 	#committed = false;
 
 	#commit() {
@@ -632,10 +619,6 @@ export class Batch {
 						batch.schedule(effect);
 						batch.cvs.set(effect, -1);
 					}
-				}
-
-				for (const derived of this.#new_deriveds) {
-					batch.cvs.set(derived, -1);
 				}
 
 				// Only apply and traverse when we know we triggered async work with marking the effects
