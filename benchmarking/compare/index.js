@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execSync, fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { safe } from '../utils.js';
 
 // if (execSync('git status --porcelain').toString().trim()) {
 // 	console.error('Working directory is not clean');
@@ -147,8 +148,4 @@ for (let i = 0; i < results[0].length; i += 1) {
 
 function char(i) {
 	return String.fromCharCode(97 + i);
-}
-
-function safe(name) {
-	return name.replace(/[^a-z0-9._-]+/gi, '_');
 }
