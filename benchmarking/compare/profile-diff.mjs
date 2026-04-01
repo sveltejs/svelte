@@ -4,7 +4,9 @@ import path from 'node:path';
 const [benchmark, baseBranch = 'main', candidateBranch] = process.argv.slice(2);
 
 if (!benchmark || !candidateBranch) {
-	console.error('Usage: node benchmarking/compare/profile-diff.mjs <benchmark> <base-branch> <candidate-branch>');
+	console.error(
+		'Usage: node benchmarking/compare/profile-diff.mjs <benchmark> <base-branch> <candidate-branch>'
+	);
 	process.exit(1);
 }
 

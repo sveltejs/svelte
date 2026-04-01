@@ -54,7 +54,8 @@ for (const branch of requested_branches) {
 	console.group(`Benchmarking ${branch}`);
 
 	const branch_profile_dir = `${PROFILE_DIR}/${safe(branch)}`;
-	if (fs.existsSync(branch_profile_dir)) fs.rmSync(branch_profile_dir, { recursive: true, force: true });
+	if (fs.existsSync(branch_profile_dir))
+		fs.rmSync(branch_profile_dir, { recursive: true, force: true });
 
 	const branch_result_file = `${outdir}/${branch}.json`;
 	if (fs.existsSync(branch_result_file)) fs.rmSync(branch_result_file, { force: true });
@@ -90,7 +91,9 @@ const result_files = fs
 	.sort((a, b) => a.localeCompare(b));
 
 const branches = result_files.map((file) => file.slice(0, -5));
-const results = result_files.map((file) => JSON.parse(fs.readFileSync(`${outdir}/${file}`, 'utf-8')));
+const results = result_files.map((file) =>
+	JSON.parse(fs.readFileSync(`${outdir}/${file}`, 'utf-8'))
+);
 
 if (results.length === 0) {
 	console.error(`No result files found in ${outdir}`);
