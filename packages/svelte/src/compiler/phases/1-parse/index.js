@@ -177,11 +177,17 @@ export class Parser {
 
 	/**
 	 * @param {any} err
-	 * @param {string} [suffix]
 	 * @returns {never}
 	 */
-	acorn_error(err, suffix = '') {
-		e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, '') + suffix);
+	acorn_error(err) {
+		const message = err.message.replace(regex_position_indicator, '');
+
+		const hint =
+			!this.ts && typeof err.pos === 'number' && this.template[err.pos] === ':'
+				? ` (did you forget to add \`lang="ts"\`?)`
+				: '';
+
+		e.js_parse_error(err.pos, message + hint);
 	}
 
 	/**

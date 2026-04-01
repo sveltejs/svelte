@@ -403,11 +403,7 @@ function open(parser) {
 					)
 				);
 			} catch (/** @type {any} */ err) {
-				const suffix =
-					!parser.ts && parser.template[err.pos] === ':'
-						? ` (did you forget to add \`lang="ts"\`?)`
-						: '';
-				parser.acorn_error(err, suffix);
+				parser.acorn_error(err);
 			}
 		} else {
 			function_expression = { params: [] };
