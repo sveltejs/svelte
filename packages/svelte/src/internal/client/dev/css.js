@@ -1,4 +1,4 @@
-import { remove_node } from '../dom/operations';
+import { remove_node } from '../dom/operations.js';
 
 /** @type {Map<String, Set<HTMLStyleElement>>} */
 var all_styles = new Map();
