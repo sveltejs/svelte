@@ -10,8 +10,12 @@ if (!benchmark || !candidateBranch) {
 
 const root = path.resolve('benchmarking/compare/.profiles');
 
+function safe(name) {
+	return name.replace(/[^a-z0-9._-]+/gi, '_');
+}
+
 function read_profile(branch, bench) {
-	const file = path.join(root, branch, `${bench}.cpuprofile`);
+	const file = path.join(root, safe(branch), `${bench}.cpuprofile`);
 	const profile = JSON.parse(fs.readFileSync(file, 'utf8'));
 	const nodes = Array.isArray(profile.nodes) ? profile.nodes : [];
 	const samples = Array.isArray(profile.samples) ? profile.samples : [];
