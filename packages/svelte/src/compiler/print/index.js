@@ -326,7 +326,7 @@ const css_visitors = {
 
 /**
  * @param {AST.JSComment[]} comments
- * @returns {Visitors<AST.SvelteNode>}
+ * @returns {Visitors<any>}
  */
 const svelte_visitors = (comments) => ({
 	Root(node, context) {
