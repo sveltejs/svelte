@@ -770,7 +770,7 @@ export function set_css_text(element, value) {
  */
 export function class_list_toggle(element, name, force) {
 	if (renderer) {
-		const classes = element.getAttribute('class')?.split(/\s+/) ?? [];
+		const classes = renderer.getAttribute(element, 'class')?.split(/\s+/) ?? [];
 		const has_class = classes.includes(name);
 		if (force === has_class) {
 			return;
@@ -783,7 +783,7 @@ export function class_list_toggle(element, name, force) {
 				classes.splice(index, 1);
 			}
 		}
-		element.setAttribute('class', classes.join(' '));
+		renderer.setAttribute(element, 'class', classes.join(' '));
 		return;
 	}
 	element.classList.toggle(name, force);
