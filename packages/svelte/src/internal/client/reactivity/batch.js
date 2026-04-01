@@ -174,6 +174,7 @@ export class Batch {
 
 	/**
 	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing
+	 * @type {Set<Effect>}
 	 */
 	#unskipped_branches = new Set();
 
