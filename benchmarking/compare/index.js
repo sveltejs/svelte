@@ -114,6 +114,8 @@ for (let i = 0; i < results[0].length; i += 1) {
 			});
 		}
 	}
+
+	write('');
 }
 
 function char(i) {
