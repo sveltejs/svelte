@@ -912,5 +912,50 @@ const svelte_visitors = (comments) => ({
 			context.visit(node.expression);
 			context.write('}');
 		}
+	},
+
+	TSModuleDeclaration(node, context) {
+		if (node.declare) {
+			context.write('declare ');
+		}
+
+		const isModule = node.id.type === 'Literal';
+		context.write(isModule ? 'module ' : 'namespace ');
+		context.visit(node.id);
+		context.write(' ');
+		context.visit(node.body);
+	},
+
+	TSMappedType(node, context) {
+		context.write('{');
+
+		if (node.readonly) {
+			context.write('readonly ');
+		}
+
+		context.write('[');
+		context.write(node.typeParameter.name);
+		context.write(' in ');
+
+		if (node.typeParameter.constraint) {
+			context.visit(node.typeParameter.constraint);
+		}
+
+		if (node.nameType) {
+			context.write(' as ');
+			context.visit(node.nameType);
+		}
+
+		context.write(']');
+
+		if (node.optional === true) {
+			context.write('?');
+		} else if (node.optional === '-') {
+			context.write('-?');
+		}
+
+		context.write(': ');
+		context.visit(node.typeAnnotation);
+		context.write('}');
 	}
 });
