@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 const filename = fileURLToPath(import.meta.url);
 const runner = path.resolve(filename, '../runner.js');
 const outdir = path.resolve(filename, '../.results');
+const report_file = `${outdir}/report.txt`;
 
 if (fs.existsSync(outdir)) fs.rmSync(outdir, { recursive: true });
 fs.mkdirSync(outdir);
@@ -74,8 +75,15 @@ const results = branches.map((branch) => {
 	return JSON.parse(fs.readFileSync(`${outdir}/${branch}.json`, 'utf-8'));
 });
 
+fs.writeFileSync(report_file, '');
+
+const write = (str) => {
+	fs.appendFileSync(report_file, str + '\n');
+	console.log(str);
+};
+
 for (let i = 0; i < results[0].length; i += 1) {
-	console.group(`${results[0][i].benchmark}`);
+	write(`${results[0][i].benchmark}`);
 
 	for (const metric of ['time', 'gc_time']) {
 		const times = results.map((result) => +result[i][metric]);
@@ -97,18 +105,15 @@ for (let i = 0; i < results[0].length; i += 1) {
 		}
 
 		if (min !== 0) {
-			console.group(`${metric}: fastest is ${char(min_index)} (${branches[min_index]})`);
+			write(`  ${metric}: fastest is ${char(min_index)} (${branches[min_index]})`);
 			times.forEach((time, b) => {
 				const SIZE = 20;
 				const n = Math.round(SIZE * (time / max));
 
-				console.log(`${char(b)}: ${'◼'.repeat(n)}${' '.repeat(SIZE - n)} ${time.toFixed(2)}ms`);
+				write(`    ${char(b)}: ${'◼'.repeat(n)}${' '.repeat(SIZE - n)} ${time.toFixed(2)}ms`);
 			});
-			console.groupEnd();
 		}
 	}
-
-	console.groupEnd();
 }
 
 function char(i) {
