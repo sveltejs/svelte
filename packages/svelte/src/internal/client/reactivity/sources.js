@@ -40,7 +40,8 @@ import {
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates,
-	set_cv
+	set_cv,
+	get_cv
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -231,7 +232,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
-		mark_reactions(source, updated_during_traversal);
+		mark_reactions(source, write_version, updated_during_traversal);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -310,10 +311,11 @@ export function increment(source) {
 
 /**
  * @param {Value} signal
+ * @param {number} wv
  * @param {Effect[] | null} updated_during_traversal
  * @returns {void}
  */
-export function mark_reactions(signal, updated_during_traversal) {
+export function mark_reactions(signal, wv, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -338,13 +340,15 @@ export function mark_reactions(signal, updated_during_traversal) {
 
 			batch_values?.delete(derived);
 
-			if ((flags & WAS_MARKED) === 0) {
-				// Only connected deriveds can be reliably unmarked right away
-				if (flags & CONNECTED) {
-					reaction.f |= WAS_MARKED;
-				}
+			if (wv > get_cv(derived)) {
+				if ((flags & WAS_MARKED) === 0) {
+					// Only connected deriveds can be reliably unmarked right away
+					if (flags & CONNECTED) {
+						reaction.f |= WAS_MARKED;
+					}
 
-				mark_reactions(derived, updated_during_traversal);
+					mark_reactions(derived, wv, updated_during_traversal);
+				}
 			}
 		} else {
 			var effect = /** @type {Effect} */ (reaction);

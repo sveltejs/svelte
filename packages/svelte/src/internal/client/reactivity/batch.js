@@ -274,8 +274,8 @@ export class Batch {
 			infinite_loop_guard();
 		}
 
-		for (const source of this.current.keys()) {
-			mark_reactions(source, null);
+		for (const [source, wv] of this.wvs) {
+			mark_reactions(source, wv, null);
 		}
 
 		// we only reschedule previously-deferred effects if we expect
