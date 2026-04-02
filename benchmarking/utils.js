@@ -45,7 +45,7 @@ export async function fastest_test(times, fn) {
 	return results.reduce((a, b) => (a.time < b.time ? a : b));
 }
 
-function safe(name) {
+export function safe(name) {
 	return name.replace(/[^a-z0-9._-]+/gi, '_');
 }
 
