@@ -1,4 +1,7 @@
 import { performance, PerformanceObserver } from 'node:perf_hooks';
+import fs from 'node:fs';
+import path from 'node:path';
+import inspector from 'node:inspector/promises';
 import v8 from 'v8-natives';
 
 // Credit to https://github.com/milomg/js-reactivity-benchmark for the logic for timing + GC tracking.
@@ -40,4 +43,38 @@ export async function fastest_test(times, fn) {
 	}
 
 	return results.reduce((a, b) => (a.time < b.time ? a : b));
+}
+
+export function safe(name) {
+	return name.replace(/[^a-z0-9._-]+/gi, '_');
+}
+
+/**
+ * @template T
+ * @param {string | null} profile_dir
+ * @param {string} profile_name
+ * @param {() => T | Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+export async function with_cpu_profile(profile_dir, profile_name, fn) {
+	if (profile_dir === null) {
+		return await fn();
+	}
+
+	fs.mkdirSync(profile_dir, { recursive: true });
+
+	const session = new inspector.Session();
+	session.connect();
+
+	await session.post('Profiler.enable');
+	await session.post('Profiler.start');
+
+	try {
+		return await fn();
+	} finally {
+		const { profile } = /** @type {{ profile: object }} */ (await session.post('Profiler.stop'));
+		const file = path.join(profile_dir, `${safe(profile_name)}.cpuprofile`);
+		fs.writeFileSync(file, JSON.stringify(profile));
+		session.disconnect();
+	}
 }
