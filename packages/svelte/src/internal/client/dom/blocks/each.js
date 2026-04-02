@@ -168,8 +168,11 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 	}
 }
 
-/** @type {TemplateNode} */
-var offscreen_anchor;
+// we need to handle the case of multiple renderers so we need to use a WeakMap of offscreen anchors rather than a single variable.
+// we also need the dom_weak_key since `null` is not a viable WeakKey
+/** @type {WeakMap<WeakKey, TemplateNode>} */
+var offscreen_anchors = new WeakMap();
+var dom_weak_key = {};
 
 /**
  * Returns an anchor node suitable for offscreen rendering.
@@ -179,15 +182,18 @@ var offscreen_anchor;
  * @returns {TemplateNode}
  */
 function get_offscreen_anchor() {
-	if (offscreen_anchor !== undefined) return offscreen_anchor;
+	// not doing it inline to please typescript
+	var cached = offscreen_anchors.get(renderer ?? dom_weak_key);
+	if (cached) return cached;
 
-	offscreen_anchor = create_text();
+	var offscreen_anchor = create_text();
 
 	if (renderer) {
 		var fragment = create_fragment();
 		append_child(fragment, offscreen_anchor);
 	}
 
+	offscreen_anchors.set(renderer ?? dom_weak_key, offscreen_anchor);
 	return offscreen_anchor;
 }
 
