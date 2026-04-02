@@ -364,7 +364,7 @@ function set_attributes(
 		}
 
 		if (key === 'class') {
-			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
+			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml' && renderer != null;
 			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 			current[key] = value;
 			current[CLASS] = next[CLASS];
