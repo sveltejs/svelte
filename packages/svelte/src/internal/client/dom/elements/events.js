@@ -96,9 +96,8 @@ export function create_event(event_name, dom, handler, options = {}) {
 	// defer the attachment till after it's been appended to the document. TODO: remove this once Chrome fixes
 	// this bug. The same applies to wheel events and touch events.
 	if (
-		event_name.startsWith('pointer') ||
-		event_name.startsWith('touch') ||
-		event_name === 'wheel'
+		!is_custom_renderer &&
+		(event_name.startsWith('pointer') || event_name.startsWith('touch') || event_name === 'wheel')
 	) {
 		queue_micro_task(() => {
 			add_event_listener(dom, event_name, target_handler, options);
