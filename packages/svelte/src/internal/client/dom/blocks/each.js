@@ -42,6 +42,7 @@ import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
+import { tag } from '../../dev/tracing.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -206,7 +207,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	});
 
 	if (DEV) {
-		each_array.label = '{#each ...}';
+		tag(each_array, '{#each ...}');
 	}
 
 	/** @type {V[]} */
