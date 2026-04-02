@@ -378,7 +378,19 @@ export function execute_derived(derived) {
 export function update_derived(derived) {
 	var value = execute_derived(derived);
 
-	set_cv(derived, derived.deps === null ? Infinity : Math.max(...derived.deps.map(get_wv)));
+	var deps = derived.deps;
+	var cv = Infinity;
+
+	if (deps !== null) {
+		cv = -Infinity;
+
+		for (var i = 0; i < deps.length; i++) {
+			var dep_wv = get_wv(deps[i]);
+			if (dep_wv > cv) cv = dep_wv;
+		}
+	}
+
+	set_cv(derived, cv);
 
 	if (!derived.equals(value)) {
 		batch_wvs?.set(derived, write_version);
