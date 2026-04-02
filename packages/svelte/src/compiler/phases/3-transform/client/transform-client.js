@@ -589,6 +589,10 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
+	if (!analysis.custom_renderer) {
+		body.unshift(b.imports([], 'svelte/internal/init-operations'));
+	}
+
 	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
 		component_block.body.unshift(

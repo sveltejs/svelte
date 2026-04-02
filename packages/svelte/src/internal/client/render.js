@@ -6,7 +6,6 @@ import {
 	create_text,
 	get_first_child,
 	get_next_sibling,
-	init_operations,
 	append_child,
 	add_event_listener,
 	remove_event_listener,
@@ -102,7 +101,6 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
-	init_operations();
 	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;
@@ -147,8 +145,6 @@ export function hydrate(component, options) {
 			e.hydration_failed();
 		}
 
-		// If an error occurred above, the operations might not yet have been initialised.
-		init_operations();
 		clear_text_content(target);
 
 		set_hydrating(false);
@@ -172,8 +168,6 @@ function _mount(
 	Component,
 	{ target, anchor, props = {}, events, context, intro = true, transformError }
 ) {
-	init_operations();
-
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
