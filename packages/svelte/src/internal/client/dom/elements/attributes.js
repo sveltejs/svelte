@@ -472,6 +472,16 @@ function set_attributes(
 						element.__value = null;
 					}
 				}
+			} else if (is_default && renderer != null) {
+				// Route through the renderer-aware abstraction so custom renderers
+				// see defaultValue/defaultChecked as proper attributes
+				if (name === 'defaultValue') {
+					set_element_default_value(element, value);
+				} else {
+					set_element_default_checked(element, value);
+				}
+				// remove it from attributes's cache
+				if (name in attributes) attributes[name] = UNINITIALIZED;
 			} else if (
 				is_default ||
 				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
