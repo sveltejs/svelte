@@ -462,6 +462,22 @@ export function set_context_after_init() {
 }
 
 /**
+ * A snippet created in a component with a custom renderer cannot be rendered by a different renderer
+ * @returns {never}
+ */
+export function snippet_renderer_mismatch() {
+	if (DEV) {
+		const error = new Error(`snippet_renderer_mismatch\nA snippet created in a component with a custom renderer cannot be rendered by a different renderer\nhttps://svelte.dev/e/snippet_renderer_mismatch`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/snippet_renderer_mismatch`);
+	}
+}
+
+/**
  * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
  * @returns {never}
  */

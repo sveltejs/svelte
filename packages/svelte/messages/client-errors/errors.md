@@ -177,6 +177,10 @@ This can happen if you render a hydratable on the client that was not rendered o
 
 This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
+## snippet_renderer_mismatch
+
+> A snippet created in a component with a custom renderer cannot be rendered by a different renderer
+
 ## state_descriptors_fixed
 
 > Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
