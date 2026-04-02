@@ -95,6 +95,10 @@ export class SvelteDate extends Date {
 							return date_proto[method].apply(this, args);
 						});
 
+						if (DEV) {
+							tag(d, `SvelteDate.${method}()`);
+						}
+
 						this.#deriveds.set(method, d);
 
 						set_active_reaction(reaction);

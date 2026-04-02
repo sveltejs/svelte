@@ -205,6 +205,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
 	});
 
+	if (DEV) {
+		each_array.label = '{#each ...}';
+	}
+
 	/** @type {V[]} */
 	var array;
 
@@ -220,6 +224,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		if ((state.effect.f & DESTROYED) !== 0) {
 			return;
 		}
+
+		var array = get(each_array);
 
 		state.pending.delete(batch);
 
@@ -376,14 +382,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			// continue in hydration mode
 			set_hydrating(true);
 		}
-
-		// When we mount the each block for the first time, the collection won't be
-		// connected to this effect as the effect hasn't finished running yet and its deps
-		// won't be assigned. However, it's possible that when reconciling the each block
-		// that a mutation occurred and it's made the collection MAYBE_DIRTY, so reading the
-		// collection again can provide consistency to the reactive graph again as the deriveds
-		// will now be `CLEAN`.
-		get(each_array);
 	});
 
 	/** @type {EachState} */
