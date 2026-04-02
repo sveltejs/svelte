@@ -470,7 +470,7 @@ export function analyze_component(root, source, options) {
 	const custom_renderer = options.experimental.customRenderer?.({ filename: options.filename });
 
 	if (css === 'injected' && custom_renderer !== undefined) {
-		e.options_css_injected_with_custom_renderer(null);
+		e.incompatible_with_custom_renderer(null, "`css: 'injected'`");
 	}
 
 	const custom_element = options.customElementOptions ?? custom_element_from_option;

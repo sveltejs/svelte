@@ -202,7 +202,7 @@ export default function read_options(node) {
 		const css_attribute = node.attributes.find(
 			(/** @type {any} */ a) => a.type === 'Attribute' && a.name === 'css'
 		);
-		e.options_css_injected_with_custom_renderer(css_attribute ?? node);
+		e.incompatible_with_custom_renderer(css_attribute ?? node, "`css: 'injected'`");
 	}
 
 	return component_options;
