@@ -538,7 +538,13 @@ export class Batch {
 				// A batch was unskipped in a later batch -> tell prior batches to unskip it, too
 				if (is_earlier) {
 					for (const unskipped of this.#unskipped_branches) {
-						batch.unskip_effect(unskipped, (e) => batch.#defer_effects([e]));
+						batch.unskip_effect(unskipped, (e) => {
+							if ((e.f & (BLOCK_EFFECT | ASYNC)) !== 0) {
+								batch.schedule(e);
+							} else {
+								batch.#defer_effects([e]);
+							}
+						});
 					}
 				}
 

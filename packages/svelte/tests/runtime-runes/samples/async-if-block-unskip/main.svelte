@@ -32,5 +32,9 @@
 	{query}
 {/if}
 
+{#if !promise.loading}
+	{await query}
+{/if}
+
 <button onclick={() => query = 'search'}>load</button>
 <button onclick={() => resolvers.shift()?.()}>resolve</button>

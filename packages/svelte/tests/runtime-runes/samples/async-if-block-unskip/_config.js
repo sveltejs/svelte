@@ -21,7 +21,7 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-			search search search
+			search search search search
 			<button>load</button>
 			<button>resolve</button>
 		`
