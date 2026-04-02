@@ -60,7 +60,7 @@ export function createRenderer(renderer) {
 						var ctx = /** @type {ComponentContext} */ (component_context);
 						if (context) ctx.c = context;
 						branch(() => {
-							/** @type {Function} */ (Component)(anchor, props);
+							/** @type {Function} */ (Component)(anchor, props ?? {});
 						});
 						pop();
 					});
