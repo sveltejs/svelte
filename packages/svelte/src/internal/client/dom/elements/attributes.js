@@ -431,7 +431,16 @@ function set_attributes(
 			// avoid using the setter
 			set_attribute(element, key, value);
 		} else if (key === 'autofocus') {
-			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
+			if (renderer == null) {
+				autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
+			} else {
+				// In custom renderer mode, just set autofocus as a regular attribute
+				if (value) {
+					set_attribute_op(element, key, value);
+				} else {
+					remove_attribute(element, key);
+				}
+			}
 		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
 			// @ts-ignore We're not running this for custom elements because __value is actually
 			// how Lit stores the current value on the element, and messing with that would break things.
