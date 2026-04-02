@@ -51,21 +51,24 @@ export function createRenderer(renderer) {
 		 */
 		render(Component, { target, props, context }) {
 			var cleanup = push_renderer(renderer);
-			const unmount = effect_root(() => {
-				var anchor = renderer.createComment('');
-				renderer.insert(/** @type {*} */ (target), anchor, null);
-				boundary(/** @type {*} */ (anchor), { pending: () => {} }, (anchor) => {
-					push({});
-					var ctx = /** @type {ComponentContext} */ (component_context);
-					if (context) ctx.c = context;
-					branch(() => {
-						/** @type {Function} */ (Component)(anchor, props);
+			try {
+				const unmount = effect_root(() => {
+					var anchor = renderer.createComment('');
+					renderer.insert(/** @type {*} */ (target), anchor, null);
+					boundary(/** @type {*} */ (anchor), { pending: () => {} }, (anchor) => {
+						push({});
+						var ctx = /** @type {ComponentContext} */ (component_context);
+						if (context) ctx.c = context;
+						branch(() => {
+							/** @type {Function} */ (Component)(anchor, props);
+						});
+						pop();
 					});
-					pop();
 				});
-			});
-			cleanup();
-			return unmount;
+				return unmount;
+			} finally {
+				cleanup();
+			}
 		}
 	};
 }
