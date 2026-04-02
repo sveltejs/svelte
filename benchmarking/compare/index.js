@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execSync, fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { safe } from '../utils.js';
 
 // if (execSync('git status --porcelain').toString().trim()) {
 // 	console.error('Working directory is not clean');
@@ -13,38 +14,51 @@ const runner = path.resolve(filename, '../runner.js');
 const outdir = path.resolve(filename, '../.results');
 const report_file = `${outdir}/report.txt`;
 
-if (fs.existsSync(outdir)) fs.rmSync(outdir, { recursive: true });
-fs.mkdirSync(outdir);
+fs.mkdirSync(outdir, { recursive: true });
 
-const branches = [];
+const requested_branches = [];
 
 let PROFILE_DIR = path.resolve(filename, '../.profiles');
-if (fs.existsSync(PROFILE_DIR)) fs.rmSync(PROFILE_DIR, { recursive: true });
 fs.mkdirSync(PROFILE_DIR, { recursive: true });
 
 for (const arg of process.argv.slice(2)) {
 	if (arg.startsWith('--')) continue;
 	if (arg === filename) continue;
 
-	branches.push(arg);
+	requested_branches.push(arg);
 }
 
-if (branches.length === 0) {
-	branches.push(
+if (requested_branches.length === 0) {
+	requested_branches.push(
 		execSync('git symbolic-ref --short -q HEAD || git rev-parse --short HEAD').toString().trim()
 	);
 }
 
-if (branches.length === 1) {
-	branches.push('main');
+const original_ref = execSync('git symbolic-ref --short -q HEAD || git rev-parse --short HEAD')
+	.toString()
+	.trim();
+
+if (
+	requested_branches.length === 1 &&
+	!requested_branches.includes('main') &&
+	!fs.existsSync(`${outdir}/main.json`)
+) {
+	requested_branches.push('main');
 }
 
 process.on('exit', () => {
-	execSync(`git checkout ${branches[0]}`);
+	execSync(`git checkout ${original_ref}`);
 });
 
-for (const branch of branches) {
+for (const branch of requested_branches) {
 	console.group(`Benchmarking ${branch}`);
+
+	const branch_profile_dir = `${PROFILE_DIR}/${safe(branch)}`;
+	if (fs.existsSync(branch_profile_dir))
+		fs.rmSync(branch_profile_dir, { recursive: true, force: true });
+
+	const branch_result_file = `${outdir}/${branch}.json`;
+	if (fs.existsSync(branch_result_file)) fs.rmSync(branch_result_file, { force: true });
 
 	execSync(`git checkout ${branch}`);
 
@@ -52,7 +66,7 @@ for (const branch of branches) {
 		const child = fork(runner, [], {
 			env: {
 				...process.env,
-				BENCH_PROFILE_DIR: `${PROFILE_DIR}/${safe(branch)}`
+				BENCH_PROFILE_DIR: branch_profile_dir
 			}
 		});
 
@@ -71,9 +85,20 @@ if (PROFILE_DIR !== null) {
 	console.log(`\nCPU profiles written to ${PROFILE_DIR}`);
 }
 
-const results = branches.map((branch) => {
-	return JSON.parse(fs.readFileSync(`${outdir}/${branch}.json`, 'utf-8'));
-});
+const result_files = fs
+	.readdirSync(outdir)
+	.filter((file) => file.endsWith('.json'))
+	.sort((a, b) => a.localeCompare(b));
+
+const branches = result_files.map((file) => file.slice(0, -5));
+const results = result_files.map((file) =>
+	JSON.parse(fs.readFileSync(`${outdir}/${file}`, 'utf-8'))
+);
+
+if (results.length === 0) {
+	console.error(`No result files found in ${outdir}`);
+	process.exit(1);
+}
 
 fs.writeFileSync(report_file, '');
 
@@ -81,6 +106,12 @@ const write = (str) => {
 	fs.appendFileSync(report_file, str + '\n');
 	console.log(str);
 };
+
+for (let i = 0; i < branches.length; i += 1) {
+	write(`${char(i)}: ${branches[i]}`);
+}
+
+write('');
 
 for (let i = 0; i < results[0].length; i += 1) {
 	write(`${results[0][i].benchmark}`);
@@ -120,8 +151,4 @@ for (let i = 0; i < results[0].length; i += 1) {
 
 function char(i) {
 	return String.fromCharCode(97 + i);
-}
-
-function safe(name) {
-	return name.replace(/[^a-z0-9._-]+/gi, '_');
 }
