@@ -4,6 +4,7 @@ import { boundary } from '../dom/blocks/boundary.js';
 import { branch, effect_root } from '../reactivity/effects.js';
 import { push, pop, component_context } from '../context.js';
 import { push_renderer } from './state.js';
+import { get_parent_node, remove_child } from '../dom/operations.js';
 
 /**
  * @template {object} [TFragment=object]
@@ -64,6 +65,11 @@ export function createRenderer(renderer) {
 						});
 						pop();
 					});
+
+					return () => {
+						var parent = get_parent_node(/** @type {*} */ (anchor));
+						if (parent) remove_child(parent, /** @type {*} */ (anchor));
+					};
 				});
 				return unmount;
 			} finally {
