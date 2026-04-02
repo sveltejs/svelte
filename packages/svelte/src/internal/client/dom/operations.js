@@ -481,6 +481,8 @@ export function set_node_value(node, value) {
 
 // --- Helpers for style attribute string manipulation (custom renderer) ---
 
+// TODO: check if this can be improved?
+
 /**
  * @param {string} style_string
  * @param {string} property
