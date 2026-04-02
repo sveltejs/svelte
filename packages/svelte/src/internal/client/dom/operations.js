@@ -13,7 +13,7 @@ import {
 } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
-import { custom_renderer_window, renderer } from '../custom-renderer/state.js';
+import { custom_renderer_window_map, renderer } from '../custom-renderer/state.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -791,6 +791,11 @@ export function class_list_toggle(element, name, force) {
 
 export function get_window() {
 	if (renderer) {
+		var custom_renderer_window = custom_renderer_window_map.get(renderer);
+		if (!custom_renderer_window) {
+			custom_renderer_window = {};
+			custom_renderer_window_map.set(renderer, custom_renderer_window);
+		}
 		return custom_renderer_window;
 	}
 	return window;

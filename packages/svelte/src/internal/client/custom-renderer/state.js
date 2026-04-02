@@ -7,8 +7,8 @@
  */
 export let renderer = null;
 
-// to use with $props.id()
-export let custom_renderer_window = {};
+// allow for a "window" for each custom renderer...to use with `$props.id`
+export let custom_renderer_window_map = new WeakMap();
 
 /**
  * @param {Renderer<any, any, any, any> | null} $renderer

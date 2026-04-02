@@ -420,9 +420,8 @@ export function props_id() {
 
 	let window = get_window();
 
-	// @ts-expect-error This way we ensure the id is unique even across Svelte runtimes
+	// This way we ensure the id is unique even across Svelte runtimes
 	(window.__svelte ??= {}).uid ??= 1;
 
-	// @ts-expect-error
 	return `c${window.__svelte.uid++}`;
 }
