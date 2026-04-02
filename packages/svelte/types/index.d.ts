@@ -2569,7 +2569,7 @@ declare module 'svelte/reactivity/window' {
 
 declare module 'svelte/renderer' {
 	export function createRenderer<TFragment extends object = object, TElement extends object = object, TTextNode extends object = object, TComment extends object = object>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
-		render: <Props extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, any, any>, options: {} extends Props ? {
+		render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 			target: TFragment | TElement | TTextNode | TComment;
 			props?: Props;
 			context?: Map<any, any>;
@@ -2577,7 +2577,10 @@ declare module 'svelte/renderer' {
 			target: TFragment | TElement | TTextNode | TComment;
 			props: Props;
 			context?: Map<any, any>;
-		}) => () => void;
+		}) => {
+			component: Exports;
+			unmount: () => void;
+		};
 	};
 	export type Renderer<TFragment extends object = object, TElement extends object = object, TTextNode extends object = object, TComment extends object = object, TNode = TFragment | TElement | TTextNode | TComment> = {
 		/**

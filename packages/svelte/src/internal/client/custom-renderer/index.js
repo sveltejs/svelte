@@ -40,19 +40,24 @@ import { get_parent_node, remove_child } from '../dom/operations.js';
  * @template {object} [TTextNode=object]
  * @template {object} [TComment=object]
  * @param {Renderer<TFragment, TElement, TTextNode, TComment>} renderer
- * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: <Props extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, any, any>, options: {} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }) => () => void }}
+ * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }) => { component: Exports, unmount: () => void } }}
  */
 export function createRenderer(renderer) {
 	return {
 		...renderer,
 		/**
 		 * @template {Record<string, any>} Props
-		 * @param {ComponentType<SvelteComponent<Props>> | Component<Props, any, any>} Component
+		 * @template {Record<string, any>} Exports
+		 * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} Component
 		 * @param {{} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }} options
 		 */
 		render(Component, { target, props, context }) {
 			var cleanup = push_renderer(renderer);
 			try {
+				/** @type {Exports} */
+				// @ts-expect-error will be defined because the render effect runs synchronously
+				var component = undefined;
+
 				const unmount = effect_root(() => {
 					var anchor = renderer.createComment('');
 					renderer.insert(/** @type {*} */ (target), anchor, null);
@@ -61,7 +66,7 @@ export function createRenderer(renderer) {
 						var ctx = /** @type {ComponentContext} */ (component_context);
 						if (context) ctx.c = context;
 						branch(() => {
-							/** @type {Function} */ (Component)(anchor, props ?? {});
+							component = /** @type {Function} */ (Component)(anchor, props ?? {}) || {};
 						});
 						pop();
 					});
@@ -71,7 +76,7 @@ export function createRenderer(renderer) {
 						if (parent) remove_child(parent, /** @type {*} */ (anchor));
 					};
 				});
-				return unmount;
+				return { component, unmount };
 			} finally {
 				cleanup();
 			}

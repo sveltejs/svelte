@@ -133,13 +133,16 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 		const target = create_root();
 
 		let unmount: (() => void) | undefined;
+		let component: Record<string, any> | undefined;
 
 		try {
-			unmount = renderer.render(mod.default, {
+			const result = renderer.render(mod.default, {
 				target,
 				props: config.props ?? {},
 				context: config.context
 			});
+			unmount = result.unmount;
+			component = result.component;
 		} catch (err) {
 			if (config.error) {
 				assert.include((err as Error).message, config.error);
@@ -175,7 +178,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 				await config.test({
 					assert,
 					target,
-					component: config.props ?? {},
+					component: component ?? {},
 					mod,
 					logs,
 					warnings,
