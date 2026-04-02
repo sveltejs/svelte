@@ -244,6 +244,7 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
+			/** @param {unknown} v */
 			function go(v) {
 				if (p === promise || v !== STALE_REACTION) {
 					fulfil(signal);

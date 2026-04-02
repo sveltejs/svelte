@@ -180,14 +180,9 @@ export function set(source, value, should_proxy = false) {
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
-		var batch = Batch.ensure();
-		var old_value = source.v;
+		old_values.set(source, is_destroying_effect ? value : source.v);
 
-		if (is_destroying_effect) {
-			old_values.set(source, value);
-		} else {
-			old_values.set(source, old_value);
-		}
+		var batch = Batch.ensure();
 
 		if ((source.f & DERIVED) !== 0) {
 			const derived = /** @type {Derived} */ (source);
