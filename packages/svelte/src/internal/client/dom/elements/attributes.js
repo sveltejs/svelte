@@ -395,7 +395,7 @@ function set_attributes(
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var is_delegated = can_delegate_event(event_name);
+			var is_delegated = renderer == null && can_delegate_event(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -419,10 +419,10 @@ function set_attributes(
 			} else if (value != null) {
 				/**
 				 * @this {any}
-				 * @param {Event} evt
+				 * @param {...any} args
 				 */
-				function handle(evt) {
-					current[key].call(this, evt);
+				function handle(...args) {
+					current[key].apply(this, args);
 				}
 
 				current[event_handle_key] = create_event(event_name, element, handle, opts);
