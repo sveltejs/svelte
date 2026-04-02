@@ -456,6 +456,13 @@ export function build_component(node, component_name, loc, context) {
 		};
 	}
 
+	if (context.state.analysis.custom_renderer) {
+		const prev = fn;
+		fn = (node_id) => {
+			return b.call('$.without_renderer', b.arrow([], prev(node_id)));
+		};
+	}
+
 	if (node.type !== 'SvelteSelf') {
 		// Component name itself could be blocked on async values
 		memoizer.check_blockers(node.metadata.expression);

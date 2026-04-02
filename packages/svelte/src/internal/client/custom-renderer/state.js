@@ -28,3 +28,19 @@ export function push_renderer($renderer) {
 		renderer = old_renderer;
 	};
 }
+
+/**
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function without_renderer(fn) {
+	if (renderer === null) return fn();
+	let old_renderer = renderer;
+	renderer = null;
+	try {
+		return fn();
+	} finally {
+		renderer = old_renderer;
+	}
+}

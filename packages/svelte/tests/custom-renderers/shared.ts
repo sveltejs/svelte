@@ -4,7 +4,7 @@ import { assert } from 'vitest';
 import { compile_directory } from '../helpers.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
-import renderer, { create_root, serialize, dispatch_event } from './renderer.js';
+import renderer, { create_root, serialize, dispatch_event, dom_elements } from './renderer.js';
 import { writeFile } from 'node:fs/promises';
 
 export interface CustomRendererTest extends BaseTest {
@@ -26,6 +26,7 @@ export interface CustomRendererTest extends BaseTest {
 		renderer: typeof renderer;
 		serialize: typeof serialize;
 		dispatch_event: typeof dispatch_event;
+		dom_elements: Array<DocumentFragment | Node>;
 	}) => void | Promise<void>;
 }
 
@@ -134,8 +135,8 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 
 		let unmount: (() => void) | undefined;
 		let component: Record<string, any> | undefined;
-
 		try {
+			dom_elements.length = 0;
 			const result = renderer.render(mod.default, {
 				target,
 				props: config.props ?? {},
@@ -184,7 +185,8 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 					warnings,
 					renderer: renderer,
 					serialize,
-					dispatch_event
+					dispatch_event,
+					dom_elements
 				});
 			}
 

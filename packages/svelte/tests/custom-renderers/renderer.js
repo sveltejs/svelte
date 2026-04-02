@@ -11,7 +11,7 @@ import { createRenderer } from '../../src/renderer/index.js';
 /**
  * @typedef {{ type: 'element', name: string, attributes: Record<string, string>, children: ObjNode[], listeners: Record<string, Array<{handler: any, options?: any}>>, parent: ObjNode | null }} ObjElement
  * @typedef {{ type: 'text', value: string, parent: ObjNode | null }} ObjText
- * @typedef {{ type: 'comment', value: string, parent: ObjNode | null }} ObjComment
+ * @typedef {{ type: 'comment', value: string, parent: ObjNode | null, before: (node: any)=> void }} ObjComment
  * @typedef {{ type: 'fragment', children: ObjNode[], parent: ObjNode | null }} ObjFragment
  * @typedef {ObjElement | ObjText | ObjComment | ObjFragment} ObjNode
  */
@@ -61,6 +61,11 @@ function remove_from_parent(node) {
 	children.splice(idx, 1);
 }
 
+/**
+ * @type {Array<DocumentFragment | Node>}
+ */
+export const dom_elements = [];
+
 const renderer = createRenderer({
 	createFragment() {
 		return /** @type {ObjFragment} */ ({
@@ -93,7 +98,12 @@ const renderer = createRenderer({
 		return /** @type {ObjComment} */ ({
 			type: 'comment',
 			value: data,
-			parent: null
+			parent: null,
+			// adding this allows for this renderer to interleave with a DOM-based renderer
+			// the argument will be the DOM node that represent a DOM Component being mounted
+			before(node) {
+				dom_elements.push(node);
+			}
 		});
 	},
 
