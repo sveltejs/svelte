@@ -439,7 +439,7 @@ export function RegularElement(node, context) {
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
-		if (name === 'template') {
+		if (name === 'template' && !context.state.analysis.custom_renderer) {
 			needs_reset = true;
 			child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
 			arg = b.member(arg, 'content');
