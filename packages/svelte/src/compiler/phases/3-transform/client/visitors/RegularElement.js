@@ -212,7 +212,8 @@ export function RegularElement(node, context) {
 
 	/** If true, needs `__value` for inputs */
 	const needs_special_value_handling =
-		name === 'option' || name === 'select' || bindings.has('group') || bindings.has('checked');
+		!context.state.analysis.custom_renderer &&
+		(name === 'option' || name === 'select' || bindings.has('group') || bindings.has('checked'));
 
 	if (has_spread) {
 		build_attribute_effect(
