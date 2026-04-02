@@ -274,6 +274,7 @@ export class Batch {
 			infinite_loop_guard();
 		}
 
+		// TODO we only need to do this for re-runs
 		for (const [source, wv] of this.wvs) {
 			mark_reactions(source, wv, null);
 		}
