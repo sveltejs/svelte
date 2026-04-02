@@ -476,7 +476,7 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(...element_state.after_update);
 	}
 
-	if (name === 'selectedcontent') {
+	if (name === 'selectedcontent' && !context.state.analysis.custom_renderer) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
