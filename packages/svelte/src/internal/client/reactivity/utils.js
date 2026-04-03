@@ -4,12 +4,12 @@ import { DERIVED, WAS_MARKED } from '#client/constants';
 /**
  * @param {Reaction} reaction
  */
-function clear_marked(reaction) {
+export function clear_marked(reaction) {
 	if ((reaction.f & WAS_MARKED) === 0) {
 		return;
 	}
 
-	reaction.f ^= WAS_MARKED;
+	unmark(reaction);
 
 	var deps = reaction.deps;
 	if (deps !== null) {
@@ -22,13 +22,15 @@ function clear_marked(reaction) {
 }
 
 /**
- * @param {Effect} effect
- * @param {Set<Effect>} dirty_effects
+ * @param {Reaction} reaction
  */
-export function defer_effect(effect, dirty_effects) {
-	dirty_effects.add(effect);
+export function mark(reaction) {
+	reaction.f |= WAS_MARKED;
+}
 
-	// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
-	// so that other batches can correctly reach these effects during their own traversal
-	clear_marked(effect);
+/**
+ * @param {Reaction} reaction
+ */
+export function unmark(reaction) {
+	reaction.f &= ~WAS_MARKED;
 }

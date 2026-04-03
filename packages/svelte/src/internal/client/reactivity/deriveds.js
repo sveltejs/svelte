@@ -75,7 +75,7 @@ export function derived(fn) {
 		deps: null,
 		effects: null,
 		equals,
-		f: DERIVED,
+		f: DERIVED | WAS_MARKED,
 		fn,
 		reactions: null,
 		cv: -1,

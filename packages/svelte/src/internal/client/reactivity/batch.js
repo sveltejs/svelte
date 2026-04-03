@@ -42,7 +42,7 @@ import {
 	update
 } from './sources.js';
 import { eager_effect, unlink_effect } from './effects.js';
-import { defer_effect } from './utils.js';
+import { clear_marked, unmark } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
@@ -425,7 +425,13 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(effects[i], this.#dirty_effects);
+			var effect = effects[i];
+
+			this.#dirty_effects.add(effect);
+
+			// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
+			// so that other batches can correctly reach these effects during their own traversal
+			clear_marked(effect);
 		}
 	}
 
@@ -1125,7 +1131,7 @@ export function eager(fn) {
  * @param {{ d: Effect[], m: Effect[] }} tracked
  */
 function reset_branch(effect, tracked) {
-	effect.f &= ~WAS_MARKED;
+	unmark(effect);
 
 	// clean branch = nothing dirty inside, no need to traverse further
 	if ((effect.f & BRANCH_EFFECT) !== 0) {
@@ -1148,7 +1154,7 @@ function reset_branch(effect, tracked) {
  * @param {Effect} effect
  */
 function reset_all(effect) {
-	effect.f &= ~WAS_MARKED;
+	unmark(effect);
 
 	var e = effect.first;
 	while (e !== null) {
