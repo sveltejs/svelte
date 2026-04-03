@@ -15,7 +15,8 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	STATE_EAGER_EFFECT
+	STATE_EAGER_EFFECT,
+	WAS_MARKED
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -1145,6 +1146,8 @@ function reset_branch(effect, tracked) {
  * @param {Effect} effect
  */
 function reset_all(effect) {
+	effect.f &= ~WAS_MARKED;
+
 	var e = effect.first;
 	while (e !== null) {
 		reset_all(e);
