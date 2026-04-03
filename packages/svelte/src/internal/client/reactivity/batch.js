@@ -1299,7 +1299,7 @@ export function get_wv(value) {
  * @param {Reaction} reaction
  */
 export function get_cv(reaction) {
-	return batch_cvs?.get(reaction) ?? reaction.cv;
+	return active_batch?.cvs.get(reaction) ?? reaction.cv;
 }
 
 /**
