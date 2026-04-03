@@ -12,7 +12,8 @@ import {
 	WAS_MARKED,
 	DESTROYED,
 	CLEAN,
-	REACTION_RAN
+	REACTION_RAN,
+	INERT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -67,10 +68,6 @@ export const recent_async_deriveds = new Set();
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	var flags = DERIVED | DIRTY;
-	var parent_derived =
-		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
-			? /** @type {Derived} */ (active_reaction)
-			: null;
 
 	if (active_effect !== null) {
 		// Since deriveds are evaluated lazily, any effects created inside them are
@@ -90,7 +87,7 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
-		parent: parent_derived ?? active_effect,
+		parent: active_effect,
 		ac: null
 	};
 
@@ -321,23 +318,6 @@ export function destroy_derived_effects(derived) {
 let stack = [];
 
 /**
- * @param {Derived} derived
- * @returns {Effect | null}
- */
-function get_derived_parent_effect(derived) {
-	var parent = derived.parent;
-	while (parent !== null) {
-		if ((parent.f & DERIVED) === 0) {
-			// The original parent effect might've been destroyed but the derived
-			// is used elsewhere now - do not return the destroyed effect in that case
-			return (parent.f & DESTROYED) === 0 ? /** @type {Effect} */ (parent) : null;
-		}
-		parent = parent.parent;
-	}
-	return null;
-}
-
-/**
  * @template T
  * @param {Derived} derived
  * @returns {T}
@@ -345,8 +325,15 @@ function get_derived_parent_effect(derived) {
 export function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
+	var parent = derived.parent;
 
-	set_active_effect(get_derived_parent_effect(derived));
+	if (!is_destroying_effect && parent !== null && (parent.f & (DESTROYED | INERT)) !== 0) {
+		w.derived_inert();
+
+		return derived.v;
+	}
+
+	set_active_effect(parent);
 
 	if (DEV) {
 		let prev_eager_effects = eager_effects;
