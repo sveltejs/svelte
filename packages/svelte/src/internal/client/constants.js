@@ -50,7 +50,7 @@ export const STATE_EAGER_EFFECT = 1 << 27;
  * Will be lifted during execution of the derived and during checking its dirty state (both are necessary
  * because a derived might be checked but not executed).
  */
-export const WAS_MARKED = 1 << 16;
+export const WAS_MARKED = 1 << 28;
 
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
