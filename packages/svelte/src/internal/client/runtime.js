@@ -52,7 +52,8 @@ import {
 	get_cv,
 	active_batch,
 	schedule_effect,
-	set_cv
+	set_cv,
+	get_wv
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
@@ -187,9 +188,7 @@ export function is_dirty(reaction) {
 			}
 		}
 
-		var wv = active_batch?.wvs.get(dependency) ?? dependency.wv;
-
-		if (wv > cv) {
+		if (get_wv(dependency) > cv) {
 			return true;
 		}
 	}
