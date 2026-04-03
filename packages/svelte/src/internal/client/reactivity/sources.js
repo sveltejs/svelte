@@ -13,7 +13,8 @@ import {
 	untracking,
 	is_destroying_effect,
 	push_reaction_value,
-	write_version
+	write_version,
+	increment_write_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -196,7 +197,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			set_cv(derived);
 		}
 
-		batch.capture(source, value);
+		batch.capture(source, value, increment_write_version());
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {

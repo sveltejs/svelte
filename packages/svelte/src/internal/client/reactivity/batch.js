@@ -432,55 +432,28 @@ export class Batch {
 	/**
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
-	 * @param {Value} source
+	 * @param {Value} value
 	 * @param {any} v
+	 * @param {number} wv
 	 */
-	capture(source, v) {
-		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, { v: source.v, wv: source.wv });
+	capture(value, v, wv) {
+		if (value.v !== UNINITIALIZED && !this.previous.has(value)) {
+			this.previous.set(value, { v: value.v, wv: value.wv });
 		}
 
-		var wv = increment_write_version();
-
 		// Don't save errors or they won't be thrown in `runtime.js#get`
-		if ((source.f & ERROR_VALUE) === 0) {
+		if ((value.f & ERROR_VALUE) === 0) {
 			var snapshot = { v, wv };
 
-			this.current.delete(source); // order must be preserved
+			this.current.delete(value); // order must be preserved
 
-			this.current.set(source, snapshot);
-			active_batch?.values?.set(source, snapshot);
+			this.current.set(value, snapshot);
+			active_batch?.values?.set(value, snapshot);
 		}
 
 		if (!this.is_fork) {
-			source.v = v;
-			source.wv = wv;
-		}
-	}
-
-	/**
-	 * @param {Derived} derived
-	 * @param {any} v
-	 * @deprecated
-	 */
-	capture_derived(derived, v) {
-		if (derived.v !== UNINITIALIZED && !this.previous.has(derived)) {
-			this.previous.set(derived, { v: derived.v, wv: derived.wv });
-		}
-
-		// Don't save errors or they won't be thrown in `runtime.js#get`
-		if ((derived.f & ERROR_VALUE) === 0) {
-			var snapshot = { v, wv: write_version };
-
-			this.current.delete(derived); // order must be preserved
-
-			this.current.set(derived, snapshot);
-			active_batch?.values?.set(derived, snapshot);
-		}
-
-		if (!this.is_fork || derived.deps === null) {
-			derived.v = v;
-			derived.wv = write_version;
+			value.v = v;
+			value.wv = wv;
 		}
 	}
 

@@ -394,7 +394,7 @@ export function update_derived(derived) {
 
 	if (!derived.equals(value)) {
 		if (active_batch !== null) {
-			active_batch.capture_derived(derived, value);
+			active_batch.capture(derived, value, write_version);
 		} else {
 			derived.v = value;
 			derived.wv = write_version;
