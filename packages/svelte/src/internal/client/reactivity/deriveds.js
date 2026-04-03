@@ -10,7 +10,9 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	REACTION_RAN
+	REACTION_RAN,
+	CONNECTED,
+	CLEAN
 } from '#client/constants';
 import {
 	active_reaction,
@@ -399,6 +401,10 @@ export function update_derived(derived) {
 			derived.v = value;
 			derived.wv = write_version;
 		}
+	}
+
+	if (active_batch === null && (derived.f & CONNECTED) !== 0) {
+		derived.f |= CLEAN;
 	}
 }
 

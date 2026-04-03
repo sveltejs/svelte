@@ -337,9 +337,10 @@ export function mark_reactions(signal, wv, updated_during_traversal) {
 		if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
-			active_batch?.values?.delete(derived);
-
 			if (wv > get_cv(derived)) {
+				active_batch?.values?.delete(derived);
+				derived.f &= ~CLEAN;
+
 				if ((flags & WAS_MARKED) === 0) {
 					// Only connected deriveds can be reliably unmarked right away
 					if (flags & CONNECTED) {

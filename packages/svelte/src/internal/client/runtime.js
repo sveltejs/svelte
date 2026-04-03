@@ -21,7 +21,8 @@ import {
 	WAS_MARKED,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	EFFECT_LEGACY
+	EFFECT_LEGACY,
+	CLEAN
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -167,6 +168,14 @@ export function is_dirty(reaction) {
 
 	if (flags & DERIVED) {
 		reaction.f &= ~WAS_MARKED;
+
+		if ((flags & CONNECTED) !== 0) {
+			if (active_batch !== null) {
+				if (active_batch.values?.has(reaction)) return false;
+			} else {
+				if ((reaction.f & CLEAN) !== 0) return false;
+			}
+		}
 	}
 
 	var dependencies = /** @type {Value[]} */ (reaction.deps);
