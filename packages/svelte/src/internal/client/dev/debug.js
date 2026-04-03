@@ -17,6 +17,7 @@ import {
 	MANAGED_EFFECT
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
+import { get_cv, get_wv } from '../reactivity/batch.js';
 import { is_dirty, untrack } from '../runtime.js';
 
 /**
@@ -101,7 +102,7 @@ export function log_effect_tree(effect, highlighted = [], depth = 0, is_reachabl
 	}
 
 	// eslint-disable-next-line no-console
-	console.group(`%c${label} (${status})`, styles.join('; '));
+	console.group(`%c${label} (${status}) cv=${get_cv(effect)}`, styles.join('; '));
 
 	if (depth === 0) {
 		const callsite = new Error().stack
@@ -163,7 +164,7 @@ function log_dep(dep) {
 
 		// eslint-disable-next-line no-console
 		console.groupCollapsed(
-			`%c$derived %c${dep.label ?? '<unknown>'}`,
+			`%c$derived %c${dep.label ?? '<unknown>'} wv=${get_wv(derived)} cv=${get_cv(derived)}`,
 			'font-weight: bold; color: CornflowerBlue',
 			'font-weight: normal',
 			untrack(() => snapshot(derived.v))
@@ -180,7 +181,7 @@ function log_dep(dep) {
 	} else {
 		// eslint-disable-next-line no-console
 		console.log(
-			`%c$state %c${dep.label ?? '<unknown>'}`,
+			`%c$state %c${dep.label ?? '<unknown>'} wv=${get_wv(dep)}`,
 			'font-weight: bold; color: CornflowerBlue',
 			'font-weight: normal',
 			untrack(() => snapshot(dep.v))
