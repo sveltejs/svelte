@@ -973,7 +973,7 @@ function mark_effects(batch, value, sources, marked, checked) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				batch.current.delete(reaction);
+				batch.current.delete(/** @type {Derived} */ (reaction));
 
 				mark_effects(batch, /** @type {Derived} */ (reaction), sources, marked, checked);
 			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources, checked)) {
