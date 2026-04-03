@@ -408,9 +408,19 @@ export function client_component(analysis, options) {
 
 	if (analysis.custom_renderer) {
 		component_block.body.unshift(
-			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
+			b.var('$$pop_renderer', b.call('$.push_renderer_if_inactive', b.id('$renderer')))
 		);
-		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
+		// $$pop_renderer may be null if renderer was already active — use optional call
+		component_block.body.push(
+			b.stmt(
+				/** @type {any} */ ({
+					type: 'CallExpression',
+					callee: b.id('$$pop_renderer'),
+					arguments: [],
+					optional: true
+				})
+			)
+		);
 	}
 
 	let should_inject_props =

@@ -30,6 +30,18 @@ export function push_renderer($renderer) {
 }
 
 /**
+ * Push a renderer only if no renderer is currently active.
+ * Used by compiled components — if render() already pushed a renderer,
+ * the component should use that one rather than overriding with its own import.
+ * @param {Renderer<any, any, any, any>} $renderer
+ * @returns {(() => void) | null}
+ */
+export function push_renderer_if_inactive($renderer) {
+	if (renderer !== null) return null;
+	return push_renderer($renderer);
+}
+
+/**
  * @template T
  * @param {() => T} fn
  * @returns {T}
