@@ -203,7 +203,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var each_array = derived_safe_equal(() => {
 		var collection = get_collection();
 
-		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
+		return /** @type {V[]} */ (
+			is_array(collection) ? collection : collection == null ? [] : array_from(collection)
+		);
 	});
 
 	if (DEV) {
@@ -260,7 +262,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	}
 
 	var effect = block(() => {
-		array = /** @type {V[]} */ (get(each_array));
+		array = get(each_array);
 		var length = array.length;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
