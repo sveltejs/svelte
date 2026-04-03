@@ -472,17 +472,6 @@ export function update_effect(effect) {
 
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-
-		// In DEV, increment versions of any sources that were written to during the effect,
-		// so that they are correctly marked as dirty when the effect re-runs
-		if (DEV && tracing_mode_flag && effect.deps !== null) {
-			for (var dep of effect.deps) {
-				if (dep.set_during_effect) {
-					dep.wv = increment_write_version();
-					dep.set_during_effect = false;
-				}
-			}
-		}
 	} finally {
 		if (effect.deps !== null) {
 			if (is_runes() && (effect.f & EFFECT_LEGACY) === 0) {

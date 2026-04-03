@@ -27,11 +27,6 @@ export interface Value<V = unknown> extends Signal {
 	created?: Error | null;
 	/** An map of errors with stack traces showing when the source was updated, keyed by the stack trace */
 	updated?: Map<string, { error: Error; count: number }> | null;
-	/**
-	 * Whether or not the source was set while running an effect — if so, we need to
-	 * increment the write version so that it shows up as dirty when the effect re-runs
-	 */
-	set_during_effect?: boolean;
 	/** A function that retrieves the underlying source, used for each block item signals */
 	trace?: null | (() => void);
 	/** Write version */

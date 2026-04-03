@@ -89,7 +89,6 @@ export function source(v, stack) {
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_error('created at');
 		signal.updated = null;
-		signal.set_during_effect = false;
 		signal.trace = null;
 	}
 
@@ -223,10 +222,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 						entry.count++;
 					}
 				}
-			}
-
-			if (active_effect !== null) {
-				source.set_during_effect = true;
 			}
 		}
 
