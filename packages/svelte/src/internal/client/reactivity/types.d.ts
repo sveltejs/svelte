@@ -109,3 +109,8 @@ export interface Blocker {
 	promise: Promise<any>;
 	settled: boolean;
 }
+
+export interface ValueSnapshot<T = any> {
+	v: T;
+	wv: number;
+}

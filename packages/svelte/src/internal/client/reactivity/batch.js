@@ -1,5 +1,5 @@
 /** @import { Fork } from 'svelte' */
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value, ValueSnapshot } from '#client' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -124,7 +124,7 @@ export class Batch {
 	/**
 	 * The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
 	 * They keys of this map are identical to `this.#current`
-	 * @type {Map<Value, any>}
+	 * @type {Map<Value, ValueSnapshot>}
 	 */
 	previous = new Map();
 
@@ -183,9 +183,6 @@ export class Batch {
 
 	/** @type {Map<Reaction, number>} */
 	cvs = new Map();
-
-	/** @type {Map<Value, number>} */
-	previous_wvs = new Map();
 
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
@@ -446,8 +443,7 @@ export class Batch {
 	 */
 	capture(source, value) {
 		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, source.v);
-			this.previous_wvs.set(source, source.wv);
+			this.previous.set(source, { v: source.v, wv: source.wv });
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
@@ -474,8 +470,7 @@ export class Batch {
 	 */
 	capture_derived(derived, value) {
 		if (derived.v !== UNINITIALIZED && !this.previous.has(derived)) {
-			this.previous.set(derived, derived.v);
-			this.previous_wvs.set(derived, derived.wv);
+			this.previous.set(derived, { v: derived.v, wv: derived.wv });
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
@@ -772,15 +767,10 @@ export class Batch {
 			if (intersects && differs) {
 				this.#blockers.add(batch);
 			} else {
-				for (const [source, previous] of batch.previous) {
-					if (!batch_values.has(source)) {
-						batch_values.set(source, previous);
-					}
-				}
-
-				for (const [value, wv] of batch.previous_wvs) {
-					if (!batch_wvs.has(value)) {
-						batch_wvs.set(value, wv);
+				for (const [value, snapshot] of batch.previous) {
+					if (!batch_values.has(value)) {
+						batch_values.set(value, snapshot.v);
+						batch_wvs.set(value, snapshot.wv);
 					}
 				}
 			}
