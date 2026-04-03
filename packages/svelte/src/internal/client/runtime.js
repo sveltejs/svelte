@@ -690,9 +690,7 @@ export function get(signal) {
 	}
 
 	var snapshot = active_batch?.values?.get(signal);
-	if (snapshot) {
-		return snapshot.v;
-	}
+	if (snapshot) return /** @type {V} */ (snapshot.v);
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
 		throw signal.v;
