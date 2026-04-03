@@ -347,7 +347,14 @@ export function mark_reactions(signal, wv, updated_during_traversal) {
 				active_batch?.values?.delete(derived);
 				derived.f &= ~CLEAN;
 
-				mark_reactions(derived, wv, updated_during_traversal);
+				if ((flags & WAS_MARKED) === 0) {
+					// Only connected deriveds can be reliably unmarked right away
+					if (flags & CONNECTED) {
+						reaction.f |= WAS_MARKED;
+					}
+
+					mark_reactions(derived, wv, updated_during_traversal);
+				}
 			}
 		} else {
 			var effect = /** @type {Effect} */ (reaction);
