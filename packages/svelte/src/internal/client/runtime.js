@@ -171,9 +171,13 @@ export function is_dirty(reaction) {
 
 		if ((flags & CONNECTED) !== 0) {
 			if (active_batch !== null) {
-				if (active_batch.values?.has(reaction)) return false;
+				if (active_batch.values?.has(/** @type {Derived} */ (reaction))) {
+					return false;
+				}
 			} else {
-				if ((reaction.f & CLEAN) !== 0) return false;
+				if ((reaction.f & CLEAN) !== 0) {
+					return false;
+				}
 			}
 		}
 	}
