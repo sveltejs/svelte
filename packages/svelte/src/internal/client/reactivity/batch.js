@@ -775,8 +775,8 @@ export class Batch {
 				this.#blockers.add(batch);
 			} else {
 				for (const [value, snapshot] of batch.previous) {
-					if (!batch_values.has(value)) {
-						batch_values.set(value, snapshot.v);
+					if (!this.values.has(value)) {
+						this.values.set(value, snapshot.v);
 						this.wvs.set(value, snapshot.wv);
 					}
 				}
