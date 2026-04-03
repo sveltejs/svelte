@@ -48,7 +48,6 @@ import {
 import {
 	Batch,
 	batch_values,
-	batch_wvs,
 	current_batch,
 	flushSync,
 	get_cv,

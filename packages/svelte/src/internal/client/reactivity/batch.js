@@ -81,11 +81,6 @@ export let batch_values = null;
  */
 export let batch_cvs = null;
 
-/**
- * @type {Map<Value, number> | null}
- */
-export let batch_wvs = null;
-
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
@@ -501,7 +496,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
-		batch_values = batch_cvs = batch_wvs = null;
+		batch_values = batch_cvs = null;
 	}
 
 	flush() {
@@ -519,7 +514,7 @@ export class Batch {
 
 			current_batch = null;
 			active_batch = null;
-			batch_values = batch_cvs = batch_wvs = null;
+			batch_values = batch_cvs = null;
 
 			old_values.clear();
 
@@ -746,7 +741,7 @@ export class Batch {
 	apply() {
 		if (!async_mode_flag) {
 			// TODO previously we bailed here if there was only one (non-fork) batch... maybe we can reinstate that
-			batch_values = batch_cvs = batch_wvs = null;
+			batch_values = batch_cvs = null;
 			return;
 		}
 
@@ -756,7 +751,6 @@ export class Batch {
 		// we need to override values with the ones in this batch...
 		batch_values = new Map(this.current);
 		batch_cvs = this.cvs;
-		batch_wvs = this.wvs;
 
 		// ...and undo changes belonging to other batches unless they block this one
 		for (const batch of batches) {
@@ -779,7 +773,7 @@ export class Batch {
 				for (const [value, snapshot] of batch.previous) {
 					if (!batch_values.has(value)) {
 						batch_values.set(value, snapshot.v);
-						batch_wvs.set(value, snapshot.wv);
+						this.wvs.set(value, snapshot.wv);
 					}
 				}
 			}
@@ -1121,17 +1115,15 @@ export function eager(fn) {
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
 			var previous_batch_cvs = batch_cvs;
-			var previous_batch_wvs = batch_wvs;
 			var previous_running_eager_effect = running_eager_effect;
 
 			try {
 				running_eager_effect = true;
-				batch_values = batch_cvs = batch_wvs = null;
+				batch_values = batch_cvs = null;
 				value = fn();
 			} finally {
 				batch_values = previous_batch_values;
 				batch_cvs = previous_batch_cvs;
-				batch_wvs = previous_batch_wvs;
 				running_eager_effect = previous_running_eager_effect;
 			}
 
@@ -1300,7 +1292,7 @@ export function fork(fn) {
  * @param {Value} value
  */
 export function get_wv(value) {
-	return batch_wvs?.get(value) ?? value.wv;
+	return active_batch?.wvs.get(value) ?? value.wv;
 }
 
 /**
