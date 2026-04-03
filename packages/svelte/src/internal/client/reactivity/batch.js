@@ -187,9 +187,6 @@ export class Batch {
 	/** @type {Map<Value, number>} */
 	previous_wvs = new Map();
 
-	/** @type {Map<Reaction, number>} */
-	previous_cvs = new Map();
-
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`.
@@ -478,7 +475,6 @@ export class Batch {
 	capture_derived(derived, value) {
 		if (derived.v !== UNINITIALIZED && !this.previous.has(derived)) {
 			this.previous.set(derived, derived.v);
-			this.previous_cvs.set(derived, derived.cv);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
@@ -778,12 +774,6 @@ export class Batch {
 				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, previous);
-					}
-				}
-
-				for (const [reaction, cv] of batch.previous_cvs) {
-					if (!batch_cvs.has(reaction)) {
-						batch_cvs.set(reaction, cv);
 					}
 				}
 
