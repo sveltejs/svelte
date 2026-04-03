@@ -2642,7 +2642,7 @@ declare module 'svelte/renderer' {
 		/**
 		 * - Insert the element into the parent before the anchor (if the anchor is null, insert at the end). This should work for both elements and fragments as parents. If `element` is a fragment, all of it's children should be inserted, not the fragment itself. If the element already has a parent, it should be removed from it's current parent before being inserted into the new parent.
 		 */
-		insert: (parent: TElement | TFragment, element: TNode, anchor: TNode | null) => void;
+		insert: (parent: TElement | TFragment, element: TNode, anchor: TElement | TTextNode | TComment | null) => void;
 		/**
 		 * - Remove the node from the tree
 		 */
