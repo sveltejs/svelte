@@ -676,8 +676,9 @@ export function get(signal) {
 		}
 	}
 
-	if (active_batch?.values?.has(signal)) {
-		return active_batch.values.get(signal);
+	var snapshot = active_batch?.values?.get(signal);
+	if (snapshot) {
+		return snapshot.v;
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {

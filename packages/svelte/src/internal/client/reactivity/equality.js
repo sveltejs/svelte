@@ -3,7 +3,8 @@ import { active_batch } from './batch.js';
 
 /** @type {Equals} */
 export function equals(value) {
-	return value === (active_batch?.values?.get(this) ?? this.v);
+	var snapshot = active_batch?.values?.get(this);
+	return value === (snapshot ? snapshot.v : this.v);
 }
 
 /**

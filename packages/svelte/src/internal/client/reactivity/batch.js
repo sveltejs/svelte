@@ -103,7 +103,7 @@ export class Batch {
 	 * The current values of any signals that are updated in this batch.
 	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
 	 * They keys of this map are identical to `this.#previous`
-	 * @type {Map<Value, any>}
+	 * @type {Map<Value, ValueSnapshot>}
 	 */
 	current = new Map();
 
@@ -119,7 +119,7 @@ export class Batch {
 	 * When time travelling (i.e. working in one batch, while other batches
 	 * still have ongoing work), we ignore the real values of affected
 	 * signals in favour of their values within the batch
-	 * @type {Map<Value, any> | null}
+	 * @type {Map<Value, ValueSnapshot> | null}
 	 */
 	values = null;
 
@@ -172,9 +172,6 @@ export class Batch {
 	 * @type {Set<Effect>}
 	 */
 	#dirty_effects = new Set();
-
-	/** @type {Map<Value, number>} */
-	wvs = new Map();
 
 	/** @type {Map<Reaction, number>} */
 	cvs = new Map();
@@ -264,8 +261,8 @@ export class Batch {
 		}
 
 		// TODO we only need to do this for re-runs
-		for (const [source, wv] of this.wvs) {
-			mark_reactions(source, wv, null);
+		for (const [source, snapshot] of this.current) {
+			mark_reactions(source, snapshot.wv, null);
 		}
 
 		// we only reschedule previously-deferred effects if we expect
@@ -447,11 +444,12 @@ export class Batch {
 
 		// Don't save errors or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, v);
-			this.wvs.delete(source); // order must be preserved
-			this.wvs.set(source, wv);
+			var snapshot = { v, wv };
 
-			active_batch?.values?.set(source, v);
+			this.current.delete(source); // order must be preserved
+
+			this.current.set(source, snapshot);
+			active_batch?.values?.set(source, snapshot);
 		}
 
 		if (!this.is_fork) {
@@ -472,10 +470,12 @@ export class Batch {
 
 		// Don't save errors or they won't be thrown in `runtime.js#get`
 		if ((derived.f & ERROR_VALUE) === 0) {
-			this.current.set(derived, v);
-			this.wvs.set(derived, write_version);
+			var snapshot = { v, wv: write_version };
 
-			active_batch?.values?.set(derived, v);
+			this.current.delete(derived); // order must be preserved
+
+			this.current.set(derived, snapshot);
+			active_batch?.values?.set(derived, snapshot);
 		}
 
 		if (!this.is_fork || derived.deps === null) {
@@ -550,13 +550,13 @@ export class Batch {
 			/** @type {Source[]} */
 			var sources = [];
 
-			for (const [source, value] of this.current) {
-				if (batch.current.has(source)) {
-					var batch_value = batch.current.get(source);
+			for (const [source, snapshot] of this.current) {
+				var batch_snapshot = batch.current.get(source);
 
-					if (is_earlier && value !== batch_value) {
+				if (batch_snapshot) {
+					if (is_earlier && snapshot.v !== batch_snapshot.v) {
 						// bring the value up to date
-						batch.current.set(source, value);
+						batch.current.set(source, snapshot.v);
 					} else {
 						// same value or later batch has more recent value,
 						// no need to re-run these effects
@@ -595,7 +595,7 @@ export class Batch {
 				checked = new Map();
 				var current_unequal = [
 					...[...batch.current.keys()].filter((c) =>
-						this.current.has(c) ? /** @type {any} */ (this.current.get(c)) !== c.v : true
+						this.current.has(c) ? /** @type {any} */ (this.current.get(c)).v !== c.v : true
 					)
 				];
 
@@ -764,8 +764,7 @@ export class Batch {
 			} else {
 				for (const [value, snapshot] of batch.previous) {
 					if (!this.values.has(value)) {
-						this.values.set(value, snapshot.v);
-						this.wvs.set(value, snapshot.wv);
+						this.values.set(value, snapshot);
 					}
 				}
 			}
@@ -1237,9 +1236,9 @@ export function fork(fn) {
 				}
 			}
 
-			for (var [value, wv] of batch.wvs) {
-				value.v = batch.current.get(value);
-				value.wv = wv;
+			for (var [value, snapshot] of batch.current) {
+				value.v = snapshot.v;
+				value.wv = snapshot.wv;
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
@@ -1282,7 +1281,8 @@ export function fork(fn) {
  * @param {Value} value
  */
 export function get_wv(value) {
-	return active_batch?.wvs.get(value) ?? value.wv;
+	var snapshot = active_batch?.values?.get(value);
+	return snapshot ? snapshot.wv : value.wv;
 }
 
 /**
