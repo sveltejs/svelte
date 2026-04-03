@@ -480,6 +480,8 @@ export class Batch {
 			active_batch?.values?.set(derived, value);
 		}
 
+		this.wvs.set(derived, write_version);
+
 		if (!this.is_fork || derived.deps === null) {
 			derived.v = value;
 			derived.wv = write_version;
