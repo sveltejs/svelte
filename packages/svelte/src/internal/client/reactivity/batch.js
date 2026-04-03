@@ -475,6 +475,7 @@ export class Batch {
 	capture_derived(derived, value) {
 		if (derived.v !== UNINITIALIZED && !this.previous.has(derived)) {
 			this.previous.set(derived, derived.v);
+			this.previous_wvs.set(derived, derived.wv);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
