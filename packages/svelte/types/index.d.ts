@@ -2606,7 +2606,7 @@ declare module 'svelte/renderer' {
 		/**
 		 * - Return the value of the node...this should be the text value of a text node, the data value of a comment, null for elements and fragments
 		 */
-		getNodeValue: (node: TNode) => string | null;
+		getNodeValue: (node: TTextNode | TComment) => string | null;
 		/**
 		 * - Return the value of the attribute with the given name on the element, or null if it doesn't exist
 		 */
@@ -2626,7 +2626,7 @@ declare module 'svelte/renderer' {
 		/**
 		 * - Set the text content of the node to the given value. This should work for both text nodes and elements (setting text content on an element should replace all of it's children with a single text node)
 		 */
-		setText: (node: TNode, text: string) => void;
+		setText: (node: TElement | TTextNode | TComment, text: string) => void;
 		/**
 		 * - Return the first child of the element, or null if it has no children. This should work for both elements and fragments
 		 */
@@ -2638,27 +2638,27 @@ declare module 'svelte/renderer' {
 		/**
 		 * - Return the next sibling of the node, or null if it has no next sibling
 		 */
-		getNextSibling: (element: TNode) => TNode | null;
+		getNextSibling: (node: TElement | TTextNode | TComment) => TNode | null;
 		/**
-		 * - Insert the element into the parent before the anchor (if the anchor is null, insert at the end). This should work for both elements and fragments as parents
+		 * - Insert the element into the parent before the anchor (if the anchor is null, insert at the end). This should work for both elements and fragments as parents. If `element` is a fragment, all of it's children should be inserted, not the fragment itself. If the element already has a parent, it should be removed from it's current parent before being inserted into the new parent.
 		 */
 		insert: (parent: TElement | TFragment, element: TNode, anchor: TNode | null) => void;
 		/**
 		 * - Remove the node from the tree
 		 */
-		remove: (node: TNode) => void;
+		remove: (node: TElement | TTextNode | TComment) => void;
 		/**
 		 * - Return the parent of the element, or null if it has no parent
 		 */
-		getParent: (element: TNode) => TNode | null;
+		getParent: (element: TElement | TTextNode | TComment) => TNode | null;
 		/**
 		 * - Add an event listener of the given type and handler to the target node, with optional options
 		 */
-		addEventListener: (target: TNode, type: string, handler: any, options?: any) => void;
+		addEventListener: (target: TElement, type: string, handler: any, options?: any) => void;
 		/**
 		 * - Remove an event listener of the given type and handler from the target node, with optional options
 		 */
-		removeEventListener: (target: TNode, type: string, handler: any, options?: any) => void;
+		removeEventListener: (target: TElement, type: string, handler: any, options?: any) => void;
 	};
 	/**
 	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.

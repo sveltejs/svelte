@@ -18,20 +18,20 @@ import { get_parent_node, remove_child } from '../dom/operations.js';
  * @property {(data: string)=>TTextNode} createTextNode - Creates a text node with the given data.
  * @property {(data: string)=>TComment} createComment - Creates a comment node with the given data. This is often used as an anchor for inserting elements, it doesn't necessarily need to be rendered
  * @property {(node: TNode)=> "fragment" | "element" | "text" | "comment"} nodeType - Should return the type of the node in string form ("fragment", "element", "text", "comment").
- * @property {(node: TNode)=>string | null} getNodeValue - Return the value of the node...this should be the text value of a text node, the data value of a comment, null for elements and fragments
+ * @property {(node: TTextNode | TComment)=>string | null} getNodeValue - Return the value of the node...this should be the text value of a text node, the data value of a comment, null for elements and fragments
  * @property {(element: TElement, name: string)=>string | null} getAttribute - Return the value of the attribute with the given name on the element, or null if it doesn't exist
  * @property {(element: TElement, key: string, value: any)=>void} setAttribute - Set the attribute with the given name and value on the element
  * @property {(element: TElement, name: string)=>void} removeAttribute - Remove the attribute with the given name from the element
  * @property {(element: TElement, name: string)=>boolean} hasAttribute - Return true if the element has an attribute with the given name
- * @property {(node: TNode, text: string)=>void} setText - Set the text content of the node to the given value. This should work for both text nodes and elements (setting text content on an element should replace all of it's children with a single text node)
+ * @property {(node: TElement | TTextNode | TComment, text: string)=>void} setText - Set the text content of the node to the given value. This should work for both text nodes and elements (setting text content on an element should replace all of it's children with a single text node)
  * @property {(element: TElement | TFragment)=>TNode | null} getFirstChild - Return the first child of the element, or null if it has no children. This should work for both elements and fragments
  * @property {(element: TElement | TFragment)=>TNode | null} getLastChild - Return the last child of the element, or null if it has no children. This should work for both elements and fragments
- * @property {(element: TNode)=>TNode | null} getNextSibling - Return the next sibling of the node, or null if it has no next sibling
- * @property {(parent: TElement | TFragment, element: TNode, anchor: TNode | null)=>void} insert - Insert the element into the parent before the anchor (if the anchor is null, insert at the end). This should work for both elements and fragments as parents
- * @property {(node: TNode)=>void} remove - Remove the node from the tree
- * @property {(element: TNode)=>TNode | null} getParent - Return the parent of the element, or null if it has no parent
- * @property {(target: TNode, type: string, handler: any, options?: any)=>void} addEventListener - Add an event listener of the given type and handler to the target node, with optional options
- * @property {(target: TNode, type: string, handler: any, options?: any)=>void} removeEventListener - Remove an event listener of the given type and handler from the target node, with optional options
+ * @property {(node: TElement | TTextNode | TComment)=>TNode | null} getNextSibling - Return the next sibling of the node, or null if it has no next sibling
+ * @property {(parent: TElement | TFragment, element: TNode, anchor: TNode | null)=>void} insert - Insert the element into the parent before the anchor (if the anchor is null, insert at the end). This should work for both elements and fragments as parents. If `element` is a fragment, all of it's children should be inserted, not the fragment itself. If the element already has a parent, it should be removed from it's current parent before being inserted into the new parent.
+ * @property {(node: TElement | TTextNode | TComment)=>void} remove - Remove the node from the tree
+ * @property {(element: TElement | TTextNode | TComment)=>TNode | null} getParent - Return the parent of the element, or null if it has no parent
+ * @property {(target: TElement, type: string, handler: any, options?: any)=>void} addEventListener - Add an event listener of the given type and handler to the target node, with optional options
+ * @property {(target: TElement, type: string, handler: any, options?: any)=>void} removeEventListener - Remove an event listener of the given type and handler from the target node, with optional options
  */
 
 /**
