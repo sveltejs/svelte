@@ -102,14 +102,14 @@ export class Batch {
 	 * The current values of any signals that are updated in this batch.
 	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
 	 * They keys of this map are identical to `this.#previous`
-	 * @type {Map<Value, ValueSnapshot>}
+	 * @type {Map<Value, ValueSnapshot<unknown>>}
 	 */
 	current = new Map();
 
 	/**
 	 * The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
 	 * They keys of this map are identical to `this.#current`
-	 * @type {Map<Value, ValueSnapshot>}
+	 * @type {Map<Value, ValueSnapshot<unknown>>}
 	 */
 	previous = new Map();
 
@@ -118,7 +118,7 @@ export class Batch {
 	 * When time travelling (i.e. working in one batch, while other batches
 	 * still have ongoing work), we ignore the real values of affected
 	 * signals in favour of their values within the batch
-	 * @type {Map<Value, ValueSnapshot> | null}
+	 * @type {Map<Value, ValueSnapshot<unknown>> | null}
 	 */
 	values = null;
 
@@ -528,7 +528,7 @@ export class Batch {
 				if (batch_snapshot) {
 					if (is_earlier && snapshot.v !== batch_snapshot.v) {
 						// bring the value up to date
-						batch.current.set(source, snapshot.v);
+						batch.current.set(source, snapshot);
 					} else {
 						// same value or later batch has more recent value,
 						// no need to re-run these effects
@@ -973,6 +973,8 @@ function mark_effects(batch, value, sources, marked, checked) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
+				batch.current.delete(reaction);
+
 				mark_effects(batch, /** @type {Derived} */ (reaction), sources, marked, checked);
 			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources, checked)) {
 				batch.schedule(/** @type {Effect} */ (reaction));

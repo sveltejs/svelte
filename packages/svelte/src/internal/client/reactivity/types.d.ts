@@ -110,7 +110,7 @@ export interface Blocker {
 	settled: boolean;
 }
 
-export interface ValueSnapshot<T = any> {
+export interface ValueSnapshot<T = unknown> {
 	v: T;
 	wv: number;
 }
