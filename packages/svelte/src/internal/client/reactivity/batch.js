@@ -117,11 +117,6 @@ export class Batch {
 	current = new Map();
 
 	/**
-	 * @type {Map<Derived, any>}
-	 */
-	current_deriveds = new Map();
-
-	/**
 	 * The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
 	 * They keys of this map are identical to `this.#current`
 	 * @type {Map<Value, ValueSnapshot>}
