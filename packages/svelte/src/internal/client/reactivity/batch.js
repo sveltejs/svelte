@@ -76,11 +76,6 @@ export let previous_batch = null;
  */
 export let batch_values = null;
 
-/**
- * @type {Map<Reaction, number> | null}
- */
-export let batch_cvs = null;
-
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
@@ -496,7 +491,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
-		batch_values = batch_cvs = null;
+		batch_values = null;
 	}
 
 	flush() {
@@ -514,7 +509,7 @@ export class Batch {
 
 			current_batch = null;
 			active_batch = null;
-			batch_values = batch_cvs = null;
+			batch_values = null;
 
 			old_values.clear();
 
@@ -741,7 +736,7 @@ export class Batch {
 	apply() {
 		if (!async_mode_flag) {
 			// TODO previously we bailed here if there was only one (non-fork) batch... maybe we can reinstate that
-			batch_values = batch_cvs = null;
+			batch_values = null;
 			return;
 		}
 
@@ -750,7 +745,6 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map(this.current);
-		batch_cvs = this.cvs;
 
 		// ...and undo changes belonging to other batches unless they block this one
 		for (const batch of batches) {
@@ -1114,16 +1108,16 @@ export function eager(fn) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
-			var previous_batch_cvs = batch_cvs;
+			var previous_batch = active_batch;
 			var previous_running_eager_effect = running_eager_effect;
 
 			try {
 				running_eager_effect = true;
-				batch_values = batch_cvs = null;
+				batch_values = active_batch = null;
 				value = fn();
 			} finally {
 				batch_values = previous_batch_values;
-				batch_cvs = previous_batch_cvs;
+				active_batch = previous_batch;
 				running_eager_effect = previous_running_eager_effect;
 			}
 
@@ -1306,8 +1300,9 @@ export function get_cv(reaction) {
  * @param {Reaction} reaction
  */
 export function set_cv(reaction, cv = write_version) {
+	// TODO seems weird to have both of these
 	current_batch?.cvs.set(reaction, cv);
-	batch_cvs?.set(reaction, cv);
+	active_batch?.cvs.set(reaction, cv);
 
 	if (!current_batch?.is_fork && !running_eager_effect) {
 		reaction.cv = cv;
