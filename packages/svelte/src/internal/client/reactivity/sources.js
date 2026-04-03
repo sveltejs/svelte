@@ -194,8 +194,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 
 			set_cv(derived);
-			batch.wvs.set(derived, write_version);
-			derived.wv = write_version;
 		}
 
 		batch.capture(source, value);
