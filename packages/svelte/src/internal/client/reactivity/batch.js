@@ -15,7 +15,6 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	CONNECTED,
 	STATE_EAGER_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
