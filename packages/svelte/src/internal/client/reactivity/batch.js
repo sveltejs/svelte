@@ -68,14 +68,6 @@ export let active_batch = null;
  */
 export let previous_batch = null;
 
-/**
- * When time travelling (i.e. working in one batch, while other batches
- * still have ongoing work), we ignore the real values of affected
- * signals in favour of their values within the batch
- * @type {Map<Value, any> | null}
- */
-let batch_values = null;
-
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
@@ -362,7 +354,6 @@ export class Batch {
 		}
 
 		active_batch = null;
-		batch_values = null;
 
 		if (next_batch !== null) {
 			batches.add(next_batch);
@@ -452,10 +443,10 @@ export class Batch {
 			this.previous.set(source, { v: source.v, wv: source.wv });
 		}
 
-		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
+		// Don't save errors or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
 			this.current.set(source, value);
-			batch_values?.set(source, value);
+			active_batch?.values?.set(source, value);
 		}
 
 		var version = increment_write_version();
@@ -479,14 +470,14 @@ export class Batch {
 			this.previous.set(derived, { v: derived.v, wv: derived.wv });
 		}
 
-		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
+		// Don't save errors or they won't be thrown in `runtime.js#get`
 		if ((derived.f & ERROR_VALUE) === 0) {
 			// TODO not totally sure about the CONNECTED condition, seems like it should be irrelevant
 			if ((derived.f & CONNECTED) !== 0) {
 				this.current.set(derived, value);
 			}
 
-			batch_values?.set(derived, value);
+			active_batch?.values?.set(derived, value);
 		}
 
 		if (!this.is_fork || derived.deps === null) {
@@ -502,7 +493,6 @@ export class Batch {
 	deactivate() {
 		current_batch = null;
 		active_batch = null;
-		batch_values = null;
 	}
 
 	flush() {
@@ -520,7 +510,6 @@ export class Batch {
 
 			current_batch = null;
 			active_batch = null;
-			batch_values = null;
 
 			old_values.clear();
 
@@ -755,7 +744,6 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		this.values = new Map(this.current);
-		batch_values = this.values;
 
 		// ...and undo changes belonging to other batches unless they block this one
 		for (const batch of batches) {
@@ -1118,16 +1106,14 @@ export function eager(fn) {
 		if (initial) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
-			var previous_batch_values = batch_values;
 			var previous_batch = active_batch;
 			var previous_running_eager_effect = running_eager_effect;
 
 			try {
 				running_eager_effect = true;
-				batch_values = active_batch = null;
+				active_batch = null;
 				value = fn();
 			} finally {
-				batch_values = previous_batch_values;
 				active_batch = previous_batch;
 				running_eager_effect = previous_running_eager_effect;
 			}
