@@ -261,7 +261,7 @@ export class Batch {
 
 		// TODO we only need to do this for re-runs
 		for (const [source, snapshot] of this.current) {
-			mark_reactions(source, snapshot.wv, null);
+			mark_reactions(this, source, snapshot.wv, null);
 		}
 
 		// we only reschedule previously-deferred effects if we expect

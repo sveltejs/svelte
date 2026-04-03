@@ -232,7 +232,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
-		mark_reactions(source, write_version, updated_during_traversal);
+		mark_reactions(batch, source, write_version, updated_during_traversal);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -310,12 +310,14 @@ export function increment(source) {
 }
 
 /**
+ * TODO this should probably be a method on `batch`
+ * @param {Batch} batch
  * @param {Value} signal
  * @param {number} wv
  * @param {Effect[] | null} updated_during_traversal
  * @returns {void}
  */
-export function mark_reactions(signal, wv, updated_during_traversal) {
+export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -343,8 +345,12 @@ export function mark_reactions(signal, wv, updated_during_traversal) {
 			var derived = /** @type {Derived} */ (reaction);
 
 			if (wv > get_cv(derived)) {
-				current_batch?.current?.delete(derived); // TODO would be nice if `batch` was passed in and we weren't doing this
+				// If setting state inside an effect, `batch !== active_batch` —
+				// we need to invalidate the current overlay so that subsequent
+				// effects read the correct value
 				active_batch?.values?.delete(derived);
+
+				batch.current.delete(derived);
 				derived.f &= ~CLEAN;
 
 				if ((flags & WAS_MARKED) === 0) {
@@ -353,7 +359,7 @@ export function mark_reactions(signal, wv, updated_during_traversal) {
 						reaction.f |= WAS_MARKED;
 					}
 
-					mark_reactions(derived, wv, updated_during_traversal);
+					mark_reactions(batch, derived, wv, updated_during_traversal);
 				}
 			}
 		} else {
@@ -366,7 +372,7 @@ export function mark_reactions(signal, wv, updated_during_traversal) {
 			if (updated_during_traversal !== null) {
 				updated_during_traversal.push(effect);
 			} else {
-				schedule_effect(effect);
+				batch.schedule(effect);
 			}
 		}
 	}
