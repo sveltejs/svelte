@@ -436,36 +436,36 @@ export class Batch {
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
 	 * @param {Value} source
-	 * @param {any} value
+	 * @param {any} v
 	 */
-	capture(source, value) {
+	capture(source, v) {
 		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, { v: source.v, wv: source.wv });
 		}
 
 		// Don't save errors or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, value);
-			active_batch?.values?.set(source, value);
+			this.current.set(source, v);
+			active_batch?.values?.set(source, v);
 		}
 
-		var version = increment_write_version();
+		var wv = increment_write_version();
 
 		this.wvs.delete(source); // order must be preserved
-		this.wvs.set(source, version);
+		this.wvs.set(source, wv);
 
 		if (!this.is_fork) {
-			source.v = value;
-			source.wv = version;
+			source.v = v;
+			source.wv = wv;
 		}
 	}
 
 	/**
 	 * @param {Derived} derived
-	 * @param {any} value
+	 * @param {any} v
 	 * @deprecated
 	 */
-	capture_derived(derived, value) {
+	capture_derived(derived, v) {
 		if (derived.v !== UNINITIALIZED && !this.previous.has(derived)) {
 			this.previous.set(derived, { v: derived.v, wv: derived.wv });
 		}
@@ -474,16 +474,16 @@ export class Batch {
 		if ((derived.f & ERROR_VALUE) === 0) {
 			// TODO not totally sure about the CONNECTED condition, seems like it should be irrelevant
 			if ((derived.f & CONNECTED) !== 0) {
-				this.current.set(derived, value);
+				this.current.set(derived, v);
 			}
 
-			active_batch?.values?.set(derived, value);
+			active_batch?.values?.set(derived, v);
 		}
 
 		this.wvs.set(derived, write_version);
 
 		if (!this.is_fork || derived.deps === null) {
-			derived.v = value;
+			derived.v = v;
 			derived.wv = write_version;
 		}
 	}
