@@ -1125,6 +1125,8 @@ export function eager(fn) {
  * @param {{ d: Effect[], m: Effect[] }} tracked
  */
 function reset_branch(effect, tracked) {
+	effect.f &= ~WAS_MARKED;
+
 	// clean branch = nothing dirty inside, no need to traverse further
 	if ((effect.f & BRANCH_EFFECT) !== 0) {
 		if ((effect.f & CLEAN) === 0) {
