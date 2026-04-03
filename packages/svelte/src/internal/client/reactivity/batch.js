@@ -443,16 +443,16 @@ export class Batch {
 			this.previous.set(source, { v: source.v, wv: source.wv });
 		}
 
+		var wv = increment_write_version();
+
 		// Don't save errors or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
 			this.current.set(source, v);
+			this.wvs.delete(source); // order must be preserved
+			this.wvs.set(source, wv);
+
 			active_batch?.values?.set(source, v);
 		}
-
-		var wv = increment_write_version();
-
-		this.wvs.delete(source); // order must be preserved
-		this.wvs.set(source, wv);
 
 		if (!this.is_fork) {
 			source.v = v;
@@ -472,15 +472,11 @@ export class Batch {
 
 		// Don't save errors or they won't be thrown in `runtime.js#get`
 		if ((derived.f & ERROR_VALUE) === 0) {
-			// TODO not totally sure about the CONNECTED condition, seems like it should be irrelevant
-			if ((derived.f & CONNECTED) !== 0) {
-				this.current.set(derived, v);
-			}
+			this.current.set(derived, v);
+			this.wvs.set(derived, write_version);
 
 			active_batch?.values?.set(derived, v);
 		}
-
-		this.wvs.set(derived, write_version);
 
 		if (!this.is_fork || derived.deps === null) {
 			derived.v = v;
@@ -599,7 +595,7 @@ export class Batch {
 				checked = new Map();
 				var current_unequal = [
 					...[...batch.current.keys()].filter((c) =>
-						this.current.has(c) ? /** @type {any} */ (this.current.get(c)) !== c : true
+						this.current.has(c) ? /** @type {any} */ (this.current.get(c)) !== c.v : true
 					)
 				];
 
