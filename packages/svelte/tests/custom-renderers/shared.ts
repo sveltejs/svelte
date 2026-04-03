@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { setImmediate } from 'node:timers/promises';
 import { assert } from 'vitest';
@@ -6,6 +7,7 @@ import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
 import renderer, { create_root, serialize, dispatch_event, dom_elements } from './renderer.js';
 import { writeFile } from 'node:fs/promises';
+import { globSync } from 'tinyglobby';
 
 export interface CustomRendererTest extends BaseTest {
 	html?: string;
@@ -14,6 +16,7 @@ export interface CustomRendererTest extends BaseTest {
 	context?: Map<any, any>;
 	error?: string;
 	compile_error?: string;
+	compile_warnings?: false;
 	runtime_error?: string;
 	warnings?: string[];
 	test?: (args: {
@@ -83,6 +86,20 @@ async function common_setup(
 			return null;
 		}
 		throw err;
+	}
+
+	if (config.compile_warnings === false) {
+		const output_dir = `${cwd}/_output/client`;
+		const warning_files = globSync('**/*.warnings.json', { cwd: output_dir });
+
+		for (const file of warning_files) {
+			const warnings = JSON.parse(fs.readFileSync(path.join(output_dir, file), 'utf-8'));
+			assert.deepEqual(
+				warnings,
+				[],
+				`Expected no compile warnings in ${file}, got: ${warnings.map((/** @type {any} */ w: any) => w.code).join(', ')}`
+			);
+		}
 	}
 
 	return compile_options;

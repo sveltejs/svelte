@@ -12,7 +12,10 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  */
 export function SvelteElement(node, context) {
 	validate_element(node, context);
-	check_element(node, context);
+
+	if (!context.state.analysis.custom_renderer) {
+		check_element(node, context);
+	}
 
 	node.metadata.path = [...context.path];
 	context.state.analysis.elements.push(node);

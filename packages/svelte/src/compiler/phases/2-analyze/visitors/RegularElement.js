@@ -25,7 +25,10 @@ import { runes } from '../../../state.js';
  */
 export function RegularElement(node, context) {
 	validate_element(node, context);
-	check_element(node, context);
+
+	if (!context.state.analysis.custom_renderer) {
+		check_element(node, context);
+	}
 
 	node.metadata.path = [...context.path];
 	context.state.analysis.elements.push(node);
@@ -34,7 +37,9 @@ export function RegularElement(node, context) {
 	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute' && attribute.name === 'value') {
-				e.textarea_invalid_content(node);
+				if (!context.state.analysis.custom_renderer) {
+					e.textarea_invalid_content(node);
+				}
 			}
 		}
 
@@ -160,7 +165,7 @@ export function RegularElement(node, context) {
 		mark_subtree_dynamic(context.path);
 	}
 
-	if (context.state.parent_element) {
+	if (context.state.parent_element && !context.state.analysis.custom_renderer) {
 		let past_parent = false;
 		let only_warn = false;
 		const ancestors = [context.state.parent_element];
@@ -221,7 +226,8 @@ export function RegularElement(node, context) {
 		context.state.analysis.source[node.end - 2] === '/' &&
 		!is_void(node_name) &&
 		!is_svg(node_name) &&
-		!is_mathml(node_name)
+		!is_mathml(node_name) &&
+		!context.state.analysis.custom_renderer
 	) {
 		w.element_invalid_self_closing_tag(node, node.name);
 	}
