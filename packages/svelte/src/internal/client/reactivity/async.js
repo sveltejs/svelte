@@ -1,4 +1,4 @@
-/** @import { Blocker, Effect, Value } from '#client' */
+/** @import { Blocker, Effect, Source, Value } from '#client' */
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -38,8 +38,22 @@ export function flatten(blockers, sync, async, fn) {
 	// Filter out already-settled blockers - no need to wait for them
 	var pending = blockers.filter((b) => !b.settled);
 
+	var deriveds = sync.map(d);
+
+	if (DEV) {
+		deriveds.forEach((d, i) => {
+			// TODO this is kinda useful for debugging but a lousy implementation —
+			// maybe the compiler could pass through the template string
+			d.label = sync[i]
+				.toString()
+				.replace('() => ', '')
+				.replaceAll('$.eager(() => ', '$state.eager(')
+				.replace(/\$\.get\((.+?)\)/g, (_, id) => id);
+		});
+	}
+
 	if (async.length === 0 && pending.length === 0) {
-		fn(sync.map(d));
+		fn(deriveds);
 		return;
 	}
 
@@ -53,12 +67,14 @@ export function flatten(blockers, sync, async, fn) {
 				? Promise.all(pending.map((b) => b.promise))
 				: null;
 
-	/** @param {Value[]} values */
-	function finish(values) {
+	/**
+	 * @param {Source[]} async
+	 */
+	function finish(async) {
 		restore();
 
 		try {
-			fn(values);
+			fn([...deriveds, ...async]);
 		} catch (error) {
 			if ((parent.f & DESTROYED) === 0) {
 				invoke_error_boundary(error, parent);
@@ -70,7 +86,7 @@ export function flatten(blockers, sync, async, fn) {
 
 	// Fast path: blockers but no async expressions
 	if (async.length === 0) {
-		/** @type {Promise<any>} */ (blocker_promise).then(() => finish(sync.map(d)));
+		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([]));
 		return;
 	}
 
@@ -79,7 +95,7 @@ export function flatten(blockers, sync, async, fn) {
 	// Full path: has async expressions
 	function run() {
 		Promise.all(async.map((expression) => async_derived(expression)))
-			.then((result) => finish([...sync.map(d), ...result]))
+			.then(finish)
 			.catch((error) => invoke_error_boundary(error, parent))
 			.finally(() => decrement_pending());
 	}

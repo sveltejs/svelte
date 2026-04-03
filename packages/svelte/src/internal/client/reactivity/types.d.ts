@@ -11,8 +11,6 @@ import type { Boundary } from '../dom/blocks/boundary';
 export interface Signal {
 	/** Flags bitmask */
 	f: number;
-	/** Write version */
-	wv: number;
 }
 
 export interface Value<V = unknown> extends Signal {
@@ -20,11 +18,8 @@ export interface Value<V = unknown> extends Signal {
 	equals: Equals;
 	/** Signals that read from this signal */
 	reactions: null | Reaction[];
-	/** Read version */
-	rv: number;
 	/** The latest value for this signal */
 	v: V;
-
 	// dev-only
 	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */
 	label?: string;
@@ -32,13 +27,12 @@ export interface Value<V = unknown> extends Signal {
 	created?: Error | null;
 	/** An map of errors with stack traces showing when the source was updated, keyed by the stack trace */
 	updated?: Map<string, { error: Error; count: number }> | null;
-	/**
-	 * Whether or not the source was set while running an effect — if so, we need to
-	 * increment the write version so that it shows up as dirty when the effect re-runs
-	 */
-	set_during_effect?: boolean;
 	/** A function that retrieves the underlying source, used for each block item signals */
 	trace?: null | (() => void);
+	/** Write version */
+	wv: number;
+	/** Read version */
+	rv: number;
 }
 
 export interface Reaction extends Signal {
@@ -50,6 +44,8 @@ export interface Reaction extends Signal {
 	deps: null | Value[];
 	/** An AbortController that aborts when the signal is destroyed */
 	ac: null | AbortController;
+	/** Check version */
+	cv: number;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
@@ -107,4 +103,9 @@ export type MaybeSource<T = unknown> = T | Source<T>;
 export interface Blocker {
 	promise: Promise<any>;
 	settled: boolean;
+}
+
+export interface ValueSnapshot<T = unknown> {
+	v: T;
+	wv: number;
 }

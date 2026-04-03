@@ -7,27 +7,27 @@ import {
 	get,
 	set_untracked_writes,
 	untrack,
-	increment_write_version,
 	update_effect,
 	current_sources,
 	is_dirty,
 	untracking,
 	is_destroying_effect,
-	push_reaction_value
+	push_reaction_value,
+	write_version,
+	increment_write_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
 	CLEAN,
 	DERIVED,
-	DIRTY,
 	BRANCH_EFFECT,
 	EAGER_EFFECT,
-	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	STATE_EAGER_EFFECT
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -37,14 +37,17 @@ import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
-	batch_values,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	set_cv,
+	get_cv,
+	active_batch,
+	current_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();
@@ -86,7 +89,6 @@ export function source(v, stack) {
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_error('created at');
 		signal.updated = null;
-		signal.set_during_effect = false;
 		signal.trace = null;
 	}
 
@@ -183,7 +185,19 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		old_values.set(source, is_destroying_effect ? value : source.v);
 
 		var batch = Batch.ensure();
-		batch.capture(source, value);
+
+		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
+			if (derived.v === UNINITIALIZED) {
+				// assigning before first read — execute to track dependencies
+				execute_derived(derived);
+			}
+
+			set_cv(derived);
+		}
+
+		batch.capture(source, value, increment_write_version());
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
@@ -209,32 +223,11 @@ export function internal_set(source, value, updated_during_traversal = null) {
 					}
 				}
 			}
-
-			if (active_effect !== null) {
-				source.set_during_effect = true;
-			}
 		}
-
-		if ((source.f & DERIVED) !== 0) {
-			const derived = /** @type {Derived} */ (source);
-
-			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
-			if ((source.f & DIRTY) !== 0) {
-				execute_derived(derived);
-			}
-
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			if (batch_values === null) {
-				update_derived_status(derived);
-			}
-		}
-
-		source.wv = increment_write_version();
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
-		mark_reactions(source, DIRTY, updated_during_traversal);
+		mark_reactions(batch, source, write_version, updated_during_traversal);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -265,13 +258,7 @@ export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
 	for (const effect of eager_effects) {
-		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-		// instead of just updating the effects - this way we avoid overfiring.
-		if ((effect.f & CLEAN) !== 0) {
-			set_signal_status(effect, MAYBE_DIRTY);
-		}
-
-		if (is_dirty(effect)) {
+		if ((effect.f & STATE_EAGER_EFFECT) !== 0 || is_dirty(effect)) {
 			update_effect(effect);
 		}
 	}
@@ -318,12 +305,14 @@ export function increment(source) {
 }
 
 /**
+ * TODO this should probably be a method on `batch`
+ * @param {Batch} batch
  * @param {Value} signal
- * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {number} wv
  * @param {Effect[] | null} updated_during_traversal
  * @returns {void}
  */
-function mark_reactions(signal, status, updated_during_traversal) {
+export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -343,27 +332,32 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			continue;
 		}
 
-		var not_dirty = (flags & DIRTY) === 0;
-
-		// don't set a DIRTY reaction to MAYBE_DIRTY
-		if (not_dirty) {
-			set_signal_status(reaction, status);
-		}
+		// TODO ideally this would work, but I think we need to `apply()` before `mark_reactions`.
+		// Or pass `batch` in as an argument?
+		// if (wv <= get_cv(reaction)) continue;
 
 		if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
-			batch_values?.delete(derived);
+			if (wv > get_cv(derived)) {
+				// If setting state inside an effect, `batch !== active_batch` —
+				// we need to invalidate the current overlay so that subsequent
+				// effects read the correct value
+				active_batch?.values?.delete(derived);
 
-			if ((flags & WAS_MARKED) === 0) {
-				// Only connected deriveds can be reliably unmarked right away
-				if (flags & CONNECTED) {
-					reaction.f |= WAS_MARKED;
+				batch.current.delete(derived);
+				derived.f &= ~CLEAN;
+
+				if ((flags & WAS_MARKED) === 0) {
+					// Only connected deriveds can be reliably unmarked right away
+					if (flags & CONNECTED) {
+						reaction.f |= WAS_MARKED;
+					}
+
+					mark_reactions(batch, derived, wv, updated_during_traversal);
 				}
-
-				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 			}
-		} else if (not_dirty) {
+		} else {
 			var effect = /** @type {Effect} */ (reaction);
 
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
@@ -373,7 +367,7 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			if (updated_during_traversal !== null) {
 				updated_during_traversal.push(effect);
 			} else {
-				schedule_effect(effect);
+				batch.schedule(effect);
 			}
 		}
 	}

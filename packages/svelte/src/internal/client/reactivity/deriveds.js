@@ -5,45 +5,37 @@ import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
 	DERIVED,
-	DIRTY,
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN,
-	REACTION_RAN
+	REACTION_RAN,
+	CONNECTED,
+	CLEAN
 } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
 	update_reaction,
-	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
-	is_destroying_effect,
 	update_effect,
-	remove_reactions
+	remove_reactions,
+	write_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import {
-	async_effect,
-	destroy_effect,
-	destroy_effect_children,
-	effect_tracking,
-	teardown
-} from './effects.js';
+import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
+import { current_batch, get_wv, active_batch, set_cv } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
-import { deferred, includes, noop } from '../../shared/utils.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { deferred, noop } from '../../shared/utils.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -66,7 +58,6 @@ export const recent_async_deriveds = new Set();
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
-	var flags = DERIVED | DIRTY;
 	var parent_derived =
 		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
 			? /** @type {Derived} */ (active_reaction)
@@ -84,12 +75,13 @@ export function derived(fn) {
 		deps: null,
 		effects: null,
 		equals,
-		f: flags,
+		f: DERIVED,
 		fn,
 		reactions: null,
+		cv: -1,
 		rv: 0,
-		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
+		v: /** @type {V} */ (UNINITIALIZED),
 		parent: parent_derived ?? active_effect,
 		ac: null
 	};
@@ -119,7 +111,7 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label;
+	if (DEV) signal.label = label ?? '{await ...}';
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
@@ -316,9 +308,9 @@ export function destroy_derived_effects(derived) {
 /**
  * The currently updating deriveds, used to detect infinite recursion
  * in dev mode and provide a nicer error than 'too much recursion'
- * @type {Derived[]}
+ * @type {Derived[] | null}
  */
-let stack = [];
+export let derived_stack = null;
 
 /**
  * @param {Derived} derived
@@ -348,31 +340,32 @@ export function execute_derived(derived) {
 
 	set_active_effect(get_derived_parent_effect(derived));
 
+	derived_stack ??= [];
+
 	if (DEV) {
+		// TODO don't we need eager effects in prod too?
 		let prev_eager_effects = eager_effects;
 		set_eager_effects(new Set());
+
 		try {
-			if (includes.call(stack, derived)) {
-				e.derived_references_self();
-			}
-
-			stack.push(derived);
-
+			derived_stack.push(derived);
 			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
 			set_eager_effects(prev_eager_effects);
-			stack.pop();
+			derived_stack.pop();
 		}
 	} else {
 		try {
+			derived_stack.push(derived);
 			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
+			derived_stack.pop();
 		}
 	}
 
@@ -386,44 +379,31 @@ export function execute_derived(derived) {
 export function update_derived(derived) {
 	var value = execute_derived(derived);
 
+	var deps = derived.deps;
+	var cv = Infinity;
+
+	if (deps !== null) {
+		cv = -Infinity;
+
+		for (var i = 0; i < deps.length; i++) {
+			var dep_wv = get_wv(deps[i]);
+			if (dep_wv > cv) cv = dep_wv;
+		}
+	}
+
+	set_cv(derived, cv);
+
 	if (!derived.equals(value)) {
-		derived.wv = increment_write_version();
-
-		// in a fork, we don't update the underlying value, just `batch_values`.
-		// the underlying value will be updated when the fork is committed.
-		// otherwise, the next time we get here after a 'real world' state
-		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.deps === null) {
-			if (current_batch !== null) {
-				current_batch.capture(derived, value, true);
-			} else {
-				derived.v = value;
-			}
-
-			// deriveds without dependencies should never be recomputed
-			if (derived.deps === null) {
-				set_signal_status(derived, CLEAN);
-				return;
-			}
+		if (active_batch !== null) {
+			active_batch.capture(derived, value, write_version);
+		} else {
+			derived.v = value;
+			derived.wv = write_version;
 		}
 	}
 
-	// don't mark derived clean if we're reading it inside a
-	// cleanup function, or it will cache a stale value
-	if (is_destroying_effect) {
-		return;
-	}
-
-	// During time traveling we don't want to reset the status so that
-	// traversal of the graph in the other batches still happens
-	if (batch_values !== null) {
-		// only cache the value if we're in a tracking context, otherwise we won't
-		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
-		}
-	} else {
-		update_derived_status(derived);
+	if (active_batch === null && (derived.f & CONNECTED) !== 0) {
+		derived.f |= CLEAN;
 	}
 }
 

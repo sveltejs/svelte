@@ -7,19 +7,18 @@ import {
 	CLEAN,
 	CONNECTED,
 	DERIVED,
-	DIRTY,
 	EFFECT,
 	ASYNC,
 	DESTROYED,
 	INERT,
-	MAYBE_DIRTY,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
 	WAS_MARKED,
 	MANAGED_EFFECT
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
-import { untrack } from '../runtime.js';
+import { get_cv, get_wv } from '../reactivity/batch.js';
+import { is_dirty, untrack } from '../runtime.js';
 
 /**
  *
@@ -77,8 +76,15 @@ export function log_effect_tree(effect, highlighted = [], depth = 0, is_reachabl
 	const flags = effect.f;
 	let label = effect_label(effect);
 
-	let status =
-		(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+	let status = 'clean';
+
+	if ((flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0) {
+		if ((flags & CLEAN) === 0) status = 'dirty';
+	} else {
+		if (is_dirty(effect)) {
+			status = 'dirty';
+		}
+	}
 
 	let styles = [`font-weight: ${status === 'clean' ? 'normal' : 'bold'}`];
 
@@ -96,7 +102,7 @@ export function log_effect_tree(effect, highlighted = [], depth = 0, is_reachabl
 	}
 
 	// eslint-disable-next-line no-console
-	console.group(`%c${label} (${status})`, styles.join('; '));
+	console.group(`%c${label} (${status}) cv=${get_cv(effect)}`, styles.join('; '));
 
 	if (depth === 0) {
 		const callsite = new Error().stack
@@ -158,7 +164,7 @@ function log_dep(dep) {
 
 		// eslint-disable-next-line no-console
 		console.groupCollapsed(
-			`%c$derived %c${dep.label ?? '<unknown>'}`,
+			`%c$derived %c${dep.label ?? '<unknown>'} wv=${get_wv(derived)} cv=${get_cv(derived)}`,
 			'font-weight: bold; color: CornflowerBlue',
 			'font-weight: normal',
 			untrack(() => snapshot(derived.v))
@@ -175,7 +181,7 @@ function log_dep(dep) {
 	} else {
 		// eslint-disable-next-line no-console
 		console.log(
-			`%c$state %c${dep.label ?? '<unknown>'}`,
+			`%c$state %c${dep.label ?? '<unknown>'} wv=${get_wv(dep)}`,
 			'font-weight: bold; color: CornflowerBlue',
 			'font-weight: normal',
 			untrack(() => snapshot(dep.v))
@@ -201,8 +207,6 @@ export function log_reactions(signal) {
 		const names = [];
 
 		if ((flags & CLEAN) !== 0) names.push('CLEAN');
-		if ((flags & DIRTY) !== 0) names.push('DIRTY');
-		if ((flags & MAYBE_DIRTY) !== 0) names.push('MAYBE_DIRTY');
 		if ((flags & CONNECTED) !== 0) names.push('CONNECTED');
 		if ((flags & WAS_MARKED) !== 0) names.push('WAS_MARKED');
 		if ((flags & INERT) !== 0) names.push('INERT');
@@ -259,7 +263,7 @@ export function log_reactions(signal) {
 				} else {
 					// It's an effect
 					const label = effect_label(/** @type {Effect} */ (reaction), true);
-					const status = (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+					const status = is_dirty(reaction) ? 'dirty' : 'clean';
 
 					// Collect parent statuses
 					/** @type {string[]} */
@@ -380,8 +384,7 @@ export function log_inconsistent_branches(effect) {
 		const is_branch = (flags & BRANCH_EFFECT) !== 0;
 
 		if (is_branch) {
-			const status =
-				(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+			const status = (flags & CLEAN) !== 0 ? 'clean' : 'dirty';
 
 			/** @type {BranchInfo[]} */
 			const child_branches = [];
