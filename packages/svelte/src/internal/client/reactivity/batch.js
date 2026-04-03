@@ -123,6 +123,12 @@ export class Batch {
 	previous = new Map();
 
 	/**
+	 * The combination of this batch's `current` and other batches' `previous` values
+	 * @type {Map<Value, any> | null}
+	 */
+	values = null;
+
+	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Set<(batch: Batch) => void>}
@@ -491,6 +497,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
+		active_batch = null;
 		batch_values = null;
 	}
 
@@ -736,7 +743,6 @@ export class Batch {
 	apply() {
 		if (!async_mode_flag) {
 			// TODO previously we bailed here if there was only one (non-fork) batch... maybe we can reinstate that
-			batch_values = null;
 			return;
 		}
 
@@ -744,7 +750,8 @@ export class Batch {
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
-		batch_values = new Map(this.current);
+		this.values = new Map(this.current);
+		batch_values = this.values;
 
 		// ...and undo changes belonging to other batches unless they block this one
 		for (const batch of batches) {
