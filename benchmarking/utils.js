@@ -63,7 +63,7 @@ function format_markdown_value(value) {
  * @param {string} text
  */
 function escape_markdown_cell(text) {
-	return text.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+	return text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 }
 
 /**
