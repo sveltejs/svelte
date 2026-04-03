@@ -9,6 +9,10 @@ import { disallow_children } from './shared/special-element.js';
  * @param {Context} context
  */
 export function SvelteBody(node, context) {
+	if (context.state.analysis.custom_renderer) {
+		e.incompatible_with_custom_renderer(node, '`<svelte:body>`');
+	}
+
 	disallow_children(node);
 	for (const attribute of node.attributes) {
 		if (

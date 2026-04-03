@@ -8,6 +8,10 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  * @param {Context} context
  */
 export function SvelteHead(node, context) {
+	if (context.state.analysis.custom_renderer) {
+		e.incompatible_with_custom_renderer(node, '`<svelte:head>`');
+	}
+
 	for (const attribute of node.attributes) {
 		e.svelte_head_illegal_attribute(attribute);
 	}

@@ -9,6 +9,10 @@ import { is_event_attribute } from '../../../utils/ast.js';
  * @param {Context} context
  */
 export function SvelteDocument(node, context) {
+	if (context.state.analysis.custom_renderer) {
+		e.incompatible_with_custom_renderer(node, '`<svelte:document>`');
+	}
+
 	disallow_children(node);
 
 	for (const attribute of node.attributes) {

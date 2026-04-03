@@ -100,6 +100,10 @@ export interface ComponentAnalysis extends Analysis {
 	 * or if not present a boolean which corresponds to the compiler option value
 	 */
 	custom_element: boolean | AST.SvelteOptions['customElement'];
+	/**
+	 * The resolved custom renderer module path, or undefined if not using a custom renderer
+	 */
+	custom_renderer: string | undefined;
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;

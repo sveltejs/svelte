@@ -83,7 +83,12 @@ export function process_children(nodes, initial, is_element, context) {
 		if (has_state && !within_bound_contenteditable) {
 			context.state.update.push(update);
 		} else {
-			context.state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
+			if (context.state.analysis.custom_renderer) {
+				// custom renderers need to use the method to invoke the renderer
+				context.state.init.push(update);
+			} else {
+				context.state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
+			}
 		}
 	}
 

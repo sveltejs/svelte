@@ -38,7 +38,10 @@ import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
-	const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
+	const is_html =
+		context.state.metadata.namespace === 'html' &&
+		node.name !== 'svg' &&
+		!context.state.analysis.custom_renderer;
 	const name = is_html ? node.name.toLowerCase() : node.name;
 	context.state.template.push_element(name, node.start, is_html);
 
@@ -47,7 +50,8 @@ export function RegularElement(node, context) {
 		return;
 	}
 
-	const is_custom_element = is_custom_element_node(node);
+	// we never treat elements as custom element in custom renderers, since we don't want to apply special handling to them (e.g. class merging)
+	const is_custom_element = is_custom_element_node(node) && !context.state.analysis.custom_renderer;
 
 	// cloneNode is faster, but it does not instantiate the underlying class of the
 	// custom element until the template is connected to the dom, which would
@@ -208,7 +212,8 @@ export function RegularElement(node, context) {
 
 	/** If true, needs `__value` for inputs */
 	const needs_special_value_handling =
-		name === 'option' || name === 'select' || bindings.has('group') || bindings.has('checked');
+		!context.state.analysis.custom_renderer &&
+		(name === 'option' || name === 'select' || bindings.has('group') || bindings.has('checked'));
 
 	if (has_spread) {
 		build_attribute_effect(
@@ -231,7 +236,7 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
-			const name = get_attribute_name(node, attribute);
+			const name = get_attribute_name(node, attribute, !!context.state.analysis.custom_renderer);
 
 			if (
 				!is_custom_element &&
@@ -253,7 +258,7 @@ export function RegularElement(node, context) {
 				if (name !== 'class' || value) {
 					context.state.template.set_prop(attribute.name, value === true ? '' : value);
 				}
-			} else if (name === 'autofocus') {
+			} else if (name === 'autofocus' && !context.state.analysis.custom_renderer) {
 				let { value } = build_attribute_value(attribute.value, context);
 				context.state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 			} else if (name === 'class') {
@@ -269,7 +274,14 @@ export function RegularElement(node, context) {
 					(value, metadata) => context.state.memoizer.add(value, metadata)
 				);
 
-				const update = build_element_attribute_update(node, node_id, name, value, attributes);
+				const update = build_element_attribute_update(
+					node,
+					node_id,
+					name,
+					value,
+					attributes,
+					!!context.state.analysis.custom_renderer
+				);
 
 				(has_state ? context.state.update : context.state.init).push(b.stmt(update));
 			}
@@ -345,11 +357,27 @@ export function RegularElement(node, context) {
 		const empty_string = value.type === 'Literal' && value.value === '';
 
 		if (!empty_string) {
-			child_state.init.push(
-				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
-			);
+			if (context.state.analysis.custom_renderer) {
+				// custom renderers need to use the method to invoke the renderer
+				context.state.template.push_text([
+					{
+						type: 'Text',
+						data: '',
+						raw: '',
+						start: -1,
+						end: -1
+					}
+				]);
+				const text = context.state.scope.generate('text');
+				context.state.init.push(b.var(text, b.call('$.child', node_id)));
+				context.state.init.push(b.stmt(b.call('$.set_text', b.id(text), value)));
+			} else {
+				child_state.init.push(
+					b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
+				);
+			}
 		}
-	} else if (is_customizable_select_element(node)) {
+	} else if (is_customizable_select_element(node) && !context.state.analysis.custom_renderer) {
 		// For <option>, <optgroup>, or <select> elements with rich content, we need to branch based on browser support.
 		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
 		// We create a separate template for the rich content and append it to the element.
@@ -411,7 +439,7 @@ export function RegularElement(node, context) {
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
-		if (name === 'template') {
+		if (name === 'template' && !context.state.analysis.custom_renderer) {
 			needs_reset = true;
 			child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
 			arg = b.member(arg, 'content');
@@ -448,7 +476,7 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(...element_state.after_update);
 	}
 
-	if (name === 'selectedcontent') {
+	if (name === 'selectedcontent' && !context.state.analysis.custom_renderer) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
@@ -580,8 +608,15 @@ export function build_style_directives_object(
  * @param {Expression} value
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  */
-function build_element_attribute_update(element, node_id, name, value, attributes) {
-	if (name === 'muted') {
+function build_element_attribute_update(
+	element,
+	node_id,
+	name,
+	value,
+	attributes,
+	custom_renderer = false
+) {
+	if (name === 'muted' && !custom_renderer) {
 		// Special case for Firefox who needs it set as a property in order to work
 		return b.assignment('=', b.member(node_id, b.id('muted')), value);
 	}
@@ -622,12 +657,12 @@ function build_element_attribute_update(element, node_id, name, value, attribute
 		return b.call('$.set_default_checked', node_id, value);
 	}
 
-	if (is_dom_property(name)) {
+	if (is_dom_property(name) && !custom_renderer) {
 		return b.assignment('=', b.member(node_id, name), value);
 	}
 
 	return b.call(
-		name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute',
+		name.startsWith('xlink') && !custom_renderer ? '$.set_xlink_attribute' : '$.set_attribute',
 		node_id,
 		b.literal(name),
 		value,

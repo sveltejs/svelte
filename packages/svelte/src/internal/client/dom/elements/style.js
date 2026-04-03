@@ -1,5 +1,12 @@
 import { to_style } from '../../../shared/attributes.js';
 import { hydrating } from '../hydration.js';
+import {
+	style_remove_property,
+	style_set_property,
+	get_attribute,
+	remove_attribute,
+	set_css_text
+} from '../operations.js';
 
 /**
  * @param {Element & ElementCSSInlineStyle} dom
@@ -13,9 +20,9 @@ function update_styles(dom, prev = {}, next, priority) {
 
 		if (prev[key] !== value) {
 			if (next[key] == null) {
-				dom.style.removeProperty(key);
+				style_remove_property(/** @type {HTMLElement} */ (dom), key);
 			} else {
-				dom.style.setProperty(key, value, priority);
+				style_set_property(/** @type {HTMLElement} */ (dom), key, value, priority);
 			}
 		}
 	}
@@ -34,11 +41,11 @@ export function set_style(dom, value, prev_styles, next_styles) {
 	if (hydrating || prev !== value) {
 		var next_style_attr = to_style(value, next_styles);
 
-		if (!hydrating || next_style_attr !== dom.getAttribute('style')) {
+		if (!hydrating || next_style_attr !== get_attribute(dom, 'style')) {
 			if (next_style_attr == null) {
-				dom.removeAttribute('style');
+				remove_attribute(dom, 'style');
 			} else {
-				dom.style.cssText = next_style_attr;
+				set_css_text(/** @type {HTMLElement} */ (dom), next_style_attr);
 			}
 		}
 

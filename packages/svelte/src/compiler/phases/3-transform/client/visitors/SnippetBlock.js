@@ -79,6 +79,12 @@ export function SnippetBlock(node, context) {
 		? b.call('$.wrap_snippet', b.id(context.state.analysis.name), b.function(null, args, body))
 		: b.arrow(args, body);
 
+	// wrap snippets in components with a custom renderer so they can only be
+	// rendered by the same renderer that compiled them
+	if (context.state.analysis.custom_renderer) {
+		snippet = b.call('$.renderer_snippet', b.id('$renderer'), snippet);
+	}
+
 	const declaration = b.const(node.expression, snippet);
 
 	// Top-level snippets are hoisted so they can be referenced in the `<script>`

@@ -13,9 +13,10 @@ import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
-import { get_first_child, get_next_sibling } from '../operations.js';
+import { get_first_child, get_next_sibling, insert_before, node_type } from '../operations.js';
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
 import { BranchManager } from './branches.js';
+import { renderer } from '../../custom-renderer/state.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -62,6 +63,48 @@ export function wrap_snippet(component, fn) {
 }
 
 /**
+ * Wraps a snippet function created in a component with a custom renderer,
+ * ensuring it can only be rendered by the same renderer.
+ * @template {(...args: any[]) => void} T
+ * @param {any} expected_renderer
+ * @param {T} fn
+ * @returns {T}
+ */
+export function renderer_snippet(expected_renderer, fn) {
+	var wrapped = /** @type {T} */ (
+		(.../** @type {any[]} */ args) => {
+			if (renderer !== expected_renderer) {
+				e.snippet_renderer_mismatch();
+			}
+			return fn(...args);
+		}
+	);
+	// we could technically avoid checking for expected_renderer in the function
+	// and store it in the returned function to check with `validate_snippet_renderer`
+	// but this keeps all the changes on the custom renderer side and leave the paths
+	// of "normal svelte" untouched...since that's the default people are gonna use
+	// svelte with we should optimize for that case
+	/** @type {any} */ (wrapped).__renderer = expected_renderer;
+
+	return wrapped;
+}
+
+/**
+ * Validates that a snippet function is compatible with the given renderer.
+ * Used at render sites in custom renderer components.
+ * @template {((...args: any[]) => void) | null | undefined} T
+ * @param {any} expected_renderer
+ * @param {T} fn
+ * @returns {T}
+ */
+export function validate_snippet_renderer(expected_renderer, fn) {
+	if (fn != null && /** @type {any} */ (fn).__renderer !== expected_renderer) {
+		e.snippet_renderer_mismatch();
+	}
+	return fn;
+}
+
+/**
  * Create a snippet programmatically
  * @template {unknown[]} Params
  * @param {(...params: Getters<Params>) => {
@@ -73,6 +116,9 @@ export function wrap_snippet(component, fn) {
 export function createRawSnippet(fn) {
 	// @ts-expect-error the types are a lie
 	return (/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
+		if (renderer != null) {
+			e.invalid_snippet_in_custom_renderer();
+		}
 		var snippet = fn(...params);
 
 		/** @type {Element} */
@@ -86,11 +132,11 @@ export function createRawSnippet(fn) {
 			var fragment = create_fragment_from_html(html);
 			element = /** @type {Element} */ (get_first_child(fragment));
 
-			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== ELEMENT_NODE)) {
+			if (DEV && (get_next_sibling(element) !== null || node_type(element) !== ELEMENT_NODE)) {
 				w.invalid_raw_snippet_render();
 			}
 
-			anchor.before(element);
+			insert_before(anchor, element);
 		}
 
 		const result = snippet.setup?.(element);

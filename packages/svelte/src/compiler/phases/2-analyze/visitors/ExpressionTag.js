@@ -11,7 +11,7 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
 export function ExpressionTag(node, context) {
 	const in_template = context.path.at(-1)?.type === 'Fragment';
 
-	if (in_template && context.state.parent_element) {
+	if (in_template && context.state.parent_element && !context.state.analysis.custom_renderer) {
 		const message = is_tag_valid_with_parent('#text', context.state.parent_element);
 		if (message) {
 			e.node_invalid_placement(node, message);

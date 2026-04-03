@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Renderer } from '../custom-renderer/index';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -94,6 +95,8 @@ export interface Effect extends Reaction {
 	parent: Effect | null;
 	/** The boundary this effect belongs to */
 	b: Boundary | null;
+	/** The renderer this effect was created with */
+	r: Renderer | null;
 	/** Dev only */
 	component_function?: any;
 	/** Dev only. Only set for certain block effects. Contains a reference to the stack that represents the render tree */

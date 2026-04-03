@@ -77,3 +77,10 @@ export const ELEMENT_NODE = 1;
 export const TEXT_NODE = 3;
 export const COMMENT_NODE = 8;
 export const DOCUMENT_FRAGMENT_NODE = 11;
+
+export const CUSTOM_RENDERER_NODE_TYPE_MAP = /** @type {const} */ ({
+	fragment: DOCUMENT_FRAGMENT_NODE,
+	element: ELEMENT_NODE,
+	text: TEXT_NODE,
+	comment: COMMENT_NODE
+});

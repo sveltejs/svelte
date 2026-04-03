@@ -36,6 +36,10 @@ export default function read_options(node) {
 				e.svelte_options_deprecated_tag(attribute);
 				break; // eslint doesn't know this is unnecessary
 			}
+			case 'customRenderer': {
+				component_options.customRenderer = get_static_value(attribute);
+				break;
+			}
 			case 'customElement': {
 				/** @type {AST.SvelteOptions['customElement']} */
 				const ce = {};
@@ -191,6 +195,14 @@ export default function read_options(node) {
 			default:
 				e.svelte_options_unknown_attribute(attribute, name);
 		}
+	}
+
+	if (component_options.css === 'injected' && component_options.customRenderer !== undefined) {
+		// Find the css attribute node for the error position
+		const css_attribute = node.attributes.find(
+			(/** @type {any} */ a) => a.type === 'Attribute' && a.name === 'css'
+		);
+		e.incompatible_with_custom_renderer(css_attribute ?? node, "`css: 'injected'`");
 	}
 
 	return component_options;

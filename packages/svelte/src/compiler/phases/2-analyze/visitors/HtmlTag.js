@@ -2,12 +2,16 @@
 /** @import { Context } from '../types' */
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { validate_opening_tag } from './shared/utils.js';
+import * as e from '../../../errors.js';
 
 /**
  * @param {AST.HtmlTag} node
  * @param {Context} context
  */
 export function HtmlTag(node, context) {
+	if (context.state.analysis.custom_renderer) {
+		e.incompatible_with_custom_renderer(node, '`@html`');
+	}
 	if (context.state.analysis.runes) {
 		validate_opening_tag(node, context.state, '@');
 	}

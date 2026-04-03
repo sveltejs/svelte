@@ -79,12 +79,12 @@ export function validate_element(node, context) {
 				validate_slot_attribute(context, attribute);
 			}
 
-			if (attribute.name === 'is') {
+			if (attribute.name === 'is' && !context.state.analysis.custom_renderer) {
 				w.attribute_avoid_is(attribute);
 			}
 
 			const correct_name = react_attributes.get(attribute.name);
-			if (correct_name) {
+			if (correct_name && !context.state.analysis.custom_renderer) {
 				w.attribute_invalid_property_name(attribute, attribute.name, correct_name);
 			}
 

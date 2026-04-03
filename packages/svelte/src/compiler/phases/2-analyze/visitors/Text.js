@@ -16,7 +16,8 @@ export function Text(node, context) {
 	if (
 		parent.type === 'Fragment' &&
 		context.state.parent_element &&
-		regex_not_whitespace.test(node.data)
+		regex_not_whitespace.test(node.data) &&
+		!context.state.analysis.custom_renderer
 	) {
 		const message = is_tag_valid_with_parent('#text', context.state.parent_element);
 		if (message) {
