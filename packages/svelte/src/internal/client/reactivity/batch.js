@@ -74,7 +74,7 @@ export let previous_batch = null;
  * signals in favour of their values within the batch
  * @type {Map<Value, any> | null}
  */
-export let batch_values = null;
+let batch_values = null;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -123,7 +123,10 @@ export class Batch {
 	previous = new Map();
 
 	/**
-	 * The combination of this batch's `current` and other batches' `previous` values
+	 * The combination of this batch's `current` and other batches' `previous` values,
+	 * When time travelling (i.e. working in one batch, while other batches
+	 * still have ongoing work), we ignore the real values of affected
+	 * signals in favour of their values within the batch
 	 * @type {Map<Value, any> | null}
 	 */
 	values = null;
