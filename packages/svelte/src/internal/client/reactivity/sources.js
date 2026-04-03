@@ -36,12 +36,12 @@ import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
-	batch_values,
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates,
 	set_cv,
-	get_cv
+	get_cv,
+	active_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -336,7 +336,7 @@ export function mark_reactions(signal, wv, updated_during_traversal) {
 		if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
-			batch_values?.delete(derived);
+			active_batch?.values?.delete(derived);
 
 			if (wv > get_cv(derived)) {
 				if ((flags & WAS_MARKED) === 0) {

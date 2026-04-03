@@ -47,7 +47,6 @@ import {
 } from './context.js';
 import {
 	Batch,
-	batch_values,
 	current_batch,
 	flushSync,
 	get_cv,
@@ -678,8 +677,8 @@ export function get(signal) {
 		}
 	}
 
-	if (batch_values?.has(signal)) {
-		return batch_values.get(signal);
+	if (active_batch?.values?.has(signal)) {
+		return active_batch.values.get(signal);
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
