@@ -457,6 +457,10 @@ export function update_effect(effect) {
 		set_dev_stack(effect.dev_stack ?? dev_stack);
 	}
 
+	// get this now, so that any writes during execution cause a re-run,
+	// but don't set it yet so that `$inspect.trace` works
+	const cv = write_version;
+
 	try {
 		if ((flags & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
 			destroy_block_effect_children(effect);
@@ -464,22 +468,10 @@ export function update_effect(effect) {
 			destroy_effect_children(effect);
 		}
 
-		// get this now, so that any writes during execution cause a re-run,
-		// but don't set it yet so that `$inspect.trace` works
-		const cv = write_version;
-
 		execute_effect_teardown(effect);
+
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-
-		if (effect.deps !== null) {
-			if (is_runes() && (effect.f & EFFECT_LEGACY) === 0) {
-				set_cv(effect, cv);
-			} else {
-				// in legacy mode, prevent the effect re-running immediately
-				set_cv(effect);
-			}
-		}
 
 		// In DEV, increment versions of any sources that were written to during the effect,
 		// so that they are correctly marked as dirty when the effect re-runs
@@ -492,6 +484,15 @@ export function update_effect(effect) {
 			}
 		}
 	} finally {
+		if (effect.deps !== null) {
+			if (is_runes() && (effect.f & EFFECT_LEGACY) === 0) {
+				set_cv(effect, cv);
+			} else {
+				// in legacy mode, prevent the effect re-running immediately
+				set_cv(effect);
+			}
+		}
+
 		is_updating_effect = was_updating_effect;
 		active_effect = previous_effect;
 
