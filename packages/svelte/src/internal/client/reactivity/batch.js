@@ -739,6 +739,7 @@ export class Batch {
 			return;
 		}
 
+		if (active_batch === this) return;
 		active_batch = this;
 
 		// if there are multiple batches, we are 'time travelling' —
