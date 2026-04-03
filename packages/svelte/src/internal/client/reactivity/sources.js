@@ -332,6 +332,10 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 			continue;
 		}
 
+		if ((flags & WAS_MARKED) !== 0) {
+			continue;
+		}
+
 		// TODO ideally this would work, but I think we need to `apply()` before `mark_reactions`.
 		// Or pass `batch` in as an argument?
 		// if (wv <= get_cv(reaction)) continue;
@@ -348,16 +352,16 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 				batch.current.delete(derived);
 				derived.f &= ~CLEAN;
 
-				if ((flags & WAS_MARKED) === 0) {
-					// Only connected deriveds can be reliably unmarked right away
-					if (flags & CONNECTED) {
-						reaction.f |= WAS_MARKED;
-					}
-
-					mark_reactions(batch, derived, wv, updated_during_traversal);
+				// Only connected deriveds can be reliably unmarked right away
+				if (flags & CONNECTED) {
+					reaction.f |= WAS_MARKED;
 				}
+
+				mark_reactions(batch, derived, wv, updated_during_traversal);
 			}
 		} else {
+			reaction.f |= WAS_MARKED;
+
 			var effect = /** @type {Effect} */ (reaction);
 
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {

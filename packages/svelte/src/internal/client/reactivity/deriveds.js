@@ -349,7 +349,6 @@ export function execute_derived(derived) {
 
 		try {
 			derived_stack.push(derived);
-			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
@@ -360,7 +359,6 @@ export function execute_derived(derived) {
 	} else {
 		try {
 			derived_stack.push(derived);
-			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {

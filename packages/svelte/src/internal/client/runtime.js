@@ -158,6 +158,8 @@ export function increment_write_version() {
 export function is_dirty(reaction) {
 	var flags = reaction.f;
 
+	reaction.f &= ~WAS_MARKED;
+
 	if ((flags & REACTION_IS_UPDATING) !== 0) {
 		return false;
 	}
@@ -167,8 +169,6 @@ export function is_dirty(reaction) {
 	}
 
 	if (flags & DERIVED) {
-		reaction.f &= ~WAS_MARKED;
-
 		if ((flags & CONNECTED) !== 0) {
 			if (active_batch !== null) {
 				if (active_batch.values?.has(/** @type {Derived} */ (reaction))) {
@@ -265,6 +265,7 @@ export function update_reaction(reaction) {
 	}
 
 	try {
+		reaction.f &= ~WAS_MARKED;
 		reaction.f |= REACTION_IS_UPDATING;
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();

@@ -1,20 +1,23 @@
-/** @import { Derived, Effect, Value } from '#client' */
+/** @import { Derived, Effect, Reaction } from '#client' */
 import { DERIVED, WAS_MARKED } from '#client/constants';
 
 /**
- * @param {Value[] | null} deps
+ * @param {Reaction} reaction
  */
-function clear_marked(deps) {
-	if (deps === null) return;
+function clear_marked(reaction) {
+	if ((reaction.f & WAS_MARKED) === 0) {
+		return;
+	}
 
-	for (const dep of deps) {
-		if ((dep.f & DERIVED) === 0 || (dep.f & WAS_MARKED) === 0) {
-			continue;
+	reaction.f ^= WAS_MARKED;
+
+	var deps = reaction.deps;
+	if (deps !== null) {
+		for (var dep of deps) {
+			if ((dep.f & DERIVED) !== 0) {
+				clear_marked(/** @type {Derived} */ (dep));
+			}
 		}
-
-		dep.f ^= WAS_MARKED;
-
-		clear_marked(/** @type {Derived} */ (dep).deps);
 	}
 }
 
@@ -27,5 +30,5 @@ export function defer_effect(effect, dirty_effects) {
 
 	// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
 	// so that other batches can correctly reach these effects during their own traversal
-	clear_marked(effect.deps);
+	clear_marked(effect);
 }
