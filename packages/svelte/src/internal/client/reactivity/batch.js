@@ -362,6 +362,7 @@ export class Batch {
 		}
 
 		active_batch = null;
+		batch_values = null;
 
 		if (next_batch !== null) {
 			batches.add(next_batch);

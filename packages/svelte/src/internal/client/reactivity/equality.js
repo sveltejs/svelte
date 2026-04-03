@@ -1,10 +1,9 @@
 /** @import { Equals } from '#client' */
-
-import { batch_values } from './batch.js';
+import { active_batch } from './batch.js';
 
 /** @type {Equals} */
 export function equals(value) {
-	return value === (batch_values?.get(this) ?? this.v);
+	return value === (active_batch?.values?.get(this) ?? this.v);
 }
 
 /**
