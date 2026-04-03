@@ -42,7 +42,8 @@ import {
 	legacy_updates,
 	set_cv,
 	get_cv,
-	active_batch
+	active_batch,
+	current_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -334,21 +335,19 @@ export function mark_reactions(signal, wv, updated_during_traversal) {
 			continue;
 		}
 
+		// TODO ideally this would work, but I think we need to `apply()` before `mark_reactions`.
+		// Or pass `batch` in as an argument?
+		// if (wv <= get_cv(reaction)) continue;
+
 		if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
 			if (wv > get_cv(derived)) {
+				current_batch?.current?.delete(derived); // TODO would be nice if `batch` was passed in and we weren't doing this
 				active_batch?.values?.delete(derived);
 				derived.f &= ~CLEAN;
 
-				if ((flags & WAS_MARKED) === 0) {
-					// Only connected deriveds can be reliably unmarked right away
-					if (flags & CONNECTED) {
-						reaction.f |= WAS_MARKED;
-					}
-
-					mark_reactions(derived, wv, updated_during_traversal);
-				}
+				mark_reactions(derived, wv, updated_during_traversal);
 			}
 		} else {
 			var effect = /** @type {Effect} */ (reaction);
