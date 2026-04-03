@@ -54,6 +54,15 @@ const batches = new Set();
 export let current_batch = null;
 
 /**
+ * The batch that is currently applied. May not be the same as `current_batch`, since we
+ * null that out when flushing effects in case they set state, resulting in a new
+ * batch being created. Effects always run inside an active_batch.
+ * TODO most occurrences of `current_batch` should be this
+ * @type {Batch | null}
+ **/
+export let active_batch = null;
+
+/**
  * This is needed to avoid overwriting inputs
  * @type {Batch | null}
  */
@@ -353,6 +362,8 @@ export class Batch {
 			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
 		}
 
+		active_batch = null;
+
 		if (next_batch !== null) {
 			batches.add(next_batch);
 
@@ -507,6 +518,7 @@ export class Batch {
 			is_processing = false;
 
 			current_batch = null;
+			active_batch = null;
 			batch_values = batch_cvs = batch_wvs = null;
 
 			old_values.clear();
@@ -737,6 +749,8 @@ export class Batch {
 			batch_values = batch_cvs = batch_wvs = null;
 			return;
 		}
+
+		active_batch = this;
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...

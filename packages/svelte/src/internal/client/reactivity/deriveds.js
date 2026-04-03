@@ -31,7 +31,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_wvs, current_batch, get_wv, set_cv } from './batch.js';
+import { current_batch, get_wv, active_batch, set_cv } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, noop } from '../../shared/utils.js';
 
@@ -393,10 +393,9 @@ export function update_derived(derived) {
 	set_cv(derived, cv);
 
 	if (!derived.equals(value)) {
-		batch_wvs?.set(derived, write_version);
-
-		if (current_batch !== null) {
-			current_batch.capture_derived(derived, value);
+		if (active_batch !== null) {
+			active_batch.capture_derived(derived, value);
+			active_batch.wvs.set(derived, write_version);
 		} else {
 			derived.v = value;
 			derived.wv = write_version;

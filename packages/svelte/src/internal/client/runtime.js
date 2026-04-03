@@ -52,6 +52,7 @@ import {
 	current_batch,
 	flushSync,
 	get_cv,
+	active_batch,
 	schedule_effect,
 	set_cv
 } from './reactivity/batch.js';
@@ -188,7 +189,7 @@ export function is_dirty(reaction) {
 			}
 		}
 
-		var wv = batch_wvs?.get(dependency) ?? dependency.wv;
+		var wv = active_batch?.wvs.get(dependency) ?? dependency.wv;
 
 		if (wv > cv) {
 			return true;
