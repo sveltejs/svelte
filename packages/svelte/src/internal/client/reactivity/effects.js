@@ -33,7 +33,8 @@ import {
 	ASYNC,
 	CONNECTED,
 	MANAGED_EFFECT,
-	DESTROYING
+	DESTROYING,
+	WAS_MARKED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -100,7 +101,7 @@ function create_effect(type, fn) {
 		ctx: component_context,
 		deps: null,
 		nodes: null,
-		f: type | CLEAN | CONNECTED,
+		f: type | CLEAN | CONNECTED | WAS_MARKED,
 		first: null,
 		fn,
 		last: null,

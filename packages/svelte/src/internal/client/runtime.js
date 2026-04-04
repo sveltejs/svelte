@@ -62,6 +62,7 @@ import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
+import { unmark } from './reactivity/utils.js';
 
 let is_updating_effect = false;
 
@@ -167,20 +168,18 @@ export function is_dirty(reaction) {
 	}
 
 	if (flags & DERIVED) {
-		reaction.f &= ~WAS_MARKED;
-
 		if ((flags & CONNECTED) !== 0) {
-			if (active_batch !== null) {
-				if (active_batch.values?.has(/** @type {Derived} */ (reaction))) {
-					return false;
-				}
-			} else {
-				if ((reaction.f & CLEAN) !== 0) {
-					return false;
-				}
+			if ((flags & WAS_MARKED) === 0) {
+				return false;
 			}
 		}
+	} else {
+		if ((flags & WAS_MARKED) === 0) {
+			return false;
+		}
 	}
+
+	unmark(reaction);
 
 	var dependencies = /** @type {Value[]} */ (reaction.deps);
 
@@ -357,6 +356,7 @@ export function update_reaction(reaction) {
 	} catch (error) {
 		return handle_error(error);
 	} finally {
+		unmark(reaction);
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
@@ -407,7 +407,7 @@ function remove_reaction(signal, dependency) {
 		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
 		if ((derived.f & CONNECTED) !== 0) {
 			derived.f ^= CONNECTED;
-			derived.f &= ~WAS_MARKED;
+			unmark(derived);
 		}
 
 		// freeze any effects inside this derived

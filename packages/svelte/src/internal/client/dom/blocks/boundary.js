@@ -34,7 +34,6 @@ import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
-import { defer_effect } from '../../reactivity/utils.js';
 
 /**
  * @typedef {{
@@ -271,7 +270,7 @@ export class Boundary {
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_effects);
+		this.#dirty_effects.add(effect);
 	}
 
 	/**
