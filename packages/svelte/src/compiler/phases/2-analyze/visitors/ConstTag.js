@@ -1,6 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import * as b from '#compiler/builders';
 import { validate_opening_tag } from './shared/utils.js';
 
 /**
@@ -42,4 +43,28 @@ export function ConstTag(node, context) {
 		function_depth: context.state.function_depth + 1,
 		derived_function_depth: context.state.function_depth + 1
 	});
+
+	const has_await = node.metadata.expression.has_await;
+	const blockers = [...node.metadata.expression.dependencies]
+		.map((dep) => dep.blocker)
+		.filter((b) => b !== null && b.object !== context.state.async_consts?.id);
+
+	if (has_await || context.state.async_consts || blockers.length > 0) {
+		const run = (context.state.async_consts ??= {
+			id: context.state.analysis.root.unique('promises'),
+			nrOfDeclarations: 0
+		});
+		node.metadata.promises_id = run.id;
+
+		const bindings = context.state.scope.get_bindings(declaration);
+
+		// keep the counter in sync with the number of thunks pushed in ConstTag in transform
+		// TODO once non-async and non-runes mode is gone investigate making this more robust
+		// via something like the approach in https://github.com/sveltejs/svelte/pull/18032
+		const length = run.nrOfDeclarations++;
+		const blocker = b.member(run.id, b.literal(length), true);
+		for (const binding of bindings) {
+			binding.blocker = blocker;
+		}
+	}
 }
