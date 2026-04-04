@@ -1,0 +1,1 @@
+{x satisfies Foo}

@@ -390,16 +390,24 @@ function open(parser) {
 		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
 		const params = parser.template.slice(params_start, parser.index);
 
-		let function_expression = matched
-			? /** @type {ArrowFunctionExpression} */ (
+		let function_expression;
+
+		if (matched) {
+			try {
+				function_expression = /** @type {ArrowFunctionExpression} */ (
 					parse_expression_at(
 						prelude + `${params} => {}`,
 						parser.root.comments,
 						parser.ts,
 						params_start
 					)
-				)
-			: { params: [] };
+				);
+			} catch (/** @type {any} */ err) {
+				parser.acorn_error(err);
+			}
+		} else {
+			function_expression = { params: [] };
+		}
 
 		parser.allow_whitespace();
 		parser.eat('}', true);

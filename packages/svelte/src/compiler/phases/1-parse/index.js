@@ -180,7 +180,14 @@ export class Parser {
 	 * @returns {never}
 	 */
 	acorn_error(err) {
-		e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
+		const message = err.message.replace(regex_position_indicator, '');
+
+		const hint =
+			!this.ts && typeof err.pos === 'number' && this.template[err.pos] === ':'
+				? ` (did you forget to add \`lang="ts"\`?)`
+				: '';
+
+		e.js_parse_error(err.pos, message + hint);
 	}
 
 	/**
