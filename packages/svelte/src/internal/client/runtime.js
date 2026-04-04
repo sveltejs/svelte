@@ -167,25 +167,19 @@ export function is_dirty(reaction) {
 		return true;
 	}
 
-	if ((flags & WAS_MARKED) === 0) {
-		return false;
+	if (flags & DERIVED) {
+		if ((flags & CONNECTED) !== 0) {
+			if ((flags & WAS_MARKED) === 0) {
+				return false;
+			}
+		}
+	} else {
+		if ((flags & WAS_MARKED) === 0) {
+			return false;
+		}
 	}
 
 	unmark(reaction);
-
-	if (flags & DERIVED) {
-		if ((flags & CONNECTED) !== 0) {
-			if (active_batch !== null) {
-				if (active_batch.values?.has(/** @type {Derived} */ (reaction))) {
-					return false;
-				}
-			} else {
-				if ((reaction.f & CLEAN) !== 0) {
-					return false;
-				}
-			}
-		}
-	}
 
 	var dependencies = /** @type {Value[]} */ (reaction.deps);
 
