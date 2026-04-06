@@ -227,7 +227,15 @@ export function pop(component) {
 
 /** @returns {boolean} */
 export function is_runes() {
-	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
+	if (!legacy_mode_flag) {
+		return true;
+	}
+
+	// TODO feels like we could probably simplify this a bit. no tests fail without
+	// the first part, though would like to better understand usage before deleting
+	const context = component_context ?? active_reaction?.ctx ?? active_effect?.ctx;
+
+	return context?.l === null;
 }
 
 /**

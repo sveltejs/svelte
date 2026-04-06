@@ -14,7 +14,6 @@ import {
 	set_active_effect
 } from '../runtime.js';
 import {
-	DIRTY,
 	BRANCH_EFFECT,
 	RENDER_EFFECT,
 	EFFECT,
@@ -28,7 +27,6 @@ import {
 	CLEAN,
 	EAGER_EFFECT,
 	HEAD_EFFECT,
-	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	USER_EFFECT,
@@ -45,7 +43,6 @@ import { component_context, dev_current_component_function, dev_stack } from '..
 import { Batch, collected_effects, current_batch } from './batch.js';
 import { flatten, increment_pending } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
-import { set_signal_status } from './status.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -103,7 +100,7 @@ function create_effect(type, fn) {
 		ctx: component_context,
 		deps: null,
 		nodes: null,
-		f: type | DIRTY | CONNECTED,
+		f: type | CLEAN | CONNECTED,
 		first: null,
 		fn,
 		last: null,
@@ -112,7 +109,7 @@ function create_effect(type, fn) {
 		b: parent && parent.b,
 		prev: null,
 		teardown: null,
-		wv: 0,
+		cv: -1,
 		ac: null
 	};
 
@@ -192,7 +189,6 @@ export function effect_tracking() {
  */
 export function teardown(fn) {
 	const effect = create_effect(RENDER_EFFECT, null);
-	set_signal_status(effect, CLEAN);
 	effect.teardown = fn;
 	return effect;
 }
@@ -345,12 +341,6 @@ export function legacy_pre_effect_reset() {
 
 			var effect = token.effect;
 
-			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
-			// the effects dependencies and correctly ensure each dependency is up-to-date.
-			if ((effect.f & CLEAN) !== 0 && effect.deps !== null) {
-				set_signal_status(effect, MAYBE_DIRTY);
-			}
-
 			if (is_dirty(effect)) {
 				update_effect(effect);
 			}
@@ -384,7 +374,9 @@ export function render_effect(fn, flags = 0) {
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)));
+		create_effect(RENDER_EFFECT, () => {
+			fn(...values.map(get));
+		});
 	});
 }
 
@@ -523,7 +515,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
-	set_signal_status(effect, DESTROYING);
+	effect.f |= DESTROYING;
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
 
@@ -690,7 +682,6 @@ function resume_children(effect, local) {
 	// here because we don't want to eagerly recompute a derived like
 	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
 	if ((effect.f & CLEAN) === 0) {
-		set_signal_status(effect, DIRTY);
 		Batch.ensure().schedule(effect); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
 	}
 
