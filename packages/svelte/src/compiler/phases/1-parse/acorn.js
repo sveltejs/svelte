@@ -77,17 +77,21 @@ export function parse_expression_at(parser, source, index) {
 
 	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
 
-	const ast = _.parseExpressionAt(source, index, {
-		onComment,
-		sourceType: 'module',
-		ecmaVersion: 16,
-		locations: true,
-		preserveParens: true
-	});
+	try {
+		const ast = _.parseExpressionAt(source, index, {
+			onComment,
+			sourceType: 'module',
+			ecmaVersion: 16,
+			locations: true,
+			preserveParens: true
+		});
 
-	add_comments(ast);
+		add_comments(ast);
 
-	return ast;
+		return ast;
+	} catch (e) {
+		parser.acorn_error(e);
+	}
 }
 
 /**
