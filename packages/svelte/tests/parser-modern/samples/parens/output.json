@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 10,
+	"end": 11,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -10,19 +10,19 @@
 			{
 				"type": "ExpressionTag",
 				"start": 0,
-				"end": 10,
+				"end": 11,
 				"expression": {
 					"type": "Literal",
-					"start": 6,
-					"end": 8,
+					"start": 7,
+					"end": 9,
 					"loc": {
 						"start": {
 							"line": 1,
-							"column": 6
+							"column": 7
 						},
 						"end": {
 							"line": 1,
-							"column": 8
+							"column": 9
 						}
 					},
 					"value": 42,
