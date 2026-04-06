@@ -349,7 +349,8 @@ export class Batch {
 			next_batch.#process();
 		}
 
-		// In sync mode flushSync can cause #commit wrongfully think that there needs to be a rebase, so we only do it in async mode
+		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
+		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag && !batches.has(this)) {
 			this.#commit();
 		}
