@@ -48,8 +48,9 @@ import {
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { UNINITIALIZED } from '../../../constants.js';
+import { mark } from './utils.js';
 
-/** @type {Set<any>} */
+/** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
 /** @type {Map<Source, any>} */
@@ -314,7 +315,9 @@ export function increment(source) {
  */
 export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 	var reactions = signal.reactions;
-	if (reactions === null) return;
+	if (reactions === null) {
+		return;
+	}
 
 	var runes = is_runes();
 	var length = reactions.length;
@@ -326,9 +329,7 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
-		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & EAGER_EFFECT) !== 0) {
-			eager_effects.add(reaction);
+		if ((flags & WAS_MARKED) !== 0) {
 			continue;
 		}
 
@@ -348,17 +349,23 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 				batch.current.delete(derived);
 				derived.f &= ~CLEAN;
 
-				if ((flags & WAS_MARKED) === 0) {
-					// Only connected deriveds can be reliably unmarked right away
-					if (flags & CONNECTED) {
-						reaction.f |= WAS_MARKED;
-					}
-
-					mark_reactions(batch, derived, wv, updated_during_traversal);
+				// Only connected deriveds can be reliably unmarked right away
+				if (flags & CONNECTED) {
+					mark(reaction);
 				}
+
+				mark_reactions(batch, derived, wv, updated_during_traversal);
 			}
 		} else {
+			mark(reaction);
+
 			var effect = /** @type {Effect} */ (reaction);
+
+			// Inspect effects need to run immediately, so that the stack trace makes sense
+			if (DEV && (flags & EAGER_EFFECT) !== 0) {
+				eager_effects.add(effect);
+				continue;
+			}
 
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
 				eager_block_effects.add(effect);
