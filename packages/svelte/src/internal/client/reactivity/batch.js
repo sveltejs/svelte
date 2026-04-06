@@ -172,6 +172,12 @@ export class Batch {
 	 */
 	#skipped_branches = new Map();
 
+	/**
+	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing
+	 * @type {Set<Effect>}
+	 */
+	#unskipped_branches = new Set();
+
 	is_fork = false;
 
 	#decrement_queued = false;
@@ -215,28 +221,31 @@ export class Batch {
 		if (!this.#skipped_branches.has(effect)) {
 			this.#skipped_branches.set(effect, { d: [], m: [] });
 		}
+		this.#unskipped_branches.delete(effect);
 	}
 
 	/**
 	 * Remove an effect from the #skipped_branches map and reschedule
 	 * any tracked dirty/maybe_dirty child effects
 	 * @param {Effect} effect
+	 * @param {(e: Effect) => void} callback
 	 */
-	unskip_effect(effect) {
+	unskip_effect(effect, callback = (e) => this.schedule(e)) {
 		var tracked = this.#skipped_branches.get(effect);
 		if (tracked) {
 			this.#skipped_branches.delete(effect);
 
 			for (var e of tracked.d) {
 				set_signal_status(e, DIRTY);
-				this.schedule(e);
+				callback(e);
 			}
 
 			for (e of tracked.m) {
 				set_signal_status(e, MAYBE_DIRTY);
-				this.schedule(e);
+				callback(e);
 			}
 		}
+		this.#unskipped_branches.add(effect);
 	}
 
 	#process() {
@@ -530,6 +539,19 @@ export class Batch {
 			} else if (sources.length > 0) {
 				if (DEV) {
 					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
+				}
+
+				// A batch was unskipped in a later batch -> tell prior batches to unskip it, too
+				if (is_earlier) {
+					for (const unskipped of this.#unskipped_branches) {
+						batch.unskip_effect(unskipped, (e) => {
+							if ((e.f & (BLOCK_EFFECT | ASYNC)) !== 0) {
+								batch.schedule(e);
+							} else {
+								batch.#defer_effects([e]);
+							}
+						});
+					}
 				}
 
 				batch.activate();
