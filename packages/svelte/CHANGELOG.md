@@ -1,5 +1,45 @@
 # svelte
 
+## 5.55.1
+
+### Patch Changes
+
+- fix: correctly handle bindings on the server ([#18009](https://github.com/sveltejs/svelte/pull/18009))
+
+- fix: prevent hydration error on async `{@html ...}` ([#17999](https://github.com/sveltejs/svelte/pull/17999))
+
+- fix: cleanup `superTypeParameters` in `ClassDeclarations`/`ClassExpression` ([#18015](https://github.com/sveltejs/svelte/pull/18015))
+
+- fix: improve duplicate module import error message ([#18016](https://github.com/sveltejs/svelte/pull/18016))
+
+- fix: reschedule new effects in prior batches ([#18021](https://github.com/sveltejs/svelte/pull/18021))
+
+## 5.55.0
+
+### Minor Changes
+
+- feat: export TweenOptions, SpringOptions, SpringUpdateOptions and Updater from svelte/motion ([#17967](https://github.com/sveltejs/svelte/pull/17967))
+
+### Patch Changes
+
+- fix: ensure HMR wrapper forwards correct start/end nodes to active effect ([#17985](https://github.com/sveltejs/svelte/pull/17985))
+
+## 5.54.1
+
+### Patch Changes
+
+- fix: hydration comments during hmr ([#17975](https://github.com/sveltejs/svelte/pull/17975))
+
+- fix: null out `effect.b` in `destroy_effect` ([#17980](https://github.com/sveltejs/svelte/pull/17980))
+
+- fix: group sync statements ([#17977](https://github.com/sveltejs/svelte/pull/17977))
+
+- fix: defer batch resolution until earlier intersecting batches have committed ([#17162](https://github.com/sveltejs/svelte/pull/17162))
+
+- fix: properly invoke `iterator.return()` during reactivity loss check ([#17966](https://github.com/sveltejs/svelte/pull/17966))
+
+- fix: remove trailing semicolon from {@const} tag printer ([#17962](https://github.com/sveltejs/svelte/pull/17962))
+
 ## 5.54.0
 
 ### Minor Changes
