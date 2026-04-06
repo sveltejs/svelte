@@ -1,5 +1,6 @@
 /** @import { Comment, Program } from 'estree' */
 /** @import { AST } from '#compiler' */
+/** @import { Parser } from './index.js' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
@@ -66,31 +67,39 @@ export function parse(source, comments, typescript, is_script) {
 }
 
 /**
+ * @param {Parser} parser
  * @param {string} source
- * @param {Comment[]} comments
- * @param {boolean} typescript
  * @param {number} index
  * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
-export function parse_expression_at(source, comments, typescript, index) {
-	const parser = typescript ? ParserWithTS : acorn.Parser;
+export function parse_expression_at(parser, source, index) {
+	const _ = parser.ts ? ParserWithTS : acorn.Parser;
 
-	const { onComment, add_comments } = get_comment_handlers(
-		source,
-		/** @type {CommentWithLocation[]} */ (comments),
-		index
-	);
+	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
 
-	const ast = parser.parseExpressionAt(source, index, {
+	const ast = _.parseExpressionAt(source, index, {
 		onComment,
 		sourceType: 'module',
 		ecmaVersion: 16,
-		locations: true
+		locations: true,
+		preserveParens: true
 	});
 
 	add_comments(ast);
 
 	return ast;
+}
+
+/**
+ * @param {acorn.Expression} node
+ * @returns {acorn.Expression}
+ */
+export function remove_parens(node) {
+	return walk(node, null, {
+		ParenthesizedExpression(node, context) {
+			return context.visit(node.expression);
+		}
+	});
 }
 
 /**

@@ -1,6 +1,6 @@
 /** @import { Expression } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import { parse_expression_at } from '../acorn.js';
+import { parse_expression_at, remove_parens } from '../acorn.js';
 import { regex_whitespace } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import { find_matching_bracket } from '../utils/bracket.js';
@@ -33,52 +33,16 @@ export function get_loose_identifier(parser, opening_token) {
  * @returns {Expression}
  */
 export default function read_expression(parser, opening_token, disallow_loose) {
-	/** @type {Expression | undefined} */
+	/** @type {ReturnType<typeof parse_expression_at>} */
 	let node;
 
 	try {
-		let comment_index = parser.root.comments.length;
-
-		node = /** @type {Expression} */ (
-			parse_expression_at(
-				parser.template,
-				parser.root.comments,
-				parser.ts,
-				parser.index
-			)
-		);
-
-		let num_parens = 0;
-
-		let i = parser.root.comments.length;
-		while (i-- > comment_index) {
-			const comment = parser.root.comments[i];
-			if (comment.end < node.start) {
-				parser.index = comment.end;
-				break;
-			}
-		}
-
-		for (let i = parser.index; i < /** @type {number} */ (node.start); i += 1) {
-			if (parser.template[i] === '(') num_parens += 1;
-		}
+		node = parse_expression_at(parser, parser.template, parser.index);
 
 		let index = /** @type {number} */ (node.end);
 
 		const last_comment = parser.root.comments.at(-1);
 		if (last_comment && last_comment.end > index) index = last_comment.end;
-
-		while (num_parens > 0) {
-			const char = parser.template[index];
-
-			if (char === ')') {
-				num_parens -= 1;
-			} else if (!regex_whitespace.test(char)) {
-				e.expected_token(index, ')');
-			}
-
-			index += 1;
-		}
 
 		parser.index = index;
 	} catch (err) {
@@ -110,5 +74,5 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 		}
 	}
 
-	return node;
+	return /** @type {Expression} */ (remove_parens(node));
 }

@@ -395,12 +395,7 @@ function open(parser) {
 		if (matched) {
 			try {
 				function_expression = /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(
-						prelude + `${params} => {}`,
-						parser.root.comments,
-						parser.ts,
-						params_start
-					)
+					parse_expression_at(parser, prelude + `${params} => {}`, params_start)
 				);
 			} catch (/** @type {any} */ err) {
 				parser.acorn_error(err);
