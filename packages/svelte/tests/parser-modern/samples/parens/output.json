@@ -1,0 +1,61 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 10,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "ExpressionTag",
+				"start": 0,
+				"end": 10,
+				"expression": {
+					"type": "Literal",
+					"start": 6,
+					"end": 8,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 6
+						},
+						"end": {
+							"line": 1,
+							"column": 8
+						}
+					},
+					"value": 42,
+					"raw": "42",
+					"leadingComments": [
+						{
+							"type": "Block",
+							"value": "",
+							"start": 2,
+							"end": 6
+						}
+					]
+				}
+			}
+		]
+	},
+	"options": null,
+	"comments": [
+		{
+			"type": "Block",
+			"value": "",
+			"start": 2,
+			"end": 6,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 2
+				},
+				"end": {
+					"line": 1,
+					"column": 6
+				}
+			}
+		}
+	]
+}
