@@ -4,6 +4,7 @@
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
+import * as e from '../../errors.js';
 
 const ParserWithTS = acorn.Parser.extend(tsPlugin());
 
@@ -21,7 +22,7 @@ const ParserWithTS = acorn.Parser.extend(tsPlugin());
  * @param {boolean} [is_script]
  */
 export function parse(source, comments, typescript, is_script) {
-	const parser = typescript ? ParserWithTS : acorn.Parser;
+	const _ = typescript ? ParserWithTS : acorn.Parser;
 
 	const { onComment, add_comments } = get_comment_handlers(
 		source,
@@ -29,7 +30,7 @@ export function parse(source, comments, typescript, is_script) {
 	);
 
 	// @ts-ignore
-	const parse_statement = parser.prototype.parseStatement;
+	const parse_statement = _.prototype.parseStatement;
 
 	// If we're dealing with a <script> then it might contain an export
 	// for something that doesn't exist directly inside but is inside the
@@ -37,7 +38,7 @@ export function parse(source, comments, typescript, is_script) {
 	// an error in these cases
 	if (is_script) {
 		// @ts-ignore
-		parser.prototype.parseStatement = function (...args) {
+		_.prototype.parseStatement = function (...args) {
 			const v = parse_statement.call(this, ...args);
 			// @ts-ignore
 			this.undefinedExports = {};
@@ -48,16 +49,18 @@ export function parse(source, comments, typescript, is_script) {
 	let ast;
 
 	try {
-		ast = parser.parse(source, {
+		ast = _.parse(source, {
 			onComment,
 			sourceType: 'module',
 			ecmaVersion: 16,
 			locations: true
 		});
+	} catch (err) {
+		handle_parse_error(err);
 	} finally {
 		if (is_script) {
 			// @ts-ignore
-			parser.prototype.parseStatement = parse_statement;
+			_.prototype.parseStatement = parse_statement;
 		}
 	}
 
@@ -90,8 +93,18 @@ export function parse_expression_at(parser, source, index) {
 
 		return ast;
 	} catch (e) {
-		parser.acorn_error(e);
+		handle_parse_error(e);
 	}
+}
+
+const regex_position_indicator = / \(\d+:\d+\)$/;
+
+/**
+ * @param {any} err
+ * @returns {never}
+ */
+function handle_parse_error(err) {
+	e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
 }
 
 /**
