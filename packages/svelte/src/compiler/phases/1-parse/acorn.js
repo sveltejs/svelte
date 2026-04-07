@@ -29,7 +29,7 @@ export function parse(source, comments, typescript, is_script) {
 		/** @type {CommentWithLocation[]} */ (comments)
 	);
 
-	// @ts-ignore
+	// @ts-expect-error
 	const parse_statement = _.prototype.parseStatement;
 
 	// If we're dealing with a <script> then it might contain an export
@@ -46,27 +46,25 @@ export function parse(source, comments, typescript, is_script) {
 		};
 	}
 
-	let ast;
-
 	try {
-		ast = _.parse(source, {
+		const ast = _.parse(source, {
 			onComment,
 			sourceType: 'module',
 			ecmaVersion: 16,
-			locations: true
+			locations: false
 		});
+
+		add_comments(ast);
+
+		return /** @type {Program} */ (ast);
 	} catch (err) {
 		handle_parse_error(err);
 	} finally {
 		if (is_script) {
-			// @ts-ignore
+			// @ts-expect-error
 			_.prototype.parseStatement = parse_statement;
 		}
 	}
-
-	add_comments(ast);
-
-	return /** @type {Program} */ (ast);
 }
 
 /**
