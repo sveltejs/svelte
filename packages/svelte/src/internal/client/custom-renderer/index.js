@@ -43,7 +43,7 @@ import { get_parent_node, remove_child } from '../dom/operations.js';
  * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }) => { component: Exports, unmount: () => void } }}
  */
 export function createRenderer(renderer) {
-	return {
+	const compound_renderer = {
 		...renderer,
 		/**
 		 * @template {Record<string, any>} Props
@@ -52,15 +52,15 @@ export function createRenderer(renderer) {
 		 * @param {{} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }} options
 		 */
 		render(Component, { target, props, context }) {
-			var cleanup = push_renderer(renderer);
+			var cleanup = push_renderer(compound_renderer);
 			try {
 				/** @type {Exports} */
 				// @ts-expect-error will be defined because the render effect runs synchronously
 				var component = undefined;
 
 				const unmount = effect_root(() => {
-					var anchor = renderer.createComment('');
-					renderer.insert(/** @type {*} */ (target), anchor, null);
+					var anchor = compound_renderer.createComment('');
+					compound_renderer.insert(/** @type {*} */ (target), anchor, null);
 					boundary(/** @type {*} */ (anchor), { pending: () => {} }, (anchor) => {
 						push({});
 						var ctx = /** @type {ComponentContext} */ (component_context);
@@ -82,4 +82,5 @@ export function createRenderer(renderer) {
 			}
 		}
 	};
+	return compound_renderer;
 }
