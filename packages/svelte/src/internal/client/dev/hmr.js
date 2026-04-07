@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, HMR } from '../../../constants.js';
-import { EFFECT_TRANSPARENT } from '#client/constants';
+import { EFFECT_TRANSPARENT, HMR_ANCHOR } from '#client/constants';
 import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
@@ -26,6 +26,7 @@ export function hmr(fn) {
 		let effect;
 
 		let ran = false;
+		let target = anchor;
 
 		block(() => {
 			if (component === (component = get(current))) {
@@ -39,13 +40,15 @@ export function hmr(fn) {
 			}
 
 			effect = branch(() => {
+				target = /** @type {any} */ (target)[HMR_ANCHOR] ?? target;
+
 				// when the component is invalidated, replace it without transitions
 				if (ran) set_should_intro(false);
 
 				// preserve getters/setters
 				var result =
 					// @ts-expect-error
-					new.target ? new component(anchor, props) : component(anchor, props);
+					new.target ? new component(target, props) : component(target, props);
 				// a component is not guaranteed to return something and we can't invoke getOwnPropertyDescriptors on undefined
 				if (result) {
 					Object.defineProperties(instance, Object.getOwnPropertyDescriptors(result));
