@@ -82,7 +82,6 @@ function open(parser) {
 		parser.require_whitespace();
 
 		let template = parser.template;
-		let end = template.length;
 
 		/** @type {Expression | undefined} */
 		let expression;
@@ -97,19 +96,17 @@ function open(parser) {
 					parse_expression_at(parser, template, parser.index)
 				);
 			} catch (err) {
-				end = /** @type {any} */ (err).position[0] - 2;
+				let end = /** @type {any} */ (err).position[0] - 2;
 
 				while (end > start && template.slice(end, end + 2) !== 'as') {
 					end -= 1;
 				}
 
 				if (end <= start) {
-					if (parser.loose) {
-						expression = get_loose_identifier(parser);
-						if (expression) {
-							break;
-						}
+					if (parser.loose && (expression = get_loose_identifier(parser))) {
+						break;
 					}
+
 					throw err;
 				}
 
