@@ -15,10 +15,10 @@ export function hmr(fn) {
 	const current = source(fn);
 
 	/**
-	 * @param {TemplateNode} anchor
+	 * @param {TemplateNode} initial_anchor
 	 * @param {any} props
 	 */
-	function wrapper(anchor, props) {
+	function wrapper(initial_anchor, props) {
 		let component = {};
 		let instance = {};
 
@@ -26,7 +26,7 @@ export function hmr(fn) {
 		let effect;
 
 		let ran = false;
-		let target = anchor;
+		let anchor = initial_anchor;
 
 		block(() => {
 			if (component === (component = get(current))) {
@@ -40,7 +40,7 @@ export function hmr(fn) {
 			}
 
 			effect = branch(() => {
-				target = /** @type {any} */ (target)[HMR_ANCHOR] ?? target;
+				anchor = /** @type {any} */ (anchor)[HMR_ANCHOR] ?? anchor;
 
 				// when the component is invalidated, replace it without transitions
 				if (ran) set_should_intro(false);
@@ -48,7 +48,7 @@ export function hmr(fn) {
 				// preserve getters/setters
 				var result =
 					// @ts-expect-error
-					new.target ? new component(target, props) : component(target, props);
+					new.target ? new component(anchor, props) : component(anchor, props);
 				// a component is not guaranteed to return something and we can't invoke getOwnPropertyDescriptors on undefined
 				if (result) {
 					Object.defineProperties(instance, Object.getOwnPropertyDescriptors(result));
