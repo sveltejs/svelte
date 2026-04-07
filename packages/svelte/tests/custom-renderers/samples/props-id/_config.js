@@ -1,5 +1,5 @@
 import { test } from '../../test';
 
 export default test({
-	html: 'c1'
+	html: 'c1 c2'
 });

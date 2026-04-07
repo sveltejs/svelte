@@ -406,13 +406,6 @@ export function client_component(analysis, options) {
 		);
 	}
 
-	if (analysis.custom_renderer) {
-		component_block.body.unshift(
-			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
-		);
-		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
-	}
-
 	let should_inject_props =
 		should_inject_context ||
 		analysis.needs_props ||
@@ -614,6 +607,13 @@ export function client_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
+	}
+
+	if (analysis.custom_renderer) {
+		component_block.body.unshift(
+			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
+		);
+		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
 	}
 
 	if (state.events.size > 0) {
