@@ -33,11 +33,8 @@ export function get_loose_identifier(parser, opening_token) {
  * @returns {Expression}
  */
 export default function read_expression(parser, opening_token, disallow_loose) {
-	/** @type {ReturnType<typeof parse_expression_at>} */
-	let node;
-
 	try {
-		node = parse_expression_at(parser, parser.template, parser.index);
+		const node = parse_expression_at(parser, parser.template, parser.index);
 
 		let index = /** @type {number} */ (node.end);
 
@@ -45,6 +42,24 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 		if (last_comment && last_comment.end > index) index = last_comment.end;
 
 		parser.index = index;
+
+		if (!parser.ts) {
+			let j = parser.index;
+			while (j < parser.template.length && regex_whitespace.test(parser.template[j])) j++;
+
+			const remaining = parser.template.slice(j);
+
+			if (
+				remaining[0] === ':' ||
+				/^satisfies[\s(]/.test(remaining) ||
+				(remaining[0] === '!' && remaining[1] !== '=') ||
+				(/^as[\s(]/.test(remaining) && !disallow_loose)
+			) {
+				e.js_parse_error(j, `Unexpected token (did you forget to add \`lang="ts"\`?)`);
+			}
+		}
+
+		return /** @type {Expression} */ (remove_parens(node));
 	} catch (err) {
 		// If we are in an each loop we need the error to be thrown in cases like
 		// `as { y = z }` so we still throw and handle the error there
@@ -57,22 +72,4 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 
 		throw err;
 	}
-
-	if (!parser.ts) {
-		let j = parser.index;
-		while (j < parser.template.length && regex_whitespace.test(parser.template[j])) j++;
-
-		const remaining = parser.template.slice(j);
-
-		if (
-			remaining[0] === ':' ||
-			/^satisfies[\s(]/.test(remaining) ||
-			(remaining[0] === '!' && remaining[1] !== '=') ||
-			(/^as[\s(]/.test(remaining) && !disallow_loose)
-		) {
-			e.js_parse_error(j, `Unexpected token (did you forget to add \`lang="ts"\`?)`);
-		}
-	}
-
-	return /** @type {Expression} */ (remove_parens(node));
 }

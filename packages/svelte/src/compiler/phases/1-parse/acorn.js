@@ -61,7 +61,7 @@ export function parse(source, comments, typescript, is_script) {
 	} catch (err) {
 		// TODO the `return` in necessary for TS<7 due to a bug; otherwise
 		// the `finally` block is regarded as unreachable
-		return handle_parse_error(err, source, typescript);
+		return handle_parse_error(err);
 	} finally {
 		if (is_script) {
 			// @ts-expect-error
@@ -102,15 +102,15 @@ const regex_position_indicator = / \(\d+:\d+\)$/;
 
 /**
  * @param {any} err
- * @param {string} source
- * @param {boolean} typescript
+ * @param {string} [source]
+ * @param {boolean} [typescript]
  * @returns {never}
  */
 function handle_parse_error(err, source, typescript) {
 	let message = /** @type {string} */ (err.message).replace(regex_position_indicator, '');
 	let pos = /** @type {number} */ (err.pos);
 
-	if (typescript && source[pos] === ':') {
+	if (!typescript && source && source[pos] === ':') {
 		message += ` (did you forget to add \`lang="ts"\`?)`;
 	}
 
