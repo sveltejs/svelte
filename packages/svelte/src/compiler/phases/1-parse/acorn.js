@@ -6,7 +6,8 @@ import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
 import * as e from '../../errors.js';
 
-const ParserWithTS = acorn.Parser.extend(tsPlugin());
+const JSParser = acorn.Parser;
+const TSParser = JSParser.extend(tsPlugin());
 
 /**
  * @typedef {Comment & {
@@ -22,7 +23,7 @@ const ParserWithTS = acorn.Parser.extend(tsPlugin());
  * @param {boolean} [is_script]
  */
 export function parse(source, comments, typescript, is_script) {
-	const _ = typescript ? ParserWithTS : acorn.Parser;
+	const acorn = typescript ? TSParser : JSParser;
 
 	const { onComment, add_comments } = get_comment_handlers(
 		source,
@@ -30,7 +31,7 @@ export function parse(source, comments, typescript, is_script) {
 	);
 
 	// @ts-expect-error
-	const parse_statement = _.prototype.parseStatement;
+	const parse_statement = acorn.prototype.parseStatement;
 
 	// If we're dealing with a <script> then it might contain an export
 	// for something that doesn't exist directly inside but is inside the
@@ -38,7 +39,7 @@ export function parse(source, comments, typescript, is_script) {
 	// an error in these cases
 	if (is_script) {
 		// @ts-ignore
-		_.prototype.parseStatement = function (...args) {
+		acorn.prototype.parseStatement = function (...args) {
 			const v = parse_statement.call(this, ...args);
 			// @ts-ignore
 			this.undefinedExports = {};
@@ -47,7 +48,7 @@ export function parse(source, comments, typescript, is_script) {
 	}
 
 	try {
-		const ast = _.parse(source, {
+		const ast = acorn.parse(source, {
 			onComment,
 			sourceType: 'module',
 			ecmaVersion: 16,
@@ -64,7 +65,7 @@ export function parse(source, comments, typescript, is_script) {
 	} finally {
 		if (is_script) {
 			// @ts-expect-error
-			_.prototype.parseStatement = parse_statement;
+			acorn.prototype.parseStatement = parse_statement;
 		}
 	}
 }
@@ -76,12 +77,12 @@ export function parse(source, comments, typescript, is_script) {
  * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
 export function parse_expression_at(parser, source, index) {
-	const _ = parser.ts ? ParserWithTS : acorn.Parser;
+	const acorn = parser.ts ? TSParser : JSParser;
 
 	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
 
 	try {
-		const ast = _.parseExpressionAt(source, index, {
+		const ast = acorn.parseExpressionAt(source, index, {
 			onComment,
 			sourceType: 'module',
 			ecmaVersion: 16,
