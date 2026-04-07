@@ -172,6 +172,12 @@ export class Batch {
 	 */
 	#skipped_branches = new Map();
 
+	/**
+	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing
+	 * @type {Set<Effect>}
+	 */
+	#unskipped_branches = new Set();
+
 	is_fork = false;
 
 	#decrement_queued = false;
@@ -215,28 +221,31 @@ export class Batch {
 		if (!this.#skipped_branches.has(effect)) {
 			this.#skipped_branches.set(effect, { d: [], m: [] });
 		}
+		this.#unskipped_branches.delete(effect);
 	}
 
 	/**
 	 * Remove an effect from the #skipped_branches map and reschedule
 	 * any tracked dirty/maybe_dirty child effects
 	 * @param {Effect} effect
+	 * @param {(e: Effect) => void} callback
 	 */
-	unskip_effect(effect) {
+	unskip_effect(effect, callback = (e) => this.schedule(e)) {
 		var tracked = this.#skipped_branches.get(effect);
 		if (tracked) {
 			this.#skipped_branches.delete(effect);
 
 			for (var e of tracked.d) {
 				set_signal_status(e, DIRTY);
-				this.schedule(e);
+				callback(e);
 			}
 
 			for (e of tracked.m) {
 				set_signal_status(e, MAYBE_DIRTY);
-				this.schedule(e);
+				callback(e);
 			}
 		}
+		this.#unskipped_branches.add(effect);
 	}
 
 	#process() {
@@ -349,7 +358,9 @@ export class Batch {
 			next_batch.#process();
 		}
 
-		if (!batches.has(this)) {
+		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
+		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
+		if (async_mode_flag && !batches.has(this)) {
 			this.#commit();
 		}
 	}
@@ -419,18 +430,22 @@ export class Batch {
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
 	 * @param {Value} source
-	 * @param {any} old_value
+	 * @param {any} value
 	 * @param {boolean} [is_derived]
 	 */
-	capture(source, old_value, is_derived = false) {
-		if (old_value !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, old_value);
+	capture(source, value, is_derived = false) {
+		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
+			this.previous.set(source, source.v);
 		}
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, [source.v, is_derived]);
-			batch_values?.set(source, source.v);
+			this.current.set(source, [value, is_derived]);
+			batch_values?.set(source, value);
+		}
+
+		if (!this.is_fork) {
+			source.v = value;
 		}
 	}
 
@@ -524,6 +539,19 @@ export class Batch {
 			} else if (sources.length > 0) {
 				if (DEV) {
 					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
+				}
+
+				// A batch was unskipped in a later batch -> tell prior batches to unskip it, too
+				if (is_earlier) {
+					for (const unskipped of this.#unskipped_branches) {
+						batch.unskip_effect(unskipped, (e) => {
+							if ((e.f & (BLOCK_EFFECT | ASYNC)) !== 0) {
+								batch.schedule(e);
+							} else {
+								batch.#defer_effects([e]);
+							}
+						});
+					}
 				}
 
 				batch.activate();
@@ -787,6 +815,7 @@ export class Batch {
 	}
 }
 
+// TODO Svelte@6 think about removing the callback argument.
 /**
  * Synchronously flush any pending updates.
  * Returns void if no callback is provided, otherwise returns the result of calling the callback.
@@ -1161,11 +1190,6 @@ export function fork(fn) {
 	var settled = batch.settled();
 
 	flushSync(fn);
-
-	// revert state changes
-	for (var [source, value] of batch.previous) {
-		source.v = value;
-	}
 
 	return {
 		commit: async () => {
