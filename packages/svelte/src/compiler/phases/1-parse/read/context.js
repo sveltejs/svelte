@@ -30,7 +30,7 @@ export default function read_pattern(parser) {
 		e.expected_pattern(i);
 	}
 
-	i = match_bracket(parser, start);
+	i = match_bracket(parser, start, char, char === '{' ? '}' : ']');
 	parser.index = i;
 
 	const pattern_string = parser.template.slice(start, i);

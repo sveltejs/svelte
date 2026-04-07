@@ -146,11 +146,11 @@ const default_close = new Set(Object.values(default_brackets));
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {Record<string, string>} brackets
+ * @param {string} open
+ * @param {string} close
  */
-export function match_bracket(parser, start, brackets = default_brackets) {
-	const close = brackets === default_brackets ? default_close : new Set(Object.values(brackets));
-	const bracket_stack = [];
+export function match_bracket(parser, start, open, close, offset = 0) {
+	let depth = offset;
 
 	let i = start;
 
@@ -162,17 +162,10 @@ export function match_bracket(parser, start, brackets = default_brackets) {
 			continue;
 		}
 
-		if (char in brackets) {
-			bracket_stack.push(char);
-		} else if (close.has(char)) {
-			const popped = /** @type {string} */ (bracket_stack.pop());
-			const expected = /** @type {string} */ (brackets[popped]);
-
-			if (char !== expected) {
-				e.expected_token(i - 1, expected);
-			}
-
-			if (bracket_stack.length === 0) {
+		if (char === open) {
+			++depth;
+		} else if (char === close) {
+			if (--depth === 0) {
 				return i;
 			}
 		}
@@ -207,7 +200,7 @@ function match_quote(parser, start, quote) {
 		}
 
 		if (quote === '`' && char === '$' && parser.template[i] === '{') {
-			i = match_bracket(parser, i);
+			i = match_bracket(parser, i, '{', '}');
 		}
 	}
 
