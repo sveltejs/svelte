@@ -12,8 +12,6 @@ import { match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 
-const pointy_bois = { '<': '>' };
-
 /** @param {Parser} parser */
 export default function tag(parser) {
 	const start = parser.index;
@@ -103,7 +101,8 @@ function open(parser) {
 				}
 
 				if (end <= start) {
-					if (parser.loose && (expression = get_loose_identifier(parser))) {
+					if (parser.loose) {
+						expression = get_loose_identifier(parser);
 						break;
 					}
 

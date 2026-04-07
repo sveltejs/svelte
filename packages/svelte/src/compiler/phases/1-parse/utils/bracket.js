@@ -89,7 +89,7 @@ function count_leading_backslashes(string, search_start_index) {
  * @param {string} template The string to search.
  * @param {number} index The index to begin the search at.
  * @param {string} open The opening bracket (ex: `'{'` will search for `'}'`).
- * @returns {number | undefined} The index of the closing bracket, or undefined if not found.
+ * @returns {number} The index of the closing bracket
  */
 export function find_matching_bracket(template, index, open) {
 	const close = default_brackets[open];
@@ -131,7 +131,8 @@ export function find_matching_bracket(template, index, open) {
 			}
 		}
 	}
-	return undefined;
+
+	e.unexpected_eof(template.length);
 }
 
 /** @type {Record<string, string>} */
@@ -140,8 +141,6 @@ const default_brackets = {
 	'(': ')',
 	'[': ']'
 };
-
-const default_close = new Set(Object.values(default_brackets));
 
 /**
  * @param {Parser} parser
