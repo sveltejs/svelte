@@ -58,7 +58,9 @@ export function parse(source, comments, typescript, is_script) {
 
 		return /** @type {Program} */ (ast);
 	} catch (err) {
-		handle_parse_error(err);
+		// TODO the `return` in necessary for TS<7 due to a bug; otherwise
+		// the `finally` block is regarded as unreachable
+		return handle_parse_error(err);
 	} finally {
 		if (is_script) {
 			// @ts-expect-error
