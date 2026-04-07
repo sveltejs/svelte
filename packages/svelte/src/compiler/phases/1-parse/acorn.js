@@ -92,6 +92,13 @@ export function parse_expression_at(parser, source, index) {
 
 		add_comments(ast);
 
+		let end = ast.end;
+
+		const last_comment = parser.root.comments.at(-1);
+		if (last_comment && last_comment.end > end) end = last_comment.end;
+
+		parser.index = end;
+
 		return ast;
 	} catch (e) {
 		handle_parse_error(e);

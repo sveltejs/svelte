@@ -60,6 +60,8 @@ export default function read_pattern(parser) {
 		expression.end = expression.typeAnnotation.end;
 	}
 
+	parser.index = expression.end;
+
 	return expression;
 }
 

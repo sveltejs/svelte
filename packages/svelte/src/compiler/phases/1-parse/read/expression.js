@@ -36,13 +36,6 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 	try {
 		const node = parse_expression_at(parser, parser.template, parser.index);
 
-		let index = /** @type {number} */ (node.end);
-
-		const last_comment = parser.root.comments.at(-1);
-		if (last_comment && last_comment.end > index) index = last_comment.end;
-
-		parser.index = index;
-
 		return /** @type {Expression} */ (remove_parens(node));
 	} catch (err) {
 		// If we are in an each loop we need the error to be thrown in cases like

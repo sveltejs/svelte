@@ -387,14 +387,20 @@ function open(parser) {
 			parser.eat(')', true);
 		}
 
-		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
-		const params = parser.template.slice(params_start, parser.index);
+		/** @type {Pattern[]} */
+		let params = [];
 
-		let function_expression = matched
-			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(parser, prelude + `${params} => {}`, params_start)
-				)
-			: { params: [] };
+		if (matched) {
+			const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
+			const params_string = parser.template.slice(params_start, parser.index);
+
+			const fn = /** @type {ArrowFunctionExpression} */ (
+				parse_expression_at(parser, prelude + `${params_string} => {}`, params_start)
+			);
+
+			params = fn.params;
+			parser.index -= 6;
+		}
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -406,7 +412,7 @@ function open(parser) {
 			end: -1,
 			expression: id,
 			typeParams: type_params,
-			parameters: function_expression.params,
+			parameters: params,
 			body: create_fragment(),
 			metadata: {
 				can_hoist: false,
