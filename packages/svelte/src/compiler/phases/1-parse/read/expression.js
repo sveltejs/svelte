@@ -27,16 +27,15 @@ export function get_loose_identifier(parser, opening_token) {
 /**
  * @param {Parser} parser
  * @param {string} [opening_token]
- * @param {boolean} [disallow_loose]
  * @returns {Expression}
  */
-export default function read_expression(parser, opening_token, disallow_loose) {
+export default function read_expression(parser, opening_token) {
 	try {
 		return /** @type {Expression} */ (parse_expression_at(parser, parser.template, parser.index));
 	} catch (err) {
 		// If we are in an each loop we need the error to be thrown in cases like
 		// `as { y = z }` so we still throw and handle the error there
-		if (parser.loose && !disallow_loose) {
+		if (parser.loose) {
 			const expression = get_loose_identifier(parser, opening_token);
 			if (expression) {
 				return expression;

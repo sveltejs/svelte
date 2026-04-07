@@ -93,7 +93,9 @@ function open(parser) {
 		// we get a valid expression
 		while (!expression) {
 			try {
-				expression = read_expression(parser, undefined, true);
+				expression = /** @type {Expression} */ (
+					parse_expression_at(parser, parser.template, parser.index)
+				);
 			} catch (err) {
 				end = /** @type {any} */ (err).position[0] - 2;
 
