@@ -55,7 +55,7 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 			}
 		}
 
-		parser.acorn_error(err);
+		throw err;
 	}
 
 	if (!parser.ts) {

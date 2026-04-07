@@ -4,8 +4,10 @@
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
+import * as e from '../../errors.js';
 
-const ParserWithTS = acorn.Parser.extend(tsPlugin());
+const JSParser = acorn.Parser;
+const TSParser = JSParser.extend(tsPlugin());
 
 /**
  * @typedef {Comment & {
@@ -21,15 +23,15 @@ const ParserWithTS = acorn.Parser.extend(tsPlugin());
  * @param {boolean} [is_script]
  */
 export function parse(source, comments, typescript, is_script) {
-	const parser = typescript ? ParserWithTS : acorn.Parser;
+	const acorn = typescript ? TSParser : JSParser;
 
 	const { onComment, add_comments } = get_comment_handlers(
 		source,
 		/** @type {CommentWithLocation[]} */ (comments)
 	);
 
-	// @ts-ignore
-	const parse_statement = parser.prototype.parseStatement;
+	// @ts-expect-error
+	const parse_statement = acorn.prototype.parseStatement;
 
 	// If we're dealing with a <script> then it might contain an export
 	// for something that doesn't exist directly inside but is inside the
@@ -37,7 +39,7 @@ export function parse(source, comments, typescript, is_script) {
 	// an error in these cases
 	if (is_script) {
 		// @ts-ignore
-		parser.prototype.parseStatement = function (...args) {
+		acorn.prototype.parseStatement = function (...args) {
 			const v = parse_statement.call(this, ...args);
 			// @ts-ignore
 			this.undefinedExports = {};
@@ -45,25 +47,27 @@ export function parse(source, comments, typescript, is_script) {
 		};
 	}
 
-	let ast;
-
 	try {
-		ast = parser.parse(source, {
+		const ast = acorn.parse(source, {
 			onComment,
 			sourceType: 'module',
 			ecmaVersion: 16,
 			locations: true
 		});
+
+		add_comments(ast);
+
+		return /** @type {Program} */ (ast);
+	} catch (err) {
+		// TODO the `return` in necessary for TS<7 due to a bug; otherwise
+		// the `finally` block is regarded as unreachable
+		return handle_parse_error(err, source, typescript);
 	} finally {
 		if (is_script) {
-			// @ts-ignore
-			parser.prototype.parseStatement = parse_statement;
+			// @ts-expect-error
+			acorn.prototype.parseStatement = parse_statement;
 		}
 	}
-
-	add_comments(ast);
-
-	return /** @type {Program} */ (ast);
 }
 
 /**
@@ -73,21 +77,44 @@ export function parse(source, comments, typescript, is_script) {
  * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
 export function parse_expression_at(parser, source, index) {
-	const _ = parser.ts ? ParserWithTS : acorn.Parser;
+	const acorn = parser.ts ? TSParser : JSParser;
 
 	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
 
-	const ast = _.parseExpressionAt(source, index, {
-		onComment,
-		sourceType: 'module',
-		ecmaVersion: 16,
-		locations: true,
-		preserveParens: true
-	});
+	try {
+		const ast = acorn.parseExpressionAt(source, index, {
+			onComment,
+			sourceType: 'module',
+			ecmaVersion: 16,
+			locations: true,
+			preserveParens: true
+		});
 
-	add_comments(ast);
+		add_comments(ast);
 
-	return ast;
+		return ast;
+	} catch (e) {
+		handle_parse_error(e, source, parser.ts);
+	}
+}
+
+const regex_position_indicator = / \(\d+:\d+\)$/;
+
+/**
+ * @param {any} err
+ * @param {string} source
+ * @param {boolean} typescript
+ * @returns {never}
+ */
+function handle_parse_error(err, source, typescript) {
+	let message = /** @type {string} */ (err.message).replace(regex_position_indicator, '');
+	let pos = /** @type {number} */ (err.pos);
+
+	if (typescript && source[pos] === ':') {
+		message += ` (did you forget to add \`lang="ts"\`?)`;
+	}
+
+	e.js_parse_error(pos, message);
 }
 
 /**
