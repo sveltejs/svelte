@@ -81,8 +81,8 @@ function open(parser) {
 	if (parser.eat('each')) {
 		parser.require_whitespace();
 
-		const template = parser.template;
-		let end = parser.template.length;
+		let template = parser.template;
+		let end = template.length;
 
 		/** @type {Expression | undefined} */
 		let expression;
@@ -94,12 +94,12 @@ function open(parser) {
 		while (!expression) {
 			try {
 				expression = /** @type {Expression} */ (
-					parse_expression_at(parser, parser.template, parser.index)
+					parse_expression_at(parser, template, parser.index)
 				);
 			} catch (err) {
 				end = /** @type {any} */ (err).position[0] - 2;
 
-				while (end > start && parser.template.slice(end, end + 2) !== 'as') {
+				while (end > start && template.slice(end, end + 2) !== 'as') {
 					end -= 1;
 				}
 
@@ -113,13 +113,9 @@ function open(parser) {
 					throw err;
 				}
 
-				// @ts-expect-error parser.template is meant to be readonly, this is a special case
-				parser.template = template.slice(0, end);
+				template = template.slice(0, end);
 			}
 		}
-
-		// @ts-expect-error
-		parser.template = template;
 
 		parser.allow_whitespace();
 
