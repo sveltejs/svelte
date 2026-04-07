@@ -1,8 +1,6 @@
 /** @import { Expression } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import { parse_expression_at, remove_parens } from '../acorn.js';
-import { regex_whitespace } from '../../patterns.js';
-import * as e from '../../../errors.js';
+import { parse_expression_at } from '../acorn.js';
 import { find_matching_bracket } from '../utils/bracket.js';
 
 /**
@@ -34,9 +32,7 @@ export function get_loose_identifier(parser, opening_token) {
  */
 export default function read_expression(parser, opening_token, disallow_loose) {
 	try {
-		const node = parse_expression_at(parser, parser.template, parser.index);
-
-		return /** @type {Expression} */ (remove_parens(node));
+		return /** @type {Expression} */ (parse_expression_at(parser, parser.template, parser.index));
 	} catch (err) {
 		// If we are in an each loop we need the error to be thrown in cases like
 		// `as { y = z }` so we still throw and handle the error there

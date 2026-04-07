@@ -1,7 +1,7 @@
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
 import { match_bracket } from '../utils/bracket.js';
-import { parse_expression_at, remove_parens } from '../acorn.js';
+import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
 
@@ -49,8 +49,10 @@ export default function read_pattern(parser) {
 		space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
 
 	/** @type {any} */
-	let expression = remove_parens(
-		parse_expression_at(parser, `${space_with_newline}(${pattern_string} = 1)`, start - 1)
+	let expression = parse_expression_at(
+		parser,
+		`${space_with_newline}(${pattern_string} = 1)`,
+		start - 1
 	);
 
 	expression = expression.left;
@@ -88,13 +90,13 @@ function read_type_annotation(parser) {
 		// parameters as part of a sequence expression instead, and will then error on optional
 		// parameters (`?:`). Therefore replace that sequence with something that will not error.
 		parser.template.slice(parser.index).replace(/\?\s*:/g, ':');
-	let expression = remove_parens(parse_expression_at(parser, template, a));
+	let expression = parse_expression_at(parser, template, a);
 
 	// `foo: bar = baz` gets mangled — fix it
 	if (expression.type === 'AssignmentExpression') {
 		let b = expression.right.start;
 		while (template[b] !== '=') b -= 1;
-		expression = remove_parens(parse_expression_at(parser, template.slice(0, b), a));
+		expression = parse_expression_at(parser, template.slice(0, b), a);
 	}
 
 	// `array as item: string, index` becomes `string, index`, which is mistaken as a sequence expression - fix that

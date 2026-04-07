@@ -99,7 +99,11 @@ export function parse_expression_at(parser, source, index) {
 
 		parser.index = end;
 
-		return ast;
+		return walk(ast, null, {
+			ParenthesizedExpression(node, context) {
+				return context.visit(node.expression);
+			}
+		});
 	} catch (e) {
 		handle_parse_error(e);
 	}
@@ -113,18 +117,6 @@ const regex_position_indicator = / \(\d+:\d+\)$/;
  */
 function handle_parse_error(err) {
 	e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
-}
-
-/**
- * @param {acorn.Expression} node
- * @returns {acorn.Expression}
- */
-export function remove_parens(node) {
-	return walk(node, null, {
-		ParenthesizedExpression(node, context) {
-			return context.visit(node.expression);
-		}
-	});
 }
 
 /**
