@@ -51,7 +51,7 @@ export function parse(source, comments, typescript, is_script) {
 			onComment,
 			sourceType: 'module',
 			ecmaVersion: 16,
-			locations: false
+			locations: true
 		});
 
 		add_comments(ast);
