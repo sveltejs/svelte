@@ -158,20 +158,18 @@ export class BranchManager {
 		var defer = should_defer_append();
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
+			var effect = branch(() => fn(this.anchor));
+
 			if (defer) {
 				var fragment = document.createDocumentFragment();
 				var anchor = create_text();
 				fragment.append(anchor);
 
-				this.#offscreen.set(
-					key,
-					branch(() => fn(anchor))
-				);
+				move_effect_before(effect, anchor);
+
+				this.#offscreen.set(key, effect);
 			} else {
-				this.#onscreen.set(
-					key,
-					branch(() => fn(this.anchor))
-				);
+				this.#onscreen.set(key, effect);
 			}
 		}
 
