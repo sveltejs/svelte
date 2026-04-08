@@ -16,15 +16,6 @@ function find_end(haystack, needle, start) {
 }
 
 /**
- * @param {string} string The string to search.
- * @param {number} search_start_index The index to start searching at.
- * @returns {number} The index of the end of this regex expression, or `Infinity` if not found.
- */
-function find_regex_end(string, search_start_index) {
-	return find_unescaped_char(string, search_start_index, '/');
-}
-
-/**
  *
  * @param {string} string The string to search.
  * @param {number} search_start_index The index to begin the search at.
@@ -93,7 +84,7 @@ export function match_bracket(source, start, open, close, offset = 0) {
 			} else if (next === '*') {
 				i = find_end(source, '*/', i + 1);
 			} else {
-				i = find_regex_end(source, i + 1) + '/'.length;
+				i = find_unescaped_char(source, i + 1, '/') + '/'.length;
 			}
 
 			continue;
