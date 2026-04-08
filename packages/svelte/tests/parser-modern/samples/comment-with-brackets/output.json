@@ -1,0 +1,592 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 157,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "EachBlock",
+				"start": 0,
+				"end": 38,
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 10,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 7
+						},
+						"end": {
+							"line": 1,
+							"column": 10
+						}
+					},
+					"name": "foo"
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "ExpressionTag",
+							"start": 28,
+							"end": 31,
+							"expression": {
+								"type": "Identifier",
+								"start": 29,
+								"end": 30,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 29
+									},
+									"end": {
+										"line": 1,
+										"column": 30
+									}
+								},
+								"name": "x"
+							}
+						}
+					]
+				},
+				"context": {
+					"type": "ObjectPattern",
+					"start": 14,
+					"end": 27,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 14
+						},
+						"end": {
+							"line": 1,
+							"column": 27
+						}
+					},
+					"properties": [
+						{
+							"type": "Property",
+							"start": 16,
+							"end": 17,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 16
+								},
+								"end": {
+									"line": 1,
+									"column": 17
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 16,
+								"end": 17,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 16
+									},
+									"end": {
+										"line": 1,
+										"column": 17
+									}
+								},
+								"name": "x"
+							},
+							"value": {
+								"type": "Identifier",
+								"start": 16,
+								"end": 17,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 16
+									},
+									"end": {
+										"line": 1,
+										"column": 17
+									}
+								},
+								"name": "x"
+							},
+							"kind": "init",
+							"trailingComments": [
+								{
+									"type": "Block",
+									"value": " { ",
+									"start": 18,
+									"end": 25
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"type": "Text",
+				"start": 38,
+				"end": 39,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 39,
+				"end": 78,
+				"expression": {
+					"type": "Identifier",
+					"start": 46,
+					"end": 49,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 7
+						},
+						"end": {
+							"line": 2,
+							"column": 10
+						}
+					},
+					"name": "foo"
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "ExpressionTag",
+							"start": 68,
+							"end": 71,
+							"expression": {
+								"type": "Identifier",
+								"start": 69,
+								"end": 70,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 30
+									},
+									"end": {
+										"line": 2,
+										"column": 31
+									}
+								},
+								"name": "x"
+							}
+						}
+					]
+				},
+				"context": {
+					"type": "ObjectPattern",
+					"start": 53,
+					"end": 67,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 15
+						},
+						"end": {
+							"line": 2,
+							"column": 29
+						}
+					},
+					"properties": [
+						{
+							"type": "Property",
+							"start": 55,
+							"end": 56,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 17
+								},
+								"end": {
+									"line": 2,
+									"column": 18
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 55,
+								"end": 56,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 17
+									},
+									"end": {
+										"line": 2,
+										"column": 18
+									}
+								},
+								"name": "x"
+							},
+							"value": {
+								"type": "Identifier",
+								"start": 55,
+								"end": 56,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 17
+									},
+									"end": {
+										"line": 2,
+										"column": 18
+									}
+								},
+								"name": "x"
+							},
+							"kind": "init",
+							"trailingComments": [
+								{
+									"type": "Block",
+									"value": " {{ ",
+									"start": 57,
+									"end": 65
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"type": "Text",
+				"start": 78,
+				"end": 79,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 79,
+				"end": 117,
+				"expression": {
+					"type": "Identifier",
+					"start": 86,
+					"end": 89,
+					"loc": {
+						"start": {
+							"line": 3,
+							"column": 7
+						},
+						"end": {
+							"line": 3,
+							"column": 10
+						}
+					},
+					"name": "foo"
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "ExpressionTag",
+							"start": 107,
+							"end": 110,
+							"expression": {
+								"type": "Identifier",
+								"start": 108,
+								"end": 109,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 29
+									},
+									"end": {
+										"line": 3,
+										"column": 30
+									}
+								},
+								"name": "x"
+							}
+						}
+					]
+				},
+				"context": {
+					"type": "ObjectPattern",
+					"start": 93,
+					"end": 106,
+					"loc": {
+						"start": {
+							"line": 3,
+							"column": 15
+						},
+						"end": {
+							"line": 3,
+							"column": 28
+						}
+					},
+					"properties": [
+						{
+							"type": "Property",
+							"start": 95,
+							"end": 96,
+							"loc": {
+								"start": {
+									"line": 3,
+									"column": 17
+								},
+								"end": {
+									"line": 3,
+									"column": 18
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 95,
+								"end": 96,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 17
+									},
+									"end": {
+										"line": 3,
+										"column": 18
+									}
+								},
+								"name": "x"
+							},
+							"value": {
+								"type": "Identifier",
+								"start": 95,
+								"end": 96,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 17
+									},
+									"end": {
+										"line": 3,
+										"column": 18
+									}
+								},
+								"name": "x"
+							},
+							"kind": "init",
+							"trailingComments": [
+								{
+									"type": "Block",
+									"value": " } ",
+									"start": 97,
+									"end": 104
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"type": "Text",
+				"start": 117,
+				"end": 118,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 118,
+				"end": 157,
+				"expression": {
+					"type": "Identifier",
+					"start": 125,
+					"end": 128,
+					"loc": {
+						"start": {
+							"line": 4,
+							"column": 7
+						},
+						"end": {
+							"line": 4,
+							"column": 10
+						}
+					},
+					"name": "foo"
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "ExpressionTag",
+							"start": 147,
+							"end": 150,
+							"expression": {
+								"type": "Identifier",
+								"start": 148,
+								"end": 149,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 30
+									},
+									"end": {
+										"line": 4,
+										"column": 31
+									}
+								},
+								"name": "x"
+							}
+						}
+					]
+				},
+				"context": {
+					"type": "ObjectPattern",
+					"start": 132,
+					"end": 146,
+					"loc": {
+						"start": {
+							"line": 4,
+							"column": 15
+						},
+						"end": {
+							"line": 4,
+							"column": 29
+						}
+					},
+					"properties": [
+						{
+							"type": "Property",
+							"start": 134,
+							"end": 135,
+							"loc": {
+								"start": {
+									"line": 4,
+									"column": 17
+								},
+								"end": {
+									"line": 4,
+									"column": 18
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 134,
+								"end": 135,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 17
+									},
+									"end": {
+										"line": 4,
+										"column": 18
+									}
+								},
+								"name": "x"
+							},
+							"value": {
+								"type": "Identifier",
+								"start": 134,
+								"end": 135,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 17
+									},
+									"end": {
+										"line": 4,
+										"column": 18
+									}
+								},
+								"name": "x"
+							},
+							"kind": "init",
+							"trailingComments": [
+								{
+									"type": "Block",
+									"value": " }} ",
+									"start": 136,
+									"end": 144
+								}
+							]
+						}
+					]
+				}
+			}
+		]
+	},
+	"options": null,
+	"comments": [
+		{
+			"type": "Block",
+			"value": " { ",
+			"start": 18,
+			"end": 25,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 18
+				},
+				"end": {
+					"line": 1,
+					"column": 25
+				}
+			}
+		},
+		{
+			"type": "Block",
+			"value": " {{ ",
+			"start": 57,
+			"end": 65,
+			"loc": {
+				"start": {
+					"line": 2,
+					"column": 19
+				},
+				"end": {
+					"line": 2,
+					"column": 27
+				}
+			}
+		},
+		{
+			"type": "Block",
+			"value": " } ",
+			"start": 97,
+			"end": 104,
+			"loc": {
+				"start": {
+					"line": 3,
+					"column": 19
+				},
+				"end": {
+					"line": 3,
+					"column": 26
+				}
+			}
+		},
+		{
+			"type": "Block",
+			"value": " }} ",
+			"start": 136,
+			"end": 144,
+			"loc": {
+				"start": {
+					"line": 4,
+					"column": 19
+				},
+				"end": {
+					"line": 4,
+					"column": 27
+				}
+			}
+		}
+	]
+}
