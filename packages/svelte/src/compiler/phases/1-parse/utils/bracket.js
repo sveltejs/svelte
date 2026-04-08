@@ -27,7 +27,9 @@ export function match_bracket(source, start, open, close, offset = 0) {
 			} else if (next === '*') {
 				i = find_end(source, '*/', i + 1);
 			} else {
-				i = find_unescaped_char(source, i + 1, '/');
+				do {
+					i = find_end(source, char, i);
+				} while (is_escaped(source, i - 1));
 			}
 
 			continue;
@@ -61,43 +63,24 @@ function find_end(haystack, needle, start) {
 }
 
 /**
- *
- * @param {string} string The string to search.
- * @param {number} search_start_index The index to begin the search at.
- * @param {string} char The character to search for.
- * @returns {number} The index of the first unescaped instance of {@link char}, or `Infinity` if not found.
- */
-function find_unescaped_char(string, search_start_index, char) {
-	let i = search_start_index;
-
-	while (true) {
-		i = find_end(string, char, i);
-
-		if (count_leading_backslashes(string, i - 1) % 2 === 0) {
-			return i;
-		}
-	}
-}
-
-/**
- * Count consecutive leading backslashes before {@link index}.
+ * Returns true if there are an odd number of backslashes directly before {@link index}
  *
  * @example
  * ```js
- * count_leading_backslashes('\\\\\\foo', 3); // 3 (the backslashes have to be escaped in the string literal, there are three in reality)
+ * is_escaped('\\\\\\foo', 3); // true (the backslashes have to be escaped in the string literal, there are three in reality)
  * ```
  *
  * @param {string} string The string to search.
- * @param {number} index The index to begin the search at.
+ * @param {number} index The index of the character being checked
  */
-function count_leading_backslashes(string, index) {
+function is_escaped(string, index) {
 	let start = index;
 
 	while (string.charCodeAt(start - 1) === 92) {
 		start--;
 	}
 
-	return index - start;
+	return (index - start) % 2 !== 0;
 }
 
 /**
