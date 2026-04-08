@@ -138,11 +138,13 @@ const visitors = {
 		delete node.abstract;
 		delete node.implements;
 		delete node.superTypeArguments;
+		delete node.superTypeParameters;
 		return context.next();
 	},
 	ClassExpression(node, context) {
 		delete node.implements;
 		delete node.superTypeArguments;
+		delete node.superTypeParameters;
 		return context.next();
 	},
 	MethodDefinition(node, context) {

@@ -2,7 +2,6 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO works on https://github.com/sveltejs/svelte/pull/17971
 	async test({ assert, target }) {
 		const [x, y, resolve] = target.querySelectorAll('button');
 
@@ -18,7 +17,13 @@ export default test({
 			<button>y++</button>
 			<button>resolve</button>
 			<hr>
-		` // if this shows world world "world" world world world "world" - then this would also be ok
+			world
+			"world"
+			world
+			world
+			world
+			"world"
+		` // if this does not show world "world" world world world "world" - then this would also be ok
 		);
 
 		resolve.click();

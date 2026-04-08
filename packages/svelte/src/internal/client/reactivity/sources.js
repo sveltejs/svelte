@@ -180,18 +180,10 @@ export function set(source, value, should_proxy = false) {
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
-		var old_value = source.v;
-
-		if (is_destroying_effect) {
-			old_values.set(source, value);
-		} else {
-			old_values.set(source, old_value);
-		}
-
-		source.v = value;
+		old_values.set(source, is_destroying_effect ? value : source.v);
 
 		var batch = Batch.ensure();
-		batch.capture(source, old_value);
+		batch.capture(source, value);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {

@@ -352,7 +352,7 @@ export function client_component(analysis, options) {
 			)
 		);
 	} else if (dev) {
-		component_returned_object.push(b.spread(b.call(b.id('$.legacy_api'))));
+		component_returned_object.unshift(b.spread(b.call(b.id('$.legacy_api'))));
 	}
 
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];

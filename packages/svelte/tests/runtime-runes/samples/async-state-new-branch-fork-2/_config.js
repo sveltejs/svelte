@@ -2,7 +2,6 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO works on https://github.com/sveltejs/svelte/pull/17971
 	async test({ assert, target }) {
 		const [x, y, shift, pop, commit] = target.querySelectorAll('button');
 
@@ -42,6 +41,8 @@ export default test({
 		shift.click();
 		await tick();
 		shift.click();
+		await tick();
+		shift.click(); // would be ok to not need this one
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
