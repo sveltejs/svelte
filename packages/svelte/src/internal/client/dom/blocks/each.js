@@ -22,7 +22,6 @@ import {
 	clear_text_content,
 	create_text,
 	get_first_child,
-	get_next_sibling,
 	move_effect_before,
 	should_defer_append
 } from '../operations.js';
@@ -30,7 +29,6 @@ import {
 	block,
 	branch,
 	destroy_effect,
-	move_effect,
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
@@ -153,9 +151,7 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 
 		if (preserved_effects?.has(e)) {
 			e.f |= EFFECT_OFFSCREEN;
-
-			const fragment = document.createDocumentFragment();
-			move_effect(e, fragment);
+			move_effect_before(e, create_text());
 		} else {
 			destroy_effect(to_destroy[i], remove_dom);
 		}
