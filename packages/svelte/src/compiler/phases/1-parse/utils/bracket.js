@@ -1,6 +1,51 @@
 import * as e from '../../../errors.js';
 
 /**
+ * @param {string} source
+ * @param {number} start
+ * @param {string} open
+ * @param {string} close
+ */
+export function match_bracket(source, start, open, close, offset = 0) {
+	let depth = offset;
+
+	let i = start;
+
+	while (i < source.length) {
+		let char = source[i++];
+
+		if (char === "'" || char === '"' || char === '`') {
+			i = match_quote(source, i, char);
+			continue;
+		}
+
+		if (char === '/') {
+			const next = source[i + 1];
+
+			if (next === '/') {
+				i = find_end(source, '\n', i + 1);
+			} else if (next === '*') {
+				i = find_end(source, '*/', i + 1);
+			} else {
+				i = find_unescaped_char(source, i + 1, '/') + '/'.length;
+			}
+
+			continue;
+		}
+
+		if (char === open) {
+			++depth;
+		} else if (char === close) {
+			if (--depth === 0) {
+				return i;
+			}
+		}
+	}
+
+	e.unexpected_eof(source.length);
+}
+
+/**
  * @param {string} haystack
  * @param {string} needle
  * @param {number} start
@@ -59,51 +104,6 @@ function count_leading_backslashes(string, search_start_index) {
 		i--;
 	}
 	return count;
-}
-
-/**
- * @param {string} source
- * @param {number} start
- * @param {string} open
- * @param {string} close
- */
-export function match_bracket(source, start, open, close, offset = 0) {
-	let depth = offset;
-
-	let i = start;
-
-	while (i < source.length) {
-		let char = source[i++];
-
-		if (char === "'" || char === '"' || char === '`') {
-			i = match_quote(source, i, char);
-			continue;
-		}
-
-		if (char === '/') {
-			const next = source[i + 1];
-
-			if (next === '/') {
-				i = find_end(source, '\n', i + 1);
-			} else if (next === '*') {
-				i = find_end(source, '*/', i + 1);
-			} else {
-				i = find_unescaped_char(source, i + 1, '/') + '/'.length;
-			}
-
-			continue;
-		}
-
-		if (char === open) {
-			++depth;
-		} else if (char === close) {
-			if (--depth === 0) {
-				return i;
-			}
-		}
-	}
-
-	e.unexpected_eof(source.length);
 }
 
 /**
