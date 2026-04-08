@@ -27,7 +27,7 @@ export function match_bracket(source, start, open, close, offset = 0) {
 			} else if (next === '*') {
 				i = find_end(source, '*/', i + 1);
 			} else {
-				i = find_unescaped_char(source, i + 1, '/') + '/'.length;
+				i = find_unescaped_char(source, i + 1, '/');
 			}
 
 			continue;
@@ -71,39 +71,33 @@ function find_unescaped_char(string, search_start_index, char) {
 	let i = search_start_index;
 
 	while (true) {
-		i = string.indexOf(char, i);
-
-		if (i === -1) {
-			e.unexpected_eof(string.length);
-		}
+		i = find_end(string, char, i);
 
 		if (count_leading_backslashes(string, i - 1) % 2 === 0) {
 			return i;
 		}
-
-		i += 1;
 	}
 }
 
 /**
- * Count consecutive leading backslashes before {@link search_start_index}.
+ * Count consecutive leading backslashes before {@link index}.
  *
  * @example
  * ```js
- * count_leading_backslashes('\\\\\\foo', 2); // 3 (the backslashes have to be escaped in the string literal, there are three in reality)
+ * count_leading_backslashes('\\\\\\foo', 3); // 3 (the backslashes have to be escaped in the string literal, there are three in reality)
  * ```
  *
  * @param {string} string The string to search.
- * @param {number} search_start_index The index to begin the search at.
+ * @param {number} index The index to begin the search at.
  */
-function count_leading_backslashes(string, search_start_index) {
-	let i = search_start_index;
-	let count = 0;
-	while (string.charCodeAt(i) === 92) {
-		count++;
-		i--;
+function count_leading_backslashes(string, index) {
+	let start = index;
+
+	while (string.charCodeAt(start - 1) === 92) {
+		start--;
 	}
-	return count;
+
+	return index - start;
 }
 
 /**
