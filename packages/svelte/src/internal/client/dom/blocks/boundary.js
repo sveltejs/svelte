@@ -1,11 +1,5 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import {
-	BOUNDARY_EFFECT,
-	DIRTY,
-	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT,
-	MAYBE_DIRTY
-} from '#client/constants';
+import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
 import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
@@ -35,13 +29,12 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, current_batch, previous_batch, schedule_effect } from '../../reactivity/batch.js';
+import { Batch, current_batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
 import { defer_effect } from '../../reactivity/utils.js';
-import { set_signal_status } from '../../reactivity/status.js';
 
 /**
  * @typedef {{
