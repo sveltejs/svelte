@@ -27,8 +27,6 @@ export function hmr(fn) {
 
 		let ran = false;
 
-		var parent_effect = /** @type {Effect} */ (active_effect);
-
 		block(() => {
 			if (component === (component = get(current))) {
 				return;
@@ -59,7 +57,7 @@ export function hmr(fn) {
 			// Forward the nodes from the inner effect to the outer active effect which would
 			// get them if the HMR wrapper wasn't there. Do this inside the block not outside
 			// so that HMR updates to the component will also update the nodes on the active effect.
-			parent_effect.nodes ??= effect.nodes;
+			/** @type {Effect} */ (active_effect).nodes = effect.nodes;
 		}, EFFECT_TRANSPARENT);
 
 		ran = true;
