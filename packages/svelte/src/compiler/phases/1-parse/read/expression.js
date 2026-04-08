@@ -1,17 +1,18 @@
 /** @import { Expression } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import { parse_expression_at } from '../acorn.js';
+import { parse, parse_expression_at } from '../acorn.js';
 import { match_bracket } from '../utils/bracket.js';
 
 /**
  * @param {Parser} parser
  * @param {string} [open]
+ * @param {string} [close]
  * @returns {Expression}
  */
-export function get_loose_identifier(parser, open = '{') {
+export function get_loose_identifier(parser, open = '{', close = '}') {
 	// Find the next } and treat it as the end of the expression
 	const start = parser.index;
-	const end = match_bracket(parser.template, parser.index, open, open === '{' ? '}' : ')', 1) - 1;
+	const end = match_bracket(parser.template, parser.index, open, close, 1) - 1;
 
 	parser.index = end;
 
@@ -21,19 +22,30 @@ export function get_loose_identifier(parser, open = '{') {
 
 /**
  * @param {Parser} parser
- * @param {string} [opening_token]
+ * @param {string} [open]
+ * @param {string} [close]
  * @returns {Expression}
  */
-export default function read_expression(parser, opening_token) {
+export default function read_expression(parser, open, close) {
+	/** @type {Expression} */
+	let expression;
+
 	try {
-		return /** @type {Expression} */ (parse_expression_at(parser, parser.template, parser.index));
+		expression = /** @type {Expression} */ (
+			parse_expression_at(parser, parser.template, parser.index)
+		);
 	} catch (err) {
-		// If we are in an each loop we need the error to be thrown in cases like
-		// `as { y = z }` so we still throw and handle the error there
-		if (parser.loose) {
-			return get_loose_identifier(parser, opening_token);
+		if (!parser.loose) {
+			throw err;
 		}
 
-		throw err;
+		expression = get_loose_identifier(parser, open, close);
 	}
+
+	if (close) {
+		parser.allow_whitespace();
+		parser.eat(close, true);
+	}
+
+	return expression;
 }

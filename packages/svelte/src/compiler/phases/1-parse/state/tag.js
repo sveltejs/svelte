@@ -29,10 +29,7 @@ export default function tag(parser) {
 		}
 	}
 
-	const expression = read_expression(parser);
-
-	parser.allow_whitespace();
-	parser.eat('}', true);
+	const expression = read_expression(parser, '{', '}');
 
 	parser.append({
 		type: 'ExpressionTag',
@@ -59,16 +56,13 @@ function open(parser) {
 			elseif: false,
 			start,
 			end: -1,
-			test: read_expression(parser),
+			test: read_expression(parser, '{', '}'),
 			consequent: create_fragment(),
 			alternate: null,
 			metadata: {
 				expression: new ExpressionMetadata()
 			}
 		});
-
-		parser.allow_whitespace();
-		parser.eat('}', true);
 
 		parser.stack.push(block);
 		parser.fragments.push(block.consequent);
@@ -182,9 +176,7 @@ function open(parser) {
 		if (parser.eat('(')) {
 			parser.allow_whitespace();
 
-			key = read_expression(parser, '(');
-			parser.allow_whitespace();
-			parser.eat(')', true);
+			key = read_expression(parser, '(', ')');
 			parser.allow_whitespace();
 		}
 
@@ -315,10 +307,7 @@ function open(parser) {
 	if (parser.eat('key')) {
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
-		parser.allow_whitespace();
-
-		parser.eat('}', true);
+		const expression = read_expression(parser, '{', '}');
 
 		/** @type {AST.KeyBlock} */
 		const block = parser.append({
@@ -443,10 +432,7 @@ function next(parser) {
 		if (parser.eat('if')) {
 			parser.require_whitespace();
 
-			const expression = read_expression(parser);
-
-			parser.allow_whitespace();
-			parser.eat('}', true);
+			const expression = read_expression(parser, '{', '}');
 
 			let elseif_start = start - 1;
 			while (parser.template[elseif_start] !== '{') elseif_start -= 1;
@@ -616,10 +602,7 @@ function special(parser) {
 		// {@html content} tag
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
-
-		parser.allow_whitespace();
-		parser.eat('}', true);
+		const expression = read_expression(parser, '{', '}');
 
 		parser.append({
 			type: 'HtmlTag',
@@ -681,7 +664,8 @@ function special(parser) {
 		parser.allow_whitespace();
 
 		const expression_start = parser.index;
-		const init = read_expression(parser);
+		const init = read_expression(parser, '{', '}');
+
 		if (
 			init.type === 'SequenceExpression' &&
 			!parser.template.substring(expression_start, init.start).includes('(')
@@ -689,9 +673,6 @@ function special(parser) {
 			// const a = (b, c) is allowed but a = b, c = d is not;
 			e.const_tag_invalid_expression(init);
 		}
-		parser.allow_whitespace();
-
-		parser.eat('}', true);
 
 		parser.append({
 			type: 'ConstTag',
@@ -715,7 +696,7 @@ function special(parser) {
 		// {@render foo(...)}
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
+		const expression = read_expression(parser, '{', '}');
 
 		if (
 			expression.type !== 'CallExpression' &&
@@ -723,9 +704,6 @@ function special(parser) {
 		) {
 			e.render_tag_invalid_expression(expression);
 		}
-
-		parser.allow_whitespace();
-		parser.eat('}', true);
 
 		parser.append({
 			type: 'RenderTag',

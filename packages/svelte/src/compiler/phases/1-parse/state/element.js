@@ -535,9 +535,7 @@ function read_attribute(parser) {
 		if (parser.eat('@attach')) {
 			parser.require_whitespace();
 
-			const expression = read_expression(parser);
-			parser.allow_whitespace();
-			parser.eat('}', true);
+			const expression = read_expression(parser, '{', '}');
 
 			/** @type {AST.AttachTag} */
 			const attachment = {
@@ -554,10 +552,7 @@ function read_attribute(parser) {
 		}
 
 		if (parser.eat('...')) {
-			const expression = read_expression(parser);
-
-			parser.allow_whitespace();
-			parser.eat('}', true);
+			const expression = read_expression(parser, '{', '}');
 
 			/** @type {AST.SpreadAttribute} */
 			const spread = {
@@ -891,9 +886,7 @@ function read_sequence(parser, done, location) {
 			flush(parser.index - 1);
 
 			parser.allow_whitespace();
-			const expression = read_expression(parser);
-			parser.allow_whitespace();
-			parser.eat('}', true);
+			const expression = read_expression(parser, '{', '}');
 
 			/** @type {AST.ExpressionTag} */
 			const chunk = {
