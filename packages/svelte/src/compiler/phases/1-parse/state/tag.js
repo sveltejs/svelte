@@ -358,7 +358,7 @@ function open(parser) {
 		// if we match a generic opening
 		if (parser.ts && parser.match('<')) {
 			const start = parser.index;
-			const end = match_bracket(parser, start, '<', '>');
+			const end = match_bracket(parser.template, start, '<', '>');
 
 			type_params = parser.template.slice(start + 1, end - 1);
 

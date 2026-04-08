@@ -1,36 +1,18 @@
-/** @import { Parser } from '../index.js' */
 import * as e from '../../../errors.js';
 
 /**
- * @param {number} num
- * @returns {number} Infinity if {@link num} is negative, else {@link num}.
+ * @param {string} haystack
+ * @param {string} needle
+ * @param {number} start
  */
-function infinity_if_negative(num) {
-	if (num < 0) {
-		return Infinity;
-	}
-	return num;
-}
+function find_end(haystack, needle, start) {
+	const i = haystack.indexOf(needle, start);
 
-/**
- * @param {string} string The string to search.
- * @param {number} search_start_index The index to start searching at.
- * @param {"'" | '"' | '`'} string_start_char The character that started this string.
- * @returns {number} The index of the end of this string expression, or `Infinity` if not found.
- */
-function find_string_end(string, search_start_index, string_start_char) {
-	let string_to_search;
-	if (string_start_char === '`') {
-		string_to_search = string;
-	} else {
-		// we could slice at the search start index, but this way the index remains valid
-		string_to_search = string.slice(
-			0,
-			infinity_if_negative(string.indexOf('\n', search_start_index))
-		);
+	if (i === -1) {
+		e.unexpected_eof(haystack.length);
 	}
 
-	return find_unescaped_char(string_to_search, search_start_index, string_start_char);
+	return i + needle.length;
 }
 
 /**
@@ -54,7 +36,7 @@ function find_unescaped_char(string, search_start_index, char) {
 	while (true) {
 		const found_index = string.indexOf(char, i);
 		if (found_index === -1) {
-			return Infinity;
+			e.unexpected_eof(string.length);
 		}
 		if (count_leading_backslashes(string, found_index - 1) % 2 === 0) {
 			return found_index;
@@ -93,46 +75,7 @@ function count_leading_backslashes(string, search_start_index) {
  */
 export function find_matching_bracket(template, index, open) {
 	const close = default_brackets[open];
-	let brackets = 1;
-	let i = index;
-	while (brackets > 0 && i < template.length) {
-		const char = template[i];
-		switch (char) {
-			case "'":
-			case '"':
-			case '`':
-				i = find_string_end(template, i + 1, char) + 1;
-				continue;
-			case '/': {
-				const next_char = template[i + 1];
-				if (!next_char) continue;
-				if (next_char === '/') {
-					i = infinity_if_negative(template.indexOf('\n', i + 1)) + '\n'.length;
-					continue;
-				}
-				if (next_char === '*') {
-					i = infinity_if_negative(template.indexOf('*/', i + 1)) + '*/'.length;
-					continue;
-				}
-				i = find_regex_end(template, i + 1) + '/'.length;
-				continue;
-			}
-			default: {
-				const char = template[i];
-				if (char === open) {
-					brackets++;
-				} else if (char === close) {
-					brackets--;
-				}
-				if (brackets === 0) {
-					return i;
-				}
-				i++;
-			}
-		}
-	}
-
-	e.unexpected_eof(template.length);
+	return match_bracket(template, index, open, close, 1) - 1;
 }
 
 /** @type {Record<string, string>} */
@@ -143,21 +86,35 @@ const default_brackets = {
 };
 
 /**
- * @param {Parser} parser
+ * @param {string} source
  * @param {number} start
  * @param {string} open
  * @param {string} close
  */
-export function match_bracket(parser, start, open, close, offset = 0) {
+export function match_bracket(source, start, open, close, offset = 0) {
 	let depth = offset;
 
 	let i = start;
 
-	while (i < parser.template.length) {
-		let char = parser.template[i++];
+	while (i < source.length) {
+		let char = source[i++];
 
 		if (char === "'" || char === '"' || char === '`') {
-			i = match_quote(parser, i, char);
+			i = match_quote(source, i, char);
+			continue;
+		}
+
+		if (char === '/') {
+			const next = source[i + 1];
+
+			if (next === '/') {
+				i = find_end(source, '\n', i + 1);
+			} else if (next === '*') {
+				i = find_end(source, '*/', i + 1);
+			} else {
+				i = find_regex_end(source, i + 1) + '/'.length;
+			}
+
 			continue;
 		}
 
@@ -170,20 +127,20 @@ export function match_bracket(parser, start, open, close, offset = 0) {
 		}
 	}
 
-	e.unexpected_eof(parser.template.length);
+	e.unexpected_eof(source.length);
 }
 
 /**
- * @param {Parser} parser
+ * @param {string} source
  * @param {number} start
  * @param {string} quote
  */
-function match_quote(parser, start, quote) {
+function match_quote(source, start, quote) {
 	let is_escaped = false;
 	let i = start;
 
-	while (i < parser.template.length) {
-		const char = parser.template[i++];
+	while (i < source.length) {
+		const char = source[i++];
 
 		if (is_escaped) {
 			is_escaped = false;
@@ -198,8 +155,8 @@ function match_quote(parser, start, quote) {
 			is_escaped = true;
 		}
 
-		if (quote === '`' && char === '$' && parser.template[i] === '{') {
-			i = match_bracket(parser, i, '{', '}');
+		if (quote === '`' && char === '$' && source[i] === '{') {
+			i = match_bracket(source, i, '{', '}');
 		}
 	}
 
