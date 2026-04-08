@@ -20,7 +20,7 @@ export function match_bracket(source, start, open, close, offset = 0) {
 		}
 
 		if (char === '/') {
-			const next = source[i + 1];
+			const next = source[i];
 
 			if (next === '/') {
 				i = find_end(source, '\n', i + 1);
