@@ -67,25 +67,6 @@ function count_leading_backslashes(string, search_start_index) {
 }
 
 /**
- * Finds the corresponding closing bracket, ignoring brackets found inside comments, strings, or regex expressions.
- * @param {string} template The string to search.
- * @param {number} index The index to begin the search at.
- * @param {string} open The opening bracket (ex: `'{'` will search for `'}'`).
- * @returns {number} The index of the closing bracket
- */
-export function find_matching_bracket(template, index, open) {
-	const close = default_brackets[open];
-	return match_bracket(template, index, open, close, 1) - 1;
-}
-
-/** @type {Record<string, string>} */
-const default_brackets = {
-	'{': '}',
-	'(': ')',
-	'[': ']'
-};
-
-/**
  * @param {string} source
  * @param {number} start
  * @param {string} open

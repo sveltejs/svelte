@@ -1,18 +1,17 @@
 /** @import { Expression } from 'estree' */
 /** @import { Parser } from '../index.js' */
 import { parse_expression_at } from '../acorn.js';
-import { find_matching_bracket } from '../utils/bracket.js';
-import * as e from '../../../errors.js';
+import { match_bracket } from '../utils/bracket.js';
 
 /**
  * @param {Parser} parser
- * @param {string} [opening_token]
+ * @param {string} [open]
  * @returns {Expression}
  */
-export function get_loose_identifier(parser, opening_token) {
+export function get_loose_identifier(parser, open = '{') {
 	// Find the next } and treat it as the end of the expression
 	const start = parser.index;
-	const end = find_matching_bracket(parser.template, parser.index, opening_token ?? '{');
+	const end = match_bracket(parser.template, parser.index, open, open === '{' ? '}' : ')', 1) - 1;
 
 	parser.index = end;
 
