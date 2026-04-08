@@ -24,15 +24,19 @@ function find_end(haystack, needle, start) {
  */
 function find_unescaped_char(string, search_start_index, char) {
 	let i = search_start_index;
+
 	while (true) {
-		const found_index = string.indexOf(char, i);
-		if (found_index === -1) {
+		i = string.indexOf(char, i);
+
+		if (i === -1) {
 			e.unexpected_eof(string.length);
 		}
-		if (count_leading_backslashes(string, found_index - 1) % 2 === 0) {
-			return found_index;
+
+		if (count_leading_backslashes(string, i - 1) % 2 === 0) {
+			return i;
 		}
-		i = found_index + 1;
+
+		i += 1;
 	}
 }
 
@@ -50,7 +54,7 @@ function find_unescaped_char(string, search_start_index, char) {
 function count_leading_backslashes(string, search_start_index) {
 	let i = search_start_index;
 	let count = 0;
-	while (string[i] === '\\') {
+	while (string.charCodeAt(i) === 92) {
 		count++;
 		i--;
 	}
