@@ -131,11 +131,73 @@ export function trace(label, fn) {
 }
 
 /**
+ * Recursively compares two values for deep equality.
+ * Used to detect when a $state initial value has changed in source code
+ * (e.g., `$state(0)` → `$state(10)`), so we know not to restore the
+ * old runtime value over the developer's intentional code change.
+ * @param {unknown} a
+ * @param {unknown} b
+ * @returns {boolean}
+ */
+function deep_equal(a, b) {
+	if (a === b) return true;
+
+	if (typeof a === 'number' && typeof b === 'number' && isNaN(a) && isNaN(b)) return true;
+
+	if (a == null || b == null || typeof a !== typeof b) return false;
+
+	if (typeof a === 'object') {
+		if (Array.isArray(a)) {
+			if (!Array.isArray(b) || a.length !== b.length) return false;
+			for (var i = 0; i < a.length; i++) {
+				if (!deep_equal(a[i], b[i])) return false;
+			}
+			return true;
+		}
+
+		if (Array.isArray(b)) return false;
+
+		var keys_a = Object.keys(/** @type {object} */ (a));
+		var keys_b = Object.keys(/** @type {object} */ (b));
+		if (keys_a.length !== keys_b.length) return false;
+		for (var i = 0; i < keys_a.length; i++) {
+			var key = keys_a[i];
+			if (!(key in /** @type {object} */ (b)) || !deep_equal(/** @type {any} */ (a)[key], /** @type {any} */ (b)[key])) return false;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * @param {Value} source
  * @param {string} label
  */
 export function tag(source, label) {
 	source.label = label;
+
+	// Record the initial value from source code BEFORE any restoration,
+	// so collect_state() can later save it alongside the runtime value.
+	// This lets the next HMR cycle detect when the developer changed
+	// the initial value (e.g., $state(0) → $state(10)).
+	source.initial = source.v;
+
+	// HMR state preservation: if $.hmr() captured state from the
+	// previous component, restore the signal value here — before
+	// template effects render the DOM with the default value.
+	// Only restore if the initial value hasn't changed in source code.
+	/** @type {Map<string, {value: any, initial: any}> | undefined} */
+	var preserved = /** @type {any} */ (globalThis).__hmr_preserved_state__;
+	if (preserved !== undefined && preserved.has(label)) {
+		var entry = preserved.get(label);
+		// If the developer changed the initial value, respect their
+		// code change instead of restoring the old runtime value
+		if (entry && deep_equal(entry.initial, source.v)) {
+			source.v = entry.value;
+		}
+	}
+
 	tag_proxy(source.v, label);
 
 	return source;

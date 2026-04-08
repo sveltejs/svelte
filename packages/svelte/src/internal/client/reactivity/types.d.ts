@@ -28,6 +28,8 @@ export interface Value<V = unknown> extends Signal {
 	// dev-only
 	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */
 	label?: string;
+	/** The initial value from source code, used for HMR state preservation to detect when the developer changed the initial value */
+	initial?: V;
 	/** An error with a stack trace showing when the source was created */
 	created?: Error | null;
 	/** An map of errors with stack traces showing when the source was updated, keyed by the stack trace */
