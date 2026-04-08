@@ -159,9 +159,13 @@ export class BranchManager {
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			if (defer) {
+				var fragment = document.createDocumentFragment();
+				var anchor = create_text();
+				fragment.append(anchor);
+
 				this.#offscreen.set(
 					key,
-					branch(() => fn(create_text()))
+					branch(() => fn(anchor))
 				);
 			} else {
 				this.#onscreen.set(
