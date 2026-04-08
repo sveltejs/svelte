@@ -6,7 +6,7 @@ import * as e from '../../../errors.js';
 import { ExpressionMetadata } from '../../nodes.js';
 import { parse_expression_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
-import read_expression, { get_loose_identifier } from '../read/expression.js';
+import { get_loose_identifier, read_expression } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
 import { match_bracket } from '../utils/bracket.js';
 

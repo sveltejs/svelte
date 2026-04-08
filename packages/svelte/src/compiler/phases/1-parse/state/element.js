@@ -1,9 +1,8 @@
 /** @import { Expression, Identifier, SourceLocation } from 'estree' */
-/** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void, REGEX_VALID_TAG_NAME } from '../../../../utils.js';
-import read_expression from '../read/expression.js';
+import { read_expression } from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
 import { decode_character_references } from '../utils/html.js';
@@ -15,7 +14,6 @@ import { get_attribute_expression, is_expression_attribute } from '../../../util
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 import { locator } from '../../../state.js';
-import * as b from '#compiler/builders';
 
 const regex_invalid_unquoted_attribute_value = /(\/>|[\s"'=<>`])/y;
 const regex_closing_textarea_tag = /<\/textarea(\s[^>]*)?>/iy;

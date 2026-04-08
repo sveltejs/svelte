@@ -26,7 +26,7 @@ export function get_loose_identifier(parser, open = '{', close = '}') {
  * @param {string} [close]
  * @returns {Expression}
  */
-export default function read_expression(parser, open, close) {
+export function read_expression(parser, open, close) {
 	/** @type {Expression} */
 	let expression;
 
