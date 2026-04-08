@@ -1,6 +1,6 @@
 /** @import { Expression } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import { parse, parse_expression_at } from '../acorn.js';
+import { parse_expression_at } from '../acorn.js';
 import { match_bracket } from '../utils/bracket.js';
 
 /**
