@@ -246,8 +246,11 @@ export class Boundary {
 
 			if (this.#pending_count > 0) {
 				var fragment = document.createDocumentFragment();
+				var anchor = create_text();
+				fragment.append(anchor);
+
 				this.#offscreen_effect = this.#main_effect;
-				move_effect(this.#main_effect, fragment);
+				move_effect_before(this.#offscreen_effect, anchor);
 
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 				this.#pending_effect = branch(() => pending(this.#anchor));

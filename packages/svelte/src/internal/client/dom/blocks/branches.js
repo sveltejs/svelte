@@ -114,8 +114,6 @@ export class BranchManager {
 
 				if (keys.includes(k)) {
 					// keep the effect offscreen, as another batch will need it
-					move_effect_before(effect, create_text());
-
 					this.#offscreen.set(k, effect);
 				} else {
 					destroy_effect(effect);

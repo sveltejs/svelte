@@ -151,7 +151,6 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 
 		if (preserved_effects?.has(e)) {
 			e.f |= EFFECT_OFFSCREEN;
-			move_effect_before(e, create_text());
 		} else {
 			destroy_effect(to_destroy[i], remove_dom);
 		}
