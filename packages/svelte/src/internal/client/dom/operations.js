@@ -291,3 +291,25 @@ export function merge_text_nodes(text) {
 		next = text.nextSibling;
 	}
 }
+
+/**
+ * @param {Effect} effect
+ * @param {TemplateNode} anchor
+ */
+export function move_effect_before(effect, anchor) {
+	if (!effect.nodes) return;
+
+	var node = effect.nodes.start;
+	var end = effect.nodes.end;
+
+	while (node !== null) {
+		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
+		anchor.before(node);
+
+		if (node === end) {
+			return;
+		}
+
+		node = next_node;
+	}
+}
