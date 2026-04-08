@@ -7,8 +7,10 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
+import { HMR_ANCHOR } from '../../constants.js';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
+import { DEV } from 'esm-env';
 
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
@@ -90,6 +92,12 @@ export class BranchManager {
 			if (offscreen) {
 				this.#onscreen.set(key, offscreen.effect);
 				this.#offscreen.delete(key);
+
+				if (DEV) {
+					// Tell hmr.js about the anchor it should use for updates,
+					// since the initial one will be removed
+					/** @type {any} */ (offscreen.fragment.lastChild)[HMR_ANCHOR] = this.anchor;
+				}
 
 				// remove the anchor...
 				/** @type {TemplateNode} */ (offscreen.fragment.lastChild).remove();
