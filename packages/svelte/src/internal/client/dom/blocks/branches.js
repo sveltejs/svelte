@@ -1,18 +1,8 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { Batch, current_batch } from '../../reactivity/batch.js';
-import {
-	branch,
-	destroy_effect,
-	move_effect,
-	pause_effect,
-	resume_effect
-} from '../../reactivity/effects.js';
+import { branch, destroy_effect, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { hydrate_node, hydrating } from '../hydration.js';
-import { create_text, should_defer_append } from '../operations.js';
-
-/**
- * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
- */
+import { create_text, move_effect_before, should_defer_append } from '../operations.js';
 
 /**
  * @template Key
@@ -43,7 +33,7 @@ export class BranchManager {
 	/**
 	 * Similar to #onscreen with respect to the keys, but contains branches that are not yet
 	 * in the DOM, because their insertion is deferred.
-	 * @type {Map<Key, Branch>}
+	 * @type {Map<Key, Effect>}
 	 */
 	#offscreen = new Map();
 
@@ -88,15 +78,10 @@ export class BranchManager {
 			var offscreen = this.#offscreen.get(key);
 
 			if (offscreen) {
-				this.#onscreen.set(key, offscreen.effect);
 				this.#offscreen.delete(key);
+				this.#onscreen.set(key, (onscreen = offscreen));
 
-				// remove the anchor...
-				/** @type {TemplateNode} */ (offscreen.fragment.lastChild).remove();
-
-				// ...and append the fragment
-				this.anchor.before(offscreen.fragment);
-				onscreen = offscreen.effect;
+				move_effect_before(offscreen, this.anchor);
 			}
 		}
 
@@ -113,7 +98,7 @@ export class BranchManager {
 			if (offscreen) {
 				// for older batches, destroy offscreen effects
 				// as they will never be committed
-				destroy_effect(offscreen.effect);
+				destroy_effect(offscreen);
 				this.#offscreen.delete(k);
 			}
 		}
@@ -129,12 +114,7 @@ export class BranchManager {
 
 				if (keys.includes(k)) {
 					// keep the effect offscreen, as another batch will need it
-					var fragment = document.createDocumentFragment();
-					move_effect(effect, fragment);
-
-					fragment.append(create_text()); // TODO can we avoid this?
-
-					this.#offscreen.set(k, { effect, fragment });
+					this.#offscreen.set(k, effect);
 				} else {
 					destroy_effect(effect);
 				}
@@ -160,9 +140,9 @@ export class BranchManager {
 
 		const keys = Array.from(this.#batches.values());
 
-		for (const [k, branch] of this.#offscreen) {
+		for (const [k, effect] of this.#offscreen) {
 			if (!keys.includes(k)) {
-				destroy_effect(branch.effect);
+				destroy_effect(effect);
 				this.#offscreen.delete(k);
 			}
 		}
@@ -178,21 +158,18 @@ export class BranchManager {
 		var defer = should_defer_append();
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
+			var effect = branch(() => fn(this.anchor));
+
 			if (defer) {
 				var fragment = document.createDocumentFragment();
-				var target = create_text();
+				var anchor = create_text();
+				fragment.append(anchor);
 
-				fragment.append(target);
+				move_effect_before(effect, anchor);
 
-				this.#offscreen.set(key, {
-					effect: branch(() => fn(target)),
-					fragment
-				});
+				this.#offscreen.set(key, effect);
 			} else {
-				this.#onscreen.set(
-					key,
-					branch(() => fn(this.anchor))
-				);
+				this.#onscreen.set(key, effect);
 			}
 		}
 
@@ -207,11 +184,11 @@ export class BranchManager {
 				}
 			}
 
-			for (const [k, branch] of this.#offscreen) {
+			for (const [k, effect] of this.#offscreen) {
 				if (k === key) {
-					batch.unskip_effect(branch.effect);
+					batch.unskip_effect(effect);
 				} else {
-					batch.skip_effect(branch.effect);
+					batch.skip_effect(effect);
 				}
 			}
 

@@ -22,14 +22,13 @@ import {
 	clear_text_content,
 	create_text,
 	get_first_child,
-	get_next_sibling,
+	move_effect_before,
 	should_defer_append
 } from '../operations.js';
 import {
 	block,
 	branch,
 	destroy_effect,
-	move_effect,
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
@@ -152,9 +151,6 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 
 		if (preserved_effects?.has(e)) {
 			e.f |= EFFECT_OFFSCREEN;
-
-			const fragment = document.createDocumentFragment();
-			move_effect(e, fragment);
 		} else {
 			destroy_effect(to_destroy[i], remove_dom);
 		}
@@ -701,26 +697,12 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
  * @param {Text | Element | Comment} anchor
  */
 function move(effect, next, anchor) {
-	if (!effect.nodes) return;
-
-	var node = effect.nodes.start;
-	var end = effect.nodes.end;
-
 	var dest =
 		next && (next.f & EFFECT_OFFSCREEN) === 0
 			? /** @type {EffectNodes} */ (next.nodes).start
 			: anchor;
 
-	while (node !== null) {
-		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
-		dest.before(node);
-
-		if (node === end) {
-			return;
-		}
-
-		node = next_node;
-	}
+	move_effect_before(effect, dest);
 }
 
 /**
