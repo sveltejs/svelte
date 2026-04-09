@@ -327,7 +327,7 @@ export function execute_derived(derived) {
 	var prev_active_effect = active_effect;
 	var parent = derived.parent;
 
-	if (DEV && !is_destroying_effect && parent !== null && (parent.f & (DESTROYED | INERT)) !== 0) {
+	if (!is_destroying_effect && parent !== null && (parent.f & (DESTROYED | INERT)) !== 0) {
 		w.derived_inert();
 
 		return derived.v;
