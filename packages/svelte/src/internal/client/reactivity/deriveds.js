@@ -48,42 +48,13 @@ import { set_signal_status, update_derived_status } from './status.js';
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
  * are read after a non-context-restoring `await`. Dev-only
- * @type {{ effect: Effect, effect_deps: Map<Value, number>, warned: boolean } | null}
+ * @type {{ effect: Effect, effect_deps: Set<Value>, warned: boolean } | null}
  */
 export let reactivity_loss_tracker = null;
 
-/** @param {{ effect: Effect, effect_deps: Map<Value, number>, warned: boolean } | null} v */
+/** @param {{ effect: Effect, effect_deps: Set<Value>, warned: boolean } | null} v */
 export function set_reactivity_loss_tracker(v) {
 	reactivity_loss_tracker = v;
-}
-
-/**
- * Collect all direct and transitive dependencies of a reaction along with their write version.
- * @param {Reaction} reaction
- * @param {Map<Value, number>} [collected]
- * @returns {Map<Value, number>}
- */
-function collect_transitive_dependencies(reaction, collected = new Map()) {
-	var dependencies = reaction.deps;
-	if (dependencies === null) {
-		return collected;
-	}
-
-	for (var i = 0; i < dependencies.length; i++) {
-		var dependency = dependencies[i];
-
-		if (collected.has(dependency)) {
-			continue;
-		}
-
-		collected.set(dependency, dependency.wv);
-
-		if ((dependency.f & DERIVED) !== 0) {
-			collect_transitive_dependencies(/** @type {Derived} */ (dependency), collected);
-		}
-	}
-
-	return collected;
 }
 
 export const recent_async_deriveds = new Set();
@@ -160,12 +131,12 @@ export function async_derived(fn, label, location) {
 		if (DEV) {
 			var tracker = (reactivity_loss_tracker = {
 				effect: /** @type {Effect} */ (active_effect),
-				effect_deps: new Map(),
+				effect_deps: new Set(),
 				warned: false
 			});
 			// So that we get the dependencies _after_ this effect has run
 			queueMicrotask(() => {
-				tracker.effect_deps = collect_transitive_dependencies(tracker.effect);
+				tracker.effect_deps = new Set(tracker.effect.deps ?? []);
 			});
 		}
 

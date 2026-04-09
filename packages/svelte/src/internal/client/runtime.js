@@ -574,8 +574,7 @@ export function get(signal) {
 			reactivity_loss_tracker &&
 			!reactivity_loss_tracker.warned &&
 			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0 &&
-			(!reactivity_loss_tracker.effect_deps.has(signal) ||
-				/** @type {number} */ (reactivity_loss_tracker.effect_deps.get(signal)) !== signal.wv)
+			!reactivity_loss_tracker.effect_deps.has(signal)
 		) {
 			reactivity_loss_tracker.warned = true;
 
