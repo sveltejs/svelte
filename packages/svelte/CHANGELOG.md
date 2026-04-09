@@ -1,5 +1,41 @@
 # svelte
 
+## 5.55.2
+
+### Patch Changes
+
+- fix: invalidate `@const` tags based on visible references in legacy mode ([#18041](https://github.com/sveltejs/svelte/pull/18041))
+
+- fix: handle parens in template expressions more robustly ([#18075](https://github.com/sveltejs/svelte/pull/18075))
+
+- fix: disallow `--` in `idPrefix` ([#18038](https://github.com/sveltejs/svelte/pull/18038))
+
+- fix: correct types for `ontoggle` on `<details>` elements ([#18063](https://github.com/sveltejs/svelte/pull/18063))
+
+- fix: don't override `$destroy/set/on` instance methods in dev mode ([#18034](https://github.com/sveltejs/svelte/pull/18034))
+
+- fix: unskip branches of earlier batches after commit ([#18048](https://github.com/sveltejs/svelte/pull/18048))
+
+- fix: never set derived.v inside fork ([#18037](https://github.com/sveltejs/svelte/pull/18037))
+
+- fix: skip rebase logic in non-async mode ([#18040](https://github.com/sveltejs/svelte/pull/18040))
+
+- fix: don't reset status of uninitialized deriveds ([#18054](https://github.com/sveltejs/svelte/pull/18054))
+
+## 5.55.1
+
+### Patch Changes
+
+- fix: correctly handle bindings on the server ([#18009](https://github.com/sveltejs/svelte/pull/18009))
+
+- fix: prevent hydration error on async `{@html ...}` ([#17999](https://github.com/sveltejs/svelte/pull/17999))
+
+- fix: cleanup `superTypeParameters` in `ClassDeclarations`/`ClassExpression` ([#18015](https://github.com/sveltejs/svelte/pull/18015))
+
+- fix: improve duplicate module import error message ([#18016](https://github.com/sveltejs/svelte/pull/18016))
+
+- fix: reschedule new effects in prior batches ([#18021](https://github.com/sveltejs/svelte/pull/18021))
+
 ## 5.55.0
 
 ### Minor Changes

@@ -62,6 +62,8 @@ export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+/** An anchor might change, via this symbol on the original anchor we can tell HMR about the updated anchor */
+export const HMR_ANCHOR = Symbol('hmr anchor');
 
 /** allow users to ignore aborted signal errors if `reason.name === 'StaleReactionError` */
 export const STALE_REACTION = new (class StaleReactionError extends Error {

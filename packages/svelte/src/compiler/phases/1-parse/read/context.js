@@ -1,7 +1,7 @@
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
 import { match_bracket } from '../utils/bracket.js';
-import { parse_expression_at } from '../acorn.js';
+import { parse_expression_at, remove_parens } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
 
@@ -35,38 +35,32 @@ export default function read_pattern(parser) {
 
 	const pattern_string = parser.template.slice(start, i);
 
-	try {
-		// the length of the `space_with_newline` has to be start - 1
-		// because we added a `(` in front of the pattern_string,
-		// which shifted the entire string to right by 1
-		// so we offset it by removing 1 character in the `space_with_newline`
-		// to achieve that, we remove the 1st space encountered,
-		// so it will not affect the `column` of the node
-		let space_with_newline = parser.template
-			.slice(0, start)
-			.replace(regex_not_newline_characters, ' ');
-		const first_space = space_with_newline.indexOf(' ');
-		space_with_newline =
-			space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
+	// the length of the `space_with_newline` has to be start - 1
+	// because we added a `(` in front of the pattern_string,
+	// which shifted the entire string to right by 1
+	// so we offset it by removing 1 character in the `space_with_newline`
+	// to achieve that, we remove the 1st space encountered,
+	// so it will not affect the `column` of the node
+	let space_with_newline = parser.template
+		.slice(0, start)
+		.replace(regex_not_newline_characters, ' ');
+	const first_space = space_with_newline.indexOf(' ');
+	space_with_newline =
+		space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
 
-		const expression = /** @type {any} */ (
-			parse_expression_at(
-				`${space_with_newline}(${pattern_string} = 1)`,
-				parser.root.comments,
-				parser.ts,
-				start - 1
-			)
-		).left;
+	/** @type {any} */
+	let expression = remove_parens(
+		parse_expression_at(parser, `${space_with_newline}(${pattern_string} = 1)`, start - 1)
+	);
 
-		expression.typeAnnotation = read_type_annotation(parser);
-		if (expression.typeAnnotation) {
-			expression.end = expression.typeAnnotation.end;
-		}
+	expression = expression.left;
 
-		return expression;
-	} catch (error) {
-		parser.acorn_error(error);
+	expression.typeAnnotation = read_type_annotation(parser);
+	if (expression.typeAnnotation) {
+		expression.end = expression.typeAnnotation.end;
 	}
+
+	return expression;
 }
 
 /**
@@ -92,13 +86,13 @@ function read_type_annotation(parser) {
 		// parameters as part of a sequence expression instead, and will then error on optional
 		// parameters (`?:`). Therefore replace that sequence with something that will not error.
 		parser.template.slice(parser.index).replace(/\?\s*:/g, ':');
-	let expression = parse_expression_at(template, parser.root.comments, parser.ts, a);
+	let expression = remove_parens(parse_expression_at(parser, template, a));
 
 	// `foo: bar = baz` gets mangled — fix it
 	if (expression.type === 'AssignmentExpression') {
 		let b = expression.right.start;
 		while (template[b] !== '=') b -= 1;
-		expression = parse_expression_at(template.slice(0, b), parser.root.comments, parser.ts, a);
+		expression = remove_parens(parse_expression_at(parser, template.slice(0, b), a));
 	}
 
 	// `array as item: string, index` becomes `string, index`, which is mistaken as a sequence expression - fix that
