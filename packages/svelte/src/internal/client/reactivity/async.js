@@ -270,6 +270,8 @@ export function run(thunks) {
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
+				restore();
+
 				if (errored) {
 					throw errored.error;
 				}
@@ -278,7 +280,6 @@ export function run(thunks) {
 					throw STALE_REACTION;
 				}
 
-				restore();
 				return fn();
 			})
 			.catch(handle_error);
