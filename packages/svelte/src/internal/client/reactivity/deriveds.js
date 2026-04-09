@@ -52,7 +52,7 @@ import { set_signal_status, update_derived_status } from './status.js';
  */
 export let reactivity_loss_tracker = null;
 
-/** @param {typeof reactivity_loss_tracker} v */
+/** @param {{ effect: Effect, warned: boolean, seen: Set<Value> } | null} v */
 export function set_reactivity_loss_tracker(v) {
 	reactivity_loss_tracker = v;
 }
