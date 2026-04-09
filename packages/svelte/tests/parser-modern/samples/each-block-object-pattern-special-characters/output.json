@@ -70,11 +70,13 @@
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 14
+										"column": 14,
+										"character": 14
 									},
 									"end": {
 										"line": 1,
-										"column": 15
+										"column": 15,
+										"character": 15
 									}
 								},
 								"name": "y"
@@ -100,11 +102,13 @@
 									"loc": {
 										"start": {
 											"line": 1,
-											"column": 14
+											"column": 14,
+											"character": 14
 										},
 										"end": {
 											"line": 1,
-											"column": 15
+											"column": 15,
+											"character": 15
 										}
 									},
 									"name": "y"
@@ -170,11 +174,11 @@
 					"loc": {
 						"start": {
 							"line": 3,
-							"column": 13
+							"column": 12
 						},
 						"end": {
 							"line": 3,
-							"column": 24
+							"column": 23
 						}
 					},
 					"properties": [
@@ -185,11 +189,11 @@
 							"loc": {
 								"start": {
 									"line": 3,
-									"column": 15
+									"column": 14
 								},
 								"end": {
 									"line": 3,
-									"column": 22
+									"column": 21
 								}
 							},
 							"method": false,
@@ -202,11 +206,13 @@
 								"loc": {
 									"start": {
 										"line": 3,
-										"column": 15
+										"column": 14,
+										"character": 47
 									},
 									"end": {
 										"line": 3,
-										"column": 16
+										"column": 15,
+										"character": 48
 									}
 								},
 								"name": "y"
@@ -218,11 +224,11 @@
 								"loc": {
 									"start": {
 										"line": 3,
-										"column": 15
+										"column": 14
 									},
 									"end": {
 										"line": 3,
-										"column": 22
+										"column": 21
 									}
 								},
 								"left": {
@@ -232,11 +238,13 @@
 									"loc": {
 										"start": {
 											"line": 3,
-											"column": 15
+											"column": 14,
+											"character": 47
 										},
 										"end": {
 											"line": 3,
-											"column": 16
+											"column": 15,
+											"character": 48
 										}
 									},
 									"name": "y"
@@ -248,11 +256,11 @@
 									"loc": {
 										"start": {
 											"line": 3,
-											"column": 19
+											"column": 18
 										},
 										"end": {
 											"line": 3,
-											"column": 22
+											"column": 21
 										}
 									},
 									"value": "{",
@@ -302,11 +310,11 @@
 					"loc": {
 						"start": {
 							"line": 5,
-							"column": 13
+							"column": 12
 						},
 						"end": {
 							"line": 5,
-							"column": 24
+							"column": 23
 						}
 					},
 					"properties": [
@@ -317,11 +325,11 @@
 							"loc": {
 								"start": {
 									"line": 5,
-									"column": 15
+									"column": 14
 								},
 								"end": {
 									"line": 5,
-									"column": 22
+									"column": 21
 								}
 							},
 							"method": false,
@@ -334,11 +342,13 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 15
+										"column": 14,
+										"character": 80
 									},
 									"end": {
 										"line": 5,
-										"column": 16
+										"column": 15,
+										"character": 81
 									}
 								},
 								"name": "y"
@@ -350,11 +360,11 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 15
+										"column": 14
 									},
 									"end": {
 										"line": 5,
-										"column": 22
+										"column": 21
 									}
 								},
 								"left": {
@@ -364,11 +374,13 @@
 									"loc": {
 										"start": {
 											"line": 5,
-											"column": 15
+											"column": 14,
+											"character": 80
 										},
 										"end": {
 											"line": 5,
-											"column": 16
+											"column": 15,
+											"character": 81
 										}
 									},
 									"name": "y"
@@ -380,11 +392,11 @@
 									"loc": {
 										"start": {
 											"line": 5,
-											"column": 19
+											"column": 18
 										},
 										"end": {
 											"line": 5,
-											"column": 22
+											"column": 21
 										}
 									},
 									"value": "]",
@@ -434,11 +446,11 @@
 					"loc": {
 						"start": {
 							"line": 7,
-							"column": 13
+							"column": 12
 						},
 						"end": {
 							"line": 7,
-							"column": 29
+							"column": 28
 						}
 					},
 					"properties": [
@@ -449,11 +461,11 @@
 							"loc": {
 								"start": {
 									"line": 7,
-									"column": 15
+									"column": 14
 								},
 								"end": {
 									"line": 7,
-									"column": 27
+									"column": 26
 								}
 							},
 							"method": false,
@@ -466,11 +478,13 @@
 								"loc": {
 									"start": {
 										"line": 7,
-										"column": 15
+										"column": 14,
+										"character": 113
 									},
 									"end": {
 										"line": 7,
-										"column": 16
+										"column": 15,
+										"character": 114
 									}
 								},
 								"name": "y"
@@ -482,11 +496,11 @@
 								"loc": {
 									"start": {
 										"line": 7,
-										"column": 15
+										"column": 14
 									},
 									"end": {
 										"line": 7,
-										"column": 27
+										"column": 26
 									}
 								},
 								"left": {
@@ -496,11 +510,13 @@
 									"loc": {
 										"start": {
 											"line": 7,
-											"column": 15
+											"column": 14,
+											"character": 113
 										},
 										"end": {
 											"line": 7,
-											"column": 16
+											"column": 15,
+											"character": 114
 										}
 									},
 									"name": "y"
@@ -512,11 +528,11 @@
 									"loc": {
 										"start": {
 											"line": 7,
-											"column": 19
+											"column": 18
 										},
 										"end": {
 											"line": 7,
-											"column": 27
+											"column": 26
 										}
 									},
 									"expressions": [
@@ -527,11 +543,11 @@
 											"loc": {
 												"start": {
 													"line": 7,
-													"column": 22
+													"column": 21
 												},
 												"end": {
 													"line": 7,
-													"column": 25
+													"column": 24
 												}
 											},
 											"expressions": [],
@@ -543,11 +559,11 @@
 													"loc": {
 														"start": {
 															"line": 7,
-															"column": 23
+															"column": 22
 														},
 														"end": {
 															"line": 7,
-															"column": 24
+															"column": 23
 														}
 													},
 													"value": {
@@ -567,11 +583,11 @@
 											"loc": {
 												"start": {
 													"line": 7,
-													"column": 20
+													"column": 19
 												},
 												"end": {
 													"line": 7,
-													"column": 20
+													"column": 19
 												}
 											},
 											"value": {
@@ -587,11 +603,11 @@
 											"loc": {
 												"start": {
 													"line": 7,
-													"column": 26
+													"column": 25
 												},
 												"end": {
 													"line": 7,
-													"column": 26
+													"column": 25
 												}
 											},
 											"value": {
@@ -646,11 +662,11 @@
 					"loc": {
 						"start": {
 							"line": 9,
-							"column": 13
+							"column": 12
 						},
 						"end": {
 							"line": 9,
-							"column": 32
+							"column": 31
 						}
 					},
 					"properties": [
@@ -661,11 +677,11 @@
 							"loc": {
 								"start": {
 									"line": 9,
-									"column": 15
+									"column": 14
 								},
 								"end": {
 									"line": 9,
-									"column": 30
+									"column": 29
 								}
 							},
 							"method": false,
@@ -678,11 +694,13 @@
 								"loc": {
 									"start": {
 										"line": 9,
-										"column": 15
+										"column": 14,
+										"character": 151
 									},
 									"end": {
 										"line": 9,
-										"column": 16
+										"column": 15,
+										"character": 152
 									}
 								},
 								"name": "y"
@@ -694,11 +712,11 @@
 								"loc": {
 									"start": {
 										"line": 9,
-										"column": 15
+										"column": 14
 									},
 									"end": {
 										"line": 9,
-										"column": 30
+										"column": 29
 									}
 								},
 								"left": {
@@ -708,11 +726,13 @@
 									"loc": {
 										"start": {
 											"line": 9,
-											"column": 15
+											"column": 14,
+											"character": 151
 										},
 										"end": {
 											"line": 9,
-											"column": 16
+											"column": 15,
+											"character": 152
 										}
 									},
 									"name": "y"
@@ -724,11 +744,11 @@
 									"loc": {
 										"start": {
 											"line": 9,
-											"column": 19
+											"column": 18
 										},
 										"end": {
 											"line": 9,
-											"column": 30
+											"column": 29
 										}
 									},
 									"expressions": [
@@ -739,11 +759,11 @@
 											"loc": {
 												"start": {
 													"line": 9,
-													"column": 22
+													"column": 21
 												},
 												"end": {
 													"line": 9,
-													"column": 28
+													"column": 27
 												}
 											},
 											"expressions": [],
@@ -755,11 +775,11 @@
 													"loc": {
 														"start": {
 															"line": 9,
-															"column": 23
+															"column": 22
 														},
 														"end": {
 															"line": 9,
-															"column": 27
+															"column": 26
 														}
 													},
 													"value": {
@@ -779,11 +799,11 @@
 											"loc": {
 												"start": {
 													"line": 9,
-													"column": 20
+													"column": 19
 												},
 												"end": {
 													"line": 9,
-													"column": 20
+													"column": 19
 												}
 											},
 											"value": {
@@ -799,11 +819,11 @@
 											"loc": {
 												"start": {
 													"line": 9,
-													"column": 29
+													"column": 28
 												},
 												"end": {
 													"line": 9,
-													"column": 29
+													"column": 28
 												}
 											},
 											"value": {

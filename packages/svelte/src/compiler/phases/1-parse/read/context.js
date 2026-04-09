@@ -1,9 +1,10 @@
-/** @import { Pattern } from 'estree' */
+/** @import { Expression, Pattern, ObjectPattern, Property, Identifier, RestElement, ArrayPattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
 import { match_bracket } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
+import { get_loc } from '../../../state.js';
 
 /**
  * @param {Parser} parser
@@ -12,6 +13,14 @@ import * as e from '../../../errors.js';
 export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
+
+	if (parser.match('{')) {
+		return read_object_pattern(parser);
+	}
+
+	if (parser.match('[')) {
+		return read_array_pattern(parser);
+	}
 
 	const id = parser.read_identifier();
 
@@ -65,6 +74,231 @@ export default function read_pattern(parser) {
 	parser.index = expression.end;
 
 	return expression;
+}
+
+/**
+ * @param {Parser} parser
+ * @returns {ObjectPattern}
+ */
+function read_object_pattern(parser) {
+	const start = parser.index;
+
+	parser.eat('{', true);
+
+	/** @type {Array<Property | RestElement>} */
+	const properties = [];
+
+	/** @type {ObjectPattern} */
+	const pattern = {
+		type: 'ObjectPattern',
+		start,
+		end: -1,
+		// @ts-ignore I think the ESTree types might just be wrong here?
+		properties
+	};
+
+	while (true) {
+		parser.allow_whitespace();
+
+		const start = parser.index;
+
+		if (parser.match('}')) {
+			// can end up here if last element had a trailing comma
+			break;
+		}
+
+		if (parser.eat('...')) {
+			parser.allow_whitespace();
+			const argument = parser.read_identifier();
+
+			properties.push({
+				type: 'RestElement',
+				start,
+				end: argument.end,
+				argument,
+				loc: get_loc(start, argument.end)
+			});
+
+			parser.allow_whitespace();
+
+			break;
+		}
+
+		const computed = parser.eat('[');
+		const key = computed
+			? /** @type {Expression} */ (parse_expression_at(parser, parser.template, parser.index))
+			: parser.read_identifier();
+		if (computed) parser.eat(']', true);
+
+		/** @type {Property} */
+		const property = {
+			type: 'Property',
+			start,
+			end: -1,
+			key,
+			value: /** @type {Identifier} */ (key),
+			method: false,
+			shorthand: true,
+			computed,
+			kind: 'init'
+		};
+
+		parser.allow_whitespace();
+
+		if (parser.eat(':', computed)) {
+			property.value = read_pattern(parser);
+			property.shorthand = false;
+		}
+
+		parser.allow_whitespace();
+
+		if (parser.eat('=')) {
+			parser.allow_whitespace();
+			const start = parser.index;
+
+			let right = /** @type {Expression} */ (
+				parse_expression_at(parser, parser.template, parser.index)
+			);
+
+			if (right.type === 'SequenceExpression' && right.start === start) {
+				right = right.expressions[0];
+				parser.index = /** @type {number} */ (right.end);
+			}
+
+			property.value = {
+				type: 'AssignmentPattern',
+				start: property.value.start,
+				end: right.end,
+				left: /** @type {Pattern} */ (property.value),
+				right,
+				loc: get_loc(property.value.start, right.end)
+			};
+		}
+
+		if (parser.ts) {
+			property.typeAnnotation = read_type_annotation(parser);
+		}
+
+		property.end = parser.index;
+
+		property.loc = get_loc(start, property.end);
+
+		properties.push(property);
+
+		parser.allow_whitespace();
+
+		if (!parser.eat(',')) {
+			break;
+		}
+	}
+
+	parser.allow_whitespace();
+	parser.eat('}', true);
+	pattern.end = parser.index;
+
+	pattern.loc = get_loc(start, parser.index);
+
+	return pattern;
+}
+
+/**
+ * @param {Parser} parser
+ * @returns {ArrayPattern}
+ */
+function read_array_pattern(parser) {
+	const start = parser.index;
+
+	parser.eat('[', true);
+
+	/** @type {Pattern[]} */
+	const elements = [];
+
+	/** @type {ArrayPattern} */
+	const pattern = {
+		type: 'ArrayPattern',
+		start,
+		end: -1,
+		elements
+	};
+
+	while (true) {
+		parser.allow_whitespace();
+
+		const start = parser.index;
+
+		if (parser.match('}')) {
+			// can end up here if last element had a trailing comma
+			break;
+		}
+
+		if (parser.eat('...')) {
+			parser.allow_whitespace();
+			const argument = parser.read_identifier();
+
+			elements.push({
+				type: 'RestElement',
+				start,
+				end: argument.end,
+				argument,
+				loc: get_loc(start, argument.end)
+			});
+
+			parser.allow_whitespace();
+
+			break;
+		}
+
+		let element = read_pattern(parser);
+
+		parser.allow_whitespace();
+
+		if (parser.eat('=')) {
+			parser.allow_whitespace();
+			const start = parser.index;
+
+			let right = /** @type {Expression} */ (
+				parse_expression_at(parser, parser.template, parser.index)
+			);
+
+			if (right.type === 'SequenceExpression' && right.start === start) {
+				right = right.expressions[0];
+				parser.index = /** @type {number} */ (right.end);
+			}
+
+			element = {
+				type: 'AssignmentPattern',
+				start: element.start,
+				end: right.end,
+				left: /** @type {Pattern} */ (element),
+				right,
+				loc: get_loc(element.start, right.end)
+			};
+		}
+
+		if (parser.ts) {
+			element.typeAnnotation = read_type_annotation(parser);
+		}
+
+		element.end = parser.index;
+
+		element.loc = get_loc(start, element.end);
+
+		elements.push(element);
+
+		parser.allow_whitespace();
+
+		if (!parser.eat(',')) {
+			break;
+		}
+	}
+
+	parser.allow_whitespace();
+	parser.eat(']', true);
+	pattern.end = parser.index;
+
+	pattern.loc = get_loc(start, parser.index);
+
+	return pattern;
 }
 
 /**

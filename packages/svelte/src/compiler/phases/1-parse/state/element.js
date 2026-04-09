@@ -14,6 +14,7 @@ import { get_attribute_expression, is_expression_attribute } from '../../../util
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 import { locator } from '../../../state.js';
+import { read_comment } from '../utils/comment.js';
 
 const regex_invalid_unquoted_attribute_value = /(\/>|[\s"'=<>`])/y;
 const regex_closing_textarea_tag = /<\/textarea(\s[^>]*)?>/iy;
@@ -714,50 +715,6 @@ function read_attribute(parser) {
 	}
 
 	return create_attribute(tag.name, tag.loc, start, end, value);
-}
-
-/**
- * @param {Parser} parser
- * @returns {AST.JSComment | null}
- */
-function read_comment(parser) {
-	const start = parser.index;
-
-	if (parser.eat('//')) {
-		const value = parser.read_until(/\n/);
-		const end = parser.index;
-
-		return {
-			type: 'Line',
-			start,
-			end,
-			value,
-			loc: {
-				start: locator(start),
-				end: locator(end)
-			}
-		};
-	}
-
-	if (parser.eat('/*')) {
-		const value = parser.read_until(/\*\//);
-
-		parser.eat('*/');
-		const end = parser.index;
-
-		return {
-			type: 'Block',
-			start,
-			end,
-			value,
-			loc: {
-				start: locator(start),
-				end: locator(end)
-			}
-		};
-	}
-
-	return null;
 }
 
 /**
