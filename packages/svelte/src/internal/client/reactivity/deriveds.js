@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source } from '#client' */
+/** @import { Derived, Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
 /** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
@@ -48,11 +48,11 @@ import { set_signal_status, update_derived_status } from './status.js';
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
  * are read after a non-context-restoring `await`. Dev-only
- * @type {{ effect: Effect, warned: boolean } | null}
+ * @type {{ effect: Effect, warned: boolean, seen: Set<Value> } | null}
  */
 export let reactivity_loss_tracker = null;
 
-/** @param {{ effect: Effect, warned: boolean } | null} v */
+/** @param {typeof reactivity_loss_tracker} v */
 export function set_reactivity_loss_tracker(v) {
 	reactivity_loss_tracker = v;
 }
@@ -131,7 +131,8 @@ export function async_derived(fn, label, location) {
 		if (DEV) {
 			reactivity_loss_tracker = {
 				effect: /** @type {Effect} */ (active_effect),
-				warned: false
+				warned: false,
+				seen: new Set()
 			};
 		}
 

@@ -159,11 +159,13 @@ export async function save(promise) {
  * Reset `current_async_effect` after the `promise` resolves, so
  * that we can emit `await_reactivity_loss` warnings
  * @template T
- * @param {Promise<T>} promise
+ * @param {() => Promise<T>} fn
  * @returns {Promise<() => T>}
  */
-export async function track_reactivity_loss(promise) {
+export async function track_reactivity_loss(fn) {
 	var previous_async_effect = reactivity_loss_tracker;
+	var promise = fn();
+	set_reactivity_loss_tracker(null);
 	var value = await promise;
 
 	return () => {
@@ -201,7 +203,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 	let normal_completion = false;
 	try {
 		while (true) {
-			const { done, value } = (await track_reactivity_loss(iterator.next()))();
+			const { done, value } = (await track_reactivity_loss(() => iterator.next()))();
 			if (done) {
 				normal_completion = true;
 				break;
@@ -211,8 +213,12 @@ export async function* for_await_track_reactivity_loss(iterable) {
 	} finally {
 		// If the iterator had an abrupt completion and `return` is defined on the iterator, call it and return the value
 		if (!normal_completion && iterator.return !== undefined) {
+			const release = await track_reactivity_loss(() =>
+				/** @type {() => Promise<IteratorResult<T, TReturn>>} */ (iterator.return)()
+			);
+
 			// eslint-disable-next-line no-unsafe-finally
-			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))().value);
+			return /** @type {TReturn} */ (release().value);
 		}
 	}
 }

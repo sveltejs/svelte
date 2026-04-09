@@ -576,19 +576,18 @@ export function get(signal) {
 	}
 
 	if (DEV) {
-		if (
-			!untracking &&
-			reactivity_loss_tracker &&
-			!reactivity_loss_tracker.warned &&
-			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0
-		) {
-			reactivity_loss_tracker.warned = true;
+		if (!untracking && reactivity_loss_tracker) {
+			if ((reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) !== 0) {
+				reactivity_loss_tracker.seen.add(signal);
+			} else if (!reactivity_loss_tracker.warned && !reactivity_loss_tracker.seen.has(signal)) {
+				reactivity_loss_tracker.warned = true;
 
-			w.await_reactivity_loss(/** @type {string} */ (signal.label));
+				w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
-			var trace = get_error('traced at');
-			// eslint-disable-next-line no-console
-			if (trace) console.warn(trace);
+				var trace = get_error('traced at');
+				// eslint-disable-next-line no-console
+				if (trace) console.warn(trace);
+			}
 		}
 
 		recent_async_deriveds.delete(signal);
