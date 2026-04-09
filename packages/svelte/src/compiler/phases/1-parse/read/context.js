@@ -11,9 +11,6 @@ import { get_loc } from '../../../state.js';
  * @returns {Pattern}
  */
 export default function read_pattern(parser) {
-	const start = parser.index;
-	let i = parser.index;
-
 	if (parser.match('{')) {
 		return read_object_pattern(parser);
 	}
@@ -24,56 +21,12 @@ export default function read_pattern(parser) {
 
 	const id = parser.read_identifier();
 
-	if (id.name !== '') {
-		const annotation = read_type_annotation(parser);
+	const annotation = read_type_annotation(parser);
 
-		return {
-			...id,
-			typeAnnotation: annotation
-		};
-	}
-
-	const char = parser.template[i];
-
-	if (char !== '{' && char !== '[') {
-		e.expected_pattern(i);
-	}
-
-	i = match_bracket(parser.template, start, char, char === '{' ? '}' : ']');
-	parser.index = i;
-
-	const pattern_string = parser.template.slice(start, i);
-
-	// the length of the `space_with_newline` has to be start - 1
-	// because we added a `(` in front of the pattern_string,
-	// which shifted the entire string to right by 1
-	// so we offset it by removing 1 character in the `space_with_newline`
-	// to achieve that, we remove the 1st space encountered,
-	// so it will not affect the `column` of the node
-	let space_with_newline = parser.template
-		.slice(0, start)
-		.replace(regex_not_newline_characters, ' ');
-	const first_space = space_with_newline.indexOf(' ');
-	space_with_newline =
-		space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
-
-	/** @type {any} */
-	let expression = parse_expression_at(
-		parser,
-		`${space_with_newline}(${pattern_string} = 1)`,
-		start - 1
-	);
-
-	expression = expression.left;
-
-	expression.typeAnnotation = read_type_annotation(parser);
-	if (expression.typeAnnotation) {
-		expression.end = expression.typeAnnotation.end;
-	}
-
-	parser.index = expression.end;
-
-	return expression;
+	return {
+		...id,
+		typeAnnotation: annotation
+	};
 }
 
 /**
