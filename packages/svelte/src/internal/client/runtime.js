@@ -32,7 +32,8 @@ import {
 	freeze_derived_effects,
 	recent_async_deriveds,
 	unfreeze_derived_effects,
-	update_derived
+	update_derived,
+	set_reactivity_loss_tracker
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions } from './dev/tracing.js';
@@ -232,6 +233,7 @@ export function update_reaction(reaction) {
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
 	var previous_update_version = update_version;
+	var previous_reactivity_loss_tracker = DEV ? reactivity_loss_tracker : null;
 
 	var flags = reaction.f;
 
@@ -355,6 +357,10 @@ export function update_reaction(reaction) {
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 		update_version = previous_update_version;
+
+		if (DEV) {
+			set_reactivity_loss_tracker(previous_reactivity_loss_tracker);
+		}
 	}
 }
 
