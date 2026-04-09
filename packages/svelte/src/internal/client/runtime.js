@@ -247,6 +247,10 @@ export function update_reaction(reaction) {
 	untracking = false;
 	update_version = ++read_version;
 
+	if (DEV) {
+		set_reactivity_loss_tracker(null);
+	}
+
 	if (reaction.ac !== null) {
 		without_reactive_context(() => {
 			/** @type {AbortController} */ (reaction.ac).abort(STALE_REACTION);
