@@ -10,6 +10,7 @@ import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
 import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 import * as state from '../../state.js';
+import { find_end } from './utils/find.js';
 
 /** @param {number} cc */
 function is_whitespace(cc) {
@@ -212,6 +213,33 @@ export class Parser {
 		if (!match || match.index !== this.index) return null;
 
 		return match[0];
+	}
+
+	advance() {
+		let i = this.index;
+		let source = this.template;
+
+		while (i < source.length) {
+			const code = source.charCodeAt(i);
+
+			if (is_whitespace(code)) {
+				i += 1;
+				continue;
+			}
+
+			if (code === 47) {
+				const next = source.charCodeAt(i + 1);
+
+				if (next === 47 || next === 42) {
+					i = find_end(source, next === 42 ? '*/' : '\n', i);
+					continue;
+				}
+			}
+
+			break;
+		}
+
+		this.index = i;
 	}
 
 	allow_whitespace() {

@@ -1,9 +1,6 @@
 /** @import { Expression, Pattern, ObjectPattern, Property, Identifier, RestElement, ArrayPattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import { match_bracket } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
-import { regex_not_newline_characters } from '../../patterns.js';
-import * as e from '../../../errors.js';
 import { get_loc } from '../../../state.js';
 
 /**
@@ -51,7 +48,7 @@ function read_object_pattern(parser) {
 	};
 
 	while (true) {
-		parser.allow_whitespace();
+		parser.advance();
 
 		const start = parser.index;
 
@@ -61,7 +58,7 @@ function read_object_pattern(parser) {
 		}
 
 		if (parser.eat('...')) {
-			parser.allow_whitespace();
+			parser.advance();
 			const argument = parser.read_identifier();
 
 			properties.push({
@@ -72,7 +69,7 @@ function read_object_pattern(parser) {
 				loc: get_loc(start, argument.end)
 			});
 
-			parser.allow_whitespace();
+			parser.advance();
 
 			break;
 		}
@@ -96,17 +93,17 @@ function read_object_pattern(parser) {
 			kind: 'init'
 		};
 
-		parser.allow_whitespace();
+		parser.advance();
 
 		if (parser.eat(':', computed)) {
 			property.value = read_pattern(parser);
 			property.shorthand = false;
 		}
 
-		parser.allow_whitespace();
+		parser.advance();
 
 		if (parser.eat('=')) {
-			parser.allow_whitespace();
+			parser.advance();
 			const start = parser.index;
 
 			let right = /** @type {Expression} */ (
@@ -138,14 +135,14 @@ function read_object_pattern(parser) {
 
 		properties.push(property);
 
-		parser.allow_whitespace();
+		parser.advance();
 
 		if (!parser.eat(',')) {
 			break;
 		}
 	}
 
-	parser.allow_whitespace();
+	parser.advance();
 	parser.eat('}', true);
 	pattern.end = parser.index;
 
@@ -175,7 +172,7 @@ function read_array_pattern(parser) {
 	};
 
 	while (true) {
-		parser.allow_whitespace();
+		parser.advance();
 
 		const start = parser.index;
 
@@ -185,7 +182,7 @@ function read_array_pattern(parser) {
 		}
 
 		if (parser.eat('...')) {
-			parser.allow_whitespace();
+			parser.advance();
 			const argument = parser.read_identifier();
 
 			elements.push({
@@ -196,17 +193,17 @@ function read_array_pattern(parser) {
 				loc: get_loc(start, argument.end)
 			});
 
-			parser.allow_whitespace();
+			parser.advance();
 
 			break;
 		}
 
 		let element = read_pattern(parser);
 
-		parser.allow_whitespace();
+		parser.advance();
 
 		if (parser.eat('=')) {
-			parser.allow_whitespace();
+			parser.advance();
 			const start = parser.index;
 
 			let right = /** @type {Expression} */ (
@@ -238,14 +235,14 @@ function read_array_pattern(parser) {
 
 		elements.push(element);
 
-		parser.allow_whitespace();
+		parser.advance();
 
 		if (!parser.eat(',')) {
 			break;
 		}
 	}
 
-	parser.allow_whitespace();
+	parser.advance();
 	parser.eat(']', true);
 	pattern.end = parser.index;
 

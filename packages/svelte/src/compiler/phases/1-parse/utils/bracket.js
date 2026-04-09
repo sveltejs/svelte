@@ -1,4 +1,5 @@
 import * as e from '../../../errors.js';
+import { find_end } from './find.js';
 
 /**
  * @param {string} source
@@ -45,21 +46,6 @@ export function match_bracket(source, start, open, close, offset = 0) {
 	}
 
 	e.unexpected_eof(source.length);
-}
-
-/**
- * @param {string} haystack
- * @param {string} needle
- * @param {number} start
- */
-function find_end(haystack, needle, start) {
-	const i = haystack.indexOf(needle, start);
-
-	if (i === -1) {
-		e.unexpected_eof(haystack.length);
-	}
-
-	return i + needle.length;
 }
 
 /**
