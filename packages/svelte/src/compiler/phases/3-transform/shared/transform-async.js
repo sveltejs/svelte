@@ -47,63 +47,24 @@ export function transform_body(instance_body, runner, transform) {
 
 	// Thunks for the await expressions
 	if (instance_body.async.length > 0) {
-		const thunks = instance_body.async.map((s) => {
-			if (s.node.type === 'VariableDeclarator') {
-				const visited = /** @type {ESTree.VariableDeclaration | ESTree.EmptyStatement} */ (
-					transform(b.var(s.node.id, s.node.init))
-				);
+		const thunks = instance_body.async.map((entry) => {
+			/** @type {ESTree.Statement[]} */
+			const entry_statements = [];
 
-				const statements =
-					visited.type === 'VariableDeclaration'
-						? visited.declarations.map((node) => {
-								if (
-									node.id.type === 'Identifier' &&
-									(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
-								) {
-									// this is an intermediate declaration created in VariableDeclaration.js;
-									// subsequent statements depend on it
-									return b.var(node.id, node.init);
-								}
-
-								return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
-							})
-						: [];
-
-				if (statements.length === 1) {
-					const statement = /** @type {ESTree.ExpressionStatement} */ (statements[0]);
-					return b.thunk(statement.expression, s.has_await);
-				}
-
-				return b.thunk(b.block(statements), s.has_await);
+			for (const node of entry.nodes) {
+				entry_statements.push(...transform_async_node(node, transform));
 			}
 
-			if (s.node.type === 'ClassDeclaration') {
-				return b.thunk(
-					b.assignment(
-						'=',
-						s.node.id,
-						/** @type {ESTree.ClassExpression} */ ({ ...s.node, type: 'ClassExpression' })
-					),
-					s.has_await
-				);
+			if (entry_statements.length === 0) {
+				// Keep indices stable for async sequencing while avoiding array holes in run([...]).
+				return b.thunk(b.void0, false);
 			}
 
-			if (s.node.type === 'ExpressionStatement') {
-				// the expression may be a $inspect call, which will be transformed into an empty statement
-				const expression = /** @type {ESTree.Expression | ESTree.EmptyStatement} */ (
-					transform(s.node.expression)
-				);
-
-				if (expression.type === 'EmptyStatement') {
-					return null;
-				}
-
-				return expression.type === 'AwaitExpression'
-					? b.thunk(expression, true)
-					: b.thunk(b.unary('void', expression), s.has_await);
+			if (entry_statements.length === 1 && entry_statements[0].type === 'ExpressionStatement') {
+				return b.thunk(entry_statements[0].expression, entry.has_await);
 			}
 
-			return b.thunk(b.block([/** @type {ESTree.Statement} */ (transform(s.node))]), s.has_await);
+			return b.thunk(b.block(entry_statements), entry.has_await);
 		});
 
 		// TODO get the `$$promises` ID from scope
@@ -111,4 +72,64 @@ export function transform_body(instance_body, runner, transform) {
 	}
 
 	return statements;
+}
+
+/**
+ * @param {ESTree.Statement | ESTree.VariableDeclarator} node
+ * @param {(node: ESTree.Node) => ESTree.Node} transform
+ * @returns {ESTree.Statement[]}
+ */
+function transform_async_node(node, transform) {
+	if (node.type === 'VariableDeclarator') {
+		const visited = /** @type {ESTree.VariableDeclaration | ESTree.EmptyStatement} */ (
+			transform(b.var(node.id, node.init))
+		);
+
+		return visited.type === 'VariableDeclaration'
+			? visited.declarations.map((node) => {
+					if (
+						node.id.type === 'Identifier' &&
+						(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
+					) {
+						// This intermediate declaration is created in VariableDeclaration.js;
+						// subsequent statements may depend on it.
+						return b.var(node.id, node.init);
+					}
+
+					return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
+				})
+			: [];
+	}
+
+	if (node.type === 'ClassDeclaration') {
+		return [
+			b.stmt(
+				b.assignment(
+					'=',
+					node.id,
+					/** @type {ESTree.ClassExpression} */ ({ ...node, type: 'ClassExpression' })
+				)
+			)
+		];
+	}
+
+	if (node.type === 'ExpressionStatement') {
+		// The expression may be a $inspect call, which will be transformed into an empty statement.
+		const expression = /** @type {ESTree.Expression | ESTree.EmptyStatement} */ (
+			transform(node.expression)
+		);
+
+		if (expression.type === 'EmptyStatement') {
+			return [];
+		}
+
+		if (expression.type === 'AwaitExpression') {
+			return [b.stmt(expression)];
+		}
+
+		return [b.stmt(b.unary('void', expression))];
+	}
+
+	const statement = /** @type {ESTree.Statement | ESTree.EmptyStatement} */ (transform(node));
+	return statement.type === 'EmptyStatement' ? [] : [statement];
 }

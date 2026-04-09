@@ -2,6 +2,7 @@ import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
 import type { AST, StateField, ValidatedCompileOptions } from '#compiler';
 import type { ExpressionMetadata } from '../nodes.js';
+import type { Identifier } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -33,6 +34,13 @@ export interface AnalysisState {
 	 * Set when we're inside a `$derived(...)` expression (but not `$derived.by(...)`) or `@const`
 	 */
 	derived_function_depth: number;
+
+	/** Collected info about async `{@const }` declarations */
+	async_consts?: {
+		id: Identifier;
+		/** How many `@const` declarations there are (already) in this scope */
+		declaration_count: number;
+	};
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

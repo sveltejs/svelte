@@ -117,12 +117,12 @@ export function declaration_duplicate(node, name) {
 }
 
 /**
- * Cannot declare a variable with the same name as an import inside `<script module>`
+ * Cannot declare a variable with the same name as an import from `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function declaration_duplicate_module_import(node) {
-	e(node, 'declaration_duplicate_module_import', `Cannot declare a variable with the same name as an import inside \`<script module>\`\nhttps://svelte.dev/e/declaration_duplicate_module_import`);
+	e(node, 'declaration_duplicate_module_import', `Cannot declare a variable with the same name as an import from \`<script module>\`\nhttps://svelte.dev/e/declaration_duplicate_module_import`);
 }
 
 /**
