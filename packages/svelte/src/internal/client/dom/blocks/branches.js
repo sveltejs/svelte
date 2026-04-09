@@ -117,7 +117,7 @@ export class BranchManager {
 				if (DEV) {
 					// Tell hmr.js about the anchor it should use for updates,
 					// since the initial one will be removed
-					/** @type {any} */ (offscreen.fragment.lastChild)[HMR_ANCHOR] = this.anchor;
+					/** @type {any} */ (get_last_child(offscreen.fragment))[HMR_ANCHOR] = this.anchor;
 				}
 
 				// remove the anchor...
