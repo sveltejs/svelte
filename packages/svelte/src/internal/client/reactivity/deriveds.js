@@ -23,7 +23,9 @@ import {
 	push_reaction_value,
 	is_destroying_effect,
 	update_effect,
-	remove_reactions
+	remove_reactions,
+	skipped_deps,
+	new_deps
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -128,19 +130,11 @@ export function async_derived(fn, label, location) {
 	var deferreds = new Map();
 
 	async_effect(() => {
-		if (DEV) {
-			var tracker = (reactivity_loss_tracker = {
-				effect: /** @type {Effect} */ (active_effect),
-				effect_deps: new Set(),
-				warned: false
-			});
-			// So that we get the dependencies _after_ this effect has run
-			queueMicrotask(() => {
-				tracker.effect_deps = new Set(tracker.effect.deps ?? []);
-			});
-		}
-
 		var effect = /** @type {Effect} */ (active_effect);
+
+		if (DEV) {
+			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
+		}
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
@@ -157,6 +151,20 @@ export function async_derived(fn, label, location) {
 		}
 
 		if (DEV) {
+			if (reactivity_loss_tracker) {
+				if (effect.deps !== null) {
+					for (let i = skipped_deps; i < effect.deps.length; i += 1) {
+						reactivity_loss_tracker.effect_deps.add(effect.deps[i]);
+					}
+				}
+
+				if (new_deps !== null) {
+					for (let i = skipped_deps; i < new_deps.length; i += 1) {
+						reactivity_loss_tracker.effect_deps.add(new_deps[i]);
+					}
+				}
+			}
+
 			reactivity_loss_tracker = null;
 		}
 

@@ -111,9 +111,9 @@ export function push_reaction_value(value) {
  * and until a new dependency is accessed — we track this via `skipped_deps`
  * @type {null | Value[]}
  */
-let new_deps = null;
+export let new_deps = null;
 
-let skipped_deps = 0;
+export let skipped_deps = 0;
 
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
