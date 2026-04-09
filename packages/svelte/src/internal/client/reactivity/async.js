@@ -163,13 +163,13 @@ export async function save(promise) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(fn) {
-	var previous_async_effect = reactivity_loss_tracker;
+	var previous_reactivity_loss_tracker = reactivity_loss_tracker;
 	var promise = fn();
 	set_reactivity_loss_tracker(null);
 	var value = await promise;
 
 	return () => {
-		set_reactivity_loss_tracker(previous_async_effect);
+		set_reactivity_loss_tracker(previous_reactivity_loss_tracker);
 		return value;
 	};
 }
