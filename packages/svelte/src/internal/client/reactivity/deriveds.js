@@ -152,14 +152,18 @@ export function async_derived(fn, label, location) {
 
 		if (DEV) {
 			if (reactivity_loss_tracker) {
+				// Reused deps from previous run (indices 0 to skipped_deps-1)
+				// We deliberately only track direct dependencies of the async expression to encourage
+				// dependencies being directly visible at the point of the expression
 				if (effect.deps !== null) {
-					for (let i = skipped_deps; i < effect.deps.length; i += 1) {
+					for (let i = 0; i < skipped_deps; i += 1) {
 						reactivity_loss_tracker.effect_deps.add(effect.deps[i]);
 					}
 				}
 
+				// New deps discovered this run
 				if (new_deps !== null) {
-					for (let i = skipped_deps; i < new_deps.length; i += 1) {
+					for (let i = 0; i < new_deps.length; i += 1) {
 						reactivity_loss_tracker.effect_deps.add(new_deps[i]);
 					}
 				}
