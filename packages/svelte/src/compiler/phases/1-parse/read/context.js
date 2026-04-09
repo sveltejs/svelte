@@ -84,7 +84,7 @@ function read_object_pattern(parser) {
 		const property = {
 			type: 'Property',
 			start,
-			end: -1,
+			end: key.end,
 			key,
 			value: /** @type {Identifier} */ (key),
 			method: false,
@@ -98,6 +98,7 @@ function read_object_pattern(parser) {
 		if (parser.eat(':', computed)) {
 			property.value = read_pattern(parser);
 			property.shorthand = false;
+			property.end = property.value.end;
 		}
 
 		parser.advance();
@@ -123,13 +124,16 @@ function read_object_pattern(parser) {
 				right,
 				loc: get_loc(property.value.start, right.end)
 			};
+
+			property.end = property.value.end;
 		}
 
 		if (parser.ts) {
 			property.typeAnnotation = read_type_annotation(parser);
+			if (property.typeAnnotation) {
+				property.end = property.typeAnnotation.end;
+			}
 		}
-
-		property.end = parser.index;
 
 		property.loc = get_loc(start, property.end);
 
@@ -227,9 +231,11 @@ function read_array_pattern(parser) {
 
 		if (parser.ts) {
 			element.typeAnnotation = read_type_annotation(parser);
-		}
 
-		element.end = parser.index;
+			if (element.typeAnnotation) {
+				element.end = element.typeAnnotation.end;
+			}
+		}
 
 		element.loc = get_loc(start, element.end);
 
