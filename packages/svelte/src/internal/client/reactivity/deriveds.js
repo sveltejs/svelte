@@ -158,11 +158,15 @@ export function async_derived(fn, label, location) {
 
 	async_effect(() => {
 		if (DEV) {
-			reactivity_loss_tracker = {
+			var tracker = (reactivity_loss_tracker = {
 				effect: /** @type {Effect} */ (active_effect),
-				effect_deps: collect_transitive_dependencies(/** @type {Reaction} */ (active_effect)),
+				effect_deps: new Map(),
 				warned: false
-			};
+			});
+			// So that we get the dependencies _after_ this effect has run
+			queueMicrotask(() => {
+				tracker.effect_deps = collect_transitive_dependencies(tracker.effect);
+			});
 		}
 
 		var effect = /** @type {Effect} */ (active_effect);
