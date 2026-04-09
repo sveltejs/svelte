@@ -18,7 +18,7 @@ export function AwaitExpression(node, context) {
 	// in dev, note which values are read inside a reactive expression,
 	// but don't track them
 	else if (dev && !is_ignored(node, 'await_reactivity_loss')) {
-		return b.call(b.await(b.call('$.track_reactivity_loss', b.thunk(argument))));
+		return b.call(b.await(b.call('$.track_reactivity_loss', argument)));
 	}
 
 	return argument === node.argument ? node : { ...node, argument };
