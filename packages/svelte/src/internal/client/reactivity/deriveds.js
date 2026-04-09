@@ -23,7 +23,9 @@ import {
 	push_reaction_value,
 	is_destroying_effect,
 	update_effect,
-	remove_reactions
+	remove_reactions,
+	skipped_deps,
+	new_deps
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -48,42 +50,13 @@ import { set_signal_status, update_derived_status } from './status.js';
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
  * are read after a non-context-restoring `await`. Dev-only
- * @type {{ effect: Effect, effect_deps: Map<Value, number>, warned: boolean } | null}
+ * @type {{ effect: Effect, effect_deps: Set<Value>, warned: boolean } | null}
  */
 export let reactivity_loss_tracker = null;
 
-/** @param {{ effect: Effect, effect_deps: Map<Value, number>, warned: boolean } | null} v */
+/** @param {{ effect: Effect, effect_deps: Set<Value>, warned: boolean } | null} v */
 export function set_reactivity_loss_tracker(v) {
 	reactivity_loss_tracker = v;
-}
-
-/**
- * Collect all direct and transitive dependencies of a reaction along with their write version.
- * @param {Reaction} reaction
- * @param {Map<Value, number>} [collected]
- * @returns {Map<Value, number>}
- */
-function collect_transitive_dependencies(reaction, collected = new Map()) {
-	var dependencies = reaction.deps;
-	if (dependencies === null) {
-		return collected;
-	}
-
-	for (var i = 0; i < dependencies.length; i++) {
-		var dependency = dependencies[i];
-
-		if (collected.has(dependency)) {
-			continue;
-		}
-
-		collected.set(dependency, dependency.wv);
-
-		if ((dependency.f & DERIVED) !== 0) {
-			collect_transitive_dependencies(/** @type {Derived} */ (dependency), collected);
-		}
-	}
-
-	return collected;
 }
 
 export const recent_async_deriveds = new Set();
@@ -157,19 +130,11 @@ export function async_derived(fn, label, location) {
 	var deferreds = new Map();
 
 	async_effect(() => {
-		if (DEV) {
-			var tracker = (reactivity_loss_tracker = {
-				effect: /** @type {Effect} */ (active_effect),
-				effect_deps: new Map(),
-				warned: false
-			});
-			// So that we get the dependencies _after_ this effect has run
-			queueMicrotask(() => {
-				tracker.effect_deps = collect_transitive_dependencies(tracker.effect);
-			});
-		}
-
 		var effect = /** @type {Effect} */ (active_effect);
+
+		if (DEV) {
+			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
+		}
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
@@ -186,6 +151,24 @@ export function async_derived(fn, label, location) {
 		}
 
 		if (DEV) {
+			if (reactivity_loss_tracker) {
+				// Reused deps from previous run (indices 0 to skipped_deps-1)
+				// We deliberately only track direct dependencies of the async expression to encourage
+				// dependencies being directly visible at the point of the expression
+				if (effect.deps !== null) {
+					for (let i = 0; i < skipped_deps; i += 1) {
+						reactivity_loss_tracker.effect_deps.add(effect.deps[i]);
+					}
+				}
+
+				// New deps discovered this run
+				if (new_deps !== null) {
+					for (let i = 0; i < new_deps.length; i += 1) {
+						reactivity_loss_tracker.effect_deps.add(new_deps[i]);
+					}
+				}
+			}
+
 			reactivity_loss_tracker = null;
 		}
 
