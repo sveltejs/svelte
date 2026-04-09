@@ -134,6 +134,14 @@ When logging a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/R
 
 The easiest way to log a value as it changes over time is to use the [`$inspect`](/docs/svelte/$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](/docs/svelte/$state#$state.snapshot) to take a snapshot of the current value.
 
+### derived_inert
+
+```
+Reading a derived belonging to a now-destroyed effect may result in stale values
+```
+
+A `$derived` value created inside an effect will stop updating when the effect is destroyed. You should create the `$derived` outside the effect, or inside an `$effect.root`.
+
 ### event_handler_invalid
 
 ```
