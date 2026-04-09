@@ -1391,7 +1391,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('derived whose original parent effect has been destroyed keeps updating', () => {
+	test('derived whose original parent effect has been destroyed no longer updates', () => {
 		return () => {
 			const warn = console.warn;
 			const warnings: string[] = [];
