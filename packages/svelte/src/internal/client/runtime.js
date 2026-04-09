@@ -409,6 +409,8 @@ function remove_reaction(signal, dependency) {
 			derived.f &= ~WAS_MARKED;
 		}
 
+		update_derived_status(derived);
+
 		// freeze any effects inside this derived
 		freeze_derived_effects(derived);
 
