@@ -39,7 +39,7 @@ export interface AnalysisState {
 	async_consts?: {
 		id: Identifier;
 		/** How many `@const` declarations there are (already) in this scope */
-		nrOfDeclarations: number;
+		declaration_count: number;
 	};
 }
 

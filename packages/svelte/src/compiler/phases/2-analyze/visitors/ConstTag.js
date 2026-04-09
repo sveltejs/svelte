@@ -52,16 +52,16 @@ export function ConstTag(node, context) {
 	if (has_await || context.state.async_consts || blockers.length > 0) {
 		const run = (context.state.async_consts ??= {
 			id: context.state.analysis.root.unique('promises'),
-			nrOfDeclarations: 0
+			declaration_count: 0
 		});
 		node.metadata.promises_id = run.id;
 
 		const bindings = context.state.scope.get_bindings(declaration);
 
 		// keep the counter in sync with the number of thunks pushed in ConstTag in transform
-		// TODO once non-async and non-runes mode is gone investigate making this more robust
+		// TODO 6.0 once non-async and non-runes mode is gone investigate making this more robust
 		// via something like the approach in https://github.com/sveltejs/svelte/pull/18032
-		const length = run.nrOfDeclarations++;
+		const length = run.declaration_count++;
 		const blocker = b.member(run.id, b.literal(length), true);
 		for (const binding of bindings) {
 			binding.blocker = blocker;
