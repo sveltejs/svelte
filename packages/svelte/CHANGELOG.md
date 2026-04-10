@@ -1,5 +1,19 @@
 # svelte
 
+## 5.55.3
+
+### Patch Changes
+
+- fix: ensure proper HMR updates for dynamic components ([#18079](https://github.com/sveltejs/svelte/pull/18079))
+
+- fix: correctly calculate `@const` blockers ([#18039](https://github.com/sveltejs/svelte/pull/18039))
+
+- fix: freeze deriveds once their containing effects are destroyed ([#17921](https://github.com/sveltejs/svelte/pull/17921))
+
+- fix: defer error boundary rendering in forks ([#18076](https://github.com/sveltejs/svelte/pull/18076))
+
+- fix: avoid false positives for reactivity loss warning ([#18088](https://github.com/sveltejs/svelte/pull/18088))
+
 ## 5.55.2
 
 ### Patch Changes
