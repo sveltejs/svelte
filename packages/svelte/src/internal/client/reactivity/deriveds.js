@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
 /** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
@@ -12,7 +12,8 @@ import {
 	WAS_MARKED,
 	DESTROYED,
 	CLEAN,
-	REACTION_RAN
+	REACTION_RAN,
+	INERT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -23,7 +24,9 @@ import {
 	push_reaction_value,
 	is_destroying_effect,
 	update_effect,
-	remove_reactions
+	remove_reactions,
+	skipped_deps,
+	new_deps
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -48,11 +51,11 @@ import { set_signal_status, update_derived_status } from './status.js';
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
  * are read after a non-context-restoring `await`. Dev-only
- * @type {{ effect: Effect, warned: boolean } | null}
+ * @type {{ effect: Effect, effect_deps: Set<Value>, warned: boolean } | null}
  */
 export let reactivity_loss_tracker = null;
 
-/** @param {{ effect: Effect, warned: boolean } | null} v */
+/** @param {{ effect: Effect, effect_deps: Set<Value>, warned: boolean } | null} v */
 export function set_reactivity_loss_tracker(v) {
 	reactivity_loss_tracker = v;
 }
@@ -67,10 +70,6 @@ export const recent_async_deriveds = new Set();
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	var flags = DERIVED | DIRTY;
-	var parent_derived =
-		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
-			? /** @type {Derived} */ (active_reaction)
-			: null;
 
 	if (active_effect !== null) {
 		// Since deriveds are evaluated lazily, any effects created inside them are
@@ -90,7 +89,7 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
-		parent: parent_derived ?? active_effect,
+		parent: active_effect,
 		ac: null
 	};
 
@@ -128,14 +127,11 @@ export function async_derived(fn, label, location) {
 	var deferreds = new Map();
 
 	async_effect(() => {
-		if (DEV) {
-			reactivity_loss_tracker = {
-				effect: /** @type {Effect} */ (active_effect),
-				warned: false
-			};
-		}
-
 		var effect = /** @type {Effect} */ (active_effect);
+
+		if (DEV) {
+			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
+		}
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
@@ -152,6 +148,24 @@ export function async_derived(fn, label, location) {
 		}
 
 		if (DEV) {
+			if (reactivity_loss_tracker) {
+				// Reused deps from previous run (indices 0 to skipped_deps-1)
+				// We deliberately only track direct dependencies of the async expression to encourage
+				// dependencies being directly visible at the point of the expression
+				if (effect.deps !== null) {
+					for (let i = 0; i < skipped_deps; i += 1) {
+						reactivity_loss_tracker.effect_deps.add(effect.deps[i]);
+					}
+				}
+
+				// New deps discovered this run
+				if (new_deps !== null) {
+					for (let i = 0; i < new_deps.length; i += 1) {
+						reactivity_loss_tracker.effect_deps.add(new_deps[i]);
+					}
+				}
+			}
+
 			reactivity_loss_tracker = null;
 		}
 
@@ -321,23 +335,6 @@ export function destroy_derived_effects(derived) {
 let stack = [];
 
 /**
- * @param {Derived} derived
- * @returns {Effect | null}
- */
-function get_derived_parent_effect(derived) {
-	var parent = derived.parent;
-	while (parent !== null) {
-		if ((parent.f & DERIVED) === 0) {
-			// The original parent effect might've been destroyed but the derived
-			// is used elsewhere now - do not return the destroyed effect in that case
-			return (parent.f & DESTROYED) === 0 ? /** @type {Effect} */ (parent) : null;
-		}
-		parent = parent.parent;
-	}
-	return null;
-}
-
-/**
  * @template T
  * @param {Derived} derived
  * @returns {T}
@@ -345,8 +342,15 @@ function get_derived_parent_effect(derived) {
 export function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
+	var parent = derived.parent;
 
-	set_active_effect(get_derived_parent_effect(derived));
+	if (!is_destroying_effect && parent !== null && (parent.f & (DESTROYED | INERT)) !== 0) {
+		w.derived_inert();
+
+		return derived.v;
+	}
+
+	set_active_effect(parent);
 
 	if (DEV) {
 		let prev_eager_effects = eager_effects;

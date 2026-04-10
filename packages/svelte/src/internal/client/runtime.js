@@ -112,9 +112,9 @@ export function push_reaction_value(value) {
  * and until a new dependency is accessed — we track this via `skipped_deps`
  * @type {null | Value[]}
  */
-let new_deps = null;
+export let new_deps = null;
 
-let skipped_deps = 0;
+export let skipped_deps = 0;
 
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
@@ -585,7 +585,8 @@ export function get(signal) {
 			!untracking &&
 			reactivity_loss_tracker &&
 			!reactivity_loss_tracker.warned &&
-			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0
+			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0 &&
+			!reactivity_loss_tracker.effect_deps.has(signal)
 		) {
 			reactivity_loss_tracker.warned = true;
 

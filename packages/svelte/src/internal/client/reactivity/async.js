@@ -168,10 +168,26 @@ export async function save(promise) {
  */
 export async function track_reactivity_loss(promise) {
 	var previous_async_effect = reactivity_loss_tracker;
+	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
+	queueMicrotask(() => {
+		if (reactivity_loss_tracker === previous_async_effect) {
+			set_reactivity_loss_tracker(null);
+		}
+	});
+
 	var value = await promise;
 
 	return () => {
 		set_reactivity_loss_tracker(previous_async_effect);
+		// While this can result in false negatives it also guards against the more important
+		// false positives that would occur if this is the last in a chain of async operations,
+		// and the reactivity_loss_tracker would then stay around until the next async operation happens.
+		queueMicrotask(() => {
+			if (reactivity_loss_tracker === previous_async_effect) {
+				set_reactivity_loss_tracker(null);
+			}
+		});
+
 		return value;
 	};
 }
@@ -210,7 +226,9 @@ export async function* for_await_track_reactivity_loss(iterable) {
 				normal_completion = true;
 				break;
 			}
+			var prev = reactivity_loss_tracker;
 			yield value;
+			set_reactivity_loss_tracker(prev);
 		}
 	} finally {
 		// If the iterator had an abrupt completion and `return` is defined on the iterator, call it and return the value

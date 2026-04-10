@@ -156,6 +156,8 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
+			/** If this const tag contains an await expression, or needs to wait on other async, this is set */
+			promises_id?: Identifier;
 		};
 	}
 
