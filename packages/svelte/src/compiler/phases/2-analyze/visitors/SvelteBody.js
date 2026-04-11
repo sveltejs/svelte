@@ -1,6 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import { custom_renderer } from '../../../state.js';
 import { is_event_attribute } from '../../../utils/ast.js';
 import { disallow_children } from './shared/special-element.js';
 
@@ -9,7 +10,7 @@ import { disallow_children } from './shared/special-element.js';
  * @param {Context} context
  */
 export function SvelteBody(node, context) {
-	if (context.state.analysis.custom_renderer) {
+	if (custom_renderer) {
 		e.incompatible_with_custom_renderer(node, '`<svelte:body>`');
 	}
 

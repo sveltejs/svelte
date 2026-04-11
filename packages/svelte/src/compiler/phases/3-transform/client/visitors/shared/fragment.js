@@ -2,6 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { cannot_be_set_statically } from '../../../../../../utils.js';
+import { custom_renderer } from '../../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { is_custom_element_node } from '../../../../nodes.js';
@@ -83,7 +84,7 @@ export function process_children(nodes, initial, is_element, context) {
 		if (has_state && !within_bound_contenteditable) {
 			context.state.update.push(update);
 		} else {
-			if (context.state.analysis.custom_renderer) {
+			if (custom_renderer) {
 				// custom renderers need to use the method to invoke the renderer
 				context.state.init.push(update);
 			} else {

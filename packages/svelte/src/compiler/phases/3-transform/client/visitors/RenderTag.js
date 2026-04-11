@@ -2,6 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
+import { custom_renderer } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_expression, Memoizer } from './shared/utils.js';
 
@@ -46,7 +47,7 @@ export function RenderTag(node, context) {
 	if (node.metadata.dynamic) {
 		// In custom renderer components, validate that the snippet is compatible
 		// with the current renderer before rendering it
-		if (context.state.analysis.custom_renderer) {
+		if (custom_renderer) {
 			snippet_function = b.call('$.validate_snippet_renderer', b.id('$renderer'), snippet_function);
 		}
 
@@ -65,7 +66,7 @@ export function RenderTag(node, context) {
 	} else {
 		// In custom renderer components, validate that the snippet is compatible
 		// with the current renderer before rendering it
-		if (context.state.analysis.custom_renderer) {
+		if (custom_renderer) {
 			snippet_function = b.call('$.validate_snippet_renderer', b.id('$renderer'), snippet_function);
 		}
 

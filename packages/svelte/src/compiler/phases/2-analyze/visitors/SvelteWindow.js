@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import { disallow_children } from './shared/special-element.js';
 import * as e from '../../../errors.js';
+import { custom_renderer } from '../../../state.js';
 import { is_event_attribute } from '../../../utils/ast.js';
 
 /**
@@ -9,7 +10,7 @@ import { is_event_attribute } from '../../../utils/ast.js';
  * @param {Context} context
  */
 export function SvelteWindow(node, context) {
-	if (context.state.analysis.custom_renderer) {
+	if (custom_renderer) {
 		e.incompatible_with_custom_renderer(node, '`<svelte:window>`');
 	}
 

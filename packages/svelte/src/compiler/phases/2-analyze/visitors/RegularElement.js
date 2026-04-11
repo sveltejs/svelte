@@ -17,7 +17,7 @@ import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { object } from '../../../utils/ast.js';
-import { runes } from '../../../state.js';
+import { runes, custom_renderer } from '../../../state.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -26,7 +26,7 @@ import { runes } from '../../../state.js';
 export function RegularElement(node, context) {
 	validate_element(node, context);
 
-	if (!context.state.analysis.custom_renderer) {
+	if (!custom_renderer) {
 		check_element(node, context);
 	}
 
@@ -37,7 +37,7 @@ export function RegularElement(node, context) {
 	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute' && attribute.name === 'value') {
-				if (!context.state.analysis.custom_renderer) {
+				if (!custom_renderer) {
 					e.textarea_invalid_content(node);
 				}
 			}
@@ -117,7 +117,7 @@ export function RegularElement(node, context) {
 	// We mark the subtree as dynamic so parent elements properly include the child init code
 	if (
 		(is_customizable_select_element(node) || node.name === 'selectedcontent') &&
-		!context.state.analysis.custom_renderer
+		!custom_renderer
 	) {
 		// Mark the element's own fragment as dynamic so it's not treated as static
 		node.fragment.metadata.dynamic = true;
@@ -165,7 +165,7 @@ export function RegularElement(node, context) {
 		mark_subtree_dynamic(context.path);
 	}
 
-	if (context.state.parent_element && !context.state.analysis.custom_renderer) {
+	if (context.state.parent_element && !custom_renderer) {
 		let past_parent = false;
 		let only_warn = false;
 		const ancestors = [context.state.parent_element];
@@ -227,7 +227,7 @@ export function RegularElement(node, context) {
 		!is_void(node_name) &&
 		!is_svg(node_name) &&
 		!is_mathml(node_name) &&
-		!context.state.analysis.custom_renderer
+		!custom_renderer
 	) {
 		w.element_invalid_self_closing_tag(node, node.name);
 	}

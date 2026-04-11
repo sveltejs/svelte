@@ -1,6 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import { custom_renderer } from '../../../state.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
@@ -8,7 +9,7 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  * @param {Context} context
  */
 export function SvelteHead(node, context) {
-	if (context.state.analysis.custom_renderer) {
+	if (custom_renderer) {
 		e.incompatible_with_custom_renderer(node, '`<svelte:head>`');
 	}
 

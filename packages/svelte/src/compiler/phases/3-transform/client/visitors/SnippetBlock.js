@@ -1,7 +1,7 @@
 /** @import { AssignmentPattern, BlockStatement, Expression, Identifier, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { dev } from '../../../../state.js';
+import { dev, custom_renderer } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
@@ -81,7 +81,7 @@ export function SnippetBlock(node, context) {
 
 	// wrap snippets in components with a custom renderer so they can only be
 	// rendered by the same renderer that compiled them
-	if (context.state.analysis.custom_renderer) {
+	if (custom_renderer) {
 		snippet = b.call('$.renderer_snippet', b.id('$renderer'), snippet);
 	}
 

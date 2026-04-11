@@ -5,6 +5,7 @@ import { is_text_attribute } from '../../../utils/ast.js';
 import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
+import { custom_renderer } from '../../../state.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -13,7 +14,7 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
 export function SvelteElement(node, context) {
 	validate_element(node, context);
 
-	if (!context.state.analysis.custom_renderer) {
+	if (!custom_renderer) {
 		check_element(node, context);
 	}
 

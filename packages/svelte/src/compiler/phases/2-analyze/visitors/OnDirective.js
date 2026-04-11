@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
+import { custom_renderer } from '../../../state.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
@@ -9,7 +10,7 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  * @param {Context} context
  */
 export function OnDirective(node, context) {
-	if (context.state.analysis.custom_renderer) {
+	if (custom_renderer) {
 		e.incompatible_with_custom_renderer(node, '`on:`');
 	}
 

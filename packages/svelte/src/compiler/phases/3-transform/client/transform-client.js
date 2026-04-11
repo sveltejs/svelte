@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
 import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
-import { dev, filename } from '../../../state.js';
+import { dev, filename, custom_renderer } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
@@ -138,13 +138,10 @@ const visitors = {
 	VariableDeclaration
 };
 
-/**
- * @param {string | undefined} custom_renderer_module
- */
-function get_imports(custom_renderer_module) {
+function get_imports() {
 	const imports = [b.import_all('$', 'svelte/internal/client')];
-	if (custom_renderer_module) {
-		imports.push(b.imports([['$renderer', '$renderer', true]], custom_renderer_module));
+	if (custom_renderer) {
+		imports.push(b.imports([['$renderer', '$renderer', true]], custom_renderer));
 	}
 	return imports;
 }
@@ -162,7 +159,7 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [...get_imports(analysis.custom_renderer), ...analysis.instance_body.hoisted],
+		hoisted: [...get_imports(), ...analysis.instance_body.hoisted],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -575,11 +572,11 @@ export function client_component(analysis, options) {
 
 	// disclose version attach the svelte version to `window` which is not guaranteed
 	// to be a thing in custom renderers environments
-	if (options.discloseVersion && !analysis.custom_renderer) {
+	if (options.discloseVersion && !custom_renderer) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
-	if (!analysis.custom_renderer) {
+	if (!custom_renderer) {
 		body.unshift(b.imports([], 'svelte/internal/init-operations'));
 	}
 
@@ -606,7 +603,7 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
 	}
 
-	if (analysis.custom_renderer) {
+	if (custom_renderer) {
 		component_block.body.unshift(
 			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
 		);

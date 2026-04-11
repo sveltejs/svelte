@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import { cannot_be_set_statically, can_delegate_event } from '../../../../utils.js';
 import { get_attribute_chunks, is_event_attribute } from '../../../utils/ast.js';
+import { custom_renderer } from '../../../state.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
@@ -60,7 +61,7 @@ export function Attribute(node, context) {
 			}
 
 			// we can't delegate event handlers in a non dom environment
-			if (!context.state.analysis.custom_renderer) {
+			if (!custom_renderer) {
 				node.metadata.delegated =
 					parent?.type === 'RegularElement' && can_delegate_event(node.name.slice(2));
 			}

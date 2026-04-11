@@ -12,6 +12,7 @@ import { binding_properties } from '../../bindings.js';
 import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
 import { is_content_editable_binding, is_svg } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
+import { custom_renderer } from '../../../state.js';
 
 /**
  * @param {AST.BindDirective} node
@@ -27,7 +28,7 @@ export function BindDirective(node, context) {
 		parent?.type === 'SvelteDocument' ||
 		parent?.type === 'SvelteBody'
 	) {
-		if (context.state.analysis.custom_renderer) {
+		if (custom_renderer) {
 			e.incompatible_with_custom_renderer(node, '`bind:`');
 		}
 		if (node.name in binding_properties) {

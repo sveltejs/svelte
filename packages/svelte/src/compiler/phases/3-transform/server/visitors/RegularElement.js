@@ -3,7 +3,7 @@
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
 import { is_void } from '../../../../../utils.js';
-import { dev, locator } from '../../../../state.js';
+import { dev, locator, custom_renderer } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes, prepare_element_spread_object } from './shared/element.js';
@@ -110,7 +110,7 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		if (is_customizable_select_element(node) && !context.state.analysis.custom_renderer) {
+		if (is_customizable_select_element(node) && !custom_renderer) {
 			rest.push(b.true);
 		}
 
@@ -157,7 +157,7 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		if (is_customizable_select_element(node) && !context.state.analysis.custom_renderer) {
+		if (is_customizable_select_element(node) && !custom_renderer) {
 			rest.push(b.true);
 		}
 
@@ -195,7 +195,7 @@ export function RegularElement(node, context) {
 		if (
 			(name === 'optgroup' || name === 'select') &&
 			is_customizable_select_element(node) &&
-			!context.state.analysis.custom_renderer
+			!custom_renderer
 		) {
 			state.template.push(b.literal('<!>'));
 		}

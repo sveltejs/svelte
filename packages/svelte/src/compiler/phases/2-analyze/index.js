@@ -482,7 +482,8 @@ export function analyze_component(root, source, options) {
 		component_name: name,
 		dev: options.dev,
 		rootDir: options.rootDir,
-		runes
+		runes,
+		custom_renderer: custom_renderer
 	});
 
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
@@ -535,7 +536,6 @@ export function analyze_component(root, source, options) {
 		event_directive_node: null,
 		uses_event_attributes: false,
 		custom_element,
-		custom_renderer,
 		inject_styles: css === 'injected' || is_custom_element,
 		accessors:
 			is_custom_element ||
