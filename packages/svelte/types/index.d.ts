@@ -1251,7 +1251,7 @@ declare module 'svelte/compiler' {
 			customRenderer?: string;
 			customElement?: {
 				tag?: string;
-				shadow?: 'open' | 'none';
+				shadow?: 'open' | 'none' | ObjectExpression | undefined;
 				props?: Record<
 					string,
 					{
