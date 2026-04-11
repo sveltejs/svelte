@@ -50,7 +50,7 @@ import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
 import { tag } from '../../dev/tracing.js';
 
-import { push_renderer, renderer } from '../../custom-renderer/state.js';
+import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -184,17 +184,17 @@ var dom_weak_key = {};
  */
 function get_offscreen_anchor() {
 	// not doing it inline to please typescript
-	var cached = offscreen_anchors.get(renderer ?? dom_weak_key);
+	var cached = offscreen_anchors.get(current_renderer ?? dom_weak_key);
 	if (cached) return cached;
 
 	var offscreen_anchor = create_text();
 
-	if (renderer) {
+	if (current_renderer) {
 		var fragment = create_fragment();
 		append_child(fragment, offscreen_anchor);
 	}
 
-	offscreen_anchors.set(renderer ?? dom_weak_key, offscreen_anchor);
+	offscreen_anchors.set(current_renderer ?? dom_weak_key, offscreen_anchor);
 	return offscreen_anchor;
 }
 
@@ -219,7 +219,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	// Capture the renderer that was active when this each block was created.
 	// Needed so that the commit callback can push the correct renderer when doing
 	// DOM operations outside of an effect context (e.g. as a batch commit callback).
-	var captured_renderer = renderer;
+	var captured_renderer = current_renderer;
 
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);

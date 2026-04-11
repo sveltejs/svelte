@@ -13,7 +13,7 @@ import {
 } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
-import { custom_renderer_window_map, renderer } from '../custom-renderer/state.js';
+import { custom_renderer_window_map, current_renderer } from '../custom-renderer/state.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -84,7 +84,7 @@ export function init_operations() {
  * @returns {Text}
  */
 export function create_text(value = '') {
-	if (renderer) return /** @type {Text} */ (renderer.createTextNode(value));
+	if (current_renderer) return /** @type {Text} */ (current_renderer.createTextNode(value));
 	return document.createTextNode(value);
 }
 
@@ -94,7 +94,8 @@ export function create_text(value = '') {
  */
 /*@__NO_SIDE_EFFECTS__*/
 export function get_first_child(node) {
-	if (renderer) return /** @type {TemplateNode | null} */ (renderer.getFirstChild(node));
+	if (current_renderer)
+		return /** @type {TemplateNode | null} */ (current_renderer.getFirstChild(node));
 	return /** @type {TemplateNode | null} */ (first_child_getter.call(node));
 }
 
@@ -104,7 +105,8 @@ export function get_first_child(node) {
  */
 /*@__NO_SIDE_EFFECTS__*/
 export function get_next_sibling(node) {
-	if (renderer) return /** @type {TemplateNode | null} */ (renderer.getNextSibling(node));
+	if (current_renderer)
+		return /** @type {TemplateNode | null} */ (current_renderer.getNextSibling(node));
 	return /** @type {TemplateNode | null} */ (next_sibling_getter.call(node));
 }
 
@@ -223,11 +225,11 @@ export function sibling(node, count = 1, is_text = false) {
  * @returns {void}
  */
 export function clear_text_content(node) {
-	if (renderer) {
-		var child = renderer.getFirstChild(node);
+	if (current_renderer) {
+		var child = current_renderer.getFirstChild(node);
 		while (child !== null) {
-			var next = renderer.getNextSibling(child);
-			renderer.remove(child);
+			var next = current_renderer.getNextSibling(child);
+			current_renderer.remove(child);
 			child = next;
 		}
 		return;
@@ -257,9 +259,9 @@ export function should_defer_append() {
  * @returns {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element}
  */
 export function create_element(tag, namespace, is) {
-	if (renderer)
+	if (current_renderer)
 		return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
-			renderer.createElement(tag)
+			current_renderer.createElement(tag)
 		);
 	let options = is ? { is } : undefined;
 	return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
@@ -268,7 +270,7 @@ export function create_element(tag, namespace, is) {
 }
 
 export function create_fragment() {
-	if (renderer) return /** @type {DocumentFragment} */ (renderer.createFragment());
+	if (current_renderer) return /** @type {DocumentFragment} */ (current_renderer.createFragment());
 	return document.createDocumentFragment();
 }
 
@@ -277,7 +279,7 @@ export function create_fragment() {
  * @returns
  */
 export function create_comment(data = '') {
-	if (renderer) return /** @type {Comment} */ (renderer.createComment(data));
+	if (current_renderer) return /** @type {Comment} */ (current_renderer.createComment(data));
 	return document.createComment(data);
 }
 
@@ -288,8 +290,8 @@ export function create_comment(data = '') {
  * @returns
  */
 export function set_attribute(element, key, value = '') {
-	if (renderer) {
-		renderer.setAttribute(element, key, value);
+	if (current_renderer) {
+		current_renderer.setAttribute(element, key, value);
 		return;
 	}
 	if (key.startsWith('xlink:')) {
@@ -306,7 +308,7 @@ export function set_attribute(element, key, value = '') {
  */
 export function merge_text_nodes(text) {
 	// if we have a renderer we will not hydrate so we can skip this
-	if (renderer) return;
+	if (current_renderer) return;
 
 	if (/** @type {string} */ (text.nodeValue).length < 65536) {
 		return;
@@ -328,7 +330,7 @@ export function merge_text_nodes(text) {
  * @returns {node is Comment}
  */
 function is_comment(node) {
-	if (renderer) return !!node && node_type(node) === COMMENT_NODE;
+	if (current_renderer) return !!node && node_type(node) === COMMENT_NODE;
 	return node instanceof Comment;
 }
 
@@ -337,8 +339,8 @@ function is_comment(node) {
  */
 export function node_type(node) {
 	if (node == null) return undefined;
-	if (renderer) {
-		const type = renderer.nodeType(node);
+	if (current_renderer) {
+		const type = current_renderer.nodeType(node);
 		return CUSTOM_RENDERER_NODE_TYPE_MAP[type];
 	}
 	return node?.nodeType;
@@ -349,7 +351,7 @@ export function node_type(node) {
  */
 export function node_name(node) {
 	if (node == null) return undefined;
-	if (renderer) {
+	if (current_renderer) {
 		// for custom renderers we don't need to return the node name since all the
 		// checks that we do on specific node names are meant to be for the HTML
 		return '';
@@ -362,7 +364,8 @@ export function node_name(node) {
  * @returns {TemplateNode | null}
  */
 export function get_last_child(node) {
-	if (renderer) return /** @type {TemplateNode | null} */ (renderer.getLastChild(node));
+	if (current_renderer)
+		return /** @type {TemplateNode | null} */ (current_renderer.getLastChild(node));
 	return /** @type {TemplateNode | null} */ (node.lastChild);
 }
 
@@ -371,7 +374,8 @@ export function get_last_child(node) {
  * @returns {TemplateNode | null}
  */
 export function get_parent_node(node) {
-	if (renderer) return /** @type {TemplateNode | null} */ (renderer.getParent(node));
+	if (current_renderer)
+		return /** @type {TemplateNode | null} */ (current_renderer.getParent(node));
 	return /** @type {TemplateNode | null} */ (node.parentNode);
 }
 
@@ -381,8 +385,8 @@ export function get_parent_node(node) {
  * @returns {Node}
  */
 export function append_child(parent, child) {
-	if (renderer) {
-		renderer.insert(parent, child, null);
+	if (current_renderer) {
+		current_renderer.insert(parent, child, null);
 		return child;
 	}
 	return parent.appendChild(child);
@@ -394,9 +398,9 @@ export function append_child(parent, child) {
  * @param {Node} new_node
  */
 export function insert_before(ref_node, new_node) {
-	if (renderer) {
-		var parent = renderer.getParent(ref_node);
-		renderer.insert(parent, new_node, ref_node);
+	if (current_renderer) {
+		var parent = current_renderer.getParent(ref_node);
+		current_renderer.insert(parent, new_node, ref_node);
 		return;
 	}
 	ref_node.before(new_node);
@@ -408,10 +412,10 @@ export function insert_before(ref_node, new_node) {
  * @param {Node} new_node
  */
 export function insert_after(ref_node, new_node) {
-	if (renderer) {
-		var parent = renderer.getParent(ref_node);
-		var next = renderer.getNextSibling(ref_node);
-		renderer.insert(parent, new_node, next);
+	if (current_renderer) {
+		var parent = current_renderer.getParent(ref_node);
+		var next = current_renderer.getNextSibling(ref_node);
+		current_renderer.insert(parent, new_node, next);
 		return;
 	}
 	ref_node.after(new_node);
@@ -421,8 +425,8 @@ export function insert_after(ref_node, new_node) {
  * @param {ChildNode} node
  */
 export function remove_node(node) {
-	if (renderer) {
-		renderer.remove(node);
+	if (current_renderer) {
+		current_renderer.remove(node);
 		return;
 	}
 	node.remove();
@@ -434,8 +438,8 @@ export function remove_node(node) {
  * @returns {ChildNode}
  */
 export function remove_child(parent, child) {
-	if (renderer) {
-		renderer.remove(child);
+	if (current_renderer) {
+		current_renderer.remove(child);
 		return child;
 	}
 	return /** @type {ChildNode} */ (parent.removeChild(child));
@@ -446,10 +450,10 @@ export function remove_child(parent, child) {
  * @param {Node} new_node
  */
 export function replace_with(old_node, new_node) {
-	if (renderer) {
-		var parent = renderer.getParent(old_node);
-		renderer.insert(parent, new_node, old_node);
-		renderer.remove(old_node);
+	if (current_renderer) {
+		var parent = current_renderer.getParent(old_node);
+		current_renderer.insert(parent, new_node, old_node);
+		current_renderer.remove(old_node);
 		return;
 	}
 	old_node.replaceWith(new_node);
@@ -460,8 +464,8 @@ export function replace_with(old_node, new_node) {
  * @param {string} value
  */
 export function set_text_content(node, value) {
-	if (renderer) {
-		renderer.setText(node, value);
+	if (current_renderer) {
+		current_renderer.setText(node, value);
 		return;
 	}
 	node.textContent = value;
@@ -472,8 +476,8 @@ export function set_text_content(node, value) {
  * @param {string} value
  */
 export function set_node_value(node, value) {
-	if (renderer) {
-		renderer.setText(node, value);
+	if (current_renderer) {
+		current_renderer.setText(node, value);
 		return;
 	}
 	node.nodeValue = value;
@@ -537,7 +541,7 @@ function remove_style_property_in_string(style_string, property) {
  * @returns {string | null}
  */
 export function get_node_value(node) {
-	if (renderer) return renderer.getNodeValue(node);
+	if (current_renderer) return current_renderer.getNodeValue(node);
 	return node.nodeValue;
 }
 
@@ -547,8 +551,8 @@ export function get_node_value(node) {
  * @param {any} value
  */
 export function set_element_value(element, value) {
-	if (renderer) {
-		renderer.setAttribute(element, 'value', value ?? '');
+	if (current_renderer) {
+		current_renderer.setAttribute(element, 'value', value ?? '');
 		return;
 	}
 	// @ts-expect-error
@@ -561,11 +565,11 @@ export function set_element_value(element, value) {
  * @param {boolean} checked
  */
 export function set_element_checked(element, checked) {
-	if (renderer) {
+	if (current_renderer) {
 		if (checked) {
-			renderer.setAttribute(element, 'checked', '');
+			current_renderer.setAttribute(element, 'checked', '');
 		} else {
-			renderer.removeAttribute(element, 'checked');
+			current_renderer.removeAttribute(element, 'checked');
 		}
 		return;
 	}
@@ -580,8 +584,8 @@ export function set_element_checked(element, checked) {
  * @param {string} value
  */
 export function set_element_default_value(element, value) {
-	if (renderer) {
-		renderer.setAttribute(element, 'defaultValue', value);
+	if (current_renderer) {
+		current_renderer.setAttribute(element, 'defaultValue', value);
 		return;
 	}
 	// @ts-expect-error
@@ -599,11 +603,11 @@ export function set_element_default_value(element, value) {
  * @param {boolean} checked
  */
 export function set_element_default_checked(element, checked) {
-	if (renderer) {
+	if (current_renderer) {
 		if (checked) {
-			renderer.setAttribute(element, 'defaultChecked', '');
+			current_renderer.setAttribute(element, 'defaultChecked', '');
 		} else {
-			renderer.removeAttribute(element, 'defaultChecked');
+			current_renderer.removeAttribute(element, 'defaultChecked');
 		}
 		return;
 	}
@@ -621,7 +625,7 @@ export function set_element_default_checked(element, checked) {
  * @returns {string | null}
  */
 export function get_attribute(element, name) {
-	if (renderer) return renderer.getAttribute(element, name);
+	if (current_renderer) return current_renderer.getAttribute(element, name);
 	return element.getAttribute(name);
 }
 
@@ -630,8 +634,8 @@ export function get_attribute(element, name) {
  * @param {string} name
  */
 export function remove_attribute(element, name) {
-	if (renderer) {
-		renderer.removeAttribute(element, name);
+	if (current_renderer) {
+		current_renderer.removeAttribute(element, name);
 		return;
 	}
 	element.removeAttribute(name);
@@ -643,7 +647,7 @@ export function remove_attribute(element, name) {
  * @returns {boolean}
  */
 export function has_attribute(element, name) {
-	if (renderer) return renderer.hasAttribute(element, name);
+	if (current_renderer) return current_renderer.hasAttribute(element, name);
 	return element.hasAttribute(name);
 }
 
@@ -652,7 +656,7 @@ export function has_attribute(element, name) {
  * @param {string} value
  */
 export function set_inner_html(element, value) {
-	if (renderer) {
+	if (current_renderer) {
 		throw new Error('setInnerHTML is not supported with custom renderers');
 	}
 	element.innerHTML = value;
@@ -664,7 +668,7 @@ export function set_inner_html(element, value) {
  * @returns {Node}
  */
 export function clone_node(node, deep) {
-	if (renderer) {
+	if (current_renderer) {
 		throw new Error('cloneNode is not supported with custom renderers');
 	}
 	return node.cloneNode(deep);
@@ -676,7 +680,7 @@ export function clone_node(node, deep) {
  * @returns {Node}
  */
 export function import_node(node, deep) {
-	if (renderer) {
+	if (current_renderer) {
 		throw new Error('importNode is not supported with custom renderers');
 	}
 	return document.importNode(node, deep);
@@ -689,8 +693,8 @@ export function import_node(node, deep) {
  * @param {boolean | AddEventListenerOptions} [options]
  */
 export function add_event_listener(target, type, handler, options) {
-	if (renderer) {
-		renderer.addEventListener(target, type, handler, options);
+	if (current_renderer) {
+		current_renderer.addEventListener(target, type, handler, options);
 		return;
 	}
 	target.addEventListener(type, handler, options);
@@ -703,8 +707,8 @@ export function add_event_listener(target, type, handler, options) {
  * @param {boolean | EventListenerOptions} [options]
  */
 export function remove_event_listener(target, type, handler, options) {
-	if (renderer) {
-		renderer.removeEventListener(target, type, handler, options);
+	if (current_renderer) {
+		current_renderer.removeEventListener(target, type, handler, options);
 		return;
 	}
 	target.removeEventListener(type, handler, options);
@@ -716,7 +720,7 @@ export function remove_event_listener(target, type, handler, options) {
  * @returns {boolean}
  */
 export function dispatch_event(target, event) {
-	if (renderer) {
+	if (current_renderer) {
 		// is only used in SSR which is not a thing for custom renderers
 		throw new Error('dispatchEvent is not supported with custom renderers');
 	}
@@ -730,10 +734,10 @@ export function dispatch_event(target, event) {
  * @param {string} [priority]
  */
 export function style_set_property(element, property, value, priority) {
-	if (renderer) {
-		var style = renderer.getAttribute(element, 'style') || '';
+	if (current_renderer) {
+		var style = current_renderer.getAttribute(element, 'style') || '';
 		var updated = set_style_property_in_string(style, property, value, priority);
-		renderer.setAttribute(element, 'style', updated);
+		current_renderer.setAttribute(element, 'style', updated);
 		return;
 	}
 	element.style.setProperty(property, value, priority);
@@ -744,10 +748,10 @@ export function style_set_property(element, property, value, priority) {
  * @param {string} property
  */
 export function style_remove_property(element, property) {
-	if (renderer) {
-		var style = renderer.getAttribute(element, 'style') || '';
+	if (current_renderer) {
+		var style = current_renderer.getAttribute(element, 'style') || '';
 		var updated = remove_style_property_in_string(style, property);
-		renderer.setAttribute(element, 'style', updated);
+		current_renderer.setAttribute(element, 'style', updated);
 		return;
 	}
 	element.style.removeProperty(property);
@@ -758,8 +762,8 @@ export function style_remove_property(element, property) {
  * @param {string} value
  */
 export function set_css_text(element, value) {
-	if (renderer) {
-		renderer.setAttribute(element, 'style', value);
+	if (current_renderer) {
+		current_renderer.setAttribute(element, 'style', value);
 		return;
 	}
 	element.style.cssText = value;
@@ -771,8 +775,8 @@ export function set_css_text(element, value) {
  * @param {boolean} force
  */
 export function class_list_toggle(element, name, force) {
-	if (renderer) {
-		const classes = renderer.getAttribute(element, 'class')?.split(/\s+/) ?? [];
+	if (current_renderer) {
+		const classes = current_renderer.getAttribute(element, 'class')?.split(/\s+/) ?? [];
 		const has_class = classes.includes(name);
 		if (force === has_class) {
 			return;
@@ -785,18 +789,18 @@ export function class_list_toggle(element, name, force) {
 				classes.splice(index, 1);
 			}
 		}
-		renderer.setAttribute(element, 'class', classes.join(' '));
+		current_renderer.setAttribute(element, 'class', classes.join(' '));
 		return;
 	}
 	element.classList.toggle(name, force);
 }
 
 export function get_window() {
-	if (renderer) {
-		var custom_renderer_window = custom_renderer_window_map.get(renderer);
+	if (current_renderer) {
+		var custom_renderer_window = custom_renderer_window_map.get(current_renderer);
 		if (!custom_renderer_window) {
 			custom_renderer_window = {};
-			custom_renderer_window_map.set(renderer, custom_renderer_window);
+			custom_renderer_window_map.set(current_renderer, custom_renderer_window);
 		}
 		return custom_renderer_window;
 	}

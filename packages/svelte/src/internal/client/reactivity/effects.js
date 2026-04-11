@@ -46,7 +46,7 @@ import { Batch, collected_effects, current_batch } from './batch.js';
 import { flatten, increment_pending } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
-import { push_renderer, renderer } from '../custom-renderer/state.js';
+import { push_renderer, current_renderer } from '../custom-renderer/state.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -115,7 +115,7 @@ function create_effect(type, fn) {
 		teardown: null,
 		wv: 0,
 		ac: null,
-		r: renderer
+		r: current_renderer
 	};
 
 	if (DEV) {

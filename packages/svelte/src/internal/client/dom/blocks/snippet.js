@@ -16,7 +16,7 @@ import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling, insert_before, node_type } from '../operations.js';
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
 import { BranchManager } from './branches.js';
-import { renderer } from '../../custom-renderer/state.js';
+import { current_renderer } from '../../custom-renderer/state.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -73,7 +73,7 @@ export function wrap_snippet(component, fn) {
 export function renderer_snippet(expected_renderer, fn) {
 	var wrapped = /** @type {T} */ (
 		(.../** @type {any[]} */ args) => {
-			if (renderer !== expected_renderer) {
+			if (current_renderer !== expected_renderer) {
 				e.snippet_renderer_mismatch();
 			}
 			return fn(...args);
@@ -116,7 +116,7 @@ export function validate_snippet_renderer(expected_renderer, fn) {
 export function createRawSnippet(fn) {
 	// @ts-expect-error the types are a lie
 	return (/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
-		if (renderer != null) {
+		if (current_renderer != null) {
 			e.invalid_snippet_in_custom_renderer();
 		}
 		var snippet = fn(...params);

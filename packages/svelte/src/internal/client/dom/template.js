@@ -40,7 +40,7 @@ import {
 	REACTION_RAN,
 	TEXT_NODE
 } from '#client/constants';
-import { renderer } from '../custom-renderer/state.js';
+import { current_renderer } from '../custom-renderer/state.js';
 
 const TEMPLATE_TAG = IS_XHTML ? 'template' : 'TEMPLATE';
 const SCRIPT_TAG = IS_XHTML ? 'script' : 'SCRIPT';
@@ -246,7 +246,7 @@ export function from_tree(structure, flags) {
 		// for the custom renderer we skip the cloning and create new nodes every time...a bit less efficient
 		// but save custom renderers implementors from having to implement importNode or cloneNode
 		// which can be a pain
-		if (node === undefined || renderer != null) {
+		if (node === undefined || current_renderer != null) {
 			const ns =
 				(flags & TEMPLATE_USE_SVG) !== 0
 					? NAMESPACE_SVG
@@ -259,7 +259,7 @@ export function from_tree(structure, flags) {
 		}
 
 		var clone = /** @type {TemplateNode} */ (
-			renderer != null
+			current_renderer != null
 				? node
 				: use_import_node || is_firefox
 					? import_node(node, true)

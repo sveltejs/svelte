@@ -20,7 +20,7 @@ import {
 	get_last_child
 } from '../operations.js';
 import { DEV } from 'esm-env';
-import { push_renderer, renderer as current_renderer } from '../../custom-renderer/state.js';
+import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
 
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch

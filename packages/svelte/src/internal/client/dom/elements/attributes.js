@@ -35,7 +35,7 @@ import {
 	set_element_default_value,
 	set_element_default_checked
 } from '../operations.js';
-import { renderer } from '../../custom-renderer/state.js';
+import { current_renderer } from '../../custom-renderer/state.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -364,7 +364,8 @@ function set_attributes(
 		}
 
 		if (key === 'class') {
-			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml' && renderer != null;
+			var is_html =
+				element.namespaceURI === 'http://www.w3.org/1999/xhtml' && current_renderer != null;
 			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 			current[key] = value;
 			current[CLASS] = next[CLASS];
@@ -395,7 +396,7 @@ function set_attributes(
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var is_delegated = renderer == null && can_delegate_event(event_name);
+			var is_delegated = current_renderer == null && can_delegate_event(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -431,7 +432,7 @@ function set_attributes(
 			// avoid using the setter
 			set_attribute(element, key, value);
 		} else if (key === 'autofocus') {
-			if (renderer == null) {
+			if (current_renderer == null) {
 				autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
 			} else {
 				// In custom renderer mode, just set autofocus as a regular attribute
@@ -458,7 +459,7 @@ function set_attributes(
 
 			if (value == null && !is_custom_element && !is_default) {
 				attributes[key] = null;
-				if ((name === 'value' || name === 'checked') && renderer == null) {
+				if ((name === 'value' || name === 'checked') && current_renderer == null) {
 					// removing value/checked also removes defaultValue/defaultChecked — preserve
 					let input = /** @type {HTMLInputElement} */ (element);
 					const use_default = prev === undefined;
@@ -481,7 +482,7 @@ function set_attributes(
 						element.__value = null;
 					}
 				}
-			} else if (is_default && renderer != null) {
+			} else if (is_default && current_renderer != null) {
 				// Route through the renderer-aware abstraction so custom renderers
 				// see defaultValue/defaultChecked as proper attributes
 				if (name === 'defaultValue') {
@@ -609,7 +610,7 @@ var setters_cache = new Map();
 /** @param {Element} element */
 function get_setters(element) {
 	// if we have a custom renderer we just skip the check all together
-	if (renderer) return [];
+	if (current_renderer) return [];
 	var cache_key = get_attribute(element, 'is') || (node_name(element) ?? '');
 	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
@@ -642,7 +643,7 @@ function get_setters(element) {
  * @param {string} value
  */
 function check_src_in_dev_hydration(element, attribute, value) {
-	if (!DEV || renderer != null) return;
+	if (!DEV || current_renderer != null) return;
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
 	if (src_url_equal(get_attribute(element, attribute) ?? '', value)) return;
 
@@ -659,7 +660,7 @@ function check_src_in_dev_hydration(element, attribute, value) {
  * @returns {boolean}
  */
 function src_url_equal(element_src, url) {
-	if (element_src === url || renderer != null) return true;
+	if (element_src === url || current_renderer != null) return true;
 	return new URL(element_src, document.baseURI).href === new URL(url, document.baseURI).href;
 }
 
@@ -674,7 +675,7 @@ function split_srcset(srcset) {
  * @returns {boolean}
  */
 function srcset_url_equal(element, srcset) {
-	if (renderer != null) return true;
+	if (current_renderer != null) return true;
 	var element_urls = split_srcset(element.srcset);
 	var urls = split_srcset(srcset);
 

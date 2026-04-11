@@ -18,7 +18,7 @@ import {
 	remove_event_listener,
 	get_parent_node
 } from '../operations.js';
-import { renderer } from '../../custom-renderer/state.js';
+import { current_renderer } from '../../custom-renderer/state.js';
 
 /**
  * Used on elements, as a map of event type -> event handler,
@@ -65,7 +65,7 @@ export function replay_events(dom) {
 export function create_event(event_name, dom, handler, options = {}) {
 	// Capture whether a custom renderer is active at creation time (during mount),
 	// since `renderer` will be null when the event actually fires
-	var is_custom_renderer = renderer != null;
+	var is_custom_renderer = current_renderer != null;
 
 	/**
 	 * @this {EventTarget}
@@ -141,7 +141,7 @@ export function event(event_name, dom, handler, capture, passive) {
 
 	if (
 		// if there's a renderer we will never add to body, window or document.
-		renderer == null &&
+		current_renderer == null &&
 		(dom === document.body ||
 			// @ts-ignore
 			dom === window ||

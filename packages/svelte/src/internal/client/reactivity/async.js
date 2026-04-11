@@ -9,7 +9,7 @@ import {
 	set_dev_stack
 } from '../context.js';
 import { Boundary } from '../dom/blocks/boundary.js';
-import { renderer, set_renderer } from '../custom-renderer/state.js';
+import { current_renderer, set_renderer } from '../custom-renderer/state.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -114,7 +114,7 @@ export function capture() {
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 	var previous_batch = /** @type {Batch} */ (current_batch);
-	var previous_renderer = renderer;
+	var previous_renderer = current_renderer;
 
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
