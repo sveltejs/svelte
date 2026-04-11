@@ -61,7 +61,8 @@ export function ConstTag(node, context) {
 		// keep the counter in sync with the number of thunks pushed in ConstTag in transform
 		// TODO 6.0 once non-async and non-runes mode is gone investigate making this more robust
 		// via something like the approach in https://github.com/sveltejs/svelte/pull/18032
-		const length = run.declaration_count++;
+		const length = run.declaration_count;
+		run.declaration_count += blockers.length > 0 ? 2 : 1;
 		const blocker = b.member(run.id, b.literal(length), true);
 		for (const binding of bindings) {
 			binding.blocker = blocker;

@@ -96,22 +96,15 @@ function add_const_declaration(state, id, expression, metadata) {
 
 		state.consts.push(b.let(id));
 
-		/** @type {Statement | undefined} */
-		let promise_stmt;
-
 		if (blockers.length === 1) {
-			promise_stmt = b.stmt(b.await(b.member(/** @type {Expression} */ (blockers[0]), 'promise')));
+			run.thunks.push(b.thunk(b.member(/** @type {Expression} */ (blockers[0]), 'promise')));
 		} else if (blockers.length > 0) {
-			promise_stmt = b.stmt(b.await(b.call('$.wait', b.array(blockers))));
+			run.thunks.push(b.thunk(b.call('$.wait', b.array(blockers))));
 		}
 
 		// keep the number of thunks pushed in sync with ConstTag in analysis phase
 		const assignment = b.assignment('=', id, expression);
-		if (promise_stmt) {
-			run.thunks.push(b.thunk(b.block([promise_stmt, b.stmt(assignment)]), true));
-		} else {
-			run.thunks.push(b.thunk(assignment, metadata.expression.has_await));
-		}
+		run.thunks.push(b.thunk(assignment, metadata.expression.has_await));
 	} else {
 		state.consts.push(b.const(id, expression));
 		state.consts.push(...after);
