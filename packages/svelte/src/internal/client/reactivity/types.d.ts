@@ -7,7 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
-import type { Renderer } from '../custom-renderer/index';
+import type { Renderer } from '../custom-renderer/types';
 
 export interface Signal {
 	/** Flags bitmask */
