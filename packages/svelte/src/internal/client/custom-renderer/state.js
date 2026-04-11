@@ -1,5 +1,5 @@
 /**
- * @import { Renderer } from ".";
+ * @import { Renderer } from "./types.js";
  */
 
 /**
