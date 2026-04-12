@@ -1116,11 +1116,9 @@ export function eager(fn) {
 		// `version` update. since this will recreate the effect,
 		// we don't need to evaluate the expression here
 		if (eager_versions.length === 0) {
-			console.log('queuing');
 			queue_micro_task(eager_flush);
 		}
 
-		console.log('pushing new');
 		eager_versions.push(version);
 	});
 
