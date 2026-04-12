@@ -1074,15 +1074,13 @@ export function schedule_effect(effect) {
 let eager_versions = [];
 
 function eager_flush() {
-	try {
-		flushSync(() => {
-			for (const version of eager_versions) {
-				update(version);
-			}
-		});
-	} finally {
+	flushSync(() => {
+		const eager = eager_versions;
 		eager_versions = [];
-	}
+		for (const version of eager) {
+			update(version);
+		}
+	});
 }
 
 /**
@@ -1118,9 +1116,11 @@ export function eager(fn) {
 		// `version` update. since this will recreate the effect,
 		// we don't need to evaluate the expression here
 		if (eager_versions.length === 0) {
+			console.log('queuing');
 			queue_micro_task(eager_flush);
 		}
 
+		console.log('pushing new');
 		eager_versions.push(version);
 	});
 
