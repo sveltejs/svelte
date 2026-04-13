@@ -38,7 +38,6 @@ import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
-import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
 
 /** @type {Set<Batch>} */
@@ -544,9 +543,7 @@ export class Batch {
 					batch.discard();
 				}
 			} else if (sources.length > 0) {
-				if (DEV) {
-					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
-				}
+				const should_execute = batch.#roots.length === 0;
 
 				// A batch was unskipped in a later batch -> tell prior batches to unskip it, too
 				if (is_earlier) {
@@ -592,8 +589,9 @@ export class Batch {
 					}
 				}
 
-				// Only apply and traverse when we know we triggered async work with marking the effects
-				if (batch.#roots.length > 0) {
+				// Only apply and traverse when we know we triggered async work with marking the effects,
+				// and there wasn't already work scheduled to run (e.g. directly afterwards via the microtask queue)
+				if (batch.#roots.length > 0 && should_execute) {
 					batch.apply();
 
 					for (var root of batch.#roots) {
@@ -716,7 +714,7 @@ export class Batch {
 
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
-						if (current_batch !== batch) {
+						if (!batches.has(batch) || batch.#pending.size > 0) {
 							// a flushSync happened in the meantime
 							return;
 						}
