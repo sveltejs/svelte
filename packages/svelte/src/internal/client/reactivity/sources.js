@@ -265,7 +265,7 @@ export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
 	for (const effect of eager_effects) {
-		let dirty = false;
+		let dirty;
 
 		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
 		// instead of just updating the effects - this way we avoid overfiring.
