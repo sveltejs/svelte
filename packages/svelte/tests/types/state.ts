@@ -1,4 +1,4 @@
-import type { ClassValue } from 'svelte/elements';
+import type { ClassValue } from 'clsx';
 
 // Regression test for #17117: this should not trigger deep/infinite type instantiation
 const cls = $state.raw<ClassValue[]>([]);
