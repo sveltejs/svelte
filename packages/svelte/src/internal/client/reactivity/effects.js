@@ -661,16 +661,22 @@ function pause_children(effect, transitions, local) {
 
 	while (child !== null) {
 		var sibling = child.next;
-		var transparent =
-			(child.f & EFFECT_TRANSPARENT) !== 0 ||
-			// If this is a branch effect without a block effect parent,
-			// it means the parent block effect was pruned. In that case,
-			// transparency information was transferred to the branch effect.
-			((child.f & BRANCH_EFFECT) !== 0 && (effect.f & BLOCK_EFFECT) !== 0);
-		// TODO we don't need to call pause_children recursively with a linked list in place
-		// it's slightly more involved though as we have to account for `transparent` changing
-		// through the tree.
-		pause_children(child, transitions, transparent ? local : false);
+
+		// If this child is a root effect, then it will become an independent root when its parent
+		// is destroyed, it should therefore not become inert nor partake in transitions.
+		if ((child.f & ROOT_EFFECT) === 0) {
+			var transparent =
+				(child.f & EFFECT_TRANSPARENT) !== 0 ||
+				// If this is a branch effect without a block effect parent,
+				// it means the parent block effect was pruned. In that case,
+				// transparency information was transferred to the branch effect.
+				((child.f & BRANCH_EFFECT) !== 0 && (effect.f & BLOCK_EFFECT) !== 0);
+			// TODO we don't need to call pause_children recursively with a linked list in place
+			// it's slightly more involved though as we have to account for `transparent` changing
+			// through the tree.
+			pause_children(child, transitions, transparent ? local : false);
+		}
+
 		child = sibling;
 	}
 }
