@@ -1,0 +1,60 @@
+# crag:auto-start
+# Generated from governance.md by crag
+# Regenerate: crag compile --target forgejo
+name: Governance Gates
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  gates:
+    name: Governance Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v4
+      - name: Setup Node.js
+        uses: https://code.forgejo.org/actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: "lint: npm run lint"
+        run: |
+          npm run lint
+      - name: "lint: npx tsc --noEmit"
+        run: |
+          npx tsc --noEmit
+      - name: "test: npm run test"
+        run: |
+          npm run test
+      - name: "build: npm run build"
+        run: |
+          npm run build
+      - name: "ci (inferred from workflow): pnpm test"
+        run: |
+          pnpm test
+      - name: "ci (inferred from workflow): pnpm test runtime-runes"
+        run: |
+          pnpm test runtime-runes
+      - name: "ci (inferred from workflow): pnpm check:tsgo"
+        run: |
+          pnpm check:tsgo
+      - name: "ci (inferred from workflow): pnpm check"
+        run: |
+          pnpm check
+      - name: "ci (inferred from workflow): pnpm lint"
+        run: |
+          pnpm lint
+      - name: "ci (inferred from workflow): }"
+        run: |
+          }
+      - name: "ci (inferred from workflow): pnpm build"
+        run: |
+          pnpm build
+      - name: "contributor docs (advisory — confirm before enforcing): pnpm check:watch  # from CONTRIBUTING.md"
+        run: |
+          pnpm check:watch  # from CONTRIBUTING.md
+
+# crag:auto-end

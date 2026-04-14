@@ -1,0 +1,29 @@
+#!/bin/sh
+# crag:auto-start
+# Generated from governance.md by crag
+# Regenerate: crag compile --target husky
+set -e
+
+# lint
+npm run lint || exit 1
+npx tsc --noEmit || exit 1
+
+# test
+npm run test || exit 1
+
+# build
+npm run build || exit 1
+
+# ci (inferred from workflow)
+pnpm test || exit 1
+pnpm test runtime-runes || exit 1
+pnpm check:tsgo || exit 1
+pnpm check || exit 1
+pnpm lint || exit 1
+} || exit 1
+pnpm build || exit 1
+
+# contributor docs (advisory — confirm before enforcing)
+pnpm check:watch  # from CONTRIBUTING.md || exit 1
+
+# crag:auto-end
