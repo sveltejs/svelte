@@ -1074,15 +1074,13 @@ export function schedule_effect(effect) {
 let eager_versions = [];
 
 function eager_flush() {
-	try {
-		flushSync(() => {
-			for (const version of eager_versions) {
-				update(version);
-			}
-		});
-	} finally {
+	flushSync(() => {
+		const eager = eager_versions;
 		eager_versions = [];
-	}
+		for (const version of eager) {
+			update(version);
+		}
+	});
 }
 
 /**
