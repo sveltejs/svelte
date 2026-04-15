@@ -400,13 +400,18 @@ export function deferred_template_effect(fn, sync = [], async = [], blockers = [
 		var decrement_pending = increment_pending();
 	}
 
-	flatten(blockers, sync, async, (values) => {
-		create_effect(EFFECT, () => fn(...values.map(get)));
-
-		if (decrement_pending) {
-			decrement_pending();
+	flatten(
+		blockers,
+		sync,
+		async,
+		(values) => {
+			create_effect(EFFECT, () => fn(...values.map(get)));
+			decrement_pending?.();
+		},
+		() => {
+			decrement_pending?.();
 		}
-	});
+	);
 }
 
 /**
