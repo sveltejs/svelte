@@ -43,7 +43,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
+import { batch_values, current_batch, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -399,7 +399,11 @@ export function update_derived(derived) {
 		// change, `derived.equals` may incorrectly return `true`
 		if (!current_batch?.is_fork || derived.deps === null) {
 			if (current_batch !== null) {
-				current_batch.capture(derived, value, true);
+				// We prefer the previous_batch because if it exists, it is a sign that we're
+				// currently in the process of flushing effects. These updates to deriveds belong
+				// to the previous batch, not the new one (which can already exist if an earlier
+				// effect wrote to a source).
+				(previous_batch ?? current_batch).capture(derived, value, true);
 			} else {
 				derived.v = value;
 			}
