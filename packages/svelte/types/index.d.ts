@@ -2487,6 +2487,11 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
+	/**
+	 * Returns `true` if `value` is a Svelte `$state` proxy.
+	 *
+	 * */
+	export function isStateProxy(value: unknown): boolean;
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
