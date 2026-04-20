@@ -609,6 +609,24 @@ describe('toStore', () => {
 		unsubscribe();
 	});
 
+	it('uses the latest state when subscribed after a pre-subscription update', () => {
+		const count = source(0);
+
+		const store = toStore(() => $.get(count));
+
+		set(count, 1);
+
+		const log: number[] = [];
+
+		const unsubscribe = store.subscribe((value) => {
+			log.push(value);
+		});
+
+		assert.deepEqual(log, [1]);
+
+		unsubscribe();
+	});
+
 	it('creates a writable store from state', () => {
 		const count = source(0);
 
