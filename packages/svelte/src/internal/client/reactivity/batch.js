@@ -1012,7 +1012,6 @@ function mark_effects(value, sources, marked, checked) {
 				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
-				debugger;
 				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
