@@ -245,7 +245,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		// log_reactions(source);
 		seen = null;
 		count_deps = 0;
-		mark_reactions(source, DIRTY, updated_during_traversal, 0);
+		mark_reactions(source, DIRTY, updated_during_traversal);
 		seen = null;
 
 		// It's possible that the current reaction might not have up-to-date dependencies
@@ -333,10 +333,9 @@ export function increment(source) {
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @param {Effect[] | null} updated_during_traversal
- * @param {number} depth
  * @returns {void}
  */
-function mark_reactions(signal, status, updated_during_traversal, depth) {
+function mark_reactions(signal, status, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -377,7 +376,7 @@ function mark_reactions(signal, status, updated_during_traversal, depth) {
 			var derived = /** @type {Derived} */ (reaction);
 
 			batch_values?.delete(derived);
-			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal, depth + 1);
+			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
 
