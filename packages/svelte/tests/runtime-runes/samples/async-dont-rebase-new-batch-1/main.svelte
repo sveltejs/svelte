@@ -19,10 +19,10 @@
 	<!-- inside if block so effects are newly created and therefore added to batch.#new_effects -->
 	<!-- first $effect creates new batch ... -->
 	{(() => {
-		 $effect(() => {
-			 count_mirror = count;
-			})
-		})()}
+		$effect(() => {
+			count_mirror = count;
+		})
+	})()}
 	<!-- ... which second $effect shouldn't write to because the derived execution belongs to the previous batch -->
 	{(() => {
 		$effect(() => {

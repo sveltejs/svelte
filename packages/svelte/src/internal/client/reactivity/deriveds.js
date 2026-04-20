@@ -399,11 +399,14 @@ export function update_derived(derived) {
 		// change, `derived.equals` may incorrectly return `true`
 		if (!current_batch?.is_fork || derived.deps === null) {
 			if (current_batch !== null) {
-				// We prefer the previous_batch because if it exists, it is a sign that we're
-				// currently in the process of flushing effects. These updates to deriveds belong
+				// We also write to previous_batch because if it exists, it is a sign that we're
+				// currently in the process of flushing effects. These updates to deriveds may belong
 				// to the previous batch, not the new one (which can already exist if an earlier
-				// effect wrote to a source).
-				(previous_batch ?? current_batch).capture(derived, value, true);
+				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
+				// but not adding it to current_batch can, too, so we add it to both.
+				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
+				current_batch?.capture(derived, value, true);
+				previous_batch?.capture(derived, value, true);
 			} else {
 				derived.v = value;
 			}

@@ -577,19 +577,23 @@ export class Batch {
 
 				checked = new Map();
 				var current_unequal = [...batch.current.keys()].filter((c) =>
-					this.current.has(c) ? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c : true
+					this.current.has(c)
+						? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c.v
+						: true
 				);
 
-				for (const effect of this.#new_effects) {
-					if (
-						(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
-						depends_on(effect, current_unequal, checked)
-					) {
-						if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
-							set_signal_status(effect, DIRTY);
-							batch.schedule(effect);
-						} else {
-							batch.#dirty_effects.add(effect);
+				if (current_unequal.length > 0) {
+					for (const effect of this.#new_effects) {
+						if (
+							(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
+							depends_on(effect, current_unequal, checked)
+						) {
+							if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
+								set_signal_status(effect, DIRTY);
+								batch.schedule(effect);
+							} else {
+								batch.#dirty_effects.add(effect);
+							}
 						}
 					}
 				}
@@ -1008,6 +1012,7 @@ function mark_effects(value, sources, marked, checked) {
 				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
+				debugger;
 				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
