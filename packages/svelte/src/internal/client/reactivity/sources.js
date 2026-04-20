@@ -177,6 +177,8 @@ export function set(source, value, should_proxy = false) {
  * @type {Set<any> | null}
  */
 var seen = null;
+/** Number of transitive dependencies, see {@link seen} for more info */
+var count_deps = 0;
 
 /**
  * @template V
@@ -242,7 +244,9 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
 		seen = null;
+		count_deps = 0;
 		mark_reactions(source, DIRTY, updated_during_traversal, 0);
+		seen = null;
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -339,7 +343,10 @@ function mark_reactions(signal, status, updated_during_traversal, depth) {
 	var runes = is_runes();
 	var length = reactions.length;
 
-	if (length > 100 || depth > 100) seen = new Set();
+	count_deps += length;
+	// Activate the `seen` Set if we think from the unusually high number of deps that
+	// there might be cycles in the graph, to avoid repeated lookups for reactions
+	if (count_deps > 1000000 && seen === null) seen = new Set();
 
 	if (seen !== null) {
 		if (seen.has(signal)) return;
