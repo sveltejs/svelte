@@ -21,7 +21,6 @@ import {
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
-	WAS_MARKED,
 	MANAGED_EFFECT,
 	REACTION_RAN
 } from './constants.js';
@@ -158,10 +157,6 @@ export function is_dirty(reaction) {
 
 	if ((flags & DIRTY) !== 0) {
 		return true;
-	}
-
-	if (flags & DERIVED) {
-		reaction.f &= ~WAS_MARKED;
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
@@ -392,11 +387,8 @@ function remove_reaction(signal, dependency) {
 	) {
 		var derived = /** @type {Derived} */ (dependency);
 
-		// If we are working with a derived that is owned by an effect, then mark it as being
-		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
 		if ((derived.f & CONNECTED) !== 0) {
 			derived.f ^= CONNECTED;
-			derived.f &= ~WAS_MARKED;
 		}
 
 		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is
