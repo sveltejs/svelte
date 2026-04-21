@@ -714,7 +714,7 @@ export class Batch {
 
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
-						if (!batches.has(batch) || batch.#pending.size > 0) {
+						if (current_batch !== batch) {
 							// a flushSync happened in the meantime
 							return;
 						}
