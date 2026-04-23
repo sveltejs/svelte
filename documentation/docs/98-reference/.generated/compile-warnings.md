@@ -697,6 +697,12 @@ Using `on:%name%` to listen to the %name% event is deprecated. Use the event att
 
 See [the migration guide](v5-migration-guide#Event-changes) for more info.
 
+### head_in_component
+
+```
+A `<head>` tag was detected in file `%filename%`, component `%component%`, at line %line%. This can lead to runtime errors. Did you mean to use `<svelte:head>`?
+```
+
 ### export_let_unused
 
 ```

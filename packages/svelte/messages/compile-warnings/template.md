@@ -83,6 +83,9 @@ In a future version of Svelte, self-closing tags may be upgraded from a warning 
 
 See [the migration guide](v5-migration-guide#Event-changes) for more info.
 
+## head_in_component
+> A `<head>` tag was detected in file `%filename%`, component `%component%`, at line %line%. This can lead to runtime errors. Did you mean to use `<svelte:head>`?
+
 ## node_invalid_placement_ssr
 
 > %message%. When rendering this component on the server, the resulting HTML will be modified by the browser (by moving, removing, or inserting elements), likely resulting in a `hydration_mismatch` warning

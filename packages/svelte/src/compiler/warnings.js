@@ -113,6 +113,7 @@ export const codes = [
 	'element_implicitly_closed',
 	'element_invalid_self_closing_tag',
 	'event_directive_deprecated',
+	'head_in_component',
 	'node_invalid_placement_ssr',
 	'script_context_deprecated',
 	'script_unknown_attribute',
@@ -783,6 +784,17 @@ export function element_invalid_self_closing_tag(node, name) {
  */
 export function event_directive_deprecated(node, name) {
 	w(node, 'event_directive_deprecated', `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead\nhttps://svelte.dev/e/event_directive_deprecated`);
+}
+
+/**
+ * A `<head>` tag was detected in file `%filename%`, component `%component%`, at line %line%. This can lead to runtime errors. Did you mean to use `<svelte:head>`?
+ * @param {null | NodeLike} node
+ * @param {string} filename
+ * @param {string} component
+ * @param {string} line
+ */
+export function head_in_component(node, filename, component, line) {
+	w(node, 'head_in_component', `A \`<head>\` tag was detected in file \`${filename}\`, component \`${component}\`, at line ${line}. This can lead to runtime errors. Did you mean to use \`<svelte:head>\`?\nhttps://svelte.dev/e/head_in_component`);
 }
 
 /**

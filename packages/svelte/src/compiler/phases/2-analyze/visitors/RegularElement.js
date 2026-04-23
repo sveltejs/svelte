@@ -17,7 +17,7 @@ import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { object } from '../../../utils/ast.js';
-import { runes } from '../../../state.js';
+import { component_name, filename, locator, runes } from '../../../state.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -124,6 +124,10 @@ export function RegularElement(node, context) {
 		binding.references.length === 0
 	) {
 		w.component_name_lowercase(node, node.name);
+	}
+
+	if (node.name === 'head' && !context.state.parent_element) {
+		w.head_in_component(node, filename, component_name, `${locator(node.start).line}`);
 	}
 
 	node.metadata.has_spread = node.attributes.some(
