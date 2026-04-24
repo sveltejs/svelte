@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { Renderer } from '../../custom-renderer/types.js' */
 import { Batch, current_batch } from '../../reactivity/batch.js';
 import {
 	branch,
@@ -9,8 +10,17 @@ import {
 } from '../../reactivity/effects.js';
 import { HMR_ANCHOR } from '../../constants.js';
 import { hydrate_node, hydrating } from '../hydration.js';
-import { create_text, should_defer_append } from '../operations.js';
+import {
+	create_text,
+	should_defer_append,
+	create_fragment,
+	append_child,
+	insert_before,
+	remove_node,
+	get_last_child
+} from '../operations.js';
 import { DEV } from 'esm-env';
+import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
 
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
@@ -62,12 +72,21 @@ export class BranchManager {
 	#transition = true;
 
 	/**
+	 * The renderer that was active when this BranchManager was created.
+	 * Needed so that #commit can push the correct renderer when doing DOM operations
+	 * outside of an effect context (e.g. as a batch commit callback).
+	 * @type {Renderer | null}
+	 */
+	#renderer = null;
+
+	/**
 	 * @param {TemplateNode} anchor
 	 * @param {boolean} transition
 	 */
 	constructor(anchor, transition = true) {
 		this.anchor = anchor;
 		this.#transition = transition;
+		this.#renderer = current_renderer;
 	}
 
 	/**
@@ -76,6 +95,8 @@ export class BranchManager {
 	#commit = (batch) => {
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
+
+		var pop_renderer = this.#renderer !== null ? push_renderer(this.#renderer) : null;
 
 		var key = /** @type {Key} */ (this.#batches.get(batch));
 
@@ -96,14 +117,14 @@ export class BranchManager {
 				if (DEV) {
 					// Tell hmr.js about the anchor it should use for updates,
 					// since the initial one will be removed
-					/** @type {any} */ (offscreen.fragment.lastChild)[HMR_ANCHOR] = this.anchor;
+					/** @type {any} */ (get_last_child(offscreen.fragment))[HMR_ANCHOR] = this.anchor;
 				}
 
 				// remove the anchor...
-				/** @type {TemplateNode} */ (offscreen.fragment.lastChild).remove();
+				remove_node(/** @type {ChildNode} */ (get_last_child(offscreen.fragment)));
 
 				// ...and append the fragment
-				this.anchor.before(offscreen.fragment);
+				insert_before(this.anchor, offscreen.fragment);
 				onscreen = offscreen.effect;
 			}
 		}
@@ -137,10 +158,10 @@ export class BranchManager {
 
 				if (keys.includes(k)) {
 					// keep the effect offscreen, as another batch will need it
-					var fragment = document.createDocumentFragment();
+					var fragment = create_fragment();
 					move_effect(effect, fragment);
 
-					fragment.append(create_text()); // TODO can we avoid this?
+					append_child(fragment, create_text()); // TODO can we avoid this?
 
 					this.#offscreen.set(k, { effect, fragment });
 				} else {
@@ -158,6 +179,8 @@ export class BranchManager {
 				on_destroy();
 			}
 		}
+
+		pop_renderer?.();
 	};
 
 	/**
@@ -187,10 +210,10 @@ export class BranchManager {
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			if (defer) {
-				var fragment = document.createDocumentFragment();
+				var fragment = create_fragment();
 				var target = create_text();
 
-				fragment.append(target);
+				append_child(fragment, target);
 
 				this.#offscreen.set(key, {
 					effect: branch(() => fn(target)),

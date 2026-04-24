@@ -44,7 +44,16 @@ const common_options = {
 	warningFilter: fun(() => true),
 
 	experimental: object({
-		async: boolean(false)
+		async: boolean(false),
+		customRenderer: parametric(
+			/** @type {(options: { filename: string }) => string | undefined} */ (() => undefined),
+			(input, keypath) => {
+				if (input != null && typeof input !== 'string') {
+					throw_error(`${keypath} should be a string, if specified`);
+				}
+				return /** @type {string | undefined} */ (input);
+			}
+		)
 	})
 };
 

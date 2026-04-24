@@ -18,7 +18,12 @@ export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
 export { sanitize_slots, slot } from './dom/blocks/slot.js';
-export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
+export {
+	snippet,
+	wrap_snippet,
+	renderer_snippet,
+	validate_snippet_renderer
+} from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
@@ -181,3 +186,4 @@ export {
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
 export { invoke_error_boundary } from './error-handling.js';
+export { push_renderer, without_renderer } from './custom-renderer/state.js';

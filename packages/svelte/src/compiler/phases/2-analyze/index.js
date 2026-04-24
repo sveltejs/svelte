@@ -467,6 +467,12 @@ export function analyze_component(root, source, options) {
 
 	const custom_element_from_option = options.customElement({ filename: options.filename });
 	const css = options.css({ filename: options.filename });
+	const custom_renderer = options.experimental.customRenderer?.({ filename: options.filename });
+
+	if (css === 'injected' && custom_renderer !== undefined) {
+		e.incompatible_with_custom_renderer(null, "`css: 'injected'`");
+	}
+
 	const custom_element = options.customElementOptions ?? custom_element_from_option;
 	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
 
@@ -476,7 +482,8 @@ export function analyze_component(root, source, options) {
 		component_name: name,
 		dev: options.dev,
 		rootDir: options.rootDir,
-		runes
+		runes,
+		custom_renderer: custom_renderer
 	});
 
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config

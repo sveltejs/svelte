@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
 import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
-import { dev, filename } from '../../../state.js';
+import { dev, filename, custom_renderer } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
@@ -138,6 +138,14 @@ const visitors = {
 	VariableDeclaration
 };
 
+function get_imports() {
+	const imports = [b.import_all('$', 'svelte/internal/client')];
+	if (custom_renderer) {
+		imports.push(b.imports([['$renderer', '$renderer', true]], custom_renderer));
+	}
+	return imports;
+}
+
 /**
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
@@ -151,7 +159,7 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
+		hoisted: [...get_imports(), ...analysis.instance_body.hoisted],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -562,8 +570,14 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
 	}
 
-	if (options.discloseVersion) {
+	// disclose version attach the svelte version to `window` which is not guaranteed
+	// to be a thing in custom renderers environments
+	if (options.discloseVersion && !custom_renderer) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
+	}
+
+	if (!custom_renderer) {
+		body.unshift(b.imports([], 'svelte/internal/init-operations'));
 	}
 
 	if (options.compatibility.componentApi === 4) {
@@ -587,6 +601,13 @@ export function client_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
+	}
+
+	if (custom_renderer) {
+		component_block.body.unshift(
+			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
+		);
+		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
 	}
 
 	if (state.events.size > 0) {

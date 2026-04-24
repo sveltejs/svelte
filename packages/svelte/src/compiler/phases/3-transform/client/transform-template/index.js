@@ -2,7 +2,7 @@
 /** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Node } from './types.js' */
 import { TEMPLATE_USE_MATHML, TEMPLATE_USE_SVG } from '../../../../../constants.js';
-import { dev, locator } from '../../../../state.js';
+import { dev, locator, custom_renderer } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
@@ -35,7 +35,8 @@ function build_locations(nodes) {
  * @param {number} [flags]
  */
 export function transform_template(state, namespace, flags = 0) {
-	const tree = state.options.fragments === 'tree';
+	// custom renderers needs a tree to work because there's no template element we can use
+	const tree = state.options.fragments === 'tree' || custom_renderer;
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
 
@@ -50,7 +51,7 @@ export function transform_template(state, namespace, flags = 0) {
 		flags ? b.literal(flags) : undefined
 	);
 
-	if (state.template.contains_script_tag) {
+	if (state.template.contains_script_tag && !custom_renderer) {
 		call = b.call(`$.with_script`, call);
 	}
 

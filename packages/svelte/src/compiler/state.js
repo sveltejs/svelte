@@ -46,6 +46,9 @@ export let dev;
 
 export let runes = false;
 
+/** @type {string | null | undefined} */
+export let custom_renderer = null;
+
 /** @type {(index: number) => Location} */
 export let locator;
 
@@ -139,6 +142,7 @@ export function is_ignored(node, code) {
 export function reset(state) {
 	dev = false;
 	runes = false;
+	custom_renderer = null;
 	component_name = UNKNOWN_FILENAME;
 	source = '';
 	source_lines = [];
@@ -155,6 +159,7 @@ export function reset(state) {
  *   component_name?: string;
  *   rootDir?: string;
  *   runes: boolean;
+ *   custom_renderer?: string | null | undefined;
  * }} state
  */
 export function adjust(state) {
@@ -162,6 +167,7 @@ export function adjust(state) {
 
 	dev = state.dev;
 	runes = state.runes;
+	custom_renderer = state.custom_renderer;
 	component_name = state.component_name ?? UNKNOWN_FILENAME;
 
 	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {

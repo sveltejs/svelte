@@ -263,6 +263,10 @@ The same applies to components:
 
 > `<%name%>` does not support non-event attributes or spread attributes
 
+## incompatible_with_custom_renderer
+
+> %message% is not compatible with `customRenderer`
+
 ## js_parse_error
 
 > %message%

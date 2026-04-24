@@ -197,6 +197,12 @@ Failed to hydrate the application
 Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
 ```
 
+### invalid_snippet_in_custom_renderer
+
+```
+`createRawSnippet` cannot be used with a custom renderer
+```
+
 ### lifecycle_legacy_only
 
 ```
@@ -228,6 +234,12 @@ The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 ```
 
 This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
+
+### snippet_renderer_mismatch
+
+```
+A snippet created in a component with a custom renderer cannot be rendered by a different renderer
+```
 
 ### state_descriptors_fixed
 
