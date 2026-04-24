@@ -47,7 +47,7 @@ import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
-/** @type {Set<any>} */
+/** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
 /** @type {Map<Source, any>} */
@@ -266,12 +266,6 @@ export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
 	for (const effect of eager_effects) {
-		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-		// instead of just updating the effects - this way we avoid overfiring.
-		if ((effect.f & CLEAN) !== 0) {
-			set_signal_status(effect, MAYBE_DIRTY);
-		}
-
 		if (is_dirty(effect)) {
 			update_effect(effect);
 		}
@@ -338,12 +332,6 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
-		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & EAGER_EFFECT) !== 0) {
-			eager_effects.add(reaction);
-			continue;
-		}
-
 		var not_dirty = (flags & DIRTY) === 0;
 
 		// don't set a DIRTY reaction to MAYBE_DIRTY
@@ -351,7 +339,12 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			set_signal_status(reaction, status);
 		}
 
-		if ((flags & DERIVED) !== 0) {
+		if ((flags & EAGER_EFFECT) !== 0) {
+			// Eager effects need to run immediately:
+			// - for $inspect so that the stack trace makes sense
+			// - for $state.eager because they might be without an effect parent
+			eager_effects.add(/** @type {Effect} */ (reaction));
+		} else if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
 			batch_values?.delete(derived);
