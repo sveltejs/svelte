@@ -167,6 +167,8 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
 
+If you need to branch logic based on whether a value is a state proxy _without_ cloning it, use [`isStateProxy`](svelte-reactivity#isStateProxy) from `svelte/reactivity`.
+
 ## `$state.eager`
 
 When state changes, it may not be reflected in the UI immediately if it is used by an `await` expression, because [updates are synchronized](await-expressions#Synchronized-updates).

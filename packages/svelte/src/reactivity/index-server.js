@@ -21,3 +21,12 @@ export class MediaQuery {
 export function createSubscriber(_) {
 	return () => {};
 }
+
+/**
+ * Returns `false` on the server because `$state` proxies are a client runtime concept.
+ *
+ * @param {unknown} _value
+ */
+export function isStateProxy(_value) {
+	return false;
+}
