@@ -1086,11 +1086,11 @@ function eager_flush() {
 /**
  * Implementation of `$state.eager(fn())`
  * @template T
+ * @param {Source<number>} version
  * @param {() => T} fn
  * @returns {T}
  */
-export function eager(fn) {
-	var version = source(0);
+export function eager(version, fn) {
 	var initial = true;
 	var value = /** @type {T} */ (undefined);
 
