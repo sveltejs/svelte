@@ -49,6 +49,22 @@ export let runes = false;
 /** @type {(index: number) => Location} */
 export let locator;
 
+/**
+ * @param {number | undefined} start
+ * @param {number | undefined} end
+ */
+export function get_loc(start, end) {
+	if (start !== undefined && end !== undefined) {
+		const s = locator(start);
+		const e = locator(end);
+
+		return {
+			start: { line: s.line, column: s.column },
+			end: { line: e.line, column: e.column }
+		};
+	}
+}
+
 /** @param {string} value */
 export function set_source(value) {
 	source = value;

@@ -82,11 +82,11 @@
 					"loc": {
 						"start": {
 							"line": 5,
-							"column": 19
+							"column": 18
 						},
 						"end": {
 							"line": 5,
-							"column": 40
+							"column": 39
 						}
 					},
 					"elements": [
@@ -97,11 +97,11 @@
 							"loc": {
 								"start": {
 									"line": 5,
-									"column": 20
+									"column": 19
 								},
 								"end": {
 									"line": 5,
-									"column": 23
+									"column": 22
 								}
 							},
 							"name": "key"
@@ -113,11 +113,11 @@
 							"loc": {
 								"start": {
 									"line": 5,
-									"column": 25
+									"column": 24
 								},
 								"end": {
 									"line": 5,
-									"column": 30
+									"column": 29
 								}
 							},
 							"name": "value"
@@ -129,11 +129,11 @@
 							"loc": {
 								"start": {
 									"line": 5,
-									"column": 32
+									"column": 31
 								},
 								"end": {
 									"line": 5,
-									"column": 39
+									"column": 38
 								}
 							},
 							"argument": {
@@ -143,11 +143,13 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 35
+										"column": 34,
+										"character": 75
 									},
 									"end": {
 										"line": 5,
-										"column": 39
+										"column": 38,
+										"character": 79
 									}
 								},
 								"name": "rest"
