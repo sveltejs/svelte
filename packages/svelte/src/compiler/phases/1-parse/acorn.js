@@ -94,7 +94,7 @@ export function parse_expression_at(parser, source, index) {
 
 		return ast;
 	} catch (e) {
-		handle_parse_error(e);
+		handle_parse_error(e, source, parser.ts);
 	}
 }
 
@@ -102,10 +102,19 @@ const regex_position_indicator = / \(\d+:\d+\)$/;
 
 /**
  * @param {any} err
+ * @param {string} [source]
+ * @param {boolean} [typescript]
  * @returns {never}
  */
-function handle_parse_error(err) {
-	e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
+function handle_parse_error(err, source, typescript) {
+	let message = /** @type {string} */ (err.message).replace(regex_position_indicator, '');
+	let pos = /** @type {number} */ (err.pos);
+
+	if (!typescript && source && source[pos] === ':') {
+		message += ` (did you forget to add \`lang="ts"\`?)`;
+	}
+
+	e.js_parse_error(pos, message);
 }
 
 /**
