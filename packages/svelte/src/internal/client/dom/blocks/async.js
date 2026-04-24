@@ -49,23 +49,29 @@ export function async(node, blockers = [], expressions = [], fn) {
 		set_hydrate_node(end);
 	}
 
-	flatten(blockers, [], expressions, (values) => {
-		if (was_hydrating) {
-			set_hydrating(true);
-			set_hydrate_node(previous_hydrate_node);
-		}
-
-		try {
-			// get values eagerly to avoid creating blocks if they reject
-			for (const d of values) get(d);
-
-			fn(node, ...values);
-		} finally {
+	flatten(
+		blockers,
+		[],
+		expressions,
+		(values) => {
 			if (was_hydrating) {
-				set_hydrating(false);
+				set_hydrating(true);
+				set_hydrate_node(previous_hydrate_node);
 			}
 
-			decrement_pending();
-		}
-	});
+			try {
+				// get values eagerly to avoid creating blocks if they reject
+				for (const d of values) get(d);
+
+				fn(node, ...values);
+			} finally {
+				if (was_hydrating) {
+					set_hydrating(false);
+				}
+
+				decrement_pending();
+			}
+		},
+		() => decrement_pending()
+	);
 }

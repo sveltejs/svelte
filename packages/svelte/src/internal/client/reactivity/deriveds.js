@@ -239,7 +239,7 @@ export function async_derived(fn, label, location) {
 					recent_async_deriveds.add(signal);
 
 					setTimeout(() => {
-						if (recent_async_deriveds.has(signal)) {
+						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
 							w.await_waterfall(/** @type {string} */ (signal.label), location);
 							recent_async_deriveds.delete(signal);
 						}
