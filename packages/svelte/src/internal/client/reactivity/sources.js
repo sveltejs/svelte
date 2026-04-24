@@ -266,13 +266,24 @@ export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
 	for (const effect of eager_effects) {
+		let dirty;
+
 		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
 		// instead of just updating the effects - this way we avoid overfiring.
 		if ((effect.f & CLEAN) !== 0) {
 			set_signal_status(effect, MAYBE_DIRTY);
 		}
 
-		if (is_dirty(effect)) {
+		try {
+			dirty = is_dirty(effect);
+		} catch {
+			// Dirty-checking can evaluate derived dependencies and throw in cases where
+			// parent effects are about to destroy this eager effect. Run the effect so
+			// its own error handling can deal with transient failures.
+			dirty = true;
+		}
+
+		if (dirty) {
 			update_effect(effect);
 		}
 	}
