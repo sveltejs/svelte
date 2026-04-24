@@ -716,6 +716,7 @@ export class Renderer {
 
 						set_ssr_context(context);
 						let transformed = await transformError(error);
+						set_ssr_context(context);
 
 						// Render the failed snippet instead of the partial children content
 						const failed_renderer = new Renderer(item.global, item);
