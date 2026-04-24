@@ -44,15 +44,6 @@ export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
 export const EFFECT_OFFSCREEN = 1 << 25;
 
-// Flags exclusive to deriveds
-/**
- * Tells that we marked this derived and its reactions as visited during the "mark as (maybe) dirty"-phase.
- * Will be lifted during execution of the derived and during checking its dirty state (both are necessary
- * because a derived might be checked but not executed). This is a pure performance optimization flag and
- * should not be used for any other purpose!
- */
-export const WAS_MARKED = 1 << 16;
-
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;

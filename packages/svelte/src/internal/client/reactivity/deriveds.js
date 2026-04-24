@@ -9,7 +9,6 @@ import {
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	ASYNC,
-	WAS_MARKED,
 	DESTROYED,
 	CLEAN,
 	REACTION_RAN,
@@ -362,7 +361,6 @@ export function execute_derived(derived) {
 
 			stack.push(derived);
 
-			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
@@ -372,7 +370,6 @@ export function execute_derived(derived) {
 		}
 	} else {
 		try {
-			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
