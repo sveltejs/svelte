@@ -6,8 +6,8 @@ import { create_event, delegate, delegated, event, event_symbol } from './events
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import {
-	ATTRIBUTES_CACHE_SYMBOL,
-	FORM_RESET_HANDLER_SYMBOL,
+	ATTRIBUTES_CACHE,
+	FORM_RESET_HANDLER,
 	IS_XHTML,
 	LOADING_ATTR_SYMBOL
 } from '#client/constants';
@@ -74,7 +74,7 @@ export function remove_input_defaults(input) {
 		}
 	};
 
-	/** @type {any} */ (input)[FORM_RESET_HANDLER_SYMBOL] = remove_defaults;
+	/** @type {any} */ (input)[FORM_RESET_HANDLER] = remove_defaults;
 	queue_micro_task(remove_defaults);
 	add_form_reset_listener();
 }
@@ -565,7 +565,7 @@ export function attribute_effect(
  */
 function get_attributes(element) {
 	return /** @type {Record<string | symbol, unknown>} **/ (
-		/** @type {any} */ (element)[ATTRIBUTES_CACHE_SYMBOL] ??= {
+		/** @type {any} */ (element)[ATTRIBUTES_CACHE] ??= {
 			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-'),
 			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
 		}

@@ -6,11 +6,11 @@ import { get_descriptor, is_extensible } from '../../shared/utils.js';
 import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
 import {
-	ATTRIBUTES_CACHE_SYMBOL,
-	CLASS_NAME_CACHE_SYMBOL,
+	ATTRIBUTES_CACHE,
+	CLASS_CACHE,
 	REACTION_RAN,
-	STYLE_CACHE_SYMBOL,
-	TEXT_CACHE_SYMBOL,
+	STYLE_CACHE,
+	TEXT_CACHE,
 	TEXT_NODE
 } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
@@ -55,15 +55,15 @@ export function init_operations() {
 
 	if (is_extensible(element_prototype)) {
 		// the following assignments improve perf of lookups on DOM nodes
-		/** @type {any} */ (element_prototype)[CLASS_NAME_CACHE_SYMBOL] = undefined;
-		/** @type {any} */ (element_prototype)[ATTRIBUTES_CACHE_SYMBOL] = null;
-		/** @type {any} */ (element_prototype)[STYLE_CACHE_SYMBOL] = undefined;
+		/** @type {any} */ (element_prototype)[CLASS_CACHE] = undefined;
+		/** @type {any} */ (element_prototype)[ATTRIBUTES_CACHE] = null;
+		/** @type {any} */ (element_prototype)[STYLE_CACHE] = undefined;
 		// @ts-expect-error
 		element_prototype.__e = undefined;
 	}
 
 	if (is_extensible(text_prototype)) {
-		/** @type {any} */ (text_prototype)[TEXT_CACHE_SYMBOL] = undefined;
+		/** @type {any} */ (text_prototype)[TEXT_CACHE] = undefined;
 	}
 
 	if (DEV) {

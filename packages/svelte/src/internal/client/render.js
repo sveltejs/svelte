@@ -23,7 +23,7 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
-import { COMMENT_NODE, STATE_SYMBOL, TEXT_CACHE_SYMBOL } from './constants.js';
+import { COMMENT_NODE, STATE_SYMBOL, TEXT_CACHE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
 
 /**
@@ -46,8 +46,9 @@ export function set_should_intro(value) {
 export function set_text(text, value) {
 	// For objects, we apply string coercion (which might make things like $state array references in the template reactive) before diffing
 	var str = value == null ? '' : typeof value === 'object' ? `${value}` : value;
-	if (str !== (/** @type {any} */ (text)[TEXT_CACHE_SYMBOL] ??= text.nodeValue)) {
-		/** @type {any} */ (text)[TEXT_CACHE_SYMBOL] = str;
+	// prettier-ignore
+	if (str !== (/** @type {any} */ (text)[TEXT_CACHE] ??= text.nodeValue)) {
+		/** @type {any} */ (text)[TEXT_CACHE] = str;
 		text.nodeValue = `${str}`;
 	}
 }

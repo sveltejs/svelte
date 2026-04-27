@@ -5,7 +5,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../../runtime.js';
-import { FORM_RESET_HANDLER_SYMBOL } from '../../../constants.js';
+import { FORM_RESET_HANDLER } from '../../../constants.js';
 import { add_form_reset_listener } from '../misc.js';
 
 /**
@@ -59,15 +59,15 @@ export function without_reactive_context(fn) {
  */
 export function listen_to_event_and_reset_event(element, event, handler, on_reset = handler) {
 	element.addEventListener(event, () => without_reactive_context(handler));
-	const prev = /** @type {any} */ (element)[FORM_RESET_HANDLER_SYMBOL];
+	const prev = /** @type {any} */ (element)[FORM_RESET_HANDLER];
 	if (prev) {
 		// special case for checkbox that can have multiple binds (group & checked)
-		/** @type {any} */ (element)[FORM_RESET_HANDLER_SYMBOL] = () => {
+		/** @type {any} */ (element)[FORM_RESET_HANDLER] = () => {
 			prev();
 			on_reset(true);
 		};
 	} else {
-		/** @type {any} */ (element)[FORM_RESET_HANDLER_SYMBOL] = () => on_reset(true);
+		/** @type {any} */ (element)[FORM_RESET_HANDLER] = () => on_reset(true);
 	}
 
 	add_form_reset_listener();
