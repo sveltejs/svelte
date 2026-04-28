@@ -27,7 +27,8 @@ import {
 	ROOT_EFFECT,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	REACTION_IS_UPDATING
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -356,8 +357,11 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			batch_values?.delete(derived);
 
 			if ((flags & WAS_MARKED) === 0) {
-				// Only connected deriveds can be reliably unmarked right away
-				if (flags & CONNECTED) {
+				// Only connected deriveds being executed outside the update cycle can be reliably unmarked right away
+				if (
+					flags & CONNECTED &&
+					(active_effect === null || (active_effect.f & REACTION_IS_UPDATING) === 0)
+				) {
 					reaction.f |= WAS_MARKED;
 				}
 
