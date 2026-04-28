@@ -123,6 +123,13 @@ const any_selector = {
 const seen = new Set();
 
 /**
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ */
+function is_inside_svelte_head(node) {
+	return node.metadata.path.some((ancestor) => ancestor.type === 'SvelteHead');
+}
+
+/**
  *
  * @param {Compiler.AST.CSS.StyleSheet} stylesheet
  * @param {Iterable<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} elements
@@ -248,6 +255,8 @@ function apply_selector(
 	from = 0,
 	to = relative_selectors.length
 ) {
+	if (is_inside_svelte_head(element)) return false;
+
 	if (from >= to) return false;
 
 	const selector_index = direction === FORWARD ? from : to - 1;

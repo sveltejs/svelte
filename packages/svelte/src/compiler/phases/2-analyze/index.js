@@ -206,6 +206,13 @@ const visitors = {
 };
 
 /**
+ * @param {AST.RegularElement | AST.SvelteElement} node
+ */
+function is_inside_svelte_head(node) {
+	return node.metadata.path.some((ancestor) => ancestor.type === 'SvelteHead');
+}
+
+/**
  * @param {AST.Script | null} script
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
@@ -876,6 +883,12 @@ export function analyze_component(root, source, options) {
 	}
 
 	for (const node of analysis.elements) {
+		// Elements rendered through <svelte:head> are not style-scopable.
+		// Prevent css hash injection (class="s-...") on tags like <meta>, <link>, <script>.
+		if (is_inside_svelte_head(node)) {
+			node.metadata.scoped = false;
+		}
+
 		if (node.metadata.scoped && is_custom_element_node(node)) {
 			mark_subtree_dynamic(node.metadata.path);
 		}
