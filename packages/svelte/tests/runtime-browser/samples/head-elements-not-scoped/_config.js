@@ -12,6 +12,8 @@ export default test({
 		assert.ok(link);
 		assert.ok(script);
 
+		if (!meta || !link || !script) return;
+		
 		assert.equal(meta.getAttribute('class'), null);
 		assert.equal(link.getAttribute('class'), null);
 		assert.equal(script.getAttribute('class'), null);
