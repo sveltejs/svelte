@@ -85,7 +85,7 @@ See [the migration guide](v5-migration-guide#Event-changes) for more info.
 
 ## head_in_component
 
-> Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/e/head_in_component) instead
+> Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
 
 ## node_invalid_placement_ssr
 

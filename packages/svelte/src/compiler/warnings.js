@@ -787,12 +787,12 @@ export function event_directive_deprecated(node, name) {
 }
 
 /**
- * Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/e/head_in_component) instead
+ * Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
  * @param {null | NodeLike} node
  * @param {string} location
  */
 export function head_in_component(node, location) {
-	w(node, 'head_in_component', `Using \`<head>\` (${location}) will likely lead to runtime errors. Use [\`<svelte:head>\`](https://svelte.dev/e/head_in_component) instead\nhttps://svelte.dev/e/head_in_component`);
+	w(node, 'head_in_component', `Using \`<head>\` (${location}) will likely lead to runtime errors. Use [\`<svelte:head>\`](https://svelte.dev/docs/svelte/svelte-head) instead\nhttps://svelte.dev/e/head_in_component`);
 }
 
 /**

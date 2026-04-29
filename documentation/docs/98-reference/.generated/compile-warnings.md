@@ -706,7 +706,7 @@ Component has unused export property '%name%'. If it is for external reference o
 ### head_in_component
 
 ```
-Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/e/head_in_component) instead
+Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
 ```
 
 ### legacy_code
