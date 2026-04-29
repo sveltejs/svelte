@@ -38,7 +38,7 @@ export interface AnalysisState {
 	/** Collected info about async `{@const }` declarations */
 	async_consts?: {
 		id: Identifier;
-		/** How many `@const` declarations there are (already) in this scope */
+		/** How many `$.run(...)` entries are already allocated in this scope */
 		declaration_count: number;
 	};
 }
