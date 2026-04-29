@@ -703,6 +703,12 @@ See [the migration guide](v5-migration-guide#Event-changes) for more info.
 Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
 ```
 
+### head_in_component
+
+```
+Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/e/head_in_component) instead
+```
+
 ### legacy_code
 
 ```

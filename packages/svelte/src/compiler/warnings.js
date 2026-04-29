@@ -787,14 +787,12 @@ export function event_directive_deprecated(node, name) {
 }
 
 /**
- * A `<head>` tag was detected in file `%filename%`, component `%component%`, at line %line%. This can lead to runtime errors. Did you mean to use `<svelte:head>`?
+ * Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/e/head_in_component) instead
  * @param {null | NodeLike} node
- * @param {string} filename
- * @param {string} component
- * @param {string} line
+ * @param {string} location
  */
-export function head_in_component(node, filename, component, line) {
-	w(node, 'head_in_component', `A \`<head>\` tag was detected in file \`${filename}\`, component \`${component}\`, at line ${line}. This can lead to runtime errors. Did you mean to use \`<svelte:head>\`?\nhttps://svelte.dev/e/head_in_component`);
+export function head_in_component(node, location) {
+	w(node, 'head_in_component', `Using \`<head>\` (${location}) will likely lead to runtime errors. Use [\`<svelte:head>\`](https://svelte.dev/e/head_in_component) instead\nhttps://svelte.dev/e/head_in_component`);
 }
 
 /**

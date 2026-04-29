@@ -83,6 +83,10 @@ In a future version of Svelte, self-closing tags may be upgraded from a warning 
 
 See [the migration guide](v5-migration-guide#Event-changes) for more info.
 
+## head_in_component
+
+> Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/e/head_in_component) instead
+
 ## node_invalid_placement_ssr
 
 > %message%. When rendering this component on the server, the resulting HTML will be modified by the browser (by moving, removing, or inserting elements), likely resulting in a `hydration_mismatch` warning
