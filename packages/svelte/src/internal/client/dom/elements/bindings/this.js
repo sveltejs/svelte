@@ -40,7 +40,7 @@ export function bind_this(element_or_component = {}, update, get_value, get_part
 			parts = get_parts?.() || [];
 
 			untrack(() => {
-				if (element_or_component !== get_value(...parts)) {
+				if (!is_bound_this(get_value(...parts), element_or_component)) {
 					update(element_or_component, ...parts);
 					// If this is an effect rerun (cause: each block context changes), then nullify the binding at
 					// the previous position if it isn't already taken over by a different effect.
