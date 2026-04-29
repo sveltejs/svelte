@@ -83,7 +83,7 @@ In a future version of Svelte, self-closing tags may be upgraded from a warning 
 
 See [the migration guide](v5-migration-guide#Event-changes) for more info.
 
-## head_in_component
+## unexpected_head
 
 > Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
 

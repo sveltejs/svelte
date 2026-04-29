@@ -113,7 +113,7 @@ export const codes = [
 	'element_implicitly_closed',
 	'element_invalid_self_closing_tag',
 	'event_directive_deprecated',
-	'head_in_component',
+	'unexpected_head',
 	'node_invalid_placement_ssr',
 	'script_context_deprecated',
 	'script_unknown_attribute',
@@ -791,8 +791,8 @@ export function event_directive_deprecated(node, name) {
  * @param {null | NodeLike} node
  * @param {string} location
  */
-export function head_in_component(node, location) {
-	w(node, 'head_in_component', `Using \`<head>\` (${location}) will likely lead to runtime errors. Use [\`<svelte:head>\`](https://svelte.dev/docs/svelte/svelte-head) instead\nhttps://svelte.dev/e/head_in_component`);
+export function unexpected_head(node, location) {
+	w(node, 'unexpected_head', `Using \`<head>\` (${location}) will likely lead to runtime errors. Use [\`<svelte:head>\`](https://svelte.dev/docs/svelte/svelte-head) instead\nhttps://svelte.dev/e/unexpected_head`);
 }
 
 /**

@@ -127,7 +127,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'head' && !context.state.parent_element) {
-		w.head_in_component(node, locate_node(node));
+		w.unexpected_head(node, locate_node(node));
 	}
 
 	node.metadata.has_spread = node.attributes.some(
