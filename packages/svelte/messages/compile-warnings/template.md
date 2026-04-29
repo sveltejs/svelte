@@ -83,10 +83,6 @@ In a future version of Svelte, self-closing tags may be upgraded from a warning 
 
 See [the migration guide](v5-migration-guide#Event-changes) for more info.
 
-## unexpected_head
-
-> Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
-
 ## node_invalid_placement_ssr
 
 > %message%. When rendering this component on the server, the resulting HTML will be modified by the browser (by moving, removing, or inserting elements), likely resulting in a `hydration_mismatch` warning
@@ -163,3 +159,7 @@ A derived value may be used in other contexts:
 > `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
 
 See [the note in the docs](legacy-svelte-self) for more info.
+
+## unexpected_head
+
+> Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
