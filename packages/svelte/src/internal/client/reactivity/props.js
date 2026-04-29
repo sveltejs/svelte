@@ -287,9 +287,7 @@ export function prop(props, key, flags, fallback) {
 
 	var get_fallback = () => {
 		if (lazy && runes) {
-			if (fallback_signal === undefined) {
-				fallback_signal = derived(/** @type {() => V} */ (fallback));
-			}
+			fallback_signal ??= derived(/** @type {() => V} */ (fallback));
 			return get(fallback_signal);
 		}
 
