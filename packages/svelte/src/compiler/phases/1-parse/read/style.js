@@ -524,6 +524,21 @@ function read_value(parser) {
 			in_url = true;
 		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
 			return value.trim();
+		} else if (
+			char === '/' &&
+			!in_url &&
+			!quote_mark &&
+			parser.template[parser.index + 1] === '*'
+		) {
+			parser.index += 2;
+			while (parser.index < parser.template.length) {
+				if (parser.template[parser.index] === '*' && parser.template[parser.index + 1] === '/') {
+					parser.index += 2;
+					break;
+				}
+				parser.index++;
+			}
+			continue;
 		}
 
 		value += char;
