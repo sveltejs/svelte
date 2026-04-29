@@ -405,7 +405,7 @@ export function update_derived(derived) {
 				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
 				// but not adding it to current_batch can, too, so we add it to both.
 				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-				current_batch?.capture(derived, value, true);
+				current_batch.capture(derived, value, true);
 				previous_batch?.capture(derived, value, true);
 			} else {
 				derived.v = value;
