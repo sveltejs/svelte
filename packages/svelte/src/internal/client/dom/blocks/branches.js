@@ -109,11 +109,14 @@ export class BranchManager {
 		}
 
 		for (const [b, k] of this.#batches) {
+			// Keep values for newer batches. Insertion order is not always chronological:
+			// an older batch can re-run after a newer one has already registered.
+			if (b.id > batch.id) continue;
+
 			this.#batches.delete(b);
 
 			if (b === batch) {
-				// keep values for newer batches
-				break;
+				continue;
 			}
 
 			const offscreen = this.#offscreen.get(k);

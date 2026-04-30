@@ -215,6 +215,7 @@ export function async_derived(fn, label, location) {
 			}
 
 			batch.activate();
+			/** @type {Source<V> & { async_batch?: Batch }} */ (signal).async_batch = batch;
 
 			if (error) {
 				signal.f |= ERROR_VALUE;
