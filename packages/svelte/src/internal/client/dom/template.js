@@ -415,8 +415,9 @@ export function props_id() {
 		hydrate_next();
 		return id;
 	}
+	// @ts-expect-error This way we ensure the id is unique even across Svelte runtimes
+	(globalThis.__svelte ??= {}).uid ??= 1;
 
-	/**@type {*}*/ (globalThis.__svelte ??= {}).uid ??= 1;
-
-	return `c${/**@type {*}*/ (globalThis.__svelte).uid++}`;
+	// @ts-expect-error
+	return `c${globalThis.__svelte.uid++}`;
 }
