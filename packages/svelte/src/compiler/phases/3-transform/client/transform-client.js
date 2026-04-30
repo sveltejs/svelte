@@ -570,9 +570,7 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
 	}
 
-	// disclose version attach the svelte version to `window` which is not guaranteed
-	// to be a thing in custom renderers environments
-	if (options.discloseVersion && !custom_renderer) {
+	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
