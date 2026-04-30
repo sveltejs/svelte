@@ -342,6 +342,14 @@ export class Batch {
 			this.#deferred?.resolve();
 		}
 
+		// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
+		// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
+		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
+		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
+		if (async_mode_flag && !batches.has(this)) {
+			this.#commit();
+		}
+
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
@@ -362,12 +370,6 @@ export class Batch {
 			}
 
 			next_batch.#process();
-		}
-
-		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
-		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
-		if (async_mode_flag && !batches.has(this)) {
-			this.#commit();
 		}
 	}
 
@@ -575,19 +577,23 @@ export class Batch {
 
 				checked = new Map();
 				var current_unequal = [...batch.current.keys()].filter((c) =>
-					this.current.has(c) ? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c : true
+					this.current.has(c)
+						? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c.v
+						: true
 				);
 
-				for (const effect of this.#new_effects) {
-					if (
-						(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
-						depends_on(effect, current_unequal, checked)
-					) {
-						if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
-							set_signal_status(effect, DIRTY);
-							batch.schedule(effect);
-						} else {
-							batch.#dirty_effects.add(effect);
+				if (current_unequal.length > 0) {
+					for (const effect of this.#new_effects) {
+						if (
+							(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
+							depends_on(effect, current_unequal, checked)
+						) {
+							if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
+								set_signal_status(effect, DIRTY);
+								batch.schedule(effect);
+							} else {
+								batch.#dirty_effects.add(effect);
+							}
 						}
 					}
 				}
@@ -716,7 +722,7 @@ export class Batch {
 
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
-						if (current_batch !== batch) {
+						if (!batches.has(batch) || batch.#pending.size > 0) {
 							// a flushSync happened in the meantime
 							return;
 						}

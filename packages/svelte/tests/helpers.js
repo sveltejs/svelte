@@ -201,7 +201,7 @@ export const async_mode = process.env.SVELTE_NO_ASYNC !== 'true';
  * @param {any[]} logs
  */
 export function normalise_inspect_logs(logs) {
-	/** @type {string[]} */
+	/** @type {any[]} */
 	const normalised = [];
 
 	for (const log of logs) {

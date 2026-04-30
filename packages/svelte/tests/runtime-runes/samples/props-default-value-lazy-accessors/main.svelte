@@ -1,5 +1,5 @@
 <script>
-	let log = $state([]);
+	let log = [];
 
 	const fallback_value = 1;
 	const nested = {
