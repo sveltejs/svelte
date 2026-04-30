@@ -1,4 +1,4 @@
-/** @import { Effect, Source } from './types.js' */
+/** @import { Derived, Effect, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -283,8 +283,14 @@ export function prop(props, key, flags, fallback) {
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
+	var fallback_signal = /** @type {Derived<V> | undefined} */ (undefined);
 
 	var get_fallback = () => {
+		if (lazy && runes) {
+			fallback_signal ??= derived(/** @type {() => V} */ (fallback));
+			return get(fallback_signal);
+		}
+
 		if (fallback_dirty) {
 			fallback_dirty = false;
 

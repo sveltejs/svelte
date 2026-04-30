@@ -3661,6 +3661,8 @@ declare namespace $state {
 	 * </script>
 	 * ```
 	 *
+	 * If `state` has a `toJSON` method, the snapshot will clone the value returned from `toJSON` instead of the original object.
+	 *
 	 * @see {@link https://svelte.dev/docs/svelte/$state#$state.snapshot Documentation}
 	 *
 	 * @param state The value to snapshot
