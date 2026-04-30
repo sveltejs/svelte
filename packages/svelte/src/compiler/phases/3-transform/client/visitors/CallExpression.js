@@ -53,7 +53,7 @@ export function CallExpression(node, context) {
 		case '$state.eager': {
 			// Keep a stable source for the eager state across reruns to properly notify dependencies
 			const id = context.state.scope.root.unique('eager');
-			context.state.hoisted.push(b.var(id, b.call('$.state', b.literal(0))));
+			context.state.hoisted.push(b.var(id, b.new(b.id('Map'))));
 			return b.call(
 				'$.eager',
 				id,
@@ -88,7 +88,7 @@ export function CallExpression(node, context) {
 		case '$effect.pending': {
 			// Keep a stable source for the pending state across reruns to properly notify dependencies
 			const id = context.state.scope.root.unique('pending');
-			context.state.hoisted.push(b.var(id, b.call('$.state', b.literal(0))));
+			context.state.hoisted.push(b.var(id, b.new(b.id('Map'))));
 			return b.call('$.eager', id, b.thunk(b.call('$.pending')));
 		}
 
