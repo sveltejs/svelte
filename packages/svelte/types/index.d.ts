@@ -1105,7 +1105,7 @@ declare module 'svelte/compiler' {
 		 */
 		runes?: boolean | undefined | ((options: { filename: string }) => boolean | undefined);
 		/**
-		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
+		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `globalThis.__svelte.v`.
 		 *
 		 * @default true
 		 */
@@ -3398,7 +3398,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		runes?: boolean | undefined | ((options: { filename: string }) => boolean | undefined);
 		/**
-		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
+		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `globalThis.__svelte.v`.
 		 *
 		 * @default true
 		 */

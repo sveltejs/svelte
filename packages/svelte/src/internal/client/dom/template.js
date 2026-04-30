@@ -1,30 +1,12 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { TemplateStructure } from './types' */
-import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import {
-	create_text,
-	get_first_child,
-	get_next_sibling,
-	is_firefox,
-	create_element,
-	create_fragment,
-	create_comment,
-	set_attribute,
-	merge_text_nodes,
-	get_last_child,
-	import_node,
-	clone_node,
-	append_child,
-	insert_before,
-	set_text_content,
-	replace_with,
-	node_type,
-	get_node_value,
-	node_name,
-	get_window
-} from './operations.js';
-import { create_fragment_from_html } from './reconciler.js';
-import { active_effect } from '../runtime.js';
+	COMMENT_NODE,
+	DOCUMENT_FRAGMENT_NODE,
+	IS_XHTML,
+	REACTION_RAN,
+	TEXT_NODE
+} from '#client/constants';
 import {
 	NAMESPACE_MATHML,
 	NAMESPACE_SVG,
@@ -33,14 +15,30 @@ import {
 	TEMPLATE_USE_MATHML,
 	TEMPLATE_USE_SVG
 } from '../../../constants.js';
-import {
-	COMMENT_NODE,
-	DOCUMENT_FRAGMENT_NODE,
-	IS_XHTML,
-	REACTION_RAN,
-	TEXT_NODE
-} from '#client/constants';
 import { current_renderer } from '../custom-renderer/state.js';
+import { active_effect } from '../runtime.js';
+import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
+import {
+	append_child,
+	clone_node,
+	create_comment,
+	create_element,
+	create_fragment,
+	create_text,
+	get_first_child,
+	get_last_child,
+	get_node_value,
+	import_node,
+	insert_before,
+	is_firefox,
+	merge_text_nodes,
+	node_name,
+	node_type,
+	replace_with,
+	set_attribute,
+	set_text_content
+} from './operations.js';
+import { create_fragment_from_html } from './reconciler.js';
 
 const TEMPLATE_TAG = IS_XHTML ? 'template' : 'TEMPLATE';
 const SCRIPT_TAG = IS_XHTML ? 'script' : 'SCRIPT';
@@ -418,10 +416,7 @@ export function props_id() {
 		return id;
 	}
 
-	let window = get_window();
+	/**@type {*}*/ (globalThis.__svelte ??= {}).uid ??= 1;
 
-	// This way we ensure the id is unique even across Svelte runtimes
-	(window.__svelte ??= {}).uid ??= 1;
-
-	return `c${window.__svelte.uid++}`;
+	return `c${/**@type {*}*/ (globalThis.__svelte).uid++}`;
 }
