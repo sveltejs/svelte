@@ -219,7 +219,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	// Capture the renderer that was active when this each block was created.
 	// Needed so that the commit callback can push the correct renderer when doing
 	// DOM operations outside of an effect context (e.g. as a batch commit callback).
-	var captured_renderer = current_renderer;
+	var renderer = current_renderer;
 
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);
@@ -265,7 +265,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		var pop_renderer = captured_renderer !== null ? push_renderer(captured_renderer) : null;
+		var pop_renderer = renderer !== null ? push_renderer(renderer) : null;
 
 		state.pending.delete(batch);
 
