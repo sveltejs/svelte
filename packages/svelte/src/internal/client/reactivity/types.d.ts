@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -24,6 +25,8 @@ export interface Value<V = unknown> extends Signal {
 	rv: number;
 	/** The latest value for this signal */
 	v: V;
+	/** The batch in which an async derived most recently resolved */
+	async_batch?: Batch; // TODO if this is only set a few times this might mess with perf (object shape etc)
 
 	// dev-only
 	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */

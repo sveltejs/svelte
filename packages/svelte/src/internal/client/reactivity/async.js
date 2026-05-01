@@ -55,7 +55,14 @@ export function flatten(blockers, sync, async, fn) {
 
 	/** @param {Value[]} values */
 	function finish(values) {
-		restore();
+		var batch = get_latest_async_batch(values);
+		if (batch) {
+			restore(false);
+			batch.activate();
+			batch.apply();
+		} else {
+			restore();
+		}
 
 		try {
 			fn(values);
@@ -93,6 +100,24 @@ export function flatten(blockers, sync, async, fn) {
 	} else {
 		run();
 	}
+}
+
+/**
+ * @param {Value[]} values
+ * @returns {Batch | null}
+ */
+function get_latest_async_batch(values) {
+	/** @type {Batch | null} */
+	var latest = null;
+
+	for (const value of values) {
+		var batch = /** @type {Value & { async_batch?: Batch }} */ (value).async_batch;
+		if (batch && (!latest || batch.id > latest.id)) {
+			latest = batch;
+		}
+	}
+
+	return latest;
 }
 
 /**
