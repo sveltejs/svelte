@@ -245,12 +245,14 @@ export async function* for_await_track_reactivity_loss(iterable) {
 				}
 			} catch (error) {
 				if (thrown_error === no_error) {
+					// eslint-disabled-next-line no-unsafe-finally
 					throw error;
 				}
 			}
 		}
 
 		if (thrown_error !== no_error) {
+			// eslint-disabled-next-line no-unsafe-finally
 			throw thrown_error;
 		}
 	}
