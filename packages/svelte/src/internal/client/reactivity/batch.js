@@ -16,7 +16,8 @@ import {
 	EAGER_EFFECT,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
-	REACTION_RAN
+	REACTION_RAN,
+	DESTROYING
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -33,7 +34,7 @@ import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
-import { eager_effect, unlink_effect } from './effects.js';
+import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
@@ -1092,13 +1093,30 @@ function eager_flush() {
 /**
  * Implementation of `$state.eager(fn())`
  * @template T
+ * @param {Map<Effect | null, Source<number>>} version_map
  * @param {() => T} fn
  * @returns {T}
  */
-export function eager(fn) {
-	var version = source(0);
+export function eager(version_map, fn) {
 	var initial = true;
 	var value = /** @type {T} */ (undefined);
+
+	// To prevent an each block or a reusable function with a $state.eager to rerun
+	// all the unrelated effects at once, we traverse up the tree until we find a branch,
+	// which will be right below a block effect we care about. To prevent memory leaks
+	// we also have to remove the entry from the map if the branch is removed.
+	let e = active_effect;
+	while (e !== null && (e.f & BRANCH_EFFECT) === 0) {
+		e = e.parent;
+	}
+	let version = version_map.get(e) ?? source(0);
+	version_map.set(e, version);
+
+	if (e) {
+		teardown(() => {
+			if (e.f & DESTROYING) version_map.delete(e);
+		});
+	}
 
 	get(version);
 
