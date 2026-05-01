@@ -1,6 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Location } from 'locate-character' */
 /** @import * as ESTree from 'estree' */
+/** @import { CommentWithLocation } from './types' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
@@ -10,6 +11,8 @@ import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
 import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 import * as state from '../../state.js';
+import { find_end } from './utils/find.js';
+import { walk } from 'zimmerframe';
 
 /** @param {number} cc */
 function is_whitespace(cc) {
@@ -167,6 +170,8 @@ export class Parser {
 				enumerable: false
 			});
 		}
+
+		this.#attach_comments();
 	}
 
 	current() {
@@ -212,6 +217,46 @@ export class Parser {
 		if (!match || match.index !== this.index) return null;
 
 		return match[0];
+	}
+
+	advance() {
+		let i = this.index;
+		let source = this.template;
+
+		while (i < source.length) {
+			const code = source.charCodeAt(i);
+
+			if (is_whitespace(code)) {
+				i += 1;
+				continue;
+			}
+
+			if (code === 47) {
+				const start = i;
+				const next = source.charCodeAt(i + 1);
+
+				if (next === 47 || next === 42) {
+					const is_block = next === 42;
+					i = find_end(source, is_block ? '*/' : '\n', i);
+
+					const end = is_block ? i : i - 1; // line comments don't include the '\n'
+
+					this.root.comments.push({
+						type: is_block ? 'Block' : 'Line',
+						start,
+						end,
+						value: source.slice(start + 2, end - (is_block ? 2 : 1)),
+						loc: state.get_loc(start, end)
+					});
+
+					continue;
+				}
+			}
+
+			break;
+		}
+
+		this.index = i;
 	}
 
 	allow_whitespace() {
@@ -314,6 +359,72 @@ export class Parser {
 	append(node) {
 		this.fragments.at(-1)?.nodes.push(node);
 		return node;
+	}
+
+	#attach_comments() {
+		const source = this.template;
+		const comments = this.root.comments.map(({ type, value, start, end }) => ({
+			type,
+			value,
+			start,
+			end
+		}));
+
+		const root =
+			/** @type {AST.BaseNode & { leadingComments: CommentWithLocation[], trailingComments: CommentWithLocation[] }} */ (
+				/** @type {unknown} */ (this.root)
+			);
+
+		const nodes = [this.root.module, this.root.instance, this.root.css, ...this.root.fragment.nodes]
+			.filter((node) => !!node)
+			.sort((a, b) => a.start - b.start);
+
+		for (const node of nodes) {
+			walk(node, null, {
+				_(node, { next, path }) {
+					let comment;
+
+					while (comments[0] && comments[0].start < node.start) {
+						comment = /** @type {CommentWithLocation} */ (comments.shift());
+						(node.leadingComments ||= []).push(comment);
+					}
+
+					next();
+
+					if (comments[0]) {
+						const parent = /** @type {any} */ (path.at(-1));
+
+						if (parent === undefined || node.end !== parent.end) {
+							const slice = source.slice(node.end, comments[0].start);
+							const is_last_in_body =
+								((parent?.type === 'BlockStatement' || parent?.type === 'Program') &&
+									parent.body.indexOf(node) === parent.body.length - 1) ||
+								(parent?.type === 'ArrayExpression' &&
+									parent.elements.indexOf(node) === parent.elements.length - 1) ||
+								(parent?.type === 'ObjectExpression' &&
+									parent.properties.indexOf(node) === parent.properties.length - 1);
+
+							if (is_last_in_body) {
+								// Special case: There can be multiple trailing comments after the last node in a block,
+								// and they can be separated by newlines
+								let end = node.end;
+
+								while (comments.length) {
+									const comment = comments[0];
+									if (parent && comment.start >= parent.end) break;
+
+									(node.trailingComments ||= []).push(comment);
+									comments.shift();
+									end = comment.end;
+								}
+							} else if (node.end <= comments[0].start && /^[,) \t]*$/.test(slice)) {
+								node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
+							}
+						}
+					}
+				}
+			});
+		}
 	}
 }
 

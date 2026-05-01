@@ -77,6 +77,14 @@
 								"raw": "2",
 								"data": "2"
 							}
+						],
+						"leadingComments": [
+							{
+								"type": "Line",
+								"value": " this is a line comment",
+								"start": 20,
+								"end": 45
+							}
 						]
 					},
 					{
@@ -103,6 +111,26 @@
 								"type": "Text",
 								"raw": "3",
 								"data": "3"
+							}
+						],
+						"leadingComments": [
+							{
+								"type": "Block",
+								"value": " this is a\n\t\tm\n\t\tu\n\t\tl\n\t\tt\n\t\ti\n\t\tl\n\t\ti\n\t\tn\n\t\te\n\t\tcomment\n\t",
+								"start": 61,
+								"end": 123
+							},
+							{
+								"type": "Line",
+								"value": " oh look another line comment",
+								"start": 125,
+								"end": 156
+							},
+							{
+								"type": "Line",
+								"value": " (two, in fact)",
+								"start": 158,
+								"end": 175
 							}
 						]
 					}
@@ -161,6 +189,20 @@
 								"type": "Text",
 								"raw": "1",
 								"data": "1"
+							}
+						],
+						"leadingComments": [
+							{
+								"type": "Block",
+								"value": " inline ",
+								"start": 207,
+								"end": 219
+							},
+							{
+								"type": "Block",
+								"value": " another inline ",
+								"start": 220,
+								"end": 240
 							}
 						]
 					}

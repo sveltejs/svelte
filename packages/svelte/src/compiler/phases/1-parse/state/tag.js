@@ -6,13 +6,11 @@ import * as e from '../../../errors.js';
 import { ExpressionMetadata } from '../../nodes.js';
 import { parse_expression_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
-import read_expression, { get_loose_identifier } from '../read/expression.js';
+import { get_loose_identifier, read_expression } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
 import { match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
-
-const pointy_bois = { '<': '>' };
 
 /** @param {Parser} parser */
 export default function tag(parser) {
@@ -31,10 +29,7 @@ export default function tag(parser) {
 		}
 	}
 
-	const expression = read_expression(parser);
-
-	parser.allow_whitespace();
-	parser.eat('}', true);
+	const expression = read_expression(parser, '{', '}');
 
 	parser.append({
 		type: 'ExpressionTag',
@@ -61,16 +56,13 @@ function open(parser) {
 			elseif: false,
 			start,
 			end: -1,
-			test: read_expression(parser),
+			test: read_expression(parser, '{', '}'),
 			consequent: create_fragment(),
 			alternate: null,
 			metadata: {
 				expression: new ExpressionMetadata()
 			}
 		});
-
-		parser.allow_whitespace();
-		parser.eat('}', true);
 
 		parser.stack.push(block);
 		parser.fragments.push(block.consequent);
@@ -81,8 +73,7 @@ function open(parser) {
 	if (parser.eat('each')) {
 		parser.require_whitespace();
 
-		const template = parser.template;
-		let end = parser.template.length;
+		let template = parser.template;
 
 		/** @type {Expression | undefined} */
 		let expression;
@@ -93,31 +84,28 @@ function open(parser) {
 		// we get a valid expression
 		while (!expression) {
 			try {
-				expression = read_expression(parser, undefined, true);
+				expression = /** @type {Expression} */ (
+					parse_expression_at(parser, template, parser.index)
+				);
 			} catch (err) {
-				end = /** @type {any} */ (err).position[0] - 2;
+				let end = /** @type {any} */ (err).position[0] - 2;
 
-				while (end > start && parser.template.slice(end, end + 2) !== 'as') {
+				while (end > start && template.slice(end, end + 2) !== 'as') {
 					end -= 1;
 				}
 
 				if (end <= start) {
 					if (parser.loose) {
 						expression = get_loose_identifier(parser);
-						if (expression) {
-							break;
-						}
+						break;
 					}
+
 					throw err;
 				}
 
-				// @ts-expect-error parser.template is meant to be readonly, this is a special case
-				parser.template = template.slice(0, end);
+				template = template.slice(0, end);
 			}
 		}
-
-		// @ts-expect-error
-		parser.template = template;
 
 		parser.allow_whitespace();
 
@@ -188,9 +176,7 @@ function open(parser) {
 		if (parser.eat('(')) {
 			parser.allow_whitespace();
 
-			key = read_expression(parser, '(');
-			parser.allow_whitespace();
-			parser.eat(')', true);
+			key = read_expression(parser, '(', ')');
 			parser.allow_whitespace();
 		}
 
@@ -321,10 +307,7 @@ function open(parser) {
 	if (parser.eat('key')) {
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
-		parser.allow_whitespace();
-
-		parser.eat('}', true);
+		const expression = read_expression(parser, '{', '}');
 
 		/** @type {AST.KeyBlock} */
 		const block = parser.append({
@@ -364,7 +347,7 @@ function open(parser) {
 		// if we match a generic opening
 		if (parser.ts && parser.match('<')) {
 			const start = parser.index;
-			const end = match_bracket(parser, start, pointy_bois);
+			const end = match_bracket(parser.template, start, '<', '>');
 
 			type_params = parser.template.slice(start + 1, end - 1);
 
@@ -387,14 +370,20 @@ function open(parser) {
 			parser.eat(')', true);
 		}
 
-		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
-		const params = parser.template.slice(params_start, parser.index);
+		/** @type {Pattern[]} */
+		let params = [];
 
-		let function_expression = matched
-			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(parser, prelude + `${params} => {}`, params_start)
-				)
-			: { params: [] };
+		if (matched) {
+			const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
+			const params_string = parser.template.slice(params_start, parser.index);
+
+			const fn = /** @type {ArrowFunctionExpression} */ (
+				parse_expression_at(parser, prelude + `${params_string} => {}`, params_start)
+			);
+
+			params = fn.params;
+			parser.index -= 6;
+		}
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -406,7 +395,7 @@ function open(parser) {
 			end: -1,
 			expression: id,
 			typeParams: type_params,
-			parameters: function_expression.params,
+			parameters: params,
 			body: create_fragment(),
 			metadata: {
 				can_hoist: false,
@@ -443,10 +432,7 @@ function next(parser) {
 		if (parser.eat('if')) {
 			parser.require_whitespace();
 
-			const expression = read_expression(parser);
-
-			parser.allow_whitespace();
-			parser.eat('}', true);
+			const expression = read_expression(parser, '{', '}');
 
 			let elseif_start = start - 1;
 			while (parser.template[elseif_start] !== '{') elseif_start -= 1;
@@ -616,10 +602,7 @@ function special(parser) {
 		// {@html content} tag
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
-
-		parser.allow_whitespace();
-		parser.eat('}', true);
+		const expression = read_expression(parser, '{', '}');
 
 		parser.append({
 			type: 'HtmlTag',
@@ -681,7 +664,8 @@ function special(parser) {
 		parser.allow_whitespace();
 
 		const expression_start = parser.index;
-		const init = read_expression(parser);
+		const init = read_expression(parser, '{', '}');
+
 		if (
 			init.type === 'SequenceExpression' &&
 			!parser.template.substring(expression_start, init.start).includes('(')
@@ -689,9 +673,6 @@ function special(parser) {
 			// const a = (b, c) is allowed but a = b, c = d is not;
 			e.const_tag_invalid_expression(init);
 		}
-		parser.allow_whitespace();
-
-		parser.eat('}', true);
 
 		parser.append({
 			type: 'ConstTag',
@@ -715,7 +696,7 @@ function special(parser) {
 		// {@render foo(...)}
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
+		const expression = read_expression(parser, '{', '}');
 
 		if (
 			expression.type !== 'CallExpression' &&
@@ -723,9 +704,6 @@ function special(parser) {
 		) {
 			e.render_tag_invalid_expression(expression);
 		}
-
-		parser.allow_whitespace();
-		parser.eat('}', true);
 
 		parser.append({
 			type: 'RenderTag',
