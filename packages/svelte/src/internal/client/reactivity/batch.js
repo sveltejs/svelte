@@ -347,7 +347,9 @@ export class Batch {
 		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag && !batches.has(this)) {
+			const prev = current_batch;
 			this.#commit();
+			current_batch = prev;
 		}
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
