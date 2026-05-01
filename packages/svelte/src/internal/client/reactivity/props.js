@@ -7,7 +7,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
-import { get_descriptor, is_function } from '../../shared/utils.js';
+import { get_descriptor_in_chain, is_function } from '../../shared/utils.js';
 import { set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import {
@@ -201,9 +201,9 @@ const spread_props_handler = {
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			const desc = get_descriptor(p, key);
+			const desc = get_descriptor_in_chain(p, key);
 			if (desc && desc.set) {
-				desc.set(value);
+				desc.set.call(p, value);
 				return true;
 			}
 		}
@@ -215,7 +215,7 @@ const spread_props_handler = {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
 			if (typeof p === 'object' && p !== null && key in p) {
-				const descriptor = get_descriptor(p, key);
+				const descriptor = get_descriptor_in_chain(p, key);
 				if (descriptor && !descriptor.configurable) {
 					// Prevent a "Non-configurability Report Error": The target is an array, it does
 					// not actually contain this property. If it is now described as non-configurable,
@@ -310,9 +310,11 @@ export function prop(props, key, flags, fallback) {
 		// or `createClassComponent(Component, props)`
 		var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
 
-		setter =
-			get_descriptor(props, key)?.set ??
-			(is_entry_props && key in props ? (v) => (props[key] = v) : undefined);
+		// Going through `props[key] = v` (rather than calling the descriptor's `set` directly)
+		// preserves `this` for prototype setters (class instances, including class fields with
+		// `$state`) and re-enters proxy traps so spread/state proxies route writes correctly.
+		var has_setter = get_descriptor_in_chain(props, key)?.set !== undefined;
+		setter = has_setter || (is_entry_props && key in props) ? (v) => (props[key] = v) : undefined;
 	}
 
 	/** @type {V} */
