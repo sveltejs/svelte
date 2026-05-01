@@ -119,7 +119,8 @@ export const codes = [
 	'slot_element_deprecated',
 	'svelte_component_deprecated',
 	'svelte_element_invalid_this',
-	'svelte_self_deprecated'
+	'svelte_self_deprecated',
+	'unexpected_head'
 ];
 
 /**
@@ -842,4 +843,13 @@ export function svelte_element_invalid_this(node) {
  */
 export function svelte_self_deprecated(node, name, basename) {
 	w(node, 'svelte_self_deprecated', `\`<svelte:self>\` is deprecated — use self-imports (e.g. \`import ${name} from './${basename}'\`) instead\nhttps://svelte.dev/e/svelte_self_deprecated`);
+}
+
+/**
+ * Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
+ * @param {null | NodeLike} node
+ * @param {string} location
+ */
+export function unexpected_head(node, location) {
+	w(node, 'unexpected_head', `Using \`<head>\` (${location}) will likely lead to runtime errors. Use [\`<svelte:head>\`](https://svelte.dev/docs/svelte/svelte-head) instead\nhttps://svelte.dev/e/unexpected_head`);
 }
