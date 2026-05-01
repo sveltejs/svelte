@@ -613,6 +613,12 @@ function has_disabled_attribute(attribute_map) {
  * @returns {typeof ElementInteractivity[keyof typeof ElementInteractivity]}
  */
 function element_interactivity(tag_name, attribute_map) {
+	if (tag_name === 'tr' || tag_name === 'td' || tag_name === 'th') {
+		return attribute_map.has('role')
+			? ElementInteractivity.Static
+			: ElementInteractivity.NonInteractive;
+	}
+
 	if (
 		interactive_element_role_schemas.some((schema) => match_schema(schema, tag_name, attribute_map))
 	) {
