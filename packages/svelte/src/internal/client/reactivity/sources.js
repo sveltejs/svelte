@@ -25,10 +25,7 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC,
-	WAS_MARKED,
-	CONNECTED,
-	REACTION_IS_UPDATING
+	ASYNC
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -173,6 +170,17 @@ export function set(source, value, should_proxy = false) {
 }
 
 /**
+ * A set of signals we have already seen while traversing in mark_reactions.
+ * Not always set to balance the common case of sources only having a couple
+ * of (transitive) dependencies (where always creating a Set would be bad for perf)
+ * with the edge case of extremely deep or wide dependency arrays with cycles.
+ * @type {Set<any> | null}
+ */
+var seen = null;
+/** Number of transitive dependencies, see {@link seen} for more info */
+var count_deps = 0;
+
+/**
  * @template V
  * @param {Source<V>} source
  * @param {V} value
@@ -235,7 +243,10 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
+		seen = null;
+		count_deps = 0;
 		mark_reactions(source, DIRTY, updated_during_traversal);
+		seen = null;
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -342,6 +353,16 @@ function mark_reactions(signal, status, updated_during_traversal) {
 	var runes = is_runes();
 	var length = reactions.length;
 
+	count_deps += length;
+	// Activate the `seen` Set if we think from the unusually high number of deps that
+	// there might be cycles in the graph, to avoid repeated lookups for reactions
+	if (count_deps > 1000000 && seen === null) seen = new Set();
+
+	if (seen !== null) {
+		if (seen.has(signal)) return;
+		seen.add(signal);
+	}
+
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
@@ -365,18 +386,7 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			var derived = /** @type {Derived} */ (reaction);
 
 			batch_values?.delete(derived);
-
-			if ((flags & WAS_MARKED) === 0) {
-				// Only connected deriveds being executed outside the update cycle can be reliably unmarked right away
-				if (
-					flags & CONNECTED &&
-					(active_effect === null || (active_effect.f & REACTION_IS_UPDATING) === 0)
-				) {
-					reaction.f |= WAS_MARKED;
-				}
-
-				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
-			}
+			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
 
