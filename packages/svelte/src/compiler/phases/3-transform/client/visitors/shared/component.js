@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { dev, is_ignored } from '../../../../../state.js';
+import { dev, is_ignored, custom_renderer } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
@@ -453,6 +453,13 @@ export function build_component(node, component_name, loc, context) {
 
 		fn = (node_id) => {
 			return build_bind_this(bind_this, prev(node_id), context);
+		};
+	}
+
+	if (custom_renderer) {
+		const prev = fn;
+		fn = (node_id) => {
+			return b.call('$.without_renderer', b.arrow([], prev(node_id)));
 		};
 	}
 

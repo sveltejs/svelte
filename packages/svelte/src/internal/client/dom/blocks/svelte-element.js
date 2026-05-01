@@ -7,7 +7,15 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { create_element, create_text, get_first_child } from '../operations.js';
+import {
+	create_element,
+	create_text,
+	get_first_child,
+	append_child,
+	create_comment,
+	insert_before,
+	node_type
+} from '../operations.js';
 import { block, teardown } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { active_effect } from '../../runtime.js';
@@ -40,7 +48,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	/** @type {null | Element} */
 	var element = null;
 
-	if (hydrating && hydrate_node.nodeType === ELEMENT_NODE) {
+	if (hydrating && node_type(hydrate_node) === ELEMENT_NODE) {
 		element = /** @type {Element} */ (hydrate_node);
 		hydrate_next();
 	}
@@ -90,14 +98,14 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				if (render_fn) {
 					if (hydrating && is_raw_text_element(next_tag)) {
 						// prevent hydration glitches
-						element.append(document.createComment(''));
+						append_child(element, create_comment(''));
 					}
 
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = hydrating
 						? get_first_child(element)
-						: element.appendChild(create_text());
+						: /** @type {Text} */ (append_child(element, create_text()));
 
 					if (hydrating) {
 						if (child_anchor === null) {
@@ -121,7 +129,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
 				/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = element;
 
-				anchor.before(element);
+				insert_before(anchor, element);
 			}
 
 			if (hydrating) {

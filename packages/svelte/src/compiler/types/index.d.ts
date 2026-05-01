@@ -148,7 +148,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	runes?: boolean | undefined | ((options: { filename: string }) => boolean | undefined);
 	/**
-	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
+	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `globalThis.__svelte.v`.
 	 *
 	 * @default true
 	 */
@@ -238,6 +238,10 @@ export interface ModuleCompileOptions {
 		 * @since 5.36
 		 */
 		async?: boolean;
+		/**
+		 * Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
+		 */
+		customRenderer?: string | ((options: { filename: string }) => string | undefined);
 	};
 }
 
@@ -245,6 +249,9 @@ export interface ModuleCompileOptions {
 
 export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'rootDir'> & {
 	rootDir: ModuleCompileOptions['rootDir'];
+	experimental: Required<Omit<Required<ModuleCompileOptions>['experimental'], 'customRenderer'>> & {
+		customRenderer: (options: { filename: string }) => string | undefined;
+	};
 };
 
 export type ValidatedCompileOptions = ValidatedModuleCompileOptions &

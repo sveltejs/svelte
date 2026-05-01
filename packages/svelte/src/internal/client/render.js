@@ -6,7 +6,14 @@ import {
 	create_text,
 	get_first_child,
 	get_next_sibling,
-	init_operations
+	append_child,
+	add_event_listener,
+	remove_event_listener,
+	get_parent_node,
+	remove_child,
+	set_node_value,
+	get_node_value,
+	node_type
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { active_effect } from './runtime.js';
@@ -47,10 +54,10 @@ export function set_text(text, value) {
 	// For objects, we apply string coercion (which might make things like $state array references in the template reactive) before diffing
 	var str = value == null ? '' : typeof value === 'object' ? `${value}` : value;
 	// @ts-expect-error
-	if (str !== (text.__t ??= text.nodeValue)) {
+	if (str !== (text.__t ??= get_node_value(text))) {
 		// @ts-expect-error
 		text.__t = str;
-		text.nodeValue = `${str}`;
+		set_node_value(text, `${str}`);
 	}
 }
 
@@ -94,7 +101,6 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
-	init_operations();
 	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;
@@ -105,7 +111,7 @@ export function hydrate(component, options) {
 
 		while (
 			anchor &&
-			(anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
+			(node_type(anchor) !== COMMENT_NODE || get_node_value(anchor) !== HYDRATION_START)
 		) {
 			anchor = get_next_sibling(anchor);
 		}
@@ -139,8 +145,6 @@ export function hydrate(component, options) {
 			e.hydration_failed();
 		}
 
-		// If an error occurred above, the operations might not yet have been initialised.
-		init_operations();
 		clear_text_content(target);
 
 		set_hydrating(false);
@@ -164,14 +168,12 @@ function _mount(
 	Component,
 	{ target, anchor, props = {}, events, context, intro = true, transformError }
 ) {
-	init_operations();
-
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
 	var unmount = component_root(() => {
-		var anchor_node = anchor ?? target.appendChild(create_text());
+		var anchor_node = anchor ?? /** @type {Text} */ (append_child(target, create_text()));
 
 		boundary(
 			/** @type {TemplateNode} */ (anchor_node),
@@ -202,8 +204,8 @@ function _mount(
 
 					if (
 						hydrate_node === null ||
-						hydrate_node.nodeType !== COMMENT_NODE ||
-						/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+						node_type(hydrate_node) !== COMMENT_NODE ||
+						get_node_value(hydrate_node) !== HYDRATION_END
 					) {
 						w.hydration_mismatch();
 						throw HYDRATION_ERROR;
@@ -246,7 +248,7 @@ function _mount(
 					var count = counts.get(event_name);
 
 					if (count === undefined) {
-						node.addEventListener(event_name, handle_event_propagation, { passive });
+						add_event_listener(node, event_name, handle_event_propagation, { passive });
 						counts.set(event_name, 1);
 					} else {
 						counts.set(event_name, count + 1);
@@ -265,7 +267,7 @@ function _mount(
 					var count = /** @type {number} */ (counts.get(event_name));
 
 					if (--count == 0) {
-						node.removeEventListener(event_name, handle_event_propagation);
+						remove_event_listener(node, event_name, handle_event_propagation);
 						counts.delete(event_name);
 
 						if (counts.size === 0) {
@@ -280,7 +282,8 @@ function _mount(
 			root_event_handles.delete(event_handle);
 
 			if (anchor_node !== anchor) {
-				anchor_node.parentNode?.removeChild(anchor_node);
+				var parent = get_parent_node(anchor_node);
+				if (parent) remove_child(parent, /** @type {ChildNode} */ (anchor_node));
 			}
 		};
 	});

@@ -11,6 +11,14 @@ import {
 	set_active_reaction
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
+import {
+	remove_attribute,
+	dispatch_event,
+	add_event_listener,
+	remove_event_listener,
+	get_parent_node
+} from '../operations.js';
+import { current_renderer } from '../../custom-renderer/state.js';
 
 /**
  * Used on elements, as a map of event type -> event handler,
@@ -30,10 +38,11 @@ export const root_event_handles = new Set();
  * @param {HTMLElement} dom
  */
 export function replay_events(dom) {
+	// custom renderers safe since it immediately returns if not hydrating
 	if (!hydrating) return;
 
-	dom.removeAttribute('onload');
-	dom.removeAttribute('onerror');
+	remove_attribute(dom, 'onload');
+	remove_attribute(dom, 'onerror');
 	// @ts-expect-error
 	const event = dom.__e;
 	if (event !== undefined) {
@@ -41,7 +50,7 @@ export function replay_events(dom) {
 		dom.__e = undefined;
 		queueMicrotask(() => {
 			if (dom.isConnected) {
-				dom.dispatchEvent(event);
+				dispatch_event(dom, event);
 			}
 		});
 	}
@@ -54,10 +63,23 @@ export function replay_events(dom) {
  * @param {AddEventListenerOptions} [options]
  */
 export function create_event(event_name, dom, handler, options = {}) {
+	// Capture whether a custom renderer is active at creation time (during mount),
+	// since `renderer` will be null when the event actually fires
+	var is_custom_renderer = current_renderer != null;
+
 	/**
 	 * @this {EventTarget}
+	 * @param  {...any} args
 	 */
-	function target_handler(/** @type {Event} */ event) {
+	function target_handler(...args) {
+		if (is_custom_renderer) {
+			// Custom renderers don't use DOM event propagation/delegation,
+			// so just call the handler directly
+			return without_reactive_context(() => {
+				return handler?.apply(this, /** @type {any} */ (args));
+			});
+		}
+		var event = /** @type {Event} */ (args[0]);
 		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation.call(dom, event);
@@ -74,15 +96,14 @@ export function create_event(event_name, dom, handler, options = {}) {
 	// defer the attachment till after it's been appended to the document. TODO: remove this once Chrome fixes
 	// this bug. The same applies to wheel events and touch events.
 	if (
-		event_name.startsWith('pointer') ||
-		event_name.startsWith('touch') ||
-		event_name === 'wheel'
+		!is_custom_renderer &&
+		(event_name.startsWith('pointer') || event_name.startsWith('touch') || event_name === 'wheel')
 	) {
 		queue_micro_task(() => {
-			dom.addEventListener(event_name, target_handler, options);
+			add_event_listener(dom, event_name, target_handler, options);
 		});
 	} else {
-		dom.addEventListener(event_name, target_handler, options);
+		add_event_listener(dom, event_name, target_handler, options);
 	}
 
 	return target_handler;
@@ -102,7 +123,7 @@ export function on(element, type, handler, options = {}) {
 	var target_handler = create_event(type, element, handler, options);
 
 	return () => {
-		element.removeEventListener(type, target_handler, options);
+		remove_event_listener(element, type, target_handler, options);
 	};
 }
 
@@ -119,16 +140,18 @@ export function event(event_name, dom, handler, capture, passive) {
 	var target_handler = create_event(event_name, dom, handler, options);
 
 	if (
-		dom === document.body ||
-		// @ts-ignore
-		dom === window ||
-		// @ts-ignore
-		dom === document ||
-		// Firefox has quirky behavior, it can happen that we still get "canplay" events when the element is already removed
-		dom instanceof HTMLMediaElement
+		// if there's a renderer we will never add to body, window or document.
+		current_renderer == null &&
+		(dom === document.body ||
+			// @ts-ignore
+			dom === window ||
+			// @ts-ignore
+			dom === document ||
+			// Firefox has quirky behavior, it can happen that we still get "canplay" events when the element is already removed
+			dom instanceof HTMLMediaElement)
 	) {
 		teardown(() => {
-			dom.removeEventListener(event_name, target_handler, options);
+			remove_event_listener(dom, event_name, target_handler, options);
 		});
 	}
 }
@@ -171,6 +194,7 @@ let last_propagated_event = null;
  * @returns {void}
  */
 export function handle_event_propagation(event) {
+	// this function is custom renderers safe since it's invoked in `mount`
 	var handler_element = this;
 	var owner_document = /** @type {Node} */ (handler_element).ownerDocument;
 	var event_name = event.type;
@@ -260,7 +284,7 @@ export function handle_event_propagation(event) {
 			/** @type {null | Element} */
 			var parent_element =
 				current_target.assignedSlot ||
-				current_target.parentNode ||
+				get_parent_node(current_target) ||
 				/** @type {any} */ (current_target).host ||
 				null;
 

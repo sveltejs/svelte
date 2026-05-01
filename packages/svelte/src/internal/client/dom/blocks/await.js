@@ -15,6 +15,7 @@ import { is_runes } from '../../context.js';
 import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
 import { capture, unset_context } from '../../reactivity/async.js';
+import { get_node_value } from '../operations.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -57,7 +58,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		// @ts-ignore coercing `node` to a `Comment` causes TypeScript and Prettier to fight
-		let mismatch = hydrating && is_promise(input) === (node.data === HYDRATION_START_ELSE);
+		let mismatch =
+			hydrating && is_promise(input) === (get_node_value(node) === HYDRATION_START_ELSE);
 
 		if (mismatch) {
 			// Hydration mismatch: remove everything inside the anchor and start fresh
