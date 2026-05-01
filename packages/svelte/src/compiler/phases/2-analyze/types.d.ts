@@ -43,12 +43,8 @@ export interface AnalysisState {
 	};
 }
 
-export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<
-	AST.SvelteNode,
-	State
->;
+export type Context<State extends AnalysisState = AnalysisState> =
+	import('zimmerframe').ReadonlyContext<AST.SvelteNode, State>;
 
-export type Visitors<State extends AnalysisState = AnalysisState> = import('zimmerframe').Visitors<
-	AST.SvelteNode,
-	State
->;
+export type Visitors<State extends AnalysisState = AnalysisState> =
+	import('zimmerframe').ReadonlyVisitors<AST.SvelteNode, State>;
