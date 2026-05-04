@@ -105,6 +105,14 @@ function escape_style_value(value) {
 	for (var i = 0; i < len; i++) {
 		var c = str[i];
 
+		if (c === '\\') {
+			escaped += c;
+			if (i + 1 < len) {
+				escaped += str[++i];
+			}
+			continue;
+		}
+
 		if (in_comment) {
 			if (c === '/' && i > 0 && str[i - 1] === '*') {
 				in_comment = false;
@@ -120,7 +128,7 @@ function escape_style_value(value) {
 		} else if (c === '(') {
 			in_apo++;
 		} else if (c === ')') {
-			in_apo--;
+			if (in_apo > 0) in_apo--;
 		}
 
 		if (c === ';' && !in_comment && in_str === false && in_apo === 0) {
