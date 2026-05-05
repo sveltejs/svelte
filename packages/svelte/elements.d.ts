@@ -2077,6 +2077,5 @@ export interface SvelteHTMLElements {
 
 export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;
 
-export type StyleDictionary = Record<string, string | number | false | null | undefined>;
-export type StyleArray = Array<StyleValue>;
-export type StyleValue = string | number | StyleDictionary | StyleArray | false | null | undefined;
+type StylePrimitive = string | number | false | null | undefined;
+export type StyleValue = StylePrimitive | StyleValue[] | { [key: string]: StyleValue };
