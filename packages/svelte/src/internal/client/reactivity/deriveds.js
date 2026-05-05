@@ -232,7 +232,7 @@ export function async_derived(fn, label, location) {
 				for (const [b, d] of deferreds) {
 					deferreds.delete(b);
 					if (b === batch) break;
-					d.reject(STALE_REACTION);
+					d.resolve(value);
 				}
 
 				if (DEV && location !== undefined) {
