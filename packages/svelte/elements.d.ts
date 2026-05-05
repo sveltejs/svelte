@@ -2078,4 +2078,4 @@ export interface SvelteHTMLElements {
 export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;
 
 type StylePrimitive = string | number | false | null | undefined;
-export type StyleValue = StylePrimitive | StyleValue[] | { [key: string]: StyleValue };
+export type StyleValue = StylePrimitive | StyleValue[] | { [key: string]: StylePrimitive };
