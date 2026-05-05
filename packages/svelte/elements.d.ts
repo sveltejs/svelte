@@ -776,7 +776,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	placeholder?: string | undefined | null;
 	slot?: string | undefined | null;
 	spellcheck?: Booleanish | undefined | null;
-	style?: string | undefined | null;
+	style?: StyleValue | undefined | null;
 	tabindex?: number | undefined | null;
 	title?: string | undefined | null;
 	translate?: 'yes' | 'no' | '' | undefined | null;
