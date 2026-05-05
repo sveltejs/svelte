@@ -642,9 +642,8 @@ export class Batch {
 	/**
 	 * @param {boolean} blocking
 	 * @param {Effect} effect
-	 * @param {boolean} skip - whether to skip updates (because this is triggered by a stale reaction)
 	 */
-	decrement(blocking, effect, skip) {
+	decrement(blocking, effect) {
 		let pending_count = this.#pending.get(effect) ?? 0;
 
 		if (pending_count === 1) {
@@ -663,7 +662,7 @@ export class Batch {
 			}
 		}
 
-		if (this.#decrement_queued || skip) return;
+		if (this.#decrement_queued) return;
 		this.#decrement_queued = true;
 
 		queue_micro_task(() => {

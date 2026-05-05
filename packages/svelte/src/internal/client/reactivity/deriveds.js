@@ -100,6 +100,8 @@ export function derived(fn) {
 	return signal;
 }
 
+const OBSOLETE = {};
+
 /**
  * @template V
  * @param {() => V | Promise<V>} fn
@@ -180,13 +182,13 @@ export function async_derived(fn, label, location) {
 			}
 
 			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
-				deferreds.get(batch)?.reject(STALE_REACTION);
+				deferreds.get(batch)?.reject(OBSOLETE);
 				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
 				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
 				for (const d of deferreds.values()) {
-					d.reject(STALE_REACTION);
+					d.reject(OBSOLETE);
 				}
 				deferreds.clear();
 			}
@@ -203,15 +205,14 @@ export function async_derived(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
-			if (decrement_pending) {
-				// don't trigger an update if we're only here because
-				// the promise was superseded before it could resolve
-				var skip = error === STALE_REACTION;
-				decrement_pending(skip);
+			// if the promise was rejected by the user, via `getAbortSignal`, then
+			// wait for a subsequent resolution instead of flushing the batch
+			if (error === STALE_REACTION) {
+				return;
 			}
 
-			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
-				return;
+			if (decrement_pending) {
+				decrement_pending();
 			}
 
 			batch.activate();
@@ -255,7 +256,7 @@ export function async_derived(fn, label, location) {
 
 	teardown(() => {
 		for (const d of deferreds.values()) {
-			d.reject(STALE_REACTION);
+			d.reject(OBSOLETE);
 		}
 	});
 

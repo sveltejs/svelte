@@ -334,8 +334,8 @@ export function increment_pending() {
 	boundary.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
-	return (skip = false) => {
+	return () => {
 		boundary.update_pending_count(-1, batch);
-		batch.decrement(blocking, effect, skip);
+		batch.decrement(blocking, effect);
 	};
 }
