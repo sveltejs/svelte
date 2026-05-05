@@ -672,19 +672,36 @@ export class Batch {
 
 			// If this is the last value that was resolved we still might want to flush the batch to bring it to completion,
 			// else it might become a zombie batch that is never removed from the `batches` Set
-			const current = new Map(this.current);
+			const current = new Map([...this.current].filter(([_, [, is_derived]]) => !is_derived));
+			let latest_overlap;
 			for (const batch of batches) {
 				if (batch.id <= this.id) continue;
 				for (const source of batch.current.keys()) {
+					if (current.has(source)) latest_overlap = batch;
 					current.delete(source);
 				}
 			}
-			// If the subsequent batches combined superseed this one, we can discard it.
-			// Otherwise we'll need to flush it to update the UI with the distinct changes.
+
 			if (current.size === 0) {
+				// If the subsequent batches combined superseed this one, we can discard it.
 				this.discard();
 				return;
+			} else if (latest_overlap) {
+				// Else we find the latest subsequent batch that overlaps with this one and make this one block on it,
+				// so that the changes resolve together with the rest of the changes in that batch. This guarantees
+				// glitch-free UI without tearing.
+				this.#blockers.add(latest_overlap); // TODO strictly speaking we should resolve this batch before the other one but in practise it hopefully doesn't matter
+				for (const batch of batches) {
+					batch.#blockers.delete(this);
+					if (batch.#blockers.size === 0 && !batch.#is_deferred()) {
+						batch.activate();
+						batch.#process();
+					}
+				}
+				return;
 			}
+
+			// If neither of the above is the case we need to flush now
 		}
 
 		this.#decrement_queued = true;
