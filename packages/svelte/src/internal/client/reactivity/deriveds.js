@@ -231,9 +231,8 @@ export function async_derived(fn, label, location) {
 
 				// All prior async derived runs are now stale
 				for (const [b, d] of deferreds) {
-					deferreds.delete(b);
-					if (b === batch) break;
-					d.resolve(value);
+					if (b.id <= batch.id) deferreds.delete(b);
+					if (b.id < batch.id) d.resolve(value);
 				}
 
 				if (DEV && location !== undefined) {
