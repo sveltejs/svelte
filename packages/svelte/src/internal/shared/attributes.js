@@ -117,7 +117,7 @@ function append_styles(styles, important = false) {
  * @returns {string}
  */
 function style_value_to_string(value) {
-	if (value == null || value === false || value === '') return '';
+	if (value == null || value === false) return '';
 	if (typeof value === 'string') return value;
 	if (Array.isArray(value)) {
 		var array_result = '';
