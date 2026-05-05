@@ -37,8 +37,6 @@ export default test({
 		component.style = '';
 		flushSync();
 
-		// empty results drop the attribute on both client and SSR (was previously
-		// `<div style=""></div>` on the client only — a hydration mismatch)
 		assert.htmlEqual(
 			target.innerHTML,
 			`
