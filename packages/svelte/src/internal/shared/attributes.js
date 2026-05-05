@@ -109,6 +109,39 @@ function append_styles(styles, important = false) {
 }
 
 /**
+ * Convert a style attribute value (string | object | array | falsy) into a CSS
+ * declaration string. Mirrors clsx's behaviour for `class`: arrays are flattened,
+ * falsy entries are dropped, object keys are emitted verbatim (no camelCase ↔
+ * kebab-case transform), and pre-formatted strings pass through unchanged.
+ * @param {any} value
+ * @returns {string}
+ */
+function style_value_to_string(value) {
+	if (value == null || value === false || value === '') return '';
+	if (typeof value === 'string') return value;
+	if (Array.isArray(value)) {
+		var array_result = '';
+		for (var i = 0; i < value.length; i++) {
+			// Strip trailing `;` so concatenating user-authored strings (which often end
+			// with one) doesn't produce `;;` which can confuse strict CSS parsers.
+			var part = style_value_to_string(value[i]).replace(/\s*;\s*$/, '');
+			if (part) array_result += (array_result ? '; ' : '') + part;
+		}
+		return array_result;
+	}
+	if (typeof value === 'object') {
+		var object_result = '';
+		for (var key of Object.keys(value)) {
+			var v = value[key];
+			if (v == null || v === false || v === '') continue;
+			object_result += (object_result ? '; ' : '') + key + ': ' + v;
+		}
+		return object_result;
+	}
+	return String(value);
+}
+
+/**
  * @param {string} name
  * @returns {string}
  */
@@ -125,6 +158,13 @@ function to_css_name(name) {
  * @returns {string | null}
  */
 export function to_style(value, styles) {
+	// `class` accepts strings, objects and arrays via clsx; mirror that for `style`
+	// by normalising non-string values into a CSS declaration string upfront so the
+	// existing parser (which expects a string) handles directive merging unchanged.
+	if (value != null && typeof value !== 'string') {
+		value = style_value_to_string(value);
+	}
+
 	if (styles) {
 		var new_style = '';
 

@@ -1547,7 +1547,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	method?: 'align' | 'stretch' | undefined | null;
 	min?: number | string | undefined | null;
 	name?: string | undefined | null;
-	style?: string | undefined | null;
+	style?: StyleValue | undefined | null;
 	target?: string | undefined | null;
 	type?: string | undefined | null;
 	width?: number | string | undefined | null;
@@ -2076,3 +2076,7 @@ export interface SvelteHTMLElements {
 }
 
 export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;
+
+export type StyleDictionary = Record<string, string | number | false | null | undefined>;
+export type StyleArray = Array<StyleValue>;
+export type StyleValue = string | number | StyleDictionary | StyleArray | false | null | undefined;
