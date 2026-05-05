@@ -260,6 +260,10 @@ export class Batch {
 			infinite_loop_guard();
 		}
 
+		if (!batches.has(this)) {
+			return;
+		}
+
 		// we only reschedule previously-deferred effects if we expect
 		// to be able to run them after processing the batch
 		if (!this.#is_deferred()) {
@@ -357,12 +361,11 @@ export class Batch {
 		// once more in that case - most of the time this will just clean up dirty branches.
 		if (this.#roots.length > 0) {
 			const batch = (next_batch ??= this);
+			batches.add(batch);
 			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
 		}
 
 		if (next_batch !== null) {
-			batches.add(next_batch);
-
 			if (DEV) {
 				for (const source of this.current.keys()) {
 					/** @type {Set<Source>} */ (source_stacks).add(source);
@@ -515,6 +518,8 @@ export class Batch {
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
 		for (const batch of batches) {
+			if (batch === current_batch) continue;
+
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
@@ -715,10 +720,9 @@ export class Batch {
 	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
+			batches.add(batch);
 
 			if (!is_processing) {
-				batches.add(current_batch);
-
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
 						if (!batches.has(batch) || batch.#pending.size > 0) {

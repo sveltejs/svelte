@@ -143,7 +143,13 @@ export function async_derived(fn, label, location) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
+			Promise.resolve(fn())
+				.then(d.resolve, (e) => {
+					// if the promise was rejected by the user, via `getAbortSignal`, then
+					// wait for a subsequent resolution instead of flushing the batch
+					if (e !== STALE_REACTION) d.reject(e);
+				})
+				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
 			unset_context();
@@ -205,15 +211,7 @@ export function async_derived(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
-			// if the promise was rejected by the user, via `getAbortSignal`, then
-			// wait for a subsequent resolution instead of flushing the batch
-			if (error === STALE_REACTION) {
-				return;
-			}
-
-			if (decrement_pending) {
-				decrement_pending();
-			}
+			decrement_pending?.();
 
 			batch.activate();
 
