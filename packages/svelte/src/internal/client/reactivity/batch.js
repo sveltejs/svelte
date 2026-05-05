@@ -359,6 +359,7 @@ export class Batch {
 		// once more in that case - most of the time this will just clean up dirty branches.
 		if (this.#roots.length > 0) {
 			const batch = (next_batch ??= this);
+			batches.add(batch);
 			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
 		}
 
