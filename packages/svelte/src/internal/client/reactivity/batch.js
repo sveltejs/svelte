@@ -255,6 +255,10 @@ export class Batch {
 	}
 
 	#process() {
+		if (DEV) {
+			invariant(batches.has(this), 'processing a discarded/resolved batch');
+		}
+
 		if (flush_count++ > 1000) {
 			batches.delete(this);
 			infinite_loop_guard();
@@ -668,7 +672,10 @@ export class Batch {
 
 		queue_micro_task(() => {
 			this.#decrement_queued = false;
-			this.flush();
+
+			if (batches.has(this)) {
+				this.flush();
+			}
 		});
 	}
 
