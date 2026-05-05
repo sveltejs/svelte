@@ -263,5 +263,5 @@ export function to_style(value, styles) {
 
 	// Empty results drop the attribute entirely so that client and SSR agree
 	// (the directive path above already returns `null` for empty output).
-	return value == null || value === '' ? null : String(value);
+	return value == null || value === '' ? null : value;
 }
