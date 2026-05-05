@@ -718,7 +718,7 @@ export class Renderer {
 
 						let promise = transformError(error);
 						set_ssr_context(null);
-						
+
 						let transformed = await promise;
 						set_ssr_context(context);
 
