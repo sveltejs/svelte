@@ -188,7 +188,7 @@ export class Batch {
 
 	#decrement_queued = false;
 
-	/** @type {Set<Batch>} */
+	/** @type {Set<Batch>} Batches that need to resolve before this one can */
 	#blockers = new Set();
 
 	#is_deferred() {
@@ -255,6 +255,8 @@ export class Batch {
 	}
 
 	#process() {
+		if (!batches.has(this)) return;
+
 		if (flush_count++ > 1000) {
 			batches.delete(this);
 			infinite_loop_guard();
@@ -361,8 +363,6 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
-			batches.add(next_batch);
-
 			if (DEV) {
 				for (const source of this.current.keys()) {
 					/** @type {Set<Source>} */ (source_stacks).add(source);
@@ -517,6 +517,8 @@ export class Batch {
 		for (const batch of batches) {
 			var is_earlier = batch.id < this.id;
 
+			if (batch === current_batch) continue; // this batch was just created while flushing the current one, don't rebase it
+
 			/** @type {Source[]} */
 			var sources = [];
 
@@ -663,7 +665,27 @@ export class Batch {
 			}
 		}
 
-		if (this.#decrement_queued || skip) return;
+		if (this.#decrement_queued) return;
+		if (skip) {
+			if (this.#pending.size > 0) return;
+
+			// If this is the last value that was resolved we still might want to flush the batch to bring it to completion,
+			// else it might become a zombie batch that is never removed from the `batches` Set
+			const current = new Map(this.current);
+			for (const batch of batches) {
+				if (batch.id <= this.id) continue;
+				for (const source of batch.current.keys()) {
+					current.delete(source);
+				}
+			}
+			// If the subsequent batches combined superseed this one, we can discard it.
+			// Otherwise we'll need to flush it to update the UI with the distinct changes.
+			if (current.size === 0) {
+				this.discard();
+				return;
+			}
+		}
+
 		this.#decrement_queued = true;
 
 		queue_micro_task(() => {
@@ -716,10 +738,9 @@ export class Batch {
 	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
+			batches.add(current_batch);
 
 			if (!is_processing) {
-				batches.add(current_batch);
-
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
 						if (!batches.has(batch) || batch.#pending.size > 0) {
@@ -761,6 +782,7 @@ export class Batch {
 				for (const [source, [, is_derived]] of batch.current) {
 					// Derived values don't partake in the blocking mechanism, because a derived could
 					// be triggered in one batch already but not the other one yet, causing a false-positive
+					// TODO do we need ignore async_deriveds for that reason, too?
 					if (is_derived) continue;
 
 					intersects ||= this.current.has(source);

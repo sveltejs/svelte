@@ -203,14 +203,15 @@ export function async_derived(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
+			var skip = error === STALE_REACTION;
+
 			if (decrement_pending) {
 				// don't trigger an update if we're only here because
 				// the promise was superseded before it could resolve
-				var skip = error === STALE_REACTION;
 				decrement_pending(skip);
 			}
 
-			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
+			if (skip || (effect.f & DESTROYED) !== 0) {
 				return;
 			}
 
@@ -230,9 +231,8 @@ export function async_derived(fn, label, location) {
 
 				// All prior async derived runs are now stale
 				for (const [b, d] of deferreds) {
-					deferreds.delete(b);
-					if (b === batch) break;
-					d.resolve(value);
+					if (b.id <= batch.id) deferreds.delete(b);
+					if (b.id < batch.id) d.reject(STALE_REACTION);
 				}
 
 				if (DEV && location !== undefined) {
