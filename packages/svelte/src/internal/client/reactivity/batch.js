@@ -130,10 +130,9 @@ export class Batch {
 	#fork_commit_callbacks = new Set();
 
 	/**
-	 * Async effects that are currently in flight
-	 * @type {Map<Effect, number>}
+	 * The number of async effects that are currently in flight
 	 */
-	#pending = new Map();
+	#pending = 0;
 
 	/**
 	 * Async effects that are currently in flight, _not_ inside a pending boundary
@@ -327,7 +326,7 @@ export class Batch {
 				reset_branch(e, t);
 			}
 		} else {
-			if (this.#pending.size === 0) {
+			if (this.#pending === 0) {
 				batches.delete(this);
 			}
 
@@ -637,8 +636,7 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	increment(blocking, effect) {
-		let pending_count = this.#pending.get(effect) ?? 0;
-		this.#pending.set(effect, pending_count + 1);
+		this.#pending += 1;
 
 		if (blocking) {
 			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
@@ -652,13 +650,7 @@ export class Batch {
 	 * @param {boolean} skip - whether to skip updates (because this is triggered by a stale reaction)
 	 */
 	decrement(blocking, effect, skip) {
-		let pending_count = this.#pending.get(effect) ?? 0;
-
-		if (pending_count === 1) {
-			this.#pending.delete(effect);
-		} else {
-			this.#pending.set(effect, pending_count - 1);
-		}
+		this.#pending -= 1;
 
 		if (blocking) {
 			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
