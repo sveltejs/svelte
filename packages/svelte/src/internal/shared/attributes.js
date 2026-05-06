@@ -158,9 +158,6 @@ function to_css_name(name) {
  * @returns {string | null}
  */
 export function to_style(value, styles) {
-	// `class` accepts strings, objects and arrays via clsx; mirror that for `style`
-	// by normalising non-string values into a CSS declaration string upfront so the
-	// existing parser (which expects a string) handles directive merging unchanged.
 	if (value != null && typeof value !== 'string') {
 		value = style_value_to_string(value);
 	}
