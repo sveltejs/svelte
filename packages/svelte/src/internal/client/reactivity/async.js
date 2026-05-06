@@ -31,9 +31,8 @@ import { aborted } from './effects.js';
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {(values: Value[]) => any} fn
- * @param {() => void} [on_abort]
  */
-export function flatten(blockers, sync, async, fn, on_abort) {
+export function flatten(blockers, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
 	// Filter out already-settled blockers - no need to wait for them
@@ -64,8 +63,6 @@ export function flatten(blockers, sync, async, fn, on_abort) {
 			} catch (error) {
 				invoke_error_boundary(error, parent);
 			}
-		} else {
-			on_abort?.();
 		}
 
 		unset_context();
