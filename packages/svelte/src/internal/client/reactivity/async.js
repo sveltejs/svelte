@@ -83,7 +83,7 @@ export function flatten(blockers, sync, async, fn) {
 		Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => finish([...sync.map(d), ...result]))
 			.catch((error) => invoke_error_boundary(error, parent))
-			.finally(() => decrement_pending());
+			.finally(decrement_pending);
 	}
 
 	if (blocker_promise) {
@@ -325,7 +325,7 @@ export function run(thunks) {
 		// wait one more tick, so that template effects are
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
-		.finally(() => decrement_pending());
+		.finally(decrement_pending);
 
 	return blockers;
 }
