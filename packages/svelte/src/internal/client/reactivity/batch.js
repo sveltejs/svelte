@@ -92,6 +92,9 @@ let uid = 1;
 export class Batch {
 	id = uid++;
 
+	/** True as soon as `#process()` was called */
+	#started = false;
+
 	/**
 	 * The current values of any signals that are updated in this batch.
 	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
@@ -264,6 +267,8 @@ export class Batch {
 	}
 
 	#process() {
+		this.#started = true;
+
 		if (flush_count++ > 1000) {
 			batches.delete(this);
 			infinite_loop_guard();
@@ -351,6 +356,8 @@ export class Batch {
 			this.#deferred?.resolve();
 		}
 
+		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
+
 		// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
 		// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
 		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
@@ -358,8 +365,6 @@ export class Batch {
 		if (async_mode_flag && !batches.has(this)) {
 			this.#commit();
 		}
-
-		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
 		// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
@@ -545,6 +550,8 @@ export class Batch {
 
 				sources.push(source);
 			}
+
+			if (!batch.#started) continue;
 
 			// Re-run async/block effects that depend on distinct values changed in both batches
 			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
@@ -733,7 +740,7 @@ export class Batch {
 
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
-						if (!batches.has(batch) || batch.#pending.size > 0) {
+						if (batch.#started) {
 							// a flushSync happened in the meantime
 							return;
 						}
