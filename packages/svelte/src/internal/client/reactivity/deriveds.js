@@ -213,6 +213,10 @@ export function async_derived(fn, label, location) {
 
 			decrement_pending?.();
 
+			if (error === OBSOLETE) {
+				return;
+			}
+
 			batch.activate();
 
 			if (error) {
