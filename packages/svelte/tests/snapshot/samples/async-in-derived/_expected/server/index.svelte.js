@@ -42,6 +42,17 @@ export default function Async_in_derived($$renderer, $$props) {
 			$$renderer.push('<!--[-1-->');
 		}
 
+		$$renderer.push(`<!--]--> `);
+
+		if (true) {
+			$$renderer.push('<!--[0-->');
+
+			let x;
+			var promises_1 = $$renderer.run([() => $$promises[2], () => x = no2()]);
+		} else {
+			$$renderer.push('<!--[-1-->');
+		}
+
 		$$renderer.push(`<!--]-->`);
 	});
 }

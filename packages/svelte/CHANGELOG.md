@@ -1,5 +1,23 @@
 # svelte
 
+## 5.55.5
+
+### Patch Changes
+
+- fix: don't mark deriveds while an effect is updating ([#18124](https://github.com/sveltejs/svelte/pull/18124))
+
+- fix: do not dispatch introstart event with animation of animate directive ([#18122](https://github.com/sveltejs/svelte/pull/18122))
+
+## 5.55.4
+
+### Patch Changes
+
+- fix: never mark a child effect root as inert ([#18111](https://github.com/sveltejs/svelte/pull/18111))
+
+- fix: reset context after waiting on blockers of `@const` expressions ([#18100](https://github.com/sveltejs/svelte/pull/18100))
+
+- fix: keep flushing new eager effects ([#18102](https://github.com/sveltejs/svelte/pull/18102))
+
 ## 5.55.3
 
 ### Patch Changes

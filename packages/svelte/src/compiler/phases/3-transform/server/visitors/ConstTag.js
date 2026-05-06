@@ -28,22 +28,15 @@ export function ConstTag(node, context) {
 			context.state.init.push(b.let(identifier.name));
 		}
 
-		/** @type {Statement | undefined} */
-		let promise_stmt;
-
 		if (blockers.length === 1) {
-			promise_stmt = b.stmt(b.await(/** @type {Expression} */ (blockers[0])));
+			run.thunks.push(b.thunk(/** @type {Expression} */ (blockers[0])));
 		} else if (blockers.length > 0) {
-			promise_stmt = b.stmt(b.await(b.call('Promise.all', b.array(blockers))));
+			run.thunks.push(b.thunk(b.call('Promise.all', b.array(blockers))));
 		}
 
 		// keep the number of thunks pushed in sync with ConstTag in analysis phase
 		const assignment = b.assignment('=', id, init);
-		if (promise_stmt) {
-			run.thunks.push(b.thunk(b.block([promise_stmt, b.stmt(assignment)]), true));
-		} else {
-			run.thunks.push(b.thunk(assignment, node.metadata.expression.has_await));
-		}
+		run.thunks.push(b.thunk(assignment, node.metadata.expression.has_await));
 	} else {
 		context.state.init.push(b.const(id, init));
 	}
