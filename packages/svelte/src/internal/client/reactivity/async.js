@@ -243,7 +243,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 		// If the iterator had an abrupt completion (break) and `return` is defined on the iterator, call it and return the value
 		if (invoke_return && iterator.return !== undefined) {
 			// eslint-disable-next-line no-unsafe-finally
-			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))());
+			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))().value);
 		}
 	}
 }
