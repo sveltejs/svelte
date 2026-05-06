@@ -76,7 +76,8 @@ export function flatten(blockers, sync, async, fn) {
 	if (async.length === 0) {
 		/** @type {Promise<any>} */ (blocker_promise)
 			.then(() => finish(sync.map(d)))
-			.finally(() => decrement_pending());
+			.finally(decrement_pending);
+
 		return;
 	}
 
