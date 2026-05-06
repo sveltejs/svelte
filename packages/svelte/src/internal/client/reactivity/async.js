@@ -55,14 +55,16 @@ export function flatten(blockers, sync, async, fn) {
 
 	/** @param {Value[]} values */
 	function finish(values) {
+		if ((parent.f & DESTROYED) !== 0) {
+			return;
+		}
+
 		restore();
 
-		if ((parent.f & DESTROYED) === 0) {
-			try {
-				fn(values);
-			} catch (error) {
-				invoke_error_boundary(error, parent);
-			}
+		try {
+			fn(values);
+		} catch (error) {
+			invoke_error_boundary(error, parent);
 		}
 
 		unset_context();
