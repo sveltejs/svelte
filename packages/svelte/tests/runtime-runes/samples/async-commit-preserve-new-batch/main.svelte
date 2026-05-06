@@ -3,11 +3,6 @@
 	let payload = $state(false);
 	let updated = $state(false);
 
-	function push(value) {
-		const deferred = Promise.withResolvers();
-		return deferred.promise;
-	}
-
 	$effect(() => {
 		if (payload) {
 			updated = true;
@@ -27,7 +22,7 @@
 <p>{updated}</p>
 
 <svelte:boundary>
-	{await push(count)}
+	{await new Promise(() => {})}
 
 	{#snippet pending()}
 		<p>pending</p>
