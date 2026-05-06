@@ -215,9 +215,10 @@ export async function* for_await_track_reactivity_loss(iterable) {
 
 	/** Whether the completion of the iterator was "normal", meaning it wasn't ended via `break` or a similar method */
 	let normal_completion = false;
-	const no_error = {}; // because a madman might throw `null` or `undefined`
+
 	/** @type {any} */
-	let thrown_error = no_error;
+	let threw = false;
+
 	try {
 		while (true) {
 			const { done, value } = (await track_reactivity_loss(iterator.next()))();
@@ -230,30 +231,19 @@ export async function* for_await_track_reactivity_loss(iterable) {
 			set_reactivity_loss_tracker(prev);
 		}
 	} catch (error) {
-		thrown_error = error;
+		threw = true;
+		throw error;
 	} finally {
 		// If the iterator had an abrupt completion and `return` is defined on the iterator, call it and return the value
 		if (!normal_completion && iterator.return !== undefined) {
-			try {
-				// Spec says a non-normal completion is break, return, or throw, in which case iterator.return() should be called...
-				const result = (await track_reactivity_loss(iterator.return()))();
+			// Spec says a non-normal completion is break, return, or throw, in which case iterator.return() should be called...
+			const result = (await track_reactivity_loss(iterator.return()))();
 
-				// ... but only in case of break or return the result is returned, otherwise error takes precedence and is (re)thrown
-				if (thrown_error === no_error) {
-					// eslint-disable-next-line no-unsafe-finally
-					return /** @type {TReturn} */ (result.value);
-				}
-			} catch (error) {
-				if (thrown_error === no_error) {
-					// eslint-disable-next-line no-unsafe-finally
-					throw error;
-				}
+			// ... but only in case of break or return the result is returned, otherwise error takes precedence
+			if (!threw) {
+				// eslint-disable-next-line no-unsafe-finally
+				return /** @type {TReturn} */ (result.value);
 			}
-		}
-
-		if (thrown_error !== no_error) {
-			// eslint-disable-next-line no-unsafe-finally
-			throw thrown_error;
 		}
 	}
 }
