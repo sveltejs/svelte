@@ -70,13 +70,15 @@ export function flatten(blockers, sync, async, fn) {
 		unset_context();
 	}
 
+	var decrement_pending = increment_pending();
+
 	// Fast path: blockers but no async expressions
 	if (async.length === 0) {
-		/** @type {Promise<any>} */ (blocker_promise).then(() => finish(sync.map(d)));
+		/** @type {Promise<any>} */ (blocker_promise)
+			.then(() => finish(sync.map(d)))
+			.finally(() => decrement_pending());
 		return;
 	}
-
-	var decrement_pending = increment_pending();
 
 	// Full path: has async expressions
 	function run() {
