@@ -213,37 +213,35 @@ export async function* for_await_track_reactivity_loss(iterable) {
 		throw new TypeError('value is not async iterable');
 	}
 
-	/** Whether the completion of the iterator was "normal", meaning it wasn't ended via `break` or a similar method */
-	let normal_completion = false;
-
-	/** @type {any} */
-	let threw = false;
+	let invoke_return = true;
 
 	try {
 		while (true) {
 			const { done, value } = (await track_reactivity_loss(iterator.next()))();
 			if (done) {
-				normal_completion = true;
+				invoke_return = false;
 				break;
 			}
 			var prev = reactivity_loss_tracker;
-			yield value;
+			try {
+				yield value;
+			} catch (e) {
+				set_reactivity_loss_tracker(prev);
+				// If the yield throws, we need to call `return` but not return its value, instead rethrow
+				if (iterator.return !== undefined) {
+					(await track_reactivity_loss(iterator.return()))();
+				}
+				throw e;
+			}
 			set_reactivity_loss_tracker(prev);
 		}
 	} catch (error) {
-		threw = true;
+		invoke_return = false;
 		throw error;
 	} finally {
-		// If the iterator had an abrupt completion and `return` is defined on the iterator, call it and return the value
-		if (!normal_completion && iterator.return !== undefined) {
-			// Spec says a non-normal completion is break, return, or throw, in which case iterator.return() should be called...
-			const result = (await track_reactivity_loss(iterator.return()))();
-
-			// ... but only in case of break or return the result is returned, otherwise error takes precedence
-			if (!threw) {
-				// eslint-disable-next-line no-unsafe-finally
-				return /** @type {TReturn} */ (result.value);
-			}
+		// If the iterator had an abrupt completion (break) and `return` is defined on the iterator, call it and return the value
+		if (invoke_return && iterator.return !== undefined) {
+			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))());
 		}
 	}
 }

@@ -12,7 +12,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			'<h1>number -> number -> number -> body failed -> ended</h1>'
+			'<h1>number -> number -> number -> return -> body failed -> ended</h1>'
 		);
 
 		assert.deepEqual(normalise_trace_logs(warnings), [

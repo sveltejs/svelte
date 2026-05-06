@@ -4,18 +4,27 @@
 	async function get_result() {
 		const logs = [];
 
-		async function* iterator() {
-			yield values[0];
-			yield values[1];
-			yield values[2];
-			throw new Error('body failed');
-		}
+		const iterator = {
+			index: 0,
+			async next() {
+				if (this.index > 2) { done: true }
+				return { done: false, value: values[this.index++] };
+			},
+			async return() {
+				logs.push('return');
+			},
+			[Symbol.asyncIterator]() {
+				return this;
+			}
+		};
 
 		try {
-			for await (const value of iterator()) {
+			for await (const value of iterator) {
 				logs.push('number');
 				// Read reactive state after async iterator await.
-				values.length === value;
+				if (values.length === 3 && value === 2) {
+					throw new Error('body failed');
+				}
 			}
 			logs.push('done');
 		} catch (error) {
