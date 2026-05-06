@@ -720,7 +720,7 @@ export class Batch {
 			const batch = (current_batch = new Batch());
 
 			if (!is_processing) {
-				batches.add(batch);
+				batches.add(current_batch);
 
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
