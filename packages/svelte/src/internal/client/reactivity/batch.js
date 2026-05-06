@@ -108,6 +108,13 @@ export class Batch {
 	previous = new Map();
 
 	/**
+	 * Async effects which this batch doesn't take into account anymore when calculating blockers,
+	 * as it has a value for it already.
+	 * @type {Set<Effect>}
+	 */
+	unblocked = new Set();
+
+	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Set<(batch: Batch) => void>}
@@ -198,6 +205,8 @@ export class Batch {
 	#is_blocked() {
 		for (const batch of this.#blockers) {
 			for (const effect of batch.#blocking_pending.keys()) {
+				if (this.unblocked.has(effect)) continue;
+
 				var skipped = false;
 				var e = effect;
 
