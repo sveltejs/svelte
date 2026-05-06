@@ -213,6 +213,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 		throw new TypeError('value is not async iterable');
 	}
 
+	// eslint-disable-next-line no-useless-assignment
 	let invoke_return = true;
 
 	try {
@@ -241,6 +242,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 	} finally {
 		// If the iterator had an abrupt completion (break) and `return` is defined on the iterator, call it and return the value
 		if (invoke_return && iterator.return !== undefined) {
+			// eslint-disable-next-line no-unsafe-finally
 			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))());
 		}
 	}
