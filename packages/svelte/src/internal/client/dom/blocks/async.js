@@ -1,5 +1,5 @@
 /** @import { Blocker, TemplateNode, Value } from '#client' */
-import { flatten, increment_pending } from '../../reactivity/async.js';
+import { flatten } from '../../reactivity/async.js';
 import { get } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -42,36 +42,26 @@ export function async(node, blockers = [], expressions = [], fn) {
 		return;
 	}
 
-	const decrement_pending = increment_pending();
-
 	if (was_hydrating) {
 		var previous_hydrate_node = hydrate_node;
 		set_hydrate_node(end);
 	}
 
-	flatten(
-		blockers,
-		[],
-		expressions,
-		(values) => {
+	flatten(blockers, [], expressions, (values) => {
+		if (was_hydrating) {
+			set_hydrating(true);
+			set_hydrate_node(previous_hydrate_node);
+		}
+
+		try {
+			// get values eagerly to avoid creating blocks if they reject
+			for (const d of values) get(d);
+
+			fn(node, ...values);
+		} finally {
 			if (was_hydrating) {
-				set_hydrating(true);
-				set_hydrate_node(previous_hydrate_node);
+				set_hydrating(false);
 			}
-
-			try {
-				// get values eagerly to avoid creating blocks if they reject
-				for (const d of values) get(d);
-
-				fn(node, ...values);
-			} finally {
-				if (was_hydrating) {
-					set_hydrating(false);
-				}
-
-				decrement_pending();
-			}
-		},
-		() => decrement_pending()
-	);
+		}
+	});
 }

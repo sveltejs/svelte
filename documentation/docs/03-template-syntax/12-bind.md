@@ -241,7 +241,7 @@ When the value of an `<option>` matches its text content, the attribute can be o
 </select>
 ```
 
-You can give the `<select>` a default value by adding a `selected` attribute to the`<option>` (or options, in the case of `<select multiple>`) that should be initially selected. If the `<select>` is part of a form, it will revert to that selection when the form is reset. Note that for the initial render the value of the binding takes precedence if it's not `undefined`.
+You can give the `<select>` a default value by adding a `selected` attribute to the `<option>` (or options, in the case of `<select multiple>`) that should be initially selected. If the `<select>` is part of a form, it will revert to that selection when the form is reset. Note that for the initial render the value of the binding takes precedence if it's not `undefined`.
 
 ```svelte
 <select bind:value={selected}>
