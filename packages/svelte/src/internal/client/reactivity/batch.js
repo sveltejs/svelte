@@ -92,6 +92,9 @@ let uid = 1;
 export class Batch {
 	id = uid++;
 
+	/** True as soon as `#process()` was called */
+	#started = false;
+
 	/**
 	 * The current values of any signals that are updated in this batch.
 	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
@@ -255,6 +258,8 @@ export class Batch {
 	}
 
 	#process() {
+		this.#started = true;
+
 		if (flush_count++ > 1000) {
 			batches.delete(this);
 			infinite_loop_guard();
@@ -537,6 +542,8 @@ export class Batch {
 				sources.push(source);
 			}
 
+			if (!batch.#started) continue;
+
 			// Re-run async/block effects that depend on distinct values changed in both batches
 			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 
@@ -722,7 +729,7 @@ export class Batch {
 
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
-						if (!batches.has(batch) || batch.#pending.size > 0) {
+						if (batch.#started) {
 							// a flushSync happened in the meantime
 							return;
 						}
