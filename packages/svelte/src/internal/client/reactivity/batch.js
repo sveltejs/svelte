@@ -569,7 +569,7 @@ export class Batch {
 				for (const effect of this.#new_effects) {
 					if (
 						!batch.#seen_effects.has(effect) &&
-						(effect.f & (INERT | EAGER_EFFECT)) === 0 &&
+						(effect.f & (DESTROYED | INERT)) === 0 &&
 						depends_on(effect, current_unequal, checked)
 					) {
 						if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
