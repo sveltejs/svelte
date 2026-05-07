@@ -70,20 +70,23 @@ export function flatten(blockers, sync, async, fn) {
 		unset_context();
 	}
 
+	var decrement_pending = increment_pending();
+
 	// Fast path: blockers but no async expressions
 	if (async.length === 0) {
-		/** @type {Promise<any>} */ (blocker_promise).then(() => finish(sync.map(d)));
+		/** @type {Promise<any>} */ (blocker_promise)
+			.then(() => finish(sync.map(d)))
+			.finally(decrement_pending);
+
 		return;
 	}
-
-	var decrement_pending = increment_pending();
 
 	// Full path: has async expressions
 	function run() {
 		Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => finish([...sync.map(d), ...result]))
 			.catch((error) => invoke_error_boundary(error, parent))
-			.finally(() => decrement_pending());
+			.finally(decrement_pending);
 	}
 
 	if (blocker_promise) {
@@ -325,7 +328,7 @@ export function run(thunks) {
 		// wait one more tick, so that template effects are
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
-		.finally(() => decrement_pending());
+		.finally(decrement_pending);
 
 	return blockers;
 }
@@ -349,8 +352,8 @@ export function increment_pending() {
 	boundary.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
-	return (skip = false) => {
+	return () => {
 		boundary.update_pending_count(-1, batch);
-		batch.decrement(blocking, effect, skip);
+		batch.decrement(blocking, effect);
 	};
 }

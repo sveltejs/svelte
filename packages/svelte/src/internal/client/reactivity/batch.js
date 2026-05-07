@@ -111,6 +111,13 @@ export class Batch {
 	previous = new Map();
 
 	/**
+	 * Async effects which this batch doesn't take into account anymore when calculating blockers,
+	 * as it has a value for it already.
+	 * @type {Set<Effect>}
+	 */
+	unblocked = new Set();
+
+	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Set<(batch: Batch) => void>}
@@ -200,6 +207,8 @@ export class Batch {
 	#is_blocked() {
 		for (const batch of this.#blockers) {
 			for (const effect of batch.#blocking_pending.keys()) {
+				if (this.unblocked.has(effect)) continue;
+
 				var skipped = false;
 				var e = effect;
 
@@ -647,9 +656,8 @@ export class Batch {
 	/**
 	 * @param {boolean} blocking
 	 * @param {Effect} effect
-	 * @param {boolean} skip - whether to skip updates (because this is triggered by a stale reaction)
 	 */
-	decrement(blocking, effect, skip) {
+	decrement(blocking, effect) {
 		this.#pending -= 1;
 
 		if (blocking) {
@@ -662,12 +670,15 @@ export class Batch {
 			}
 		}
 
-		if (this.#decrement_queued || skip) return;
+		if (this.#decrement_queued) return;
 		this.#decrement_queued = true;
 
 		queue_micro_task(() => {
 			this.#decrement_queued = false;
-			this.flush();
+
+			if (batches.has(this)) {
+				this.flush();
+			}
 		});
 	}
 
