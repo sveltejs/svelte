@@ -47,7 +47,6 @@ import { batch_values, current_batch, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
-import { queue_micro_task } from '../dom/task.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
