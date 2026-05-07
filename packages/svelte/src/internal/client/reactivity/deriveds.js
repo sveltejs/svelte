@@ -120,7 +120,7 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label;
+	if (DEV) signal.label = label ?? fn.toString();
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
@@ -189,14 +189,12 @@ export function async_derived(fn, label, location) {
 
 			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
 				deferreds.get(batch)?.reject(OBSOLETE);
-				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
 				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
 				for (const d of deferreds.values()) {
 					d.reject(OBSOLETE);
 				}
-				deferreds.clear();
 			}
 
 			deferreds.set(batch, d);
@@ -212,10 +210,9 @@ export function async_derived(fn, label, location) {
 			}
 
 			decrement_pending?.();
+			deferreds.delete(batch);
 
-			if (error === OBSOLETE) {
-				return;
-			}
+			if (error === OBSOLETE) return;
 
 			batch.activate();
 
@@ -233,8 +230,14 @@ export function async_derived(fn, label, location) {
 
 				// All prior async derived runs are now stale
 				for (const [b, d] of deferreds) {
-					if (b.id <= batch.id) deferreds.delete(b);
-					if (b.id < batch.id) d.resolve(value);
+					if (b.id < batch.id) {
+						// Don't delete + resolve directly, instead only do that once
+						// the current batch commits. This way we avoid tearing when
+						// `b` is rendering through the early resolve while `batch` is
+						// still pending.
+						batch.unblocked.add(effect);
+						batch.oncommit(() => d.resolve(value));
+					}
 				}
 
 				if (DEV && location !== undefined) {
