@@ -43,7 +43,7 @@ import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, collected_effects, current_batch } from './batch.js';
-import { flatten, increment_pending } from './async.js';
+import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
 
@@ -396,16 +396,8 @@ export function template_effect(fn, sync = [], async = [], blockers = []) {
  * @param {Blocker[]} blockers
  */
 export function deferred_template_effect(fn, sync = [], async = [], blockers = []) {
-	if (async.length > 0 || blockers.length > 0) {
-		var decrement_pending = increment_pending();
-	}
-
 	flatten(blockers, sync, async, (values) => {
 		create_effect(EFFECT, () => fn(...values.map(get)));
-
-		if (decrement_pending) {
-			decrement_pending();
-		}
 	});
 }
 
