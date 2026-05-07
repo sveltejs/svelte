@@ -33,12 +33,11 @@ export default test({
 		assert.equal(get('nested').style.padding, '4px');
 		assert.equal(get('nested').style.margin, '2px');
 
-		// all entries falsy → attribute absent (or empty)
-		assert.notOk(get('all-falsy').getAttribute('style'));
+		// all entries falsy → attribute absent
+		assert.equal(get('all-falsy').getAttribute('style'), null);
 
-		// empty object → empty style attribute (parallels clsx({}) === '')
-		const empty_attr = get('empty-object').getAttribute('style');
-		assert.ok(empty_attr === '' || empty_attr === null);
+		// empty object → attribute absent
+		assert.equal(get('empty-object').getAttribute('style'), null);
 
 		// conditional inline object: dropped when the gate is false
 		assert.equal(get('conditional').style.padding, '4px');
@@ -92,7 +91,7 @@ export default test({
 		// $derived gated by a condition: when falsy, no attribute should be emitted
 		assert.notOk(get('derived-conditional').getAttribute('style'));
 
-		// $derived combined with style: directive — directive wins
+		// $derived combined with style: directive, directive wins
 		assert.equal(get('derived-directive').style.color, 'blue');
 		assert.equal(get('derived-directive').style.padding, '2px');
 

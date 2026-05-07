@@ -33,7 +33,7 @@
 <!-- every entry is falsy → no style attribute -->
 <div id="all-falsy" style={[false, null, undefined, '']}></div>
 
-<!-- empty object → empty style attribute (matches clsx({}) = '') -->
+<!-- empty object → no style attribute -->
 <div id="empty-object" style={{}}></div>
 
 <!-- conditional inline object: when the condition is false the whole object is dropped -->
@@ -70,7 +70,7 @@
 <!-- $derived gated by a condition: when falsy, no attribute should be emitted -->
 <div id="derived-conditional" style={derived_conditional}></div>
 
-<!-- $derived combined with style: directive — directive must win -->
+<!-- $derived combined with style: directive, directive must win -->
 <div id="derived-directive" style={derived_object} style:color="blue"></div>
 
 <!-- $derived inside spread -->
