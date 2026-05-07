@@ -109,12 +109,14 @@ export class BranchManager {
 		}
 
 		for (const [b, k] of this.#batches) {
+			if (b.id > batch.id) {
+				// keep values for newer batches
+				continue;
+			}
+
 			this.#batches.delete(b);
 
-			if (b === batch) {
-				// keep values for newer batches
-				break;
-			}
+			if (b === batch) continue;
 
 			const offscreen = this.#offscreen.get(k);
 

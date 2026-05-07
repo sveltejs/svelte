@@ -47,6 +47,7 @@ import { batch_values, current_batch, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
+import { queue_micro_task } from '../dom/task.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -125,7 +126,7 @@ export function async_derived(fn, label, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
+	/** @type {Map<Batch, ReturnType<typeof deferred<V>> & {temp?: true}>} */
 	var deferreds = new Map();
 
 	async_effect(() => {
@@ -135,7 +136,7 @@ export function async_derived(fn, label, location) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
 		}
 
-		/** @type {ReturnType<typeof deferred<V>>} */
+		/** @type {ReturnType<typeof deferred<V>> & {temp?: true}} */
 		var d = deferred();
 		promise = d.promise;
 
@@ -226,17 +227,28 @@ export function async_derived(fn, label, location) {
 					signal.f ^= ERROR_VALUE;
 				}
 
+				const v = signal.v;
 				internal_set(signal, value);
+				if (d.temp) signal.v = v;
 
 				// All prior async derived runs are now stale
 				for (const [b, d] of deferreds) {
 					if (b.id < batch.id) {
-						// Don't delete + resolve directly, instead only do that once
-						// the current batch commits. This way we avoid tearing when
+						// Don't resolve directly, instead only do that once the
+						// current batch commits. This way we avoid tearing when
 						// `b` is rendering through the early resolve while `batch` is
 						// still pending.
 						batch.unblocked.add(effect);
+						if (parent !== null) {
+							// Terrible hack: this way we unblock ourselves from `flatten`
+							// which can block us on initial run
+							batch.unblocked.add(parent);
+						}
 						batch.oncommit(() => d.resolve(value));
+						// We don't want the value to be written to the underlying source because
+						// else it will be considered the latest value even thought it's outdated.
+						// This can happen if the earlier derived resolves before this batch commits.
+						d.temp = true;
 					}
 				}
 

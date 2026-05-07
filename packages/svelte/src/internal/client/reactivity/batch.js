@@ -92,6 +92,21 @@ let uid = 1;
 export class Batch {
 	id = uid++;
 
+	/**
+	 * Effects this batch has seen already or that were created before it (and there it is able to know about them).
+	 * Used to filter out #new_effects of other batches during #commit.
+	 */
+	#seen_effects = new Set();
+
+	constructor() {
+		// This batch doesn't care about new batches before it was created; it knows about these already
+		for (const batch of batches) {
+			for (const e of batch.#new_effects) {
+				this.#seen_effects.add(e);
+			}
+		}
+	}
+
 	/** True as soon as `#process()` was called */
 	#started = false;
 
@@ -206,24 +221,20 @@ export class Batch {
 
 	#is_blocked() {
 		for (const batch of this.#blockers) {
-			for (const effect of batch.#blocking_pending.keys()) {
+			outer: for (const effect of batch.#blocking_pending.keys()) {
 				if (this.unblocked.has(effect)) continue;
 
-				var skipped = false;
 				var e = effect;
 
 				while (e.parent !== null) {
 					if (this.#skipped_branches.has(e)) {
-						skipped = true;
-						break;
+						continue outer;
 					}
 
 					e = e.parent;
 				}
 
-				if (!skipped) {
-					return true;
-				}
+				return true;
 			}
 		}
 
@@ -415,6 +426,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
+					this.#seen_effects.add(effect); // This effect was definitely touched by this batch now
 					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
 					update_effect(effect);
 				}
@@ -521,7 +533,9 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	register_created_effect(effect) {
-		this.#new_effects.push(effect);
+		if ((effect.f & (EAGER_EFFECT | BRANCH_EFFECT)) === 0) {
+			this.#new_effects.push(effect);
+		}
 	}
 
 	#commit() {
@@ -534,6 +548,44 @@ export class Batch {
 
 			/** @type {Source[]} */
 			var sources = [];
+			/** @type {Map<Reaction, boolean>} */
+			var checked = new Map();
+
+			var scheduled = false;
+
+			var current_unequal = [...batch.current]
+				.filter(([k, c]) => {
+					const current = this.current.get(k);
+					// unequal if value is different and it's not a derived in both
+					return current ? current[0] !== c[0] && (!current[1] || !c[1]) : true;
+				})
+				.map(([k]) => k);
+
+			if (current_unequal.length > 0) {
+				// New effects created in this batch another batch doesn't know about yet
+				// need to be checked against the sources that are changing in this batch,
+				// as they might need to be rescheduled now. If we don't do this, we can
+				// end up with stale values in the UI.
+				for (const effect of this.#new_effects) {
+					if (
+						!batch.#seen_effects.has(effect) &&
+						(effect.f & (INERT | EAGER_EFFECT)) === 0 &&
+						depends_on(effect, current_unequal, checked)
+					) {
+						if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
+							scheduled = true;
+							set_signal_status(effect, DIRTY);
+							batch.schedule(effect);
+						} else {
+							// TODO this isn't quite right, maybe the source is different
+							// but the effect is only reading it indirectly through a derived
+							// that didn't change, so it doesn't need to re-run.
+							batch.#dirty_effects.add(effect);
+						}
+						// TODO skipped branches needs to be taken into account here?
+					}
+				}
+			}
 
 			for (const [source, [value, is_derived]] of this.current) {
 				if (batch.current.has(source)) {
@@ -562,8 +614,8 @@ export class Batch {
 					// this batch is now obsolete and can be discarded
 					batch.discard();
 				}
-			} else if (sources.length > 0) {
-				if (DEV) {
+			} else if (sources.length > 0 || scheduled) {
+				if (DEV && !scheduled) {
 					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
 				}
 
@@ -585,34 +637,10 @@ export class Batch {
 				/** @type {Set<Value>} */
 				var marked = new Set();
 
-				/** @type {Map<Reaction, boolean>} */
-				var checked = new Map();
+				checked = new Map();
 
 				for (var source of sources) {
 					mark_effects(source, others, marked, checked);
-				}
-
-				checked = new Map();
-				var current_unequal = [...batch.current.keys()].filter((c) =>
-					this.current.has(c)
-						? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c.v
-						: true
-				);
-
-				if (current_unequal.length > 0) {
-					for (const effect of this.#new_effects) {
-						if (
-							(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
-							depends_on(effect, current_unequal, checked)
-						) {
-							if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
-								set_signal_status(effect, DIRTY);
-								batch.schedule(effect);
-							} else {
-								batch.#dirty_effects.add(effect);
-							}
-						}
-					}
 				}
 
 				// Only apply and traverse when we know we triggered async work with marking the effects
@@ -1024,6 +1052,9 @@ function mark_effects(value, sources, marked, checked) {
 				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
+				// TODO this isn't quite right, maybe the source is different
+				// but the effect is only reading it indirectly through a derived
+				// that didn't change, so it doesn't need to re-run.
 				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
