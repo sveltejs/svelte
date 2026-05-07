@@ -363,6 +363,8 @@ export class Batch {
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag && !batches.has(this)) {
 			this.#commit();
+			// Rebases can activate other batches or null it out, therefore restore the new one here
+			current_batch = next_batch;
 		}
 
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
