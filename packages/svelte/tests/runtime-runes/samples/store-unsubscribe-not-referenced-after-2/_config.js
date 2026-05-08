@@ -3,7 +3,7 @@ import { ok, test } from '../../test';
 
 // Test that the store is unsubscribed from, even if it's not referenced once the store itself is set to null
 export default test({
-	skip_async: true,
+	skip_no_async: true,
 
 	async test({ target, assert }) {
 		assert.htmlEqual(
