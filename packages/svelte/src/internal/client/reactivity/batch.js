@@ -41,8 +41,11 @@ import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
 
-/** @type {Set<Batch>} */
-const batches = new Set();
+/** @type {Batch | null} */
+let first_batch = null;
+
+/** @type {Batch | null} */
+let last_batch = null;
 
 /** @type {Batch | null} */
 export let current_batch = null;
@@ -94,6 +97,14 @@ export class Batch {
 
 	/** True as soon as `#process()` was called */
 	#started = false;
+
+	linked = true;
+
+	/** @type {Batch | null} */
+	#prev = null;
+
+	/** @type {Batch | null} */
+	#next = null;
 
 	/**
 	 * The current values of any signals that are updated in this batch.
@@ -269,7 +280,7 @@ export class Batch {
 		this.#started = true;
 
 		if (flush_count++ > 1000) {
-			batches.delete(this);
+			this.#unlink();
 			infinite_loop_guard();
 		}
 
@@ -336,7 +347,7 @@ export class Batch {
 			}
 		} else {
 			if (this.#pending === 0) {
-				batches.delete(this);
+				this.#unlink();
 			}
 
 			// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
@@ -361,7 +372,7 @@ export class Batch {
 		// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
 		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
-		if (async_mode_flag && !batches.has(this)) {
+		if (async_mode_flag && !this.linked) {
 			this.#commit();
 			// Rebases can activate other batches or null it out, therefore restore the new one here
 			current_batch = next_batch;
@@ -376,8 +387,6 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
-			batches.add(next_batch);
-
 			if (DEV) {
 				for (const source of this.current.keys()) {
 					/** @type {Set<Source>} */ (source_stacks).add(source);
@@ -514,7 +523,7 @@ export class Batch {
 		this.#discard_callbacks.clear();
 		this.#fork_commit_callbacks.clear();
 
-		batches.delete(this);
+		this.#unlink();
 	}
 
 	/**
@@ -529,7 +538,7 @@ export class Batch {
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
-		for (const batch of batches) {
+		for (let batch = first_batch; batch !== null; batch = batch.#next) {
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
@@ -630,7 +639,7 @@ export class Batch {
 			}
 		}
 
-		for (const batch of batches) {
+		for (let batch = first_batch; batch !== null; batch = batch.#next) {
 			if (batch.#blockers.has(this)) {
 				batch.#blockers.delete(this);
 
@@ -678,7 +687,7 @@ export class Batch {
 		queue_micro_task(() => {
 			this.#decrement_queued = false;
 
-			if (batches.has(this)) {
+			if (this.linked) {
 				this.flush();
 			}
 		});
@@ -729,9 +738,16 @@ export class Batch {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 
-			if (!is_processing) {
-				batches.add(current_batch);
+			if (last_batch === null) {
+				first_batch = last_batch = batch;
+			} else {
+				last_batch.#next = batch;
+				batch.#prev = last_batch;
+			}
 
+			last_batch = batch;
+
+			if (!is_processing) {
 				if (!is_flushing_sync) {
 					queue_micro_task(() => {
 						if (batch.#started) {
@@ -749,7 +765,7 @@ export class Batch {
 	}
 
 	apply() {
-		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) {
+		if (!async_mode_flag || (!this.is_fork && this.#prev === null && this.#next === null)) {
 			batch_values = null;
 			return;
 		}
@@ -762,7 +778,7 @@ export class Batch {
 		}
 
 		// ...and undo changes belonging to other batches unless they block this one
-		for (const batch of batches) {
+		for (let batch = first_batch; batch !== null; batch = batch.#next) {
 			if (batch === this || batch.is_fork) continue;
 
 			// A batch is blocked on an earlier batch if it overlaps with the earlier batch's changes but is not a superset
@@ -847,6 +863,25 @@ export class Batch {
 		}
 
 		this.#roots.push(e);
+	}
+
+	#unlink() {
+		var prev = this.#prev;
+		var next = this.#next;
+
+		if (prev === null) {
+			first_batch = next;
+		} else {
+			prev.#next = next;
+		}
+
+		if (next === null) {
+			last_batch = prev;
+		} else {
+			next.#prev = prev;
+		}
+
+		this.linked = false;
 	}
 }
 
@@ -1231,7 +1266,7 @@ export function fork(fn) {
 				return;
 			}
 
-			if (!batches.has(batch)) {
+			if (!batch.linked) {
 				e.fork_discarded();
 			}
 
@@ -1277,7 +1312,7 @@ export function fork(fn) {
 				source.wv = increment_write_version();
 			}
 
-			if (!committed && batches.has(batch)) {
+			if (!committed && batch.linked) {
 				batch.discard();
 			}
 		}
@@ -1288,5 +1323,5 @@ export function fork(fn) {
  * Forcibly remove all current batches, to prevent cross-talk between tests
  */
 export function clear() {
-	batches.clear();
+	first_batch = last_batch = null;
 }
