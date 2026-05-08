@@ -42,6 +42,7 @@ import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
+import { tag } from '../../dev/tracing.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -204,6 +205,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
 	});
+
+	if (DEV) {
+		tag(each_array, '{#each ...}');
+	}
 
 	/** @type {V[]} */
 	var array;
@@ -480,6 +485,14 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		}
 
+		if ((effect.f & INERT) !== 0) {
+			resume_effect(effect);
+			if (is_animated) {
+				effect.nodes?.a?.unfix();
+				(to_animate ??= new Set()).delete(effect);
+			}
+		}
+
 		if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
 			effect.f ^= EFFECT_OFFSCREEN;
 
@@ -505,14 +518,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 				current = skip_to_branch(prev.next);
 				continue;
-			}
-		}
-
-		if ((effect.f & INERT) !== 0) {
-			resume_effect(effect);
-			if (is_animated) {
-				effect.nodes?.a?.unfix();
-				(to_animate ??= new Set()).delete(effect);
 			}
 		}
 

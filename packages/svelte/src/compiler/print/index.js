@@ -592,8 +592,13 @@ const svelte_visitors = (comments) => ({
 	},
 
 	ConstTag(node, context) {
-		context.write('{@');
-		context.visit(node.declaration);
+		context.write('{@const ');
+		const declarators = node.declaration.declarations;
+		for (let i = 0; i < declarators.length; i++) {
+			if (i > 0) context.write(', ');
+			context.visit(declarators[i]);
+		}
+
 		context.write('}');
 	},
 

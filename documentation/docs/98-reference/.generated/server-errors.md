@@ -69,6 +69,12 @@ Cause:
 `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
 ```
 
+### invalid_id_prefix
+
+```
+The `idPrefix` option cannot include `--`.
+```
+
 ### lifecycle_function_unavailable
 
 ```

@@ -23,6 +23,7 @@ export { print } from './print/index.js';
 export function compile(source, options) {
 	source = remove_bom(source);
 	state.reset({ warning: options.warningFilter, filename: options.filename });
+
 	const validated = validate_component_options(options, '');
 
 	let parsed = _parse(source);
@@ -33,7 +34,9 @@ export function compile(source, options) {
 	const combined_options = {
 		...validated,
 		...parsed_options,
-		customElementOptions
+		customElementOptions,
+		css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : validated.css,
+		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes
 	};
 
 	if (parsed.metadata.ts) {

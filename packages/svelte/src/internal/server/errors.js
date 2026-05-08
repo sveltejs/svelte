@@ -106,6 +106,18 @@ export function invalid_csp() {
 }
 
 /**
+ * The `idPrefix` option cannot include `--`.
+ * @returns {never}
+ */
+export function invalid_id_prefix() {
+	const error = new Error(`invalid_id_prefix\nThe \`idPrefix\` option cannot include \`--\`.\nhttps://svelte.dev/e/invalid_id_prefix`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}

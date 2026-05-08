@@ -89,9 +89,11 @@ You can freely use destructuring and rest patterns in each blocks.
 {#each expression, index}...{/each}
 ```
 
-In case you just want to render something `n` times, you can omit the `as` part ([demo](/playground/untitled#H4sIAAAAAAAAE3WR0W7CMAxFf8XKNAk0WsSeUEaRpn3Guoc0MbQiJFHiMlDVf18SOrZJ48259_jaVgZmxBEZZ28thgCNFV6xBdt1GgPj7wOji0t2EqI-wa_OleGEmpLWiID_6dIaQkMxhm1UdwKpRQhVzWSaVORJNdvWpqbhAYVsYQCNZk8thzWMC_DCHMZk3wPSThNQ088I3mghD9UwSwHwlLE5PMIzVFUFq3G7WUZ2OyUvU3JOuZU332wCXTRmtPy1NgzXZtUFp8WFw9536uWqpbIgPEaDsJBW90cTOHh0KGi2XsBq5-cT6-3nPauxXqHnsHJnCFZ3CvJVkyuCQ0mFF9TZyCQ162WGvteLKfG197Y3iv_pz_fmS68Hxt8iPBPj5HscP8YvCNX7uhYCAAA=)):
+In case you just want to render something `n` times, you can omit the `as` part:
 
+<!-- codeblock:start {"title":"Chess board"} -->
 ```svelte
+<!--- file: App.svelte --->
 <div class="chess-board">
 	{#each { length: 8 }, rank}
 		{#each { length: 8 }, file}
@@ -99,7 +101,22 @@ In case you just want to render something `n` times, you can omit the `as` part 
 		{/each}
 	{/each}
 </div>
+
+<style>
+	.chess-board {
+		display: grid;
+		grid-template-columns: repeat(8, 1fr);
+		rows: repeat(8, 1fr);
+		border: 1px solid black;
+		aspect-ratio: 1;
+
+		.black {
+			background: black;
+		}
+	}
+</style>
 ```
+<!-- codeblock:end -->
 
 ## Else blocks
 

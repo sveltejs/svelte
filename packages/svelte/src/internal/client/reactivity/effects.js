@@ -122,6 +122,8 @@ function create_effect(type, fn) {
 		effect.component_function = dev_current_component_function;
 	}
 
+	current_batch?.register_created_effect(effect);
+
 	/** @type {Effect | null} */
 	var e = effect;
 
@@ -399,16 +401,8 @@ export function template_effect(fn, sync = [], async = [], blockers = []) {
  * @param {Blocker[]} blockers
  */
 export function deferred_template_effect(fn, sync = [], async = [], blockers = []) {
-	if (async.length > 0 || blockers.length > 0) {
-		var decrement_pending = increment_pending();
-	}
-
 	flatten(blockers, sync, async, (values) => {
 		create_effect(EFFECT, () => fn(...values.map(get)));
-
-		if (decrement_pending) {
-			decrement_pending();
-		}
 	});
 }
 
@@ -564,6 +558,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.fn =
 		effect.nodes =
 		effect.ac =
+		effect.b =
 			null;
 }
 
@@ -656,16 +651,22 @@ function pause_children(effect, transitions, local) {
 
 	while (child !== null) {
 		var sibling = child.next;
-		var transparent =
-			(child.f & EFFECT_TRANSPARENT) !== 0 ||
-			// If this is a branch effect without a block effect parent,
-			// it means the parent block effect was pruned. In that case,
-			// transparency information was transferred to the branch effect.
-			((child.f & BRANCH_EFFECT) !== 0 && (effect.f & BLOCK_EFFECT) !== 0);
-		// TODO we don't need to call pause_children recursively with a linked list in place
-		// it's slightly more involved though as we have to account for `transparent` changing
-		// through the tree.
-		pause_children(child, transitions, transparent ? local : false);
+
+		// If this child is a root effect, then it will become an independent root when its parent
+		// is destroyed, it should therefore not become inert nor partake in transitions.
+		if ((child.f & ROOT_EFFECT) === 0) {
+			var transparent =
+				(child.f & EFFECT_TRANSPARENT) !== 0 ||
+				// If this is a branch effect without a block effect parent,
+				// it means the parent block effect was pruned. In that case,
+				// transparency information was transferred to the branch effect.
+				((child.f & BRANCH_EFFECT) !== 0 && (effect.f & BLOCK_EFFECT) !== 0);
+			// TODO we don't need to call pause_children recursively with a linked list in place
+			// it's slightly more involved though as we have to account for `transparent` changing
+			// through the tree.
+			pause_children(child, transitions, transparent ? local : false);
+		}
+
 		child = sibling;
 	}
 }

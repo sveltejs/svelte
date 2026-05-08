@@ -49,7 +49,8 @@ export const EFFECT_OFFSCREEN = 1 << 25;
 /**
  * Tells that we marked this derived and its reactions as visited during the "mark as (maybe) dirty"-phase.
  * Will be lifted during execution of the derived and during checking its dirty state (both are necessary
- * because a derived might be checked but not executed).
+ * because a derived might be checked but not executed). This is a pure performance optimization flag and
+ * should not be used for any other purpose!
  */
 export const WAS_MARKED = 1 << 16;
 
@@ -75,6 +76,8 @@ export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+/** An anchor might change, via this symbol on the original anchor we can tell HMR about the updated anchor */
+export const HMR_ANCHOR = Symbol('hmr anchor');
 
 /** allow users to ignore aborted signal errors if `reason.name === 'StaleReactionError` */
 export const STALE_REACTION = new (class StaleReactionError extends Error {

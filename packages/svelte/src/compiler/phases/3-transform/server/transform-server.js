@@ -300,7 +300,7 @@ export function server_component(analysis, options) {
 
 	const body = [...state.hoisted, ...module.body];
 
-	if (analysis.css.ast !== null && options.css === 'injected' && !options.customElement) {
+	if (analysis.css.ast !== null && analysis.inject_styles && !analysis.custom_element) {
 		const hash = b.literal(analysis.css.hash);
 		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 

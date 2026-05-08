@@ -25,9 +25,11 @@ The experimental flag will be removed in Svelte 6.
 
 ## Synchronized updates
 
-When an `await` expression depends on a particular piece of state, changes to that state will not be reflected in the UI until the asynchronous work has completed, so that the UI is not left in an inconsistent state. In other words, in an example like [this](/playground/untitled#H4sIAAAAAAAAE42QsWrDQBBEf2VZUkhYRE4gjSwJ0qVMkS6XYk9awcFpJe5Wdoy4fw-ycdykSPt2dpiZFYVGxgrf2PsJTlPwPWTcO-U-xwIH5zli9bminudNtwEsbl-v8_wYj-x1Y5Yi_8W7SZRFI1ZYxy64WVsjRj0rEDTwEJWUs6f8cKP2Tp8vVIxSPEsHwyKdukmA-j6jAmwO63Y1SidyCsIneA_T6CJn2ZBD00Jk_XAjT4tmQwEv-32eH6AsgYK6wXWOPPTs6Xy1CaxLECDYgb3kSUbq8p5aaifzorCt0RiUZbQcDIJ10ldH8gs3K6X2Xzqbro5zu1KCHaw2QQPrtclvwVSXc2sEC1T-Vqw0LJy-ClRy_uSkx2ogHzn9ADZ1CubKAQAA)...
+When an `await` expression depends on a particular piece of state, changes to that state will not be reflected in the UI until the asynchronous work has completed, so that the UI is not left in an inconsistent state. In other words, in an example like this...
 
+<!-- codeblock:start {"title":"Synchronized updates"} -->
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let a = $state(1);
 	let b = $state(2);
@@ -43,6 +45,7 @@ When an `await` expression depends on a particular piece of state, changes to th
 
 <p>{a} + {b} = {await add(a, b)}</p>
 ```
+<!-- codeblock:end -->
 
 ...if you increment `a`, the contents of the `<p>` will _not_ immediately update to read this —
 
@@ -59,8 +62,8 @@ Updates can overlap — a fast update will be reflected in the UI while an earli
 Svelte will do as much asynchronous work as it can in parallel. For example if you have two `await` expressions in your markup...
 
 ```svelte
-<p>{await one()}</p>
-<p>{await two()}</p>
+<p>{await one(x)}</p>
+<p>{await two(y)}</p>
 ```
 
 ...both functions will run at the same time, as they are independent expressions, even though they are _visually_ sequential.
@@ -68,13 +71,18 @@ Svelte will do as much asynchronous work as it can in parallel. For example if y
 This does not apply to sequential `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript. An exception is that independent `$derived` expressions will update independently, even though they will run sequentially when they are first created:
 
 ```js
-async function one() { return 1; }
-async function two() { return 2; }
+/** @param {number} x */
+async function one(x) { return x; }
+/** @param {number} y */
+async function two(y) { return y; }
+let x = $state(1);
+let y = $state(2);
 // ---cut---
-// these will run sequentially the first time,
-// but will update independently
-let a = $derived(await one());
-let b = $derived(await two());
+// `b` will not be created until `a` has resolved,
+// but once created they will update independently
+// even if `x` and `y` update simultaneously
+let a = $derived(await one(x));
+let b = $derived(await two(y));
 ```
 
 > [!NOTE] If you write code like this, expect Svelte to give you an [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) warning

@@ -1391,8 +1391,12 @@ describe('signals', () => {
 		};
 	});
 
-	test('derived whose original parent effect has been destroyed keeps updating', () => {
+	test('derived whose original parent effect has been destroyed no longer updates', () => {
 		return () => {
+			const warn = console.warn;
+			const warnings: string[] = [];
+			console.warn = (...args) => warnings.push(...args);
+
 			let count: Source<number>;
 			let double: Derived<number>;
 			const destroy = effect_root(() => {
@@ -1404,17 +1408,23 @@ describe('signals', () => {
 
 			flushSync();
 			assert.equal($.get(double!), 0);
-
-			destroy();
 			flushSync();
 
 			set(count!, 1);
 			flushSync();
 			assert.equal($.get(double!), 2);
 
+			destroy();
+
+			assert.equal($.get(double!), 2);
+			assert.equal(warnings.length, 0); // value is unchanged, no warning yet
+
 			set(count!, 2);
 			flushSync();
-			assert.equal($.get(double!), 4);
+			assert.equal($.get(double!), 2);
+			assert.ok(warnings.some((str) => str.includes('derived_inert')));
+
+			console.warn = warn;
 		};
 	});
 

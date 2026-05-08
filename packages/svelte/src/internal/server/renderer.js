@@ -468,10 +468,14 @@ export class Renderer {
 		}
 
 		this.local = other.local;
-		this.#out = other.#out.map((item) => {
-			if (item instanceof Renderer) {
-				item.subsume(item);
+		this.#out = other.#out.map((item, i) => {
+			const current = this.#out[i];
+
+			if (current instanceof Renderer && item instanceof Renderer) {
+				current.subsume(item);
+				return current;
 			}
+
 			return item;
 		});
 		this.promise = other.promise;
@@ -711,7 +715,12 @@ export class Renderer {
 						const { context, failed, transformError } = item.#boundary;
 
 						set_ssr_context(context);
-						let transformed = await transformError(error);
+
+						let promise = transformError(error);
+						set_ssr_context(null);
+
+						let transformed = await promise;
+						set_ssr_context(context);
 
 						// Render the failed snippet instead of the partial children content
 						const failed_renderer = new Renderer(item.global, item);
@@ -755,6 +764,10 @@ export class Renderer {
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
+		if (options.idPrefix?.includes('--')) {
+			e.invalid_id_prefix();
+		}
+
 		var previous_context = ssr_context;
 
 		try {

@@ -16,7 +16,7 @@
 
 ## declaration_duplicate_module_import
 
-> Cannot declare a variable with the same name as an import inside `<script module>`
+> Cannot declare a variable with the same name as an import from `<script module>`
 
 ## derived_invalid_export
 

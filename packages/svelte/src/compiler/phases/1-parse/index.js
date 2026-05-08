@@ -11,8 +11,6 @@ import { is_reserved } from '../../../utils.js';
 import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 import * as state from '../../state.js';
 
-const regex_position_indicator = / \(\d+:\d+\)$/;
-
 /** @param {number} cc */
 function is_whitespace(cc) {
 	// fast path for common whitespace
@@ -173,14 +171,6 @@ export class Parser {
 
 	current() {
 		return this.stack[this.stack.length - 1];
-	}
-
-	/**
-	 * @param {any} err
-	 * @returns {never}
-	 */
-	acorn_error(err) {
-		e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
 	}
 
 	/**

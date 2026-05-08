@@ -62,8 +62,8 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	fn: () => V;
 	/** Effects created inside this signal. Used to destroy those effects when the derived reruns or is cleaned up */
 	effects: null | Effect[];
-	/** Parent effect or derived */
-	parent: Effect | Derived | null;
+	/** Parent effect */
+	parent: Effect | null;
 }
 
 export interface EffectNodes {
@@ -103,6 +103,8 @@ export interface Effect extends Reaction {
 	component_function?: any;
 	/** Dev only. Only set for certain block effects. Contains a reference to the stack that represents the render tree */
 	dev_stack?: DevStackEntry | null;
+	/** Dev only. The user-authored template effect function before dependency wrapping */
+	original_fn?: Function;
 }
 
 export type Source<V = unknown> = Value<V>;

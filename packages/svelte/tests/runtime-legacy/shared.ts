@@ -60,6 +60,8 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	id_prefix?: string;
 	before_test?: () => void;
 	after_test?: () => void;
+	/** If true, flushSync() will not be called before invoking test() */
+	skip_initial_flushSync?: boolean;
 	test?: (args: {
 		variant: 'dom' | 'hydrate';
 		assert: Assert;
@@ -505,7 +507,7 @@ async function run_test_variant(
 
 			try {
 				if (config.test) {
-					flushSync();
+					if (!config.skip_initial_flushSync) flushSync();
 
 					if (variant === 'hydrate' && cwd.includes('async-')) {
 						// wait for pending boundaries to render
@@ -543,7 +545,7 @@ async function run_test_variant(
 				}
 			} finally {
 				if (runes) {
-					unmount(instance);
+					await unmount(instance);
 				} else {
 					instance.$destroy();
 				}

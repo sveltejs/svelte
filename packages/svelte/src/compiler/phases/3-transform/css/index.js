@@ -65,7 +65,7 @@ export function render_stylesheet(source, analysis, options) {
 
 	merge_with_preprocessor_map(css, options, css.map.sources[0]);
 
-	if (dev && options.css === 'injected' && css.code) {
+	if (dev && analysis.inject_styles && css.code) {
 		css.code += `\n/*# sourceMappingURL=${css.map.toUrl()} */`;
 	}
 

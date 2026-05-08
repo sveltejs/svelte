@@ -952,9 +952,9 @@ export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement
 
 	'bind:open'?: boolean | undefined | null;
 
-	'on:toggle'?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
-	ontoggle?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
-	ontogglecapture?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
+	'on:toggle'?: ToggleEventHandler<HTMLDetailsElement> | undefined | null;
+	ontoggle?: ToggleEventHandler<HTMLDetailsElement> | undefined | null;
+	ontogglecapture?: ToggleEventHandler<HTMLDetailsElement> | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {

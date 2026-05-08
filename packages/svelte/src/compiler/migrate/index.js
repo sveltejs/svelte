@@ -146,6 +146,8 @@ export function migrate(source, { filename, use_ts } = {}) {
 			...parsed_options,
 			customElementOptions,
 			filename: filename ?? UNKNOWN_FILENAME,
+			css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : () => 'external',
+			runes: 'runes' in parsed_options ? () => parsed_options.runes : () => undefined,
 			experimental: {
 				async: true
 			}
