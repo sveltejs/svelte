@@ -23,11 +23,9 @@ export default test({
 
 		pop.click();
 		await tick();
-		assert.htmlEqual(p.innerHTML, `1 + 0 = 1 | 1 0`);
+		assert.htmlEqual(p.innerHTML, `0 + 0 = 0 | 0 0`);
 
 		shift.click();
-		await tick();
-		pop.click();
 		await tick();
 		assert.htmlEqual(p.innerHTML, `1 + 2 = 3 | 1 1`);
 	}

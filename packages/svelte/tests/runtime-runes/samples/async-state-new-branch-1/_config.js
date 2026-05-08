@@ -7,29 +7,23 @@ export default test({
 
 		x.click();
 		await tick();
+		assert.deepEqual(logs, ['universe']);
 
 		y.click();
 		await tick();
+		assert.deepEqual(logs, ['universe', 'universe']);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
 			<button>x</button>
 			<button>y++</button>
 			<button>resolve</button>
-			world
-		` // if this does not show world - that would also be ok
+		`
 		);
 
 		resolve.click();
 		await tick();
-		assert.deepEqual(logs, [
-			'universe',
-			'world',
-			'$effect: world',
-			'$effect: universe',
-			'$effect: universe'
-		]);
-		// assert.deepEqual(logs, ['universe', 'universe', '$effect: universe', '$effect: universe']); // this would also be ok
+		assert.deepEqual(logs, ['universe', 'universe', '$effect: universe', '$effect: universe']);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
