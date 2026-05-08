@@ -334,26 +334,28 @@ export class Batch {
 			for (const [e, t] of this.#skipped_branches) {
 				reset_branch(e, t);
 			}
-		} else {
-			if (this.#pending === 0) {
-				batches.delete(this);
-			}
 
-			// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
-			this.#dirty_effects.clear();
-			this.#maybe_dirty_effects.clear();
-
-			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn(this);
-			this.#commit_callbacks.clear();
-
-			previous_batch = this;
-			flush_queued_effects(render_effects);
-			flush_queued_effects(effects);
-			previous_batch = null;
-
-			this.#deferred?.resolve();
+			return;
 		}
+
+		if (this.#pending === 0) {
+			batches.delete(this);
+		}
+
+		// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
+		this.#dirty_effects.clear();
+		this.#maybe_dirty_effects.clear();
+
+		// append/remove branches
+		for (const fn of this.#commit_callbacks) fn(this);
+		this.#commit_callbacks.clear();
+
+		previous_batch = this;
+		flush_queued_effects(render_effects);
+		flush_queued_effects(effects);
+		previous_batch = null;
+
+		this.#deferred?.resolve();
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
