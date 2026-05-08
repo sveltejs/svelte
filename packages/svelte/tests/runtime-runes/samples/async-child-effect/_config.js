@@ -34,8 +34,8 @@ export default test({
 			`
 				<button>shift</button>
 				<button>+</button>
-				<p>AA</p>
-				<p>aa</p>
+				<p>A</p>
+				<p>a</p>
 			`
 		);
 

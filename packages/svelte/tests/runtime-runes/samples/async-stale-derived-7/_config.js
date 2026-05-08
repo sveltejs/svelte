@@ -19,11 +19,12 @@ export default test({
 		await tick();
 		assert.htmlEqual(p.innerHTML, `0 + 0 = 0 | 0 0`);
 
-		// Check that the first batch can still resolve before the second even if one of its async values
-		// is already superseeded (but the subsequent batch as a whole is still pending).
+		// Previously check that the first batch can still resolve before the second even if one of its async values
+		// is already superseeded (but the subsequent batch as a whole is still pending) - now that batches are
+		// entangled this no longer happens and instead everything is waited on.
 		shift_1.click();
 		await tick();
-		assert.htmlEqual(p.innerHTML, `1 + 0 = 1 | 1 0`);
+		assert.htmlEqual(p.innerHTML, `0 + 0 = 0 | 0 0`);
 
 		shift_1.click();
 		await tick();

@@ -19,15 +19,18 @@ export default test({
 		const [shift, increment] = target.querySelectorAll('button');
 		const [p] = target.querySelectorAll('p');
 
-		for (let i = 1; i < 5; i += 1) {
+		for (let i = 0; i < 4; i += 1) {
 			flushSync(() => increment.click());
 		}
 
-		for (let i = 1; i < 5; i += 1) {
+		const seen = [];
+		for (let i = 0; i < 4; i += 1) {
 			shift.click();
 			await tick();
 
-			assert.equal(p.innerHTML, `${i}: ${Math.min(i, 3)}`);
+			seen.push(p.innerHTML);
 		}
+
+		assert.deepEqual(seen, ['0: 0', '0: 0', '0: 0', '4: 3']);
 	}
 });

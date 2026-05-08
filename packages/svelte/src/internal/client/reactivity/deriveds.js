@@ -79,6 +79,7 @@ export function derived(fn) {
 
 	/** @type {Derived<V>} */
 	const signal = {
+		batch: current_batch,
 		ctx: component_context,
 		deps: null,
 		effects: null,
@@ -126,10 +127,25 @@ export function async_derived(fn, label, location) {
 	var should_suspend = !active_reaction;
 
 	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
-	var deferreds = new Map();
+	var deferreds = new Map(); // TODO this can only be one batch at a time now
 
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
+		var batch = /** @type {Batch} */ (current_batch);
+		var controller = new AbortController();
+		effect.ac = controller;
+
+		controller.signal.addEventListener(
+			'abort',
+			() => {
+				for (const d of deferreds.values()) {
+					d.reject(STALE_REACTION);
+				}
+
+				deferreds.clear();
+			},
+			{ once: true }
+		);
 
 		if (DEV) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
@@ -176,8 +192,6 @@ export function async_derived(fn, label, location) {
 
 			reactivity_loss_tracker = null;
 		}
-
-		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
@@ -231,12 +245,13 @@ export function async_derived(fn, label, location) {
 				// All prior async derived runs are now stale
 				for (const [b, d] of deferreds) {
 					if (b.id < batch.id) {
+						d.reject(OBSOLETE);
+						// TODO I think we don't need this when entangling
 						// Don't delete + resolve directly, instead only do that once
 						// the current batch commits. This way we avoid tearing when
 						// `b` is rendering through the early resolve while `batch` is
 						// still pending.
-						batch.unblocked.add(effect);
-						batch.oncommit(() => d.resolve(value));
+						// batch.oncommit(() => d.resolve(value));
 					}
 				}
 
@@ -258,10 +273,13 @@ export function async_derived(fn, label, location) {
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
 	});
 
+	const t = deferred();
+
 	teardown(() => {
 		for (const d of deferreds.values()) {
 			d.reject(OBSOLETE);
 		}
+		t.resolve();
 	});
 
 	if (DEV) {
@@ -273,8 +291,13 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
-			function go() {
+			/** @param {unknown} [error] */
+			function go(error) {
 				if (p === promise) {
+					if (error === STALE_REACTION) {
+						return t.promise;
+					}
+
 					fulfil(signal);
 				} else {
 					// if the effect re-runs before the initial promise
@@ -283,7 +306,7 @@ export function async_derived(fn, label, location) {
 				}
 			}
 
-			p.then(go, go);
+			p.then(() => go(), go);
 		}
 
 		next(promise);

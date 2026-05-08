@@ -41,7 +41,8 @@ import {
 	batch_values,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	current_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -76,6 +77,7 @@ export function set_eager_effects_deferred() {
 export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
+		batch: current_batch,
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
@@ -237,6 +239,8 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		// log_reactions(source);
 		mark_reactions(source, DIRTY, updated_during_traversal);
 
+		batch.reschedule();
+
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
@@ -345,6 +349,8 @@ function mark_reactions(signal, status, updated_during_traversal) {
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
+
+		reaction.batch = Batch.upsert(reaction);
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
