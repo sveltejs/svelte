@@ -374,12 +374,11 @@ export class Batch {
 		// once more in that case - most of the time this will just clean up dirty branches.
 		if (this.#roots.length > 0) {
 			const batch = (next_batch ??= this);
+			batches.add(batch);
 			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
 		}
 
 		if (next_batch !== null) {
-			batches.add(next_batch);
-
 			if (DEV) {
 				for (const source of this.current.keys()) {
 					/** @type {Set<Source>} */ (source_stacks).add(source);
@@ -732,20 +731,14 @@ export class Batch {
 	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
+			batches.add(batch);
 
-			if (!is_processing) {
-				batches.add(current_batch);
-
-				if (!is_flushing_sync) {
-					queue_micro_task(() => {
-						if (batch.#started) {
-							// a flushSync happened in the meantime
-							return;
-						}
-
+			if (!is_processing && !is_flushing_sync) {
+				queue_micro_task(() => {
+					if (!batch.#started) {
 						batch.flush();
-					});
-				}
+					}
+				});
 			}
 		}
 
