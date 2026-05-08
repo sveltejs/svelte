@@ -335,6 +335,10 @@ export class Batch {
 				reset_branch(e, t);
 			}
 
+			if (updates.length > 0) {
+				/** @type {Batch} */ (/** @type {unknown} */ (current_batch)).#process();
+			}
+
 			return;
 		}
 
