@@ -40,6 +40,7 @@ import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
+import { OBSOLETE } from './deriveds.js';
 
 /** @type {Batch | null} */
 let first_batch = null;
@@ -97,7 +98,7 @@ let uid = 1;
 export class Batch {
 	id = uid++;
 
-	/** True as soon as `#process()` was called */
+	/** True as soon as `#process` was called */
 	#started = false;
 
 	linked = true;
@@ -107,6 +108,9 @@ export class Batch {
 
 	/** @type {Batch | null} */
 	#next = null;
+
+	/** @type {Map<Effect, PromiseWithResolvers<any>>} */
+	async_deriveds = new Map();
 
 	/**
 	 * The current values of any signals that are updated in this batch.
@@ -348,7 +352,8 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
-		if (this.#is_deferred() || this.#is_blocked()) {
+		// if the batch has outstanding pending work, stash effects and bail
+		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
@@ -360,6 +365,13 @@ export class Batch {
 				/** @type {Batch} */ (/** @type {unknown} */ (current_batch)).#process();
 			}
 
+			return;
+		}
+
+		const earlier_batch = this.#find_earlier_batch();
+
+		if (earlier_batch) {
+			earlier_batch.#merge(this);
 			return;
 		}
 
@@ -460,6 +472,103 @@ export class Batch {
 				}
 
 				effect = effect.parent;
+			}
+		}
+	}
+
+	#find_earlier_batch() {
+		var batch = this.#prev;
+
+		while (batch !== null) {
+			// TODO if the batches are connected, break
+			for (const value of this.current.keys()) {
+				if (batch.current.has(value)) return batch;
+			}
+
+			batch = batch.#prev;
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param {Batch} batch
+	 */
+	#merge(batch) {
+		// console.group('this.current', this.id);
+		// for (const [source, value] of this.current) {
+		// 	console.log(source.label, value);
+		// }
+		// console.groupEnd();
+
+		// console.group('batch.current', batch.id);
+		// for (const [source, value] of batch.current) {
+		// 	console.log(source.label, value);
+		// }
+		// console.groupEnd();
+
+		for (const [source, value] of batch.current) {
+			if (!this.previous.has(source)) {
+				this.previous.set(source, batch.previous.get(source));
+			}
+
+			this.current.set(source, value);
+		}
+
+		for (const [effect, deferred] of batch.async_deriveds) {
+			const d = this.async_deriveds.get(effect);
+			if (d) {
+				deferred.promise.then((value) => {
+					d.resolve(value);
+				});
+			}
+		}
+
+		/**
+		 * mark all effects that depend on `batch.current`, except the
+		 * async effects that we just resolved (TODO unless they depend
+		 * on values in this batch that are NOT in the later batch?)
+		 * @param {Value} value
+		 */
+		const mark = (value) => {
+			var reactions = value.reactions;
+			if (reactions === null) return;
+
+			for (const reaction of reactions) {
+				var flags = reaction.f;
+
+				if ((flags & DERIVED) !== 0) {
+					mark(/** @type {Derived} */ (reaction));
+				} else {
+					var effect = /** @type {Effect} */ (reaction);
+
+					if (flags & (ASYNC | BLOCK_EFFECT) && !this.async_deriveds.has(effect)) {
+						set_signal_status(effect, DIRTY);
+						this.schedule(effect);
+					}
+				}
+			}
+		};
+
+		for (const source of this.current.keys()) {
+			mark(source);
+		}
+
+		batch.#unlink();
+
+		current_batch = this;
+		this.#process();
+
+		for (const [effect, deferred] of this.async_deriveds) {
+			var e = effect;
+
+			while (e.parent !== null) {
+				if (this.#skipped_branches.has(e)) {
+					deferred.resolve(OBSOLETE);
+					break;
+				}
+
+				e = e.parent;
 			}
 		}
 	}
