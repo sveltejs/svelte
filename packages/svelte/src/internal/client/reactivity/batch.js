@@ -372,12 +372,11 @@ export class Batch {
 		// once more in that case - most of the time this will just clean up dirty branches.
 		if (this.#roots.length > 0) {
 			const batch = (next_batch ??= this);
+			batches.add(batch);
 			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
 		}
 
 		if (next_batch !== null) {
-			batches.add(next_batch);
-
 			if (DEV) {
 				for (const source of this.current.keys()) {
 					/** @type {Set<Source>} */ (source_stacks).add(source);
