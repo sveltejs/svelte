@@ -301,7 +301,7 @@ export class Batch {
 
 		/**
 		 * @type {Effect[]}
-		 * @deprecated when we get rid of legacy mode and stores, we can get rid of this
+		 * @deprecated when we get rid of legacy mode and stores, we can get rid of this, and also early-return in the deferred case
 		 */
 		var updates = (legacy_updates = []);
 
