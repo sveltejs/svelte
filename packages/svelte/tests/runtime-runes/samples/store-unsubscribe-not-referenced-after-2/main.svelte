@@ -18,7 +18,9 @@
 
 {#if watcherA}
 	<!-- make sure the presence of async work doesn't break the `legacy_updates` mechanism -->
-	{await 'hello'}
+	{#if true}
+		{await 'hello'}
+	{/if}
 
 	{$watcherA}
 	<button on:click={() => watcherA = null}>remove watcher</button>
