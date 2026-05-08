@@ -28,15 +28,15 @@ jobs:
     permissions: {}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # For pull_request_target, check out the PR head.
           # For workflow_dispatch, check out the manually specified SHA.
           # For push, fall back to the push SHA.
           ref: ${{ github.event.pull_request.head.sha || inputs.sha || github.sha }}
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4
-      - uses: actions/setup-node@v6
+      - uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v6.0.5
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 22.x
           cache: pnpm
@@ -50,7 +50,7 @@ jobs:
       - run: pnpx pkg-pr-new publish --comment=off --json output.json --compact --no-template './packages/svelte'
 
       - name: Upload output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: output
           path: ./output.json
@@ -66,12 +66,12 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: output
 
       - name: Sanitize output
-        uses: actions/github-script@v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -101,7 +101,7 @@ jobs:
             fs.writeFileSync('sanitized-output.json', JSON.stringify({ packages }), 'utf8');
 
       - name: Upload sanitized output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sanitized-output
           path: ./sanitized-output.json
@@ -117,13 +117,13 @@ jobs:
 
     steps:
       - name: Download sanitized artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sanitized-output
 
       - name: Resolve PR number
         id: pr
-        uses: actions/github-script@v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             if (context.eventName === 'pull_request_target') {
@@ -143,7 +143,7 @@ jobs:
             core.setOutput('number', pr);
 
       - name: Post or update comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -200,12 +200,12 @@ jobs:
 
     steps:
       - name: Download sanitized artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sanitized-output
 
       - name: Log publish info
-        uses: actions/github-script@v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
