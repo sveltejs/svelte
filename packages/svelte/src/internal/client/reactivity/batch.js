@@ -85,7 +85,9 @@ export let collected_effects = null;
 export let legacy_updates = null;
 
 var flush_count = 0;
-var source_stacks = DEV ? new Set() : null;
+
+/** @type {Set<Value>} */
+var source_stacks = new Set();
 
 let uid = 1;
 
@@ -273,6 +275,14 @@ export class Batch {
 			infinite_loop_guard();
 		}
 
+		if (DEV) {
+			// track all the values that were updated during this flush,
+			// so that they can be reset afterwards
+			for (const value of this.current.keys()) {
+				source_stacks.add(value);
+			}
+		}
+
 		// we only reschedule previously-deferred effects if we expect
 		// to be able to run them after processing the batch
 		if (!this.#is_deferred()) {
@@ -377,12 +387,6 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
-			if (DEV) {
-				for (const source of this.current.keys()) {
-					/** @type {Set<Source>} */ (source_stacks).add(source);
-				}
-			}
-
 			next_batch.#process();
 		}
 	}
@@ -481,9 +485,11 @@ export class Batch {
 	}
 
 	flush() {
-		var source_stacks = DEV ? new Set() : null;
-
 		try {
+			if (DEV) {
+				source_stacks.clear();
+			}
+
 			is_processing = true;
 			current_batch = this;
 
@@ -501,7 +507,7 @@ export class Batch {
 			old_values.clear();
 
 			if (DEV) {
-				for (const source of /** @type {Set<Source>} */ (source_stacks)) {
+				for (const source of source_stacks) {
 					source.updated = null;
 				}
 			}
