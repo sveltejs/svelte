@@ -335,7 +335,9 @@ export class Batch {
 				reset_branch(e, t);
 			}
 
-			return;
+			if (updates.length === 0) {
+				return;
+			}
 		}
 
 		// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
