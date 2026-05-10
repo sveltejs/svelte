@@ -218,7 +218,27 @@ export class Batch {
 	#blockers = new Set();
 
 	#is_deferred() {
-		return this.is_fork || this.#blocking_pending.size > 0;
+		if (this.is_fork) return true;
+
+		for (const effect of this.#blocking_pending.keys()) {
+			var e = effect;
+			var skipped = false;
+
+			while (e.parent !== null) {
+				if (this.#skipped_branches.has(e)) {
+					skipped = true;
+					break;
+				}
+
+				e = e.parent;
+			}
+
+			if (!skipped) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	#is_blocked() {
@@ -558,19 +578,6 @@ export class Batch {
 
 		current_batch = this;
 		this.#process();
-
-		for (const [effect, deferred] of this.async_deriveds) {
-			var e = effect;
-
-			while (e.parent !== null) {
-				if (this.#skipped_branches.has(e)) {
-					deferred.resolve(OBSOLETE);
-					break;
-				}
-
-				e = e.parent;
-			}
-		}
 	}
 
 	/**
