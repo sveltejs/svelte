@@ -100,7 +100,7 @@ export function derived(fn) {
 	return signal;
 }
 
-export const OBSOLETE = {};
+export const OBSOLETE = Symbol('obsolete');
 
 /**
  * @template V
