@@ -12,7 +12,7 @@ function update_styles(dom, prev = {}, next, priority) {
 		var value = next[key];
 
 		if (prev[key] !== value) {
-			if (next[key] == null) {
+			if (value == null) {
 				dom.style.removeProperty(key);
 			} else {
 				// setProperty rejects values with trailing semicolons; strip them so that
