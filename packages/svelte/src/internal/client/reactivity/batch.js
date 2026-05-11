@@ -85,12 +85,17 @@ export let collected_effects = null;
 export let legacy_updates = null;
 
 var flush_count = 0;
-var source_stacks = DEV ? new Set() : null;
+
+/** @type {Set<Value>} */
+var source_stacks = new Set();
 
 let uid = 1;
 
 export class Batch {
 	id = uid++;
+
+	/** True as soon as `#process()` was called */
+	#started = false;
 
 	/**
 	 * The current values of any signals that are updated in this batch.
@@ -106,6 +111,13 @@ export class Batch {
 	 * @type {Map<Value, any>}
 	 */
 	previous = new Map();
+
+	/**
+	 * Async effects which this batch doesn't take into account anymore when calculating blockers,
+	 * as it has a value for it already.
+	 * @type {Set<Effect>}
+	 */
+	unblocked = new Set();
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
@@ -127,10 +139,9 @@ export class Batch {
 	#fork_commit_callbacks = new Set();
 
 	/**
-	 * Async effects that are currently in flight
-	 * @type {Map<Effect, number>}
+	 * The number of async effects that are currently in flight
 	 */
-	#pending = new Map();
+	#pending = 0;
 
 	/**
 	 * Async effects that are currently in flight, _not_ inside a pending boundary
@@ -198,6 +209,8 @@ export class Batch {
 	#is_blocked() {
 		for (const batch of this.#blockers) {
 			for (const effect of batch.#blocking_pending.keys()) {
+				if (this.unblocked.has(effect)) continue;
+
 				var skipped = false;
 				var e = effect;
 
@@ -255,9 +268,19 @@ export class Batch {
 	}
 
 	#process() {
+		this.#started = true;
+
 		if (flush_count++ > 1000) {
 			batches.delete(this);
 			infinite_loop_guard();
+		}
+
+		if (DEV) {
+			// track all the values that were updated during this flush,
+			// so that they can be reset afterwards
+			for (const value of this.current.keys()) {
+				source_stacks.add(value);
+			}
 		}
 
 		// we only reschedule previously-deferred effects if we expect
@@ -321,54 +344,51 @@ export class Batch {
 			for (const [e, t] of this.#skipped_branches) {
 				reset_branch(e, t);
 			}
-		} else {
-			if (this.#pending.size === 0) {
-				batches.delete(this);
+
+			if (updates.length > 0) {
+				/** @type {Batch} */ (/** @type {unknown} */ (current_batch)).#process();
 			}
 
-			// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
-			this.#dirty_effects.clear();
-			this.#maybe_dirty_effects.clear();
-
-			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn(this);
-			this.#commit_callbacks.clear();
-
-			previous_batch = this;
-			flush_queued_effects(render_effects);
-			flush_queued_effects(effects);
-			previous_batch = null;
-
-			this.#deferred?.resolve();
+			return;
 		}
+
+		// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
+		this.#dirty_effects.clear();
+		this.#maybe_dirty_effects.clear();
+
+		// append/remove branches
+		for (const fn of this.#commit_callbacks) fn(this);
+		this.#commit_callbacks.clear();
+
+		previous_batch = this;
+		flush_queued_effects(render_effects);
+		flush_queued_effects(effects);
+		previous_batch = null;
+
+		this.#deferred?.resolve();
+
+		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
 		// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
 		// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
 		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
-		if (async_mode_flag && !batches.has(this)) {
+		if (async_mode_flag && this.#pending === 0) {
 			this.#commit();
+			// Rebases can activate other batches or null it out, therefore restore the new one here
+			current_batch = next_batch;
 		}
-
-		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
 		// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
 		// once more in that case - most of the time this will just clean up dirty branches.
 		if (this.#roots.length > 0) {
 			const batch = (next_batch ??= this);
+			batches.add(batch);
 			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
 		}
 
 		if (next_batch !== null) {
-			batches.add(next_batch);
-
-			if (DEV) {
-				for (const source of this.current.keys()) {
-					/** @type {Set<Source>} */ (source_stacks).add(source);
-				}
-			}
-
 			next_batch.#process();
 		}
 	}
@@ -467,9 +487,11 @@ export class Batch {
 	}
 
 	flush() {
-		var source_stacks = DEV ? new Set() : null;
-
 		try {
+			if (DEV) {
+				source_stacks.clear();
+			}
+
 			is_processing = true;
 			current_batch = this;
 
@@ -487,7 +509,7 @@ export class Batch {
 			old_values.clear();
 
 			if (DEV) {
-				for (const source of /** @type {Set<Source>} */ (source_stacks)) {
+				for (const source of source_stacks) {
 					source.updated = null;
 				}
 			}
@@ -510,6 +532,8 @@ export class Batch {
 	}
 
 	#commit() {
+		batches.delete(this);
+
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
@@ -536,6 +560,8 @@ export class Batch {
 
 				sources.push(source);
 			}
+
+			if (!batch.#started) continue;
 
 			// Re-run async/block effects that depend on distinct values changed in both batches
 			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
@@ -630,8 +656,7 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	increment(blocking, effect) {
-		let pending_count = this.#pending.get(effect) ?? 0;
-		this.#pending.set(effect, pending_count + 1);
+		this.#pending += 1;
 
 		if (blocking) {
 			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
@@ -642,16 +667,9 @@ export class Batch {
 	/**
 	 * @param {boolean} blocking
 	 * @param {Effect} effect
-	 * @param {boolean} skip - whether to skip updates (because this is triggered by a stale reaction)
 	 */
-	decrement(blocking, effect, skip) {
-		let pending_count = this.#pending.get(effect) ?? 0;
-
-		if (pending_count === 1) {
-			this.#pending.delete(effect);
-		} else {
-			this.#pending.set(effect, pending_count - 1);
-		}
+	decrement(blocking, effect) {
+		this.#pending -= 1;
 
 		if (blocking) {
 			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
@@ -663,12 +681,15 @@ export class Batch {
 			}
 		}
 
-		if (this.#decrement_queued || skip) return;
+		if (this.#decrement_queued) return;
 		this.#decrement_queued = true;
 
 		queue_micro_task(() => {
 			this.#decrement_queued = false;
-			this.flush();
+
+			if (batches.has(this)) {
+				this.flush();
+			}
 		});
 	}
 
@@ -716,20 +737,14 @@ export class Batch {
 	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
+			batches.add(batch);
 
-			if (!is_processing) {
-				batches.add(current_batch);
-
-				if (!is_flushing_sync) {
-					queue_micro_task(() => {
-						if (!batches.has(batch) || batch.#pending.size > 0) {
-							// a flushSync happened in the meantime
-							return;
-						}
-
+			if (!is_processing && !is_flushing_sync) {
+				queue_micro_task(() => {
+					if (!batch.#started) {
 						batch.flush();
-					});
-				}
+					}
+				});
 			}
 		}
 
