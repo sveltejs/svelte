@@ -318,20 +318,19 @@ export class Batch {
 			}
 		}
 
-		// we only reschedule previously-deferred effects if we expect
-		// to be able to run them after processing the batch
-		if (!this.#is_deferred()) {
-			for (const e of this.#dirty_effects) {
-				this.#maybe_dirty_effects.delete(e);
-				set_signal_status(e, DIRTY);
-				this.schedule(e);
-			}
-
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				this.schedule(e);
-			}
+		for (const e of this.#dirty_effects) {
+			this.#maybe_dirty_effects.delete(e);
+			set_signal_status(e, DIRTY);
+			this.schedule(e);
 		}
+
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			this.schedule(e);
+		}
+
+		this.#maybe_dirty_effects.clear();
+		this.#dirty_effects.clear();
 
 		const roots = this.#roots;
 		this.#roots = [];
@@ -563,8 +562,8 @@ export class Batch {
 					var effect = /** @type {Effect} */ (reaction);
 
 					if (flags & (ASYNC | BLOCK_EFFECT) && !this.async_deriveds.has(effect)) {
-						set_signal_status(effect, DIRTY);
-						this.schedule(effect);
+						this.#maybe_dirty_effects.delete(effect);
+						this.#dirty_effects.add(effect);
 					}
 				}
 			}
@@ -574,6 +573,7 @@ export class Batch {
 			mark(source);
 		}
 
+		batch.discard();
 		batch.#unlink();
 
 		current_batch = this;
