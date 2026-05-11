@@ -669,6 +669,19 @@ export class Batch {
 				sources.push(source);
 			}
 
+			if (is_earlier) {
+				// TODO do we need to restart these in some cases, instead of
+				// immediately resolving them?
+				for (const [effect, deferred] of this.async_deriveds) {
+					const d = batch.async_deriveds.get(effect);
+					if (d) {
+						deferred.promise.then((value) => {
+							d.resolve(value);
+						});
+					}
+				}
+			}
+
 			if (!batch.#started) continue;
 
 			// Re-run async/block effects that depend on distinct values changed in both batches
