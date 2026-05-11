@@ -499,9 +499,11 @@ export class Batch {
 		var batch = this.#prev;
 
 		while (batch !== null) {
-			// TODO if the batches are connected, break
-			for (const value of this.current.keys()) {
-				if (batch.current.has(value)) return batch;
+			if (!batch.is_fork) {
+				// if the batches are connected, break
+				for (const value of this.current.keys()) {
+					if (batch.current.has(value)) return batch;
+				}
 			}
 
 			batch = batch.#prev;
@@ -573,7 +575,7 @@ export class Batch {
 			mark(source);
 		}
 
-		batch.discard();
+		batch.discard(); // TODO this could presumably result in branches being destroyed prematurely
 		batch.#unlink();
 
 		current_batch = this;
