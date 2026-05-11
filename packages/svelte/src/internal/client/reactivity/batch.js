@@ -214,9 +214,6 @@ export class Batch {
 
 	#decrement_queued = false;
 
-	/** @type {Set<Batch>} */
-	#blockers = new Set();
-
 	#is_deferred() {
 		if (this.is_fork) return true;
 
@@ -235,32 +232,6 @@ export class Batch {
 
 			if (!skipped) {
 				return true;
-			}
-		}
-
-		return false;
-	}
-
-	#is_blocked() {
-		for (const batch of this.#blockers) {
-			for (const effect of batch.#blocking_pending.keys()) {
-				if (this.unblocked.has(effect)) continue;
-
-				var skipped = false;
-				var e = effect;
-
-				while (e.parent !== null) {
-					if (this.#skipped_branches.has(e)) {
-						skipped = true;
-						break;
-					}
-
-					e = e.parent;
-				}
-
-				if (!skipped) {
-					return true;
-				}
 			}
 		}
 
@@ -775,17 +746,6 @@ export class Batch {
 				batch.deactivate();
 			}
 		}
-
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
-			if (batch.#blockers.has(this)) {
-				batch.#blockers.delete(this);
-
-				if (batch.#blockers.size === 0 && !batch.#is_deferred()) {
-					batch.activate();
-					batch.#process();
-				}
-			}
-		}
 	}
 
 	/**
@@ -920,9 +880,7 @@ export class Batch {
 				}
 			}
 
-			if (intersects && differs) {
-				this.#blockers.add(batch);
-			} else {
+			if (!intersects || !differs) {
 				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, previous);

@@ -230,18 +230,6 @@ export function async_derived(fn, label, location) {
 
 				internal_set(signal, value);
 
-				// All prior async derived runs are now stale
-				// for (const [b, d] of deferreds) {
-				// 	if (b.id < batch.id) {
-				// 		// Don't delete + resolve directly, instead only do that once
-				// 		// the current batch commits. This way we avoid tearing when
-				// 		// `b` is rendering through the early resolve while `batch` is
-				// 		// still pending.
-				// 		batch.unblocked.add(effect);
-				// 		batch.oncommit(() => d.resolve(value));
-				// 	}
-				// }
-
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);
 
