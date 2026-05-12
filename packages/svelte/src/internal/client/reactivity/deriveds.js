@@ -188,7 +188,7 @@ export function async_derived(fn, label, location) {
 			}
 
 			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
-				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
+				deferreds.get(batch)?.reject(OBSOLETE);
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
 				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
