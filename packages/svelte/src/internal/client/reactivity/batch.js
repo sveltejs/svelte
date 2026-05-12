@@ -494,18 +494,6 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
-		// console.group('this.current', this.id);
-		// for (const [source, value] of this.current) {
-		// 	console.log(source.label, value);
-		// }
-		// console.groupEnd();
-
-		// console.group('batch.current', batch.id);
-		// for (const [source, value] of batch.current) {
-		// 	console.log(source.label, value);
-		// }
-		// console.groupEnd();
-
 		for (const [source, value] of batch.current) {
 			if (!this.previous.has(source)) {
 				this.previous.set(source, batch.previous.get(source));
