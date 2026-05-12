@@ -293,15 +293,22 @@ export class Batch {
 			this.#maybe_dirty_effects.delete(e);
 			set_signal_status(e, DIRTY);
 			this.schedule(e);
+
+			// don't run async effects again (TODO this should be unnecessary with an incremental approach)
+			if ((e.f & ASYNC) !== 0) {
+				this.#dirty_effects.delete(e);
+			}
 		}
 
 		for (const e of this.#maybe_dirty_effects) {
 			set_signal_status(e, MAYBE_DIRTY);
 			this.schedule(e);
-		}
 
-		this.#maybe_dirty_effects.clear();
-		this.#dirty_effects.clear();
+			// don't run async effects again (TODO this should be unnecessary with an incremental approach)
+			if ((e.f & ASYNC) !== 0) {
+				this.#dirty_effects.delete(e);
+			}
+		}
 
 		const roots = this.#roots;
 		this.#roots = [];
