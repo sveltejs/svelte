@@ -29,6 +29,7 @@
     "@changesets/cli": "^2.29.8",
     "@eslint/js": "^10.0.0",
     "@sveltejs/eslint-config": "^9.0.0",
+    "@sveltejs/target": "^0.0.5",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
     "@types/picomatch": "^4.0.2",
