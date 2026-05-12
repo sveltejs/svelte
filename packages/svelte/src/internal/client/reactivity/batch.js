@@ -516,11 +516,7 @@ export class Batch {
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
-			if (d) {
-				deferred.promise.then((value) => {
-					d.resolve(value);
-				});
-			}
+			if (d) deferred.promise.then(d.resolve);
 		}
 
 		/**
@@ -681,11 +677,7 @@ export class Batch {
 				// immediately resolving them?
 				for (const [effect, deferred] of this.async_deriveds) {
 					const d = batch.async_deriveds.get(effect);
-					if (d) {
-						deferred.promise.then((value) => {
-							d.resolve(value);
-						});
-					}
+					if (d) deferred.promise.then(d.resolve);
 				}
 			}
 
