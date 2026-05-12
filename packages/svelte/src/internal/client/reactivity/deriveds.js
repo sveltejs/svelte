@@ -211,10 +211,9 @@ export function async_derived(fn, label, location) {
 			}
 
 			decrement_pending?.();
+			deferreds.delete(batch);
 
-			if (error === OBSOLETE) {
-				return;
-			}
+			if (error === OBSOLETE) return;
 
 			batch.activate();
 
