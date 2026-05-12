@@ -495,7 +495,7 @@ export class Batch {
 	 */
 	#merge(batch) {
 		for (const [source, value] of batch.current) {
-			if (!this.previous.has(source)) {
+			if (!this.previous.has(source) && batch.previous.has(source)) {
 				this.previous.set(source, batch.previous.get(source));
 			}
 
