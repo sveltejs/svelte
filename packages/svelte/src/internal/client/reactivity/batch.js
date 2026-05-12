@@ -549,7 +549,7 @@ export class Batch {
 			mark(source);
 		}
 
-		batch.discard(); // TODO this could presumably result in branches being destroyed prematurely
+		this.oncommit(() => batch.discard());
 		batch.#unlink();
 
 		current_batch = this;
