@@ -49,7 +49,10 @@ export function head(hash, render_fn) {
 	}
 
 	try {
-		block(() => branch(() => render_fn(anchor)), HEAD_EFFECT);
+		block(() => {
+			var e = branch(() => render_fn(anchor));
+			e.f |= HEAD_EFFECT;
+		});
 	} finally {
 		if (was_hydrating) {
 			set_hydrating(true);
