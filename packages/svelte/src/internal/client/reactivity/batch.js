@@ -109,7 +109,7 @@ export class Batch {
 	/** @type {Batch | null} */
 	#next = null;
 
-	/** @type {Map<Effect, ReturnType<typeof deferred>>} */
+	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
 	async_deriveds = new Map();
 
 	/**
