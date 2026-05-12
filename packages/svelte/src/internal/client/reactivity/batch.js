@@ -861,13 +861,13 @@ export class Batch {
 			batch_values.set(source, value);
 		}
 
-		// ...and undo changes belonging to other batches unless they block this one
+		// ...and undo changes belonging to other batches unless they intersect
 		for (let batch = first_batch; batch !== null; batch = batch.#next) {
 			if (batch === this || batch.is_fork) continue;
 
-			// A batch is blocked on an earlier batch if it overlaps with the earlier batch's changes but is not a superset
+			// If two batches intersect, the latter batch will be merged into the earlier batch,
+			// and we should treat them as a single set of changes
 			var intersects = false;
-			var differs = false;
 
 			if (batch.id < this.id) {
 				for (const [source, [, is_derived]] of batch.current) {
@@ -875,12 +875,14 @@ export class Batch {
 					// be triggered in one batch already but not the other one yet, causing a false-positive
 					if (is_derived) continue;
 
-					intersects ||= this.current.has(source);
-					differs ||= !this.current.has(source);
+					if (this.current.has(source)) {
+						intersects = true;
+						break;
+					}
 				}
 			}
 
-			if (!intersects || !differs) {
+			if (!intersects) {
 				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, previous);
