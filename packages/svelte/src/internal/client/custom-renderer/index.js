@@ -25,7 +25,8 @@ export function createRenderer(renderer) {
 		 * @param {{} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }} options
 		 */
 		render(Component, { target, props, context }) {
-			var cleanup = push_renderer(compound_renderer);
+			var pop_renderer = push_renderer(compound_renderer);
+
 			try {
 				/** @type {Exports} */
 				// @ts-expect-error will be defined because the render effect runs synchronously
@@ -51,7 +52,7 @@ export function createRenderer(renderer) {
 				});
 				return { component, unmount };
 			} finally {
-				cleanup();
+				pop_renderer();
 			}
 		}
 	};

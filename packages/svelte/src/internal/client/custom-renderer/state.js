@@ -1,6 +1,4 @@
-/**
- * @import { Renderer } from "./types.js";
- */
+/** @import { Renderer } from './types.js'; */
 
 /**
  * @type {Renderer<any, any, any, any> | null}
@@ -19,10 +17,11 @@ export function set_renderer(value) {
  * @param {Renderer<any, any, any, any> | null} value
  */
 export function push_renderer(value) {
-	let old_renderer = current_renderer;
+	var previous_renderer = current_renderer;
 	current_renderer = value;
+
 	return () => {
-		current_renderer = old_renderer;
+		current_renderer = previous_renderer;
 	};
 }
 
@@ -32,9 +31,13 @@ export function push_renderer(value) {
  * @returns {T}
  */
 export function without_renderer(fn) {
-	if (current_renderer === null) return fn();
-	let previous_renderer = current_renderer;
+	if (current_renderer === null) {
+		return fn();
+	}
+
+	var previous_renderer = current_renderer;
 	current_renderer = null;
+
 	try {
 		return fn();
 	} finally {
