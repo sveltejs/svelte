@@ -2568,7 +2568,94 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export function createRenderer<TFragment extends object = object, TElement extends object = object, TTextNode extends object = object, TComment extends object = object>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
+	type NodeType = 'fragment' | 'element' | 'text' | 'comment';
+
+	type RendererNodes<
+		Fragment extends object = object,
+		Element extends object = object,
+		TextNode extends object = object,
+		Comment extends object = object
+	> = { fragment: Fragment; element: Element; text: TextNode; comment: Comment };
+
+	type AnyNode<T extends RendererNodes> = T[NodeType];
+
+	export type Renderer<T extends RendererNodes = RendererNodes> = {
+		/** Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of its children. */
+		createFragment(): T['fragment'];
+
+		/** Creates an element with the given name. */
+		createElement(name: string): T['element'];
+
+		/** Creates a text node with the given data. */
+		createTextNode(data: string): T['text'];
+
+		/**
+		 * Creates a comment node with the given data.
+		 * This is often used as an anchor for inserting elements; it doesn't necessarily need to be rendered.
+		 */
+		createComment(data: string): T['comment'];
+
+		/** Should return the type of the node in string form. */
+		nodeType(node: AnyNode<T>): NodeType;
+
+		/**
+		 * Return the value of the node:
+		 * - text value of a text node
+		 * - data value of a comment
+		 * - null for elements and fragments
+		 */
+		getNodeValue(node: T['text'] | T['comment']): string | null;
+
+		/** Return the value of the attribute with the given name on the element, or null if it doesn't exist. */
+		getAttribute(element: T['element'], name: string): string | null;
+
+		/** Set the attribute with the given name and value on the element. */
+		setAttribute(element: T['element'], key: string, value: any): void;
+
+		/** Remove the attribute with the given name from the element. */
+		removeAttribute(element: T['element'], name: string): void;
+
+		/** Return true if the element has an attribute with the given name. */
+		hasAttribute(element: T['element'], name: string): boolean;
+
+		/**
+		 * Set the text content of the node to the given value.
+		 * This should work for both text nodes and elements.
+		 */
+		setText(node: T['element'] | T['text'] | T['comment'], text: string): void;
+
+		/** Return the first child of the element or fragment, or null if it has no children. */
+		getFirstChild(element: T['element'] | T['fragment']): AnyNode<T> | null;
+
+		/** Return the last child of the element or fragment, or null if it has no children. */
+		getLastChild(element: T['element'] | T['fragment']): AnyNode<T> | null;
+
+		/** Return the next sibling of the node, or null if it has no next sibling. */
+		getNextSibling(node: T['element'] | T['text'] | T['comment']): AnyNode<T> | null;
+
+		/**
+		 * Insert the element into the parent before the anchor.
+		 * If anchor is null, insert at the end.
+		 */
+		insert(
+			parent: T['element'] | T['fragment'],
+			element: AnyNode<T>,
+			anchor: T['element'] | T['text'] | T['comment'] | null
+		): void;
+
+		/** Remove the node from the tree. */
+		remove(node: T['element'] | T['text'] | T['comment']): void;
+
+		/** Return the parent of the element, or null if it has no parent. */
+		getParent(element: T['element'] | T['text'] | T['comment']): AnyNode<T> | null;
+
+		/** Add an event listener of the given type and handler to the target node. */
+		addEventListener(target: T['element'], type: string, handler: any, options?: any): void;
+
+		/** Remove an event listener of the given type and handler from the target node. */
+		removeEventListener(target: T['element'], type: string, handler: any, options?: any): void;
+	};
+	export function createRenderer<T extends RendererNodes>(renderer: Renderer<T>): Renderer<T> & {
 		render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 			target: TFragment | TElement | TTextNode | TComment;
 			props?: Props;
@@ -2581,94 +2668,6 @@ declare module 'svelte/renderer' {
 			component: Exports;
 			unmount: () => void;
 		};
-	};
-	type NodeType = 'fragment' | 'element' | 'text' | 'comment';
-
-	type Renderer<
-		TFragment extends object = object,
-		TElement extends object = object,
-		TTextNode extends object = object,
-		TComment extends object = object,
-		TNode extends TFragment | TElement | TTextNode | TComment =
-			| TFragment
-			| TElement
-			| TTextNode
-			| TComment
-	> = {
-		/** Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of its children. */
-		createFragment(): TFragment;
-
-		/** Creates an element with the given name. */
-		createElement(name: string): TElement;
-
-		/** Creates a text node with the given data. */
-		createTextNode(data: string): TTextNode;
-
-		/**
-		 * Creates a comment node with the given data.
-		 * This is often used as an anchor for inserting elements; it doesn't necessarily need to be rendered.
-		 */
-		createComment(data: string): TComment;
-
-		/** Should return the type of the node in string form. */
-		nodeType(node: TNode): NodeType;
-
-		/**
-		 * Return the value of the node:
-		 * - text value of a text node
-		 * - data value of a comment
-		 * - null for elements and fragments
-		 */
-		getNodeValue(node: TTextNode | TComment): string | null;
-
-		/** Return the value of the attribute with the given name on the element, or null if it doesn't exist. */
-		getAttribute(element: TElement, name: string): string | null;
-
-		/** Set the attribute with the given name and value on the element. */
-		setAttribute(element: TElement, key: string, value: any): void;
-
-		/** Remove the attribute with the given name from the element. */
-		removeAttribute(element: TElement, name: string): void;
-
-		/** Return true if the element has an attribute with the given name. */
-		hasAttribute(element: TElement, name: string): boolean;
-
-		/**
-		 * Set the text content of the node to the given value.
-		 * This should work for both text nodes and elements.
-		 */
-		setText(node: TElement | TTextNode | TComment, text: string): void;
-
-		/** Return the first child of the element or fragment, or null if it has no children. */
-		getFirstChild(element: TElement | TFragment): TNode | null;
-
-		/** Return the last child of the element or fragment, or null if it has no children. */
-		getLastChild(element: TElement | TFragment): TNode | null;
-
-		/** Return the next sibling of the node, or null if it has no next sibling. */
-		getNextSibling(node: TElement | TTextNode | TComment): TNode | null;
-
-		/**
-		 * Insert the element into the parent before the anchor.
-		 * If anchor is null, insert at the end.
-		 */
-		insert(
-			parent: TElement | TFragment,
-			element: TNode,
-			anchor: TElement | TTextNode | TComment | null
-		): void;
-
-		/** Remove the node from the tree. */
-		remove(node: TElement | TTextNode | TComment): void;
-
-		/** Return the parent of the element, or null if it has no parent. */
-		getParent(element: TElement | TTextNode | TComment): TNode | null;
-
-		/** Add an event listener of the given type and handler to the target node. */
-		addEventListener(target: TElement, type: string, handler: any, options?: any): void;
-
-		/** Remove an event listener of the given type and handler from the target node. */
-		removeEventListener(target: TElement, type: string, handler: any, options?: any): void;
 	};
 	/**
 	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
