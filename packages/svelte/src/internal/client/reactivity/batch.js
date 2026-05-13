@@ -472,8 +472,8 @@ export class Batch {
 		while (batch !== null) {
 			if (!batch.is_fork) {
 				// if the batches are connected, break
-				for (const [value, tuple] of this.current) {
-					if (batch.current.has(value) && !tuple[1]) {
+				for (const [value, [, is_derived]] of this.current) {
+					if (batch.current.has(value) && !is_derived) {
 						return batch;
 					}
 				}
@@ -660,7 +660,7 @@ export class Batch {
 
 			if (is_earlier) {
 				// TODO do we need to restart these in some cases, instead of
-				// immediately resolving them?
+				// immediately resolving them? Likely not because of how this.apply() works.
 				for (const [effect, deferred] of this.async_deriveds) {
 					const d = batch.async_deriveds.get(effect);
 					if (d) deferred.promise.then(d.resolve);
@@ -869,7 +869,7 @@ export class Batch {
 
 			if (batch.id < this.id) {
 				for (const [source, [, is_derived]] of batch.current) {
-					// Derived values don't partake in the blocking mechanism, because a derived could
+					// Derived values don't partake in the intersection mechanism, because a derived could
 					// be triggered in one batch already but not the other one yet, causing a false-positive
 					if (is_derived) continue;
 
@@ -880,6 +880,11 @@ export class Batch {
 				}
 			}
 
+			// Since the latter batch merges into the earlier (if it resolves before the earlier one),
+			// we treat the earlier values as "already applied". This way we don't need to rerun async
+			// effects of the earlier batch in case they are merged.
+			// As a result you can think of batch_values as having the latest values of all intersecting
+			// batches up until this batch.
 			if (!intersects) {
 				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
