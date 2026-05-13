@@ -288,15 +288,19 @@ export class Batch {
 			}
 		}
 
-		for (const e of this.#dirty_effects) {
-			this.#maybe_dirty_effects.delete(e);
-			set_signal_status(e, DIRTY);
-			this.schedule(e);
-		}
+		// we only reschedule previously-deferred effects if we expect
+		// to be able to run them after processing the batch
+		if (!this.#is_deferred()) {
+			for (const e of this.#dirty_effects) {
+				this.#maybe_dirty_effects.delete(e);
+				set_signal_status(e, DIRTY);
+				this.schedule(e);
+			}
 
-		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			this.schedule(e);
+			for (const e of this.#maybe_dirty_effects) {
+				set_signal_status(e, MAYBE_DIRTY);
+				this.schedule(e);
+			}
 		}
 
 		const roots = this.#roots;
