@@ -40,7 +40,6 @@ import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
-import { OBSOLETE } from './deriveds.js';
 
 /** @type {Batch | null} */
 let first_batch = null;
@@ -293,21 +292,11 @@ export class Batch {
 			this.#maybe_dirty_effects.delete(e);
 			set_signal_status(e, DIRTY);
 			this.schedule(e);
-
-			// don't run async effects again (TODO this should be unnecessary with an incremental approach)
-			if ((e.f & ASYNC) !== 0) {
-				this.#dirty_effects.delete(e);
-			}
 		}
 
 		for (const e of this.#maybe_dirty_effects) {
 			set_signal_status(e, MAYBE_DIRTY);
 			this.schedule(e);
-
-			// don't run async effects again (TODO this should be unnecessary with an incremental approach)
-			if ((e.f & ASYNC) !== 0) {
-				this.#dirty_effects.delete(e);
-			}
 		}
 
 		const roots = this.#roots;
@@ -512,7 +501,9 @@ export class Batch {
 		/**
 		 * mark all effects that depend on `batch.current`, except the
 		 * async effects that we just resolved (TODO unless they depend
-		 * on values in this batch that are NOT in the later batch?)
+		 * on values in this batch that are NOT in the later batch?).
+		 * Through this we also will populate the correct #skipped_branches,
+		 * oncommit callbacks etc, so we don't need to merge them separately.
 		 * @param {Value} value
 		 */
 		const mark = (value) => {
@@ -529,7 +520,8 @@ export class Batch {
 
 					if (flags & (ASYNC | BLOCK_EFFECT) && !this.async_deriveds.has(effect)) {
 						this.#maybe_dirty_effects.delete(effect);
-						this.#dirty_effects.add(effect);
+						set_signal_status(effect, DIRTY);
+						this.schedule(effect);
 					}
 				}
 			}
