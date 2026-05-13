@@ -26,3 +26,7 @@ tmp
 benchmarking/.profiles
 benchmarking/compare/.results
 benchmarking/compare/.profiles
+
+# Added by @sveltejs/target
+.tar-get/.vercel
+*.tgz

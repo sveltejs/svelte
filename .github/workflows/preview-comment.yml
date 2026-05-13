@@ -1,0 +1,166 @@
+# Posts/updates a PR comment with install instructions for each `@sveltejs/target`
+# preview deployment, and assigns a `{short_sha}.{ALIAS_DOMAIN}` alias when
+# `ALIAS_DOMAIN` is configured below. Triggered by Vercel's `repository_dispatch`
+# events. See https://vercel.com/docs/git/vercel-for-github#repository-dispatch-events
+#
+# Requirements:
+#   - `VERCEL_TOKEN` secret (Vercel → Account Settings → Tokens, scoped to the
+#     team that owns the preview project). Only needed when `ALIAS_DOMAIN` is
+#     set; without it, the workflow doesn't talk to the Vercel API at all.
+#   - For SHA aliases: a custom domain added to the team with a wildcard
+#     subdomain (`*.{ALIAS_DOMAIN}`) verified.
+
+name: Preview deployment comment
+
+on:
+  repository_dispatch:
+    types:
+      - vercel.deployment.success
+      - vercel.deployment.error
+      - vercel.deployment.canceled
+      - vercel.deployment.failed
+      - vercel.deployment.pending
+
+# `client_payload.environment` is `production` for the production deployment;
+# we only care about previews here.
+jobs:
+  comment:
+    if: github.event.client_payload.environment == 'preview'
+    runs-on: ubuntu-latest
+    # Scope `VERCEL_TOKEN` to this workflow only. GitHub auto-creates the
+    # environment on first run if it doesn't already exist; add the secret
+    # at `Settings → Environments → @sveltejs/target → Add secret`.
+    environment: '@sveltejs/target'
+    permissions:
+      pull-requests: write
+    env:
+      # Domain for per-SHA aliases. Leave empty to skip aliasing.
+      ALIAS_DOMAIN: 'pkg.svelte.dev'
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      TEAM_SLUG: 'svelte'
+    steps:
+      - name: Manage preview comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { ALIAS_DOMAIN, VERCEL_TOKEN, TEAM_SLUG } = process.env;
+            const payload = context.payload.client_payload;
+            const { id, url, state, git, alias = [] } = payload;
+            const { sha, shortSha } = git;
+
+            const MARKER = '<!-- @sveltejs/target preview-comment -->';
+
+            // The branch alias is the one containing `-git-`. Falls back to
+            // the deployment URL if Vercel didn't include the alias list (the
+            // `alias` field on `repository_dispatch` payloads is optional).
+            const branch_alias = alias.find((a) => a.includes('-git-'));
+            const branch_url = branch_alias ? `https://${branch_alias}` : `https://${url}`;
+            const sha_url = ALIAS_DOMAIN ? `https://${shortSha}.${ALIAS_DOMAIN}` : null;
+
+            // Assign the per-SHA alias on success. The only Vercel API call
+            // in this workflow — everything else uses payload fields or
+            // public deployment URLs.
+            if (state.type === 'success' && ALIAS_DOMAIN) {
+              const target = `${shortSha}.${ALIAS_DOMAIN}`;
+              const api = `https://api.vercel.com/v2/deployments/${id}/aliases?slug=${encodeURIComponent(TEAM_SLUG)}`;
+              const res = await fetch(api, {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${VERCEL_TOKEN}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ alias: target })
+              });
+              if (res.ok) {
+                core.info(`Assigned alias ${target} → ${id}`);
+              } else {
+                const text = await res.text();
+                core.warning(`Failed to assign SHA alias (${res.status}): ${text}`);
+              }
+            }
+
+            // Find an open PR whose head SHA matches the commit.
+            const { data: prs } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:pr is:open ${sha}`
+            });
+            const pr = prs.items.find((p) => p.pull_request);
+            if (!pr) {
+              core.info(`No open PR for ${sha}; nothing to comment on.`);
+              return;
+            }
+
+            // Fetch the package manifest from the deployment (only valid once
+            // the deployment is `READY`).
+            let packages = [];
+            if (state.type === 'success') {
+              try {
+                const res = await fetch(`https://${url}/manifest.json`);
+                if (res.ok) {
+                  const manifest = await res.json();
+                  packages = manifest.packages || [];
+                }
+              } catch (err) {
+                core.warning(`Could not fetch manifest.json: ${err.message}`);
+              }
+            }
+
+            const status_label = {
+              success: '✅ Ready',
+              pending: '⏳ Building',
+              error: '❌ Error',
+              failed: '❌ Failed',
+              canceled: '🚫 Canceled'
+            }[state.type] || state.type;
+
+            const install_block = packages.length === 0
+              ? '_Deployment is not ready yet._'
+              : packages
+                  .map((p) => `\`\`\`sh\npnpm add ${branch_url}/${p.name}\n\`\`\``)
+                  .join('\n');
+
+            const sha_pin_block = sha_url && packages.length > 0
+              ? `\n<details>\n<summary>Pin to this commit (\`${shortSha}\`)</summary>\n\n${packages
+                  .map((p) => `\`\`\`sh\npnpm add ${sha_url}/${p.name}\n\`\`\``)
+                  .join('\n')}\n\n</details>\n`
+              : '';
+
+            const body = [
+              MARKER,
+              `### Preview build — ${status_label}`,
+              ``,
+              `Commit: [\`${shortSha}\`](${context.payload.repository.html_url}/commit/${sha})`,
+              ``,
+              `**Latest on this branch:** ${branch_url}`,
+              ``,
+              install_block,
+              sha_pin_block
+            ].join('\n');
+
+            // Find an existing comment by us and update in-place, otherwise
+            // create a new one. The hidden marker is how we identify our own
+            // comment across re-runs.
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              per_page: 100
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(MARKER));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+              core.info(`Updated PR #${pr.number} comment.`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body
+              });
+              core.info(`Created comment on PR #${pr.number}.`);
+            }
