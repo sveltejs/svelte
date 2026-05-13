@@ -138,14 +138,6 @@ const visitors = {
 	VariableDeclaration
 };
 
-function get_imports() {
-	const imports = [b.import_all('$', 'svelte/internal/client')];
-	if (custom_renderer) {
-		imports.push(b.imports([['$renderer', '$renderer', true]], custom_renderer));
-	}
-	return imports;
-}
-
 /**
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
@@ -159,7 +151,7 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [...get_imports(), ...analysis.instance_body.hoisted],
+		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -574,7 +566,9 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
-	if (!custom_renderer) {
+	if (custom_renderer) {
+		body.unshift(b.imports([['$renderer', '$renderer', true]], custom_renderer));
+	} else {
 		body.unshift(b.imports([], 'svelte/internal/init-operations'));
 	}
 
