@@ -2067,9 +2067,9 @@ export interface SvelteHTMLElements {
 	};
 	'svelte:head': { [name: string]: any };
 	'svelte:boundary': {
-		onerror?: (error: unknown, reset: () => void) => void;
-		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
-		pending?: import('svelte').Snippet;
+		onerror?: ((error: unknown, reset: () => void) => void) | null | undefined;
+		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]> | null | undefined;
+		pending?: import('svelte').Snippet | null | undefined;
 	};
 
 	[name: string]: { [name: string]: any };
