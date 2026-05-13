@@ -479,8 +479,10 @@ export class Batch {
 		while (batch !== null) {
 			if (!batch.is_fork) {
 				// if the batches are connected, break
-				for (const value of this.current.keys()) {
-					if (batch.current.has(value)) return batch;
+				for (const [value, tuple] of this.current) {
+					if (batch.current.has(value) && !tuple[1]) {
+						return batch;
+					}
 				}
 			}
 
