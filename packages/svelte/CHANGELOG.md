@@ -1,5 +1,49 @@
 # svelte
 
+## 5.55.6
+
+### Patch Changes
+
+- fix: leave stale promises to wait for a later resolution, instead of rejecting ([#18180](https://github.com/sveltejs/svelte/pull/18180))
+
+- fix: keep dependencies of `$state.eager/pending` ([#18218](https://github.com/sveltejs/svelte/pull/18218))
+
+- fix: reapply context after transforming error during SSR ([#18099](https://github.com/sveltejs/svelte/pull/18099))
+
+- fix: don't rebase just-created batches ([#18117](https://github.com/sveltejs/svelte/pull/18117))
+
+- chore: allow `null` for `pending` in typings ([#18201](https://github.com/sveltejs/svelte/pull/18201))
+
+- fix: flush eager effects in production ([#18107](https://github.com/sveltejs/svelte/pull/18107))
+
+- fix: rethrow error of failed iterable after calling `return()` ([#18169](https://github.com/sveltejs/svelte/pull/18169))
+
+- fix: account for proxified instance when updating `bind:this` ([#18147](https://github.com/sveltejs/svelte/pull/18147))
+
+- fix: ensure scheduled batch is flushed if not obsolete ([#18131](https://github.com/sveltejs/svelte/pull/18131))
+
+- fix: resolve stale deriveds with latest value ([#18167](https://github.com/sveltejs/svelte/pull/18167))
+
+- chore: remove unnecessary `increment_pending` calls ([#18183](https://github.com/sveltejs/svelte/pull/18183))
+
+- fix: correctly compile component member expressions for SSR ([#18192](https://github.com/sveltejs/svelte/pull/18192))
+
+- fix: reset `source.updated` stack traces after `flush` ([#18196](https://github.com/sveltejs/svelte/pull/18196))
+
+- fix: replacing async 'blocking' strategy with 'merging' ([#18205](https://github.com/sveltejs/svelte/pull/18205))
+
+- fix: allow `@debug` tags to reference awaited variables ([#18138](https://github.com/sveltejs/svelte/pull/18138))
+
+- fix: re-run fallback props if dependencies update ([#18146](https://github.com/sveltejs/svelte/pull/18146))
+
+- fix: abort running obsolete async branches ([#18118](https://github.com/sveltejs/svelte/pull/18118))
+
+- fix: ignore comments when reading CSS values ([#18153](https://github.com/sveltejs/svelte/pull/18153))
+
+- fix: wrap `Promise.all` in `save` during SSR ([#18178](https://github.com/sveltejs/svelte/pull/18178))
+
+- fix: ignore false-positive errors of `$inspect` dependencies ([#18106](https://github.com/sveltejs/svelte/pull/18106))
+
 ## 5.55.5
 
 ### Patch Changes
