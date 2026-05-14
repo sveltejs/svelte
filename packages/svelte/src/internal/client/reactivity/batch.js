@@ -1235,33 +1235,27 @@ function eager_flush() {
 	});
 }
 
+/** @type {Map<Reaction, Source<number>>} */
+var version_map = new Map();
+
 /**
  * Implementation of `$state.eager(fn())`
  * @template T
- * @param {Map<Effect | null, Source<number>>} version_map
  * @param {() => T} fn
  * @returns {T}
  */
-export function eager(version_map, fn) {
+export function eager(fn) {
 	var initial = true;
 	var value = /** @type {T} */ (undefined);
 
-	// To prevent an each block or a reusable function with a $state.eager to rerun
-	// all the unrelated effects at once, we traverse up the tree until we find a branch,
-	// which will be right below a block effect we care about. To prevent memory leaks
-	// we also have to remove the entry from the map if the branch is removed.
-	let e = active_effect;
-	while (e !== null && (e.f & BRANCH_EFFECT) === 0) {
-		e = e.parent;
-	}
-	let version = version_map.get(e) ?? source(0);
-	version_map.set(e, version);
+	let parent = /** @type {Reaction} */ (active_reaction);
 
-	if (e) {
-		teardown(() => {
-			if (e.f & DESTROYING) version_map.delete(e);
-		});
-	}
+	let version = version_map.get(parent) ?? source(0);
+	version_map.set(parent, version);
+
+	teardown(() => {
+		if (parent.f & DESTROYING) version_map.delete(parent);
+	});
 
 	get(version);
 
