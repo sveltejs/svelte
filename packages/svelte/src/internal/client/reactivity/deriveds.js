@@ -100,7 +100,7 @@ export function derived(fn) {
 	return signal;
 }
 
-const OBSOLETE = {};
+export const OBSOLETE = Symbol('obsolete');
 
 /**
  * @template V
@@ -125,8 +125,8 @@ export function async_derived(fn, label, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
-	var deferreds = new Map();
+	/** @type {Set<ReturnType<typeof deferred<V>>>} */
+	var deferreds = new Set();
 
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
@@ -188,7 +188,7 @@ export function async_derived(fn, label, location) {
 			}
 
 			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
-				deferreds.get(batch)?.reject(OBSOLETE);
+				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
 				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
@@ -197,7 +197,8 @@ export function async_derived(fn, label, location) {
 				}
 			}
 
-			deferreds.set(batch, d);
+			deferreds.add(d);
+			batch.async_deriveds.set(effect, d);
 		}
 
 		/**
@@ -210,7 +211,7 @@ export function async_derived(fn, label, location) {
 			}
 
 			decrement_pending?.();
-			deferreds.delete(batch);
+			deferreds.delete(d);
 
 			if (error === OBSOLETE) return;
 
@@ -227,18 +228,6 @@ export function async_derived(fn, label, location) {
 				}
 
 				internal_set(signal, value);
-
-				// All prior async derived runs are now stale
-				for (const [b, d] of deferreds) {
-					if (b.id < batch.id) {
-						// Don't delete + resolve directly, instead only do that once
-						// the current batch commits. This way we avoid tearing when
-						// `b` is rendering through the early resolve while `batch` is
-						// still pending.
-						batch.unblocked.add(effect);
-						batch.oncommit(() => d.resolve(value));
-					}
-				}
 
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);
@@ -259,7 +248,7 @@ export function async_derived(fn, label, location) {
 	});
 
 	teardown(() => {
-		for (const d of deferreds.values()) {
+		for (const d of deferreds) {
 			d.reject(OBSOLETE);
 		}
 	});
