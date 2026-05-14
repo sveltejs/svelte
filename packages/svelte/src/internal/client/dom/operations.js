@@ -6,10 +6,14 @@ import { get_descriptor, is_extensible } from '../../shared/utils.js';
 import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
 import {
-	TEXT_NODE,
+	ATTRIBUTES_CACHE,
+	CLASS_CACHE,
 	REACTION_RAN,
-	CUSTOM_RENDERER_NODE_TYPE_MAP,
-	COMMENT_NODE
+	STYLE_CACHE,
+	TEXT_CACHE,
+	TEXT_NODE,
+  COMMENT_NODE,
+  CUSTOM_RENDERER_NODE_TYPE_MAP
 } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
@@ -54,21 +58,15 @@ export function init_operations() {
 
 	if (is_extensible(element_prototype)) {
 		// the following assignments improve perf of lookups on DOM nodes
-		// @ts-expect-error
-		element_prototype.__click = undefined;
-		// @ts-expect-error
-		element_prototype.__className = undefined;
-		// @ts-expect-error
-		element_prototype.__attributes = null;
-		// @ts-expect-error
-		element_prototype.__style = undefined;
+		/** @type {any} */ (element_prototype)[CLASS_CACHE] = undefined;
+		/** @type {any} */ (element_prototype)[ATTRIBUTES_CACHE] = null;
+		/** @type {any} */ (element_prototype)[STYLE_CACHE] = undefined;
 		// @ts-expect-error
 		element_prototype.__e = undefined;
 	}
 
 	if (is_extensible(text_prototype)) {
-		// @ts-expect-error
-		text_prototype.__t = undefined;
+		/** @type {any} */ (text_prototype)[TEXT_CACHE] = undefined;
 	}
 
 	if (DEV) {

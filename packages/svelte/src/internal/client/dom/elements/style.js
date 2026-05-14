@@ -1,4 +1,5 @@
 import { to_style } from '../../../shared/attributes.js';
+import { STYLE_CACHE } from '../../constants.js';
 import { hydrating } from '../hydration.js';
 import {
 	style_remove_property,
@@ -35,8 +36,7 @@ function update_styles(dom, prev = {}, next, priority) {
  * @param {Record<string, any> | [Record<string, any>, Record<string, any>]} [next_styles]
  */
 export function set_style(dom, value, prev_styles, next_styles) {
-	// @ts-expect-error
-	var prev = dom.__style;
+	var prev = /** @type {any} */ (dom)[STYLE_CACHE];
 
 	if (hydrating || prev !== value) {
 		var next_style_attr = to_style(value, next_styles);
@@ -49,8 +49,7 @@ export function set_style(dom, value, prev_styles, next_styles) {
 			}
 		}
 
-		// @ts-expect-error
-		dom.__style = value;
+		/** @type {any} */ (dom)[STYLE_CACHE] = value;
 	} else if (next_styles) {
 		if (Array.isArray(next_styles)) {
 			update_styles(dom, prev_styles?.[0], next_styles[0]);
