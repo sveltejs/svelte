@@ -12,7 +12,7 @@ import {
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
-import { has_await_expression } from '../../../../../utils/ast.js';
+import { has_await_expression, save } from '../../../../../utils/ast.js';
 import { ExpressionMetadata } from '../../../../nodes.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
@@ -360,7 +360,7 @@ export class PromiseOptimiser {
 
 		return b.const(
 			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
-			b.await(b.call('Promise.all', promises))
+			save(b.call('Promise.all', promises))
 		);
 	}
 

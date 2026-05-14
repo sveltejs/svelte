@@ -715,7 +715,12 @@ export class Renderer {
 						const { context, failed, transformError } = item.#boundary;
 
 						set_ssr_context(context);
-						let transformed = await transformError(error);
+
+						let promise = transformError(error);
+						set_ssr_context(null);
+
+						let transformed = await promise;
+						set_ssr_context(context);
 
 						// Render the failed snippet instead of the partial children content
 						const failed_renderer = new Renderer(item.global, item);
