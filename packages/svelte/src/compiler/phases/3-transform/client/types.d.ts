@@ -15,8 +15,6 @@ import type { Template } from './transform-template/template.js';
 import type { Memoizer } from './visitors/shared/utils.js';
 
 export interface ClientTransformState extends TransformState {
-	readonly hoisted: Array<Statement | ModuleDeclaration>;
-
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
 	 * us to rewrite `this.foo` as `this.#foo.value`
@@ -41,6 +39,7 @@ export interface ClientTransformState extends TransformState {
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
 	readonly options: ValidatedCompileOptions;
+	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
 	readonly store_to_invalidate?: string;
 

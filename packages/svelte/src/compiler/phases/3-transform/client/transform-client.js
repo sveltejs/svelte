@@ -693,7 +693,6 @@ export function client_module(analysis, options) {
 	const state = {
 		analysis,
 		options,
-		hoisted: [],
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		state_fields: new Map(),
@@ -715,6 +714,6 @@ export function client_module(analysis, options) {
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [...body, ...state.hoisted, ...module.body]
+		body: [...body, ...module.body]
 	};
 }

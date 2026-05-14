@@ -50,12 +50,11 @@ export function CallExpression(node, context) {
 			return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
 		}
 
-		case '$state.eager': {
+		case '$state.eager':
 			return b.call(
 				'$.eager',
 				b.thunk(/** @type {Expression} */ (context.visit(node.arguments[0])))
 			);
-		}
 
 		case '$state.snapshot':
 			return b.call(
@@ -81,10 +80,8 @@ export function CallExpression(node, context) {
 				.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
 			);
 
-		case '$effect.pending': {
-			// Keep a stable source for the pending state across reruns to properly notify dependencies
+		case '$effect.pending':
 			return b.call('$.eager', b.thunk(b.call('$.pending')));
-		}
 
 		case '$inspect':
 		case '$inspect().with':
