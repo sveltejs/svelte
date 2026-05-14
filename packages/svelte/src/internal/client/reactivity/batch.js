@@ -1248,7 +1248,11 @@ export function eager(fn) {
 	var initial = true;
 	var value = /** @type {T} */ (undefined);
 
-	let parent = /** @type {Reaction} */ (active_reaction);
+	if (active_reaction === null) {
+		return fn();
+	}
+
+	let parent = active_reaction;
 
 	let version = version_map.get(parent) ?? source(0);
 	version_map.set(parent, version);
