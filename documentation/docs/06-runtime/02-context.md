@@ -163,6 +163,52 @@ export const [getCounter, setCounter] = createContext<Counter>();
 
 Svelte will warn you if you get it wrong.
 
+If the state needs to be reassigned, such as with a primitive value, pass a function that reads the current value:
+
+<!-- codeblock:start {"title":"Context with reassignable state"} -->
+```svelte
+<!--- file: App.svelte --->
+<script>
+	import { setCount } from './context.ts';
+	import Child from './Child.svelte';
+
+	let count = $state(0);
+
+	setCount(() => count);
+</script>
+
+<button onclick={() => count += 1}>
+	increment
+</button>
+
+<Child />
+
+<button onclick={() => count = 0}>
+	reset
+</button>
+```
+
+```svelte
+<!--- file: Child.svelte --->
+<script>
+	import { getCount } from './context.ts';
+
+	const count = getCount();
+</script>
+
+<p>{count()}</p>
+```
+
+```ts
+/// file: context.ts
+import { createContext } from 'svelte';
+
+export const [getCount, setCount] = createContext<() => number>();
+```
+<!-- codeblock:end -->
+
+This keeps the consumer from capturing the initial value.
+
 ## Component testing
 
 When writing [component tests](testing#Unit-and-component-tests-with-Vitest-Component-testing), it can be useful to create a wrapper component that sets the context in order to check the behaviour of a component that uses it. As of version 5.49, you can do this sort of thing:
