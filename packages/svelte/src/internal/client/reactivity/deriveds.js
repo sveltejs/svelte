@@ -338,7 +338,12 @@ export function execute_derived(derived) {
 	var prev_active_effect = active_effect;
 	var parent = derived.parent;
 
-	if (!is_destroying_effect && parent !== null && (parent.f & (DESTROYED | INERT)) !== 0) {
+	if (
+		!is_destroying_effect &&
+		parent !== null &&
+		derived.v !== UNINITIALIZED && // if it was never evaluated before, it's guaranteed to fail downstream, so we try to execute instead
+		(parent.f & (DESTROYED | INERT)) !== 0
+	) {
 		w.derived_inert();
 
 		return derived.v;
