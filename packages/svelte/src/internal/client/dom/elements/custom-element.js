@@ -121,6 +121,9 @@ if (typeof HTMLElement === 'function') {
 						} else {
 							$$slots[name] = create_slot(name);
 						}
+					} else if (name === 'default') {
+						this.$$d.children = create_slot(name);
+						$$slots.default = true;
 					}
 				}
 				for (const attribute of this.attributes) {
