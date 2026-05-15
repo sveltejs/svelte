@@ -1,3 +1,4 @@
+import { DEV } from 'esm-env';
 import { to_style } from '../../../shared/attributes.js';
 import { hydrating } from '../hydration.js';
 
@@ -15,10 +16,18 @@ function update_styles(dom, prev = {}, next, priority) {
 			if (value == null) {
 				dom.style.removeProperty(key);
 			} else {
+				var str_value = String(value);
+
+				if (DEV && /;+\s*$/.test(str_value)) {
+					// eslint-disable-next-line no-console
+					console.warn(
+						`[svelte] Style directive value for "${key}" has a trailing semicolon which is invalid and will be removed. Remove the trailing ";" from the value.`
+					);
+				}
+
 				// setProperty rejects values with trailing semicolons; strip them so that
 				// reactive updates behave consistently with the initial cssText assignment
-				var str_value = String(value).replace(/;+\s*$/, '');
-				dom.style.setProperty(key, str_value, priority);
+				dom.style.setProperty(key, str_value.replace(/;+\s*$/, ''), priority);
 			}
 		}
 	}
