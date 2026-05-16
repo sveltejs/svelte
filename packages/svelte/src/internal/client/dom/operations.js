@@ -12,8 +12,8 @@ import {
 	STYLE_CACHE,
 	TEXT_CACHE,
 	TEXT_NODE,
-  COMMENT_NODE,
-  CUSTOM_RENDERER_NODE_TYPE_MAP
+	COMMENT_NODE,
+	CUSTOM_RENDERER_NODE_TYPE_MAP
 } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
