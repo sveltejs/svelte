@@ -32,7 +32,7 @@ You can also bind to the following properties:
 - `outerHeight`
 - `scrollX`
 - `scrollY`
-- `online` — an alias for `window.navigator.onLine`
+- `online` — an alias for `window.navigator.online`
 - `devicePixelRatio`
 
 All except `scrollX` and `scrollY` are readonly.
