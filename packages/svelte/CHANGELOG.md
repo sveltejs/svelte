@@ -1,5 +1,19 @@
 # svelte
 
+## 5.55.8
+
+### Patch Changes
+
+- fix(print): handle `svelte:body` and fix keyframe percentage double-printing ([#18234](https://github.com/sveltejs/svelte/pull/18234))
+
+- fix: execute uninitialized derived even if it's destroyed ([#18228](https://github.com/sveltejs/svelte/pull/18228))
+
+- fix: use named symbols everywhere ([#18238](https://github.com/sveltejs/svelte/pull/18238))
+
+- fix: don't run teardown effects when deriveds are unfreezed ([#18227](https://github.com/sveltejs/svelte/pull/18227))
+
+- fix: unset context synchronously in `run` ([#18236](https://github.com/sveltejs/svelte/pull/18236))
+
 ## 5.55.7
 
 ### Patch Changes
