@@ -142,6 +142,21 @@ export function capture() {
 	};
 }
 
+let restore_batch = true;
+
+/**
+ * Use with care / only if unavoidable; currently only needed for `{#await ...}` blocks.
+ * @param {Function} fn
+ */
+export function without_batch_restore(fn) {
+	restore_batch = false;
+	try {
+		return fn();
+	} finally {
+		restore_batch = true;
+	}
+}
+
 /**
  * Wraps an `await` expression in such a way that the effect context that was
  * active before the expression evaluated can be reapplied afterwards —
@@ -151,11 +166,12 @@ export function capture() {
  * @returns {Promise<() => T>}
  */
 export async function save(promise) {
+	var with_batch = restore_batch;
 	var restore = capture();
 	var value = await promise;
 
 	return () => {
-		restore();
+		restore(with_batch);
 		return value;
 	};
 }

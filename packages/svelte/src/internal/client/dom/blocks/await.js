@@ -12,9 +12,10 @@ import {
 import { queue_micro_task } from '../task.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { is_runes } from '../../context.js';
-import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
+import { Batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
-import { capture, unset_context } from '../../reactivity/async.js';
+import { capture, unset_context, without_batch_restore } from '../../reactivity/async.js';
+import { DEV } from 'esm-env';
 
 const PENDING = 0;
 const THEN = 1;
@@ -42,16 +43,19 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var value = runes ? source(v) : mutable_source(v, false, false);
 	var error = runes ? source(v) : mutable_source(v, false, false);
 
+	if (DEV) {
+		value.label = '{#await ...} value';
+		error.label = '{#await ...} error';
+	}
+
 	var branches = new BranchManager(node);
 
 	block(() => {
-		var batch = /** @type {Batch} */ (current_batch);
-
-		// we null out `current_batch` because otherwise `save(...)` will incorrectly restore it —
-		// the batch will already have been committed by the time it resolves
-		batch.deactivate();
-		var input = get_input();
-		batch.activate();
+		// we ignore `current_batch` because otherwise `save(...)` will incorrectly restore it —
+		// the batch will already have been committed by the time it resolves. We're not using
+		// batch.deactivate()/activate() here because get_input() could write to sources, which
+		// would then incorrectly create a new batch.
+		var input = without_batch_restore(get_input);
 
 		var destroyed = false;
 

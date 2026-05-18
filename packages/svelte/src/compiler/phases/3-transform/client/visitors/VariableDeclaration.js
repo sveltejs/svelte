@@ -386,13 +386,21 @@ export function VariableDeclaration(node, context) {
  * @param {Expression} value
  */
 function create_state_declarators(declarator, context, value) {
+	/**
+	 * @param {Expression} value
+	 * @param {string} name
+	 */
+	const source = (value, name) => {
+		const call = b.call(
+			'$.mutable_source',
+			value,
+			context.state.analysis.immutable ? b.true : undefined
+		);
+		return dev ? b.call('$.tag', call, b.literal(name)) : call;
+	};
+
 	if (declarator.id.type === 'Identifier') {
-		return [
-			b.declarator(
-				declarator.id,
-				b.call('$.mutable_source', value, context.state.analysis.immutable ? b.true : undefined)
-			)
-		];
+		return [b.declarator(declarator.id, source(value, declarator.id.name))];
 	}
 
 	const tmp = b.id(context.state.scope.generate('tmp'));
@@ -414,7 +422,7 @@ function create_state_declarators(declarator, context, value) {
 			return b.declarator(
 				path.node,
 				binding?.kind === 'state'
-					? b.call('$.mutable_source', value, context.state.analysis.immutable ? b.true : undefined)
+					? source(value, /** @type {Identifier} */ (path.node).name)
 					: value
 			);
 		})
