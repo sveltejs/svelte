@@ -46,31 +46,32 @@ export function IfBlock(node, context) {
 		}
 	}
 
-	if (context.state.options.preserveWhitespace) {
-		return;
-	}
-
-	let nested_if = get_mergeable_nested_if_block(node);
+	// Check if we can merge nested if blocks into this one, e.g.
+	// {#if foo}{#if bar}...{/if}{/if} --> {#if foo && bar}...{/if}
+	let nested_if = get_mergeable_nested_if_block(node, context.state.options.preserveWhitespace);
 
 	while (nested_if) {
 		node.test = b.logical('&&', node.test, nested_if.test);
 		node.consequent = nested_if.consequent;
 		node.metadata.expression.merge(nested_if.metadata.expression);
 
-		nested_if = get_mergeable_nested_if_block(node);
+		nested_if = get_mergeable_nested_if_block(node, context.state.options.preserveWhitespace);
 	}
 }
 
 /**
  * @param {AST.IfBlock} node
+ * @param {boolean} preserve_whitespace
  * @returns {AST.IfBlock | undefined}
  */
-function get_mergeable_nested_if_block(node) {
+function get_mergeable_nested_if_block(node, preserve_whitespace) {
 	if (node.alternate || !can_merge_expression(node)) {
 		return;
 	}
 
-	const nested = node.consequent.nodes.filter(is_content_node);
+	const nested = node.consequent.nodes.filter(
+		(node) => node.type !== 'Text' || preserve_whitespace || regex_not_whitespace.test(node.data)
+	);
 
 	if (
 		nested.length !== 1 ||
@@ -97,11 +98,4 @@ function can_merge_expression(node) {
 		!expression.has_assignment &&
 		!expression.has_blockers()
 	);
-}
-
-/**
- * @param {AST.SvelteNode} node
- */
-function is_content_node(node) {
-	return node.type !== 'Text' || regex_not_whitespace.test(node.data);
 }
