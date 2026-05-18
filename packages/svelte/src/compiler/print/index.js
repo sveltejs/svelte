@@ -247,7 +247,7 @@ const css_visitors = {
 	},
 
 	Percentage(node, context) {
-		context.write(`${node.value}%`);
+		context.write(node.value);
 	},
 
 	PseudoClassSelector(node, context) {
@@ -417,6 +417,7 @@ const svelte_visitors = (comments) => ({
 				const is_block_element =
 					child_node.type === 'RegularElement' ||
 					child_node.type === 'Component' ||
+					child_node.type === 'SvelteBody' ||
 					child_node.type === 'SvelteHead' ||
 					child_node.type === 'SvelteFragment' ||
 					child_node.type === 'SvelteBoundary' ||
@@ -819,6 +820,10 @@ const svelte_visitors = (comments) => ({
 		}
 
 		context.write('</style>');
+	},
+
+	SvelteBody(node, context) {
+		base_element(node, context, comments);
 	},
 
 	SvelteBoundary(node, context) {
