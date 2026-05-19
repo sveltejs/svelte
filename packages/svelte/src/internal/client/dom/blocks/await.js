@@ -7,7 +7,8 @@ import {
 	hydrating,
 	skip_nodes,
 	set_hydrate_node,
-	set_hydrating
+	set_hydrating,
+	hydrate_node
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
@@ -90,12 +91,6 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				}
 				// Make sure we have a batch, since the branch manager expects one to exist
 				Batch.ensure();
-
-				if (hydrating) {
-					// `restore()` could set `hydrating` to `true`, which we very much
-					// don't want — we want to restore everything _except_ this
-					set_hydrating(false);
-				}
 
 				try {
 					fn();
