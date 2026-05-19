@@ -679,7 +679,9 @@ export class Batch {
 					batch.discard();
 				}
 			} else if (sources.length > 0) {
-				if (DEV) {
+				// The microtask queue can contain the batch already scheduled to run right
+				// after this one is finished, so throwing the invariant would be wrong here.
+				if (DEV && !batch.#decrement_queued) {
 					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
 				}
 
@@ -732,7 +734,8 @@ export class Batch {
 				}
 
 				// Only apply and traverse when we know we triggered async work with marking the effects
-				if (batch.#roots.length > 0) {
+				// and know this won't run anyway right afterwards
+				if (batch.#roots.length > 0 && !batch.#decrement_queued) {
 					batch.apply();
 
 					for (var root of batch.#roots) {
