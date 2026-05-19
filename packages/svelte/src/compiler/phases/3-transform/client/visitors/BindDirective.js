@@ -169,6 +169,8 @@ export function BindDirective(node, context) {
 			case 'clientHeight':
 			case 'offsetWidth':
 			case 'offsetHeight':
+			case 'scrollWidth':
+			case 'scrollHeight':
 				call = b.call('$.bind_element_size', context.state.node, b.literal(node.name), set ?? get);
 				break;
 

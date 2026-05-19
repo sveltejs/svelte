@@ -850,6 +850,8 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	readonly 'bind:focused'?: boolean | undefined | null;
 	readonly 'bind:offsetWidth'?: number | undefined | null;
 	readonly 'bind:offsetHeight'?: number | undefined | null;
+	readonly 'bind:scrollWidth'?: number | undefined | null;
+	readonly 'bind:scrollHeight'?: number | undefined | null;
 
 	// allow any data- attribute
 	[key: `data-${string}`]: any;

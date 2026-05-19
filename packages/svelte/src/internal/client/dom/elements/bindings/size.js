@@ -93,7 +93,7 @@ export function bind_resize_observer(element, type, set) {
 
 /**
  * @param {HTMLElement} element
- * @param {'clientWidth' | 'clientHeight' | 'offsetWidth' | 'offsetHeight'} type
+ * @param {'clientWidth' | 'clientHeight' | 'offsetWidth' | 'offsetHeight' | 'scrollWidth' | 'scrollHeight'} type
  * @param {(size: number) => void} set
  */
 export function bind_element_size(element, type, set) {

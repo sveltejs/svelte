@@ -163,6 +163,14 @@ export const binding_properties = {
 		omit_in_ssr: true,
 		invalid_elements: ['svelte:window', 'svelte:document']
 	},
+	scrollWidth: {
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
+	},
+	scrollHeight: {
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
+	},
 	contentRect: {
 		omit_in_ssr: true,
 		invalid_elements: ['svelte:window', 'svelte:document']
