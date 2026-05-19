@@ -19,6 +19,6 @@ export default test({
 		resolve.click();
 		await tick();
 
-		assert.htmlEqual(target.innerHTML, '<button>increment</button> <button>resolve</button> 4 4');
+		assert.htmlEqual(target.innerHTML, '<button>increment</button> <button>resolve</button> 4 4 1');
 	}
 });

@@ -19,3 +19,4 @@
 <button onclick={() => queue.shift()?.()}>resolve</button>
 {#await request(count) then result}{result}{/await}
 {#await await push(count) + count then result}{result}{/await}
+{#await await 1 then result}{result}{/await}
