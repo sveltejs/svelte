@@ -3,16 +3,18 @@
 	export let clientHeight = 2;
 	export let offsetHeight = 3;
 	export let offsetWidth = 4;
+	export let scrollHeight = 5;
+	export let scrollWidth = 6;
 
-	export let audioDuration = 5;
-	export let audioBuffered = 6;
-	export let audioSeekable = 7;
-	export let audioPlayed = 8;
+	export let audioDuration = 7;
+	export let audioBuffered = 8;
+	export let audioSeekable = 9;
+	export let audioPlayed = 10;
 
-	export let videoDuration = 9;
-	export let videoBuffered = 10;
-	export let videoSeekable = 11;
-	export let videoPlayed = 12;
+	export let videoDuration = 11;
+	export let videoBuffered = 12;
+	export let videoSeekable = 13;
+	export let videoPlayed = 14;
 
 	export let value = '/some/file';
 </script>
@@ -22,6 +24,8 @@
 	bind:clientHeight
 	bind:offsetWidth
 	bind:offsetHeight
+	bind:scrollWidth
+	bind:scrollHeight
 ></div>
 
 <audio
