@@ -4,7 +4,7 @@ import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { get_current_url } from './url.js';
 
-export const REPLACE = Symbol();
+export const REPLACE = Symbol('replace');
 
 /**
  * A reactive version of the built-in [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) object.

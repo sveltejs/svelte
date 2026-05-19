@@ -338,7 +338,12 @@ export function execute_derived(derived) {
 	var prev_active_effect = active_effect;
 	var parent = derived.parent;
 
-	if (!is_destroying_effect && parent !== null && (parent.f & (DESTROYED | INERT)) !== 0) {
+	if (
+		!is_destroying_effect &&
+		parent !== null &&
+		derived.v !== UNINITIALIZED && // if it was never evaluated before, it's guaranteed to fail downstream, so we try to execute instead
+		(parent.f & (DESTROYED | INERT)) !== 0
+	) {
 		w.derived_inert();
 
 		return derived.v;
@@ -447,8 +452,8 @@ export function freeze_derived_effects(derived) {
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence
 			// of a teardown function is what determines whether the
-			// effect runs again during unfreezing
-			e.teardown = noop;
+			// effect runs again during unfreezing (but not for teardown-only effects)
+			if (e.fn !== null) e.teardown = noop;
 			e.ac = null;
 
 			remove_reactions(e, 0);
@@ -466,7 +471,7 @@ export function unfreeze_derived_effects(derived) {
 	for (const e of derived.effects) {
 		// if the effect was previously frozen — indicated by the presence
 		// of a teardown function — unfreeze it
-		if (e.teardown) {
+		if (e.teardown && e.fn !== null) {
 			update_effect(e);
 		}
 	}

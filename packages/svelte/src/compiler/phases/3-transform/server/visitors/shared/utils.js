@@ -229,18 +229,25 @@ export function build_attribute_value(
 				? node.data.replace(regex_whitespaces_strict, ' ')
 				: node.data;
 		} else {
-			expressions.push(
-				b.call(
-					'$.stringify',
-					transform(
-						/** @type {Expression} */ (context.visit(node.expression)),
-						node.metadata.expression
-					)
-				)
-			);
+			const evaluated = context.state.scope.evaluate(node.expression);
 
-			quasi = b.quasi('', i + 1 === value.length);
-			quasis.push(quasi);
+			if (evaluated.is_known) {
+				quasi.value.cooked += (evaluated.value ?? '') + '';
+			} else {
+				const expression = transform(
+					/** @type {Expression} */ (context.visit(node.expression)),
+					node.metadata.expression
+				);
+
+				expressions.push(
+					evaluated.is_string && evaluated.is_defined
+						? expression
+						: b.call('$.stringify', expression)
+				);
+
+				quasi = b.quasi('', i + 1 === value.length);
+				quasis.push(quasi);
+			}
 		}
 	}
 
@@ -248,7 +255,9 @@ export function build_attribute_value(
 		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
-	return b.template(quasis, expressions);
+	return expressions.length > 0
+		? b.template(quasis, expressions)
+		: b.literal(/** @type {string} */ (quasi.value.cooked));
 }
 
 /**

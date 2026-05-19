@@ -308,15 +308,21 @@ export function run(thunks) {
 			.then(() => {
 				restore();
 
-				if (errored) {
-					throw errored.error;
-				}
+				try {
+					if (errored) {
+						throw errored.error;
+					}
 
-				if (aborted(active)) {
-					throw STALE_REACTION;
-				}
+					if (aborted(active)) {
+						throw STALE_REACTION;
+					}
 
-				return fn();
+					return fn();
+				} finally {
+					// We gotta unset context directly in case the function returns a promise, in which case
+					// unset_context in .finally() would be too late ...
+					unset_context();
+				}
 			})
 			.catch(handle_error);
 
@@ -325,6 +331,7 @@ export function run(thunks) {
 
 		promise.finally(() => {
 			blocker.settled = true;
+			// ... but we also need it after such a promise has resolved in case it restores our context
 			unset_context();
 		});
 	}
