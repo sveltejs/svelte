@@ -1,5 +1,3 @@
-export type NodeType = 'fragment' | 'element' | 'text' | 'comment';
-
 export type Renderer<
 	TFragment extends object = object,
 	TElement extends object = object,
@@ -86,3 +84,19 @@ export type Renderer<
 	/** Remove an event listener of the given type and handler from the target node. */
 	removeEventListener(target: TElement, type: string, handler: any, options?: any): void;
 };
+
+export type RendererNodes<
+	Fragment extends object,
+	Element extends object,
+	TextNode extends object,
+	Comment extends object
+> = {
+	fragment: Fragment;
+	element: Element;
+	text: TextNode;
+	comment: Comment;
+};
+
+export type NodeType = keyof RendererNodes<any, any, any, any>;
+export type UnsetObject = object & { readonly __unset: unique symbol };
+export type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;

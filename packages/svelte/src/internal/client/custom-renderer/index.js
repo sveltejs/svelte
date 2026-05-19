@@ -1,5 +1,5 @@
 /** @import { ComponentContext } from '#client' */
-/** @import { Renderer } from "./types.js" */
+/** @import { Renderer, RendererNodes, DefaultNodes } from "./types.js" */
 /** @import { Component, ComponentType, SvelteComponent } from '../../../index.js' */
 import { boundary } from '../dom/blocks/boundary.js';
 import { branch, effect_root } from '../reactivity/effects.js';
@@ -8,10 +8,11 @@ import { push_renderer } from './state.js';
 import { get_parent_node, remove_child } from '../dom/operations.js';
 
 /**
- * @template {object} [TFragment=object]
- * @template {object} [TElement=object]
- * @template {object} [TTextNode=object]
- * @template {object} [TComment=object]
+ * @template {RendererNodes<object, object, object, object>} [T=DefaultNodes]
+ * @template {object} [TFragment=T extends DefaultNodes ? object : T['fragment']]
+ * @template {object} [TElement=T extends DefaultNodes ? object : T['element']]
+ * @template {object} [TTextNode=T extends DefaultNodes ? object : T['text']]
+ * @template {object} [TComment=T extends DefaultNodes ? object : T['comment']]
  * @param {Renderer<TFragment, TElement, TTextNode, TComment>} renderer
  * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }) => { component: Exports, unmount: () => void } }}
  */

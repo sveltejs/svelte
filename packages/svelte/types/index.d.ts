@@ -2568,7 +2568,7 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export function createRenderer<TFragment extends object = object, TElement extends object = object, TTextNode extends object = object, TComment extends object = object>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
+	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"]>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
 		render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 			target: TFragment | TElement | TTextNode | TComment;
 			props?: Props;
@@ -2582,8 +2582,6 @@ declare module 'svelte/renderer' {
 			unmount: () => void;
 		};
 	};
-	type NodeType = 'fragment' | 'element' | 'text' | 'comment';
-
 	type Renderer<
 		TFragment extends object = object,
 		TElement extends object = object,
@@ -2670,6 +2668,22 @@ declare module 'svelte/renderer' {
 		/** Remove an event listener of the given type and handler from the target node. */
 		removeEventListener(target: TElement, type: string, handler: any, options?: any): void;
 	};
+
+	type RendererNodes<
+		Fragment extends object,
+		Element extends object,
+		TextNode extends object,
+		Comment extends object
+	> = {
+		fragment: Fragment;
+		element: Element;
+		text: TextNode;
+		comment: Comment;
+	};
+
+	type NodeType = keyof RendererNodes<any, any, any, any>;
+	type UnsetObject = object & { readonly __unset: unique symbol };
+	type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;
 	/**
 	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
 	 * Use `mount` instead to instantiate components.
