@@ -52,7 +52,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var branches = new BranchManager(node);
 
 	block(() => {
-		var batch = current_batch;
+		var batch = /** @type {Batch} */ (current_batch);
 		var input = get_input();
 
 		var destroyed = false;
@@ -87,7 +87,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				// could write to sources, which would then incorrectly create a new batch or could mess with
 				// async_derived expecting a current_batch to exist.
 				if (current_batch === batch) {
-					batch?.deactivate();
+					batch.deactivate();
 				}
 				// Make sure we have a batch, since the branch manager expects one to exist
 				Batch.ensure();
