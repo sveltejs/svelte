@@ -5,7 +5,12 @@ import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate, delegated, event, event_symbol } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
-import { IS_XHTML, LOADING_ATTR_SYMBOL } from '#client/constants';
+import {
+	ATTRIBUTES_CACHE,
+	FORM_RESET_HANDLER,
+	IS_XHTML,
+	LOADING_ATTR_SYMBOL
+} from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { is_capture_event, can_delegate_event, normalize_attribute } from '../../../../utils.js';
 import {
@@ -69,8 +74,7 @@ export function remove_input_defaults(input) {
 		}
 	};
 
-	// @ts-expect-error
-	input.__on_r = remove_defaults;
+	/** @type {any} */ (input)[FORM_RESET_HANDLER] = remove_defaults;
 	queue_micro_task(remove_defaults);
 	add_form_reset_listener();
 }
@@ -561,8 +565,7 @@ export function attribute_effect(
  */
 function get_attributes(element) {
 	return /** @type {Record<string | symbol, unknown>} **/ (
-		// @ts-expect-error
-		element.__attributes ??= {
+		/** @type {any} */ (element)[ATTRIBUTES_CACHE] ??= {
 			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-'),
 			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
 		}
@@ -583,13 +586,19 @@ function get_setters(element) {
 	var proto = element; // In the case of custom elements there might be setters on the instance
 	var element_proto = Element.prototype;
 
-	// Stop at Element, from there on there's only unnecessary setters we're not interested in
+	// Stop at Element, from there on there's only unnecessary (and dangerous, like innerHTML) setters we're not interested in
 	// Do not use constructor.name here as that's unreliable in some browser environments
 	while (element_proto !== proto) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {
-			if (descriptors[key].set) {
+			if (
+				descriptors[key].set &&
+				// better safe than sorry, we don't want spread attributes to mess with HTML content
+				key !== 'innerHTML' &&
+				key !== 'textContent' &&
+				key !== 'innerText'
+			) {
 				setters.push(key);
 			}
 		}
