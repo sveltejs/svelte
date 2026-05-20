@@ -169,7 +169,7 @@
   "dependencies": {
     "@jridgewell/remapping": "^2.3.4",
     "@jridgewell/sourcemap-codec": "^1.5.0",
-    "@sveltejs/acorn-typescript": "^1.0.5",
+    "@sveltejs/acorn-typescript": "^1.0.10",
     "@types/estree": "^1.0.5",
     "@types/trusted-types": "^2.0.7",
     "acorn": "^8.12.1",
@@ -178,7 +178,7 @@
     "clsx": "^2.1.1",
     "devalue": "^5.8.1",
     "esm-env": "^1.2.1",
-    "esrap": "^2.2.4",
+    "esrap": "^2.2.9",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
