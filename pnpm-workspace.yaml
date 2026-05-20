@@ -1,9 +1,13 @@
-minimumReleaseAge: 1440
+minimumReleaseAge: 2880
 minimumReleaseAgeExclude:
   - '@sveltejs/*'
   - svelte
   - esrap
   - devalue
+  - zimmerframe
+  - prettier-plugin-svelte
+  - svelte-check
+  - esm-env
 blockExoticSubdeps: true
 
 packages:
