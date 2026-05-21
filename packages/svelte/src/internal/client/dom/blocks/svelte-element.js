@@ -88,9 +88,12 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				assign_nodes(element, element);
 
 				if (render_fn) {
+					var hydration_sentinel = null;
+
 					if (hydrating && is_raw_text_element(next_tag)) {
 						// prevent hydration glitches
-						element.append(document.createComment(''));
+						hydration_sentinel = document.createComment('');
+						element.append(hydration_sentinel);
 					}
 
 					// If hydrating, use the existing ssr comment as the anchor so that the
@@ -113,9 +116,12 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// need to call `render_fn` in order to run actions etc. If the element
 					// contains children, it's a user error (which is warned on elsewhere)
 					// and the DOM will be silently discarded
-					render_fn(element, child_anchor);
-
-					set_animation_effect_override(null);
+					try {
+						render_fn(element, child_anchor);
+					} finally {
+						hydration_sentinel?.remove();
+						set_animation_effect_override(null);
+					}
 				}
 
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
