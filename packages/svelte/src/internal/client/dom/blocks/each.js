@@ -428,6 +428,20 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 	var length = array.length;
 	var items = state.items;
+
+	// Fast path: pure reorder (no additions, removals, transitions, async items, or
+	// non-branch sibling effects). Uses a longest-increasing-subsequence pass that
+	// produces the minimum number of DOM moves. Falls through to the heuristic
+	// below for everything else.
+	if (
+		!is_animated &&
+		state.outrogroups === null &&
+		state.fallback === null &&
+		try_reconcile_lis(state, array, length, items, anchor, get_key)
+	) {
+		return;
+	}
+
 	var current = skip_to_branch(state.effect.first);
 
 	/** @type {undefined | Set<Effect>} */
@@ -740,6 +754,195 @@ function link(state, prev, next) {
 	} else {
 		next.prev = prev;
 	}
+}
+
+/**
+ * LIS fast path for pure reorders. Returns `true` on success, `false` if the
+ * caller should fall back to the legacy heuristic. Eligibility is checked
+ * inline as we walk; we bail the moment we see anything that disqualifies
+ * (transitions, outros, INERT items, offscreen items, non-branch siblings,
+ * length mismatch).
+ *
+ * The hot lockstep loop handles the no-reorder case (text update on existing
+ * rows) without allocating anything. Only on first divergence do we build the
+ * data structures for the LIS pass.
+ *
+ * @template V
+ * @param {EachState} state
+ * @param {Array<V>} array
+ * @param {number} length
+ * @param {Map<any, EachItem>} items
+ * @param {Element | Comment | Text} anchor
+ * @param {(value: V, index: number) => any} get_key
+ * @returns {boolean}
+ */
+function try_reconcile_lis(state, array, length, items, anchor, get_key) {
+	var current = state.effect.first;
+
+	for (var i = 0; i < length; i++) {
+		if (current === null) return false;
+		if ((current.f & BRANCH_EFFECT) === 0 || (current.f & INERT) !== 0) return false;
+		var next_e = /** @type {EachItem} */ (items.get(get_key(array[i], i))).e;
+		if ((next_e.f & EFFECT_OFFSCREEN) !== 0) return false;
+		if (next_e !== current) {
+			return reconcile_lis_suffix(state, array, length, items, anchor, get_key, i, current);
+		}
+		current = current.next;
+	}
+
+	// Reached end of new array — the chain must end here too, otherwise items
+	// were removed and the legacy path must handle the teardown.
+	return current === null;
+}
+
+/**
+ * Full LIS reorder pass. Called after `try_reconcile_lis`'s lockstep loop hits
+ * a divergence at position `i_start`. Positions `[0, i_start)` are guaranteed
+ * stable — same effect in same place — so we never touch them.
+ *
+ * @template V
+ * @param {EachState} state
+ * @param {Array<V>} array
+ * @param {number} length
+ * @param {Map<any, EachItem>} items
+ * @param {Element | Comment | Text} anchor
+ * @param {(value: V, index: number) => any} get_key
+ * @param {number} i_start First diverging new-array index
+ * @param {Effect} current_start Old-chain effect at position `i_start`
+ * @returns {boolean}
+ */
+function reconcile_lis_suffix(
+	state,
+	array,
+	length,
+	items,
+	anchor,
+	get_key,
+	i_start,
+	current_start
+) {
+	var suffix_len = length - i_start;
+
+	/** @type {Effect[]} */
+	var next_effects = new Array(suffix_len);
+	/** @type {Set<Effect>} */
+	var next_set = new Set();
+
+	// First entry is `current_start`'s would-be effect — already validated.
+	var first_key = get_key(array[i_start], i_start);
+	var first_e = /** @type {EachItem} */ (items.get(first_key)).e;
+	next_effects[0] = first_e;
+	next_set.add(first_e);
+
+	for (var k = 1; k < suffix_len; k++) {
+		var e = /** @type {EachItem} */ (items.get(get_key(array[i_start + k], i_start + k))).e;
+		if ((e.f & EFFECT_OFFSCREEN) !== 0) return false;
+		next_effects[k] = e;
+		next_set.add(e);
+	}
+
+	// Walk old chain suffix; every entry must be in the new-effect set, otherwise
+	// items got removed and we hand off to the legacy path.
+	/** @type {Map<Effect, number>} */
+	var old_index_by_effect = new Map();
+	/** @type {Effect | null} */
+	var current = current_start;
+	var old_count = 0;
+	while (current !== null) {
+		if ((current.f & BRANCH_EFFECT) === 0 || (current.f & INERT) !== 0) return false;
+		if (!next_set.has(current)) return false;
+		old_index_by_effect.set(current, old_count++);
+		current = current.next;
+	}
+
+	if (old_count !== suffix_len) return false;
+
+	/** @type {number[]} */
+	var new_to_old = new Array(suffix_len);
+	for (k = 0; k < suffix_len; k++) {
+		new_to_old[k] = /** @type {number} */ (old_index_by_effect.get(next_effects[k]));
+	}
+
+	var lis = compute_lis(new_to_old);
+	var lis_pointer = lis.length - 1;
+
+	// Move DOM right-to-left so the anchor for effect `k` is `next_effects[k+1]`
+	// which has already settled at its final DOM position.
+	for (k = suffix_len - 1; k >= 0; k--) {
+		if (lis_pointer >= 0 && k === lis[lis_pointer]) {
+			lis_pointer--;
+			continue;
+		}
+		var next_effect = k + 1 < suffix_len ? next_effects[k + 1] : null;
+		move(next_effects[k], next_effect, anchor);
+	}
+
+	// Patch the linked list. Prefix `[0, i_start)` is stable so its prev/next
+	// pointers are correct. We splice the new suffix in after the prefix tail
+	// (the effect immediately before `current_start` in the old chain, which is
+	// the same effect that should precede the new suffix head).
+	var prefix_tail = current_start.prev;
+	if (prefix_tail === null) {
+		state.effect.first = next_effects[0];
+	} else {
+		prefix_tail.next = next_effects[0];
+	}
+	next_effects[0].prev = prefix_tail;
+	for (k = 0; k < suffix_len - 1; k++) {
+		next_effects[k].next = next_effects[k + 1];
+		next_effects[k + 1].prev = next_effects[k];
+	}
+	next_effects[suffix_len - 1].next = null;
+	state.effect.last = next_effects[suffix_len - 1];
+
+	return true;
+}
+
+/**
+ * Longest-increasing-subsequence (returns indices into `arr` that form the LIS,
+ * in ascending order). Patience-sort variant; O(n log n).
+ * @param {number[]} arr
+ * @returns {number[]}
+ */
+function compute_lis(arr) {
+	var n = arr.length;
+	if (n === 0) return [];
+
+	/** @type {number[]} predecessor pointer for reconstruction */
+	var p = new Array(n);
+	/** @type {number[]} indices of LIS so far (values are indices into `arr`) */
+	var result = [0];
+
+	for (var i = 0; i < n; i++) {
+		var v = arr[i];
+		var last = result[result.length - 1];
+		if (arr[last] < v) {
+			p[i] = last;
+			result.push(i);
+			continue;
+		}
+		// binary search: leftmost position where arr[result[pos]] >= v
+		var u = 0;
+		var w = result.length - 1;
+		while (u < w) {
+			var c = (u + w) >> 1;
+			if (arr[result[c]] < v) u = c + 1;
+			else w = c;
+		}
+		if (v < arr[result[u]]) {
+			if (u > 0) p[i] = result[u - 1];
+			result[u] = i;
+		}
+	}
+
+	// walk predecessor pointers from the tail to reconstruct the actual sequence
+	var u2 = result.length;
+	var v2 = result[u2 - 1];
+	while (u2-- > 0) {
+		result[u2] = v2;
+		v2 = p[v2];
+	}
+	return result;
 }
 
 /**
