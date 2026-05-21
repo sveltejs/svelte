@@ -779,7 +779,9 @@ function link(state, prev, next) {
  * @returns {boolean}
  */
 function try_reconcile_lis(state, array, length, items, anchor, get_key) {
-	// Forward walk — consume the stable prefix.
+	// Forward walk — consume the stable prefix. The offscreen check is only
+	// reachable on divergence: a matching `prefix_old` already passed
+	// `is_eligible_branch`, so a `next_e` equal to it can't be offscreen.
 	var prefix_end = 0;
 	/** @type {Effect | null} */
 	var prefix_old = state.effect.first;
@@ -787,8 +789,10 @@ function try_reconcile_lis(state, array, length, items, anchor, get_key) {
 		if (prefix_old === null) return false;
 		if (!is_eligible_branch(prefix_old)) return false;
 		var next_e = /** @type {EachItem} */ (items.get(get_key(array[prefix_end], prefix_end))).e;
-		if ((next_e.f & EFFECT_OFFSCREEN) !== 0) return false;
-		if (next_e !== prefix_old) break;
+		if (next_e !== prefix_old) {
+			if ((next_e.f & EFFECT_OFFSCREEN) !== 0) return false;
+			break;
+		}
 		prefix_old = prefix_old.next;
 		prefix_end++;
 	}
@@ -798,9 +802,10 @@ function try_reconcile_lis(state, array, length, items, anchor, get_key) {
 		return prefix_old === null;
 	}
 
-	// Backward walk — consume the stable suffix. Offscreen items (newly
-	// created this batch) are appended to the chain end, so the very last
-	// effect can be offscreen — that disqualifies the fast path.
+	// Backward walk — consume the stable suffix. Newly-created items sit at
+	// the chain tail with `EFFECT_OFFSCREEN`, so `state.effect.last` can be
+	// offscreen; `is_eligible_branch` filters those out. As with the prefix,
+	// `tail_e`'s offscreen check is only reachable on divergence.
 	var suffix_start = length;
 	/** @type {Effect | null} */
 	var suffix_old = state.effect.last;
@@ -810,8 +815,10 @@ function try_reconcile_lis(state, array, length, items, anchor, get_key) {
 		var tail_e = /** @type {EachItem} */ (
 			items.get(get_key(array[suffix_start - 1], suffix_start - 1))
 		).e;
-		if ((tail_e.f & EFFECT_OFFSCREEN) !== 0) return false;
-		if (tail_e !== suffix_old) break;
+		if (tail_e !== suffix_old) {
+			if ((tail_e.f & EFFECT_OFFSCREEN) !== 0) return false;
+			break;
+		}
 		suffix_old = suffix_old.prev;
 		suffix_start--;
 	}
@@ -906,9 +913,10 @@ function reconcile_lis_middle(
 	var new_to_old = new Array(middle_len);
 	for (var k = 0; k < middle_len; k++) {
 		var e = /** @type {EachItem} */ (items.get(get_key(array[prefix_end + k], prefix_end + k))).e;
-		if ((e.f & EFFECT_OFFSCREEN) !== 0) return false;
+		// Offscreen items are filtered out of `old_index_by_effect` by the
+		// chain walk above, so the `oi === undefined` check catches them too.
 		var oi = old_index_by_effect.get(e);
-		if (oi === undefined) return false; // not in old slice → add/remove
+		if (oi === undefined) return false; // offscreen / add / remove
 		next_effects[k] = e;
 		new_to_old[k] = oi;
 	}
