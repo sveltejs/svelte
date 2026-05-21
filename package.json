@@ -32,7 +32,7 @@
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
     "@types/picomatch": "^4.0.2",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^10.0.0",
     "eslint-plugin-lube": "^0.5.1",
     "eslint-plugin-svelte": "^3.15.0",
@@ -44,6 +44,6 @@
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.56.0",
     "v8-natives": "^1.2.5",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.7"
   }
 }

@@ -42,9 +42,9 @@ const { run: run_browser_tests } = suite_with_variants<
 
 describe.concurrent(
 	'runtime-browser',
-	() => run_browser_tests(__dirname),
 	// Browser tests are brittle and slow on CI
-	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
+	{ timeout: 20000, retry: process.env.CI ? 1 : 0 },
+	() => run_browser_tests(__dirname)
 );
 
 const { run: run_ce_tests } = suite<ReturnType<typeof import('./assert').test>>(
@@ -55,9 +55,9 @@ const { run: run_ce_tests } = suite<ReturnType<typeof import('./assert').test>>(
 
 describe.concurrent(
 	'custom-elements',
-	() => run_ce_tests(__dirname, 'custom-elements-samples'),
 	// Browser tests are brittle and slow on CI
-	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
+	{ timeout: 20000, retry: process.env.CI ? 1 : 0 },
+	() => run_ce_tests(__dirname, 'custom-elements-samples')
 );
 
 async function run_test(

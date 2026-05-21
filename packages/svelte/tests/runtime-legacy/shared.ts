@@ -126,6 +126,16 @@ const listeners = process.rawListeners('unhandledRejection');
 beforeAll(() => {
 	// @ts-expect-error TODO huh?
 	process.prependListener('unhandledRejection', unhandled_rejection_handler);
+
+	// Route jsdom's virtual console through `globalThis.console` at call time,
+	// so per-test `console.{log,warn,error}` overrides see inline-script logs
+	// and `jsdomError` events. (vitest 4's jsdom env binds to the original
+	// `globalThis.console` reference before vitest wraps it.)
+	const vc = (window as any)._virtualConsole;
+	for (const m of ['log', 'warn', 'error'] as const) {
+		vc?.on(m, (...args: any[]) => console[m](...args));
+	}
+	vc?.on('jsdomError', (e: Error & { detail?: unknown }) => console.error(e.stack, e.detail));
 });
 
 beforeEach(() => {
@@ -256,6 +266,13 @@ async function run_test_variant(
 	let errors: string[] = [];
 	let manual_hydrate = false;
 
+	// Named so we can remove it in `finally` — otherwise listeners from earlier
+	// tests leak and keep writing to module-level `unhandled_rejection`.
+	const window_error_listener = (e: ErrorEvent) => {
+		unhandled_rejection = e.error;
+		e.preventDefault();
+	};
+
 	{
 		// use some crude static analysis to determine if logs/warnings are intercepted.
 		// we do this instead of using getters on the `test` parameters so that we can
@@ -348,10 +365,7 @@ async function run_test_variant(
 		window.document.head.innerHTML = styles ? `<style>${styles}</style>` : '';
 		window.document.body.innerHTML = '<main></main>';
 
-		window.addEventListener('error', (e) => {
-			unhandled_rejection = e.error;
-			e.preventDefault();
-		});
+		window.addEventListener('error', window_error_listener);
 
 		globalThis.requestAnimationFrame = globalThis.setTimeout;
 
@@ -592,6 +606,8 @@ async function run_test_variant(
 		if (hydrating) {
 			throw new Error('Hydration state was not cleared');
 		}
+
+		window.removeEventListener('error', window_error_listener);
 
 		config.after_test?.();
 

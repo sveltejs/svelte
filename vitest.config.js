@@ -29,6 +29,10 @@ export default defineConfig({
 	test: {
 		dir: '.',
 		reporters: ['dot'],
+		// A handful of dev-mode tests trigger Svelte's `effect_update_depth_exceeded`
+		// guard, which involves ~1000 Error objects per flush for stack tracking —
+		// slow enough under vitest 4's deeper async stacks to overrun the 5s default.
+		testTimeout: 10_000,
 		include: [
 			'packages/svelte/**/*.test.ts',
 			'packages/svelte/tests/*/test.ts',
