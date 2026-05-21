@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, HMR } from '../../../constants.js';
-import { EFFECT_TRANSPARENT } from '#client/constants';
+import { EFFECT_TRANSPARENT, HMR_ANCHOR } from '#client/constants';
 import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
@@ -15,10 +15,10 @@ export function hmr(fn) {
 	const current = source(fn);
 
 	/**
-	 * @param {TemplateNode} anchor
+	 * @param {TemplateNode} initial_anchor
 	 * @param {any} props
 	 */
-	function wrapper(anchor, props) {
+	function wrapper(initial_anchor, props) {
 		let component = {};
 		let instance = {};
 
@@ -26,6 +26,7 @@ export function hmr(fn) {
 		let effect;
 
 		let ran = false;
+		let anchor = initial_anchor;
 
 		block(() => {
 			if (component === (component = get(current))) {
@@ -39,6 +40,8 @@ export function hmr(fn) {
 			}
 
 			effect = branch(() => {
+				anchor = /** @type {any} */ (anchor)[HMR_ANCHOR] ?? anchor;
+
 				// when the component is invalidated, replace it without transitions
 				if (ran) set_should_intro(false);
 

@@ -21,7 +21,7 @@ export let legacy_is_updating_store = false;
  */
 let is_store_binding = false;
 
-let IS_UNMOUNTED = Symbol();
+let IS_UNMOUNTED = Symbol('unmounted');
 
 /**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy

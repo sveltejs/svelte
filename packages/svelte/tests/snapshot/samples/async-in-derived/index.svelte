@@ -19,3 +19,7 @@
 		return await 1;
 	})()}
 {/if}
+
+{#if true}
+	{@const x = no2}
+{/if}

@@ -27,7 +27,8 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	CONNECTED,
-	STATE_EAGER_EFFECT
+	STATE_EAGER_EFFECT,
+	REACTION_IS_UPDATING
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -49,7 +50,7 @@ import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { UNINITIALIZED } from '../../../constants.js';
 
-/** @type {Set<any>} */
+/** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
 /** @type {Map<Source, any>} */
@@ -258,7 +259,18 @@ export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
 	for (const effect of eager_effects) {
-		if ((effect.f & STATE_EAGER_EFFECT) !== 0 || is_dirty(effect)) {
+		let dirty;
+
+		try {
+			dirty = (effect.f & STATE_EAGER_EFFECT) !== 0 || is_dirty(effect);
+		} catch {
+			// Dirty-checking can evaluate derived dependencies and throw in cases where
+			// parent effects are about to destroy this eager effect. Run the effect so
+			// its own error handling can deal with transient failures.
+			dirty = true;
+		}
+
+		if (dirty) {
 			update_effect(effect);
 		}
 	}
@@ -326,17 +338,16 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
-		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & EAGER_EFFECT) !== 0) {
-			eager_effects.add(reaction);
-			continue;
-		}
-
 		// TODO ideally this would work, but I think we need to `apply()` before `mark_reactions`.
 		// Or pass `batch` in as an argument?
 		// if (wv <= get_cv(reaction)) continue;
 
-		if ((flags & DERIVED) !== 0) {
+		if ((flags & EAGER_EFFECT) !== 0) {
+			// Eager effects need to run immediately:
+			// - for $inspect so that the stack trace makes sense
+			// - for $state.eager because they might be without an effect parent
+			eager_effects.add(/** @type {Effect} */ (reaction));
+		} else if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
 			if (wv > get_cv(derived)) {

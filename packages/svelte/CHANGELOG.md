@@ -1,5 +1,145 @@
 # svelte
 
+## 5.55.9
+
+### Patch Changes
+
+- fix: don't unset batch when calling `{#await ...}` promise ([#18243](https://github.com/sveltejs/svelte/pull/18243))
+
+- fix: promise-ify `{#await await ...}` expressions on the server and correctly hydrate them on the client ([#18243](https://github.com/sveltejs/svelte/pull/18243))
+
+- fix: deduplicate dependencies that are added outside the init/update cycle ([#18243](https://github.com/sveltejs/svelte/pull/18243))
+
+- fix: avoid false-positive batch invariant error ([#18246](https://github.com/sveltejs/svelte/pull/18246))
+
+- fix: inline primitive constants in attribute values during SSR ([#18232](https://github.com/sveltejs/svelte/pull/18232))
+
+## 5.55.8
+
+### Patch Changes
+
+- fix(print): handle `svelte:body` and fix keyframe percentage double-printing ([#18234](https://github.com/sveltejs/svelte/pull/18234))
+
+- fix: execute uninitialized derived even if it's destroyed ([#18228](https://github.com/sveltejs/svelte/pull/18228))
+
+- fix: use named symbols everywhere ([#18238](https://github.com/sveltejs/svelte/pull/18238))
+
+- fix: don't run teardown effects when deriveds are unfreezed ([#18227](https://github.com/sveltejs/svelte/pull/18227))
+
+- fix: unset context synchronously in `run` ([#18236](https://github.com/sveltejs/svelte/pull/18236))
+
+## 5.55.7
+
+### Patch Changes
+
+- fix: prevent XSS on `hydratable` from user contents ([`a16ebc67bbcf8f708360195687e1b2719463e1a4`](https://github.com/sveltejs/svelte/commit/a16ebc67bbcf8f708360195687e1b2719463e1a4))
+
+- chore: bump devalue ([#18219](https://github.com/sveltejs/svelte/pull/18219))
+
+- fix: disallow empty attribute names during SSR ([`547853e2406a2147ad7fb5ffeba95b01bd9642da`](https://github.com/sveltejs/svelte/commit/547853e2406a2147ad7fb5ffeba95b01bd9642da))
+
+- fix: harden regex ([`d2375e2ebcab5c88feb5652f1a9d621b8f06b259`](https://github.com/sveltejs/svelte/commit/d2375e2ebcab5c88feb5652f1a9d621b8f06b259))
+
+- fix: move Svelte runtime properties to symbols ([`e1cbbd96441e82c9eb8a23a2903c0d06d3cda991`](https://github.com/sveltejs/svelte/commit/e1cbbd96441e82c9eb8a23a2903c0d06d3cda991))
+
+## 5.55.6
+
+### Patch Changes
+
+- fix: leave stale promises to wait for a later resolution, instead of rejecting ([#18180](https://github.com/sveltejs/svelte/pull/18180))
+
+- fix: keep dependencies of `$state.eager/pending` ([#18218](https://github.com/sveltejs/svelte/pull/18218))
+
+- fix: reapply context after transforming error during SSR ([#18099](https://github.com/sveltejs/svelte/pull/18099))
+
+- fix: don't rebase just-created batches ([#18117](https://github.com/sveltejs/svelte/pull/18117))
+
+- chore: allow `null` for `pending` in typings ([#18201](https://github.com/sveltejs/svelte/pull/18201))
+
+- fix: flush eager effects in production ([#18107](https://github.com/sveltejs/svelte/pull/18107))
+
+- fix: rethrow error of failed iterable after calling `return()` ([#18169](https://github.com/sveltejs/svelte/pull/18169))
+
+- fix: account for proxified instance when updating `bind:this` ([#18147](https://github.com/sveltejs/svelte/pull/18147))
+
+- fix: ensure scheduled batch is flushed if not obsolete ([#18131](https://github.com/sveltejs/svelte/pull/18131))
+
+- fix: resolve stale deriveds with latest value ([#18167](https://github.com/sveltejs/svelte/pull/18167))
+
+- chore: remove unnecessary `increment_pending` calls ([#18183](https://github.com/sveltejs/svelte/pull/18183))
+
+- fix: correctly compile component member expressions for SSR ([#18192](https://github.com/sveltejs/svelte/pull/18192))
+
+- fix: reset `source.updated` stack traces after `flush` ([#18196](https://github.com/sveltejs/svelte/pull/18196))
+
+- fix: replacing async 'blocking' strategy with 'merging' ([#18205](https://github.com/sveltejs/svelte/pull/18205))
+
+- fix: allow `@debug` tags to reference awaited variables ([#18138](https://github.com/sveltejs/svelte/pull/18138))
+
+- fix: re-run fallback props if dependencies update ([#18146](https://github.com/sveltejs/svelte/pull/18146))
+
+- fix: abort running obsolete async branches ([#18118](https://github.com/sveltejs/svelte/pull/18118))
+
+- fix: ignore comments when reading CSS values ([#18153](https://github.com/sveltejs/svelte/pull/18153))
+
+- fix: wrap `Promise.all` in `save` during SSR ([#18178](https://github.com/sveltejs/svelte/pull/18178))
+
+- fix: ignore false-positive errors of `$inspect` dependencies ([#18106](https://github.com/sveltejs/svelte/pull/18106))
+
+## 5.55.5
+
+### Patch Changes
+
+- fix: don't mark deriveds while an effect is updating ([#18124](https://github.com/sveltejs/svelte/pull/18124))
+
+- fix: do not dispatch introstart event with animation of animate directive ([#18122](https://github.com/sveltejs/svelte/pull/18122))
+
+## 5.55.4
+
+### Patch Changes
+
+- fix: never mark a child effect root as inert ([#18111](https://github.com/sveltejs/svelte/pull/18111))
+
+- fix: reset context after waiting on blockers of `@const` expressions ([#18100](https://github.com/sveltejs/svelte/pull/18100))
+
+- fix: keep flushing new eager effects ([#18102](https://github.com/sveltejs/svelte/pull/18102))
+
+## 5.55.3
+
+### Patch Changes
+
+- fix: ensure proper HMR updates for dynamic components ([#18079](https://github.com/sveltejs/svelte/pull/18079))
+
+- fix: correctly calculate `@const` blockers ([#18039](https://github.com/sveltejs/svelte/pull/18039))
+
+- fix: freeze deriveds once their containing effects are destroyed ([#17921](https://github.com/sveltejs/svelte/pull/17921))
+
+- fix: defer error boundary rendering in forks ([#18076](https://github.com/sveltejs/svelte/pull/18076))
+
+- fix: avoid false positives for reactivity loss warning ([#18088](https://github.com/sveltejs/svelte/pull/18088))
+
+## 5.55.2
+
+### Patch Changes
+
+- fix: invalidate `@const` tags based on visible references in legacy mode ([#18041](https://github.com/sveltejs/svelte/pull/18041))
+
+- fix: handle parens in template expressions more robustly ([#18075](https://github.com/sveltejs/svelte/pull/18075))
+
+- fix: disallow `--` in `idPrefix` ([#18038](https://github.com/sveltejs/svelte/pull/18038))
+
+- fix: correct types for `ontoggle` on `<details>` elements ([#18063](https://github.com/sveltejs/svelte/pull/18063))
+
+- fix: don't override `$destroy/set/on` instance methods in dev mode ([#18034](https://github.com/sveltejs/svelte/pull/18034))
+
+- fix: unskip branches of earlier batches after commit ([#18048](https://github.com/sveltejs/svelte/pull/18048))
+
+- fix: never set derived.v inside fork ([#18037](https://github.com/sveltejs/svelte/pull/18037))
+
+- fix: skip rebase logic in non-async mode ([#18040](https://github.com/sveltejs/svelte/pull/18040))
+
+- fix: don't reset status of uninitialized deriveds ([#18054](https://github.com/sveltejs/svelte/pull/18054))
+
 ## 5.55.1
 
 ### Patch Changes

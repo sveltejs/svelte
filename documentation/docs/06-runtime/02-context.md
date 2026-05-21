@@ -163,6 +163,8 @@ export const [getCounter, setCounter] = createContext<Counter>();
 
 Svelte will warn you if you get it wrong.
 
+Similarly, to pass primitive values through context, use functions as described in [Passing state into functions]($state#Passing-state-into-functions).
+
 ## Component testing
 
 When writing [component tests](testing#Unit-and-component-tests-with-Vitest-Component-testing), it can be useful to create a wrapper component that sets the context in order to check the behaviour of a component that uses it. As of version 5.49, you can do this sort of thing:

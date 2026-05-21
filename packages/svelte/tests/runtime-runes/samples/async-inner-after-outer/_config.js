@@ -37,18 +37,6 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-			<p>true</p>
-			<button>toggle</button>
-			<button>shift</button>
-		`
-		);
-
-		shift?.click();
-		await tick();
-
-		assert.htmlEqual(
-			target.innerHTML,
-			`
 			<button>toggle</button>
 			<button>shift</button>
 		`

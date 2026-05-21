@@ -562,9 +562,15 @@ export function get(signal) {
 					}
 				}
 			} else {
-				// we're adding a dependency outside the init/update cycle
-				// (i.e. after an `await`)
-				(active_reaction.deps ??= []).push(signal);
+				// We're adding a dependency outside the init/update cycle (i.e. after an `await`).
+				// We have to deduplicate deps/reactions in this case or remove_reactions could
+				// disconnect deps/reactions that are actually still in use (if skip_deps says
+				// "disconnect all after this index" and some of the signals are also present in
+				// list prior to the cutoff index, i.e. that should be kept).
+				active_reaction.deps ??= [];
+				if (!includes.call(active_reaction.deps, signal)) {
+					active_reaction.deps.push(signal);
+				}
 
 				var reactions = signal.reactions;
 
@@ -582,7 +588,8 @@ export function get(signal) {
 			!untracking &&
 			reactivity_loss_tracker &&
 			!reactivity_loss_tracker.warned &&
-			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0
+			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0 &&
+			!reactivity_loss_tracker.effect_deps.has(signal)
 		) {
 			reactivity_loss_tracker.warned = true;
 

@@ -2,6 +2,8 @@ import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/client';
 
+var root = $.from_html(`<!> <!>`, 1);
+
 export default function Async_in_derived($$anchor, $$props) {
 	$.push($$props, true);
 
@@ -21,7 +23,7 @@ export default function Async_in_derived($$anchor, $$props) {
 		}
 	]);
 
-	var fragment = $.comment();
+	var fragment = root();
 	var node = $.first_child(fragment);
 
 	{
@@ -46,6 +48,23 @@ export default function Async_in_derived($$anchor, $$props) {
 
 		$.if(node, ($$render) => {
 			if (true) $$render(consequent);
+		});
+	}
+
+	var node_1 = $.sibling(node, 2);
+
+	{
+		var consequent_1 = ($$anchor) => {
+			let x;
+
+			var promises_1 = $.run([
+				() => $$promises[2].promise,
+				() => x = $.derived(() => $.get(no2))
+			]);
+		};
+
+		$.if(node_1, ($$render) => {
+			if (true) $$render(consequent_1);
 		});
 	}
 

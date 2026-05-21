@@ -71,33 +71,35 @@ export function flatten(blockers, sync, async, fn) {
 	 * @param {Source[]} async
 	 */
 	function finish(async) {
+		if ((parent.f & DESTROYED) !== 0) {
+			return;
+		}
+
 		restore();
 
 		try {
 			fn([...deriveds, ...async]);
 		} catch (error) {
-			if ((parent.f & DESTROYED) === 0) {
-				invoke_error_boundary(error, parent);
-			}
+			invoke_error_boundary(error, parent);
 		}
 
 		unset_context();
 	}
 
+	var decrement_pending = increment_pending();
+
 	// Fast path: blockers but no async expressions
 	if (async.length === 0) {
-		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([]));
+		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([])).finally(decrement_pending);
 		return;
 	}
-
-	var decrement_pending = increment_pending();
 
 	// Full path: has async expressions
 	function run() {
 		Promise.all(async.map((expression) => async_derived(expression)))
 			.then(finish)
 			.catch((error) => invoke_error_boundary(error, parent))
-			.finally(() => decrement_pending());
+			.finally(decrement_pending);
 	}
 
 	if (blocker_promise) {
@@ -180,10 +182,26 @@ export async function save(promise) {
  */
 export async function track_reactivity_loss(promise) {
 	var previous_async_effect = reactivity_loss_tracker;
+	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
+	queueMicrotask(() => {
+		if (reactivity_loss_tracker === previous_async_effect) {
+			set_reactivity_loss_tracker(null);
+		}
+	});
+
 	var value = await promise;
 
 	return () => {
 		set_reactivity_loss_tracker(previous_async_effect);
+		// While this can result in false negatives it also guards against the more important
+		// false positives that would occur if this is the last in a chain of async operations,
+		// and the reactivity_loss_tracker would then stay around until the next async operation happens.
+		queueMicrotask(() => {
+			if (reactivity_loss_tracker === previous_async_effect) {
+				set_reactivity_loss_tracker(null);
+			}
+		});
+
 		return value;
 	};
 }
@@ -213,20 +231,35 @@ export async function* for_await_track_reactivity_loss(iterable) {
 		throw new TypeError('value is not async iterable');
 	}
 
-	/** Whether the completion of the iterator was "normal", meaning it wasn't ended via `break` or a similar method */
-	let normal_completion = false;
+	// eslint-disable-next-line no-useless-assignment
+	let invoke_return = true;
+
 	try {
 		while (true) {
 			const { done, value } = (await track_reactivity_loss(iterator.next()))();
 			if (done) {
-				normal_completion = true;
+				invoke_return = false;
 				break;
 			}
-			yield value;
+			var prev = reactivity_loss_tracker;
+			try {
+				yield value;
+			} catch (e) {
+				set_reactivity_loss_tracker(prev);
+				// If the yield throws, we need to call `return` but not return its value, instead rethrow
+				if (iterator.return !== undefined) {
+					(await track_reactivity_loss(iterator.return()))();
+				}
+				throw e;
+			}
+			set_reactivity_loss_tracker(prev);
 		}
+	} catch (error) {
+		invoke_return = false;
+		throw error;
 	} finally {
-		// If the iterator had an abrupt completion and `return` is defined on the iterator, call it and return the value
-		if (!normal_completion && iterator.return !== undefined) {
+		// If the iterator had an abrupt completion (break) and `return` is defined on the iterator, call it and return the value
+		if (invoke_return && iterator.return !== undefined) {
 			// eslint-disable-next-line no-unsafe-finally
 			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))().value);
 		}
@@ -281,16 +314,23 @@ export function run(thunks) {
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
-				if (errored) {
-					throw errored.error;
-				}
-
-				if (aborted(active)) {
-					throw STALE_REACTION;
-				}
-
 				restore();
-				return fn();
+
+				try {
+					if (errored) {
+						throw errored.error;
+					}
+
+					if (aborted(active)) {
+						throw STALE_REACTION;
+					}
+
+					return fn();
+				} finally {
+					// We gotta unset context directly in case the function returns a promise, in which case
+					// unset_context in .finally() would be too late ...
+					unset_context();
+				}
 			})
 			.catch(handle_error);
 
@@ -299,6 +339,7 @@ export function run(thunks) {
 
 		promise.finally(() => {
 			blocker.settled = true;
+			// ... but we also need it after such a promise has resolved in case it restores our context
 			unset_context();
 		});
 	}
@@ -307,7 +348,7 @@ export function run(thunks) {
 		// wait one more tick, so that template effects are
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
-		.finally(() => decrement_pending());
+		.finally(decrement_pending);
 
 	return blockers;
 }
@@ -331,8 +372,8 @@ export function increment_pending() {
 	boundary.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
-	return (skip = false) => {
+	return () => {
 		boundary.update_pending_count(-1, batch);
-		batch.decrement(blocking, effect, skip);
+		batch.decrement(blocking, effect);
 	};
 }

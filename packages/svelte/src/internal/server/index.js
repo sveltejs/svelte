@@ -151,7 +151,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		// omit functions, internal svelte properties and invalid attribute names
 		if (typeof attrs[name] === 'function') continue;
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
-		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
+		if (name === '' || INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
 		var value = attrs[name];
 		var lower = name.toLowerCase();

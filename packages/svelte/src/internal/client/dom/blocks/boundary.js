@@ -29,7 +29,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, current_batch, schedule_effect } from '../../reactivity/batch.js';
+import { Batch, current_batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -38,9 +38,9 @@ import { defer_effect } from '../../reactivity/utils.js';
 
 /**
  * @typedef {{
- * 	 onerror?: (error: unknown, reset: () => void) => void;
- *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
- *   pending?: (anchor: Node) => void;
+ * 	 onerror?: ((error: unknown, reset: () => void) => void) | null;
+ *   failed?: ((anchor: Node, error: () => unknown, reset: () => () => void) => void) | null;
+ *   pending?: ((anchor: Node) => void) | null;
  * }} BoundaryProps
  */
 
@@ -376,15 +376,29 @@ export class Boundary {
 
 	/** @param {unknown} error */
 	error(error) {
-		var onerror = this.#props.onerror;
-		let failed = this.#props.failed;
-
 		// If we have nothing to capture the error, or if we hit an error while
 		// rendering the fallback, re-throw for another boundary to handle
-		if (!onerror && !failed) {
+		if (!this.#props.onerror && !this.#props.failed) {
 			throw error;
 		}
 
+		if (current_batch?.is_fork) {
+			if (this.#main_effect) current_batch.skip_effect(this.#main_effect);
+			if (this.#pending_effect) current_batch.skip_effect(this.#pending_effect);
+			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
+
+			current_batch.on_fork_commit(() => {
+				this.#handle_error(error);
+			});
+		} else {
+			this.#handle_error(error);
+		}
+	}
+
+	/**
+	 * @param {unknown} error
+	 */
+	#handle_error(error) {
 		if (this.#main_effect) {
 			destroy_effect(this.#main_effect);
 			this.#main_effect = null;
@@ -406,6 +420,8 @@ export class Boundary {
 			set_hydrate_node(skip_nodes());
 		}
 
+		var onerror = this.#props.onerror;
+		let failed = this.#props.failed;
 		var did_reset = false;
 		var calling_on_error = false;
 
