@@ -628,13 +628,15 @@ function reconcile(state, array, anchor, flags, get_key) {
 			var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
 
 			if (is_animated) {
-				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].nodes?.a?.measure();
-				}
-
-				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].nodes?.a?.fix();
-				}
+				// Three batched phases minimise layout flushes. With the per-item
+				// `fix()` body each iteration forced two reflows (one for the
+				// `getComputedStyle` read, one for the post-absolute
+				// `getBoundingClientRect` read); batching brings the whole batch
+				// down to ~2 flushes total.
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.measure();
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.fix_size();
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.fix_position();
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.fix_transform();
 			}
 
 			pause_effects(state, to_destroy, controlled_anchor);
