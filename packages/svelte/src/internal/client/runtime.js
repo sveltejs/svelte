@@ -525,9 +525,10 @@ export function settled() {
 /**
  * @template V
  * @param {Value<V>} signal
+ * @param {boolean} [force]
  * @returns {V}
  */
-export function get(signal) {
+export function get(signal, force = false) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
 
@@ -540,7 +541,10 @@ export function get(signal) {
 		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
-		if (!destroyed && (current_sources === null || !includes.call(current_sources, signal))) {
+		if (
+			!destroyed &&
+			(force || current_sources === null || !includes.call(current_sources, signal))
+		) {
 			var deps = active_reaction.deps;
 
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
