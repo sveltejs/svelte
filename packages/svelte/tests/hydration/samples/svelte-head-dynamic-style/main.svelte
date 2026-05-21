@@ -1,5 +1,5 @@
 <script>
-	export let css;
+	let { css } = $props();
 </script>
 
 <svelte:head>
