@@ -807,7 +807,9 @@ function try_reconcile_lis(state, array, length, items, anchor, get_key) {
 	while (suffix_start > prefix_end) {
 		if (suffix_old === null) return false;
 		if (!is_eligible_branch(suffix_old)) return false;
-		var tail_e = /** @type {EachItem} */ (items.get(get_key(array[suffix_start - 1], suffix_start - 1))).e;
+		var tail_e = /** @type {EachItem} */ (
+			items.get(get_key(array[suffix_start - 1], suffix_start - 1))
+		).e;
 		if ((tail_e.f & EFFECT_OFFSCREEN) !== 0) return false;
 		if (tail_e !== suffix_old) break;
 		suffix_old = suffix_old.prev;
