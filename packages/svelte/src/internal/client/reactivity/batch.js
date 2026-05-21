@@ -677,8 +677,10 @@ export class Batch {
 
 			if (!batch.#started) continue;
 
-			// Re-run async/block effects that depend on distinct values changed in both batches
-			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
+			// Re-run async/block effects that depend on distinct values changed in both batches (ignoring deriveds)
+			var others = [...batch.current.keys()].filter(
+				(s) => !(/** @type {[any, boolean]} */ (batch.current.get(s))[1]) && !this.current.has(s)
+			);
 
 			if (others.length === 0) {
 				if (is_earlier) {
@@ -718,11 +720,14 @@ export class Batch {
 				}
 
 				checked = new Map();
-				var current_unequal = [...batch.current.keys()].filter((c) =>
-					this.current.has(c)
-						? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c.v
-						: true
-				);
+				var current_unequal = [...batch.current]
+					.filter(([c, v1]) => {
+						const v2 = this.current.get(c);
+						if (!v2) return true;
+						// Either their values are different or one is a derived but not the other
+						return v2[0] !== v1[0] || v2[1] !== v1[1];
+					})
+					.map(([c]) => c);
 
 				if (current_unequal.length > 0) {
 					for (const effect of this.#new_effects) {
