@@ -510,7 +510,7 @@ export class Batch {
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
-			if (d) deferred.promise.then(d.resolve);
+			if (d) deferred.promise.then(d.resolve).catch(d.reject);
 		}
 
 		// Mark is not guaranteed not touch these, so we transfer them
@@ -677,7 +677,7 @@ export class Batch {
 				// immediately resolving them? Likely not because of how this.apply() works.
 				for (const [effect, deferred] of this.async_deriveds) {
 					const d = batch.async_deriveds.get(effect);
-					if (d) deferred.promise.then(d.resolve);
+					if (d) deferred.promise.then(d.resolve).catch(d.reject);
 				}
 			}
 
