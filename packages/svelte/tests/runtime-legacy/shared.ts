@@ -295,9 +295,7 @@ async function run_test_variant(
 		if (intercept_errors) {
 			const detail = e.error;
 			const is_error = detail && detail.name && detail.message !== undefined && detail.stack;
-			const error_string = is_error
-				? `[${detail.name}: ${detail.message}]`
-				: String(detail);
+			const error_string = is_error ? `[${detail.name}: ${detail.message}]` : String(detail);
 			errors.push(`Error: Uncaught ${error_string}\n${detail?.stack ?? ''}`, detail);
 		} else {
 			unhandled_rejection = e.error;

@@ -34,7 +34,10 @@ interface SourcemapTest extends BaseTest {
 		// chai 5's `asserts value` signatures trip TS2775 in `_config.js` files
 		// where `assert` is a destructured parameter (non-explicit). Override
 		// the assertion methods we use with non-assertion equivalents.
-		assert: Omit<typeof assert, 'ok' | 'isOk' | 'isTrue' | 'isFalse' | 'exists' | 'notExists' | 'instanceOf'> & {
+		assert: Omit<
+			typeof assert,
+			'ok' | 'isOk' | 'isTrue' | 'isFalse' | 'exists' | 'notExists' | 'instanceOf'
+		> & {
 			ok(value: unknown, message?: string): void;
 			isOk(value: unknown, message?: string): void;
 			isTrue(value: unknown, message?: string): void;
