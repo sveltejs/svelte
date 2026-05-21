@@ -282,8 +282,7 @@ export function handle_event_propagation(event) {
 			if (event.cancelBubble) break;
 
 			path_idx++;
-			current_target =
-				path_idx < path.length ? /** @type {Element} */ (path[path_idx]) : null;
+			current_target = path_idx < path.length ? /** @type {Element} */ (path[path_idx]) : null;
 		}
 
 		if (throw_error) {
