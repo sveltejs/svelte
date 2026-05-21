@@ -150,7 +150,15 @@ export default test({
 
 		// ── deterministic shuffle — every item in a new position ──
 		before = snapshot_elements(target);
-		component.items = [initial[2], initial[5], initial[0], initial[6], initial[1], initial[3], initial[4]];
+		component.items = [
+			initial[2],
+			initial[5],
+			initial[0],
+			initial[6],
+			initial[1],
+			initial[3],
+			initial[4]
+		];
 		flushSync();
 		assert.deepEqual(id_order(target), ['3', '6', '1', '7', '2', '4', '5']);
 		assert_identity_preserved(assert, before, target);
