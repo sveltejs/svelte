@@ -212,9 +212,8 @@ export function is_dirty(reaction) {
 /**
  * @param {Value} signal
  * @param {Effect} effect
- * @param {boolean} [root]
  */
-function schedule_possible_effect_self_invalidation(signal, effect, root = true) {
+function schedule_possible_effect_self_invalidation(signal, effect) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -226,7 +225,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 		var reaction = reactions[i];
 
 		if ((reaction.f & DERIVED) !== 0) {
-			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
+			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect);
 		} else if (effect === reaction) {
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
