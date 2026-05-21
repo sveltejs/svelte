@@ -300,12 +300,8 @@ export class Batch {
 			}
 		}
 
-		// we only reschedule previously-deferred effects if we expect
-		// to be able to run them after processing the batch
-		if (!this.#is_deferred()) {
-			for (const e of this.#dirty_effects) {
-				this.schedule(e);
-			}
+		for (const e of this.#dirty_effects) {
+			this.schedule(e);
 		}
 
 		const roots = this.#roots;
@@ -494,19 +490,22 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
-		for (const [source, value] of batch.current) {
+		for (const [source, snapshot] of batch.current) {
 			var previous = batch.previous.get(source);
 
 			if (previous && !this.previous.has(source)) {
 				this.previous.set(source, previous);
 			}
 
-			this.current.set(source, value);
+			this.current.set(source, snapshot);
 		}
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
 			if (d) deferred.promise.then(d.resolve);
+
+			var cv = batch.cvs.get(effect);
+			if (cv !== undefined) this.cvs.set(effect, cv);
 		}
 
 		/**
