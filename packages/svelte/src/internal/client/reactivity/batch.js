@@ -530,7 +530,10 @@ export class Batch {
 					var effect = /** @type {Effect} */ (reaction);
 
 					if (flags & (ASYNC | BLOCK_EFFECT) && !this.async_deriveds.has(effect)) {
-						effect.f ^= ~CLEAN;
+						if ((effect.f & CLEAN) !== 0) {
+							effect.f ^= CLEAN;
+						}
+
 						this.schedule(effect);
 					}
 				}
