@@ -91,8 +91,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					var tmp_comment = null;
 
 					if (hydrating && is_raw_text_element(next_tag)) {
-						// prevent hydration glitches (the inner render function might do hydrate_next() to advance past a comment it expects)
-						element.append(tmp_comment = document.createComment(''));
+						// prevent hydration glitches (code just below expects an anchor)
+						element.append((tmp_comment = document.createComment('')));
 					}
 
 					// If hydrating, use the existing ssr comment as the anchor so that the
