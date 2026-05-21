@@ -20,7 +20,6 @@ import {
 	EFFECT,
 	DESTROYED,
 	INERT,
-	REACTION_RAN,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	EFFECT_TRANSPARENT,
@@ -213,7 +212,11 @@ export function user_effect(fn) {
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
 	var flags = /** @type {Effect} */ (active_effect).f;
-	var defer = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & REACTION_RAN) === 0;
+	var defer =
+		!active_reaction &&
+		(flags & BRANCH_EFFECT) !== 0 &&
+		component_context !== null &&
+		!component_context.i;
 
 	if (defer) {
 		// Top-level `$effect(...)` in an unmounted component — defer until mount
