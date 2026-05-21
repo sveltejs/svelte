@@ -763,9 +763,11 @@ function link(state, prev, next) {
  * (transitions, outros, INERT items, offscreen items, non-branch siblings,
  * length mismatch).
  *
- * The hot lockstep loop handles the no-reorder case (text update on existing
- * rows) without allocating anything. Only on first divergence do we build the
- * data structures for the LIS pass.
+ * Two lockstep walks (forward from the start, backward from the end) narrow
+ * the work to the unstable middle. The no-reorder case is handled by the
+ * forward walk alone, without allocating anything. Local edits (a swap of
+ * nearby items, a single item moved) leave a tiny middle. Reverse and shuffle
+ * leave the full middle, where LIS earns its keep.
  *
  * @template V
  * @param {EachState} state
@@ -777,28 +779,80 @@ function link(state, prev, next) {
  * @returns {boolean}
  */
 function try_reconcile_lis(state, array, length, items, anchor, get_key) {
-	var current = state.effect.first;
-
-	for (var i = 0; i < length; i++) {
-		if (current === null) return false;
-		if ((current.f & BRANCH_EFFECT) === 0 || (current.f & INERT) !== 0) return false;
-		var next_e = /** @type {EachItem} */ (items.get(get_key(array[i], i))).e;
+	// Forward walk — consume the stable prefix.
+	var prefix_end = 0;
+	/** @type {Effect | null} */
+	var prefix_old = state.effect.first;
+	while (prefix_end < length) {
+		if (prefix_old === null) return false;
+		if (!is_eligible_branch(prefix_old)) return false;
+		var next_e = /** @type {EachItem} */ (items.get(get_key(array[prefix_end], prefix_end))).e;
 		if ((next_e.f & EFFECT_OFFSCREEN) !== 0) return false;
-		if (next_e !== current) {
-			return reconcile_lis_suffix(state, array, length, items, anchor, get_key, i, current);
-		}
-		current = current.next;
+		if (next_e !== prefix_old) break;
+		prefix_old = prefix_old.next;
+		prefix_end++;
 	}
 
-	// Reached end of new array — the chain must end here too, otherwise items
-	// were removed and the legacy path must handle the teardown.
-	return current === null;
+	if (prefix_end === length) {
+		// New array fully consumed by the prefix walk. Chain must end here too.
+		return prefix_old === null;
+	}
+
+	// Backward walk — consume the stable suffix. Offscreen items (newly
+	// created this batch) are appended to the chain end, so the very last
+	// effect can be offscreen — that disqualifies the fast path.
+	var suffix_start = length;
+	/** @type {Effect | null} */
+	var suffix_old = state.effect.last;
+	while (suffix_start > prefix_end) {
+		if (suffix_old === null) return false;
+		if (!is_eligible_branch(suffix_old)) return false;
+		var tail_e = /** @type {EachItem} */ (items.get(get_key(array[suffix_start - 1], suffix_start - 1))).e;
+		if ((tail_e.f & EFFECT_OFFSCREEN) !== 0) return false;
+		if (tail_e !== suffix_old) break;
+		suffix_old = suffix_old.prev;
+		suffix_start--;
+	}
+
+	if (prefix_end === suffix_start) {
+		// Empty unstable middle in the new array but the old chain still has
+		// items between `prefix_old` and `suffix_old` — that's a removal, which
+		// the legacy path handles.
+		return false;
+	}
+
+	return reconcile_lis_middle(
+		state,
+		array,
+		length,
+		items,
+		anchor,
+		get_key,
+		prefix_end,
+		suffix_start,
+		/** @type {Effect} */ (prefix_old),
+		/** @type {Effect} */ (suffix_old)
+	);
 }
 
 /**
- * Full LIS reorder pass. Called after `try_reconcile_lis`'s lockstep loop hits
- * a divergence at position `i_start`. Positions `[0, i_start)` are guaranteed
- * stable — same effect in same place — so we never touch them.
+ * @param {Effect} effect
+ * @returns {boolean}
+ */
+function is_eligible_branch(effect) {
+	return (
+		(effect.f & BRANCH_EFFECT) !== 0 &&
+		(effect.f & INERT) === 0 &&
+		(effect.f & EFFECT_OFFSCREEN) === 0
+	);
+}
+
+/**
+ * LIS reorder pass over the unstable middle identified by the prefix/suffix
+ * walks. `prefix_old` is the first unstable old-chain effect and `suffix_old`
+ * is the last; together they bound a contiguous run of branch effects in the
+ * chain. The new-array slice `[prefix_end, suffix_start)` is the same length
+ * as that run (we bail otherwise — that's an add/remove).
  *
  * @template V
  * @param {EachState} state
@@ -807,93 +861,101 @@ function try_reconcile_lis(state, array, length, items, anchor, get_key) {
  * @param {Map<any, EachItem>} items
  * @param {Element | Comment | Text} anchor
  * @param {(value: V, index: number) => any} get_key
- * @param {number} i_start First diverging new-array index
- * @param {Effect} current_start Old-chain effect at position `i_start`
+ * @param {number} prefix_end
+ * @param {number} suffix_start
+ * @param {Effect} prefix_old First unstable old-chain effect (inclusive)
+ * @param {Effect} suffix_old Last unstable old-chain effect (inclusive)
  * @returns {boolean}
  */
-function reconcile_lis_suffix(
+function reconcile_lis_middle(
 	state,
 	array,
 	length,
 	items,
 	anchor,
 	get_key,
-	i_start,
-	current_start
+	prefix_end,
+	suffix_start,
+	prefix_old,
+	suffix_old
 ) {
-	var suffix_len = length - i_start;
+	var middle_len = suffix_start - prefix_end;
 
-	/** @type {Effect[]} */
-	var next_effects = new Array(suffix_len);
-	/** @type {Set<Effect>} */
-	var next_set = new Set();
-
-	// First entry is `current_start`'s would-be effect — already validated.
-	var first_key = get_key(array[i_start], i_start);
-	var first_e = /** @type {EachItem} */ (items.get(first_key)).e;
-	next_effects[0] = first_e;
-	next_set.add(first_e);
-
-	for (var k = 1; k < suffix_len; k++) {
-		var e = /** @type {EachItem} */ (items.get(get_key(array[i_start + k], i_start + k))).e;
-		if ((e.f & EFFECT_OFFSCREEN) !== 0) return false;
-		next_effects[k] = e;
-		next_set.add(e);
-	}
-
-	// Walk old chain suffix; every entry must be in the new-effect set, otherwise
-	// items got removed and we hand off to the legacy path.
+	// Build map from old-chain effect → position in the unstable old slice.
+	// Bail on any non-eligible effect (non-branch, inert, or offscreen — the
+	// last appears when newly-created items sit at the chain tail).
 	/** @type {Map<Effect, number>} */
 	var old_index_by_effect = new Map();
 	/** @type {Effect | null} */
-	var current = current_start;
+	var current = prefix_old;
 	var old_count = 0;
 	while (current !== null) {
-		if ((current.f & BRANCH_EFFECT) === 0 || (current.f & INERT) !== 0) return false;
-		if (!next_set.has(current)) return false;
+		if (!is_eligible_branch(current)) return false;
 		old_index_by_effect.set(current, old_count++);
+		if (current === suffix_old) break;
 		current = current.next;
 	}
 
-	if (old_count !== suffix_len) return false;
+	if (old_count !== middle_len) return false;
 
+	/** @type {Effect[]} */
+	var next_effects = new Array(middle_len);
 	/** @type {number[]} */
-	var new_to_old = new Array(suffix_len);
-	for (k = 0; k < suffix_len; k++) {
-		new_to_old[k] = /** @type {number} */ (old_index_by_effect.get(next_effects[k]));
+	var new_to_old = new Array(middle_len);
+	for (var k = 0; k < middle_len; k++) {
+		var e = /** @type {EachItem} */ (items.get(get_key(array[prefix_end + k], prefix_end + k))).e;
+		if ((e.f & EFFECT_OFFSCREEN) !== 0) return false;
+		var oi = old_index_by_effect.get(e);
+		if (oi === undefined) return false; // not in old slice → add/remove
+		next_effects[k] = e;
+		new_to_old[k] = oi;
 	}
 
 	var lis = compute_lis(new_to_old);
 	var lis_pointer = lis.length - 1;
 
+	// The DOM anchor for moves: first effect of the stable suffix in the new
+	// array (or the each block's anchor when there's no suffix).
+	var suffix_first_effect =
+		suffix_start < length
+			? /** @type {EachItem} */ (items.get(get_key(array[suffix_start], suffix_start))).e
+			: null;
+
 	// Move DOM right-to-left so the anchor for effect `k` is `next_effects[k+1]`
 	// which has already settled at its final DOM position.
-	for (k = suffix_len - 1; k >= 0; k--) {
+	for (k = middle_len - 1; k >= 0; k--) {
 		if (lis_pointer >= 0 && k === lis[lis_pointer]) {
 			lis_pointer--;
 			continue;
 		}
-		var next_effect = k + 1 < suffix_len ? next_effects[k + 1] : null;
+		var next_effect = k + 1 < middle_len ? next_effects[k + 1] : suffix_first_effect;
 		move(next_effects[k], next_effect, anchor);
 	}
 
-	// Patch the linked list. Prefix `[0, i_start)` is stable so its prev/next
-	// pointers are correct. We splice the new suffix in after the prefix tail
-	// (the effect immediately before `current_start` in the old chain, which is
-	// the same effect that should precede the new suffix head).
-	var prefix_tail = current_start.prev;
+	// Patch the linked list. Prefix `[0, prefix_end)` and suffix
+	// `[suffix_start, length)` are stable — leave their pointers alone. Only
+	// the unstable middle needs rewiring.
+	var prefix_tail = prefix_old.prev;
+	var suffix_head = suffix_old.next;
+
 	if (prefix_tail === null) {
 		state.effect.first = next_effects[0];
 	} else {
 		prefix_tail.next = next_effects[0];
 	}
 	next_effects[0].prev = prefix_tail;
-	for (k = 0; k < suffix_len - 1; k++) {
+
+	for (k = 0; k < middle_len - 1; k++) {
 		next_effects[k].next = next_effects[k + 1];
 		next_effects[k + 1].prev = next_effects[k];
 	}
-	next_effects[suffix_len - 1].next = null;
-	state.effect.last = next_effects[suffix_len - 1];
+
+	next_effects[middle_len - 1].next = suffix_head;
+	if (suffix_head === null) {
+		state.effect.last = next_effects[middle_len - 1];
+	} else {
+		suffix_head.prev = next_effects[middle_len - 1];
+	}
 
 	return true;
 }
