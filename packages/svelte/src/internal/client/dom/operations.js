@@ -240,9 +240,17 @@ export function should_defer_append() {
  * @returns {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element}
  */
 export function create_element(tag, namespace, is) {
-	let options = is ? { is } : undefined;
+	// `createElement` hits a fast path in Blink that skips the namespace
+	// lookup `createElementNS` always performs — only the HTML namespace is
+	// eligible. `namespace` may also be `null` (e.g. `<svelte:element
+	// xmlns={null}>`) — treat that as the default.
+	if (namespace == null || namespace === NAMESPACE_HTML) {
+		return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
+			is ? document.createElement(tag, { is }) : document.createElement(tag)
+		);
+	}
 	return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
-		document.createElementNS(namespace ?? NAMESPACE_HTML, tag, options)
+		document.createElementNS(namespace, tag, is ? { is } : undefined)
 	);
 }
 
