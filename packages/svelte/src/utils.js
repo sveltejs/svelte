@@ -427,63 +427,59 @@ export function is_mathml(name) {
 	return MATHML_ELEMENTS.has(name);
 }
 
-const STATE_CREATION_RUNES = /** @type {const} */ ([
-	'$state',
-	'$state.raw',
-	'$derived',
-	'$derived.by'
-]);
+const STATE_CREATION_RUNES = new Set(
+	/** @type {const} */ (['$state', '$state.raw', '$derived', '$derived.by'])
+);
 
-const STATE_CREATION_RUNE_SET = new Set(STATE_CREATION_RUNES);
+const RUNES = new Set(
+	/** @type {const} */ ([
+		...STATE_CREATION_RUNES,
+		'$state.eager',
+		'$state.snapshot',
+		'$props',
+		'$props.id',
+		'$bindable',
+		'$effect',
+		'$effect.pre',
+		'$effect.tracking',
+		'$effect.root',
+		'$effect.pending',
+		'$inspect',
+		'$inspect().with',
+		'$inspect.trace',
+		'$host'
+	])
+);
 
-const RUNES = /** @type {const} */ ([
-	...STATE_CREATION_RUNES,
-	'$state.eager',
-	'$state.snapshot',
-	'$props',
-	'$props.id',
-	'$bindable',
-	'$effect',
-	'$effect.pre',
-	'$effect.tracking',
-	'$effect.root',
-	'$effect.pending',
-	'$inspect',
-	'$inspect().with',
-	'$inspect.trace',
-	'$host'
-]);
-
-const RUNE_SET = new Set(RUNES);
-
-/** @typedef {typeof RUNES[number]} RuneName */
+/** @typedef {typeof RUNES extends Set<infer T> ? T : never} RuneName */
+/** @typedef {typeof STATE_CREATION_RUNES extends Set<infer T> ? T : never} StateCreationRuneName */
 
 /**
  * @param {string} name
  * @returns {name is RuneName}
  */
 export function is_rune(name) {
-	return RUNE_SET.has(/** @type {RuneName} */ (name));
+	return RUNES.has(/** @type {RuneName} */ (name));
 }
-
-/** @typedef {typeof STATE_CREATION_RUNES[number]} StateCreationRuneName */
 
 /**
  * @param {string} name
  * @returns {name is StateCreationRuneName}
  */
 export function is_state_creation_rune(name) {
-	return STATE_CREATION_RUNE_SET.has(/** @type {StateCreationRuneName} */ (name));
+	return STATE_CREATION_RUNES.has(/** @type {StateCreationRuneName} */ (name));
 }
 
-/** List of elements that require raw contents and should not have SSR comments put in them */
-const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 'title']);
+/** Elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = new Set(
+	/** @type {const} */ (['textarea', 'script', 'style', 'title'])
+);
 
-const RAW_TEXT_ELEMENT_SET = new Set(RAW_TEXT_ELEMENTS);
+/** @typedef {typeof RAW_TEXT_ELEMENTS extends Set<infer T> ? T : never} RawTextElement */
 
 /** @param {string} name */
 export function is_raw_text_element(name) {
-	return RAW_TEXT_ELEMENT_SET.has(/** @type {typeof RAW_TEXT_ELEMENTS[number]} */ (name));
+	return RAW_TEXT_ELEMENTS.has(/** @type {RawTextElement} */ (name));
 }
 
 // Matches valid HTML/SVG/MathML element names and custom element names.
