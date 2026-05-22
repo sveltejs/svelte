@@ -2682,6 +2682,12 @@ declare module 'svelte/renderer' {
 	};
 
 	type NodeType = keyof RendererNodes<any, any, any, any>;
+
+	// to detect if the user is passing a type or not we create this type utils that adds a unique symbol
+	// that the user will never be able to pass in. We then create a a DefaultNodes type that is used as the default
+	// type for the T generic of `createRenderer`. This means we can "detect" if the user is passing a type manually by
+	// checking if the type extends DefaultNodes and using different default values
+	// for the other arguments (TFragment, TElement, TTextNode, TComment)
 	type UnsetObject = object & { readonly __unset: unique symbol };
 	type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;
 	/**
