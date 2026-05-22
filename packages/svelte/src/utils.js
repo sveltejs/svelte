@@ -471,9 +471,7 @@ export function is_state_creation_rune(name) {
 }
 
 /** Elements that require raw contents and should not have SSR comments put in them */
-const RAW_TEXT_ELEMENTS = new Set(
-	/** @type {const} */ (['textarea', 'script', 'style', 'title'])
-);
+const RAW_TEXT_ELEMENTS = new Set(/** @type {const} */ (['textarea', 'script', 'style', 'title']));
 
 /** @typedef {typeof RAW_TEXT_ELEMENTS extends Set<infer T> ? T : never} RawTextElement */
 
