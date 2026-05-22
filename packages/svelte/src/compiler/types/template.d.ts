@@ -133,6 +133,8 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
+			/** If `true`, the `{@html}` block is the only child of its parent element and can use `parent.innerHTML` directly */
+			is_controlled?: boolean;
 		};
 	}
 
@@ -153,6 +155,8 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
+			/** If this const tag contains an await expression, or needs to wait on other async, this is set */
+			promises_id?: Identifier;
 		};
 	}
 

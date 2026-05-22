@@ -6,5 +6,5 @@
  * @param {Context} context
  */
 export function Fragment(node, context) {
-	context.next({ ...context.state, fragment: node });
+	context.next({ ...context.state, fragment: node, async_consts: undefined });
 }

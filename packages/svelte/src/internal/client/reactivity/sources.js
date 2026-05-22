@@ -27,7 +27,8 @@ import {
 	ROOT_EFFECT,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	REACTION_IS_UPDATING
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -35,12 +36,18 @@ import { includes } from '../../shared/utils.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
+import {
+	Batch,
+	batch_values,
+	eager_block_effects,
+	schedule_effect,
+	legacy_updates
+} from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
-/** @type {Set<any>} */
+/** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
 /** @type {Map<Source, any>} */
@@ -162,29 +169,22 @@ export function set(source, value, should_proxy = false) {
 		tag_proxy(new_value, /** @type {string} */ (source.label));
 	}
 
-	return internal_set(source, new_value);
+	return internal_set(source, new_value, legacy_updates);
 }
 
 /**
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}
  */
-export function internal_set(source, value) {
+export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
-		var old_value = source.v;
-
-		if (is_destroying_effect) {
-			old_values.set(source, value);
-		} else {
-			old_values.set(source, old_value);
-		}
-
-		source.v = value;
+		old_values.set(source, is_destroying_effect ? value : source.v);
 
 		var batch = Batch.ensure();
-		batch.capture(source, old_value);
+		batch.capture(source, value);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
@@ -224,14 +224,18 @@ export function internal_set(source, value) {
 				execute_derived(derived);
 			}
 
-			update_derived_status(derived);
+			// During time traveling we don't want to reset the status so that
+			// traversal of the graph in the other batches still happens
+			if (batch_values === null) {
+				update_derived_status(derived);
+			}
 		}
 
 		source.wv = increment_write_version();
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
-		mark_reactions(source, DIRTY);
+		mark_reactions(source, DIRTY, updated_during_traversal);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -268,7 +272,18 @@ export function flush_eager_effects() {
 			set_signal_status(effect, MAYBE_DIRTY);
 		}
 
-		if (is_dirty(effect)) {
+		let dirty;
+
+		try {
+			dirty = is_dirty(effect);
+		} catch {
+			// Dirty-checking can evaluate derived dependencies and throw in cases where
+			// parent effects are about to destroy this eager effect. Run the effect so
+			// its own error handling can deal with transient failures.
+			dirty = true;
+		}
+
+		if (dirty) {
 			update_effect(effect);
 		}
 	}
@@ -317,9 +332,10 @@ export function increment(source) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {Effect[] | null} updated_during_traversal
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+function mark_reactions(signal, status, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -333,12 +349,6 @@ function mark_reactions(signal, status) {
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
-		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & EAGER_EFFECT) !== 0) {
-			eager_effects.add(reaction);
-			continue;
-		}
-
 		var not_dirty = (flags & DIRTY) === 0;
 
 		// don't set a DIRTY reaction to MAYBE_DIRTY
@@ -346,25 +356,39 @@ function mark_reactions(signal, status) {
 			set_signal_status(reaction, status);
 		}
 
-		if ((flags & DERIVED) !== 0) {
+		if ((flags & EAGER_EFFECT) !== 0) {
+			// Eager effects need to run immediately:
+			// - for $inspect so that the stack trace makes sense
+			// - for $state.eager because they might be without an effect parent
+			eager_effects.add(/** @type {Effect} */ (reaction));
+		} else if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
 			batch_values?.delete(derived);
 
 			if ((flags & WAS_MARKED) === 0) {
-				// Only connected deriveds can be reliably unmarked right away
-				if (flags & CONNECTED) {
+				// Only connected deriveds being executed outside the update cycle can be reliably unmarked right away
+				if (
+					flags & CONNECTED &&
+					(active_effect === null || (active_effect.f & REACTION_IS_UPDATING) === 0)
+				) {
 					reaction.f |= WAS_MARKED;
 				}
 
-				mark_reactions(derived, MAYBE_DIRTY);
+				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 			}
 		} else if (not_dirty) {
+			var effect = /** @type {Effect} */ (reaction);
+
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
-				eager_block_effects.add(/** @type {Effect} */ (reaction));
+				eager_block_effects.add(effect);
 			}
 
-			schedule_effect(/** @type {Effect} */ (reaction));
+			if (updated_during_traversal !== null) {
+				updated_during_traversal.push(effect);
+			} else {
+				schedule_effect(effect);
+			}
 		}
 	}
 }

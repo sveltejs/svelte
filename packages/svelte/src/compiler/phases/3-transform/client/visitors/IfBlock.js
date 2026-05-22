@@ -51,7 +51,7 @@ export function IfBlock(node, context) {
 			}
 		}
 
-		const render_call = b.stmt(b.call('$$render', consequent_id, index > 0 && b.literal(index)));
+		const render_call = b.stmt(b.call('$$render', consequent_id, index !== 0 && b.literal(index)));
 		const new_if = b.if(test, render_call);
 
 		if (last_if) {
@@ -71,7 +71,7 @@ export function IfBlock(node, context) {
 		const alternate_id = b.id(context.state.scope.generate('alternate'));
 		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
 
-		last_if.alternate = b.stmt(b.call('$$render', alternate_id, b.literal(false)));
+		last_if.alternate = b.stmt(b.call('$$render', alternate_id, b.literal(-1)));
 	}
 
 	// Build $.if() arguments

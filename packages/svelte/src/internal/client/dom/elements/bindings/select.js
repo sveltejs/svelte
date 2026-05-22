@@ -4,6 +4,7 @@ import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
 import { Batch, current_batch, previous_batch } from '../../../reactivity/batch.js';
+import { async_mode_flag } from '../../../../flags/index.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
@@ -105,6 +106,9 @@ export function bind_select_value(select, get, set = get) {
 
 		set(value);
 
+		// @ts-ignore
+		select.__value = value;
+
 		if (current_batch !== null) {
 			batches.add(current_batch);
 		}
@@ -115,8 +119,9 @@ export function bind_select_value(select, get, set = get) {
 		var value = get();
 
 		if (select === document.activeElement) {
-			// we need both, because in non-async mode, render effects run before previous_batch is set
-			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+			// In sync mode render effects are executed during tree traversal -> needs current_batch
+			// In async mode render effects are flushed once batch resolved, at which point current_batch is null -> needs previous_batch
+			var batch = /** @type {Batch} */ (async_mode_flag ? previous_batch : current_batch);
 
 			// Don't update the <select> if it is focused. We can get here if, for example,
 			// an update is deferred because of async work depending on the select:

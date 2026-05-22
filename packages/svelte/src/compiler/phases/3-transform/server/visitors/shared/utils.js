@@ -12,7 +12,7 @@ import {
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
-import { has_await_expression } from '../../../../../utils/ast.js';
+import { has_await_expression, save } from '../../../../../utils/ast.js';
 import { ExpressionMetadata } from '../../../../nodes.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
@@ -225,26 +225,39 @@ export function build_attribute_value(
 		const node = value[i];
 
 		if (node.type === 'Text') {
-			quasi.value.raw += trim_whitespace
+			quasi.value.cooked += trim_whitespace
 				? node.data.replace(regex_whitespaces_strict, ' ')
 				: node.data;
 		} else {
-			expressions.push(
-				b.call(
-					'$.stringify',
-					transform(
-						/** @type {Expression} */ (context.visit(node.expression)),
-						node.metadata.expression
-					)
-				)
-			);
+			const evaluated = context.state.scope.evaluate(node.expression);
 
-			quasi = b.quasi('', i + 1 === value.length);
-			quasis.push(quasi);
+			if (evaluated.is_known) {
+				quasi.value.cooked += (evaluated.value ?? '') + '';
+			} else {
+				const expression = transform(
+					/** @type {Expression} */ (context.visit(node.expression)),
+					node.metadata.expression
+				);
+
+				expressions.push(
+					evaluated.is_string && evaluated.is_defined
+						? expression
+						: b.call('$.stringify', expression)
+				);
+
+				quasi = b.quasi('', i + 1 === value.length);
+				quasis.push(quasi);
+			}
 		}
 	}
 
-	return b.template(quasis, expressions);
+	for (const quasi of quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
+	}
+
+	return expressions.length > 0
+		? b.template(quasis, expressions)
+		: b.literal(/** @type {string} */ (quasi.value.cooked));
 }
 
 /**
@@ -268,6 +281,10 @@ export function build_getter(node, state) {
 			b.literal(node.name),
 			build_getter(store_id, state)
 		);
+	}
+
+	if (binding.kind === 'derived') {
+		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(binding.node);
 	}
 
 	return node;
@@ -352,7 +369,7 @@ export class PromiseOptimiser {
 
 		return b.const(
 			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
-			b.await(b.call('Promise.all', promises))
+			save(b.call('Promise.all', promises))
 		);
 	}
 

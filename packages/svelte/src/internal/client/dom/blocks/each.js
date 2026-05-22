@@ -29,18 +29,20 @@ import {
 	block,
 	branch,
 	destroy_effect,
+	move_effect,
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { BRANCH_EFFECT, COMMENT_NODE, EFFECT_OFFSCREEN, INERT } from '#client/constants';
+import { BRANCH_EFFECT, COMMENT_NODE, DESTROYED, EFFECT_OFFSCREEN, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
+import { tag } from '../../dev/tracing.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -83,7 +85,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 					if (group.pending.size === 0) {
 						var groups = /** @type {Set<EachOutroGroup>} */ (state.outrogroups);
 
-						destroy_effects(array_from(group.done));
+						destroy_effects(state, array_from(group.done));
 						groups.delete(group);
 
 						if (groups.size === 0) {
@@ -114,7 +116,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 			state.items.clear();
 		}
 
-		destroy_effects(to_destroy, !fast_path);
+		destroy_effects(state, to_destroy, !fast_path);
 	} else {
 		group = {
 			pending: new Set(to_destroy),
@@ -126,14 +128,36 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 }
 
 /**
+ * @param {EachState} state
  * @param {Effect[]} to_destroy
  * @param {boolean} remove_dom
  */
-function destroy_effects(to_destroy, remove_dom = true) {
-	// TODO only destroy effects if no pending batch needs them. otherwise,
-	// just re-add the `EFFECT_OFFSCREEN` flag
+function destroy_effects(state, to_destroy, remove_dom = true) {
+	/** @type {Set<Effect> | undefined} */
+	var preserved_effects;
+
+	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
+	if (state.pending.size > 0) {
+		preserved_effects = new Set();
+
+		for (const keys of state.pending.values()) {
+			for (const key of keys) {
+				preserved_effects.add(/** @type {EachItem} */ (state.items.get(key)).e);
+			}
+		}
+	}
+
 	for (var i = 0; i < to_destroy.length; i++) {
-		destroy_effect(to_destroy[i], remove_dom);
+		var e = to_destroy[i];
+
+		if (preserved_effects?.has(e)) {
+			e.f |= EFFECT_OFFSCREEN;
+
+			const fragment = document.createDocumentFragment();
+			move_effect(e, fragment);
+		} else {
+			destroy_effect(to_destroy[i], remove_dom);
+		}
 	}
 }
 
@@ -182,12 +206,28 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
 	});
 
+	if (DEV) {
+		tag(each_array, '{#each ...}');
+	}
+
 	/** @type {V[]} */
 	var array;
 
+	/** @type {Map<Batch, Set<any>>} */
+	var pending = new Map();
+
 	var first_run = true;
 
-	function commit() {
+	/**
+	 * @param {Batch} batch
+	 */
+	function commit(batch) {
+		if ((state.effect.f & DESTROYED) !== 0) {
+			return;
+		}
+
+		state.pending.delete(batch);
+
 		state.fallback = fallback;
 		reconcile(state, array, anchor, flags, get_key);
 
@@ -208,6 +248,13 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				});
 			}
 		}
+	}
+
+	/**
+	 * @param {Batch} batch
+	 */
+	function discard(batch) {
+		state.pending.delete(batch);
 	}
 
 	var effect = block(() => {
@@ -249,6 +296,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 			var value = array[index];
 			var key = get_key(value, index);
+
+			if (DEV) {
+				// Check that the key function is idempotent (returns the same value when called twice)
+				var key_again = get_key(value, index);
+				if (key !== key_again) {
+					e.each_key_volatile(String(index), String(key), String(key_again));
+				}
+			}
 
 			var item = first_run ? null : items.get(key);
 
@@ -306,6 +361,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!first_run) {
+			pending.set(batch, keys);
+
 			if (defer) {
 				for (const [key, item] of items) {
 					if (!keys.has(key)) {
@@ -314,11 +371,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				}
 
 				batch.oncommit(commit);
-				batch.ondiscard(() => {
-					// TODO presumably we need to do something here?
-				});
+				batch.ondiscard(discard);
 			} else {
-				commit();
+				commit(batch);
 			}
 		}
 
@@ -337,7 +392,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	});
 
 	/** @type {EachState} */
-	var state = { effect, flags, items, outrogroups: null, fallback };
+	var state = { effect, flags, items, pending, outrogroups: null, fallback };
 
 	first_run = false;
 
@@ -430,6 +485,14 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		}
 
+		if ((effect.f & INERT) !== 0) {
+			resume_effect(effect);
+			if (is_animated) {
+				effect.nodes?.a?.unfix();
+				(to_animate ??= new Set()).delete(effect);
+			}
+		}
+
 		if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
 			effect.f ^= EFFECT_OFFSCREEN;
 
@@ -455,14 +518,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 				current = skip_to_branch(prev.next);
 				continue;
-			}
-		}
-
-		if ((effect.f & INERT) !== 0) {
-			resume_effect(effect);
-			if (is_animated) {
-				effect.nodes?.a?.unfix();
-				(to_animate ??= new Set()).delete(effect);
 			}
 		}
 
@@ -536,7 +591,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 	if (state.outrogroups !== null) {
 		for (const group of state.outrogroups) {
 			if (group.pending.size === 0) {
-				destroy_effects(array_from(group.done));
+				destroy_effects(state, array_from(group.done));
 				state.outrogroups?.delete(group);
 			}
 		}

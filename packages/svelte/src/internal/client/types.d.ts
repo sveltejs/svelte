@@ -1,5 +1,6 @@
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
+import type { Batch } from './reactivity/batch.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
 declare global {
@@ -37,6 +38,12 @@ export type ComponentContext = {
 	 * @deprecated remove in 6.0
 	 */
 	x: Record<string, any> | null;
+	/**
+	 * The parent effect of this component
+	 * TODO 6.0 this is used to control `bind:this` timing that might change,
+	 * in which case we can remove this property
+	 */
+	r: Effect;
 	/**
 	 * legacy stuff
 	 * @deprecated remove in 6.0
@@ -84,6 +91,8 @@ export type EachState = {
 	flags: number;
 	/** a key -> item lookup */
 	items: Map<any, EachItem>;
+	/** a batch -> keys lookup of all keys that are still needed */
+	pending: Map<Batch, Set<any>>;
 	/** all outro groups that this item is a part of */
 	outrogroups: Set<EachOutroGroup> | null;
 	/** `{:else}` effect */

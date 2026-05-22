@@ -1,6 +1,5 @@
 /** @import { Blocker, TemplateNode, Value } from '#client' */
 import { flatten } from '../../reactivity/async.js';
-import { Batch, current_batch } from '../../reactivity/batch.js';
 import { get } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -10,7 +9,6 @@ import {
 	set_hydrating,
 	skip_nodes
 } from '../hydration.js';
-import { get_boundary } from './boundary.js';
 
 /**
  * @param {TemplateNode} node
@@ -44,13 +42,6 @@ export function async(node, blockers = [], expressions = [], fn) {
 		return;
 	}
 
-	var boundary = get_boundary();
-	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = boundary.is_rendered();
-
-	boundary.update_pending_count(1);
-	batch.increment(blocking);
-
 	if (was_hydrating) {
 		var previous_hydrate_node = hydrate_node;
 		set_hydrate_node(end);
@@ -71,9 +62,6 @@ export function async(node, blockers = [], expressions = [], fn) {
 			if (was_hydrating) {
 				set_hydrating(false);
 			}
-
-			boundary.update_pending_count(-1);
-			batch.decrement(blocking);
 		}
 	});
 }

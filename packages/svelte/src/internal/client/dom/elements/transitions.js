@@ -5,7 +5,7 @@ import { active_effect, untrack } from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '#client/constants';
+import { BLOCK_EFFECT, REACTION_RAN, EFFECT_TRANSPARENT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { without_reactive_context } from './bindings/shared.js';
 
@@ -115,10 +115,17 @@ export function animation(element, get_fn, get_params) {
 			) {
 				const options = get_fn()(this.element, { from, to }, get_params?.());
 
-				animation = animate(this.element, options, undefined, 1, () => {
-					animation?.abort();
-					animation = undefined;
-				});
+				animation = animate(
+					this.element,
+					options,
+					undefined,
+					1,
+					() => {},
+					() => {
+						animation?.abort();
+						animation = undefined;
+					}
+				);
 			}
 		},
 		fix() {
@@ -239,15 +246,24 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 			}
 
-			intro = animate(element, get_options(), outro, 1, () => {
-				dispatch_event(element, 'introend');
+			intro = animate(
+				element,
+				get_options(),
+				outro,
+				1,
+				() => {
+					dispatch_event(element, 'introstart');
+				},
+				() => {
+					dispatch_event(element, 'introend');
 
-				// Ensure we cancel the animation to prevent leaking
-				intro?.abort();
-				intro = current_options = undefined;
+					// Ensure we cancel the animation to prevent leaking
+					intro?.abort();
+					intro = current_options = undefined;
 
-				element.style.overflow = overflow;
-			});
+					element.style.overflow = overflow;
+				}
+			);
 		},
 		out(fn) {
 			if (!is_outro) {
@@ -258,10 +274,19 @@ export function transition(flags, element, get_fn, get_params) {
 
 			element.inert = true;
 
-			outro = animate(element, get_options(), intro, 0, () => {
-				dispatch_event(element, 'outroend');
-				fn?.();
-			});
+			outro = animate(
+				element,
+				get_options(),
+				intro,
+				0,
+				() => {
+					dispatch_event(element, 'outrostart');
+				},
+				() => {
+					dispatch_event(element, 'outroend');
+					fn?.();
+				}
+			);
 		},
 		stop: () => {
 			intro?.abort();
@@ -289,7 +314,7 @@ export function transition(flags, element, get_fn, get_params) {
 				}
 			}
 
-			run = !block || (block.f & EFFECT_RAN) !== 0;
+			run = !block || (block.f & REACTION_RAN) !== 0;
 		}
 
 		if (run) {
@@ -306,10 +331,11 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
  * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
+ * @param {(() => void)} on_begin Called just before beginning the animation
  * @param {(() => void)} on_finish Called after successfully completing the animation
  * @returns {Animation}
  */
-function animate(element, options, counterpart, t2, on_finish) {
+function animate(element, options, counterpart, t2, on_begin, on_finish) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
@@ -323,7 +349,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t2, on_finish);
+			a = animate(element, o, counterpart, t2, on_begin, on_finish);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -342,7 +368,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 	counterpart?.deactivate();
 
 	if (!options?.duration && !options?.delay) {
-		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
+		on_begin();
 		on_finish();
 
 		return {
@@ -382,7 +408,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 		// remove dummy animation from the stack to prevent conflict with main animation
 		animation.cancel();
 
-		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
+		on_begin();
 
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro

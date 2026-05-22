@@ -1,4 +1,6 @@
+import { DEV } from 'esm-env';
 import { define_property } from './utils.js';
+import * as e from './errors.js';
 
 /**
  * @param {string} label
@@ -62,4 +64,16 @@ export function get_stack() {
 	}
 
 	return new_lines;
+}
+
+/**
+ * @param {boolean} condition
+ * @param {string} message
+ */
+export function invariant(condition, message) {
+	if (!DEV) {
+		throw new Error('invariant(...) was not guarded by if (DEV)');
+	}
+
+	if (!condition) e.invariant_violation(message);
 }

@@ -1,6 +1,6 @@
 /** @import { Task } from '#client' */
-/** @import { SpringOpts, SpringUpdateOpts, TickContext } from './private.js' */
-/** @import { Spring as SpringStore } from './public.js' */
+/** @import { TickContext } from './private.js' */
+/** @import { Spring as SpringStore, SpringOptions, SpringUpdateOptions } from './public.js' */
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
@@ -62,7 +62,7 @@ function tick_spring(ctx, last_value, current_value, target_value) {
  * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
  * @template [T=any]
  * @param {T} [value]
- * @param {SpringOpts} [opts]
+ * @param {SpringOptions} [opts]
  * @returns {SpringStore<T>}
  */
 export function spring(value, opts = {}) {
@@ -83,7 +83,7 @@ export function spring(value, opts = {}) {
 	let cancel_task = false;
 	/**
 	 * @param {T} new_value
-	 * @param {SpringUpdateOpts} opts
+	 * @param {SpringUpdateOptions} opts
 	 * @returns {Promise<void>}
 	 */
 	function set(new_value, opts = {}) {
@@ -191,7 +191,7 @@ export class Spring {
 
 	/**
 	 * @param {T} value
-	 * @param {SpringOpts} [options]
+	 * @param {SpringOptions} [options]
 	 */
 	constructor(value, options = {}) {
 		this.#current = DEV ? tag(state(value), 'Spring.current') : state(value);
@@ -225,7 +225,7 @@ export class Spring {
 	 * ```
 	 * @template U
 	 * @param {() => U} fn
-	 * @param {SpringOpts} [options]
+	 * @param {SpringOptions} [options]
 	 */
 	static of(fn, options) {
 		const spring = new Spring(fn(), options);
@@ -293,7 +293,7 @@ export class Spring {
 	 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 	 *
 	 * @param {T} value
-	 * @param {SpringUpdateOpts} [options]
+	 * @param {SpringUpdateOptions} [options]
 	 */
 	set(value, options) {
 		this.#deferred?.reject(new Error('Aborted'));

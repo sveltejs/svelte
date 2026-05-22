@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,12 +7,7 @@ export default test({
 	`,
 
 	async test({ assert, target }) {
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		flushSync();
-
+		await tick();
 		assert.htmlEqual(target.innerHTML, '<p data-foo="bar">hello</p>');
 	}
 });

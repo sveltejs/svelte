@@ -1,4 +1,4 @@
-/** @import { Effect, Source } from './types.js' */
+/** @import { Derived, Effect, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -22,6 +22,7 @@ import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { effect, render_effect } from './effects.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -282,8 +283,14 @@ export function prop(props, key, flags, fallback) {
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
+	var fallback_signal = /** @type {Derived<V> | undefined} */ (undefined);
 
 	var get_fallback = () => {
+		if (lazy && runes) {
+			fallback_signal ??= derived(/** @type {() => V} */ (fallback));
+			return get(fallback_signal);
+		}
+
 		if (fallback_dirty) {
 			fallback_dirty = false;
 
@@ -296,7 +303,7 @@ export function prop(props, key, flags, fallback) {
 	};
 
 	/** @type {((v: V) => void) | undefined} */
-	var setter;
+	let setter;
 
 	if (bindable) {
 		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
@@ -308,6 +315,7 @@ export function prop(props, key, flags, fallback) {
 			(is_entry_props && key in props ? (v) => (props[key] = v) : undefined);
 	}
 
+	/** @type {V} */
 	var initial_value;
 	var is_store_sub = false;
 
@@ -417,9 +425,7 @@ export function prop(props, key, flags, fallback) {
 
 			// special case — avoid recalculating the derived if we're in a
 			// teardown function and the prop was overridden locally, or the
-			// component was already destroyed (this latter part is necessary
-			// because `bind:this` can read props after the component has
-			// been destroyed. TODO simplify `bind:this`
+			// component was already destroyed (people could access props in a timeout)
 			if ((is_destroying_effect && overridden) || (parent_effect.f & DESTROYED) !== 0) {
 				return d.v;
 			}

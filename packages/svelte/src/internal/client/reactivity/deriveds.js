@@ -1,5 +1,6 @@
-/** @import { Derived, Effect, Source } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
+/** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
@@ -10,7 +11,9 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN
+	CLEAN,
+	REACTION_RAN,
+	INERT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -19,29 +22,42 @@ import {
 	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
-	is_destroying_effect
+	is_destroying_effect,
+	update_effect,
+	remove_reactions,
+	skipped_deps,
+	new_deps
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
+import {
+	async_effect,
+	destroy_effect,
+	destroy_effect_children,
+	effect_tracking,
+	teardown
+} from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
-import { unset_context } from './async.js';
-import { deferred, includes } from '../../shared/utils.js';
+import { batch_values, current_batch, previous_batch } from './batch.js';
+import { increment_pending, unset_context } from './async.js';
+import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
-/** @type {Effect | null} */
-export let current_async_effect = null;
+/**
+ * This allows us to track 'reactivity loss' that occurs when signals
+ * are read after a non-context-restoring `await`. Dev-only
+ * @type {{ effect: Effect, effect_deps: Set<Value>, warned: boolean } | null}
+ */
+export let reactivity_loss_tracker = null;
 
-/** @param {Effect | null} v */
-export function set_from_async_derived(v) {
-	current_async_effect = v;
+/** @param {{ effect: Effect, effect_deps: Set<Value>, warned: boolean } | null} v */
+export function set_reactivity_loss_tracker(v) {
+	reactivity_loss_tracker = v;
 }
 
 export const recent_async_deriveds = new Set();
@@ -54,10 +70,6 @@ export const recent_async_deriveds = new Set();
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	var flags = DERIVED | DIRTY;
-	var parent_derived =
-		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
-			? /** @type {Derived} */ (active_reaction)
-			: null;
 
 	if (active_effect !== null) {
 		// Since deriveds are evaluated lazily, any effects created inside them are
@@ -77,7 +89,7 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
-		parent: parent_derived ?? active_effect,
+		parent: active_effect,
 		ac: null
 	};
 
@@ -87,6 +99,8 @@ export function derived(fn) {
 
 	return signal;
 }
+
+export const OBSOLETE = Symbol('obsolete');
 
 /**
  * @template V
@@ -103,21 +117,23 @@ export function async_derived(fn, label, location) {
 		e.async_derived_orphan();
 	}
 
-	var boundary = /** @type {Boundary} */ (parent.b);
-
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label;
+	if (DEV) signal.label = label ?? fn.toString();
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
-	var deferreds = new Map();
+	/** @type {Set<ReturnType<typeof deferred<V>>>} */
+	var deferreds = new Set();
 
 	async_effect(() => {
-		if (DEV) current_async_effect = active_effect;
+		var effect = /** @type {Effect} */ (active_effect);
+
+		if (DEV) {
+			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
+		}
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
@@ -128,34 +144,61 @@ export function async_derived(fn, label, location) {
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
 			Promise.resolve(fn())
-				.then(d.resolve, d.reject)
-				.then(() => {
-					if (batch === current_batch && batch.committed) {
-						// if the batch was rejected as stale, we need to cleanup
-						// after any `$.save(...)` calls inside `fn()`
-						batch.deactivate();
-					}
-
-					unset_context();
-				});
+				.then(d.resolve, (e) => {
+					// if the promise was rejected by the user, via `getAbortSignal`, then
+					// wait for a subsequent resolution instead of flushing the batch
+					if (e !== STALE_REACTION) d.reject(e);
+				})
+				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
 			unset_context();
 		}
 
-		if (DEV) current_async_effect = null;
+		if (DEV) {
+			if (reactivity_loss_tracker) {
+				// Reused deps from previous run (indices 0 to skipped_deps-1)
+				// We deliberately only track direct dependencies of the async expression to encourage
+				// dependencies being directly visible at the point of the expression
+				if (effect.deps !== null) {
+					for (let i = 0; i < skipped_deps; i += 1) {
+						reactivity_loss_tracker.effect_deps.add(effect.deps[i]);
+					}
+				}
+
+				// New deps discovered this run
+				if (new_deps !== null) {
+					for (let i = 0; i < new_deps.length; i += 1) {
+						reactivity_loss_tracker.effect_deps.add(new_deps[i]);
+					}
+				}
+			}
+
+			reactivity_loss_tracker = null;
+		}
 
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
-			var blocking = boundary.is_rendered();
+			// we only increment the batch's pending state for updates, not creation, otherwise
+			// we will decrement to zero before the work that depends on this promise (e.g. a
+			// template effect) has initialized, causing the batch to resolve prematurely
+			if ((effect.f & REACTION_RAN) !== 0) {
+				var decrement_pending = increment_pending();
+			}
 
-			boundary.update_pending_count(1);
-			batch.increment(blocking);
+			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
+				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
+			} else {
+				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
+				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
+				for (const d of deferreds.values()) {
+					d.reject(OBSOLETE);
+				}
+			}
 
-			deferreds.get(batch)?.reject(STALE_REACTION);
-			deferreds.delete(batch); // delete to ensure correct order in Map iteration below
-			deferreds.set(batch, d);
+			deferreds.add(d);
+			batch.async_deriveds.set(effect, d);
 		}
 
 		/**
@@ -163,17 +206,22 @@ export function async_derived(fn, label, location) {
 		 * @param {unknown} error
 		 */
 		const handler = (value, error = undefined) => {
-			current_async_effect = null;
+			if (DEV) {
+				reactivity_loss_tracker = null;
+			}
+
+			decrement_pending?.();
+			deferreds.delete(d);
+
+			if (error === OBSOLETE) return;
 
 			batch.activate();
 
 			if (error) {
-				if (error !== STALE_REACTION) {
-					signal.f |= ERROR_VALUE;
+				signal.f |= ERROR_VALUE;
 
-					// @ts-expect-error the error is the wrong type, but we don't care
-					internal_set(signal, error);
-				}
+				// @ts-expect-error the error is the wrong type, but we don't care
+				internal_set(signal, error);
 			} else {
 				if ((signal.f & ERROR_VALUE) !== 0) {
 					signal.f ^= ERROR_VALUE;
@@ -181,18 +229,11 @@ export function async_derived(fn, label, location) {
 
 				internal_set(signal, value);
 
-				// All prior async derived runs are now stale
-				for (const [b, d] of deferreds) {
-					deferreds.delete(b);
-					if (b === batch) break;
-					d.reject(STALE_REACTION);
-				}
-
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);
 
 					setTimeout(() => {
-						if (recent_async_deriveds.has(signal)) {
+						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
 							w.await_waterfall(/** @type {string} */ (signal.label), location);
 							recent_async_deriveds.delete(signal);
 						}
@@ -200,18 +241,15 @@ export function async_derived(fn, label, location) {
 				}
 			}
 
-			if (should_suspend) {
-				boundary.update_pending_count(-1);
-				batch.decrement(blocking);
-			}
+			batch.deactivate();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
 	});
 
 	teardown(() => {
-		for (const d of deferreds.values()) {
-			d.reject(STALE_REACTION);
+		for (const d of deferreds) {
+			d.reject(OBSOLETE);
 		}
 	});
 
@@ -291,23 +329,6 @@ export function destroy_derived_effects(derived) {
 let stack = [];
 
 /**
- * @param {Derived} derived
- * @returns {Effect | null}
- */
-function get_derived_parent_effect(derived) {
-	var parent = derived.parent;
-	while (parent !== null) {
-		if ((parent.f & DERIVED) === 0) {
-			// The original parent effect might've been destroyed but the derived
-			// is used elsewhere now - do not return the destroyed effect in that case
-			return (parent.f & DESTROYED) === 0 ? /** @type {Effect} */ (parent) : null;
-		}
-		parent = parent.parent;
-	}
-	return null;
-}
-
-/**
  * @template T
  * @param {Derived} derived
  * @returns {T}
@@ -315,8 +336,20 @@ function get_derived_parent_effect(derived) {
 export function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
+	var parent = derived.parent;
 
-	set_active_effect(get_derived_parent_effect(derived));
+	if (
+		!is_destroying_effect &&
+		parent !== null &&
+		derived.v !== UNINITIALIZED && // if it was never evaluated before, it's guaranteed to fail downstream, so we try to execute instead
+		(parent.f & (DESTROYED | INERT)) !== 0
+	) {
+		w.derived_inert();
+
+		return derived.v;
+	}
+
+	set_active_effect(parent);
 
 	if (DEV) {
 		let prev_eager_effects = eager_effects;
@@ -364,7 +397,18 @@ export function update_derived(derived) {
 		// otherwise, the next time we get here after a 'real world' state
 		// change, `derived.equals` may incorrectly return `true`
 		if (!current_batch?.is_fork || derived.deps === null) {
-			derived.v = value;
+			if (current_batch !== null) {
+				// We also write to previous_batch because if it exists, it is a sign that we're
+				// currently in the process of flushing effects. These updates to deriveds may belong
+				// to the previous batch, not the new one (which can already exist if an earlier
+				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
+				// but not adding it to current_batch can, too, so we add it to both.
+				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
+				current_batch.capture(derived, value, true);
+				previous_batch?.capture(derived, value, true);
+			} else {
+				derived.v = value;
+			}
 
 			// deriveds without dependencies should never be recomputed
 			if (derived.deps === null) {
@@ -390,5 +434,45 @@ export function update_derived(derived) {
 		}
 	} else {
 		update_derived_status(derived);
+	}
+}
+
+/**
+ * @param {Derived} derived
+ */
+export function freeze_derived_effects(derived) {
+	if (derived.effects === null) return;
+
+	for (const e of derived.effects) {
+		// if the effect has a teardown function or abort signal, call it
+		if (e.teardown || e.ac) {
+			e.teardown?.();
+			e.ac?.abort(STALE_REACTION);
+
+			// make it a noop so it doesn't get called again if the derived
+			// is unfrozen. we don't set it to `null`, because the existence
+			// of a teardown function is what determines whether the
+			// effect runs again during unfreezing (but not for teardown-only effects)
+			if (e.fn !== null) e.teardown = noop;
+			e.ac = null;
+
+			remove_reactions(e, 0);
+			destroy_effect_children(e);
+		}
+	}
+}
+
+/**
+ * @param {Derived} derived
+ */
+export function unfreeze_derived_effects(derived) {
+	if (derived.effects === null) return;
+
+	for (const e of derived.effects) {
+		// if the effect was previously frozen — indicated by the presence
+		// of a teardown function — unfreeze it
+		if (e.teardown && e.fn !== null) {
+			update_effect(e);
+		}
 	}
 }

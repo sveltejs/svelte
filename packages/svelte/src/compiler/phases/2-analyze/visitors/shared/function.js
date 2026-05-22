@@ -10,7 +10,7 @@ export function visit_function(node, context) {
 		for (const [name] of context.state.scope.references) {
 			const binding = context.state.scope.get(name);
 
-			if (binding && binding.scope.function_depth < context.state.scope.function_depth) {
+			if (binding && binding.scope !== context.state.scope) {
 				context.state.expression.references.add(binding);
 			}
 		}

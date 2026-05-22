@@ -148,6 +148,25 @@ export function each_key_duplicate(a, b, value) {
 }
 
 /**
+ * Keyed each block has key that is not idempotent — the key for item at index %index% was `%a%` but is now `%b%`. Keys must be the same each time for a given item
+ * @param {string} index
+ * @param {string} a
+ * @param {string} b
+ * @returns {never}
+ */
+export function each_key_volatile(index, a, b) {
+	if (DEV) {
+		const error = new Error(`each_key_volatile\nKeyed each block has key that is not idempotent — the key for item at index ${index} was \`${a}\` but is now \`${b}\`. Keys must be the same each time for a given item\nhttps://svelte.dev/e/each_key_volatile`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/each_key_volatile`);
+	}
+}
+
+/**
  * `%rune%` cannot be used inside an effect cleanup function
  * @param {string} rune
  * @returns {never}

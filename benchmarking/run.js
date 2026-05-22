@@ -1,9 +1,12 @@
 import * as $ from '../packages/svelte/src/internal/client/index.js';
 import { reactivity_benchmarks } from './benchmarks/reactivity/index.js';
 import { ssr_benchmarks } from './benchmarks/ssr/index.js';
+import { with_cpu_profile } from './utils.js';
 
 // e.g. `pnpm bench kairo` to only run the kairo benchmarks
 const filters = process.argv.slice(2);
+
+const PROFILE_DIR = './benchmarking/.profiles';
 
 const suites = [
 	{
@@ -50,7 +53,7 @@ try {
 		console.log('='.repeat(TOTAL_WIDTH));
 
 		for (const benchmark of benchmarks) {
-			const results = await benchmark.fn();
+			const results = await with_cpu_profile(PROFILE_DIR, benchmark.label, () => benchmark.fn());
 			console.log(
 				pad_right(benchmark.label, COLUMN_WIDTHS[0]) +
 					pad_left(results.time.toFixed(2), COLUMN_WIDTHS[1]) +
@@ -69,6 +72,10 @@ try {
 				pad_left(suite_gc_time.toFixed(2), COLUMN_WIDTHS[2])
 		);
 		console.log('='.repeat(TOTAL_WIDTH));
+	}
+
+	if (PROFILE_DIR !== null) {
+		console.log(`\nCPU profiles written to ${PROFILE_DIR}`);
 	}
 } catch (e) {
 	// eslint-disable-next-line no-console

@@ -2,7 +2,6 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // this fails on main, too; skip for now
 	async test({ assert, target, logs }) {
 		const [x, y, resolve] = target.querySelectorAll('button');
 

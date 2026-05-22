@@ -27,10 +27,12 @@ export const DIRTY = 1 << 11;
 export const MAYBE_DIRTY = 1 << 12;
 export const INERT = 1 << 13;
 export const DESTROYED = 1 << 14;
+/** Set once a reaction has run for the first time */
+export const REACTION_RAN = 1 << 15;
+/** Effect is in the process of getting destroyed. Can be observed in child teardown functions */
+export const DESTROYING = 1 << 25;
 
 // Flags exclusive to effects
-/** Set once an effect that should run synchronously has run */
-export const EFFECT_RAN = 1 << 15;
 /**
  * 'Transparent' effects do not create a transition boundary.
  * This is on a block effect 99% of the time but may also be on a branch effect if its parent block effect was pruned
@@ -46,9 +48,10 @@ export const EFFECT_OFFSCREEN = 1 << 25;
 /**
  * Tells that we marked this derived and its reactions as visited during the "mark as (maybe) dirty"-phase.
  * Will be lifted during execution of the derived and during checking its dirty state (both are necessary
- * because a derived might be checked but not executed).
+ * because a derived might be checked but not executed). This is a pure performance optimization flag and
+ * should not be used for any other purpose!
  */
-export const WAS_MARKED = 1 << 15;
+export const WAS_MARKED = 1 << 16;
 
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
@@ -60,6 +63,13 @@ export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+export const ATTRIBUTES_CACHE = Symbol('attributes');
+export const CLASS_CACHE = Symbol('class');
+export const STYLE_CACHE = Symbol('style');
+export const TEXT_CACHE = Symbol('text');
+export const FORM_RESET_HANDLER = Symbol('form reset');
+/** An anchor might change, via this symbol on the original anchor we can tell HMR about the updated anchor */
+export const HMR_ANCHOR = Symbol('hmr anchor');
 
 /** allow users to ignore aborted signal errors if `reason.name === 'StaleReactionError` */
 export const STALE_REACTION = new (class StaleReactionError extends Error {
@@ -67,6 +77,10 @@ export const STALE_REACTION = new (class StaleReactionError extends Error {
 	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
 })();
 
+export const IS_XHTML =
+	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location
+	!!globalThis.document?.contentType &&
+	/* @__PURE__ */ globalThis.document.contentType.includes('xml');
 export const ELEMENT_NODE = 1;
 export const TEXT_NODE = 3;
 export const COMMENT_NODE = 8;

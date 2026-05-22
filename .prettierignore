@@ -31,6 +31,8 @@ packages/svelte/tests/parser-modern/samples/*/_actual.json
 packages/svelte/tests/parser-modern/samples/*/output.json
 packages/svelte/types
 packages/svelte/compiler/index.js
+playgrounds/sandbox/dist/*
+playgrounds/sandbox/output/*
 playgrounds/sandbox/src/*
 
 **/node_modules

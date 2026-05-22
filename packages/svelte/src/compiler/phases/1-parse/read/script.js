@@ -9,7 +9,7 @@ import { is_text_attribute } from '../../../utils/ast.js';
 import { locator } from '../../../state.js';
 
 const regex_closing_script_tag = /<\/script\s*>/;
-const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
+const regex_starts_with_closing_script_tag = /<\/script\s*>/y;
 
 const RESERVED_ATTRIBUTES = ['server', 'client', 'worker', 'test', 'default'];
 const ALLOWED_ATTRIBUTES = ['context', 'generics', 'lang', 'module'];
@@ -31,14 +31,7 @@ export function read_script(parser, start, attributes) {
 		parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
 	parser.read(regex_starts_with_closing_script_tag);
 
-	/** @type {Program} */
-	let ast;
-
-	try {
-		ast = acorn.parse(source, parser.root.comments, parser.ts, true);
-	} catch (err) {
-		parser.acorn_error(err);
-	}
+	const ast = acorn.parse(source, parser.root.comments, parser.ts, true);
 
 	ast.start = script_start;
 

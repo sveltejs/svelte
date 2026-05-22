@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import 'svelte/internal/flags/async';
 import {
 	sbench_create_0to1,
 	sbench_create_1000to1,

@@ -22,13 +22,16 @@ import {
 	STALE_REACTION,
 	ERROR_VALUE,
 	WAS_MARKED,
-	MANAGED_EFFECT
+	MANAGED_EFFECT,
+	REACTION_RAN
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
-	destroy_derived_effects,
+	reactivity_loss_tracker,
 	execute_derived,
+	freeze_derived_effects,
 	recent_async_deriveds,
+	unfreeze_derived_effects,
 	update_derived
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
@@ -55,6 +58,7 @@ import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
+import * as w from './warnings.js';
 
 let is_updating_effect = false;
 
@@ -107,9 +111,9 @@ export function push_reaction_value(value) {
  * and until a new dependency is accessed — we track this via `skipped_deps`
  * @type {null | Value[]}
  */
-let new_deps = null;
+export let new_deps = null;
 
-let skipped_deps = 0;
+export let skipped_deps = 0;
 
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
@@ -253,6 +257,7 @@ export function update_reaction(reaction) {
 		reaction.f |= REACTION_IS_UPDATING;
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
+		reaction.f |= REACTION_RAN;
 		var deps = reaction.deps;
 
 		// Don't remove reactions during fork;
@@ -394,10 +399,19 @@ function remove_reaction(signal, dependency) {
 			derived.f &= ~WAS_MARKED;
 		}
 
-		update_derived_status(derived);
+		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is
+		// never re-executed. This is possible when the derived is only executed once in the context
+		// of a new branch which happens before fork.commit() runs. In this case, the derived still has
+		// UNINITIALIZED as its value, and then when it's loosing its reactions we need to ensure it stays
+		// DIRTY so it is reexecuted once someone wants its value again.
+		if (derived.v !== UNINITIALIZED) {
+			update_derived_status(derived);
+		}
+
+		// freeze any effects inside this derived
+		freeze_derived_effects(derived);
 
 		// Disconnect any reactions owned by this reaction
-		destroy_derived_effects(derived);
 		remove_reactions(derived, 0);
 	}
 }
@@ -546,9 +560,15 @@ export function get(signal) {
 					}
 				}
 			} else {
-				// we're adding a dependency outside the init/update cycle
-				// (i.e. after an `await`)
-				(active_reaction.deps ??= []).push(signal);
+				// We're adding a dependency outside the init/update cycle (i.e. after an `await`).
+				// We have to deduplicate deps/reactions in this case or remove_reactions could
+				// disconnect deps/reactions that are actually still in use (if skip_deps says
+				// "disconnect all after this index" and some of the signals are also present in
+				// list prior to the cutoff index, i.e. that should be kept).
+				active_reaction.deps ??= [];
+				if (!includes.call(active_reaction.deps, signal)) {
+					active_reaction.deps.push(signal);
+				}
 
 				var reactions = signal.reactions;
 
@@ -562,19 +582,21 @@ export function get(signal) {
 	}
 
 	if (DEV) {
-		// TODO reinstate this, but make it actually work
-		// if (current_async_effect) {
-		// 	var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
-		// 	var was_read = current_async_effect.deps?.includes(signal);
+		if (
+			!untracking &&
+			reactivity_loss_tracker &&
+			!reactivity_loss_tracker.warned &&
+			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0 &&
+			!reactivity_loss_tracker.effect_deps.has(signal)
+		) {
+			reactivity_loss_tracker.warned = true;
 
-		// 	if (!tracking && !untracking && !was_read) {
-		// 		w.await_reactivity_loss(/** @type {string} */ (signal.label));
+			w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
-		// 		var trace = get_error('traced at');
-		// 		// eslint-disable-next-line no-console
-		// 		if (trace) console.warn(trace);
-		// 	}
-		// }
+			var trace = get_error('traced at');
+			// eslint-disable-next-line no-console
+			if (trace) console.warn(trace);
+		}
 
 		recent_async_deriveds.delete(signal);
 
@@ -589,7 +611,7 @@ export function get(signal) {
 			if (signal.trace) {
 				signal.trace();
 			} else {
-				var trace = get_error('traced at');
+				trace = get_error('traced at');
 
 				if (trace) {
 					var entry = tracing_expressions.entries.get(signal);
@@ -643,7 +665,7 @@ export function get(signal) {
 			active_reaction !== null &&
 			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
 
-		var is_new = derived.deps === null;
+		var is_new = (derived.f & REACTION_RAN) === 0;
 
 		if (is_dirty(derived)) {
 			if (should_connect) {
@@ -656,6 +678,7 @@ export function get(signal) {
 		}
 
 		if (should_connect && !is_new) {
+			unfreeze_derived_effects(derived);
 			reconnect(derived);
 		}
 	}
@@ -677,14 +700,15 @@ export function get(signal) {
  * @param {Derived} derived
  */
 function reconnect(derived) {
-	if (derived.deps === null) return;
-
 	derived.f |= CONNECTED;
+
+	if (derived.deps === null) return;
 
 	for (const dep of derived.deps) {
 		(dep.reactions ??= []).push(derived);
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
+			unfreeze_derived_effects(/** @type {Derived} */ (dep));
 			reconnect(/** @type {Derived} */ (dep));
 		}
 	}
@@ -742,30 +766,6 @@ export function untrack(fn) {
 	} finally {
 		untracking = previous_untracking;
 	}
-}
-
-/**
- * @param {Record<string | symbol, unknown>} obj
- * @param {Array<string | symbol>} keys
- * @returns {Record<string | symbol, unknown>}
- */
-export function exclude_from_object(obj, keys) {
-	/** @type {Record<string | symbol, unknown>} */
-	var result = {};
-
-	for (var key in obj) {
-		if (!keys.includes(key)) {
-			result[key] = obj[key];
-		}
-	}
-
-	for (var symbol of Object.getOwnPropertySymbols(obj)) {
-		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
-			result[symbol] = obj[symbol];
-		}
-	}
-
-	return result;
 }
 
 /**

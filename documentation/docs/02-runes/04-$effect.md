@@ -41,9 +41,11 @@ You can use `$effect` anywhere, not just at the top level of a component, as lon
 
 > [!NOTE] Svelte uses effects internally to represent logic and expressions in your template — this is how `<h1>hello {name}!</h1>` updates when `name` changes.
 
-An effect can return a _teardown function_ which will run immediately before the effect re-runs ([demo](/playground/untitled#H4sIAAAAAAAAE42SQVODMBCF_8pOxkPRKq3HCsx49K4n64xpskjGkDDJ0tph-O8uINo6HjxB3u7HvrehE07WKDbiyZEhi1osRWksRrF57gQdm6E2CKx_dd43zU3co6VB28mIf-nKO0JH_BmRRRVMQ8XWbXkAgfKtI8jhIpIkXKySu7lSG2tNRGZ1_GlYr1ZTD3ddYFmiosUigbyAbpC2lKbwWJkIB8ZhhxBQBWRSw6FCh3sM8GrYTthL-wqqku4N44TyqEgwF3lmRHr4Op0PGXoH31c5rO8mqV-eOZ49bikgtcHBL55tmhIkEMqg_cFB2TpFxjtg703we6NRL8HQFCS07oSUCZi6Rm04lz1yytIHBKoQpo1w6Gsm4gmyS8b8Y5PydeMdX8gwS2Ok4I-ov5NZtvQde95GMsccn_1wzNKfu3RZtS66cSl9lvL7qO1aIk7knbJGvefdtIOzi73M4bYvovUHDFk6AcX_0HRESxnpBOW_jfCDxIZCi_1L_wm4xGQ60wIAAA==)).
+An effect can return a _teardown function_ which will run immediately before the effect re-runs:
 
+<!-- codeblock:start {"title":"Effect teardown"} -->
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let count = $state(0);
 	let milliseconds = $state(1000);
@@ -68,6 +70,7 @@ An effect can return a _teardown function_ which will run immediately before the
 <button onclick={() => (milliseconds *= 2)}>slower</button>
 <button onclick={() => (milliseconds /= 2)}>faster</button>
 ```
+<!-- codeblock:end -->
 
 Teardown functions also run when the effect is destroyed, which happens when its parent is destroyed (for example, a component is unmounted) or the parent effect re-runs.
 
@@ -206,9 +209,11 @@ Apart from the timing, `$effect.pre` works exactly like `$effect`.
 
 ## `$effect.tracking`
 
-The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/playground/untitled#H4sIAAAAAAAACn3PwYrCMBDG8VeZDYIt2PYeY8Dn2HrIhqkU08nQjItS-u6buAt7UDzmz8ePyaKGMWBS-nNRcmdU-hHUTpGbyuvI3KZvDFLal0v4qvtIgiSZUSb5eWSxPfWSc4oB2xDP1XYk8HHiSHkICeXKeruDDQ4Demlldv4y0rmq6z10HQwuJMxGVv4mVVXDwcJS0jP9u3knynwtoKz1vifT_Z9Jhm0WBCcOTlDD8kyspmML5qNpHg40jc3fFryJ0iWsp_UHgz3180oBAAA=)):
+The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template:
 
+<!-- codeblock:start {"title":"$effect.tracking()"} -->
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	console.log('in component setup:', $effect.tracking()); // false
 
@@ -219,14 +224,27 @@ The `$effect.tracking` rune is an advanced feature that tells you whether or not
 
 <p>in template: {$effect.tracking()}</p> <!-- true -->
 ```
+<!-- codeblock:end -->
 
 It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svelte-reactivity#createSubscriber), which will create listeners to update reactive values but _only_ if those values are being tracked (rather than, for example, read inside an event handler).
 
 ## `$effect.pending`
 
-When using [`await`](await-expressions) in components, the `$effect.pending()` rune tells you how many promises are pending in the current [boundary](svelte-boundary), not including child boundaries ([demo](/playground/untitled#H4sIAAAAAAAAE3WRMU_DMBCF_8rJdHDUqilILGkaiY2RgY0yOPYZWbiOFV8IleX_jpMUEAIWS_7u-d27c2ROnJBV7B6t7WDsequAozKEqmAbpo3FwKqnyOjsJ90EMr-8uvN-G97Q0sRaEfAvLjtH6CjbsDrI3nhqju5IFgkEHGAVSBDy62L_SdtvejPTzEU4Owl6cJJM50AoxcUG2gLiVM31URgChyM89N3JBORcF3BoICA9mhN2A3G9gdvdrij2UJYgejLaSCMsKLTivNj0SEOf7WEN7ZwnHV1dfqd2dTsQ5QCdk9bI10PkcxexXqcmH3W51Jt_le2kbH8os9Y3UaTcNLYpDx-Xab6GTHXpZ128MhpWqDVK2np0yrgXXqQpaLa4APDLBkIF8bd2sYql0Sn_DeE7sYr6AdNzvgljR-MUq7SwAdMHeUtgHR4CAAA=)):
+When using [`await`](await-expressions) in components, the `$effect.pending()` rune tells you how many promises are pending in the current [boundary](svelte-boundary), not including child boundaries:
 
+<!-- codeblock:start {"title":"$effect.pending"} -->
 ```svelte
+<!--- file: App.svelte --->
+<script>
+	let a = $state(1);
+	let b = $state(2);
+
+	async function add(a, b) {
+		await new Promise((f) => setTimeout(f, 500)); // artificial delay
+		return a + b;
+	}
+</script>
+
 <button onclick={() => a++}>a++</button>
 <button onclick={() => b++}>b++</button>
 
@@ -236,6 +254,7 @@ When using [`await`](await-expressions) in components, the `$effect.pending()` r
 	<p>pending promises: {$effect.pending()}</p>
 {/if}
 ```
+<!-- codeblock:end -->
 
 ## `$effect.root`
 
@@ -285,9 +304,11 @@ In general, `$effect` is best considered something of an escape hatch — useful
 
 If you're using an effect because you want to be able to reassign the derived value (to build an optimistic UI, for example) note that [deriveds can be directly overridden]($derived#Overriding-derived-values) as of Svelte 5.25.
 
-You might be tempted to do something convoluted with effects to link one value to another. The following example shows two inputs for "money spent" and "money left" that are connected to each other. If you update one, the other should update accordingly. Don't use effects for this ([demo](/playground/untitled#H4sIAAAAAAAAE5WRTWrDMBCFryKGLBJoY3fRjWIHeoiu6i6UZBwEY0VE49TB-O6VxrFTSih0qe_Ne_OjHpxpEDS8O7ZMeIAnqC1hAP3RA1990hKI_Fb55v06XJA4sZ0J-IjvT47RcYyBIuzP1vO2chVHHFjxiQ2pUr3k-SZRQlbBx_LIFoEN4zJfzQph_UMQr4hRXmBd456Xy5Uqt6pPKHmkfmzyPAZL2PCnbRpg8qWYu63I7lu4gswOSRYqrPNt3CgeqqzgbNwRK1A76w76YqjFspfcQTWmK3vJHlQm1puSTVSeqdOc_r9GaeCHfUSY26TXry6Br4RSK3C6yMEGT-aqVU3YbUZ2NF6rfP2KzXgbuYzY46czdgyazy0On_FlLH3F-UDXhgIO35UGlA1rAgAA)):
+You might be tempted to do something convoluted with effects to link one value to another. The following example shows two inputs for "money spent" and "money left" that are connected to each other. If you update one, the other should update accordingly. Instead of using effects for this...
 
+<!-- codeblock:start {"title":"Setting state in effects (don't do this!)"} -->
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	const total = 100;
 	let spent = $state(0);
@@ -311,11 +332,21 @@ You might be tempted to do something convoluted with effects to link one value t
 	<input type="range" bind:value={left} max={total} />
 	{left}/{total} left
 </label>
+
+<style>
+	label {
+		display: flex;
+		gap: 0.5em;
+	}
+</style>
 ```
+<!-- codeblock:end -->
 
-Instead, use `oninput` callbacks or — better still — [function bindings](bind#Function-bindings) where possible ([demo](/playground/untitled#H4sIAAAAAAAAE5VRvW7CMBB-FcvqECQK6dDFJEgsnfoGTQdDLsjSxVjxhYKivHvPBwFUsXS8774_nwftbQva6I_e78gdvNo6Xzu_j3quG4cQtfkaNJ1DIiWA8atkE8IiHgEpYVsb4Rm-O3gCT2yji7jrXKB15StiOJKiA1lUpXrL81VCEUjFwHTGXiJZgiyf3TYIjSxq6NwR6uyifr0ohMbEZnpHH2rWf7ImS8KZGtK6osl_UqelRIyVL5b3ir5AuwWUtoXzoee6fIWy0p31e6i0XMocLfZQDuI6qtaeykGcR7UU6XWznFAZU9LN_X9B2UyVayk9f3ji0-REugen6U9upDOCcAWcLlS7GNCejWoQTqsLtrfBqHzxDu3DrUTOf0xwIm2o62H85sk6_OHG2jQWI4y_3byXXGMCAAA=)):
+...use `oninput` callbacks or — better still — [function bindings](bind#Function-bindings) where possible:
 
+<!-- codeblock:start {"title":"Setting state with function bindings"} -->
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	const total = 100;
 	let spent = $state(0);
@@ -335,6 +366,14 @@ Instead, use `oninput` callbacks or — better still — [function bindings](bin
 	<input type="range" +++bind:value={() => left, updateLeft}+++ max={total} />
 	{left}/{total} left
 </label>
+
+<style>
+	label {
+		display: flex;
+		gap: 0.5em;
+	}
+</style>
 ```
+<!-- codeblock:end -->
 
 If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](svelte#untrack).
