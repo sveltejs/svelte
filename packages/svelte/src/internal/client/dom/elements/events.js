@@ -15,8 +15,7 @@ import {
 	remove_attribute,
 	dispatch_event,
 	add_event_listener,
-	remove_event_listener,
-	get_parent_node
+	remove_event_listener
 } from '../operations.js';
 import { current_renderer } from '../../custom-renderer/state.js';
 
@@ -281,12 +280,7 @@ export function handle_event_propagation(event) {
 		var other_errors = [];
 
 		while (current_target !== null) {
-			/** @type {null | Element} */
-			var parent_element =
-				current_target.assignedSlot ||
-				get_parent_node(current_target) ||
-				/** @type {any} */ (current_target).host ||
-				null;
+			if (current_target === handler_element) break;
 
 			try {
 				// @ts-expect-error
@@ -308,10 +302,10 @@ export function handle_event_propagation(event) {
 					throw_error = error;
 				}
 			}
-			if (event.cancelBubble || parent_element === handler_element || parent_element === null) {
-				break;
-			}
-			current_target = parent_element;
+			if (event.cancelBubble) break;
+
+			path_idx++;
+			current_target = path_idx < path.length ? /** @type {Element} */ (path[path_idx]) : null;
 		}
 
 		if (throw_error) {

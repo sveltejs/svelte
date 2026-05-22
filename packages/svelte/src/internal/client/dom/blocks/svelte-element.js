@@ -14,7 +14,8 @@ import {
 	append_child,
 	create_comment,
 	insert_before,
-	node_type
+	node_type,
+	remove_child
 } from '../operations.js';
 import { block, teardown } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
@@ -96,9 +97,11 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				assign_nodes(element, element);
 
 				if (render_fn) {
+					var tmp_comment = null;
+
 					if (hydrating && is_raw_text_element(next_tag)) {
-						// prevent hydration glitches
-						append_child(element, create_comment(''));
+						// prevent hydration glitches (code just below expects an anchor)
+						append_child(element, (tmp_comment = create_comment('')));
 					}
 
 					// If hydrating, use the existing ssr comment as the anchor so that the
@@ -122,7 +125,9 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// contains children, it's a user error (which is warned on elsewhere)
 					// and the DOM will be silently discarded
 					render_fn(element, child_anchor);
-
+					if (tmp_comment) {
+						remove_child(element, tmp_comment);
+					}
 					set_animation_effect_override(null);
 				}
 
