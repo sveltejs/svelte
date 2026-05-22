@@ -402,7 +402,7 @@ export function update_derived(derived) {
 
 	if (!derived.equals(value)) {
 		if (active_batch !== null) {
-			active_batch.capture(derived, value, write_version);
+			(current_batch ?? active_batch).capture(derived, value, write_version);
 
 			// We also write to previous_batch because if it exists, it is a sign that we're
 			// currently in the process of flushing effects. These updates to deriveds may belong

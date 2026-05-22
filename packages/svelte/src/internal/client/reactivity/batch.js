@@ -1173,6 +1173,7 @@ function mark_effects(batch, value, sources, marked, checked) {
 
 			if ((flags & DERIVED) !== 0) {
 				batch.current.delete(/** @type {Derived} */ (reaction));
+				batch.cvs.set(/** @type {Derived} */ (reaction), -1);
 
 				mark_effects(batch, /** @type {Derived} */ (reaction), sources, marked, checked);
 			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources, checked)) {
