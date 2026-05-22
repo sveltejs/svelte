@@ -233,6 +233,12 @@ export function should_defer_append() {
 }
 
 /**
+ * Branching here is intentional and load-bearing for perf. `createElement(tag)`
+ * hits a fast path in Blink that `createElementNS(NAMESPACE_HTML, tag)` doesn't,
+ * and passing an explicit `undefined` as the trailing options arg measurably
+ * slows both APIs. Funnelling every case through a single `createElementNS(ns,
+ * tag, options)` call would be smaller but slower on the HTML path.
+ *
  * @template {keyof HTMLElementTagNameMap | string} T
  * @param {T} tag
  * @param {string} [namespace]
