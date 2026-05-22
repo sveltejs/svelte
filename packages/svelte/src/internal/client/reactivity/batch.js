@@ -326,6 +326,12 @@ export class Batch {
 				this.#traverse(root, effects, render_effects);
 			} catch (e) {
 				reset_all(root);
+				// If there's no async work left, this branch is now dead and needs
+				// to be unlinked to not become a zombie that is never cleaned up.
+				// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
+				// for a (non-minimal) reproduction that demonstrates a case where this is necessary
+				// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
+				if (!this.#is_deferred()) this.#unlink();
 				throw e;
 			}
 		}
@@ -362,6 +368,10 @@ export class Batch {
 		const earlier_batch = this.#find_earlier_batch();
 
 		if (earlier_batch) {
+			// If this batch collected deferred effects during traversal, they still need
+			// to run after being merged into the earlier batch.
+			this.#defer_effects(render_effects);
+			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
 			return;
 		}
@@ -502,11 +512,14 @@ export class Batch {
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
-			if (d) deferred.promise.then(d.resolve);
+			if (d) deferred.promise.then(d.resolve).catch(d.reject);
 
 			var cv = batch.cvs.get(effect);
 			if (cv !== undefined) this.cvs.set(effect, cv);
 		}
+
+		// Mark is not guaranteed to not touch these, so we transfer them
+		this.transfer_effects(batch.#dirty_effects);
 
 		/**
 		 * mark all effects that depend on `batch.current`, except the
@@ -680,14 +693,17 @@ export class Batch {
 				// immediately resolving them? Likely not because of how this.apply() works.
 				for (const [effect, deferred] of this.async_deriveds) {
 					const d = batch.async_deriveds.get(effect);
-					if (d) deferred.promise.then(d.resolve);
+					if (d) deferred.promise.then(d.resolve).catch(d.reject);
 				}
 			}
 
 			if (!batch.#started) continue;
 
-			// Re-run async/block effects that depend on distinct values changed in both batches
-			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
+			// Re-run async/block effects that depend on distinct values changed in both batches (ignoring deriveds)
+			var others = Array.from(batch.current.keys()).filter((value) => {
+				if ((value.f & DERIVED) !== 0) return false;
+				return !this.current.has(value);
+			});
 
 			if (others.length === 0) {
 				if (is_earlier) {
@@ -727,11 +743,12 @@ export class Batch {
 				}
 
 				checked = new Map();
-				var current_unequal = [
-					...[...batch.current.keys()].filter((c) =>
-						this.current.has(c) ? /** @type {any} */ (this.current.get(c)).v !== c.v : true
-					)
-				];
+				var current_unequal = [...batch.current]
+					.filter(([c, v1]) => {
+						const v2 = this.current.get(c);
+						return !v2 || v2.v !== v1.v;
+					})
+					.map(([c]) => c);
 
 				for (const effect of this.#new_effects) {
 					if (
