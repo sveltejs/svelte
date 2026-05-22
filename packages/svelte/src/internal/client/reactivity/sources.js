@@ -28,7 +28,8 @@ import {
 	WAS_MARKED,
 	CONNECTED,
 	STATE_EAGER_EFFECT,
-	REACTION_IS_UPDATING
+	REACTION_IS_UPDATING,
+	REACTION_RAN
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -361,7 +362,11 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 
 				if ((flags & WAS_MARKED) === 0) {
 					// Only connected deriveds can be reliably unmarked right away
-					if (flags & CONNECTED) {
+					if (
+						flags & CONNECTED &&
+						active_reaction !== null &&
+						(active_reaction.f & REACTION_RAN) !== 0
+					) {
 						reaction.f |= WAS_MARKED;
 					}
 
