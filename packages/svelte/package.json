@@ -159,6 +159,7 @@
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
+    "@typescript-eslint/parser": "^8.59.4",
     "baseline-browser-mapping": "^2.10.32",
     "dts-buddy": "^0.5.5",
     "esbuild": "^0.25.10",

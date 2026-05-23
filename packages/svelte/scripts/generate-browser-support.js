@@ -1,25 +1,32 @@
 // Regenerates `documentation/docs/07-misc/05-browser-support.md`.
 //
 // Pipeline:
-//   1. Bundle the runtime entry points the same way `check-treeshakeability.js`
+//   1. Bundle each runtime entry point the same way `check-treeshakeability.js`
 //      does, using the `production`/`browser` export conditions so the code
 //      we scan matches what end users actually receive.
-//   2. Collect compiler-emitted JavaScript from the snapshot test fixtures
-//      under `tests/snapshot/samples/*/_expected/client/*.js`. These files
-//      are versioned alongside the compiler, so they capture exactly what
-//      the compiler emits today without re-compiling anything here.
-//   3. Run ESLint with `eslint-plugin-baseline-js`, ratcheting the Baseline
-//      target down (`widely` → most recent year → earliest year → `newly`)
-//      until the lint passes. That target is the minimum Baseline status
-//      the combined code satisfies.
-//   4. Translate the target into concrete Chrome / Edge / Firefox / Safari
-//      versions via `baseline-browser-mapping`.
-//   5. Rewrite the table inside the `<!-- generated-table:start -->` markers
-//      in the docs page. Surrounding prose is owned by the docs author.
+//   2. Write each bundle to `scripts/_baseline/<entry>.ts` alongside a minimal
+//      tsconfig. This is what gives the linter type information — without it
+//      the Baseline rule can only see syntax features and constructor names,
+//      and it misses instance methods like `String.prototype.replaceAll` or
+//      `Array.prototype.toSorted`.
+//   3. Run ESLint with `eslint-plugin-baseline-js`'s `recommended-ts` preset
+//      (`preset: 'type-aware'`), ratcheting the Baseline year up from 2015
+//      until the lint passes. That year is the minimum Baseline floor the
+//      combined code satisfies.
+//   4. Also scan the compiler-emitted JavaScript from the snapshot tests
+//      under `tests/snapshot/samples/*/_expected/client/*.js`. These have
+//      no type info, but the patterns the compiler emits are limited, so
+//      the syntax-only scan is sufficient there.
+//   5. Apply the manual overrides in `KNOWN_API_FLOORS` below for features
+//      the scanner cannot see even with type info (string-literal options
+//      to constructors, e.g. `box: 'device-pixel-content-box'`).
+//   6. Translate the resulting floor into concrete browser versions via
+//      `baseline-browser-mapping` and rewrite the table in the docs page.
 //
 // Required dev dependencies (add to `packages/svelte/package.json`):
 //   - eslint
 //   - eslint-plugin-baseline-js
+//   - @typescript-eslint/parser
 //   - baseline-browser-mapping
 
 import fs from 'node:fs';
@@ -38,8 +45,44 @@ const pkg_dir = path.resolve(__dirname, '..');
 const repo_root = path.resolve(pkg_dir, '..', '..');
 const docs_page = path.join(repo_root, 'documentation/docs/07-misc/05-browser-support.md');
 const snapshot_dir = path.join(pkg_dir, 'tests/snapshot/samples');
+const tmp_dir = path.join(__dirname, '_baseline');
 
 const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8'));
+
+/**
+ * Manual overrides for API floors the scanner cannot detect, even with
+ * type information. These come from a manual audit of the runtime and
+ * are checked by humans during code review.
+ *
+ * Each entry declares the minimum Baseline year required by an API. If
+ * the scanned floor is older than the entry's year, the entry bumps it.
+ *
+ * Add an entry here when:
+ *   - The API is invoked via a string-literal option that the rule can
+ *     only see as a generic constructor call (e.g. `new ResizeObserver({
+ *     box: 'device-pixel-content-box' })`).
+ *   - The API is referenced via dynamic property access or aliasing.
+ *   - You discover the scanner is silently missing something.
+ *
+ * Do NOT add entries for features that are gated behind a specific
+ * directive or import and tree-shaken when unused — those belong in the
+ * hand-curated "Per-feature browser requirements" section of the docs
+ * page, not here. This list is for things that ship with the always-on
+ * runtime.
+ *
+ * @type {Array<{
+ *   api: string,
+ *   year: number,
+ *   file: string,
+ *   reason: string
+ * }>}
+ */
+const KNOWN_API_FLOORS = [
+	// Nothing currently — Svelte's always-on runtime is detected
+	// accurately by the type-aware scan. Conditional features that
+	// exceed the floor are documented in the "Per-feature browser
+	// requirements" section of the docs page, not bumped here.
+];
 
 /**
  * Subpath exports whose browser code ships to end users. Derived by walking
@@ -65,6 +108,44 @@ const runtime_entry_points = [
 	'svelte/store',
 	'svelte/transition'
 ];
+
+/**
+ * Filesystem-safe identifier for an importee like `svelte/internal/client`.
+ *
+ * @param {string} importee
+ */
+function safe_name(importee) {
+	return importee.replace(/[^a-z0-9]+/gi, '_');
+}
+
+/**
+ * Set up `scripts/_baseline/` with a tsconfig that covers the bundle files
+ * we are about to write. The directory is wiped on each run so stale
+ * bundles cannot leak into the next scan.
+ */
+function prepare_tmp_dir() {
+	fs.rmSync(tmp_dir, { recursive: true, force: true });
+	fs.mkdirSync(tmp_dir, { recursive: true });
+
+	const tsconfig = {
+		compilerOptions: {
+			target: 'esnext',
+			module: 'esnext',
+			moduleResolution: 'bundler',
+			lib: ['esnext', 'dom', 'dom.iterable'],
+			allowJs: true,
+			checkJs: false,
+			strict: false,
+			noEmit: true,
+			skipLibCheck: true,
+			isolatedModules: true
+		},
+		include: ['./*.ts']
+	};
+	fs.writeFileSync(path.join(tmp_dir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2));
+
+	return path.join(tmp_dir, 'tsconfig.json');
+}
 
 /**
  * Bundle a runtime entry the way users receive it, so we scan the same code
@@ -157,21 +238,36 @@ const targets = (() => {
 })();
 
 /**
+ * Lint the on-disk bundle files (runtime entries) with type-aware mode.
+ *
+ * @param {string[]} files Absolute paths inside `tmp_dir`.
+ * @param {string} tsconfig Absolute path to the tsconfig in `tmp_dir`.
+ * @param {number | 'newly'} target
+ */
+async function lint_runtime_files(files, tsconfig, target) {
+	const eslint = new ESLint({
+		overrideConfigFile: true,
+		overrideConfig: eslint_config(target, { tsconfig, root: tmp_dir })
+	});
+	return eslint.lintFiles(files);
+}
+
+/**
+ * Lint a compiler-output fixture in syntax-only mode (no type info — the
+ * fixtures are tiny snippets without a tsconfig). The patterns the
+ * compiler emits are bounded, so the non-typed scan is sufficient.
+ *
  * @param {string} label
  * @param {string} source
  * @param {number | 'newly'} target
- * @returns {Promise<{ passes: boolean, messages: Array<{ ruleId: string | null, message: string }> }>}
  */
-async function lint_at_target(label, source, target) {
+async function lint_fixture(label, source, target) {
 	const eslint = new ESLint({
 		overrideConfigFile: true,
 		overrideConfig: eslint_config(target)
 	});
 	const [result] = await eslint.lintText(source, { filePath: `${label}.js` });
-	return {
-		passes: result.errorCount === 0,
-		messages: result.messages
-	};
+	return result;
 }
 
 /**
@@ -188,33 +284,39 @@ function prev_target(target) {
 }
 
 /**
- * @param {string} runtime_source
+ * @param {string[]} runtime_files Absolute paths to bundle files in `tmp_dir`.
+ * @param {string} tsconfig Absolute path to the tsconfig in `tmp_dir`.
  * @param {Array<{ filename: string, code: string }>} compiler_fixtures
  */
-async function find_minimum_target(runtime_source, compiler_fixtures) {
-	const inputs = [
-		{ label: 'runtime', source: runtime_source },
-		...compiler_fixtures.map((f) => ({
-			label: `compiler-output/${f.filename}`,
-			source: f.code
-		}))
-	];
-
+async function find_minimum_target(runtime_files, tsconfig, compiler_fixtures) {
 	/** @type {Map<string, Set<string>>} target → set of feature messages that tripped it */
 	const failures_by_target = new Map();
 
 	for (const target of targets) {
 		const failures = new Set();
-		for (const { label, source } of inputs) {
-			const { passes, messages } = await lint_at_target(label, source, target);
-			if (!passes) {
-				for (const m of messages) {
-					if (m.ruleId === 'baseline-js/use-baseline') {
-						failures.add(`${label}: ${m.message}`);
-					}
+
+		// Type-aware scan over the runtime bundles.
+		const runtime_results = await lint_runtime_files(runtime_files, tsconfig, target);
+		for (const result of runtime_results) {
+			const label = `runtime/${path.basename(result.filePath, '.ts')}`;
+			for (const m of result.messages) {
+				if (m.ruleId === 'baseline-js/use-baseline') {
+					failures.add(`${label}: ${m.message}`);
 				}
 			}
 		}
+
+		// Syntax-only scan over the compiler-output fixtures.
+		for (const fixture of compiler_fixtures) {
+			const label = `compiler-output/${fixture.filename}`;
+			const result = await lint_fixture(label, fixture.code, target);
+			for (const m of result.messages) {
+				if (m.ruleId === 'baseline-js/use-baseline') {
+					failures.add(`${label}: ${m.message}`);
+				}
+			}
+		}
+
 		if (failures.size === 0) {
 			const previous = failures_by_target.get(String(prev_target(target)));
 			if (previous && previous.size > 0) {
@@ -234,6 +336,15 @@ async function find_minimum_target(runtime_source, compiler_fixtures) {
 		failures_by_target.set(String(target), failures);
 		// eslint-disable-next-line no-console
 		console.log(`  ${target}: ${failures.size} feature(s) exceed budget`);
+		if (process.env.DEBUG_BROWSER_SUPPORT) {
+			const unique = new Set();
+			for (const f of failures) {
+				const m = /Feature '([^']+)' \(([^)]+)\)/.exec(f);
+				if (m) unique.add(`${m[1]} (${m[2]})`);
+			}
+			// eslint-disable-next-line no-console
+			for (const f of [...unique].sort()) console.log(`    - ${f}`);
+		}
 	}
 
 	const newly_failures = failures_by_target.get('newly');
@@ -245,6 +356,30 @@ async function find_minimum_target(runtime_source, compiler_fixtures) {
 			'A brand-new API may be in use that has not yet reached Baseline Newly available.\n' +
 			`First failures at the most permissive target (\`newly\`):\n  - ${sample}`
 	);
+}
+
+/**
+ * Apply the manual overrides in `KNOWN_API_FLOORS`, bumping `target` to
+ * the highest declared year that exceeds it. Returns the resulting target
+ * along with the list of overrides that were applied.
+ *
+ * @param {number | 'newly'} target
+ */
+function apply_manual_overrides(target) {
+	const target_year = typeof target === 'number' ? target : Infinity;
+	const applied = [];
+	let bumped = target;
+
+	for (const entry of KNOWN_API_FLOORS) {
+		if (entry.year > target_year) {
+			applied.push(entry);
+			if (typeof bumped !== 'number' || entry.year > bumped) {
+				bumped = entry.year;
+			}
+		}
+	}
+
+	return { target: bumped, applied };
 }
 
 /**
@@ -362,23 +497,43 @@ function rewrite_docs_page(table_markdown) {
 
 /* eslint-disable no-console */
 async function main() {
+	console.log('Preparing scratch directory…');
+	const tsconfig = prepare_tmp_dir();
+
 	console.log('Bundling runtime entries…');
-	const runtime_chunks = await Promise.all(runtime_entry_points.map(bundle_runtime));
-	const runtime_source = runtime_chunks.join('\n');
+	const runtime_files = [];
+	for (const importee of runtime_entry_points) {
+		const code = await bundle_runtime(importee);
+		const file = path.join(tmp_dir, `${safe_name(importee)}.ts`);
+		fs.writeFileSync(file, code);
+		runtime_files.push(file);
+	}
 
 	console.log('Loading compiler-output fixtures…');
 	const compiler_fixtures = load_compiler_output_fixtures();
 	console.log(`  (${compiler_fixtures.length} fixtures found)`);
 
-	console.log('Searching for the minimum Baseline target…');
-	const target = await find_minimum_target(runtime_source, compiler_fixtures);
-	console.log(`  → ${target}`);
+	console.log('Searching for the minimum Baseline target (type-aware)…');
+	const detected = await find_minimum_target(runtime_files, tsconfig, compiler_fixtures);
+	console.log(`  → ${detected}`);
+
+	const { target, applied } = apply_manual_overrides(detected);
+	if (applied.length > 0) {
+		console.log('Applying manual overrides:');
+		for (const entry of applied) {
+			console.log(`  - ${entry.api} → Baseline ${entry.year} (${entry.reason})`);
+		}
+		console.log(`  Final target: ${target}`);
+	}
 
 	console.log('Resolving browser versions…');
 	const versions = browser_versions_for(target);
 
 	console.log('Rewriting docs page…');
 	rewrite_docs_page(render_table(versions, target));
+
+	console.log('Cleaning up scratch directory…');
+	fs.rmSync(tmp_dir, { recursive: true, force: true });
 
 	console.log('Done.');
 }

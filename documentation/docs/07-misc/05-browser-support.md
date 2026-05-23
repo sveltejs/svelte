@@ -39,6 +39,26 @@ These numbers describe what Svelte's output _requires_ in order to run — they 
 - **SvelteKit**, adapters and build tooling. See the [SvelteKit docs](https://svelte.dev/docs/kit) for the browser support story there.
 - **Internet Explorer 11.** Svelte's runtime relies on `Proxy`, which cannot be polyfilled. IE11 is not supported and there is no path to making it work.
 
+## Per-feature browser requirements
+
+Some Svelte features rely on browser APIs that exceed the floor in the table above. The runtime still loads on older browsers — modern bundlers tree-shake the affected code when the feature is unused — but if you use one of these features, you need the higher minimum version listed here. This section is maintained by hand because the underlying APIs are accessed in ways that an automated scanner cannot reliably detect (string-literal constructor options, feature-detected calls, or runtime branches reached only for certain value types).
+
+<!-- conditional-features:start (maintained by hand) -->
+
+| Feature                                | Affected API                                | Min Chrome | Min Firefox | Min Safari | What breaks on older browsers                                                |
+| -------------------------------------- | ------------------------------------------- | ---------- | ----------- | ---------- | ---------------------------------------------------------------------------- |
+| `bind:contentBoxSize`                  | `ResizeObserverEntry.contentBoxSize`        | 84         | 69          | 15.4       | The binding returns `undefined`                                              |
+| `bind:borderBoxSize`                   | `ResizeObserverEntry.borderBoxSize`         | 84         | 69          | 15.4       | The binding returns `undefined`                                              |
+| `bind:devicePixelContentBoxSize`       | `ResizeObserver` `box` option + entry prop  | 84         | 93          | 16.4       | The `ResizeObserver` constructor throws                                      |
+| `$state.snapshot()` of `Date` etc.     | `structuredClone()`                         | 98         | 94          | 15.4       | `ReferenceError` when snapshotting `Date` or non-JSON-serializable values    |
+| `transition:` / `in:` / `out:`         | `HTMLElement.inert`                         | 102        | 112         | 15.5       | Transitions still animate, but pointer events are not blocked during outro   |
+| `flip` from `svelte/animate`           | `getComputedStyle(...).zoom` reads          | (floor)    | 126         | (floor)    | Animation math is wrong if ancestors use CSS `zoom` (Firefox <126 only)      |
+| `getAbortSignal()`                     | `AbortController.abort(reason)`             | 98         | 97          | 16         | `signal.reason` is the default `AbortError` instead of the Svelte sentinel   |
+
+<!-- conditional-features:end -->
+
 ## How this page stays accurate
 
-The minimum versions can only move forward in a minor or major release, and any change is recorded in the [changelog](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md). CI runs the same generator on every pull request — if a change introduces a newer browser API, the build fails until this page is regenerated in the same pull request.
+The minimum versions in the headline table can only move forward in a minor or major release, and any change is recorded in the [changelog](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md). CI runs the same generator on every pull request — if a change introduces a newer browser API, the build fails until this page is regenerated in the same pull request.
+
+The per-feature table above is maintained by hand. When you add or change a runtime feature that uses a non-Baseline-2020 API, please update both the code and the relevant row in that table.
