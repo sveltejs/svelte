@@ -89,8 +89,10 @@ export function set_active_effect(effect) {
 
 /**
  * When sources are created within a reaction, reading and writing
- * them within that reaction should not cause a re-run
- * @type {null | Source[]}
+ * them within that reaction should not cause a re-run. Stored as a
+ * `Set` so the membership checks in `set()` and
+ * `schedule_possible_effect_self_invalidation` are O(1) instead of O(n).
+ * @type {null | Set<Source>}
  */
 export let current_sources = null;
 
@@ -98,10 +100,9 @@ export let current_sources = null;
 export function push_reaction_value(value) {
 	if (active_reaction !== null && (!async_mode_flag || (active_reaction.f & DERIVED) !== 0)) {
 		if (current_sources === null) {
-			current_sources = [value];
-		} else {
-			current_sources.push(value);
+			current_sources = new Set();
 		}
+		current_sources.add(value);
 	}
 }
 
@@ -202,7 +203,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
-	if (!async_mode_flag && current_sources !== null && includes.call(current_sources, signal)) {
+	if (!async_mode_flag && current_sources !== null && current_sources.has(signal)) {
 		return;
 	}
 
@@ -540,7 +541,7 @@ export function get(signal) {
 		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
-		if (!destroyed && (current_sources === null || !includes.call(current_sources, signal))) {
+		if (!destroyed && (current_sources === null || !current_sources.has(signal))) {
 			var deps = active_reaction.deps;
 
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
