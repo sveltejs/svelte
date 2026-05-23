@@ -9,56 +9,68 @@ import baseline_js from 'eslint-plugin-baseline-js';
 import ts_parser from '@typescript-eslint/parser';
 
 /**
- * Features that the type-aware scan reports but that should not bump the
- * floor. Each entry MUST have a justification — either the API is
- * feature-detected with a safe fallback, or the plugin's web-features
- * dataset is wrong, or the API is reached only by a specific runtime
- * branch and is documented in the "Per-feature browser requirements"
- * section of the docs page.
+ * Suppressions that should NEVER affect the floor regardless of whether
+ * the runtime currently uses the API. Two reasons an entry belongs here:
  *
- * Treat changes to this list with suspicion — every entry weakens the
- * floor's claim.
+ *   - The plugin's `web-features` dataset misclassifies the API. Example:
+ *     `devicepixelratio` is marked Baseline `false` because Safari is
+ *     missing from its `support` map, but the property has shipped in
+ *     every Safari for over a decade.
+ *
+ *   - Svelte feature-detects the API at runtime with `?.` and degrades
+ *     gracefully when it's unavailable. Users on browsers without the
+ *     API see no breakage, so requiring it would overstate the floor.
+ *     Example: `trusted-types` in `src/internal/client/dom/reconciler.js`.
+ *
+ * These are exempt from the staleness check below — if Svelte stops
+ * using the API, removing the entry is fine but not required.
  */
-export const IGNORE_FEATURES = [
+export const SAFE_TO_IGNORE = [
+	'devicepixelratio',
 	// `globalThis?.window?.trustedTypes && trustedTypes.createPolicy(...)`
 	// in `src/internal/client/dom/reconciler.js`. Feature-detected with
 	// `?.` — the runtime no-ops when Trusted Types is unavailable.
-	'trusted-types',
-
-	// False positive: the plugin's web-features dataset marks
-	// `devicepixelratio` as Baseline `false` because Safari is missing
-	// from its `support` map, but `window.devicePixelRatio` has been
-	// shipped in every Safari since the property existed. Used in
-	// `src/reactivity/window/index.js`.
-	'devicepixelratio',
-
-	// `structuredClone()` in `src/internal/shared/clone.js` (lines 108
-	// and 129). Only invoked when `$state.snapshot()` is called with
-	// `Date` or non-JSON-serializable values; the primitive code path
-	// never reaches it. Documented in the docs page under
-	// "Per-feature browser requirements" with its Baseline-2022 floor.
-	'structured-clone'
+	'trusted-types'
 ];
 
 /**
- * Smaller ignore list for the IGNORE_FEATURES staleness check: only the
- * web-features data bug, no behavioural suppressions. The staleness
- * check is meant to detect that an ignored API is still in the code —
- * suppressing it would defeat the verification.
+ * Suppressions for features that DO live in the runtime but are reached
+ * only via a specific code path that's documented in the per-feature
+ * table on the docs page. The aggregate scan hides them so the headline
+ * floor reflects "load Svelte and use the basic runtime", not "use every
+ * conditional feature".
+ *
+ * Each entry MUST appear in the conditional-features table on the docs
+ * page (auto-generated from `find_all_conditional_features`). The
+ * staleness check below also verifies the entry is still present in the
+ * runtime bundle — if the scanner doesn't flag it, the entry can be
+ * removed.
  */
-export const FALSE_POSITIVE_FEATURES = ['devicepixelratio'];
+export const BEHAVIORAL_IGNORE = [
+	// `structuredClone()` in `src/internal/shared/clone.js`. Only invoked
+	// when `$state.snapshot()` is called with `Date` or non-JSON-serializable
+	// values. The `$state.snapshot()` fixture detects it and produces a row
+	// in the conditional-features table.
+	'structured-clone'
+];
+
+/** Aggregate ignore list — used for the headline floor. */
+export const IGNORE_FEATURES = [...SAFE_TO_IGNORE, ...BEHAVIORAL_IGNORE];
 
 /**
- * Ignore list for per-fixture scans. Suppresses the data bug AND
- * `trusted-types`, which is feature-detected at runtime with `?.` and
- * never affects users on browsers that don't support it. Without this
- * suppression every fixture that touches the template runtime would
- * report a Baseline-2026 floor and skew every conditional row.
- *
- * `structured-clone` is intentionally NOT in this list — we want the
- * `$state.snapshot` fixture to flag it so it can be emitted as a row.
+ * Ignore list for the IGNORE_FEATURES staleness check. Lets BEHAVIORAL
+ * entries be visible to the scan so we can confirm they're still in the
+ * runtime; SAFE_TO_IGNORE entries are pre-filtered because the staleness
+ * check doesn't apply to them.
  */
-export const PER_FIXTURE_IGNORE = ['devicepixelratio', 'trusted-types'];
+export const STALENESS_CHECK_IGNORE = SAFE_TO_IGNORE;
+
+/**
+ * Ignore list for per-fixture scans. Suppresses SAFE entries but NOT
+ * BEHAVIORAL ones — the per-fixture pass needs to see
+ * `structured-clone` etc. so it can emit the conditional row.
+ */
+export const PER_FIXTURE_IGNORE = SAFE_TO_IGNORE;
 
 /**
  * @param {'widely' | 'newly' | number} target
@@ -70,24 +82,23 @@ export const PER_FIXTURE_IGNORE = ['devicepixelratio', 'trusted-types'];
  *   `@typescript-eslint/parser` with the given tsconfig. This catches
  *   instance-method calls like `String.prototype.replaceAll` and
  *   `Array.prototype.toSorted` that the non-typed preset misses.
- * @param {{ purpose: 'aggregate' | 'per-file' | 'per-fixture' }} [options]
- *   `'aggregate'` (default) uses the full IGNORE_FEATURES list including
- *   behavioural suppressions for the aggregate runtime scan.
- *   `'per-file'` uses the smaller false-positive list, so the validator
- *   can confirm a file actually uses APIs that the aggregate scan
- *   intentionally hides.
- *   `'per-fixture'` uses the PER_FIXTURE_IGNORE list — suppresses safe
- *   feature-detected APIs but still flags conditionally-invoked ones,
- *   so per-feature fixtures detect the APIs they actually need.
+ * @param {{ purpose: 'aggregate' | 'staleness-check' | 'per-fixture' }} [options]
+ *   `'aggregate'` (default) uses the full IGNORE_FEATURES list — the
+ *   floor reflects "load Svelte without using conditional features".
+ *   `'staleness-check'` excludes only SAFE entries, so the scan can
+ *   verify BEHAVIORAL entries are still flagged in the runtime.
+ *   `'per-fixture'` excludes only SAFE entries, so per-feature fixtures
+ *   detect the BEHAVIORAL APIs they actually need.
  * @returns {import('eslint').Linter.Config[]}
  */
 export function config(target, type_info, options) {
 	const ignore_list =
-		options?.purpose === 'per-file'
-			? FALSE_POSITIVE_FEATURES
+		options?.purpose === 'staleness-check'
+			? STALENESS_CHECK_IGNORE
 			: options?.purpose === 'per-fixture'
 				? PER_FIXTURE_IGNORE
 				: IGNORE_FEATURES;
+
 	// `recommended-ts` enables `preset: 'type-aware'` for Web API + JS builtin
 	// detection. Without type info the rule degrades to syntax-only checks,
 	// which is why we always pair it with `@typescript-eslint/parser` and a
@@ -110,8 +121,6 @@ export function config(target, type_info, options) {
 		/** @type {unknown} */ (baseline_js)
 	);
 
-	// The preset's rule entry already has the `available` option set, but
-	// not `ignoreFeatures`. Replace the rule so both options are present.
 	const rules = /** @type {import('eslint').Linter.RulesRecord} */ ({
 		.../** @type {Record<string, unknown>} */ (preset.rules),
 		'baseline-js/use-baseline': [

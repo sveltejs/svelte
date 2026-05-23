@@ -38,11 +38,7 @@ import virtual from '@rollup/plugin-virtual';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { ESLint } from 'eslint';
 import { getCompatibleVersions } from 'baseline-browser-mapping';
-import {
-	config as eslint_config,
-	IGNORE_FEATURES,
-	FALSE_POSITIVE_FEATURES
-} from './browser-support.eslint.config.js';
+import { config as eslint_config, BEHAVIORAL_IGNORE } from './browser-support.eslint.config.js';
 import { binding_properties } from '../src/compiler/phases/bindings.js';
 import { compile as svelte_compile } from '../src/compiler/index.js';
 
@@ -496,7 +492,6 @@ async function find_minimum_target(runtime_files, tsconfig, compiler_fixtures) {
 }
 
 /**
- * Apply the manual overrides in `KNOWN_API_FLOORS`, bumping `target` to
  * Extract every unique web-feature ID flagged in a lint result.
  *
  * @param {import('eslint').ESLint.LintResult} result
@@ -529,28 +524,28 @@ function feature_names_in(result) {
 }
 
 /**
- * Verify every entry in `IGNORE_FEATURES` is actually used by the runtime.
- * Without this, a suppression can outlive the API it suppresses — the
- * comment stays in the config file pointing at code that no longer exists.
+ * Verify every entry in `BEHAVIORAL_IGNORE` is actually used by the runtime.
+ * Without this, a behavioural suppression can outlive the API it
+ * suppresses — the comment stays in the config file pointing at code
+ * that no longer exists.
  *
- * Runs the type-aware aggregate scan with only the genuine false-positive
- * suppression in place. Any IGNORE_FEATURES entry whose feature ID does
- * NOT appear in the resulting flagged set is reported as removable.
+ * `SAFE_TO_IGNORE` entries are exempt from this check: they're safe to
+ * carry regardless of whether the runtime currently uses the API (the
+ * staleness signal would be noise, since `?.` feature-detection and
+ * data-bug suppressions are valid no matter what).
  *
  * @param {string[]} runtime_files
  * @param {string} tsconfig
  */
 async function validate_ignore_features(runtime_files, tsconfig) {
-	const false_positives = new Set(FALSE_POSITIVE_FEATURES);
-	const to_check = IGNORE_FEATURES.filter((id) => !false_positives.has(id));
-	if (to_check.length === 0) return;
+	if (BEHAVIORAL_IGNORE.length === 0) return;
 
 	// Scan at year 2015 so the rule reports every Baseline-classified
 	// feature regardless of year — the goal is "is this feature ever
 	// flagged?", not "is it newer than X".
 	const eslint = new ESLint({
 		overrideConfigFile: true,
-		overrideConfig: eslint_config(2015, { tsconfig, root: tmp_dir }, { purpose: 'per-file' })
+		overrideConfig: eslint_config(2015, { tsconfig, root: tmp_dir }, { purpose: 'staleness-check' })
 	});
 	const results = await eslint.lintFiles(runtime_files);
 
@@ -559,10 +554,10 @@ async function validate_ignore_features(runtime_files, tsconfig) {
 		for (const id of feature_ids_in(result)) flagged.add(id);
 	}
 
-	const stale = to_check.filter((id) => !flagged.has(id));
+	const stale = BEHAVIORAL_IGNORE.filter((id) => !flagged.has(id));
 	if (stale.length > 0) {
 		throw new Error(
-			`IGNORE_FEATURES contains entries that the scanner does not flag — ` +
+			`BEHAVIORAL_IGNORE contains entries that the scanner does not flag — ` +
 				`they can be removed:\n` +
 				stale.map((id) => `  - ${id}`).join('\n') +
 				`\n\nEdit \`packages/svelte/scripts/browser-support.eslint.config.js\` ` +
@@ -1064,54 +1059,58 @@ async function main() {
 	console.log('Preparing scratch directory…');
 	const tsconfig = prepare_tmp_dir();
 
-	console.log('Bundling runtime entries…');
-	const runtime_files = [];
-	for (const importee of runtime_entry_points) {
-		const code = await bundle_runtime(importee);
-		const file = path.join(tmp_dir, `${safe_name(importee)}.ts`);
-		fs.writeFileSync(file, code);
-		runtime_files.push(file);
+	try {
+		console.log('Bundling runtime entries…');
+		const runtime_files = [];
+		for (const importee of runtime_entry_points) {
+			const code = await bundle_runtime(importee);
+			const file = path.join(tmp_dir, `${safe_name(importee)}.ts`);
+			fs.writeFileSync(file, code);
+			runtime_files.push(file);
+		}
+
+		console.log('Loading compiler-output fixtures…');
+		const compiler_fixtures = load_compiler_output_fixtures();
+		console.log(`  (${compiler_fixtures.length} fixtures found)`);
+
+		console.log('Searching for the minimum Baseline target (type-aware)…');
+		const target = await find_minimum_target(runtime_files, tsconfig, compiler_fixtures);
+		console.log(`  → ${target}`);
+
+		console.log('Checking BEHAVIORAL_IGNORE for stale entries…');
+		await validate_ignore_features(runtime_files, tsconfig);
+		console.log('  no stale entries');
+
+		console.log('Enumerating subpackage exports…');
+		const subpackage_exports = await enumerate_subpackage_exports();
+		const total_exports = Object.values(subpackage_exports).reduce((n, list) => n + list.length, 0);
+		console.log(
+			`  ${total_exports} export(s) across ${Object.keys(subpackage_exports).length} subpackage(s)`
+		);
+
+		console.log('Scanning per-feature fixtures for conditional requirements…');
+		const conditional_rows = await find_all_conditional_features(target, subpackage_exports);
+		console.log(
+			`  ${conditional_rows.length} feature(s) require browsers newer than the runtime floor`
+		);
+
+		console.log('Resolving browser versions…');
+		const versions = browser_versions_for(target);
+
+		console.log('Rewriting docs page…');
+		rewrite_docs_page(
+			render_table(versions, target),
+			render_conditional_table(conditional_rows, target),
+			render_runtime_entries()
+		);
+
+		console.log('Done.');
+	} finally {
+		// Ensure cleanup happens even on failure — otherwise leftover bundle
+		// files in `scripts/_baseline/` get picked up by `pnpm lint` on the
+		// next CI step and produce spurious naming/no-console errors.
+		fs.rmSync(tmp_dir, { recursive: true, force: true });
 	}
-
-	console.log('Loading compiler-output fixtures…');
-	const compiler_fixtures = load_compiler_output_fixtures();
-	console.log(`  (${compiler_fixtures.length} fixtures found)`);
-
-	console.log('Searching for the minimum Baseline target (type-aware)…');
-	const target = await find_minimum_target(runtime_files, tsconfig, compiler_fixtures);
-	console.log(`  → ${target}`);
-
-	console.log('Checking IGNORE_FEATURES for stale entries…');
-	await validate_ignore_features(runtime_files, tsconfig);
-	console.log('  no stale entries');
-
-	console.log('Enumerating subpackage exports…');
-	const subpackage_exports = await enumerate_subpackage_exports();
-	const total_exports = Object.values(subpackage_exports).reduce((n, list) => n + list.length, 0);
-	console.log(
-		`  ${total_exports} export(s) across ${Object.keys(subpackage_exports).length} subpackage(s)`
-	);
-
-	console.log('Scanning per-feature fixtures for conditional requirements…');
-	const conditional_rows = await find_all_conditional_features(target, subpackage_exports);
-	console.log(
-		`  ${conditional_rows.length} feature(s) require browsers newer than the runtime floor`
-	);
-
-	console.log('Resolving browser versions…');
-	const versions = browser_versions_for(target);
-
-	console.log('Rewriting docs page…');
-	rewrite_docs_page(
-		render_table(versions, target),
-		render_conditional_table(conditional_rows, target),
-		render_runtime_entries()
-	);
-
-	console.log('Cleaning up scratch directory…');
-	fs.rmSync(tmp_dir, { recursive: true, force: true });
-
-	console.log('Done.');
 }
 
 main().catch((err) => {
