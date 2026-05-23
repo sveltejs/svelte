@@ -207,11 +207,13 @@
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 19
+										"column": 19,
+										"character": 19
 									},
 									"end": {
 										"line": 1,
-										"column": 23
+										"column": 23,
+										"character": 23
 									}
 								},
 								"name": "name"
@@ -223,11 +225,13 @@
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 19
+										"column": 19,
+										"character": 19
 									},
 									"end": {
 										"line": 1,
-										"column": 23
+										"column": 23,
+										"character": 23
 									}
 								},
 								"name": "name"
@@ -258,11 +262,13 @@
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 25
+										"column": 25,
+										"character": 25
 									},
 									"end": {
 										"line": 1,
-										"column": 29
+										"column": 29,
+										"character": 29
 									}
 								},
 								"name": "cool"
@@ -288,11 +294,13 @@
 									"loc": {
 										"start": {
 											"line": 1,
-											"column": 25
+											"column": 25,
+											"character": 25
 										},
 										"end": {
 											"line": 1,
-											"column": 29
+											"column": 29,
+											"character": 29
 										}
 									},
 									"name": "cool"
@@ -495,11 +503,11 @@
 					"loc": {
 						"start": {
 							"line": 5,
-							"column": 18
+							"column": 17
 						},
 						"end": {
 							"line": 5,
-							"column": 57
+							"column": 56
 						}
 					},
 					"properties": [
@@ -510,11 +518,11 @@
 							"loc": {
 								"start": {
 									"line": 5,
-									"column": 20
+									"column": 19
 								},
 								"end": {
 									"line": 5,
-									"column": 42
+									"column": 41
 								}
 							},
 							"method": false,
@@ -527,11 +535,13 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 20
+										"column": 19,
+										"character": 115
 									},
 									"end": {
 										"line": 5,
-										"column": 24
+										"column": 23,
+										"character": 119
 									}
 								},
 								"name": "name"
@@ -543,11 +553,11 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 20
+										"column": 19
 									},
 									"end": {
 										"line": 5,
-										"column": 42
+										"column": 41
 									}
 								},
 								"left": {
@@ -557,11 +567,13 @@
 									"loc": {
 										"start": {
 											"line": 5,
-											"column": 20
+											"column": 19,
+											"character": 115
 										},
 										"end": {
 											"line": 5,
-											"column": 24
+											"column": 23,
+											"character": 119
 										}
 									},
 									"name": "name"
@@ -573,11 +585,11 @@
 									"loc": {
 										"start": {
 											"line": 5,
-											"column": 27
+											"column": 26
 										},
 										"end": {
 											"line": 5,
-											"column": 42
+											"column": 41
 										}
 									},
 									"expressions": [
@@ -588,11 +600,11 @@
 											"loc": {
 												"start": {
 													"line": 5,
-													"column": 35
+													"column": 34
 												},
 												"end": {
 													"line": 5,
-													"column": 40
+													"column": 39
 												}
 											},
 											"value": "Doe",
@@ -607,11 +619,11 @@
 											"loc": {
 												"start": {
 													"line": 5,
-													"column": 28
+													"column": 27
 												},
 												"end": {
 													"line": 5,
-													"column": 33
+													"column": 32
 												}
 											},
 											"value": {
@@ -627,11 +639,11 @@
 											"loc": {
 												"start": {
 													"line": 5,
-													"column": 41
+													"column": 40
 												},
 												"end": {
 													"line": 5,
-													"column": 41
+													"column": 40
 												}
 											},
 											"value": {
@@ -652,11 +664,11 @@
 							"loc": {
 								"start": {
 									"line": 5,
-									"column": 44
+									"column": 43
 								},
 								"end": {
 									"line": 5,
-									"column": 55
+									"column": 54
 								}
 							},
 							"method": false,
@@ -669,11 +681,13 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 44
+										"column": 43,
+										"character": 139
 									},
 									"end": {
 										"line": 5,
-										"column": 48
+										"column": 47,
+										"character": 143
 									}
 								},
 								"name": "cool"
@@ -685,11 +699,11 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 44
+										"column": 43
 									},
 									"end": {
 										"line": 5,
-										"column": 55
+										"column": 54
 									}
 								},
 								"left": {
@@ -699,11 +713,13 @@
 									"loc": {
 										"start": {
 											"line": 5,
-											"column": 44
+											"column": 43,
+											"character": 139
 										},
 										"end": {
 											"line": 5,
-											"column": 48
+											"column": 47,
+											"character": 143
 										}
 									},
 									"name": "cool"
@@ -715,11 +731,11 @@
 									"loc": {
 										"start": {
 											"line": 5,
-											"column": 51
+											"column": 50
 										},
 										"end": {
 											"line": 5,
-											"column": 55
+											"column": 54
 										}
 									},
 									"value": true,
@@ -906,11 +922,11 @@
 					"loc": {
 						"start": {
 							"line": 9,
-							"column": 18
+							"column": 17
 						},
 						"end": {
 							"line": 9,
-							"column": 79
+							"column": 78
 						}
 					},
 					"properties": [
@@ -921,11 +937,11 @@
 							"loc": {
 								"start": {
 									"line": 9,
-									"column": 20
+									"column": 19
 								},
 								"end": {
 									"line": 9,
-									"column": 64
+									"column": 63
 								}
 							},
 							"method": false,
@@ -938,11 +954,13 @@
 								"loc": {
 									"start": {
 										"line": 9,
-										"column": 20
+										"column": 19,
+										"character": 229
 									},
 									"end": {
 										"line": 9,
-										"column": 24
+										"column": 23,
+										"character": 233
 									}
 								},
 								"name": "name"
@@ -954,11 +972,11 @@
 								"loc": {
 									"start": {
 										"line": 9,
-										"column": 20
+										"column": 19
 									},
 									"end": {
 										"line": 9,
-										"column": 64
+										"column": 63
 									}
 								},
 								"left": {
@@ -968,11 +986,13 @@
 									"loc": {
 										"start": {
 											"line": 9,
-											"column": 20
+											"column": 19,
+											"character": 229
 										},
 										"end": {
 											"line": 9,
-											"column": 24
+											"column": 23,
+											"character": 233
 										}
 									},
 									"name": "name"
@@ -984,11 +1004,11 @@
 									"loc": {
 										"start": {
 											"line": 9,
-											"column": 27
+											"column": 26
 										},
 										"end": {
 											"line": 9,
-											"column": 64
+											"column": 63
 										}
 									},
 									"callee": {
@@ -998,11 +1018,11 @@
 										"loc": {
 											"start": {
 												"line": 9,
-												"column": 28
+												"column": 27
 											},
 											"end": {
 												"line": 9,
-												"column": 61
+												"column": 60
 											}
 										},
 										"id": null,
@@ -1017,11 +1037,11 @@
 											"loc": {
 												"start": {
 													"line": 9,
-													"column": 34
+													"column": 33
 												},
 												"end": {
 													"line": 9,
-													"column": 61
+													"column": 60
 												}
 											},
 											"body": [
@@ -1032,11 +1052,11 @@
 													"loc": {
 														"start": {
 															"line": 9,
-															"column": 36
+															"column": 35
 														},
 														"end": {
 															"line": 9,
-															"column": 59
+															"column": 58
 														}
 													},
 													"argument": {
@@ -1046,11 +1066,11 @@
 														"loc": {
 															"start": {
 																"line": 9,
-																"column": 43
+																"column": 42
 															},
 															"end": {
 																"line": 9,
-																"column": 58
+																"column": 57
 															}
 														},
 														"expressions": [
@@ -1061,11 +1081,11 @@
 																"loc": {
 																	"start": {
 																		"line": 9,
-																		"column": 51
+																		"column": 50
 																	},
 																	"end": {
 																		"line": 9,
-																		"column": 56
+																		"column": 55
 																	}
 																},
 																"value": "Doe",
@@ -1080,11 +1100,11 @@
 																"loc": {
 																	"start": {
 																		"line": 9,
-																		"column": 44
+																		"column": 43
 																	},
 																	"end": {
 																		"line": 9,
-																		"column": 49
+																		"column": 48
 																	}
 																},
 																"value": {
@@ -1100,11 +1120,11 @@
 																"loc": {
 																	"start": {
 																		"line": 9,
-																		"column": 57
+																		"column": 56
 																	},
 																	"end": {
 																		"line": 9,
-																		"column": 57
+																		"column": 56
 																	}
 																},
 																"value": {
@@ -1132,11 +1152,11 @@
 							"loc": {
 								"start": {
 									"line": 9,
-									"column": 66
+									"column": 65
 								},
 								"end": {
 									"line": 9,
-									"column": 77
+									"column": 76
 								}
 							},
 							"method": false,
@@ -1149,11 +1169,13 @@
 								"loc": {
 									"start": {
 										"line": 9,
-										"column": 66
+										"column": 65,
+										"character": 275
 									},
 									"end": {
 										"line": 9,
-										"column": 70
+										"column": 69,
+										"character": 279
 									}
 								},
 								"name": "cool"
@@ -1165,11 +1187,11 @@
 								"loc": {
 									"start": {
 										"line": 9,
-										"column": 66
+										"column": 65
 									},
 									"end": {
 										"line": 9,
-										"column": 77
+										"column": 76
 									}
 								},
 								"left": {
@@ -1179,11 +1201,13 @@
 									"loc": {
 										"start": {
 											"line": 9,
-											"column": 66
+											"column": 65,
+											"character": 275
 										},
 										"end": {
 											"line": 9,
-											"column": 70
+											"column": 69,
+											"character": 279
 										}
 									},
 									"name": "cool"
@@ -1195,11 +1219,11 @@
 									"loc": {
 										"start": {
 											"line": 9,
-											"column": 73
+											"column": 72
 										},
 										"end": {
 											"line": 9,
-											"column": 77
+											"column": 76
 										}
 									},
 									"value": true,

@@ -1,9 +1,8 @@
 /** @import { Expression, Identifier, SourceLocation } from 'estree' */
-/** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void, REGEX_VALID_TAG_NAME } from '../../../../utils.js';
-import read_expression from '../read/expression.js';
+import { read_expression } from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
 import { decode_character_references } from '../utils/html.js';
@@ -15,7 +14,7 @@ import { get_attribute_expression, is_expression_attribute } from '../../../util
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 import { locator } from '../../../state.js';
-import * as b from '#compiler/builders';
+import { read_comment } from '../utils/comment.js';
 
 const regex_invalid_unquoted_attribute_value = /(\/>|[\s"'=<>`])/y;
 const regex_closing_textarea_tag = /<\/textarea(\s[^>]*)?>/iy;
@@ -535,9 +534,7 @@ function read_attribute(parser) {
 		if (parser.eat('@attach')) {
 			parser.require_whitespace();
 
-			const expression = read_expression(parser);
-			parser.allow_whitespace();
-			parser.eat('}', true);
+			const expression = read_expression(parser, '{', '}');
 
 			/** @type {AST.AttachTag} */
 			const attachment = {
@@ -554,10 +551,7 @@ function read_attribute(parser) {
 		}
 
 		if (parser.eat('...')) {
-			const expression = read_expression(parser);
-
-			parser.allow_whitespace();
-			parser.eat('}', true);
+			const expression = read_expression(parser, '{', '}');
 
 			/** @type {AST.SpreadAttribute} */
 			const spread = {
@@ -724,50 +718,6 @@ function read_attribute(parser) {
 }
 
 /**
- * @param {Parser} parser
- * @returns {AST.JSComment | null}
- */
-function read_comment(parser) {
-	const start = parser.index;
-
-	if (parser.eat('//')) {
-		const value = parser.read_until(/\n/);
-		const end = parser.index;
-
-		return {
-			type: 'Line',
-			start,
-			end,
-			value,
-			loc: {
-				start: locator(start),
-				end: locator(end)
-			}
-		};
-	}
-
-	if (parser.eat('/*')) {
-		const value = parser.read_until(/\*\//);
-
-		parser.eat('*/');
-		const end = parser.index;
-
-		return {
-			type: 'Block',
-			start,
-			end,
-			value,
-			loc: {
-				start: locator(start),
-				end: locator(end)
-			}
-		};
-	}
-
-	return null;
-}
-
-/**
  * @param {string} name
  * @returns {any}
  */
@@ -891,9 +841,7 @@ function read_sequence(parser, done, location) {
 			flush(parser.index - 1);
 
 			parser.allow_whitespace();
-			const expression = read_expression(parser);
-			parser.allow_whitespace();
-			parser.eat('}', true);
+			const expression = read_expression(parser, '{', '}');
 
 			/** @type {AST.ExpressionTag} */
 			const chunk = {

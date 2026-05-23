@@ -133,11 +133,11 @@
 					"loc": {
 						"start": {
 							"line": 5,
-							"column": 15
+							"column": 14
 						},
 						"end": {
 							"line": 5,
-							"column": 39
+							"column": 38
 						}
 					},
 					"elements": [
@@ -148,11 +148,11 @@
 							"loc": {
 								"start": {
 									"line": 5,
-									"column": 16
+									"column": 15
 								},
 								"end": {
 									"line": 5,
-									"column": 19
+									"column": 18
 								}
 							},
 							"name": "key"
@@ -164,11 +164,11 @@
 							"loc": {
 								"start": {
 									"line": 5,
-									"column": 21
+									"column": 20
 								},
 								"end": {
 									"line": 5,
-									"column": 38
+									"column": 37
 								}
 							},
 							"left": {
@@ -178,11 +178,13 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 21
+										"column": 20,
+										"character": 65
 									},
 									"end": {
 										"line": 5,
-										"column": 26
+										"column": 25,
+										"character": 70
 									}
 								},
 								"name": "value"
@@ -194,11 +196,11 @@
 								"loc": {
 									"start": {
 										"line": 5,
-										"column": 29
+										"column": 28
 									},
 									"end": {
 										"line": 5,
-										"column": 38
+										"column": 37
 									}
 								},
 								"value": "default",

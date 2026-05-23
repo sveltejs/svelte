@@ -92,7 +92,18 @@ export function parse_expression_at(parser, source, index) {
 
 		add_comments(ast);
 
-		return ast;
+		let end = ast.end;
+
+		const last_comment = parser.root.comments.at(-1);
+		if (last_comment && last_comment.end > end) end = last_comment.end;
+
+		parser.index = end;
+
+		return walk(ast, null, {
+			ParenthesizedExpression(node, context) {
+				return context.visit(node.expression);
+			}
+		});
 	} catch (e) {
 		handle_parse_error(e);
 	}
@@ -106,18 +117,6 @@ const regex_position_indicator = / \(\d+:\d+\)$/;
  */
 function handle_parse_error(err) {
 	e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
-}
-
-/**
- * @param {acorn.Expression} node
- * @returns {acorn.Expression}
- */
-export function remove_parens(node) {
-	return walk(node, null, {
-		ParenthesizedExpression(node, context) {
-			return context.visit(node.expression);
-		}
-	});
 }
 
 /**
@@ -164,62 +163,52 @@ function get_comment_handlers(source, comments, index = 0) {
 
 		/** @param {acorn.Node & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }} ast */
 		add_comments(ast) {
-			if (comments.length === 0) return;
-
-			comments = comments
-				.filter((comment) => comment.start >= index)
-				.map(({ type, value, start, end }) => ({ type, value, start, end }));
-
-			walk(ast, null, {
-				_(node, { next, path }) {
-					let comment;
-
-					while (comments[0] && comments[0].start < node.start) {
-						comment = /** @type {CommentWithLocation} */ (comments.shift());
-						(node.leadingComments ||= []).push(comment);
-					}
-
-					next();
-
-					if (comments[0]) {
-						const parent = /** @type {any} */ (path.at(-1));
-
-						if (parent === undefined || node.end !== parent.end) {
-							const slice = source.slice(node.end, comments[0].start);
-							const is_last_in_body =
-								((parent?.type === 'BlockStatement' || parent?.type === 'Program') &&
-									parent.body.indexOf(node) === parent.body.length - 1) ||
-								(parent?.type === 'ArrayExpression' &&
-									parent.elements.indexOf(node) === parent.elements.length - 1) ||
-								(parent?.type === 'ObjectExpression' &&
-									parent.properties.indexOf(node) === parent.properties.length - 1);
-
-							if (is_last_in_body) {
-								// Special case: There can be multiple trailing comments after the last node in a block,
-								// and they can be separated by newlines
-								let end = node.end;
-
-								while (comments.length) {
-									const comment = comments[0];
-									if (parent && comment.start >= parent.end) break;
-
-									(node.trailingComments ||= []).push(comment);
-									comments.shift();
-									end = comment.end;
-								}
-							} else if (node.end <= comments[0].start && /^[,) \t]*$/.test(slice)) {
-								node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
-							}
-						}
-					}
-				}
-			});
-
-			// Special case: Trailing comments after the root node (which can only happen for expression tags or for Program nodes).
-			// Adding them ensures that we can later detect the end of the expression tag correctly.
-			if (comments.length > 0 && (comments[0].start >= ast.end || ast.type === 'Program')) {
-				(ast.trailingComments ||= []).push(...comments.splice(0));
-			}
+			// if (comments.length === 0) return;
+			// comments = comments
+			// 	.filter((comment) => comment.start >= index)
+			// 	.map(({ type, value, start, end }) => ({ type, value, start, end }));
+			// walk(ast, null, {
+			// 	_(node, { next, path }) {
+			// 		let comment;
+			// 		while (comments[0] && comments[0].start < node.start) {
+			// 			comment = /** @type {CommentWithLocation} */ (comments.shift());
+			// 			(node.leadingComments ||= []).push(comment);
+			// 		}
+			// 		next();
+			// 		if (comments[0]) {
+			// 			const parent = /** @type {any} */ (path.at(-1));
+			// 			if (parent === undefined || node.end !== parent.end) {
+			// 				const slice = source.slice(node.end, comments[0].start);
+			// 				const is_last_in_body =
+			// 					((parent?.type === 'BlockStatement' || parent?.type === 'Program') &&
+			// 						parent.body.indexOf(node) === parent.body.length - 1) ||
+			// 					(parent?.type === 'ArrayExpression' &&
+			// 						parent.elements.indexOf(node) === parent.elements.length - 1) ||
+			// 					(parent?.type === 'ObjectExpression' &&
+			// 						parent.properties.indexOf(node) === parent.properties.length - 1);
+			// 				if (is_last_in_body) {
+			// 					// Special case: There can be multiple trailing comments after the last node in a block,
+			// 					// and they can be separated by newlines
+			// 					let end = node.end;
+			// 					while (comments.length) {
+			// 						const comment = comments[0];
+			// 						if (parent && comment.start >= parent.end) break;
+			// 						(node.trailingComments ||= []).push(comment);
+			// 						comments.shift();
+			// 						end = comment.end;
+			// 					}
+			// 				} else if (node.end <= comments[0].start && /^[,) \t]*$/.test(slice)) {
+			// 					node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// });
+			// // Special case: Trailing comments after the root node (which can only happen for expression tags or for Program nodes).
+			// // Adding them ensures that we can later detect the end of the expression tag correctly.
+			// if (comments.length > 0 && (comments[0].start >= ast.end || ast.type === 'Program')) {
+			// 	(ast.trailingComments ||= []).push(...comments.splice(0));
+			// }
 		}
 	};
 }
