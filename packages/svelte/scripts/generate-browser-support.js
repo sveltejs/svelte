@@ -1142,49 +1142,14 @@ function replace_block(source, name, replacement) {
 }
 
 /**
- * Render the runtime-entries list as inline markdown: e.g.
- * `` `svelte`, `svelte/animate`, `svelte/easing` and `svelte/transition` ``.
- * Used in the "What is covered" prose so the docs cannot drift from
- * `runtime_entry_points` in this script.
- */
-function render_runtime_entries() {
-	const quoted = runtime_entry_points.map((e) => `\`${e}\``);
-	if (quoted.length <= 1) return quoted.join('');
-	const last = quoted.pop();
-	return `${quoted.join(', ')} and ${last}`;
-}
-
-/**
  * @param {string} headline_table
  * @param {string} conditional_table
- * @param {string} runtime_entries
  */
-function rewrite_docs_page(headline_table, conditional_table, runtime_entries) {
+function rewrite_docs_page(headline_table, conditional_table) {
 	let source = fs.readFileSync(docs_page, 'utf-8');
 	source = replace_block(source, 'generated-table', headline_table);
 	source = replace_block(source, 'conditional-features', conditional_table);
-	source = replace_inline_block(source, 'runtime-entries', runtime_entries);
 	fs.writeFileSync(docs_page, source);
-}
-
-/**
- * Like `replace_block` but used for inline markers on a single line —
- * no surrounding blank lines added.
- *
- * @param {string} source
- * @param {string} name
- * @param {string} replacement
- */
-function replace_inline_block(source, name, replacement) {
-	const start = `<!-- ${name}:start -->`;
-	const end = `<!-- ${name}:end -->`;
-	const pattern = new RegExp(`${start}[\\s\\S]*?${end}`);
-
-	if (!pattern.test(source)) {
-		throw new Error(`Could not find \`${start}\` / \`${end}\` markers in ${docs_page}.`);
-	}
-
-	return source.replace(pattern, `${start}${replacement}${end}`);
 }
 
 /* eslint-disable no-console */
@@ -1233,8 +1198,7 @@ async function main() {
 		console.log('Rewriting docs page…');
 		rewrite_docs_page(
 			render_table(versions, target),
-			render_conditional_table(conditional_rows, target),
-			render_runtime_entries()
+			render_conditional_table(conditional_rows, target)
 		);
 
 		console.log('Done.');
