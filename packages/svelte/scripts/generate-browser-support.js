@@ -38,8 +38,10 @@ import virtual from '@rollup/plugin-virtual';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { ESLint } from 'eslint';
 import { getCompatibleVersions } from 'baseline-browser-mapping';
+import { features as web_features } from 'web-features';
 import { config as eslint_config, BEHAVIORAL_IGNORE } from './browser-support.eslint.config.js';
 import { binding_properties } from '../src/compiler/phases/bindings.js';
+import { RUNES } from '../src/utils.js';
 import { compile as svelte_compile } from '../src/compiler/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -119,20 +121,70 @@ async function enumerate_subpackage_exports() {
 }
 
 /**
- * Runes whose runtime path is meaningfully different from the always-on
- * reactivity machinery and worth testing in isolation. Most runes
- * (`$state`, `$derived`, etc.) are already covered by the aggregate scan.
- * `$state.snapshot()` is the standout — it pulls in `clone.js` which uses
- * `structuredClone`.
+ * Produce a minimal `.svelte` fixture that invokes a rune. The list of
+ * runes is enumerated from `RUNES` (the canonical source in
+ * `src/utils.js`) rather than hand-picked — that way a new rune added
+ * to the compiler either gets an explicit case here or shows up in the
+ * "skipped" log so a maintainer can add one.
  *
- * @type {Array<{ name: string, source: string }>}
+ * Each case must produce a syntactically valid invocation that compiles
+ * cleanly through `svelte/compiler` in client mode. Most runes simply
+ * exercise the always-on reactivity machinery and pass at the runtime
+ * floor — they don't appear in the conditional-features table. The
+ * pipeline doesn't need to know which ones are interesting; it tests
+ * them all and lets the scan results decide.
+ *
+ * Returns `null` for runes that don't have a sensible standalone
+ * invocation in a fresh component (e.g. `$inspect().with` is parsed
+ * differently and `$effect.tracking`/`$effect.pending` only make sense
+ * inside an effect callback — these are still tested by being indirectly
+ * invoked from the outer fixture).
+ *
+ * @param {string} rune
+ * @returns {string | null}
  */
-const TESTED_RUNES = [
-	{
-		name: '`$state.snapshot()`',
-		source: `<script>const value = $state({});const snap = $state.snapshot(value);console.log(snap);</script>`
+function rune_fixture(rune) {
+	switch (rune) {
+		case '$state':
+			return `<script>let v = $state(0); console.log(v);</script>`;
+		case '$state.raw':
+			return `<script>let v = $state.raw({}); console.log(v);</script>`;
+		case '$state.eager':
+			return `<script>let v = $state.eager(0); console.log(v);</script>`;
+		case '$state.snapshot':
+			return `<script>const v = $state({}); const snap = $state.snapshot(v); console.log(snap);</script>`;
+		case '$derived':
+			return `<script>let a = $state(0); let d = $derived(a + 1); console.log(d);</script>`;
+		case '$derived.by':
+			return `<script>let a = $state(0); let d = $derived.by(() => a + 1); console.log(d);</script>`;
+		case '$props':
+			return `<script>let { x } = $props(); console.log(x);</script>`;
+		case '$props.id':
+			return `<script>const id = $props.id(); console.log(id);</script>`;
+		case '$bindable':
+			return `<script>let { v = $bindable() } = $props(); console.log(v);</script>`;
+		case '$effect':
+			return `<script>$effect(() => { console.log('e'); });</script>`;
+		case '$effect.pre':
+			return `<script>$effect.pre(() => { console.log('p'); });</script>`;
+		case '$effect.tracking':
+			return `<script>$effect(() => { console.log($effect.tracking()); });</script>`;
+		case '$effect.root':
+			return `<script>const stop = $effect.root(() => () => {}); stop();</script>`;
+		case '$effect.pending':
+			return `<script>$effect(() => { console.log($effect.pending()); });</script>`;
+		case '$inspect':
+			return `<script>let v = $state(0); $inspect(v);</script>`;
+		case '$inspect().with':
+			return `<script>let v = $state(0); $inspect(v).with(() => {});</script>`;
+		case '$inspect.trace':
+			return `<script>$effect(() => { $inspect.trace(); });</script>`;
+		case '$host':
+			return `<svelte:options customElement="x-y" />\n<script>const h = $host(); console.log(h);</script>`;
+		default:
+			return null;
 	}
-];
+}
 
 /**
  * Compiled-fixture sources for directives. Bindings are covered by the
@@ -177,33 +229,51 @@ const TESTED_DIRECTIVES = [
  * Each entry MUST be justified — the comment is the only documentation
  * a reviewer has to evaluate why an entry belongs here.
  *
+ * Versions map convention:
+ *   - `string` (e.g. `'93'`) — minimum supported version
+ *   - `null` — never supported in that browser
+ *   - omitted — at or below the runtime floor (renderer shows `(floor)`)
+ *
  * @type {Array<{
  *   regex: RegExp,
  *   name: string,
  *   baseline_year: number,
- *   versions: Record<string, string>
+ *   versions: Record<string, string | null>
  * }>}
  */
 const BLIND_SPOT_DETECTORS = [
 	{
-		// `box: 'device-pixel-content-box'` in `bind_resize_observer` (size.js).
-		// The string literal is referenced unconditionally inside a module-level
-		// `/* @__PURE__ */ new ResizeObserverSingleton({...})`; once any of the
-		// size bindings is used, the bundler keeps all three observer
-		// instantiations because they share a function body, and the
-		// `device-pixel-content-box` constructor runs at module load. The
-		// scanner cannot see the string. Per MDN:
-		// Chrome 84 (Jul 2020), Firefox 93 (Oct 2021), Safari 16.4 (Mar 2023).
+		// The combination of `box: 'device-pixel-content-box'` (constructor
+		// option, in `bind_resize_observer` / size.js) plus reading
+		// `entry.devicePixelContentBoxSize` in the observer callback. Per
+		// `@mdn/browser-compat-data`:
+		//   - `box: 'device-pixel-content-box'` constructor option:
+		//     Chrome 84, Edge 84, Firefox 93, Safari 15.4.
+		//   - `ResizeObserverEntry.devicePixelContentBoxSize` property:
+		//     Chrome 84, Edge 84, Firefox 93, Safari NOT SUPPORTED
+		//     (`"version_added": false`).
+		// Safari accepts the constructor option silently from 15.4, but never
+		// exposes the property on entries — so reading the binding always
+		// yields `undefined` on Safari, regardless of version. Marking Safari
+		// as `null` is the honest answer.
 		regex: /['"]device-pixel-content-box['"]/,
-		name: '`ResizeObserver` `box: device-pixel-content-box` option',
+		name: '`ResizeObserver` `box: device-pixel-content-box` option + `entry.devicePixelContentBoxSize`',
 		baseline_year: 2023,
-		versions: { chrome: '84', edge: '84', firefox: '93', safari: '16.4' }
+		versions: {
+			chrome: '84',
+			edge: '84',
+			firefox: '93',
+			safari: null,
+			safari_ios: null
+		}
 	},
 	{
 		// `getComputedStyle(current).zoom` walk in `svelte/animate`'s `flip`
 		// fallback path. Firefox didn't expose `.zoom` until v126 (May 2024);
 		// pre-126 the read yields `""` → `NaN`, breaking the animation math.
-		// Scanner cannot see the `.zoom` instance property access.
+		// Scanner cannot see the `.zoom` instance property access. Per MDN
+		// BCD for the CSS `zoom` property: Chrome 1, Edge 12, Firefox 126,
+		// Safari 3.1 — only Firefox's version drives the floor here.
 		regex: /getComputedStyle\([^)]*\)\.zoom\b/,
 		name: 'CSS `zoom` property reads (`getComputedStyle(...).zoom`)',
 		baseline_year: 2025,
@@ -492,6 +562,41 @@ async function find_minimum_target(runtime_files, tsconfig, compiler_fixtures) {
 }
 
 /**
+ * Look up the per-browser minimum versions for a set of web-feature IDs
+ * using the `web-features` dataset. Returns the strictest (highest) version
+ * required across all input IDs — the union over multiple features.
+ *
+ * Falls back to `null` for the entire result if NONE of the IDs are
+ * present in the dataset, so callers can default to year-based mapping.
+ *
+ * @param {Iterable<string>} ids
+ * @returns {Record<string, string> | null}
+ */
+function versions_from_web_features(ids) {
+	/** @type {Record<string, string>} */
+	const merged = {};
+	let any_found = false;
+
+	for (const id of ids) {
+		const feature = web_features[id];
+		if (!feature || !('status' in feature)) continue;
+		const support = /** @type {Record<string, string> | undefined} */ (
+			/** @type {unknown} */ (feature.status.support)
+		);
+		if (!support) continue;
+		any_found = true;
+		for (const [browser, version] of Object.entries(support)) {
+			const current = merged[browser];
+			if (!current || Number(version) > Number(current)) {
+				merged[browser] = version;
+			}
+		}
+	}
+
+	return any_found ? merged : null;
+}
+
+/**
  * Extract every unique web-feature ID flagged in a lint result.
  *
  * @param {import('eslint').ESLint.LintResult} result
@@ -606,8 +711,20 @@ function enumerate_features(subpackage_exports) {
 		}
 	}
 
-	for (const rune of TESTED_RUNES) {
-		features.push({ name: rune.name, kind: 'svelte', source: rune.source });
+	// Enumerated from `RUNES` (the same array the compiler reads to
+	// recognise rune identifiers). Cases without a fixture template fall
+	// through with a warning, so a new rune either gets a template or
+	// shows up in the log.
+	for (const rune of RUNES) {
+		const source = rune_fixture(rune);
+		if (source === null) {
+			// eslint-disable-next-line no-console
+			console.warn(
+				`  (no fixture template for rune \`${rune}\` — add a case to rune_fixture if it can introduce a new browser API)`
+			);
+			continue;
+		}
+		features.push({ name: `\`${rune}\``, kind: 'svelte', source });
 	}
 
 	for (const directive of TESTED_DIRECTIVES) {
@@ -716,7 +833,7 @@ async function bundle_fixture(feature) {
  */
 function apply_blind_spots(bundle_code) {
 	let year = 0;
-	/** @type {Record<string, string>} */
+	/** @type {Record<string, string | null>} */
 	let versions = {};
 	const matched = [];
 
@@ -741,6 +858,7 @@ function apply_blind_spots(bundle_code) {
  */
 async function scan_fixture_floor(fixture_file) {
 	let last_failure_names = new Set();
+	let last_failure_ids = new Set();
 	for (const year of targets) {
 		const eslint = new ESLint({
 			overrideConfigFile: true,
@@ -752,13 +870,22 @@ async function scan_fixture_floor(fixture_file) {
 		});
 		const [result] = await eslint.lintFiles([fixture_file]);
 		if (result.errorCount === 0) {
-			// Drivers are the features that just stopped failing — names
-			// captured from the previous (one-year-stricter) scan.
-			return { year, driving: [...last_failure_names] };
+			// Drivers are the features that just stopped failing — names and
+			// IDs captured from the previous (one-year-stricter) scan.
+			return {
+				year,
+				driving_names: [...last_failure_names],
+				driving_ids: [...last_failure_ids]
+			};
 		}
 		last_failure_names = feature_names_in(result);
+		last_failure_ids = feature_ids_in(result);
 	}
-	return { year: /** @type {const} */ ('newly'), driving: [...last_failure_names] };
+	return {
+		year: /** @type {const} */ ('newly'),
+		driving_names: [...last_failure_names],
+		driving_ids: [...last_failure_ids]
+	};
 }
 
 /**
@@ -770,7 +897,7 @@ async function scan_fixture_floor(fixture_file) {
  * @returns {Promise<Array<{
  *   name: string,
  *   api: string,
- *   versions: Record<string, string>,
+ *   versions: Record<string, string | null>,
  *   baseline_year: number | 'newly'
  * }>>}
  */
@@ -780,7 +907,7 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 	/** @type {Array<{
 	 *   name: string,
 	 *   api: string,
-	 *   versions: Record<string, string>,
+	 *   versions: Record<string, string | null>,
 	 *   baseline_year: number | 'newly'
 	 * }>} */
 	const rows = [];
@@ -811,22 +938,27 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 		if (final_year <= runtime_year || final_year === 0) continue;
 
 		// Prefer blind-spot version data when it's the strictest constraint.
-		// When the scanner detects a higher floor than any blind spot, look up
-		// the browser versions for that year — but `baseline-browser-mapping`
-		// rejects future targets (years that have not ended yet), so we skip
-		// rows that depend on years we can't resolve.
+		// Otherwise look up exact per-feature versions in `web-features`
+		// (more precise than the year-based mapping). Fall back to the
+		// year mapping only if no driving feature was found in the dataset.
+		/** @type {Record<string, string | null> | undefined} */
 		let versions;
 		let api;
 		if (blind.matched.length > 0 && blind.year >= scanner_year) {
 			versions = blind.versions;
 			api = blind.matched.join(', ');
 		} else if (typeof final_year === 'number' && Number.isFinite(final_year)) {
-			try {
-				versions = browser_versions_for(final_year);
-			} catch {
-				continue;
+			api = scanned.driving_names.join(', ') || '(see bundle output)';
+			versions = versions_from_web_features(scanned.driving_ids) ?? undefined;
+			if (!versions) {
+				// `web-features` had no entry for any driving feature.
+				// Fall back to the conservative year mapping.
+				try {
+					versions = browser_versions_for(final_year);
+				} catch {
+					continue;
+				}
 			}
-			api = scanned.driving.join(', ') || '(see bundle output)';
 		} else {
 			// Scanner says 'newly' AND no blind spot matched — we know the
 			// fixture uses something past every recorded Baseline year, but
@@ -854,7 +986,7 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
  * @param {Array<{
  *   name: string,
  *   api: string,
- *   versions: Record<string, string>,
+ *   versions: Record<string, string | null>,
  *   baseline_year: number | 'newly'
  * }>} rows
  * @param {number | 'newly'} runtime_floor
@@ -886,7 +1018,8 @@ function render_conditional_table(rows, runtime_floor) {
 	const body = sorted.map((entry) => {
 		const cells = browsers.map(([key]) => {
 			const v = entry.versions[key];
-			if (!v) return '(floor)';
+			if (v === null) return 'not supported';
+			if (v === undefined) return '(floor)';
 			const floor_v = runtime_versions[key];
 			return floor_v && Number(v) <= Number(floor_v) ? '(floor)' : v;
 		});
