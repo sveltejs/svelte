@@ -85,6 +85,128 @@ const KNOWN_API_FLOORS = [
 ];
 
 /**
+ * Hand-curated metadata for features whose API floor exceeds the
+ * auto-detected runtime floor. Renders the "Per-feature browser
+ * requirements" table in the docs page AND is validated by the
+ * pipeline against the source files it references.
+ *
+ * For each entry:
+ *   - `files` MUST point at the source files that house the API. The
+ *     pipeline scans them to validate the entry.
+ *   - `detection`:
+ *       - `{ feature_id, baseline_year }` — the scanner can see this
+ *         API. The pipeline verifies the named `feature_id` appears
+ *         in the file's lint output when targeting one year below
+ *         `baseline_year`. This catches drift when the API is removed
+ *         or replaced.
+ *       - `'manual'` — the scanner cannot see this API (string-literal
+ *         option, dynamic access, or instance method on `any`). The
+ *         pipeline trusts the version data and only checks that the
+ *         file exists.
+ *
+ * @type {Array<{
+ *   feature: string,
+ *   api: string,
+ *   files: string[],
+ *   versions: Record<string, string>,
+ *   breaks: string,
+ *   detection: 'manual' | { feature_id: string, baseline_year: number }
+ * }>}
+ */
+const CONDITIONAL_FEATURES = [
+	{
+		feature: '`bind:contentBoxSize`',
+		api: '`ResizeObserverEntry.contentBoxSize`',
+		files: ['src/internal/client/dom/elements/bindings/size.js'],
+		versions: { chrome: '84', edge: '84', firefox: '69', safari: '15.4' },
+		breaks: 'The binding returns `undefined`',
+		detection: 'manual'
+	},
+	{
+		feature: '`bind:borderBoxSize`',
+		api: '`ResizeObserverEntry.borderBoxSize`',
+		files: ['src/internal/client/dom/elements/bindings/size.js'],
+		versions: { chrome: '84', edge: '84', firefox: '69', safari: '15.4' },
+		breaks: 'The binding returns `undefined`',
+		detection: 'manual'
+	},
+	{
+		feature: '`bind:devicePixelContentBoxSize`',
+		api: '`ResizeObserver` `box` option + entry property',
+		files: ['src/internal/client/dom/elements/bindings/size.js'],
+		versions: { chrome: '84', edge: '84', firefox: '93', safari: '16.4' },
+		breaks: 'The `ResizeObserver` constructor throws',
+		detection: 'manual'
+	},
+	{
+		feature: '`$state.snapshot()` of `Date` etc.',
+		api: '`structuredClone()`',
+		files: ['src/internal/shared/clone.js'],
+		versions: { chrome: '98', edge: '98', firefox: '94', safari: '15.4' },
+		breaks: '`ReferenceError` when snapshotting `Date` or non-JSON-serializable values',
+		detection: { feature_id: 'structured-clone', baseline_year: 2022 }
+	},
+	{
+		feature: '`transition:` / `in:` / `out:`',
+		api: '`HTMLElement.inert`',
+		files: ['src/internal/client/dom/elements/transitions.js'],
+		versions: { chrome: '102', edge: '102', firefox: '112', safari: '15.5' },
+		breaks: 'Transitions still animate, but pointer events are not blocked during outro',
+		detection: { feature_id: 'inert', baseline_year: 2023 }
+	},
+	{
+		feature: '`flip` from `svelte/animate`',
+		api: '`getComputedStyle(...).zoom` reads',
+		files: ['src/animate/index.js'],
+		versions: { firefox: '126' },
+		breaks: 'Animation math is wrong if ancestors use CSS `zoom` (Firefox <126 only)',
+		detection: 'manual'
+	},
+	{
+		feature: '`getAbortSignal()`',
+		api: '`AbortController.abort(reason)`',
+		files: ['src/internal/client/runtime.js'],
+		versions: { chrome: '98', edge: '98', firefox: '97', safari: '16' },
+		breaks: '`signal.reason` is the default `AbortError` instead of the Svelte sentinel',
+		detection: 'manual'
+	}
+];
+
+/**
+ * Files that are loaded only when a specific user feature is used —
+ * either gated by a directive, a binding, or a non-default subpath
+ * import. The pipeline scans every file in this list and fails if any
+ * has a flagged feature that is not already covered by a
+ * `CONDITIONAL_FEATURES` entry. This is how new conditional APIs get
+ * caught when contributors add them without updating the docs.
+ *
+ * If you add a new runtime file whose code is conditionally loaded,
+ * add it here too. If you add a new file that's part of the always-on
+ * runtime, it is already covered by the aggregate scan and does not
+ * need to go here.
+ */
+const CONDITIONAL_SOURCE_FILES = [
+	'src/animate/index.js',
+	'src/internal/client/dom/elements/transitions.js',
+	'src/internal/client/dom/elements/customizable-select.js',
+	'src/internal/client/dom/elements/custom-element.js',
+	'src/internal/shared/clone.js',
+	'src/internal/client/dom/elements/bindings/size.js',
+	'src/internal/client/dom/elements/bindings/media.js',
+	'src/internal/client/dom/elements/bindings/select.js',
+	'src/internal/client/dom/elements/bindings/window.js',
+	'src/internal/client/dom/elements/bindings/document.js',
+	'src/internal/client/dom/elements/bindings/navigator.js',
+	'src/internal/client/dom/elements/bindings/input.js',
+	'src/internal/client/dom/elements/bindings/this.js',
+	'src/internal/client/dom/elements/bindings/universal.js',
+	'src/reactivity/url.js',
+	'src/reactivity/url-search-params.js',
+	'src/reactivity/media-query.js',
+	'src/reactivity/window/index.js'
+];
+
+/**
  * Subpath exports whose browser code ships to end users. Derived by walking
  * `pkg.exports` and keeping every entry that resolves to a `.js` file under
  * the `browser` or `default` condition (i.e. anything that can end up in a
@@ -253,6 +375,29 @@ async function lint_runtime_files(files, tsconfig, target) {
 }
 
 /**
+ * Lint a single Svelte source file with the existing svelte tsconfig.
+ * Used by the conditional-features validator.
+ *
+ * @param {string} file Absolute path to a source file inside `packages/svelte`.
+ * @param {number | 'newly'} target
+ */
+async function lint_source_file(file, target) {
+	const eslint = new ESLint({
+		overrideConfigFile: true,
+		overrideConfig: eslint_config(
+			target,
+			{
+				tsconfig: path.join(pkg_dir, 'tsconfig.json'),
+				root: pkg_dir
+			},
+			{ purpose: 'per-file' }
+		)
+	});
+	const [result] = await eslint.lintFiles([file]);
+	return result;
+}
+
+/**
  * Lint a compiler-output fixture in syntax-only mode (no type info — the
  * fixtures are tiny snippets without a tsconfig). The patterns the
  * compiler emits are bounded, so the non-typed scan is sufficient.
@@ -383,6 +528,145 @@ function apply_manual_overrides(target) {
 }
 
 /**
+ * Extract every unique web-feature ID flagged in a lint result.
+ *
+ * @param {import('eslint').ESLint.LintResult} result
+ */
+function feature_ids_in(result) {
+	const ids = new Set();
+	for (const m of result.messages) {
+		if (m.ruleId !== 'baseline-js/use-baseline') continue;
+		const match = /\(([^)]+)\)/.exec(m.message);
+		if (match) ids.add(match[1]);
+	}
+	return ids;
+}
+
+/**
+ * Validate every `CONDITIONAL_FEATURES` entry against the source file(s)
+ * it references, and scan every file in `CONDITIONAL_SOURCE_FILES` for
+ * APIs that exceed the runtime floor without a matching entry.
+ *
+ * Throws with an actionable message on any drift.
+ *
+ * @param {number | 'newly'} runtime_floor
+ */
+async function validate_conditional_features(runtime_floor) {
+	const floor_year = typeof runtime_floor === 'number' ? runtime_floor : Infinity;
+
+	const errors = [];
+
+	// 1. Per-entry validation.
+	for (const entry of CONDITIONAL_FEATURES) {
+		for (const rel of entry.files) {
+			const file = path.join(pkg_dir, rel);
+			if (!fs.existsSync(file)) {
+				errors.push(
+					`CONDITIONAL_FEATURES entry ${JSON.stringify(entry.feature)} ` +
+						`references ${rel}, which does not exist.`
+				);
+				continue;
+			}
+
+			if (entry.detection === 'manual') continue;
+
+			// Scan one year below baseline_year — the feature must be flagged.
+			const result = await lint_source_file(file, entry.detection.baseline_year - 1);
+			const ids = feature_ids_in(result);
+			if (!ids.has(entry.detection.feature_id)) {
+				errors.push(
+					`CONDITIONAL_FEATURES entry ${JSON.stringify(entry.feature)} ` +
+						`claims ${rel} uses feature ${JSON.stringify(entry.detection.feature_id)}, ` +
+						`but the scanner did not flag it at year ${entry.detection.baseline_year - 1}. ` +
+						`Either the API was removed (delete the entry), the feature ID is wrong, ` +
+						`or the baseline_year is too low.`
+				);
+			}
+		}
+	}
+
+	// 2. Drift detection across CONDITIONAL_SOURCE_FILES.
+	//
+	// For each conditional source file, scan at `runtime_floor` and look for
+	// flagged features that are NOT already documented in CONDITIONAL_FEATURES.
+	// Any such feature means the file uses a new API past the runtime floor
+	// that hasn't been added to the per-feature table.
+	const documented_ids = new Set();
+	for (const entry of CONDITIONAL_FEATURES) {
+		if (entry.detection !== 'manual') {
+			documented_ids.add(entry.detection.feature_id);
+		}
+	}
+
+	for (const rel of CONDITIONAL_SOURCE_FILES) {
+		const file = path.join(pkg_dir, rel);
+		if (!fs.existsSync(file)) {
+			errors.push(`CONDITIONAL_SOURCE_FILES references ${rel}, which does not exist.`);
+			continue;
+		}
+
+		const result = await lint_source_file(file, runtime_floor);
+		const ids = feature_ids_in(result);
+		const undocumented = [...ids].filter((id) => !documented_ids.has(id));
+
+		if (undocumented.length > 0) {
+			errors.push(
+				`${rel} flags features at the runtime floor (year ${floor_year}) ` +
+					`that are not documented in CONDITIONAL_FEATURES: ` +
+					`${undocumented.join(', ')}.\n` +
+					`  Either add a CONDITIONAL_FEATURES entry for the relevant ` +
+					`user-facing feature, or — if the API is safe (feature-detected, ` +
+					`graceful fallback) — add it to IGNORE_FEATURES in ` +
+					`browser-support.eslint.config.js with a justification.`
+			);
+		}
+	}
+
+	if (errors.length > 0) {
+		throw new Error(
+			'Conditional features validation failed:\n\n' + errors.map((e) => `  - ${e}`).join('\n\n')
+		);
+	}
+}
+
+/**
+ * Render the per-feature browser-requirements table from CONDITIONAL_FEATURES.
+ *
+ * @param {number | 'newly'} runtime_floor Used to label cells that fall
+ *   at or below the floor (no version bump needed for that browser).
+ */
+function render_conditional_table(runtime_floor) {
+	const browsers = /** @type {const} */ ([
+		['chrome', 'Chrome / Edge'],
+		['firefox', 'Firefox'],
+		['safari', 'Safari']
+	]);
+
+	const runtime_versions = browser_versions_for(runtime_floor);
+
+	const header =
+		'| Feature | Affected API | ' +
+		browsers.map(([, label]) => `Min ${label}`).join(' | ') +
+		' | What breaks on older browsers |';
+	const sep = '| --- | --- |' + browsers.map(() => ' ---: |').join('') + ' --- |';
+
+	const rows = CONDITIONAL_FEATURES.map((entry) => {
+		const cells = browsers.map(([key]) => {
+			const v = entry.versions[key];
+			if (!v) return '(floor)';
+			const floor_v = runtime_versions[key];
+			// If the entry's version is not strictly newer than the runtime
+			// floor for this browser, show "(floor)" instead of repeating
+			// the same number.
+			return floor_v && Number(v) <= Number(floor_v) ? '(floor)' : v;
+		});
+		return `| ${entry.feature} | ${entry.api} | ${cells.join(' | ')} | ${entry.breaks} |`;
+	});
+
+	return [header, sep, ...rows].join('\n');
+}
+
+/**
  * @param {number | 'newly'} target
  */
 function browser_versions_for(target) {
@@ -476,23 +760,33 @@ function render_table(versions, target) {
 }
 
 /**
- * @param {string} table_markdown
+ * Replace the markdown between `<!-- ${name}:start -->` and `<!-- ${name}:end -->`.
+ *
+ * @param {string} source
+ * @param {string} name
+ * @param {string} replacement
  */
-function rewrite_docs_page(table_markdown) {
-	const source = fs.readFileSync(docs_page, 'utf-8');
-	const start = '<!-- generated-table:start -->';
-	const end = '<!-- generated-table:end -->';
+function replace_block(source, name, replacement) {
+	const start = `<!-- ${name}:start -->`;
+	const end = `<!-- ${name}:end -->`;
 	const pattern = new RegExp(`${start}[\\s\\S]*?${end}`);
 
 	if (!pattern.test(source)) {
-		throw new Error(
-			`Could not find generated-table markers in ${docs_page}. ` +
-				`Restore the \`${start}\` / \`${end}\` block.`
-		);
+		throw new Error(`Could not find \`${start}\` / \`${end}\` markers in ${docs_page}.`);
 	}
 
-	const replacement = `${start}\n\n${table_markdown}\n\n${end}`;
-	fs.writeFileSync(docs_page, source.replace(pattern, replacement));
+	return source.replace(pattern, `${start}\n\n${replacement}\n\n${end}`);
+}
+
+/**
+ * @param {string} headline_table
+ * @param {string} conditional_table
+ */
+function rewrite_docs_page(headline_table, conditional_table) {
+	let source = fs.readFileSync(docs_page, 'utf-8');
+	source = replace_block(source, 'generated-table', headline_table);
+	source = replace_block(source, 'conditional-features', conditional_table);
+	fs.writeFileSync(docs_page, source);
 }
 
 /* eslint-disable no-console */
@@ -526,11 +820,15 @@ async function main() {
 		console.log(`  Final target: ${target}`);
 	}
 
+	console.log('Validating conditional features…');
+	await validate_conditional_features(target);
+	console.log(`  ${CONDITIONAL_FEATURES.length} entries verified against source`);
+
 	console.log('Resolving browser versions…');
 	const versions = browser_versions_for(target);
 
 	console.log('Rewriting docs page…');
-	rewrite_docs_page(render_table(versions, target));
+	rewrite_docs_page(render_table(versions, target), render_conditional_table(target));
 
 	console.log('Cleaning up scratch directory…');
 	fs.rmSync(tmp_dir, { recursive: true, force: true });

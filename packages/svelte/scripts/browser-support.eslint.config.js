@@ -41,6 +41,15 @@ const IGNORE_FEATURES = [
 ];
 
 /**
+ * Smaller ignore list for per-file scans during validation: only the
+ * web-features data bug, no behavioural suppressions. Per-file scans
+ * are meant to detect that a file truly does use a flagged feature —
+ * suppressing `structured-clone` here would defeat the validation that
+ * `clone.js` actually uses `structuredClone()`.
+ */
+const FALSE_POSITIVE_FEATURES = ['devicepixelratio'];
+
+/**
  * @param {'widely' | 'newly' | number} target
  *   `'widely'` — Baseline Widely available
  *   `'newly'`  — Baseline Newly available
@@ -50,9 +59,16 @@ const IGNORE_FEATURES = [
  *   `@typescript-eslint/parser` with the given tsconfig. This catches
  *   instance-method calls like `String.prototype.replaceAll` and
  *   `Array.prototype.toSorted` that the non-typed preset misses.
+ * @param {{ purpose: 'aggregate' | 'per-file' }} [options]
+ *   `'aggregate'` (default) uses the full IGNORE_FEATURES list including
+ *   behavioural suppressions for the aggregate runtime scan.
+ *   `'per-file'` uses the smaller false-positive list, so the validator
+ *   can confirm a file actually uses APIs that the aggregate scan
+ *   intentionally hides.
  * @returns {import('eslint').Linter.Config[]}
  */
-export function config(target, type_info) {
+export function config(target, type_info, options) {
+	const ignore_list = options?.purpose === 'per-file' ? FALSE_POSITIVE_FEATURES : IGNORE_FEATURES;
 	// `recommended-ts` enables `preset: 'type-aware'` for Web API + JS builtin
 	// detection. Without type info the rule degrades to syntax-only checks,
 	// which is why we always pair it with `@typescript-eslint/parser` and a
@@ -83,7 +99,7 @@ export function config(target, type_info) {
 			'error',
 			{
 				available: target,
-				ignoreFeatures: IGNORE_FEATURES,
+				ignoreFeatures: ignore_list,
 				...(type_info
 					? {
 							includeWebApis: { preset: 'type-aware' },
@@ -94,11 +110,16 @@ export function config(target, type_info) {
 		]
 	});
 
+	// The `recommended-ts` preset's `files` glob targets `**/*.{ts,tsx}`,
+	// but Svelte's source is `.js` with JSDoc types. Broaden the glob when
+	// type info is available so the rule actually runs against `.js` files.
+	const files_glob = type_info ? ['**/*.{js,ts,tsx}'] : [...preset.files];
+
 	/** @type {import('eslint').Linter.Config[]} */
 	const layers = [
 		{ plugins: { 'baseline-js': plugin } },
 		{
-			files: [...preset.files],
+			files: files_glob,
 			languageOptions: type_info
 				? {
 						parser: /** @type {import('eslint').Linter.Parser} */ (
