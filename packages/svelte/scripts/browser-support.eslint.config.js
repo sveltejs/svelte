@@ -41,13 +41,24 @@ export const IGNORE_FEATURES = [
 ];
 
 /**
- * Smaller ignore list for per-file scans during validation: only the
- * web-features data bug, no behavioural suppressions. Per-file scans
- * are meant to detect that a file truly does use a flagged feature —
- * suppressing `structured-clone` here would defeat the validation that
- * `clone.js` actually uses `structuredClone()`.
+ * Smaller ignore list for the IGNORE_FEATURES staleness check: only the
+ * web-features data bug, no behavioural suppressions. The staleness
+ * check is meant to detect that an ignored API is still in the code —
+ * suppressing it would defeat the verification.
  */
 export const FALSE_POSITIVE_FEATURES = ['devicepixelratio'];
+
+/**
+ * Ignore list for per-fixture scans. Suppresses the data bug AND
+ * `trusted-types`, which is feature-detected at runtime with `?.` and
+ * never affects users on browsers that don't support it. Without this
+ * suppression every fixture that touches the template runtime would
+ * report a Baseline-2026 floor and skew every conditional row.
+ *
+ * `structured-clone` is intentionally NOT in this list — we want the
+ * `$state.snapshot` fixture to flag it so it can be emitted as a row.
+ */
+export const PER_FIXTURE_IGNORE = ['devicepixelratio', 'trusted-types'];
 
 /**
  * @param {'widely' | 'newly' | number} target
@@ -59,16 +70,24 @@ export const FALSE_POSITIVE_FEATURES = ['devicepixelratio'];
  *   `@typescript-eslint/parser` with the given tsconfig. This catches
  *   instance-method calls like `String.prototype.replaceAll` and
  *   `Array.prototype.toSorted` that the non-typed preset misses.
- * @param {{ purpose: 'aggregate' | 'per-file' }} [options]
+ * @param {{ purpose: 'aggregate' | 'per-file' | 'per-fixture' }} [options]
  *   `'aggregate'` (default) uses the full IGNORE_FEATURES list including
  *   behavioural suppressions for the aggregate runtime scan.
  *   `'per-file'` uses the smaller false-positive list, so the validator
  *   can confirm a file actually uses APIs that the aggregate scan
  *   intentionally hides.
+ *   `'per-fixture'` uses the PER_FIXTURE_IGNORE list — suppresses safe
+ *   feature-detected APIs but still flags conditionally-invoked ones,
+ *   so per-feature fixtures detect the APIs they actually need.
  * @returns {import('eslint').Linter.Config[]}
  */
 export function config(target, type_info, options) {
-	const ignore_list = options?.purpose === 'per-file' ? FALSE_POSITIVE_FEATURES : IGNORE_FEATURES;
+	const ignore_list =
+		options?.purpose === 'per-file'
+			? FALSE_POSITIVE_FEATURES
+			: options?.purpose === 'per-fixture'
+				? PER_FIXTURE_IGNORE
+				: IGNORE_FEATURES;
 	// `recommended-ts` enables `preset: 'type-aware'` for Web API + JS builtin
 	// detection. Without type info the rule degrades to syntax-only checks,
 	// which is why we always pair it with `@typescript-eslint/parser` and a

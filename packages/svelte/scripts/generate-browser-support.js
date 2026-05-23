@@ -1,32 +1,32 @@
 // Regenerates `documentation/docs/07-misc/05-browser-support.md`.
 //
 // Pipeline:
-//   1. Bundle each runtime entry point the same way `check-treeshakeability.js`
-//      does, using the `production`/`browser` export conditions so the code
-//      we scan matches what end users actually receive.
-//   2. Write each bundle to `scripts/_baseline/<entry>.ts` alongside a minimal
-//      tsconfig. This is what gives the linter type information — without it
-//      the Baseline rule can only see syntax features and constructor names,
-//      and it misses instance methods like `String.prototype.replaceAll` or
-//      `Array.prototype.toSorted`.
-//   3. Run ESLint with `eslint-plugin-baseline-js`'s `recommended-ts` preset
-//      (`preset: 'type-aware'`), ratcheting the Baseline year up from 2015
-//      until the lint passes. That year is the minimum Baseline floor the
-//      combined code satisfies.
-//   4. Also scan the compiler-emitted JavaScript from the snapshot tests
-//      under `tests/snapshot/samples/*/_expected/client/*.js`. These have
-//      no type info, but the patterns the compiler emits are limited, so
-//      the syntax-only scan is sufficient there.
-//   5. Apply the manual overrides in `KNOWN_API_FLOORS` below for features
-//      the scanner cannot see even with type info (string-literal options
-//      to constructors, e.g. `box: 'device-pixel-content-box'`).
-//   6. Translate the resulting floor into concrete browser versions via
-//      `baseline-browser-mapping` and rewrite the table in the docs page.
+//   1. Bundle each runtime entry point with rollup using the same export
+//      conditions as a production bundler. Write each bundle to
+//      `scripts/_baseline/<entry>.ts` alongside a minimal tsconfig so the
+//      linter has type information — without it the Baseline rule misses
+//      instance methods like `String.prototype.replaceAll`.
+//   2. Run ESLint with `eslint-plugin-baseline-js`'s `recommended-ts`
+//      preset, ratcheting the Baseline year up from 2015 until the lint
+//      passes. That year is the runtime floor.
+//   3. Also scan the compiler-emitted snapshot fixtures under
+//      `tests/snapshot/samples/*/_expected/client/*.js`.
+//   4. Verify each entry in `IGNORE_FEATURES` is still flagged by the
+//      scanner — if not, it can be removed.
+//   5. Enumerate every user-facing feature (every `bind:*` from the
+//      compiler's `binding_properties`, every export of every tested
+//      subpackage, the `$state.snapshot` rune, directives like
+//      `transition:`/`animate:`/`use:`/`{@html}`/custom elements).
+//      For each: generate a minimal fixture, compile, bundle, scan.
+//      If the bundle's floor exceeds the runtime floor, emit a row in
+//      the conditional-features table. Blind-spot detectors fill in for
+//      APIs the type-aware scanner can't see (string-literal options
+//      like `device-pixel-content-box`, instance `.zoom` reads, etc.).
+//   6. Translate floors into concrete browser versions via
+//      `baseline-browser-mapping` and rewrite both tables.
 //
-// Required dev dependencies (add to `packages/svelte/package.json`):
-//   - eslint
-//   - eslint-plugin-baseline-js
-//   - @typescript-eslint/parser
+// Required dev dependencies:
+//   - eslint, eslint-plugin-baseline-js, @typescript-eslint/parser
 //   - baseline-browser-mapping
 
 import fs from 'node:fs';
@@ -43,6 +43,8 @@ import {
 	IGNORE_FEATURES,
 	FALSE_POSITIVE_FEATURES
 } from './browser-support.eslint.config.js';
+import { binding_properties } from '../src/compiler/phases/bindings.js';
+import { compile as svelte_compile } from '../src/compiler/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkg_dir = path.resolve(__dirname, '..');
@@ -54,160 +56,140 @@ const tmp_dir = path.join(__dirname, '_baseline');
 const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8'));
 
 /**
- * Manual overrides for API floors the scanner cannot detect, even with
- * type information. These come from a manual audit of the runtime and
- * are checked by humans during code review.
+ * Subpackage exports we test individually. Each one produces a per-feature
+ * fixture: `import { X } from 'svelte/Y'` plus a usage that prevents
+ * tree-shaking. If the fixture bundles to code that exceeds the runtime
+ * floor, an entry is auto-generated in the conditional features table.
  *
- * Each entry declares the minimum Baseline year required by an API. If
- * the scanned floor is older than the entry's year, the entry bumps it.
- *
- * Add an entry here when:
- *   - The API is invoked via a string-literal option that the rule can
- *     only see as a generic constructor call (e.g. `new ResizeObserver({
- *     box: 'device-pixel-content-box' })`).
- *   - The API is referenced via dynamic property access or aliasing.
- *   - You discover the scanner is silently missing something.
- *
- * Do NOT add entries for features that are gated behind a specific
- * directive or import and tree-shaken when unused — those belong in the
- * hand-curated "Per-feature browser requirements" section of the docs
- * page, not here. This list is for things that ship with the always-on
- * runtime.
- *
- * @type {Array<{
- *   api: string,
- *   year: number,
- *   file: string,
- *   reason: string
- * }>}
+ * Limited to publicly-imported APIs that have their own subpath. `svelte`
+ * itself, `svelte/store`, `svelte/events`, `svelte/easing`, and
+ * `svelte/attachments` are either covered by the aggregate scan or are
+ * pure math — they would produce noise.
  */
-const KNOWN_API_FLOORS = [
-	// Nothing currently — Svelte's always-on runtime is detected
-	// accurately by the type-aware scan. Conditional features that
-	// exceed the floor are documented in the "Per-feature browser
-	// requirements" section of the docs page, not bumped here.
-];
+const TESTED_SUBPACKAGE_EXPORTS = {
+	'svelte/animate': ['flip'],
+	'svelte/transition': ['blur', 'fade', 'fly', 'slide', 'scale', 'draw', 'crossfade'],
+	'svelte/motion': ['Spring', 'Tween', 'spring', 'tweened', 'prefersReducedMotion'],
+	'svelte/reactivity': [
+		'SvelteDate',
+		'SvelteSet',
+		'SvelteMap',
+		'SvelteURL',
+		'SvelteURLSearchParams',
+		'MediaQuery',
+		'createSubscriber'
+	],
+	'svelte/reactivity/window': [
+		'scrollX',
+		'scrollY',
+		'innerWidth',
+		'innerHeight',
+		'outerWidth',
+		'outerHeight',
+		'screenLeft',
+		'screenTop',
+		'online',
+		'devicePixelRatio'
+	]
+};
 
 /**
- * Hand-curated metadata for features whose API floor exceeds the
- * auto-detected runtime floor. Renders the "Per-feature browser
- * requirements" table in the docs page AND is validated by the
- * pipeline against the source files it references.
+ * Runes whose runtime path is meaningfully different from the always-on
+ * reactivity machinery and worth testing in isolation. Most runes
+ * (`$state`, `$derived`, etc.) are already covered by the aggregate scan.
+ * `$state.snapshot()` is the standout — it pulls in `clone.js` which uses
+ * `structuredClone`.
  *
- * For each entry:
- *   - `files` MUST point at the source files that house the API. The
- *     pipeline scans them to validate the entry.
- *   - `detection`:
- *       - `{ feature_id, baseline_year }` — the scanner can see this
- *         API. The pipeline verifies the named `feature_id` appears
- *         in the file's lint output when targeting one year below
- *         `baseline_year`. This catches drift when the API is removed
- *         or replaced.
- *       - `'manual'` — the scanner cannot see this API (string-literal
- *         option, dynamic access, or instance method on `any`). The
- *         pipeline trusts the version data and only checks that the
- *         file exists.
- *
- * @type {Array<{
- *   feature: string,
- *   api: string,
- *   files: string[],
- *   versions: Record<string, string>,
- *   breaks: string,
- *   detection: 'manual' | { feature_id: string, baseline_year: number }
- * }>}
+ * @type {Array<{ name: string, source: string }>}
  */
-const CONDITIONAL_FEATURES = [
+const TESTED_RUNES = [
 	{
-		feature: '`bind:contentBoxSize`',
-		api: '`ResizeObserverEntry.contentBoxSize`',
-		files: ['src/internal/client/dom/elements/bindings/size.js'],
-		versions: { chrome: '84', edge: '84', firefox: '69', safari: '15.4' },
-		breaks: 'The binding returns `undefined`',
-		detection: 'manual'
-	},
-	{
-		feature: '`bind:borderBoxSize`',
-		api: '`ResizeObserverEntry.borderBoxSize`',
-		files: ['src/internal/client/dom/elements/bindings/size.js'],
-		versions: { chrome: '84', edge: '84', firefox: '69', safari: '15.4' },
-		breaks: 'The binding returns `undefined`',
-		detection: 'manual'
-	},
-	{
-		feature: '`bind:devicePixelContentBoxSize`',
-		api: '`ResizeObserver` `box` option + entry property',
-		files: ['src/internal/client/dom/elements/bindings/size.js'],
-		versions: { chrome: '84', edge: '84', firefox: '93', safari: '16.4' },
-		breaks: 'The `ResizeObserver` constructor throws',
-		detection: 'manual'
-	},
-	{
-		feature: '`$state.snapshot()` of `Date` etc.',
-		api: '`structuredClone()`',
-		files: ['src/internal/shared/clone.js'],
-		versions: { chrome: '98', edge: '98', firefox: '94', safari: '15.4' },
-		breaks: '`ReferenceError` when snapshotting `Date` or non-JSON-serializable values',
-		detection: { feature_id: 'structured-clone', baseline_year: 2022 }
-	},
-	{
-		feature: '`transition:` / `in:` / `out:`',
-		api: '`HTMLElement.inert`',
-		files: ['src/internal/client/dom/elements/transitions.js'],
-		versions: { chrome: '102', edge: '102', firefox: '112', safari: '15.5' },
-		breaks: 'Transitions still animate, but pointer events are not blocked during outro',
-		detection: { feature_id: 'inert', baseline_year: 2023 }
-	},
-	{
-		feature: '`flip` from `svelte/animate`',
-		api: '`getComputedStyle(...).zoom` reads',
-		files: ['src/animate/index.js'],
-		versions: { firefox: '126' },
-		breaks: 'Animation math is wrong if ancestors use CSS `zoom` (Firefox <126 only)',
-		detection: 'manual'
-	},
-	{
-		feature: '`getAbortSignal()`',
-		api: '`AbortController.abort(reason)`',
-		files: ['src/internal/client/runtime.js'],
-		versions: { chrome: '98', edge: '98', firefox: '97', safari: '16' },
-		breaks: '`signal.reason` is the default `AbortError` instead of the Svelte sentinel',
-		detection: 'manual'
+		name: '`$state.snapshot()`',
+		source: `<script>const value = $state({});const snap = $state.snapshot(value);console.log(snap);</script>`
 	}
 ];
 
 /**
- * Files that are loaded only when a specific user feature is used —
- * either gated by a directive, a binding, or a non-default subpath
- * import. The pipeline scans every file in this list and fails if any
- * has a flagged feature that is not already covered by a
- * `CONDITIONAL_FEATURES` entry. This is how new conditional APIs get
- * caught when contributors add them without updating the docs.
- *
- * If you add a new runtime file whose code is conditionally loaded,
- * add it here too. If you add a new file that's part of the always-on
- * runtime, it is already covered by the aggregate scan and does not
- * need to go here.
+ * Compiled-fixture sources for directives. Bindings are covered by the
+ * `binding_properties` enumeration; transitions, animate, actions, and
+ * `@attach` need explicit fixtures because they require accompanying
+ * imports or surrounding markup.
  */
-const CONDITIONAL_SOURCE_FILES = [
-	'src/animate/index.js',
-	'src/internal/client/dom/elements/transitions.js',
-	'src/internal/client/dom/elements/customizable-select.js',
-	'src/internal/client/dom/elements/custom-element.js',
-	'src/internal/shared/clone.js',
-	'src/internal/client/dom/elements/bindings/size.js',
-	'src/internal/client/dom/elements/bindings/media.js',
-	'src/internal/client/dom/elements/bindings/select.js',
-	'src/internal/client/dom/elements/bindings/window.js',
-	'src/internal/client/dom/elements/bindings/document.js',
-	'src/internal/client/dom/elements/bindings/navigator.js',
-	'src/internal/client/dom/elements/bindings/input.js',
-	'src/internal/client/dom/elements/bindings/this.js',
-	'src/internal/client/dom/elements/bindings/universal.js',
-	'src/reactivity/url.js',
-	'src/reactivity/url-search-params.js',
-	'src/reactivity/media-query.js',
-	'src/reactivity/window/index.js'
+const TESTED_DIRECTIVES = [
+	{
+		name: '`transition:` / `in:` / `out:`',
+		source: `<script>import { fade } from 'svelte/transition'; let show = $state(false);</script>{#if show}<div transition:fade></div>{/if}`
+	},
+	{
+		name: '`animate:`',
+		source: `<script>import { flip } from 'svelte/animate'; let items = $state([1,2,3]);</script>{#each items as item (item)}<div animate:flip>{item}</div>{/each}`
+	},
+	{
+		name: '`use:` actions',
+		source: `<script>function action(node){return {destroy(){}}}</script><div use:action></div>`
+	},
+	{
+		name: '`@attach`',
+		source: `<script>const attachment = (node) => () => {};</script><div {@attach attachment}></div>`
+	},
+	{
+		name: '`{@html ...}`',
+		source: `<script>let html = $state('<b>x</b>');</script>{@html html}`
+	},
+	{
+		name: 'Custom elements (`<svelte:options customElement>`)',
+		source: `<svelte:options customElement="my-el" />\n<div></div>`
+	}
+];
+
+/**
+ * Blind-spot detectors: APIs the type-aware scanner cannot see because
+ * they're accessed via string-literal options, dynamic property reads,
+ * or with type information stripped by bundling. Each detector runs a
+ * regex over the bundled fixture and, if it matches, bumps the
+ * fixture's floor to the declared baseline year.
+ *
+ * Each entry MUST be justified — the comment is the only documentation
+ * a reviewer has to evaluate why an entry belongs here.
+ *
+ * @type {Array<{
+ *   regex: RegExp,
+ *   name: string,
+ *   baseline_year: number,
+ *   versions: Record<string, string>
+ * }>}
+ */
+const BLIND_SPOT_DETECTORS = [
+	{
+		// `box: 'device-pixel-content-box'` in `bind_resize_observer` (size.js).
+		// The string literal is referenced unconditionally inside a module-level
+		// `/* @__PURE__ */ new ResizeObserverSingleton({...})`; once any of the
+		// size bindings is used, the bundler keeps all three observer
+		// instantiations because they share a function body, and the
+		// `device-pixel-content-box` constructor runs at module load. The
+		// scanner cannot see the string. Per MDN:
+		// Chrome 84 (Jul 2020), Firefox 93 (Oct 2021), Safari 16.4 (Mar 2023).
+		regex: /['"]device-pixel-content-box['"]/,
+		name: '`ResizeObserver` `box: device-pixel-content-box` option',
+		baseline_year: 2023,
+		versions: { chrome: '84', edge: '84', firefox: '93', safari: '16.4' }
+	},
+	{
+		// `getComputedStyle(current).zoom` walk in `svelte/animate`'s `flip`
+		// fallback path. Firefox didn't expose `.zoom` until v126 (May 2024);
+		// pre-126 the read yields `""` → `NaN`, breaking the animation math.
+		// Scanner cannot see the `.zoom` instance property access.
+		regex: /getComputedStyle\([^)]*\)\.zoom\b/,
+		name: 'CSS `zoom` property reads (`getComputedStyle(...).zoom`)',
+		baseline_year: 2025,
+		versions: { firefox: '126' }
+	}
+	// Note: `controller.abort(STALE_REACTION)` in `runtime.js` was previously
+	// detected here, but the call is in the always-on reactivity teardown
+	// and gets bundled with every fixture. Detection would fire for every
+	// feature, drowning the table in noise — and the API degrades
+	// gracefully (older browsers still abort; only `signal.reason` differs).
+	// Not worth flagging.
 ];
 
 /**
@@ -379,29 +361,6 @@ async function lint_runtime_files(files, tsconfig, target) {
 }
 
 /**
- * Lint a single Svelte source file with the existing svelte tsconfig.
- * Used by the conditional-features validator.
- *
- * @param {string} file Absolute path to a source file inside `packages/svelte`.
- * @param {number | 'newly'} target
- */
-async function lint_source_file(file, target) {
-	const eslint = new ESLint({
-		overrideConfigFile: true,
-		overrideConfig: eslint_config(
-			target,
-			{
-				tsconfig: path.join(pkg_dir, 'tsconfig.json'),
-				root: pkg_dir
-			},
-			{ purpose: 'per-file' }
-		)
-	});
-	const [result] = await eslint.lintFiles([file]);
-	return result;
-}
-
-/**
  * Lint a compiler-output fixture in syntax-only mode (no type info — the
  * fixtures are tiny snippets without a tsconfig). The patterns the
  * compiler emits are bounded, so the non-typed scan is sufficient.
@@ -509,29 +468,6 @@ async function find_minimum_target(runtime_files, tsconfig, compiler_fixtures) {
 
 /**
  * Apply the manual overrides in `KNOWN_API_FLOORS`, bumping `target` to
- * the highest declared year that exceeds it. Returns the resulting target
- * along with the list of overrides that were applied.
- *
- * @param {number | 'newly'} target
- */
-function apply_manual_overrides(target) {
-	const target_year = typeof target === 'number' ? target : Infinity;
-	const applied = [];
-	let bumped = target;
-
-	for (const entry of KNOWN_API_FLOORS) {
-		if (entry.year > target_year) {
-			applied.push(entry);
-			if (typeof bumped !== 'number' || entry.year > bumped) {
-				bumped = entry.year;
-			}
-		}
-	}
-
-	return { target: bumped, applied };
-}
-
-/**
  * Extract every unique web-feature ID flagged in a lint result.
  *
  * @param {import('eslint').ESLint.LintResult} result
@@ -544,6 +480,23 @@ function feature_ids_in(result) {
 		if (match) ids.add(match[1]);
 	}
 	return ids;
+}
+
+/**
+ * Extract friendly feature names ("structuredClone()", "Resize observer")
+ * from the lint output for use in user-facing tables.
+ *
+ * @param {import('eslint').ESLint.LintResult} result
+ */
+function feature_names_in(result) {
+	const names = new Set();
+	for (const m of result.messages) {
+		if (m.ruleId !== 'baseline-js/use-baseline') continue;
+		// Messages look like: Feature 'Resize observer' (resize-observer) became Baseline in 2020…
+		const match = /Feature '([^']+)'/.exec(m.message);
+		if (match) names.add(`\`${match[1]}\``);
+	}
+	return names;
 }
 
 /**
@@ -591,99 +544,297 @@ async function validate_ignore_features(runtime_files, tsconfig) {
 }
 
 /**
- * Validate every `CONDITIONAL_FEATURES` entry against the source file(s)
- * it references, and scan every file in `CONDITIONAL_SOURCE_FILES` for
- * APIs that exceed the runtime floor without a matching entry.
+ * Build the full list of user-facing features to test for conditional
+ * floor bumps. Each feature gets a self-contained fixture, compiled and
+ * bundled like real user code, then scanned. If the bundle's floor
+ * exceeds the runtime floor, a row is auto-emitted in the docs.
  *
- * Throws with an actionable message on any drift.
- *
- * @param {number | 'newly'} runtime_floor
+ * @returns {Array<{ name: string, source: string, kind: 'svelte' | 'js' }>}
  */
-async function validate_conditional_features(runtime_floor) {
-	const floor_year = typeof runtime_floor === 'number' ? runtime_floor : Infinity;
+function enumerate_features() {
+	/** @type {Array<{ name: string, source: string, kind: 'svelte' | 'js' }>} */
+	const features = [];
 
-	const errors = [];
-
-	// 1. Per-entry validation.
-	for (const entry of CONDITIONAL_FEATURES) {
-		for (const rel of entry.files) {
-			const file = path.join(pkg_dir, rel);
-			if (!fs.existsSync(file)) {
-				errors.push(
-					`CONDITIONAL_FEATURES entry ${JSON.stringify(entry.feature)} ` +
-						`references ${rel}, which does not exist.`
-				);
-				continue;
-			}
-
-			if (entry.detection === 'manual') continue;
-
-			// Scan one year below baseline_year — the feature must be flagged.
-			const result = await lint_source_file(file, entry.detection.baseline_year - 1);
-			const ids = feature_ids_in(result);
-			if (!ids.has(entry.detection.feature_id)) {
-				errors.push(
-					`CONDITIONAL_FEATURES entry ${JSON.stringify(entry.feature)} ` +
-						`claims ${rel} uses feature ${JSON.stringify(entry.detection.feature_id)}, ` +
-						`but the scanner did not flag it at year ${entry.detection.baseline_year - 1}. ` +
-						`Either the API was removed (delete the entry), the feature ID is wrong, ` +
-						`or the baseline_year is too low.`
-				);
-			}
+	// Every `bind:*` accepted by the compiler. Element selection respects
+	// the `valid_elements` constraint declared in `binding_properties`.
+	for (const [name, props] of Object.entries(binding_properties)) {
+		const fixture = binding_fixture(name, props);
+		if (fixture) {
+			features.push({
+				name: `\`bind:${name}\``,
+				kind: 'svelte',
+				source: fixture
+			});
 		}
 	}
 
-	// 2. Drift detection across CONDITIONAL_SOURCE_FILES.
-	//
-	// For each conditional source file, scan at `runtime_floor` and look for
-	// flagged features that are NOT already documented in CONDITIONAL_FEATURES.
-	// Any such feature means the file uses a new API past the runtime floor
-	// that hasn't been added to the per-feature table.
-	const documented_ids = new Set();
-	for (const entry of CONDITIONAL_FEATURES) {
-		if (entry.detection !== 'manual') {
-			documented_ids.add(entry.detection.feature_id);
+	for (const [module, exports] of Object.entries(TESTED_SUBPACKAGE_EXPORTS)) {
+		for (const exp of exports) {
+			features.push({
+				name: `\`{ ${exp} }\` from \`${module}\``,
+				kind: 'js',
+				source: `import { ${exp} } from '${module}'; export const _ = ${exp};`
+			});
 		}
 	}
 
-	for (const rel of CONDITIONAL_SOURCE_FILES) {
-		const file = path.join(pkg_dir, rel);
-		if (!fs.existsSync(file)) {
-			errors.push(`CONDITIONAL_SOURCE_FILES references ${rel}, which does not exist.`);
-			continue;
-		}
-
-		const result = await lint_source_file(file, runtime_floor);
-		const ids = feature_ids_in(result);
-		const undocumented = [...ids].filter((id) => !documented_ids.has(id));
-
-		if (undocumented.length > 0) {
-			errors.push(
-				`${rel} flags features at the runtime floor (year ${floor_year}) ` +
-					`that are not documented in CONDITIONAL_FEATURES: ` +
-					`${undocumented.join(', ')}.\n` +
-					`  Either add a CONDITIONAL_FEATURES entry for the relevant ` +
-					`user-facing feature, or — if the API is safe (feature-detected, ` +
-					`graceful fallback) — add it to IGNORE_FEATURES in ` +
-					`browser-support.eslint.config.js with a justification.`
-			);
-		}
+	for (const rune of TESTED_RUNES) {
+		features.push({ name: rune.name, kind: 'svelte', source: rune.source });
 	}
 
-	if (errors.length > 0) {
-		throw new Error(
-			'Conditional features validation failed:\n\n' + errors.map((e) => `  - ${e}`).join('\n\n')
-		);
+	for (const directive of TESTED_DIRECTIVES) {
+		features.push({ name: directive.name, kind: 'svelte', source: directive.source });
 	}
+
+	return features;
 }
 
 /**
- * Render the per-feature browser-requirements table from CONDITIONAL_FEATURES.
+ * Produce the `.svelte` source for a single binding fixture. Returns
+ * `null` for bindings the compiler treats as elements rather than
+ * properties (none currently, but defensive).
  *
- * @param {number | 'newly'} runtime_floor Used to label cells that fall
- *   at or below the floor (no version bump needed for that browser).
+ * @param {string} name
+ * @param {import('../src/compiler/phases/bindings.js').BindingProperty} props
  */
-function render_conditional_table(runtime_floor) {
+function binding_fixture(name, props) {
+	// Map declared `valid_elements` to a concrete element + minimal attrs
+	// so the compiler accepts the binding.
+	const tag = (props.valid_elements ?? ['div'])[0];
+
+	// Pick a sensible initial value and attribute set per binding.
+	const reactive = `let v = $state();`;
+
+	if (tag === 'svelte:window') {
+		return `<script>${reactive}</script><svelte:window bind:${name}={v} />`;
+	}
+	if (tag === 'svelte:document') {
+		return `<script>${reactive}</script><svelte:document bind:${name}={v} />`;
+	}
+	if (tag === 'input') {
+		// `bind:checked` requires type="checkbox"|"radio"; `bind:group` too.
+		const type =
+			name === 'checked' || name === 'indeterminate'
+				? ' type="checkbox"'
+				: name === 'group'
+					? ' type="radio" value="a"'
+					: name === 'files'
+						? ' type="file"'
+						: '';
+		return `<script>${reactive}</script><input${type} bind:${name}={v} />`;
+	}
+	if (tag === 'details') {
+		return `<script>${reactive}</script><details bind:${name}={v}><summary>x</summary></details>`;
+	}
+
+	return `<script>${reactive}</script><${tag} bind:${name}={v}></${tag}>`;
+}
+
+/**
+ * Compile a `.svelte` fixture to JS (no-op for `.js` fixtures), then
+ * bundle the result with rollup using the same export conditions as
+ * `bundle_runtime`. Returns the bundled code as a single string.
+ *
+ * @param {{ name: string, source: string, kind: 'svelte' | 'js' }} feature
+ */
+async function bundle_fixture(feature) {
+	let entry_code = feature.source;
+	if (feature.kind === 'svelte') {
+		const compiled = svelte_compile(feature.source, {
+			generate: 'client',
+			filename: 'Fixture.svelte',
+			dev: false
+		});
+		entry_code = compiled.js.code;
+	}
+
+	const bundle = await rollup({
+		input: '__fixture__',
+		plugins: [
+			virtual({ __fixture__: entry_code }),
+			{
+				name: 'resolve-svelte',
+				resolveId(id) {
+					if (id.startsWith('svelte')) {
+						const entry = pkg.exports[id.replace('svelte', '.')];
+						if (!entry) return;
+						return path.resolve(pkg_dir, entry.browser ?? entry.default);
+					}
+				}
+			},
+			nodeResolve({ exportConditions: ['production', 'import', 'browser', 'default'] })
+		],
+		external: ['esm-env'],
+		// Fixtures are tiny; suppress rollup's warnings about circular deps
+		// in the Svelte runtime which we already accept in `bundle_runtime`.
+		onwarn() {}
+	});
+
+	const { output } = await bundle.generate({ format: 'esm' });
+	await bundle.close();
+
+	return output
+		.filter((chunk) => chunk.type === 'chunk')
+		.map((chunk) => /** @type {import('rollup').OutputChunk} */ (chunk).code)
+		.join('\n');
+}
+
+/**
+ * Apply blind-spot detectors to a bundled fixture. Returns the highest
+ * baseline year demanded by any matching detector, along with version
+ * data and the list of detector names that matched.
+ *
+ * @param {string} bundle_code
+ */
+function apply_blind_spots(bundle_code) {
+	let year = 0;
+	/** @type {Record<string, string>} */
+	let versions = {};
+	const matched = [];
+
+	for (const detector of BLIND_SPOT_DETECTORS) {
+		if (!detector.regex.test(bundle_code)) continue;
+		matched.push(detector.name);
+		if (detector.baseline_year > year) {
+			year = detector.baseline_year;
+			versions = detector.versions;
+		}
+	}
+
+	return { year, versions, matched };
+}
+
+/**
+ * Compute the minimum Baseline year a fixture's bundle requires. Reuses
+ * the same year-search as the aggregate scan but on a single per-fixture
+ * file, with the per-file ignore list (no behavioural suppressions).
+ *
+ * @param {string} fixture_file Absolute path to the `.ts` bundle.
+ */
+async function scan_fixture_floor(fixture_file) {
+	let last_failure_names = new Set();
+	for (const year of targets) {
+		const eslint = new ESLint({
+			overrideConfigFile: true,
+			overrideConfig: eslint_config(
+				year,
+				{ tsconfig: path.join(tmp_dir, 'tsconfig.json'), root: tmp_dir },
+				{ purpose: 'per-fixture' }
+			)
+		});
+		const [result] = await eslint.lintFiles([fixture_file]);
+		if (result.errorCount === 0) {
+			// Drivers are the features that just stopped failing — names
+			// captured from the previous (one-year-stricter) scan.
+			return { year, driving: [...last_failure_names] };
+		}
+		last_failure_names = feature_names_in(result);
+	}
+	return { year: /** @type {const} */ ('newly'), driving: [...last_failure_names] };
+}
+
+/**
+ * Iterate every feature, bundle its fixture, scan it. Return the rows
+ * that need to appear in the conditional-features table.
+ *
+ * @param {number | 'newly'} runtime_floor
+ * @returns {Promise<Array<{
+ *   name: string,
+ *   api: string,
+ *   versions: Record<string, string>,
+ *   baseline_year: number | 'newly'
+ * }>>}
+ */
+async function find_all_conditional_features(runtime_floor) {
+	const runtime_year = typeof runtime_floor === 'number' ? runtime_floor : Infinity;
+	const features = enumerate_features();
+	/** @type {Array<{
+	 *   name: string,
+	 *   api: string,
+	 *   versions: Record<string, string>,
+	 *   baseline_year: number | 'newly'
+	 * }>} */
+	const rows = [];
+
+	for (let i = 0; i < features.length; i++) {
+		const feature = features[i];
+		// eslint-disable-next-line no-console
+		process.stdout.write(`\r  ${i + 1}/${features.length}  ${feature.name}`.padEnd(80));
+
+		let bundle_code;
+		try {
+			bundle_code = await bundle_fixture(feature);
+		} catch {
+			continue; // some fixtures (rare element combos) may fail to compile
+		}
+
+		// Write the bundle so the type-aware scanner can resolve its types.
+		const fixture_file = path.join(tmp_dir, `fixture_${i}.ts`);
+		fs.writeFileSync(fixture_file, bundle_code);
+
+		const scanned = await scan_fixture_floor(fixture_file);
+		const blind = apply_blind_spots(bundle_code);
+
+		const scanner_year = scanned.year === 'newly' ? Infinity : scanned.year;
+		const final_year = Math.max(scanner_year, blind.year);
+
+		// Skip features at or below the runtime floor — they don't need a row.
+		if (final_year <= runtime_year || final_year === 0) continue;
+
+		// Prefer blind-spot version data when it's the strictest constraint.
+		// When the scanner detects a higher floor than any blind spot, look up
+		// the browser versions for that year — but `baseline-browser-mapping`
+		// rejects future targets (years that have not ended yet), so we skip
+		// rows that depend on years we can't resolve.
+		let versions;
+		let api;
+		if (blind.matched.length > 0 && blind.year >= scanner_year) {
+			versions = blind.versions;
+			api = blind.matched.join(', ');
+		} else if (typeof final_year === 'number' && Number.isFinite(final_year)) {
+			try {
+				versions = browser_versions_for(final_year);
+			} catch {
+				continue;
+			}
+			api = scanned.driving.join(', ') || '(see bundle output)';
+		} else {
+			// Scanner says 'newly' AND no blind spot matched — we know the
+			// fixture uses something past every recorded Baseline year, but
+			// can't pin down browser versions. Skip rather than mislead.
+			continue;
+		}
+
+		rows.push({
+			name: feature.name,
+			api,
+			versions,
+			baseline_year: Number.isFinite(final_year) ? /** @type {number} */ (final_year) : 'newly'
+		});
+	}
+	// eslint-disable-next-line no-console
+	process.stdout.write('\n');
+
+	return rows;
+}
+
+/**
+ * Render the per-feature browser-requirements table from the auto-detected
+ * rows. Sorted by Safari floor descending, then alphabetically.
+ *
+ * @param {Array<{
+ *   name: string,
+ *   api: string,
+ *   versions: Record<string, string>,
+ *   baseline_year: number | 'newly'
+ * }>} rows
+ * @param {number | 'newly'} runtime_floor
+ */
+function render_conditional_table(rows, runtime_floor) {
+	if (rows.length === 0) {
+		return '_No features currently require browser versions newer than the runtime floor._';
+	}
+
 	const browsers = /** @type {const} */ ([
 		['chrome', 'Chrome / Edge'],
 		['firefox', 'Firefox'],
@@ -692,26 +843,28 @@ function render_conditional_table(runtime_floor) {
 
 	const runtime_versions = browser_versions_for(runtime_floor);
 
-	const header =
-		'| Feature | Affected API | ' +
-		browsers.map(([, label]) => `Min ${label}`).join(' | ') +
-		' | What breaks on older browsers |';
-	const sep = '| --- | --- |' + browsers.map(() => ' ---: |').join('') + ' --- |';
+	const sorted = [...rows].sort((a, b) => {
+		const sa = Number(a.versions.safari ?? '0');
+		const sb = Number(b.versions.safari ?? '0');
+		if (sb !== sa) return sb - sa;
+		return a.name.localeCompare(b.name);
+	});
 
-	const rows = CONDITIONAL_FEATURES.map((entry) => {
+	const header =
+		'| Feature | Affected API | ' + browsers.map(([, label]) => `Min ${label}`).join(' | ') + ' |';
+	const sep = '| --- | --- |' + browsers.map(() => ' ---: |').join('');
+
+	const body = sorted.map((entry) => {
 		const cells = browsers.map(([key]) => {
 			const v = entry.versions[key];
 			if (!v) return '(floor)';
 			const floor_v = runtime_versions[key];
-			// If the entry's version is not strictly newer than the runtime
-			// floor for this browser, show "(floor)" instead of repeating
-			// the same number.
 			return floor_v && Number(v) <= Number(floor_v) ? '(floor)' : v;
 		});
-		return `| ${entry.feature} | ${entry.api} | ${cells.join(' | ')} | ${entry.breaks} |`;
+		return `| ${entry.name} | ${entry.api} | ${cells.join(' | ')} |`;
 	});
 
-	return [header, sep, ...rows].join('\n');
+	return [header, sep, ...body].join('\n');
 }
 
 /**
@@ -891,25 +1044,18 @@ async function main() {
 	console.log(`  (${compiler_fixtures.length} fixtures found)`);
 
 	console.log('Searching for the minimum Baseline target (type-aware)…');
-	const detected = await find_minimum_target(runtime_files, tsconfig, compiler_fixtures);
-	console.log(`  → ${detected}`);
-
-	const { target, applied } = apply_manual_overrides(detected);
-	if (applied.length > 0) {
-		console.log('Applying manual overrides:');
-		for (const entry of applied) {
-			console.log(`  - ${entry.api} → Baseline ${entry.year} (${entry.reason})`);
-		}
-		console.log(`  Final target: ${target}`);
-	}
-
-	console.log('Validating conditional features…');
-	await validate_conditional_features(target);
-	console.log(`  ${CONDITIONAL_FEATURES.length} entries verified against source`);
+	const target = await find_minimum_target(runtime_files, tsconfig, compiler_fixtures);
+	console.log(`  → ${target}`);
 
 	console.log('Checking IGNORE_FEATURES for stale entries…');
 	await validate_ignore_features(runtime_files, tsconfig);
 	console.log('  no stale entries');
+
+	console.log('Scanning per-feature fixtures for conditional requirements…');
+	const conditional_rows = await find_all_conditional_features(target);
+	console.log(
+		`  ${conditional_rows.length} feature(s) require browsers newer than the runtime floor`
+	);
 
 	console.log('Resolving browser versions…');
 	const versions = browser_versions_for(target);
@@ -917,7 +1063,7 @@ async function main() {
 	console.log('Rewriting docs page…');
 	rewrite_docs_page(
 		render_table(versions, target),
-		render_conditional_table(target),
+		render_conditional_table(conditional_rows, target),
 		render_runtime_entries()
 	);
 
