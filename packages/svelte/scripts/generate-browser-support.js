@@ -56,42 +56,71 @@ const tmp_dir = path.join(__dirname, '_baseline');
 const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8'));
 
 /**
- * Subpackage exports we test individually. Each one produces a per-feature
- * fixture: `import { X } from 'svelte/Y'` plus a usage that prevents
- * tree-shaking. If the fixture bundles to code that exceeds the runtime
- * floor, an entry is auto-generated in the conditional features table.
+ * Subpath exports in `package.json` to skip when enumerating fixtures.
  *
- * Limited to publicly-imported APIs that have their own subpath. `svelte`
- * itself, `svelte/store`, `svelte/events`, `svelte/easing`, and
- * `svelte/attachments` are either covered by the aggregate scan or are
- * pure math — they would produce noise.
+ * - The main `svelte` entry (`.`) is covered by the aggregate runtime
+ *   scan, and most of its named exports (`tick`, `mount`, lifecycle
+ *   helpers, etc.) exercise the always-on reactivity machinery.
+ *   Per-export fixtures would be redundant.
+ * - `./compiler`, `./server`, `./internal/server` are Node-only.
+ * - `./internal/*` and `./legacy` are private surface or thin shims
+ *   already covered by the aggregate.
+ * - `./action`, `./elements` are types-only (no `.js` to scan).
+ *
+ * Anything else in `pkg.exports` gets its full export list enumerated
+ * at runtime via `import * as ns from <subpath>`. New subpackages get
+ * picked up automatically.
  */
-const TESTED_SUBPACKAGE_EXPORTS = {
-	'svelte/animate': ['flip'],
-	'svelte/transition': ['blur', 'fade', 'fly', 'slide', 'scale', 'draw', 'crossfade'],
-	'svelte/motion': ['Spring', 'Tween', 'spring', 'tweened', 'prefersReducedMotion'],
-	'svelte/reactivity': [
-		'SvelteDate',
-		'SvelteSet',
-		'SvelteMap',
-		'SvelteURL',
-		'SvelteURLSearchParams',
-		'MediaQuery',
-		'createSubscriber'
-	],
-	'svelte/reactivity/window': [
-		'scrollX',
-		'scrollY',
-		'innerWidth',
-		'innerHeight',
-		'outerWidth',
-		'outerHeight',
-		'screenLeft',
-		'screenTop',
-		'online',
-		'devicePixelRatio'
-	]
-};
+const SKIP_SUBPACKAGES = new Set([
+	'.',
+	'./package.json',
+	'./action',
+	'./compiler',
+	'./elements',
+	'./internal',
+	'./internal/client',
+	'./internal/disclose-version',
+	'./internal/flags/async',
+	'./internal/flags/legacy',
+	'./internal/flags/tracing',
+	'./internal/server',
+	'./legacy',
+	'./server'
+]);
+
+/**
+ * Read every browser-targeted subpath in `pkg.exports`, import each
+ * dynamically, and return the union of `Object.keys()` of each module's
+ * namespace. Replaces what used to be a hand-curated list.
+ */
+async function enumerate_subpackage_exports() {
+	/** @type {Record<string, string[]>} */
+	const result = {};
+	for (const [subpath, conditions] of Object.entries(pkg.exports)) {
+		if (SKIP_SUBPACKAGES.has(subpath)) continue;
+		if (typeof conditions !== 'object' || conditions === null) continue;
+
+		const entry =
+			/** @type {Record<string, string>} */
+			(conditions).browser ?? /** @type {Record<string, string>} */ (conditions).default;
+		if (!entry || !entry.endsWith('.js')) continue;
+
+		const module_id = `svelte${subpath.slice(1)}`;
+		try {
+			const ns = await import(module_id);
+			const names = Object.keys(ns)
+				.filter((k) => k !== 'default')
+				.sort();
+			if (names.length > 0) result[module_id] = names;
+		} catch (err) {
+			// eslint-disable-next-line no-console
+			console.warn(
+				`  (could not enumerate ${module_id}: ${/** @type {Error} */ (err).message.split('\n')[0]})`
+			);
+		}
+	}
+	return result;
+}
 
 /**
  * Runes whose runtime path is meaningfully different from the always-on
@@ -549,9 +578,13 @@ async function validate_ignore_features(runtime_files, tsconfig) {
  * bundled like real user code, then scanned. If the bundle's floor
  * exceeds the runtime floor, a row is auto-emitted in the docs.
  *
+ * @param {Record<string, string[]>} subpackage_exports
+ *   Map of subpath → list of exported symbols, produced by
+ *   `enumerate_subpackage_exports`. Passed in rather than computed here
+ *   so the dynamic-import discovery can happen once in `main`.
  * @returns {Array<{ name: string, source: string, kind: 'svelte' | 'js' }>}
  */
-function enumerate_features() {
+function enumerate_features(subpackage_exports) {
 	/** @type {Array<{ name: string, source: string, kind: 'svelte' | 'js' }>} */
 	const features = [];
 
@@ -568,7 +601,7 @@ function enumerate_features() {
 		}
 	}
 
-	for (const [module, exports] of Object.entries(TESTED_SUBPACKAGE_EXPORTS)) {
+	for (const [module, exports] of Object.entries(subpackage_exports)) {
 		for (const exp of exports) {
 			features.push({
 				name: `\`{ ${exp} }\` from \`${module}\``,
@@ -738,6 +771,7 @@ async function scan_fixture_floor(fixture_file) {
  * that need to appear in the conditional-features table.
  *
  * @param {number | 'newly'} runtime_floor
+ * @param {Record<string, string[]>} subpackage_exports
  * @returns {Promise<Array<{
  *   name: string,
  *   api: string,
@@ -745,9 +779,9 @@ async function scan_fixture_floor(fixture_file) {
  *   baseline_year: number | 'newly'
  * }>>}
  */
-async function find_all_conditional_features(runtime_floor) {
+async function find_all_conditional_features(runtime_floor, subpackage_exports) {
 	const runtime_year = typeof runtime_floor === 'number' ? runtime_floor : Infinity;
-	const features = enumerate_features();
+	const features = enumerate_features(subpackage_exports);
 	/** @type {Array<{
 	 *   name: string,
 	 *   api: string,
@@ -1051,8 +1085,15 @@ async function main() {
 	await validate_ignore_features(runtime_files, tsconfig);
 	console.log('  no stale entries');
 
+	console.log('Enumerating subpackage exports…');
+	const subpackage_exports = await enumerate_subpackage_exports();
+	const total_exports = Object.values(subpackage_exports).reduce((n, list) => n + list.length, 0);
+	console.log(
+		`  ${total_exports} export(s) across ${Object.keys(subpackage_exports).length} subpackage(s)`
+	);
+
 	console.log('Scanning per-feature fixtures for conditional requirements…');
-	const conditional_rows = await find_all_conditional_features(target);
+	const conditional_rows = await find_all_conditional_features(target, subpackage_exports);
 	console.log(
 		`  ${conditional_rows.length} feature(s) require browsers newer than the runtime floor`
 	);
