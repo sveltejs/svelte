@@ -36,15 +36,10 @@ import { config as eslint_config } from './browser-support.eslint.config.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkg_dir = path.resolve(__dirname, '..');
 const repo_root = path.resolve(pkg_dir, '..', '..');
-const docs_page = path.join(
-	repo_root,
-	'documentation/docs/07-misc/05-browser-support.md'
-);
+const docs_page = path.join(repo_root, 'documentation/docs/07-misc/05-browser-support.md');
 const snapshot_dir = path.join(pkg_dir, 'tests/snapshot/samples');
 
-const pkg = JSON.parse(
-	fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8')
-);
+const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8'));
 
 /**
  * Subpath exports whose browser code ships to end users. Derived by walking
@@ -180,10 +175,6 @@ async function lint_at_target(label, source, target) {
 }
 
 /**
- * @param {string} runtime_source
- * @param {Array<{ filename: string, code: string }>} compiler_fixtures
- */
-/**
  * The lint target immediately preceding `target` in the search order, used
  * to surface the features that drove the floor. Returns `undefined` for
  * the first target.
@@ -196,6 +187,10 @@ function prev_target(target) {
 	return i > 0 ? targets[i - 1] : undefined;
 }
 
+/**
+ * @param {string} runtime_source
+ * @param {Array<{ filename: string, code: string }>} compiler_fixtures
+ */
 async function find_minimum_target(runtime_source, compiler_fixtures) {
 	const inputs = [
 		{ label: 'runtime', source: runtime_source },
@@ -223,6 +218,7 @@ async function find_minimum_target(runtime_source, compiler_fixtures) {
 		if (failures.size === 0) {
 			const previous = failures_by_target.get(String(prev_target(target)));
 			if (previous && previous.size > 0) {
+				// eslint-disable-next-line no-console
 				console.log(`  → ${target} (features that drove the floor:)`);
 				const unique = new Set();
 				for (const f of previous) {
@@ -230,11 +226,13 @@ async function find_minimum_target(runtime_source, compiler_fixtures) {
 					const m = /Feature '([^']+)' \(([^)]+)\)/.exec(f);
 					if (m) unique.add(`${m[1]} (${m[2]})`);
 				}
+				// eslint-disable-next-line no-console
 				for (const f of [...unique].sort()) console.log(`    - ${f}`);
 			}
 			return target;
 		}
 		failures_by_target.set(String(target), failures);
+		// eslint-disable-next-line no-console
 		console.log(`  ${target}: ${failures.size} feature(s) exceed budget`);
 	}
 
@@ -258,8 +256,7 @@ function browser_versions_for(target) {
 	// search fell through to `'newly'`, we use the current year — that gives
 	// the most recent Newly-available cutoff, which is the strongest
 	// statement `baseline-browser-mapping` is able to make.
-	const target_year =
-		typeof target === 'number' ? target : new Date().getFullYear();
+	const target_year = typeof target === 'number' ? target : new Date().getFullYear();
 
 	const versions = getCompatibleVersions({
 		targetYear: target_year,
@@ -326,14 +323,10 @@ function render_table(versions, target) {
 		['Android WebView', versions.webview_android ?? '?']
 	];
 
-	const target_label =
-		target === 'newly' ? 'Baseline Newly available' : `Baseline ${target}`;
+	const target_label = target === 'newly' ? 'Baseline Newly available' : `Baseline ${target}`;
 
 	const width_a = Math.max(...rows.map((r) => r[0].length), 'Browser'.length);
-	const width_b = Math.max(
-		...rows.map((r) => String(r[1]).length),
-		'Minimum version'.length
-	);
+	const width_b = Math.max(...rows.map((r) => String(r[1]).length), 'Minimum version'.length);
 
 	const pad = (/** @type {string} */ s, /** @type {number} */ n) =>
 		s + ' '.repeat(Math.max(0, n - s.length));
@@ -367,11 +360,10 @@ function rewrite_docs_page(table_markdown) {
 	fs.writeFileSync(docs_page, source.replace(pattern, replacement));
 }
 
+/* eslint-disable no-console */
 async function main() {
 	console.log('Bundling runtime entries…');
-	const runtime_chunks = await Promise.all(
-		runtime_entry_points.map(bundle_runtime)
-	);
+	const runtime_chunks = await Promise.all(runtime_entry_points.map(bundle_runtime));
 	const runtime_source = runtime_chunks.join('\n');
 
 	console.log('Loading compiler-output fixtures…');
