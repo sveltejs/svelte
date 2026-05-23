@@ -38,7 +38,11 @@ import virtual from '@rollup/plugin-virtual';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { ESLint } from 'eslint';
 import { getCompatibleVersions } from 'baseline-browser-mapping';
-import { config as eslint_config } from './browser-support.eslint.config.js';
+import {
+	config as eslint_config,
+	IGNORE_FEATURES,
+	FALSE_POSITIVE_FEATURES
+} from './browser-support.eslint.config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkg_dir = path.resolve(__dirname, '..');
@@ -543,6 +547,50 @@ function feature_ids_in(result) {
 }
 
 /**
+ * Verify every entry in `IGNORE_FEATURES` is actually used by the runtime.
+ * Without this, a suppression can outlive the API it suppresses — the
+ * comment stays in the config file pointing at code that no longer exists.
+ *
+ * Runs the type-aware aggregate scan with only the genuine false-positive
+ * suppression in place. Any IGNORE_FEATURES entry whose feature ID does
+ * NOT appear in the resulting flagged set is reported as removable.
+ *
+ * @param {string[]} runtime_files
+ * @param {string} tsconfig
+ */
+async function validate_ignore_features(runtime_files, tsconfig) {
+	const false_positives = new Set(FALSE_POSITIVE_FEATURES);
+	const to_check = IGNORE_FEATURES.filter((id) => !false_positives.has(id));
+	if (to_check.length === 0) return;
+
+	// Scan at year 2015 so the rule reports every Baseline-classified
+	// feature regardless of year — the goal is "is this feature ever
+	// flagged?", not "is it newer than X".
+	const eslint = new ESLint({
+		overrideConfigFile: true,
+		overrideConfig: eslint_config(2015, { tsconfig, root: tmp_dir }, { purpose: 'per-file' })
+	});
+	const results = await eslint.lintFiles(runtime_files);
+
+	const flagged = new Set();
+	for (const result of results) {
+		for (const id of feature_ids_in(result)) flagged.add(id);
+	}
+
+	const stale = to_check.filter((id) => !flagged.has(id));
+	if (stale.length > 0) {
+		throw new Error(
+			`IGNORE_FEATURES contains entries that the scanner does not flag — ` +
+				`they can be removed:\n` +
+				stale.map((id) => `  - ${id}`).join('\n') +
+				`\n\nEdit \`packages/svelte/scripts/browser-support.eslint.config.js\` ` +
+				`and delete the stale entries. If the API was removed from the runtime ` +
+				`as part of this change, that is exactly the intended signal.`
+		);
+	}
+}
+
+/**
  * Validate every `CONDITIONAL_FEATURES` entry against the source file(s)
  * it references, and scan every file in `CONDITIONAL_SOURCE_FILES` for
  * APIs that exceed the runtime floor without a matching entry.
@@ -779,14 +827,49 @@ function replace_block(source, name, replacement) {
 }
 
 /**
+ * Render the runtime-entries list as inline markdown: e.g.
+ * `` `svelte`, `svelte/animate`, `svelte/easing` and `svelte/transition` ``.
+ * Used in the "What is covered" prose so the docs cannot drift from
+ * `runtime_entry_points` in this script.
+ */
+function render_runtime_entries() {
+	const quoted = runtime_entry_points.map((e) => `\`${e}\``);
+	if (quoted.length <= 1) return quoted.join('');
+	const last = quoted.pop();
+	return `${quoted.join(', ')} and ${last}`;
+}
+
+/**
  * @param {string} headline_table
  * @param {string} conditional_table
+ * @param {string} runtime_entries
  */
-function rewrite_docs_page(headline_table, conditional_table) {
+function rewrite_docs_page(headline_table, conditional_table, runtime_entries) {
 	let source = fs.readFileSync(docs_page, 'utf-8');
 	source = replace_block(source, 'generated-table', headline_table);
 	source = replace_block(source, 'conditional-features', conditional_table);
+	source = replace_inline_block(source, 'runtime-entries', runtime_entries);
 	fs.writeFileSync(docs_page, source);
+}
+
+/**
+ * Like `replace_block` but used for inline markers on a single line —
+ * no surrounding blank lines added.
+ *
+ * @param {string} source
+ * @param {string} name
+ * @param {string} replacement
+ */
+function replace_inline_block(source, name, replacement) {
+	const start = `<!-- ${name}:start -->`;
+	const end = `<!-- ${name}:end -->`;
+	const pattern = new RegExp(`${start}[\\s\\S]*?${end}`);
+
+	if (!pattern.test(source)) {
+		throw new Error(`Could not find \`${start}\` / \`${end}\` markers in ${docs_page}.`);
+	}
+
+	return source.replace(pattern, `${start}${replacement}${end}`);
 }
 
 /* eslint-disable no-console */
@@ -824,11 +907,19 @@ async function main() {
 	await validate_conditional_features(target);
 	console.log(`  ${CONDITIONAL_FEATURES.length} entries verified against source`);
 
+	console.log('Checking IGNORE_FEATURES for stale entries…');
+	await validate_ignore_features(runtime_files, tsconfig);
+	console.log('  no stale entries');
+
 	console.log('Resolving browser versions…');
 	const versions = browser_versions_for(target);
 
 	console.log('Rewriting docs page…');
-	rewrite_docs_page(render_table(versions, target), render_conditional_table(target));
+	rewrite_docs_page(
+		render_table(versions, target),
+		render_conditional_table(target),
+		render_runtime_entries()
+	);
 
 	console.log('Cleaning up scratch directory…');
 	fs.rmSync(tmp_dir, { recursive: true, force: true });
