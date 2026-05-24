@@ -1005,6 +1005,24 @@ export function debug_tag_invalid_arguments(node) {
 }
 
 /**
+ * Declaration tags must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary>` or `<Component>`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function declaration_tag_invalid_placement(node) {
+	e(node, 'declaration_tag_invalid_placement', `Declaration tags must be the immediate child of \`{#snippet}\`, \`{#if}\`, \`{:else if}\`, \`{:else}\`, \`{#each}\`, \`{:then}\`, \`{:catch}\`, \`<svelte:fragment>\`, \`<svelte:boundary>\` or \`<Component>\`\nhttps://svelte.dev/e/declaration_tag_invalid_placement`);
+}
+
+/**
+ * Declaration tags must be `let`, `const`, `var` or `function` declarations
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function declaration_tag_invalid_type(node) {
+	e(node, 'declaration_tag_invalid_type', `Declaration tags must be \`let\`, \`const\`, \`var\` or \`function\` declarations\nhttps://svelte.dev/e/declaration_tag_invalid_type`);
+}
+
+/**
  * Directive value must be a JavaScript expression enclosed in curly braces
  * @param {null | number | NodeLike} node
  * @returns {never}

@@ -852,7 +852,7 @@ declare module 'svelte/attachments' {
 
 declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
-	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation } from 'estree';
+	import type { ArrayExpression, ArrowFunctionExpression, FunctionDeclaration, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation } from 'estree';
 	import type { Location } from 'locate-character';
 	import type { default as ts } from 'esrap/languages/ts';
 	/**
@@ -1303,6 +1303,12 @@ declare module 'svelte/compiler' {
 			};
 		}
 
+		/** A `{let ...}`, `{const ...}`, `{var ...}` or `{function ...}` tag */
+		export interface DeclarationTag extends BaseNode {
+			type: 'DeclarationTag';
+			declaration: VariableDeclaration | FunctionDeclaration;
+		}
+
 		/** A `{@debug ...}` tag */
 		export interface DebugTag extends BaseNode {
 			type: 'DebugTag';
@@ -1613,6 +1619,7 @@ declare module 'svelte/compiler' {
 		export type Tag =
 			| AST.AttachTag
 			| AST.ConstTag
+			| AST.DeclarationTag
 			| AST.DebugTag
 			| AST.ExpressionTag
 			| AST.HtmlTag

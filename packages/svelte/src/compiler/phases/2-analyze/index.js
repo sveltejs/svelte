@@ -36,6 +36,7 @@ import { ClassDeclaration } from './visitors/ClassDeclaration.js';
 import { ClassDirective } from './visitors/ClassDirective.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
+import { DeclarationTag } from './visitors/DeclarationTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
@@ -157,6 +158,7 @@ const visitors = {
 	ClassDirective,
 	Component,
 	ConstTag,
+	DeclarationTag,
 	DebugTag,
 	EachBlock,
 	ExportDefaultDeclaration,

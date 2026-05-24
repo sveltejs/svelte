@@ -22,6 +22,7 @@ import { ClassBody } from './visitors/ClassBody.js';
 import { Comment } from './visitors/Comment.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
+import { DeclarationTag } from './visitors/DeclarationTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
@@ -99,6 +100,7 @@ const visitors = {
 	Comment,
 	Component,
 	ConstTag,
+	DeclarationTag,
 	DebugTag,
 	EachBlock,
 	ExportNamedDeclaration,

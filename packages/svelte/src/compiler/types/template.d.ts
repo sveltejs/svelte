@@ -2,6 +2,7 @@ import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
+	FunctionDeclaration,
 	VariableDeclaration,
 	VariableDeclarator,
 	Expression,
@@ -156,6 +157,18 @@ export namespace AST {
 		metadata: {
 			expression: ExpressionMetadata;
 			/** If this const tag contains an await expression, or needs to wait on other async, this is set */
+			promises_id?: Identifier;
+		};
+	}
+
+	/** A `{let ...}`, `{const ...}`, `{var ...}` or `{function ...}` tag */
+	export interface DeclarationTag extends BaseNode {
+		type: 'DeclarationTag';
+		declaration: VariableDeclaration | FunctionDeclaration;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+			/** If this declaration tag contains an await expression, or needs to wait on other async, this is set */
 			promises_id?: Identifier;
 		};
 	}
@@ -622,6 +635,7 @@ export namespace AST {
 	export type Tag =
 		| AST.AttachTag
 		| AST.ConstTag
+		| AST.DeclarationTag
 		| AST.DebugTag
 		| AST.ExpressionTag
 		| AST.HtmlTag

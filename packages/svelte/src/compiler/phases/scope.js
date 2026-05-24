@@ -1149,8 +1149,19 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			next({ scope });
 		},
 
-		FunctionDeclaration(node, { state, next }) {
-			if (node.id) state.scope.declare(node.id, 'normal', 'function', node);
+		FunctionDeclaration(node, { state, path, next }) {
+			const is_parent_declaration_tag = path.at(-1)?.type === 'DeclarationTag';
+			if (node.id) {
+				const binding = state.scope.declare(
+					node.id,
+					is_parent_declaration_tag ? 'template' : 'normal',
+					'function',
+					node
+				);
+				if (is_parent_declaration_tag) {
+					binding.metadata = { is_template_declaration: true };
+				}
+			}
 
 			const scope = state.scope.child(true);
 			scopes.set(node, scope);
@@ -1194,7 +1205,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		VariableDeclaration(node, { state, path, next }) {
-			const is_parent_const_tag = path.at(-1)?.type === 'ConstTag';
+			const is_parent_template_tag =
+				path.at(-1)?.type === 'ConstTag' || path.at(-1)?.type === 'DeclarationTag';
 			for (const declarator of node.declarations) {
 				/** @type {Binding[]} */
 				const bindings = [];
@@ -1204,7 +1216,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				for (const id of extract_identifiers(declarator.id)) {
 					const binding = state.scope.declare(
 						id,
-						is_parent_const_tag ? 'template' : 'normal',
+						is_parent_template_tag ? 'template' : 'normal',
 						node.kind,
 						declarator.init
 					);

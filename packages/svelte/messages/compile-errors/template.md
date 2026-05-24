@@ -191,6 +191,14 @@ The same applies to components:
 
 > {@debug ...} arguments must be identifiers, not arbitrary expressions
 
+## declaration_tag_invalid_placement
+
+> Declaration tags must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary>` or `<Component>`
+
+## declaration_tag_invalid_type
+
+> Declaration tags must be `let`, `const`, `var` or `function` declarations
+
 ## directive_invalid_value
 
 > Directive value must be a JavaScript expression enclosed in curly braces

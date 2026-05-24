@@ -603,6 +603,12 @@ const svelte_visitors = (comments) => ({
 		context.write('}');
 	},
 
+	DeclarationTag(node, context) {
+		context.write('{');
+		context.visit(node.declaration);
+		context.write('}');
+	},
+
 	DebugTag(node, context) {
 		context.write('{@debug ');
 		let started = false;
