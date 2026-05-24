@@ -1,33 +1,28 @@
 // Regenerates `documentation/docs/07-misc/05-browser-support.md`.
 //
 // Pipeline:
-//   1. Bundle each runtime entry point with rollup using the same export
-//      conditions as a production bundler. Write each bundle to
-//      `scripts/_baseline/<entry>.ts` alongside a minimal tsconfig so the
-//      linter has type information — without it the Baseline rule misses
-//      instance methods like `String.prototype.replaceAll`.
-//   2. Run ESLint with `eslint-plugin-baseline-js`'s `recommended-ts`
-//      preset, ratcheting the Baseline year up from 2015 until the lint
-//      passes. That year is the runtime floor.
-//   3. Also scan the compiler-emitted snapshot fixtures under
-//      `tests/snapshot/samples/*/_expected/client/*.js`.
-//   4. Verify each entry in `IGNORE_FEATURES` is still flagged by the
-//      scanner — if not, it can be removed.
-//   5. Enumerate every user-facing feature (every `bind:*` from the
-//      compiler's `binding_properties`, every export of every tested
-//      subpackage, the `$state.snapshot` rune, directives like
-//      `transition:`/`animate:`/`use:`/`{@html}`/custom elements).
-//      For each: generate a minimal fixture, compile, bundle, scan.
-//      If the bundle's floor exceeds the runtime floor, emit a row in
-//      the conditional-features table. Blind-spot detectors fill in for
-//      APIs the type-aware scanner can't see (string-literal options
-//      like `device-pixel-content-box`, instance `.zoom` reads, etc.).
-//   6. Translate floors into concrete browser versions via
-//      `baseline-browser-mapping` and rewrite both tables.
+//   1. Bundle each runtime entry point with rollup using production export
+//      conditions, then walk the resulting JS with TypeScript's compiler
+//      API + TypeChecker. The walker (see `browser-support.detector.js`)
+//      flags any web-features ID the runtime references.
+//   2. Verify each entry in `BEHAVIORAL_IGNORE` is still flagged by the
+//      detector — if not, the entry can be removed.
+//   3. Enumerate every user-facing feature (each `bind:*`, every public
+//      subpackage export, every rune from the compiler's `RUNES` array,
+//      and the handful of directives that need their own fixtures). For
+//      each: compile, bundle, walk. If the bundle requires browser
+//      versions newer than the runtime floor, emit a row in the
+//      conditional-features table. Blind-spot regexes pick up APIs the
+//      AST walker can't see (string-literal constructor options,
+//      `getComputedStyle(...).zoom` reads).
+//   4. Translate floors into concrete browser versions via `web-features`
+//      data (exact per-feature versions), falling back to
+//      `baseline-browser-mapping` for year-only resolution.
 //
 // Required dev dependencies:
-//   - eslint, eslint-plugin-baseline-js, @typescript-eslint/parser
-//   - baseline-browser-mapping
+//   - typescript (already in the tree)
+//   - web-features, baseline-browser-mapping
+//   - rollup + plugin-virtual + plugin-node-resolve (already in the tree)
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,10 +31,14 @@ import { fileURLToPath } from 'node:url';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import { ESLint } from 'eslint';
 import { getCompatibleVersions } from 'baseline-browser-mapping';
-import { features as web_features } from 'web-features';
-import { config as eslint_config, BEHAVIORAL_IGNORE } from './browser-support.eslint.config.js';
+import {
+	detect_features,
+	detect_features_in_text,
+	versions_for_feature,
+	name_for_feature,
+	baseline_year_for_feature
+} from './browser-support.detector.js';
 import { binding_properties } from '../src/compiler/phases/bindings.js';
 import { RUNES } from '../src/utils.js';
 import { compile as svelte_compile } from '../src/compiler/index.js';
@@ -52,6 +51,38 @@ const snapshot_dir = path.join(pkg_dir, 'tests/snapshot/samples');
 const tmp_dir = path.join(__dirname, '_baseline');
 
 const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8'));
+
+/**
+ * Suppressions that should NEVER affect the floor regardless of whether
+ * the runtime currently uses the API. Two reasons an entry belongs here:
+ *
+ *   - The `web-features` dataset misclassifies the API (e.g.
+ *     `devicepixelratio` is marked Baseline `false` because Safari is
+ *     missing from its `support` map, but the property has shipped in
+ *     every Safari for over a decade).
+ *   - Svelte feature-detects the API at runtime with `?.` and degrades
+ *     gracefully when it's unavailable. Example: `trusted-types` in
+ *     `src/internal/client/dom/reconciler.js`.
+ *
+ * These are exempt from the staleness check.
+ */
+const SAFE_TO_IGNORE = new Set(['devicepixelratio', 'trusted-types']);
+
+/**
+ * Suppressions for features that DO live in the runtime but are reached
+ * only via a specific code path documented in the per-feature table on
+ * the docs page. The aggregate scan hides them so the headline floor
+ * reflects "load Svelte and use the basic runtime", not "use every
+ * conditional feature".
+ *
+ * Each entry MUST appear in the conditional-features table. The
+ * staleness check below also verifies the entry is still present in the
+ * runtime — if the detector doesn't flag it, the entry can be removed.
+ */
+const BEHAVIORAL_IGNORE = new Set(['structured-clone']);
+
+/** Aggregate ignore set — used for the headline floor. */
+const AGGREGATE_IGNORE = new Set([...SAFE_TO_IGNORE, ...BEHAVIORAL_IGNORE]);
 
 /**
  * Subpath exports in `package.json` to skip when enumerating fixtures.
@@ -329,25 +360,6 @@ function safe_name(importee) {
 function prepare_tmp_dir() {
 	fs.rmSync(tmp_dir, { recursive: true, force: true });
 	fs.mkdirSync(tmp_dir, { recursive: true });
-
-	const tsconfig = {
-		compilerOptions: {
-			target: 'esnext',
-			module: 'esnext',
-			moduleResolution: 'bundler',
-			lib: ['esnext', 'dom', 'dom.iterable'],
-			allowJs: true,
-			checkJs: false,
-			strict: false,
-			noEmit: true,
-			skipLibCheck: true,
-			isolatedModules: true
-		},
-		include: ['./*.ts']
-	};
-	fs.writeFileSync(path.join(tmp_dir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2));
-
-	return path.join(tmp_dir, 'tsconfig.json');
 }
 
 /**
@@ -417,172 +429,22 @@ function load_compiler_output_fixtures() {
 }
 
 /**
- * Year identifiers we sweep, from oldest to newest. The Baseline rule reports
- * a feature when its Baseline year is *greater* than the configured target,
- * so the first year here that produces zero errors is the smallest Baseline
- * year that contains every feature Svelte uses — i.e. the actual minimum
- * required floor. Targets newer than that floor also pass, but they would
- * overstate the requirement (and produce browser versions that are newer
- * than what the code actually needs).
+ * Combine per-feature version data into a single Record. Takes the max
+ * (strictest) version per browser across the input feature IDs.
  *
- * `'newly'` is the final fallback for features that have just reached
- * Baseline and aren't yet attributable to a year. We do not include
- * `'widely'` in the search: passing `'widely'` only tells us the code is
- * conservative enough for the moving 30-month window, not what the
- * technical floor is.
- *
- * @type {Array<number | 'newly'>}
- */
-const targets = (() => {
-	const this_year = new Date().getFullYear();
-	const years = [];
-	for (let y = 2015; y <= this_year; y++) years.push(y);
-	return [...years, 'newly'];
-})();
-
-/**
- * Lint the on-disk bundle files (runtime entries) with type-aware mode.
- *
- * @param {string[]} files Absolute paths inside `tmp_dir`.
- * @param {string} tsconfig Absolute path to the tsconfig in `tmp_dir`.
- * @param {number | 'newly'} target
- */
-async function lint_runtime_files(files, tsconfig, target) {
-	const eslint = new ESLint({
-		overrideConfigFile: true,
-		overrideConfig: eslint_config(target, { tsconfig, root: tmp_dir })
-	});
-	return eslint.lintFiles(files);
-}
-
-/**
- * Lint a compiler-output fixture in syntax-only mode (no type info — the
- * fixtures are tiny snippets without a tsconfig). The patterns the
- * compiler emits are bounded, so the non-typed scan is sufficient.
- *
- * @param {string} label
- * @param {string} source
- * @param {number | 'newly'} target
- */
-async function lint_fixture(label, source, target) {
-	const eslint = new ESLint({
-		overrideConfigFile: true,
-		overrideConfig: eslint_config(target)
-	});
-	const [result] = await eslint.lintText(source, { filePath: `${label}.js` });
-	return result;
-}
-
-/**
- * The lint target immediately preceding `target` in the search order, used
- * to surface the features that drove the floor. Returns `undefined` for
- * the first target.
- *
- * @param {number | 'newly'} target
- * @returns {number | 'newly' | undefined}
- */
-function prev_target(target) {
-	const i = targets.indexOf(target);
-	return i > 0 ? targets[i - 1] : undefined;
-}
-
-/**
- * @param {string[]} runtime_files Absolute paths to bundle files in `tmp_dir`.
- * @param {string} tsconfig Absolute path to the tsconfig in `tmp_dir`.
- * @param {Array<{ filename: string, code: string }>} compiler_fixtures
- */
-async function find_minimum_target(runtime_files, tsconfig, compiler_fixtures) {
-	/** @type {Map<string, Set<string>>} target → set of feature messages that tripped it */
-	const failures_by_target = new Map();
-
-	for (const target of targets) {
-		const failures = new Set();
-
-		// Type-aware scan over the runtime bundles.
-		const runtime_results = await lint_runtime_files(runtime_files, tsconfig, target);
-		for (const result of runtime_results) {
-			const label = `runtime/${path.basename(result.filePath, '.ts')}`;
-			for (const m of result.messages) {
-				if (m.ruleId === 'baseline-js/use-baseline') {
-					failures.add(`${label}: ${m.message}`);
-				}
-			}
-		}
-
-		// Syntax-only scan over the compiler-output fixtures.
-		for (const fixture of compiler_fixtures) {
-			const label = `compiler-output/${fixture.filename}`;
-			const result = await lint_fixture(label, fixture.code, target);
-			for (const m of result.messages) {
-				if (m.ruleId === 'baseline-js/use-baseline') {
-					failures.add(`${label}: ${m.message}`);
-				}
-			}
-		}
-
-		if (failures.size === 0) {
-			const previous = failures_by_target.get(String(prev_target(target)));
-			if (previous && previous.size > 0) {
-				// eslint-disable-next-line no-console
-				console.log(`  → ${target} (features that drove the floor:)`);
-				const unique = new Set();
-				for (const f of previous) {
-					// e.g. "runtime: Feature 'Nullish coalescing' (nullish-coalescing) became Baseline in 2020 and exceeds 2019."
-					const m = /Feature '([^']+)' \(([^)]+)\)/.exec(f);
-					if (m) unique.add(`${m[1]} (${m[2]})`);
-				}
-				// eslint-disable-next-line no-console
-				for (const f of [...unique].sort()) console.log(`    - ${f}`);
-			}
-			return target;
-		}
-		failures_by_target.set(String(target), failures);
-		// eslint-disable-next-line no-console
-		console.log(`  ${target}: ${failures.size} feature(s) exceed budget`);
-		if (process.env.DEBUG_BROWSER_SUPPORT) {
-			const unique = new Set();
-			for (const f of failures) {
-				const m = /Feature '([^']+)' \(([^)]+)\)/.exec(f);
-				if (m) unique.add(`${m[1]} (${m[2]})`);
-			}
-			// eslint-disable-next-line no-console
-			for (const f of [...unique].sort()) console.log(`    - ${f}`);
-		}
-	}
-
-	const newly_failures = failures_by_target.get('newly');
-	const sample = newly_failures
-		? [...newly_failures].slice(0, 10).join('\n  - ')
-		: '(no failures recorded)';
-	throw new Error(
-		'No Baseline target in the search range covered Svelte. ' +
-			'A brand-new API may be in use that has not yet reached Baseline Newly available.\n' +
-			`First failures at the most permissive target (\`newly\`):\n  - ${sample}`
-	);
-}
-
-/**
- * Look up the per-browser minimum versions for a set of web-feature IDs
- * using the `web-features` dataset. Returns the strictest (highest) version
- * required across all input IDs — the union over multiple features.
- *
- * Falls back to `null` for the entire result if NONE of the IDs are
- * present in the dataset, so callers can default to year-based mapping.
+ * Returns `null` if NONE of the IDs have versions in `web-features`, so
+ * callers can fall back to year-based mapping.
  *
  * @param {Iterable<string>} ids
  * @returns {Record<string, string> | null}
  */
-function versions_from_web_features(ids) {
+function versions_from_features(ids) {
 	/** @type {Record<string, string>} */
 	const merged = {};
 	let any_found = false;
 
 	for (const id of ids) {
-		const feature = web_features[id];
-		if (!feature || !('status' in feature)) continue;
-		const support = /** @type {Record<string, string> | undefined} */ (
-			/** @type {unknown} */ (feature.status.support)
-		);
+		const support = versions_for_feature(id);
 		if (!support) continue;
 		any_found = true;
 		for (const [browser, version] of Object.entries(support)) {
@@ -597,75 +459,71 @@ function versions_from_web_features(ids) {
 }
 
 /**
- * Extract every unique web-feature ID flagged in a lint result.
+ * Run the TS-based detector across the runtime bundles and the compiler-
+ * output fixtures, then compute the highest baseline year among the
+ * detected features (after subtracting `AGGREGATE_IGNORE`).
  *
- * @param {import('eslint').ESLint.LintResult} result
+ * @param {string[]} runtime_files Absolute paths to runtime bundle files.
+ * @param {Array<{ filename: string, code: string }>} compiler_fixtures
+ * @returns {number} The minimum Baseline year the combined code satisfies.
  */
-function feature_ids_in(result) {
-	const ids = new Set();
-	for (const m of result.messages) {
-		if (m.ruleId !== 'baseline-js/use-baseline') continue;
-		const match = /\(([^)]+)\)/.exec(m.message);
-		if (match) ids.add(match[1]);
+function find_minimum_target(runtime_files, compiler_fixtures) {
+	// Type-aware walk over the runtime bundles.
+	const detected = detect_features(runtime_files);
+
+	// Syntax-only walk over the compiler-output fixtures (text only, no
+	// program context; the bare TS source-file parser handles the syntax
+	// features the compiler emits).
+	for (const fixture of compiler_fixtures) {
+		for (const id of detect_features_in_text(fixture.code)) detected.add(id);
 	}
-	return ids;
+
+	let max_year = 2015;
+	/** @type {Set<string>} */
+	const drivers = new Set();
+	for (const id of detected) {
+		if (AGGREGATE_IGNORE.has(id)) continue;
+		const year = baseline_year_for_feature(id);
+		if (year && year > max_year) {
+			max_year = year;
+			drivers.clear();
+			drivers.add(id);
+		} else if (year === max_year) {
+			drivers.add(id);
+		}
+	}
+
+	// eslint-disable-next-line no-console
+	console.log(`  → ${max_year} (features that drove the floor:)`);
+	for (const id of [...drivers].sort()) {
+		// eslint-disable-next-line no-console
+		console.log(`    - ${name_for_feature(id)} (${id})`);
+	}
+
+	return max_year;
 }
 
 /**
- * Extract friendly feature names ("structuredClone()", "Resize observer")
- * from the lint output for use in user-facing tables.
+ * Verify every entry in `BEHAVIORAL_IGNORE` is actually used by the
+ * runtime. Without this, a behavioural suppression can outlive the API
+ * it suppresses — the comment stays in the config pointing at code that
+ * no longer exists.
  *
- * @param {import('eslint').ESLint.LintResult} result
- */
-function feature_names_in(result) {
-	const names = new Set();
-	for (const m of result.messages) {
-		if (m.ruleId !== 'baseline-js/use-baseline') continue;
-		// Messages look like: Feature 'Resize observer' (resize-observer) became Baseline in 2020…
-		const match = /Feature '([^']+)'/.exec(m.message);
-		if (match) names.add(`\`${match[1]}\``);
-	}
-	return names;
-}
-
-/**
- * Verify every entry in `BEHAVIORAL_IGNORE` is actually used by the runtime.
- * Without this, a behavioural suppression can outlive the API it
- * suppresses — the comment stays in the config file pointing at code
- * that no longer exists.
- *
- * `SAFE_TO_IGNORE` entries are exempt from this check: they're safe to
- * carry regardless of whether the runtime currently uses the API (the
- * staleness signal would be noise, since `?.` feature-detection and
- * data-bug suppressions are valid no matter what).
+ * `SAFE_TO_IGNORE` entries are exempt: they're safe to carry regardless
+ * of whether the runtime currently uses the API.
  *
  * @param {string[]} runtime_files
- * @param {string} tsconfig
  */
-async function validate_ignore_features(runtime_files, tsconfig) {
-	if (BEHAVIORAL_IGNORE.length === 0) return;
-
-	// Scan at year 2015 so the rule reports every Baseline-classified
-	// feature regardless of year — the goal is "is this feature ever
-	// flagged?", not "is it newer than X".
-	const eslint = new ESLint({
-		overrideConfigFile: true,
-		overrideConfig: eslint_config(2015, { tsconfig, root: tmp_dir }, { purpose: 'staleness-check' })
-	});
-	const results = await eslint.lintFiles(runtime_files);
-
-	const flagged = new Set();
-	for (const result of results) {
-		for (const id of feature_ids_in(result)) flagged.add(id);
-	}
-
-	const stale = BEHAVIORAL_IGNORE.filter((id) => !flagged.has(id));
+function validate_ignore_features(runtime_files) {
+	if (BEHAVIORAL_IGNORE.size === 0) return;
+	const detected = detect_features(runtime_files);
+	const stale = [...BEHAVIORAL_IGNORE].filter((id) => !detected.has(id));
 	if (stale.length > 0) {
 		throw new Error(
-			`BEHAVIORAL_IGNORE contains entries that the scanner does not flag — ` +
+			`BEHAVIORAL_IGNORE contains entries that the detector does not flag — ` +
 				`they can be removed:\n` +
 				stale.map((id) => `  - ${id}`).join('\n') +
-				`\n\nEdit \`packages/svelte/scripts/browser-support.eslint.config.js\` ` +
+				`\n\nEdit \`packages/svelte/scripts/generate-browser-support.js\` ` +
 				`and delete the stale entries. If the API was removed from the runtime ` +
 				`as part of this change, that is exactly the intended signal.`
 		);
@@ -850,41 +708,33 @@ function apply_blind_spots(bundle_code) {
 }
 
 /**
- * Compute the minimum Baseline year a fixture's bundle requires. Reuses
- * the same year-search as the aggregate scan but on a single per-fixture
- * file, with the per-file ignore list (no behavioural suppressions).
+ * Detect features in a single fixture bundle and report the per-fixture
+ * floor year along with the IDs that drove it. Used for the per-feature
+ * conditional table.
  *
  * @param {string} fixture_file Absolute path to the `.ts` bundle.
  */
-async function scan_fixture_floor(fixture_file) {
-	let last_failure_names = new Set();
-	let last_failure_ids = new Set();
-	for (const year of targets) {
-		const eslint = new ESLint({
-			overrideConfigFile: true,
-			overrideConfig: eslint_config(
-				year,
-				{ tsconfig: path.join(tmp_dir, 'tsconfig.json'), root: tmp_dir },
-				{ purpose: 'per-fixture' }
-			)
-		});
-		const [result] = await eslint.lintFiles([fixture_file]);
-		if (result.errorCount === 0) {
-			// Drivers are the features that just stopped failing — names and
-			// IDs captured from the previous (one-year-stricter) scan.
-			return {
-				year,
-				driving_names: [...last_failure_names],
-				driving_ids: [...last_failure_ids]
-			};
+function scan_fixture(fixture_file) {
+	const detected = detect_features([fixture_file]);
+	let max_year = 0;
+	/** @type {string[]} */
+	const driving_ids = [];
+	for (const id of detected) {
+		if (SAFE_TO_IGNORE.has(id)) continue;
+		const year = baseline_year_for_feature(id);
+		if (!year) continue;
+		if (year > max_year) {
+			max_year = year;
+			driving_ids.length = 0;
+			driving_ids.push(id);
+		} else if (year === max_year) {
+			driving_ids.push(id);
 		}
-		last_failure_names = feature_names_in(result);
-		last_failure_ids = feature_ids_in(result);
 	}
 	return {
-		year: /** @type {const} */ ('newly'),
-		driving_names: [...last_failure_names],
-		driving_ids: [...last_failure_ids]
+		year: max_year,
+		driving_ids,
+		driving_names: driving_ids.map((id) => `\`${name_for_feature(id)}\``)
 	};
 }
 
@@ -928,10 +778,10 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 		const fixture_file = path.join(tmp_dir, `fixture_${i}.ts`);
 		fs.writeFileSync(fixture_file, bundle_code);
 
-		const scanned = await scan_fixture_floor(fixture_file);
+		const scanned = scan_fixture(fixture_file);
 		const blind = apply_blind_spots(bundle_code);
 
-		const scanner_year = scanned.year === 'newly' ? Infinity : scanned.year;
+		const scanner_year = scanned.year || 0;
 		const final_year = Math.max(scanner_year, blind.year);
 
 		// Skip features at or below the runtime floor — they don't need a row.
@@ -939,8 +789,7 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 
 		// Prefer blind-spot version data when it's the strictest constraint.
 		// Otherwise look up exact per-feature versions in `web-features`
-		// (more precise than the year-based mapping). Fall back to the
-		// year mapping only if no driving feature was found in the dataset.
+		// (more precise than the year-based mapping).
 		/** @type {Record<string, string | null> | undefined} */
 		let versions;
 		let api;
@@ -949,10 +798,8 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 			api = blind.matched.join(', ');
 		} else if (typeof final_year === 'number' && Number.isFinite(final_year)) {
 			api = scanned.driving_names.join(', ') || '(see bundle output)';
-			versions = versions_from_web_features(scanned.driving_ids) ?? undefined;
+			versions = versions_from_features(scanned.driving_ids) ?? undefined;
 			if (!versions) {
-				// `web-features` had no entry for any driving feature.
-				// Fall back to the conservative year mapping.
 				try {
 					versions = browser_versions_for(final_year);
 				} catch {
@@ -1155,7 +1002,7 @@ function rewrite_docs_page(headline_table, conditional_table) {
 /* eslint-disable no-console */
 async function main() {
 	console.log('Preparing scratch directory…');
-	const tsconfig = prepare_tmp_dir();
+	prepare_tmp_dir();
 
 	try {
 		console.log('Bundling runtime entries…');
@@ -1172,11 +1019,10 @@ async function main() {
 		console.log(`  (${compiler_fixtures.length} fixtures found)`);
 
 		console.log('Searching for the minimum Baseline target (type-aware)…');
-		const target = await find_minimum_target(runtime_files, tsconfig, compiler_fixtures);
-		console.log(`  → ${target}`);
+		const target = find_minimum_target(runtime_files, compiler_fixtures);
 
 		console.log('Checking BEHAVIORAL_IGNORE for stale entries…');
-		await validate_ignore_features(runtime_files, tsconfig);
+		validate_ignore_features(runtime_files);
 		console.log('  no stale entries');
 
 		console.log('Enumerating subpackage exports…');
