@@ -37,11 +37,33 @@ import {
 	detect_features_in_text,
 	versions_for_feature,
 	name_for_feature,
-	baseline_year_for_feature
+	baseline_year_for_feature,
+	register_extra_rules
 } from './browser-support.detector.js';
 import { binding_properties } from '../src/compiler/phases/bindings.js';
 import { RUNES } from '../src/utils.js';
 import { compile as svelte_compile } from '../src/compiler/index.js';
+
+// Supplemental detection rules for APIs `web-features` doesn't track
+// yet. Each rule is checked with full TS type-aware precision — the
+// only reason it lives here instead of being auto-derived is that no
+// compat key in `web-features` covers the API.
+register_extra_rules([
+	{
+		// `getComputedStyle(current).zoom` walk in `svelte/animate`'s
+		// `flip` fallback path. Firefox didn't expose `.zoom` on
+		// `CSSStyleDeclaration` until v126 (May 2024) — pre-126 the read
+		// yields an empty string, breaking the animation math. No entry
+		// for it exists in `web-features` (CSS `zoom` is an IDL accessor
+		// without its own Baseline feature record).
+		receiver_type: 'CSSStyleDeclaration',
+		member: 'zoom',
+		feature_id: 'extra:css-zoom-read',
+		name: 'CSS zoom property reads (getComputedStyle(...).zoom)',
+		baseline_year: 2024,
+		versions: { firefox: '126' }
+	}
+]);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkg_dir = path.resolve(__dirname, '..');
@@ -79,7 +101,7 @@ const SAFE_TO_IGNORE = new Set(['devicepixelratio', 'trusted-types']);
  * staleness check below also verifies the entry is still present in the
  * runtime — if the detector doesn't flag it, the entry can be removed.
  */
-const BEHAVIORAL_IGNORE = new Set(['structured-clone']);
+const BEHAVIORAL_IGNORE = new Set(['structured-clone', 'extra:css-zoom-read']);
 
 /** Aggregate ignore set — used for the headline floor. */
 const AGGREGATE_IGNORE = new Set([...SAFE_TO_IGNORE, ...BEHAVIORAL_IGNORE]);
@@ -297,19 +319,11 @@ const BLIND_SPOT_DETECTORS = [
 			safari: null,
 			safari_ios: null
 		}
-	},
-	{
-		// `getComputedStyle(current).zoom` walk in `svelte/animate`'s `flip`
-		// fallback path. Firefox didn't expose `.zoom` until v126 (May 2024);
-		// pre-126 the read yields `""` → `NaN`, breaking the animation math.
-		// Scanner cannot see the `.zoom` instance property access. Per MDN
-		// BCD for the CSS `zoom` property: Chrome 1, Edge 12, Firefox 126,
-		// Safari 3.1 — only Firefox's version drives the floor here.
-		regex: /getComputedStyle\([^)]*\)\.zoom\b/,
-		name: 'CSS `zoom` property reads (`getComputedStyle(...).zoom`)',
-		baseline_year: 2025,
-		versions: { firefox: '126' }
 	}
+	// Note: `getComputedStyle(...).zoom` is no longer a regex blind spot;
+	// it's registered as a supplemental member rule on `CSSStyleDeclaration`
+	// (see `register_extra_rules` above), so the type-aware walker handles
+	// it precisely.
 	// Note: `controller.abort(STALE_REACTION)` in `runtime.js` was previously
 	// detected here, but the call is in the always-on reactivity teardown
 	// and gets bundled with every fixture. Detection would fire for every
@@ -432,14 +446,17 @@ function load_compiler_output_fixtures() {
  * Combine per-feature version data into a single Record. Takes the max
  * (strictest) version per browser across the input feature IDs.
  *
- * Returns `null` if NONE of the IDs have versions in `web-features`, so
- * callers can fall back to year-based mapping.
+ * `null` propagates as "not supported" — if any contributing feature
+ * marks a browser unsupported, the merged record does too.
+ *
+ * Returns `null` if NONE of the IDs have versions in `web-features` or
+ * supplemental rules, so callers can fall back to year-based mapping.
  *
  * @param {Iterable<string>} ids
- * @returns {Record<string, string> | null}
+ * @returns {Record<string, string | null> | null}
  */
 function versions_from_features(ids) {
-	/** @type {Record<string, string>} */
+	/** @type {Record<string, string | null>} */
 	const merged = {};
 	let any_found = false;
 
@@ -449,7 +466,13 @@ function versions_from_features(ids) {
 		any_found = true;
 		for (const [browser, version] of Object.entries(support)) {
 			const current = merged[browser];
-			if (!current || Number(version) > Number(current)) {
+			// `null` means "not supported"; propagate it directly.
+			if (version === null) {
+				merged[browser] = null;
+				continue;
+			}
+			if (current === null) continue; // already known unsupported
+			if (current === undefined || Number(version) > Number(current)) {
 				merged[browser] = version;
 			}
 		}

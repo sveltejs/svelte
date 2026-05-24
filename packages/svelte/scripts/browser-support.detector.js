@@ -203,6 +203,60 @@ function build_detection_maps() {
 const MAPS = build_detection_maps();
 
 /**
+ * Versions and friendly names for synthetic feature IDs registered via
+ * `register_extra_rules` — APIs the type-aware walker can see but that
+ * `web-features` doesn't (yet) catalogue. `versions_for_feature` and
+ * `name_for_feature` consult this map before falling back to
+ * `web-features` lookups.
+ *
+ * @type {Map<string, { name: string, versions: Record<string, string | null>, baseline_year: number | null }>}
+ */
+const EXTRA_FEATURE_INFO = new Map();
+
+/**
+ * Register additional member-access rules for APIs the `web-features`
+ * dataset doesn't track yet. The generator calls this at startup for
+ * cases like `CSSStyleDeclaration.zoom` — Firefox didn't expose it until
+ * v126, but no `web-features` entry covers that fact.
+ *
+ * Each rule contributes:
+ *   - a `(receiver_type, member) → feature_id` entry in the detection
+ *     map, so the AST walker emits `feature_id` whenever a matching
+ *     property access shows up,
+ *   - per-browser versions and a baseline year for `feature_id`, used
+ *     downstream by `versions_for_feature`, `name_for_feature`, and
+ *     `baseline_year_for_feature`.
+ *
+ * @param {Array<{
+ *   receiver_type: string,
+ *   member: string,
+ *   feature_id: string,
+ *   name: string,
+ *   baseline_year: number,
+ *   versions: Record<string, string | null>
+ * }>} rules
+ */
+export function register_extra_rules(rules) {
+	for (const rule of rules) {
+		let by_member = MAPS.members.get(rule.receiver_type);
+		if (!by_member) {
+			by_member = new Map();
+			MAPS.members.set(rule.receiver_type, by_member);
+		}
+		// Don't overwrite an existing rule from web-features; the latter
+		// is canonical when it exists. Supplemental rules fill gaps.
+		if (!by_member.has(rule.member)) {
+			by_member.set(rule.member, rule.feature_id);
+		}
+		EXTRA_FEATURE_INFO.set(rule.feature_id, {
+			name: rule.name,
+			baseline_year: rule.baseline_year,
+			versions: rule.versions
+		});
+	}
+}
+
+/**
  * Compile bundle files into a single `ts.Program` so type-checking is
  * amortised across all of them.
  *
@@ -366,12 +420,15 @@ export function detect_features_in_text(source_text) {
 }
 
 /**
- * Per-browser minimum versions for a web-features ID. Returns null if
- * the feature isn't in the dataset or lacks Baseline support data.
+ * Per-browser minimum versions for a feature ID. Consults
+ * supplemental rules first (from `register_extra_rules`), then falls
+ * back to `web-features`. Returns null when neither has data.
  *
  * @param {string} feature_id
  */
 export function versions_for_feature(feature_id) {
+	const extra = EXTRA_FEATURE_INFO.get(feature_id);
+	if (extra) return extra.versions;
 	const feature = web_features[feature_id];
 	if (!feature || !('status' in feature)) return null;
 	return /** @type {Record<string, string> | null} */ (
@@ -385,19 +442,23 @@ export function versions_for_feature(feature_id) {
  * @param {string} feature_id
  */
 export function name_for_feature(feature_id) {
+	const extra = EXTRA_FEATURE_INFO.get(feature_id);
+	if (extra) return extra.name;
 	const feature = web_features[feature_id];
 	if (feature && 'name' in feature) return feature.name;
 	return feature_id;
 }
 
 /**
- * Baseline year for a feature (the `baseline_low_date` year). Returns
- * `null` for features without a Baseline date (limited availability,
- * or not in the dataset).
+ * Baseline year for a feature. Returns `null` for features without a
+ * Baseline date (limited availability, supplemental rules without a
+ * year, or absent from the dataset).
  *
  * @param {string} feature_id
  */
 export function baseline_year_for_feature(feature_id) {
+	const extra = EXTRA_FEATURE_INFO.get(feature_id);
+	if (extra) return extra.baseline_year;
 	const feature = web_features[feature_id];
 	if (!feature || !('status' in feature)) return null;
 	const status = /** @type {{ baseline_low_date?: string }} */ (feature.status);
