@@ -135,56 +135,65 @@ const BEHAVIORAL_IGNORE = new Set([
 const AGGREGATE_IGNORE = new Set([...SAFE_TO_IGNORE, ...BEHAVIORAL_IGNORE]);
 
 /**
- * Subpath exports in `package.json` to skip when enumerating fixtures.
- *
- * - The main `svelte` entry (`.`) is covered by the aggregate runtime
- *   scan, and most of its named exports (`tick`, `mount`, lifecycle
- *   helpers, etc.) exercise the always-on reactivity machinery.
- *   Per-export fixtures would be redundant.
- * - `./compiler`, `./server`, `./internal/server` are Node-only.
- * - `./internal/*` and `./legacy` are private surface or thin shims
- *   already covered by the aggregate.
- * - `./action`, `./elements` are types-only (no `.js` to scan).
- *
- * Anything else in `pkg.exports` gets its full export list enumerated
- * at runtime via `import * as ns from <subpath>`. New subpackages get
- * picked up automatically.
+ * Subpaths in `pkg.exports` whose runtime is Node-only. Can't be derived
+ * from the exports map alone — `./compiler` has a `require:` field that
+ * hints at CJS, but `./server` and `./internal/server` are plain `default`
+ * entries indistinguishable from a browser module.
  */
-const SKIP_SUBPACKAGES = new Set([
-	'.',
-	'./package.json',
-	'./action',
-	'./compiler',
-	'./elements',
-	'./internal',
-	'./internal/client',
-	'./internal/disclose-version',
-	'./internal/flags/async',
-	'./internal/flags/legacy',
-	'./internal/flags/tracing',
-	'./internal/server',
-	'./legacy',
-	'./server'
-]);
+const NODE_ONLY_EXPORTS = new Set(['./compiler', './server', './internal/server']);
 
 /**
- * Read every browser-targeted subpath in `pkg.exports`, import each
- * dynamically, and return the union of `Object.keys()` of each module's
- * namespace. Replaces what used to be a hand-curated list.
+ * Every subpath in `pkg.exports` that ships browser JS. Type-only entries
+ * (`./action`, `./elements`) and the `./package.json` re-export filter out
+ * naturally on the `.js` check; only Node-only subpaths need an explicit
+ * exception, so new browser exports are picked up automatically.
+ */
+function browser_subpaths() {
+	const subpaths = [];
+	for (const [subpath, conditions] of Object.entries(pkg.exports)) {
+		if (NODE_ONLY_EXPORTS.has(subpath)) continue;
+		if (typeof conditions !== 'object' || conditions === null) continue;
+		const file =
+			/** @type {Record<string, string>} */ (conditions).browser ??
+			/** @type {Record<string, string>} */ (conditions).default;
+		if (typeof file !== 'string' || !file.endsWith('.js')) continue;
+		subpaths.push(subpath);
+	}
+	return subpaths;
+}
+
+/**
+ * `.` → `svelte`, `./animate` → `svelte/animate`, etc.
+ *
+ * @param {string} subpath
+ */
+function importee_for(subpath) {
+	return subpath === '.' ? 'svelte' : `svelte${subpath.slice(1)}`;
+}
+
+/**
+ * True if a subpath represents a public, user-facing subpackage whose
+ * named exports should each get their own per-feature fixture. Excludes
+ * the main entry (covered by the aggregate scan), the `./legacy` shim,
+ * and everything under `./internal/`.
+ *
+ * @param {string} subpath
+ */
+function is_public_subpackage(subpath) {
+	return subpath !== '.' && subpath !== './legacy' && !subpath.startsWith('./internal');
+}
+
+/**
+ * For each public subpackage, dynamically import the module and return
+ * its named exports. Driven entirely by `pkg.exports`, so a new
+ * subpackage is picked up the next time the script runs.
  */
 async function enumerate_subpackage_exports() {
 	/** @type {Record<string, string[]>} */
 	const result = {};
-	for (const [subpath, conditions] of Object.entries(pkg.exports)) {
-		if (SKIP_SUBPACKAGES.has(subpath)) continue;
-		if (typeof conditions !== 'object' || conditions === null) continue;
-
-		const entry =
-			/** @type {Record<string, string>} */
-			(conditions).browser ?? /** @type {Record<string, string>} */ (conditions).default;
-		if (!entry || !entry.endsWith('.js')) continue;
-
-		const module_id = `svelte${subpath.slice(1)}`;
+	for (const subpath of browser_subpaths()) {
+		if (!is_public_subpackage(subpath)) continue;
+		const module_id = importee_for(subpath);
 		try {
 			const ns = await import(module_id);
 			const names = Object.keys(ns)
@@ -301,31 +310,6 @@ const TESTED_DIRECTIVES = [
 ];
 
 /**
- * Subpath exports whose browser code ships to end users. Derived by walking
- * `pkg.exports` and keeping every entry that resolves to a `.js` file under
- * the `browser` or `default` condition (i.e. anything that can end up in a
- * client-side bundle). Server-only entries (`./server`, `./internal/server`,
- * `./compiler`), type-only entries (`./action`, `./elements`), and trivial
- * flag/string modules (`./internal/flags/*`, `./internal/disclose-version`)
- * are excluded — they either don't run in the browser or contain no
- * meaningful API surface to scan.
- */
-const runtime_entry_points = [
-	'svelte',
-	'svelte/animate',
-	'svelte/attachments',
-	'svelte/easing',
-	'svelte/events',
-	'svelte/internal/client',
-	'svelte/legacy',
-	'svelte/motion',
-	'svelte/reactivity',
-	'svelte/reactivity/window',
-	'svelte/store',
-	'svelte/transition'
-];
-
-/**
  * Filesystem-safe identifier for an importee like `svelte/internal/client`.
  *
  * @param {string} importee
@@ -335,26 +319,21 @@ function safe_name(importee) {
 }
 
 /**
- * Set up `scripts/_baseline/` with a tsconfig that covers the bundle files
- * we are about to write. The directory is wiped on each run so stale
- * bundles cannot leak into the next scan.
- */
-function prepare_tmp_dir() {
-	fs.rmSync(tmp_dir, { recursive: true, force: true });
-	fs.mkdirSync(tmp_dir, { recursive: true });
-}
-
-/**
- * Bundle a runtime entry the way users receive it, so we scan the same code
- * the browser does. Mirrors the approach in `check-treeshakeability.js`.
+ * Bundle an entry the way users receive it, so we scan the same code the
+ * browser does. Mirrors `check-treeshakeability.js`.
  *
- * @param {string} importee
+ * @param {string} entry_code Virtual module source: typically
+ *   `export * from 'svelte/...'` for a runtime entry, or compiled fixture
+ *   JS for a per-feature scan.
+ * @param {{ silent?: boolean }} [options]
+ *   `silent` suppresses rollup's circular-dependency warnings — used for
+ *   fixture bundles where they're known and noisy.
  */
-async function bundle_runtime(importee) {
-	const bundle = await rollup({
+async function bundle(entry_code, options = {}) {
+	const built = await rollup({
 		input: '__entry__',
 		plugins: [
-			virtual({ __entry__: `export * from '${importee}';` }),
+			virtual({ __entry__: entry_code }),
 			{
 				name: 'resolve-svelte',
 				resolveId(id) {
@@ -365,17 +344,16 @@ async function bundle_runtime(importee) {
 					}
 				}
 			},
-			nodeResolve({
-				exportConditions: ['production', 'import', 'browser', 'default']
-			})
+			nodeResolve({ exportConditions: ['production', 'import', 'browser', 'default'] })
 		],
 		// Treat optional peers / Node-only branches as external so we only scan
 		// code that actually runs in the browser.
-		external: ['esm-env']
+		external: ['esm-env'],
+		onwarn: options.silent ? () => {} : undefined
 	});
 
-	const { output } = await bundle.generate({ format: 'esm' });
-	await bundle.close();
+	const { output } = await built.generate({ format: 'esm' });
+	await built.close();
 
 	return output
 		.filter((chunk) => chunk.type === 'chunk')
@@ -450,6 +428,31 @@ function versions_from_features(ids) {
 }
 
 /**
+ * Highest baseline year among `detected`, and the set of feature IDs that
+ * drove it. Used both for the aggregate runtime floor and for per-fixture
+ * scans — the two differ only in their ignore set.
+ *
+ * @param {Iterable<string>} detected
+ * @param {Set<string>} ignore
+ */
+function compute_floor(detected, ignore) {
+	let year = 0;
+	/** @type {Set<string>} */
+	const drivers = new Set();
+	for (const id of detected) {
+		if (ignore.has(id)) continue;
+		const y = baseline_year_for_feature(id);
+		if (!y) continue;
+		if (y > year) {
+			year = y;
+			drivers.clear();
+		}
+		if (y === year) drivers.add(id);
+	}
+	return { year, drivers };
+}
+
+/**
  * Run the TS-based detector across the runtime bundles and the compiler-
  * output fixtures, then compute the highest baseline year among the
  * detected features (after subtracting `AGGREGATE_IGNORE`).
@@ -469,29 +472,19 @@ function find_minimum_target(runtime_files, compiler_fixtures) {
 		for (const id of detect_features_in_text(fixture.code)) detected.add(id);
 	}
 
-	let max_year = 2015;
-	/** @type {Set<string>} */
-	const drivers = new Set();
-	for (const id of detected) {
-		if (AGGREGATE_IGNORE.has(id)) continue;
-		const year = baseline_year_for_feature(id);
-		if (year && year > max_year) {
-			max_year = year;
-			drivers.clear();
-			drivers.add(id);
-		} else if (year === max_year) {
-			drivers.add(id);
-		}
-	}
+	const { year, drivers } = compute_floor(detected, AGGREGATE_IGNORE);
+	// Floor at 2015 so the docs never claim a pre-ES6 target if every
+	// detected feature happens to lack a Baseline year.
+	const final_year = Math.max(year, 2015);
 
 	// eslint-disable-next-line no-console
-	console.log(`  → ${max_year} (features that drove the floor:)`);
+	console.log(`  → ${final_year} (features that drove the floor:)`);
 	for (const id of [...drivers].sort()) {
 		// eslint-disable-next-line no-console
 		console.log(`    - ${name_for_feature(id)} (${id})`);
 	}
 
-	return max_year;
+	return final_year;
 }
 
 /**
@@ -626,51 +619,21 @@ function binding_fixture(name, props) {
 
 /**
  * Compile a `.svelte` fixture to JS (no-op for `.js` fixtures), then
- * bundle the result with rollup using the same export conditions as
- * `bundle_runtime`. Returns the bundled code as a single string.
+ * bundle the result through the shared `bundle` helper. Fixtures are tiny
+ * so circular-dep warnings from the Svelte runtime are silenced.
  *
  * @param {{ name: string, source: string, kind: 'svelte' | 'js' }} feature
  */
 async function bundle_fixture(feature) {
-	let entry_code = feature.source;
-	if (feature.kind === 'svelte') {
-		const compiled = svelte_compile(feature.source, {
-			generate: 'client',
-			filename: 'Fixture.svelte',
-			dev: false
-		});
-		entry_code = compiled.js.code;
-	}
-
-	const bundle = await rollup({
-		input: '__fixture__',
-		plugins: [
-			virtual({ __fixture__: entry_code }),
-			{
-				name: 'resolve-svelte',
-				resolveId(id) {
-					if (id.startsWith('svelte')) {
-						const entry = pkg.exports[id.replace('svelte', '.')];
-						if (!entry) return;
-						return path.resolve(pkg_dir, entry.browser ?? entry.default);
-					}
-				}
-			},
-			nodeResolve({ exportConditions: ['production', 'import', 'browser', 'default'] })
-		],
-		external: ['esm-env'],
-		// Fixtures are tiny; suppress rollup's warnings about circular deps
-		// in the Svelte runtime which we already accept in `bundle_runtime`.
-		onwarn() {}
-	});
-
-	const { output } = await bundle.generate({ format: 'esm' });
-	await bundle.close();
-
-	return output
-		.filter((chunk) => chunk.type === 'chunk')
-		.map((chunk) => /** @type {import('rollup').OutputChunk} */ (chunk).code)
-		.join('\n');
+	const entry_code =
+		feature.kind === 'svelte'
+			? svelte_compile(feature.source, {
+					generate: 'client',
+					filename: 'Fixture.svelte',
+					dev: false
+				}).js.code
+			: feature.source;
+	return bundle(entry_code, { silent: true });
 }
 
 /**
@@ -681,24 +644,10 @@ async function bundle_fixture(feature) {
  * @param {string} fixture_file Absolute path to the `.ts` bundle.
  */
 function scan_fixture(fixture_file) {
-	const detected = detect_features([fixture_file]);
-	let max_year = 0;
-	/** @type {string[]} */
-	const driving_ids = [];
-	for (const id of detected) {
-		if (SAFE_TO_IGNORE.has(id)) continue;
-		const year = baseline_year_for_feature(id);
-		if (!year) continue;
-		if (year > max_year) {
-			max_year = year;
-			driving_ids.length = 0;
-			driving_ids.push(id);
-		} else if (year === max_year) {
-			driving_ids.push(id);
-		}
-	}
+	const { year, drivers } = compute_floor(detect_features([fixture_file]), SAFE_TO_IGNORE);
+	const driving_ids = [...drivers];
 	return {
-		year: max_year,
+		year,
 		driving_ids,
 		driving_names: driving_ids.map((id) => `\`${name_for_feature(id)}\``)
 	};
@@ -730,7 +679,6 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 
 	for (let i = 0; i < features.length; i++) {
 		const feature = features[i];
-		// eslint-disable-next-line no-console
 		process.stdout.write(`\r  ${i + 1}/${features.length}  ${feature.name}`.padEnd(80));
 
 		let bundle_code;
@@ -770,7 +718,6 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 			baseline_year: final_year
 		});
 	}
-	// eslint-disable-next-line no-console
 	process.stdout.write('\n');
 
 	return rows;
@@ -952,13 +899,18 @@ function rewrite_docs_page(headline_table, conditional_table) {
 /* eslint-disable no-console */
 async function main() {
 	console.log('Preparing scratch directory…');
-	prepare_tmp_dir();
+	// Wipe and recreate so stale bundles can't leak into the next scan.
+	fs.rmSync(tmp_dir, { recursive: true, force: true });
+	fs.mkdirSync(tmp_dir, { recursive: true });
 
 	try {
 		console.log('Bundling runtime entries…');
 		const runtime_files = [];
-		for (const importee of runtime_entry_points) {
-			const code = await bundle_runtime(importee);
+		for (const importee of browser_subpaths().map(importee_for)) {
+			// `import * as` + re-export keeps default and named exports
+			// alive, so flag modules (only a default export) don't produce
+			// empty chunks but their code still ends up in the scan.
+			const code = await bundle(`import * as __ns from '${importee}'; export default __ns;`);
 			const file = path.join(tmp_dir, `${safe_name(importee)}.ts`);
 			fs.writeFileSync(file, code);
 			runtime_files.push(file);
