@@ -125,6 +125,8 @@ function build_detection_maps() {
 	const globals = new Map();
 	/** @type {Map<string, Map<string, string>>} type → member → feature_id */
 	const members = new Map();
+	/** @type {Map<string, string>} string-literal value → feature_id */
+	const string_literals = new Map();
 	/** @type {Array<{ predicate: (n: ts.Node) => boolean, feature_id: string }>} */
 	const syntax_predicates = [];
 
@@ -197,7 +199,7 @@ function build_detection_maps() {
 		}
 	}
 
-	return { globals, members, syntax_predicates };
+	return { globals, members, string_literals, syntax_predicates };
 }
 
 const MAPS = build_detection_maps();
@@ -214,39 +216,49 @@ const MAPS = build_detection_maps();
 const EXTRA_FEATURE_INFO = new Map();
 
 /**
- * Register additional member-access rules for APIs the `web-features`
- * dataset doesn't track yet. The generator calls this at startup for
- * cases like `CSSStyleDeclaration.zoom` — Firefox didn't expose it until
- * v126, but no `web-features` entry covers that fact.
+ * Register additional detection rules for APIs the `web-features` dataset
+ * doesn't track yet. Two rule shapes are accepted:
  *
- * Each rule contributes:
- *   - a `(receiver_type, member) → feature_id` entry in the detection
- *     map, so the AST walker emits `feature_id` whenever a matching
- *     property access shows up,
- *   - per-browser versions and a baseline year for `feature_id`, used
- *     downstream by `versions_for_feature`, `name_for_feature`, and
- *     `baseline_year_for_feature`.
+ *   - **Member access**: `{ receiver_type, member, ... }` — flags
+ *     `expr.member` when `expr`'s type resolves to `receiver_type`.
+ *     Equivalent to a `api.X.Y` rule auto-derived from web-features.
+ *
+ *   - **String literal**: `{ string_literal, ... }` — flags any
+ *     occurrence of the literal value in source. Used for API options
+ *     that are string-typed (e.g. `{ box: 'device-pixel-content-box' }`).
+ *     The walker can be tightened later with a contextual-type check if
+ *     false positives ever surface; for now an exact match is enough
+ *     (these strings are too specific to occur incidentally).
+ *
+ * Each rule contributes its `feature_id`, per-browser versions,
+ * baseline year, and display name to the shared lookup tables.
  *
  * @param {Array<{
- *   receiver_type: string,
- *   member: string,
  *   feature_id: string,
  *   name: string,
  *   baseline_year: number,
- *   versions: Record<string, string | null>
+ *   versions: Record<string, string | null>,
+ *   receiver_type?: string,
+ *   member?: string,
+ *   string_literal?: string
  * }>} rules
  */
 export function register_extra_rules(rules) {
 	for (const rule of rules) {
-		let by_member = MAPS.members.get(rule.receiver_type);
-		if (!by_member) {
-			by_member = new Map();
-			MAPS.members.set(rule.receiver_type, by_member);
-		}
-		// Don't overwrite an existing rule from web-features; the latter
-		// is canonical when it exists. Supplemental rules fill gaps.
-		if (!by_member.has(rule.member)) {
-			by_member.set(rule.member, rule.feature_id);
+		if (rule.receiver_type && rule.member) {
+			let by_member = MAPS.members.get(rule.receiver_type);
+			if (!by_member) {
+				by_member = new Map();
+				MAPS.members.set(rule.receiver_type, by_member);
+			}
+			// Don't overwrite an existing web-features rule; that's canonical.
+			if (!by_member.has(rule.member)) {
+				by_member.set(rule.member, rule.feature_id);
+			}
+		} else if (rule.string_literal) {
+			if (!MAPS.string_literals.has(rule.string_literal)) {
+				MAPS.string_literals.set(rule.string_literal, rule.feature_id);
+			}
 		}
 		EXTRA_FEATURE_INFO.set(rule.feature_id, {
 			name: rule.name,
@@ -356,6 +368,15 @@ function walk_source(source, checker, emit) {
 					emit(feature_id);
 				}
 			}
+		}
+
+		// String-literal detection. The walker matches by value alone;
+		// false positives are theoretically possible but the literal
+		// values we care about (e.g. `'device-pixel-content-box'`) are
+		// distinctive enough that one hasn't been observed.
+		if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+			const feature_id = MAPS.string_literals.get(node.text);
+			if (feature_id) emit(feature_id);
 		}
 
 		// Member access detection (requires the checker).

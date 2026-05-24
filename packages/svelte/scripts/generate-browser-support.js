@@ -62,6 +62,30 @@ register_extra_rules([
 		name: 'CSS zoom property reads (getComputedStyle(...).zoom)',
 		baseline_year: 2024,
 		versions: { firefox: '126' }
+	},
+	{
+		// `box: 'device-pixel-content-box'` in `bind_resize_observer`
+		// (size.js). The TS DOM lib declares the option value as part of
+		// the `ResizeObserverBoxOptions` union — we could check the
+		// contextual type, but matching the literal value is enough since
+		// the string is too specific to occur incidentally. Per MDN BCD:
+		//   - constructor option: Chrome 84, Firefox 93, Safari 15.4
+		//   - `ResizeObserverEntry.devicePixelContentBoxSize`: Safari NOT
+		//     SUPPORTED (`version_added: false`)
+		// Safari therefore silently accepts the option from 15.4 onwards
+		// but never exposes the matching entry property, so the binding
+		// reads `undefined` on any Safari.
+		string_literal: 'device-pixel-content-box',
+		feature_id: 'extra:device-pixel-content-box',
+		name: 'ResizeObserver `box: device-pixel-content-box` option + `entry.devicePixelContentBoxSize`',
+		baseline_year: 2023,
+		versions: {
+			chrome: '84',
+			edge: '84',
+			firefox: '93',
+			safari: null,
+			safari_ios: null
+		}
 	}
 ]);
 
@@ -101,7 +125,11 @@ const SAFE_TO_IGNORE = new Set(['devicepixelratio', 'trusted-types']);
  * staleness check below also verifies the entry is still present in the
  * runtime — if the detector doesn't flag it, the entry can be removed.
  */
-const BEHAVIORAL_IGNORE = new Set(['structured-clone', 'extra:css-zoom-read']);
+const BEHAVIORAL_IGNORE = new Set([
+	'structured-clone',
+	'extra:css-zoom-read',
+	'extra:device-pixel-content-box'
+]);
 
 /** Aggregate ignore set — used for the headline floor. */
 const AGGREGATE_IGNORE = new Set([...SAFE_TO_IGNORE, ...BEHAVIORAL_IGNORE]);
@@ -270,66 +298,6 @@ const TESTED_DIRECTIVES = [
 		name: 'Custom elements (`<svelte:options customElement>`)',
 		source: `<svelte:options customElement="my-el" />\n<div></div>`
 	}
-];
-
-/**
- * Blind-spot detectors: APIs the type-aware scanner cannot see because
- * they're accessed via string-literal options, dynamic property reads,
- * or with type information stripped by bundling. Each detector runs a
- * regex over the bundled fixture and, if it matches, bumps the
- * fixture's floor to the declared baseline year.
- *
- * Each entry MUST be justified — the comment is the only documentation
- * a reviewer has to evaluate why an entry belongs here.
- *
- * Versions map convention:
- *   - `string` (e.g. `'93'`) — minimum supported version
- *   - `null` — never supported in that browser
- *   - omitted — at or below the runtime floor (renderer shows `(floor)`)
- *
- * @type {Array<{
- *   regex: RegExp,
- *   name: string,
- *   baseline_year: number,
- *   versions: Record<string, string | null>
- * }>}
- */
-const BLIND_SPOT_DETECTORS = [
-	{
-		// The combination of `box: 'device-pixel-content-box'` (constructor
-		// option, in `bind_resize_observer` / size.js) plus reading
-		// `entry.devicePixelContentBoxSize` in the observer callback. Per
-		// `@mdn/browser-compat-data`:
-		//   - `box: 'device-pixel-content-box'` constructor option:
-		//     Chrome 84, Edge 84, Firefox 93, Safari 15.4.
-		//   - `ResizeObserverEntry.devicePixelContentBoxSize` property:
-		//     Chrome 84, Edge 84, Firefox 93, Safari NOT SUPPORTED
-		//     (`"version_added": false`).
-		// Safari accepts the constructor option silently from 15.4, but never
-		// exposes the property on entries — so reading the binding always
-		// yields `undefined` on Safari, regardless of version. Marking Safari
-		// as `null` is the honest answer.
-		regex: /['"]device-pixel-content-box['"]/,
-		name: '`ResizeObserver` `box: device-pixel-content-box` option + `entry.devicePixelContentBoxSize`',
-		baseline_year: 2023,
-		versions: {
-			chrome: '84',
-			edge: '84',
-			firefox: '93',
-			safari: null,
-			safari_ios: null
-		}
-	}
-	// Note: `getComputedStyle(...).zoom` is no longer a regex blind spot;
-	// it's registered as a supplemental member rule on `CSSStyleDeclaration`
-	// (see `register_extra_rules` above), so the type-aware walker handles
-	// it precisely.
-	// Note: `controller.abort(STALE_REACTION)` in `runtime.js` was previously
-	// detected here, but the call is in the always-on reactivity teardown
-	// and gets bundled with every fixture. Detection would fire for every
-	// feature, drowning the table in noise — and the API degrades
-	// gracefully (older browsers still abort; only `signal.reason` differs).
-	// Not worth flagging.
 ];
 
 /**
@@ -706,31 +674,6 @@ async function bundle_fixture(feature) {
 }
 
 /**
- * Apply blind-spot detectors to a bundled fixture. Returns the highest
- * baseline year demanded by any matching detector, along with version
- * data and the list of detector names that matched.
- *
- * @param {string} bundle_code
- */
-function apply_blind_spots(bundle_code) {
-	let year = 0;
-	/** @type {Record<string, string | null>} */
-	let versions = {};
-	const matched = [];
-
-	for (const detector of BLIND_SPOT_DETECTORS) {
-		if (!detector.regex.test(bundle_code)) continue;
-		matched.push(detector.name);
-		if (detector.baseline_year > year) {
-			year = detector.baseline_year;
-			versions = detector.versions;
-		}
-	}
-
-	return { year, versions, matched };
-}
-
-/**
  * Detect features in a single fixture bundle and report the per-fixture
  * floor year along with the IDs that drove it. Used for the per-feature
  * conditional table.
@@ -802,45 +745,29 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 		fs.writeFileSync(fixture_file, bundle_code);
 
 		const scanned = scan_fixture(fixture_file);
-		const blind = apply_blind_spots(bundle_code);
-
-		const scanner_year = scanned.year || 0;
-		const final_year = Math.max(scanner_year, blind.year);
+		const final_year = scanned.year;
 
 		// Skip features at or below the runtime floor — they don't need a row.
 		if (final_year <= runtime_year || final_year === 0) continue;
 
-		// Prefer blind-spot version data when it's the strictest constraint.
-		// Otherwise look up exact per-feature versions in `web-features`
-		// (more precise than the year-based mapping).
-		/** @type {Record<string, string | null> | undefined} */
-		let versions;
-		let api;
-		if (blind.matched.length > 0 && blind.year >= scanner_year) {
-			versions = blind.versions;
-			api = blind.matched.join(', ');
-		} else if (typeof final_year === 'number' && Number.isFinite(final_year)) {
-			api = scanned.driving_names.join(', ') || '(see bundle output)';
-			versions = versions_from_features(scanned.driving_ids) ?? undefined;
-			if (!versions) {
-				try {
-					versions = browser_versions_for(final_year);
-				} catch {
-					continue;
-				}
+		// Use exact per-feature versions where available (from web-features
+		// or supplemental rules), falling back to the conservative year
+		// mapping only if no feature has explicit version data.
+		const api = scanned.driving_names.join(', ') || '(see bundle output)';
+		let versions = versions_from_features(scanned.driving_ids);
+		if (!versions) {
+			try {
+				versions = browser_versions_for(final_year);
+			} catch {
+				continue;
 			}
-		} else {
-			// Scanner says 'newly' AND no blind spot matched — we know the
-			// fixture uses something past every recorded Baseline year, but
-			// can't pin down browser versions. Skip rather than mislead.
-			continue;
 		}
 
 		rows.push({
 			name: feature.name,
 			api,
 			versions,
-			baseline_year: Number.isFinite(final_year) ? /** @type {number} */ (final_year) : 'newly'
+			baseline_year: final_year
 		});
 	}
 	// eslint-disable-next-line no-console
