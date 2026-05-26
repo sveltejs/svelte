@@ -5,7 +5,7 @@
 		$effect.root(() => {
 			async function fn() {
 				let count = $state(1);
-				increment = () => {debugger;count++;};
+				increment = () => { count++; };
 				const value = $derived(await count);
 				$effect.pre(() => console.log(value))
 				return { get value() { return value } };
