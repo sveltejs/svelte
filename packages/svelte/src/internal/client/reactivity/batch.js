@@ -393,7 +393,7 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.linked && this.#pending === 0 && (this.#roots.length === 0 || next_batch !== null)) {
+		if (this.#pending === 0 && (this.#roots.length === 0 || next_batch !== null)) {
 			this.#unlink();
 
 			// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
