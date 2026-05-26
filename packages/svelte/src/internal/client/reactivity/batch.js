@@ -393,7 +393,7 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.linked && this.#pending === 0) {
+		if (this.linked && this.#pending === 0 && this.#roots.length === 0) {
 			this.#unlink();
 		}
 
@@ -411,10 +411,7 @@ export class Batch {
 		// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
 		// once more in that case - most of the time this will just clean up dirty branches.
 		if (this.#roots.length > 0) {
-			if (next_batch === null) {
-				next_batch = this;
-				this.#link();
-			}
+			next_batch ??= this;
 
 			const batch = next_batch;
 			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
