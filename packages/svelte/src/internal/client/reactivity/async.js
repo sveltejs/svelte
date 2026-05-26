@@ -154,13 +154,21 @@ export function capture() {
  */
 export async function save(promise, unset) {
 	var batch = current_batch;
-	var active = /** @type {Effect} */ (active_effect);
 	var restore = capture();
 	var value = await promise;
 
 	return () => {
+		if (unset) {
+			// If this is happening outside the context of an async derived,
+			// context will not automatically be unset
+			queue_micro_task(() => {
+				if (batch === current_batch) {
+					unset_context();
+				}
+			});
+		}
+
 		restore();
-		if (unset) queue_micro_task(unset_context);
 		return value;
 	};
 }
