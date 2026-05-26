@@ -393,7 +393,7 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.linked && this.#pending === 0 && this.#roots.length === 0) {
+		if (this.linked && this.#pending === 0 && (this.#roots.length === 0 || next_batch !== null)) {
 			this.#unlink();
 		}
 
