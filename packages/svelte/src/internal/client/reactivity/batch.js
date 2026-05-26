@@ -101,7 +101,7 @@ export class Batch {
 	/** True as soon as `#process` was called */
 	#started = false;
 
-	linked = true;
+	linked = false;
 
 	/** @type {Batch | null} */
 	#prev = null;
@@ -975,6 +975,8 @@ export class Batch {
 	}
 
 	#link() {
+		if (this.linked) return;
+
 		if (last_batch === null) {
 			first_batch = last_batch = this;
 		} else {
@@ -983,9 +985,12 @@ export class Batch {
 		}
 
 		last_batch = this;
+		this.linked = true;
 	}
 
 	#unlink() {
+		if (!this.linked) return;
+
 		var prev = this.#prev;
 		var next = this.#next;
 
@@ -1001,6 +1006,9 @@ export class Batch {
 			next.#prev = prev;
 		}
 
+		// null out in case it's relinked later
+		this.#prev = null;
+		this.#next = null;
 		this.linked = false;
 	}
 }
