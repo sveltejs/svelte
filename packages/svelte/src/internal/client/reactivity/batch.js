@@ -641,8 +641,6 @@ export class Batch {
 	}
 
 	#commit() {
-		this.#unlink();
-
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
