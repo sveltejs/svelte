@@ -643,6 +643,7 @@ export class Batch {
 		this.#fork_commit_callbacks.clear();
 
 		this.#unlink();
+		this.#deferred?.resolve();
 	}
 
 	/**
