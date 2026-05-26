@@ -2,7 +2,6 @@ import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
-	FunctionDeclaration,
 	VariableDeclaration,
 	VariableDeclarator,
 	Expression,
@@ -161,10 +160,10 @@ export namespace AST {
 		};
 	}
 
-	/** A `{let ...}`, `{const ...}`, `{var ...}` or `{function ...}` tag */
+	/** A `{let ...}` or `{const ...}` tag */
 	export interface DeclarationTag extends BaseNode {
 		type: 'DeclarationTag';
-		declaration: VariableDeclaration | FunctionDeclaration;
+		declaration: VariableDeclaration;
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;

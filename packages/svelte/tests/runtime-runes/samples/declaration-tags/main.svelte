@@ -12,10 +12,8 @@
 {#if visible}
 	{let counter = $state({ value: initial })}
 	{let doubled = $derived(counter.value * 2)}
-	{var suffix = ' total'}
-	{function format(value) {
-		return `${value}${suffix}`;
-	}}
+	{const suffix = ' total'}
+	{const format = (value) => `${value}${suffix}`}
 
 	<button onclick={() => (counter.value += 1)}>{counter.value}</button>
 	<p>{format(doubled)}</p>

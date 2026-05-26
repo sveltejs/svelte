@@ -1,10 +1,10 @@
 ---
-title: {<declaration ...>}
+title: {const/let ...>}
 ---
 
-Declaration tags define local variables and functions inside markup.
+Declaration tags define local variables inside markup.
 
-You can use `let`, `const`, `var` and `function` declarations:
+You can use `let` and `const` declarations:
 
 <!-- codeblock:start {"title":"Declaration tags"} -->
 ```svelte
@@ -15,16 +15,14 @@ You can use `let`, `const`, `var` and `function` declarations:
 
 {#each boxes as box}
 	{const area = box.width * box.height}
-	{function label(value) {
-		return `${value} square pixels`;
-	}}
+	{const label = `${area} square pixels`}
 
-	<p>{label(area)}</p>
+	<p>{label}</p>
 {/each}
 ```
 <!-- codeblock:end -->
 
-Unlike [`{@const ...}`](@const), declaration tags are plain JavaScript declarations. This means `{const ...}` is not reactive by itself; use runes such as `$state` or `$derived` when you need reactive values:
+Unlike [`{@const ...}`](@const), declaration tags are plain JavaScript declarations. This means `{const/let ...}` is not reactive by itself; use runes such as `$state` or `$derived` when you need reactive values:
 
 <!-- codeblock:start {"title":"Reactive declaration tags"} -->
 ```svelte
@@ -39,7 +37,7 @@ Unlike [`{@const ...}`](@const), declaration tags are plain JavaScript declarati
 
 {#if modify}
 	{let name = $state(user.name)}
-	{let greeting = $derived(`Hello ${name}`)}
+	{const greeting = $derived(`Hello ${name}`)}
 
 	<input bind:value={name} />
 	<p>{greeting}</p>

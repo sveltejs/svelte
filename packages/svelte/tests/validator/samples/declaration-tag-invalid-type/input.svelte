@@ -1,3 +1,3 @@
 {#if true}
-	{class Foo {}}
+	{var foo = 1}
 {/if}

@@ -9,14 +9,7 @@ import { validate_opening_tag } from './shared/utils.js';
  */
 export function DeclarationTag(node, context) {
 	if (context.state.analysis.runes) {
-		const expected =
-			node.declaration.type === 'FunctionDeclaration' ? 'f' : node.declaration.kind[0];
-		validate_opening_tag(node, context.state, expected);
-	}
-
-	if (node.declaration.type !== 'VariableDeclaration') {
-		context.visit(node.declaration);
-		return;
+		validate_opening_tag(node, context.state, node.declaration.kind[0]);
 	}
 
 	context.visit(node.declaration, {

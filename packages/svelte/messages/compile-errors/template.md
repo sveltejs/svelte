@@ -193,7 +193,7 @@ The same applies to components:
 
 ## declaration_tag_invalid_type
 
-> Declaration tags must be `let`, `const`, `var` or `function` declarations
+> Declaration tags must be `let` or `const` declarations
 
 ## directive_invalid_value
 

@@ -37,7 +37,7 @@ export interface AnalysisState {
 	 */
 	derived_function_depth: number;
 
-	/** Collected info about async `{@const }`/`{let/const/var/ ...}` declarations */
+	/** Collected info about async `{@const }`/`{let/const ...}` declarations */
 	async_consts?: {
 		id: Identifier;
 		/** How many `$.run(...)` entries are already allocated in this scope */

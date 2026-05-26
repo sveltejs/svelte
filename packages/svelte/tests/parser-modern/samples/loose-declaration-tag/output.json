@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 52,
+	"end": 38,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -11,7 +11,7 @@
 				"type": "IfBlock",
 				"elseif": false,
 				"start": 0,
-				"end": 52,
+				"end": 38,
 				"test": {
 					"type": "Literal",
 					"start": 5,
@@ -99,39 +99,7 @@
 						{
 							"type": "Text",
 							"start": 32,
-							"end": 34,
-							"raw": "\n\t",
-							"data": "\n\t"
-						},
-						{
-							"type": "DeclarationTag",
-							"start": 34,
-							"end": 46,
-							"declaration": {
-								"type": "FunctionDeclaration",
-								"id": {
-									"type": "Identifier",
-									"name": "",
-									"start": 45,
-									"end": 45
-								},
-								"generator": false,
-								"async": false,
-								"params": [],
-								"body": {
-									"type": "BlockStatement",
-									"body": [],
-									"start": 45,
-									"end": 45
-								},
-								"start": 35,
-								"end": 45
-							}
-						},
-						{
-							"type": "Text",
-							"start": 46,
-							"end": 47,
+							"end": 33,
 							"raw": "\n",
 							"data": "\n"
 						}
@@ -141,6 +109,5 @@
 			}
 		]
 	},
-	"options": null,
-	"comments": []
+	"options": null
 }

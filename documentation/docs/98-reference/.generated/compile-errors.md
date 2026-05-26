@@ -402,7 +402,7 @@ Cannot declare a variable with the same name as an import from `<script module>`
 ### declaration_tag_invalid_type
 
 ```
-Declaration tags must be `let`, `const`, `var` or `function` declarations
+Declaration tags must be `let` or `const` declarations
 ```
 
 ### derived_invalid_export

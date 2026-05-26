@@ -11,8 +11,8 @@ import { create_fragment } from '../utils/create.js';
 import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
-const regex_supported_declaration = /(?:let|const|var|function)\b/y;
-const regex_unsupported_declaration = /(?:class|type|interface|enum)\b/y;
+const regex_supported_declaration = /(?:let|const)\b/y;
+const regex_unsupported_declaration = /(?:var|function|class|type|interface|enum)\b/y;
 
 const pointy_bois = { '<': '>' };
 
@@ -39,10 +39,7 @@ export default function tag(parser) {
 			type: 'DeclarationTag',
 			start,
 			end: parser.index,
-			declaration:
-				/** @type {import('estree').VariableDeclaration | import('estree').FunctionDeclaration} */ (
-					declaration
-				),
+			declaration: /** @type {import('estree').VariableDeclaration} */ (declaration),
 			metadata: {
 				expression: new ExpressionMetadata()
 			}
@@ -68,20 +65,21 @@ export default function tag(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {null | import('estree').VariableDeclaration | import('estree').FunctionDeclaration}
+ * @returns {null | import('estree').VariableDeclaration}
  */
 function read_declaration(parser) {
 	const start = parser.index;
 
-	if (parser.match_regex(regex_unsupported_declaration)) {
-		e.declaration_tag_invalid_type({ start, end: start + 5 });
+	const unsupported = parser.match_regex(regex_unsupported_declaration);
+	if (unsupported) {
+		e.declaration_tag_invalid_type({ start, end: start + unsupported.length });
 	}
 
 	if (!parser.match_regex(regex_supported_declaration)) {
 		return null;
 	}
 
-	/** @type {import('estree').Statement | import('estree').VariableDeclaration | import('estree').FunctionDeclaration} */
+	/** @type {import('estree').Statement | import('estree').VariableDeclaration} */
 	let declaration;
 	try {
 		declaration = parse_statement_at(parser, parser.template, start);
@@ -92,58 +90,31 @@ function read_declaration(parser) {
 		if (end === undefined) throw error;
 
 		parser.index = end;
-		if (parser.template.startsWith('function', start)) {
-			declaration = {
-				type: 'FunctionDeclaration',
-				id: {
-					type: 'Identifier',
-					name: '',
-					start: parser.index,
-					end: parser.index
-				},
-				generator: false,
-				async: false,
-				params: [],
-				body: {
-					type: 'BlockStatement',
-					body: [],
-					start: parser.index,
-					end: parser.index
-				},
-				start,
-				end
-			};
-		} else {
-			const kind = parser.template.startsWith('const', start)
-				? 'const'
-				: parser.template.startsWith('var', start)
-					? 'var'
-					: 'let';
+		const kind = parser.template.startsWith('const', start) ? 'const' : 'let';
 
-			declaration = {
-				type: 'VariableDeclaration',
-				kind,
-				declarations: [
-					{
-						type: 'VariableDeclarator',
-						id: {
-							type: 'Identifier',
-							name: '',
-							start: parser.index,
-							end: parser.index
-						},
-						init: null,
+		declaration = {
+			type: 'VariableDeclaration',
+			kind,
+			declarations: [
+				{
+					type: 'VariableDeclarator',
+					id: {
+						type: 'Identifier',
+						name: '',
 						start: parser.index,
 						end: parser.index
-					}
-				],
-				start,
-				end
-			};
-		}
+					},
+					init: null,
+					start: parser.index,
+					end: parser.index
+				}
+			],
+			start,
+			end
+		};
 	}
 
-	if (declaration.type !== 'VariableDeclaration' && declaration.type !== 'FunctionDeclaration') {
+	if (declaration.type !== 'VariableDeclaration') {
 		e.declaration_tag_invalid_type({
 			start: declaration.start ?? start,
 			end: declaration.end ?? parser.index
@@ -151,7 +122,7 @@ function read_declaration(parser) {
 	}
 
 	// TODO support using
-	if (declaration.type === 'VariableDeclaration' && declaration.kind === 'using') {
+	if (declaration.kind !== 'let' && declaration.kind !== 'const') {
 		e.declaration_tag_invalid_type(declaration);
 	}
 
