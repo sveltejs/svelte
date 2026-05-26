@@ -52,7 +52,6 @@ import {
 	flushSync,
 	get_cv,
 	active_batch,
-	schedule_effect,
 	set_cv,
 	get_wv
 } from './reactivity/batch.js';
@@ -210,10 +209,11 @@ export function is_dirty(reaction) {
 }
 
 /**
+ * @param {Batch} batch
  * @param {Value} signal
  * @param {Effect} effect
  */
-function schedule_possible_effect_self_invalidation(signal, effect) {
+function schedule_possible_effect_self_invalidation(batch, signal, effect) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -225,9 +225,9 @@ function schedule_possible_effect_self_invalidation(signal, effect) {
 		var reaction = reactions[i];
 
 		if ((reaction.f & DERIVED) !== 0) {
-			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect);
+			schedule_possible_effect_self_invalidation(batch, /** @type {Derived} */ (reaction), effect);
 		} else if (effect === reaction) {
-			schedule_effect(/** @type {Effect} */ (reaction));
+			batch.schedule(/** @type {Effect} */ (reaction));
 		}
 	}
 }
@@ -308,10 +308,12 @@ export function update_reaction(reaction) {
 			untracked_writes !== null &&
 			!untracking &&
 			deps !== null &&
-			(reaction.f & DERIVED) === 0
+			(reaction.f & DERIVED) === 0 &&
+			current_batch !== null
 		) {
 			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
 				schedule_possible_effect_self_invalidation(
+					current_batch,
 					untracked_writes[i],
 					/** @type {Effect} */ (reaction)
 				);

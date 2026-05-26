@@ -28,7 +28,6 @@ import {
 	WAS_MARKED,
 	CONNECTED,
 	STATE_EAGER_EFFECT,
-	REACTION_IS_UPDATING,
 	REACTION_RAN
 } from '#client/constants';
 import * as e from '../errors.js';
@@ -40,12 +39,10 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	eager_block_effects,
-	schedule_effect,
 	legacy_updates,
 	set_cv,
 	get_cv,
-	active_batch,
-	current_batch
+	active_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';

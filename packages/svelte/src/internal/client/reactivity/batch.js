@@ -1233,14 +1233,6 @@ function depends_on(reaction, sources, checked) {
 	return false;
 }
 
-/**
- * @param {Effect} effect
- * @returns {void}
- */
-export function schedule_effect(effect) {
-	/** @type {Batch} */ (current_batch).schedule(effect);
-}
-
 /** @type {Source<number>[]} */
 let eager_versions = [];
 
