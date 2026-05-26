@@ -804,11 +804,11 @@ export function script_context_deprecated(node) {
 }
 
 /**
- * Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+ * Unrecognised attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
  * @param {null | NodeLike} node
  */
 export function script_unknown_attribute(node) {
-	w(node, 'script_unknown_attribute', `Unrecognized attribute — should be one of \`generics\`, \`lang\` or \`module\`. If this exists for a preprocessor, ensure that the preprocessor removes it\nhttps://svelte.dev/e/script_unknown_attribute`);
+	w(node, 'script_unknown_attribute', `Unrecognised attribute — should be one of \`generics\`, \`lang\` or \`module\`. If this exists for a preprocessor, ensure that the preprocessor removes it\nhttps://svelte.dev/e/script_unknown_attribute`);
 }
 
 /**
