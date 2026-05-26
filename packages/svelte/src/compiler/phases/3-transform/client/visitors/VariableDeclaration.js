@@ -213,7 +213,7 @@ export function VariableDeclaration(node, context) {
 							location ? b.literal(location) : undefined
 						);
 
-						call = should_save ? save(call) : b.await(call);
+						call = should_save ? save(call, true) : b.await(call);
 
 						declarations.push(b.declarator(declarator.id, call));
 					} else {
@@ -251,7 +251,7 @@ export function VariableDeclaration(node, context) {
 								location ? b.literal(location) : undefined
 							);
 
-							call = should_save ? save(call) : b.await(call);
+							call = should_save ? save(call, true) : b.await(call);
 						}
 
 						declarations.push(b.declarator(id, call));

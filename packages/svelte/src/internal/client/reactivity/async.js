@@ -149,25 +149,26 @@ export function capture() {
  * `await a + b` becomes `(await $.save(a))() + b`
  * @template T
  * @param {Promise<T>} promise
+ * @param {boolean} unset
  * @returns {Promise<() => T>}
  */
-export async function save(promise) {
+export async function save(promise, unset) {
 	var batch = current_batch;
-	var active = /** @type {Effect} */ (active_effect);
 	var restore = capture();
 	var value = await promise;
 
 	return () => {
-		restore();
-		// If there's a boundary, the surrounding system will call unset_context at the appropriate time
-		if (!active.b) {
-			// If this is the last in a chain of async operations, the context would stay around
-			// until the next async operation happens, which can result in weird/buggy behavior
-			// because other sync work might suddenly be associated with an async batch.
+		if (unset) {
+			// If this is happening outside the context of an async derived,
+			// context will not automatically be unset
 			queue_micro_task(() => {
-				if (batch === current_batch) unset_context();
+				if (batch === current_batch) {
+					unset_context();
+				}
 			});
 		}
+
+		restore();
 		return value;
 	};
 }
