@@ -25,6 +25,7 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import { queue_micro_task } from '../dom/task.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -151,11 +152,22 @@ export function capture() {
  * @returns {Promise<() => T>}
  */
 export async function save(promise) {
+	var batch = current_batch;
+	var active = /** @type {Effect} */ (active_effect);
 	var restore = capture();
 	var value = await promise;
 
 	return () => {
 		restore();
+		// If there's a boundary, the surrounding system will call unset_context at the appropriate time
+		if (!active.b) {
+			// If this is the last in a chain of async operations, the context would stay around
+			// until the next async operation happens, which can result in weird/buggy behavior
+			// because other sync work might suddenly be associated with an async batch.
+			queue_micro_task(() => {
+				if (batch === current_batch) unset_context();
+			});
+		}
 		return value;
 	};
 }
@@ -352,15 +364,15 @@ export function wait(blockers) {
  */
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
-	var boundary = /** @type {Boundary} */ (effect.b);
+	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
 	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = boundary.is_rendered();
+	var blocking = !!boundary?.is_rendered();
 
-	boundary.update_pending_count(1, batch);
+	boundary?.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
 	return () => {
-		boundary.update_pending_count(-1, batch);
+		boundary?.update_pending_count(-1, batch);
 		batch.decrement(blocking, effect);
 	};
 }
