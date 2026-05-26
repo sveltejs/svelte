@@ -1,8 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
-import * as e from '../../../errors.js';
 import * as b from '#compiler/builders';
-import { validate_opening_tag, validate_tag_placement } from './shared/utils.js';
+import { validate_opening_tag } from './shared/utils.js';
 
 /**
  * @param {AST.DeclarationTag} node
@@ -15,8 +14,6 @@ export function DeclarationTag(node, context) {
 		validate_opening_tag(node, context.state, expected);
 	}
 
-	validate_tag_placement(node, context, e.declaration_tag_invalid_placement);
-
 	if (node.declaration.type !== 'VariableDeclaration') {
 		context.visit(node.declaration);
 		return;
@@ -24,6 +21,7 @@ export function DeclarationTag(node, context) {
 
 	context.visit(node.declaration, {
 		...context.state,
+		in_declaration_tag: true,
 		expression: node.metadata.expression
 	});
 

@@ -1205,8 +1205,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		VariableDeclaration(node, { state, path, next }) {
-			const is_parent_template_tag =
-				path.at(-1)?.type === 'ConstTag' || path.at(-1)?.type === 'DeclarationTag';
+			const is_parent_const_tag = path.at(-1)?.type === 'ConstTag';
 			for (const declarator of node.declarations) {
 				/** @type {Binding[]} */
 				const bindings = [];
@@ -1216,7 +1215,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				for (const id of extract_identifiers(declarator.id)) {
 					const binding = state.scope.declare(
 						id,
-						is_parent_template_tag ? 'template' : 'normal',
+						is_parent_const_tag ? 'template' : 'normal',
 						node.kind,
 						declarator.init
 					);

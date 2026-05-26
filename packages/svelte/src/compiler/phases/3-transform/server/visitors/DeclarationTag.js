@@ -1,4 +1,4 @@
-/** @import { Expression, Identifier, Pattern, Statement, VariableDeclaration } from 'estree' */
+/** @import { Expression, Identifier, Pattern, Statement, ExpressionStatement, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { extract_identifiers, has_await_expression } from '../../../../utils/ast.js';
@@ -53,7 +53,7 @@ export function build_async_declaration_parts(declaration) {
  * @param {ComponentContext} context
  * @param {AST.ConstTag['metadata'] | AST.DeclarationTag['metadata']} metadata
  * @param {Identifier[]} ids
- * @param {Statement[]} assignments
+ * @param {ExpressionStatement[]} assignments
  * @param {VariableDeclaration['kind']} [kind]
  */
 export function add_async_declaration(context, metadata, ids, assignments, kind = 'let') {
@@ -80,5 +80,6 @@ export function add_async_declaration(context, metadata, ids, assignments, kind 
 	const has_await =
 		metadata.expression.has_await ||
 		assignments.some((assignment) => has_await_expression(assignment));
-	run.thunks.push(b.thunk(b.block(assignments), has_await));
+	const body = assignments.length === 1 ? assignments[0].expression : b.block(assignments);
+	run.thunks.push(b.thunk(body, has_await));
 }

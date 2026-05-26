@@ -16,6 +16,8 @@ export interface AnalysisState {
 	 * Parent doesn't necessarily mean direct path predecessor because there could be `#each`, `#if` etc in-between.
 	 */
 	parent_element: string | null;
+	/** True if inside DeclarationTag */
+	in_declaration_tag: boolean;
 	has_props_rune: boolean;
 	/** Which slots the current parent component has */
 	component_slots: Set<string>;
