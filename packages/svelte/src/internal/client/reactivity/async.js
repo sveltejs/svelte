@@ -25,6 +25,7 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import { queue_micro_task } from '../dom/task.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -148,13 +149,25 @@ export function capture() {
  * `await a + b` becomes `(await $.save(a))() + b`
  * @template T
  * @param {Promise<T>} promise
+ * @param {boolean} unset
  * @returns {Promise<() => T>}
  */
-export async function save(promise) {
+export async function save(promise, unset) {
+	var batch = current_batch;
 	var restore = capture();
 	var value = await promise;
 
 	return () => {
+		if (unset) {
+			// If this is happening outside the context of an async derived,
+			// context will not automatically be unset
+			queue_micro_task(() => {
+				if (batch === current_batch) {
+					unset_context();
+				}
+			});
+		}
+
 		restore();
 		return value;
 	};
@@ -352,15 +365,15 @@ export function wait(blockers) {
  */
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
-	var boundary = /** @type {Boundary} */ (effect.b);
+	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
 	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = boundary.is_rendered();
+	var blocking = !!boundary?.is_rendered();
 
-	boundary.update_pending_count(1, batch);
+	boundary?.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
 	return () => {
-		boundary.update_pending_count(-1, batch);
+		boundary?.update_pending_count(-1, batch);
 		batch.decrement(blocking, effect);
 	};
 }

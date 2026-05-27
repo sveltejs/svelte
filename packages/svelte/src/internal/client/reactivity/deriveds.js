@@ -230,9 +230,7 @@ export function async_derived(fn, label, location) {
 					signal.f ^= ERROR_VALUE;
 				}
 
-				internal_set(signal, value);
-
-				if (DEV && location !== undefined) {
+				if (DEV && location !== undefined && !signal.equals(value)) {
 					recent_async_deriveds.add(signal);
 
 					setTimeout(() => {
@@ -242,6 +240,8 @@ export function async_derived(fn, label, location) {
 						}
 					});
 				}
+
+				internal_set(signal, value);
 			}
 
 			batch.deactivate();
