@@ -393,31 +393,30 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.linked && this.#pending === 0) {
+		if (this.#pending === 0 && (this.#roots.length === 0 || next_batch !== null)) {
 			this.#unlink();
-		}
 
-		// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
-		// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
-		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
-		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
-		if (async_mode_flag && !this.linked) {
-			this.#commit();
-			// Rebases can activate other batches or null it out, therefore restore the new one here
-			current_batch = next_batch;
+			// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
+			// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
+			// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
+			// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
+			if (async_mode_flag) {
+				this.#commit();
+				// Rebases can activate other batches or null it out, therefore restore the new one here
+				current_batch = next_batch;
+			}
 		}
 
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
 		// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
 		// once more in that case - most of the time this will just clean up dirty branches.
 		if (this.#roots.length > 0) {
-			if (next_batch === null) {
+			if (next_batch !== null) {
+				const batch = next_batch;
+				batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
+			} else {
 				next_batch = this;
-				this.#link();
 			}
-
-			const batch = next_batch;
-			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
 		}
 
 		if (next_batch !== null) {
@@ -644,8 +643,6 @@ export class Batch {
 	}
 
 	#commit() {
-		this.#unlink();
-
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
