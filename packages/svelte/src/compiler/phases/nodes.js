@@ -102,13 +102,6 @@ export class ExpressionMetadata {
 		if (!this.#blockers) {
 			this.#blockers = new Set();
 
-			for (const d of this.dependencies) {
-				if (d.blocker) this.#blockers.add(d.blocker);
-			}
-
-			// Also consider references reached through closures (e.g. `() => host` inside
-			// an interpolation). Otherwise blockers attached to such bindings are missed
-			// and the template_effect runs before the async value is assigned.
 			for (const r of this.references) {
 				if (r.blocker) this.#blockers.add(r.blocker);
 			}
