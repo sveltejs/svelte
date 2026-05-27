@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern } from 'estree' */
+/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { walk } from 'zimmerframe';
@@ -39,7 +39,7 @@ export default function tag(parser) {
 			type: 'DeclarationTag',
 			start,
 			end: parser.index,
-			declaration: /** @type {import('estree').VariableDeclaration} */ (declaration),
+			declaration: /** @type {VariableDeclaration} */ (declaration),
 			metadata: {
 				expression: new ExpressionMetadata()
 			}
