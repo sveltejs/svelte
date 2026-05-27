@@ -633,7 +633,8 @@ export function has_await_expression(node) {
 /**
  * Turns `await ...` to `(await $.save(...))()`
  * @param {ESTree.Expression} expression
+ * @param {boolean} unset
  */
-export function save(expression) {
-	return b.call(b.await(b.call('$.save', expression)));
+export function save(expression, unset = false) {
+	return b.call(b.await(b.call('$.save', expression, unset && b.true)));
 }
