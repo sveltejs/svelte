@@ -125,7 +125,7 @@ export class SvelteSet extends Set {
 			if (!has) {
 				// If the value doesn't exist, track the version in case it's added later
 				// but don't create sources willy-nilly to track all possible values
-				get(this.#version);
+				get(this.#version, true);
 				return false;
 			}
 
