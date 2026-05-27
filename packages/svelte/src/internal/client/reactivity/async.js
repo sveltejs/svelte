@@ -25,7 +25,6 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
-import { queue_micro_task } from '../dom/task.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -149,25 +148,13 @@ export function capture() {
  * `await a + b` becomes `(await $.save(a))() + b`
  * @template T
  * @param {Promise<T>} promise
- * @param {boolean} unset
  * @returns {Promise<() => T>}
  */
-export async function save(promise, unset) {
-	var batch = current_batch;
+export async function save(promise) {
 	var restore = capture();
 	var value = await promise;
 
 	return () => {
-		if (unset) {
-			// If this is happening outside the context of an async derived,
-			// context will not automatically be unset
-			queue_micro_task(() => {
-				if (batch === current_batch) {
-					unset_context();
-				}
-			});
-		}
-
 		restore();
 		return value;
 	};
