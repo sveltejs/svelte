@@ -41,6 +41,7 @@ import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
+import { OBSOLETE } from './deriveds.js';
 
 /** @type {Batch | null} */
 let first_batch = null;
@@ -630,6 +631,10 @@ export class Batch {
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
 		this.#fork_commit_callbacks.clear();
+
+		for (const deferred of this.async_deriveds.values()) {
+			deferred.reject(OBSOLETE);
+		}
 
 		this.#unlink();
 		this.#deferred?.resolve();
