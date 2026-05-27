@@ -1,5 +1,5 @@
 ---
-title: {const/let ...}
+title: {let/const ...}
 ---
 
 Declaration tags define local variables inside markup with `const` or `let`:
