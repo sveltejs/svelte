@@ -57,6 +57,15 @@ export class Memoizer {
 				this.#blockers.add(binding.blocker);
 			}
 		}
+
+		// Also consider references reached through closures (e.g. `() => host` inside
+		// an interpolation). Otherwise blockers attached to such bindings are missed
+		// and the resulting effect runs before the async value is assigned.
+		for (const binding of metadata.references) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
 	}
 
 	apply() {
