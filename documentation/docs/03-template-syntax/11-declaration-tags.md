@@ -2,9 +2,7 @@
 title: {const/let ...}
 ---
 
-Declaration tags define local variables inside markup.
-
-You can use `let` and `const` declarations:
+Declaration tags define local variables inside markup with `const` or `let`:
 
 <!-- codeblock:start {"title":"Declaration tags"} -->
 ```svelte
@@ -22,7 +20,9 @@ You can use `let` and `const` declarations:
 ```
 <!-- codeblock:end -->
 
-Unlike [`{@const ...}`](@const), declaration tags are plain JavaScript declarations. This means `{const/let ...}` is not reactive by itself; use runes such as `$state` or `$derived` when you need reactive values:
+> [!NOTE] The [`{@const ...}`](@const) syntax is considered legacy — use declaration tags instead.
+
+When values should be reactive, you can use `$state` and `$derived`:
 
 <!-- codeblock:start {"title":"Reactive declaration tags"} -->
 ```svelte
