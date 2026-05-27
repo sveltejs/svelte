@@ -13,7 +13,7 @@ Declaration tags define local variables inside markup with `const` or `let`:
 
 {#each boxes as box}
 	{const area = box.width * box.height}
-	{const label = `${area} square pixels`}
+	{const label = `${box.width} ⨉ ${box.height} = ${area}`}
 
 	<p>{label}</p>
 {/each}
@@ -29,22 +29,23 @@ When values should be reactive, you can use `$state` and `$derived`:
 <!--- file: App.svelte --->
 <script>
 	let user = $state({ name: 'Svelte' });
-	let modify = $state(false);
+	let editing = $state(false);
 </script>
 
 <p>Hello {user.name}</p>
-<button onclick={() => modify = true}>modify name</button>
+<button onclick={() => editing = true}>edit name</button>
 
-{#if modify}
+{#if editing}
 	{let name = $state(user.name)}
 	{const greeting = $derived(`Hello ${name}`)}
 
+	<hr>
 	<input bind:value={name} />
 	<p>{greeting}</p>
 
 	<button onclick={() => {
 		user.name = name;
-		modify = false;
+		editing = false;
 	}}>save</button>
 {/if}
 ```
