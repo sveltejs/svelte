@@ -28,93 +28,58 @@ import { features } from 'web-features';
  * detection callbacks. The callback receives a TS AST node and returns
  * true if that node represents the operator or statement.
  *
- * Stored as `Map` (not a plain object) so that lookup never resolves via
- * the prototype chain — `Object.prototype.toLocaleString` and friends
- * shouldn't masquerade as predicates.
- *
- * @type {Map<string, (node: ts.Node) => boolean>}
+ * @type {Record<string, (node: ts.Node) => boolean>}
  */
-const SYNTAX_PREDICATES = new Map([
-	[
-		'nullish_coalescing',
-		(node) =>
-			ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken
-	],
-	[
-		'nullish_coalescing_assignment',
-		(node) =>
-			ts.isBinaryExpression(node) &&
-			node.operatorToken.kind === ts.SyntaxKind.QuestionQuestionEqualsToken
-	],
-	[
-		'logical_or_assignment',
-		(node) =>
-			ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.BarBarEqualsToken
-	],
-	[
-		'logical_and_assignment',
-		(node) =>
-			ts.isBinaryExpression(node) &&
-			node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandEqualsToken
-	],
-	[
-		'optional_chaining',
-		(node) =>
-			(ts.isPropertyAccessExpression(node) ||
-				ts.isElementAccessExpression(node) ||
-				ts.isCallExpression(node)) &&
-			node.questionDotToken !== undefined
-	],
-	['spread', (node) => ts.isSpreadElement(node) || ts.isSpreadAssignment(node)],
-	['destructuring', (node) => ts.isObjectBindingPattern(node) || ts.isArrayBindingPattern(node)],
-	['arrow_functions', (node) => ts.isArrowFunction(node)],
-	[
-		'try_catch_optional_binding',
-		(node) => ts.isCatchClause(node) && node.variableDeclaration === undefined
-	],
-	['async_iteration', (node) => ts.isForOfStatement(node) && node.awaitModifier !== undefined],
-	['for_await', (node) => ts.isForOfStatement(node) && node.awaitModifier !== undefined],
-	['private_class_fields', (node) => ts.isPrivateIdentifier(node)],
-	[
-		'async_generator_function',
-		(node) =>
-			(ts.isFunctionDeclaration(node) ||
-				ts.isFunctionExpression(node) ||
-				ts.isMethodDeclaration(node)) &&
-			node.asteriskToken !== undefined &&
-			(node.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword) ?? false)
-	],
-	[
-		'generator_function',
-		(node) =>
-			(ts.isFunctionDeclaration(node) ||
-				ts.isFunctionExpression(node) ||
-				ts.isMethodDeclaration(node)) &&
-			node.asteriskToken !== undefined &&
-			!(node.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword) ?? false)
-	],
-	[
-		'async_function',
-		(node) =>
-			(ts.isFunctionDeclaration(node) ||
-				ts.isFunctionExpression(node) ||
-				ts.isArrowFunction(node) ||
-				ts.isMethodDeclaration(node)) &&
-			(node.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword) ?? false) &&
-			node.asteriskToken === undefined
-	],
-	['classes', (node) => ts.isClassDeclaration(node) || ts.isClassExpression(node)],
-	[
-		'let_const',
-		(node) =>
-			ts.isVariableDeclarationList(node) &&
-			((node.flags & ts.NodeFlags.Let) !== 0 || (node.flags & ts.NodeFlags.Const) !== 0)
-	],
-	[
-		'template_literals',
-		(node) => ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)
-	]
-]);
+const SYNTAX_PREDICATES = {
+	nullish_coalescing: (node) =>
+		ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken,
+	nullish_coalescing_assignment: (node) =>
+		ts.isBinaryExpression(node) &&
+		node.operatorToken.kind === ts.SyntaxKind.QuestionQuestionEqualsToken,
+	logical_or_assignment: (node) =>
+		ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.BarBarEqualsToken,
+	logical_and_assignment: (node) =>
+		ts.isBinaryExpression(node) &&
+		node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandEqualsToken,
+	optional_chaining: (node) =>
+		(ts.isPropertyAccessExpression(node) ||
+			ts.isElementAccessExpression(node) ||
+			ts.isCallExpression(node)) &&
+		node.questionDotToken !== undefined,
+	spread: (node) => ts.isSpreadElement(node) || ts.isSpreadAssignment(node),
+	destructuring: (node) => ts.isObjectBindingPattern(node) || ts.isArrayBindingPattern(node),
+	arrow_functions: (node) => ts.isArrowFunction(node),
+	try_catch_optional_binding: (node) =>
+		ts.isCatchClause(node) && node.variableDeclaration === undefined,
+	async_iteration: (node) => ts.isForOfStatement(node) && node.awaitModifier !== undefined,
+	for_await: (node) => ts.isForOfStatement(node) && node.awaitModifier !== undefined,
+	private_class_fields: (node) => ts.isPrivateIdentifier(node),
+	async_generator_function: (node) =>
+		(ts.isFunctionDeclaration(node) ||
+			ts.isFunctionExpression(node) ||
+			ts.isMethodDeclaration(node)) &&
+		node.asteriskToken !== undefined &&
+		(node.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword) ?? false),
+	generator_function: (node) =>
+		(ts.isFunctionDeclaration(node) ||
+			ts.isFunctionExpression(node) ||
+			ts.isMethodDeclaration(node)) &&
+		node.asteriskToken !== undefined &&
+		!(node.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword) ?? false),
+	async_function: (node) =>
+		(ts.isFunctionDeclaration(node) ||
+			ts.isFunctionExpression(node) ||
+			ts.isArrowFunction(node) ||
+			ts.isMethodDeclaration(node)) &&
+		(node.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword) ?? false) &&
+		node.asteriskToken === undefined,
+	classes: (node) => ts.isClassDeclaration(node) || ts.isClassExpression(node),
+	let_const: (node) =>
+		ts.isVariableDeclarationList(node) &&
+		((node.flags & ts.NodeFlags.Let) !== 0 || (node.flags & ts.NodeFlags.Const) !== 0),
+	template_literals: (node) =>
+		ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)
+};
 
 /**
  * Walk `web-features` once and partition every `compat_features` path
@@ -188,9 +153,8 @@ function build_detection_maps() {
 			if (parts[0] === 'javascript' && parts.length >= 3) {
 				const candidates = [parts[2], parts[parts.length - 1]];
 				for (const key of candidates) {
-					const predicate = SYNTAX_PREDICATES.get(key);
-					if (predicate) {
-						syntax_predicates.push({ predicate, feature_id });
+					if (Object.hasOwn(SYNTAX_PREDICATES, key)) {
+						syntax_predicates.push({ predicate: SYNTAX_PREDICATES[key], feature_id });
 						break;
 					}
 				}
