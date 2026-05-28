@@ -23,7 +23,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { rollup } from 'rollup';
+import { rollup, type OutputChunk } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { getCompatibleVersions } from 'baseline-browser-mapping';
@@ -38,6 +38,19 @@ import {
 import { binding_properties } from '../src/compiler/phases/bindings.js';
 import { RUNES } from '../src/utils.js';
 import { compile as svelte_compile } from '../src/compiler/index.js';
+
+type BindingProperty = import('../src/compiler/phases/bindings.js').BindingProperty;
+type PackageExport = string | { browser?: string; default?: string };
+type CompilerFixture = { filename: string; code: string };
+type Feature = { name: string; source: string; kind: 'svelte' | 'js' };
+type BrowserVersions = Record<string, string | null>;
+type RuntimeFloor = number | 'newly';
+type ConditionalRow = {
+	name: string;
+	api: string;
+	versions: BrowserVersions;
+	baseline_year: RuntimeFloor;
+};
 
 // Supplemental detection rules for APIs `web-features` doesn't track
 // yet. Each rule is checked with full TS type-aware precision — the
@@ -88,11 +101,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkg_dir = path.resolve(__dirname, '..');
 const repo_root = path.resolve(pkg_dir, '..', '..');
 const docs_dir = path.join(repo_root, 'documentation/docs/07-misc/.generated');
-const docs_page = path.join(repo_root, 'documentation/docs/07-misc/05-browser-support.md');
 const snapshot_dir = path.join(pkg_dir, 'tests/snapshot/samples');
 const tmp_dir = path.join(__dirname, '_baseline');
 
-const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8'));
+const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8')) as {
+	exports: Record<string, PackageExport>;
+};
 
 /**
  * Suppressions that should NEVER affect the floor regardless of whether
@@ -144,14 +158,12 @@ const NODE_ONLY_EXPORTS = new Set(['./compiler', './server', './internal/server'
  * naturally on the `.js` check; only Node-only subpaths need an explicit
  * exception, so new browser exports are picked up automatically.
  */
-function browser_subpaths() {
-	const subpaths = [];
+function browser_subpaths(): string[] {
+	const subpaths: string[] = [];
 	for (const [subpath, conditions] of Object.entries(pkg.exports)) {
 		if (NODE_ONLY_EXPORTS.has(subpath)) continue;
 		if (typeof conditions !== 'object' || conditions === null) continue;
-		const file =
-			/** @type {Record<string, string>} */ (conditions).browser ??
-			/** @type {Record<string, string>} */ (conditions).default;
+		const file = conditions.browser ?? conditions.default;
 		if (typeof file !== 'string' || !file.endsWith('.js')) continue;
 		subpaths.push(subpath);
 	}
@@ -160,10 +172,8 @@ function browser_subpaths() {
 
 /**
  * `.` → `svelte`, `./animate` → `svelte/animate`, etc.
- *
- * @param {string} subpath
  */
-function importee_for(subpath) {
+function importee_for(subpath: string): string {
 	return subpath === '.' ? 'svelte' : `svelte${subpath.slice(1)}`;
 }
 
@@ -172,10 +182,8 @@ function importee_for(subpath) {
  * named exports should each get their own per-feature fixture. Excludes
  * the main entry (covered by the aggregate scan), the `./legacy` shim,
  * and everything under `./internal/`.
- *
- * @param {string} subpath
  */
-function is_public_subpackage(subpath) {
+function is_public_subpackage(subpath: string): boolean {
 	return subpath !== '.' && subpath !== './legacy' && !subpath.startsWith('./internal');
 }
 
@@ -184,9 +192,8 @@ function is_public_subpackage(subpath) {
  * its named exports. Driven entirely by `pkg.exports`, so a new
  * subpackage is picked up the next time the script runs.
  */
-async function enumerate_subpackage_exports() {
-	/** @type {Record<string, string[]>} */
-	const result = {};
+async function enumerate_subpackage_exports(): Promise<Record<string, string[]>> {
+	const result: Record<string, string[]> = {};
 	for (const subpath of browser_subpaths()) {
 		if (!is_public_subpackage(subpath)) continue;
 		const module_id = importee_for(subpath);
@@ -197,10 +204,9 @@ async function enumerate_subpackage_exports() {
 				.sort();
 			if (names.length > 0) result[module_id] = names;
 		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
 			// eslint-disable-next-line no-console
-			console.warn(
-				`  (could not enumerate ${module_id}: ${/** @type {Error} */ (err).message.split('\n')[0]})`
-			);
+			console.warn(`  (could not enumerate ${module_id}: ${message.split('\n')[0]})`);
 		}
 	}
 	return result;
@@ -225,11 +231,8 @@ async function enumerate_subpackage_exports() {
  * differently and `$effect.tracking`/`$effect.pending` only make sense
  * inside an effect callback — these are still tested by being indirectly
  * invoked from the outer fixture).
- *
- * @param {typeof RUNES[number]} rune
- * @returns {string}
  */
-function rune_fixture(rune) {
+function rune_fixture(rune: (typeof RUNES)[number]): string {
 	switch (rune) {
 		case '$state':
 			return `<script>let v = $state(0); console.log(v);</script>`;
@@ -307,10 +310,8 @@ const TESTED_DIRECTIVES = [
 
 /**
  * Filesystem-safe identifier for an importee like `svelte/internal/client`.
- *
- * @param {string} importee
  */
-function safe_name(importee) {
+function safe_name(importee: string): string {
 	return importee.replace(/[^a-z0-9]+/gi, '_');
 }
 
@@ -318,25 +319,25 @@ function safe_name(importee) {
  * Bundle an entry the way users receive it, so we scan the same code the
  * browser does. Mirrors `check-treeshakeability.js`.
  *
- * @param {string} entry_code Virtual module source: typically
- *   `export * from 'svelte/...'` for a runtime entry, or compiled fixture
- *   JS for a per-feature scan.
- * @param {{ silent?: boolean }} [options]
- *   `silent` suppresses rollup's circular-dependency warnings — used for
- *   fixture bundles where they're known and noisy.
+ * `entry_code` is virtual module source: typically `export * from
+ * 'svelte/...'` for a runtime entry, or compiled fixture JS for a per-feature
+ * scan. `silent` suppresses rollup's circular-dependency warnings — used for
+ * fixture bundles where they're known and noisy.
  */
-async function bundle(entry_code, options = {}) {
+async function bundle(entry_code: string, options: { silent?: boolean } = {}): Promise<string> {
 	const built = await rollup({
 		input: '__entry__',
 		plugins: [
 			virtual({ __entry__: entry_code }),
 			{
 				name: 'resolve-svelte',
-				resolveId(id) {
+				resolveId(id: string) {
 					if (id.startsWith('svelte')) {
 						const entry = pkg.exports[id.replace('svelte', '.')];
 						if (!entry) return;
-						return path.resolve(pkg_dir, entry.browser ?? entry.default);
+						if (typeof entry === 'string') return path.resolve(pkg_dir, entry);
+						const file = entry.browser ?? entry.default;
+						if (file) return path.resolve(pkg_dir, file);
 					}
 				}
 			},
@@ -352,8 +353,8 @@ async function bundle(entry_code, options = {}) {
 	await built.close();
 
 	return output
-		.filter((chunk) => chunk.type === 'chunk')
-		.map((chunk) => /** @type {import('rollup').OutputChunk} */ (chunk).code)
+		.filter((chunk): chunk is OutputChunk => chunk.type === 'chunk')
+		.map((chunk) => chunk.code)
 		.join('\n');
 }
 
@@ -361,12 +362,9 @@ async function bundle(entry_code, options = {}) {
  * Read every compiler-emitted client file from the snapshot tests. These
  * fixtures cover the full range of patterns the compiler emits — bindings,
  * transitions, `<svelte:element>`, async derived, hydration markers, etc.
- *
- * @returns {Array<{ filename: string, code: string }>}
  */
-function load_compiler_output_fixtures() {
-	/** @type {Array<{ filename: string, code: string }>} */
-	const fixtures = [];
+function load_compiler_output_fixtures(): CompilerFixture[] {
+	const fixtures: CompilerFixture[] = [];
 
 	for (const sample of fs.readdirSync(snapshot_dir)) {
 		const client_dir = path.join(snapshot_dir, sample, '_expected/client');
@@ -393,13 +391,9 @@ function load_compiler_output_fixtures() {
  *
  * Returns `null` if NONE of the IDs have versions in `web-features` or
  * supplemental rules, so callers can fall back to year-based mapping.
- *
- * @param {Iterable<string>} ids
- * @returns {Record<string, string | null> | null}
  */
-function versions_from_features(ids) {
-	/** @type {Record<string, string | null>} */
-	const merged = {};
+function versions_from_features(ids: Iterable<string>): BrowserVersions | null {
+	const merged: BrowserVersions = {};
 	let any_found = false;
 
 	for (const id of ids) {
@@ -427,14 +421,13 @@ function versions_from_features(ids) {
  * Highest baseline year among `detected`, and the set of feature IDs that
  * drove it. Used both for the aggregate runtime floor and for per-fixture
  * scans — the two differ only in their ignore set.
- *
- * @param {Iterable<string>} detected
- * @param {Set<string>} ignore
  */
-function compute_floor(detected, ignore) {
+function compute_floor(
+	detected: Iterable<string>,
+	ignore: Set<string>
+): { year: number; drivers: Set<string> } {
 	let year = 0;
-	/** @type {Set<string>} */
-	const drivers = new Set();
+	const drivers = new Set<string>();
 	for (const id of detected) {
 		if (ignore.has(id)) continue;
 		const y = baseline_year_for_feature(id);
@@ -453,11 +446,13 @@ function compute_floor(detected, ignore) {
  * output fixtures, then compute the highest baseline year among the
  * detected features (after subtracting `AGGREGATE_IGNORE`).
  *
- * @param {string[]} runtime_files Absolute paths to runtime bundle files.
- * @param {Array<{ filename: string, code: string }>} compiler_fixtures
- * @returns {number} The minimum Baseline year the combined code satisfies.
+ * `runtime_files` are absolute paths to runtime bundle files. Returns the
+ * minimum Baseline year the combined code satisfies.
  */
-function find_minimum_target(runtime_files, compiler_fixtures) {
+function find_minimum_target(
+	runtime_files: string[],
+	compiler_fixtures: CompilerFixture[]
+): number {
 	// Type-aware walk over the runtime bundles.
 	const detected = detect_features(runtime_files);
 
@@ -492,9 +487,8 @@ function find_minimum_target(runtime_files, compiler_fixtures) {
  * `SAFE_TO_IGNORE` entries are exempt: they're safe to carry regardless
  * of whether the runtime currently uses the API.
  *
- * @param {string[]} runtime_files
  */
-function validate_ignore_features(runtime_files) {
+function validate_ignore_features(runtime_files: string[]): void {
 	if (BEHAVIORAL_IGNORE.size === 0) return;
 	const detected = detect_features(runtime_files);
 	const stale = [...BEHAVIORAL_IGNORE].filter((id) => !detected.has(id));
@@ -516,15 +510,12 @@ function validate_ignore_features(runtime_files) {
  * bundled like real user code, then scanned. If the bundle's floor
  * exceeds the runtime floor, a row is auto-emitted in the docs.
  *
- * @param {Record<string, string[]>} subpackage_exports
- *   Map of subpath → list of exported symbols, produced by
- *   `enumerate_subpackage_exports`. Passed in rather than computed here
- *   so the dynamic-import discovery can happen once in `main`.
- * @returns {Array<{ name: string, source: string, kind: 'svelte' | 'js' }>}
+ * `subpackage_exports` maps subpath → list of exported symbols, produced by
+ * `enumerate_subpackage_exports`. Passed in rather than computed here so the
+ * dynamic-import discovery can happen once in `main`.
  */
-function enumerate_features(subpackage_exports) {
-	/** @type {Array<{ name: string, source: string, kind: 'svelte' | 'js' }>} */
-	const features = [];
+function enumerate_features(subpackage_exports: Record<string, string[]>): Feature[] {
+	const features: Feature[] = [];
 
 	// Every `bind:*` accepted by the compiler. Element selection respects
 	// the `valid_elements` constraint declared in `binding_properties`.
@@ -569,10 +560,8 @@ function enumerate_features(subpackage_exports) {
  * `null` for bindings the compiler treats as elements rather than
  * properties (none currently, but defensive).
  *
- * @param {string} name
- * @param {import('../src/compiler/phases/bindings.js').BindingProperty} props
  */
-function binding_fixture(name, props) {
+function binding_fixture(name: string, props: BindingProperty): string {
 	// Map declared `valid_elements` to a concrete element + minimal attrs
 	// so the compiler accepts the binding.
 	const tag = (props.valid_elements ?? ['div'])[0];
@@ -610,9 +599,8 @@ function binding_fixture(name, props) {
  * bundle the result through the shared `bundle` helper. Fixtures are tiny
  * so circular-dep warnings from the Svelte runtime are silenced.
  *
- * @param {{ name: string, source: string, kind: 'svelte' | 'js' }} feature
  */
-async function bundle_fixture(feature) {
+async function bundle_fixture(feature: Feature): Promise<string> {
 	const entry_code =
 		feature.kind === 'svelte'
 			? svelte_compile(feature.source, {
@@ -629,9 +617,13 @@ async function bundle_fixture(feature) {
  * floor year along with the IDs that drove it. Used for the per-feature
  * conditional table.
  *
- * @param {string} fixture_file Absolute path to the `.ts` bundle.
+ * `fixture_file` is the absolute path to the `.ts` bundle.
  */
-function scan_fixture(fixture_file) {
+function scan_fixture(fixture_file: string): {
+	year: number;
+	driving_ids: string[];
+	driving_names: string[];
+} {
 	const { year, drivers } = compute_floor(detect_features([fixture_file]), SAFE_TO_IGNORE);
 	const driving_ids = [...drivers];
 	return {
@@ -644,26 +636,14 @@ function scan_fixture(fixture_file) {
 /**
  * Iterate every feature, bundle its fixture, scan it. Return the rows
  * that need to appear in the conditional-features table.
- *
- * @param {number | 'newly'} runtime_floor
- * @param {Record<string, string[]>} subpackage_exports
- * @returns {Promise<Array<{
- *   name: string,
- *   api: string,
- *   versions: Record<string, string | null>,
- *   baseline_year: number | 'newly'
- * }>>}
  */
-async function find_all_conditional_features(runtime_floor, subpackage_exports) {
+async function find_all_conditional_features(
+	runtime_floor: RuntimeFloor,
+	subpackage_exports: Record<string, string[]>
+): Promise<ConditionalRow[]> {
 	const runtime_year = typeof runtime_floor === 'number' ? runtime_floor : Infinity;
 	const features = enumerate_features(subpackage_exports);
-	/** @type {Array<{
-	 *   name: string,
-	 *   api: string,
-	 *   versions: Record<string, string | null>,
-	 *   baseline_year: number | 'newly'
-	 * }>} */
-	const rows = [];
+	const rows: ConditionalRow[] = [];
 
 	for (let i = 0; i < features.length; i++) {
 		const feature = features[i];
@@ -714,25 +694,17 @@ async function find_all_conditional_features(runtime_floor, subpackage_exports) 
 /**
  * Render the per-feature browser-requirements table from the auto-detected
  * rows. Sorted by Safari floor descending, then alphabetically.
- *
- * @param {Array<{
- *   name: string,
- *   api: string,
- *   versions: Record<string, string | null>,
- *   baseline_year: number | 'newly'
- * }>} rows
- * @param {number | 'newly'} runtime_floor
  */
-function render_conditional_table(rows, runtime_floor) {
+function render_conditional_table(rows: ConditionalRow[], runtime_floor: RuntimeFloor): string {
 	if (rows.length === 0) {
 		return '_No features currently require browser versions newer than the runtime floor._';
 	}
 
-	const browsers = /** @type {const} */ ([
+	const browsers = [
 		['chrome', 'Chrome / Edge'],
 		['firefox', 'Firefox'],
 		['safari', 'Safari']
-	]);
+	] as const;
 
 	const runtime_versions = browser_versions_for(runtime_floor);
 
@@ -761,10 +733,7 @@ function render_conditional_table(rows, runtime_floor) {
 	return [header, sep, ...body].join('\n');
 }
 
-/**
- * @param {number | 'newly'} target
- */
-function browser_versions_for(target) {
+function browser_versions_for(target: RuntimeFloor): Record<string, string> {
 	// `targetYear` returns the minimum versions in which every feature that
 	// reached Baseline by the end of that year is supported. If the lint
 	// search fell through to `'newly'`, we use the current year — that gives
@@ -796,28 +765,23 @@ function browser_versions_for(target) {
 		'webview_android'
 	]);
 
-	/** @type {Record<string, string>} */
-	const lookup = {};
+	const lookup: Record<string, string> = {};
 	for (const { browser, version } of versions) {
 		if (visible_browsers.has(browser)) lookup[browser] = version;
 	}
 	return lookup;
 }
 
-/**
- * @param {Record<string, string>} versions
- * @param {number | 'newly'} target
- */
-function render_table(versions, target) {
+function render_table(versions: Record<string, string>, target: RuntimeFloor): string {
 	// Chrome and Edge ship from the same engine and historically resolve to the
 	// same Baseline version. Collapse them into one row when they match, but
 	// fall back to listing them separately if they ever drift.
-	const chrome_edge =
+	const chrome_edge: [string, string] | null =
 		versions.chrome && versions.chrome === versions.edge
 			? ['Chrome / Edge', versions.chrome]
 			: null;
 
-	const base_rows = chrome_edge
+	const base_rows: Array<[string, string]> = chrome_edge
 		? [chrome_edge, ['Chrome (Android)', versions.chrome_android ?? '?']]
 		: [
 				['Chrome', versions.chrome ?? '?'],
@@ -825,7 +789,7 @@ function render_table(versions, target) {
 				['Edge', versions.edge ?? '?']
 			];
 
-	const rows = [
+	const rows: Array<[string, string]> = [
 		...base_rows,
 		['Firefox', versions.firefox ?? '?'],
 		['Firefox (Android)', versions.firefox_android ?? '?'],
@@ -843,8 +807,7 @@ function render_table(versions, target) {
 		Math.max(heading.length, ...rows.map((r) => String(r[i]).length))
 	);
 
-	const pad = (/** @type {string} */ s, /** @type {number} */ n) =>
-		s + ' '.repeat(Math.max(0, n - s.length));
+	const pad = (s: string, n: number) => s + ' '.repeat(Math.max(0, n - s.length));
 
 	const header = `| ${headings.map((heading, i) => pad(heading, widths[i])).join(' | ')} |`;
 	const sep = `| ${widths.map((width) => '-'.repeat(width)).join(' | ')} |`;
@@ -866,7 +829,7 @@ async function main() {
 
 	try {
 		console.log('Bundling runtime entries…');
-		const runtime_files = [];
+		const runtime_files: string[] = [];
 		for (const importee of browser_subpaths().map(importee_for)) {
 			// `import * as` + re-export keeps default and named exports
 			// alive, so flag modules (only a default export) don't produce
@@ -917,11 +880,7 @@ async function main() {
 	}
 }
 
-/**
- * @param {string} file
- * @param {string} content
- */
-function generate(file, content) {
+function generate(file: string, content: string): void {
 	const filename = path.join(docs_dir, file);
 
 	try {
