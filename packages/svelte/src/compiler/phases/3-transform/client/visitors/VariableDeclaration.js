@@ -49,7 +49,7 @@ export function VariableDeclaration(node, context) {
 				}
 
 				if (declarator.id.type === 'Identifier') {
-					const exclude_id = b.id(context.state.scope.root.unique('rest_excludes').name);
+					const exclude_id = context.state.scope.root.unique('rest_excludes');
 					context.state.hoisted.push(
 						b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
 					);
@@ -100,7 +100,7 @@ export function VariableDeclaration(node, context) {
 							}
 						} else {
 							// RestElement
-							const exclude_id = b.id(context.state.scope.root.unique('rest_excludes').name);
+							const exclude_id = context.state.scope.root.unique('rest_excludes');
 							context.state.hoisted.push(
 								b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
 							);
