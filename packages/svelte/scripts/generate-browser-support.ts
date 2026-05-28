@@ -210,67 +210,33 @@ async function enumerate_subpackage_exports(): Promise<Record<string, string[]>>
 	return result;
 }
 
-/**
- * Produce a minimal `.svelte` fixture that invokes a rune. The list of
- * runes is enumerated from `RUNES` (the canonical source in
- * `src/utils.js`) rather than hand-picked — that way a new rune added
- * to the compiler either gets an explicit case here or shows up in the
- * "skipped" log so a maintainer can add one.
- *
- * Each case must produce a syntactically valid invocation that compiles
- * cleanly through `svelte/compiler` in client mode. Most runes simply
- * exercise the always-on reactivity machinery and pass at the runtime
- * floor — they don't appear in the conditional-features table. The
- * pipeline doesn't need to know which ones are interesting; it tests
- * them all and lets the scan results decide.
- *
- * Returns `null` for runes that don't have a sensible standalone
- * invocation in a fresh component (e.g. `$inspect().with` is parsed
- * differently and `$effect.tracking`/`$effect.pending` only make sense
- * inside an effect callback — these are still tested by being indirectly
- * invoked from the outer fixture).
- */
+const rune_fixtures: Record<(typeof RUNES)[number], string> = {
+	$state: `<script>let v = $state(0); console.log(v);</script>`,
+	'$state.raw': `<script>let v = $state.raw({}); console.log(v);</script>`,
+	'$state.eager': `<script>let v = $state.eager(0); console.log(v);</script>`,
+	'$state.snapshot': `<script>const v = $state({}); const snap = $state.snapshot(v); console.log(snap);</script>`,
+	$derived: `<script>let a = $state(0); let d = $derived(a + 1); console.log(d);</script>`,
+	'$derived.by': `<script>let a = $state(0); let d = $derived.by(() => a + 1); console.log(d);</script>`,
+	$props: `<script>let { x } = $props(); console.log(x);</script>`,
+	'$props.id': `<script>const id = $props.id(); console.log(id);</script>`,
+	$bindable: `<script>let { v = $bindable() } = $props(); console.log(v);</script>`,
+	$effect: `<script>$effect(() => { console.log('e'); });</script>`,
+	'$effect.pre': `<script>$effect.pre(() => { console.log('p'); });</script>`,
+	'$effect.tracking': `<script>$effect(() => { console.log($effect.tracking()); });</script>`,
+	'$effect.root': `<script>const stop = $effect.root(() => () => {}); stop();</script>`,
+	'$effect.pending': `<script>$effect(() => { console.log($effect.pending()); });</script>`,
+	$inspect: `<script>let v = $state(0); $inspect(v);</script>`,
+	'$inspect().with': `<script>let v = $state(0); $inspect(v).with(() => {});</script>`,
+	'$inspect.trace': `<script>$effect(() => { $inspect.trace(); });</script>`,
+	$host: `<svelte:options customElement="x-y" />\n<script>const h = $host(); console.log(h);</script>`
+};
+
 function rune_fixture(rune: (typeof RUNES)[number]): string {
-	switch (rune) {
-		case '$state':
-			return `<script>let v = $state(0); console.log(v);</script>`;
-		case '$state.raw':
-			return `<script>let v = $state.raw({}); console.log(v);</script>`;
-		case '$state.eager':
-			return `<script>let v = $state.eager(0); console.log(v);</script>`;
-		case '$state.snapshot':
-			return `<script>const v = $state({}); const snap = $state.snapshot(v); console.log(snap);</script>`;
-		case '$derived':
-			return `<script>let a = $state(0); let d = $derived(a + 1); console.log(d);</script>`;
-		case '$derived.by':
-			return `<script>let a = $state(0); let d = $derived.by(() => a + 1); console.log(d);</script>`;
-		case '$props':
-			return `<script>let { x } = $props(); console.log(x);</script>`;
-		case '$props.id':
-			return `<script>const id = $props.id(); console.log(id);</script>`;
-		case '$bindable':
-			return `<script>let { v = $bindable() } = $props(); console.log(v);</script>`;
-		case '$effect':
-			return `<script>$effect(() => { console.log('e'); });</script>`;
-		case '$effect.pre':
-			return `<script>$effect.pre(() => { console.log('p'); });</script>`;
-		case '$effect.tracking':
-			return `<script>$effect(() => { console.log($effect.tracking()); });</script>`;
-		case '$effect.root':
-			return `<script>const stop = $effect.root(() => () => {}); stop();</script>`;
-		case '$effect.pending':
-			return `<script>$effect(() => { console.log($effect.pending()); });</script>`;
-		case '$inspect':
-			return `<script>let v = $state(0); $inspect(v);</script>`;
-		case '$inspect().with':
-			return `<script>let v = $state(0); $inspect(v).with(() => {});</script>`;
-		case '$inspect.trace':
-			return `<script>$effect(() => { $inspect.trace(); });</script>`;
-		case '$host':
-			return `<svelte:options customElement="x-y" />\n<script>const h = $host(); console.log(h);</script>`;
+	if (!Object.hasOwn(rune_fixtures, rune)) {
+		throw new Error(`Fixture missing for ${rune}`);
 	}
 
-	throw new Error(`Fixture missing for ${rune}`);
+	return rune_fixtures[rune];
 }
 
 /**
