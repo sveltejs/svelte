@@ -13,4 +13,4 @@
 | Samsung Internet  | 14.0                     |
 | Android WebView   | 87                       |
 
-> [!NOTE] This equates to a <a href="">Baseline</a> target of 2020.
+> [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of 2020.
