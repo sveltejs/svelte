@@ -98,6 +98,8 @@ jobs:
       - name: build and check generated types
         if: (${{ success() }} || ${{ failure() }}) # ensures this step runs even if previous steps fail
         run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally with `cd packages/svelte && pnpm generate:types` and commit the changes after you have reviewed them"; git diff; exit 1); }
+      - name: check browser-support docs page is up to date
+        run: '{ [ "`git status --porcelain=v1 documentation/docs/07-misc/05-browser-support.md`" == "" ] || (echo "The browser-support docs page is out of date — please regenerate it locally with \`cd packages/svelte && pnpm generate:browser-support\` and commit the changes"; git diff documentation/docs/07-misc/05-browser-support.md; exit 1); }'
   Benchmarks:
     permissions: {}
     runs-on: ubuntu-latest
