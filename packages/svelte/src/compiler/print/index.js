@@ -605,7 +605,41 @@ const svelte_visitors = (comments) => ({
 
 	DeclarationTag(node, context) {
 		context.write('{');
-		context.visit(node.declaration);
+
+		const open = context.new();
+		const join = context.new();
+		const child_context = context.new();
+
+		context.append(child_context);
+
+		child_context.write(`${node.declaration.kind} `);
+		child_context.append(open);
+
+		const declarations = node.declaration.declarations;
+		let first = true;
+
+		for (const d of declarations) {
+			if (!first) child_context.append(join);
+			first = false;
+
+			child_context.visit(d);
+		}
+
+		const length = child_context.measure() + 2 * (declarations.length - 1);
+
+		const multiline = child_context.multiline || (declarations.length > 1 && length > 50);
+
+		if (multiline) {
+			context.multiline = true;
+
+			if (declarations.length > 1) open.indent();
+			join.write(',');
+			join.newline();
+			if (declarations.length > 1) context.dedent();
+		} else {
+			join.write(', ');
+		}
+
 		context.write('}');
 	},
 

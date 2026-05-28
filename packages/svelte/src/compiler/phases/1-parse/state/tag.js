@@ -127,7 +127,6 @@ function read_declaration(parser) {
 	}
 
 	parser.index = /** @type {number} */ (declaration.end);
-	parser.eat(';');
 	parser.allow_whitespace();
 	parser.eat('}', true);
 

@@ -107,10 +107,14 @@ export function parse_expression_at(parser, source, index) {
  */
 export function parse_statement_at(parser, source, index) {
 	const acorn = parser.ts ? TSParser : JSParser;
-	const end = find_matching_bracket(source, index, '{');
+	let end = find_matching_bracket(source, index, '{');
 	if (end === undefined) e.unexpected_eof(source.length);
 
-	const padded_source = `${' '.repeat(index)}${source.slice(index, end)};`;
+	while (source[end - 1] === ';') {
+		end -= 1;
+	}
+
+	const padded_source = `${' '.repeat(index)}${source.slice(index, end)}`;
 	const { onComment, add_comments } = get_comment_handlers(
 		padded_source,
 		parser.root.comments,
