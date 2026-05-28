@@ -396,7 +396,7 @@ export class Boundary {
 			if (this.#pending_effect) current_batch.skip_effect(this.#pending_effect);
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
 
-			current_batch.on_fork_commit(() => {
+			current_batch.oncommit(() => {
 				this.#handle_error(error);
 			});
 		} else {
