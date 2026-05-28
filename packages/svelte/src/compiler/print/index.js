@@ -606,6 +606,8 @@ const svelte_visitors = (comments) => ({
 	DeclarationTag(node, context) {
 		context.write('{');
 
+		// This is duplicated from esrap's handling of VariableDeclaration,
+		// which we need to do in order to omit the trailing semicolon that esrap would add.
 		const open = context.new();
 		const join = context.new();
 		const child_context = context.new();
