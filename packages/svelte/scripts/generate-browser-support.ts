@@ -31,7 +31,6 @@ import {
 	detect_features,
 	detect_features_in_text,
 	versions_for_feature,
-	name_for_feature,
 	baseline_year_for_feature,
 	register_extra_rules
 } from './browser-support.detector.js';
@@ -47,7 +46,6 @@ type BrowserVersions = Record<string, string | null>;
 type RuntimeFloor = number | 'newly';
 type ConditionalRow = {
 	name: string;
-	api: string;
 	versions: BrowserVersions;
 	baseline_year: RuntimeFloor;
 };
@@ -477,7 +475,7 @@ function find_minimum_target(
 	console.log(`  → ${final_year} (features that drove the floor:)`);
 	for (const id of [...drivers].sort()) {
 		// eslint-disable-next-line no-console
-		console.log(`    - ${name_for_feature(id)} (${id})`);
+		console.log(`    - ${id}`);
 	}
 
 	return final_year;
@@ -627,14 +625,12 @@ async function bundle_fixture(feature: Feature): Promise<string> {
 function scan_fixture(fixture_file: string): {
 	year: number;
 	driving_ids: string[];
-	driving_names: string[];
 } {
 	const { year, drivers } = compute_floor(detect_features([fixture_file]), SAFE_TO_IGNORE);
-	const driving_ids = [...drivers];
+
 	return {
 		year,
-		driving_ids,
-		driving_names: driving_ids.map((id) => `\`${name_for_feature(id)}\``)
+		driving_ids: [...drivers]
 	};
 }
 
@@ -674,7 +670,6 @@ async function find_all_conditional_features(
 		// Use exact per-feature versions where available (from web-features
 		// or supplemental rules), falling back to the conservative year
 		// mapping only if no feature has explicit version data.
-		const api = scanned.driving_names.join(', ') || '(see bundle output)';
 		let versions = versions_from_features(scanned.driving_ids);
 		if (!versions) {
 			try {
@@ -686,7 +681,6 @@ async function find_all_conditional_features(
 
 		rows.push({
 			name: feature.name,
-			api,
 			versions,
 			baseline_year: final_year
 		});
@@ -706,7 +700,7 @@ function render_conditional_table(rows: ConditionalRow[], runtime_floor: Runtime
 	}
 
 	const browsers = [
-		['chrome', 'Chrome / Edge'],
+		['chrome', 'Chrome/Edge'],
 		['firefox', 'Firefox'],
 		['safari', 'Safari']
 	] as const;
@@ -720,9 +714,8 @@ function render_conditional_table(rows: ConditionalRow[], runtime_floor: Runtime
 		return a.name.localeCompare(b.name);
 	});
 
-	const header =
-		'| Feature | Affected API | ' + browsers.map(([, label]) => `Min ${label}`).join(' | ') + ' |';
-	const sep = '| --- | --- |' + browsers.map(() => ' ---: |').join('');
+	const header = '| Feature | ' + browsers.map(([, label]) => `${label}`).join(' | ') + ' |';
+	const sep = '| --- |' + browsers.map(() => ' ---: |').join('');
 
 	const body = sorted.map((entry) => {
 		const cells = browsers.map(([key]) => {
@@ -732,7 +725,7 @@ function render_conditional_table(rows: ConditionalRow[], runtime_floor: Runtime
 			const floor_v = runtime_versions[key];
 			return floor_v && Number(v) <= Number(floor_v) ? '(floor)' : v;
 		});
-		return `| ${entry.name} | ${entry.api} | ${cells.join(' | ')} |`;
+		return `| ${entry.name} | ${cells.join(' | ')} |`;
 	});
 
 	return [header, sep, ...body].join('\n');
@@ -806,7 +799,7 @@ function render_table(versions: Record<string, string>, target: RuntimeFloor): s
 		['Android WebView', versions.webview_android ?? '?']
 	];
 
-	const headings = ['Browser', 'Minimum version'].map((text) => `<h3>${text}</h3>`);
+	const headings = ['Browser', 'Minimum version'];
 
 	const widths = headings.map((heading, i) =>
 		Math.max(heading.length, ...rows.map((r) => String(r[i]).length))

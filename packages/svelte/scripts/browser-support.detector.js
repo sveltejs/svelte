@@ -150,9 +150,8 @@ const MAPS = build_detection_maps();
 /**
  * Versions and friendly names for synthetic feature IDs registered via
  * `register_extra_rules` — APIs the type-aware walker can see but that
- * `web-features` doesn't (yet) catalogue. `versions_for_feature` and
- * `name_for_feature` consult this map before falling back to
- * `web-features` lookups.
+ * `web-features` doesn't (yet) catalogue. `versions_for_feature` consults
+ * this map before falling back to `web-features` lookups.
  *
  * @type {Map<string, { name: string, versions: Record<string, string | null>, baseline_year: number | null }>}
  */
@@ -398,19 +397,6 @@ export function versions_for_feature(feature_id) {
 	return /** @type {Record<string, string> | null} */ (
 		/** @type {unknown} */ (feature.status.support)
 	);
-}
-
-/**
- * Friendly display name for a feature, falling back to the ID.
- *
- * @param {string} feature_id
- */
-export function name_for_feature(feature_id) {
-	const extra = EXTRA_FEATURE_INFO.get(feature_id);
-	if (extra) return extra.name;
-	const feature = features[feature_id];
-	if (feature && 'name' in feature) return feature.name;
-	return feature_id;
 }
 
 /**
