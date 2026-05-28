@@ -346,7 +346,12 @@ async function bundle(entry_code: string, options: { silent?: boolean } = {}): P
 		// Treat optional peers / Node-only branches as external so we only scan
 		// code that actually runs in the browser.
 		external: ['esm-env'],
-		onwarn: options.silent ? () => {} : undefined
+		onwarn: options.silent
+			? () => {}
+			: (warning, handler) => {
+					if (warning.code === 'CIRCULAR_DEPENDENCY') return;
+					handler(warning);
+				}
 	});
 
 	const { output } = await built.generate({ format: 'esm' });
