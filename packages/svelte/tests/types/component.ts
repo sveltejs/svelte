@@ -9,6 +9,7 @@ import {
 	type Component,
 	type ComponentInternals
 } from 'svelte';
+import { createRenderer } from 'svelte/renderer';
 import { render } from 'svelte/server';
 
 SvelteComponent.element === HTMLElement;
@@ -290,6 +291,52 @@ mount(
 );
 // if component receives no args, props can be omitted
 mount(null as any as Component<{}>, { target: null as any });
+
+type CustomFragment = { kind: 'fragment' };
+type CustomElement = { kind: 'element' };
+type CustomText = { kind: 'text' };
+type CustomComment = { kind: 'comment' };
+const custom_renderer = createRenderer<{
+	fragment: CustomFragment;
+	element: CustomElement;
+	text: CustomText;
+	comment: CustomComment;
+}>(null as any);
+
+mount(functionComponent, {
+	renderer: custom_renderer,
+	target: null as any as CustomFragment,
+	anchor: null as any as CustomComment,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
+
+// @ts-expect-error target must match the renderer
+mount(functionComponent, {
+	renderer: custom_renderer,
+	target: null as any as HTMLElement,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
+
+// @ts-expect-error anchor must match the renderer
+mount(functionComponent, {
+	renderer: custom_renderer,
+	target: null as any as CustomElement,
+	anchor: null as any as CustomFragment,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
+
+// @ts-expect-error createRenderer returns the renderer directly
+custom_renderer.render;
+createRenderer({ ...custom_renderer, extra: true }).extra === true;
 
 hydrate(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
