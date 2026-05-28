@@ -837,21 +837,24 @@ function render_table(versions, target) {
 		['Android WebView', versions.webview_android ?? '?']
 	];
 
-	const target_label = target === 'newly' ? 'Baseline Newly available' : `Baseline ${target}`;
+	const headings = ['Browser', 'Minimum version'].map((text) => `<h3>${text}</h3>`);
 
-	const width_a = Math.max(...rows.map((r) => r[0].length), 'Browser'.length);
-	const width_b = Math.max(...rows.map((r) => String(r[1]).length), 'Minimum version'.length);
+	const widths = headings.map((heading, i) =>
+		Math.max(heading.length, ...rows.map((r) => String(r[i]).length))
+	);
 
 	const pad = (/** @type {string} */ s, /** @type {number} */ n) =>
 		s + ' '.repeat(Math.max(0, n - s.length));
 
-	const header = `| ${pad('Browser', width_a)} | ${pad('Minimum version', width_b)} |`;
-	const sep = `| ${'-'.repeat(width_a)} | ${'-'.repeat(width_b)} |`;
+	const header = `| ${headings.map((heading, i) => pad(heading, widths[i])).join(' | ')} |`;
+	const sep = `| ${widths.map((width) => '-'.repeat(width)).join(' | ')} |`;
 	const body = rows
-		.map(([a, b]) => `| ${pad(a, width_a)} | ${pad(String(b), width_b)} |`)
+		.map(([a, b]) => `| ${pad(a, widths[0])} | ${pad(String(b), widths[1])} |`)
 		.join('\n');
 
-	return `_Resolved Baseline target: **${target_label}**._\n\n${header}\n${sep}\n${body}`;
+	const target_label = target === 'newly' ? '"newly available"' : target;
+
+	return `${header}\n${sep}\n${body}\n\n> [!NOTE] This equates to a <a href="">Baseline</a> target of ${target_label}.`;
 }
 
 /* eslint-disable no-console */
