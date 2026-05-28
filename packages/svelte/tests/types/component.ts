@@ -313,9 +313,9 @@ mount(functionComponent, {
 	}
 });
 
-// @ts-expect-error target must match the renderer
 mount(functionComponent, {
 	renderer: custom_renderer,
+	// @ts-expect-error target must match the renderer
 	target: null as any as HTMLElement,
 	props: {
 		binding: true,
@@ -323,10 +323,10 @@ mount(functionComponent, {
 	}
 });
 
-// @ts-expect-error anchor must match the renderer
 mount(functionComponent, {
 	renderer: custom_renderer,
 	target: null as any as CustomElement,
+	// @ts-expect-error anchor must match the renderer
 	anchor: null as any as CustomFragment,
 	props: {
 		binding: true,
