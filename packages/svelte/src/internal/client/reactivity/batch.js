@@ -128,13 +128,6 @@ export class Batch {
 	previous = new Map();
 
 	/**
-	 * Async effects which this batch doesn't take into account anymore when calculating blockers,
-	 * as it has a value for it already.
-	 * @type {Set<Effect>}
-	 */
-	unblocked = new Set();
-
-	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Set<(batch: Batch) => void>}
@@ -213,6 +206,18 @@ export class Batch {
 	is_fork = false;
 
 	#decrement_queued = false;
+
+	constructor() {
+		// link batch
+		if (last_batch === null) {
+			first_batch = last_batch = this;
+		} else {
+			last_batch.#next = this;
+			this.#prev = last_batch;
+		}
+
+		last_batch = this;
+	}
 
 	#is_deferred() {
 		if (this.is_fork) return true;
@@ -327,11 +332,11 @@ export class Batch {
 			} catch (e) {
 				reset_all(root);
 				// If there's no async work left, this branch is now dead and needs
-				// to be unlinked to not become a zombie that is never cleaned up.
+				// to be discarded to not become a zombie that is never cleaned up.
 				// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
 				// for a (non-minimal) reproduction that demonstrates a case where this is necessary
 				// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
-				if (!this.#is_deferred()) this.#unlink();
+				if (!this.#is_deferred()) this.discard();
 				throw e;
 			}
 		}
@@ -852,7 +857,6 @@ export class Batch {
 	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
-			batch.#link();
 
 			if (!is_processing && !is_flushing_sync) {
 				queue_micro_task(() => {
@@ -972,18 +976,11 @@ export class Batch {
 		this.#roots.push(e);
 	}
 
-	#link() {
-		if (last_batch === null) {
-			first_batch = last_batch = this;
-		} else {
-			last_batch.#next = this;
-			this.#prev = last_batch;
-		}
-
-		last_batch = this;
-	}
-
 	#unlink() {
+		// #merge calls #unlink, discard later on does it again - prevent
+		// running it multiple times to not corrupt the linked list
+		if (!this.linked) return;
+
 		var prev = this.#prev;
 		var next = this.#next;
 
