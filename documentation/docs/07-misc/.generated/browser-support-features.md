@@ -1,4 +1,4 @@
-<!-- generated in ../../../../../packages/svelte/scripts/generate-browser-support.js. do not edit -->
+<!-- generated in ../../../../../packages/svelte/scripts/generate-browser-support.ts. do not edit -->
 
 | Feature | Affected API | Min Chrome / Edge | Min Firefox | Min Safari |
 | --- | --- | ---: | ---: | ---: |

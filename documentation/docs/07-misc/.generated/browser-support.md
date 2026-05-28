@@ -1,4 +1,4 @@
-<!-- generated in ../../../../../packages/svelte/scripts/generate-browser-support.js. do not edit -->
+<!-- generated in ../../../../../packages/svelte/scripts/generate-browser-support.ts. do not edit -->
 
 | <h3>Browser</h3>  | <h3>Minimum version</h3> |
 | ----------------- | ------------------------ |

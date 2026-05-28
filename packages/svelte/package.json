@@ -143,10 +143,10 @@
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:tsgo": "tsgo --project tsconfig.runtime.json --skipLibCheck && tsgo --skipLibCheck",
     "check:watch": "tsc --watch",
-    "generate": "node scripts/process-messages && node ./scripts/generate-types.js && node ./scripts/generate-browser-support.js",
+    "generate": "node scripts/process-messages && node ./scripts/generate-types.js && pnpm generate:browser-support",
     "generate:version": "node ./scripts/generate-version.js",
     "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
-    "generate:browser-support": "node ./scripts/generate-browser-support.js",
+    "generate:browser-support": "node ./scripts/generate-browser-support.ts",
     "prepublishOnly": "pnpm build",
     "knip": "pnpm dlx knip"
   },
