@@ -687,9 +687,11 @@ function render_conditional_table(rows: ConditionalRow[], runtime_floor: Runtime
 		const cells = browsers.map(([key]) => {
 			const v = entry.versions[key];
 			if (v === null) return 'not supported';
-			if (v === undefined) return '(floor)';
+			if (v === undefined) return '<span style="color: var(--sk-fg-4)">—</span>';
 			const floor_v = runtime_versions[key];
-			return floor_v && Number(v) <= Number(floor_v) ? '(floor)' : v;
+			return floor_v && Number(v) <= Number(floor_v)
+				? '<span style="color: var(--sk-fg-4)">—</span>'
+				: v;
 		});
 		return `| ${entry.name} | ${cells.join(' | ')} |`;
 	});

@@ -3,5 +3,5 @@
 | Feature | Chrome/Edge | Firefox | Safari |
 | --- | ---: | ---: | ---: |
 | `$state.snapshot` | 98 | 94 | 15.4 |
-| `bind:devicePixelContentBoxSize` | (floor) | 93 | not supported |
-| `flip` from `svelte/animate` | (floor) | 126 | (floor) |
+| `bind:devicePixelContentBoxSize` | <span style="color: var(--sk-fg-4)">—</span> | 93 | not supported |
+| `flip` from `svelte/animate` | <span style="color: var(--sk-fg-4)">—</span> | 126 | <span style="color: var(--sk-fg-4)">—</span> |
