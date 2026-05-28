@@ -13,7 +13,7 @@ export function hash(str) {
 	return (hash >>> 0).toString(36);
 }
 
-const VOID_ELEMENT_NAMES = new Set([
+const VOID_ELEMENT_NAMES = [
 	'area',
 	'base',
 	'br',
@@ -30,17 +30,17 @@ const VOID_ELEMENT_NAMES = new Set([
 	'source',
 	'track',
 	'wbr'
-]);
+];
 
 /**
  * Returns `true` if `name` is of a void element
  * @param {string} name
  */
 export function is_void(name) {
-	return VOID_ELEMENT_NAMES.has(name) || name.toLowerCase() === '!doctype';
+	return VOID_ELEMENT_NAMES.includes(name) || name.toLowerCase() === '!doctype';
 }
 
-const RESERVED_WORDS = new Set([
+const RESERVED_WORDS = [
 	'arguments',
 	'await',
 	'break',
@@ -89,14 +89,14 @@ const RESERVED_WORDS = new Set([
 	'while',
 	'with',
 	'yield'
-]);
+];
 
 /**
  * Returns `true` if `word` is a reserved JavaScript keyword
  * @param {string} word
  */
 export function is_reserved(word) {
-	return RESERVED_WORDS.has(word);
+	return RESERVED_WORDS.includes(word);
 }
 
 /**
@@ -106,8 +106,8 @@ export function is_capture_event(name) {
 	return name.endsWith('capture') && name !== 'gotpointercapture' && name !== 'lostpointercapture';
 }
 
-/** Set of Element events that will be delegated */
-const DELEGATED_EVENTS = new Set([
+/** List of Element events that will be delegated */
+const DELEGATED_EVENTS = [
 	'beforeinput',
 	'click',
 	'change',
@@ -131,20 +131,20 @@ const DELEGATED_EVENTS = new Set([
 	'touchend',
 	'touchmove',
 	'touchstart'
-]);
+];
 
 /**
  * Returns `true` if `event_name` is a delegated event
  * @param {string} event_name
  */
 export function can_delegate_event(event_name) {
-	return DELEGATED_EVENTS.has(event_name);
+	return DELEGATED_EVENTS.includes(event_name);
 }
 
 /**
  * Attributes that are boolean, i.e. they are present or not present.
  */
-const DOM_BOOLEAN_ATTRIBUTES = new Set([
+const DOM_BOOLEAN_ATTRIBUTES = [
 	'allowfullscreen',
 	'async',
 	'autofocus',
@@ -173,14 +173,14 @@ const DOM_BOOLEAN_ATTRIBUTES = new Set([
 	'defer',
 	'disablepictureinpicture',
 	'disableremoteplayback'
-]);
+];
 
 /**
  * Returns `true` if `name` is a boolean attribute
  * @param {string} name
  */
 export function is_boolean_attribute(name) {
-	return DOM_BOOLEAN_ATTRIBUTES.has(name);
+	return DOM_BOOLEAN_ATTRIBUTES.includes(name);
 }
 
 /**
@@ -213,7 +213,7 @@ export function normalize_attribute(name) {
 	return ATTRIBUTE_ALIASES[name] ?? name;
 }
 
-const DOM_PROPERTIES = new Set([
+const DOM_PROPERTIES = [
 	...DOM_BOOLEAN_ATTRIBUTES,
 	'formNoValidate',
 	'isMap',
@@ -229,16 +229,16 @@ const DOM_PROPERTIES = new Set([
 	'allowFullscreen',
 	'disablePictureInPicture',
 	'disableRemotePlayback'
-]);
+];
 
 /**
  * @param {string} name
  */
 export function is_dom_property(name) {
-	return DOM_PROPERTIES.has(name);
+	return DOM_PROPERTIES.includes(name);
 }
 
-const NON_STATIC_PROPERTIES = new Set(['autofocus', 'muted', 'defaultValue', 'defaultChecked']);
+const NON_STATIC_PROPERTIES = ['autofocus', 'muted', 'defaultValue', 'defaultChecked'];
 
 /**
  * Returns `true` if the given attribute cannot be set through the template
@@ -246,7 +246,7 @@ const NON_STATIC_PROPERTIES = new Set(['autofocus', 'muted', 'defaultValue', 'de
  * @param {string} name
  */
 export function cannot_be_set_statically(name) {
-	return NON_STATIC_PROPERTIES.has(name);
+	return NON_STATIC_PROPERTIES.includes(name);
 }
 
 /**
@@ -258,24 +258,24 @@ export function cannot_be_set_statically(name) {
  * - they apply to mobile which is generally less performant
  * we're marking them as passive by default for other elements, too.
  */
-const PASSIVE_EVENTS = new Set(['touchstart', 'touchmove']);
+const PASSIVE_EVENTS = ['touchstart', 'touchmove'];
 
 /**
  * Returns `true` if `name` is a passive event
  * @param {string} name
  */
 export function is_passive_event(name) {
-	return PASSIVE_EVENTS.has(name);
+	return PASSIVE_EVENTS.includes(name);
 }
 
-const CONTENT_EDITABLE_BINDINGS = new Set(['textContent', 'innerHTML', 'innerText']);
+const CONTENT_EDITABLE_BINDINGS = ['textContent', 'innerHTML', 'innerText'];
 
 /** @param {string} name */
 export function is_content_editable_binding(name) {
-	return CONTENT_EDITABLE_BINDINGS.has(name);
+	return CONTENT_EDITABLE_BINDINGS.includes(name);
 }
 
-const LOAD_ERROR_ELEMENTS = new Set([
+const LOAD_ERROR_ELEMENTS = [
 	'body',
 	'embed',
 	'iframe',
@@ -285,17 +285,17 @@ const LOAD_ERROR_ELEMENTS = new Set([
 	'script',
 	'style',
 	'track'
-]);
+];
 
 /**
  * Returns `true` if the element emits `load` and `error` events
  * @param {string} name
  */
 export function is_load_error_element(name) {
-	return LOAD_ERROR_ELEMENTS.has(name);
+	return LOAD_ERROR_ELEMENTS.includes(name);
 }
 
-const SVG_ELEMENTS = new Set([
+const SVG_ELEMENTS = [
 	'altGlyph',
 	'altGlyphDef',
 	'altGlyphItem',
@@ -382,14 +382,14 @@ const SVG_ELEMENTS = new Set([
 	'use',
 	'view',
 	'vkern'
-]);
+];
 
 /** @param {string} name */
 export function is_svg(name) {
-	return SVG_ELEMENTS.has(name);
+	return SVG_ELEMENTS.includes(name);
 }
 
-const MATHML_ELEMENTS = new Set([
+const MATHML_ELEMENTS = [
 	'annotation',
 	'annotation-xml',
 	'maction',
@@ -420,64 +420,64 @@ const MATHML_ELEMENTS = new Set([
 	'munder',
 	'munderover',
 	'semantics'
-]);
+];
 
 /** @param {string} name */
 export function is_mathml(name) {
-	return MATHML_ELEMENTS.has(name);
+	return MATHML_ELEMENTS.includes(name);
 }
 
-const STATE_CREATION_RUNES = new Set(
-	/** @type {const} */ (['$state', '$state.raw', '$derived', '$derived.by'])
-);
+const STATE_CREATION_RUNES = /** @type {const} */ ([
+	'$state',
+	'$state.raw',
+	'$derived',
+	'$derived.by'
+]);
 
-const RUNES = new Set(
-	/** @type {const} */ ([
-		...STATE_CREATION_RUNES,
-		'$state.eager',
-		'$state.snapshot',
-		'$props',
-		'$props.id',
-		'$bindable',
-		'$effect',
-		'$effect.pre',
-		'$effect.tracking',
-		'$effect.root',
-		'$effect.pending',
-		'$inspect',
-		'$inspect().with',
-		'$inspect.trace',
-		'$host'
-	])
-);
+const RUNES = /** @type {const} */ ([
+	...STATE_CREATION_RUNES,
+	'$state.eager',
+	'$state.snapshot',
+	'$props',
+	'$props.id',
+	'$bindable',
+	'$effect',
+	'$effect.pre',
+	'$effect.tracking',
+	'$effect.root',
+	'$effect.pending',
+	'$inspect',
+	'$inspect().with',
+	'$inspect.trace',
+	'$host'
+]);
 
-/** @typedef {typeof RUNES extends Set<infer T> ? T : never} RuneName */
-/** @typedef {typeof STATE_CREATION_RUNES extends Set<infer T> ? T : never} StateCreationRuneName */
+/** @typedef {typeof RUNES[number]} RuneName */
 
 /**
  * @param {string} name
  * @returns {name is RuneName}
  */
 export function is_rune(name) {
-	return RUNES.has(/** @type {RuneName} */ (name));
+	return RUNES.includes(/** @type {RuneName} */ (name));
 }
+
+/** @typedef {typeof STATE_CREATION_RUNES[number]} StateCreationRuneName */
 
 /**
  * @param {string} name
  * @returns {name is StateCreationRuneName}
  */
 export function is_state_creation_rune(name) {
-	return STATE_CREATION_RUNES.has(/** @type {StateCreationRuneName} */ (name));
+	return STATE_CREATION_RUNES.includes(/** @type {StateCreationRuneName} */ (name));
 }
 
-/** Elements that require raw contents and should not have SSR comments put in them */
-const RAW_TEXT_ELEMENTS = new Set(/** @type {const} */ (['textarea', 'script', 'style', 'title']));
-
-/** @typedef {typeof RAW_TEXT_ELEMENTS extends Set<infer T> ? T : never} RawTextElement */
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 'title']);
 
 /** @param {string} name */
 export function is_raw_text_element(name) {
-	return RAW_TEXT_ELEMENTS.has(/** @type {RawTextElement} */ (name));
+	return RAW_TEXT_ELEMENTS.includes(/** @type {typeof RAW_TEXT_ELEMENTS[number]} */ (name));
 }
 
 // Matches valid HTML/SVG/MathML element names and custom element names.
