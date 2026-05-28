@@ -689,12 +689,15 @@ export class Batch {
 				}
 			}
 
-			if (!batch.#started) continue;
+			var current = [...batch.current.keys()].filter(
+				(source) => !(/** @type {[any, boolean]} */ (batch.current.get(source))[1])
+			);
+
+			// If not started yet or no sources to update (which is e.g. possible for the very first batch) then bail
+			if (!batch.#started || current.length === 0) continue;
 
 			// Re-run async/block effects that depend on distinct values changed in both batches (ignoring deriveds)
-			var others = [...batch.current.keys()].filter(
-				(s) => !(/** @type {[any, boolean]} */ (batch.current.get(s))[1]) && !this.current.has(s)
-			);
+			var others = current.filter((source) => !this.current.has(source));
 
 			if (others.length === 0) {
 				if (is_earlier) {
