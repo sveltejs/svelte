@@ -8,24 +8,7 @@ title: Browser support
 
 The table below shows the minimum browser versions Svelte's runtime and compiled output are expected to work in.
 
-<!-- generated-table:start -->
-
-_Resolved Baseline target: **Baseline 2020**._
-
-| Browser           | Minimum version |
-| ----------------- | --------------- |
-| Chrome / Edge     | 87              |
-| Chrome (Android)  | 87              |
-| Firefox           | 83              |
-| Firefox (Android) | 83              |
-| Safari            | 14              |
-| Safari (iOS)      | 14              |
-| Opera             | 73              |
-| Opera (Android)   | 62              |
-| Samsung Internet  | 14.0            |
-| Android WebView   | 87              |
-
-<!-- generated-table:end -->
+@include .generated/browser-support.md
 
 These numbers describe what Svelte's output _requires_ in order to run — they're derived from the APIs the code uses, not from a list of browsers the team commits to testing.
 
@@ -44,16 +27,7 @@ These numbers describe what Svelte's output _requires_ in order to run — they'
 
 Some Svelte features rely on browser APIs that exceed the floor above. The runtime still loads on older browsers — modern bundlers tree-shake the affected code when the feature is unused — but if you use one of these features, you need the higher minimum version listed here.
 
-<!-- conditional-features:start -->
-
-| Feature | Affected API | Min Chrome / Edge | Min Firefox | Min Safari |
-| --- | --- | ---: | ---: | ---: |
-| `$state.snapshot` | `structuredClone()` | 98 | 94 | 15.4 |
-| `{ flip }` from `svelte/animate` | `CSS zoom property reads (getComputedStyle(...).zoom)` | (floor) | 126 | (floor) |
-| `animate:` | `CSS zoom property reads (getComputedStyle(...).zoom)` | (floor) | 126 | (floor) |
-| `bind:devicePixelContentBoxSize` | `ResizeObserver `box: device-pixel-content-box` option + `entry.devicePixelContentBoxSize`` | (floor) | 93 | not supported |
-
-<!-- conditional-features:end -->
+@include .generated/browser-support-features.md
 
 ## How this page stays accurate
 

@@ -87,6 +87,7 @@ register_extra_rules([
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkg_dir = path.resolve(__dirname, '..');
 const repo_root = path.resolve(pkg_dir, '..', '..');
+const docs_dir = path.join(repo_root, 'documentation/docs/07-misc/.generated');
 const docs_page = path.join(repo_root, 'documentation/docs/07-misc/05-browser-support.md');
 const snapshot_dir = path.join(pkg_dir, 'tests/snapshot/samples');
 const tmp_dir = path.join(__dirname, '_baseline');
@@ -853,36 +854,6 @@ function render_table(versions, target) {
 	return `_Resolved Baseline target: **${target_label}**._\n\n${header}\n${sep}\n${body}`;
 }
 
-/**
- * Replace the markdown between `<!-- ${name}:start -->` and `<!-- ${name}:end -->`.
- *
- * @param {string} source
- * @param {string} name
- * @param {string} replacement
- */
-function replace_block(source, name, replacement) {
-	const start = `<!-- ${name}:start -->`;
-	const end = `<!-- ${name}:end -->`;
-	const pattern = new RegExp(`${start}[\\s\\S]*?${end}`);
-
-	if (!pattern.test(source)) {
-		throw new Error(`Could not find \`${start}\` / \`${end}\` markers in ${docs_page}.`);
-	}
-
-	return source.replace(pattern, `${start}\n\n${replacement}\n\n${end}`);
-}
-
-/**
- * @param {string} headline_table
- * @param {string} conditional_table
- */
-function rewrite_docs_page(headline_table, conditional_table) {
-	let source = fs.readFileSync(docs_page, 'utf-8');
-	source = replace_block(source, 'generated-table', headline_table);
-	source = replace_block(source, 'conditional-features', conditional_table);
-	fs.writeFileSync(docs_page, source);
-}
-
 /* eslint-disable no-console */
 async function main() {
 	console.log('Preparing scratch directory…');
@@ -931,10 +902,8 @@ async function main() {
 		const versions = browser_versions_for(target);
 
 		console.log('Rewriting docs page…');
-		rewrite_docs_page(
-			render_table(versions, target),
-			render_conditional_table(conditional_rows, target)
-		);
+		generate('browser-support.md', render_table(versions, target));
+		generate('browser-support-features.md', render_conditional_table(conditional_rows, target));
 
 		console.log('Done.');
 	} finally {
@@ -943,6 +912,22 @@ async function main() {
 		// next CI step and produce spurious naming/no-console errors.
 		fs.rmSync(tmp_dir, { recursive: true, force: true });
 	}
+}
+
+/**
+ * @param {string} file
+ * @param {string} content
+ */
+function generate(file, content) {
+	const filename = path.join(docs_dir, file);
+
+	try {
+		fs.mkdirSync(path.dirname(file), { recursive: true });
+	} catch {}
+
+	const backlink = path.relative(filename, fileURLToPath(import.meta.url));
+
+	fs.writeFileSync(filename, `<!-- generated in ${backlink}. do not edit -->\n\n${content}`);
 }
 
 main().catch((err) => {
