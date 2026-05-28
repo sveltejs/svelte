@@ -1,7 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
-import { validate_opening_tag, validate_tag_placement } from './shared/utils.js';
+import { validate_opening_tag } from './shared/utils.js';
 import { mark_async_declaration } from './DeclarationTag.js';
 
 /**
@@ -13,7 +13,25 @@ export function ConstTag(node, context) {
 		validate_opening_tag(node, context.state, '@');
 	}
 
-	validate_tag_placement(node, context, e.const_tag_invalid_placement);
+	const parent = context.path.at(-1);
+	const grand_parent = context.path.at(-2);
+
+	if (
+		parent?.type !== 'Fragment' ||
+		(grand_parent?.type !== 'IfBlock' &&
+			grand_parent?.type !== 'SvelteFragment' &&
+			grand_parent?.type !== 'Component' &&
+			grand_parent?.type !== 'SvelteComponent' &&
+			grand_parent?.type !== 'EachBlock' &&
+			grand_parent?.type !== 'AwaitBlock' &&
+			grand_parent?.type !== 'SnippetBlock' &&
+			grand_parent?.type !== 'SvelteBoundary' &&
+			grand_parent?.type !== 'KeyBlock' &&
+			((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
+				!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
+	) {
+		e.const_tag_invalid_placement(node);
+	}
 
 	const declaration = node.declaration.declarations[0];
 

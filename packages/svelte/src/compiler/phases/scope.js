@@ -1149,19 +1149,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			next({ scope });
 		},
 
-		FunctionDeclaration(node, { state, path, next }) {
-			const is_parent_declaration_tag = path.at(-1)?.type === 'DeclarationTag';
-			if (node.id) {
-				const binding = state.scope.declare(
-					node.id,
-					is_parent_declaration_tag ? 'template' : 'normal',
-					'function',
-					node
-				);
-				if (is_parent_declaration_tag) {
-					binding.metadata = { is_template_declaration: true };
-				}
-			}
+		FunctionDeclaration(node, { state, next }) {
+			if (node.id) state.scope.declare(node.id, 'normal', 'function', node);
 
 			const scope = state.scope.child(true);
 			scopes.set(node, scope);
