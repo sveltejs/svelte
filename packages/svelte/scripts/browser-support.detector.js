@@ -20,7 +20,7 @@
 // enum — about 20 entries.
 
 import ts from 'typescript';
-import { features as web_features } from 'web-features';
+import { features } from 'web-features';
 
 /**
  * Maps compat-key suffixes under `javascript.operators` and
@@ -146,7 +146,7 @@ function build_detection_maps() {
 		if (!by_member.has(member)) by_member.set(member, feature_id);
 	};
 
-	for (const [feature_id, feature] of Object.entries(web_features)) {
+	for (const [feature_id, feature] of Object.entries(features)) {
 		if (!('compat_features' in feature) || !feature.compat_features) continue;
 		for (const path of feature.compat_features) {
 			const parts = path.split('.');
@@ -450,7 +450,7 @@ export function detect_features_in_text(source_text) {
 export function versions_for_feature(feature_id) {
 	const extra = EXTRA_FEATURE_INFO.get(feature_id);
 	if (extra) return extra.versions;
-	const feature = web_features[feature_id];
+	const feature = features[feature_id];
 	if (!feature || !('status' in feature)) return null;
 	return /** @type {Record<string, string> | null} */ (
 		/** @type {unknown} */ (feature.status.support)
@@ -465,7 +465,7 @@ export function versions_for_feature(feature_id) {
 export function name_for_feature(feature_id) {
 	const extra = EXTRA_FEATURE_INFO.get(feature_id);
 	if (extra) return extra.name;
-	const feature = web_features[feature_id];
+	const feature = features[feature_id];
 	if (feature && 'name' in feature) return feature.name;
 	return feature_id;
 }
@@ -480,7 +480,7 @@ export function name_for_feature(feature_id) {
 export function baseline_year_for_feature(feature_id) {
 	const extra = EXTRA_FEATURE_INFO.get(feature_id);
 	if (extra) return extra.baseline_year;
-	const feature = web_features[feature_id];
+	const feature = features[feature_id];
 	if (!feature || !('status' in feature)) return null;
 	const status = /** @type {{ baseline_low_date?: string }} */ (feature.status);
 	if (!status.baseline_low_date) return null;
