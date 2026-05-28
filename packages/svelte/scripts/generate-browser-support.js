@@ -18,11 +18,6 @@
 //   4. Translate floors into concrete browser versions via `web-features`
 //      data (exact per-feature versions), falling back to
 //      `baseline-browser-mapping` for year-only resolution.
-//
-// Required dev dependencies:
-//   - typescript (already in the tree)
-//   - web-features, baseline-browser-mapping
-//   - rollup + plugin-virtual + plugin-node-resolve (already in the tree)
 
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,24 +1,3 @@
-// Type-aware browser-API detector for `generate-browser-support.js`.
-//
-// Replaces the previous `eslint-plugin-baseline-js` scanner. We parse each
-// bundle with TypeScript's own compiler, walk the AST with the TypeChecker,
-// and flag web-features whose `compat_features` paths match what the
-// receiver type and member name resolve to.
-//
-// Detection maps are DERIVED from `web-features` at startup — they're not
-// hand-curated. Each feature in the dataset lists BCD paths like
-// `api.HTMLElement.inert` or `javascript.builtins.String.replaceAll`, and
-// we partition them into:
-//
-//   - Global identifiers          (`api.X`, `javascript.builtins.X`)
-//   - Type-member access          (`api.X.Y`, `javascript.builtins.X.Y`)
-//   - Operators / syntax kinds    (`javascript.operators.X`,
-//                                  `javascript.statements.X`)
-//
-// The only hand-coded data is `OPERATOR_KIND_MAP` below, which is a
-// mechanical mapping from compat-key names to TypeScript's `SyntaxKind`
-// enum — about 20 entries.
-
 import ts from 'typescript';
 import { features } from 'web-features';
 
