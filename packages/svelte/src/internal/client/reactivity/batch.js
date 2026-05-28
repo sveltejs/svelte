@@ -518,6 +518,10 @@ export class Batch {
 			if (d) deferred.promise.then(d.resolve).catch(d.reject);
 		}
 
+		// Clear them or else those that are still pending might get rejected on discard (after merged-into batch is done).
+		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
+		batch.async_deriveds.clear();
+
 		// Mark is not guaranteed not touch these, so we transfer them
 		this.transfer_effects(batch.#dirty_effects, batch.#maybe_dirty_effects);
 
