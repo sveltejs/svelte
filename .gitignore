@@ -22,6 +22,7 @@ coverage
 .DS_Store
 
 tmp
+packages/svelte/scripts/_baseline/
 
 benchmarking/.profiles
 benchmarking/compare/.results
