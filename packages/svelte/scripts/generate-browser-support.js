@@ -225,8 +225,8 @@ async function enumerate_subpackage_exports() {
  * inside an effect callback — these are still tested by being indirectly
  * invoked from the outer fixture).
  *
- * @param {string} rune
- * @returns {string | null}
+ * @param {typeof RUNES[number]} rune
+ * @returns {string}
  */
 function rune_fixture(rune) {
 	switch (rune) {
@@ -266,9 +266,9 @@ function rune_fixture(rune) {
 			return `<script>$effect(() => { $inspect.trace(); });</script>`;
 		case '$host':
 			return `<svelte:options customElement="x-y" />\n<script>const h = $host(); console.log(h);</script>`;
-		default:
-			return null;
 	}
+
+	throw new Error(`Fixture missing for ${rune}`);
 }
 
 /**
@@ -548,20 +548,12 @@ function enumerate_features(subpackage_exports) {
 		}
 	}
 
-	// Enumerated from `RUNES` (the same array the compiler reads to
-	// recognise rune identifiers). Cases without a fixture template fall
-	// through with a warning, so a new rune either gets a template or
-	// shows up in the log.
 	for (const rune of RUNES) {
-		const source = rune_fixture(rune);
-		if (source === null) {
-			// eslint-disable-next-line no-console
-			console.warn(
-				`  (no fixture template for rune \`${rune}\` — add a case to rune_fixture if it can introduce a new browser API)`
-			);
-			continue;
-		}
-		features.push({ name: `\`${rune}\``, kind: 'svelte', source });
+		features.push({
+			name: `\`${rune}\``,
+			kind: 'svelte',
+			source: rune_fixture(rune)
+		});
 	}
 
 	for (const directive of TESTED_DIRECTIVES) {
