@@ -532,6 +532,16 @@ export class Batch {
 		// Mark is not guaranteed to not touch these, so we transfer them
 		this.transfer_effects(batch.#dirty_effects);
 
+		for (const fn of batch.#commit_callbacks) {
+			this.#commit_callbacks.add(() => fn(batch));
+		}
+
+		for (const fn of batch.#discard_callbacks) {
+			this.#discard_callbacks.add(() => fn(batch));
+		}
+
+		this.settled().then(batch.#deferred?.resolve, batch.#deferred?.reject);
+
 		/**
 		 * mark all effects that depend on `batch.current`, except the
 		 * async effects that we just resolved (TODO unless they depend
