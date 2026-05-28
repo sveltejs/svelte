@@ -729,10 +729,22 @@ function browser_versions_for(target: RuntimeFloor): Record<string, string> {
 		'webview_android'
 	]);
 
+	const suffixes = ['_android', '_ios'];
+
 	const lookup: Record<string, string> = {};
-	for (const { browser, version } of versions) {
-		if (visible_browsers.has(browser)) lookup[browser] = version;
+	outer: for (const { browser, version } of versions) {
+		if (visible_browsers.has(browser)) {
+			for (const suffix of suffixes) {
+				// skip e.g. 'Chrome (Android)' if it matches Chrome
+				if (browser.endsWith(suffix) && version === lookup[browser.replace(suffix, '')]) {
+					continue outer;
+				}
+			}
+
+			lookup[browser] = version;
+		}
 	}
+
 	return lookup;
 }
 
@@ -741,29 +753,27 @@ function render_table(versions: Record<string, string>, target: RuntimeFloor): s
 	// same Baseline version. Collapse them into one row when they match, but
 	// fall back to listing them separately if they ever drift.
 	const chrome_edge: [string, string] | null =
-		versions.chrome && versions.chrome === versions.edge
-			? ['Chrome / Edge', versions.chrome]
-			: null;
+		versions.chrome && versions.chrome === versions.edge ? ['Chrome/Edge', versions.chrome] : null;
 
 	const base_rows: Array<[string, string]> = chrome_edge
-		? [chrome_edge, ['Chrome (Android)', versions.chrome_android ?? '?']]
+		? [chrome_edge, ['Chrome (Android)', versions.chrome_android]]
 		: [
-				['Chrome', versions.chrome ?? '?'],
-				['Chrome (Android)', versions.chrome_android ?? '?'],
-				['Edge', versions.edge ?? '?']
+				['Chrome', versions.chrome],
+				['Chrome (Android)', versions.chrome_android],
+				['Edge', versions.edge]
 			];
 
-	const rows: Array<[string, string]> = [
+	const rows = [
 		...base_rows,
-		['Firefox', versions.firefox ?? '?'],
-		['Firefox (Android)', versions.firefox_android ?? '?'],
-		['Safari', versions.safari ?? '?'],
-		['Safari (iOS)', versions.safari_ios ?? '?'],
-		['Opera', versions.opera ?? '?'],
-		['Opera (Android)', versions.opera_android ?? '?'],
-		['Samsung Internet', versions.samsunginternet_android ?? '?'],
-		['Android WebView', versions.webview_android ?? '?']
-	];
+		['Firefox', versions.firefox],
+		['Firefox (Android)', versions.firefox_android],
+		['Safari', versions.safari],
+		['Safari (iOS)', versions.safari_ios],
+		['Opera', versions.opera],
+		['Opera (Android)', versions.opera_android],
+		['Samsung Internet', versions.samsunginternet_android],
+		['Android WebView', versions.webview_android]
+	].filter(([label, version]) => version !== undefined) as Array<[string, string]>;
 
 	const headings = ['Browser', 'Minimum version'];
 
