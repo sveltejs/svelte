@@ -533,7 +533,7 @@ function enumerate_features(subpackage_exports: Record<string, string[]>): Featu
 	for (const [module, exports] of Object.entries(subpackage_exports)) {
 		for (const exp of exports) {
 			features.push({
-				name: `\`{ ${exp} }\` from \`${module}\``,
+				name: `\`${exp}\` from \`${module}\``,
 				kind: 'js',
 				source: `import { ${exp} } from '${module}'; export const _ = ${exp};`
 			});
