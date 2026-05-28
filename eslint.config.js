@@ -90,6 +90,7 @@ export default [
 			'**/tests',
 			'packages/svelte/scripts/process-messages/templates/*.js',
 			'packages/svelte/scripts/_bundle.js',
+			'packages/svelte/scripts/_baseline/**',
 			'packages/svelte/src/compiler/errors.js',
 			'packages/svelte/src/internal/client/errors.js',
 			'packages/svelte/src/internal/client/warnings.js',
