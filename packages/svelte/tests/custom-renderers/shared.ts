@@ -38,7 +38,7 @@ const console_log = console.log;
 // eslint-disable-next-line no-console
 const console_warn = console.warn;
 
-const renderer_path = path.resolve(import.meta.dirname, 'renderer.js');
+const renderer_path = path.resolve(import.meta.dirname, 'renderer.ts');
 
 export function custom_renderer_suite() {
 	return suite_with_variants<CustomRendererTest, 'custom-renderer', CompileOptions | null>(

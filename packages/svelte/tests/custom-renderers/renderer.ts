@@ -8,20 +8,29 @@
 
 import { createRenderer } from '../../src/renderer/index.js';
 
-/**
- * @typedef {{ type: 'element', name: string, attributes: Record<string, string>, children: ObjNode[], listeners: Record<string, Array<{handler: any, options?: any}>>, parent: ObjNode | null }} ObjElement
- * @typedef {{ type: 'text', value: string, parent: ObjNode | null }} ObjText
- * @typedef {{ type: 'comment', value: string, parent: ObjNode | null, before: (node: any)=> void }} ObjComment
- * @typedef {{ type: 'fragment', children: ObjNode[], parent: ObjNode | null }} ObjFragment
- * @typedef {ObjElement | ObjText | ObjComment | ObjFragment} ObjNode
- */
+type ObjElement = {
+	type: 'element';
+	name: string;
+	attributes: Record<string, string>;
+	children: ObjNode[];
+	listeners: Record<string, Array<{ handler: any; options?: any }>>;
+	parent: ObjNode | null;
+};
+type ObjText = { type: 'text'; value: string; parent: ObjNode | null };
+type ObjComment = {
+	type: 'comment';
+	value: string;
+	parent: ObjNode | null;
+	before: (node: any) => void;
+};
+type ObjFragment = { type: 'fragment'; children: ObjNode[]; parent: ObjNode | null };
+type ObjNode = ObjElement | ObjText | ObjComment | ObjFragment;
 
-/**
- * @param {ObjNode & { children?: ObjNode[] }} parent
- * @param {ObjNode} node
- * @param {ObjNode | null} anchor
- */
-function insert_node(parent, node, anchor) {
+function insert_node(
+	parent: ObjNode & { children?: ObjNode[] },
+	node: ObjNode,
+	anchor: ObjNode | null
+) {
 	if (node.type === 'fragment') {
 		const children = [...(node.children ?? [])];
 		for (const child of children) {
@@ -35,7 +44,7 @@ function insert_node(parent, node, anchor) {
 		remove_from_parent(node);
 	}
 
-	const children = /** @type {ObjNode[]} */ (parent.children);
+	const children: ObjNode[] = parent.children ?? [];
 	node.parent = parent;
 
 	if (anchor === null) {
@@ -47,8 +56,7 @@ function insert_node(parent, node, anchor) {
 	}
 }
 
-/** @param {ObjNode} node */
-function remove_from_parent(node) {
+function remove_from_parent(node: ObjNode) {
 	const parent = node.parent;
 	if (!parent || !('children' in parent)) return;
 
@@ -61,41 +69,43 @@ function remove_from_parent(node) {
 	children.splice(idx, 1);
 }
 
-/**
- * @type {Array<DocumentFragment | Node>}
- */
-export const dom_elements = [];
+export const dom_elements: Array<DocumentFragment | Node> = [];
 
-const renderer = createRenderer({
+const renderer = createRenderer<{
+	fragment: ObjFragment;
+	element: ObjElement;
+	text: ObjText;
+	comment: ObjComment;
+}>({
 	createFragment() {
-		return /** @type {ObjFragment} */ ({
+		return {
 			type: 'fragment',
 			children: [],
 			parent: null
-		});
+		};
 	},
 
 	createElement(name) {
-		return /** @type {ObjElement} */ ({
+		return {
 			type: 'element',
 			name,
 			attributes: {},
 			children: [],
 			listeners: {},
 			parent: null
-		});
+		};
 	},
 
 	createTextNode(data) {
-		return /** @type {ObjText} */ ({
+		return {
 			type: 'text',
 			value: data,
 			parent: null
-		});
+		};
 	},
 
 	createComment(data) {
-		return /** @type {ObjComment} */ ({
+		return {
 			type: 'comment',
 			value: data,
 			parent: null,
@@ -104,7 +114,7 @@ const renderer = createRenderer({
 			before(node) {
 				dom_elements.push(node);
 			}
-		});
+		};
 	},
 
 	nodeType(node) {
@@ -186,7 +196,6 @@ const renderer = createRenderer({
 
 /**
  * Create a root object for mounting components into.
- * @returns {ObjFragment}
  */
 export function create_root() {
 	return renderer.createFragment();
@@ -194,11 +203,8 @@ export function create_root() {
 
 /**
  * Dispatch a synthetic event on an object node.
- * @param {any} node
- * @param {string} type
- * @param {any} [detail]
  */
-export function dispatch_event(node, type, detail) {
+export function dispatch_event(node: any, type: string, detail?: any) {
 	const listeners = node.listeners?.[type];
 	if (!listeners) return;
 	const event = { type, detail, target: node };
@@ -209,10 +215,8 @@ export function dispatch_event(node, type, detail) {
 
 /**
  * Serialize an object tree to an HTML-like string for easy assertion.
- * @param {ObjNode} node
- * @returns {string}
  */
-export function serialize(node) {
+export function serialize(node: ObjNode): string {
 	if (!node) return '';
 
 	switch (node.type) {
