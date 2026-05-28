@@ -96,9 +96,9 @@ export function animation(element, get_fn, get_params) {
 
 	/** @type {null | { position: string, width: string, height: string, transform: string }} */
 	var original_styles = null;
-	/** Captured pre-absolute size, set by `fix_size`, consumed by `fix_position`. */
+	/** Captured pre-absolute size, set by `capture_size`, consumed by `set_position`. */
 	var frozen_width = '';
-	/** Captured pre-absolute size, set by `fix_size`, consumed by `fix_position`. */
+	/** Captured pre-absolute size, set by `capture_size`, consumed by `set_position`. */
 	var frozen_height = '';
 
 	nodes.a ??= {
@@ -132,7 +132,7 @@ export function animation(element, get_fn, get_params) {
 				);
 			}
 		},
-		fix_size() {
+		capture_size() {
 			original_styles = null;
 
 			// If an animation is already running, transforming the element is likely to fail,
@@ -160,7 +160,7 @@ export function animation(element, get_fn, get_params) {
 			frozen_width = width;
 			frozen_height = height;
 		},
-		fix_position() {
+		set_position() {
 			if (original_styles === null) return;
 
 			var style = /** @type {HTMLElement | SVGElement} */ (this.element).style;
@@ -169,7 +169,7 @@ export function animation(element, get_fn, get_params) {
 			style.width = frozen_width;
 			style.height = frozen_height;
 		},
-		fix_transform() {
+		set_transform() {
 			if (original_styles === null) return;
 
 			var to = this.element.getBoundingClientRect();

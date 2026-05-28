@@ -634,9 +634,9 @@ function reconcile(state, array, anchor, flags, get_key) {
 				// `getBoundingClientRect` read); batching brings the whole batch
 				// down to ~2 flushes total.
 				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.measure();
-				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.fix_size();
-				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.fix_position();
-				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.fix_transform();
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.capture_size();
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.set_position();
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.set_transform();
 			}
 
 			pause_effects(state, to_destroy, controlled_anchor);

@@ -131,20 +131,20 @@ export interface AnimationManager {
 	 * Pure read pass — runs before any items have been mutated so the captured
 	 * dimensions reflect the original layout (matters in flex/grid containers).
 	 */
-	fix_size: () => void;
+	capture_size: () => void;
 	/**
 	 * Apply `position: absolute` and the captured size. Pure write pass — runs
 	 * after all items' sizes have been captured, so the layout invalidation
 	 * is batched into a single subsequent flush.
 	 */
-	fix_position: () => void;
+	set_position: () => void;
 	/**
 	 * Read the element's post-absolute bounding rect and apply a compensating
 	 * transform so it visually stays at its captured-`from` position. The first
 	 * call in a batch pays one layout flush; subsequent calls in the same
 	 * batch are flush-free because `transform` is compositor-only.
 	 */
-	fix_transform: () => void;
+	set_transform: () => void;
 	/** Unfix the element position if the outro is aborted */
 	unfix: () => void;
 }
