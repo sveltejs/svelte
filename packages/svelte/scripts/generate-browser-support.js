@@ -854,7 +854,7 @@ function render_table(versions, target) {
 
 	const target_label = target === 'newly' ? '"newly available"' : target;
 
-	return `${header}\n${sep}\n${body}\n\n> [!NOTE] This equates to a <a href="">Baseline</a> target of ${target_label}.`;
+	return `${header}\n${sep}\n${body}\n\n> [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of ${target_label}.`;
 }
 
 /* eslint-disable no-console */
