@@ -529,9 +529,6 @@ export class Batch {
 			if (cv !== undefined) this.cvs.set(effect, cv);
 		}
 
-		// Mark is not guaranteed to not touch these, so we transfer them
-		this.transfer_effects(batch.#dirty_effects);
-
 		for (const fn of batch.#commit_callbacks) {
 			this.#commit_callbacks.add(() => fn(batch));
 		}
@@ -540,7 +537,15 @@ export class Batch {
 			this.#discard_callbacks.add(() => fn(batch));
 		}
 
-		this.settled().then(batch.#deferred?.resolve, batch.#deferred?.reject);
+		// TODO this doesn't feel quite right, but it gets the tests to pass
+		this.oncommit(() => {
+			for (const fn of batch.#discard_callbacks) fn(batch);
+		});
+
+		this.settled().then(() => batch.#deferred?.resolve());
+
+		// Mark is not guaranteed to not touch these, so we transfer them
+		this.transfer_effects(batch.#dirty_effects);
 
 		/**
 		 * mark all effects that depend on `batch.current`, except the
@@ -577,7 +582,6 @@ export class Batch {
 			mark(source);
 		}
 
-		this.oncommit(() => batch.discard());
 		batch.#unlink();
 
 		current_batch = this;
