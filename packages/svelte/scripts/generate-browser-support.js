@@ -285,7 +285,7 @@ const TESTED_DIRECTIVES = [
 	},
 	{
 		name: '`animate:`',
-		source: `<script>import { flip } from 'svelte/animate'; let items = $state([1,2,3]);</script>{#each items as item (item)}<div animate:flip>{item}</div>{/each}`
+		source: `<script>const flip = () => {}; let items = $state([1,2,3]);</script>{#each items as item (item)}<div animate:flip>{item}</div>{/each}`
 	},
 	{
 		name: '`use:` actions',
