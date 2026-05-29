@@ -359,10 +359,25 @@ export function append(anchor, dom) {
 	if (hydrating) {
 		var effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
-		// When hydrating and outer component and an inner component is async, i.e. blocked on a promise,
-		// then by the time the inner resolves we have already advanced to the end of the hydrated nodes
-		// of the parent component. Check for defined for that reason to avoid rewinding the parent's end marker.
-		if ((effect.f & REACTION_RAN) === 0 || effect.nodes.end === null) {
+		// When hydrating, an effect's `end` marker advances as its template nodes are
+		// hydrated. With async (a component blocked on a promise), an effect can append
+		// more nodes *after* it has already run once and recorded an `end`. We must:
+		//
+		//   1. advance `end` if it hasn't been set yet, or the reaction hasn't run, and
+		//   2. advance `end` for the effect's own later nodes (forward in document order),
+		//      but
+		//   3. NOT rewind `end` backwards — this happens when an outer component's `end`
+		//      was already advanced past an inner async component's region, and the inner
+		//      component resolves later. Rewinding there would shrink the parent's range
+		//      and orphan DOM on destroy.
+		var current_end = effect.nodes.end;
+
+		if (
+			(effect.f & REACTION_RAN) === 0 ||
+			current_end === null ||
+			// only advance forward, never rewind: is `hydrate_node` after `current_end`?
+			(current_end.compareDocumentPosition(hydrate_node) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+		) {
 			effect.nodes.end = hydrate_node;
 		}
 
