@@ -18,7 +18,7 @@ import {
 	is_customizable_select_element
 } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter } from '../utils.js';
+import { build_getter, get_transform } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -303,11 +303,14 @@ export function RegularElement(node, context) {
 		}
 	}
 
+	const scope = /** @type {Scope} */ (context.state.scopes.get(node.fragment));
+
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
 		metadata,
-		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
+		scope,
+		transform: get_transform(scope, context.state),
 		preserve_whitespace: context.state.preserve_whitespace || name === 'pre' || name === 'textarea'
 	};
 
@@ -321,8 +324,19 @@ export function RegularElement(node, context) {
 		state.options.preserveComments
 	);
 
+	const has_declarations = !node.fragment.metadata.transparent;
+
 	/** @type {typeof state} */
-	const child_state = { ...state, init: [], update: [], after_update: [], snippets: [] };
+	const child_state = {
+		...state,
+		init: [],
+		update: [],
+		after_update: [],
+		snippets: [],
+		consts: has_declarations ? [] : state.consts,
+		async_consts: has_declarations ? undefined : state.async_consts,
+		memoizer: has_declarations ? new Memoizer() : state.memoizer
+	};
 
 	for (const node of hoisted) {
 		context.visit(node, child_state);
@@ -446,11 +460,21 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock') || has_declarations) {
+		if (child_state.async_consts && child_state.async_consts.thunks.length > 0) {
+			child_state.consts.push(
+				b.var(
+					child_state.async_consts.id,
+					b.call('$.run', b.array(child_state.async_consts.thunks))
+				)
+			);
+		}
+
 		// Wrap children in `{...}` to avoid declaration conflicts
 		context.state.init.push(
 			b.block([
 				...child_state.snippets,
+				...child_state.consts,
 				...child_state.init,
 				...element_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state) : b.empty,

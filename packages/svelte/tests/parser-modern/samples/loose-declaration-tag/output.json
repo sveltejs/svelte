@@ -1,0 +1,113 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 38,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "IfBlock",
+				"elseif": false,
+				"start": 0,
+				"end": 38,
+				"test": {
+					"type": "Literal",
+					"start": 5,
+					"end": 9,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 5
+						},
+						"end": {
+							"line": 1,
+							"column": 9
+						}
+					},
+					"value": true,
+					"raw": "true"
+				},
+				"consequent": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 10,
+							"end": 12,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "DeclarationTag",
+							"start": 12,
+							"end": 18,
+							"declaration": {
+								"type": "VariableDeclaration",
+								"kind": "let",
+								"declarations": [
+									{
+										"type": "VariableDeclarator",
+										"id": {
+											"type": "Identifier",
+											"name": "",
+											"start": 17,
+											"end": 17
+										},
+										"init": null,
+										"start": 17,
+										"end": 17
+									}
+								],
+								"start": 13,
+								"end": 17
+							}
+						},
+						{
+							"type": "Text",
+							"start": 18,
+							"end": 20,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "DeclarationTag",
+							"start": 20,
+							"end": 32,
+							"declaration": {
+								"type": "VariableDeclaration",
+								"kind": "const",
+								"declarations": [
+									{
+										"type": "VariableDeclarator",
+										"id": {
+											"type": "Identifier",
+											"name": "",
+											"start": 31,
+											"end": 31
+										},
+										"init": null,
+										"start": 31,
+										"end": 31
+									}
+								],
+								"start": 21,
+								"end": 31
+							}
+						},
+						{
+							"type": "Text",
+							"start": 32,
+							"end": 33,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				},
+				"alternate": null
+			}
+		]
+	},
+	"options": null
+}

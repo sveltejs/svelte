@@ -217,6 +217,7 @@ function* find_descendants(fragment) {
 			case 'SnippetBlock':
 			case 'DebugTag':
 			case 'ConstTag':
+			case 'DeclarationTag':
 			case 'Comment':
 			case 'ExpressionTag':
 				break;
