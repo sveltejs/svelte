@@ -201,8 +201,8 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	// Let bindings first, they can be used on attributes
-	context.state.init.push(...lets);
+	// Let bindings first, they can be used on attributes and `{@const}` declarations
+	context.state.let_directives.push(...lets);
 
 	const node_id = context.state.node;
 

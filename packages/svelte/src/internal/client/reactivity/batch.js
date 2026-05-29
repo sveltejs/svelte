@@ -128,13 +128,6 @@ export class Batch {
 	previous = new Map();
 
 	/**
-	 * Async effects which this batch doesn't take into account anymore when calculating blockers,
-	 * as it has a value for it already.
-	 * @type {Set<Effect>}
-	 */
-	unblocked = new Set();
-
-	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Set<(batch: Batch) => void>}
@@ -214,6 +207,18 @@ export class Batch {
 
 	#decrement_queued = false;
 
+	constructor() {
+		// link batch
+		if (last_batch === null) {
+			first_batch = last_batch = this;
+		} else {
+			last_batch.#next = this;
+			this.#prev = last_batch;
+		}
+
+		last_batch = this;
+	}
+
 	#is_deferred() {
 		if (this.is_fork) return true;
 
@@ -289,19 +294,19 @@ export class Batch {
 			}
 		}
 
-		// we only reschedule previously-deferred effects if we expect
-		// to be able to run them after processing the batch
-		if (!this.#is_deferred()) {
-			for (const e of this.#dirty_effects) {
-				this.#maybe_dirty_effects.delete(e);
-				set_signal_status(e, DIRTY);
-				this.schedule(e);
-			}
+		// We always reschedule previously-deferred effects, not just when
+		// #is_deferred() is true, because traversing the tree could make
+		// an if block that contains the last blocking pending effect falsy,
+		// causing the block to no longer be deferred.
+		for (const e of this.#dirty_effects) {
+			this.#maybe_dirty_effects.delete(e);
+			set_signal_status(e, DIRTY);
+			this.schedule(e);
+		}
 
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				this.schedule(e);
-			}
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			this.schedule(e);
 		}
 
 		const roots = this.#roots;
@@ -326,6 +331,12 @@ export class Batch {
 				this.#traverse(root, effects, render_effects);
 			} catch (e) {
 				reset_all(root);
+				// If there's no async work left, this branch is now dead and needs
+				// to be discarded to not become a zombie that is never cleaned up.
+				// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
+				// for a (non-minimal) reproduction that demonstrates a case where this is necessary
+				// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
+				if (!this.#is_deferred()) this.discard();
 				throw e;
 			}
 		}
@@ -362,6 +373,10 @@ export class Batch {
 		const earlier_batch = this.#find_earlier_batch();
 
 		if (earlier_batch) {
+			// If this batch collected deferred effects during traversal, they still need
+			// to run after being merged into the earlier batch.
+			this.#defer_effects(render_effects);
+			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
 			return;
 		}
@@ -383,31 +398,30 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.linked && this.#pending === 0) {
+		if (this.#pending === 0 && (this.#roots.length === 0 || next_batch !== null)) {
 			this.#unlink();
-		}
 
-		// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
-		// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
-		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
-		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
-		if (async_mode_flag && !this.linked) {
-			this.#commit();
-			// Rebases can activate other batches or null it out, therefore restore the new one here
-			current_batch = next_batch;
+			// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
+			// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
+			// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
+			// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
+			if (async_mode_flag) {
+				this.#commit();
+				// Rebases can activate other batches or null it out, therefore restore the new one here
+				current_batch = next_batch;
+			}
 		}
 
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
 		// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
 		// once more in that case - most of the time this will just clean up dirty branches.
 		if (this.#roots.length > 0) {
-			if (next_batch === null) {
+			if (next_batch !== null) {
+				const batch = next_batch;
+				batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
+			} else {
 				next_batch = this;
-				this.#link();
 			}
-
-			const batch = next_batch;
-			batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
 		}
 
 		if (next_batch !== null) {
@@ -500,8 +514,11 @@ export class Batch {
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
-			if (d) deferred.promise.then(d.resolve);
+			if (d) deferred.promise.then(d.resolve).catch(d.reject);
 		}
+
+		// Mark is not guaranteed not touch these, so we transfer them
+		this.transfer_effects(batch.#dirty_effects, batch.#maybe_dirty_effects);
 
 		/**
 		 * mark all effects that depend on `batch.current`, except the
@@ -620,6 +637,7 @@ export class Batch {
 		this.#fork_commit_callbacks.clear();
 
 		this.#unlink();
+		this.#deferred?.resolve();
 	}
 
 	/**
@@ -630,8 +648,6 @@ export class Batch {
 	}
 
 	#commit() {
-		this.#unlink();
-
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
@@ -664,14 +680,16 @@ export class Batch {
 				// immediately resolving them? Likely not because of how this.apply() works.
 				for (const [effect, deferred] of this.async_deriveds) {
 					const d = batch.async_deriveds.get(effect);
-					if (d) deferred.promise.then(d.resolve);
+					if (d) deferred.promise.then(d.resolve).catch(d.reject);
 				}
 			}
 
 			if (!batch.#started) continue;
 
-			// Re-run async/block effects that depend on distinct values changed in both batches
-			var others = [...batch.current.keys()].filter((s) => !this.current.has(s));
+			// Re-run async/block effects that depend on distinct values changed in both batches (ignoring deriveds)
+			var others = [...batch.current.keys()].filter(
+				(s) => !(/** @type {[any, boolean]} */ (batch.current.get(s))[1]) && !this.current.has(s)
+			);
 
 			if (others.length === 0) {
 				if (is_earlier) {
@@ -711,11 +729,14 @@ export class Batch {
 				}
 
 				checked = new Map();
-				var current_unequal = [...batch.current.keys()].filter((c) =>
-					this.current.has(c)
-						? /** @type {[any, boolean]} */ (this.current.get(c))[0] !== c.v
-						: true
-				);
+				var current_unequal = [...batch.current]
+					.filter(([c, v1]) => {
+						const v2 = this.current.get(c);
+						if (!v2) return true;
+						// Either their values are different or one is a derived but not the other
+						return v2[0] !== v1[0] || v2[1] !== v1[1];
+					})
+					.map(([c]) => c);
 
 				if (current_unequal.length > 0) {
 					for (const effect of this.#new_effects) {
@@ -836,7 +857,6 @@ export class Batch {
 	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
-			batch.#link();
 
 			if (!is_processing && !is_flushing_sync) {
 				queue_micro_task(() => {
@@ -956,18 +976,11 @@ export class Batch {
 		this.#roots.push(e);
 	}
 
-	#link() {
-		if (last_batch === null) {
-			first_batch = last_batch = this;
-		} else {
-			last_batch.#next = this;
-			this.#prev = last_batch;
-		}
-
-		last_batch = this;
-	}
-
 	#unlink() {
+		// #merge calls #unlink, discard later on does it again - prevent
+		// running it multiple times to not corrupt the linked list
+		if (!this.linked) return;
+
 		var prev = this.#prev;
 		var next = this.#next;
 

@@ -102,8 +102,8 @@ export class ExpressionMetadata {
 		if (!this.#blockers) {
 			this.#blockers = new Set();
 
-			for (const d of this.dependencies) {
-				if (d.blocker) this.#blockers.add(d.blocker);
+			for (const r of this.references) {
+				if (r.blocker) this.#blockers.add(r.blocker);
 			}
 		}
 
