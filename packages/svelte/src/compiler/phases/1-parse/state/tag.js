@@ -12,7 +12,10 @@ import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 const regex_supported_declaration = /(?:let|const)\b/y;
-const regex_unsupported_declaration = /(?:var|function|class|type|interface|enum)\b/y;
+// All except `type` are reserved keywords and cannot be used as variable names.
+// For type we check if it's not something like `type .x` / `type ()` / `type % 2` / ...
+const regex_unsupported_declaration =
+	/(?:(?:var|function|class|interface|enum)\b)|(?:type\s+[^?.(`<[&|%^}])/y;
 
 const pointy_bois = { '<': '>' };
 
