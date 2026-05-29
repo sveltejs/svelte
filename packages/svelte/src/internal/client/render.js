@@ -166,147 +166,161 @@ const listeners = new Map();
  * @param {MountOptions<any, any> & { renderer?: Renderer }} options
  * @returns {Exports}
  */
-function _mount(
+function _mount(Component, options) {
+	if (options.renderer) {
+		var pop_renderer = push_renderer(options.renderer);
+
+		try {
+			return _mount_inner(Component, options);
+		} finally {
+			pop_renderer();
+		}
+	}
+
+	return _mount_inner(Component, options);
+}
+
+/**
+ * @template {Record<string, any>} Exports
+ * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
+ * @param {MountOptions<any, any> & { renderer?: Renderer }} options
+ * @returns {Exports}
+ */
+function _mount_inner(
 	Component,
 	{ target, anchor, props = {}, events, context, intro = true, transformError, renderer }
 ) {
-	var pop_renderer = renderer ? push_renderer(renderer) : null;
-
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
-	try {
-		var unmount = component_root(() => {
-			var anchor_node =
-				anchor ?? /** @type {Text} */ (append_child(/** @type {Node} */ (target), create_text()));
+	var unmount = component_root(() => {
+		var anchor_node =
+			anchor ?? /** @type {Text} */ (append_child(/** @type {Node} */ (target), create_text()));
 
-			boundary(
-				/** @type {TemplateNode} */ (anchor_node),
-				{
-					pending: () => {}
-				},
-				(anchor_node) => {
-					push({});
-					var ctx = /** @type {ComponentContext} */ (component_context);
-					if (context) ctx.c = context;
+		boundary(
+			/** @type {TemplateNode} */ (anchor_node),
+			{
+				pending: () => {}
+			},
+			(anchor_node) => {
+				push({});
+				var ctx = /** @type {ComponentContext} */ (component_context);
+				if (context) ctx.c = context;
 
-					if (events) {
-						// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-						/** @type {any} */ (props).$$events = events;
-					}
-
-					if (hydrating) {
-						assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
-					}
-
-					should_intro = intro;
-					// @ts-expect-error the public typings are not what the actual function looks like
-					component = Component(anchor_node, props) || {};
-					should_intro = true;
-
-					if (hydrating) {
-						/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = hydrate_node;
-
-						if (
-							hydrate_node === null ||
-							node_type(hydrate_node) !== COMMENT_NODE ||
-							get_node_value(hydrate_node) !== HYDRATION_END
-						) {
-							w.hydration_mismatch();
-							throw HYDRATION_ERROR;
-						}
-					}
-
-					pop();
-				},
-				transformError
-			);
-
-			// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
-			/** @type {Set<string>} */
-			var registered_events = new Set();
-			/** @type {null | ((events: Array<string>) => void)} */
-			var event_handle = null;
-
-			if (!renderer) {
-				var dom_target = /** @type {EventTarget} */ (target);
-
-				/** @param {Array<string>} events */
-				event_handle = (events) => {
-					for (var i = 0; i < events.length; i++) {
-						var event_name = events[i];
-
-						if (registered_events.has(event_name)) continue;
-						registered_events.add(event_name);
-
-						var passive = is_passive_event(event_name);
-
-						// Add the event listener to both the container and the document.
-						// The container listener ensures we catch events from within in case
-						// the outer content stops propagation of the event.
-						//
-						// The document listener ensures we catch events that originate from elements that were
-						// manually moved outside of the container (e.g. via manual portals).
-						for (const node of [dom_target, document]) {
-							var counts = listeners.get(node);
-
-							if (counts === undefined) {
-								counts = new Map();
-								listeners.set(node, counts);
-							}
-
-							var count = counts.get(event_name);
-
-							if (count === undefined) {
-								add_event_listener(node, event_name, handle_event_propagation, { passive });
-								counts.set(event_name, 1);
-							} else {
-								counts.set(event_name, count + 1);
-							}
-						}
-					}
-				};
-
-				event_handle(array_from(all_registered_events));
-				root_event_handles.add(event_handle);
-			}
-
-			return () => {
-				if (event_handle !== null) {
-					for (var event_name of registered_events) {
-						for (const node of [/** @type {EventTarget} */ (target), document]) {
-							var counts = /** @type {Map<string, number>} */ (listeners.get(node));
-							var count = /** @type {number} */ (counts.get(event_name));
-
-							if (--count == 0) {
-								remove_event_listener(node, event_name, handle_event_propagation);
-								counts.delete(event_name);
-
-								if (counts.size === 0) {
-									listeners.delete(node);
-								}
-							} else {
-								counts.set(event_name, count);
-							}
-						}
-					}
-
-					root_event_handles.delete(event_handle);
+				if (events) {
+					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+					/** @type {any} */ (props).$$events = events;
 				}
 
-				if (anchor_node !== anchor) {
-					var parent = get_parent_node(/** @type {Node} */ (anchor_node));
-					if (parent) remove_child(parent, /** @type {ChildNode} */ (anchor_node));
+				if (hydrating) {
+					assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
+				}
+
+				should_intro = intro;
+				// @ts-expect-error the public typings are not what the actual function looks like
+				component = Component(anchor_node, props) || {};
+				should_intro = true;
+
+				if (hydrating) {
+					/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = hydrate_node;
+
+					if (
+						hydrate_node === null ||
+						node_type(hydrate_node) !== COMMENT_NODE ||
+						get_node_value(hydrate_node) !== HYDRATION_END
+					) {
+						w.hydration_mismatch();
+						throw HYDRATION_ERROR;
+					}
+				}
+
+				pop();
+			},
+			transformError
+		);
+
+		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
+		/** @type {Set<string>} */
+		var registered_events = new Set();
+		/** @type {null | ((events: Array<string>) => void)} */
+		var event_handle = null;
+
+		if (!renderer) {
+			var dom_target = /** @type {EventTarget} */ (target);
+
+			/** @param {Array<string>} events */
+			event_handle = (events) => {
+				for (var i = 0; i < events.length; i++) {
+					var event_name = events[i];
+
+					if (registered_events.has(event_name)) continue;
+					registered_events.add(event_name);
+
+					var passive = is_passive_event(event_name);
+
+					// Add the event listener to both the container and the document.
+					// The container listener ensures we catch events from within in case
+					// the outer content stops propagation of the event.
+					//
+					// The document listener ensures we catch events that originate from elements that were
+					// manually moved outside of the container (e.g. via manual portals).
+					for (const node of [dom_target, document]) {
+						var counts = listeners.get(node);
+
+						if (counts === undefined) {
+							counts = new Map();
+							listeners.set(node, counts);
+						}
+
+						var count = counts.get(event_name);
+
+						if (count === undefined) {
+							add_event_listener(node, event_name, handle_event_propagation, { passive });
+							counts.set(event_name, 1);
+						} else {
+							counts.set(event_name, count + 1);
+						}
+					}
 				}
 			};
-		});
 
-		mounted_components.set(component, unmount);
-		return component;
-	} finally {
-		pop_renderer?.();
-	}
+			event_handle(array_from(all_registered_events));
+			root_event_handles.add(event_handle);
+		}
+
+		return () => {
+			if (event_handle !== null) {
+				for (var event_name of registered_events) {
+					for (const node of [/** @type {EventTarget} */ (target), document]) {
+						var counts = /** @type {Map<string, number>} */ (listeners.get(node));
+						var count = /** @type {number} */ (counts.get(event_name));
+
+						if (--count == 0) {
+							remove_event_listener(node, event_name, handle_event_propagation);
+							counts.delete(event_name);
+
+							if (counts.size === 0) {
+								listeners.delete(node);
+							}
+						} else {
+							counts.set(event_name, count);
+						}
+					}
+				}
+
+				root_event_handles.delete(event_handle);
+			}
+
+			if (anchor_node !== anchor) {
+				var parent = get_parent_node(/** @type {Node} */ (anchor_node));
+				if (parent) remove_child(parent, /** @type {ChildNode} */ (anchor_node));
+			}
+		};
+	});
+
+	mounted_components.set(component, unmount);
+	return component;
 }
 
 /**
