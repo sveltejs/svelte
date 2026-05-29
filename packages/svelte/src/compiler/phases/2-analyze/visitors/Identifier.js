@@ -162,7 +162,7 @@ export function Identifier(node, context) {
 		if (binding.metadata?.is_template_declaration && context.state.options.experimental.async) {
 			let snippet_name;
 
-			// Find out if this references a {@const ...} declaration of an implicit children snippet
+			// Find out if this references a {@const ...}/{let/const ...} declaration of an implicit children snippet
 			// when it is itself inside a snippet block at the same level. If so, error.
 			for (let i = context.path.length - 1; i >= 0; i--) {
 				const parent = context.path[i];
