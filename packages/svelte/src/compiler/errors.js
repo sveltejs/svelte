@@ -1005,21 +1005,21 @@ export function debug_tag_invalid_arguments(node) {
 }
 
 /**
- * Declaration tags cannot be used in legacy mode
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function declaration_tag_no_legacy_mode(node) {
-	e(node, 'declaration_tag_no_legacy_mode', `Declaration tags cannot be used in legacy mode\nhttps://svelte.dev/e/declaration_tag_no_legacy_mode`);
-}
-
-/**
  * Declaration tags must be `let` or `const` declarations
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function declaration_tag_invalid_type(node) {
 	e(node, 'declaration_tag_invalid_type', `Declaration tags must be \`let\` or \`const\` declarations\nhttps://svelte.dev/e/declaration_tag_invalid_type`);
+}
+
+/**
+ * Declaration tags cannot be used in legacy mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function declaration_tag_no_legacy_mode(node) {
+	e(node, 'declaration_tag_no_legacy_mode', `Declaration tags cannot be used in legacy mode\nhttps://svelte.dev/e/declaration_tag_no_legacy_mode`);
 }
 
 /**
