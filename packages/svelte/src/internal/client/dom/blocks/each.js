@@ -212,9 +212,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		tag(each_array, '{#each ...}');
 	}
 
-	/** @type {V[]} */
-	var array;
-
 	/** @type {Map<Batch, Set<any>>} */
 	var pending = new Map();
 
@@ -262,7 +259,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	}
 
 	var effect = block(() => {
-		array = get(each_array);
+		var array = get(each_array);
 		var length = array.length;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
