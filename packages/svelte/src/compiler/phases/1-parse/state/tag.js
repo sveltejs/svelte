@@ -12,7 +12,7 @@ import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 const regex_supported_declaration = /(?:let|const)\b/y;
-const regex_unsupported_declaration = /(?:var|function|class|type|interface|enum)\b/y;
+const regex_unsupported_declaration = /(?:var|type|interface|enum)\b/y;
 
 const pointy_bois = { '<': '>' };
 
