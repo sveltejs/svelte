@@ -30,7 +30,7 @@ import { process_children, is_static_element } from './shared/fragment.js';
 import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 import { Template } from '../transform-template/template.js';
-import { hoist_template, transform_template } from '../transform-template/index.js';
+import { transform_template } from '../transform-template/index.js';
 import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 
 /**
@@ -398,8 +398,12 @@ export function RegularElement(node, context) {
 		);
 
 		// Transform the template to $.from_html(...) and hoist it (deduplicating identical templates)
-		const template = transform_template(select_state, metadata.namespace, TEMPLATE_FRAGMENT);
-		const template_name = hoist_template(context.state, `${name}_content`, template);
+		const template_name = transform_template(
+			select_state,
+			`${name}_content`,
+			metadata.namespace,
+			TEMPLATE_FRAGMENT
+		);
 
 		// Build the rich content function body
 		// The anchor is the child of the element (a hydration marker during hydration)

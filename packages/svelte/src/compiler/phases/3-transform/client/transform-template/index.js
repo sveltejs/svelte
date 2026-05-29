@@ -1,4 +1,4 @@
-/** @import { Expression, Identifier } from 'estree' */
+/** @import { TemplateLiteral } from 'estree' */
 /** @import { Namespace } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Node } from './types.js' */
@@ -32,13 +32,28 @@ function build_locations(nodes) {
 
 /**
  * @param {ComponentClientTransformState} state
+ * @param {string} name
  * @param {Namespace} namespace
  * @param {number} [flags]
  */
-export function transform_template(state, namespace, flags = 0) {
+export function transform_template(state, name, namespace, flags = 0) {
 	const tree = state.options.fragments === 'tree';
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
+
+	const key =
+		tree || dev
+			? null
+			: get_template_key(
+					/** @type {TemplateLiteral} */ (expression),
+					state.metadata.namespace,
+					flags
+				);
+
+	if (key !== null) {
+		const existing = state.templates.get(key);
+		if (existing !== undefined) return existing;
+	}
 
 	if (tree) {
 		if (namespace === 'svg') flags |= TEMPLATE_USE_SVG;
@@ -64,27 +79,8 @@ export function transform_template(state, namespace, flags = 0) {
 		);
 	}
 
-	return call;
-}
-
-/**
- * Hoists a template factory (`$.from_html(...)` etc.) to module scope, reusing an
- * existing identical template within the same component rather than emitting a duplicate.
- * @param {ComponentClientTransformState} state
- * @param {string} name - the base name for a newly hoisted template
- * @param {Expression} template
- * @returns {Identifier}
- */
-export function hoist_template(state, name, template) {
-	const key = get_template_key(template);
-
-	if (key !== null) {
-		const existing = state.templates.get(key);
-		if (existing !== undefined) return existing;
-	}
-
 	const id = state.scope.root.unique(name);
-	state.hoisted.push(b.var(id, template));
+	state.hoisted.push(b.var(id, call));
 
 	if (key !== null) {
 		state.templates.set(key, id);
@@ -98,33 +94,11 @@ export function hoist_template(state, name, template) {
  * `$.from_html`/`from_svg`/`from_mathml` factories with literal arguments - or `null`
  * for anything else. Dev-mode templates are wrapped in `$.add_locations(...)`, which
  * embeds per-call-site locations, so they never produce a key and are never shared.
- * @param {Expression} template
+ * @param {TemplateLiteral} template
+ * @param {Namespace} namespace
+ * @param {number} flags
  * @returns {string | null}
  */
-function get_template_key(template) {
-	if (template.type !== 'CallExpression' || template.callee.type !== 'Identifier') {
-		return null;
-	}
-
-	const name = template.callee.name;
-
-	if (name !== '$.from_html' && name !== '$.from_svg' && name !== '$.from_mathml') {
-		return null;
-	}
-
-	const [content, flags] = template.arguments;
-
-	if (
-		content?.type !== 'TemplateLiteral' ||
-		content.expressions.length !== 0 ||
-		content.quasis.length !== 1
-	) {
-		return null;
-	}
-
-	if (flags !== undefined && (flags.type !== 'Literal' || typeof flags.value !== 'number')) {
-		return null;
-	}
-
-	return `${name} ${flags ? flags.value : 0} ${content.quasis[0].value.raw}`;
+function get_template_key(template, namespace, flags) {
+	return `${namespace} ${flags} ${template.quasis[0].value.raw}`;
 }

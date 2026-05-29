@@ -4,7 +4,7 @@
 import * as b from '#compiler/builders';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
-import { hoist_template, transform_template } from '../transform-template/index.js';
+import { transform_template } from '../transform-template/index.js';
 import { Template } from '../transform-template/template.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
@@ -95,8 +95,7 @@ export function Fragment(node, context) {
 
 		let flags = state.template.needs_import_node ? TEMPLATE_USE_IMPORT_NODE : undefined;
 
-		const template = transform_template(state, namespace, flags);
-		const template_name = hoist_template(state, 'root', template);
+		const template_name = transform_template(state, 'root', namespace, flags);
 
 		state.init.unshift(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
@@ -146,8 +145,7 @@ export function Fragment(node, context) {
 				// special case — we can use `$.comment` instead of creating a unique template
 				state.init.unshift(b.var(id, b.call('$.comment')));
 			} else {
-				const template = transform_template(state, namespace, flags);
-				const template_name = hoist_template(state, 'root', template);
+				const template_name = transform_template(state, 'root', namespace, flags);
 
 				state.init.unshift(b.var(id, b.call(template_name)));
 			}
