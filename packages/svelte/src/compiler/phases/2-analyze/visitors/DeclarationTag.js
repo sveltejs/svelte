@@ -1,6 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
+import * as e from '../../../errors.js';
 import { validate_opening_tag } from './shared/utils.js';
 
 /**
@@ -8,8 +9,9 @@ import { validate_opening_tag } from './shared/utils.js';
  * @param {Context} context
  */
 export function DeclarationTag(node, context) {
-	if (context.state.analysis.runes) {
-		validate_opening_tag(node, context.state, node.declaration.kind[0]);
+	validate_opening_tag(node, context.state, node.declaration.kind[0]);
+	if (!context.state.analysis.runes && !context.state.analysis.maybe_runes) {
+		e.declaration_tag_no_legacy_mode(node);
 	}
 
 	context.visit(node.declaration, {

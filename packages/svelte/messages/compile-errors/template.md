@@ -195,6 +195,10 @@ The same applies to components:
 
 > Declaration tags must be `let` or `const` declarations
 
+## declaration_tag_no_legacy_mode
+
+> Declaration tags cannot be used in legacy mode
+
 ## directive_invalid_value
 
 > Directive value must be a JavaScript expression enclosed in curly braces
