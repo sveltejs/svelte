@@ -3,11 +3,11 @@
 		"code": "declaration_tag_invalid_type",
 		"message": "Declaration tags must be `let` or `const` declarations",
 		"start": {
-			"line": 13,
+			"line": 14,
 			"column": 2
 		},
 		"end": {
-			"line": 13,
+			"line": 14,
 			"column": 8
 		}
 	}

@@ -1,6 +1,7 @@
 {#if true}
 	<!-- check that these doesn't trigger already -->
 	{type}
+	{type }
 	{type && foo}
 	{type || bar}
 	{type % 2}
