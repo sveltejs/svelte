@@ -7,6 +7,7 @@ import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 import { build_expression } from './shared/utils.js';
+import { add_async_declaration } from './DeclarationTag.js';
 
 /**
  * @param {AST.ConstTag} node
@@ -26,7 +27,7 @@ export function ConstTag(node, context) {
 
 		context.state.transform[declaration.id.name] = { read: get_value };
 
-		add_const_declaration(context.state, declaration.id, expression, node.metadata);
+		add_const_declaration(context, declaration.id, expression, node.metadata);
 	} else {
 		const identifiers = extract_identifiers(declaration.id);
 		const tmp = b.id(context.state.scope.generate('computed_const'));
@@ -63,7 +64,7 @@ export function ConstTag(node, context) {
 			expression = b.call('$.tag', expression, b.literal('[@const]'));
 		}
 
-		add_const_declaration(context.state, tmp, expression, node.metadata);
+		add_const_declaration(context, tmp, expression, node.metadata);
 
 		for (const node of identifiers) {
 			context.state.transform[node.name] = {
@@ -74,38 +75,26 @@ export function ConstTag(node, context) {
 }
 
 /**
- * @param {ComponentContext['state']} state
+ * @param {ComponentContext} context
  * @param {Identifier} id
  * @param {Expression} expression
  * @param {AST.ConstTag['metadata']} metadata
  */
-function add_const_declaration(state, id, expression, metadata) {
+function add_const_declaration(context, id, expression, metadata) {
 	// we need to eagerly evaluate the expression in order to hit any
 	// 'Cannot access x before initialization' errors
 	const after = dev ? [b.stmt(b.call('$.get', id))] : [];
 
-	const blockers = [...metadata.expression.dependencies]
-		.map((dep) => dep.blocker)
-		.filter((b) => b !== null && b.object !== state.async_consts?.id);
-
 	if (metadata.promises_id) {
-		const run = (state.async_consts ??= {
-			id: metadata.promises_id,
-			thunks: []
-		});
-
-		state.consts.push(b.let(id));
-
-		if (blockers.length === 1) {
-			run.thunks.push(b.thunk(b.member(/** @type {Expression} */ (blockers[0]), 'promise')));
-		} else if (blockers.length > 0) {
-			run.thunks.push(b.thunk(b.call('$.wait', b.array(blockers))));
-		}
-
-		// keep the number of thunks pushed in sync with ConstTag in analysis phase
-		const assignment = b.assignment('=', id, expression);
-		run.thunks.push(b.thunk(assignment, metadata.expression.has_await));
+		add_async_declaration(
+			context,
+			metadata,
+			[id],
+			[b.stmt(b.assignment('=', id, expression))],
+			'let'
+		);
 	} else {
+		const { state } = context;
 		state.consts.push(b.const(id, expression));
 		state.consts.push(...after);
 	}

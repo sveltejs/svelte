@@ -1,16 +1,20 @@
-/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern } from 'estree' */
+/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { ExpressionMetadata } from '../../nodes.js';
-import { parse_expression_at } from '../acorn.js';
+import { parse_expression_at, parse_statement_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
-import { match_bracket } from '../utils/bracket.js';
+import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
+const regex_supported_declaration = /(?:let|const)\b/y;
+// All except `type` are reserved keywords and cannot be used as variable names.
+// For type we check if it's not something like `type .x` / `type ()` / `type % 2` / ...
+const regex_unsupported_declaration = /(?:(?:var|interface|enum)\b)|(?:type\s+[^?.(`<[&|%^}])/y;
 
 const pointy_bois = { '<': '>' };
 
@@ -31,6 +35,20 @@ export default function tag(parser) {
 		}
 	}
 
+	const declaration = read_declaration(parser);
+	if (declaration) {
+		parser.append({
+			type: 'DeclarationTag',
+			start,
+			end: parser.index,
+			declaration: /** @type {VariableDeclaration} */ (declaration),
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
+		});
+		return;
+	}
+
 	const expression = read_expression(parser);
 
 	parser.allow_whitespace();
@@ -45,6 +63,76 @@ export default function tag(parser) {
 			expression: new ExpressionMetadata()
 		}
 	});
+}
+
+/**
+ * @param {Parser} parser
+ * @returns {null | import('estree').VariableDeclaration}
+ */
+function read_declaration(parser) {
+	const start = parser.index;
+
+	const unsupported = parser.match_regex(regex_unsupported_declaration);
+	if (unsupported) {
+		e.declaration_tag_invalid_type({ start, end: start + unsupported.length });
+	}
+
+	if (!parser.match_regex(regex_supported_declaration)) {
+		return null;
+	}
+
+	/** @type {import('estree').Statement | import('estree').VariableDeclaration} */
+	let declaration;
+	try {
+		declaration = parse_statement_at(parser, parser.template, start);
+	} catch (error) {
+		if (!parser.loose) throw error;
+
+		const end = find_matching_bracket(parser.template, start, '{');
+		if (end === undefined) throw error;
+
+		parser.index = end;
+		const kind = parser.template.startsWith('const', start) ? 'const' : 'let';
+
+		declaration = {
+			type: 'VariableDeclaration',
+			kind,
+			declarations: [
+				{
+					type: 'VariableDeclarator',
+					id: {
+						type: 'Identifier',
+						name: '',
+						start: parser.index,
+						end: parser.index
+					},
+					init: null,
+					start: parser.index,
+					end: parser.index
+				}
+			],
+			start,
+			end
+		};
+	}
+
+	if (declaration.type !== 'VariableDeclaration') {
+		e.declaration_tag_invalid_type({
+			start: declaration.start ?? start,
+			end: declaration.end ?? parser.index
+		});
+	}
+
+	// TODO support using
+	if (declaration.kind !== 'let' && declaration.kind !== 'const') {
+		e.declaration_tag_invalid_type(declaration);
+	}
+
+	parser.index = /** @type {number} */ (declaration.end);
+	parser.allow_whitespace();
+	parser.eat('}', true);
+
+	return declaration;
 }
 
 /** @param {Parser} parser */

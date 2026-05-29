@@ -1,0 +1,14 @@
+[
+	{
+		"code": "declaration_tag_no_legacy_mode",
+		"message": "Declaration tags cannot be used in legacy mode",
+		"start": {
+			"line": 5,
+			"column": 0
+		},
+		"end": {
+			"line": 5,
+			"column": 19
+		}
+	}
+]

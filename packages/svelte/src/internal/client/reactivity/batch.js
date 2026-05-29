@@ -156,12 +156,6 @@ export class Batch {
 	#discard_callbacks = new Set();
 
 	/**
-	 * Callbacks that should run only when a fork is committed.
-	 * @type {Set<(batch: Batch) => void>}
-	 */
-	#fork_commit_callbacks = new Set();
-
-	/**
 	 * The number of async effects that are currently in flight
 	 */
 	#pending = 0;
@@ -665,7 +659,6 @@ export class Batch {
 	discard() {
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
-		this.#fork_commit_callbacks.clear();
 
 		this.#unlink();
 		this.#deferred?.resolve();
@@ -862,16 +855,6 @@ export class Batch {
 	/** @param {(batch: Batch) => void} fn */
 	ondiscard(fn) {
 		this.#discard_callbacks.add(fn);
-	}
-
-	/** @param {(batch: Batch) => void} fn */
-	on_fork_commit(fn) {
-		this.#fork_commit_callbacks.add(fn);
-	}
-
-	run_fork_commit_callbacks() {
-		for (const fn of this.#fork_commit_callbacks) fn(this);
-		this.#fork_commit_callbacks.clear();
 	}
 
 	settled() {
@@ -1435,10 +1418,6 @@ export function fork(fn) {
 				value.v = snapshot.v;
 				value.wv = snapshot.wv;
 			}
-
-			batch.activate();
-			batch.run_fork_commit_callbacks();
-			batch.deactivate();
 
 			// trigger any `$state.eager(...)` expressions with the new state.
 			// eager effects don't get scheduled like other effects, so we
