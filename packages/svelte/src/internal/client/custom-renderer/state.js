@@ -1,5 +1,7 @@
 /** @import { Renderer } from './types.js'; */
 
+import { hydrating, set_hydrating } from '../dom/hydration.js';
+
 /**
  * @type {Renderer<any, any, any, any> | null}
  */
@@ -17,11 +19,13 @@ export function set_renderer(value) {
  * @param {Renderer<any, any, any, any> | null} value
  */
 export function push_renderer(value) {
+	var previous_hydrating = hydrating;
 	var previous_renderer = current_renderer;
 	current_renderer = value;
 
 	return () => {
 		current_renderer = previous_renderer;
+		set_hydrating(previous_hydrating);
 	};
 }
 
