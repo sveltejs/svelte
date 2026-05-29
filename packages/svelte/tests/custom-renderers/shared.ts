@@ -6,7 +6,7 @@ import { compile_directory } from '../helpers.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
 import renderer, { create_root, serialize, dispatch_event, dom_elements } from './renderer.js';
-import { mount, unmount as unmount_component } from '../../src/index-client.js';
+import { mount, unmount } from '../../src/index-client.js';
 import { writeFile } from 'node:fs/promises';
 import { globSync } from 'tinyglobby';
 
@@ -212,7 +212,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 			}
 		} finally {
 			if (component) {
-				await unmount_component(component);
+				await unmount(component);
 			}
 
 			if (config.warnings) {
