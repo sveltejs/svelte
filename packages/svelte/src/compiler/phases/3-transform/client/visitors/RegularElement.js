@@ -398,12 +398,7 @@ export function RegularElement(node, context) {
 		);
 
 		// Transform the template to $.from_html(...) and hoist it (deduplicating identical templates)
-		const template_name = transform_template(
-			select_state,
-			`${name}_content`,
-			metadata.namespace,
-			TEMPLATE_FRAGMENT
-		);
+		const template_name = transform_template(select_state, `${name}_content`, TEMPLATE_FRAGMENT);
 
 		// Build the rich content function body
 		// The anchor is the child of the element (a hydration marker during hydration)

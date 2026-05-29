@@ -33,10 +33,10 @@ function build_locations(nodes) {
 /**
  * @param {ComponentClientTransformState} state
  * @param {string} name
- * @param {Namespace} namespace
  * @param {number} [flags]
  */
-export function transform_template(state, name, namespace, flags = 0) {
+export function transform_template(state, name, flags = 0) {
+	const namespace = state.metadata.namespace;
 	const tree = state.options.fragments === 'tree';
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
