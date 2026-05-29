@@ -20,7 +20,7 @@ Declaration tags define local variables inside markup with `const` or `let`:
 ```
 <!-- codeblock:end -->
 
-> [!NOTE] Declaration tags are available in Svelte 5.56 and newer.
+> [!NOTE] Declaration tags are available since Svelte 5.56.
 
 > [!NOTE] The [`{@const ...}`](@const) syntax is considered legacy — use declaration tags instead.
 
