@@ -374,7 +374,6 @@ export function RegularElement(node, context) {
 		context.state.template.push_comment();
 
 		// Create a separate template for the rich content
-		const template_name = context.state.scope.root.unique(`${name}_content`);
 		const fragment_id = b.id(context.state.scope.generate('fragment'));
 		const anchor_id = b.id(context.state.scope.generate('anchor'));
 
@@ -398,9 +397,8 @@ export function RegularElement(node, context) {
 			}
 		);
 
-		// Transform the template to $.from_html(...) and hoist it
-		const template = transform_template(select_state, metadata.namespace, TEMPLATE_FRAGMENT);
-		context.state.hoisted.push(b.var(template_name, template));
+		// Transform the template to $.from_html(...) and hoist it (deduplicating identical templates)
+		const template_name = transform_template(select_state, `${name}_content`, TEMPLATE_FRAGMENT);
 
 		// Build the rich content function body
 		// The anchor is the child of the element (a hydration marker during hydration)
