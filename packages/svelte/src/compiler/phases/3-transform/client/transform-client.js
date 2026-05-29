@@ -141,6 +141,7 @@ export function client_component(analysis, options) {
 		scopes: analysis.module.scopes,
 		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
+		templates: new Map(),
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),

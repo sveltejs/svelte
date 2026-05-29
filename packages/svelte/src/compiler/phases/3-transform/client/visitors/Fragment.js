@@ -4,7 +4,7 @@
 import * as b from '#compiler/builders';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
-import { transform_template } from '../transform-template/index.js';
+import { hoist_template, transform_template } from '../transform-template/index.js';
 import { Template } from '../transform-template/template.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
@@ -52,7 +52,6 @@ export function Fragment(node, context) {
 			(trimmed[0].type === 'IfBlock' &&
 				trimmed[0].elseif &&
 				/** @type {AST.IfBlock} */ (parent).metadata.flattened?.includes(trimmed[0])));
-	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 
 	/** @type {Statement[]} */
 	const body = [];
@@ -97,7 +96,7 @@ export function Fragment(node, context) {
 		let flags = state.template.needs_import_node ? TEMPLATE_USE_IMPORT_NODE : undefined;
 
 		const template = transform_template(state, namespace, flags);
-		state.hoisted.push(b.var(template_name, template));
+		const template_name = hoist_template(state, 'root', template);
 
 		state.init.unshift(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
@@ -148,7 +147,7 @@ export function Fragment(node, context) {
 				state.init.unshift(b.var(id, b.call('$.comment')));
 			} else {
 				const template = transform_template(state, namespace, flags);
-				state.hoisted.push(b.var(template_name, template));
+				const template_name = hoist_template(state, 'root', template);
 
 				state.init.unshift(b.var(id, b.call(template_name)));
 			}
