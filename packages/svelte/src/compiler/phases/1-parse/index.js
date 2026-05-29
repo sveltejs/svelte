@@ -302,7 +302,10 @@ export class Parser {
 	}
 
 	pop() {
-		this.fragments.pop();
+		const fragment = this.fragments.pop();
+		if (fragment?.metadata.transparent && fragment.nodes.some((n) => n.type === 'DeclarationTag')) {
+			fragment.metadata.transparent = false;
+		}
 		return this.stack.pop();
 	}
 

@@ -17,16 +17,22 @@ import { is_customizable_select_element } from '../../../nodes.js';
 export function RegularElement(node, context) {
 	const name = context.state.namespace === 'html' ? node.name.toLowerCase() : node.name;
 	const namespace = determine_namespace_for_children(node, context.state.namespace);
+	const has_child_declarations = !node.fragment.metadata.transparent;
 
 	/** @type {ComponentServerTransformState} */
 	const state = {
 		...context.state,
 		namespace,
+		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
 			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
 		init: [],
-		template: []
+		template: [],
+		async_consts: undefined
 	};
+
+	/** @type {ComponentServerTransformState} */
+	const attribute_state = { ...state, scope: context.state.scope };
 
 	const node_is_void = is_void(name);
 
@@ -50,7 +56,11 @@ export function RegularElement(node, context) {
 	if (!is_special) {
 		// only open the tag in the non-special path
 		state.template.push(b.literal(`<${name}`));
-		body = build_element_attributes(node, { ...context, state }, optimiser.transform);
+		body = build_element_attributes(
+			node,
+			{ ...context, state: attribute_state },
+			optimiser.transform
+		);
 		state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 	}
 
@@ -72,10 +82,7 @@ export function RegularElement(node, context) {
 		node.fragment.nodes,
 		context.path,
 		namespace,
-		{
-			...state,
-			scope: /** @type {Scope} */ (state.scopes.get(node.fragment))
-		},
+		state,
 		state.preserve_whitespace,
 		state.options.preserveComments
 	);
@@ -205,7 +212,17 @@ export function RegularElement(node, context) {
 		state.template.push(b.stmt(b.call('$.pop_element')));
 	}
 
-	if (optimiser.is_async()) {
+	if (has_child_declarations && state.async_consts && state.async_consts.thunks.length > 0) {
+		state.init.push(
+			b.var(state.async_consts.id, b.call('$$renderer.run', b.array(state.async_consts.thunks)))
+		);
+	}
+
+	if (has_child_declarations) {
+		context.state.template.push(
+			...optimiser.render([b.block([...state.init, ...build_template(state.template)])])
+		);
+	} else if (optimiser.is_async()) {
 		context.state.template.push(
 			...optimiser.render([...state.init, ...build_template(state.template)])
 		);

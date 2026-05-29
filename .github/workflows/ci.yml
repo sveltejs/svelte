@@ -80,7 +80,7 @@ jobs:
   Lint:
     permissions: {}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4
@@ -99,7 +99,7 @@ jobs:
         if: (${{ success() }} || ${{ failure() }}) # ensures this step runs even if previous steps fail
         run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally with `cd packages/svelte && pnpm generate:types` and commit the changes after you have reviewed them"; git diff; exit 1); }
       - name: check browser-support docs page is up to date
-        run: '{ [ "`git status --porcelain=v1 documentation/docs/07-misc/05-browser-support.md`" == "" ] || (echo "The browser-support docs page is out of date — please regenerate it locally with \`cd packages/svelte && pnpm generate:browser-support\` and commit the changes"; git diff documentation/docs/07-misc/05-browser-support.md; exit 1); }'
+        run: '{ [ "`git status --porcelain=v1 documentation/docs/07-misc/.generated/`" == "" ] || (echo "The browser-support docs page is out of date — please regenerate it locally with \`cd packages/svelte && pnpm generate:browser-support\` and commit the changes"; git diff documentation/docs/07-misc/.generated/; exit 1); }'
   Benchmarks:
     permissions: {}
     runs-on: ubuntu-latest

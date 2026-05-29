@@ -15,6 +15,7 @@ import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
+import { DeclarationTag } from './visitors/DeclarationTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
@@ -64,6 +65,7 @@ const template_visitors = {
 	AwaitBlock,
 	Component,
 	ConstTag,
+	DeclarationTag,
 	DebugTag,
 	EachBlock,
 	Fragment,
