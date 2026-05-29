@@ -11,8 +11,8 @@ import { create_fragment } from '../utils/create.js';
 import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
-const regex_supported_declaration = /(?:let|const)\b/y;
-const regex_unsupported_declaration = /(?:var|function|class|type|interface|enum)\b/y;
+const regex_supported_declaration = /(?:let|const)\s/y;
+const regex_unsupported_declaration = /(?:var|function|class|type|interface|enum)\s/y;
 
 const pointy_bois = { '<': '>' };
 
@@ -72,7 +72,7 @@ function read_declaration(parser) {
 
 	const unsupported = parser.match_regex(regex_unsupported_declaration);
 	if (unsupported) {
-		e.declaration_tag_invalid_type({ start, end: start + unsupported.length });
+		e.declaration_tag_invalid_type({ start, end: start + unsupported.length - 1 });
 	}
 
 	if (!parser.match_regex(regex_supported_declaration)) {
