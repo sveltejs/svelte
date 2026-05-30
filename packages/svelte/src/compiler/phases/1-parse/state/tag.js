@@ -13,8 +13,11 @@ import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 const regex_supported_declaration = /(?:let|const)\b/y;
 // All except `type` are reserved keywords and cannot be used as variable names.
-// For type we check if it's not something like `type .x` / `type ()` / `type % 2` / ...
-const regex_unsupported_declaration = /(?:(?:var|interface|enum)\b)|(?:type\s+[^?.(`<[&|%^}])/y;
+// `type` is a contextual keyword, so we only treat it as a TypeScript `type` declaration
+// when it matches the shape `type Foo = ...` / `type Foo<...> = ...` — otherwise it's
+// just an identifier (e.g. `{type === 'all' ? a : b}`, `{type instanceof Foo}`).
+const regex_unsupported_declaration =
+	/(?:(?:var|interface|enum)\b)|(?:type\s+[A-Za-z_$][\w$]*\s*[<=])/y;
 
 const pointy_bois = { '<': '>' };
 
