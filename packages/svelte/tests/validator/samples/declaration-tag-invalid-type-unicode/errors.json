@@ -3,12 +3,12 @@
 		"code": "declaration_tag_invalid_type",
 		"message": "Declaration tags must be `let` or `const` declarations",
 		"start": {
-			"line": 25,
-			"column": 2
+			"line": 2,
+			"column": 1
 		},
 		"end": {
-			"line": 25,
-			"column": 8
+			"line": 2,
+			"column": 16
 		}
 	}
 ]

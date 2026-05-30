@@ -12,9 +12,9 @@ import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 const regex_supported_declaration = /(?:let|const)\b/y;
-// All except `type` are reserved keywords and cannot be used as variable names.
-// For type we check if it's not something like `type .x` / `type ()` / `type % 2` / ...
-const regex_unsupported_declaration = /(?:(?:var|interface|enum)\b)|(?:type\s+[^?.(`<[&|%^}])/y;
+const regex_unsupported_declaration = /(?:var|interface|enum)\b/y;
+// `type` is a contextual keyword; this is just a shape hint, confirmed by parsing.
+const regex_maybe_type_declaration = /type\s+[\p{ID_Start}_$]/uy;
 
 const pointy_bois = { '<': '>' };
 
@@ -75,6 +75,26 @@ function read_declaration(parser) {
 	const unsupported = parser.match_regex(regex_unsupported_declaration);
 	if (unsupported) {
 		e.declaration_tag_invalid_type({ start, end: start + unsupported.length });
+	}
+
+	const type_alias_match = parser.match_regex(regex_maybe_type_declaration);
+	if (type_alias_match) {
+		const initial_comment_count = parser.root.comments.length;
+		/** @type {{ type: string; start: number; end: number } | undefined} */
+		let statement;
+		try {
+			statement = /** @type {{ type: string; start: number; end: number }} */ (
+				/** @type {unknown} */ (parse_statement_at(parser, parser.template, start))
+			);
+		} catch {
+			e.declaration_tag_invalid_type({ start, end: start + type_alias_match.length });
+		}
+		if (statement.type !== 'ExpressionStatement') {
+			e.declaration_tag_invalid_type(statement);
+		}
+		// discard probe comments so `read_expression` doesn't re-add them
+		parser.root.comments.length = initial_comment_count;
+		return null;
 	}
 
 	if (!parser.match_regex(regex_supported_declaration)) {
