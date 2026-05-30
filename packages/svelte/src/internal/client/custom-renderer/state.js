@@ -20,12 +20,17 @@ export function set_renderer(value) {
  */
 export function push_renderer(value) {
 	var previous_hydrating = hydrating;
+	if (hydrating) {
+		set_hydrating(false);
+	}
 	var previous_renderer = current_renderer;
 	current_renderer = value;
 
 	return () => {
 		current_renderer = previous_renderer;
-		set_hydrating(previous_hydrating);
+		if (previous_hydrating) {
+			set_hydrating(previous_hydrating);
+		}
 	};
 }
 
