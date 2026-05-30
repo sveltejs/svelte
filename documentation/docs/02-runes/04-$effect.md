@@ -172,33 +172,35 @@ $effect(() => {
 
 ## `$effect.pre`
 
-In rare cases, you may need to run code _before_ the DOM updates. For this we can use the `$effect.pre` rune:
+In rare cases, you may need to run code _before_ the DOM updates. For this we can use the `$effect.pre` rune.
+
+> [!NOTE] In experimental async mode, `$effect.pre` runs after the DOM has been updated, the same as `$effect`. For patterns that need to capture DOM state before an update — such as chat autoscroll — use an event listener to track the relevant state instead. The example below works correctly in both modes:
 
 ```svelte
 <script>
-	import { tick } from 'svelte';
-
 	let div = $state();
 	let messages = $state([]);
 
 	// ...
 
-	$effect.pre(() => {
+	let autoscroll = true;
+
+	$effect(() => {
 		if (!div) return; // not yet mounted
 
 		// reference `messages` array length so that this code re-runs whenever it changes
 		messages.length;
 
 		// autoscroll when new messages are added
-		if (div.offsetHeight + div.scrollTop > div.scrollHeight - 20) {
-			tick().then(() => {
-				div.scrollTo(0, div.scrollHeight);
-			});
+		if (autoscroll) {
+			div.scrollTo(0, div.scrollHeight);
 		}
 	});
 </script>
 
-<div bind:this={div}>
+<div bind:this={div} onscroll={() => {
+	autoscroll = div.offsetHeight + div.scrollTop > div.scrollHeight - 20;
+}}>
 	{#each messages as message}
 		<p>{message}</p>
 	{/each}
