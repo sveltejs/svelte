@@ -359,7 +359,7 @@ export function execute_derived(derived) {
 		set_eager_effects(new Set());
 		try {
 			if (includes.call(stack, derived)) {
-				e.derived_references_self();
+				e.derived_references_self(derived.label);
 			}
 
 			stack.push(derived);

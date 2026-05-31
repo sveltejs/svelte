@@ -36,6 +36,8 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > A derived value cannot reference itself recursively
 
+> A derived value `%label%` cannot reference itself recursively
+
 ## each_key_duplicate
 
 > Keyed each block has duplicate key at indexes %a% and %b%

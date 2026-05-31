@@ -112,11 +112,14 @@ export function component_api_invalid_new(component, name) {
 
 /**
  * A derived value cannot reference itself recursively
+ * @param {string | undefined | null} [label]
  * @returns {never}
  */
-export function derived_references_self() {
+export function derived_references_self(label) {
 	if (DEV) {
-		const error = new Error(`derived_references_self\nA derived value cannot reference itself recursively\nhttps://svelte.dev/e/derived_references_self`);
+		const error = new Error(`derived_references_self\n${label
+			? `The derived \`${label}\` cannot reference itself recursively`
+			: `A derived value cannot reference itself recursively`}\nhttps://svelte.dev/e/derived_references_self`);
 
 		error.name = 'Svelte error';
 
