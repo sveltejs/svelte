@@ -49,10 +49,13 @@ export interface CompileResult {
 	ast: any;
 }
 
+/** A compiler warning returned during compilation. */
 export interface Warning extends ICompileDiagnostic {}
 
+/** A compiler error thrown or collected during compilation. */
 export interface CompileError extends ICompileDiagnostic {}
 
+/** Function that returns a CSS class name for scoped styles. */
 export type CssHashGetter = (args: {
 	name: string;
 	filename: string;
@@ -60,6 +63,7 @@ export type CssHashGetter = (args: {
 	hash: (input: string) => string;
 }) => string;
 
+/** Options for optimizing the compiled output. */
 export interface OptimizeOptions {
 	hydrate?: boolean;
 }
@@ -243,10 +247,12 @@ export interface ModuleCompileOptions {
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
 
+/** Module compile options with all fields required (except rootDir). */
 export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'rootDir'> & {
 	rootDir: ModuleCompileOptions['rootDir'];
 };
 
+/** Compile options with all fields validated and required where applicable. */
 export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 	Omit<
 		Required<CompileOptions>,
@@ -272,6 +278,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		hmr: CompileOptions['hmr'];
 	};
 
+/** The kind of a binding in the component scope. */
 export type BindingKind =
 	| 'normal' // A variable that is not in any way special
 	| 'prop' // A normal prop (possibly reassigned or mutated)
@@ -287,6 +294,7 @@ export type BindingKind =
 	| 'template' // A binding declared in the template, e.g. in an `await` block or `const` tag
 	| 'static'; // A binding whose value is known to be static (i.e. each index)
 
+/** The kind of a variable declaration. */
 export type DeclarationKind =
 	| 'var'
 	| 'let'
@@ -302,6 +310,7 @@ export type DeclarationKind =
 	| 'using'
 	| 'await using';
 
+/** Metadata about a state field in a class component. */
 export interface StateField {
 	type: StateCreationRuneName;
 	node: PropertyDefinition | AssignmentExpression;

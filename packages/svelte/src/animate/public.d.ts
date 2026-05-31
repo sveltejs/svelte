@@ -1,4 +1,4 @@
-// todo: same as Transition, should it be shared?
+/** Configuration returned by animation functions. */
 export interface AnimationConfig {
 	delay?: number;
 	duration?: number;
@@ -7,6 +7,7 @@ export interface AnimationConfig {
 	tick?: (t: number, u: number) => void;
 }
 
+/** Options for the `flip` animation. */
 export interface FlipParams {
 	delay?: number;
 	duration?: number | ((len: number) => number);

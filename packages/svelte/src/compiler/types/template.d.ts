@@ -28,12 +28,14 @@ import type { ExpressionMetadata } from '../phases/nodes';
 export type Namespace = 'html' | 'svg' | 'mathml';
 
 export namespace AST {
+	/** Base interface for all AST nodes, containing position information. */
 	export interface BaseNode {
 		type: string;
 		start: number;
 		end: number;
 	}
 
+	/** A fragment containing a list of child nodes. */
 	export interface Fragment {
 		type: 'Fragment';
 		nodes: Array<Text | Tag | ElementLike | Block | Comment>;
@@ -74,6 +76,7 @@ export namespace AST {
 		};
 	}
 
+	/** Options provided by `<svelte:options>` in the component. */
 	export interface SvelteOptions {
 		// start/end info (needed for warnings and for our Prettier plugin)
 		start: number;
@@ -325,6 +328,7 @@ export namespace AST {
 		};
 	}
 
+	/** Base interface for all element-like AST nodes. */
 	export interface BaseElement extends BaseNode {
 		name: string;
 		name_loc: SourceLocation;
@@ -332,6 +336,7 @@ export namespace AST {
 		fragment: Fragment;
 	}
 
+	/** A component tag in the template (e.g. `<MyComponent>`). */
 	export interface Component extends BaseElement {
 		type: 'Component';
 		/** @internal */
@@ -346,16 +351,19 @@ export namespace AST {
 		};
 	}
 
+	/** A `<title>` element. */
 	export interface TitleElement extends BaseElement {
 		type: 'TitleElement';
 		name: 'title';
 	}
 
+	/** A `<slot>` element. */
 	export interface SlotElement extends BaseElement {
 		type: 'SlotElement';
 		name: 'slot';
 	}
 
+	/** A standard HTML element (e.g. `<div>`, `<span>`). */
 	export interface RegularElement extends BaseElement {
 		type: 'RegularElement';
 		/** @internal */
@@ -373,11 +381,13 @@ export namespace AST {
 		};
 	}
 
+	/** A `<svelte:body>` element. */
 	export interface SvelteBody extends BaseElement {
 		type: 'SvelteBody';
 		name: 'svelte:body';
 	}
 
+	/** A `<svelte:component>` dynamic component element. */
 	export interface SvelteComponent extends BaseElement {
 		type: 'SvelteComponent';
 		name: 'svelte:component';
@@ -393,11 +403,13 @@ export namespace AST {
 		};
 	}
 
+	/** A `<svelte:document>` element. */
 	export interface SvelteDocument extends BaseElement {
 		type: 'SvelteDocument';
 		name: 'svelte:document';
 	}
 
+	/** A `<svelte:element>` dynamic element. */
 	export interface SvelteElement extends BaseElement {
 		type: 'SvelteElement';
 		name: 'svelte:element';
@@ -420,16 +432,19 @@ export namespace AST {
 		};
 	}
 
+	/** A `<svelte:fragment>` element. */
 	export interface SvelteFragment extends BaseElement {
 		type: 'SvelteFragment';
 		name: 'svelte:fragment';
 	}
 
+	/** A `<svelte:boundary>` element for error boundaries. */
 	export interface SvelteBoundary extends BaseElement {
 		type: 'SvelteBoundary';
 		name: 'svelte:boundary';
 	}
 
+	/** A `<svelte:head>` element. */
 	export interface SvelteHead extends BaseElement {
 		type: 'SvelteHead';
 		name: 'svelte:head';
@@ -441,6 +456,7 @@ export namespace AST {
 		name: 'svelte:options';
 	}
 
+	/** A `<svelte:self>` recursive component element. */
 	export interface SvelteSelf extends BaseElement {
 		type: 'SvelteSelf';
 		name: 'svelte:self';
@@ -454,6 +470,7 @@ export namespace AST {
 		};
 	}
 
+	/** A `<svelte:window>` element. */
 	export interface SvelteWindow extends BaseElement {
 		type: 'SvelteWindow';
 		name: 'svelte:window';
@@ -523,6 +540,7 @@ export namespace AST {
 		};
 	}
 
+	/** A `{#key ...}` block that re-renders when the key expression changes. */
 	export interface KeyBlock extends BaseNode {
 		type: 'KeyBlock';
 		expression: Expression;
@@ -533,6 +551,7 @@ export namespace AST {
 		};
 	}
 
+	/** A `{#snippet ...}` block that defines a reusable template fragment. */
 	export interface SnippetBlock extends BaseNode {
 		type: 'SnippetBlock';
 		expression: Identifier;
@@ -548,11 +567,13 @@ export namespace AST {
 		};
 	}
 
+	/** Base interface for attribute AST nodes. */
 	export interface BaseAttribute extends BaseNode {
 		name: string;
 		name_loc: SourceLocation | null;
 	}
 
+	/** A static or dynamic HTML attribute. */
 	export interface Attribute extends BaseAttribute {
 		type: 'Attribute';
 		/**
@@ -568,6 +589,7 @@ export namespace AST {
 		};
 	}
 
+	/** A spread attribute (e.g. `{...obj}`) on an element. */
 	export interface SpreadAttribute extends BaseNode {
 		type: 'SpreadAttribute';
 		expression: Expression;
@@ -577,6 +599,7 @@ export namespace AST {
 		};
 	}
 
+	/** A `<script>` or `<script module>` block. */
 	export interface Script extends BaseNode {
 		type: 'Script';
 		context: 'default' | 'module';
@@ -584,6 +607,7 @@ export namespace AST {
 		attributes: Attribute[];
 	}
 
+	/** A JavaScript comment found in script blocks or expressions. */
 	export interface JSComment {
 		type: 'Line' | 'Block';
 		value: string;
@@ -595,8 +619,10 @@ export namespace AST {
 		};
 	}
 
+	/** An attribute node or a directive on an element. */
 	export type AttributeLike = Attribute | SpreadAttribute | Directive;
 
+	/** A Svelte directive (e.g. `bind:`, `on:`, `use:`). */
 	export type Directive =
 		| AST.AnimateDirective
 		| AST.BindDirective
@@ -607,6 +633,7 @@ export namespace AST {
 		| AST.TransitionDirective
 		| AST.UseDirective;
 
+	/** A template block (e.g. `{#each}`, `{#if}`, `{#await}`). */
 	export type Block =
 		| AST.EachBlock
 		| AST.IfBlock
@@ -614,6 +641,7 @@ export namespace AST {
 		| AST.KeyBlock
 		| AST.SnippetBlock;
 
+	/** Any element-like AST node (components, regular elements, svelte elements). */
 	export type ElementLike =
 		| AST.Component
 		| AST.TitleElement
@@ -631,6 +659,7 @@ export namespace AST {
 		| AST.SvelteWindow
 		| AST.SvelteBoundary;
 
+	/** A template tag (e.g. `{@render}`, `{@html}`, `{@const}`). */
 	export type Tag =
 		| AST.AttachTag
 		| AST.ConstTag
@@ -640,6 +669,7 @@ export namespace AST {
 		| AST.HtmlTag
 		| AST.RenderTag;
 
+	/** Any node that can appear in the template AST. */
 	export type TemplateNode =
 		| AST.Root
 		| AST.Text
@@ -652,6 +682,7 @@ export namespace AST {
 		| AST.Comment
 		| Block;
 
+	/** Any node in the Svelte AST, including ESTree nodes, template nodes, CSS nodes, and scripts. */
 	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
 
 	export type { _CSS as CSS };

@@ -300,6 +300,7 @@ interface DispatchOptions {
 	cancelable?: boolean;
 }
 
+/** A strongly-typed event dispatcher for dispatching custom events. */
 export interface EventDispatcher<EventMap extends Record<string, any>> {
 	// Implementation notes:
 	// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode

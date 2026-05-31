@@ -1,11 +1,13 @@
 import { Readable, type Unsubscriber } from '../store/public.js';
 
+/** Options for configuring spring physics behavior. */
 export interface SpringOptions {
 	stiffness?: number;
 	damping?: number;
 	precision?: number;
 }
 
+/** Options for a single spring update. */
 export interface SpringUpdateOptions {
 	/**
 	 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
@@ -25,8 +27,10 @@ export interface SpringUpdateOptions {
 	preserveMomentum?: number;
 }
 
+/** A function that computes a new value from the target and current value. */
 export type Updater<T> = (target_value: T, value: T) => T;
 
+/** Options for configuring tweened transitions. */
 export interface TweenOptions<T> {
 	delay?: number;
 	duration?: number | ((from: T, to: T) => number);
@@ -38,6 +42,7 @@ export interface TweenOptions<T> {
 // this means both the Spring class and the Spring interface are merged into one with some things only
 // existing on one side. In Svelte 6, remove the type definition and move the jsdoc onto the class in spring.js
 
+/** Legacy spring store interface. Use the `Spring` class for new code. */
 export interface Spring<T> extends Readable<T> {
 	set(new_value: T, opts?: SpringUpdateOptions): Promise<void>;
 	/**
@@ -113,6 +118,7 @@ export class Spring<T> {
 	get current(): T;
 }
 
+/** A store that smoothly transitions between values using tweens. */
 export interface Tweened<T> extends Readable<T> {
 	set(value: T, opts?: TweenOptions<T>): Promise<void>;
 	update(updater: Updater<T>, opts?: TweenOptions<T>): Promise<void>;

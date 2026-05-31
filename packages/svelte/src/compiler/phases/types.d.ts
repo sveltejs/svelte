@@ -17,6 +17,7 @@ import type {
 import type { Scope, ScopeRoot } from './scope.js';
 import type { ExpressionMetadata } from './nodes.js';
 
+/** Parsed JavaScript module/script with scope information. */
 export interface Js {
 	ast: Program;
 	scope: Scope;
@@ -24,17 +25,20 @@ export interface Js {
 	has_await: boolean;
 }
 
+/** Parsed template with scope information. */
 export interface Template {
 	ast: AST.Fragment;
 	scope: Scope;
 	scopes: Map<AST.SvelteNode, Scope>;
 }
 
+/** A reactive `$:` statement with its dependencies and assignments. */
 export interface ReactiveStatement {
 	assignments: Set<Binding>;
 	dependencies: Binding[];
 }
 
+/** Metadata for a declaration that contains an await expression. */
 export interface AwaitedDeclaration {
 	id: Identifier;
 	has_await: boolean;
@@ -68,6 +72,7 @@ export interface Analysis {
 	pickled_awaits: Set<AwaitExpression>;
 }
 
+/** Analysis results specific to a Svelte component. */
 export interface ComponentAnalysis extends Analysis {
 	root: ScopeRoot;
 	instance: Js;

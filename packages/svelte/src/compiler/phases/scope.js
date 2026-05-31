@@ -85,6 +85,7 @@ const global_constants = {
 	'Math.SQRT1_2': Math.SQRT1_2
 };
 
+/** Represents a variable binding in a component scope. */
 export class Binding {
 	/** @type {Scope} */
 	scope;
@@ -602,6 +603,7 @@ class Evaluation {
 	}
 }
 
+/** Represents a lexical scope in the component, tracking bindings and references. */
 export class Scope {
 	/** @type {ScopeRoot} */
 	root;
@@ -859,6 +861,7 @@ const logical = {
 	'??': (left, right) => left ?? right
 };
 
+/** The root scope of a component, managing all top-level bindings. */
 export class ScopeRoot {
 	/** @type {Set<string>} */
 	conflicts = new Set();

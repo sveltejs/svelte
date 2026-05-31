@@ -1,3 +1,4 @@
+/** Internal context passed to spring tick calculations. */
 export interface TickContext {
 	inv_mass: number;
 	dt: number;

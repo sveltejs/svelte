@@ -1,19 +1,23 @@
 import type { AST } from '#compiler';
 
 export namespace _CSS {
+	/** Base interface for all CSS AST nodes. */
 	export interface BaseNode {
 		start: number;
 		end: number;
 	}
 
+	/** Base interface for CSS stylesheets. */
 	export interface StyleSheetBase extends BaseNode {
 		children: Array<Atrule | Rule>;
 	}
 
+	/** A standalone CSS file stylesheet. */
 	export interface StyleSheetFile extends StyleSheetBase {
 		type: 'StyleSheetFile';
 	}
 
+	/** A `<style>` block from a Svelte component. */
 	export interface StyleSheet extends StyleSheetBase {
 		type: 'StyleSheet';
 		attributes: any[]; // TODO
@@ -26,6 +30,7 @@ export namespace _CSS {
 		};
 	}
 
+	/** A CSS at-rule (e.g. `@media`, `@keyframes`). */
 	export interface Atrule extends BaseNode {
 		type: 'Atrule';
 		name: string;
@@ -33,6 +38,7 @@ export namespace _CSS {
 		block: Block | null;
 	}
 
+	/** A CSS rule with a selector list and a block of declarations. */
 	export interface Rule extends BaseNode {
 		type: 'Rule';
 		prelude: SelectorList;
@@ -109,21 +115,25 @@ export namespace _CSS {
 		};
 	}
 
+	/** A CSS type selector (e.g. `div`, `span`). */
 	export interface TypeSelector extends BaseNode {
 		type: 'TypeSelector';
 		name: string;
 	}
 
+	/** A CSS ID selector (e.g. `#my-id`). */
 	export interface IdSelector extends BaseNode {
 		type: 'IdSelector';
 		name: string;
 	}
 
+	/** A CSS class selector (e.g. `.my-class`). */
 	export interface ClassSelector extends BaseNode {
 		type: 'ClassSelector';
 		name: string;
 	}
 
+	/** A CSS attribute selector (e.g. `[href]`, `[type="text"]`). */
 	export interface AttributeSelector extends BaseNode {
 		type: 'AttributeSelector';
 		name: string;
@@ -132,27 +142,32 @@ export namespace _CSS {
 		flags: string | null;
 	}
 
+	/** A CSS pseudo-element selector (e.g. `::before`, `::after`). */
 	export interface PseudoElementSelector extends BaseNode {
 		type: 'PseudoElementSelector';
 		name: string;
 	}
 
+	/** A CSS pseudo-class selector (e.g. `:hover`, `:nth-child()`). */
 	export interface PseudoClassSelector extends BaseNode {
 		type: 'PseudoClassSelector';
 		name: string;
 		args: SelectorList | null;
 	}
 
+	/** A CSS percentage value (e.g. in `@keyframes`). */
 	export interface Percentage extends BaseNode {
 		type: 'Percentage';
 		value: string;
 	}
 
+	/** A CSS nesting selector (`&`). */
 	export interface NestingSelector extends BaseNode {
 		type: 'NestingSelector';
 		name: '&';
 	}
 
+	/** An `nth` value used in pseudo-class selectors like `:nth-child()`. */
 	export interface Nth extends BaseNode {
 		type: 'Nth';
 		value: string;
@@ -169,23 +184,26 @@ export namespace _CSS {
 		| Nth
 		| NestingSelector;
 
+	/** A CSS combinator (e.g. `>`, `~`, `+`, ` `). */
 	export interface Combinator extends BaseNode {
 		type: 'Combinator';
 		name: string;
 	}
 
+	/** A CSS declaration block (the contents between `{` and `}`). */
 	export interface Block extends BaseNode {
 		type: 'Block';
 		children: Array<Declaration | Rule | Atrule>;
 	}
 
+	/** A CSS property declaration (e.g. `color: red`). */
 	export interface Declaration extends BaseNode {
 		type: 'Declaration';
 		property: string;
 		value: string;
 	}
 
-	// for zimmerframe
+	/** Any CSS AST node. */
 	export type Node =
 		| StyleSheet
 		| Rule
