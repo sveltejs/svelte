@@ -14,7 +14,7 @@ const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 const regex_supported_declaration = /(?:let|const)\b/y;
 const regex_unsupported_declaration = /(?:var|interface|enum)\b/y;
 // `type` is a contextual keyword; this is just a shape hint, confirmed by parsing.
-const regex_maybe_type_declaration = /type\s+[\p{ID_Start}_$]/uy;
+const regex_maybe_type_declaration = /type\b/y;
 
 const pointy_bois = { '<': '>' };
 
@@ -77,29 +77,16 @@ function read_declaration(parser) {
 		e.declaration_tag_invalid_type({ start, end: start + unsupported.length });
 	}
 
-	const type_alias_match = parser.match_regex(regex_maybe_type_declaration);
-	if (type_alias_match) {
-		const initial_comment_count = parser.root.comments.length;
-		/** @type {{ type: string; start: number; end: number } | undefined} */
-		let statement;
-		try {
-			statement = /** @type {{ type: string; start: number; end: number }} */ (
-				/** @type {unknown} */ (parse_statement_at(parser, parser.template, start))
-			);
-		} catch {
-			e.declaration_tag_invalid_type({ start, end: start + type_alias_match.length });
-		}
-		if (statement.type !== 'ExpressionStatement') {
-			e.declaration_tag_invalid_type(statement);
-		}
-		// discard probe comments so `read_expression` doesn't re-add them
-		parser.root.comments.length = initial_comment_count;
+	if (
+		!parser.match_regex(regex_supported_declaration) &&
+		// `type` is special, since it is not a reserved keyword and can be used
+		// as part of a valid expression. We gotta parse first and then see what it is.
+		!parser.match_regex(regex_maybe_type_declaration)
+	) {
 		return null;
 	}
 
-	if (!parser.match_regex(regex_supported_declaration)) {
-		return null;
-	}
+	const initial_comment_count = parser.root.comments.length;
 
 	/** @type {import('estree').Statement | import('estree').VariableDeclaration} */
 	let declaration;
@@ -137,10 +124,16 @@ function read_declaration(parser) {
 	}
 
 	if (declaration.type !== 'VariableDeclaration') {
-		e.declaration_tag_invalid_type({
-			start: declaration.start ?? start,
-			end: declaration.end ?? parser.index
-		});
+		if (declaration.type === 'ExpressionStatement') {
+			parser.root.comments.length = initial_comment_count; // Else they show up duplicated
+			return null;
+		} else {
+			// This is a TSTypeAliasDeclaration
+			e.declaration_tag_invalid_type({
+				start: declaration.start ?? start,
+				end: declaration.end ?? parser.index
+			});
+		}
 	}
 
 	// TODO support using

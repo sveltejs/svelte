@@ -1,3 +1,5 @@
+<script lang="ts"></script>
+
 {#if true}
 	<!-- check that these doesn't trigger already -->
 	{type}
@@ -20,6 +22,7 @@
 	{type / 2}
 	{type > 1}
 	{type instanceof Foo}
+	{type instanceof /* comment */ Object}
 	{type in foo}
 	<!-- ... this one should trigger though -->
 	{type foo = boolean}
