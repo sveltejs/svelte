@@ -673,7 +673,7 @@ function render_conditional_table(features: ConditionalRow[], runtime_floor: Run
 	features.sort((a, b) => a.name.localeCompare(b.name));
 
 	const browsers = [
-		['chrome', 'Chrome / Edge'],
+		['chrome', 'Chrome/Edge'],
 		['firefox', 'Firefox'],
 		['safari', 'Safari']
 	] as const;
@@ -768,7 +768,7 @@ function render_browser_table(versions: Record<string, string>, target: RuntimeF
 	];
 
 	if (versions.chrome === versions.edge) {
-		rows[0][0] += ` / ${BROWSER.edge}`;
+		rows[0][0] += `/${BROWSER.edge}`;
 	} else {
 		rows.push([BROWSER.edge, versions.edge]);
 	}
