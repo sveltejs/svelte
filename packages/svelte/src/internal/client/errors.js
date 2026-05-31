@@ -330,12 +330,15 @@ export function hydratable_missing_but_required(key) {
 }
 
 /**
- * Failed to hydrate the application
+ * Hydration failed because the server-rendered HTML does not match what the client expected. The original error was: %cause%
+ * @param {string | undefined | null} [cause]
  * @returns {never}
  */
-export function hydration_failed() {
+export function hydration_failed(cause) {
 	if (DEV) {
-		const error = new Error(`hydration_failed\nFailed to hydrate the application\nhttps://svelte.dev/e/hydration_failed`);
+		const error = new Error(`hydration_failed\n${cause
+			? `Hydration failed because the server-rendered HTML does not match what the client expected. The original error was: ${cause}`
+			: 'Hydration failed because the server-rendered HTML does not match what the client expected'}\nhttps://svelte.dev/e/hydration_failed`);
 
 		error.name = 'Svelte error';
 

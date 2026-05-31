@@ -149,7 +149,28 @@ This can happen if you render a hydratable on the client that was not rendered o
 
 ## hydration_failed
 
-> Failed to hydrate the application
+> Hydration failed because the server-rendered HTML does not match what the client expected
+
+> Hydration failed because the server-rendered HTML does not match what the client expected. The original error was: %cause%
+
+Hydration fails when the DOM produced during server-side rendering cannot be reconciled with the client component tree. Common causes include:
+
+- Using browser-only APIs (e.g. `window`, `document`, `localStorage`) during server-side rendering
+- Rendering conditional content based on the environment (e.g. `{#if typeof window !== "undefined"}`)
+- Timestamps or random values that differ between server and client renders
+- Browser extensions (e.g. translation tools) that modify the server-rendered HTML before hydration
+
+To investigate, check the warnings in your browser console. To recover gracefully by falling back to client-side rendering, pass `recover: true` to `hydrate`:
+
+```js
+import { hydrate } from 'svelte';
+import App from './App.svelte';
+
+const app = hydrate(App, {
+	target: document.getElementById('app')!,
+	recover: true
+});
+```
 
 ## invalid_snippet
 

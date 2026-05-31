@@ -135,7 +135,7 @@ export function hydrate(component, options) {
 		}
 
 		if (options.recover === false) {
-			e.hydration_failed();
+			e.hydration_failed(error !== HYDRATION_ERROR ? String(error) : undefined);
 		}
 
 		// If an error occurred above, the operations might not yet have been initialised.
