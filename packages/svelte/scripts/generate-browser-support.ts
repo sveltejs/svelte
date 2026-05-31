@@ -685,7 +685,7 @@ function render_conditional_table(features: ConditionalRow[], runtime_floor: Run
 		const name_cell = row.doc_link ? `[${row.name}](${row.doc_link})` : row.name;
 		const versions = browsers.map(([key]) => {
 			const v = row.versions[key];
-			if (v === null) return '<span style="color: var(--sk-fg-4)">not supported</span>';
+			if (v === null) return 'not supported';
 			if (v === undefined) return '<span style="color: var(--sk-fg-4)">—</span>';
 			const floor_v = floor_versions[key];
 			if (floor_v && Number(v) <= Number(floor_v))
@@ -782,7 +782,7 @@ function render_browser_table(versions: Record<string, string>, target: RuntimeF
 		[`${BROWSER.opera} (Android)`, versions.opera_android],
 		[BROWSER.samsung_internet, versions.samsunginternet_android],
 		[BROWSER.webview_android, versions.webview_android],
-		[BROWSER.internet_explorer, '<span style="color: var(--sk-fg-4)">not supported</span>']
+		[BROWSER.internet_explorer, 'not supported']
 	);
 
 	const target_label = target === 'newly' ? '"newly available"' : target;
