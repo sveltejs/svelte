@@ -751,14 +751,14 @@ function browser_versions_for(target: RuntimeFloor): Record<string, string> {
 }
 
 const BROWSER = {
-	chrome: '![](/images/browsers/chrome.svg) Chrome',
-	edge: '![](/images/browsers/edge.svg) Edge',
-	firefox: '![](/images/browsers/firefox.svg) Firefox',
-	safari: '![](/images/browsers/safari.svg) Safari',
-	opera: '![](/images/browsers/opera.svg) Opera',
-	samsung_internet: '![](/images/browsers/samsung-internet.svg) Samsung Internet',
-	webview_android: '![](/images/browsers/android-webview.svg) Android WebView',
-	internet_explorer: '![](/images/browsers/internet-explorer.svg) Internet Explorer'
+	chrome: 'Chrome',
+	edge: 'Edge',
+	firefox: 'Firefox',
+	safari: 'Safari',
+	opera: 'Opera',
+	samsung_internet: 'Samsung Internet',
+	webview_android: 'Android WebView',
+	internet_explorer: 'Internet Explorer'
 };
 
 function render_browser_table(versions: Record<string, string>, target: RuntimeFloor): string {
