@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // Regenerates `documentation/docs/07-misc/05-browser-support.md`.
 //
 // Pipeline:
@@ -46,8 +47,15 @@ type BrowserVersions = Record<string, string | null>;
 type RuntimeFloor = number | 'newly';
 type ConditionalRow = {
 	name: string;
+	doc_link: string | null;
 	versions: BrowserVersions;
 	baseline_year: RuntimeFloor;
+};
+
+const doc_links: Record<string, string | null> = {
+	'`$state.snapshot`': '/docs/svelte/$state#$state.snapshot',
+	'`bind:devicePixelContentBoxSize`': '/docs/svelte/bind#Dimensions',
+	'`flip` from `svelte/animate`': '/docs/svelte/svelte-animate#flip'
 };
 
 // Supplemental detection rules for APIs `web-features` doesn't track
@@ -125,13 +133,7 @@ const SAFE_TO_IGNORE = new Set(['devicepixelratio', 'trusted-types']);
 /**
  * Suppressions for features that DO live in the runtime but are reached
  * only via a specific code path documented in the per-feature table on
- * the docs page. The aggregate scan hides them so the headline floor
- * reflects "load Svelte and use the basic runtime", not "use every
- * conditional feature".
- *
- * Each entry MUST appear in the conditional-features table. The
- * staleness check below also verifies the entry is still present in the
- * runtime — if the detector doesn't flag it, the entry can be removed.
+ * the docs page.
  */
 const BEHAVIORAL_IGNORE = new Set([
 	'structured-clone',
@@ -203,7 +205,6 @@ async function enumerate_subpackage_exports(): Promise<Record<string, string[]>>
 			if (names.length > 0) result[module_id] = names;
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
-			// eslint-disable-next-line no-console
 			console.warn(`  (could not enumerate ${module_id}: ${message.split('\n')[0]})`);
 		}
 	}
@@ -437,10 +438,8 @@ function find_minimum_target(
 	// detected feature happens to lack a Baseline year.
 	const final_year = Math.max(year, 2015);
 
-	// eslint-disable-next-line no-console
 	console.log(`  → ${final_year} (features that drove the floor:)`);
 	for (const id of [...drivers].sort()) {
-		// eslint-disable-next-line no-console
 		console.log(`    - ${id}`);
 	}
 
@@ -455,7 +454,6 @@ function find_minimum_target(
  *
  * `SAFE_TO_IGNORE` entries are exempt: they're safe to carry regardless
  * of whether the runtime currently uses the API.
- *
  */
 function validate_ignore_features(runtime_files: string[]): void {
 	if (BEHAVIORAL_IGNORE.size === 0) return;
@@ -528,14 +526,12 @@ function enumerate_features(subpackage_exports: Record<string, string[]>): Featu
  * Produce the `.svelte` source for a single binding fixture. Returns
  * `null` for bindings the compiler treats as elements rather than
  * properties (none currently, but defensive).
- *
  */
 function binding_fixture(name: string, props: BindingProperty): string {
 	// Map declared `valid_elements` to a concrete element + minimal attrs
 	// so the compiler accepts the binding.
 	const tag = (props.valid_elements ?? ['div'])[0];
 
-	// Pick a sensible initial value and attribute set per binding.
 	const reactive = `let v = $state();`;
 
 	if (tag === 'svelte:window') {
@@ -545,7 +541,7 @@ function binding_fixture(name: string, props: BindingProperty): string {
 		return `<script>${reactive}</script><svelte:document bind:${name}={v} />`;
 	}
 	if (tag === 'input') {
-		// `bind:checked` requires type="checkbox"|"radio"; `bind:group` too.
+		// `bind:checked` and `bind:group` require type="checkbox" | "radio"
 		const type =
 			name === 'checked' || name === 'indeterminate'
 				? ' type="checkbox"'
@@ -567,7 +563,6 @@ function binding_fixture(name: string, props: BindingProperty): string {
  * Compile a `.svelte` fixture to JS (no-op for `.js` fixtures), then
  * bundle the result through the shared `bundle` helper. Fixtures are tiny
  * so circular-dep warnings from the Svelte runtime are silenced.
- *
  */
 async function bundle_fixture(feature: Feature): Promise<string> {
 	const entry_code =
@@ -612,6 +607,8 @@ async function find_all_conditional_features(
 	const features = enumerate_features(subpackage_exports);
 	const rows: ConditionalRow[] = [];
 
+	const missing_doc_links: string[] = [];
+
 	for (let i = 0; i < features.length; i++) {
 		const feature = features[i];
 		process.stdout.write(`\r  ${i + 1}/${features.length}  ${feature.name}`.padEnd(80));
@@ -645,25 +642,35 @@ async function find_all_conditional_features(
 			}
 		}
 
+		let doc_link = doc_links[feature.name];
+		if (doc_link === undefined) {
+			doc_link = null;
+			missing_doc_links.push(feature.name);
+		}
+
 		rows.push({
 			name: feature.name,
+			doc_link,
 			versions,
 			baseline_year: final_year
 		});
 	}
 	process.stdout.write('\n');
 
+	if (missing_doc_links.length) {
+		throw new Error(`Missing documentation url for some features.
+Add them to the \`doc_links\` map in \`scripts/generate-browser-support.ts\`, or add an explicit \`null\` if they don't have a documentation url.
+${missing_doc_links.map((name) => `  - "${name}"`).join('\n')}`);
+	}
+
 	return rows;
 }
 
-/**
- * Render the per-feature browser-requirements table from the auto-detected
- * rows. Sorted by Safari floor descending, then alphabetically.
- */
-function render_conditional_table(rows: ConditionalRow[], runtime_floor: RuntimeFloor): string {
-	if (rows.length === 0) {
+function render_conditional_table(features: ConditionalRow[], runtime_floor: RuntimeFloor): string {
+	if (features.length === 0) {
 		return '_No features currently require browser versions newer than the runtime floor._';
 	}
+	features.sort((a, b) => a.name.localeCompare(b.name));
 
 	const browsers = [
 		['chrome', 'Chrome/Edge'],
@@ -671,32 +678,25 @@ function render_conditional_table(rows: ConditionalRow[], runtime_floor: Runtime
 		['safari', 'Safari']
 	] as const;
 
-	const runtime_versions = browser_versions_for(runtime_floor);
+	const floor_versions = browser_versions_for(runtime_floor);
 
-	const sorted = [...rows].sort((a, b) => {
-		const sa = Number(a.versions.safari ?? '0');
-		const sb = Number(b.versions.safari ?? '0');
-		if (sb !== sa) return sb - sa;
-		return a.name.localeCompare(b.name);
-	});
-
-	const header = '| Feature | ' + browsers.map(([, label]) => `${label}`).join(' | ') + ' |';
-	const sep = '| --- |' + browsers.map(() => ' ---: |').join('');
-
-	const body = sorted.map((entry) => {
-		const cells = browsers.map(([key]) => {
-			const v = entry.versions[key];
+	const rows: string[][] = [];
+	for (const row of features) {
+		const name_cell = row.doc_link ? `[${row.name}](${row.doc_link})` : row.name;
+		const versions = browsers.map(([key]) => {
+			const v = row.versions[key];
 			if (v === null) return 'not supported';
 			if (v === undefined) return '<span style="color: var(--sk-fg-4)">—</span>';
-			const floor_v = runtime_versions[key];
-			return floor_v && Number(v) <= Number(floor_v)
-				? '<span style="color: var(--sk-fg-4)">—</span>'
-				: v;
-		});
-		return `| ${entry.name} | ${cells.join(' | ')} |`;
-	});
+			const floor_v = floor_versions[key];
+			if (floor_v && Number(v) <= Number(floor_v))
+				return '<span style="color: var(--sk-fg-4)">—</span>';
 
-	return [header, sep, ...body].join('\n');
+			return v;
+		});
+		rows.push([name_cell, ...versions]);
+	}
+
+	return render_markdown_table(['Feature', ...browsers.map(([, label]) => `${label}`)], rows);
 }
 
 function browser_versions_for(target: RuntimeFloor): Record<string, string> {
@@ -750,53 +750,59 @@ function browser_versions_for(target: RuntimeFloor): Record<string, string> {
 	return lookup;
 }
 
-function render_table(versions: Record<string, string>, target: RuntimeFloor): string {
-	// Chrome and Edge ship from the same engine and historically resolve to the
-	// same Baseline version. Collapse them into one row when they match, but
-	// fall back to listing them separately if they ever drift.
-	const chrome_edge: [string, string] | null =
-		versions.chrome && versions.chrome === versions.edge ? ['Chrome/Edge', versions.chrome] : null;
+const BROWSER = {
+	chrome: 'Chrome',
+	edge: 'Edge',
+	firefox: 'Firefox',
+	safari: 'Safari',
+	opera: 'Opera',
+	samsung_internet: 'Samsung Internet',
+	webview_android: 'Android WebView',
+	internet_explorer: 'Internet Explorer'
+};
 
-	const base_rows: Array<[string, string]> = chrome_edge
-		? [chrome_edge, ['Chrome (Android)', versions.chrome_android]]
-		: [
-				['Chrome', versions.chrome],
-				['Chrome (Android)', versions.chrome_android],
-				['Edge', versions.edge]
-			];
+function render_browser_table(versions: Record<string, string>, target: RuntimeFloor): string {
+	const rows: Array<[string, string]> = [
+		[BROWSER.chrome, versions.chrome],
+		[`${BROWSER.chrome} (Android)`, versions.chrome_android]
+	];
 
-	const rows = [
-		...base_rows,
-		['Firefox', versions.firefox],
-		['Firefox (Android)', versions.firefox_android],
-		['Safari', versions.safari],
-		['Safari (iOS)', versions.safari_ios],
-		['Opera', versions.opera],
-		['Opera (Android)', versions.opera_android],
-		['Samsung Internet', versions.samsunginternet_android],
-		['Android WebView', versions.webview_android]
-	].filter(([label, version]) => version !== undefined) as Array<[string, string]>;
+	if (versions.chrome === versions.edge) {
+		rows[0][0] += `/${BROWSER.edge}`;
+	} else {
+		rows.push([BROWSER.edge, versions.edge]);
+	}
 
-	const headings = ['Browser', 'Minimum version'];
-
-	const widths = headings.map((heading, i) =>
-		Math.max(heading.length, ...rows.map((r) => String(r[i]).length))
+	rows.push(
+		[BROWSER.firefox, versions.firefox],
+		[`${BROWSER.firefox} (Android)`, versions.firefox_android],
+		[BROWSER.safari, versions.safari],
+		[`${BROWSER.safari} (iOS)`, versions.safari_ios],
+		[BROWSER.opera, versions.opera],
+		[`${BROWSER.opera} (Android)`, versions.opera_android],
+		[BROWSER.samsung_internet, versions.samsunginternet_android],
+		[BROWSER.webview_android, versions.webview_android],
+		[BROWSER.internet_explorer, 'not supported']
 	);
-
-	const pad = (s: string, n: number) => s + ' '.repeat(Math.max(0, n - s.length));
-
-	const header = `| ${headings.map((heading, i) => pad(heading, widths[i])).join(' | ')} |`;
-	const sep = `| ${widths.map((width) => '-'.repeat(width)).join(' | ')} |`;
-	const body = rows
-		.map(([a, b]) => `| ${pad(a, widths[0])} | ${pad(String(b), widths[1])} |`)
-		.join('\n');
 
 	const target_label = target === 'newly' ? '"newly available"' : target;
 
-	return `${header}\n${sep}\n${body}\n\n> [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of ${target_label}.`;
+	return (
+		render_markdown_table(
+			['Browser', 'Minimum version'],
+			rows.filter(([, version]) => version !== undefined)
+		) +
+		`\n\n> [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of ${target_label}.`
+	);
 }
 
-/* eslint-disable no-console */
+function render_markdown_table(headers: string[], rows: string[][]): string {
+	return `| ${headers.join(' | ')} |
+| ${headers.map(() => '-').join(' | ')} |
+${rows.map((row) => `| ${row.join(' | ')} |`).join('\n')}
+`;
+}
+
 async function main() {
 	console.log('Preparing scratch directory…');
 	// Wipe and recreate so stale bundles can't leak into the next scan.
@@ -844,14 +850,11 @@ async function main() {
 		const versions = browser_versions_for(target);
 
 		console.log('Rewriting docs page…');
-		generate('browser-support.md', render_table(versions, target));
+		generate('browser-support.md', render_browser_table(versions, target));
 		generate('browser-support-features.md', render_conditional_table(conditional_rows, target));
 
 		console.log('Done.');
 	} finally {
-		// Ensure cleanup happens even on failure — otherwise leftover bundle
-		// files in `scripts/_baseline/` get picked up by `pnpm lint` on the
-		// next CI step and produce spurious naming/no-console errors.
 		fs.rmSync(tmp_dir, { recursive: true, force: true });
 	}
 }
