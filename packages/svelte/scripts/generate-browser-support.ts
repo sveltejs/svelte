@@ -660,7 +660,7 @@ async function find_all_conditional_features(
 	if (missing_doc_links.length) {
 		throw new Error(`Missing documentation url for some features.
 Add them to the \`doc_links\` map in \`scripts/generate-browser-support.ts\`, or add an explicit \`null\` if they don't have a documentation url.
-${missing_doc_links.map(name => `  - "${name}"`).join('\n')}`);
+${missing_doc_links.map((name) => `  - "${name}"`).join('\n')}`);
 	}
 
 	return rows;
@@ -777,7 +777,9 @@ function render_table(versions: Record<string, string>, target: RuntimeFloor): s
 	// same Baseline version. Collapse them into one row when they match, but
 	// fall back to listing them separately if they ever drift.
 	const chrome_edge: [string, string] | null =
-		versions.chrome && versions.chrome === versions.edge ? [`${BROWSER.chrome} / ${BROWSER.edge}`, versions.chrome] : null;
+		versions.chrome && versions.chrome === versions.edge
+			? [`${BROWSER.chrome} / ${BROWSER.edge}`, versions.chrome]
+			: null;
 
 	const base_rows: Array<[string, string]> = chrome_edge
 		? [chrome_edge, [`${BROWSER.chrome} (Android)`, versions.chrome_android]]
