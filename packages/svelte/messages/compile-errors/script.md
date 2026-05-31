@@ -4,7 +4,7 @@
 
 ## constant_assignment
 
-> Cannot assign to %thing%
+> Cannot assign to `%thing%`. If the variable needs to be reassigned, declare it with `let` or use `$state()` for reactive state
 
 ## constant_binding
 

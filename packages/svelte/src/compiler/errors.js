@@ -93,7 +93,7 @@ export function bindable_invalid_location(node) {
  * @returns {never}
  */
 export function constant_assignment(node, thing) {
-	e(node, 'constant_assignment', `Cannot assign to ${thing}\nhttps://svelte.dev/e/constant_assignment`);
+	e(node, 'constant_assignment', `Cannot assign to `${thing}`. If the variable needs to be reassigned, declare it with `let` or use `$state()` for reactive state\nhttps://svelte.dev/e/constant_assignment`);
 }
 
 /**
