@@ -666,11 +666,11 @@ ${missing_doc_links.map((name) => `  - "${name}"`).join('\n')}`);
 	return rows;
 }
 
-function render_conditional_table(rows: ConditionalRow[], runtime_floor: RuntimeFloor): string {
-	if (rows.length === 0) {
+function render_conditional_table(features: ConditionalRow[], runtime_floor: RuntimeFloor): string {
+	if (features.length === 0) {
 		return '_No features currently require browser versions newer than the runtime floor._';
 	}
-	rows.sort((a, b) => a.name.localeCompare(b.name));
+	features.sort((a, b) => a.name.localeCompare(b.name));
 
 	const browsers = [
 		['chrome', 'Chrome / Edge'],
@@ -680,8 +680,8 @@ function render_conditional_table(rows: ConditionalRow[], runtime_floor: Runtime
 
 	const floor_versions = browser_versions_for(runtime_floor);
 
-	const r2: Array<string[]> = [];
-	for (const row of rows) {
+	const rows: string[][] = [];
+	for (const row of features) {
 		const name_cell = row.doc_link ? `[${row.name}](${row.doc_link})` : row.name;
 		const versions = browsers.map(([key]) => {
 			const v = row.versions[key];
@@ -693,10 +693,10 @@ function render_conditional_table(rows: ConditionalRow[], runtime_floor: Runtime
 
 			return v;
 		});
-		r2.push([name_cell, ...versions]);
+		rows.push([name_cell, ...versions]);
 	}
 
-	return render_markdown_table(['Feature', ...browsers.map(([, label]) => `${label}`)], r2);
+	return render_markdown_table(['Feature', ...browsers.map(([, label]) => `${label}`)], rows);
 }
 
 function browser_versions_for(target: RuntimeFloor): Record<string, string> {
@@ -796,7 +796,7 @@ function render_browser_table(versions: Record<string, string>, target: RuntimeF
 	);
 }
 
-function render_markdown_table(headers: string[], rows: Array<string[]>): string {
+function render_markdown_table(headers: string[], rows: string[][]): string {
 	return `| ${headers.join(' | ')} |
 | ${headers.map(() => '-').join(' | ')} |
 ${rows.map((row) => `| ${row.join(' | ')} |`).join('\n')}
