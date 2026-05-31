@@ -49,8 +49,21 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 ### derived_references_self
 
 ```
-A derived value cannot reference itself recursively
+A `$derived` or `$derived.by` expression read its own value during evaluation, creating a cycle
 ```
+
+This happens when a derived value references itself, directly or through a chain of other derived values that leads back to the original. The evaluation cannot proceed because it would loop forever.
+
+```js
+// direct self-reference
+let doubled = $derived(doubled * 2);
+
+// indirect cycle
+let a = $derived(b + 1);
+let b = $derived(a + 1);
+```
+
+To fix this, make sure the derived expression only reads state (`$state`) or other derived values that do not form a cycle with it.
 
 ### each_key_duplicate
 
