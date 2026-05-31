@@ -666,14 +666,11 @@ ${missing_doc_links.map((name) => `  - "${name}"`).join('\n')}`);
 	return rows;
 }
 
-/**
- * Render the per-feature browser-requirements table from the auto-detected
- * rows. Sorted by Safari floor descending, then alphabetically.
- */
 function render_conditional_table(rows: ConditionalRow[], runtime_floor: RuntimeFloor): string {
 	if (rows.length === 0) {
 		return '_No features currently require browser versions newer than the runtime floor._';
 	}
+	rows.sort((a, b) => a.name.localeCompare(b.name));
 
 	const browsers = [
 		['chrome', 'Chrome / Edge'],
@@ -681,33 +678,25 @@ function render_conditional_table(rows: ConditionalRow[], runtime_floor: Runtime
 		['safari', 'Safari']
 	] as const;
 
-	const runtime_versions = browser_versions_for(runtime_floor);
+	const floor_versions = browser_versions_for(runtime_floor);
 
-	const sorted = [...rows].sort((a, b) => {
-		const sa = Number(a.versions.safari ?? '0');
-		const sb = Number(b.versions.safari ?? '0');
-		if (sb !== sa) return sb - sa;
-		return a.name.localeCompare(b.name);
-	});
-
-	const header = '| Feature | ' + browsers.map(([, label]) => `${label}`).join(' | ') + ' |';
-	const sep = '| --- |' + browsers.map(() => ' ---: |').join('');
-
-	const body = sorted.map((entry) => {
-		const cells = browsers.map(([key]) => {
-			const v = entry.versions[key];
+	const r2: Array<string[]> = [];
+	for (const row of rows) {
+		const name_cell = row.doc_link ? `[${row.name}](${row.doc_link})` : row.name;
+		const versions = browsers.map(([key]) => {
+			const v = row.versions[key];
 			if (v === null) return '<span style="color: var(--sk-fg-4)">not supported</span>';
 			if (v === undefined) return '<span style="color: var(--sk-fg-4)">—</span>';
-			const floor_v = runtime_versions[key];
-			return floor_v && Number(v) <= Number(floor_v)
-				? '<span style="color: var(--sk-fg-4)">—</span>'
-				: v;
-		});
-		const name_cell = entry.doc_link ? `[${entry.name}](${entry.doc_link})` : entry.name;
-		return `| ${name_cell} | ${cells.join(' | ')} |`;
-	});
+			const floor_v = floor_versions[key];
+			if (floor_v && Number(v) <= Number(floor_v))
+				return '<span style="color: var(--sk-fg-4)">—</span>';
 
-	return [header, sep, ...body].join('\n');
+			return v;
+		});
+		r2.push([name_cell, ...versions]);
+	}
+
+	return render_markdown_table(['Feature', ...browsers.map(([, label]) => `${label}`)], r2);
 }
 
 function browser_versions_for(target: RuntimeFloor): Record<string, string> {
@@ -772,25 +761,19 @@ const BROWSER = {
 	internet_explorer: '![](/images/browsers/internet-explorer.svg) Internet Explorer'
 };
 
-function render_table(versions: Record<string, string>, target: RuntimeFloor): string {
-	// Chrome and Edge ship from the same engine and historically resolve to the
-	// same Baseline version. Collapse them into one row when they match, but
-	// fall back to listing them separately if they ever drift.
-	const chrome_edge: [string, string] | null =
-		versions.chrome && versions.chrome === versions.edge
-			? [`${BROWSER.chrome} / ${BROWSER.edge}`, versions.chrome]
-			: null;
+function render_browser_table(versions: Record<string, string>, target: RuntimeFloor): string {
+	const rows: Array<[string, string]> = [
+		[BROWSER.chrome, versions.chrome],
+		[`${BROWSER.chrome} (Android)`, versions.chrome_android]
+	];
 
-	const base_rows: Array<[string, string]> = chrome_edge
-		? [chrome_edge, [`${BROWSER.chrome} (Android)`, versions.chrome_android]]
-		: [
-				[BROWSER.chrome, versions.chrome],
-				[`${BROWSER.chrome} (Android)`, versions.chrome_android],
-				[BROWSER.edge, versions.edge]
-			];
+	if (versions.chrome === versions.edge) {
+		rows[0][0] += ` / ${BROWSER.edge}`;
+	} else {
+		rows.push([BROWSER.edge, versions.edge]);
+	}
 
-	const rows = [
-		...base_rows,
+	rows.push(
 		[BROWSER.firefox, versions.firefox],
 		[`${BROWSER.firefox} (Android)`, versions.firefox_android],
 		[BROWSER.safari, versions.safari],
@@ -800,25 +783,24 @@ function render_table(versions: Record<string, string>, target: RuntimeFloor): s
 		[BROWSER.samsung_internet, versions.samsunginternet_android],
 		[BROWSER.webview_android, versions.webview_android],
 		[BROWSER.internet_explorer, '<span style="color: var(--sk-fg-4)">not supported</span>']
-	].filter(([label, version]) => version !== undefined) as Array<[string, string]>;
-
-	const headings = ['Browser', 'Minimum version'];
-
-	const widths = headings.map((heading, i) =>
-		Math.max(heading.length, ...rows.map((r) => String(r[i]).length))
 	);
-
-	const pad = (s: string, n: number) => s + ' '.repeat(Math.max(0, n - s.length));
-
-	const header = `| ${headings.map((heading, i) => pad(heading, widths[i])).join(' | ')} |`;
-	const sep = `| ${widths.map((width) => '-'.repeat(width)).join(' | ')} |`;
-	const body = rows
-		.map(([a, b]) => `| ${pad(a, widths[0])} | ${pad(String(b), widths[1])} |`)
-		.join('\n');
 
 	const target_label = target === 'newly' ? '"newly available"' : target;
 
-	return `${header}\n${sep}\n${body}\n\n> [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of ${target_label}.`;
+	return (
+		render_markdown_table(
+			['Browser', 'Minimum version'],
+			rows.filter(([, version]) => version !== undefined)
+		) +
+		`\n\n> [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of ${target_label}.`
+	);
+}
+
+function render_markdown_table(headers: string[], rows: Array<string[]>): string {
+	return `| ${headers.join(' | ')} |
+| ${headers.map(() => '-').join(' | ')} |
+${rows.map((row) => `| ${row.join(' | ')} |`).join('\n')}
+`;
 }
 
 async function main() {
@@ -868,7 +850,7 @@ async function main() {
 		const versions = browser_versions_for(target);
 
 		console.log('Rewriting docs page…');
-		generate('browser-support.md', render_table(versions, target));
+		generate('browser-support.md', render_browser_table(versions, target));
 		generate('browser-support-features.md', render_conditional_table(conditional_rows, target));
 
 		console.log('Done.');
