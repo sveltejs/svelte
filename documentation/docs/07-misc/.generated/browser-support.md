@@ -2,14 +2,14 @@
 
 | Browser | Minimum version |
 | - | - |
-| Chrome / Edge | 87 |
+| Chrome/Edge | 87 |
 | Firefox | 83 |
 | Safari | 14 |
 | Opera | 73 |
 | Opera (Android) | 62 |
 | Samsung Internet | 14.0 |
 | Android WebView | 87 |
-| Internet Explorer | <span style="color: var(--sk-fg-4)">not supported</span> |
+| Internet Explorer | not supported |
 
 
 > [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of 2020.
