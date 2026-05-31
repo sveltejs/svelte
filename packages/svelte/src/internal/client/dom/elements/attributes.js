@@ -331,6 +331,20 @@ function set_attributes(
 	}
 
 	var setters = get_setters(element);
+	if (
+		!is_custom_element &&
+		element.nodeName === INPUT_TAG &&
+		'type' in next &&
+		('value' in next || '__value' in next)
+	) {
+		var type = next.type;
+		var current_type = current.type;
+
+		if (type !== current_type || (type === undefined && element.hasAttribute('type'))) {
+			current.type = type;
+			set_attribute(element, 'type', type, skip_warning);
+		}
+	}
 
 	// since key is captured we use const
 	for (const key in next) {
