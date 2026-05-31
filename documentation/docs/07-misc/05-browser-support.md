@@ -8,13 +8,6 @@ The table below shows the minimum browser versions Svelte is expected to work in
 
 This table only covers Svelte itself. It does not include [SvelteKit](/docs/kit), other Svelte libraries, or your own code.
 
-<style>
-	td > img {
-		vertical-align:center;
-		width: 24px;
-	}
-</style>
-
 ## Exceptions
 
 A few Svelte features require a higher minimum browser version. You'll only need to take the following table into consideration if you use these specific features.
