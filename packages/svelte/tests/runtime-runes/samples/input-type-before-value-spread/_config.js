@@ -1,4 +1,4 @@
-import { test } from '../../assert';
+import { test } from '../../test';
 
 const value = 'line1\nline2\nline3';
 
