@@ -344,7 +344,7 @@ function set_attributes(
 	var setters = get_setters(element);
 
 	if (
-		// the following login only make sense in a dev environment
+		// the following logic only make sense in a dev environment
 		current_renderer == null &&
 		node_name(element) === INPUT_TAG &&
 		'type' in next &&
