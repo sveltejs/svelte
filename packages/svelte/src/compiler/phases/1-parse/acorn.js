@@ -121,10 +121,13 @@ export function parse_statement_at(parser, source, index) {
 		);
 		p.nextToken();
 		const statement = /** @type {Statement} */ (p.parseStatement(null, true, Object.create(null)));
-		add_comments(statement);
+		add_comments(/** @type {acorn.Node} */ (statement));
 		return statement;
-	} catch (e) {
-		handle_parse_error(e);
+	} catch (err) {
+		// A statement that runs to the end of the source (e.g. an unterminated declaration tag)
+		// is an EOF, not a stray token; preserve the friendlier `unexpected_eof` diagnostic.
+		if (/** @type {any} */ (err).pos === source.length) e.unexpected_eof(source.length);
+		handle_parse_error(err);
 	}
 }
 
