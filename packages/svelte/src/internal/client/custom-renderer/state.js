@@ -20,8 +20,9 @@ export function set_renderer(value) {
  */
 export function push_renderer(value) {
 	var previous_hydrating = hydrating;
+	var should_disable_hydration = hydrating && value != null;
 	// this is to allow hydration code to treeshake
-	if (hydrating) {
+	if (should_disable_hydration) {
 		set_hydrating(false);
 	}
 	var previous_renderer = current_renderer;
@@ -29,7 +30,7 @@ export function push_renderer(value) {
 
 	return () => {
 		current_renderer = previous_renderer;
-		if (previous_hydrating) {
+		if (should_disable_hydration) {
 			set_hydrating(previous_hydrating);
 		}
 	};

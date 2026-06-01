@@ -267,7 +267,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		var pop_renderer = renderer !== null ? push_renderer(renderer) : null;
+		var pop_renderer = push_renderer(renderer);
 
 		state.pending.delete(batch);
 

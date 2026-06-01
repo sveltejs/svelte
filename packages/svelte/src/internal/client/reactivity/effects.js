@@ -513,7 +513,7 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	var pop_renderer = effect.r !== null ? push_renderer(effect.r) : null;
+	var pop_renderer = push_renderer(effect.r);
 
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
@@ -738,7 +738,7 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
-	var pop_renderer = effect.r !== null ? push_renderer(effect.r) : null;
+	var pop_renderer = push_renderer(effect.r);
 
 	/** @type {TemplateNode | null} */
 	var node = effect.nodes.start;

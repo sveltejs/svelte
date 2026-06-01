@@ -96,7 +96,7 @@ export class BranchManager {
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
 
-		var pop_renderer = this.#renderer !== null ? push_renderer(this.#renderer) : null;
+		var pop_renderer = push_renderer(this.#renderer);
 
 		var key = /** @type {Key} */ (this.#batches.get(batch));
 
