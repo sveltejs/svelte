@@ -105,7 +105,11 @@ export function find_matching_bracket(template, index, open) {
 				continue;
 			case '/': {
 				const next_char = template[i + 1];
-				if (!next_char) continue;
+				if (!next_char) {
+					// `/` is the last character; advance past it so we don't loop forever
+					i++;
+					continue;
+				}
 				if (next_char === '/') {
 					i = infinity_if_negative(template.indexOf('\n', i + 1)) + '\n'.length;
 					continue;
