@@ -5,7 +5,6 @@ import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
 import * as e from '../../errors.js';
-import { find_matching_bracket } from './utils/bracket.js';
 
 const JSParser = acorn.Parser;
 const TSParser = JSParser.extend(tsPlugin());
@@ -106,38 +105,26 @@ export function parse_expression_at(parser, source, index) {
  * @returns {Statement}
  */
 export function parse_statement_at(parser, source, index) {
-	const acorn = parser.ts ? TSParser : JSParser;
-	let end = find_matching_bracket(source, index, '{');
-	if (end === undefined) e.unexpected_eof(source.length);
-
-	while (source[end - 1] === ';') {
-		end -= 1;
-	}
-
-	const padded_source = `${' '.repeat(index)}${source.slice(index, end)}`;
-	const { onComment, add_comments } = get_comment_handlers(
-		padded_source,
-		parser.root.comments,
-		index
-	);
+	// cast to `any`: acorn's Parser constructor and parseStatement/nextToken aren't in its public types
+	const acorn = /** @type {any} */ (parser.ts ? TSParser : JSParser);
+	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
 
 	try {
-		const ast = acorn.parse(padded_source, {
-			onComment,
-			sourceType: 'module',
-			ecmaVersion: 16,
-			locations: true
-		});
-
-		add_comments(ast);
-
-		const statement = /** @type {Statement} */ (
-			/** @type {unknown} */ (/** @type {Program} */ (ast).body[0])
+		// This is like parseExpressionAt but for statements
+		const p = new acorn(
+			{ onComment, sourceType: 'module', ecmaVersion: 16, locations: true },
+			source,
+			index
 		);
-		statement.end = Math.min(/** @type {number} */ (statement.end), end);
+		p.nextToken();
+		const statement = /** @type {Statement} */ (p.parseStatement(null, true, Object.create(null)));
+		add_comments(/** @type {acorn.Node} */ (statement));
 		return statement;
-	} catch (e) {
-		handle_parse_error(e);
+	} catch (err) {
+		// A statement that runs to the end of the source (e.g. an unterminated declaration tag)
+		// is an EOF, not a stray token; preserve the friendlier `unexpected_eof` diagnostic.
+		if (/** @type {any} */ (err).pos === source.length) e.unexpected_eof(source.length);
+		handle_parse_error(err);
 	}
 }
 
