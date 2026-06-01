@@ -343,7 +343,7 @@ export class PromiseOptimiser {
 	 * @param {ExpressionMetadata} metadata
 	 */
 	check_blockers(metadata) {
-		for (const binding of metadata.dependencies) {
+		for (const binding of metadata.references) {
 			if (binding.blocker) {
 				this.#blockers.add(binding.blocker);
 			}
