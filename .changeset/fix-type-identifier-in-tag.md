@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: don't mistake expressions starting with `type` (e.g. `{type === 'all' ? a : b}`) for TypeScript `type` declarations in tags
+fix: more robust parsing of declaration tags with regards to `type`
