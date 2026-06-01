@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 38,
+	"end": 54,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -11,7 +11,7 @@
 				"type": "IfBlock",
 				"elseif": false,
 				"start": 0,
-				"end": 38,
+				"end": 54,
 				"test": {
 					"type": "Literal",
 					"start": 5,
@@ -99,7 +99,39 @@
 						{
 							"type": "Text",
 							"start": 32,
-							"end": 33,
+							"end": 34,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "DeclarationTag",
+							"start": 34,
+							"end": 48,
+							"declaration": {
+								"type": "VariableDeclaration",
+								"kind": "let",
+								"declarations": [
+									{
+										"type": "VariableDeclarator",
+										"id": {
+											"type": "Identifier",
+											"name": "",
+											"start": 47,
+											"end": 47
+										},
+										"init": null,
+										"start": 47,
+										"end": 47
+									}
+								],
+								"start": 35,
+								"end": 47
+							}
+						},
+						{
+							"type": "Text",
+							"start": 48,
+							"end": 49,
 							"raw": "\n",
 							"data": "\n"
 						}
