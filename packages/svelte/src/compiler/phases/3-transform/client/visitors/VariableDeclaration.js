@@ -49,8 +49,13 @@ export function VariableDeclaration(node, context) {
 				}
 
 				if (declarator.id.type === 'Identifier') {
+					const exclude_id = context.state.scope.root.unique('rest_excludes');
+					context.state.hoisted.push(
+						b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
+					);
+
 					/** @type {Expression[]} */
-					const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+					const args = [b.id('$$props'), exclude_id];
 
 					if (dev) {
 						// include rest name, so we can provide informative error messages
@@ -95,8 +100,13 @@ export function VariableDeclaration(node, context) {
 							}
 						} else {
 							// RestElement
+							const exclude_id = context.state.scope.root.unique('rest_excludes');
+							context.state.hoisted.push(
+								b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
+							);
+
 							/** @type {Expression[]} */
-							const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+							const args = [b.id('$$props'), exclude_id];
 
 							if (dev) {
 								// include rest name, so we can provide informative error messages

@@ -389,7 +389,9 @@ export function render_effect(fn, flags = 0) {
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)));
+		create_effect(RENDER_EFFECT, () => {
+			fn(...values.map(get));
+		});
 	});
 }
 
@@ -522,7 +524,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
-	set_signal_status(effect, DESTROYING);
+	effect.f |= DESTROYING;
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
 

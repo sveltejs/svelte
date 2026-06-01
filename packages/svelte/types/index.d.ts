@@ -1308,6 +1308,12 @@ declare module 'svelte/compiler' {
 			};
 		}
 
+		/** A `{let ...}` or `{const ...}` tag */
+		export interface DeclarationTag extends BaseNode {
+			type: 'DeclarationTag';
+			declaration: VariableDeclaration;
+		}
+
 		/** A `{@debug ...}` tag */
 		export interface DebugTag extends BaseNode {
 			type: 'DebugTag';
@@ -1618,6 +1624,7 @@ declare module 'svelte/compiler' {
 		export type Tag =
 			| AST.AttachTag
 			| AST.ConstTag
+			| AST.DeclarationTag
 			| AST.DebugTag
 			| AST.ExpressionTag
 			| AST.HtmlTag

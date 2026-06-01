@@ -1,5 +1,21 @@
 # svelte
 
+## 5.56.0
+
+### Minor Changes
+
+- feat: allow declarations in the template ([#18282](https://github.com/sveltejs/svelte/pull/18282))
+
+### Patch Changes
+
+- perf: use `createElement` instead of `createElementNS` for HTML elements ([#18262](https://github.com/sveltejs/svelte/pull/18262))
+
+- perf: store `current_sources` as a `Set` for O(1) membership checks ([#18278](https://github.com/sveltejs/svelte/pull/18278))
+
+- perf: deduplicate identical hoisted templates within a component ([#18320](https://github.com/sveltejs/svelte/pull/18320))
+
+- perf: hoist `rest_props` exclude list as a module-scope `Set` ([#18252](https://github.com/sveltejs/svelte/pull/18252))
+
 ## 5.55.10
 
 ### Patch Changes

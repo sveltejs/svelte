@@ -115,6 +115,25 @@ test('url.searchParams', () => {
 	cleanup();
 });
 
+test('url.searchParams.set updates url when duplicate values collapse to the same joined string', () => {
+	const url = new SvelteURL('https://svelte.dev?a=ab&a=c');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.href);
+		});
+	});
+
+	flushSync(() => {
+		url.searchParams.set('a', 'abc');
+	});
+
+	assert.deepEqual(log, ['https://svelte.dev/?a=ab&a=c', 'https://svelte.dev/?a=abc']);
+
+	cleanup();
+});
+
 test('url.search normalizes value', () => {
 	const url = new SvelteURL('https://svelte.dev');
 	const log: any = [];
