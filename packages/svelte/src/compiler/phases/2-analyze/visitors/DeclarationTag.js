@@ -2,21 +2,34 @@
 /** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
 import * as e from '../../../errors.js';
-import { validate_opening_tag } from './shared/utils.js';
+import { extract_identifiers } from '../../../utils/ast.js';
 
 /**
  * @param {AST.DeclarationTag} node
  * @param {Context} context
  */
 export function DeclarationTag(node, context) {
-	validate_opening_tag(node, context.state, node.declaration.kind[0]);
 	if (!context.state.analysis.runes && !context.state.analysis.maybe_runes) {
 		e.declaration_tag_no_legacy_mode(node);
+	}
+
+	const is_top_level = context.path.length === 1 && context.path[0].type === 'Fragment';
+	if (is_top_level) {
+		const duplicate = node.declaration.declarations
+			.flatMap((declaration) => extract_identifiers(declaration.id))
+			.find((id) => context.state.analysis.instance.scope.declarations.has(id.name));
+		if (duplicate) {
+			e.declaration_duplicate(duplicate, duplicate.name);
+		}
 	}
 
 	context.visit(node.declaration, {
 		...context.state,
 		in_declaration_tag: true,
+		// the declaration lives in the fragment scope, which is one level deeper than the
+		// `function_depth` we're tracking here (`set_scope` doesn't update `function_depth`).
+		// align them so that `state_referenced_locally` warnings are calculated correctly
+		function_depth: context.state.scope.function_depth,
 		expression: node.metadata.expression
 	});
 
