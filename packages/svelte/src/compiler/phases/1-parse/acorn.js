@@ -106,15 +106,12 @@ export function parse_expression_at(parser, source, index) {
  */
 export function parse_statement_at(parser, source, index) {
 	// cast to `any`: acorn's Parser constructor and parseStatement/nextToken aren't in its public types
-	const ParserClass = /** @type {any} */ (parser.ts ? TSParser : JSParser);
+	const acorn = /** @type {any} */ (parser.ts ? TSParser : JSParser);
 	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
 
 	try {
-		// Parse a single statement starting at `index` with acorn's own parser, so the statement
-		// boundary is decided by the JS grammar rather than by scanning for a matching bracket.
-		// acorn then handles `/` (division vs regex), comments, keywords, TS annotations,
-		// destructuring and multi-declarator declarations.
-		const p = new ParserClass(
+		// This is like parseExpressionAt but for statements
+		const p = new acorn(
 			{ onComment, sourceType: 'module', ecmaVersion: 16, locations: true },
 			source,
 			index
