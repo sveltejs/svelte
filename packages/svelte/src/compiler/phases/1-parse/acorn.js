@@ -1,10 +1,11 @@
-/** @import { Comment, Program } from 'estree' */
+/** @import { Comment, Program, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from './index.js' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
 import * as e from '../../errors.js';
+import { find_matching_bracket } from './utils/bracket.js';
 
 const JSParser = acorn.Parser;
 const TSParser = JSParser.extend(tsPlugin());
@@ -93,6 +94,48 @@ export function parse_expression_at(parser, source, index) {
 		add_comments(ast);
 
 		return ast;
+	} catch (e) {
+		handle_parse_error(e);
+	}
+}
+
+/**
+ * @param {Parser} parser
+ * @param {string} source
+ * @param {number} index
+ * @returns {Statement}
+ */
+export function parse_statement_at(parser, source, index) {
+	const acorn = parser.ts ? TSParser : JSParser;
+	let end = find_matching_bracket(source, index, '{');
+	if (end === undefined) e.unexpected_eof(source.length);
+
+	while (source[end - 1] === ';') {
+		end -= 1;
+	}
+
+	const padded_source = `${' '.repeat(index)}${source.slice(index, end)}`;
+	const { onComment, add_comments } = get_comment_handlers(
+		padded_source,
+		parser.root.comments,
+		index
+	);
+
+	try {
+		const ast = acorn.parse(padded_source, {
+			onComment,
+			sourceType: 'module',
+			ecmaVersion: 16,
+			locations: true
+		});
+
+		add_comments(ast);
+
+		const statement = /** @type {Statement} */ (
+			/** @type {unknown} */ (/** @type {Program} */ (ast).body[0])
+		);
+		statement.end = Math.min(/** @type {number} */ (statement.end), end);
+		return statement;
 	} catch (e) {
 		handle_parse_error(e);
 	}

@@ -28,7 +28,7 @@ export interface ComponentServerTransformState extends ServerTransformState {
 	readonly preserve_whitespace: boolean;
 	/** True if the current node is a) a component or render tag and b) the sole child of a block  */
 	readonly is_standalone: boolean;
-	/** Transformed async `{@const }` declarations (if any) and those coming after them */
+	/** Transformed async `{@const }`/`{let/const ...}` declarations (if any) and those coming after them */
 	async_consts?: {
 		id: Identifier;
 		thunks: Expression[];
