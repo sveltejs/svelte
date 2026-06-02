@@ -1443,13 +1443,13 @@ export function fork(fn) {
 				const eager = batch.eager;
 				eager.is_fork = false;
 
-				for (var [reaction, cv] of eager.cvs) {
+				for ([reaction, cv] of eager.cvs) {
 					if (cv > reaction.cv) {
 						reaction.cv = cv;
 					}
 				}
 
-				for (var [value, snapshot] of eager.current) {
+				for ([value, snapshot] of eager.current) {
 					value.v = snapshot.v;
 					value.wv = snapshot.wv;
 				}
