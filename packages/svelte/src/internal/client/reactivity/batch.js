@@ -1455,6 +1455,7 @@ export function fork(fn) {
 				}
 
 				eager.flush();
+				batch.eager = null;
 			}
 
 			batch.flush();
