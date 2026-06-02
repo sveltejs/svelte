@@ -10,6 +10,7 @@ import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
 import { transform_component, transform_module } from './phases/3-transform/index.js';
 import { validate_component_options, validate_module_options } from './validate-options.js';
 import * as state from './state.js';
+import * as e from './errors.js';
 export { default as preprocess } from './preprocess/index.js';
 export { print } from './print/index.js';
 
@@ -42,10 +43,25 @@ export function compile(source, options) {
 	/** @type {(options: { filename: string }) => string | null | undefined} */
 	let custom_renderer_option = validated.experimental.customRenderer;
 
-	if (typeof custom_renderer === 'string') {
-		custom_renderer_option = () => custom_renderer;
-	} else if (custom_renderer === false || custom_renderer === null) {
-		custom_renderer_option = () => null;
+	if (custom_renderer !== undefined) {
+		// the feature is a global compiler option — a component can only override the renderer it uses
+		// (or opt out) when `experimental.customRenderer` is enabled. Otherwise nothing pushes a
+		// renderer, so allowing `<svelte:options customRenderer>` would silently do the wrong thing.
+		const global_custom_renderer = options.experimental?.customRenderer;
+
+		if (!(global_custom_renderer != null && global_custom_renderer !== false)) {
+			const attribute = parsed.options?.attributes.find(
+				(/** @type {any} */ attribute) =>
+					attribute.type === 'Attribute' && attribute.name === 'customRenderer'
+			);
+			e.svelte_options_customrenderer_disabled(attribute ?? parsed.options);
+		}
+
+		if (typeof custom_renderer === 'string') {
+			custom_renderer_option = () => custom_renderer;
+		} else if (custom_renderer === false || custom_renderer === null) {
+			custom_renderer_option = () => null;
+		}
 	}
 
 	/** @type {ValidatedCompileOptions} */

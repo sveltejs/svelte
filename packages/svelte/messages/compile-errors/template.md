@@ -429,6 +429,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > Valid `<svelte:...>` tag names are %list%
 
+## svelte_options_customrenderer_disabled
+
+> `customRenderer` cannot be set in `<svelte:options>` unless the `experimental.customRenderer` compiler option is enabled
+
 ## svelte_options_deprecated_tag
 
 > "tag" option is deprecated — use "customElement" instead
