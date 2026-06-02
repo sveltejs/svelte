@@ -587,8 +587,7 @@ export function client_component(analysis, options) {
 
 	if (custom_renderer !== undefined) {
 		// when the custom renderer feature is enabled every component pushes a renderer: components
-		// with a renderer module push `$renderer`, DOM components push `null`. This is what allows us
-		// to avoid wrapping child components in `$.without_renderer(...)`.
+		// with a renderer module push `$renderer`, DOM components push `null`
 		component_block.body.unshift(
 			b.var(
 				'$$pop_renderer',

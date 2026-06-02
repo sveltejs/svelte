@@ -69,7 +69,7 @@ const common_options = {
 				}
 
 				if (typeof input === 'function') {
-					return (/** @type {{ filename: string }} */ options) => input(options) ?? null;
+					return input;
 				}
 
 				throw_error(`${keypath} should be true, a string or a function, if specified`);
