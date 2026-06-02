@@ -1,5 +1,3 @@
-console.log('[SECURITY-POC] Svelte compiler preview loaded via playground version parameter');
-
 /** @import { LegacyRoot } from './types/legacy-nodes.js' */
 /** @import { CompileOptions, CompileResult, ValidatedCompileOptions, ModuleCompileOptions } from '#compiler' */
 /** @import { AST } from './public.js' */
