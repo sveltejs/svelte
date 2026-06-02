@@ -1,5 +1,4 @@
 <script>
-	
 	let count = $state(0);
 	const delayedCount = $derived(await push(count));
 	const derivedCount = $derived(count);
