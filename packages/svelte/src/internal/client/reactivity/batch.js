@@ -287,17 +287,19 @@ export class Batch {
 		if (this.#committed) return;
 
 		current_batch = this;
-		this.#started = true;
 
 		if (flush_count++ > 1000) {
 			this.#unlink();
 			infinite_loop_guard();
 		}
 
-		// TODO we only need to do this for re-runs
-		for (const [source, snapshot] of this.current) {
-			mark_reactions(this, source, snapshot.wv, null);
+		if (this.#started) {
+			for (const [source, snapshot] of this.current) {
+				mark_reactions(this, source, snapshot.wv, null);
+			}
 		}
+
+		this.#started = true;
 
 		if (DEV) {
 			// track all the values that were updated during this flush,

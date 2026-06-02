@@ -300,7 +300,6 @@ export function update_reaction(reaction) {
 		// ensure that if any of those untracked writes result in re-invalidation
 		// of the current effect, then that happens accordingly
 		if (
-			!async_mode_flag &&
 			is_runes() &&
 			untracked_writes !== null &&
 			!untracking &&
