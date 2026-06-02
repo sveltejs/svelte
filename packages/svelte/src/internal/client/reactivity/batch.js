@@ -1469,6 +1469,7 @@ export function fork(fn) {
 			}
 
 			if (!committed && batch.linked) {
+				batch.eager?.discard();
 				batch.discard();
 			}
 		}
