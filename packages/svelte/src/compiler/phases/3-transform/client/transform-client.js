@@ -585,9 +585,15 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
 	}
 
-	if (custom_renderer) {
+	if (custom_renderer !== undefined) {
+		// when the custom renderer feature is enabled every component pushes a renderer: components
+		// with a renderer module push `$renderer`, DOM components push `null`. This is what allows us
+		// to avoid wrapping child components in `$.without_renderer(...)`.
 		component_block.body.unshift(
-			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
+			b.var(
+				'$$pop_renderer',
+				b.call('$.push_renderer', custom_renderer ? b.id('$renderer') : b.literal(null))
+			)
 		);
 		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
 	}

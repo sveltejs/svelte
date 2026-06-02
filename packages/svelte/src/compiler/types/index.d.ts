@@ -239,9 +239,21 @@ export interface ModuleCompileOptions {
 		 */
 		async?: boolean;
 		/**
-		 * Path to a module that exports the custom renderer to use. When this is truthy templating mode will also be automatically set to `functional`
+		 * Enables the custom renderer feature. Can be:
+		 *
+		 * - `true`: every component defaults to DOM rendering. Opt a component in to a custom
+		 *   renderer with `<svelte:options customRenderer="path/to/renderer" />`.
+		 * - a string: a path to a module that exports the custom renderer to use. Every component
+		 *   defaults to this renderer. Opt a component out with `<svelte:options customRenderer={null} />`.
+		 * - a function: resolves the renderer module path lazily, per file. Returning `undefined`
+		 *   makes that component render to the DOM.
+		 *
+		 * When this option is set every component pushes a renderer (DOM components push `null`).
 		 */
-		customRenderer?: string | ((options: { filename: string }) => string | undefined);
+		customRenderer?:
+			| boolean
+			| string
+			| ((options: { filename: string }) => string | null | undefined);
 	};
 }
 
@@ -250,7 +262,7 @@ export interface ModuleCompileOptions {
 export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'rootDir'> & {
 	rootDir: ModuleCompileOptions['rootDir'];
 	experimental: Required<Omit<Required<ModuleCompileOptions>['experimental'], 'customRenderer'>> & {
-		customRenderer: (options: { filename: string }) => string | undefined;
+		customRenderer: (options: { filename: string }) => string | null | undefined;
 	};
 };
 

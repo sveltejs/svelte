@@ -34,6 +34,20 @@ export function compile(source, options) {
 		...parsed_options
 	} = parsed.options || {};
 
+	// resolve the per-component custom renderer, taking `<svelte:options customRenderer={...} />`
+	// into account. The normalized option is always a function returning `string | null | undefined`
+	// (see `validate-options.js`). A string opts in to a specific renderer module, `null`/`false`
+	// opts out to plain DOM (while keeping the feature enabled) and `true`/absent inherits whatever
+	// the global option resolves to.
+	/** @type {(options: { filename: string }) => string | null | undefined} */
+	let custom_renderer_option = validated.experimental.customRenderer;
+
+	if (typeof custom_renderer === 'string') {
+		custom_renderer_option = () => custom_renderer;
+	} else if (custom_renderer === false || custom_renderer === null) {
+		custom_renderer_option = () => null;
+	}
+
 	/** @type {ValidatedCompileOptions} */
 	const combined_options = {
 		...validated,
@@ -43,7 +57,7 @@ export function compile(source, options) {
 		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes,
 		experimental: {
 			...validated.experimental,
-			...(custom_renderer !== undefined ? { customRenderer: () => custom_renderer } : {})
+			customRenderer: custom_renderer_option
 		}
 	};
 
