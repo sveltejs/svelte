@@ -18,12 +18,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - node-version: 18
+          # Vitest 4 requires Node 20+, so tests run on 20/22/24. The published
+          # Svelte package still supports Node >=18 (see packages/svelte/package.json).
+          - node-version: 20
             os: windows-latest
-          - node-version: 18
+          - node-version: 20
             os: macOS-latest
-          - node-version: 18
-            os: ubuntu-latest
           - node-version: 20
             os: ubuntu-latest
           - node-version: 22

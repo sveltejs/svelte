@@ -166,7 +166,7 @@
     "source-map": "^0.7.4",
     "tinyglobby": "^0.2.12",
     "typescript": "^5.5.4",
-    "vitest": "^2.1.9",
+    "vitest": "^4.1.7",
     "web-features": "^3.29.0"
   },
   "dependencies": {
