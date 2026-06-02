@@ -1,16 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { rollup } from 'rollup';
-import virtual from '@rollup/plugin-virtual';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { rolldown } from 'rolldown';
+import { virtual } from './virtual.js';
 import { compile } from 'svelte/compiler';
 
 /**
  * @param {string} entry
  */
 async function bundle_code(entry) {
-	const bundle = await rollup({
+	const bundle = await rolldown({
 		input: '__entry__',
 		plugins: [
 			virtual({
@@ -24,10 +23,7 @@ async function bundle_code(entry) {
 						return path.resolve(entry.browser ?? entry.default);
 					}
 				}
-			},
-			nodeResolve({
-				exportConditions: ['production', 'import', 'browser', 'default']
-			})
+			}
 		],
 		onwarn: (warning, handle) => {
 			if (warning.code !== 'EMPTY_BUNDLE' && warning.code !== 'CIRCULAR_DEPENDENCY') {

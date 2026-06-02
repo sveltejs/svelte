@@ -24,9 +24,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { rollup, type OutputChunk } from 'rollup';
-import virtual from '@rollup/plugin-virtual';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { rolldown, type OutputChunk } from 'rolldown';
+import { virtual } from './virtual.js';
 import { getCompatibleVersions } from 'baseline-browser-mapping';
 import {
 	detect_features,
@@ -54,6 +53,9 @@ type ConditionalRow = {
 
 const doc_links: Record<string, string | null> = {
 	'`$state.snapshot`': '/docs/svelte/$state#$state.snapshot',
+	'`bind:contentRect`': '/TODO',
+	'`bind:contentBoxSize`': '/TODO',
+	'`bind:borderBoxSize`': '/TODO',
 	'`bind:devicePixelContentBoxSize`': '/docs/svelte/bind#Dimensions',
 	'`flip` from `svelte/animate`': '/docs/svelte/svelte-animate#flip'
 };
@@ -286,11 +288,11 @@ function safe_name(importee: string): string {
  *
  * `entry_code` is virtual module source: typically `export * from
  * 'svelte/...'` for a runtime entry, or compiled fixture JS for a per-feature
- * scan. `silent` suppresses rollup's circular-dependency warnings — used for
+ * scan. `silent` suppresses rolldown's circular-dependency warnings — used for
  * fixture bundles where they're known and noisy.
  */
 async function bundle(entry_code: string, options: { silent?: boolean } = {}): Promise<string> {
-	const built = await rollup({
+	const built = await rolldown({
 		input: '__entry__',
 		plugins: [
 			virtual({ __entry__: entry_code }),
@@ -305,8 +307,7 @@ async function bundle(entry_code: string, options: { silent?: boolean } = {}): P
 						if (file) return path.resolve(pkg_dir, file);
 					}
 				}
-			},
-			nodeResolve({ exportConditions: ['production', 'import', 'browser', 'default'] })
+			}
 		],
 		// Treat optional peers / Node-only branches as external so we only scan
 		// code that actually runs in the browser.
