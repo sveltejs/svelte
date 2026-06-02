@@ -1253,13 +1253,13 @@ let eager_map = new Map();
 
 let running_eager_effect = false;
 
-/** @param {Batch | null} batch */
+/** @param {Batch} batch */
 function eager_flush(batch) {
 	flushSync(() => {
 		const versions = /** @type {Source<number>[]} */ (eager_map.get(batch));
 		eager_map.delete(batch);
-		const eager_batch = (current_batch = batch?.eager ?? new Batch());
-		if (batch?.is_fork) {
+		const eager_batch = (current_batch = batch.eager ?? new Batch());
+		if (batch.is_fork) {
 			eager_batch.is_fork = true;
 			batch.eager = eager_batch;
 		}
@@ -1323,7 +1323,7 @@ export function eager(fn) {
 		// the second time this effect runs, it's to schedule a
 		// `version` update. since this will recreate the effect,
 		// we don't need to evaluate the expression here
-		const batch = current_batch;
+		const batch = /** @type {Batch} */ (current_batch);
 		const versions = eager_map.get(batch) ?? [];
 		if (versions.length === 0) {
 			eager_map.set(batch, versions);
