@@ -152,6 +152,7 @@ export function clean_nodes(
 
 		if (
 			node.type === 'ConstTag' ||
+			node.type === 'DeclarationTag' ||
 			node.type === 'DebugTag' ||
 			node.type === 'SvelteBody' ||
 			node.type === 'SvelteWindow' ||

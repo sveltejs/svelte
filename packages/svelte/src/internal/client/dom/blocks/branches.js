@@ -90,6 +90,8 @@ export class BranchManager {
 			var offscreen = this.#offscreen.get(key);
 
 			if (offscreen) {
+				// effect could have been outro'ed before through a prior batch — resume if necessary
+				resume_effect(offscreen.effect);
 				this.#onscreen.set(key, offscreen.effect);
 				this.#offscreen.delete(key);
 

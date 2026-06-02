@@ -187,7 +187,10 @@ export function async_derived(fn, label, location) {
 				var decrement_pending = increment_pending();
 			}
 
-			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
+			if (
+				// boundary can be null if the async derived is inside an $effect.root not connected to the component render tree
+				parent.b?.is_rendered()
+			) {
 				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
@@ -227,9 +230,7 @@ export function async_derived(fn, label, location) {
 					signal.f ^= ERROR_VALUE;
 				}
 
-				internal_set(signal, value);
-
-				if (DEV && location !== undefined) {
+				if (DEV && location !== undefined && !signal.equals(value)) {
 					recent_async_deriveds.add(signal);
 
 					setTimeout(() => {
@@ -239,6 +240,8 @@ export function async_derived(fn, label, location) {
 						}
 					});
 				}
+
+				internal_set(signal, value);
 			}
 
 			batch.deactivate();
