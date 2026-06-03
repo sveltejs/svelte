@@ -2,17 +2,9 @@ import { test } from '../../test';
 
 export default test({
 	mode: ['client', 'server'], // output is correct, but test suite chokes on the extra ssr comment which is harmless
-	withoutNormalizeHtml: true,
-	html: get_html(false),
-	ssrHtml: get_html(true)
-});
-
-/** @param {boolean} ssr */
-function get_html(ssr) {
-	// ssr rendered HTML has an extra newline prefixed within `<pre>` tag,
-	// if the <pre> tag starts with `\n`
-	// because when browser parses the SSR rendered HTML, it will ignore the 1st '\n' character
-	return `${ssr ? '<!--[-->' : ''}<pre id="pre">  A
+	withoutNormalizeHtml: 'only-strip-comments', // because whitespace inside pre tags is significant
+	// Note how we're testing against target.innerHTML which already removed the redundant first newline
+	html: `<pre id="pre">  A
   B
   <span>
     C
@@ -35,5 +27,5 @@ function get_html(ssr) {
 leading newlines</pre></div> <div id="pre-without-leading-newline"><pre>without spaces</pre> <pre>  with spaces  </pre> <pre>${' '}
 newline after leading space</pre></div> <pre id="pre-with-multiple-leading-newlines">
 
-multiple leading newlines</pre>${ssr ? '<!--]-->' : ''}`;
-}
+multiple leading newlines</pre>`
+});

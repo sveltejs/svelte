@@ -8,11 +8,28 @@
 		console.log(this);
 	}
 
+	function foo<T>(): string {
+		return ""!;
+	}
+
 	class Foo<T> {
 		public name: string;
+		declare bar: string;
 		x = 'x' as const;
 		constructor(name: string) {
 			this.name = name;
+		}
+	}
+
+	class MyClass implements Hello {}
+
+	abstract class MyAbstractClass {
+		abstract x(): void;
+		y() {}
+	}
+	class Subclass extends Foo<string> {
+		constructor(value: string) {
+			super(value);
 		}
 	}
 
@@ -24,7 +41,7 @@
 
 	declare module 'foobar' {}
 	namespace SomeNamespace {
-		export type Foo = true
+		export type Foo = true;
 	}
 
 	export function overload(a: boolean): boolean;
@@ -34,6 +51,8 @@
 	export type { Hello };
 
 	const TypedFoo = Foo<true>;
+	const typeAssertion = <boolean>true;
+	const x = foo<true>();
 </script>
 
 <script>

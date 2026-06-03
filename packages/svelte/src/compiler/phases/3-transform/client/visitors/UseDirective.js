@@ -1,7 +1,7 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { parse_directive_name } from './shared/utils.js';
 
 /**
@@ -32,6 +32,18 @@ export function UseDirective(node, context) {
 	}
 
 	// actions need to run after attribute updates in order with bindings/events
-	context.state.init.push(b.stmt(b.call('$.action', ...args)));
+	let statement = b.stmt(b.call('$.action', ...args));
+
+	if (node.metadata.expression.is_async()) {
+		statement = b.stmt(
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
+		);
+	}
+
+	context.state.init.push(statement);
 	context.next();
 }

@@ -1,13 +1,17 @@
-import type { Expression, Statement, ModuleDeclaration, LabeledStatement } from 'estree';
+import type {
+	Expression,
+	Statement,
+	ModuleDeclaration,
+	LabeledStatement,
+	Identifier
+} from 'estree';
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
-import type { StateField } from '../client/types.js';
 
 export interface ServerTransformState extends TransformState {
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
-	readonly private_derived: Map<string, StateField>;
 }
 
 export interface ComponentServerTransformState extends ServerTransformState {
@@ -22,7 +26,13 @@ export interface ComponentServerTransformState extends ServerTransformState {
 	readonly template: Array<Statement | Expression>;
 	readonly namespace: Namespace;
 	readonly preserve_whitespace: boolean;
-	readonly skip_hydration_boundaries: boolean;
+	/** True if the current node is a) a component or render tag and b) the sole child of a block  */
+	readonly is_standalone: boolean;
+	/** Transformed async `{@const }`/`{let/const ...}` declarations (if any) and those coming after them */
+	async_consts?: {
+		id: Identifier;
+		thunks: Expression[];
+	};
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ServerTransformState>;

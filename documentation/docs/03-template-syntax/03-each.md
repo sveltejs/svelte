@@ -1,5 +1,6 @@
 ---
 title: {#each ...}
+tags: template-each
 ---
 
 ```svelte
@@ -12,7 +13,9 @@ title: {#each ...}
 {#each expression as name, index}...{/each}
 ```
 
-Iterating over values can be done with an each block. The values in question can be arrays, array-like objects (i.e. anything with a `length` property), or iterables like `Map` and `Set` — in other words, anything that can be used with `Array.from`.
+Iterating over values can be done with an each block. The values in question can be arrays, array-like objects (i.e. anything with a `length` property), or iterables like `Map` and `Set`. (Internally, they are converted to arrays with [`Array.from`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from).)
+
+If the value is `null` or `undefined`, it is treated the same as an empty array (which will cause [else blocks](#Else-blocks) to be rendered, where applicable).
 
 ```svelte
 <h1>Shopping list</h1>
@@ -43,7 +46,9 @@ An each block can also specify an _index_, equivalent to the second argument in 
 {#each expression as name, index (key)}...{/each}
 ```
 
-If a _key_ expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
+If a _key_ expression is provided — which must uniquely identify each list item — Svelte will use it to intelligently update the list when data changes by inserting, moving and deleting items, rather than adding or removing items at the end and updating the state in the middle.
+
+The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
 
 ```svelte
 {#each items as item (item.id)}
@@ -84,9 +89,11 @@ You can freely use destructuring and rest patterns in each blocks.
 {#each expression, index}...{/each}
 ```
 
-In case you just want to render something `n` times, you can omit the `as` part ([demo](/playground/untitled#H4sIAAAAAAAAE3WR0W7CMAxFf8XKNAk0WsSeUEaRpn3Guoc0MbQiJFHiMlDVf18SOrZJ48259_jaVgZmxBEZZ28thgCNFV6xBdt1GgPj7wOji0t2EqI-wa_OleGEmpLWiID_6dIaQkMxhm1UdwKpRQhVzWSaVORJNdvWpqbhAYVsYQCNZk8thzWMC_DCHMZk3wPSThNQ088I3mghD9UwSwHwlLE5PMIzVFUFq3G7WUZ2OyUvU3JOuZU332wCXTRmtPy1NgzXZtUFp8WFw9536uWqpbIgPEaDsJBW90cTOHh0KGi2XsBq5-cT6-3nPauxXqHnsHJnCFZ3CvJVkyuCQ0mFF9TZyCQ162WGvteLKfG197Y3iv_pz_fmS68Hxt8iPBPj5HscP8YvCNX7uhYCAAA=)):
+In case you just want to render something `n` times, you can omit the `as` part:
 
+<!-- codeblock:start {"title":"Chess board"} -->
 ```svelte
+<!--- file: App.svelte --->
 <div class="chess-board">
 	{#each { length: 8 }, rank}
 		{#each { length: 8 }, file}
@@ -94,7 +101,22 @@ In case you just want to render something `n` times, you can omit the `as` part 
 		{/each}
 	{/each}
 </div>
+
+<style>
+	.chess-board {
+		display: grid;
+		grid-template-columns: repeat(8, 1fr);
+		rows: repeat(8, 1fr);
+		border: 1px solid black;
+		aspect-ratio: 1;
+
+		.black {
+			background: black;
+		}
+	}
+</style>
 ```
+<!-- codeblock:end -->
 
 ## Else blocks
 

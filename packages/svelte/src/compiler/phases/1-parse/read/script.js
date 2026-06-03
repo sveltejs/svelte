@@ -6,9 +6,10 @@ import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_text_attribute } from '../../../utils/ast.js';
+import { locator } from '../../../state.js';
 
 const regex_closing_script_tag = /<\/script\s*>/;
-const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
+const regex_starts_with_closing_script_tag = /<\/script\s*>/y;
 
 const RESERVED_ATTRIBUTES = ['server', 'client', 'worker', 'test', 'default'];
 const ALLOWED_ATTRIBUTES = ['context', 'generics', 'lang', 'module'];
@@ -16,7 +17,7 @@ const ALLOWED_ATTRIBUTES = ['context', 'generics', 'lang', 'module'];
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag>} attributes
  * @returns {AST.Script}
  */
 export function read_script(parser, start, attributes) {
@@ -30,17 +31,16 @@ export function read_script(parser, start, attributes) {
 		parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
 	parser.read(regex_starts_with_closing_script_tag);
 
-	/** @type {Program} */
-	let ast;
+	const ast = acorn.parse(source, parser.root.comments, parser.ts, true);
 
-	try {
-		ast = acorn.parse(source, parser.ts, true);
-	} catch (err) {
-		parser.acorn_error(err);
-	}
-
-	// TODO is this necessary?
 	ast.start = script_start;
+
+	if (ast.loc) {
+		// Acorn always uses `0` as the start of a `Program`, but for sourcemap purposes
+		// we need it to be the start of the `<script>` contents
+		({ line: ast.loc.start.line, column: ast.loc.start.column } = locator(start));
+		({ line: ast.loc.end.line, column: ast.loc.end.column } = locator(parser.index));
+	}
 
 	/** @type {'default' | 'module'} */
 	let context = 'default';

@@ -3,7 +3,7 @@ import { test } from '../../test';
 
 /**
  * $.component() should not break transition
- * https://github.com/sveltejs/svelte/issues/13645
+ * @see {@link https://github.com/sveltejs/svelte/issues/13645}
  */
 export default test({
 	test({ assert, raf, target }) {

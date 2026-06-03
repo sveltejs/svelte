@@ -1,12 +1,10 @@
-import type { Binding, ExpressionMetadata } from '#compiler';
+import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
 	VariableDeclaration,
 	VariableDeclarator,
 	Expression,
-	FunctionDeclaration,
-	FunctionExpression,
 	Identifier,
 	MemberExpression,
 	Node,
@@ -15,10 +13,12 @@ import type {
 	Program,
 	ChainExpression,
 	SimpleCallExpression,
-	SequenceExpression
+	SequenceExpression,
+	SourceLocation
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
+import type { ExpressionMetadata } from '../phases/nodes';
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -26,13 +26,6 @@ import type { _CSS } from './css';
  * - `mathml`  — for e.g. `<math>` or `<mrow>`
  */
 export type Namespace = 'html' | 'svg' | 'mathml';
-
-export type DelegatedEvent =
-	| {
-			hoisted: true;
-			function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
-	  }
-	| { hoisted: false };
 
 export namespace AST {
 	export interface BaseNode {
@@ -72,6 +65,8 @@ export namespace AST {
 		instance: Script | null;
 		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
+		/** Comments found in <script> and {expressions} */
+		comments: JSComment[];
 		/** @internal */
 		metadata: {
 			/** Whether the component was parsed with typescript */
@@ -92,7 +87,7 @@ export namespace AST {
 		css?: 'injected';
 		customElement?: {
 			tag?: string;
-			shadow?: 'open' | 'none';
+			shadow?: 'open' | 'none' | ObjectExpression | undefined;
 			props?: Record<
 				string,
 				{
@@ -135,6 +130,12 @@ export namespace AST {
 	export interface HtmlTag extends BaseNode {
 		type: 'HtmlTag';
 		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+			/** If `true`, the `{@html}` block is the only child of its parent element and can use `parent.innerHTML` directly */
+			is_controlled?: boolean;
+		};
 	}
 
 	/** An HTML comment */
@@ -151,6 +152,24 @@ export namespace AST {
 		declaration: VariableDeclaration & {
 			declarations: [VariableDeclarator & { id: Pattern; init: Expression }];
 		};
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+			/** If this const tag contains an await expression, or needs to wait on other async, this is set */
+			promises_id?: Identifier;
+		};
+	}
+
+	/** A `{let ...}` or `{const ...}` tag */
+	export interface DeclarationTag extends BaseNode {
+		type: 'DeclarationTag';
+		declaration: VariableDeclaration;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+			/** If this declaration tag contains an await expression, or needs to wait on other async, this is set */
+			promises_id?: Identifier;
+		};
 	}
 
 	/** A `{@debug ...}` tag */
@@ -165,8 +184,9 @@ export namespace AST {
 		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			dynamic: boolean;
-			args_with_call_expression: Set<number>;
+			arguments: ExpressionMetadata[];
 			path: SvelteNode[];
 			/** The set of locally-defined snippets that this render tag could correspond to,
 			 * used for CSS pruning purposes */
@@ -174,17 +194,31 @@ export namespace AST {
 		};
 	}
 
+	/** A `{@attach foo(...)} tag */
+	export interface AttachTag extends BaseNode {
+		type: 'AttachTag';
+		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
+	}
+
 	/** An `animate:` directive */
-	export interface AnimateDirective extends BaseNode {
+	export interface AnimateDirective extends BaseAttribute {
 		type: 'AnimateDirective';
 		/** The 'x' in `animate:x` */
 		name: string;
 		/** The y in `animate:x={y}` */
 		expression: null | Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `bind:` directive */
-	export interface BindDirective extends BaseNode {
+	export interface BindDirective extends BaseAttribute {
 		type: 'BindDirective';
 		/** The 'x' in `bind:x` */
 		name: string;
@@ -192,13 +226,15 @@ export namespace AST {
 		expression: Identifier | MemberExpression | SequenceExpression;
 		/** @internal */
 		metadata: {
+			binding?: Binding | null;
 			binding_group_name: Identifier;
 			parent_each_blocks: EachBlock[];
+			expression: ExpressionMetadata;
 		};
 	}
 
 	/** A `class:` directive */
-	export interface ClassDirective extends BaseNode {
+	export interface ClassDirective extends BaseAttribute {
 		type: 'ClassDirective';
 		/** The 'x' in `class:x` */
 		name: 'class';
@@ -211,7 +247,7 @@ export namespace AST {
 	}
 
 	/** A `let:` directive */
-	export interface LetDirective extends BaseNode {
+	export interface LetDirective extends BaseAttribute {
 		type: 'LetDirective';
 		/** The 'x' in `let:x` */
 		name: string;
@@ -220,13 +256,23 @@ export namespace AST {
 	}
 
 	/** An `on:` directive */
-	export interface OnDirective extends BaseNode {
+	export interface OnDirective extends BaseAttribute {
 		type: 'OnDirective';
 		/** The 'x' in `on:x` */
 		name: string;
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
-		modifiers: string[]; // TODO specify
+		modifiers: Array<
+			| 'capture'
+			| 'nonpassive'
+			| 'once'
+			| 'passive'
+			| 'preventDefault'
+			| 'self'
+			| 'stopImmediatePropagation'
+			| 'stopPropagation'
+			| 'trusted'
+		>;
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
@@ -234,7 +280,7 @@ export namespace AST {
 	}
 
 	/** A `style:` directive */
-	export interface StyleDirective extends BaseNode {
+	export interface StyleDirective extends BaseAttribute {
 		type: 'StyleDirective';
 		/** The 'x' in `style:x` */
 		name: string;
@@ -249,7 +295,7 @@ export namespace AST {
 
 	// TODO have separate in/out/transition directives
 	/** A `transition:`, `in:` or `out:` directive */
-	export interface TransitionDirective extends BaseNode {
+	export interface TransitionDirective extends BaseAttribute {
 		type: 'TransitionDirective';
 		/** The 'x' in `transition:x` */
 		name: string;
@@ -260,20 +306,29 @@ export namespace AST {
 		intro: boolean;
 		/** True if this is a `transition:` or `out:` directive */
 		outro: boolean;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `use:` directive */
-	export interface UseDirective extends BaseNode {
+	export interface UseDirective extends BaseAttribute {
 		type: 'UseDirective';
 		/** The 'x' in `use:x` */
 		name: string;
 		/** The 'y' in `use:x={y}` */
 		expression: null | Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
-	interface BaseElement extends BaseNode {
+	export interface BaseElement extends BaseNode {
 		name: string;
-		attributes: Array<Attribute | SpreadAttribute | Directive>;
+		name_loc: SourceLocation;
+		attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 		fragment: Fragment;
 	}
 
@@ -281,6 +336,7 @@ export namespace AST {
 		type: 'Component';
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			dynamic: boolean;
 			/** The set of locally-defined snippets that this component tag could render,
@@ -312,6 +368,8 @@ export namespace AST {
 			has_spread: boolean;
 			scoped: boolean;
 			path: SvelteNode[];
+			/** Synthetic value attribute for <option> with single expression child, used for client-only handling */
+			synthetic_value_node: ExpressionTag | null;
 		};
 	}
 
@@ -326,6 +384,7 @@ export namespace AST {
 		expression: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
@@ -345,6 +404,7 @@ export namespace AST {
 		tag: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			/**
 			 * `true` if this is an svg element. The boolean may not be accurate because
 			 * the tag is dynamic, but we do our best to infer it from the template.
@@ -419,8 +479,6 @@ export namespace AST {
 			expression: ExpressionMetadata;
 			keyed: boolean;
 			contains_group_binding: boolean;
-			/** Set if something in the array expression is shadowed within the each block */
-			array_name: Identifier | null;
 			index: Identifier;
 			declarations: Map<string, Binding>;
 			/**
@@ -429,6 +487,11 @@ export namespace AST {
 			 * This saves us from creating an extra comment and insertion being faster.
 			 */
 			is_controlled: boolean;
+			/**
+			 * Bindings this each block transitively depends on. In legacy mode, we
+			 * invalidate these bindings when mutations happen to each block items
+			 */
+			transitive_deps: Set<Binding>;
 		};
 	}
 
@@ -439,6 +502,12 @@ export namespace AST {
 		test: Expression;
 		consequent: Fragment;
 		alternate: Fragment | null;
+		/** @internal */
+		metadata: {
+			/** List of else-if blocks that can be flattened into this if block */
+			flattened?: IfBlock[];
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** An `{#await ...}` block */
@@ -453,18 +522,27 @@ export namespace AST {
 		pending: Fragment | null;
 		then: Fragment | null;
 		catch: Fragment | null;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	export interface KeyBlock extends BaseNode {
 		type: 'KeyBlock';
 		expression: Expression;
 		fragment: Fragment;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	export interface SnippetBlock extends BaseNode {
 		type: 'SnippetBlock';
 		expression: Identifier;
 		parameters: Pattern[];
+		typeParams?: string;
 		body: Fragment;
 		/** @internal */
 		metadata: {
@@ -475,18 +553,23 @@ export namespace AST {
 		};
 	}
 
-	export interface Attribute extends BaseNode {
-		type: 'Attribute';
+	export interface BaseAttribute extends BaseNode {
 		name: string;
+		name_loc: SourceLocation | null;
+	}
+
+	export interface Attribute extends BaseAttribute {
+		type: 'Attribute';
 		/**
 		 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 		 */
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
 		/** @internal */
 		metadata: {
-			expression: ExpressionMetadata;
 			/** May be set if this is an event attribute */
-			delegated: null | DelegatedEvent;
+			delegated: boolean;
+			/** May be `true` if this is a `class` attribute that needs `clsx` */
+			needs_clsx: boolean;
 		};
 	}
 
@@ -504,6 +587,17 @@ export namespace AST {
 		context: 'default' | 'module';
 		content: Program;
 		attributes: Attribute[];
+	}
+
+	export interface JSComment {
+		type: 'Line' | 'Block';
+		value: string;
+		start: number;
+		end: number;
+		loc: {
+			start: { line: number; column: number };
+			end: { line: number; column: number };
+		};
 	}
 
 	export type AttributeLike = Attribute | SpreadAttribute | Directive;
@@ -543,7 +637,14 @@ export namespace AST {
 		| AST.SvelteBoundary
 		| AST.SveltePortal;
 
-	export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+	export type Tag =
+		| AST.AttachTag
+		| AST.ConstTag
+		| AST.DeclarationTag
+		| AST.DebugTag
+		| AST.ExpressionTag
+		| AST.HtmlTag
+		| AST.RenderTag;
 
 	export type TemplateNode =
 		| AST.Root
@@ -553,10 +654,11 @@ export namespace AST {
 		| AST.Attribute
 		| AST.SpreadAttribute
 		| Directive
+		| AST.AttachTag
 		| AST.Comment
 		| Block;
 
-	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
 
 	export type { _CSS as CSS };
 }

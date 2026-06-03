@@ -1,7 +1,7 @@
 /** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
-/** @import { Scope, ScopeRoot } from '../phases/scope.js' */
+/** @import { Scope } from '../phases/scope.js' */
 /** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
@@ -9,7 +9,7 @@ import { parse } from '../phases/1-parse/index.js';
 import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
-import { reset, reset_warning_filter } from '../state.js';
+import { reset, UNKNOWN_FILENAME } from '../state.js';
 import {
 	extract_identifiers,
 	extract_all_identifiers_from_expression,
@@ -134,8 +134,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 			return start + style_placeholder + end;
 		});
 
-		reset_warning_filter(() => false);
-		reset(source, { filename: filename ?? '(unknown)' });
+		reset({ warning: () => false, filename });
 
 		let parsed = parse(source);
 
@@ -146,7 +145,12 @@ export function migrate(source, { filename, use_ts } = {}) {
 			...validate_component_options({}, ''),
 			...parsed_options,
 			customElementOptions,
-			filename: filename ?? '(unknown)'
+			filename: filename ?? UNKNOWN_FILENAME,
+			css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : () => 'external',
+			runes: 'runes' in parsed_options ? () => parsed_options.runes : () => undefined,
+			experimental: {
+				async: true
+			}
 		};
 
 		const str = new MagicString(source);
@@ -602,16 +606,16 @@ const instance_script = {
 						'Encountered an export declaration pattern that is not supported for automigration.'
 					);
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
-					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
-					// const tmp = state.scope.generate('tmp');
-					// const paths = extract_paths(declarator.id);
+					// means that foo and bar are the props (i.e. the leaves are the prop names), not x and z.
+					// const tmp = b.id(state.scope.generate('tmp'));
+					// const paths = extract_paths(declarator.id, tmp);
 					// state.props_pre.push(
-					// 	b.declaration('const', b.id(tmp), visit(declarator.init!) as Expression)
+					// 	b.declaration('const', tmp, visit(declarator.init!) as Expression)
 					// );
 					// for (const path of paths) {
 					// 	const name = (path.node as Identifier).name;
 					// 	const binding = state.scope.get(name)!;
-					// 	const value = path.expression!(b.id(tmp));
+					// 	const value = path.expression;
 					// 	if (binding.kind === 'bindable_prop' || binding.kind === 'rest_prop') {
 					// 		state.props.push({
 					// 			local: name,
@@ -944,54 +948,53 @@ const instance_script = {
 			node.body.type === 'ExpressionStatement' &&
 			node.body.expression.type === 'AssignmentExpression'
 		) {
-			const ids = extract_identifiers(node.body.expression.left);
-			const [, expression_ids] = extract_all_identifiers_from_expression(
-				node.body.expression.right
-			);
-			const bindings = ids.map((id) => state.scope.get(id.name));
-			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
+			const { left, right } = node.body.expression;
 
-			if (
-				reassigned_bindings.length === 0 &&
-				!bindings.some((b) => b?.kind === 'store_sub') &&
-				node.body.expression.left.type !== 'MemberExpression'
-			) {
-				let { start, end } = /** @type {{ start: number, end: number }} */ (
-					node.body.expression.right
-				);
+			const ids = extract_identifiers(left);
+			const [, expression_ids] = extract_all_identifiers_from_expression(right);
+			const bindings = ids.map((id) => /** @type {Binding} */ (state.scope.get(id.name)));
 
-				check_rune_binding('derived');
+			if (bindings.every((b) => b.kind === 'legacy_reactive')) {
+				if (
+					right.type !== 'Literal' &&
+					bindings.every((b) => b.kind !== 'store_sub') &&
+					left.type !== 'MemberExpression'
+				) {
+					let { start, end } = /** @type {{ start: number, end: number }} */ (right);
 
-				// $derived
-				state.str.update(
-					/** @type {number} */ (node.start),
-					/** @type {number} */ (node.body.expression.start),
-					'let '
-				);
+					check_rune_binding('derived');
 
-				if (node.body.expression.right.type === 'SequenceExpression') {
-					while (state.str.original[start] !== '(') start -= 1;
-					while (state.str.original[end - 1] !== ')') end += 1;
+					// $derived
+					state.str.update(
+						/** @type {number} */ (node.start),
+						/** @type {number} */ (node.body.expression.start),
+						'let '
+					);
+
+					if (right.type === 'SequenceExpression') {
+						while (state.str.original[start] !== '(') start -= 1;
+						while (state.str.original[end - 1] !== ')') end += 1;
+					}
+
+					state.str.prependRight(start, `$derived(`);
+
+					// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
+					// otherwise, we need to add one
+					if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
+						state.str.appendLeft(end, `)`);
+					}
+
+					return;
 				}
 
-				state.str.prependRight(start, `$derived(`);
-
-				// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
-				// otherwise, we need to add one
-				if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
-					state.str.appendLeft(end, `)`);
-				}
-
-				return;
-			} else {
-				for (const binding of reassigned_bindings) {
-					if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
+				for (const binding of bindings) {
+					if (binding.reassigned && (ids.includes(binding.node) || expression_ids.length === 0)) {
 						check_rune_binding('state');
 						const init =
 							binding.kind === 'state'
 								? ' = $state()'
 								: expression_ids.length === 0
-									? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
+									? ` = $state(${state.str.original.substring(/** @type {number} */ (right.start), right.end)})`
 									: '';
 						// implicitly-declared variable which we need to make explicit
 						state.str.prependLeft(
@@ -1000,7 +1003,8 @@ const instance_script = {
 						);
 					}
 				}
-				if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+
+				if (expression_ids.length === 0 && bindings.every((b) => b.kind !== 'store_sub')) {
 					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 					return;
 				}
@@ -1056,8 +1060,6 @@ const template = {
 		handle_identifier(node, state, path);
 	},
 	RegularElement(node, { state, path, next }) {
-		migrate_slot_usage(node, path, state);
-		handle_events(node, state);
 		// Strip off any namespace from the beginning of the node name.
 		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
 
@@ -1065,8 +1067,12 @@ const template = {
 			let trimmed_position = node.end - 2;
 			while (state.str.original.charAt(trimmed_position - 1) === ' ') trimmed_position--;
 			state.str.remove(trimmed_position, node.end - 1);
-			state.str.appendRight(node.end, `</${node.name}>`);
+			state.str.appendLeft(node.end, `</${node.name}>`);
 		}
+
+		migrate_slot_usage(node, path, state);
+		handle_events(node, state);
+
 		next();
 	},
 	SvelteSelf(node, { state, next }) {
@@ -1307,7 +1313,7 @@ const template = {
 			name = state.scope.generate(slot_name);
 			if (name !== slot_name) {
 				throw new MigrationError(
-					'This migration would change the name of a slot making the component unusable'
+					`This migration would change the name of a slot (${slot_name} to ${name}) making the component unusable`
 				);
 			}
 		}
@@ -1592,7 +1598,6 @@ function extract_type_and_comment(declarator, state, path) {
 	const comment_start = /** @type {any} */ (comment_node)?.start;
 	const comment_end = /** @type {any} */ (comment_node)?.end;
 	let comment = comment_node && str.original.substring(comment_start, comment_end);
-
 	if (comment_node) {
 		str.update(comment_start, comment_end, '');
 	}
@@ -1673,6 +1678,11 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
+			// try to find JSDoc comments after a hyphen `-`
+			const jsdoc_comment = /@type {.+} (?:\w+|\[.*?\]) - (.+)/.exec(comment_node.value);
+			if (jsdoc_comment) {
+				cleaned_comment += jsdoc_comment[1]?.trim();
+			}
 			return {
 				type: match[1],
 				comment: cleaned_comment,
@@ -1693,7 +1703,6 @@ function extract_type_and_comment(declarator, state, path) {
 			};
 		}
 	}
-
 	return {
 		type: 'any',
 		comment: state.uses_ts ? comment : cleaned_comment,
@@ -1702,14 +1711,14 @@ function extract_type_and_comment(declarator, state, path) {
 }
 
 // Ensure modifiers are applied in the same order as Svelte 4
-const modifier_order = [
+const modifier_order = /** @type {const} */ ([
 	'preventDefault',
 	'stopPropagation',
 	'stopImmediatePropagation',
 	'self',
 	'trusted',
 	'once'
-];
+]);
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteWindow | AST.SvelteDocument | AST.SvelteBody} element
@@ -1805,7 +1814,7 @@ function handle_events(element, state) {
 }
 
 /**
- * Returns start and end of the node. If the start is preceeded with white-space-only before a line break,
+ * Returns start and end of the node. If the start is preceded with white-space-only before a line break,
  * the start will be the start of the line.
  * @param {string} source
  * @param {LabeledStatement} node
@@ -1877,7 +1886,7 @@ function handle_identifier(node, state, path) {
 				let new_name = state.scope.generate(name);
 				if (new_name !== name) {
 					throw new MigrationError(
-						'This migration would change the name of a slot making the component unusable'
+						`This migration would change the name of a slot (${name} to ${new_name}) making the component unusable`
 					);
 				}
 			}

@@ -8,6 +8,6 @@ export default test({
 	},
 
 	warnings: [
-		'Intermediate.svelte passed a value to Counter.svelte with `bind:`, but the value is owned by main.svelte. Consider creating a binding between main.svelte and Intermediate.svelte'
+		'Intermediate.svelte passed property `object` to Counter.svelte with `bind:`, but its parent component main.svelte did not declare `object` as a binding. Consider creating a binding between main.svelte and Intermediate.svelte (e.g. `bind:object={...}` instead of `object={...}`)'
 	]
 });

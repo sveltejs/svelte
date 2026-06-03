@@ -15,13 +15,21 @@ export function SveltePortal(node, context) {
 	);
 
 	if (target) {
-		const value = build_attribute_value(/** @type {AST.Attribute} */ (target).value, context);
+		const value = build_attribute_value(
+			/** @type {AST.Attribute} */ (target).value,
+			context,
+			(expression) => expression
+		);
 		const body = /** @type {BlockStatement} */ (context.visit(node.fragment, context.state));
 		context.state.template.push(
-			b.stmt(b.call('$.portal', b.id('$$payload'), value, b.arrow([b.id('$$payload')], body)))
+			b.stmt(b.call('$.portal', b.id('$$renderer'), value, b.arrow([b.id('$$renderer')], body)))
 		);
 	} else {
-		const value = build_attribute_value(/** @type {AST.Attribute} */ (_for).value, context);
-		context.state.template.push(b.stmt(b.call('$.portal_outlet', b.id('$$payload'), value)));
+		const value = build_attribute_value(
+			/** @type {AST.Attribute} */ (_for).value,
+			context,
+			(expression) => expression
+		);
+		context.state.template.push(b.stmt(b.call('$.portal_outlet', b.id('$$renderer'), value)));
 	}
 }

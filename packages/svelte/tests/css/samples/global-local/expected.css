@@ -1,0 +1,8 @@
+
+	div.svelte-xyz .whatever {
+		color: green;
+	}
+
+	.whatever div.svelte-xyz {
+		color: green;
+	}

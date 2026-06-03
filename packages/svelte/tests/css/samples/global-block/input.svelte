@@ -5,6 +5,10 @@
 		.x {
 			color: green;
 		}
+
+		.a, .selector, .list {
+			color: green;
+		}
 	}
 
 	div :global {
@@ -37,7 +41,7 @@
 		}
 	}
 
-	/* ...wich is equivalent to `div :global { &.x { ...} }` ... */
+	/* ...which is equivalent to `div :global { &.x { ...} }` ... */
 	div :global {
 		&.x {
 			color: green;
@@ -49,7 +53,7 @@
 		color: green;
 	}
 
-	/* ...and therefore `div { :global.x { ... }` aswell */
+	/* ...and therefore `div { :global.x { ... }` as well */
 	div {
 		:global.x {
 			color: green;
@@ -76,6 +80,10 @@
 			animation: test 1s;
 		}
 
+		.y{
+			animation: test-in 1s;
+		}
+
 		@keyframes test-in{
 			to{
 				opacity: 1;
@@ -86,6 +94,16 @@
 	@keyframes test{
 		to{
 			opacity: 1;
+		}
+	}
+
+	:global x, :global y {
+		color: green;
+	}
+
+	div :global, div :global y, unused :global {
+		z {
+			color: green;
 		}
 	}
 </style>

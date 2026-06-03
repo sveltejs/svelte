@@ -24,12 +24,20 @@ await createBundle({
 	output: `${dir}/types/index.d.ts`,
 	compilerOptions: {
 		// so that types/properties with `@internal` (and its dependencies) are removed from the output
-		stripInternal: true
+		stripInternal: true,
+		paths: Object.fromEntries(
+			Object.entries(pkg.imports).map(
+				/** @param {[string,any]} import */ ([key, value]) => {
+					return [key, [value.types ?? value.default ?? value]];
+				}
+			)
+		)
 	},
 	modules: {
 		[pkg.name]: `${dir}/src/index.d.ts`,
 		[`${pkg.name}/action`]: `${dir}/src/action/public.d.ts`,
 		[`${pkg.name}/animate`]: `${dir}/src/animate/public.d.ts`,
+		[`${pkg.name}/attachments`]: `${dir}/src/attachments/public.d.ts`,
 		[`${pkg.name}/compiler`]: `${dir}/src/compiler/public.d.ts`,
 		[`${pkg.name}/easing`]: `${dir}/src/easing/index.js`,
 		[`${pkg.name}/legacy`]: `${dir}/src/legacy/legacy-client.js`,
@@ -45,6 +53,8 @@ await createBundle({
 		[`${pkg.name}/types/compiler/interfaces`]: `${dir}/src/compiler/types/legacy-interfaces.d.ts`
 	}
 });
+
+fs.appendFileSync(`${dir}/types/index.d.ts`, '\n');
 
 const types = fs.readFileSync(`${dir}/types/index.d.ts`, 'utf-8');
 

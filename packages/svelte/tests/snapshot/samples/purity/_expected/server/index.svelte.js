@@ -1,7 +1,7 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
-export default function Purity($$payload) {
-	$$payload.out += `<p>${$.escape(Math.max(0, Math.min(0, 100)))}</p> <p>${$.escape(location.href)}</p> `;
-	Child($$payload, { prop: encodeURIComponent('hello') });
-	$$payload.out += `<!---->`;
+export default function Purity($$renderer) {
+	$$renderer.push(`<p>0</p> <p>${$.escape(location.href)}</p> `);
+	Child($$renderer, { prop: encodeURIComponent('hello') });
+	$$renderer.push(`<!---->`);
 }

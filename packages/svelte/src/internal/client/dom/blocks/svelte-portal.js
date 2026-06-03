@@ -1,7 +1,7 @@
-/** @import { TemplateNode } from '#client' */
+/** @import { EffectNodes, TemplateNode } from '#client' */
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
 import { PortalKey } from '../../../shared/svelte-portal.js';
-import { block, remove_nodes, render_effect } from '../../reactivity/effects.js';
+import { block, remove_effect_dom, render_effect } from '../../reactivity/effects.js';
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
 
@@ -55,10 +55,12 @@ export function portal(target, content) {
 	}
 
 	const portal = portals.get(target);
-	if (!is_dom_node && !portal)
+	if (!is_dom_node && !portal) {
+		// TODO can we lift this restriction?
 		throw new Error(
 			'TODO error code: No portal found for given target. Make sure portal target exists before referencing it'
 		);
+	}
 
 	let previous_hydrating = false;
 	let previous_hydrate_node = null;
@@ -76,6 +78,7 @@ export function portal(target, content) {
 		anchor = portal.anchor;
 	}
 
+	// TODO handle multiple targeting the same portal
 	if (hydrating) {
 		previous_hydrating = true;
 		if (is_dom_node) {
@@ -94,7 +97,8 @@ export function portal(target, content) {
 			// child effects (like this one) don't need to traverse the nodes anymore because they
 			// were already removed by the parent. That's not true in this case because the nodes
 			// are somewhere else, so remove them "manually" here.
-			remove_nodes(effect);
+			const nodes = /** @type {EffectNodes} */ (effect.nodes);
+			remove_effect_dom(nodes.start, /** @type {TemplateNode} */ (nodes.end));
 		};
 	});
 

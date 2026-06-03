@@ -1,4 +1,4 @@
-/** @import { TaggedTemplateExpression, VariableDeclarator } from 'estree' */
+/** @import { TaggedTemplateExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import { is_pure } from './shared/utils.js';
 
@@ -12,12 +12,5 @@ export function TaggedTemplateExpression(node, context) {
 		context.state.expression.has_state = true;
 	}
 
-	if (node.tag.type === 'Identifier') {
-		const binding = context.state.scope.get(node.tag.name);
-
-		if (binding !== null) {
-			binding.is_called = true;
-		}
-	}
 	context.next();
 }

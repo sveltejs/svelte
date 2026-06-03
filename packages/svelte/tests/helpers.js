@@ -1,7 +1,7 @@
 /** @import { CompileOptions } from '#compiler' */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import glob from 'tiny-glob/sync.js';
+import { globSync } from 'tinyglobby';
 import { VERSION, compile, compileModule, preprocess } from 'svelte/compiler';
 import { vi } from 'vitest';
 
@@ -43,6 +43,7 @@ export function create_deferred() {
 	/** @param {any} [reason] */
 	let reject = (reason) => {};
 
+	/** @type {Promise<any>} */
 	const promise = new Promise((f, r) => {
 		resolve = f;
 		reject = r;
@@ -70,7 +71,7 @@ export async function compile_directory(
 
 	fs.rmSync(output_dir, { recursive: true, force: true });
 
-	for (let file of glob('**', { cwd, filesOnly: true })) {
+	for (let file of globSync('**', { cwd, onlyFiles: true })) {
 		if (file.startsWith('_')) continue;
 
 		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r\n/g, '\n');
@@ -86,7 +87,8 @@ export async function compile_directory(
 				const compiled = compileModule(text, {
 					filename: opts.filename,
 					generate: opts.generate,
-					dev: opts.dev
+					dev: opts.dev,
+					experimental: opts.experimental
 				});
 				write(out, compiled.js.code.replace(`v${VERSION}`, 'VERSION'));
 			} else {
@@ -146,6 +148,10 @@ export async function compile_directory(
 
 			if (compiled.css) {
 				write(`${output_dir}/${file}.css`, compiled.css.code);
+				write(
+					`${output_dir}/${file}.css.json`,
+					JSON.stringify({ hasGlobal: compiled.css.hasGlobal })
+				);
 				if (output_map) {
 					write(`${output_dir}/${file}.css.map`, JSON.stringify(compiled.css.map, null, '\t'));
 				}
@@ -185,4 +191,79 @@ if (typeof window !== 'undefined') {
 			removeEventListener: () => {}
 		};
 	});
+}
+
+export const fragments = /** @type {'html' | 'tree'} */ (process.env.FRAGMENTS) ?? 'html';
+
+export const async_mode = process.env.SVELTE_NO_ASYNC !== 'true';
+
+/**
+ * @param {any[]} logs
+ */
+export function normalise_inspect_logs(logs) {
+	/** @type {any[]} */
+	const normalised = [];
+
+	for (const log of logs) {
+		if (log === 'stack trace') {
+			// ignore `console.group('stack trace')` in default `$inspect(...)` output
+			continue;
+		}
+
+		if (log instanceof Error) {
+			const last_line = log.stack
+				?.trim()
+				.split('\n')
+				.filter((line) => !line.includes('at Module.get_stack'))[1];
+
+			const match = last_line && /(at .+) /.exec(last_line);
+
+			if (match) normalised.push(match[1]);
+		} else {
+			normalised.push(log);
+		}
+	}
+
+	return normalised;
+}
+
+/**
+ * @param {any[]} logs
+ */
+export function normalise_trace_logs(logs) {
+	let normalised = [];
+
+	logs = logs.slice();
+
+	while (logs.length > 0) {
+		const log = logs.shift();
+
+		if (log instanceof Error) {
+			continue;
+		}
+
+		if (typeof log === 'string' && log.includes('%c')) {
+			const split = log.split('%c');
+
+			const first = /** @type {string} */ (split.shift()).trim();
+			if (first) normalised.push({ log: first });
+
+			while (split.length > 0) {
+				const log = /** @type {string} */ (split.shift()).trim();
+				const highlighted = logs.shift() === 'color: CornflowerBlue; font-weight: bold';
+
+				// omit timings, as they will differ between runs
+				if (/\(.+ms\)/.test(log)) continue;
+
+				normalised.push({
+					log,
+					highlighted
+				});
+			}
+		} else {
+			normalised.push({ log });
+		}
+	}
+
+	return normalised;
 }

@@ -240,6 +240,7 @@
 					"type": "Identifier",
 					"name": "y",
 					"start": 138,
+					"end": 139,
 					"loc": {
 						"start": {
 							"line": 19,
@@ -251,8 +252,7 @@
 							"column": 13,
 							"character": 139
 						}
-					},
-					"end": 139
+					}
 				},
 				"expression": {
 					"type": "Identifier",

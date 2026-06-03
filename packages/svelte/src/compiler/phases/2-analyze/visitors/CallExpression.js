@@ -3,10 +3,11 @@
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
-import { get_parent, unwrap_optional } from '../../../utils/ast.js';
+import { get_parent } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
-import * as b from '../../../utils/builders.js';
+import * as b from '#compiler/builders';
+import { ExpressionMetadata } from '../../nodes.js';
 
 /**
  * @param {CallExpression} node
@@ -16,6 +17,14 @@ export function CallExpression(node, context) {
 	const parent = /** @type {AST.SvelteNode} */ (get_parent(context.path, -1));
 
 	const rune = get_rune(node, context.state.scope);
+
+	if (rune && rune !== '$inspect') {
+		for (const arg of node.arguments) {
+			if (arg.type === 'SpreadElement') {
+				e.rune_invalid_spread(node, rune);
+			}
+		}
+	}
 
 	switch (rune) {
 		case null:
@@ -42,6 +51,9 @@ export function CallExpression(node, context) {
 				e.bindable_invalid_location(node);
 			}
 
+			// We need context in case the bound prop is stale
+			context.state.analysis.needs_context = true;
+
 			break;
 
 		case '$host':
@@ -55,7 +67,7 @@ export function CallExpression(node, context) {
 
 		case '$props':
 			if (context.state.has_props_rune) {
-				e.props_duplicate(node);
+				e.props_duplicate(node, rune);
 			}
 
 			context.state.has_props_rune = true;
@@ -74,24 +86,53 @@ export function CallExpression(node, context) {
 
 			break;
 
+		case '$props.id': {
+			const grand_parent = get_parent(context.path, -2);
+
+			if (context.state.analysis.props_id) {
+				e.props_duplicate(node, rune);
+			}
+
+			if (
+				parent.type !== 'VariableDeclarator' ||
+				parent.id.type !== 'Identifier' ||
+				context.state.ast_type !== 'instance' ||
+				context.state.scope !== context.state.analysis.instance.scope ||
+				grand_parent.type !== 'VariableDeclaration'
+			) {
+				e.props_id_invalid_placement(node);
+			}
+
+			if (node.arguments.length > 0) {
+				e.rune_invalid_arguments(node, rune);
+			}
+
+			context.state.analysis.props_id = parent.id;
+
+			break;
+		}
+
 		case '$state':
 		case '$state.raw':
 		case '$derived':
-		case '$derived.by':
-			if (
-				parent.type !== 'VariableDeclarator' &&
-				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
-			) {
+		case '$derived.by': {
+			const valid =
+				is_variable_declaration(parent, context) ||
+				is_class_property_definition(parent) ||
+				is_class_property_assignment_at_constructor_root(parent, context);
+
+			if (!valid) {
 				e.state_invalid_placement(node, rune);
 			}
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-			} else if (rune === '$state' && node.arguments.length > 1) {
+			} else if (node.arguments.length > 1) {
 				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 			}
 
 			break;
+		}
 
 		case '$effect':
 		case '$effect.pre':
@@ -119,6 +160,13 @@ export function CallExpression(node, context) {
 		case '$effect.root':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
+
+		case '$effect.pending':
+			if (context.state.expression) {
+				context.state.expression.has_state = true;
 			}
 
 			break;
@@ -171,10 +219,19 @@ export function CallExpression(node, context) {
 
 					context.state.scope.tracing = b.thunk(b.literal(label + ' ' + loc));
 				}
+
+				context.state.analysis.tracing = true;
 			}
 
 			break;
 		}
+
+		case '$state.eager':
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
 
 		case '$state.snapshot':
 			if (node.arguments.length !== 1) {
@@ -184,28 +241,24 @@ export function CallExpression(node, context) {
 			break;
 	}
 
-	if (context.state.render_tag) {
-		// Find out which of the render tag arguments contains this call expression
-		const arg_idx = unwrap_optional(context.state.render_tag.expression).arguments.findIndex(
-			(arg) => arg === node || context.path.includes(arg)
-		);
-
-		// -1 if this is the call expression of the render tag itself
-		if (arg_idx !== -1) {
-			context.state.render_tag.metadata.args_with_call_expression.add(arg_idx);
-		}
-	}
-
-	if (node.callee.type === 'Identifier') {
-		const binding = context.state.scope.get(node.callee.name);
-
-		if (binding !== null) {
-			binding.is_called = true;
-		}
-	}
-
 	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning
-	if (rune === '$inspect' || rune === '$derived') {
+	if (rune === '$derived') {
+		const expression = new ExpressionMetadata();
+
+		context.next({
+			...context.state,
+			function_depth: context.state.function_depth + 1,
+			derived_function_depth: context.state.function_depth + 1,
+			expression
+		});
+
+		if (expression.has_await) {
+			context.state.analysis.async_deriveds.add(node);
+		}
+
+		// Tell surrounding declaration tag about metadata for correct calculation of blockers etc
+		if (context.state.in_declaration_tag) context.state.expression?.merge(expression);
+	} else if (rune === '$inspect') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();
@@ -249,4 +302,41 @@ function get_function_label(nodes) {
 	if (parent.type === 'VariableDeclarator' && parent.id.type === 'Identifier') {
 		return parent.id.name;
 	}
+}
+
+/**
+ * @param {AST.SvelteNode} parent
+ * @param {Context} context
+ */
+function is_variable_declaration(parent, context) {
+	return parent.type === 'VariableDeclarator' && get_parent(context.path, -3).type !== 'ConstTag';
+}
+
+/**
+ * @param {AST.SvelteNode} parent
+ */
+function is_class_property_definition(parent) {
+	return parent.type === 'PropertyDefinition' && !parent.static && !parent.computed;
+}
+
+/**
+ * @param {AST.SvelteNode} node
+ * @param {Context} context
+ */
+function is_class_property_assignment_at_constructor_root(node, context) {
+	if (
+		node.type === 'AssignmentExpression' &&
+		node.operator === '=' &&
+		node.left.type === 'MemberExpression' &&
+		node.left.object.type === 'ThisExpression' &&
+		((node.left.property.type === 'Identifier' && !node.left.computed) ||
+			node.left.property.type === 'PrivateIdentifier' ||
+			node.left.property.type === 'Literal')
+	) {
+		// MethodDefinition (-5) -> FunctionExpression (-4) -> BlockStatement (-3) -> ExpressionStatement (-2) -> AssignmentExpression (-1)
+		const parent = get_parent(context.path, -5);
+		return parent?.type === 'MethodDefinition' && parent.kind === 'constructor';
+	}
+
+	return false;
 }

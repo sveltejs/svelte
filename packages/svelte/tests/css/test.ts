@@ -34,6 +34,7 @@ interface CssTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
 	warnings?: Warning[];
 	props?: Record<string, any>;
+	hasGlobal?: boolean;
 }
 
 /**
@@ -76,6 +77,14 @@ const { test, run } = suite<CssTest>(async (config, cwd) => {
 		// TODO enable SSR tests
 		// const actual_ssr = ServerComponent.render(config.props).html;
 		// assert_html_equal(actual_ssr, expected.html);
+	}
+
+	if (config.hasGlobal !== undefined) {
+		const metadata = JSON.parse(
+			fs.readFileSync(`${cwd}/_output/client/input.svelte.css.json`, 'utf-8')
+		);
+
+		assert.equal(metadata.hasGlobal, config.hasGlobal);
 	}
 
 	const dom_css = fs.readFileSync(`${cwd}/_output/client/input.svelte.css`, 'utf-8').trim();

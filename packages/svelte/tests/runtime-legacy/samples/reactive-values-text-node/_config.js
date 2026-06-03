@@ -1,5 +1,6 @@
 import { test } from '../../test';
 import { create_deferred } from '../../../helpers';
+import { flushSync } from 'svelte';
 
 /** @type {ReturnType<typeof create_deferred>} */
 let deferred;
@@ -17,6 +18,8 @@ export default test({
 
 	async test({ assert, target }) {
 		await deferred.promise;
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`

@@ -1,43 +1,83 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
-import glob from 'tiny-glob/sync.js';
+import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
-import { afterAll, assert, beforeAll } from 'vitest';
-import { compile_directory } from '../helpers.js';
-import { setup_html_equal } from '../html_equal.js';
+import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
+import { async_mode, compile_directory, fragments } from '../helpers.js';
+import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
+import { clear } from '../../src/internal/client/reactivity/batch.js';
+import { hydrating } from '../../src/internal/client/dom/hydration.js';
+import { ssr_context } from '../../src/internal/server/context.js';
 
-type Assert = typeof import('vitest').assert & {
-	htmlEqual(a: string, b: string, description?: string): void;
-	htmlEqualWithOptions(
-		a: string,
-		b: string,
-		opts: {
-			preserveComments: boolean;
-			withoutNormalizeHtml: boolean;
-		},
-		description?: string
-	): void;
+// `_config.js` files call `assert.ok` etc. with `assert` typed via parameter
+// inference, which TypeScript treats as non-explicit. chai 5 (pulled in by
+// vitest 4) declares these as assertion functions (`asserts value`), so TS2775
+// fires on every call. Override the affected methods with non-assertion
+// signatures — the runtime behavior is unchanged.
+type NonAssertingMethods = {
+	ok(value: unknown, message?: string): void;
+	isOk(value: unknown, message?: string): void;
+	isTrue(value: unknown, message?: string): void;
+	isFalse(value: unknown, message?: string): void;
+	exists(value: unknown, message?: string): void;
+	notExists(value: unknown, message?: string): void;
+	instanceOf(value: unknown, type: Function, message?: string): void;
+};
+
+type Assert = Omit<typeof import('vitest').assert, keyof NonAssertingMethods> &
+	NonAssertingMethods & {
+		htmlEqual(a: string, b: string, description?: string): void;
+		htmlEqualWithOptions(
+			a: string,
+			b: string,
+			opts: {
+				preserveComments: boolean;
+				withoutNormalizeHtml: boolean;
+			},
+			description?: string
+		): void;
+	};
+
+// TODO remove this shim when we can
+// @ts-expect-error
+Promise.withResolvers = () => {
+	let resolve;
+	let reject;
+
+	const promise = new Promise((f, r) => {
+		resolve = f;
+		reject = r;
+	});
+
+	return { promise, resolve, reject };
 };
 
 export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
 	extends BaseTest {
 	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */
-	mode?: Array<'server' | 'client' | 'hydrate'>;
+	mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
 	/** Temporarily skip specific modes, without skipping the entire test */
-	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
+	skip_mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
+	/** Skip if running with process.env.SVELTE_NO_ASYNC */
+	skip_no_async?: boolean;
+	/** Skip if running without process.env.SVELTE_NO_ASYNC */
+	skip_async?: boolean;
 	html?: string;
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
 	props?: Props;
 	server_props?: Props;
+	id_prefix?: string;
 	before_test?: () => void;
 	after_test?: () => void;
+	/** If true, flushSync() will not be called before invoking test() */
+	skip_initial_flushSync?: boolean;
 	test?: (args: {
 		variant: 'dom' | 'hydrate';
 		assert: Assert;
@@ -51,6 +91,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		raf: {
 			tick: (ms: number) => void;
 		};
+		snapshot: any;
 		target: HTMLElement;
 		window: Window & {
 			Event: typeof Event;
@@ -63,7 +104,12 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		errors: any[];
 		hydrate: Function;
 	}) => void | Promise<void>;
-	test_ssr?: (args: { logs: any[]; assert: Assert }) => void | Promise<void>;
+	test_ssr?: (args: {
+		logs: any[];
+		warnings: any[];
+		assert: Assert;
+		variant: 'ssr' | 'async-ssr';
+	}) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
 	intro?: boolean;
@@ -75,6 +121,15 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean | 'only-strip-comments';
 	recover?: boolean;
+	transformError?: (error: unknown) => unknown;
+}
+
+declare global {
+	var __svelte:
+		| {
+				h?: Map<string, unknown>;
+		  }
+		| undefined;
 }
 
 let unhandled_rejection: Error | null = null;
@@ -85,13 +140,23 @@ function unhandled_rejection_handler(err: Error) {
 
 const listeners = process.rawListeners('unhandledRejection');
 
-const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal({
-	removeDataSvelte: true
-});
-
 beforeAll(() => {
 	// @ts-expect-error TODO huh?
 	process.prependListener('unhandledRejection', unhandled_rejection_handler);
+
+	// Route inline-`<script>` console calls through `globalThis.console` at
+	// call time, so per-test `console.{log,warn,error}` overrides see them.
+	// (jsdom scripts run in a VM with their own `console` object, separate
+	// from Node's `globalThis.console` — vitest 4's jsdom env no longer
+	// bridges them per-test.)
+	const vc = (window as any)._virtualConsole;
+	for (const m of ['log', 'warn', 'error'] as const) {
+		vc?.on(m, (...args: any[]) => console[m](...args));
+	}
+});
+
+beforeEach(() => {
+	delete globalThis?.__svelte?.h;
 });
 
 afterAll(() => {
@@ -108,9 +173,17 @@ let console_warn = console.warn;
 let console_error = console.error;
 
 export function runtime_suite(runes: boolean) {
-	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
-		['dom', 'hydrate', 'ssr'],
-		(variant, config) => {
+	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'async-ssr' | 'dom', CompileOptions>(
+		['dom', 'hydrate', 'ssr', 'async-ssr'],
+		(variant, config, test_name) => {
+			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
+				return true;
+			}
+
+			if (async_mode && config.skip_async) {
+				return true;
+			}
+
 			if (variant === 'hydrate') {
 				if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
 				if (config.skip_mode?.includes('hydrate')) return true;
@@ -138,6 +211,22 @@ export function runtime_suite(runes: boolean) {
 				if (config.skip_mode?.includes('server')) return true;
 			}
 
+			if (variant === 'async-ssr') {
+				if (!runes || !async_mode) return 'no-test';
+				if (
+					(config.mode && !config.mode.includes('async-server')) ||
+					(!config.test_ssr &&
+						config.html === undefined &&
+						config.ssrHtml === undefined &&
+						config.error === undefined &&
+						config.runtime_error === undefined &&
+						!config.mode?.includes('async-server'))
+				) {
+					return 'no-test';
+				}
+				if (config.skip_mode?.includes('async-server')) return true;
+			}
+
 			return false;
 		},
 		(config, cwd) => {
@@ -157,10 +246,17 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		rootDir: cwd,
 		dev: force_hmr ? true : undefined,
 		hmr: force_hmr ? true : undefined,
+		experimental: {
+			async: runes && async_mode
+		},
+		fragments,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
-		runes
+		runes:
+			config.compileOptions && 'runes' in config.compileOptions
+				? config.compileOptions.runes
+				: runes
 	};
 
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
@@ -176,7 +272,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 async function run_test_variant(
 	cwd: string,
 	config: RuntimeTest,
-	variant: 'dom' | 'hydrate' | 'ssr',
+	variant: 'dom' | 'hydrate' | 'ssr' | 'async-ssr',
 	compileOptions: CompileOptions,
 	runes: boolean
 ) {
@@ -186,6 +282,26 @@ async function run_test_variant(
 	let warnings: string[] = [];
 	let errors: string[] = [];
 	let manual_hydrate = false;
+	let intercept_errors = false;
+
+	// Capture phase so we still see the error if a test installs its own
+	// `stopImmediatePropagation` listener (e.g. event-handler-*). Named so we
+	// can remove it in `finally` — otherwise listeners from earlier tests leak
+	// and keep writing to module-level `unhandled_rejection`. When the test
+	// intercepts `errors`, mirror jsdom's `Uncaught [...]` format into the
+	// array — vitest 4's jsdom env no longer routes `jsdomError` to vitest's
+	// wrapped console reliably (works locally but not in CI's forks pool).
+	const window_error_listener = (e: ErrorEvent) => {
+		if (intercept_errors) {
+			const detail = e.error;
+			const is_error = detail && detail.name && detail.message !== undefined && detail.stack;
+			const error_string = is_error ? `[${detail.name}: ${detail.message}]` : String(detail);
+			errors.push(`Error: Uncaught ${error_string}\n${detail?.stack ?? ''}`, detail);
+		} else {
+			unhandled_rejection = e.error;
+		}
+		e.preventDefault();
+	};
 
 	{
 		// use some crude static analysis to determine if logs/warnings are intercepted.
@@ -200,7 +316,16 @@ async function run_test_variant(
 			i++;
 		}
 
-		if (str.slice(0, i).includes('logs')) {
+		let ssr_str = config.test_ssr?.toString() ?? '';
+		let sn = 0;
+		let si = 0;
+		while (si < ssr_str.length) {
+			if (ssr_str[si] === '(') sn++;
+			if (ssr_str[si] === ')' && --sn === 0) break;
+			si++;
+		}
+
+		if (str.slice(0, i).includes('logs') || ssr_str.slice(0, si).includes('logs')) {
 			// eslint-disable-next-line no-console
 			console.log = (...args) => {
 				logs.push(...args);
@@ -211,10 +336,14 @@ async function run_test_variant(
 			manual_hydrate = true;
 		}
 
-		if (str.slice(0, i).includes('warnings') || config.warnings) {
+		if (
+			str.slice(0, i).includes('warnings') ||
+			config.warnings ||
+			ssr_str.slice(0, si).includes('warnings')
+		) {
 			// eslint-disable-next-line no-console
 			console.warn = (...args) => {
-				if (args[0].startsWith('%c[svelte]')) {
+				if (typeof args[0] === 'string' && args[0].startsWith('%c[svelte]')) {
 					// TODO convert this to structured data, for more robust comparison?
 
 					let message = args[0];
@@ -235,6 +364,7 @@ async function run_test_variant(
 		}
 
 		if (str.slice(0, i).includes('errors') || config.errors) {
+			intercept_errors = true;
 			// eslint-disable-next-line no-console
 			console.error = (...args) => {
 				errors.push(...args);
@@ -256,7 +386,7 @@ async function run_test_variant(
 		raf.reset();
 
 		// Put things we need on window for testing
-		const styles = glob('**/*.css', { cwd: `${cwd}/_output/client` })
+		const styles = globSync('**/*.css', { cwd: `${cwd}/_output/client` })
 			.map((file) => fs.readFileSync(`${cwd}/_output/client/${file}`, 'utf-8'))
 			.join('\n')
 			.replace(/\/\*<\/?style>\*\//g, '');
@@ -266,10 +396,7 @@ async function run_test_variant(
 		window.document.head.innerHTML = styles ? `<style>${styles}</style>` : '';
 		window.document.body.innerHTML = '<main></main>';
 
-		window.addEventListener('error', (e) => {
-			unhandled_rejection = e.error;
-			e.preventDefault();
-		});
+		window.addEventListener('error', window_error_listener, true);
 
 		globalThis.requestAnimationFrame = globalThis.setTimeout;
 
@@ -279,19 +406,31 @@ async function run_test_variant(
 
 		let snapshot = undefined;
 
-		if (variant === 'hydrate' || variant === 'ssr') {
+		if (variant === 'hydrate' || variant === 'ssr' || variant === 'async-ssr') {
+			if (ssr_context !== null) {
+				throw new Error('ssr_context was not cleared');
+			}
+
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
-			const { html, head } = render(SsrSvelteComponent, {
-				props: config.server_props ?? config.props ?? {}
+			const render_result = render(SsrSvelteComponent, {
+				props: config.server_props ?? config.props ?? {},
+				idPrefix: config.id_prefix,
+				transformError: config.transformError
 			});
+			const rendered =
+				variant === 'async-ssr' || (variant === 'hydrate' && compileOptions.experimental?.async)
+					? await render_result
+					: render_result;
+			const { body, head } = rendered;
 
-			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
-			target.innerHTML = html;
+			const prefix = variant === 'async-ssr' ? 'async_' : '';
+			fs.writeFileSync(`${cwd}/_output/${prefix}rendered.html`, body);
+			target.innerHTML = body;
 
 			if (head) {
-				fs.writeFileSync(`${cwd}/_output/rendered_head.html`, head);
+				fs.writeFileSync(`${cwd}/_output/${prefix}rendered_head.html`, head);
 				window.document.head.innerHTML = window.document.head.innerHTML + head;
 			}
 
@@ -302,11 +441,15 @@ async function run_test_variant(
 					snapshot = config.snapshot(target);
 				}
 			}
+
+			if (ssr_context !== null) {
+				throw new Error('ssr_context was not cleared');
+			}
 		} else {
 			target.innerHTML = '';
 		}
 
-		if (variant === 'ssr') {
+		if (variant === 'ssr' || variant === 'async-ssr') {
 			if (config.ssrHtml) {
 				assert_html_equal_with_options(target.innerHTML, config.ssrHtml, {
 					preserveComments:
@@ -324,12 +467,13 @@ async function run_test_variant(
 			if (config.test_ssr) {
 				await config.test_ssr({
 					logs,
-					// @ts-expect-error
+					warnings,
 					assert: {
 						...assert,
 						htmlEqual: assert_html_equal,
 						htmlEqualWithOptions: assert_html_equal_with_options
-					}
+					},
+					variant
 				});
 			}
 		} else {
@@ -343,10 +487,24 @@ async function run_test_variant(
 				throw new Error('Ensure dom mode is skipped');
 			};
 
+			const run_hydratables_init = () => {
+				if (variant !== 'hydrate') return;
+				const script = [...document.head.querySelectorAll('script').values()].find((script) =>
+					script.textContent?.includes('window.__svelte ??= {}')
+				)?.textContent;
+				if (!script) return;
+				(0, eval)(script);
+			};
+
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
-				if (manual_hydrate) {
+
+				// @ts-expect-error
+				globalThis.__svelte.uid = 1;
+
+				if (manual_hydrate && variant === 'hydrate') {
 					hydrate_fn = () => {
+						run_hydratables_init();
 						instance = hydrate(mod.default, {
 							target,
 							props,
@@ -355,15 +513,18 @@ async function run_test_variant(
 						});
 					};
 				} else {
+					run_hydratables_init();
 					const render = variant === 'hydrate' ? hydrate : mount;
 					instance = render(mod.default, {
 						target,
 						props,
 						intro: config.intro,
-						recover: config.recover ?? false
+						recover: config.recover ?? false,
+						transformError: config.transformError
 					});
 				}
 			} else {
+				run_hydratables_init();
 				instance = createClassComponent({
 					component: mod.default,
 					props: config.props,
@@ -390,9 +551,14 @@ async function run_test_variant(
 
 			try {
 				if (config.test) {
-					flushSync();
+					if (!config.skip_initial_flushSync) flushSync();
+
+					if (variant === 'hydrate' && cwd.includes('async-')) {
+						// wait for pending boundaries to render
+						await Promise.resolve();
+					}
+
 					await config.test({
-						// @ts-expect-error TS doesn't get it
 						assert: {
 							...assert,
 							htmlEqual: assert_html_equal,
@@ -402,6 +568,7 @@ async function run_test_variant(
 						component: runes ? props : instance,
 						instance,
 						mod,
+						ok,
 						target,
 						snapshot,
 						window,
@@ -412,6 +579,8 @@ async function run_test_variant(
 						errors,
 						hydrate: hydrate_fn
 					});
+
+					flushSync();
 				}
 
 				if (config.runtime_error && !unhandled_rejection) {
@@ -420,7 +589,7 @@ async function run_test_variant(
 				}
 			} finally {
 				if (runes) {
-					unmount(instance);
+					await unmount(instance);
 				} else {
 					instance.$destroy();
 				}
@@ -447,10 +616,11 @@ async function run_test_variant(
 					'Expected component to unmount and leave nothing behind after it was destroyed'
 				);
 
-				// TODO: This seems useless, unhandledRejection is only triggered on the next task
-				// by which time the test has already finished and the next test resets it to null above
+				// uncaught errors like during template effects flush
 				if (unhandled_rejection) {
-					throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
+					if (!config.expect_unhandled_rejections) {
+						throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
+					}
 				}
 			}
 		}
@@ -463,9 +633,11 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
-		console.log = console_log;
-		console.warn = console_warn;
-		console.error = console_error;
+		if (hydrating) {
+			throw new Error('Hydration state was not cleared');
+		}
+
+		window.removeEventListener('error', window_error_listener, true);
 
 		config.after_test?.();
 
@@ -480,6 +652,12 @@ async function run_test_variant(
 				process.on('unhandledRejection', listener);
 			});
 		}
+
+		console.log = console_log;
+		console.warn = console_warn;
+		console.error = console_error;
+
+		clear();
 	}
 }
 

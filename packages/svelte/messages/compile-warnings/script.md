@@ -1,3 +1,7 @@
+## custom_element_props_identifier
+
+> Using a rest element or a non-destructured declaration with `$props()` means that Svelte can't infer what properties to expose when creating a custom element. Consider destructuring all the props or explicitly specifying the `customElement.props` option.
+
 ## export_let_unused
 
 > Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
@@ -54,14 +58,15 @@ To fix this, wrap your variable declaration with `$state`.
 
 ## state_referenced_locally
 
-> State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+> This reference only captures the initial value of `%name%`. Did you mean to reference it inside a %type% instead?
 
 This warning is thrown when the compiler detects the following:
-- A reactive variable is declared
-- the variable is reassigned
-- the variable is referenced inside the same scope it is declared and it is a non-reactive context
 
-In this case, the state reassignment will not be noticed by whatever you passed it to. For example, if you pass the state to a function, that function will not notice the updates:
+- A reactive variable is declared
+- ...and later reassigned...
+- ...and referenced in the same scope
+
+This 'breaks the link' to the original state declaration. For example, if you pass the state to a function, the function loses access to the state once it is reassigned:
 
 ```svelte
 <!--- file: Parent.svelte --->

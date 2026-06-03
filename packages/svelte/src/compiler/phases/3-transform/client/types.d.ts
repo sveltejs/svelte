@@ -3,7 +3,6 @@ import type {
 	Statement,
 	LabeledStatement,
 	Identifier,
-	PrivateIdentifier,
 	Expression,
 	AssignmentExpression,
 	UpdateExpression,
@@ -12,12 +11,10 @@ import type {
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
-import type { SourceLocation } from '#shared';
+import type { Template } from './transform-template/template.js';
+import type { Memoizer } from './visitors/shared/utils.js';
 
 export interface ClientTransformState extends TransformState {
-	readonly private_state: Map<string, StateField>;
-	readonly public_state: Map<string, StateField>;
-
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
 	 * us to rewrite `this.foo` as `this.#foo.value`
@@ -30,7 +27,7 @@ export interface ClientTransformState extends TransformState {
 			/** turn `foo` into e.g. `$.get(foo)` */
 			read: (id: Identifier) => Expression;
 			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
-			assign?: (node: Identifier, value: Expression) => Expression;
+			assign?: (node: Identifier, value: Expression, proxy?: boolean) => Expression;
 			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
 			mutate?: (node: Identifier, mutation: AssignmentExpression | UpdateExpression) => Expression;
 			/** turn `foo++` into e.g. `$.update(foo)` */
@@ -43,38 +40,35 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
+	/** Deduplicates hoisted templates by content, mapping a template key to its hoisted identifier */
+	readonly templates: Map<string, Identifier>;
 	readonly events: Set<string>;
-	readonly is_instance: boolean;
+	readonly store_to_invalidate?: string;
 
-	/** Stuff that happens before the render effect(s) */
-	readonly before_init: Statement[];
 	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];
 	/** Stuff that happens inside the render effect */
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
+	/** Transformed `{#snippets }` declarations */
+	readonly snippets: Statement[];
+	/** Transformed `{@const }` declarations */
+	readonly consts: Statement[];
+	/** Transformed async `{@const }` declarations (if any) and those coming after them */
+	async_consts?: {
+		id: Identifier;
+		thunks: Expression[];
+	};
+	/** Transformed `let:` directives */
+	readonly let_directives: Statement[];
+	/** Memoized expressions */
+	readonly memoizer: Memoizer;
 	/** The HTML template string */
-	readonly template: Array<string | Expression>;
-	readonly locations: SourceLocation[];
+	readonly template: Template;
 	readonly metadata: {
 		namespace: Namespace;
 		bound_contenteditable: boolean;
-		/**
-		 * Stuff that is set within the children of one `Fragment` visitor that is relevant
-		 * to said fragment. Shouldn't be destructured or otherwise spread unless inside the
-		 * `Fragment` visitor to keep the object reference intact (it's also nested
-		 * within `metadata` for this reason).
-		 */
-		context: {
-			/** `true` if the HTML template needs to be instantiated with `importNode` */
-			template_needs_import_node: boolean;
-			/**
-			 * `true` if HTML template contains a `<script>` tag. In this case we need to invoke a special
-			 * template instantiation function (see `create_fragment_with_script_from_html` for more info)
-			 */
-			template_contains_script_tag: boolean;
-		};
 	};
 	readonly preserve_whitespace: boolean;
 
@@ -91,11 +85,9 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly instance_level_snippets: VariableDeclaration[];
 	/** Snippets hoisted to the module */
 	readonly module_level_snippets: VariableDeclaration[];
-}
 
-export interface StateField {
-	kind: 'state' | 'raw_state' | 'derived' | 'derived_by';
-	id: PrivateIdentifier;
+	/** True if the current node is a) a component or render tag and b) the sole child of a block  */
+	readonly is_standalone: boolean;
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;

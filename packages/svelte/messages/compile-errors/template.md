@@ -40,7 +40,27 @@
 
 ## attribute_invalid_sequence_expression
 
-> Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
+> Comma-separated expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
+
+An attribute value cannot be a comma-separated sequence of expressions — in other words this is disallowed:
+
+```svelte
+<div class={size, color}>...</div>
+```
+
+Instead, make sure that the attribute value contains a single expression. In the example above it's likely that this was intended (see the [class documentation](class) for more details):
+
+```svelte
+<div class={[size, color]}>...</div>
+```
+
+If you _do_ need to use the comma operator for some reason, wrap the sequence in parentheses:
+
+```svelte
+<div class={(size, color)}>...</div>
+```
+
+Note that this will evaluate to `color`, ignoring `size`.
 
 ## attribute_invalid_type
 
@@ -53,6 +73,10 @@
 ## bind_group_invalid_expression
 
 > `bind:group` can only bind to an Identifier or MemberExpression
+
+## bind_group_invalid_snippet_parameter
+
+> Cannot `bind:group` to a snippet parameter
 
 ## bind_invalid_expression
 
@@ -118,11 +142,62 @@
 
 ## const_tag_invalid_placement
 
-> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary>` or `<Component>`
+
+## const_tag_invalid_reference
+
+> The `{@const %name% = ...}` declaration is not available in this snippet
+
+The following is an error:
+
+```svelte
+<svelte:boundary>
+    {@const foo = 'bar'}
+
+    {#snippet failed()}
+        {foo}
+    {/snippet}
+</svelte:boundary>
+```
+
+Here, `foo` is not available inside `failed`. The top level code inside `<svelte:boundary>` becomes part of the implicit `children` snippet, in other words the above code is equivalent to this:
+
+```svelte
+<svelte:boundary>
+    {#snippet children()}
+        {@const foo = 'bar'}
+    {/snippet}
+
+    {#snippet failed()}
+        {foo}
+    {/snippet}
+</svelte:boundary>
+```
+
+The same applies to components:
+
+```svelte
+<Component>
+    {@const foo = 'bar'}
+
+    {#snippet someProp()}
+        <!-- error -->
+        {foo}
+    {/snippet}
+</Component>
+```
 
 ## debug_tag_invalid_arguments
 
 > {@debug ...} arguments must be identifiers, not arbitrary expressions
+
+## declaration_tag_invalid_type
+
+> Declaration tags must be `let` or `const` declarations
+
+## declaration_tag_no_legacy_mode
+
+> Declaration tags cannot be used in legacy mode
 
 ## directive_invalid_value
 
@@ -131,6 +206,10 @@
 ## directive_missing_name
 
 > `%type%` name cannot be empty
+
+## each_key_without_as
+
+> An `{#each ...}` block without an `as` clause cannot have a key
 
 ## element_invalid_closing_tag
 
@@ -172,6 +251,10 @@
 
 > Expected identifier or destructure pattern
 
+## expected_tag
+
+> Expected 'html', 'render', 'attach', 'const', or 'debug'
+
 ## expected_token
 
 > Expected token %token%
@@ -179,6 +262,10 @@
 ## expected_whitespace
 
 > Expected whitespace
+
+## illegal_await_expression
+
+> `use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
 
 ## illegal_element_attribute
 
@@ -352,7 +439,7 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_customelement
 
-> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none" | `ShadowRootInit`; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
 
 ## svelte_options_invalid_customelement_props
 
@@ -360,7 +447,9 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_customelement_shadow
 
-> "shadow" must be either "open" or "none"
+> "shadow" must be either "open", "none" or `ShadowRootInit` object.
+
+See https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#options for more information on valid shadow root constructor options
 
 ## svelte_options_invalid_tagname
 
@@ -417,6 +506,10 @@ See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-ele
 ## unexpected_reserved_word
 
 > '%word%' is a reserved word in JavaScript and cannot be used here
+
+## unterminated_string_constant
+
+> Unterminated string constant
 
 ## void_element_invalid_content
 

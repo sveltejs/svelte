@@ -4,6 +4,7 @@ import { it } from 'vitest';
 export interface BaseTest {
 	skip?: boolean;
 	solo?: boolean;
+	timeout?: number;
 }
 
 /**
@@ -20,6 +21,9 @@ const filter = process.env.FILTER
 		)
 	: /./;
 
+// this defaults to 10, which is too low for some of our tests
+Error.stackTraceLimit = 100;
+
 export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string) => void) {
 	return {
 		test: (config: Test) => config,
@@ -27,7 +31,7 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 			await for_each_dir<Test>(cwd, samples_dir, (config, dir) => {
 				let it_fn = config.skip ? it.skip : config.solo ? it.only : it;
 
-				it_fn(dir, () => fn(config, `${cwd}/${samples_dir}/${dir}`));
+				it_fn(dir, { timeout: config.timeout }, () => fn(config, `${cwd}/${samples_dir}/${dir}`));
 			});
 		}
 	};
@@ -35,7 +39,7 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 
 export function suite_with_variants<Test extends BaseTest, Variants extends string, Common>(
 	variants: Variants[],
-	should_skip_variant: (variant: Variants, config: Test) => boolean | 'no-test',
+	should_skip_variant: (variant: Variants, config: Test, test_name: string) => boolean | 'no-test',
 	common_setup: (config: Test, test_dir: string) => Promise<Common> | Common,
 	fn: (config: Test, test_dir: string, variant: Variants, common: Common) => void
 ) {
@@ -46,15 +50,15 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 				let called_common = false;
 				let common: any = undefined;
 				for (const variant of variants) {
-					if (should_skip_variant(variant, config) === 'no-test') {
+					if (should_skip_variant(variant, config, dir) === 'no-test') {
 						continue;
 					}
 					// TODO unify test interfaces
-					const skip = config.skip || should_skip_variant(variant, config);
+					const skip = config.skip || should_skip_variant(variant, config, dir);
 					const solo = config.solo;
 					let it_fn = skip ? it.skip : solo ? it.only : it;
 
-					it_fn(`${dir} (${variant})`, async () => {
+					it_fn(`${dir} (${variant})`, { timeout: config.timeout }, async () => {
 						if (!called_common) {
 							called_common = true;
 							common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`);

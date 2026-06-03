@@ -1,0 +1,1 @@
+<div>{@html await Promise.resolve(`<span>Foo</span>`)}</div>

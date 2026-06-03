@@ -16,5 +16,6 @@ export function KeyBlock(node, context) {
 
 	mark_subtree_dynamic(context.path);
 
-	context.next();
+	context.visit(node.expression, { ...context.state, expression: node.metadata.expression });
+	context.visit(node.fragment);
 }

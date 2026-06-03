@@ -9,7 +9,7 @@
 export function SvelteFragment(node, context) {
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			context.state.init.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			context.visit(attribute);
 		}
 	}
 

@@ -1,5 +1,6 @@
 ---
 title: {#key ...}
+tags: template-key
 ---
 
 ```svelte

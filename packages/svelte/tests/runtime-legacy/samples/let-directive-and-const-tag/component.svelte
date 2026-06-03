@@ -1,0 +1,1 @@
+<slot data='foo'></slot>

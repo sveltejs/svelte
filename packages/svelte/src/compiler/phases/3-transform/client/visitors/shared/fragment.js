@@ -1,10 +1,11 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Identifier, SourceLocation } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
-import * as b from '../../../../../utils/builders.js';
-import { build_template_chunk, build_update } from './utils.js';
+import * as b from '#compiler/builders';
+import { is_custom_element_node } from '../../../../nodes.js';
+import { build_template_chunk } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -15,8 +16,8 @@ import { build_template_chunk, build_update } from './utils.js';
  * @param {boolean} is_element
  * @param {ComponentContext} context
  */
-export function process_children(nodes, initial, is_element, { visit, state }) {
-	const within_bound_contenteditable = state.metadata.bound_contenteditable;
+export function process_children(nodes, initial, is_element, context) {
+	const within_bound_contenteditable = context.state.metadata.bound_contenteditable;
 	let prev = initial;
 	let skipped = 0;
 
@@ -41,14 +42,15 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	/**
 	 * @param {boolean} is_text
 	 * @param {string} name
+	 * @param {SourceLocation | null} [loc]
 	 */
-	function flush_node(is_text, name) {
+	function flush_node(is_text, name, loc) {
 		const expression = get_node(is_text);
 		let id = expression;
 
 		if (id.type !== 'Identifier') {
-			id = b.id(state.scope.generate(name));
-			state.init.push(b.var(id, expression));
+			id = b.id(context.state.scope.generate(name), loc);
+			context.state.init.push(b.var(id, expression));
 		}
 
 		prev = () => id;
@@ -63,13 +65,13 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	function flush_sequence(sequence) {
 		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
-			state.template.push(sequence.map((node) => node.raw).join(''));
+			context.state.template.push_text(sequence);
 			return;
 		}
 
-		state.template.push(' ');
+		context.state.template.push_text([{ type: 'Text', data: ' ', raw: ' ', start: -1, end: -1 }]);
 
-		const { has_state, has_call, value } = build_template_chunk(sequence, visit, state);
+		const { has_state, value } = build_template_chunk(sequence, context);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
@@ -78,12 +80,10 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 		const update = b.stmt(b.call('$.set_text', id, value));
 
-		if (has_call && !within_bound_contenteditable) {
-			state.init.push(build_update(update));
-		} else if (has_state && !within_bound_contenteditable) {
-			state.update.push(update);
+		if (has_state && !within_bound_contenteditable) {
+			context.state.update.push(update);
 		} else {
-			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
+			context.state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
 	}
 
@@ -96,18 +96,30 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 				sequence = [];
 			}
 
-			let child_state = state;
+			let child_state = context.state;
 
-			if (is_static_element(node, state)) {
+			if (is_static_element(node)) {
 				skipped += 1;
-			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
+			} else if (
+				(node.type === 'EachBlock' || node.type === 'HtmlTag') &&
+				nodes.length === 1 &&
+				is_element &&
+				// In case it's wrapped in async the async logic will want to skip sibling nodes up until the end, hence we cannot make this controlled
+				// TODO switch this around and instead optimize for elements with a single block child and not require extra comments (neither for async nor normally)
+				!node.metadata.expression.is_async()
+			) {
 				node.metadata.is_controlled = true;
 			} else {
-				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
-				child_state = { ...state, node: id };
+				const id = flush_node(
+					false,
+					node.type === 'RegularElement' ? node.name : 'node',
+					node.type === 'RegularElement' ? node.name_loc : null
+				);
+
+				child_state = { ...context.state, node: id };
 			}
 
-			visit(node, child_state);
+			context.visit(node, child_state);
 		}
 	}
 
@@ -119,18 +131,17 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	// traverse to the last (n - 1) one when hydrating
 	if (skipped > 1) {
 		skipped -= 1;
-		state.init.push(b.stmt(b.call('$.next', skipped !== 1 && b.literal(skipped))));
+		context.state.init.push(b.stmt(b.call('$.next', skipped !== 1 && b.literal(skipped))));
 	}
 }
 
 /**
  * @param {AST.SvelteNode} node
- * @param {ComponentContext["state"]} state
  */
-function is_static_element(node, state) {
+export function is_static_element(node) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
-	if (node.name.includes('-')) return false; // we're setting all attributes on custom elements through properties
+	if (is_custom_element_node(node)) return false; // we're setting all attributes on custom elements through properties
 
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') {
@@ -142,6 +153,17 @@ function is_static_element(node, state) {
 		}
 
 		if (cannot_be_set_statically(attribute.name)) {
+			return false;
+		}
+
+		if (attribute.name === 'dir') {
+			return false;
+		}
+
+		if (
+			['input', 'textarea'].includes(node.name) &&
+			['value', 'checked'].includes(attribute.name)
+		) {
 			return false;
 		}
 

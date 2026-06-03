@@ -1,12 +1,39 @@
-import { source } from '../internal/client/reactivity/sources.js';
+import { DEV } from 'esm-env';
+import { state, increment } from '../internal/client/reactivity/sources.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { get_current_url } from './url.js';
-import { increment } from './utils.js';
 
-export const REPLACE = Symbol();
+export const REPLACE = Symbol('replace');
 
+/**
+ * A reactive version of the built-in [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) object.
+ * Reading its contents (by iterating, or by calling `params.get(...)` or `params.getAll(...)` as in the [example](https://svelte.dev/playground/b3926c86c5384bab9f2cf993bc08c1c8) below) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+ * will cause it to be re-evaluated as necessary when the params are updated.
+ *
+ * ```svelte
+ * <script>
+ * 	import { SvelteURLSearchParams } from 'svelte/reactivity';
+ *
+ * 	const params = new SvelteURLSearchParams('message=hello');
+ *
+ * 	let key = $state('key');
+ * 	let value = $state('value');
+ * </script>
+ *
+ * <input bind:value={key} />
+ * <input bind:value={value} />
+ * <button onclick={() => params.append(key, value)}>append</button>
+ *
+ * <p>?{params.toString()}</p>
+ *
+ * {#each params as [key, value]}
+ * 	<p>{key}: {value}</p>
+ * {/each}
+ * ```
+ */
 export class SvelteURLSearchParams extends URLSearchParams {
-	#version = source(0);
+	#version = DEV ? tag(state(0), 'SvelteURLSearchParams version') : state(0);
 	#url = get_current_url();
 
 	#updating = false;
@@ -23,6 +50,7 @@ export class SvelteURLSearchParams extends URLSearchParams {
 
 	/**
 	 * @param {URLSearchParams} params
+	 * @internal
 	 */
 	[REPLACE](params) {
 		if (this.#updating) return;
@@ -104,11 +132,12 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	set(name, value) {
-		var previous = super.getAll(name).join('');
+		var previous = super.getAll(name);
 		super.set(name, value);
 		// can't use has(name, value), because for something like https://svelte.dev?foo=1&bar=2&foo=3
 		// if you set `foo` to 1, then foo=3 gets deleted whilst `has("foo", "1")` returns true
-		if (previous !== super.getAll(name).join('')) {
+		var current = super.getAll(name);
+		if (previous.length !== current.length || previous.some((value, i) => value !== current[i])) {
 			this.#update_url();
 			increment(this.#version);
 		}

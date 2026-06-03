@@ -1,7 +1,7 @@
 /** @import { Identifier, Node } from 'estree' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { build_getter } from '../utils.js';
 
 /**
@@ -32,7 +32,11 @@ export function Identifier(node, context) {
 				grand_parent?.type !== 'AssignmentExpression' &&
 				grand_parent?.type !== 'UpdateExpression'
 			) {
-				return b.id('$$props');
+				const key = /** @type {Identifier} */ (parent.property);
+
+				if (!binding.metadata?.exclude_props?.includes(key.name)) {
+					return b.id('$$props');
+				}
 			}
 		}
 

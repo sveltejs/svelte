@@ -82,12 +82,14 @@ As with elements, `name={name}` can be replaced with the `{name}` shorthand.
 <Widget foo={bar} answer={42} text="hello" />
 ```
 
+## Spread attributes
+
 _Spread attributes_ allow many attributes or properties to be passed to an element or component at once.
 
-An element or component can have multiple spread attributes, interspersed with regular ones.
+An element or component can have multiple spread attributes, interspersed with regular ones. Order matters — if `things.a` exists it will take precedence over `a="b"`, while `c="d"` would take precedence over `things.c`:
 
 ```svelte
-<Widget {...things} />
+<Widget a="b" {...things} c="d" />
 ```
 
 ## Events
@@ -154,6 +156,8 @@ A JavaScript expression can be included as text by surrounding it with curly bra
 {expression}
 ```
 
+Expressions that are `null` or `undefined` will be omitted; all others are [coerced to strings](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#string_coercion).
+
 Curly braces can be included in a Svelte template by using their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings: `&lbrace;`, `&lcub;`, or `&#123;` for `{` and `&rbrace;`, `&rcub;`, or `&#125;` for `}`.
 
 If you're using a regular expression (`RegExp`) [literal notation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp#literal_notation_and_constructor), you'll need to wrap it in parentheses.
@@ -185,7 +189,7 @@ You can use HTML comments inside components.
 Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually, these are accessibility warnings; make sure that you're disabling them for a good reason.
 
 ```svelte
-<!-- svelte-ignore a11y-autofocus -->
+<!-- svelte-ignore a11y_autofocus -->
 <input bind:value={name} autofocus />
 ```
 

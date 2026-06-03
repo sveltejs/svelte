@@ -1,3 +1,4 @@
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 /**
@@ -77,7 +78,7 @@ export default test({
 			const { promise, reject } = promiseWithResolver();
 			component.promise = promise;
 			// wait for rendering
-			await Promise.resolve();
+			await tick();
 
 			// remove the promise
 			component.promise = null;

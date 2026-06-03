@@ -1,15 +1,15 @@
 import { test } from '../../test';
 
 export default test({
-	html: `
+	ssrHtml: `
 		<select>
-			<option value='hullo'>Hullo</option>
+			<option selected value='hullo'>Hullo</option>
 			<option value='world'>World</option>
 		</select>
 
 		<select>
 			<option value='hullo'>Hullo</option>
-			<option value='world'>World</option>
+			<option selected value='world'>World</option>
 		</select>
 	`,
 
@@ -19,7 +19,21 @@ export default test({
 		};
 	},
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target, window, variant }) {
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<select>
+				<option ${variant === 'hydrate' ? 'selected ' : ''}value='hullo'>Hullo</option>
+				<option value='world'>World</option>
+			</select>
+
+			<select>
+				<option value='hullo'>Hullo</option>
+				<option ${variant === 'hydrate' ? 'selected ' : ''}value='world'>World</option>
+			</select>
+		`
+		);
 		const selects = [...target.querySelectorAll('select')];
 
 		const change = new window.Event('change');

@@ -22,7 +22,7 @@ export function ExportSpecifier(node, context) {
 			});
 
 			const binding = context.state.scope.get(local_name);
-			if (binding) binding.reassigned = binding.updated = true;
+			if (binding) binding.reassigned = true;
 		}
 	} else {
 		validate_export(node, context.state.scope, local_name);

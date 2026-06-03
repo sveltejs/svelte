@@ -1,11 +1,13 @@
-/** @import { Expression, Pattern } from 'estree' */
+/** @import { Expression, Identifier, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
+import { build_expression } from './shared/utils.js';
+import { add_async_declaration } from './DeclarationTag.js';
 
 /**
  * @param {AST.ConstTag} node
@@ -15,23 +17,17 @@ export function ConstTag(node, context) {
 	const declaration = node.declaration.declarations[0];
 	// TODO we can almost certainly share some code with $derived(...)
 	if (declaration.id.type === 'Identifier') {
-		context.state.init.push(
-			b.const(
-				declaration.id,
-				create_derived(
-					context.state,
-					b.thunk(/** @type {Expression} */ (context.visit(declaration.init)))
-				)
-			)
-		);
+		const init = build_expression(context, declaration.init, node.metadata.expression);
+
+		let expression = create_derived(context.state, init, node.metadata.expression.has_await);
+
+		if (dev) {
+			expression = b.call('$.tag', expression, b.literal(declaration.id.name));
+		}
 
 		context.state.transform[declaration.id.name] = { read: get_value };
 
-		// we need to eagerly evaluate the expression in order to hit any
-		// 'Cannot access x before initialization' errors
-		if (dev) {
-			context.state.init.push(b.stmt(b.call('$.get', declaration.id)));
-		}
+		add_const_declaration(context, declaration.id, expression, node.metadata);
 	} else {
 		const identifiers = extract_identifiers(declaration.id);
 		const tmp = b.id(context.state.scope.generate('computed_const'));
@@ -44,33 +40,62 @@ export function ConstTag(node, context) {
 			delete transform[node.name];
 		}
 
-		const child_state = { ...context.state, transform };
+		const child_state = /** @type {ComponentContext['state']} */ ({
+			...context.state,
+			transform
+		});
 
 		// TODO optimise the simple `{ x } = y` case — we can just return `y`
 		// instead of destructuring it only to return a new object
-		const fn = b.arrow(
-			[],
-			b.block([
-				b.const(
-					/** @type {Pattern} */ (context.visit(declaration.id, child_state)),
-					/** @type {Expression} */ (context.visit(declaration.init, child_state))
-				),
-				b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
-			])
+		const init = build_expression(
+			{ ...context, state: child_state },
+			declaration.init,
+			node.metadata.expression
 		);
 
-		context.state.init.push(b.const(tmp, create_derived(context.state, fn)));
+		const block = b.block([
+			b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
+			b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
+		]);
 
-		// we need to eagerly evaluate the expression in order to hit any
-		// 'Cannot access x before initialization' errors
+		let expression = create_derived(context.state, block, node.metadata.expression.has_await);
+
 		if (dev) {
-			context.state.init.push(b.stmt(b.call('$.get', tmp)));
+			expression = b.call('$.tag', expression, b.literal('[@const]'));
 		}
+
+		add_const_declaration(context, tmp, expression, node.metadata);
 
 		for (const node of identifiers) {
 			context.state.transform[node.name] = {
 				read: (node) => b.member(b.call('$.get', tmp), node)
 			};
 		}
+	}
+}
+
+/**
+ * @param {ComponentContext} context
+ * @param {Identifier} id
+ * @param {Expression} expression
+ * @param {AST.ConstTag['metadata']} metadata
+ */
+function add_const_declaration(context, id, expression, metadata) {
+	// we need to eagerly evaluate the expression in order to hit any
+	// 'Cannot access x before initialization' errors
+	const after = dev ? [b.stmt(b.call('$.get', id))] : [];
+
+	if (metadata.promises_id) {
+		add_async_declaration(
+			context,
+			metadata,
+			[id],
+			[b.stmt(b.assignment('=', id, expression))],
+			'let'
+		);
+	} else {
+		const { state } = context;
+		state.consts.push(b.const(id, expression));
+		state.consts.push(...after);
 	}
 }

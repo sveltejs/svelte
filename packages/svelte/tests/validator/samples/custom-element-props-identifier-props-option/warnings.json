@@ -1,0 +1,14 @@
+[
+	{
+		"code": "options_missing_custom_element",
+		"end": {
+			"column": 2,
+			"line": 3
+		},
+		"message": "The `customElement` option is used when generating a custom element. Did you forget the `customElement: true` compile option?",
+		"start": {
+			"column": 16,
+			"line": 1
+		}
+	}
+]

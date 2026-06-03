@@ -1,10 +1,10 @@
-/** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
-/** @import { AST, Binding } from '#compiler' */
-/** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
+/** @import { BlockStatement, Expression, Identifier } from 'estree' */
+/** @import { Binding } from '#compiler' */
+/** @import { ClientTransformState, ComponentClientTransformState } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
-import * as b from '../../../utils/builders.js';
-import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
+import * as b from '#compiler/builders';
+import { is_simple_expression, save } from '../../../utils/ast.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -12,8 +12,6 @@ import {
 	PROPS_IS_UPDATED,
 	PROPS_IS_BINDABLE
 } from '../../../../constants.js';
-import { dev } from '../../../state.js';
-import { get_value } from './visitors/shared/declarations.js';
 
 /**
  * @param {Binding} binding
@@ -43,109 +41,6 @@ export function build_getter(node, state) {
 	}
 
 	return node;
-}
-
-/**
- * @param {Expression} value
- * @param {Expression} previous
- */
-export function build_proxy_reassignment(value, previous) {
-	return dev ? b.call('$.proxy', value, b.null, previous) : b.call('$.proxy', value);
-}
-
-/**
- * @param {FunctionDeclaration | FunctionExpression | ArrowFunctionExpression} node
- * @param {ComponentContext} context
- * @returns {Pattern[]}
- */
-function get_hoisted_params(node, context) {
-	const scope = context.state.scope;
-
-	/** @type {Identifier[]} */
-	const params = [];
-
-	/**
-	 * We only want to push if it's not already present to avoid name clashing
-	 * @param {Identifier} id
-	 */
-	function push_unique(id) {
-		if (!params.find((param) => param.name === id.name)) {
-			params.push(id);
-		}
-	}
-
-	for (const [reference] of scope.references) {
-		let binding = scope.get(reference);
-
-		if (binding !== null && !scope.declarations.has(reference) && binding.initial !== node) {
-			if (binding.kind === 'store_sub') {
-				// We need both the subscription for getting the value and the store for updating
-				push_unique(b.id(binding.node.name));
-				binding = /** @type {Binding} */ (scope.get(binding.node.name.slice(1)));
-			}
-
-			let expression = context.state.transform[reference]?.read(b.id(binding.node.name));
-
-			if (
-				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
-				// TODO this code is bad, we need to kill it
-				expression != null &&
-				typeof expression !== 'function' &&
-				expression.type === 'MemberExpression' &&
-				expression.object.type === 'CallExpression' &&
-				expression.object.callee.type === 'Identifier' &&
-				expression.object.callee.name === '$.get' &&
-				expression.object.arguments[0].type === 'Identifier'
-			) {
-				push_unique(b.id(expression.object.arguments[0].name));
-			} else if (
-				// If we are referencing a simple $$props value, then we need to reference the object property instead
-				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-				!is_prop_source(binding, context.state)
-			) {
-				push_unique(b.id('$$props'));
-			} else if (
-				// imports don't need to be hoisted
-				binding.declaration_kind !== 'import'
-			) {
-				// create a copy to remove start/end tags which would mess up source maps
-				push_unique(b.id(binding.node.name));
-				// rest props are often accessed through the $$props object for optimization reasons,
-				// but we can't know if the delegated event handler will use it, so we need to add both as params
-				if (binding.kind === 'rest_prop' && context.state.analysis.runes) {
-					push_unique(b.id('$$props'));
-				}
-			}
-		}
-	}
-	return params;
-}
-
-/**
- * @param {FunctionDeclaration | FunctionExpression | ArrowFunctionExpression} node
- * @param {ComponentContext} context
- * @returns {Pattern[]}
- */
-export function build_hoisted_params(node, context) {
-	const hoisted_params = get_hoisted_params(node, context);
-	node.metadata.hoisted_params = hoisted_params;
-
-	/** @type {Pattern[]} */
-	const params = [];
-
-	if (node.params.length === 0) {
-		if (hoisted_params.length > 0) {
-			// For the event object
-			params.push(b.id(context.state.scope.generate('_')));
-		}
-	} else {
-		for (const param of node.params) {
-			params.push(/** @type {Pattern} */ (context.visit(param)));
-		}
-	}
-
-	params.push(...hoisted_params);
-	return params;
 }
 
 /**
@@ -270,45 +165,38 @@ export function should_proxy(node, scope) {
 }
 
 /**
- * @param {Pattern} node
- * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
- * @returns {{ id: Pattern, declarations: null | Statement[] }}
+ * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
+ * @param {ComponentClientTransformState} state
+ * @param {Expression | BlockStatement} expression
+ * @param {boolean} [async]
  */
-export function create_derived_block_argument(node, context) {
-	if (node.type === 'Identifier') {
-		context.state.transform[node.name] = { read: get_value };
-		return { id: node, declarations: null };
+export function create_derived(state, expression, async = false) {
+	const thunk = b.thunk(expression, async);
+
+	if (async) {
+		return save(b.call('$.async_derived', thunk));
+	} else {
+		return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', thunk);
 	}
-
-	const pattern = /** @type {Pattern} */ (context.visit(node));
-	const identifiers = extract_identifiers(node);
-
-	const id = b.id('$$source');
-	const value = b.id('$$value');
-
-	const block = b.block([
-		b.var(pattern, b.call('$.get', id)),
-		b.return(b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier))))
-	]);
-
-	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
-
-	for (const id of identifiers) {
-		context.state.transform[id.name] = { read: get_value };
-
-		declarations.push(
-			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
-		);
-	}
-
-	return { id, declarations };
 }
 
 /**
- * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
- * @param {ComponentClientTransformState} state
- * @param {Expression} arg
+ * @param {Scope} scope
+ * @param {ClientTransformState} state
  */
-export function create_derived(state, arg) {
-	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+export function get_transform(scope, state) {
+	const transform = { ...state.transform };
+
+	for (const [name, binding] of scope.declarations) {
+		if (
+			binding.kind === 'normal' ||
+			// Reads of `$state(...)` declarations are not
+			// transformed if they are never reassigned
+			(binding.kind === 'state' && !is_state_source(binding, state.analysis))
+		) {
+			delete transform[name];
+		}
+	}
+
+	return transform;
 }

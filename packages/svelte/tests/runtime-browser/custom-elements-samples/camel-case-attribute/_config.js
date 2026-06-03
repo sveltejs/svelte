@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../assert';
 const tick = () => Promise.resolve();
 
@@ -14,8 +15,7 @@ export default test({
 		el.setAttribute('camel-case', 'universe');
 		el.setAttribute('an-array', '[3,4]');
 		el.setAttribute('camelcase2', 'Hi');
-		await tick();
-		await tick();
+		flushSync();
 		assert.htmlEqual(el.shadowRoot.innerHTML, '<h1>Hi universe!</h1> <p>3</p><p>4</p>');
 		assert.htmlEqual(
 			target.innerHTML,
@@ -25,8 +25,7 @@ export default test({
 		el.camelCase = 'galaxy';
 		el.camelCase2 = 'Hey';
 		el.anArray = [5, 6];
-		await tick();
-		await tick();
+		flushSync();
 		assert.htmlEqual(el.shadowRoot.innerHTML, '<h1>Hey galaxy!</h1> <p>5</p><p>6</p>');
 		assert.htmlEqual(
 			target.innerHTML,

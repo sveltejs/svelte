@@ -1,14 +1,14 @@
-import type {
-	ClassDeclaration,
-	Expression,
-	FunctionDeclaration,
-	Identifier,
-	ImportDeclaration
-} from 'estree';
 import type { SourceMap } from 'magic-string';
-import type { Scope } from '../phases/scope.js';
+import type { Binding } from '../phases/scope.js';
 import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
+import type { StateCreationRuneName } from '../../utils.js';
+import type {
+	AssignmentExpression,
+	CallExpression,
+	PrivateIdentifier,
+	PropertyDefinition
+} from 'estree';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -25,6 +25,8 @@ export interface CompileResult {
 		code: string;
 		/** A source map */
 		map: SourceMap;
+		/** Whether or not the CSS includes global rules */
+		hasGlobal: boolean;
 	};
 	/**
 	 * An array of warning objects that were generated during compilation. Each warning has several properties:
@@ -71,9 +73,11 @@ export interface CompileOptions extends ModuleCompileOptions {
 	/**
 	 * If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.
 	 *
+	 * You can also pass a function that receives `{ filename }` and returns a boolean.
+	 *
 	 * @default false
 	 */
-	customElement?: boolean;
+	customElement?: boolean | ((options: { filename: string }) => boolean);
 	/**
 	 * If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.
 	 *
@@ -99,11 +103,13 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * - `'injected'`: styles will be included in the `head` when using `render(...)`, and injected into the document (if not already present) when the component mounts. For components compiled as custom elements, styles are injected to the shadow root.
 	 * - `'external'`: the CSS will only be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
 	 * This is always `'injected'` when compiling with `customElement` mode.
+	 *
+	 * You can also pass a function that receives `{ filename }` and returns either `'injected'` or `'external'`.
 	 */
-	css?: 'injected' | 'external';
+	css?: 'injected' | 'external' | ((options: { filename: string }) => 'injected' | 'external');
 	/**
 	 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-	 * It defaults to returning `svelte-${hash(css)}`.
+	 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 	 *
 	 * @default undefined
 	 */
@@ -121,6 +127,16 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	preserveWhitespace?: boolean;
 	/**
+	 * Which strategy to use when cloning DOM fragments:
+	 *
+	 * - `html` populates a `<template>` with `innerHTML` and clones it. This is faster, but cannot be used if your app's [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) includes [`require-trusted-types-for 'script'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/require-trusted-types-for)
+	 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
+	 *
+	 * @default 'html'
+	 * @since 5.33
+	 */
+	fragments?: 'html' | 'tree';
+	/**
 	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 	 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -130,7 +146,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 	 * @default undefined
 	 */
-	runes?: boolean | undefined;
+	runes?: boolean | undefined | ((options: { filename: string }) => boolean | undefined);
 	/**
 	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 	 *
@@ -212,6 +228,17 @@ export interface ModuleCompileOptions {
 	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 	 */
 	warningFilter?: (warning: Warning) => boolean;
+	/**
+	 * Experimental options
+	 * @since 5.36
+	 */
+	experimental?: {
+		/**
+		 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+		 * @since 5.36
+		 */
+		async?: boolean;
+	};
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
@@ -225,102 +252,66 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		Required<CompileOptions>,
 		| keyof ModuleCompileOptions
 		| 'name'
+		| 'customElement'
 		| 'compatibility'
 		| 'outputFilename'
 		| 'cssOutputFilename'
 		| 'sourcemap'
+		| 'css'
 		| 'runes'
 	> & {
 		name: CompileOptions['name'];
+		customElement: (options: { filename: string }) => boolean;
 		outputFilename: CompileOptions['outputFilename'];
 		cssOutputFilename: CompileOptions['cssOutputFilename'];
 		sourcemap: CompileOptions['sourcemap'];
 		compatibility: Required<Required<CompileOptions>['compatibility']>;
-		runes: CompileOptions['runes'];
+		css: (options: { filename: string }) => 'injected' | 'external';
+		runes: (options: { filename: string }) => boolean | undefined;
 		customElementOptions: AST.SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];
 	};
+
+export type BindingKind =
+	| 'normal' // A variable that is not in any way special
+	| 'prop' // A normal prop (possibly reassigned or mutated)
+	| 'bindable_prop' // A prop one can `bind:` to (possibly reassigned or mutated)
+	| 'rest_prop' // A rest prop
+	| 'raw_state' // A state variable
+	| 'state' // A deeply reactive state variable
+	| 'derived' // A derived variable
+	| 'each' // An each block parameter
+	| 'snippet' // A snippet parameter
+	| 'store_sub' // A $store value
+	| 'legacy_reactive' // A `$:` declaration
+	| 'template' // A binding declared in the template, e.g. in an `await` block or `const` tag
+	| 'static'; // A binding whose value is known to be static (i.e. each index)
 
 export type DeclarationKind =
 	| 'var'
 	| 'let'
 	| 'const'
+	| 'using'
+	| 'await using'
 	| 'function'
 	| 'import'
 	| 'param'
 	| 'rest_param'
-	| 'synthetic';
+	| 'synthetic'
+	// TODO not yet implemented, but needed for TypeScript reasons
+	| 'using'
+	| 'await using';
 
-export interface Binding {
-	node: Identifier;
-	/**
-	 * - `normal`: A variable that is not in any way special
-	 * - `prop`: A normal prop (possibly reassigned or mutated)
-	 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
-	 * - `rest_prop`: A rest prop
-	 * - `state`: A state variable
-	 * - `derived`: A derived variable
-	 * - `each`: An each block parameter
-	 * - `snippet`: A snippet parameter
-	 * - `store_sub`: A $store value
-	 * - `legacy_reactive`: A `$:` declaration
-	 * - `template`: A binding declared in the template, e.g. in an `await` block or `const` tag
-	 */
-	kind:
-		| 'normal'
-		| 'prop'
-		| 'bindable_prop'
-		| 'rest_prop'
-		| 'state'
-		| 'raw_state'
-		| 'derived'
-		| 'each'
-		| 'snippet'
-		| 'store_sub'
-		| 'legacy_reactive'
-		| 'template'
-		| 'snippet';
-	declaration_kind: DeclarationKind;
-	/**
-	 * What the value was initialized with.
-	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
-	 */
-	initial:
-		| null
-		| Expression
-		| FunctionDeclaration
-		| ClassDeclaration
-		| ImportDeclaration
-		| AST.EachBlock
-		| AST.SnippetBlock;
-	is_called: boolean;
-	references: { node: Identifier; path: AST.SvelteNode[] }[];
-	mutated: boolean;
-	reassigned: boolean;
-	/** `true` if mutated _or_ reassigned */
-	updated: boolean;
-	scope: Scope;
-	/** For `legacy_reactive`: its reactive dependencies */
-	legacy_dependencies: Binding[];
-	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
-	prop_alias: string | null;
-	/** Additional metadata, varies per binding type */
-	metadata: {
-		/** `true` if is (inside) a rest parameter */
-		inside_rest?: boolean;
-	} | null;
-}
-
-export interface ExpressionMetadata {
-	/** All the bindings that are referenced inside this expression */
-	dependencies: Set<Binding>;
-	/** True if the expression references state directly, or _might_ (via member/call expressions) */
-	has_state: boolean;
-	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
-	has_call: boolean;
+export interface StateField {
+	type: StateCreationRuneName;
+	node: PropertyDefinition | AssignmentExpression;
+	key: PrivateIdentifier;
+	value: CallExpression;
 }
 
 export * from './template.js';
+
+export { Binding, Scope } from '../phases/scope.js';
 
 // TODO this chain is a bit weird
 export { ReactiveStatement } from '../phases/types.js';

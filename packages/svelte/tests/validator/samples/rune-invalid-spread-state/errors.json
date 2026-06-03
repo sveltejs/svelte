@@ -1,0 +1,14 @@
+[
+	{
+		"code": "rune_invalid_spread",
+		"end": {
+			"column": 30,
+			"line": 3
+		},
+		"message": "`$state` cannot be called with a spread argument",
+		"start": {
+			"column": 15,
+			"line": 3
+		}
+	}
+]

@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
-import { queue_micro_task } from './task.js';
 import { register_style } from '../dev/css.js';
+import { effect } from '../reactivity/effects.js';
+import { create_element } from './operations.js';
 
 /**
  * @param {Node} anchor
@@ -8,7 +9,7 @@ import { register_style } from '../dev/css.js';
  */
 export function append_styles(anchor, css) {
 	// Use `queue_micro_task` to ensure `anchor` is in the DOM, otherwise getRootNode() will yield wrong results
-	queue_micro_task(() => {
+	effect(() => {
 		var root = anchor.getRootNode();
 
 		var target = /** @type {ShadowRoot} */ (root).host
@@ -18,7 +19,7 @@ export function append_styles(anchor, css) {
 		// Always querying the DOM is roughly the same perf as additionally checking for presence in a map first assuming
 		// that you'll get cache hits half of the time, so we just always query the dom for simplicity and code savings.
 		if (!target.querySelector('#' + css.hash)) {
-			const style = document.createElement('style');
+			const style = create_element('style');
 			style.id = css.hash;
 			style.textContent = css.code;
 

@@ -1,4 +1,3 @@
-/** @import { ActionReturn } from 'svelte/action' */
 import { noop } from '../../../shared/utils.js';
 import { user_pre_effect } from '../../reactivity/effects.js';
 import { on } from '../elements/events.js';

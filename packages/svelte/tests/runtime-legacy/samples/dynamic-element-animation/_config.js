@@ -50,6 +50,8 @@ export default test({
 			{ id: 1, name: 'a' }
 		];
 
+		raf.tick(0);
+
 		divs = target.querySelectorAll('div');
 		assert.equal(divs[0].style.transform, 'translate(0px, 120px)');
 		assert.equal(divs[1].style.transform, '');

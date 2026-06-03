@@ -1,5 +1,4 @@
 /** @import { Expression, Identifier } from 'estree' */
-/** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import { should_proxy } from '../../3-transform/client/utils.js';
@@ -7,6 +6,8 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
+import { get_rune } from '../../scope.js';
+import { is_component_node } from '../../nodes.js';
 
 /**
  * @param {Identifier} node
@@ -39,7 +40,7 @@ export function Identifier(node, context) {
 		if (
 			is_rune(node.name) &&
 			context.state.scope.get(node.name) === null &&
-			context.state.scope.get(node.name.slice(1)) === null
+			context.state.scope.get(node.name.slice(1))?.kind !== 'store_sub'
 		) {
 			/** @type {Expression} */
 			let current = node;
@@ -90,7 +91,14 @@ export function Identifier(node, context) {
 	if (binding) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
-			context.state.expression.has_state ||= binding.kind !== 'normal';
+			context.state.expression.references.add(binding);
+			context.state.expression.has_state ||=
+				binding.kind !== 'static' &&
+				(binding.kind === 'prop' ||
+					binding.kind === 'bindable_prop' ||
+					binding.kind === 'rest_prop' ||
+					!binding.is_function()) &&
+				!context.state.scope.evaluate(node).is_known;
 		}
 
 		if (
@@ -106,12 +114,41 @@ export function Identifier(node, context) {
 						binding.initial.arguments[0].type !== 'SpreadElement' &&
 						!should_proxy(binding.initial.arguments[0], context.state.scope)))) ||
 				binding.kind === 'raw_state' ||
-				binding.kind === 'derived') &&
+				binding.kind === 'derived' ||
+				binding.kind === 'prop' ||
+				binding.kind === 'rest_prop') &&
 			// We're only concerned with reads here
 			(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 			parent.type !== 'UpdateExpression'
 		) {
-			w.state_referenced_locally(node);
+			let type = 'closure';
+
+			let i = context.path.length;
+			while (i--) {
+				const parent = context.path[i];
+
+				if (
+					parent.type === 'ArrowFunctionExpression' ||
+					parent.type === 'FunctionDeclaration' ||
+					parent.type === 'FunctionExpression'
+				) {
+					break;
+				}
+
+				if (
+					parent.type === 'CallExpression' &&
+					parent.arguments.includes(/** @type {any} */ (context.path[i + 1]))
+				) {
+					const rune = get_rune(parent, context.state.scope);
+
+					if (rune === '$state' || rune === '$state.raw') {
+						type = 'derived';
+						break;
+					}
+				}
+			}
+
+			w.state_referenced_locally(node, node.name, type);
 		}
 
 		if (
@@ -120,6 +157,38 @@ export function Identifier(node, context) {
 			binding.reassigned
 		) {
 			w.reactive_declaration_module_script_dependency(node);
+		}
+
+		if (binding.metadata?.is_template_declaration && context.state.options.experimental.async) {
+			let snippet_name;
+
+			// Find out if this references a {@const ...}/{let/const ...} declaration of an implicit children snippet
+			// when it is itself inside a snippet block at the same level. If so, error.
+			for (let i = context.path.length - 1; i >= 0; i--) {
+				const parent = context.path[i];
+				const grand_parent = context.path[i - 1];
+
+				if (parent.type === 'SnippetBlock') {
+					snippet_name = parent.expression.name;
+				} else if (
+					snippet_name &&
+					grand_parent &&
+					parent.type === 'Fragment' &&
+					(is_component_node(grand_parent) ||
+						(grand_parent.type === 'SvelteBoundary' &&
+							(snippet_name === 'failed' || snippet_name === 'pending')))
+				) {
+					if (
+						is_component_node(grand_parent)
+							? grand_parent.metadata.scopes.default === binding.scope
+							: context.state.scopes.get(parent) === binding.scope
+					) {
+						e.const_tag_invalid_reference(node, node.name);
+					} else {
+						break;
+					}
+				}
+			}
 		}
 	}
 }

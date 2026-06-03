@@ -1,6 +1,6 @@
 /** @import { Expression, PropertyDefinition } from 'estree' */
 /** @import { Context } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 
 /**
@@ -11,7 +11,7 @@ export function PropertyDefinition(node, context) {
 	if (context.state.analysis.runes && node.value != null && node.value.type === 'CallExpression') {
 		const rune = get_rune(node.value, context.state.scope);
 
-		if (rune === '$state' || rune === '$state.raw' || rune === '$derived') {
+		if (rune === '$state' || rune === '$state.raw') {
 			return {
 				...node,
 				value:
@@ -21,13 +21,14 @@ export function PropertyDefinition(node, context) {
 			};
 		}
 
-		if (rune === '$derived.by') {
+		if (rune === '$derived.by' || rune === '$derived') {
+			const fn = /** @type {Expression} */ (context.visit(node.value.arguments[0]));
 			return {
 				...node,
 				value:
 					node.value.arguments.length === 0
 						? null
-						: b.call(/** @type {Expression} */ (context.visit(node.value.arguments[0])))
+						: b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn)
 			};
 		}
 	}

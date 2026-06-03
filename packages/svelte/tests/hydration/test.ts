@@ -2,9 +2,10 @@
 
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { compile_directory, should_update_expected } from '../helpers.js';
+import { compile_directory } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
-import { suite, assert_ok, type BaseTest } from '../suite.js';
+import { fragments } from '../helpers.js';
+import { assert_ok, suite, type BaseTest } from '../suite.js';
 import { createClassComponent } from 'svelte/legacy';
 import { render } from 'svelte/server';
 import type { CompileOptions } from '#compiler';
@@ -13,6 +14,7 @@ import { flushSync } from 'svelte';
 interface HydrationTest extends BaseTest {
 	load_compiled?: boolean;
 	server_props?: Record<string, any>;
+	id_prefix?: string;
 	props?: Record<string, any>;
 	compileOptions?: Partial<CompileOptions>;
 	/**
@@ -23,7 +25,21 @@ interface HydrationTest extends BaseTest {
 	expect_hydration_error?: true;
 	snapshot?: (target: HTMLElement) => any;
 	test?: (
-		assert: typeof import('vitest').assert & {
+		// `_config.js` test callbacks rely on inferred parameter types, which
+		// TS treats as non-explicit and rejects for chai 5's assertion-function
+		// signatures (TS2775). Override the assertion methods we actually use
+		// with non-assertion equivalents.
+		assert: Omit<
+			typeof import('vitest').assert,
+			'ok' | 'isOk' | 'isTrue' | 'isFalse' | 'exists' | 'notExists' | 'instanceOf'
+		> & {
+			ok(value: unknown, message?: string): void;
+			isOk(value: unknown, message?: string): void;
+			isTrue(value: unknown, message?: string): void;
+			isFalse(value: unknown, message?: string): void;
+			exists(value: unknown, message?: string): void;
+			notExists(value: unknown, message?: string): void;
+			instanceOf(value: unknown, type: Function, message?: string): void;
 			htmlEqual(a: string, b: string, description?: string): void;
 		},
 		target: HTMLElement,
@@ -42,15 +58,23 @@ function read(path: string): string | void {
 
 const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	if (!config.load_compiled) {
-		await compile_directory(cwd, 'client', { accessors: true, ...config.compileOptions });
+		await compile_directory(cwd, 'client', {
+			accessors: true,
+			fragments,
+			...config.compileOptions
+		});
+
 		await compile_directory(cwd, 'server', config.compileOptions);
 	}
+
+	config.before_test?.();
 
 	const target = window.document.body;
 	const head = window.document.head;
 
 	const rendered = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
-		props: config.server_props ?? config.props ?? {}
+		props: config.server_props ?? config.props ?? {},
+		idPrefix: config?.id_prefix
 	});
 
 	const override = read(`${cwd}/_override.html`);
@@ -63,8 +87,6 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
 		head.innerHTML = override_head ?? rendered.head;
 	}
-
-	config.before_test?.();
 
 	try {
 		const snapshot = config.snapshot ? config.snapshot(target) : {};
@@ -103,7 +125,8 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			component: (await import(`${cwd}/_output/client/main.svelte.js`)).default,
 			target,
 			hydrate: true,
-			props: config.props
+			props: config.props,
+			idPrefix: config?.id_prefix
 		});
 
 		console.warn = warn;
@@ -122,14 +145,12 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 
 		flushSync();
 
-		const normalize = (string: string) => string.trim().replace(/\r\n/g, '\n');
-
 		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
-		assert.equal(normalize(target.innerHTML), normalize(expected));
+		assert_html_equal(target.innerHTML, expected);
 
 		if (rendered.head) {
 			const expected = read(`${cwd}/_expected_head.html`) ?? rendered.head;
-			assert.equal(normalize(head.innerHTML), normalize(expected));
+			assert_html_equal(head.innerHTML, expected);
 		}
 
 		if (config.snapshot) {
@@ -145,7 +166,6 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 
 		if (config.test) {
 			await config.test(
-				// @ts-expect-error TS doesn't get it
 				{
 					...assert,
 					htmlEqual: assert_html_equal

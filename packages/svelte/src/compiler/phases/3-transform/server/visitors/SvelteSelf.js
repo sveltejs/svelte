@@ -1,6 +1,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { build_inline_component } from './shared/component.js';
 
 /**

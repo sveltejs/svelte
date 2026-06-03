@@ -28,6 +28,7 @@
 					"type": "Identifier",
 					"name": "theValue",
 					"start": 46,
+					"end": 54,
 					"loc": {
 						"start": {
 							"line": 3,
@@ -39,13 +40,13 @@
 							"column": 15,
 							"character": 54
 						}
-					},
-					"end": 54
+					}
 				},
 				"error": {
 					"type": "Identifier",
 					"name": "theError",
 					"start": 96,
+					"end": 104,
 					"loc": {
 						"start": {
 							"line": 5,
@@ -57,8 +58,7 @@
 							"column": 16,
 							"character": 104
 						}
-					},
-					"end": 104
+					}
 				},
 				"pending": {
 					"type": "PendingBlock",

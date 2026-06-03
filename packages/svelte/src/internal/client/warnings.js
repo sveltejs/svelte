@@ -19,13 +19,44 @@ export function assignment_value_stale(property, location) {
 }
 
 /**
+ * Detected reactivity loss when reading `%name%`. This happens when state is read in an async function after an earlier `await`
+ * @param {string} name
+ */
+export function await_reactivity_loss(name) {
+	if (DEV) {
+		console.warn(`%c[svelte] await_reactivity_loss\n%cDetected reactivity loss when reading \`${name}\`. This happens when state is read in an async function after an earlier \`await\`\nhttps://svelte.dev/e/await_reactivity_loss`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_reactivity_loss`);
+	}
+}
+
+/**
+ * An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+ * @param {string} name
+ * @param {string} location
+ */
+export function await_waterfall(name, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] await_waterfall\n%cAn async derived, \`${name}\` (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_waterfall`);
+	}
+}
+
+/**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
  * @param {string | undefined | null} [location]
  */
 export function binding_property_non_reactive(binding, location) {
 	if (DEV) {
-		console.warn(`%c[svelte] binding_property_non_reactive\n%c${location ? `\`${binding}\` (${location}) is binding to a non-reactive property` : `\`${binding}\` is binding to a non-reactive property`}\nhttps://svelte.dev/e/binding_property_non_reactive`, bold, normal);
+		console.warn(
+			`%c[svelte] binding_property_non_reactive\n%c${location
+				? `\`${binding}\` (${location}) is binding to a non-reactive property`
+				: `\`${binding}\` is binding to a non-reactive property`}\nhttps://svelte.dev/e/binding_property_non_reactive`,
+			bold,
+			normal
+		);
 	} else {
 		console.warn(`https://svelte.dev/e/binding_property_non_reactive`);
 	}
@@ -44,6 +75,17 @@ export function console_log_state(method) {
 }
 
 /**
+ * Reading a derived belonging to a now-destroyed effect may result in stale values
+ */
+export function derived_inert() {
+	if (DEV) {
+		console.warn(`%c[svelte] derived_inert\n%cReading a derived belonging to a now-destroyed effect may result in stale values\nhttps://svelte.dev/e/derived_inert`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/derived_inert`);
+	}
+}
+
+/**
  * %handler% should be a function. Did you mean to %suggestion%?
  * @param {string} handler
  * @param {string} suggestion
@@ -53,6 +95,18 @@ export function event_handler_invalid(handler, suggestion) {
 		console.warn(`%c[svelte] event_handler_invalid\n%c${handler} should be a function. Did you mean to ${suggestion}?\nhttps://svelte.dev/e/event_handler_invalid`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/event_handler_invalid`);
+	}
+}
+
+/**
+ * Expected to find a hydratable with key `%key%` during hydration, but did not.
+ * @param {string} key
+ */
+export function hydratable_missing_but_expected(key) {
+	if (DEV) {
+		console.warn(`%c[svelte] hydratable_missing_but_expected\n%cExpected to find a hydratable with key \`${key}\` during hydration, but did not.\nhttps://svelte.dev/e/hydratable_missing_but_expected`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/hydratable_missing_but_expected`);
 	}
 }
 
@@ -76,7 +130,13 @@ export function hydration_attribute_changed(attribute, html, value) {
  */
 export function hydration_html_changed(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : "The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value"}\nhttps://svelte.dev/e/hydration_html_changed`, bold, normal);
+		console.warn(
+			`%c[svelte] hydration_html_changed\n%c${location
+				? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value`
+				: 'The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value'}\nhttps://svelte.dev/e/hydration_html_changed`,
+			bold,
+			normal
+		);
 	} else {
 		console.warn(`https://svelte.dev/e/hydration_html_changed`);
 	}
@@ -88,7 +148,13 @@ export function hydration_html_changed(location) {
  */
 export function hydration_mismatch(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_mismatch\n%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : "Hydration failed because the initial UI does not match what was rendered on the server"}\nhttps://svelte.dev/e/hydration_mismatch`, bold, normal);
+		console.warn(
+			`%c[svelte] hydration_mismatch\n%c${location
+				? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}`
+				: 'Hydration failed because the initial UI does not match what was rendered on the server'}\nhttps://svelte.dev/e/hydration_mismatch`,
+			bold,
+			normal
+		);
 	} else {
 		console.warn(`https://svelte.dev/e/hydration_mismatch`);
 	}
@@ -129,29 +195,43 @@ export function lifecycle_double_unmount() {
 }
 
 /**
- * %parent% passed a value to %child% with `bind:`, but the value is owned by %owner%. Consider creating a binding between %owner% and %parent%
+ * %parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)
  * @param {string} parent
+ * @param {string} prop
  * @param {string} child
  * @param {string} owner
  */
-export function ownership_invalid_binding(parent, child, owner) {
+export function ownership_invalid_binding(parent, prop, child, owner) {
 	if (DEV) {
-		console.warn(`%c[svelte] ownership_invalid_binding\n%c${parent} passed a value to ${child} with \`bind:\`, but the value is owned by ${owner}. Consider creating a binding between ${owner} and ${parent}\nhttps://svelte.dev/e/ownership_invalid_binding`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_binding\n%c${parent} passed property \`${prop}\` to ${child} with \`bind:\`, but its parent component ${owner} did not declare \`${prop}\` as a binding. Consider creating a binding between ${owner} and ${parent} (e.g. \`bind:${prop}={...}\` instead of \`${prop}={...}\`)\nhttps://svelte.dev/e/ownership_invalid_binding`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/ownership_invalid_binding`);
 	}
 }
 
 /**
- * %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
- * @param {string | undefined | null} [component]
- * @param {string | undefined | null} [owner]
+ * Mutating unbound props (`%name%`, at %location%) is strongly discouraged. Consider using `bind:%prop%={...}` in %parent% (or using a callback) instead
+ * @param {string} name
+ * @param {string} location
+ * @param {string} prop
+ * @param {string} parent
  */
-export function ownership_invalid_mutation(component, owner) {
+export function ownership_invalid_mutation(name, location, prop, parent) {
 	if (DEV) {
-		console.warn(`%c[svelte] ownership_invalid_mutation\n%c${component ? `${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead` : "Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead"}\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_mutation\n%cMutating unbound props (\`${name}\`, at ${location}) is strongly discouraged. Consider using \`bind:${prop}={...}\` in ${parent} (or using a callback) instead\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/ownership_invalid_mutation`);
+	}
+}
+
+/**
+ * The `value` property of a `<select multiple>` element should be an array, but it received a non-array value. The selection will be kept as is.
+ */
+export function select_multiple_invalid_value() {
+	if (DEV) {
+		console.warn(`%c[svelte] select_multiple_invalid_value\n%cThe \`value\` property of a \`<select multiple>\` element should be an array, but it received a non-array value. The selection will be kept as is.\nhttps://svelte.dev/e/select_multiple_invalid_value`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/select_multiple_invalid_value`);
 	}
 }
 
@@ -164,5 +244,39 @@ export function state_proxy_equality_mismatch(operator) {
 		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results\nhttps://svelte.dev/e/state_proxy_equality_mismatch`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/state_proxy_equality_mismatch`);
+	}
+}
+
+/**
+ * Tried to unmount a state proxy, rather than a component
+ */
+export function state_proxy_unmount() {
+	if (DEV) {
+		console.warn(`%c[svelte] state_proxy_unmount\n%cTried to unmount a state proxy, rather than a component\nhttps://svelte.dev/e/state_proxy_unmount`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/state_proxy_unmount`);
+	}
+}
+
+/**
+ * A `<svelte:boundary>` `reset` function only resets the boundary the first time it is called
+ */
+export function svelte_boundary_reset_noop() {
+	if (DEV) {
+		console.warn(`%c[svelte] svelte_boundary_reset_noop\n%cA \`<svelte:boundary>\` \`reset\` function only resets the boundary the first time it is called\nhttps://svelte.dev/e/svelte_boundary_reset_noop`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/svelte_boundary_reset_noop`);
+	}
+}
+
+/**
+ * The `slide` transition does not work correctly for elements with `display: %value%`
+ * @param {string} value
+ */
+export function transition_slide_display(value) {
+	if (DEV) {
+		console.warn(`%c[svelte] transition_slide_display\n%cThe \`slide\` transition does not work correctly for elements with \`display: ${value}\`\nhttps://svelte.dev/e/transition_slide_display`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/transition_slide_display`);
 	}
 }

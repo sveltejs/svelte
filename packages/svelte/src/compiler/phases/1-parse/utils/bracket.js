@@ -1,40 +1,5 @@
-import full_char_code_at from './full_char_code_at.js';
-
-const SQUARE_BRACKET_OPEN = '['.charCodeAt(0);
-const SQUARE_BRACKET_CLOSE = ']'.charCodeAt(0);
-const CURLY_BRACKET_OPEN = '{'.charCodeAt(0);
-const CURLY_BRACKET_CLOSE = '}'.charCodeAt(0);
-
-/** @param {number} code */
-export function is_bracket_open(code) {
-	return code === SQUARE_BRACKET_OPEN || code === CURLY_BRACKET_OPEN;
-}
-
-/** @param {number} code */
-export function is_bracket_close(code) {
-	return code === SQUARE_BRACKET_CLOSE || code === CURLY_BRACKET_CLOSE;
-}
-
-/**
- * @param {number} open
- * @param {number} close
- */
-export function is_bracket_pair(open, close) {
-	return (
-		(open === SQUARE_BRACKET_OPEN && close === SQUARE_BRACKET_CLOSE) ||
-		(open === CURLY_BRACKET_OPEN && close === CURLY_BRACKET_CLOSE)
-	);
-}
-
-/** @param {number} open */
-export function get_bracket_close(open) {
-	if (open === SQUARE_BRACKET_OPEN) {
-		return SQUARE_BRACKET_CLOSE;
-	}
-	if (open === CURLY_BRACKET_OPEN) {
-		return CURLY_BRACKET_CLOSE;
-	}
-}
+/** @import { Parser } from '../index.js' */
+import * as e from '../../../errors.js';
 
 /**
  * @param {number} num
@@ -74,7 +39,9 @@ function find_string_end(string, search_start_index, string_start_char) {
  * @returns {number} The index of the end of this regex expression, or `Infinity` if not found.
  */
 function find_regex_end(string, search_start_index) {
-	return find_unescaped_char(string, search_start_index, '/');
+	const slash = find_unescaped_char(string, search_start_index, '/');
+	const eol = find_unescaped_char(string, search_start_index, '\n');
+	return slash < eol ? slash : Infinity;
 }
 
 /**
@@ -127,8 +94,7 @@ function count_leading_backslashes(string, search_start_index) {
  * @returns {number | undefined} The index of the closing bracket, or undefined if not found.
  */
 export function find_matching_bracket(template, index, open) {
-	const open_code = full_char_code_at(open, 0);
-	const close_code = get_bracket_close(open_code);
+	const close = default_brackets[open];
 	let brackets = 1;
 	let i = index;
 	while (brackets > 0 && i < template.length) {
@@ -141,7 +107,11 @@ export function find_matching_bracket(template, index, open) {
 				continue;
 			case '/': {
 				const next_char = template[i + 1];
-				if (!next_char) continue;
+				if (!next_char) {
+					// `/` is the last character; advance past it so we don't loop forever
+					i++;
+					continue;
+				}
 				if (next_char === '/') {
 					i = infinity_if_negative(template.indexOf('\n', i + 1)) + '\n'.length;
 					continue;
@@ -150,14 +120,19 @@ export function find_matching_bracket(template, index, open) {
 					i = infinity_if_negative(template.indexOf('*/', i + 1)) + '*/'.length;
 					continue;
 				}
-				i = find_regex_end(template, i + 1) + '/'.length;
+				const end = find_regex_end(template, i + 1) + '/'.length;
+				if (end === Infinity) {
+					i++;
+				} else {
+					i = end;
+				}
 				continue;
 			}
 			default: {
-				const code = full_char_code_at(template, i);
-				if (code === open_code) {
+				const char = template[i];
+				if (char === open) {
 					brackets++;
-				} else if (code === close_code) {
+				} else if (char === close) {
 					brackets--;
 				}
 				if (brackets === 0) {
@@ -168,4 +143,84 @@ export function find_matching_bracket(template, index, open) {
 		}
 	}
 	return undefined;
+}
+
+/** @type {Record<string, string>} */
+const default_brackets = {
+	'{': '}',
+	'(': ')',
+	'[': ']'
+};
+
+const default_close = new Set(Object.values(default_brackets));
+
+/**
+ * @param {Parser} parser
+ * @param {number} start
+ * @param {Record<string, string>} brackets
+ */
+export function match_bracket(parser, start, brackets = default_brackets) {
+	const close = brackets === default_brackets ? default_close : new Set(Object.values(brackets));
+	const bracket_stack = [];
+
+	let i = start;
+
+	while (i < parser.template.length) {
+		let char = parser.template[i++];
+
+		if (char === "'" || char === '"' || char === '`') {
+			i = match_quote(parser, i, char);
+			continue;
+		}
+
+		if (char in brackets) {
+			bracket_stack.push(char);
+		} else if (close.has(char)) {
+			const popped = /** @type {string} */ (bracket_stack.pop());
+			const expected = /** @type {string} */ (brackets[popped]);
+
+			if (char !== expected) {
+				e.expected_token(i - 1, expected);
+			}
+
+			if (bracket_stack.length === 0) {
+				return i;
+			}
+		}
+	}
+
+	e.unexpected_eof(parser.template.length);
+}
+
+/**
+ * @param {Parser} parser
+ * @param {number} start
+ * @param {string} quote
+ */
+function match_quote(parser, start, quote) {
+	let is_escaped = false;
+	let i = start;
+
+	while (i < parser.template.length) {
+		const char = parser.template[i++];
+
+		if (is_escaped) {
+			is_escaped = false;
+			continue;
+		}
+
+		if (char === quote) {
+			return i;
+		}
+
+		if (char === '\\') {
+			is_escaped = true;
+		}
+
+		if (quote === '`' && char === '$' && parser.template[i] === '{') {
+			i = match_bracket(parser, i);
+		}
+	}
+
+	e.unterminated_string_constant(start);
 }

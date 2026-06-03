@@ -2,7 +2,7 @@
 title: What are runes?
 ---
 
-> [!NOTE] **rune** /ro͞on/ _noun_
+> [!NOTE] **rune** /ruːn/ _noun_
 >
 > A letter or mark used as a mystical or magic symbol.
 

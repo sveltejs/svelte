@@ -14,4 +14,4 @@
 	})
 </script>
 
-<button on:click={() => count++ }>Click</button>
+<button onclick={() => count++ }>Click</button>

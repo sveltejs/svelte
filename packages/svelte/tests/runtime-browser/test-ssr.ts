@@ -20,7 +20,7 @@ export async function run_ssr_test(
 		await compile_directory(test_dir, 'server', config.compileOptions);
 
 		const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
-		const { body } = render(Component, { props: config.props || {} });
+		const { body } = render(Component, { props: config.props || {}, idPrefix: config.id_prefix });
 
 		fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);
 

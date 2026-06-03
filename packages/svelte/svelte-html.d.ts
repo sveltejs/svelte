@@ -50,6 +50,7 @@ declare global {
 				? SVGElementTagNameMap[Key]
 				: any;
 
+		// TODO remove HTMLAttributes/SVGAttributes/IntrinsicElements in Svelte 6
 		// For backwards-compatibility and ease-of-use, in case someone enhanced the typings from import('svelte/elements').HTMLAttributes/SVGAttributes
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		interface HTMLAttributes<T extends EventTarget = any> {}
@@ -237,18 +238,6 @@ declare global {
 			tspan: HTMLProps<'tspan', SVGAttributes>;
 			use: HTMLProps<'use', SVGAttributes>;
 			view: HTMLProps<'view', SVGAttributes>;
-
-			// Svelte specific
-			'svelte:window': HTMLProps<'svelte:window', HTMLAttributes>;
-			'svelte:body': HTMLProps<'svelte:body', HTMLAttributes>;
-			'svelte:document': HTMLProps<'svelte:document', HTMLAttributes>;
-			'svelte:fragment': { slot?: string };
-			'svelte:head': { [name: string]: any };
-			'svelte:boundary': {
-				onerror?: (error: unknown, reset: () => void) => void;
-				failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
-			};
-			// don't type svelte:options, it would override the types in svelte/elements and it isn't extendable anyway
 
 			[name: string]: { [name: string]: any };
 		}

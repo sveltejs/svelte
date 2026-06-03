@@ -46,6 +46,8 @@ export default test({
 			{ id: 1, name: 'a' }
 		];
 
+		raf.tick(0);
+
 		divs = document.querySelectorAll('div');
 		assert.equal(divs[0].dy, 120);
 		assert.equal(divs[4].dy, -120);

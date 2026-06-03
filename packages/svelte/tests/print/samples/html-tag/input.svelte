@@ -1,0 +1,3 @@
+<article>
+	{@html content}
+</article>

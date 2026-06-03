@@ -2,14 +2,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import polka from 'polka';
 import { render } from 'svelte/server';
-import App from './src/main.svelte';
+import App from './src/App.svelte';
+import './ssr-common.js';
 
-const { head, body } = render(App);
+const { head, body } = await render(App);
 
 const rendered = fs
 	.readFileSync(path.resolve('./dist/client/index.html'), 'utf-8')
-	.replace(`<!--ssr-body-->`, body)
-	.replace(`<!--ssr-head-->`, head);
+	// use function form to prevent any string replacement characters from being interpreted
+	.replace(`<!--ssr-body-->`, () => body)
+	.replace(`<!--ssr-head-->`, () => head);
 
 const types = {
 	'.js': 'application/javascript',

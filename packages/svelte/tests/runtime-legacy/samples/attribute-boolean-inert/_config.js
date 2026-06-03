@@ -1,14 +1,21 @@
-import { ok, test } from '../../test';
+import { test } from '../../test';
 
 export default test({
+	ssrHtml: `
+		<div></div>
+		<div inert="">some div <button>click</button></div>
+	`,
+
 	get props() {
 		return { inert: true };
 	},
+
 	test({ assert, target, component }) {
-		const div = target.querySelector('div');
-		ok(div);
-		assert.ok(div.inert);
+		const [div1, div2] = target.querySelectorAll('div');
+		assert.ok(!div1.inert);
+		assert.ok(div2.inert);
+
 		component.inert = false;
-		assert.ok(!div.inert);
+		assert.ok(!div2.inert);
 	}
 });

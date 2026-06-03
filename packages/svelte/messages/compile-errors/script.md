@@ -16,7 +16,7 @@
 
 ## declaration_duplicate_module_import
 
-> Cannot declare a variable with the same name as an import inside `<script module>`
+> Cannot declare a variable with the same name as an import from `<script module>`
 
 ## derived_invalid_export
 
@@ -30,13 +30,53 @@
 
 > The $ prefix is reserved, and cannot be used for variables and imports
 
+## duplicate_class_field
+
+> `%name%` has already been declared
+
 ## each_item_invalid_assignment
 
-> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
+
+In legacy mode, it was possible to reassign or bind to the each block argument itself:
+
+```svelte
+<script>
+	let array = [1, 2, 3];
+</script>
+
+{#each array as entry}
+	<!-- reassignment -->
+	<button on:click={() => entry = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={entry}>
+{/each}
+```
+
+This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and as such is forbidden in runes mode. You can achieve the same outcome by using the index instead:
+
+```svelte
+<script>
+	let array = $state([1, 2, 3]);
+</script>
+
+{#each array as entry, i}
+	<!-- reassignment -->
+	<button onclick={() => array[i] = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={array[i]}>
+{/each}
+```
 
 ## effect_invalid_placement
 
 > `$effect()` can only be used as an expression statement
+
+## experimental_async
+
+> Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless the `experimental.async` compiler option is `true`
 
 ## export_undefined
 
@@ -66,6 +106,10 @@
 
 > The arguments keyword cannot be used within the template or at the top level of a component
 
+## legacy_await_invalid
+
+> Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
+
 ## legacy_export_invalid
 
 > Cannot use `export let` in runes mode — use `$props()` instead
@@ -88,7 +132,11 @@
 
 ## props_duplicate
 
-> Cannot use `$props()` more than once
+> Cannot use `%rune%()` more than once
+
+## props_id_invalid_placement
+
+> `$props.id()` can only be used at the top level of components as a variable declaration initializer
 
 ## props_illegal_name
 
@@ -125,6 +173,10 @@
 ## rune_invalid_name
 
 > `%name%` is not a valid rune
+
+## rune_invalid_spread
+
+> `%rune%` cannot be called with a spread argument
 
 ## rune_invalid_usage
 
@@ -172,13 +224,41 @@ It's possible to export a snippet from a `<script module>` block, but only if it
 
 > Cannot reassign or bind to snippet parameter
 
+## state_field_duplicate
+
+> `%name%` has already been declared on this class
+
+An assignment to a class field that uses a `$state` or `$derived` rune is considered a _state field declaration_. The declaration can happen in the class body...
+
+```js
+class Counter {
+	count = $state(0);
+}
+```
+
+...or inside the constructor...
+
+```js
+class Counter {
+	constructor() {
+		this.count = $state(0);
+	}
+}
+```
+
+...but it can only happen once.
+
+## state_field_invalid_assignment
+
+> Cannot assign to a state field before its declaration
+
 ## state_invalid_export
 
 > Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
 
 ## state_invalid_placement
 
-> `%rune%(...)` can only be used as a variable declaration initializer or a class field
+> `%rune%(...)` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.
 
 ## store_invalid_scoped_subscription
 

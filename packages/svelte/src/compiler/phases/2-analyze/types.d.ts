@@ -1,7 +1,8 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type { AST, ExpressionMetadata, ValidatedCompileOptions } from '#compiler';
-import type { LabeledStatement } from 'estree';
+import type { AST, StateField, ValidatedCompileOptions } from '#compiler';
+import type { ExpressionMetadata } from '../nodes.js';
+import type { Identifier } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -9,25 +10,39 @@ export interface AnalysisState {
 	analysis: ComponentAnalysis;
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
+	fragment: AST.Fragment | null;
 	/**
 	 * Tag name of the parent element. `null` if the parent is `svelte:element`, `#snippet`, a component or the root.
 	 * Parent doesn't necessarily mean direct path predecessor because there could be `#each`, `#if` etc in-between.
 	 */
 	parent_element: string | null;
+	/** True if inside DeclarationTag */
+	in_declaration_tag: boolean;
 	has_props_rune: boolean;
 	/** Which slots the current parent component has */
 	component_slots: Set<string>;
 	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
-	/** The current {@render ...} tag, if any */
-	render_tag: null | AST.RenderTag;
-	private_derived_state: string[];
+
+	/** Used to analyze class state */
+	state_fields: Map<string, StateField>;
+
 	function_depth: number;
 
 	// legacy stuff
-	instance_scope: Scope;
 	reactive_statement: null | ReactiveStatement;
-	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
+
+	/**
+	 * Set when we're inside a `$derived(...)` expression (but not `$derived.by(...)`) or `@const`
+	 */
+	derived_function_depth: number;
+
+	/** Collected info about async `{@const }`/`{let/const ...}` declarations */
+	async_consts?: {
+		id: Identifier;
+		/** How many `$.run(...)` entries are already allocated in this scope */
+		declaration_count: number;
+	};
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

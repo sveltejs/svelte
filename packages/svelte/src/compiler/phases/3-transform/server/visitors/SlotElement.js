@@ -1,8 +1,13 @@
 /** @import { BlockStatement, Expression, Literal, Property } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
-import { empty_comment, build_attribute_value } from './shared/utils.js';
+import * as b from '#compiler/builders';
+import {
+	build_attribute_value,
+	PromiseOptimiser,
+	block_open,
+	block_close
+} from './shared/utils.js';
 
 /**
  * @param {AST.SlotElement} node
@@ -15,13 +20,22 @@ export function SlotElement(node, context) {
 	/** @type {Expression[]} */
 	const spreads = [];
 
+	const optimiser = new PromiseOptimiser();
+
 	let name = b.literal('default');
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'SpreadAttribute') {
-			spreads.push(/** @type {Expression} */ (context.visit(attribute)));
+			let expression = /** @type {Expression} */ (context.visit(attribute));
+			spreads.push(optimiser.transform(expression, attribute.metadata.expression));
 		} else if (attribute.type === 'Attribute') {
-			const value = build_attribute_value(attribute.value, context, false, true);
+			const value = build_attribute_value(
+				attribute.value,
+				context,
+				optimiser.transform,
+				false,
+				true
+			);
 
 			if (attribute.name === 'name') {
 				name = /** @type {Literal} */ (value);
@@ -38,17 +52,17 @@ export function SlotElement(node, context) {
 
 	const fallback =
 		node.fragment.nodes.length === 0
-			? b.literal(null)
+			? b.null
 			: b.thunk(/** @type {BlockStatement} */ (context.visit(node.fragment)));
 
 	const slot = b.call(
 		'$.slot',
-		b.id('$$payload'),
+		b.id('$$renderer'),
 		b.id('$$props'),
 		name,
 		props_expression,
 		fallback
 	);
 
-	context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
+	context.state.template.push(block_open, ...optimiser.render_block([b.stmt(slot)]), block_close);
 }

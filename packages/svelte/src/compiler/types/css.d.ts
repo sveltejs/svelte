@@ -6,10 +6,17 @@ export namespace _CSS {
 		end: number;
 	}
 
-	export interface StyleSheet extends BaseNode {
+	export interface StyleSheetBase extends BaseNode {
+		children: Array<Atrule | Rule>;
+	}
+
+	export interface StyleSheetFile extends StyleSheetBase {
+		type: 'StyleSheetFile';
+	}
+
+	export interface StyleSheet extends StyleSheetBase {
 		type: 'StyleSheet';
 		attributes: any[]; // TODO
-		children: Array<Atrule | Rule>;
 		content: {
 			start: number;
 			end: number;
@@ -34,6 +41,10 @@ export namespace _CSS {
 		metadata: {
 			parent_rule: null | Rule;
 			has_local_selectors: boolean;
+			/**
+			 * `true` if the rule contains a ComplexSelector whose RelativeSelectors are all global or global-like
+			 */
+			has_global_selectors: boolean;
 			/**
 			 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
 			 */
@@ -64,6 +75,7 @@ export namespace _CSS {
 		/** @internal */
 		metadata: {
 			rule: null | Rule;
+			is_global: boolean;
 			/** True if this selector applies to an element. For global selectors, this is defined in css-analyze, for others in css-prune while scoping */
 			used: boolean;
 		};

@@ -11,17 +11,36 @@ import { cubicOut } from '../easing/index.js';
  * @returns {AnimationConfig}
  */
 export function flip(node, { from, to }, params = {}) {
-	var style = getComputedStyle(node);
-	var zoom = get_zoom(node); // https://drafts.csswg.org/css-viewport/#effective-zoom
+	var { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
 
+	var style = getComputedStyle(node);
+
+	// find the transform origin, expressed as a pair of values between 0 and 1
 	var transform = style.transform === 'none' ? '' : style.transform;
 	var [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
+	ox /= node.clientWidth;
+	oy /= node.clientHeight;
+
+	// calculate effect of parent transforms and zoom
+	var zoom = get_zoom(node); // https://drafts.csswg.org/css-viewport/#effective-zoom
+	var sx = node.clientWidth / to.width / zoom;
+	var sy = node.clientHeight / to.height / zoom;
+
+	// find the starting position of the transform origin
+	var fx = from.left + from.width * ox;
+	var fy = from.top + from.height * oy;
+
+	// find the ending position of the transform origin
+	var tx = to.left + to.width * ox;
+	var ty = to.top + to.height * oy;
+
+	// find the translation at the start of the transform
+	var dx = (fx - tx) * sx;
+	var dy = (fy - ty) * sy;
+
+	// find the relative scale at the start of the transform
 	var dsx = from.width / to.width;
 	var dsy = from.height / to.height;
-
-	var dx = (from.left + dsx * ox - (to.left + ox)) / zoom;
-	var dy = (from.top + dsy * oy - (to.top + oy)) / zoom;
-	var { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
 
 	return {
 		delay,
@@ -32,7 +51,8 @@ export function flip(node, { from, to }, params = {}) {
 			var y = u * dy;
 			var sx = t + u * dsx;
 			var sy = t + u * dsy;
-			return `transform: ${transform} scale(${sx}, ${sy}) translate(${x}px, ${y}px);`;
+
+			return `transform: ${transform} translate(${x}px, ${y}px) scale(${sx}, ${sy});`;
 		}
 	};
 }

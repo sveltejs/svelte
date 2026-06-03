@@ -1,7 +1,5 @@
-/** @import { ExportNamedDeclaration, Identifier, Node } from 'estree' */
-/** @import { Binding } from '#compiler' */
+/** @import { ExportNamedDeclaration, Identifier } from 'estree' */
 /** @import { Context } from '../types' */
-/** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 
@@ -12,6 +10,17 @@ import { extract_identifiers } from '../../../utils/ast.js';
 export function ExportNamedDeclaration(node, context) {
 	// visit children, so bindings are correctly initialised
 	context.next();
+
+	if (
+		context.state.ast_type &&
+		node.specifiers.some((specifier) =>
+			specifier.exported.type === 'Identifier'
+				? specifier.exported.name === 'default'
+				: specifier.exported.value === 'default'
+		)
+	) {
+		e.module_illegal_default_export(node);
+	}
 
 	if (node.declaration?.type === 'VariableDeclaration') {
 		// in runes mode, forbid `export let`

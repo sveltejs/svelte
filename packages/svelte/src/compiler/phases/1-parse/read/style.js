@@ -2,31 +2,33 @@
 /** @import { Parser } from '../index.js' */
 import * as e from '../../../errors.js';
 
-const REGEX_MATCHER = /^[~^$*|]?=/;
+const REGEX_MATCHER = /[~^$*|]?=/y;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
-const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today, but make it future-proof
-const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
-const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
+const REGEX_ATTRIBUTE_FLAGS = /[a-zA-Z]+/y; // only `i` and `s` are valid today, but make it future-proof
+const REGEX_COMBINATOR = /(\+|~|>|\|\|)/y;
+const REGEX_PERCENTAGE = /\d+(\.\d+)?%/y;
 const REGEX_NTH_OF =
-	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
+	/(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/y;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
-const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
+const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/y;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
+const REGEX_UNICODE_SEQUENCE = /\\[0-9a-fA-F]{1,6}(\r\n|\s)?/y;
 const REGEX_COMMENT_CLOSE = /\*\//;
 const REGEX_HTML_COMMENT_CLOSE = /-->/;
 
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag>} attributes
  * @returns {AST.CSS.StyleSheet}
  */
 export default function read_style(parser, start, attributes) {
 	const content_start = parser.index;
-	const children = read_body(parser, '</style');
+	const children = read_body(parser, (p) => p.match('</style') || p.index >= p.template.length);
 	const content_end = parser.index;
 
-	parser.read(/^<\/style\s*>/);
+	parser.eat('</style', true);
+	parser.read(/\s*>/y);
 
 	return {
 		type: 'StyleSheet',
@@ -45,20 +47,14 @@ export default function read_style(parser, start, attributes) {
 
 /**
  * @param {Parser} parser
- * @param {string} close
- * @returns {any[]}
+ * @param {(parser: Parser) => boolean} finished
+ * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
  */
-function read_body(parser, close) {
+function read_body(parser, finished) {
 	/** @type {Array<AST.CSS.Rule | AST.CSS.Atrule>} */
 	const children = [];
 
-	while (parser.index < parser.template.length) {
-		allow_comment_or_whitespace(parser);
-
-		if (parser.match(close)) {
-			return children;
-		}
-
+	while ((allow_comment_or_whitespace(parser), !finished(parser))) {
 		if (parser.match('@')) {
 			children.push(read_at_rule(parser));
 		} else {
@@ -66,7 +62,7 @@ function read_body(parser, close) {
 		}
 	}
 
-	e.expected_token(parser.template.length, close);
+	return children;
 }
 
 /**
@@ -118,6 +114,7 @@ function read_rule(parser) {
 		metadata: {
 			parent_rule: null,
 			has_local_selectors: false,
+			has_global_selectors: false,
 			is_global_block: false
 		}
 	};
@@ -342,6 +339,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				children,
 				metadata: {
 					rule: null,
+					is_global: false,
 					used: false
 				}
 			};
@@ -510,8 +508,12 @@ function read_value(parser) {
 		if (escaped) {
 			value += '\\' + char;
 			escaped = false;
+			parser.index++;
+			continue;
 		} else if (char === '\\') {
 			escaped = true;
+			parser.index++;
+			continue;
 		} else if (char === quote_mark) {
 			quote_mark = null;
 		} else if (char === ')') {
@@ -522,6 +524,21 @@ function read_value(parser) {
 			in_url = true;
 		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
 			return value.trim();
+		} else if (
+			char === '/' &&
+			!in_url &&
+			!quote_mark &&
+			parser.template[parser.index + 1] === '*'
+		) {
+			parser.index += 2;
+			while (parser.index < parser.template.length) {
+				if (parser.template[parser.index] === '*' && parser.template[parser.index + 1] === '/') {
+					parser.index += 2;
+					break;
+				}
+				parser.index++;
+			}
+			continue;
 		}
 
 		value += char;
@@ -566,7 +583,7 @@ function read_attribute_value(parser) {
 }
 
 /**
- * https://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
+ * @see {@link https://www.w3.org/TR/css-syntax-3/#ident-token-diagram CSS Syntax Module Level 3}
  * @param {Parser} parser
  */
 function read_identifier(parser) {
@@ -574,29 +591,30 @@ function read_identifier(parser) {
 
 	let identifier = '';
 
-	if (parser.match('--') || parser.match_regex(REGEX_LEADING_HYPHEN_OR_DIGIT)) {
+	if (parser.match_regex(REGEX_LEADING_HYPHEN_OR_DIGIT)) {
 		e.css_expected_identifier(start);
 	}
 
-	let escaped = false;
-
 	while (parser.index < parser.template.length) {
 		const char = parser.template[parser.index];
-		if (escaped) {
-			identifier += '\\' + char;
-			escaped = false;
-		} else if (char === '\\') {
-			escaped = true;
+		if (char === '\\') {
+			const sequence = parser.match_regex(REGEX_UNICODE_SEQUENCE);
+			if (sequence) {
+				identifier += String.fromCodePoint(parseInt(sequence.slice(1), 16));
+				parser.index += sequence.length;
+			} else {
+				identifier += '\\' + parser.template[parser.index + 1];
+				parser.index += 2;
+			}
 		} else if (
 			/** @type {number} */ (char.codePointAt(0)) >= 160 ||
 			REGEX_VALID_IDENTIFIER_CHAR.test(char)
 		) {
 			identifier += char;
+			parser.index++;
 		} else {
 			break;
 		}
-
-		parser.index++;
 	}
 
 	if (identifier === '') {
@@ -622,4 +640,13 @@ function allow_comment_or_whitespace(parser) {
 
 		parser.allow_whitespace();
 	}
+}
+
+/**
+ * Parse standalone CSS content (not wrapped in `<style>`).
+ * @param {Parser} parser
+ * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
+ */
+export function parse_stylesheet(parser) {
+	return read_body(parser, (p) => p.index >= p.template.length);
 }

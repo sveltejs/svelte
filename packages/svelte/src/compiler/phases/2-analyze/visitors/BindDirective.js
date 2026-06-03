@@ -5,7 +5,7 @@ import {
 	is_text_attribute,
 	object
 } from '../../../utils/ast.js';
-import { validate_no_const_assignment } from './shared/utils.js';
+import { validate_assignment } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { binding_properties } from '../../bindings.js';
@@ -33,7 +33,7 @@ export function BindDirective(node, context) {
 				e.bind_invalid_target(
 					node,
 					node.name,
-					property.valid_elements.map((valid_element) => `<${valid_element}>`).join(', ')
+					property.valid_elements.map((valid_element) => `\`<${valid_element}>\``).join(', ')
 				);
 			}
 
@@ -67,11 +67,15 @@ export function BindDirective(node, context) {
 					}
 				} else {
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-						e.bind_invalid_target(node, node.name, '<input type="checkbox">');
+						e.bind_invalid_target(
+							node,
+							node.name,
+							`\`<input type="checkbox">\`${type?.value[0].data === 'radio' ? ` — for \`<input type="radio">\`, use \`bind:group\`` : ''}`
+						);
 					}
 
 					if (node.name === 'files' && type?.value[0].data !== 'file') {
-						e.bind_invalid_target(node, node.name, '<input type="file">');
+						e.bind_invalid_target(node, node.name, '`<input type="file">`');
 					}
 				}
 			}
@@ -94,7 +98,7 @@ export function BindDirective(node, context) {
 				e.bind_invalid_target(
 					node,
 					node.name,
-					`non-<svg> elements. Use 'clientWidth' for <svg> instead`
+					`non-\`<svg>\` elements. Use \`bind:clientWidth\` for \`<svg>\` instead`
 				);
 			}
 
@@ -132,8 +136,19 @@ export function BindDirective(node, context) {
 		}
 
 		let i = /** @type {number} */ (node.expression.start);
+		let leading_comments_start = /**@type {any}*/ (node.expression.leadingComments?.at(0))?.start;
+		let leading_comments_end = /**@type {any}*/ (node.expression.leadingComments?.at(-1))?.end;
 		while (context.state.analysis.source[--i] !== '{') {
-			if (context.state.analysis.source[i] === '(') {
+			if (
+				context.state.analysis.source[i] === '(' &&
+				// if the parenthesis is in a leading comment we don't need to throw the error
+				!(
+					leading_comments_start &&
+					leading_comments_end &&
+					i <= leading_comments_end &&
+					i >= leading_comments_start
+				)
+			) {
 				e.bind_invalid_parens(node, node.name);
 			}
 		}
@@ -144,10 +159,26 @@ export function BindDirective(node, context) {
 
 		mark_subtree_dynamic(context.path);
 
+		const [get, set] = node.expression.expressions;
+		// We gotta jump across the getter/setter functions to avoid the expression metadata field being reset to null
+		// as we want to collect the functions' blocker/async info
+		context.visit(get.type === 'ArrowFunctionExpression' ? get.body : get, {
+			...context.state,
+			expression: node.metadata.expression
+		});
+		context.visit(set.type === 'ArrowFunctionExpression' ? set.body : set, {
+			...context.state,
+			expression: node.metadata.expression
+		});
+
+		if (node.metadata.expression.has_await) {
+			e.illegal_await_expression(node);
+		}
+
 		return;
 	}
 
-	validate_no_const_assignment(node, node.expression, context.state.scope, true);
+	validate_assignment(node, node.expression, context);
 
 	const assignee = node.expression;
 	const left = object(assignee);
@@ -157,6 +188,7 @@ export function BindDirective(node, context) {
 	}
 
 	const binding = context.state.scope.get(left.name);
+	node.metadata.binding = binding;
 
 	if (assignee.type === 'Identifier') {
 		// reassignment
@@ -173,19 +205,15 @@ export function BindDirective(node, context) {
 		) {
 			e.bind_invalid_value(node.expression);
 		}
-
-		if (context.state.analysis.runes && binding?.kind === 'each') {
-			e.each_item_invalid_assignment(node);
-		}
-
-		if (binding?.kind === 'snippet') {
-			e.snippet_parameter_assignment(node);
-		}
 	}
 
 	if (node.name === 'group') {
 		if (!binding) {
 			throw new Error('Cannot find declaration for bind:group');
+		}
+
+		if (binding.kind === 'snippet') {
+			e.bind_group_invalid_snippet_parameter(node);
 		}
 
 		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
@@ -235,7 +263,8 @@ export function BindDirective(node, context) {
 
 		node.metadata = {
 			binding_group_name: group_name,
-			parent_each_blocks: each_blocks
+			parent_each_blocks: each_blocks,
+			expression: node.metadata.expression
 		};
 	}
 
@@ -243,5 +272,9 @@ export function BindDirective(node, context) {
 		w.bind_invalid_each_rest(binding.node, binding.node.name);
 	}
 
-	context.next();
+	context.next({ ...context.state, expression: node.metadata.expression });
+
+	if (node.metadata.expression.has_await) {
+		e.illegal_await_expression(node);
+	}
 }

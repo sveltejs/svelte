@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 const data = {
@@ -15,9 +16,10 @@ export default test({
 
 	html: '<p>hello</p>',
 
-	async test({ assert, component, target }) {
+	test({ assert, component, target }) {
 		data.message = 'goodbye';
-		await component.$set({ data });
+		component.$set({ data });
+		flushSync();
 
 		assert.htmlEqual(target.innerHTML, '<p>goodbye</p>');
 	}

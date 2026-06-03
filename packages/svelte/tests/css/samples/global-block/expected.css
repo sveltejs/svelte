@@ -3,6 +3,10 @@
 		.x {
 			color: green;
 		}
+
+		.a, .selector, .list {
+			color: green;
+		}
 	/*}*/
 
 	div.svelte-xyz {
@@ -35,7 +39,7 @@
 		/*}*/
 	}
 
-	/* ...wich is equivalent to `div :global { &.x { ...} }` ... */
+	/* ...which is equivalent to `div :global { &.x { ...} }` ... */
 	div.svelte-xyz {
 		&.x {
 			color: green;
@@ -47,7 +51,7 @@
 		color: green;
 	}
 
-	/* ...and therefore `div { :global.x { ... }` aswell */
+	/* ...and therefore `div { :global.x { ... }` as well */
 	div.svelte-xyz {
 		&.x {
 			color: green;
@@ -74,6 +78,10 @@
 			animation: svelte-xyz-test 1s;
 		}
 
+		.y{
+			animation: test-in 1s;
+		}
+
 		@keyframes test-in{
 			to{
 				opacity: 1;
@@ -84,5 +92,15 @@
 	@keyframes svelte-xyz-test{
 		to{
 			opacity: 1;
+		}
+	}
+
+	 x,  y {
+		color: green;
+	}
+
+	div.svelte-xyz, div.svelte-xyz y /* (unused) unused*/ {
+		z {
+			color: green;
 		}
 	}

@@ -58,6 +58,7 @@ for (const key in pkg.exports) {
 	if (key === './internal') continue;
 	if (key === './internal/disclose-version') continue;
 	if (key === './internal/flags/legacy') continue;
+	if (key === './internal/flags/tracing') continue;
 
 	for (const type of ['browser', 'default']) {
 		if (!pkg.exports[key][type]) continue;
@@ -91,6 +92,7 @@ const bundle = await bundle_code(
 </script>
 
 <svelte:head><title>hi</title></svelte:head>
+<input bind:value={foo} />
 
 <a href={foo} class={foo}>a</a>
 <a {...foo}>a</a>
@@ -116,27 +118,40 @@ const bundle = await bundle_code(
 	).js.code
 );
 
-if (!bundle.includes('hydrate_node') && !bundle.includes('hydrate_next')) {
+/**
+ * @param {string} case_name
+ * @param {string[]} strings
+ */
+function check_bundle(case_name, ...strings) {
+	for (const string of strings) {
+		const index = bundle.indexOf(string);
+		if (index >= 0) {
+			// eslint-disable-next-line no-console
+			console.error(`❌ ${case_name} not treeshakeable`);
+			failed = true;
+
+			let lines = bundle.slice(index - 500, index + 500).split('\n');
+			const target_line = lines.findIndex((line) => line.includes(string));
+			// mark the failed line
+			lines = lines
+				.map((line, i) => (i === target_line ? `> ${line}` : `| ${line}`))
+				.slice(target_line - 5, target_line + 6);
+			// eslint-disable-next-line no-console
+			console.error('The first failed line:\n' + lines.join('\n'));
+			return;
+		}
+	}
 	// eslint-disable-next-line no-console
-	console.error(`✅ Hydration code treeshakeable`);
-} else {
-	failed = true;
-	// eslint-disable-next-line no-console
-	console.error(`❌ Hydration code not treeshakeable`);
+	console.error(`✅ ${case_name} treeshakeable`);
 }
 
-if (!bundle.includes('component_context.l')) {
-	// eslint-disable-next-line no-console
-	console.error(`✅ Legacy code treeshakeable`);
-} else {
-	failed = true;
-	// eslint-disable-next-line no-console
-	console.error(`❌ Legacy code not treeshakeable`);
-}
+check_bundle('Hydration code', 'hydrate_node', 'hydrate_next');
+check_bundle('Legacy code', 'component_context.l');
+check_bundle('$inspect.trace', `'CreatedAt'`);
 
 if (failed) {
 	// eslint-disable-next-line no-console
-	console.error(bundle);
+	console.error('Full bundle at', path.resolve('scripts/_bundle.js'));
 	fs.writeFileSync('scripts/_bundle.js', bundle);
 }
 

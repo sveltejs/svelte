@@ -1,8 +1,8 @@
-import "svelte/internal/disclose-version";
-import "svelte/internal/flags/legacy";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import 'svelte/internal/flags/legacy';
+import * as $ from 'svelte/internal/client';
 
-var root = $.template(`<h1>hello world</h1>`);
+var root = $.from_html(`<h1>hello world</h1>`);
 
 function Hmr($$anchor) {
 	var h1 = root();
@@ -11,11 +11,10 @@ function Hmr($$anchor) {
 }
 
 if (import.meta.hot) {
-	Hmr = $.hmr(Hmr, () => Hmr[$.HMR].source);
+	Hmr = $.hmr(Hmr);
 
 	import.meta.hot.accept((module) => {
-		module.default[$.HMR].source = Hmr[$.HMR].source;
-		$.set(Hmr[$.HMR].source, module.default[$.HMR].original);
+		Hmr[$.HMR].update(module.default);
 	});
 }
 

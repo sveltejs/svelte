@@ -72,6 +72,8 @@ const NUL = 0;
 // to replace them ourselves
 //
 // Source: http://en.wikipedia.org/wiki/Character_encodings_in_HTML#Illegal_characters
+// Also see: https://en.wikipedia.org/wiki/Plane_(Unicode)
+// Also see: https://html.spec.whatwg.org/multipage/parsing.html#preprocessing-the-input-stream
 
 /** @param {number} code */
 function validate_code(code) {
@@ -113,6 +115,11 @@ function validate_code(code) {
 
 	// supplementary ideographic plane 0x20000 - 0x2ffff
 	if (code >= 131072 && code <= 196607) {
+		return code;
+	}
+
+	// supplementary special-purpose plane 0xe0000 - 0xe07f and 0xe0100 - 0xe01ef
+	if ((code >= 917504 && code <= 917631) || (code >= 917760 && code <= 917999)) {
 		return code;
 	}
 

@@ -112,6 +112,19 @@
 		color: red;
 	}*/
 
+	d.svelte-xyz:has(+ e:where(.svelte-xyz)) {
+		color: green;
+	}
+	d.svelte-xyz:has(~ f:where(.svelte-xyz)) {
+		color: green;
+	}
+	/* (unused) d:has(+ f) {
+		color: red;
+	}*/
+	/* (unused) f:has(~ d) {
+		color: red;
+	}*/
+
 	.foo {
 		.svelte-xyz:has(x:where(.svelte-xyz)) {
 			color: green;
@@ -125,4 +138,21 @@
 		/* (unused) &:has(.unused) {
 			color: red;
 		}*/
+	}
+
+	.foo:has(x.svelte-xyz) {
+		color: green;
+	}
+	/* (unused) :global(.foo):has(.unused) {
+		color: red;
+	}*/
+
+	g.svelte-xyz:has(> h:where(.svelte-xyz) > i:where(.svelte-xyz)) {
+		color: green;
+	}
+	/* (unused) h:has(> h > i) {
+		color: red;
+	}*/
+	g.svelte-xyz:has(+ j:where(.svelte-xyz) > k:where(.svelte-xyz)) {
+		color: green;
 	}

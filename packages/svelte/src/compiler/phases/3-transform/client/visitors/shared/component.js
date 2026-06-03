@@ -1,11 +1,10 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
-import * as b from '../../../../../utils/builders.js';
-import { create_derived } from '../../utils.js';
-import { build_bind_this, validate_binding } from '../shared/utils.js';
+import * as b from '#compiler/builders';
+import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
@@ -13,13 +12,17 @@ import { determine_slot } from '../../../../../utils/slot.js';
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {string} component_name
+ * @param {SourceLocation | null} loc
  * @param {ComponentContext} context
- * @param {Expression} anchor
  * @returns {Statement}
  */
-export function build_component(node, component_name, context, anchor = context.state.node) {
+export function build_component(node, component_name, loc, context) {
+	/** @type {Expression} */
+	const anchor = context.state.node;
+
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
+
 	/** @type {Array<() => void>} */
 	const delayed_props = [];
 
@@ -41,6 +44,8 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Record<string, Expression[]>} */
 	const events = {};
 
+	const memoizer = new Memoizer();
+
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
@@ -49,6 +54,15 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/** @type {ExpressionStatement[]} */
 	const binding_initializers = [];
+
+	const is_component_dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
+
+	// The variable name used for the component inside $.component()
+	const intermediate_name =
+		node.type === 'Component' && node.metadata.dynamic
+			? context.state.scope.generate(node.name)
+			: '$$component';
 
 	/**
 	 * If this component has a slot property, it is a named slot within another component. In this case
@@ -88,7 +102,7 @@ export function build_component(node, component_name, context, anchor = context.
 	if (slot_scope_applies_to_itself) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+				context.visit(attribute, { ...context.state, let_directives: lets });
 			}
 		}
 	}
@@ -96,7 +110,7 @@ export function build_component(node, component_name, context, anchor = context.
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, states.default)));
+				context.visit(attribute, { ...states.default, let_directives: lets });
 			}
 		} else if (attribute.type === 'OnDirective') {
 			if (!attribute.expression) {
@@ -116,23 +130,32 @@ export function build_component(node, component_name, context, anchor = context.
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
-			if (attribute.metadata.expression.has_state) {
-				let value = expression;
+			const memoized_expression = memoizer.add(expression, attribute.metadata.expression);
+			const is_memoized = expression !== memoized_expression;
 
-				if (attribute.metadata.expression.has_call) {
-					const id = b.id(context.state.scope.generate('spread_element'));
-					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
-					value = b.call('$.get', id);
-				}
-
-				props_and_spreads.push(b.thunk(value));
+			if (
+				is_memoized ||
+				attribute.metadata.expression.has_state ||
+				attribute.metadata.expression.has_await
+			) {
+				props_and_spreads.push(
+					b.thunk(is_memoized ? b.call('$.get', memoized_expression) : expression)
+				);
 			} else {
 				props_and_spreads.push(expression);
 			}
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
-					b.init(attribute.name, build_attribute_value(attribute.value, context).value)
+					b.init(
+						attribute.name,
+						build_attribute_value(attribute.value, context, (value, metadata) => {
+							const memoized = memoizer.add(value, metadata);
+
+							// TODO put the derived in the local block
+							return value !== memoized ? b.call('$.get', memoized) : value;
+						}).value
+					)
 				);
 				continue;
 			}
@@ -145,54 +168,61 @@ export function build_component(node, component_name, context, anchor = context.
 				has_children_prop = true;
 			}
 
-			const { value } = build_attribute_value(attribute.value, context);
+			const { value, has_state } = build_attribute_value(
+				attribute.value,
+				context,
+				(value, metadata) => {
+					// When we have a non-simple computation, anything other than an Identifier or Member expression,
+					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
+					// child component (e.g. `active={i === index}`)
+					const should_wrap_in_derived =
+						metadata.has_await ||
+						get_attribute_chunks(attribute.value).some((n) => {
+							return (
+								n.type === 'ExpressionTag' &&
+								n.expression.type !== 'Identifier' &&
+								n.expression.type !== 'MemberExpression'
+							);
+						});
 
-			if (attribute.metadata.expression.has_state) {
-				let arg = value;
+					const memoized = memoizer.add(value, metadata, should_wrap_in_derived);
 
-				// When we have a non-simple computation, anything other than an Identifier or Member expression,
-				// then there's a good chance it needs to be memoized to avoid over-firing when read within the
-				// child component.
-				const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-					return (
-						n.type === 'ExpressionTag' &&
-						n.expression.type !== 'Identifier' &&
-						n.expression.type !== 'MemberExpression'
-					);
-				});
-
-				if (should_wrap_in_derived) {
-					const id = b.id(context.state.scope.generate(attribute.name));
-					context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
-					arg = b.call('$.get', id);
+					return value !== memoized ? b.call('$.get', memoized) : value;
 				}
+			);
 
-				push_prop(b.get(attribute.name, [b.return(arg)]));
+			if (has_state) {
+				push_prop(b.get(attribute.name, [b.return(value)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+			const expression = /** @type {Expression} */ (
+				context.visit(attribute.expression, { ...context.state, memoizer })
+			);
 
-			if (dev && attribute.name !== 'this' && attribute.expression.type !== 'SequenceExpression') {
+			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
+			memoizer.check_blockers(attribute.metadata.expression);
+
+			if (
+				dev &&
+				attribute.name !== 'this' &&
+				!is_ignored(node, 'ownership_invalid_binding') &&
+				// bind:x={() => x.y, y => x.y = y} will be handled by the assignment expression binding validation
+				attribute.expression.type !== 'SequenceExpression'
+			) {
 				const left = object(attribute.expression);
-				let binding;
+				const binding = left && context.state.scope.get(left.name);
 
-				if (left?.type === 'Identifier') {
-					binding = context.state.scope.get(left.name);
-				}
-
-				// Only run ownership addition on $state fields.
-				// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
-				// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-				if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
+				if (binding?.kind === 'bindable_prop' || binding?.kind === 'prop') {
+					context.state.analysis.needs_mutation_validation = true;
 					binding_initializers.push(
 						b.stmt(
 							b.call(
-								b.id('$.add_owner_effect'),
-								b.thunk(expression),
-								b.id(component_name),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
+								'$$ownership_validator.binding',
+								b.literal(binding.node.name),
+								b.id(is_component_dynamic ? intermediate_name : component_name),
+								b.thunk(expression)
 							)
 						)
 					);
@@ -230,15 +260,9 @@ export function build_component(node, component_name, context, anchor = context.
 						attribute.expression.type === 'Identifier' &&
 						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
 
-					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
-					if (is_store_sub) {
-						push_prop(
-							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
-							true
-						);
-					} else {
-						push_prop(b.get(attribute.name, [b.return(expression)]), true);
-					}
+					const get = is_store_sub
+						? b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
+						: b.get(attribute.name, [b.return(expression)]);
 
 					const assignment = b.assignment(
 						'=',
@@ -246,12 +270,37 @@ export function build_component(node, component_name, context, anchor = context.
 						b.id('$$value')
 					);
 
-					push_prop(
-						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
-						true
-					);
+					const set = b.set(attribute.name, [
+						b.stmt(/** @type {Expression} */ (context.visit(assignment)))
+					]);
+
+					get.key.loc = attribute.name_loc;
+					set.key.loc = attribute.name_loc;
+
+					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
+					push_prop(get, true);
+					push_prop(set, true);
 				}
 			}
+		} else if (attribute.type === 'AttachTag') {
+			const evaluated = context.state.scope.evaluate(attribute.expression);
+
+			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+			if (attribute.metadata.expression.has_state) {
+				expression = b.arrow(
+					[b.id('$$node')],
+					b.call(
+						evaluated.is_function ? expression : b.logical('||', expression, b.id('$.noop')),
+						b.id('$$node')
+					)
+				);
+			}
+
+			// TODO also support await expressions here?
+			memoizer.check_blockers(attribute.metadata.expression);
+
+			push_prop(b.prop('init', b.call('$.attachment'), expression, true));
 		}
 	}
 
@@ -284,7 +333,7 @@ export function build_component(node, component_name, context, anchor = context.
 			// can be used as props without creating conflicts
 			context.visit(child, {
 				...context.state,
-				init: snippet_declarations
+				snippets: snippet_declarations
 			});
 
 			push_prop(b.prop('init', child.expression, child.expression));
@@ -386,16 +435,17 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {
-		return b.call(
-			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
-			// will be handled separately through the `$.component` function, and then the component name will
-			// always be referenced through just the identifier here.
-			node.type === 'SvelteComponent'
-				? component_name
-				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
-			node_id,
-			props_expression
-		);
+		// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
+		// will be handled separately through the `$.component` function, and then the component name will
+		// always be referenced through just the identifier here.
+		const callee = is_component_dynamic
+			? b.id(intermediate_name)
+			: /** @type {Expression} */ (context.visit(b.member_id(component_name)));
+
+		// line up the `Foo` in `Foo(...)` and `<Foo>` for usable stack traces
+		callee.loc = loc;
+
+		return b.call(callee, node_id, props_expression);
 	};
 
 	if (bind_this !== null) {
@@ -406,18 +456,27 @@ export function build_component(node, component_name, context, anchor = context.
 		};
 	}
 
-	const statements = [...snippet_declarations];
+	if (node.type !== 'SvelteSelf') {
+		// Component name itself could be blocked on async values
+		memoizer.check_blockers(node.metadata.expression);
+	}
 
-	if (node.type === 'SvelteComponent') {
+	let statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
+
+	if (is_component_dynamic) {
 		const prev = fn;
 
 		fn = (node_id) => {
 			return b.call(
 				'$.component',
 				node_id,
-				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
+				b.thunk(
+					/** @type {Expression} */ (
+						context.visit(node.type === 'Component' ? b.member_id(component_name) : node.expression)
+					)
+				),
 				b.arrow(
-					[b.id('$$anchor'), b.id(component_name)],
+					[b.id('$$anchor'), b.id(intermediate_name)],
 					b.block([...binding_initializers, b.stmt(prev(b.id('$$anchor')))])
 				)
 			);
@@ -427,11 +486,17 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		context.state.template.push(
-			context.state.metadata.namespace === 'svg'
-				? '<g><!></g>'
-				: '<svelte-css-wrapper style="display: contents"><!></svelte-css-wrapper>'
-		);
+		if (context.state.metadata.namespace === 'svg') {
+			// this boils down to <g><!></g>
+			context.state.template.push_element('g', node.start, false);
+		} else {
+			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
+			context.state.template.push_element('svelte-css-wrapper', node.start, false);
+			context.state.template.set_prop('style', 'display: contents');
+		}
+
+		context.state.template.push_comment();
+		context.state.template.pop_element();
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
@@ -439,8 +504,32 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		context.state.template.push('<!>');
-		statements.push(b.stmt(fn(anchor)));
+		context.state.template.push_comment();
+
+		statements.push(add_svelte_meta(fn(anchor), node, 'component', { componentTag: node.name }));
+	}
+
+	memoizer.apply();
+
+	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
+
+	if (async_values || blockers) {
+		statements = [
+			b.stmt(
+				b.call(
+					'$.async',
+					anchor,
+					blockers,
+					async_values,
+					b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+				)
+			)
+		];
+
+		if (context.state.is_standalone) {
+			statements.push(b.stmt(b.call('$.next')));
+		}
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

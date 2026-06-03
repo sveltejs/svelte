@@ -14,7 +14,7 @@ export function SveltePortal(node, context) {
 		(attr) => attr.type === 'Attribute' && attr.name === 'target'
 	);
 
-	context.state.template.push('<!>');
+	context.state.template.push_comment();
 
 	if (target) {
 		const { value, has_state } = build_attribute_value(

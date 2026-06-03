@@ -1,19 +1,13 @@
-/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
+/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, EffectNodes, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
-import {
-	active_effect,
-	active_reaction,
-	set_active_effect,
-	set_active_reaction,
-	untrack
-} from '../../runtime.js';
+import { active_effect, untrack } from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
-import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
+import { BLOCK_EFFECT, REACTION_RAN, EFFECT_TRANSPARENT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
+import { without_reactive_context } from './bindings/shared.js';
 
 /**
  * @param {Element} element
@@ -21,7 +15,9 @@ import { queue_micro_task } from '../task.js';
  * @returns {void}
  */
 function dispatch_event(element, type) {
-	element.dispatchEvent(new CustomEvent(type));
+	without_reactive_context(() => {
+		element.dispatchEvent(new CustomEvent(type));
+	});
 }
 
 /**
@@ -69,6 +65,14 @@ function css_to_keyframe(css) {
 /** @param {number} t */
 const linear = (t) => t;
 
+/** @type {Effect | null} */
+let animation_effect_override = null;
+
+/** @param {Effect | null} v */
+export function set_animation_effect_override(v) {
+	animation_effect_override = v;
+}
+
 /**
  * Called inside keyed `{#each ...}` blocks (as `$.animation(...)`). This creates an animation manager
  * and attaches it to the block, so that moves can be animated following reconciliation.
@@ -78,7 +82,8 @@ const linear = (t) => t;
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	var item = /** @type {EachItem} */ (current_each_item);
+	var effect = animation_effect_override ?? /** @type {Effect} */ (active_effect);
+	var nodes = /** @type {EffectNodes} */ (effect.nodes);
 
 	/** @type {DOMRect} */
 	var from;
@@ -92,7 +97,7 @@ export function animation(element, get_fn, get_params) {
 	/** @type {null | { position: string, width: string, height: string, transform: string }} */
 	var original_styles = null;
 
-	item.a ??= {
+	nodes.a ??= {
 		element,
 		measure() {
 			from = this.element.getBoundingClientRect();
@@ -110,10 +115,17 @@ export function animation(element, get_fn, get_params) {
 			) {
 				const options = get_fn()(this.element, { from, to }, get_params?.());
 
-				animation = animate(this.element, options, undefined, 1, () => {
-					animation?.abort();
-					animation = undefined;
-				});
+				animation = animate(
+					this.element,
+					options,
+					undefined,
+					1,
+					() => {},
+					() => {
+						animation?.abort();
+						animation = undefined;
+					}
+				);
 			}
 		},
 		fix() {
@@ -164,7 +176,7 @@ export function animation(element, get_fn, get_params) {
 	// when an animation manager already exists, if the tag changes. in that case, we need to
 	// swap out the element rather than creating a new manager, in case it happened at the same
 	// moment as a reconciliation
-	item.a.element = element;
+	nodes.a.element = element;
 }
 
 /**
@@ -192,6 +204,13 @@ export function transition(flags, element, get_fn, get_params) {
 
 	var inert = element.inert;
 
+	/**
+	 * The default overflow style, stashed so we can revert changes during the transition
+	 * that are necessary to work around a Safari <18 bug
+	 * TODO 6.0 remove this, if older versions of Safari have died out enough
+	 */
+	var overflow = element.style.overflow;
+
 	/** @type {Animation | undefined} */
 	var intro;
 
@@ -199,21 +218,14 @@ export function transition(flags, element, get_fn, get_params) {
 	var outro;
 
 	function get_options() {
-		var previous_reaction = active_reaction;
-		var previous_effect = active_effect;
-		set_active_reaction(null);
-		set_active_effect(null);
-		try {
+		return without_reactive_context(() => {
 			// If a transition is still ongoing, we use the existing options rather than generating
 			// new ones. This ensures that reversible transitions reverse smoothly, rather than
 			// jumping to a new spot because (for example) a different `duration` was used
 			return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
 				direction
 			}));
-		} finally {
-			set_active_reaction(previous_reaction);
-			set_active_effect(previous_effect);
-		}
+		});
 	}
 
 	/** @type {TransitionManager} */
@@ -234,15 +246,24 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 			}
 
-			dispatch_event(element, 'introstart');
+			intro = animate(
+				element,
+				get_options(),
+				outro,
+				1,
+				() => {
+					dispatch_event(element, 'introstart');
+				},
+				() => {
+					dispatch_event(element, 'introend');
 
-			intro = animate(element, get_options(), outro, 1, () => {
-				dispatch_event(element, 'introend');
+					// Ensure we cancel the animation to prevent leaking
+					intro?.abort();
+					intro = current_options = undefined;
 
-				// Ensure we cancel the animation to prevent leaking
-				intro?.abort();
-				intro = current_options = undefined;
-			});
+					element.style.overflow = overflow;
+				}
+			);
 		},
 		out(fn) {
 			if (!is_outro) {
@@ -253,12 +274,19 @@ export function transition(flags, element, get_fn, get_params) {
 
 			element.inert = true;
 
-			dispatch_event(element, 'outrostart');
-
-			outro = animate(element, get_options(), intro, 0, () => {
-				dispatch_event(element, 'outroend');
-				fn?.();
-			});
+			outro = animate(
+				element,
+				get_options(),
+				intro,
+				0,
+				() => {
+					dispatch_event(element, 'outrostart');
+				},
+				() => {
+					dispatch_event(element, 'outroend');
+					fn?.();
+				}
+			);
 		},
 		stop: () => {
 			intro?.abort();
@@ -266,9 +294,9 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	};
 
-	var e = /** @type {Effect} */ (active_effect);
+	var e = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
-	(e.transitions ??= []).push(transition);
+	(e.nodes.t ??= []).push(transition);
 
 	// if this is a local transition, we only want to run it if the parent (branch) effect's
 	// parent (block) effect is where the state change happened. we can determine that by
@@ -286,7 +314,7 @@ export function transition(flags, element, get_fn, get_params) {
 				}
 			}
 
-			run = !block || (block.f & EFFECT_RAN) !== 0;
+			run = !block || (block.f & REACTION_RAN) !== 0;
 		}
 
 		if (run) {
@@ -303,10 +331,11 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
  * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
+ * @param {(() => void)} on_begin Called just before beginning the animation
  * @param {(() => void)} on_finish Called after successfully completing the animation
  * @returns {Animation}
  */
-function animate(element, options, counterpart, t2, on_finish) {
+function animate(element, options, counterpart, t2, on_begin, on_finish) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
@@ -320,7 +349,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t2, on_finish);
+			a = animate(element, o, counterpart, t2, on_begin, on_finish);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -338,7 +367,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 	counterpart?.deactivate();
 
-	if (!options?.duration) {
+	if (!options?.duration && !options?.delay) {
+		on_begin();
 		on_finish();
 
 		return {
@@ -369,9 +399,17 @@ function animate(element, options, counterpart, t2, on_finish) {
 	// create a dummy animation that lasts as long as the delay (but with whatever devtools
 	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
 	// the CSS keyframes aren't created until the DOM is updated
-	var animation = element.animate(keyframes, { duration: delay });
+	//
+	// fill forwards to prevent the element from rendering without styles applied
+	// see https://github.com/sveltejs/svelte/issues/14732
+	var animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
 
 	animation.onfinish = () => {
+		// remove dummy animation from the stack to prevent conflict with main animation
+		animation.cancel();
+
+		on_begin();
+
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro
 		var t1 = counterpart?.t() ?? 1 - t2;
@@ -382,14 +420,27 @@ function animate(element, options, counterpart, t2, on_finish) {
 		var keyframes = [];
 
 		if (duration > 0) {
+			/**
+			 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
+			 * add it as an inline style to work around a Safari <18 bug
+			 * TODO 6.0 remove this, if possible
+			 */
+			var needs_overflow_hidden = false;
+
 			if (css) {
 				var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
 				for (var i = 0; i <= n; i += 1) {
 					var t = t1 + delta * easing(i / n);
-					var styles = css(t, 1 - t);
-					keyframes.push(css_to_keyframe(styles));
+					var styles = css_to_keyframe(css(t, 1 - t));
+					keyframes.push(styles);
+
+					needs_overflow_hidden ||= styles.overflow === 'hidden';
 				}
+			}
+
+			if (needs_overflow_hidden) {
+				/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
 			}
 
 			get_t = () => {

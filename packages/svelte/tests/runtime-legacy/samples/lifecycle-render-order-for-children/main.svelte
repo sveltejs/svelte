@@ -5,7 +5,7 @@
 
 	export let n = 0;
 
-	function logRender () {
+	function logRender (n) {
 		order.push(`parent: render ${n}`);
 		return 'parent';
 	}
@@ -23,7 +23,7 @@
 	})
 </script>
 
-{logRender()}
+{logRender(n)}
 <ul>
 	{#each [1,2,3] as index}
 		<Item {index} {n} />

@@ -1,28 +1,32 @@
-/** @import { AssignmentExpression, Expression, Literal, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, Expression, Literal, Node, Pattern, Super, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
-import { extract_identifiers } from '../../../../utils/ast.js';
+import { extract_identifiers, get_parent } from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
+import { get_name } from '../../../nodes.js';
 
 /**
- * @param {AssignmentExpression | UpdateExpression} node
+ * @param {AssignmentExpression | UpdateExpression | AST.BindDirective} node
  * @param {Pattern | Expression} argument
- * @param {AnalysisState} state
+ * @param {Context} context
  */
-export function validate_assignment(node, argument, state) {
-	validate_no_const_assignment(node, argument, state.scope, false);
+export function validate_assignment(node, argument, context) {
+	validate_no_const_assignment(node, argument, context.state.scope, node.type === 'BindDirective');
 
 	if (argument.type === 'Identifier') {
-		const binding = state.scope.get(argument.name);
+		const binding = context.state.scope.get(argument.name);
 
-		if (state.analysis.runes) {
-			if (binding?.kind === 'derived') {
-				e.constant_assignment(node, 'derived state');
+		if (context.state.analysis.runes) {
+			if (
+				context.state.analysis.props_id != null &&
+				binding?.node === context.state.analysis.props_id
+			) {
+				e.constant_assignment(node, '$props.id()');
 			}
 
 			if (binding?.kind === 'each') {
@@ -35,19 +39,38 @@ export function validate_assignment(node, argument, state) {
 		}
 	}
 
-	let object = /** @type {Expression | Super} */ (argument);
+	if (argument.type === 'MemberExpression' && argument.object.type === 'ThisExpression') {
+		const name =
+			argument.computed && argument.property.type !== 'Literal'
+				? null
+				: get_name(argument.property);
 
-	/** @type {Expression | PrivateIdentifier | null} */
-	let property = null;
+		const field = name !== null && context.state.state_fields?.get(name);
 
-	while (object.type === 'MemberExpression') {
-		property = object.property;
-		object = object.object;
-	}
+		// check we're not assigning to a state field before its declaration in the constructor
+		if (field && field.node.type === 'AssignmentExpression' && node !== field.node) {
+			let i = context.path.length;
+			while (i--) {
+				const parent = context.path[i];
 
-	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
-		if (state.private_derived_state.includes(property.name)) {
-			e.constant_assignment(node, 'derived state');
+				if (
+					parent.type === 'FunctionDeclaration' ||
+					parent.type === 'FunctionExpression' ||
+					parent.type === 'ArrowFunctionExpression'
+				) {
+					const grandparent = get_parent(context.path, i - 1);
+
+					if (
+						grandparent.type === 'MethodDefinition' &&
+						grandparent.kind === 'constructor' &&
+						/** @type {number} */ (node.start) < /** @type {number} */ (field.node.start)
+					) {
+						e.state_field_invalid_assignment(node);
+					}
+
+					break;
+				}
+			}
 		}
 	}
 }
@@ -74,7 +97,6 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 	} else if (argument.type === 'Identifier') {
 		const binding = scope.get(argument.name);
 		if (
-			binding?.kind === 'derived' ||
 			binding?.declaration_kind === 'import' ||
 			(binding?.declaration_kind === 'const' && binding.kind !== 'each')
 		) {
@@ -89,12 +111,7 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 			// );
 
 			// TODO have a more specific error message for assignments to things like `{:then foo}`
-			const thing =
-				binding.declaration_kind === 'import'
-					? 'import'
-					: binding.kind === 'derived'
-						? 'derived state'
-						: 'constant';
+			const thing = binding.declaration_kind === 'import' ? 'import' : 'constant';
 
 			if (is_binding) {
 				e.constant_binding(node, thing);
@@ -144,7 +161,6 @@ export function ensure_no_module_import_conflict(node, state) {
 			state.scope === state.analysis.instance.scope &&
 			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
 		) {
-			// TODO fix the message here
 			e.declaration_duplicate_module_import(node.id);
 		}
 	}

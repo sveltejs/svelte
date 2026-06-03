@@ -33,7 +33,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button><button>clicks: 1</button>`);
 
 		assert.deepEqual(warnings, [
-			'Counter.svelte mutated a value owned by main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead'
+			'Mutating unbound props (`notshared`, at Counter.svelte:10:23) is strongly discouraged. Consider using `bind:notshared={...}` in main.svelte (or using a callback) instead'
 		]);
 	}
 });

@@ -64,7 +64,7 @@ export function LabeledStatement(node, context) {
 				}
 			}
 
-			context.state.reactive_statements.set(node, reactive_statement);
+			context.state.analysis.reactive_statements.set(node, reactive_statement);
 
 			if (
 				node.body.type === 'ExpressionStatement' &&

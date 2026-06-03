@@ -1,11 +1,27 @@
-import type { AST, Binding } from '#compiler';
-import type { Identifier, LabeledStatement, Node, Program } from 'estree';
+import type { AST, Binding, StateField } from '#compiler';
+import type {
+	AwaitExpression,
+	CallExpression,
+	ClassBody,
+	ClassDeclaration,
+	FunctionDeclaration,
+	Identifier,
+	LabeledStatement,
+	ModuleDeclaration,
+	Pattern,
+	Program,
+	Statement,
+	VariableDeclaration,
+	VariableDeclarator
+} from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
+import type { ExpressionMetadata } from './nodes.js';
 
 export interface Js {
 	ast: Program;
 	scope: Scope;
 	scopes: Map<AST.SvelteNode, Scope>;
+	has_await: boolean;
 }
 
 export interface Template {
@@ -19,17 +35,37 @@ export interface ReactiveStatement {
 	dependencies: Binding[];
 }
 
+export interface AwaitedDeclaration {
+	id: Identifier;
+	has_await: boolean;
+	pattern: Pattern;
+	metadata: ExpressionMetadata;
+	updated_by: Set<Identifier>;
+}
+
 /**
  * Analysis common to modules and components
  */
 export interface Analysis {
 	module: Js;
+	/** @deprecated use `component_name` from `state.js` instead */
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
+	/** @deprecated use `runes` from `state.js` instead */
 	runes: boolean;
 	immutable: boolean;
+	/** True if `$inspect.trace` is used */
+	tracing: boolean;
+	comments: AST.JSComment[];
+
+	classes: Map<ClassBody, Map<string, StateField>>;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
+
+	/** A set of deriveds that contain `await` expressions */
+	async_deriveds: Set<CallExpression>;
+	/** Awaits needing context preservation */
+	pickled_awaits: Set<AwaitExpression>;
 }
 
 export interface ComponentAnalysis extends Analysis {
@@ -39,9 +75,13 @@ export interface ComponentAnalysis extends Analysis {
 	/** Used for CSS pruning and scoping */
 	elements: Array<AST.RegularElement | AST.SvelteElement>;
 	runes: boolean;
+	maybe_runes: boolean;
+	tracing: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
 	uses_props: boolean;
+	/** The component ID variable name, if any */
+	props_id: Identifier | null;
 	/** Whether the component uses `$$restProps` */
 	uses_rest_props: boolean;
 	/** Whether the component uses `$$slots` */
@@ -49,6 +89,7 @@ export interface ComponentAnalysis extends Analysis {
 	uses_component_bindings: boolean;
 	uses_render_tags: boolean;
 	needs_context: boolean;
+	needs_mutation_validation: boolean;
 	needs_props: boolean;
 	/** Set to the first event directive (on:x) found on a DOM element in the code */
 	event_directive_node: AST.OnDirective | null;
@@ -69,9 +110,10 @@ export interface ComponentAnalysis extends Analysis {
 		ast: AST.CSS.StyleSheet | null;
 		hash: string;
 		keyframes: string[];
+		has_global: boolean;
 	};
+	/** @deprecated use `source` from `state.js` instead */
 	source: string;
-	undefined_exports: Map<string, Node>;
 	/**
 	 * Every render tag/component, and whether it could be definitively resolved or not
 	 */
@@ -83,30 +125,13 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
-}
-
-declare module 'estree' {
-	interface ArrowFunctionExpression {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-
-	interface FunctionExpression {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-
-	interface FunctionDeclaration {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
+	/**
+	 * Pre-transformed `<script>` block
+	 */
+	instance_body: {
+		hoisted: Array<Statement | ModuleDeclaration>;
+		sync: Array<Statement | ModuleDeclaration | VariableDeclaration>;
+		async: Array<{ nodes: Array<Statement | VariableDeclarator>; has_await: boolean }>;
+		declarations: Array<Identifier>;
+	};
 }

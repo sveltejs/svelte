@@ -34,6 +34,86 @@ function add() {
 }
 ```
 
+### await_reactivity_loss
+
+```
+Detected reactivity loss when reading `%name%`. This happens when state is read in an async function after an earlier `await`
+```
+
+Svelte's signal-based reactivity works by tracking which bits of state are read when a template or `$derived(...)` expression executes. If an expression contains an `await`, Svelte transforms it such that any state _after_ the `await` is also tracked — in other words, in a case like this...
+
+```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
+let total = $derived(await a + b);
+```
+
+...both `a` and `b` are tracked, even though `b` is only read once `a` has resolved, after the initial execution.
+
+This does _not_ apply to an `await` that is not 'visible' inside the expression. In a case like this...
+
+```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
+async function sum() {
+	return await a + b;
+}
+
+let total = $derived(await sum());
+```
+
+...`total` will depend on `a` (which is read immediately) but not `b` (which is not). The solution is to pass the values into the function:
+
+```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
+/**
+ * @param {Promise<number>} a
+ * @param {number} b
+ */
+async function sum(a, b) {
+	return await a + b;
+}
+
+let total = $derived(await sum(a, b));
+```
+
+### await_waterfall
+
+```
+An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+```
+
+In a case like this...
+
+```js
+async function one() { return 1 }
+async function two() { return 2 }
+// ---cut---
+let a = $derived(await one());
+let b = $derived(await two());
+```
+
+...the second `$derived` will not be created until the first one has resolved. Since `await two()` does not depend on the value of `a`, this delay, often described as a 'waterfall', is unnecessary.
+
+(Note that if the values of `await one()` and `await two()` subsequently change, they can do so concurrently — the waterfall only occurs when the deriveds are first created.)
+
+You can solve this by creating the promises first and _then_ awaiting them:
+
+```js
+async function one() { return 1 }
+async function two() { return 2 }
+// ---cut---
+let aPromise = $derived(one());
+let bPromise = $derived(two());
+
+let a = $derived(await aPromise);
+let b = $derived(await bPromise);
+```
+
 ### binding_property_non_reactive
 
 ```
@@ -52,12 +132,39 @@ Your `console.%method%` contained `$state` proxies. Consider using `$inspect(...
 
 When logging a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy), browser devtools will log the proxy itself rather than the value it represents. In the case of Svelte, the 'target' of a `$state` proxy might not resemble its current value, which can be confusing.
 
-The easiest way to log a value as it changes over time is to use the [`$inspect`](https://svelte.dev/docs/svelte/$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](https://svelte.dev/docs/svelte/$state#$state.snapshot) to take a snapshot of the current value.
+The easiest way to log a value as it changes over time is to use the [`$inspect`](/docs/svelte/$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](/docs/svelte/$state#$state.snapshot) to take a snapshot of the current value.
+
+### derived_inert
+
+```
+Reading a derived belonging to a now-destroyed effect may result in stale values
+```
+
+A `$derived` value created inside an effect will stop updating when the effect is destroyed. You should create the `$derived` outside the effect, or inside an `$effect.root`.
 
 ### event_handler_invalid
 
 ```
 %handler% should be a function. Did you mean to %suggestion%?
+```
+
+### hydratable_missing_but_expected
+
+```
+Expected to find a hydratable with key `%key%` during hydration, but did not.
+```
+
+This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
+
+```svelte
+<script>
+  import { hydratable } from 'svelte';
+
+	if (BROWSER) {
+		// bad! nothing can become interactive until this asynchronous work is done
+		await hydratable('foo', get_slow_random_number);
+	}
+</script>
 ```
 
 ### hydration_attribute_changed
@@ -138,7 +245,7 @@ Hydration failed because the initial UI does not match what was rendered on the 
 
 This warning is thrown when Svelte encounters an error while hydrating the HTML from the server. During hydration, Svelte walks the DOM, expecting a certain structure. If that structure is different (for example because the HTML was repaired by the DOM because of invalid HTML), then Svelte will run into issues, resulting in this warning.
 
-During development, this error is often preceeded by a `console.error` detailing the offending HTML, which needs fixing.
+During development, this error is often preceded by a `console.error` detailing the offending HTML, which needs fixing.
 
 ### invalid_raw_snippet_render
 
@@ -161,7 +268,7 @@ Tried to unmount a component that was not mounted
 ### ownership_invalid_binding
 
 ```
-%parent% passed a value to %child% with `bind:`, but the value is owned by %owner%. Consider creating a binding between %owner% and %parent%
+%parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)
 ```
 
 Consider three components `GrandParent`, `Parent` and `Child`. If you do `<GrandParent bind:value>`, inside `GrandParent` pass on the variable via `<Parent {value} />` (note the missing `bind:`) and then do `<Child bind:value>` inside `Parent`, this warning is thrown.
@@ -171,11 +278,7 @@ To fix it, `bind:` to the value instead of just passing a property (i.e. in this
 ### ownership_invalid_mutation
 
 ```
-Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
-```
-
-```
-%component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
+Mutating unbound props (`%name%`, at %location%) is strongly discouraged. Consider using `bind:%prop%={...}` in %parent% (or using a callback) instead
 ```
 
 Consider the following code:
@@ -204,6 +307,19 @@ Consider the following code:
 
 To fix it, either create callback props to communicate changes, or mark `person` as [`$bindable`]($bindable).
 
+### select_multiple_invalid_value
+
+```
+The `value` property of a `<select multiple>` element should be an array, but it received a non-array value. The selection will be kept as is.
+```
+
+When using `<select multiple value={...}>`, Svelte will mark all selected `<option>` elements as selected by iterating over the array passed to `value`. If `value` is not an array, Svelte will emit this warning and keep the selected options as they are.
+
+To silence the warning, ensure that `value`:
+
+- is an array for an explicit selection
+- is `null` or `undefined` to keep the selection as is
+
 ### state_proxy_equality_mismatch
 
 ```
@@ -222,3 +338,62 @@ Reactive `$state(...)` proxies and the values they proxy have different identiti
 ```
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
+
+### state_proxy_unmount
+
+```
+Tried to unmount a state proxy, rather than a component
+```
+
+`unmount` was called with a state proxy:
+
+```js
+import { mount, unmount } from 'svelte';
+import Component from './Component.svelte';
+let target = document.body;
+// ---cut---
+let component = $state(mount(Component, { target }));
+
+// later...
+unmount(component);
+```
+
+Avoid using `$state` here. If `component` _does_ need to be reactive for some reason, use `$state.raw` instead.
+
+### svelte_boundary_reset_noop
+
+```
+A `<svelte:boundary>` `reset` function only resets the boundary the first time it is called
+```
+
+When an error occurs while rendering the contents of a [`<svelte:boundary>`](https://svelte.dev/docs/svelte/svelte-boundary), the `onerror` handler is called with the error plus a `reset` function that attempts to re-render the contents.
+
+This `reset` function should only be called once. After that, it has no effect — in a case like this, where a reference to `reset` is stored outside the boundary, clicking the button while `<Contents />` is rendered will _not_ cause the contents to be rendered again.
+
+```svelte
+<script>
+	let reset;
+</script>
+
+<button onclick={reset}>reset</button>
+
+<svelte:boundary onerror={(e, r) => (reset = r)}>
+	<!-- contents -->
+
+	{#snippet failed(e)}
+		<p>oops! {e.message}</p>
+	{/snippet}
+</svelte:boundary>
+```
+
+### transition_slide_display
+
+```
+The `slide` transition does not work correctly for elements with `display: %value%`
+```
+
+The [slide](/docs/svelte/svelte-transition#slide) transition works by animating the `height` of the element, which requires a `display` style like `block`, `flex` or `grid`. It does not work for:
+
+- `display: inline` (which is the default for elements like `<span>`), and its variants like `inline-block`, `inline-flex` and `inline-grid`
+- `display: table` and `table-[name]`, which are the defaults for elements like `<table>` and `<tr>`
+- `display: contents`

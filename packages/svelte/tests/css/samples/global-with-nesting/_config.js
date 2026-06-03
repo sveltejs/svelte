@@ -1,5 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	warnings: []
+	warnings: [],
+
+	hasGlobal: false
 });

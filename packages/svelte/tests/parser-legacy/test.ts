@@ -18,7 +18,7 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test parser` to update parser tests
 	if (process.env.UPDATE_SNAPSHOTS) {
-		fs.writeFileSync(`${cwd}/output.json`, JSON.stringify(actual, null, '\t'));
+		fs.writeFileSync(`${cwd}/output.json`, JSON.stringify(actual, null, '\t') + '\n');
 	} else {
 		fs.writeFileSync(`${cwd}/_actual.json`, JSON.stringify(actual, null, '\t'));
 

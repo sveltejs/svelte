@@ -1,0 +1,8 @@
+	x.svelte-xyz + y:where(.svelte-xyz) { color: green; }
+	x.svelte-xyz + v:where(.svelte-xyz) { color: green; }
+	x.svelte-xyz + z:where(.svelte-xyz) { color: green; }
+	y.svelte-xyz + z:where(.svelte-xyz) { color: green; }
+	v.svelte-xyz + z:where(.svelte-xyz) { color: green; }
+	.component + z.svelte-xyz { color: green; }
+
+	/* (unused) n + m { color: red; }*/

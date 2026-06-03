@@ -1,8 +1,9 @@
 /** @import { ComponentContextLegacy } from '#client' */
 import { run, run_all } from '../../../shared/utils.js';
+import { component_context } from '../../context.js';
 import { derived } from '../../reactivity/deriveds.js';
 import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
-import { component_context, deep_read_state, get, untrack } from '../../runtime.js';
+import { deep_read_state, get, untrack } from '../../runtime.js';
 
 /**
  * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects

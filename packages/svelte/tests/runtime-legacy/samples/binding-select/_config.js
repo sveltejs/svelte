@@ -2,11 +2,11 @@ import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
-	html: `
+	ssrHtml: `
 		<p>selected: one</p>
 
 		<select>
-			<option>one</option>
+			<option selected>one</option>
 			<option>two</option>
 			<option>three</option>
 		</select>
@@ -18,7 +18,21 @@ export default test({
 		return { selected: 'one' };
 	},
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target, window, variant }) {
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<p>selected: one</p>
+
+			<select>
+				<option${variant === 'hydrate' ? ' selected' : ''}>one</option>
+				<option>two</option>
+				<option>three</option>
+			</select>
+
+			<p>selected: one</p>
+		`
+		);
 		const select = target.querySelector('select');
 		ok(select);
 
@@ -40,7 +54,7 @@ export default test({
 			<p>selected: two</p>
 
 			<select>
-				<option>one</option>
+				<option${variant === 'hydrate' ? ' selected' : ''}>one</option>
 				<option>two</option>
 				<option>three</option>
 			</select>

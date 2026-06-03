@@ -4,6 +4,6 @@
 	const getColor = () => color;
 </script>
 
-<div style="background-color: {getColor()}">Hello world</div>
+<div style="background-color: {getColor()};">Hello world</div>
 
 <button onclick={() => color = 'blue'}>Make blue</button>

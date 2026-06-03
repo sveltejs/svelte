@@ -1,9 +1,9 @@
-/** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
+/** @import { AssignmentPattern, BlockStatement, Expression, Identifier, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -12,9 +12,8 @@ import { get_value } from './shared/declarations.js';
  */
 export function SnippetBlock(node, context) {
 	// TODO hoist where possible
-	/** @type {Pattern[]} */
+	/** @type {(Identifier | AssignmentPattern)[]} */
 	const args = [b.id('$$anchor')];
-
 	/** @type {BlockStatement} */
 	let body;
 
@@ -30,12 +29,7 @@ export function SnippetBlock(node, context) {
 		if (!argument) continue;
 
 		if (argument.type === 'Identifier') {
-			args.push({
-				type: 'AssignmentPattern',
-				left: argument,
-				right: b.id('$.noop')
-			});
-
+			args.push(b.assignment_pattern(argument, b.id('$.noop')));
 			transform[argument.name] = { read: b.call };
 
 			continue;
@@ -44,14 +38,21 @@ export function SnippetBlock(node, context) {
 		let arg_alias = `$$arg${i}`;
 		args.push(b.id(arg_alias));
 
-		const paths = extract_paths(argument);
+		const { inserts, paths } = extract_paths(argument, b.maybe_call(b.id(arg_alias)));
+
+		for (const { id, value } of inserts) {
+			id.name = context.state.scope.generate('$$array');
+			transform[id.name] = { read: get_value };
+
+			declarations.push(
+				b.var(id, b.call('$.derived', /** @type {Expression} */ (context.visit(b.thunk(value)))))
+			);
+		}
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
-			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression?.(b.maybe_call(b.id(arg_alias)))))
-			);
+			const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression, child_state)));
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
@@ -66,18 +67,17 @@ export function SnippetBlock(node, context) {
 			}
 		}
 	}
-
+	const block = /** @type {BlockStatement} */ (context.visit(node.body, child_state)).body;
 	body = b.block([
+		dev ? b.stmt(b.call('$.validate_snippet_args', b.spread(b.id('arguments')))) : b.empty,
 		...declarations,
-		.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body
+		...block
 	]);
 
-	/** @type {Expression} */
-	let snippet = b.arrow(args, body);
-
-	if (dev) {
-		snippet = b.call('$.wrap_snippet', b.id(context.state.analysis.name), snippet);
-	}
+	// in dev we use a FunctionExpression (not arrow function) so we can use `arguments`
+	let snippet = dev
+		? b.call('$.wrap_snippet', b.id(context.state.analysis.name), b.function(null, args, body))
+		: b.arrow(args, body);
 
 	const declaration = b.const(node.expression, snippet);
 
@@ -89,6 +89,6 @@ export function SnippetBlock(node, context) {
 			context.state.instance_level_snippets.push(declaration);
 		}
 	} else {
-		context.state.init.push(declaration);
+		context.state.snippets.push(declaration);
 	}
 }

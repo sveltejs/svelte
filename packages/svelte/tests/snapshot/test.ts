@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { assert, expect } from 'vitest';
-import glob from 'tiny-glob/sync.js';
+import { globSync } from 'tinyglobby';
 import { compile_directory } from '../helpers.js';
 import { suite, type BaseTest } from '../suite.js';
 import { VERSION } from 'svelte/compiler';
@@ -18,8 +18,8 @@ const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
 		fs.rmSync(`${cwd}/_expected`, { recursive: true, force: true });
 		fs.cpSync(`${cwd}/_output`, `${cwd}/_expected`, { recursive: true, force: true });
 	} else {
-		const actual = glob('**', { cwd: `${cwd}/_output`, filesOnly: true });
-		const expected = glob('**', { cwd: `${cwd}/_expected`, filesOnly: true });
+		const actual = globSync('**', { cwd: `${cwd}/_output`, onlyFiles: true });
+		const expected = globSync('**', { cwd: `${cwd}/_expected`, onlyFiles: true });
 
 		assert.deepEqual(actual, expected);
 

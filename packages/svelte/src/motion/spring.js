@@ -1,14 +1,16 @@
 /** @import { Task } from '#client' */
-/** @import { SpringOpts, SpringUpdateOpts, TickContext } from './private.js' */
-/** @import { Spring as SpringStore } from './public.js' */
+/** @import { TickContext } from './private.js' */
+/** @import { Spring as SpringStore, SpringOptions, SpringUpdateOptions } from './public.js' */
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
 import { is_date } from './utils.js';
-import { set, source } from '../internal/client/reactivity/sources.js';
+import { set, state } from '../internal/client/reactivity/sources.js';
 import { render_effect } from '../internal/client/reactivity/effects.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { deferred, noop } from '../internal/shared/utils.js';
+import { DEV } from 'esm-env';
 
 /**
  * @template T
@@ -60,7 +62,7 @@ function tick_spring(ctx, last_value, current_value, target_value) {
  * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
  * @template [T=any]
  * @param {T} [value]
- * @param {SpringOpts} [opts]
+ * @param {SpringOptions} [opts]
  * @returns {SpringStore<T>}
  */
 export function spring(value, opts = {}) {
@@ -81,7 +83,7 @@ export function spring(value, opts = {}) {
 	let cancel_task = false;
 	/**
 	 * @param {T} new_value
-	 * @param {SpringUpdateOpts} opts
+	 * @param {SpringUpdateOptions} opts
 	 * @returns {Promise<void>}
 	 */
 	function set(new_value, opts = {}) {
@@ -108,12 +110,17 @@ export function spring(value, opts = {}) {
 					return false;
 				}
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
+
+				// clamp elapsed time to 1/30th of a second, so that longer pauses
+				// (blocked thread or inactive tab) don't cause the spring to go haywire
+				const elapsed = Math.min(now - last_time, 1000 / 30);
+
 				/** @type {TickContext} */
 				const ctx = {
 					inv_mass,
 					opts: spring,
 					settled: true,
-					dt: ((now - last_time) * 60) / 1000
+					dt: (elapsed * 60) / 1000
 				};
 				// @ts-ignore
 				const next_value = tick_spring(ctx, last_value, value, target_value);
@@ -163,12 +170,12 @@ export function spring(value, opts = {}) {
  * @since 5.8.0
  */
 export class Spring {
-	#stiffness = source(0.15);
-	#damping = source(0.8);
-	#precision = source(0.01);
+	#stiffness = state(0.15);
+	#damping = state(0.8);
+	#precision = state(0.01);
 
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
+	#current;
+	#target;
 
 	#last_value = /** @type {T} */ (undefined);
 	#last_time = 0;
@@ -184,14 +191,23 @@ export class Spring {
 
 	/**
 	 * @param {T} value
-	 * @param {SpringOpts} [options]
+	 * @param {SpringOptions} [options]
 	 */
 	constructor(value, options = {}) {
-		this.#current.v = this.#target.v = value;
+		this.#current = DEV ? tag(state(value), 'Spring.current') : state(value);
+		this.#target = DEV ? tag(state(value), 'Spring.target') : state(value);
 
 		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
 		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);
 		if (typeof options.precision === 'number') this.#precision.v = options.precision;
+
+		if (DEV) {
+			tag(this.#stiffness, 'Spring.stiffness');
+			tag(this.#damping, 'Spring.damping');
+			tag(this.#precision, 'Spring.precision');
+			tag(this.#current, 'Spring.current');
+			tag(this.#target, 'Spring.target');
+		}
 	}
 
 	/**
@@ -209,7 +225,7 @@ export class Spring {
 	 * ```
 	 * @template U
 	 * @param {() => U} fn
-	 * @param {SpringOpts} [options]
+	 * @param {SpringOptions} [options]
 	 */
 	static of(fn, options) {
 		const spring = new Spring(fn(), options);
@@ -236,6 +252,10 @@ export class Spring {
 			this.#task ??= loop((now) => {
 				this.#inverse_mass = Math.min(this.#inverse_mass + inv_mass_recovery_rate, 1);
 
+				// clamp elapsed time to 1/30th of a second, so that longer pauses
+				// (blocked thread or inactive tab) don't cause the spring to go haywire
+				const elapsed = Math.min(now - this.#last_time, 1000 / 30);
+
 				/** @type {import('./private').TickContext} */
 				const ctx = {
 					inv_mass: this.#inverse_mass,
@@ -245,7 +265,7 @@ export class Spring {
 						precision: this.#precision.v
 					},
 					settled: true,
-					dt: ((now - this.#last_time) * 60) / 1000
+					dt: (elapsed * 60) / 1000
 				};
 
 				var next = tick_spring(ctx, this.#last_value, this.#current.v, this.#target.v);
@@ -273,7 +293,7 @@ export class Spring {
 	 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 	 *
 	 * @param {T} value
-	 * @param {SpringUpdateOpts} [options]
+	 * @param {SpringUpdateOptions} [options]
 	 */
 	set(value, options) {
 		this.#deferred?.reject(new Error('Aborted'));

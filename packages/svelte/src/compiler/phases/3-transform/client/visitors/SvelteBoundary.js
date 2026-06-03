@@ -1,7 +1,8 @@
-/** @import { BlockStatement, Statement, Expression } from 'estree' */
+/** @import { BlockStatement, Statement, Expression, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import { dev } from '../../../../state.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {AST.SvelteBoundary} node
@@ -23,7 +24,7 @@ export function SvelteBoundary(node, context) {
 
 		const expression = /** @type {Expression} */ (context.visit(chunk.expression, context.state));
 
-		if (attribute.metadata.expression.has_state) {
+		if (chunk.metadata.expression.has_state) {
 			props.properties.push(b.get(attribute.name, [b.return(expression)]));
 		} else {
 			props.properties.push(b.init(attribute.name, expression));
@@ -33,29 +34,98 @@ export function SvelteBoundary(node, context) {
 	const nodes = [];
 
 	/** @type {Statement[]} */
-	const snippet_statements = [];
+	const const_tags = [];
 
-	// Capture the `failed` implicit snippet prop
+	/** @type {Statement[]} */
+	const hoisted = [];
+
+	let has_const = false;
+	let has_declaration = false;
+
+	// const tags need to live inside the boundary, but might also be referenced in hoisted snippets.
+	// to resolve this we cheat: we duplicate const tags inside snippets
+	// We'll revert this behavior in the future, it was a mistake to allow this (Component snippets also don't do this).
 	for (const child of node.fragment.nodes) {
-		if (child.type === 'SnippetBlock' && child.expression.name === 'failed') {
-			/** @type {Statement[]} */
-			const init = [];
-			context.visit(child, { ...context.state, init });
-			props.properties.push(b.prop('init', child.expression, child.expression));
-			snippet_statements.push(...init);
-		} else {
-			nodes.push(child);
+		if (child.type === 'ConstTag') {
+			has_const = true;
+			if (!context.state.options.experimental.async) {
+				context.visit(child, {
+					...context.state,
+					consts: const_tags,
+					scope: context.state.scopes.get(node.fragment) ?? context.state.scope
+				});
+			}
+		}
+
+		if (child.type === 'DeclarationTag') {
+			has_declaration = true;
 		}
 	}
 
-	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
+	for (const child of node.fragment.nodes) {
+		if (child.type === 'ConstTag') {
+			if (context.state.options.experimental.async) {
+				nodes.push(child);
+			}
+			continue;
+		}
+
+		if (child.type === 'SnippetBlock') {
+			if (
+				context.state.options.experimental.async &&
+				(has_const || has_declaration) &&
+				!['failed', 'pending'].includes(child.expression.name)
+			) {
+				// we can't hoist snippets as they may reference const/declaration tags, so we just keep them in the fragment
+				nodes.push(child);
+			} else {
+				/** @type {Statement[]} */
+				const statements = [];
+
+				context.visit(child, { ...context.state, snippets: statements });
+
+				const snippet = /** @type {VariableDeclaration} */ (statements[0]);
+
+				const snippet_fn = dev
+					? // @ts-expect-error we know this shape is correct
+						snippet.declarations[0].init.arguments[1]
+					: snippet.declarations[0].init;
+
+				if (!context.state.options.experimental.async) {
+					snippet_fn.body.body.unshift(
+						...const_tags.filter((node) => node.type === 'VariableDeclaration')
+					);
+				}
+
+				if (['failed', 'pending'].includes(child.expression.name)) {
+					props.properties.push(b.prop('init', child.expression, child.expression));
+				}
+
+				hoisted.push(snippet);
+			}
+
+			continue;
+		}
+
+		nodes.push(child);
+	}
+
+	const block = /** @type {BlockStatement} */ (
+		context.visit(
+			{ ...node.fragment, nodes },
+			// Since we're creating a new fragment the reference in scopes can't match, so we gotta attach the right scope manually
+			{ ...context.state, scope: context.state.scopes.get(node.fragment) ?? context.state.scope }
+		)
+	);
+
+	if (!context.state.options.experimental.async) {
+		block.body.unshift(...const_tags);
+	}
 
 	const boundary = b.stmt(
 		b.call('$.boundary', context.state.node, props, b.arrow([b.id('$$anchor')], block))
 	);
 
-	context.state.template.push('<!>');
-	context.state.init.push(
-		snippet_statements.length > 0 ? b.block([...snippet_statements, boundary]) : boundary
-	);
+	context.state.template.push_comment();
+	context.state.init.push(hoisted.length > 0 ? b.block([...hoisted, boundary]) : boundary);
 }

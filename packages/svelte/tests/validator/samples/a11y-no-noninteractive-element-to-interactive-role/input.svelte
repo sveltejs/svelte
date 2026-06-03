@@ -69,6 +69,13 @@
 <li role="menuitem"></li>
 <li role="row"></li>
 <li role="treeitem" aria-selected={false}></li>
+<!-- menu -->
+<menu role="menu"></menu>
+<menu role="menubar"></menu>
+<menu role="radiogroup"></menu>
+<menu role="tablist"></menu>
+<menu role="tree"></menu>
+<menu role="treegrid"></menu>
 
 <!-- VALID: elements assigned an interactive role. -->
 <div role="button"></div>

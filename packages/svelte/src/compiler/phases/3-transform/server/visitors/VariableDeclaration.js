@@ -1,9 +1,10 @@
 /** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
+/** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
 import { build_fallback, extract_paths } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
 
@@ -24,6 +25,11 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 
+			if (rune === '$props.id') {
+				// skip
+				continue;
+			}
+
 			if (rune === '$props') {
 				let has_rest = false;
 				// remove $bindable() from props declaration
@@ -40,25 +46,31 @@ export function VariableDeclaration(node, context) {
 						) {
 							const right = node.right.arguments.length
 								? /** @type {Expression} */ (context.visit(node.right.arguments[0]))
-								: b.id('undefined');
+								: b.void0;
 							return b.assignment_pattern(node.left, right);
 						}
 					}
 				});
+
+				// if `$$slots` is declared separately, deconflict
+				const slots_name = /** @type {ComponentAnalysis} */ (context.state.analysis).uses_slots
+					? b.id('$$slots_')
+					: b.id('$$slots');
+
 				if (id.type === 'ObjectPattern' && has_rest) {
 					// If a rest pattern is used within an object pattern, we need to ensure we don't expose $$slots or $$events
 					id.properties.splice(
 						id.properties.length - 1,
 						0,
 						// @ts-ignore
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$slots'), slots_name),
 						b.prop('init', b.id('$$events'), b.id('$$events'))
 					);
 				} else if (id.type === 'Identifier') {
 					// If $props is referenced as an identifier, we need to ensure we don't expose $$slots or $$events as properties
 					// on the identifier reference
 					id = b.object_pattern([
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$slots'), slots_name),
 						b.prop('init', b.id('$$events'), b.id('$$events')),
 						b.rest(b.id(id.name))
 					]);
@@ -70,25 +82,59 @@ export function VariableDeclaration(node, context) {
 			}
 
 			const args = /** @type {CallExpression} */ (init).arguments;
-			const value =
-				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
+			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
 
-			if (rune === '$derived.by') {
-				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), b.call(value))
-				);
+			if (rune === '$derived' || rune === '$derived.by') {
+				const is_async =
+					rune === '$derived' &&
+					context.state.analysis.async_deriveds.has(
+						/** @type {CallExpression} */ (declarator.init)
+					);
+
+				let init = is_async
+					? b.await(b.call('$.async_derived', b.thunk(value, true)))
+					: b.call('$.derived', rune === '$derived' ? b.thunk(value) : value);
+
+				if (declarator.id.type === 'Identifier') {
+					declarations.push(
+						b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), init)
+					);
+				} else {
+					const call = /** @type {CallExpression} */ (declarator.init);
+
+					let rhs = value;
+
+					if (rune !== '$derived' || call.arguments[0].type !== 'Identifier') {
+						const id = b.id(context.state.scope.generate('$$d'));
+
+						rhs = b.call(id);
+						declarations.push(b.declarator(id, init));
+					}
+
+					const { inserts, paths } = extract_paths(declarator.id, rhs);
+
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$derived_array');
+
+						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+						const call = b.call('$.derived', expression);
+
+						declarations.push(b.declarator(id, call));
+					}
+
+					for (const path of paths) {
+						const expression = /** @type {Expression} */ (context.visit(path.expression));
+						const call = b.call('$.derived', b.thunk(expression));
+
+						declarations.push(b.declarator(path.node, call));
+					}
+				}
+
 				continue;
 			}
 
 			if (declarator.id.type === 'Identifier') {
 				declarations.push(b.declarator(declarator.id, value));
-				continue;
-			}
-
-			if (rune === '$derived') {
-				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), value)
-				);
 				continue;
 			}
 
@@ -108,22 +154,30 @@ export function VariableDeclaration(node, context) {
 			if (has_props) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
-					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
-					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					// means that foo and bar are the props (i.e. the leaves are the prop names), not x and z.
+					const tmp = b.id(context.state.scope.generate('tmp'));
+					const { inserts, paths } = extract_paths(declarator.id, tmp);
+
 					declarations.push(
 						b.declarator(
-							b.id(tmp),
+							tmp,
 							/** @type {Expression} */ (context.visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
+
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$array');
+						declarations.push(b.declarator(id, value));
+					}
+
 					for (const path of paths) {
-						const value = path.expression?.(b.id(tmp));
+						const value = path.expression;
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
 						declarations.push(b.declarator(path.node, build_fallback(prop, value)));
 					}
+
 					continue;
 				}
 
@@ -156,6 +210,10 @@ export function VariableDeclaration(node, context) {
 		}
 	}
 
+	if (declarations.length === 0) {
+		return b.empty;
+	}
+
 	return {
 		...node,
 		declarations
@@ -173,12 +231,16 @@ function create_state_declarators(declarator, scope, value) {
 		return [b.declarator(declarator.id, value)];
 	}
 
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const tmp = b.id(scope.generate('tmp'));
+	const { paths, inserts } = extract_paths(declarator.id, tmp);
 	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
+		b.declarator(tmp, value), // TODO inject declarator for opts, so we can use it below
+		...inserts.map(({ id, value }) => {
+			id.name = scope.generate('$$array');
+			return b.declarator(id, value);
+		}),
 		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
+			const value = path.expression;
 			return b.declarator(path.node, value);
 		})
 	];

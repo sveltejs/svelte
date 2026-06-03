@@ -16,7 +16,7 @@ declare module '*.svelte' {
  * let count = $state(0);
  * ```
  *
- * https://svelte.dev/docs/svelte/$state
+ * @see {@link https://svelte.dev/docs/svelte/$state Documentation}
  *
  * @param initial The initial value
  */
@@ -85,20 +85,34 @@ declare namespace $state {
 			? NonReactive<T>
 			: T extends { toJSON(): infer R }
 				? R
-				: T extends Array<infer U>
-					? Array<Snapshot<U>>
-					: T extends object
-						? T extends { [key: string]: any }
-							? { [K in keyof T]: Snapshot<T[K]> }
-							: never
-						: never;
+				: T extends readonly unknown[]
+					? { [K in keyof T]: Snapshot<T[K]> }
+					: T extends Array<infer U>
+						? Array<Snapshot<U>>
+						: T extends object
+							? T extends { [key: string]: any }
+								? { [K in keyof T]: Snapshot<T[K]> }
+								: never
+							: never;
 
+	/**
+	 * Returns the latest `value`, even if the rest of the UI is suspending
+	 * while async work (such as data loading) completes.
+	 *
+	 * ```svelte
+	 * <nav>
+	 *   <a href="/" aria-current={$state.eager(pathname) === '/' ? 'page' : null}>home</a>
+	 *   <a href="/about" aria-current={$state.eager(pathname) === '/about' ? 'page' : null}>about</a>
+	 * </nav>
+	 * ```
+	 */
+	export function eager<T>(value: T): T;
 	/**
 	 * Declares state that is _not_ made deeply reactive — instead of mutating it,
 	 * you must reassign it.
 	 *
 	 * Example:
-	 * ```ts
+	 * ```svelte
 	 * <script>
 	 *   let items = $state.raw([0]);
 	 *
@@ -107,12 +121,12 @@ declare namespace $state {
 	 *   };
 	 * </script>
 	 *
-	 * <button on:click={addItem}>
+	 * <button onclick={addItem}>
 	 *   {items.join(', ')}
 	 * </button>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$state#$state.raw
+	 * @see {@link https://svelte.dev/docs/svelte/$state#$state.raw Documentation}
 	 *
 	 * @param initial The initial value
 	 */
@@ -122,7 +136,7 @@ declare namespace $state {
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *
 	 * Example:
-	 * ```ts
+	 * ```svelte
 	 * <script>
 	 *   let counter = $state({ count: 0 });
 	 *
@@ -133,7 +147,9 @@ declare namespace $state {
 	 * </script>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$state#$state.snapshot
+	 * If `state` has a `toJSON` method, the snapshot will clone the value returned from `toJSON` instead of the original object.
+	 *
+	 * @see {@link https://svelte.dev/docs/svelte/$state#$state.snapshot Documentation}
 	 *
 	 * @param state The value to snapshot
 	 */
@@ -159,6 +175,9 @@ declare namespace $state {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -170,7 +189,7 @@ declare namespace $state {
  * let double = $derived(count * 2);
  * ```
  *
- * https://svelte.dev/docs/svelte/$derived
+ * @see {@link https://svelte.dev/docs/svelte/$derived Documentation}
  *
  * @param expression The derived state expression
  */
@@ -192,7 +211,7 @@ declare namespace $derived {
 	 * });
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$derived#$derived.by
+	 * @see {@link https://svelte.dev/docs/svelte/$derived#$derived.by Documentation}
 	 */
 	export function by<T>(fn: () => T): T;
 
@@ -216,6 +235,9 @@ declare namespace $derived {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -229,9 +251,9 @@ declare namespace $derived {
  *
  * If you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.
  *
- * Does not run during server side rendering.
+ * Does not run during server-side rendering.
  *
- * https://svelte.dev/docs/svelte/$effect
+ * @see {@link https://svelte.dev/docs/svelte/$effect Documentation}
  * @param fn The function to execute
  */
 declare function $effect(fn: () => void | (() => void)): void;
@@ -248,12 +270,19 @@ declare namespace $effect {
 	 *
 	 * If you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.
 	 *
-	 * Does not run during server side rendering.
+	 * Does not run during server-side rendering.
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.pre
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.pre Documentation}
 	 * @param fn The function to execute
 	 */
 	export function pre(fn: () => void | (() => void)): void;
+
+	/**
+	 * Returns the number of promises that are pending in the current boundary, not including child boundaries.
+	 *
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.pending Documentation}
+	 */
+	export function pending(): number;
 
 	/**
 	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
@@ -273,7 +302,7 @@ declare namespace $effect {
 	 *
 	 * This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.tracking
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.tracking Documentation}
 	 */
 	export function tracking(): boolean;
 
@@ -288,20 +317,20 @@ declare namespace $effect {
 	 *   let count = $state(0);
 	 *
 	 *   const cleanup = $effect.root(() => {
-	 *	    $effect(() => {
-	 *				console.log(count);
-	 *			})
+	 *     $effect(() => {
+	 *       console.log(count);
+	 *     })
 	 *
-	 *      return () => {
-	 *        console.log('effect root cleanup');
-	 * 			}
+	 *     return () => {
+	 *       console.log('effect root cleanup');
+	 *     }
 	 *   });
 	 * </script>
 	 *
 	 * <button onclick={() => cleanup()}>cleanup</button>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.root
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.root Documentation}
 	 */
 	export function root(fn: () => void | (() => void)): () => void;
 
@@ -325,6 +354,9 @@ declare namespace $effect {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -334,9 +366,44 @@ declare namespace $effect {
  * let { optionalProp = 42, requiredProp, bindableProp = $bindable() }: { optionalProp?: number; requiredProps: string; bindableProp: boolean } = $props();
  * ```
  *
- * https://svelte.dev/docs/svelte/$props
+ * @see {@link https://svelte.dev/docs/svelte/$props Documentation}
  */
 declare function $props(): any;
+
+declare namespace $props {
+	/**
+	 * Generates an ID that is unique to the current component instance. When hydrating a server-rendered component,
+	 * the value will be consistent between server and client.
+	 *
+	 * This is useful for linking elements via attributes like `for` and `aria-labelledby`.
+	 * @since 5.20.0
+	 */
+	export function id(): string;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
+}
 
 /**
  * Declares a prop as bindable, meaning the parent component can use `bind:propName={value}` to bind to it.
@@ -345,9 +412,35 @@ declare function $props(): any;
  * let { propName = $bindable() }: { propName: boolean } = $props();
  * ```
  *
- * https://svelte.dev/docs/svelte/$bindable
+ * @see {@link https://svelte.dev/docs/svelte/$bindable Documentation}
  */
 declare function $bindable<T>(fallback?: T): T;
+
+declare namespace $bindable {
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
+}
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:
@@ -365,7 +458,7 @@ declare function $bindable<T>(fallback?: T): T;
  * $inspect(x, y).with(() => { debugger; });
  * ```
  *
- * https://svelte.dev/docs/svelte/$inspect
+ * @see {@link https://svelte.dev/docs/svelte/$inspect Documentation}
  */
 declare function $inspect<T extends any[]>(
 	...values: T
@@ -387,7 +480,31 @@ declare namespace $inspect {
 	 *   });
 	 * </script>
 	 */
-	export function trace(name: string): void;
+	export function trace(name?: string): void;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -407,6 +524,32 @@ declare namespace $inspect {
  *
  * Only available inside custom element components, and only on the client-side.
  *
- * https://svelte.dev/docs/svelte/$host
+ * @see {@link https://svelte.dev/docs/svelte/$host Documentation}
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
+
+declare namespace $host {
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
+}

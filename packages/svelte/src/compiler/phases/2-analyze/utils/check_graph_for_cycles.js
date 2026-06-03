@@ -14,6 +14,7 @@ export default function check_graph_for_cycles(edges) {
 	}, new Map());
 
 	const visited = new Set();
+	/** @type {Set<T>} */
 	const on_stack = new Set();
 	/** @type {Array<Array<T>>} */
 	const cycles = [];

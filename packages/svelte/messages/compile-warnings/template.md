@@ -30,9 +30,52 @@
 
 > `<%name%>` will be treated as an HTML element unless it begins with a capital letter
 
+## element_implicitly_closed
+
+> This element is implicitly closed by the following `%tag%`, which can cause an unexpected DOM structure. Add an explicit `%closing%` to avoid surprises.
+
+In HTML, some elements are implicitly closed by another element. For example, you cannot nest a `<p>` inside another `<p>`:
+
+```html
+<!-- this HTML... -->
+<p><p>hello</p>
+
+<!-- results in this DOM structure -->
+<p></p>
+<p>hello</p>
+```
+
+Similarly, a parent element's closing tag will implicitly close all child elements, even if the `</` was a typo and you meant to create a _new_ element. To avoid ambiguity, it's always a good idea to have an explicit closing tag.
+
 ## element_invalid_self_closing_tag
 
 > Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`
+
+In HTML, there's [no such thing as a self-closing tag](https://jakearchibald.com/2023/against-self-closing-tags-in-html/). While this _looks_ like a self-contained element with some text next to it...
+
+```html
+<div>
+	<span class="icon" /> some text!
+</div>
+```
+
+...a spec-compliant HTML parser (such as a browser) will in fact parse it like this, with the text _inside_ the icon:
+
+```html
+<div>
+	<span class="icon"> some text! </span>
+</div>
+```
+
+Some templating languages (including Svelte) will 'fix' HTML by turning `<span />` into `<span></span>`. Others adhere to the spec. Both result in ambiguity and confusion when copy-pasting code between different contexts, so Svelte prompts you to resolve the ambiguity directly by having an explicit closing tag.
+
+To automate this, run the dedicated migration:
+
+```sh
+npx sv migrate self-closing-tags
+```
+
+In a future version of Svelte, self-closing tags may be upgraded from a warning to an error.
 
 ## event_directive_deprecated
 
@@ -64,7 +107,7 @@ This code will work when the component is rendered on the client (which is why t
 
 ## script_unknown_attribute
 
-> Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+> Unrecognised attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
 
 ## slot_element_deprecated
 

@@ -9,7 +9,7 @@ export default test({
 
 		<math>
 			<mrow></mrow>
-		</svg>
+		</math>
 
 		<div class="hi">hi</div>
 	`,

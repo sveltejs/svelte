@@ -62,6 +62,18 @@
 						"start": 72,
 						"end": 83,
 						"name": "class",
+						"name_loc": {
+							"start": {
+								"line": 2,
+								"column": 27,
+								"character": 72
+							},
+							"end": {
+								"line": 2,
+								"column": 32,
+								"character": 77
+							}
+						},
 						"value": [
 							{
 								"start": 79,
