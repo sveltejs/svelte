@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
 import * as e from '../../../errors.js';
+import { extract_identifiers } from '../../../utils/ast.js';
 
 /**
  * @param {AST.DeclarationTag} node
@@ -10,6 +11,16 @@ import * as e from '../../../errors.js';
 export function DeclarationTag(node, context) {
 	if (!context.state.analysis.runes && !context.state.analysis.maybe_runes) {
 		e.declaration_tag_no_legacy_mode(node);
+	}
+
+	const is_top_level = context.path.length === 1 && context.path[0].type === 'Fragment';
+	if (is_top_level) {
+		const duplicate = node.declaration.declarations
+			.flatMap((declaration) => extract_identifiers(declaration.id))
+			.find((id) => context.state.analysis.instance.scope.declarations.has(id.name));
+		if (duplicate) {
+			e.declaration_duplicate(duplicate, duplicate.name);
+		}
 	}
 
 	context.visit(node.declaration, {

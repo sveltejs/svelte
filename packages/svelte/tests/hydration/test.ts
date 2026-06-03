@@ -25,7 +25,21 @@ interface HydrationTest extends BaseTest {
 	expect_hydration_error?: true;
 	snapshot?: (target: HTMLElement) => any;
 	test?: (
-		assert: typeof import('vitest').assert & {
+		// `_config.js` test callbacks rely on inferred parameter types, which
+		// TS treats as non-explicit and rejects for chai 5's assertion-function
+		// signatures (TS2775). Override the assertion methods we actually use
+		// with non-assertion equivalents.
+		assert: Omit<
+			typeof import('vitest').assert,
+			'ok' | 'isOk' | 'isTrue' | 'isFalse' | 'exists' | 'notExists' | 'instanceOf'
+		> & {
+			ok(value: unknown, message?: string): void;
+			isOk(value: unknown, message?: string): void;
+			isTrue(value: unknown, message?: string): void;
+			isFalse(value: unknown, message?: string): void;
+			exists(value: unknown, message?: string): void;
+			notExists(value: unknown, message?: string): void;
+			instanceOf(value: unknown, type: Function, message?: string): void;
 			htmlEqual(a: string, b: string, description?: string): void;
 		},
 		target: HTMLElement,
@@ -152,7 +166,6 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 
 		if (config.test) {
 			await config.test(
-				// @ts-expect-error TS doesn't get it
 				{
 					...assert,
 					htmlEqual: assert_html_equal
