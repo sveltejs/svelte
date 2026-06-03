@@ -45,13 +45,34 @@ const common_options = {
 
 	experimental: object({
 		async: boolean(false),
-		customRenderer: parametric(
-			/** @type {(options: { filename: string }) => string | undefined} */ (() => undefined),
+		// `customRenderer` can be:
+		//  - `undefined`/`false`: the feature is off, components compile to plain DOM
+		//  - `true`: the feature is on, every component defaults to DOM (opt in via `<svelte:options>`)
+		//  - a string: the feature is on, every component defaults to that module (opt out via `<svelte:options>`)
+		//  - a function: the feature is on, the module is resolved lazily per file
+		// The normalized value is always a function returning `string | null | undefined` where
+		// `string` is the renderer module, `null` is "DOM but feature enabled" (push `null`) and
+		// `undefined` is "feature off" (no renderer pushed at all).
+		customRenderer: validator(
+			/** @type {(options: { filename: string }) => string | null | undefined} */ (() => undefined),
 			(input, keypath) => {
-				if (input != null && typeof input !== 'string') {
-					throw_error(`${keypath} should be a string, if specified`);
+				if (input === false) {
+					return () => undefined;
 				}
-				return /** @type {string | undefined} */ (input);
+
+				if (input === true) {
+					return () => null;
+				}
+
+				if (typeof input === 'string') {
+					return () => input;
+				}
+
+				if (typeof input === 'function') {
+					return input;
+				}
+
+				throw_error(`${keypath} should be true, a string or a function, if specified`);
 			}
 		)
 	})

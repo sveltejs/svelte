@@ -35,23 +35,3 @@ export function push_renderer(value) {
 		}
 	};
 }
-
-/**
- * @template T
- * @param {() => T} fn
- * @returns {T}
- */
-export function without_renderer(fn) {
-	if (current_renderer === null) {
-		return fn();
-	}
-
-	var previous_renderer = current_renderer;
-	current_renderer = null;
-
-	try {
-		return fn();
-	} finally {
-		current_renderer = previous_renderer;
-	}
-}

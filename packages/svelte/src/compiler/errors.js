@@ -1550,6 +1550,15 @@ export function svelte_meta_invalid_tag(node, list) {
 }
 
 /**
+ * `customRenderer` cannot be set in `<svelte:options>` unless the `experimental.customRenderer` compiler option is enabled
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_customrenderer_disabled(node) {
+	e(node, 'svelte_options_customrenderer_disabled', `\`customRenderer\` cannot be set in \`<svelte:options>\` unless the \`experimental.customRenderer\` compiler option is enabled\nhttps://svelte.dev/e/svelte_options_customrenderer_disabled`);
+}
+
+/**
  * "tag" option is deprecated — use "customElement" instead
  * @param {null | number | NodeLike} node
  * @returns {never}
