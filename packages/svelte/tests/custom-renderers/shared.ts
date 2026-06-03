@@ -23,8 +23,7 @@ type NonAssertingMethods = {
 	instanceOf(value: unknown, type: Function, message?: string): void;
 };
 
-type Assert = Omit<typeof import('vitest').assert, keyof NonAssertingMethods> &
-	NonAssertingMethods;
+type Assert = Omit<typeof import('vitest').assert, keyof NonAssertingMethods> & NonAssertingMethods;
 
 export interface CustomRendererTest extends BaseTest {
 	html?: string;
