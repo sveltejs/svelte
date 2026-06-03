@@ -40,7 +40,6 @@ export function compile(source, options) {
 	// (see `validate-options.js`). A string opts in to a specific renderer module, `null`/`false`
 	// opts out to plain DOM (while keeping the feature enabled) and `true`/absent inherits whatever
 	// the global option resolves to.
-	/** @type {(options: { filename: string }) => string | null | undefined} */
 	let custom_renderer_option = validated.experimental.customRenderer;
 
 	if (custom_renderer !== undefined) {

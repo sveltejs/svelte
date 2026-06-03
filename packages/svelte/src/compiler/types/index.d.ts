@@ -256,7 +256,7 @@ export interface ModuleCompileOptions {
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
 
-export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'rootDir'> & {
+export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'rootDir' | 'experimental'> & {
 	rootDir: ModuleCompileOptions['rootDir'];
 	experimental: Required<Omit<Required<ModuleCompileOptions>['experimental'], 'customRenderer'>> & {
 		customRenderer: (options: { filename: string }) => string | null | undefined;
