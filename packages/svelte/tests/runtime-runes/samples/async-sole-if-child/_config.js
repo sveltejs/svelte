@@ -10,10 +10,8 @@ export default test({
 			target.innerHTML,
 			`
 				<button>toggle</button>
-				<div>
-					<header>header</header>
-					<footer>footer</footer>
-				</div>
+				<header>header</header>
+				<footer>footer</footer>
 			`
 		);
 
@@ -23,7 +21,6 @@ export default test({
 			target.innerHTML,
 			`
 				<button>toggle</button>
-				<div></div>
 			`
 		);
 
@@ -33,10 +30,8 @@ export default test({
 			target.innerHTML,
 			`
 				<button>toggle</button>
-				<div>
-					<header>header</header>
-					<footer>footer</footer>
-				</div>
+				<header>header</header>
+				<footer>footer</footer>
 			`
 		);
 	}

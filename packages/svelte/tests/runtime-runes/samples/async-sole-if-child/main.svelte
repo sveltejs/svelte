@@ -6,10 +6,6 @@
 
 <button onclick={() => (show = !show)}>toggle</button>
 
-<svelte:boundary>
-	<div>
-		{#if show}
-			<Child gate={await Promise.resolve(true)} />
-		{/if}
-	</div>
-</svelte:boundary>
+{#if show}
+	<Child gate={await Promise.resolve(true)} />
+{/if}
