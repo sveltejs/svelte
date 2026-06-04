@@ -449,7 +449,9 @@ export class Batch {
 				} else if ((flags & EFFECT) !== 0) {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
-					render_effects.push(effect);
+					if ((flags & RENDER_EFFECT) !== 0 || is_dirty(effect)) {
+						render_effects.push(effect);
+					}
 				} else if (is_dirty(effect)) {
 					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
 					update_effect(effect);
