@@ -50,7 +50,7 @@ import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
 import { tag } from '../../dev/tracing.js';
 
-import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
+import { push_renderer, current_renderer, parent_renderer } from '../../custom-renderer/state.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -220,6 +220,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	// Needed so that the commit callback can push the correct renderer when doing
 	// DOM operations outside of an effect context (e.g. as a batch commit callback).
 	var renderer = current_renderer;
+	var parent = parent_renderer;
 
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);
@@ -267,7 +268,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		var pop_renderer = push_renderer(renderer);
+		var pop_renderer = push_renderer(renderer, parent);
 
 		state.pending.delete(batch);
 

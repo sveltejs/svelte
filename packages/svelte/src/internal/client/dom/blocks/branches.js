@@ -20,7 +20,7 @@ import {
 	get_last_child
 } from '../operations.js';
 import { DEV } from 'esm-env';
-import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
+import { push_renderer, current_renderer, parent_renderer } from '../../custom-renderer/state.js';
 
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
@@ -80,6 +80,12 @@ export class BranchManager {
 	#renderer = null;
 
 	/**
+	 * The parent renderer that was active when this BranchManager was created.
+	 * @type {Renderer | null}
+	 */
+	#parent_renderer = null;
+
+	/**
 	 * @param {TemplateNode} anchor
 	 * @param {boolean} transition
 	 */
@@ -87,6 +93,7 @@ export class BranchManager {
 		this.anchor = anchor;
 		this.#transition = transition;
 		this.#renderer = current_renderer;
+		this.#parent_renderer = parent_renderer;
 	}
 
 	/**
@@ -96,7 +103,7 @@ export class BranchManager {
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
 
-		var pop_renderer = push_renderer(this.#renderer);
+		var pop_renderer = push_renderer(this.#renderer, this.#parent_renderer);
 
 		var key = /** @type {Key} */ (this.#batches.get(batch));
 
