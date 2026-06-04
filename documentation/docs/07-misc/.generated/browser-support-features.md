@@ -1,4 +1,4 @@
-<!-- generated in ..\..\..\..\..\packages\svelte\scripts\generate-browser-support.ts. do not edit -->
+<!-- generated in ../../../../../packages/svelte/scripts/generate-browser-support.ts. do not edit -->
 
 | Feature | Chrome/Edge | Firefox | Safari |
 | - | - | - | - |
