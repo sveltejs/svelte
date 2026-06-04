@@ -141,6 +141,7 @@ export function client_component(analysis, options) {
 		scopes: analysis.module.scopes,
 		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
+		templates: new Map(),
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -584,9 +585,14 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
 	}
 
-	if (custom_renderer) {
+	if (custom_renderer !== undefined) {
+		// when the custom renderer feature is enabled every component pushes a renderer: components
+		// with a renderer module push `$renderer`, DOM components push `null`
 		component_block.body.unshift(
-			b.var('$$pop_renderer', b.call('$.push_renderer', b.id('$renderer')))
+			b.var(
+				'$$pop_renderer',
+				b.call('$.push_renderer', custom_renderer ? b.id('$renderer') : b.literal(null))
+			)
 		);
 		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
 	}

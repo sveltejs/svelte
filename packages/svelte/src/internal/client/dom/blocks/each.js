@@ -242,7 +242,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var each_array = derived_safe_equal(() => {
 		var collection = get_collection();
 
-		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
+		return /** @type {V[]} */ (
+			is_array(collection) ? collection : collection == null ? [] : array_from(collection)
+		);
 	});
 
 	if (DEV) {
@@ -265,7 +267,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		var pop_renderer = renderer !== null ? push_renderer(renderer) : null;
+		var pop_renderer = push_renderer(renderer);
 
 		state.pending.delete(batch);
 

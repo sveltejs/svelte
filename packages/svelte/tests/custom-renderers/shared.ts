@@ -10,6 +10,22 @@ import { mount, unmount } from '../../src/index-client.js';
 import { writeFile } from 'node:fs/promises';
 import { globSync } from 'tinyglobby';
 
+// `_config.js` test callbacks rely on inferred parameter types, which
+// TypeScript treats as non-explicit and rejects for chai's assertion-function
+// signatures (TS2775). Override the assertion methods we use with
+// non-assertion equivalents; runtime behavior is unchanged.
+type NonAssertingMethods = {
+	ok(value: unknown, message?: string): void;
+	isOk(value: unknown, message?: string): void;
+	isTrue(value: unknown, message?: string): void;
+	isFalse(value: unknown, message?: string): void;
+	exists(value: unknown, message?: string): void;
+	notExists(value: unknown, message?: string): void;
+	instanceOf(value: unknown, type: Function, message?: string): void;
+};
+
+type Assert = Omit<typeof import('vitest').assert, keyof NonAssertingMethods> & NonAssertingMethods;
+
 export interface CustomRendererTest extends BaseTest {
 	html?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -21,7 +37,7 @@ export interface CustomRendererTest extends BaseTest {
 	runtime_error?: string;
 	warnings?: string[];
 	test?: (args: {
-		assert: typeof import('vitest').assert;
+		assert: Assert;
 		target: any;
 		component: Record<string, any>;
 		mod: any;

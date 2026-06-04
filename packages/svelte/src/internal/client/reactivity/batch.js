@@ -41,6 +41,7 @@ import { set_signal_status } from './status.js';
 import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
+import { OBSOLETE } from './deriveds.js';
 
 /** @type {Batch | null} */
 let first_batch = null;
@@ -511,6 +512,10 @@ export class Batch {
 			if (d) deferred.promise.then(d.resolve).catch(d.reject);
 		}
 
+		// Clear them or else those that are still pending might get rejected on discard (after merged-into batch is done).
+		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
+		batch.async_deriveds.clear();
+
 		// Mark is not guaranteed not touch these, so we transfer them
 		this.transfer_effects(batch.#dirty_effects, batch.#maybe_dirty_effects);
 
@@ -629,6 +634,10 @@ export class Batch {
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
 
+		for (const deferred of this.async_deriveds.values()) {
+			deferred.reject(OBSOLETE);
+		}
+
 		this.#unlink();
 		this.#deferred?.resolve();
 	}
@@ -677,12 +686,15 @@ export class Batch {
 				}
 			}
 
-			if (!batch.#started) continue;
+			var current = [...batch.current.keys()].filter(
+				(source) => !(/** @type {[any, boolean]} */ (batch.current.get(source))[1])
+			);
+
+			// If not started yet or no sources to update (which is e.g. possible for the very first batch) then bail
+			if (!batch.#started || current.length === 0) continue;
 
 			// Re-run async/block effects that depend on distinct values changed in both batches (ignoring deriveds)
-			var others = [...batch.current.keys()].filter(
-				(s) => !(/** @type {[any, boolean]} */ (batch.current.get(s))[1]) && !this.current.has(s)
-			);
+			var others = current.filter((source) => !this.current.has(source));
 
 			if (others.length === 0) {
 				if (is_earlier) {

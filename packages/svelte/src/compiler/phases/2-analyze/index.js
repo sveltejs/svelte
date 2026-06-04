@@ -472,7 +472,9 @@ export function analyze_component(root, source, options) {
 	const css = options.css({ filename: options.filename });
 	const custom_renderer = options.experimental.customRenderer?.({ filename: options.filename });
 
-	if (css === 'injected' && custom_renderer !== undefined) {
+	// only an actual renderer module (a string) is incompatible with injected css — a `null`
+	// renderer means the component renders to the DOM, which is fine
+	if (css === 'injected' && typeof custom_renderer === 'string') {
 		e.incompatible_with_custom_renderer(null, "`css: 'injected'`");
 	}
 

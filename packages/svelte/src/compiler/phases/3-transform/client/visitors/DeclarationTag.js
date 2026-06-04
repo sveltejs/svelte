@@ -10,8 +10,10 @@ import { add_state_transformers } from './shared/declarations.js';
  * @param {ComponentContext} context
  */
 export function DeclarationTag(node, context) {
-	const declaration = /** @type {Statement | undefined} */ (context.visit(node.declaration));
+	// register the transformers _before_ visiting the declaration, so that
+	// later declarators can reference earlier ones (e.g. `{let a = $state(0), b = $derived(a * 2)}`)
 	add_state_transformers(context);
+	const declaration = /** @type {Statement | undefined} */ (context.visit(node.declaration));
 
 	if (
 		node.metadata.promises_id &&

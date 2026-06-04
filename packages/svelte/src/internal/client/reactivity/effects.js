@@ -389,7 +389,9 @@ export function render_effect(fn, flags = 0) {
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)));
+		create_effect(RENDER_EFFECT, () => {
+			fn(...values.map(get));
+		});
 	});
 }
 
@@ -511,7 +513,7 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	var pop_renderer = effect.r !== null ? push_renderer(effect.r) : null;
+	var pop_renderer = push_renderer(effect.r);
 
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
@@ -522,7 +524,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
-	set_signal_status(effect, DESTROYING);
+	effect.f |= DESTROYING;
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
 
@@ -736,7 +738,7 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
-	var pop_renderer = effect.r !== null ? push_renderer(effect.r) : null;
+	var pop_renderer = push_renderer(effect.r);
 
 	/** @type {TemplateNode | null} */
 	var node = effect.nodes.start;
