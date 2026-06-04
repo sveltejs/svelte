@@ -599,7 +599,7 @@ describe('signals', () => {
 
 		return () => {
 			flushSync();
-			assert.deepEqual(log, [20]);
+			assert.deepEqual(log, [20, 20]);
 		};
 	});
 

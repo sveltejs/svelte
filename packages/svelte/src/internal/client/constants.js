@@ -23,14 +23,13 @@ export const BOUNDARY_EFFECT = 1 << 7;
  */
 export const CONNECTED = 1 << 9;
 export const CLEAN = 1 << 10;
-export const DIRTY = 1 << 11;
-export const MAYBE_DIRTY = 1 << 12;
 export const INERT = 1 << 13;
 export const DESTROYED = 1 << 14;
 /** Set once a reaction has run for the first time */
 export const REACTION_RAN = 1 << 15;
 /** Effect is in the process of getting destroyed. Can be observed in child teardown functions */
 export const DESTROYING = 1 << 25;
+export const EFFECT_LEGACY = 1 << 26;
 
 // Flags exclusive to effects
 /**
@@ -43,6 +42,7 @@ export const HEAD_EFFECT = 1 << 18;
 export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
 export const EFFECT_OFFSCREEN = 1 << 25;
+export const STATE_EAGER_EFFECT = 1 << 27;
 
 // Flags exclusive to deriveds
 /**

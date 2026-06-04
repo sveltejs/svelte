@@ -1,11 +1,5 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import {
-	BOUNDARY_EFFECT,
-	DIRTY,
-	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT,
-	MAYBE_DIRTY
-} from '#client/constants';
+import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
 import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
@@ -109,9 +103,6 @@ export class Boundary {
 
 	/** @type {Set<Effect>} */
 	#dirty_effects = new Set();
-
-	/** @type {Set<Effect>} */
-	#maybe_dirty_effects = new Set();
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -272,7 +263,7 @@ export class Boundary {
 
 		// any effects that were previously deferred should be transferred
 		// to the batch, which will flush in the next microtask
-		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
+		batch.transfer_effects(this.#dirty_effects);
 	}
 
 	/**
@@ -280,7 +271,7 @@ export class Boundary {
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
+		defer_effect(effect, this.#dirty_effects);
 	}
 
 	/**

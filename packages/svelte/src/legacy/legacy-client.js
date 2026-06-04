@@ -1,9 +1,16 @@
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
-import { DIRTY, LEGACY_PROPS, MAYBE_DIRTY } from '../internal/client/constants.js';
+/** @import { Derived, Value } from '#client' */
+import { DERIVED, EFFECT_LEGACY, LEGACY_PROPS } from '../internal/client/constants.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { active_effect, get } from '../internal/client/runtime.js';
+import {
+	active_effect,
+	get,
+	new_deps,
+	skipped_deps,
+	untracked_writes
+} from '../internal/client/runtime.js';
 import { flushSync } from '../internal/client/reactivity/batch.js';
 import { define_property, is_array } from '../internal/shared/utils.js';
 import * as e from '../internal/client/errors.js';
@@ -12,7 +19,6 @@ import { DEV } from 'esm-env';
 import { FILENAME } from '../constants.js';
 import { component_context, dev_current_component_function } from '../internal/client/context.js';
 import { async_mode_flag } from '../internal/flags/index.js';
-import { set_signal_status } from '../internal/client/reactivity/status.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -189,17 +195,37 @@ class Svelte4Component {
  */
 export function run(fn) {
 	user_pre_effect(() => {
-		fn();
 		var effect = /** @type {import('#client').Effect} */ (active_effect);
-		// If the effect is immediately made dirty again, mark it as maybe dirty to emulate legacy behaviour
-		if ((effect.f & DIRTY) !== 0) {
-			let filename = "a file (we can't know which one)";
-			if (DEV) {
-				// @ts-ignore
-				filename = dev_current_component_function?.[FILENAME] ?? filename;
+
+		// we need this to prevent it from re-running
+		effect.f |= EFFECT_LEGACY;
+
+		fn();
+
+		if (untracked_writes !== null) {
+			/** @type {Set<Value>} */
+			const all_deps = new Set([...(effect.deps ?? [].slice(skipped_deps)), ...(new_deps ?? [])]);
+
+			/** @param {Value} dep */
+			const add_deps = (dep) => {
+				all_deps.add(dep);
+
+				if ((dep.f & DERIVED) !== 0) {
+					const deps = /** @type {Derived} */ (dep).deps;
+					if (deps !== null) deps.forEach(add_deps);
+				}
+			};
+
+			for (const dep of all_deps) {
+				if (untracked_writes.includes(dep)) {
+					let filename = "a file (we can't know which one)";
+					if (DEV) {
+						// @ts-ignore
+						filename = dev_current_component_function?.[FILENAME] ?? filename;
+					}
+					w.legacy_recursive_reactive_block(filename);
+				}
 			}
-			w.legacy_recursive_reactive_block(filename);
-			set_signal_status(effect, MAYBE_DIRTY);
 		}
 	});
 }

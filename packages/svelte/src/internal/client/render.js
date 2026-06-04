@@ -172,13 +172,14 @@ function _mount(
 	var unmount = component_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
+		push({});
+
 		boundary(
 			/** @type {TemplateNode} */ (anchor_node),
 			{
 				pending: () => {}
 			},
 			(anchor_node) => {
-				push({});
 				var ctx = /** @type {ComponentContext} */ (component_context);
 				if (context) ctx.c = context;
 
@@ -208,11 +209,11 @@ function _mount(
 						throw HYDRATION_ERROR;
 					}
 				}
-
-				pop();
 			},
 			transformError
 		);
+
+		pop();
 
 		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
 		/** @type {Set<string>} */
