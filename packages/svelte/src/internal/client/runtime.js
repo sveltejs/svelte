@@ -51,6 +51,7 @@ import {
 	batch_values,
 	current_batch,
 	flushSync,
+	previous_batch,
 	schedule_effect
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
@@ -581,6 +582,11 @@ export function get(signal) {
 		if (
 			!untracking &&
 			reactivity_loss_tracker &&
+			// By checking that current/previous batch are null we filter out false positives.
+			// reactivity_loss_tracker is only reset after a microtask, so if a flush happens
+			// before that, we get warnings for things we shouldn't warn on.
+			current_batch === null &&
+			previous_batch === null &&
 			!reactivity_loss_tracker.warned &&
 			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0 &&
 			!reactivity_loss_tracker.effect_deps.has(signal)
