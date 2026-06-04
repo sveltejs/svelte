@@ -447,7 +447,7 @@ export function update_effect(effect) {
 	active_effect = effect;
 	is_updating_effect = true;
 
-	var pop_renderer = push_renderer(effect.r);
+	var pop_renderer = push_renderer(effect.r, effect.pr);
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
