@@ -12,6 +12,7 @@ import { extract_identifiers } from '../../utils/ast.js';
 import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
+import { custom_renderer } from '../../state.js';
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
@@ -290,7 +291,8 @@ export function clean_nodes(
 					!first.metadata.dynamic &&
 					!first.attributes.some(
 						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
-					))),
+					))) &&
+			custom_renderer == undefined,
 		/** if a component/snippet/each block starts with text, we need to add an anchor comment so that its text node doesn't get fused with its surroundings */
 		is_text_first:
 			(parent.type === 'Fragment' ||
