@@ -45,7 +45,7 @@ import { Batch, collected_effects, current_batch } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
-import { push_renderer, current_renderer } from '../custom-renderer/state.js';
+import { push_renderer, current_renderer, parent_renderer } from '../custom-renderer/state.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -114,7 +114,8 @@ function create_effect(type, fn) {
 		teardown: null,
 		wv: 0,
 		ac: null,
-		r: current_renderer
+		r: current_renderer,
+		pr: parent_renderer
 	};
 
 	if (DEV) {
@@ -513,7 +514,7 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	var pop_renderer = push_renderer(effect.r);
+	var pop_renderer = push_renderer(effect.r, effect.pr);
 
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
@@ -564,6 +565,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.ac =
 		effect.b =
 		effect.r =
+		effect.pr =
 			null;
 
 	pop_renderer?.();
@@ -738,7 +740,7 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
-	var pop_renderer = push_renderer(effect.r);
+	var pop_renderer = push_renderer(effect.r, effect.pr);
 
 	/** @type {TemplateNode | null} */
 	var node = effect.nodes.start;
