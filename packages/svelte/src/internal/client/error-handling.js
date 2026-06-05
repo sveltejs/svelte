@@ -52,11 +52,15 @@ export function invoke_error_boundary(error, effect) {
 				throw error;
 			}
 
-			try {
-				/** @type {Boundary} */ (effect.b).error(error);
-				return;
-			} catch (e) {
-				error = e;
+			// If the boundary has been destroyed (effect.b is null), skip it
+			// and continue bubbling up to the parent boundary
+			if (effect.b !== null) {
+				try {
+					/** @type {Boundary} */ (effect.b).error(error);
+					return;
+				} catch (e) {
+					error = e;
+				}
 			}
 		}
 
