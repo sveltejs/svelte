@@ -3,7 +3,7 @@
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
-import { ERROR_VALUE, BOUNDARY_EFFECT, REACTION_RAN, EFFECT } from './constants.js';
+import { ERROR_VALUE, BOUNDARY_EFFECT, REACTION_RAN, EFFECT, DESTROYED } from './constants.js';
 import { define_property, get_descriptor } from '../shared/utils.js';
 import { active_effect, active_reaction } from './runtime.js';
 
@@ -45,6 +45,10 @@ export function handle_error(error) {
  * @param {Effect | null} effect
  */
 export function invoke_error_boundary(error, effect) {
+	if (effect !== null && (effect.f & DESTROYED) !== 0) {
+		return;
+	}
+
 	while (effect !== null) {
 		if ((effect.f & BOUNDARY_EFFECT) !== 0) {
 			if ((effect.f & REACTION_RAN) === 0) {
@@ -54,13 +58,11 @@ export function invoke_error_boundary(error, effect) {
 
 			// If the boundary has been destroyed (effect.b is null), skip it
 			// and continue bubbling up to the parent boundary
-			if (effect.b !== null) {
-				try {
-					/** @type {Boundary} */ (effect.b).error(error);
-					return;
-				} catch (e) {
-					error = e;
-				}
+			try {
+				/** @type {Boundary} */ (effect.b).error(error);
+				return;
+			} catch (e) {
+				error = e;
 			}
 		}
 
