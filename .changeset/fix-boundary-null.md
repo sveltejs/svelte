@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: check boundary exists before calling error handler in async derived
+fix: ignore errors that occur in destroyed effects
