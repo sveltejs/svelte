@@ -56,8 +56,6 @@ export function invoke_error_boundary(error, effect) {
 				throw error;
 			}
 
-			// If the boundary has been destroyed (effect.b is null), skip it
-			// and continue bubbling up to the parent boundary
 			try {
 				/** @type {Boundary} */ (effect.b).error(error);
 				return;
