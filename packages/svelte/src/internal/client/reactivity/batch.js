@@ -15,7 +15,6 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	STATE_EAGER_EFFECT,
 	DESTROYING
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
@@ -109,6 +108,13 @@ export class Batch {
 	#started = false;
 
 	linked = true;
+
+	/**
+	 * In case of a fork with eager effects, this is the related eager batch
+	 * that will commit eagerly updating effects just before this fork commits.
+	 * @type {Batch | null}
+	 */
+	eager = null;
 
 	/** @type {Batch | null} */
 	#prev = null;
@@ -1242,16 +1248,22 @@ function depends_on(reaction, sources, checked) {
 	return false;
 }
 
-/** @type {Source<number>[]} */
-let eager_versions = [];
+/** @type {Map<Batch | null, Source<number>[]>} */
+let eager_map = new Map();
 
 let running_eager_effect = false;
 
-function eager_flush() {
+/** @param {Batch} batch */
+function eager_flush(batch) {
 	flushSync(() => {
-		const eager = eager_versions;
-		eager_versions = [];
-		for (const version of eager) {
+		const versions = /** @type {Source<number>[]} */ (eager_map.get(batch));
+		eager_map.delete(batch);
+		const eager_batch = (current_batch = batch.eager ?? new Batch());
+		if (batch.is_fork) {
+			eager_batch.is_fork = true;
+			batch.eager = eager_batch;
+		}
+		for (const version of versions) {
 			update(version);
 		}
 	});
@@ -1289,7 +1301,7 @@ export function eager(fn) {
 		version.label = '<eager>';
 	}
 
-	var effect = eager_effect(() => {
+	eager_effect(() => {
 		if (initial) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
@@ -1308,23 +1320,18 @@ export function eager(fn) {
 			return;
 		}
 
-		if (!current_batch?.is_fork) {
-			// the second time this effect runs, it's to schedule a
-			// `version` update. since this will recreate the effect,
-			// we don't need to evaluate the expression here
-			if (eager_versions.length === 0) {
-				queue_micro_task(eager_flush);
-			}
-
-			eager_versions.push(version);
-		} else {
-			fn();
+		// the second time this effect runs, it's to schedule a
+		// `version` update. since this will recreate the effect,
+		// we don't need to evaluate the expression here
+		const batch = /** @type {Batch} */ (current_batch);
+		const versions = eager_map.get(batch) ?? [];
+		if (versions.length === 0) {
+			eager_map.set(batch, versions);
+			queue_micro_task(() => eager_flush(batch));
 		}
-	});
 
-	// TODO ideally this wouldn't be necessary. I haven't figured out a way for these
-	// effects to correctly be marked dirty when `$state.eager(...)` arguments change
-	effect.f |= STATE_EAGER_EFFECT;
+		versions.push(version);
+	});
 
 	initial = false;
 
@@ -1430,24 +1437,26 @@ export function fork(fn) {
 				value.wv = snapshot.wv;
 			}
 
-			// trigger any `$state.eager(...)` expressions with the new state.
-			// eager effects don't get scheduled like other effects, so we
-			// can't just encounter them during traversal, we need to
-			// proactively flush them
-			// TODO maybe there's a better implementation?
-			// e.g. maybe we can just schedule them so that they run
-			// with everything else during batch.flush?
-			flushSync(() => {
-				/** @type {Set<Effect>} */
-				var eager_effects = new Set();
+			// Flush the eager batch first to update any effects depending
+			// on `$state.eager/$effect.pending`
+			if (batch.eager) {
+				const eager = batch.eager;
+				eager.is_fork = false;
 
-				for (var source of batch.current.keys()) {
-					mark_eager_effects(source, eager_effects);
+				for ([reaction, cv] of eager.cvs) {
+					if (cv > reaction.cv) {
+						reaction.cv = cv;
+					}
 				}
 
-				set_eager_effects(eager_effects);
-				flush_eager_effects();
-			});
+				for ([value, snapshot] of eager.current) {
+					value.v = snapshot.v;
+					value.wv = snapshot.wv;
+				}
+
+				eager.flush();
+				batch.eager = null;
+			}
 
 			batch.flush();
 			await settled;
@@ -1460,6 +1469,7 @@ export function fork(fn) {
 			}
 
 			if (!committed && batch.linked) {
+				batch.eager?.discard();
 				batch.discard();
 			}
 		}

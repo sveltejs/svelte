@@ -27,7 +27,6 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	CONNECTED,
-	STATE_EAGER_EFFECT,
 	REACTION_RAN
 } from '#client/constants';
 import * as e from '../errors.js';
@@ -41,7 +40,8 @@ import {
 	legacy_updates,
 	set_cv,
 	get_cv,
-	active_batch
+	active_batch,
+	current_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -245,6 +245,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		}
 
 		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+			current_batch?.apply(); // the current batch is not necessarily the active batch, ensure it is
 			flush_eager_effects();
 		}
 	}
@@ -259,7 +260,7 @@ export function flush_eager_effects() {
 		let dirty;
 
 		try {
-			dirty = (effect.f & STATE_EAGER_EFFECT) !== 0 || is_dirty(effect);
+			dirty = is_dirty(effect);
 		} catch {
 			// Dirty-checking can evaluate derived dependencies and throw in cases where
 			// parent effects are about to destroy this eager effect. Run the effect so
