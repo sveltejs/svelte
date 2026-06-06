@@ -59,7 +59,7 @@ export function parse(source, comments, typescript, is_script) {
 
 		return /** @type {Program} */ (ast);
 	} catch (err) {
-		// TODO the `return` in necessary for TS<7 due to a bug; otherwise
+		// TODO the `return` is necessary for TS<7 due to a bug; otherwise
 		// the `finally` block is regarded as unreachable
 		return handle_parse_error(err);
 	} finally {
