@@ -1434,3 +1434,4 @@ export function fork(fn) {
 export function clear() {
 	first_batch = last_batch = null;
 }
+
