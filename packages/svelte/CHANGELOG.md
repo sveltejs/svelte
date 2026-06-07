@@ -1,5 +1,13 @@
 # svelte
 
+## 5.56.3
+
+### Patch Changes
+
+- fix: ignore errors that occur in destroyed effects ([#18384](https://github.com/sveltejs/svelte/pull/18384))
+
+- fix: type BigInts in `$state.snapshot(...)` return values ([#18388](https://github.com/sveltejs/svelte/pull/18388))
+
 ## 5.56.2
 
 ### Patch Changes
