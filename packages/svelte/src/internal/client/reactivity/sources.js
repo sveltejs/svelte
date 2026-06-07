@@ -40,7 +40,10 @@ import {
 	batch_values,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	current_batch,
+	batch_values,
+	Batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -179,10 +182,10 @@ export function set(source, value, should_proxy = false) {
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals(value)) {
-		old_values.set(source, is_destroying_effect ? value : source.v);
-
-		var batch = Batch.ensure();
+  const current_value = batch_values?.has(source) ? batch_values.get(source) : source.v;
+  if (value !== current_value) {
+    old_values.set(source, is_destroying_effect ? value : source.v);
+    var batch = Batch.ensure();
 		batch.capture(source, value);
 
 		if (DEV) {
