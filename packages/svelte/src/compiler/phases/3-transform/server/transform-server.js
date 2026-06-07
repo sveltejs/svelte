@@ -325,58 +325,33 @@ export function server_component(analysis, options) {
 		component_block
 	);
 
-	if (options.compatibility.componentApi === 4) {
-		body.unshift(b.imports([['render', '$$_render']], 'svelte/server'));
-		body.push(
-			component_function,
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member_id(`${analysis.name}.render`),
-					b.function(
-						null,
-						[b.id('$$props'), b.id('$$opts')],
-						b.block([
-							b.return(
-								b.call(
-									'$$_render',
-									b.id(analysis.name),
-									b.object([
-										b.init('props', b.id('$$props')),
-										b.init('context', b.member(b.id('$$opts'), 'context', false, true))
-									])
-								)
+	body.unshift(b.imports([['render', '$$_render']], 'svelte/server'));
+	body.push(
+		component_function,
+		b.stmt(
+			b.assignment(
+				'=',
+				b.member_id(`${analysis.name}.render`),
+				b.function(
+					null,
+					[b.id('$$props'), b.id('$$opts')],
+					b.block([
+						b.return(
+							b.call(
+								'$$_render',
+								b.id(analysis.name),
+								b.object([
+									b.init('props', b.id('$$props')),
+									b.init('context', b.member(b.id('$$opts'), 'context', false, true))
+								])
 							)
-						])
-					)
+						)
+					])
 				)
-			),
-			b.export_default(b.id(analysis.name))
-		);
-	} else if (dev) {
-		body.push(
-			component_function,
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member_id(`${analysis.name}.render`),
-					b.function(
-						null,
-						[],
-						b.block([
-							b.throw_error(
-								`Component.render(...) is no longer valid in Svelte 5. ` +
-									'See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information'
-							)
-						])
-					)
-				)
-			),
-			b.export_default(b.id(analysis.name))
-		);
-	} else {
-		body.push(b.export_default(component_function));
-	}
+			)
+		),
+		b.export_default(b.id(analysis.name))
+	);
 
 	if (dev) {
 		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later

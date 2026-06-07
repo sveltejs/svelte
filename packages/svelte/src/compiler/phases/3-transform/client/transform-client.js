@@ -556,23 +556,19 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
-	if (options.compatibility.componentApi === 4) {
-		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
-		component_block.body.unshift(
-			b.if(
-				b.id('new.target'),
-				b.return(
-					b.call(
-						'$$_createClassComponent',
-						// When called with new, the first argument is the constructor options
-						b.object([b.init('component', b.id(analysis.name)), b.spread(b.id('$$anchor'))])
-					)
+	body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
+	component_block.body.unshift(
+		b.if(
+			b.id('new.target'),
+			b.return(
+				b.call(
+					'$$_createClassComponent',
+					// When called with new, the first argument is the constructor options
+					b.object([b.init('component', b.id(analysis.name)), b.spread(b.id('$$anchor'))])
 				)
 			)
-		);
-	} else if (dev) {
-		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
-	}
+		)
+	);
 
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration

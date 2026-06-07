@@ -702,14 +702,8 @@ export function analyze_component(root, source, options) {
 
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
-		if (props_refs) {
-			e.legacy_props_invalid(props_refs[0].node);
-		}
 
 		const rest_props_refs = module.scope.references.get('$$restProps');
-		if (rest_props_refs) {
-			e.legacy_rest_props_invalid(rest_props_refs[0].node);
-		}
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
 			/** @type {AnalysisState} */

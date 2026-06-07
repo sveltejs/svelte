@@ -78,14 +78,12 @@ export function Identifier(node, context) {
 
 	let binding = context.state.scope.get(node.name);
 
-	if (!context.state.analysis.runes) {
-		if (node.name === '$$props') {
-			context.state.analysis.uses_props = true;
-		}
+	if (node.name === '$$props') {
+		context.state.analysis.uses_props = true;
+	}
 
-		if (node.name === '$$restProps') {
-			context.state.analysis.uses_rest_props = true;
-		}
+	if (node.name === '$$restProps') {
+		context.state.analysis.uses_rest_props = true;
 	}
 
 	if (binding) {
