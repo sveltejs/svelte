@@ -444,6 +444,9 @@ export function update_derived(derived) {
  * @param {Derived} derived
  */
 export function freeze_derived_effects(derived) {
+	derived.ac?.abort(STALE_REACTION);
+	derived.ac = null;
+
 	if (derived.effects === null) return;
 
 	for (const e of derived.effects) {
