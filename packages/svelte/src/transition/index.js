@@ -263,7 +263,7 @@ export function crossfade({ fallback, ...defaults }) {
 			duration: typeof duration === 'function' ? duration(d) : duration,
 			easing,
 			css: (t, u) => `
-			   opacity: ${t * opacity};
+			   opacity: \;
 			   transform-origin: top left;
 			   transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${
 						t + (1 - t) * dh
@@ -298,3 +298,4 @@ export function crossfade({ fallback, ...defaults }) {
 	}
 	return [transition(to_send, to_receive, false), transition(to_receive, to_send, true)];
 }
+
