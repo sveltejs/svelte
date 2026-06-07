@@ -93,18 +93,20 @@ let b = $derived(await two());
 
 (Note that if the values of `await one()` and `await two()` subsequently change, they can do so concurrently — the waterfall only occurs when the deriveds are first created.)
 
-You can solve this by creating the promises first and _then_ awaiting them:
+If the functions do not depend on reactive state, you can solve this by calling them eagerly (without `$derived`) so both promises start immediately:
 
 ```js
 async function one() { return 1 }
 async function two() { return 2 }
 // ---cut---
-let aPromise = $derived(one());
-let bPromise = $derived(two());
+const aPromise = one();
+const bPromise = two();
 
 let a = $derived(await aPromise);
 let b = $derived(await bPromise);
 ```
+
+Note that using `$derived(one())` for the promises does _not_ help — `$derived` is lazy, so `one()` and `two()` would still be called sequentially when `a` and `b` are first evaluated. Plain `const` assignments call the functions immediately, before either `$derived` is evaluated.
 
 ## binding_property_non_reactive
 
