@@ -114,7 +114,7 @@ if (typeof HTMLElement === 'function') {
 				const $$slots = {};
 				const existing_slots = get_custom_elements_slots(this);
 				for (const name of this.$$s) {
-					if (name in existing_slots) {
+					if (name === 'default' || name in existing_slots) {
 						if (name === 'default' && !this.$$d.children) {
 							this.$$d.children = create_slot(name);
 							$$slots.default = true;
