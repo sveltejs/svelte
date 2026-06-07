@@ -25,7 +25,7 @@ export function slot(anchor, $$props, name, slot_props, fallback_fn) {
 			fallback_fn(anchor);
 		}
 	} else {
-		slot_fn(anchor, is_interop ? () => slot_props : slot_props);
+		slot_fn(anchor, is_interop ? () => slot_props : slot_props, fallback_fn);
 	}
 }
 

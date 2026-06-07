@@ -2,7 +2,7 @@ import { createClassComponent } from '../../../../legacy/legacy-client.js';
 import { effect_root, render_effect } from '../../reactivity/effects.js';
 import { append } from '../template.js';
 import { define_property, get_descriptor, object_keys } from '../../../shared/utils.js';
-import { create_element } from '../operations.js';
+import { create_element, create_text } from '../operations.js';
 
 /**
  * @typedef {Object} CustomElementPropDefinition
@@ -102,10 +102,18 @@ if (typeof HTMLElement === 'function') {
 				function create_slot(name) {
 					/**
 					 * @param {Element} anchor
+					 * @param {any} slot_props
+					 * @param {null | ((anchor: Element) => void)} fallback_fn
 					 */
-					return (anchor) => {
+					return (anchor, slot_props, fallback_fn) => {
 						const slot = create_element('slot');
 						if (name !== 'default') slot.name = name;
+						
+						if (fallback_fn) {
+							const slot_anchor = create_text();
+							slot.appendChild(slot_anchor);
+							fallback_fn(slot_anchor);
+						}
 
 						append(anchor, slot);
 					};
@@ -114,7 +122,7 @@ if (typeof HTMLElement === 'function') {
 				const $$slots = {};
 				const existing_slots = get_custom_elements_slots(this);
 				for (const name of this.$$s) {
-					if (name in existing_slots) {
+					if (name === 'default' || name in existing_slots) {
 						if (name === 'default' && !this.$$d.children) {
 							this.$$d.children = create_slot(name);
 							$$slots.default = true;

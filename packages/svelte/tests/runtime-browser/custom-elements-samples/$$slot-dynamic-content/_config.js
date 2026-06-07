@@ -14,7 +14,7 @@ export default test({
 		assert.htmlEqual(
 			ce.shadowRoot.innerHTML,
 			`
-		<slot></slot>
+		<slot>fallback</slot>
 		<p>named fallback</p>
 	`
 		);
@@ -23,7 +23,7 @@ export default test({
 		assert.htmlEqual(
 			ce.shadowRoot.innerHTML,
 			`
-		<slot></slot>
+		<slot>fallback</slot>
 		<p>named fallback</p>
 	`
 		);
