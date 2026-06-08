@@ -1,5 +1,27 @@
 # svelte
 
+## 5.56.3
+
+### Patch Changes
+
+- fix: ignore errors that occur in destroyed effects ([#18384](https://github.com/sveltejs/svelte/pull/18384))
+
+- fix: type BigInts in `$state.snapshot(...)` return values ([#18388](https://github.com/sveltejs/svelte/pull/18388))
+
+## 5.56.2
+
+### Patch Changes
+
+- fix: properly track effect end node for async sibling component ([#18371](https://github.com/sveltejs/svelte/pull/18371))
+
+- fix: prevent false-positive reactivity loss warning ([#18373](https://github.com/sveltejs/svelte/pull/18373))
+
+- chore: bump esrap dependency ([#18372](https://github.com/sveltejs/svelte/pull/18372))
+
+- fix: ignore declaration tags for animation directive ([#18366](https://github.com/sveltejs/svelte/pull/18366))
+
+- fix: reject pending async deriveds on discard ([#18308](https://github.com/sveltejs/svelte/pull/18308))
+
 ## 5.56.1
 
 ### Patch Changes
