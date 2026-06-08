@@ -13,8 +13,9 @@ import { get_parent_node, remove_child } from '../dom/operations.js';
  * @template {object} [TElement=T extends DefaultNodes ? object : T['element']]
  * @template {object} [TTextNode=T extends DefaultNodes ? object : T['text']]
  * @template {object} [TComment=T extends DefaultNodes ? object : T['comment']]
- * @param {Renderer<TFragment, TElement, TTextNode, TComment>} renderer
- * @returns {Renderer<TFragment, TElement, TTextNode, TComment> & { render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }) => { component: Exports, unmount: () => void } }}
+ * @template {RendererNodes<any, any, any, any, any> | undefined} [TForeignNodes=T extends DefaultNodes ? RendererNodes<any, any, any, any, any> : T['foreign']]
+ * @param {Renderer<TFragment, TElement, TTextNode, TComment, TForeignNodes>} renderer
+ * @returns {Renderer<TFragment, TElement, TTextNode, TComment, TForeignNodes> & { render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }) => { component: Exports, unmount: () => void } }}
  */
 export function createRenderer(renderer) {
 	const compound_renderer = {
@@ -26,7 +27,7 @@ export function createRenderer(renderer) {
 		 * @param {{} extends Props ? { target: TFragment | TElement | TTextNode | TComment, props?: Props, context?: Map<any, any> } : { target: TFragment | TElement | TTextNode | TComment, props: Props, context?: Map<any, any> }} options
 		 */
 		render(Component, { target, props, context }) {
-			var pop_renderer = push_renderer(compound_renderer);
+			var pop_renderer = push_renderer(compound_renderer, compound_renderer);
 
 			try {
 				/** @type {Exports} */

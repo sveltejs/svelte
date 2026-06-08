@@ -50,7 +50,12 @@ import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
 import { tag } from '../../dev/tracing.js';
 
-import { push_renderer, current_renderer, parent_renderer } from '../../custom-renderer/state.js';
+import {
+	push_renderer,
+	current_renderer,
+	parent_renderer,
+	set_parent_renderer
+} from '../../custom-renderer/state.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -216,12 +221,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
-	// Capture the renderer that was active when this each block was created.
-	// Needed so that the commit callback can push the correct renderer when doing
-	// DOM operations outside of an effect context (e.g. as a batch commit callback).
-	var renderer = current_renderer;
-	var parent = parent_renderer;
-
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);
 
@@ -229,6 +228,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			? set_hydrate_node(get_first_child(parent_node))
 			: /** @type {Text} */ (append_child(parent_node, create_text()));
 	}
+
+	// Branch contents always render within the same renderer as the template that created
+	// the block. The outer parent renderer is restored after the branch has run.
+	var renderer = current_renderer;
+	var parent = parent_renderer;
 
 	if (hydrating) {
 		hydrate_next();
@@ -302,6 +306,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	function discard(batch) {
 		state.pending.delete(batch);
 	}
+
+	// we push current renderer twice because branches will always
+	// append to the current renderer
+	var pop_renderer = push_renderer(renderer, renderer);
 
 	var effect = block(() => {
 		array = /** @type {V[]} */ (get(each_array));
@@ -436,6 +444,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// will now be `CLEAN`.
 		get(each_array);
 	});
+	pop_renderer?.();
+	// we restore the parent_renderer so that an append after a
+	// branch will append to the correct renderer
+	set_parent_renderer(parent);
 
 	/** @type {EachState} */
 	var state = { effect, flags, items, pending, outrogroups: null, fallback };

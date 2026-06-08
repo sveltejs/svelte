@@ -20,7 +20,13 @@ import {
 	get_last_child
 } from '../operations.js';
 import { DEV } from 'esm-env';
-import { push_renderer, current_renderer, parent_renderer } from '../../custom-renderer/state.js';
+import {
+	push_renderer,
+	current_renderer,
+	parent_renderer,
+	set_parent_renderer,
+	set_renderer
+} from '../../custom-renderer/state.js';
 
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
@@ -94,6 +100,23 @@ export class BranchManager {
 		this.#transition = transition;
 		this.#renderer = current_renderer;
 		this.#parent_renderer = parent_renderer;
+	}
+
+	/**
+	 * @param {() => void} fn
+	 */
+	#create_branch(fn) {
+		// we push current renderer twice because branches will always
+		// append to the current renderer
+		var pop_renderer = push_renderer(this.#renderer, this.#renderer);
+		try {
+			return branch(fn);
+		} finally {
+			pop_renderer?.();
+			// we restore the parent_renderer so that an append after a
+			// branch will append to the correct renderer
+			set_parent_renderer(this.#parent_renderer);
+		}
 	}
 
 	/**
@@ -225,13 +248,13 @@ export class BranchManager {
 				append_child(fragment, target);
 
 				this.#offscreen.set(key, {
-					effect: branch(() => fn(target)),
+					effect: this.#create_branch(() => fn(target)),
 					fragment
 				});
 			} else {
 				this.#onscreen.set(
 					key,
-					branch(() => fn(this.anchor))
+					this.#create_branch(() => fn(this.anchor))
 				);
 			}
 		}
