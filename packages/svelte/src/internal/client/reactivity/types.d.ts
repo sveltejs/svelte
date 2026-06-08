@@ -65,10 +65,19 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 export interface EffectNodes {
 	start: TemplateNode;
 	end: TemplateNode | null;
+	/** Renderer-local ranges, used when a component interleaves custom and foreign-rendered nodes */
+	segments: null | EffectNodeSegment[];
 	/** $.animation */
 	a: AnimationManager | null;
 	/** $.transition */
 	t: TransitionManager[] | null;
+}
+
+export interface EffectNodeSegment {
+	start: TemplateNode;
+	end: TemplateNode | null;
+	r: Renderer | null;
+	pr: Renderer | null;
 }
 
 export interface Effect extends Reaction {
