@@ -97,6 +97,7 @@ async function compare(key, a, b) {
 	} catch {
 		// disregard any errors that happen during serialization,
 		// they will be dealt with separately
+		return;
 	}
 
 	const a_stack = /** @type {string} */ (a.stack);
