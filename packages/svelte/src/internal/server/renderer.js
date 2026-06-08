@@ -660,7 +660,7 @@ export class Renderer {
 		try {
 			const renderer = Renderer.#open_render('async', component, options);
 			const content = await renderer.#collect_content_async();
-			const hydratables = await renderer.#collect_hydratables();
+			const hydratables = await renderer.#hydratable_block();
 			if (hydratables !== null) {
 				content.head = hydratables + content.head;
 			}
@@ -740,17 +740,6 @@ export class Renderer {
 		return content;
 	}
 
-	async #collect_hydratables() {
-		const ctx = get_render_context().hydratable;
-
-		for (const comparison of ctx.comparisons) {
-			// these reject if there's a mismatch
-			await comparison;
-		}
-
-		return await this.#hydratable_block(ctx);
-	}
-
 	/**
 	 * @template {Record<string, any>} Props
 	 * @param {'sync' | 'async'} mode
@@ -816,10 +805,14 @@ export class Renderer {
 		};
 	}
 
-	/**
-	 * @param {HydratableContext} ctx
-	 */
-	async #hydratable_block(ctx) {
+	async #hydratable_block() {
+		const ctx = get_render_context().hydratable;
+
+		for (const comparison of ctx.comparisons) {
+			// these reject if there's a mismatch
+			await comparison;
+		}
+
 		if (ctx.lookup.size === 0) {
 			return null;
 		}
