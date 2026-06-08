@@ -19,7 +19,6 @@ export type Csp = { nonce?: string; hash?: boolean };
 
 export interface HydratableLookupEntry {
 	value: unknown;
-	serialized: string;
 	promises?: Array<Promise<void>>;
 	/** dev-only */
 	stack?: string;

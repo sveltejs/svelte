@@ -46,47 +46,11 @@ export function hydratable(key, fn) {
  */
 function encode(key, value, unresolved) {
 	/** @type {HydratableLookupEntry} */
-	const entry = { value, serialized: '' };
+	const entry = { value };
 
 	if (DEV) {
 		entry.stack = get_user_code_location();
 	}
-
-	let uid = 1;
-
-	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
-		if (is_promise(value)) {
-			// we serialize promises as `"${i}"`, because it's impossible for that string
-			// to occur 'naturally' (since the quote marks would have to be escaped)
-			// this placeholder is returned synchronously from `uneval`, which includes it in the
-			// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
-			// be replaced.
-			const placeholder = `"${uid++}"`;
-			const p = value
-				.then((v) => {
-					entry.serialized = entry.serialized.replace(
-						placeholder,
-						// use the function form here to prevent any string replacement characters from being interpreted
-						// in `v`, as it's potentially user-controlled and therefore potentially malicious.
-						// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
-						() => `r(${uneval(v)})`
-					);
-				})
-				.catch((devalue_error) =>
-					e.hydratable_serialization_failed(
-						key,
-						serialization_stack(entry.stack, devalue_error?.stack)
-					)
-				);
-
-			unresolved?.set(p, key);
-			// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
-			p.catch(() => {}).finally(() => unresolved?.delete(p));
-
-			(entry.promises ??= []).push(p);
-			return placeholder;
-		}
-	});
 
 	return entry;
 }
@@ -135,7 +99,7 @@ async function compare(key, a, b) {
  * @param {string | undefined} root_stack
  * @param {string | undefined} uneval_stack
  */
-function serialization_stack(root_stack, uneval_stack) {
+export function serialization_stack(root_stack, uneval_stack) {
 	let out = '';
 	if (root_stack) {
 		out += root_stack + '\n';

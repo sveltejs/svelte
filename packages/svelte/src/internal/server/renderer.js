@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
+/** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source, HydratableLookupEntry } from './types.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
@@ -14,6 +14,7 @@ import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { has_own_property, is_promise, is_promiselike, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
+import { serialization_stack } from './hydratable.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -836,7 +837,16 @@ export class Renderer {
 		let serialized = '';
 		let uid = 1;
 
+		/** @type {string | null} */
+		let serializing = null;
+
 		serialized = devalue.uneval(entries, (value, uneval) => {
+			if (entries.includes(value)) {
+				serializing = value[0];
+			}
+
+			const currently_serializing = serializing;
+
 			if (is_promise(value)) {
 				// we serialize promises as `"${i}"`, because it's impossible for that string
 				// to occur 'naturally' (since the quote marks would have to be escaped)
@@ -844,22 +854,29 @@ export class Renderer {
 				// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
 				// be replaced.
 				const placeholder = `"${uid++}"`;
-				const p = value.then((v) => {
-					serialized = serialized.replace(
-						placeholder,
-						// use the function form here to prevent any string replacement characters from being interpreted
-						// in `v`, as it's potentially user-controlled and therefore potentially malicious.
-						// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
-						() => `r(${uneval(v)})`
-					);
-				});
-				// TODO figure out how best to report these errors
-				// .catch((devalue_error) =>
-				// 	e.hydratable_serialization_failed(
-				// 		key,
-				// 		serialization_stack(entry.stack, devalue_error?.stack)
-				// 	)
-				// );
+				const p = value
+					.then((v) => {
+						serialized = serialized.replace(
+							placeholder,
+							// use the function form here to prevent any string replacement characters from being interpreted
+							// in `v`, as it's potentially user-controlled and therefore potentially malicious.
+							// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
+							() => {
+								serializing = currently_serializing;
+								return `r(${uneval(v)})`;
+							}
+						);
+					})
+					// TODO figure out how best to report these errors
+					.catch((devalue_error) => {
+						const key = /** @type {string} */ (currently_serializing);
+						const entry = /** @type {HydratableLookupEntry} */ (ctx.lookup.get(key));
+
+						e.hydratable_serialization_failed(
+							key,
+							serialization_stack(entry.stack, devalue_error?.stack)
+						);
+					});
 
 				ctx.unresolved_promises?.set(p, 'TODO');
 				// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
