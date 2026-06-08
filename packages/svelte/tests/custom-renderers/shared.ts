@@ -28,13 +28,13 @@ type NonAssertingMethods = {
 
 type Assert = Omit<typeof import('vitest').assert, keyof NonAssertingMethods> & NonAssertingMethods;
 
-export interface CustomRendererTest extends BaseTest {
+interface CustomRendererHydrateTest extends BaseTest {
 	html?: string;
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
 	server_props?: Record<string, any>;
 	context?: Map<any, any>;
-	hydrate?: true;
+	hydrate: true;
 	error?: string;
 	compile_error?: string;
 	compile_warnings?: false;
@@ -42,7 +42,7 @@ export interface CustomRendererTest extends BaseTest {
 	warnings?: string[];
 	test?: (args: {
 		assert: Assert;
-		target: ObjFragment | HTMLElement;
+		target: HTMLElement;
 		component: Record<string, any>;
 		mod: any;
 		logs: any[];
@@ -52,6 +52,33 @@ export interface CustomRendererTest extends BaseTest {
 		dispatch_event: typeof dispatch_event;
 	}) => void | Promise<void>;
 }
+
+interface CustomRendererNonHydrateTest extends BaseTest {
+	html?: string;
+	compileOptions?: Partial<CompileOptions>;
+	props?: Record<string, any>;
+	server_props?: Record<string, any>;
+	context?: Map<any, any>;
+	hydrate?: false;
+	error?: string;
+	compile_error?: string;
+	compile_warnings?: false;
+	runtime_error?: string;
+	warnings?: string[];
+	test?: (args: {
+		assert: Assert;
+		target: ObjFragment;
+		component: Record<string, any>;
+		mod: any;
+		logs: any[];
+		warnings: any[];
+		renderer: typeof renderer;
+		serialize: typeof serialize;
+		dispatch_event: typeof dispatch_event;
+	}) => void | Promise<void>;
+}
+
+export type CustomRendererTest = CustomRendererHydrateTest | CustomRendererNonHydrateTest;
 
 // eslint-disable-next-line no-console
 const console_log = console.log;
@@ -222,7 +249,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 			if (config.test) {
 				await config.test({
 					assert,
-					target,
+					target: target as never,
 					component: component ?? {},
 					mod,
 					logs,
@@ -292,7 +319,7 @@ async function run_hydration_test(
 		if (config.test) {
 			await config.test({
 				assert,
-				target,
+				target: target as never,
 				component,
 				mod,
 				logs,
