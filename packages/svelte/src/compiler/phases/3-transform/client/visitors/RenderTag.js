@@ -45,10 +45,14 @@ export function RenderTag(node, context) {
 	);
 
 	if (node.metadata.dynamic) {
-		// In custom renderer components, validate that the snippet is compatible
-		// with the current renderer before rendering it
-		if (custom_renderer) {
-			snippet_function = b.call('$.validate_snippet_renderer', b.id('$renderer'), snippet_function);
+		// In custom-renderer-aware builds, validate that the snippet is compatible
+		// with the current renderer before rendering it.
+		if (custom_renderer !== undefined) {
+			snippet_function = b.call(
+				'$.validate_snippet_renderer',
+				custom_renderer ? b.id('$renderer') : b.literal(null),
+				snippet_function
+			);
 		}
 
 		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
@@ -64,10 +68,14 @@ export function RenderTag(node, context) {
 			)
 		);
 	} else {
-		// In custom renderer components, validate that the snippet is compatible
-		// with the current renderer before rendering it
-		if (custom_renderer) {
-			snippet_function = b.call('$.validate_snippet_renderer', b.id('$renderer'), snippet_function);
+		// In custom-renderer-aware builds, validate that the snippet is compatible
+		// with the current renderer before rendering it.
+		if (custom_renderer !== undefined) {
+			snippet_function = b.call(
+				'$.validate_snippet_renderer',
+				custom_renderer ? b.id('$renderer') : b.literal(null),
+				snippet_function
+			);
 		}
 
 		statements.push(
