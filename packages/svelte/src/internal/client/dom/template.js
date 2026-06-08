@@ -15,7 +15,7 @@ import {
 	TEMPLATE_USE_MATHML,
 	TEMPLATE_USE_SVG
 } from '../../../constants.js';
-import { current_renderer } from '../custom-renderer/state.js';
+import { current_renderer, parent_renderer } from '../custom-renderer/state.js';
 import { active_effect } from '../runtime.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import {
@@ -50,8 +50,34 @@ const SCRIPT_TAG = IS_XHTML ? 'script' : 'SCRIPT';
 export function assign_nodes(start, end) {
 	var effect = /** @type {Effect} */ (active_effect);
 	if (effect.nodes === null) {
-		effect.nodes = { start, end, a: null, t: null };
+		effect.nodes = {
+			start,
+			end,
+			segments: should_segment_nodes(effect)
+				? [{ start, end, r: current_renderer, pr: parent_renderer }]
+				: null,
+			a: null,
+			t: null
+		};
+	} else if (should_segment_nodes(effect)) {
+		var nodes = effect.nodes;
+		(nodes.segments ??= [{ start: nodes.start, end: nodes.end, r: effect.r, pr: effect.pr }]).push({
+			start,
+			end,
+			r: current_renderer,
+			pr: parent_renderer
+		});
 	}
+}
+
+/**
+ * @param {Effect} effect
+ */
+function should_segment_nodes(effect) {
+	return (
+		(current_renderer !== effect.r || parent_renderer !== effect.pr) &&
+		(current_renderer?.foreign != null || parent_renderer?.foreign != null)
+	);
 }
 
 /**
@@ -386,6 +412,12 @@ export function append(anchor, dom) {
 		// of the parent component. Check for defined for that reason to avoid rewinding the parent's end marker.
 		if ((effect.f & REACTION_RAN) === 0 || effect.nodes.end === null) {
 			effect.nodes.end = hydrate_node;
+
+			// this is to cover interleaved custom renders where an hydrated dom component interleaves with a custom renderer
+			// since it will use segments instead of start/end, we need to make sure to update the segment's end as well
+			if (effect.nodes.segments !== null) {
+				effect.nodes.segments[0].end = hydrate_node;
+			}
 		}
 
 		hydrate_next();
