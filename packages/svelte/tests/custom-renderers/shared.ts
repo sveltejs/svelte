@@ -5,7 +5,14 @@ import { assert } from 'vitest';
 import { compile_directory } from '../helpers.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
-import renderer, { create_root, serialize, dispatch_event, type ObjFragment } from './renderer.js';
+import renderer, {
+	create_root,
+	serialize,
+	dispatch_event,
+	type ObjFragment,
+	type ObjElement,
+	type ObjNode
+} from './renderer.js';
 import { mount, unmount } from '../../src/index-client.js';
 import { writeFile } from 'node:fs/promises';
 import { globSync } from 'tinyglobby';
@@ -53,6 +60,15 @@ interface CustomRendererHydrateTest extends BaseTest {
 	}) => void | Promise<void>;
 }
 
+function filter_elements(extra_filter?: (node: ObjElement) => boolean) {
+	return (node: ObjNode): node is ObjElement =>
+		node.type === 'element' && (extra_filter?.(node) ?? true);
+}
+
+const utils = {
+	filter_elements
+};
+
 interface CustomRendererNonHydrateTest extends BaseTest {
 	html?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -66,6 +82,9 @@ interface CustomRendererNonHydrateTest extends BaseTest {
 	runtime_error?: string;
 	warnings?: string[];
 	test?: (args: {
+		utils: {
+			filter_elements: typeof filter_elements;
+		};
 		assert: Assert;
 		target: ObjFragment;
 		component: Record<string, any>;
@@ -248,6 +267,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 		try {
 			if (config.test) {
 				await config.test({
+					utils,
 					assert,
 					target: target as never,
 					component: component ?? {},
@@ -318,6 +338,7 @@ async function run_hydration_test(
 	try {
 		if (config.test) {
 			await config.test({
+				utils,
 				assert,
 				target: target as never,
 				component,
