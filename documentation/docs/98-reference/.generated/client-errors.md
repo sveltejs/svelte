@@ -225,6 +225,12 @@ Cannot do `bind:%key%={undefined}` when `%key%` has a fallback value
 Rest element properties of `$props()` such as `%property%` are readonly
 ```
 
+### renderer_missing_foreign
+
+```
+A custom renderer must define `foreign` to interleave with DOM or another custom renderer
+```
+
 ### rune_outside_svelte
 
 ```

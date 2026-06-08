@@ -429,6 +429,22 @@ export function props_rest_readonly(property) {
 }
 
 /**
+ * A custom renderer must define `foreign` to interleave with DOM or another custom renderer
+ * @returns {never}
+ */
+export function renderer_missing_foreign() {
+	if (DEV) {
+		const error = new Error(`renderer_missing_foreign\nA custom renderer must define \`foreign\` to interleave with DOM or another custom renderer\nhttps://svelte.dev/e/renderer_missing_foreign`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/renderer_missing_foreign`);
+	}
+}
+
+/**
  * The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
  * @param {string} rune
  * @returns {never}
