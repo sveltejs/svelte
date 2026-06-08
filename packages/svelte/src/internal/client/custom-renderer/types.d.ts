@@ -3,6 +3,13 @@ export type Renderer<
 	TElement extends object = object,
 	TTextNode extends object = object,
 	TComment extends object = object,
+	TForeignNodes extends RendererNodes<any, any, any, any, any> | undefined = RendererNodes<
+		any,
+		any,
+		any,
+		any,
+		any
+	>,
 	TNode extends TFragment | TElement | TTextNode | TComment =
 		| TFragment
 		| TElement
@@ -83,26 +90,88 @@ export type Renderer<
 
 	/** Remove an event listener of the given type and handler from the target node. */
 	removeEventListener(target: TElement, type: string, handler: any, options?: any): void;
+
+	/** Operations used when this renderer is interleaved with DOM or another custom renderer. */
+	foreign?: {
+		/**
+		 * Insert a node from this renderer into a different renderer's parent before the anchor.
+		 * If anchor is null, insert at the end.
+		 */
+		insertIntoForeign(
+			parent: TForeignNodes extends undefined
+				? never
+				:
+						| DefinedRendererNodes<TForeignNodes>['element']
+						| DefinedRendererNodes<TForeignNodes>['fragment'],
+			element: TNode,
+			anchor:
+				| DefinedRendererNodes<TForeignNodes>['element']
+				| DefinedRendererNodes<TForeignNodes>['text']
+				| DefinedRendererNodes<TForeignNodes>['comment']
+				| null
+		): void;
+		/**
+		 * Insert a node from a different renderer into this renderer's parent before the anchor.
+		 * If anchor is null, insert at the end.
+		 */
+		insertForeign(
+			parent: TElement | TFragment,
+			element:
+				| DefinedRendererNodes<TForeignNodes>['element']
+				| DefinedRendererNodes<TForeignNodes>['fragment']
+				| DefinedRendererNodes<TForeignNodes>['text']
+				| DefinedRendererNodes<TForeignNodes>['comment'],
+			anchor:
+				| DefinedRendererNodes<TForeignNodes>['element']
+				| DefinedRendererNodes<TForeignNodes>['text']
+				| DefinedRendererNodes<TForeignNodes>['comment']
+				| null
+		): void;
+
+		/** Remove a node that was inserted across renderer boundaries. */
+		removeForeign(
+			node:
+				| DefinedRendererNodes<TForeignNodes>['element']
+				| DefinedRendererNodes<TForeignNodes>['fragment']
+				| DefinedRendererNodes<TForeignNodes>['text']
+				| DefinedRendererNodes<TForeignNodes>['comment']
+		): void;
+		/** Remove a node that was inserted across renderer boundaries. */
+		removeFromForeign(node: TNode): void;
+	};
 };
+
+type DefinedRendererNodes<TNodes extends RendererNodes<any, any, any, any, any> | undefined> =
+	TNodes extends RendererNodes<any, any, any, any, any>
+		? TNodes
+		: RendererNodes<any, any, any, any, any>;
 
 export type RendererNodes<
 	Fragment extends object,
 	Element extends object,
 	TextNode extends object,
-	Comment extends object
+	Comment extends object,
+	ForeignNode extends RendererNodes<any, any, any, any, any> = RendererNodes<
+		any,
+		any,
+		any,
+		any,
+		any
+	>
 > = {
 	fragment: Fragment;
 	element: Element;
 	text: TextNode;
 	comment: Comment;
+	foreign?: ForeignNode;
 };
 
-export type NodeType = keyof RendererNodes<any, any, any, any>;
+export type NodeType = Exclude<keyof RendererNodes<any, any, any, any, any>, 'foreign'>;
 
 // to detect if the user is passing a type or not we create this type utils that adds a unique symbol
 // that the user will never be able to pass in. We then create a a DefaultNodes type that is used as the default
 // type for the T generic of `createRenderer`. This means we can "detect" if the user is passing a type manually by
 // checking if the type extends DefaultNodes and using different default values
-// for the other arguments (TFragment, TElement, TTextNode, TComment)
+// for the other arguments (TFragment, TElement, TTextNode, TComment, TForeignNodes)
 export type UnsetObject = object & { readonly __unset: unique symbol };
 export type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;
