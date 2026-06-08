@@ -12,7 +12,7 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { has_own_property, is_promise, is_promiselike, noop } from '../shared/utils.js';
+import { has_own_property, is_promise, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 import { serialization_stack } from './hydratable.js';
 
@@ -831,13 +831,12 @@ export class Renderer {
 		const promises = [];
 		const entries = Array.from(ctx.lookup).map(([k, v]) => [k, v.value]);
 
-		let serialized = '';
 		let uid = 1;
 
 		/** @type {string | null} */
 		let serializing = null;
 
-		serialized = devalue.uneval(entries, (value, uneval) => {
+		let serialized = devalue.uneval(entries, (value, uneval) => {
 			if (entries.includes(value)) {
 				serializing = value[0];
 			}

@@ -5,6 +5,7 @@ import * as e from './errors.js';
 import * as devalue from 'devalue';
 import { DEV } from 'esm-env';
 import { get_user_code_location } from './dev.js';
+import { is_promise } from '../shared/utils.js';
 
 /**
  * @template T
@@ -54,43 +55,59 @@ function encode(value) {
 }
 
 /**
- * @param {any} value
- * @returns {value is Promise<any>}
- */
-function is_promise(value) {
-	// we use this check rather than `instanceof Promise`
-	// because it works cross-realm
-	return Object.prototype.toString.call(value) === '[object Promise]';
-}
-
-/**
+ * This function runs in development to ensure that if `hydratable` is called
+ * twice with the same key, both occurrences use the same value
  * @param {string} key
  * @param {HydratableLookupEntry} a
  * @param {HydratableLookupEntry} b
  */
 async function compare(key, a, b) {
-	// note: these need to be loops (as opposed to Promise.all) because
-	// additional promises can get pushed to them while we're awaiting
-	// an earlier one
-	for (const p of a?.promises ?? []) {
-		await p;
+	/**
+	 * A simplified version of the logic in `renderer.js`
+	 * @param {any} value
+	 */
+	async function serialize(value) {
+		/** @type {Promise<any>[]} */
+		const promises = [];
+
+		let uid = 1;
+
+		let serialized = devalue.uneval(value, (value, uneval) => {
+			if (is_promise(value)) {
+				const placeholder = `"${uid++}"`;
+				const p = value.then((v) => {
+					serialized = serialized.replace(placeholder, () => uneval(v));
+				});
+
+				promises.push(p);
+				return placeholder;
+			}
+		});
+
+		// a loop, not Promise.all, as it may change while we're awaiting
+		for (const p of promises) await p;
+
+		return serialized;
 	}
 
-	for (const p of b?.promises ?? []) {
-		await p;
+	try {
+		if ((await serialize(a.value)) === (await serialize(b.value))) {
+			return;
+		}
+	} catch {
+		// disregard any errors that happen during serialization,
+		// they will be dealt with separately
 	}
 
-	if (a.serialized !== b.serialized) {
-		const a_stack = /** @type {string} */ (a.stack);
-		const b_stack = /** @type {string} */ (b.stack);
+	const a_stack = /** @type {string} */ (a.stack);
+	const b_stack = /** @type {string} */ (b.stack);
 
-		const stack =
-			a_stack === b_stack
-				? `Occurred at:\n${a_stack}`
-				: `First occurrence at:\n${a_stack}\n\nSecond occurrence at:\n${b_stack}`;
+	const stack =
+		a_stack === b_stack
+			? `Occurred at:\n${a_stack}`
+			: `First occurrence at:\n${a_stack}\n\nSecond occurrence at:\n${b_stack}`;
 
-		e.hydratable_clobbering(key, stack);
-	}
+	e.hydratable_clobbering(key, stack);
 }
 
 /**
