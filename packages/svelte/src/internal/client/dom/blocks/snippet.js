@@ -38,13 +38,10 @@ export function snippet(node, get_snippet, ...args) {
 
 		branches.ensure(
 			snippet,
-				snippet &&
+			snippet &&
 				((anchor) => {
 					var renderer = /** @type {any} */ (snippet).__renderer;
-					var has_renderer = has_own_property.call(
-						/** @type {any} */ (snippet),
-						'__renderer'
-					);
+					var has_renderer = has_own_property.call(/** @type {any} */ (snippet), '__renderer');
 
 					if (has_renderer) {
 						var pop_renderer = push_renderer(renderer, renderer);
