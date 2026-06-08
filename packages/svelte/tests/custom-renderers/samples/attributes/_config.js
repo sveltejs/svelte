@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	test({ assert, target, serialize }) {
+	test({ assert, target, serialize, utils }) {
 		const html = serialize(target);
 		assert.equal(
 			html,
@@ -9,17 +9,13 @@ export default test({
 		);
 
 		// Verify individual attribute access on the object node
-		const div = target.children.find(
-			(/** @type {any} */ n) => n.type === 'element' && n.name === 'div'
-		);
+		const div = target.children.find(utils.filter_elements((n) => n.name === 'div'));
 		assert.ok(div);
-		assert.equal(div.attributes['class'], 'container');
-		assert.equal(div.attributes['data-color'], 'red');
+		assert.equal(div?.attributes['class'], 'container');
+		assert.equal(div?.attributes['data-color'], 'red');
 
-		const span = div.children.find(
-			(/** @type {any} */ n) => n.type === 'element' && n.name === 'span'
-		);
+		const span = div?.children.find(utils.filter_elements((n) => n.name === 'span'));
 		assert.ok(span);
-		assert.equal(span.attributes['id'], 'label');
+		assert.equal(span?.attributes['id'], 'label');
 	}
 });
