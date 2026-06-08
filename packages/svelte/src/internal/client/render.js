@@ -1,5 +1,6 @@
 /** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
+/** @import { Renderer } from './custom-renderer/types.js' */
 import { DEV } from 'esm-env';
 import {
 	clear_text_content,
@@ -32,6 +33,7 @@ import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
 import { COMMENT_NODE, STATE_SYMBOL, TEXT_CACHE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
+import { push_renderer } from './custom-renderer/state.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -66,8 +68,9 @@ export function set_text(text, value) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
+ * @template [Renderer=undefined]
  * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
- * @param {MountOptions<Props>} options
+ * @param {MountOptions<Props, Renderer>} options
  * @returns {Exports}
  */
 export function mount(component, options) {
@@ -160,19 +163,40 @@ const listeners = new Map();
 /**
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
- * @param {MountOptions} options
+ * @param {MountOptions<any, any> & { renderer?: Renderer }} options
  * @returns {Exports}
  */
-function _mount(
+function _mount(Component, options) {
+	if (options.renderer) {
+		var pop_renderer = push_renderer(options.renderer);
+
+		try {
+			return _mount_inner(Component, options);
+		} finally {
+			pop_renderer();
+		}
+	}
+
+	return _mount_inner(Component, options);
+}
+
+/**
+ * @template {Record<string, any>} Exports
+ * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
+ * @param {MountOptions<any, any> & { renderer?: Renderer }} options
+ * @returns {Exports}
+ */
+function _mount_inner(
 	Component,
-	{ target, anchor, props = {}, events, context, intro = true, transformError }
+	{ target, anchor, props = {}, events, context, intro = true, transformError, renderer }
 ) {
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
 	var unmount = component_root(() => {
-		var anchor_node = anchor ?? /** @type {Text} */ (append_child(target, create_text()));
+		var anchor_node =
+			anchor ?? /** @type {Text} */ (append_child(/** @type {Node} */ (target), create_text()));
 
 		boundary(
 			/** @type {TemplateNode} */ (anchor_node),
@@ -219,69 +243,77 @@ function _mount(
 		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
 		/** @type {Set<string>} */
 		var registered_events = new Set();
+		/** @type {null | ((events: Array<string>) => void)} */
+		var event_handle = null;
 
-		/** @param {Array<string>} events */
-		var event_handle = (events) => {
-			for (var i = 0; i < events.length; i++) {
-				var event_name = events[i];
+		if (!renderer) {
+			var dom_target = /** @type {EventTarget} */ (target);
 
-				if (registered_events.has(event_name)) continue;
-				registered_events.add(event_name);
+			/** @param {Array<string>} events */
+			event_handle = (events) => {
+				for (var i = 0; i < events.length; i++) {
+					var event_name = events[i];
 
-				var passive = is_passive_event(event_name);
+					if (registered_events.has(event_name)) continue;
+					registered_events.add(event_name);
 
-				// Add the event listener to both the container and the document.
-				// The container listener ensures we catch events from within in case
-				// the outer content stops propagation of the event.
-				//
-				// The document listener ensures we catch events that originate from elements that were
-				// manually moved outside of the container (e.g. via manual portals).
-				for (const node of [target, document]) {
-					var counts = listeners.get(node);
+					var passive = is_passive_event(event_name);
 
-					if (counts === undefined) {
-						counts = new Map();
-						listeners.set(node, counts);
-					}
+					// Add the event listener to both the container and the document.
+					// The container listener ensures we catch events from within in case
+					// the outer content stops propagation of the event.
+					//
+					// The document listener ensures we catch events that originate from elements that were
+					// manually moved outside of the container (e.g. via manual portals).
+					for (const node of [dom_target, document]) {
+						var counts = listeners.get(node);
 
-					var count = counts.get(event_name);
+						if (counts === undefined) {
+							counts = new Map();
+							listeners.set(node, counts);
+						}
 
-					if (count === undefined) {
-						add_event_listener(node, event_name, handle_event_propagation, { passive });
-						counts.set(event_name, 1);
-					} else {
-						counts.set(event_name, count + 1);
+						var count = counts.get(event_name);
+
+						if (count === undefined) {
+							add_event_listener(node, event_name, handle_event_propagation, { passive });
+							counts.set(event_name, 1);
+						} else {
+							counts.set(event_name, count + 1);
+						}
 					}
 				}
-			}
-		};
+			};
 
-		event_handle(array_from(all_registered_events));
-		root_event_handles.add(event_handle);
+			event_handle(array_from(all_registered_events));
+			root_event_handles.add(event_handle);
+		}
 
 		return () => {
-			for (var event_name of registered_events) {
-				for (const node of [target, document]) {
-					var counts = /** @type {Map<string, number>} */ (listeners.get(node));
-					var count = /** @type {number} */ (counts.get(event_name));
+			if (event_handle !== null) {
+				for (var event_name of registered_events) {
+					for (const node of [/** @type {EventTarget} */ (target), document]) {
+						var counts = /** @type {Map<string, number>} */ (listeners.get(node));
+						var count = /** @type {number} */ (counts.get(event_name));
 
-					if (--count == 0) {
-						remove_event_listener(node, event_name, handle_event_propagation);
-						counts.delete(event_name);
+						if (--count == 0) {
+							remove_event_listener(node, event_name, handle_event_propagation);
+							counts.delete(event_name);
 
-						if (counts.size === 0) {
-							listeners.delete(node);
+							if (counts.size === 0) {
+								listeners.delete(node);
+							}
+						} else {
+							counts.set(event_name, count);
 						}
-					} else {
-						counts.set(event_name, count);
 					}
 				}
+
+				root_event_handles.delete(event_handle);
 			}
 
-			root_event_handles.delete(event_handle);
-
 			if (anchor_node !== anchor) {
-				var parent = get_parent_node(anchor_node);
+				var parent = get_parent_node(/** @type {Node} */ (anchor_node));
 				if (parent) remove_child(parent, /** @type {ChildNode} */ (anchor_node));
 			}
 		};

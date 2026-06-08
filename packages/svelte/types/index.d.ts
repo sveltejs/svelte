@@ -315,15 +315,52 @@ declare module 'svelte' {
 	/**
 	 * Defines the options accepted by the `mount()` function.
 	 */
-	export type MountOptions<Props extends Record<string, any> = Record<string, any>> = {
-		/**
-		 * Target element where the component will be mounted.
-		 */
-		target: Document | Element | ShadowRoot;
-		/**
-		 * Optional node inside `target`. When specified, it is used to render the component immediately before it.
-		 */
-		anchor?: Node;
+	type MountRenderer = {
+		createFragment(): object;
+		createElement(name: string): object;
+		createTextNode(data: string): object;
+		createComment(data: string): object;
+	};
+
+	type MountRendererTarget<Renderer> = Renderer extends {
+		createFragment(): infer TFragment;
+		createElement(name: string): infer TElement;
+	}
+		? TFragment | TElement
+		: never;
+
+	type MountRendererAnchor<Renderer> = Renderer extends {
+		createElement(name: string): infer TElement;
+		createTextNode(data: string): infer TTextNode;
+		createComment(data: string): infer TComment;
+	}
+		? TElement | TTextNode | TComment
+		: never;
+
+	export type MountOptions<
+		Props extends Record<string, any> = Record<string, any>,
+		Renderer = undefined
+	> = (Renderer extends MountRenderer
+		? {
+				/** Custom renderer to use instead of the DOM. */
+				renderer: Renderer;
+				/** Target node where the component will be mounted. */
+				target: MountRendererTarget<Renderer>;
+				/** Optional node inside `target`. When specified, it is used to render the component immediately before it. */
+				anchor?: MountRendererAnchor<Renderer>;
+			}
+		: {
+				/**
+				 * Target element where the component will be mounted.
+				 */
+				target: Document | Element | ShadowRoot;
+				/**
+				 * Optional node inside `target`. When specified, it is used to render the component immediately before it.
+				 */
+				anchor?: Node;
+				/** Custom renderer to use instead of the DOM. */
+				renderer?: undefined;
+			}) & {
 		/**
 		 * Allows the specification of events.
 		 * @deprecated Use callback props instead.
@@ -344,18 +381,18 @@ declare module 'svelte' {
 		 */
 		transformError?: (error: unknown) => unknown | Promise<unknown>;
 	} & ({} extends Props
-		? {
-				/**
-				 * Component properties.
-				 */
-				props?: Props;
-			}
-		: {
-				/**
-				 * Component properties.
-				 */
-				props: Props;
-			});
+			? {
+					/**
+					 * Component properties.
+					 */
+					props?: Props;
+				}
+			: {
+					/**
+					 * Component properties.
+					 */
+					props: Props;
+				});
 
 	/**
 	 * Represents work that is happening off-screen, such as data being preloaded
@@ -536,7 +573,7 @@ declare module 'svelte' {
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: MountOptions<Props>): Exports;
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Renderer = undefined>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: MountOptions<Props, Renderer>): Exports;
 	/**
 	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
@@ -2584,20 +2621,7 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"]>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment> & {
-		render: <Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
-			target: TFragment | TElement | TTextNode | TComment;
-			props?: Props;
-			context?: Map<any, any>;
-		} : {
-			target: TFragment | TElement | TTextNode | TComment;
-			props: Props;
-			context?: Map<any, any>;
-		}) => {
-			component: Exports;
-			unmount: () => void;
-		};
-	};
+	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"], R extends Renderer<TFragment, TElement, TTextNode, TComment> = Renderer<TFragment, TElement, TTextNode, TComment>>(renderer: R): R;
 	type Renderer<
 		TFragment extends object = object,
 		TElement extends object = object,
@@ -2706,206 +2730,6 @@ declare module 'svelte/renderer' {
 	// for the other arguments (TFragment, TElement, TTextNode, TComment)
 	type UnsetObject = object & { readonly __unset: unique symbol };
 	type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;
-	/**
-	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
-	 * Use `mount` instead to instantiate components.
-	 * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
-	 * for more info.
-	 */
-	interface ComponentConstructorOptions<
-		Props extends Record<string, any> = Record<string, any>
-	> {
-		target: Element | Document | ShadowRoot;
-		anchor?: Element;
-		props?: Props;
-		context?: Map<any, any>;
-		hydrate?: boolean;
-		intro?: boolean;
-		recover?: boolean;
-		sync?: boolean;
-		idPrefix?: string;
-		$$inline?: boolean;
-		transformError?: (error: unknown) => unknown;
-	}
-
-	/**
-	 * Utility type for ensuring backwards compatibility on a type level that if there's a default slot, add 'children' to the props
-	 */
-	type Properties<Props, Slots> = Props &
-		(Slots extends { default: any }
-			? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
-				// but the alternative is non-fixable type errors because of the way TypeScript index
-				// signatures work (they will always take precedence and make an impossible-to-satisfy children type).
-				Props extends Record<string, never>
-				? any
-				: { children?: any }
-			: {});
-
-	/**
-	 * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
-	 * are completely different under the hood. For typing, use `Component` instead.
-	 * To instantiate components, use `mount` instead.
-	 * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
-	 */
-	class SvelteComponent<
-		Props extends Record<string, any> = Record<string, any>,
-		Events extends Record<string, any> = any,
-		Slots extends Record<string, any> = any
-	> {
-		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
-		static element?: typeof HTMLElement;
-
-		[prop: string]: any;
-		/**
-		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
-		 * is a stop-gap solution. Migrate towards using `mount` instead. See
-		 * [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
-		 */
-		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
-		/**
-		 * For type checking capabilities only.
-		 * Does not exist at runtime.
-		 * ### DO NOT USE!
-		 */
-		$$prop_def: Props; // Without Properties: unnecessary, causes type bugs
-		/**
-		 * For type checking capabilities only.
-		 * Does not exist at runtime.
-		 * ### DO NOT USE!
-		 */
-		$$events_def: Events;
-		/**
-		 * For type checking capabilities only.
-		 * Does not exist at runtime.
-		 * ### DO NOT USE!
-		 */
-		$$slot_def: Slots;
-		/**
-		 * For type checking capabilities only.
-		 * Does not exist at runtime.
-		 * ### DO NOT USE!
-		 */
-		$$bindings?: string;
-
-		/**
-		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
-		 * for more info.
-		 */
-		$destroy(): void;
-
-		/**
-		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
-		 * for more info.
-		 */
-		$on<K extends Extract<keyof Events, string>>(
-			type: K,
-			callback: (e: Events[K]) => void
-		): () => void;
-
-		/**
-		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
-		 * for more info.
-		 */
-		$set(props: Partial<Props>): void;
-	}
-
-	const brand: unique symbol;
-	type Brand<B> = { [brand]: B };
-	type Branded<T, B> = T & Brand<B>;
-
-	/**
-	 * Internal implementation details that vary between environments
-	 */
-	type ComponentInternals = Branded<{}, 'ComponentInternals'>;
-
-	/**
-	 * Can be used to create strongly typed Svelte components.
-	 *
-	 * #### Example:
-	 *
-	 * You have component library on npm called `component-library`, from which
-	 * you export a component called `MyComponent`. For Svelte+TypeScript users,
-	 * you want to provide typings. Therefore you create a `index.d.ts`:
-	 * ```ts
-	 * import type { Component } from 'svelte';
-	 * export declare const MyComponent: Component<{ foo: string }> {}
-	 * ```
-	 * Typing this makes it possible for IDEs like VS Code with the Svelte extension
-	 * to provide intellisense and to use the component like this in a Svelte file
-	 * with TypeScript:
-	 * ```svelte
-	 * <script lang="ts">
-	 * 	import { MyComponent } from "component-library";
-	 * </script>
-	 * <MyComponent foo={'bar'} />
-	 * ```
-	 */
-	interface Component<
-		Props extends Record<string, any> = {},
-		Exports extends Record<string, any> = {},
-		Bindings extends keyof Props | '' = string
-	> {
-		/**
-		 * @param internal An internal object used by Svelte. Do not use or modify.
-		 * @param props The props passed to the component.
-		 */
-		(
-			this: void,
-			internals: ComponentInternals,
-			props: Props
-		): {
-			/**
-			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
-			 * for more info.
-			 */
-			$on?(type: string, callback: (e: any) => void): () => void;
-			/**
-			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
-			 * for more info.
-			 */
-			$set?(props: Partial<Props>): void;
-		} & Exports;
-		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
-		element?: typeof HTMLElement;
-		/** Does not exist at runtime, for typing capabilities only. DO NOT USE */
-		z_$$bindings?: Bindings;
-	}
-
-	/**
-	 * @deprecated This type is obsolete when working with the new `Component` type.
-	 *
-	 * @description
-	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
-	 * dynamic components using `<svelte:component>`.
-	 *
-	 * Example:
-	 * ```html
-	 * <script lang="ts">
-	 * 	import type { ComponentType, SvelteComponent } from 'svelte';
-	 * 	import Component1 from './Component1.svelte';
-	 * 	import Component2 from './Component2.svelte';
-	 *
-	 * 	const component: ComponentType = someLogic() ? Component1 : Component2;
-	 * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
-	 * </script>
-	 *
-	 * <svelte:component this={component} />
-	 * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
-	 * ```
-	 */
-	type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
-		options: ComponentConstructorOptions<
-			Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
-		>
-	) => Comp) & {
-		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
-		element?: typeof HTMLElement;
-	};
 
 	export {};
 }
