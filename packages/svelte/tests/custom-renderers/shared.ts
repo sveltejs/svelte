@@ -13,9 +13,9 @@ import renderer, {
 	type ObjElement,
 	type ObjNode
 } from './renderer.js';
+import { mount, hydrate, unmount } from '../../src/index-client.js';
 import { writeFile } from 'node:fs/promises';
 import { globSync } from 'tinyglobby';
-import { hydrate, unmount } from 'svelte';
 import { render } from 'svelte/server';
 
 // `_config.js` test callbacks rely on inferred parameter types, which
@@ -225,16 +225,13 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 
 		const target = create_root();
 
-		let unmount: (() => void) | undefined;
 		let component: Record<string, any> | undefined;
 		try {
-			const result = renderer.render(mod.default, {
+			component = mount(mod.default, {
 				target,
 				props: config.props ?? {},
 				context: config.context
 			});
-			unmount = result.unmount;
-			component = result.component;
 		} catch (err) {
 			if (config.error) {
 				assert.include((err as Error).message, config.error);
@@ -286,7 +283,9 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 				assert.fail('Expected a runtime error');
 			}
 		} finally {
-			unmount?.();
+			if (component) {
+				await unmount(component);
+			}
 
 			if (config.warnings) {
 				assert.deepEqual(warnings, config.warnings);
