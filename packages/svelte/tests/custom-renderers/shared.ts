@@ -228,6 +228,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 		let component: Record<string, any> | undefined;
 		try {
 			component = mount(mod.default, {
+				renderer,
 				target,
 				props: config.props ?? {},
 				context: config.context
