@@ -23,7 +23,7 @@ export function hydratable(key, fn) {
 
 	if (entry !== undefined) {
 		if (DEV) {
-			const comparison = compare(key, entry, encode(key, fn()));
+			const comparison = compare(key, entry, encode(fn()));
 			comparison.catch(() => {});
 			hydratable.comparisons.push(comparison);
 		}
@@ -33,18 +33,16 @@ export function hydratable(key, fn) {
 
 	const value = fn();
 
-	entry = encode(key, value, hydratable.unresolved_promises);
+	entry = encode(value);
 	hydratable.lookup.set(key, entry);
 
 	return value;
 }
 
 /**
- * @param {string} key
  * @param {any} value
- * @param {Map<Promise<any>, string>} [unresolved]
  */
-function encode(key, value, unresolved) {
+function encode(value) {
 	/** @type {HydratableLookupEntry} */
 	const entry = { value };
 

@@ -27,7 +27,6 @@ export interface HydratableLookupEntry {
 export interface HydratableContext {
 	lookup: Map<string, HydratableLookupEntry>;
 	comparisons: Promise<void>[];
-	unresolved_promises: Map<Promise<string>, string>;
 }
 
 export interface RenderContext {

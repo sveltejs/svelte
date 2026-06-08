@@ -743,12 +743,6 @@ export class Renderer {
 	async #collect_hydratables() {
 		const ctx = get_render_context().hydratable;
 
-		for (const [_, key] of ctx.unresolved_promises) {
-			// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
-			// serialize it, so we're blocking the response on useless content.
-			w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
-		}
-
 		for (const comparison of ctx.comparisons) {
 			// these reject if there's a mismatch
 			await comparison;
@@ -830,6 +824,9 @@ export class Renderer {
 			return null;
 		}
 
+		/** @type {Set<string>} */
+		const unresolved_promises = new Set();
+
 		/** @type {Promise<any>[]} */
 		const promises = [];
 		const entries = Array.from(ctx.lookup).map(([k, v]) => [k, v.value]);
@@ -845,7 +842,7 @@ export class Renderer {
 				serializing = value[0];
 			}
 
-			const currently_serializing = serializing;
+			const key = /** @type {string} */ (serializing);
 
 			if (is_promise(value)) {
 				// we serialize promises as `"${i}"`, because it's impossible for that string
@@ -862,14 +859,13 @@ export class Renderer {
 							// in `v`, as it's potentially user-controlled and therefore potentially malicious.
 							// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
 							() => {
-								serializing = currently_serializing;
+								serializing = key;
 								return `r(${uneval(v)})`;
 							}
 						);
 					})
 					// TODO figure out how best to report these errors
 					.catch((devalue_error) => {
-						const key = /** @type {string} */ (currently_serializing);
 						const entry = /** @type {HydratableLookupEntry} */ (ctx.lookup.get(key));
 
 						e.hydratable_serialization_failed(
@@ -878,14 +874,23 @@ export class Renderer {
 						);
 					});
 
-				ctx.unresolved_promises?.set(p, 'TODO');
+				unresolved_promises.add(key);
+
 				// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
-				p.catch(() => {}).finally(() => ctx.unresolved_promises?.delete(p));
+				p.catch(() => {}).finally(() => unresolved_promises.delete(key));
 
 				promises.push(p);
 				return placeholder;
 			}
 		});
+
+		setTimeout(() => {
+			for (const key of unresolved_promises) {
+				// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
+				// serialize it, so we're blocking the response on useless content.
+				w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
+			}
+		}, 0);
 
 		for (const p of promises) {
 			await p;
