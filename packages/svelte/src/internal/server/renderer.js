@@ -824,8 +824,8 @@ export class Renderer {
 			return null;
 		}
 
-		/** @type {Set<string>} */
-		const unresolved_promises = new Set();
+		/** @type {Map<Promise<any>, string>} */
+		const unresolved_promises = new Map();
 
 		/** @type {Promise<any>[]} */
 		const promises = [];
@@ -874,10 +874,12 @@ export class Renderer {
 						);
 					});
 
-				unresolved_promises.add(key);
+				unresolved_promises.set(p, key);
 
 				// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
-				p.catch(() => {}).finally(() => unresolved_promises.delete(key));
+				p.catch(() => {}).finally(() => {
+					unresolved_promises.delete(p);
+				});
 
 				promises.push(p);
 				return placeholder;
@@ -885,7 +887,7 @@ export class Renderer {
 		});
 
 		setTimeout(() => {
-			for (const key of unresolved_promises) {
+			for (const key of unresolved_promises.values()) {
 				// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
 				// serialize it, so we're blocking the response on useless content.
 				w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
