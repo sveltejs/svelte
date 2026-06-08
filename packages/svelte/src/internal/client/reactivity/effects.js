@@ -521,7 +521,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.nodes !== null &&
 		effect.nodes.end !== null
 	) {
-		remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
+		remove_effect_nodes(effect);
 		removed = true;
 	}
 
@@ -583,6 +583,26 @@ export function remove_effect_dom(node, end) {
 
 		remove_node(/** @type {ChildNode} */ (node));
 		node = next;
+	}
+}
+
+/**
+ * @param {Effect} effect
+ */
+function remove_effect_nodes(effect) {
+	var nodes = /** @type {NonNullable<Effect['nodes']>} */ (effect.nodes);
+	var segments = nodes.segments;
+
+	if (segments === null) {
+		remove_effect_dom(nodes.start, /** @type {TemplateNode} */ (nodes.end));
+		return;
+	}
+
+	for (var i = segments.length - 1; i >= 0; i--) {
+		var segment = segments[i];
+		var pop_renderer = push_renderer(segment.r, segment.pr);
+		remove_effect_dom(segment.start, /** @type {TemplateNode} */ (segment.end));
+		pop_renderer?.();
 	}
 }
 
