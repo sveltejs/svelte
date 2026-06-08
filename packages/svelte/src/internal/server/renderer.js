@@ -12,7 +12,7 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { has_own_property, noop } from '../shared/utils.js';
+import { has_own_property, is_promise, is_promiselike, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -829,21 +829,54 @@ export class Renderer {
 			return null;
 		}
 
-		let entries = [];
-		let has_promises = false;
+		/** @type {Promise<any>[]} */
+		const promises = [];
+		const entries = Array.from(ctx.lookup).map(([k, v]) => [k, v.value]);
 
-		for (const [k, v] of ctx.lookup) {
-			if (v.promises) {
-				has_promises = true;
-				for (const p of v.promises) await p;
+		let serialized = '';
+		let uid = 1;
+
+		serialized = devalue.uneval(entries, (value, uneval) => {
+			if (is_promise(value)) {
+				// we serialize promises as `"${i}"`, because it's impossible for that string
+				// to occur 'naturally' (since the quote marks would have to be escaped)
+				// this placeholder is returned synchronously from `uneval`, which includes it in the
+				// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
+				// be replaced.
+				const placeholder = `"${uid++}"`;
+				const p = value.then((v) => {
+					serialized = serialized.replace(
+						placeholder,
+						// use the function form here to prevent any string replacement characters from being interpreted
+						// in `v`, as it's potentially user-controlled and therefore potentially malicious.
+						// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
+						() => `r(${uneval(v)})`
+					);
+				});
+				// TODO figure out how best to report these errors
+				// .catch((devalue_error) =>
+				// 	e.hydratable_serialization_failed(
+				// 		key,
+				// 		serialization_stack(entry.stack, devalue_error?.stack)
+				// 	)
+				// );
+
+				ctx.unresolved_promises?.set(p, 'TODO');
+				// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
+				p.catch(() => {}).finally(() => ctx.unresolved_promises?.delete(p));
+
+				promises.push(p);
+				return placeholder;
 			}
+		});
 
-			entries.push(`[${devalue.uneval(k)},${v.serialized}]`);
+		for (const p of promises) {
+			await p;
 		}
 
 		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
 
-		if (has_promises) {
+		if (promises.length > 0) {
 			prelude = `const r = (v) => Promise.resolve(v);
 				${prelude}`;
 		}
@@ -852,9 +885,7 @@ export class Renderer {
 			{
 				${prelude}
 
-				for (const [k, v] of [
-					${entries.join(',\n\t\t\t\t\t')}
-				]) {
+				for (const [k, v] of ${serialized}) {
 					h.set(k, v);
 				}
 			}
