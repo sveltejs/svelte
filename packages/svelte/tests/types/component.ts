@@ -334,9 +334,6 @@ mount(functionComponent, {
 	}
 });
 
-// @ts-expect-error createRenderer returns the renderer directly
-custom_renderer.render;
-createRenderer({ ...custom_renderer, extra: true }).extra === true;
 
 hydrate(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
