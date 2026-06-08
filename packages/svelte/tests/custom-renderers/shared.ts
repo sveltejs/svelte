@@ -5,10 +5,12 @@ import { assert } from 'vitest';
 import { compile_directory } from '../helpers.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
-import renderer, { create_root, serialize, dispatch_event, dom_elements } from './renderer.js';
+import renderer, { create_root, serialize, dispatch_event, type ObjFragment } from './renderer.js';
 import { mount, unmount } from '../../src/index-client.js';
 import { writeFile } from 'node:fs/promises';
 import { globSync } from 'tinyglobby';
+import { hydrate, unmount } from 'svelte';
+import { render } from 'svelte/server';
 
 // `_config.js` test callbacks rely on inferred parameter types, which
 // TypeScript treats as non-explicit and rejects for chai's assertion-function
@@ -30,7 +32,9 @@ export interface CustomRendererTest extends BaseTest {
 	html?: string;
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
+	server_props?: Record<string, any>;
 	context?: Map<any, any>;
+	hydrate?: true;
 	error?: string;
 	compile_error?: string;
 	compile_warnings?: false;
@@ -38,7 +42,7 @@ export interface CustomRendererTest extends BaseTest {
 	warnings?: string[];
 	test?: (args: {
 		assert: Assert;
-		target: any;
+		target: ObjFragment | HTMLElement;
 		component: Record<string, any>;
 		mod: any;
 		logs: any[];
@@ -46,7 +50,6 @@ export interface CustomRendererTest extends BaseTest {
 		renderer: typeof renderer;
 		serialize: typeof serialize;
 		dispatch_event: typeof dispatch_event;
-		dom_elements: Array<DocumentFragment | Node>;
 	}) => void | Promise<void>;
 }
 
@@ -97,6 +100,10 @@ async function common_setup(
 
 	try {
 		await compile_directory(cwd, 'client', compile_options);
+
+		if (config.hydrate) {
+			await compile_directory(cwd, 'server', compile_options);
+		}
 	} catch (err) {
 		if (config.compile_error) {
 			assert.include((err as Error).message, config.compile_error);
@@ -165,12 +172,17 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 
 	try {
 		const mod = await import(`${cwd}/_output/client/main.svelte.js`);
+
+		if (config.hydrate) {
+			await run_hydration_test(cwd, config, mod, logs, warnings);
+			return;
+		}
+
 		const target = create_root();
 
 		let component: Record<string, any> | undefined;
 		try {
-			dom_elements.length = 0;
-			component = mount(mod.default, {
+			const result = mount(mod.default, {
 				renderer,
 				target,
 				props: config.props ?? {},
@@ -217,8 +229,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 					warnings,
 					renderer: renderer,
 					serialize,
-					dispatch_event,
-					dom_elements
+					dispatch_event
 				});
 			}
 
@@ -251,6 +262,48 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 		await setImmediate();
 		console.log = console_log;
 		console.warn = console_warn;
+	}
+}
+
+async function run_hydration_test(
+	cwd: string,
+	config: CustomRendererTest,
+	mod: any,
+	logs: any[],
+	warnings: any[]
+) {
+	const target = document.createElement('main');
+	const rendered = await render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
+		props: config.server_props ?? config.props ?? {}
+	});
+	target.innerHTML = rendered.body;
+
+	const component = hydrate(mod.default, {
+		target,
+		props: config.props ?? {},
+		context: config.context
+	});
+
+	if (config.html) {
+		assert.equal(target.innerHTML, config.html);
+	}
+
+	try {
+		if (config.test) {
+			await config.test({
+				assert,
+				target,
+				component,
+				mod,
+				logs,
+				warnings,
+				renderer: renderer,
+				serialize,
+				dispatch_event
+			});
+		}
+	} finally {
+		unmount(component);
 	}
 }
 
