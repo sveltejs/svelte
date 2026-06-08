@@ -588,13 +588,23 @@ export function client_component(analysis, options) {
 	if (custom_renderer !== undefined) {
 		// when the custom renderer feature is enabled every component pushes a renderer: components
 		// with a renderer module push `$renderer`, DOM components push `null`
+		const pop_renderer = b.stmt(b.call('$$pop_renderer'));
+		let pop_renderer_index = component_block.body.length;
+
+		if (should_inject_context) {
+			pop_renderer_index -= 1;
+			if (needs_store_cleanup) pop_renderer_index -= 1;
+			if (needs_store_cleanup && component_returned_object.length > 0) pop_renderer_index -= 1;
+		}
+
 		component_block.body.unshift(
 			b.var(
 				'$$pop_renderer',
 				b.call('$.push_renderer', custom_renderer ? b.id('$renderer') : b.literal(null))
 			)
 		);
-		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
+
+		component_block.body.splice(pop_renderer_index + 1, 0, pop_renderer);
 	}
 
 	if (state.events.size > 0) {
