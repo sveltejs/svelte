@@ -2,19 +2,12 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	test({ assert, target, dispatch_event }) {
-		const inputs = target.children.filter(
-			(/** @type {any} */ n) => n.type === 'element' && n.name === 'input'
-		);
-		const button = target.children.find(
-			(/** @type {any} */ n) => n.type === 'element' && n.name === 'button'
-		);
-		const select = target.children.find(
-			(/** @type {any} */ n) => n.type === 'element' && n.name === 'select'
-		);
+	test({ assert, target, dispatch_event, utils }) {
+		const inputs = target.children.filter(utils.filter_elements((n) => n.name === 'input'));
+		const button = target.children.find(utils.filter_elements((n) => n.name === 'button'));
+		const select = target.children.find(utils.filter_elements((n) => n.name === 'select'));
 		const selected_option = select.children.find(
-			(/** @type {any} */ n) =>
-				n.type === 'element' && n.name === 'option' && n.attributes['value'] === 'other'
+			utils.filter_elements((n) => n.name === 'option' && n.attributes['value'] === 'other')
 		);
 
 		assert.equal(inputs.length, 4);

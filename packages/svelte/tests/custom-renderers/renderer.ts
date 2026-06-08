@@ -8,7 +8,7 @@
 
 import { createRenderer } from '../../src/renderer/index.js';
 
-type ObjElement = {
+export type ObjElement = {
 	type: 'element';
 	name: string;
 	attributes: Record<string, string>;
@@ -29,7 +29,7 @@ export type ObjFragment = {
 	parent: ObjNode | null;
 	elements_children: Array<HTMLElement | DocumentFragment | Text | Comment>;
 };
-type ObjNode = ObjElement | ObjText | ObjComment | ObjFragment;
+export type ObjNode = ObjElement | ObjText | ObjComment | ObjFragment;
 
 function insert_node(
 	parent: ObjNode & { children?: ObjNode[] },
