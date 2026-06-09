@@ -1,4 +1,4 @@
-/** @import { Comment, Program } from 'estree' */
+/** @import { Comment, Program, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from './index.js' */
 import * as acorn from 'acorn';
@@ -95,6 +95,36 @@ export function parse_expression_at(parser, source, index) {
 		return ast;
 	} catch (e) {
 		handle_parse_error(e);
+	}
+}
+
+/**
+ * @param {Parser} parser
+ * @param {string} source
+ * @param {number} index
+ * @returns {Statement}
+ */
+export function parse_statement_at(parser, source, index) {
+	// cast to `any`: acorn's Parser constructor and parseStatement/nextToken aren't in its public types
+	const acorn = /** @type {any} */ (parser.ts ? TSParser : JSParser);
+	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
+
+	try {
+		// This is like parseExpressionAt but for statements
+		const p = new acorn(
+			{ onComment, sourceType: 'module', ecmaVersion: 16, locations: true },
+			source,
+			index
+		);
+		p.nextToken();
+		const statement = /** @type {Statement} */ (p.parseStatement(null, true, Object.create(null)));
+		add_comments(/** @type {acorn.Node} */ (statement));
+		return statement;
+	} catch (err) {
+		// A statement that runs to the end of the source (e.g. an unterminated declaration tag)
+		// is an EOF, not a stray token; preserve the friendlier `unexpected_eof` diagnostic.
+		if (/** @type {any} */ (err).pos === source.length) e.unexpected_eof(source.length);
+		handle_parse_error(err);
 	}
 }
 

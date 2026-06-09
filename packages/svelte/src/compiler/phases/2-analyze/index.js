@@ -36,6 +36,7 @@ import { ClassDeclaration } from './visitors/ClassDeclaration.js';
 import { ClassDirective } from './visitors/ClassDirective.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
+import { DeclarationTag } from './visitors/DeclarationTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
@@ -157,6 +158,7 @@ const visitors = {
 	ClassDirective,
 	Component,
 	ConstTag,
+	DeclarationTag,
 	DebugTag,
 	EachBlock,
 	ExportDefaultDeclaration,
@@ -312,6 +314,7 @@ export function analyze_module(source, options) {
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			fragment: null,
 			parent_element: null,
+			in_declaration_tag: false,
 			reactive_statement: null,
 			derived_function_depth: -1
 		},
@@ -718,6 +721,7 @@ export function analyze_component(root, source, options) {
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				fragment: ast === template.ast ? ast : null,
 				parent_element: null,
+				in_declaration_tag: false,
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
@@ -785,6 +789,7 @@ export function analyze_component(root, source, options) {
 				options,
 				fragment: ast === template.ast ? ast : null,
 				parent_element: null,
+				in_declaration_tag: false,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				reactive_statement: null,
