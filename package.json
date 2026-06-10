@@ -23,7 +23,8 @@
     "changeset:publish": "changeset publish",
     "bench": "NODE_ENV=production node --allow-natives-syntax ./benchmarking/run.js",
     "bench:compare": "NODE_ENV=production node --allow-natives-syntax ./benchmarking/compare/index.js",
-    "bench:debug": "NODE_ENV=production node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
+    "bench:debug": "NODE_ENV=production node --allow-natives-syntax --inspect-brk ./benchmarking/run.js",
+    "bench:browser": "vitest bench --run --config=benchmarking/browser/vitest.config.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
@@ -32,7 +33,9 @@
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
     "@types/picomatch": "^4.0.2",
-    "@vitest/coverage-v8": "^4.1.7",
+    "@vitest/browser": "^4.1.8",
+    "@vitest/browser-playwright": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^10.0.0",
     "eslint-plugin-lube": "^0.5.1",
     "eslint-plugin-svelte": "^3.15.0",
@@ -44,6 +47,6 @@
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.56.0",
     "v8-natives": "^1.2.5",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.8"
   }
 }
