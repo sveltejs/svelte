@@ -28,6 +28,21 @@ If Playwright complains the executable is missing:
 cd packages/svelte && pnpm exec playwright install chromium
 ```
 
+## Multiple browsers
+
+Browser mode is configured via Vitest 4's `browser.instances` array in
+[`vitest.config.js`](./vitest.config.js). It runs in Chromium by default; add
+more engines to compare the same benches across them:
+
+```js
+instances: [{ browser: 'chromium' }, { browser: 'firefox' }, { browser: 'webkit' }];
+```
+
+Each instance needs its Playwright browser installed
+(`pnpm exec playwright install firefox webkit`). Vitest prefixes every result
+line with the instance name (e.g. `|chromium|`), so cross-engine numbers stay
+distinguishable in one run.
+
 ## Writing a benchmark
 
 Each `.bench.js` file uses Vitest's `bench()` API. The function body is the

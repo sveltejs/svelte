@@ -49,8 +49,13 @@ export function VariableDeclaration(node, context) {
 				}
 
 				if (declarator.id.type === 'Identifier') {
+					const exclude_id = context.state.scope.root.unique('rest_excludes');
+					context.state.hoisted.push(
+						b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
+					);
+
 					/** @type {Expression[]} */
-					const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+					const args = [b.id('$$props'), exclude_id];
 
 					if (dev) {
 						// include rest name, so we can provide informative error messages
@@ -95,8 +100,13 @@ export function VariableDeclaration(node, context) {
 							}
 						} else {
 							// RestElement
+							const exclude_id = context.state.scope.root.unique('rest_excludes');
+							context.state.hoisted.push(
+								b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
+							);
+
 							/** @type {Expression[]} */
-							const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+							const args = [b.id('$$props'), exclude_id];
 
 							if (dev) {
 								// include rest name, so we can provide informative error messages
@@ -194,11 +204,6 @@ export function VariableDeclaration(node, context) {
 					/** @type {CallExpression} */ (init)
 				);
 
-				// for now, only wrap async derived in $.save if it's not
-				// a top-level instance derived. TODO in future maybe we
-				// can dewaterfall all of them?
-				const should_save = context.state.is_instance && context.state.scope.function_depth > 1;
-
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (context.visit(value));
 
@@ -213,9 +218,7 @@ export function VariableDeclaration(node, context) {
 							location ? b.literal(location) : undefined
 						);
 
-						call = should_save ? save(call) : b.await(call);
-
-						declarations.push(b.declarator(declarator.id, call));
+						declarations.push(b.declarator(declarator.id, b.await(call)));
 					} else {
 						if (rune === '$derived') expression = b.thunk(expression);
 
@@ -251,7 +254,7 @@ export function VariableDeclaration(node, context) {
 								location ? b.literal(location) : undefined
 							);
 
-							call = should_save ? save(call) : b.await(call);
+							call = b.await(call);
 						}
 
 						declarations.push(b.declarator(id, call));

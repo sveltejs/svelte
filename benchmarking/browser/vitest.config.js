@@ -14,6 +14,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -23,11 +24,6 @@ const pkg = JSON.parse(
 );
 
 export default defineConfig({
-	// Pre-bundle these so the first test run isn't interrupted by a Vite reload
-	// when it discovers them ("new dependencies optimized: esm-env, clsx").
-	optimizeDeps: {
-		include: ['esm-env', 'clsx']
-	},
 	resolve: {
 		alias: [
 			// Resolve `svelte` / `svelte/internal/client` / `svelte/internal/flags/...`
@@ -49,14 +45,19 @@ export default defineConfig({
 		include: ['benches/**/*.bench.js'],
 
 		// Browser mode — runs the benches in real Chromium via Playwright. The
-		// `@vitest/browser` package is the dev dep that brings this in; the
-		// `playwright` package was already installed.
+		// `@vitest/browser` package brings in browser mode and
+		// `@vitest/browser-playwright` provides the `playwright()` provider
+		// factory (Vitest 4 replaced the `provider: 'playwright'` string and the
+		// single `name` field with a provider factory and an `instances` array).
+		//
+		// `instances` is a list: add `{ browser: 'firefox' }` / `{ browser: 'webkit' }`
+		// here to run the same benches across engines.
 		browser: {
 			enabled: true,
-			provider: 'playwright',
+			provider: playwright(),
 			headless: true,
-			name: 'chromium',
-			screenshotFailures: false
+			screenshotFailures: false,
+			instances: [{ browser: 'chromium' }]
 		}
 	}
 });

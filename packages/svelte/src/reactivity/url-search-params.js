@@ -132,11 +132,12 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	set(name, value) {
-		var previous = super.getAll(name).join('');
+		var previous = super.getAll(name);
 		super.set(name, value);
 		// can't use has(name, value), because for something like https://svelte.dev?foo=1&bar=2&foo=3
 		// if you set `foo` to 1, then foo=3 gets deleted whilst `has("foo", "1")` returns true
-		if (previous !== super.getAll(name).join('')) {
+		var current = super.getAll(name);
+		if (previous.length !== current.length || previous.some((value, i) => value !== current[i])) {
 			this.#update_url();
 			increment(this.#version);
 		}
