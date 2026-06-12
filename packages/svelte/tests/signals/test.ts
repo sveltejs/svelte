@@ -3,6 +3,7 @@ import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
+	branch,
 	effect,
 	effect_root,
 	render_effect,
@@ -1501,6 +1502,54 @@ describe('signals', () => {
 			flushSync();
 
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
+		};
+	});
+
+	// https://github.com/sveltejs/svelte/issues/18420
+	test('init-time read of an unconnected derived does not zombie-connect its dependencies', () => {
+		const s = state(0);
+		const inner = derived(() => $.get(s));
+		const memo = derived(() => $.get(inner));
+
+		return () => {
+			// mirrors a component's init-time prop read (e.g. a prop default):
+			// a branch effect body runs with `active_reaction === null` while an
+			// effect update is in progress, and the read evaluates the parent's
+			// prop-expression memo unconnected
+			const destroy = effect_root(() => {
+				branch(() => {
+					assert.equal($.get(memo), 0);
+				});
+			});
+
+			destroy();
+
+			// `inner` must not stay subscribed to `s` — nothing holds a
+			// reference to `inner` that a destroy cascade could reach
+			assert.equal(s.reactions, null);
+			assert.equal(inner.reactions, null);
+		};
+	});
+
+	// https://github.com/sveltejs/svelte/issues/18420
+	test('connected read of the same derived chain still cleans up on destroy', () => {
+		const s = state(0);
+		const inner = derived(() => $.get(s));
+		const memo = derived(() => $.get(inner));
+
+		return () => {
+			const destroy = effect_root(() => {
+				branch(() => {
+					render_effect(() => {
+						assert.equal($.get(memo), 0);
+					});
+				});
+			});
+
+			flushSync();
+			destroy();
+
+			assert.equal(s.reactions, null);
 		};
 	});
 });

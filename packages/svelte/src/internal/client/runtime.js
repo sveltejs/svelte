@@ -660,12 +660,19 @@ export function get(signal) {
 		}
 
 		// connect disconnected deriveds if we are reading them inside an effect,
-		// or inside another derived that is already connected
+		// or inside another derived that is already connected. A derived reader
+		// that is itself unconnected must not connect its dependencies, even
+		// while an effect update is in progress (e.g. an init-time prop read
+		// evaluating a parent prop-expression memo): the dependency would be
+		// subscribed into the graph while nothing subscribes to the reader, so
+		// no destroy cascade could ever reach it (#18420)
 		var should_connect =
 			(derived.f & CONNECTED) === 0 &&
 			!untracking &&
 			active_reaction !== null &&
-			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
+			((active_reaction.f & DERIVED) !== 0
+				? (active_reaction.f & CONNECTED) !== 0
+				: is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
 
 		var is_new = (derived.f & REACTION_RAN) === 0;
 
