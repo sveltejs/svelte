@@ -16,6 +16,41 @@ import { get_value } from './shared/declarations.js';
 import { build_expression, add_svelte_meta } from './shared/utils.js';
 
 /**
+ * Walks an AST node tree and returns the name of the first store_sub binding found, or null.
+ * Used to detect store subscriptions hidden behind derived expressions.
+ * @param {import('estree').Node | null | undefined} node
+ * @param {Scope} scope
+ * @returns {string | null}
+ */
+function find_store_sub_name(node, scope) {
+	if (!node || typeof node !== 'object' || !('type' in node)) return null;
+
+	if (node.type === 'Identifier') {
+		const binding = scope.get(/** @type {string} */ (/** @type {Identifier} */ (node).name));
+		if (binding?.kind === 'store_sub') return binding.node.name;
+		return null;
+	}
+
+	for (const key of Object.keys(node)) {
+		if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') continue;
+		const child = /** @type {any} */ (node)[key];
+		if (Array.isArray(child)) {
+			for (const item of child) {
+				if (item && typeof item === 'object' && item.type) {
+					const result = find_store_sub_name(item, scope);
+					if (result) return result;
+				}
+			}
+		} else if (child && typeof child === 'object' && child.type) {
+			const result = find_store_sub_name(child, scope);
+			if (result) return result;
+		}
+	}
+
+	return null;
+}
+
+/**
  * @param {AST.EachBlock} node
  * @param {ComponentContext} context
  */
@@ -62,6 +97,15 @@ export function EachBlock(node, context) {
 			uses_store = true;
 			break;
 		}
+
+		// If the expression depends on a derived that itself depends on a store,
+		// we still need mutable item sources (#13569)
+		if (binding.kind === 'derived' && binding.initial?.type === 'CallExpression') {
+			if (find_store_sub_name(binding.initial, binding.scope)) {
+				uses_store = true;
+				break;
+			}
+		}
 	}
 
 	for (const binding of node.metadata.expression.dependencies) {
@@ -106,6 +150,20 @@ export function EachBlock(node, context) {
 		if (binding.kind === 'store_sub') {
 			store_to_invalidate = binding.node.name;
 			break;
+		}
+	}
+
+	// If the expression is a derived that depends on a store, we need to
+	// invalidate that store when bindings mutate items (#13569)
+	if (!store_to_invalidate) {
+		for (const binding of node.metadata.expression.dependencies) {
+			if (binding.kind === 'derived' && binding.initial?.type === 'CallExpression') {
+				const name = find_store_sub_name(binding.initial, binding.scope);
+				if (name) {
+					store_to_invalidate = name;
+					break;
+				}
+			}
 		}
 	}
 
