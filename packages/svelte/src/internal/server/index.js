@@ -3,7 +3,7 @@
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
-import { is_promise, noop } from '../shared/utils.js';
+import { get_descriptor_in_chain, is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
@@ -181,21 +181,55 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 export function spread_props(props) {
 	/** @type {Record<string, unknown>} */
 	const merged_props = {};
-	let key;
 
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
 		if (obj == null) continue;
-		for (key of Object.keys(obj)) {
-			const desc = Object.getOwnPropertyDescriptor(obj, key);
-			if (desc) {
-				Object.defineProperty(merged_props, key, desc);
-			} else {
-				merged_props[key] = obj[key];
+		// `for..in` collects own + inherited enumerable string keys; class accessors
+		// aren't enumerable so we follow up with a prototype walk (excluding Object.prototype).
+		/** @type {Set<string>} */
+		const seen = new Set();
+		for (const key in obj) {
+			seen.add(key);
+			copy_prop(merged_props, obj, key);
+		}
+		let proto = Object.getPrototypeOf(obj);
+		while (proto != null && proto !== Object.prototype) {
+			for (const key of Object.getOwnPropertyNames(proto)) {
+				if (key === 'constructor' || seen.has(key)) continue;
+				seen.add(key);
+				copy_prop(merged_props, obj, key);
 			}
+			proto = Object.getPrototypeOf(proto);
 		}
 	}
 	return merged_props;
+}
+
+/**
+ * Copies a property from `source` to `target`. Accessors are bound to `source`
+ * so `this` resolves correctly when reading/writing through `target` (relevant
+ * for class instances spread into props).
+ * @param {Record<string, unknown>} target
+ * @param {Record<string, unknown>} source
+ * @param {string} key
+ */
+function copy_prop(target, source, key) {
+	const desc = get_descriptor_in_chain(source, key);
+	if (!desc) {
+		target[key] = source[key];
+		return;
+	}
+	if (desc.get || desc.set) {
+		Object.defineProperty(target, key, {
+			enumerable: true,
+			configurable: true,
+			get: desc.get && desc.get.bind(source),
+			set: desc.set && desc.set.bind(source)
+		});
+	} else {
+		Object.defineProperty(target, key, desc);
+	}
 }
 
 /**
@@ -394,7 +428,7 @@ export function bind_props(props_parent, props_now) {
 		if (
 			initial_value === undefined &&
 			value !== undefined &&
-			Object.getOwnPropertyDescriptor(props_parent, key)?.set
+			get_descriptor_in_chain(props_parent, key)?.set
 		) {
 			props_parent[key] = value;
 		}
