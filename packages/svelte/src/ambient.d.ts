@@ -86,7 +86,13 @@ declare namespace $state {
 			: T extends { toJSON(): infer R }
 				? R
 				: T extends readonly unknown[]
-					? { [K in keyof T]: Snapshot<T[K]> }
+					? number extends T['length']
+						? T extends Array<infer U>
+							? Array<Snapshot<U>>
+							: T extends ReadonlyArray<infer U>
+								? ReadonlyArray<Snapshot<U>>
+								: never
+						: { [K in keyof T]: Snapshot<T[K]> }
 					: T extends Array<infer U>
 						? Array<Snapshot<U>>
 						: T extends object
