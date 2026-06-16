@@ -334,7 +334,6 @@ mount(functionComponent, {
 	}
 });
 
-
 hydrate(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
