@@ -1,0 +1,14 @@
+[
+	{
+		"code": "unexpected_head",
+		"message": "Using `<head>` ((unknown):1:0) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead",
+		"start": {
+			"line": 1,
+			"column": 0
+		},
+		"end": {
+			"line": 3,
+			"column": 7
+		}
+	}
+]
