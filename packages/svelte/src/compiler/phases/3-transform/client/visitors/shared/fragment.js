@@ -161,7 +161,7 @@ export function is_static_element(node) {
 		}
 
 		if (
-			['input', 'textarea'].includes(node.name) &&
+			['input', 'textarea', 'select'].includes(node.name) &&
 			['value', 'checked'].includes(attribute.name)
 		) {
 			return false;
