@@ -75,8 +75,35 @@ export function build_element_attributes(node, context, transform) {
 				) {
 					events_to_capture.add(attribute.name);
 				}
-				// the defaultValue/defaultChecked properties don't exist as attributes
-			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
+				// `defaultValue` / `defaultChecked` are DOM properties, not HTML
+				// attributes. For `<input>` and `<textarea>`, render them as their
+				// SSR-visible equivalents (`value` / `checked`) so non-JS users see
+				// the default value and there's no FOUC on hydrated pages. For
+				// `<select>`, `defaultValue` controls which `<option>` is initially
+				// selected and is handled by the select-special path below, so we
+				// drop it here. For any other element, drop it: there is no HTML
+				// attribute equivalent.
+				//
+				// The spread path already does this mapping at runtime via
+				// `$.attributes()` in `internal/server/index.js`; this branch keeps
+				// the non-spread form symmetric.
+				// https://github.com/sveltejs/svelte/issues/18446
+			} else if (attribute.name === 'defaultValue' || attribute.name === 'defaultChecked') {
+				if (node.name === 'textarea' && attribute.name === 'defaultValue') {
+					// Same handling as `value` on `<textarea>`: render as child
+					// content. `content` may already be set if both `value` and
+					// `defaultValue` were specified; later wins (matching the runtime
+					// behaviour where the property is read once).
+					content = b.call('$.escape', build_attribute_value(attribute.value, context, transform));
+				} else if (node.name === 'input') {
+					const renamed =
+						attribute.name === 'defaultValue'
+							? { ...attribute, name: 'value' }
+							: { ...attribute, name: 'checked' };
+					attributes.push(renamed);
+				}
+				// else: drop silently (select handled elsewhere; other elements have no equivalent)
+			} else {
 				if (attribute.name === 'class') {
 					if (attribute.metadata.needs_clsx) {
 						attributes.push({
