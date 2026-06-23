@@ -5,6 +5,7 @@ import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { should_proxy } from '../utils.js';
 import { get_inspect_args } from '../../utils.js';
+import { get_parent } from '../../../../utils/ast.js';
 
 /**
  * @param {CallExpression} node
@@ -12,6 +13,7 @@ import { get_inspect_args } from '../../utils.js';
  */
 export function CallExpression(node, context) {
 	const rune = get_rune(node, context.state.scope);
+	const parent = get_parent(context.path, -1);
 
 	switch (rune) {
 		case '$host':
@@ -40,7 +42,25 @@ export function CallExpression(node, context) {
 			}
 
 			const callee = b.id('$.state', node.callee.loc);
-			return b.call(callee, value);
+			let retval = b.call(callee, value);
+
+			// this is not the path you would expect from `$derived($state(...))`, but
+			// it looks like this because we visit the arguments of the derived in the
+			// VariableDeclaration visitor
+			if (
+				(parent.type === 'VariableDeclaration' &&
+					parent.declarations.length === 1 &&
+					parent.declarations[0].init?.type === 'CallExpression' &&
+					parent.declarations[0].init.callee.type === 'Identifier' &&
+					parent.declarations[0].init?.callee.name === '$derived') ||
+				(parent.type === 'CallExpression' &&
+					parent.callee.type === 'Identifier' &&
+					parent.callee.name === '$derived')
+			) {
+				retval = b.call('$.get', retval);
+			}
+
+			return retval;
 		}
 
 		case '$derived':
