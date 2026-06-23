@@ -555,6 +555,10 @@ export function client_component(analysis, options) {
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
+	// this needs to be !== undefined because we want to enable the flag even if the custom renderer is null (which is a valid value meaning "no renderer")
+	if (custom_renderer !== undefined) {
+		body.unshift(b.imports([], 'svelte/internal/flags/custom-renderer'));
+	}
 
 	if (custom_renderer) {
 		body.unshift(b.imports([['$renderer', '$renderer', true]], custom_renderer));
