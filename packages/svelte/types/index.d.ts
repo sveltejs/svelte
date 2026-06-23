@@ -460,6 +460,13 @@ declare module 'svelte' {
 	export function afterUpdate(fn: () => void): void;
 	export function hydratable<T>(key: string, fn: () => T): T;
 	/**
+	 * The `onAnimationFrame` function schedules a callback to run on `requestAnimationFrame`. It must be called inside an effect (e.g. during component initialisation).
+	 *
+	 * `onAnimationFrame` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
+	 *
+	 * */
+	export function onAnimationFrame<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
+	/**
 	 * Create a snippet programmatically
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {

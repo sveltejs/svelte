@@ -233,6 +233,32 @@ export function afterUpdate(fn) {
 }
 
 /**
+ * The `onAnimationFrame` function schedules a callback to run on `requestAnimationFrame`. It must be called inside an effect (e.g. during component initialisation).
+ *
+ * `onAnimationFrame` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
+ *
+ * @template T
+ * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
+ * @returns {void}
+ */
+export function onAnimationFrame(fn) {
+	if (component_context === null) {
+		lifecycle_outside_component('onAnimationFrame');
+	}
+
+	user_effect(() => {
+		let frame = requestAnimationFrame(function next() {
+			frame = requestAnimationFrame(next);
+			fn();
+		});
+
+		return () => {
+			cancelAnimationFrame(frame);
+		};
+	});
+}
+
+/**
  * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
  * @param {ComponentContext} context
  */
