@@ -56,6 +56,7 @@ import {
 	parent_renderer,
 	set_parent_renderer
 } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -272,7 +273,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		var pop_renderer = push_renderer(renderer, parent);
+		var pop_renderer = custom_renderers_flag ? push_renderer(renderer, parent) : undefined;
 
 		state.pending.delete(batch);
 
@@ -309,7 +310,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	// we push current renderer twice because branches will always
 	// append to the current renderer
-	var pop_renderer = push_renderer(renderer, renderer);
+	var pop_renderer = custom_renderers_flag ? push_renderer(renderer, renderer) : undefined;
 
 	var effect = block(() => {
 		array = /** @type {V[]} */ (get(each_array));
@@ -447,7 +448,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	pop_renderer?.();
 	// we restore the parent_renderer so that an append after a
 	// branch will append to the correct renderer
-	set_parent_renderer(parent);
+	if (custom_renderers_flag) {
+		set_parent_renderer(parent);
+	}
 
 	/** @type {EachState} */
 	var state = { effect, flags, items, pending, outrogroups: null, fallback };
