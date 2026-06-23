@@ -18,7 +18,7 @@ export default test({
 		raf.tick(150);
 		assert.htmlEqual(
 			target.innerHTML,
-			'<p>foo</p><p class="red svelte-1yszte8 border" style="overflow: hidden; opacity: 0; border-top-width: 0.5px; border-bottom-width: 0.5px; min-height: 0;">bar</p>'
+			'<p>foo</p><p class="red svelte-1yszte8 border" style="overflow: hidden; opacity: 0; height: 0px; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px; border-top-width: 0.5px; border-bottom-width: 0.5px; min-height: 0;">bar</p>'
 		);
 		component.open = true;
 		raf.tick(250);
