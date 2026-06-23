@@ -204,13 +204,6 @@ export function transition(flags, element, get_fn, get_params) {
 
 	var inert = element.inert;
 
-	/**
-	 * The default overflow style, stashed so we can revert changes during the transition
-	 * that are necessary to work around a Safari <18 bug
-	 * TODO 6.0 remove this, if older versions of Safari have died out enough
-	 */
-	var overflow = element.style.overflow;
-
 	/** @type {Animation | undefined} */
 	var intro;
 
@@ -260,8 +253,6 @@ export function transition(flags, element, get_fn, get_params) {
 					// Ensure we cancel the animation to prevent leaking
 					intro?.abort();
 					intro = current_options = undefined;
-
-					element.style.overflow = overflow;
 				}
 			);
 		},
@@ -420,27 +411,13 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 		var keyframes = [];
 
 		if (duration > 0) {
-			/**
-			 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
-			 * add it as an inline style to work around a Safari <18 bug
-			 * TODO 6.0 remove this, if possible
-			 */
-			var needs_overflow_hidden = false;
-
 			if (css) {
 				var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
 				for (var i = 0; i <= n; i += 1) {
 					var t = t1 + delta * easing(i / n);
-					var styles = css_to_keyframe(css(t, 1 - t));
-					keyframes.push(styles);
-
-					needs_overflow_hidden ||= styles.overflow === 'hidden';
+					keyframes.push(css_to_keyframe(css(t, 1 - t)));
 				}
-			}
-
-			if (needs_overflow_hidden) {
-				/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
 			}
 
 			get_t = () => {
