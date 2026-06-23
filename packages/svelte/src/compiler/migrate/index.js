@@ -114,6 +114,37 @@ function find_closing_parenthesis(start, code) {
 }
 
 /**
+ * @param {MagicString} str
+ * @param {unknown} start
+ * @param {unknown} end
+ */
+function is_valid_range(str, start, end) {
+	return (
+		typeof start === 'number' &&
+		typeof end === 'number' &&
+		start >= 0 &&
+		start < end &&
+		end <= str.original.length
+	);
+}
+
+/**
+ * @param {MagicString} str
+ * @param {unknown} start
+ * @param {unknown} end
+ */
+function remove_if_valid(str, start, end) {
+	if (!is_valid_range(str, start, end)) return false;
+
+	try {
+		str.remove(/** @type {number} */ (start), /** @type {number} */ (end));
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
  * May throw an error if the code is too complex to migrate automatically.
  *
@@ -547,21 +578,22 @@ const instance_script = {
 			return;
 		}
 
-		let count_removed = 0;
+		const specifiers_to_remove = /** @type {typeof node.specifiers} */ ([]);
 		for (const specifier of node.specifiers) {
 			if (specifier.local.type !== 'Identifier') continue;
 
 			const binding = state.scope.get(specifier.local.name);
 			if (binding?.kind === 'bindable_prop') {
-				state.str.remove(
-					/** @type {number} */ (specifier.start),
-					/** @type {number} */ (specifier.end)
-				);
-				count_removed++;
+				specifiers_to_remove.push(specifier);
 			}
 		}
-		if (count_removed === node.specifiers.length) {
-			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+
+		if (specifiers_to_remove.length === node.specifiers.length) {
+			remove_if_valid(state.str, node.start, node.end);
+		} else {
+			for (const specifier of specifiers_to_remove) {
+				remove_if_valid(state.str, specifier.start, specifier.end);
+			}
 		}
 	},
 	VariableDeclaration(node, { state, path, visit, next }) {
@@ -1597,8 +1629,14 @@ function extract_type_and_comment(declarator, state, path) {
 
 	const comment_start = /** @type {any} */ (comment_node)?.start;
 	const comment_end = /** @type {any} */ (comment_node)?.end;
-	let comment = comment_node && str.original.substring(comment_start, comment_end);
-	if (comment_node) {
+	const has_comment_range = is_valid_range(str, comment_start, comment_end);
+	const is_svelte_comment =
+		has_comment_range && str.original.startsWith('<!--', /** @type {number} */ (comment_start));
+	let comment =
+		comment_node && has_comment_range && !is_svelte_comment
+			? str.original.substring(comment_start, comment_end)
+			: undefined;
+	if (has_comment_range && !is_svelte_comment) {
 		str.update(comment_start, comment_end, '');
 	}
 
@@ -1607,9 +1645,11 @@ function extract_type_and_comment(declarator, state, path) {
 	const trailing_comment_start = /** @type {any} */ (trailing_comment_node)?.start;
 	const trailing_comment_end = /** @type {any} */ (trailing_comment_node)?.end;
 	let trailing_comment =
-		trailing_comment_node && str.original.substring(trailing_comment_start, trailing_comment_end);
+		trailing_comment_node && is_valid_range(str, trailing_comment_start, trailing_comment_end)
+			? str.original.substring(trailing_comment_start, trailing_comment_end)
+			: undefined;
 
-	if (trailing_comment_node) {
+	if (is_valid_range(str, trailing_comment_start, trailing_comment_end)) {
 		str.update(trailing_comment_start, trailing_comment_end, '');
 	}
 
