@@ -46,6 +46,7 @@ import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
 import { push_renderer, current_renderer, parent_renderer } from '../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../flags/index.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -514,7 +515,7 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	var pop_renderer = push_renderer(effect.r, effect.pr);
+	var pop_renderer = custom_renderers_flag ? push_renderer(effect.r, effect.pr) : undefined;
 
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
@@ -600,7 +601,7 @@ function remove_effect_nodes(effect) {
 
 	for (var i = segments.length - 1; i >= 0; i--) {
 		var segment = segments[i];
-		var pop_renderer = push_renderer(segment.r, segment.pr);
+		var pop_renderer = custom_renderers_flag ? push_renderer(segment.r, segment.pr) : undefined;
 		remove_effect_dom(segment.start, /** @type {TemplateNode} */ (segment.end));
 		pop_renderer?.();
 	}
@@ -760,7 +761,7 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
-	var pop_renderer = push_renderer(effect.r, effect.pr);
+	var pop_renderer = custom_renderers_flag ? push_renderer(effect.r, effect.pr) : undefined;
 
 	/** @type {TemplateNode | null} */
 	var node = effect.nodes.start;

@@ -15,6 +15,7 @@ import {
 	set_parent_renderer,
 	set_renderer
 } from '../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../flags/index.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -138,8 +139,8 @@ export function capture() {
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 	var previous_batch = /** @type {Batch} */ (current_batch);
-	var previous_renderer = current_renderer;
-	var previous_parent_renderer = parent_renderer;
+	var previous_renderer = custom_renderers_flag ? current_renderer : null;
+	var previous_parent_renderer = custom_renderers_flag ? parent_renderer : null;
 
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
@@ -150,8 +151,10 @@ export function capture() {
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 
-		set_renderer(previous_renderer);
-		set_parent_renderer(previous_parent_renderer);
+		if (custom_renderers_flag) {
+			set_renderer(previous_renderer);
+			set_parent_renderer(previous_parent_renderer);
+		}
 
 		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
 			// TODO we only need optional chaining here because `{#await ...}` blocks
@@ -283,8 +286,10 @@ export function unset_context(deactivate_batch = true) {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
-	set_renderer(null);
-	set_parent_renderer(null);
+	if (custom_renderers_flag) {
+		set_renderer(null);
+		set_parent_renderer(null);
+	}
 	if (deactivate_batch) current_batch?.deactivate();
 
 	if (DEV) {

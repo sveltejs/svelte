@@ -34,6 +34,7 @@ import { is_passive_event } from '../../utils.js';
 import { COMMENT_NODE, STATE_SYMBOL, TEXT_CACHE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
 import { push_renderer } from './custom-renderer/state.js';
+import { custom_renderers_flag } from '../flags/index.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -167,7 +168,7 @@ const listeners = new Map();
  * @returns {Exports}
  */
 function _mount(Component, options) {
-	if (options.renderer) {
+	if (custom_renderers_flag && options.renderer) {
 		var pop_renderer = push_renderer(options.renderer, options.renderer);
 
 		try {
