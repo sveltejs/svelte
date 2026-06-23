@@ -25,6 +25,23 @@ import { Renderer } from './renderer.js';
 import * as e from './errors.js';
 import { ssr_context } from './context.js';
 
+/**
+ * Returns the inline `onload`/`onerror` capture attribute, or `''` if `csp.nonce`
+ * or `csp.hash` is set (renderer injects a head script instead).
+ *
+ * @param {Renderer} renderer
+ * @param {string} name
+ * @returns {string}
+ */
+export function event_capture(renderer, name) {
+	const csp = renderer.global.csp;
+	if (csp.nonce || csp.hash) {
+		renderer.global.needs_event_replay_script = true;
+		return '';
+	}
+	return ` ${name}="this.__e=event"`;
+}
+
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
