@@ -51,6 +51,7 @@ import * as e from '../../errors.js';
 import { tag } from '../../dev/tracing.js';
 
 import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -293,7 +294,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		var pop_renderer = push_renderer(renderer);
+		var pop_renderer = custom_renderers_flag ? push_renderer(renderer) : undefined;
 
 		try {
 			state.pending.delete(batch);

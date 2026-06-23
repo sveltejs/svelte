@@ -23,6 +23,7 @@ import {
 } from '../operations.js';
 import { DEV } from 'esm-env';
 import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
@@ -98,7 +99,7 @@ export class BranchManager {
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
 
-		var pop_renderer = push_renderer(this.#renderer);
+		var pop_renderer = custom_renderers_flag ? push_renderer(this.#renderer) : undefined;
 
 		try {
 			var key = /** @type {Key} */ (this.#batches.get(batch));

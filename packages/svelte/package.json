@@ -71,6 +71,9 @@
     "./internal/flags/tracing": {
       "default": "./src/internal/flags/tracing.js"
     },
+    "./internal/flags/custom-renderer": {
+      "default": "./src/internal/flags/custom-renderer.js"
+    },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },

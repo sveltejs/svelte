@@ -49,6 +49,7 @@ import { Batch, collected_effects, set_teardown_context, teardown_context } from
 import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
 import { push_renderer, current_renderer } from '../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../flags/index.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -518,7 +519,7 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	var pop_renderer = push_renderer(effect.r);
+	var pop_renderer = custom_renderers_flag ? push_renderer(effect.r) : undefined;
 
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
@@ -767,7 +768,7 @@ function resume_children(effect, local) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
-	var pop_renderer = push_renderer(effect.r);
+	var pop_renderer = custom_renderers_flag ? push_renderer(effect.r) : undefined;
 
 	try {
 		/** @type {TemplateNode | null} */
