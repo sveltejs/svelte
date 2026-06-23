@@ -28,6 +28,7 @@ import {
 	skipped_deps,
 	new_deps
 } from '../runtime.js';
+import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
@@ -444,6 +445,13 @@ export function update_derived(derived) {
  * @param {Derived} derived
  */
 export function freeze_derived_effects(derived) {
+	if (derived.ac !== null) {
+		without_reactive_context(() => {
+			derived.ac?.abort(STALE_REACTION);
+			derived.ac = null;
+		});
+	}
+
 	if (derived.effects === null) return;
 
 	for (const e of derived.effects) {
