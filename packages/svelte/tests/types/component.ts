@@ -10,6 +10,7 @@ import {
 	type ComponentInternals
 } from 'svelte';
 import { render } from 'svelte/server';
+import type { HTMLAnchorAttributes, HTMLButtonAttributes } from '../../elements';
 
 SvelteComponent.element === HTMLElement;
 
@@ -333,6 +334,154 @@ render(functionComponent, {
 	props: {
 		binding: true,
 		// @ts-expect-error
+		readonly: 1
+	}
+});
+
+// --------------------------------------------------------------------------- union props
+
+const unionComponent: Component<
+	{
+		binding: boolean;
+	} & (
+		| (HTMLButtonAttributes & {
+				readonly: string;
+		  })
+		| (HTMLAnchorAttributes & {
+				readonly2: string;
+		  })
+	),
+	{ foo: 'bar' },
+	'binding'
+> = (a, props) => {
+	props.binding === true;
+	if ('readonly' in props) {
+		props.readonly === 'foo';
+		// @ts-expect-error
+		props.readonly = true;
+	}
+	if ('readonly2' in props) {
+		props.readonly2 === 'foo';
+		// @ts-expect-error
+		props.readonly2 = true;
+	}
+	// @ts-expect-error
+	props.binding = '';
+	return {
+		foo: 'bar'
+	};
+};
+unionComponent.element === HTMLElement;
+
+const unionBindingIsOkayToWiden: Component<any> = unionComponent;
+
+unionComponent(null as any, {
+	binding: true,
+	// @ts-expect-error
+	readonly: true
+});
+
+const unionComponentInstance = unionComponent(null as any, {
+	binding: true,
+	readonly: 'foo',
+	// @ts-expect-error
+	x: ''
+});
+unionComponentInstance.foo === 'bar';
+// @ts-expect-error
+unionComponentInstance.foo = 'foo';
+
+const unionComponentProps: ComponentProps<typeof unionComponent> = {
+	binding: true,
+	readonly: 'foo',
+	type: 'button',
+	// @ts-expect-error
+	prop: 1
+};
+
+const unionComponentProps2: ComponentProps<typeof unionComponent> = {
+	binding: true,
+	readonly2: 'foo',
+	href: 'https://example.com',
+	// @ts-expect-error
+	prop: 1
+};
+
+// Test that self-typed functions are correctly inferred, too (use case: language tools has its own shape for backwards compatibility)
+const unionComponentProps3: ComponentProps<(a: any, b: { a: true }) => { foo: string }> = {
+	a: true
+};
+
+mount(unionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		readonly: 'foo',
+		type: 'button',
+		// @ts-expect-error
+		x: ''
+	}
+});
+mount(unionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		// @ts-expect-error wrong type
+		readonly: 1
+	}
+});
+mount(
+	unionComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+mount(null as any as Component<{}>, { target: null as any });
+
+hydrate(unionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		readonly: 'foo',
+		type: 'button',
+		// @ts-expect-error
+		x: ''
+	}
+});
+hydrate(unionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	// @ts-expect-error missing prop
+	props: {
+		binding: true
+	}
+});
+hydrate(
+	unionComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+hydrate(null as any as Component<{}>, { target: null as any });
+
+render(unionComponent, {
+	props: {
+		binding: true,
+		readonly: 'foo',
+		type: 'button'
+	}
+});
+// @ts-expect-error
+render(unionComponent);
+render(unionComponent, {
+	// @ts-expect-error
+	props: {
+		binding: true
+	}
+});
+render(unionComponent, {
+	// @ts-expect-error
+	props: {
+		binding: true,
 		readonly: 1
 	}
 });
