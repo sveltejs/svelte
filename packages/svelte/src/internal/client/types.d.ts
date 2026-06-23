@@ -126,8 +126,25 @@ export interface AnimationManager {
 	measure: () => void;
 	/** Called during keyed each block reconciliation, after updates — this triggers the animation */
 	apply: () => void;
-	/** Fix the element position, so that siblings can move to the correct destination */
-	fix: () => void;
+	/**
+	 * Capture the element's pre-absolute-positioning size + original styles.
+	 * Pure read pass — runs before any items have been mutated so the captured
+	 * dimensions reflect the original layout (matters in flex/grid containers).
+	 */
+	capture_size: () => void;
+	/**
+	 * Apply `position: absolute` and the captured size. Pure write pass — runs
+	 * after all items' sizes have been captured, so the layout invalidation
+	 * is batched into a single subsequent flush.
+	 */
+	set_position: () => void;
+	/**
+	 * Read the element's post-absolute bounding rect and apply a compensating
+	 * transform so it visually stays at its captured-`from` position. The first
+	 * call in a batch pays one layout flush; subsequent calls in the same
+	 * batch are flush-free because `transform` is compositor-only.
+	 */
+	set_transform: () => void;
 	/** Unfix the element position if the outro is aborted */
 	unfix: () => void;
 }

@@ -630,13 +630,15 @@ function reconcile(state, array, anchor, flags, get_key) {
 			var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
 
 			if (is_animated) {
+				// Doing all the reads _then_ all the writes minimises layout flushes.
+				// `measure` and `capture_size` are both reads, so they share a loop.
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].nodes?.a?.measure();
+					var am = to_destroy[i].nodes?.a;
+					am?.measure();
+					am?.capture_size();
 				}
-
-				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].nodes?.a?.fix();
-				}
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.set_position();
+				for (i = 0; i < destroy_length; i += 1) to_destroy[i].nodes?.a?.set_transform();
 			}
 
 			pause_effects(state, to_destroy, controlled_anchor);
