@@ -1,8 +1,10 @@
 /** @import { ComponentContext, Effect } from '#client' */
 import { DESTROYING, STATE_SYMBOL } from '#client/constants';
 import { component_context } from '../../../context.js';
+import { capture_signals } from '../../../legacy.js';
 import { effect, render_effect } from '../../../reactivity/effects.js';
-import { active_effect, untrack } from '../../../runtime.js';
+import { old_values } from '../../../reactivity/sources.js';
+import { active_effect, get, untrack } from '../../../runtime.js';
 
 /**
  * @param {any} bound_value
@@ -62,8 +64,25 @@ export function bind_this(element_or_component = {}, update, get_value, get_part
 				p = p.parent;
 			}
 			const teardown = () => {
-				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
+				if (!parts) return;
+
+				let bound_value;
+				const signals = capture_signals(() => {
+					bound_value = get_value(...parts);
+				});
+
+				if (is_bound_this(bound_value, element_or_component)) {
+					const values = new Map();
+
+					for (const signal of signals) {
+						values.set(signal, get(signal));
+					}
+
 					update(null, ...parts);
+
+					for (const [signal, value] of values) {
+						old_values.set(signal, value);
+					}
 				}
 			};
 			const original_teardown = p.teardown;
