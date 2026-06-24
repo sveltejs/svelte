@@ -12,8 +12,8 @@ export default test({
 			`
 			<button>fork</button>
 			<button>commit</button>
-			<p style="">foo</p>
-			<p style="">foo</p>
+			<p>foo</p>
+			<p>foo</p>
 			<p>foo</p>
 		`
 		);
@@ -51,8 +51,8 @@ export default test({
 			`
 			<button>fork</button>
 			<button>commit</button>
-			<p style="">foo</p>
-			<p style="">foo</p>
+			<p>foo</p>
+			<p>foo</p>
 			<p>foo</p>
 		`
 		);
