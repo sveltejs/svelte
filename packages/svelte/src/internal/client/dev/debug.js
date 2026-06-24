@@ -15,7 +15,6 @@ import {
 	MAYBE_DIRTY,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	WAS_MARKED,
 	MANAGED_EFFECT
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
@@ -204,7 +203,6 @@ export function log_reactions(signal) {
 		if ((flags & DIRTY) !== 0) names.push('DIRTY');
 		if ((flags & MAYBE_DIRTY) !== 0) names.push('MAYBE_DIRTY');
 		if ((flags & CONNECTED) !== 0) names.push('CONNECTED');
-		if ((flags & WAS_MARKED) !== 0) names.push('WAS_MARKED');
 		if ((flags & INERT) !== 0) names.push('INERT');
 		if ((flags & DESTROYED) !== 0) names.push('DESTROYED');
 
