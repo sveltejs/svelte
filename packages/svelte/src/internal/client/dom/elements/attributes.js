@@ -314,178 +314,180 @@ function set_attributes(
 	var current = prev || {};
 	var is_option_element = element.nodeName === OPTION_TAG;
 
-	for (var key in prev) {
-		if (!(key in next)) {
-			next[key] = null;
-		}
-	}
-
-	if (next.class) {
-		next.class = clsx(next.class);
-	} else if (css_hash || next[CLASS]) {
-		next.class = null; /* force call to set_class() */
-	}
-
-	if (next[STYLE]) {
-		next.style ??= null; /* force call to set_style() */
-	}
-
-	var setters = get_setters(element);
-
-	if (element.nodeName === INPUT_TAG && 'type' in next && ('value' in next || '__value' in next)) {
-		var type = next.type;
-
-		if (type !== current.type || (type === undefined && element.hasAttribute('type'))) {
-			current.type = type;
-			set_attribute(element, 'type', type, skip_warning);
-		}
-	}
-
-	// since key is captured we use const
-	for (const key in next) {
-		// let instead of var because referenced in a closure
-		let value = next[key];
-
-		// Up here because we want to do this for the initial value, too, even if it's undefined,
-		// and this wouldn't be reached in case of undefined because of the equality check below
-		if (is_option_element && key === 'value' && value == null) {
-			// The <option> element is a special case because removing the value attribute means
-			// the value is set to the text content of the option element, and setting the value
-			// to null or undefined means the value is set to the string "null" or "undefined".
-			// To align with how we handle this case in non-spread-scenarios, this logic is needed.
-			// There's a super-edge-case bug here that is left in in favor of smaller code size:
-			// Because of the "set missing props to null" logic above, we can't differentiate
-			// between a missing value and an explicitly set value of null or undefined. That means
-			// that once set, the value attribute of an <option> element can't be removed. This is
-			// a very rare edge case, and removing the attribute altogether isn't possible either
-			// for the <option value={undefined}> case, so we're not losing any functionality here.
-			// @ts-ignore
-			element.value = element.__value = '';
-			current[key] = value;
-			continue;
-		}
-
-		if (key === 'class') {
-			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
-			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
-			current[key] = value;
-			current[CLASS] = next[CLASS];
-			continue;
-		}
-
-		if (key === 'style') {
-			set_style(element, value, prev?.[STYLE], next[STYLE]);
-			current[key] = value;
-			current[STYLE] = next[STYLE];
-			continue;
-		}
-
-		var prev_value = current[key];
-
-		// Skip if value is unchanged, unless it's `undefined` and the element still has the attribute
-		if (value === prev_value && !(value === undefined && element.hasAttribute(key))) {
-			continue;
-		}
-
-		current[key] = value;
-
-		var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
-		if (prefix === '$$') continue;
-
-		if (prefix === 'on') {
-			/** @type {{ capture?: true }} */
-			const opts = {};
-			const event_handle_key = '$$' + key;
-			let event_name = key.slice(2);
-			var is_delegated = can_delegate_event(event_name);
-
-			if (is_capture_event(event_name)) {
-				event_name = event_name.slice(0, -7);
-				opts.capture = true;
+	try {
+		for (var key in prev) {
+			if (!(key in next)) {
+				next[key] = null;
 			}
+		}
 
-			if (!is_delegated && prev_value) {
-				// Listening to same event but different handler -> our handle function below takes care of this
-				// If we were to remove and add listeners in this case, it could happen that the event is "swallowed"
-				// (the browser seems to not know yet that a new one exists now) and doesn't reach the handler
-				// https://github.com/sveltejs/svelte/issues/11903
-				if (value != null) continue;
+		if (next.class) {
+			next.class = clsx(next.class);
+		} else if (css_hash || next[CLASS]) {
+			next.class = null; /* force call to set_class() */
+		}
 
-				element.removeEventListener(event_name, current[event_handle_key], opts);
-				current[event_handle_key] = null;
+		if (next[STYLE]) {
+			next.style ??= null; /* force call to set_style() */
+		}
+
+		var setters = get_setters(element);
+
+		if (element.nodeName === INPUT_TAG && 'type' in next && ('value' in next || '__value' in next)) {
+			var type = next.type;
+
+			if (type !== current.type || (type === undefined && element.hasAttribute('type'))) {
+				current.type = type;
+				set_attribute(element, 'type', type, skip_warning);
 			}
+		}
 
-			if (is_delegated) {
-				delegated(event_name, element, value);
-				delegate([event_name]);
-			} else if (value != null) {
-				/**
-				 * @this {any}
-				 * @param {Event} evt
-				 */
-				function handle(evt) {
-					current[key].call(this, evt);
-				}
+		// since key is captured we use const
+		for (const key in next) {
+			// let instead of var because referenced in a closure
+			let value = next[key];
 
-				current[event_handle_key] = create_event(event_name, element, handle, opts);
-			}
-		} else if (key === 'style') {
-			// avoid using the setter
-			set_attribute(element, key, value);
-		} else if (key === 'autofocus') {
-			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
-			// @ts-ignore We're not running this for custom elements because __value is actually
-			// how Lit stores the current value on the element, and messing with that would break things.
-			element.value = element.__value = value;
-		} else if (key === 'selected' && is_option_element) {
-			set_selected(/** @type {HTMLOptionElement} */ (element), value);
-		} else {
-			var name = key;
-			if (!preserve_attribute_case) {
-				name = normalize_attribute(name);
-			}
-
-			var is_default = name === 'defaultValue' || name === 'defaultChecked';
-
-			if (value == null && !is_custom_element && !is_default) {
-				attributes[key] = null;
-
-				if (name === 'value' || name === 'checked') {
-					// removing value/checked also removes defaultValue/defaultChecked — preserve
-					let input = /** @type {HTMLInputElement} */ (element);
-					const use_default = prev === undefined;
-					if (name === 'value') {
-						let previous = input.defaultValue;
-						input.removeAttribute(name);
-						input.defaultValue = previous;
-						// @ts-ignore
-						input.value = input.__value = use_default ? previous : null;
-					} else {
-						let previous = input.defaultChecked;
-						input.removeAttribute(name);
-						input.defaultChecked = previous;
-						input.checked = use_default ? previous : false;
-					}
-				} else {
-					element.removeAttribute(key);
-				}
-			} else if (
-				is_default ||
-				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
-			) {
+			// Up here because we want to do this for the initial value, too, even if it's undefined,
+			// and this wouldn't be reached in case of undefined because of the equality check below
+			if (is_option_element && key === 'value' && value == null) {
+				// The <option> element is a special case because removing the value attribute means
+				// the value is set to the text content of the option element, and setting the value
+				// to null or undefined means the value is set to the string "null" or "undefined".
+				// To align with how we handle this case in non-spread-scenarios, this logic is needed.
+				// There's a super-edge-case bug here that is left in in favor of smaller code size:
+				// Because of the "set missing props to null" logic above, we can't differentiate
+				// between a missing value and an explicitly set value of null or undefined. That means
+				// that once set, the value attribute of an <option> element can't be removed. This is
+				// a very rare edge case, and removing the attribute altogether isn't possible either
+				// for the <option value={undefined}> case, so we're not losing any functionality here.
 				// @ts-ignore
-				element[name] = value;
-				// remove it from attributes's cache
-				if (name in attributes) attributes[name] = UNINITIALIZED;
-			} else if (typeof value !== 'function') {
-				set_attribute(element, name, value, skip_warning);
+				element.value = element.__value = '';
+				current[key] = value;
+				continue;
+			}
+
+			if (key === 'class') {
+				var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
+				set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
+				current[key] = value;
+				current[CLASS] = next[CLASS];
+				continue;
+			}
+
+			if (key === 'style') {
+				set_style(element, value, prev?.[STYLE], next[STYLE]);
+				current[key] = value;
+				current[STYLE] = next[STYLE];
+				continue;
+			}
+
+			var prev_value = current[key];
+
+			// Skip if value is unchanged, unless it's `undefined` and the element still has the attribute
+			if (value === prev_value && !(value === undefined && element.hasAttribute(key))) {
+				continue;
+			}
+
+			current[key] = value;
+
+			var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
+			if (prefix === '$$') continue;
+
+			if (prefix === 'on') {
+				/** @type {{ capture?: true }} */
+				const opts = {};
+				const event_handle_key = '$$' + key;
+				let event_name = key.slice(2);
+				var is_delegated = can_delegate_event(event_name);
+
+				if (is_capture_event(event_name)) {
+					event_name = event_name.slice(0, -7);
+					opts.capture = true;
+				}
+
+				if (!is_delegated && prev_value) {
+					// Listening to same event but different handler -> our handle function below takes care of this
+					// If we were to remove and add listeners in this case, it could happen that the event is "swallowed"
+					// (the browser seems to not know yet that a new one exists now) and doesn't reach the handler
+					// https://github.com/sveltejs/svelte/issues/11903
+					if (value != null) continue;
+
+					element.removeEventListener(event_name, current[event_handle_key], opts);
+					current[event_handle_key] = null;
+				}
+
+				if (is_delegated) {
+					delegated(event_name, element, value);
+					delegate([event_name]);
+				} else if (value != null) {
+					/**
+					 * @this {any}
+					 * @param {Event} evt
+					 */
+					function handle(evt) {
+						current[key].call(this, evt);
+					}
+
+					current[event_handle_key] = create_event(event_name, element, handle, opts);
+				}
+			} else if (key === 'style') {
+				// avoid using the setter
+				set_attribute(element, key, value);
+			} else if (key === 'autofocus') {
+				autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
+			} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
+				// @ts-ignore We're not running this for custom elements because __value is actually
+				// how Lit stores the current value on the element, and messing with that would break things.
+				element.value = element.__value = value;
+			} else if (key === 'selected' && is_option_element) {
+				set_selected(/** @type {HTMLOptionElement} */ (element), value);
+			} else {
+				var name = key;
+				if (!preserve_attribute_case) {
+					name = normalize_attribute(name);
+				}
+
+				var is_default = name === 'defaultValue' || name === 'defaultChecked';
+
+				if (value == null && !is_custom_element && !is_default) {
+					attributes[key] = null;
+
+					if (name === 'value' || name === 'checked') {
+						// removing value/checked also removes defaultValue/defaultChecked — preserve
+						let input = /** @type {HTMLInputElement} */ (element);
+						const use_default = prev === undefined;
+						if (name === 'value') {
+							let previous = input.defaultValue;
+							input.removeAttribute(name);
+							input.defaultValue = previous;
+							// @ts-ignore
+							input.value = input.__value = use_default ? previous : null;
+						} else {
+							let previous = input.defaultChecked;
+							input.removeAttribute(name);
+							input.defaultChecked = previous;
+							input.checked = use_default ? previous : false;
+						}
+					} else {
+						element.removeAttribute(key);
+					}
+				} else if (
+					is_default ||
+					(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
+				) {
+					// @ts-ignore
+					element[name] = value;
+					// remove it from attributes's cache
+					if (name in attributes) attributes[name] = UNINITIALIZED;
+				} else if (typeof value !== 'function') {
+					set_attribute(element, name, value, skip_warning);
+				}
 			}
 		}
-	}
-
-	if (is_hydrating_custom_element) {
-		set_hydrating(true);
+	} finally {
+		if (is_hydrating_custom_element) {
+			set_hydrating(true);
+		}
 	}
 
 	return current;
