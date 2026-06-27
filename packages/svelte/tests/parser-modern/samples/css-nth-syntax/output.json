@@ -6,6 +6,12 @@
 		"attributes": [],
 		"children": [
 			{
+				"type": "CSSComment",
+				"start": 12,
+				"end": 58,
+				"data": " test that all these are parsed correctly "
+			},
+			{
 				"type": "Rule",
 				"prelude": {
 					"type": "SelectorList",

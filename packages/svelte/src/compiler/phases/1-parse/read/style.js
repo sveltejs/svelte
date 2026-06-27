@@ -48,13 +48,17 @@ export default function read_style(parser, start, attributes) {
 /**
  * @param {Parser} parser
  * @param {(parser: Parser) => boolean} finished
- * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
+ * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule | AST.CSS.CSSComment>}
  */
 function read_body(parser, finished) {
-	/** @type {Array<AST.CSS.Rule | AST.CSS.Atrule>} */
+	/** @type {Array<AST.CSS.Rule | AST.CSS.Atrule | AST.CSS.CSSComment>} */
 	const children = [];
 
-	while ((allow_comment_or_whitespace(parser), !finished(parser))) {
+	while (parser.index < parser.template.length) {
+		children.push(...read_comments_and_whitespace(parser));
+
+		if (finished(parser)) break;
+
 		if (parser.match('@')) {
 			children.push(read_at_rule(parser));
 		} else {
@@ -93,7 +97,8 @@ function read_at_rule(parser) {
 		start,
 		end: parser.index,
 		name,
-		prelude,
+		prelude: prelude.value,
+		...(prelude.raw && { raw: prelude.raw }),
 		block
 	};
 }
@@ -126,10 +131,10 @@ function read_rule(parser) {
  * @returns {AST.CSS.SelectorList}
  */
 function read_selector_list(parser, inside_pseudo_class = false) {
-	/** @type {AST.CSS.ComplexSelector[]} */
+	/** @type {Array<AST.CSS.ComplexSelector | AST.CSS.CSSComment>} */
 	const children = [];
 
-	allow_comment_or_whitespace(parser);
+	children.push(...read_comments_and_whitespace(parser));
 
 	const start = parser.index;
 
@@ -138,7 +143,7 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 
 		const end = parser.index;
 
-		allow_comment_or_whitespace(parser);
+		children.push(...read_comments_and_whitespace(parser));
 
 		if (inside_pseudo_class ? parser.match(')') : parser.match('{')) {
 			return {
@@ -149,7 +154,7 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 			};
 		} else {
 			parser.eat(',', true);
-			allow_comment_or_whitespace(parser);
+			children.push(...read_comments_and_whitespace(parser));
 		}
 	}
 
@@ -323,7 +328,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 		}
 
 		const index = parser.index;
-		allow_comment_or_whitespace(parser);
+		read_comments_and_whitespace(parser);
 
 		if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
 			// rewind, so we know whether to continue building the selector list
@@ -412,11 +417,11 @@ function read_block(parser) {
 
 	parser.eat('{', true);
 
-	/** @type {Array<AST.CSS.Declaration | AST.CSS.Rule | AST.CSS.Atrule>} */
+	/** @type {Array<AST.CSS.Declaration | AST.CSS.Rule | AST.CSS.Atrule | AST.CSS.CSSComment>} */
 	const children = [];
 
 	while (parser.index < parser.template.length) {
-		allow_comment_or_whitespace(parser);
+		children.push(...read_comments_and_whitespace(parser));
 
 		if (parser.match('}')) {
 			break;
@@ -471,7 +476,7 @@ function read_declaration(parser) {
 
 	const value = read_value(parser);
 
-	if (!value && !property.startsWith('--')) {
+	if (!value.value && !property.startsWith('--')) {
 		e.css_empty_declaration({ start, end: index });
 	}
 
@@ -486,16 +491,19 @@ function read_declaration(parser) {
 		start,
 		end,
 		property,
-		value
+		value: value.value,
+		...(value.raw && { raw: value.raw })
 	};
 }
 
 /**
  * @param {Parser} parser
- * @returns {string}
+ * @returns {{ value: string; raw: string | null }}
  */
 function read_value(parser) {
+	const start = parser.index;
 	let value = '';
+	let has_comment = false;
 	let escaped = false;
 	let in_url = false;
 
@@ -523,13 +531,19 @@ function read_value(parser) {
 		} else if (char === '(' && value.slice(-3) === 'url') {
 			in_url = true;
 		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
-			return value.trim();
+			const normalized = value.trim();
+
+			return {
+				value: normalized,
+				raw: has_comment ? parser.template.slice(start, parser.index).trim() : null
+			};
 		} else if (
 			char === '/' &&
 			!in_url &&
 			!quote_mark &&
 			parser.template[parser.index + 1] === '*'
 		) {
+			has_comment = true;
 			parser.index += 2;
 			while (parser.index < parser.template.length) {
 				if (parser.template[parser.index] === '*' && parser.template[parser.index + 1] === '/') {
@@ -624,13 +638,26 @@ function read_identifier(parser) {
 	return identifier;
 }
 
-/** @param {Parser} parser */
-function allow_comment_or_whitespace(parser) {
+/**
+ * @param {Parser} parser
+ * @returns {AST.CSS.CSSComment[]}
+ */
+function read_comments_and_whitespace(parser) {
+	/** @type {AST.CSS.CSSComment[]} */
+	const comments = [];
+
 	parser.allow_whitespace();
 	while (parser.match('/*') || parser.match('<!--')) {
 		if (parser.eat('/*')) {
-			parser.read_until(REGEX_COMMENT_CLOSE);
+			const start = parser.index - 2;
+			const data = parser.read_until(REGEX_COMMENT_CLOSE);
 			parser.eat('*/', true);
+			comments.push({
+				type: 'CSSComment',
+				start,
+				end: parser.index,
+				data
+			});
 		}
 
 		if (parser.eat('<!--')) {
@@ -640,12 +667,14 @@ function allow_comment_or_whitespace(parser) {
 
 		parser.allow_whitespace();
 	}
+
+	return comments;
 }
 
 /**
  * Parse standalone CSS content (not wrapped in `<style>`).
  * @param {Parser} parser
- * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
+ * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule | AST.CSS.CSSComment>}
  */
 export function parse_stylesheet(parser) {
 	return read_body(parser, (p) => p.index >= p.template.length);

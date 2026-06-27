@@ -7,7 +7,7 @@ export namespace _CSS {
 	}
 
 	export interface StyleSheetBase extends BaseNode {
-		children: Array<Atrule | Rule>;
+		children: Array<Atrule | Rule | CSSComment>;
 	}
 
 	export interface StyleSheetFile extends StyleSheetBase {
@@ -30,7 +30,13 @@ export namespace _CSS {
 		type: 'Atrule';
 		name: string;
 		prelude: string;
+		raw?: string;
 		block: Block | null;
+	}
+
+	export interface CSSComment extends BaseNode {
+		type: 'CSSComment';
+		data: string;
 	}
 
 	export interface Rule extends BaseNode {
@@ -60,7 +66,7 @@ export namespace _CSS {
 		/**
 		 * The `a`, `b` and `c` in `a, b, c {}`
 		 */
-		children: ComplexSelector[];
+		children: Array<ComplexSelector | CSSComment>;
 	}
 
 	/**
@@ -176,18 +182,20 @@ export namespace _CSS {
 
 	export interface Block extends BaseNode {
 		type: 'Block';
-		children: Array<Declaration | Rule | Atrule>;
+		children: Array<Declaration | Rule | Atrule | CSSComment>;
 	}
 
 	export interface Declaration extends BaseNode {
 		type: 'Declaration';
 		property: string;
 		value: string;
+		raw?: string;
 	}
 
 	// for zimmerframe
 	export type Node =
 		| StyleSheet
+		| CSSComment
 		| Rule
 		| Atrule
 		| SelectorList

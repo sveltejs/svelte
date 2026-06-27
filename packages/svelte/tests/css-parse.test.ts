@@ -70,8 +70,58 @@ describe('parseCss', () => {
 
 	it('parses comments', () => {
 		const ast = parseCss('/* comment */ div { color: red; }');
-		assert.equal(ast.children.length, 1);
-		assert.equal(ast.children[0].type, 'Rule');
+		assert.equal(ast.children.length, 2);
+		assert.equal(ast.children[0].type, 'CSSComment');
+		assert.equal(ast.children[1].type, 'Rule');
+	});
+
+	it('includes comments in the AST', () => {
+		const ast = parseCss(`/* top 1 *//* top 2 */
+.foo, /* between */
+.bar /* trailing */ {
+	/* block */
+	color: /* value */ red;
+}
+@media /* prelude */ screen {}`);
+
+		const [first, second, rule, atrule] = ast.children as any[];
+
+		assert.deepEqual(first, {
+			type: 'CSSComment',
+			start: 0,
+			end: 11,
+			data: ' top 1 '
+		});
+		assert.deepEqual(second, {
+			type: 'CSSComment',
+			start: 11,
+			end: 22,
+			data: ' top 2 '
+		});
+
+		assert.deepEqual(
+			rule.prelude.children.map((child: any) =>
+				child.type === 'CSSComment'
+					? { type: child.type, start: child.start, end: child.end, data: child.data }
+					: child.type
+			),
+			[
+				'ComplexSelector',
+				{ type: 'CSSComment', start: 29, end: 42, data: ' between ' },
+				'ComplexSelector',
+				{ type: 'CSSComment', start: 48, end: 62, data: ' trailing ' }
+			]
+		);
+
+		const [block_comment, declaration] = rule.block.children;
+		assert.deepEqual(block_comment, {
+			type: 'CSSComment',
+			start: 66,
+			end: 77,
+			data: ' block '
+		});
+		assert.equal(declaration.raw, '/* value */ red');
+		assert.equal(atrule.raw, '/* prelude */ screen');
 	});
 
 	it('parses complex selectors', () => {
