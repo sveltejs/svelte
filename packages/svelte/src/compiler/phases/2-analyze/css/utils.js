@@ -1,5 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Node } from 'estree' */
+import { without_css_comments } from '../../css.js';
+
 const UNKNOWN = {};
 
 /**
@@ -147,10 +149,12 @@ export function is_unscoped_pseudo_class(selector) {
 			// one selector in the :not (.e.g :not(.x .y)), then .x and .y should be scoped
 			(selector.name !== 'not' ||
 				selector.args === null ||
-				selector.args.children.every((c) => c.children.length === 1))) ||
+				without_css_comments(selector.args.children).every((c) => c.children.length === 1))) ||
 			// selectors with has/is/where/not can also be global if all their children are global
 			selector.args === null ||
-			selector.args.children.every((c) => c.children.every((r) => is_global(r))))
+			without_css_comments(selector.args.children).every((c) =>
+				c.children.every((r) => is_global(r))
+			))
 	);
 }
 

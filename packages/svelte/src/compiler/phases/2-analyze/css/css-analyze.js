@@ -3,7 +3,7 @@
 /** @import { Visitors } from 'zimmerframe' */
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
-import { is_keyframes_node } from '../../css.js';
+import { is_keyframes_node, without_css_comments } from '../../css.js';
 import { is_global, is_unscoped_pseudo_class } from './utils.js';
 
 /**
@@ -91,7 +91,8 @@ const css_visitors = {
 				const selector = relative_selector.selectors[i];
 
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					const child = selector.args?.children[0].children[0];
+					const child =
+						selector.args && without_css_comments(selector.args.children)[0]?.children[0];
 					// ensure `:global(element)` to be at the first position in a compound selector
 					if (child?.selectors[0].type === 'TypeSelector' && i !== 0) {
 						e.css_global_invalid_selector_list(selector);
@@ -106,7 +107,7 @@ const css_visitors = {
 					// (standalone :global() with multiple selectors is OK)
 					if (
 						selector.args !== null &&
-						selector.args.children.length > 1 &&
+						without_css_comments(selector.args.children).length > 1 &&
 						(node.children.length > 1 || relative_selector.selectors.length > 1)
 					) {
 						e.css_global_invalid_selector(selector);
@@ -130,9 +131,9 @@ const css_visitors = {
 			const first = node.children[0]?.selectors[1];
 			const no_nesting_scope =
 				first?.type !== 'PseudoClassSelector' || is_unscoped_pseudo_class(first);
-			const parent_is_global = node.metadata.rule.metadata.parent_rule.prelude.children.some(
-				(child) => child.children.length === 1 && child.children[0].metadata.is_global
-			);
+			const parent_is_global = without_css_comments(
+				node.metadata.rule.metadata.parent_rule.prelude.children
+			).some((child) => child.children.length === 1 && child.children[0].metadata.is_global);
 			// mark `&:hover` in `:global(.foo) { &:hover { color: green }}` as used
 			if (no_nesting_scope && parent_is_global) {
 				node.metadata.used = true;
@@ -196,9 +197,10 @@ const css_visitors = {
 	},
 	Rule(node, context) {
 		node.metadata.parent_rule = context.state.rule;
+		const complex_selectors = without_css_comments(node.prelude.children);
 
 		// We gotta allow :global x, :global y because CSS preprocessors might generate that from :global { x, y {...} }
-		for (const complex_selector of node.prelude.children) {
+		for (const complex_selector of complex_selectors) {
 			let is_global_block = false;
 
 			for (let selector_idx = 0; selector_idx < complex_selector.children.length; selector_idx++) {
@@ -238,7 +240,7 @@ const css_visitors = {
 							complex_selector.children.length === 1 &&
 							complex_selector.children[0].selectors.length === 1; // just `:global`, not e.g. `:global x`
 
-						if (is_lone_global && node.prelude.children.length > 1) {
+						if (is_lone_global && complex_selectors.length > 1) {
 							// `:global, :global x { z { ... } }` would become `x { z { ... } }` which means `z` is always
 							// constrained by `x`, which is not what the user intended
 							e.css_global_block_invalid_list(node.prelude);
@@ -247,7 +249,7 @@ const css_visitors = {
 						if (
 							declaration &&
 							// :global { color: red; } is invalid, but foo :global { color: red; } is valid
-							node.prelude.children.length === 1 &&
+							complex_selectors.length === 1 &&
 							is_lone_global
 						) {
 							e.css_global_block_invalid_declaration(declaration);
@@ -268,7 +270,7 @@ const css_visitors = {
 		// visit selector list first, to populate child selector metadata
 		context.visit(node.prelude, state);
 
-		for (const selector of node.prelude.children) {
+		for (const selector of complex_selectors) {
 			node.metadata.has_global_selectors ||= selector.metadata.is_global;
 			node.metadata.has_local_selectors ||= !selector.metadata.is_global;
 		}
@@ -290,14 +292,15 @@ const css_visitors = {
 
 		if (!parent_rule) {
 			// https://developer.mozilla.org/en-US/docs/Web/CSS/Nesting_selector#using_outside_nested_rule
-			const children = rule.prelude.children;
+			const children = without_css_comments(rule.prelude.children);
 			const selectors = children[0].children[0].selectors;
 			if (
 				children.length > 1 ||
 				selectors.length > 1 ||
 				selectors[0].type !== 'PseudoClassSelector' ||
 				selectors[0].name !== 'global' ||
-				selectors[0].args?.children[0]?.children[0].selectors[0] !== node
+				(selectors[0].args &&
+					without_css_comments(selectors[0].args.children)[0]?.children[0].selectors[0]) !== node
 			) {
 				e.css_nesting_selector_invalid_placement(node);
 			}
@@ -305,8 +308,8 @@ const css_visitors = {
 			// :global { &.foo { ... } } is invalid
 			parent_rule.metadata.is_global_block &&
 			!parent_rule.metadata.parent_rule &&
-			parent_rule.prelude.children[0].children.length === 1 &&
-			parent_rule.prelude.children[0].children[0].selectors.length === 1
+			without_css_comments(parent_rule.prelude.children)[0].children.length === 1 &&
+			without_css_comments(parent_rule.prelude.children)[0].children[0].selectors.length === 1
 		) {
 			e.css_global_block_invalid_modifier_start(node);
 		}
