@@ -18,12 +18,12 @@ A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag
 </div>
 ```
 
-Svelte safely omits dynamic tags if the resolved property is `null` or `undefined`, but it expects the object path to be valid object.
+Svelte will omit tags if the leaf property is `null` or `undefined`.
 
 ```svelte
 <script>
 	let Widget = $state(null)
-    let child = $state({ widget: null })
+	let child = $state({ widget: null })
 </script>
 
 <Widget />
