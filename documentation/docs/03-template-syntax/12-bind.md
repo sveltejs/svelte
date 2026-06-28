@@ -415,3 +415,6 @@ Bindable properties can have a fallback value:
 ```
 
 This fallback value _only_ applies when the property is _not_ bound. When the property is bound and a fallback value is present, the parent is expected to provide a value other than `undefined`, else a runtime error is thrown. This prevents hard-to-reason-about situations where it's unclear which value should apply.
+
+> [!NOTE]
+> When using a fallback value with `$bindable`, the parent component must provide a value that is not `undefined` when binding to the property. If the bound value is `undefined`, Svelte will throw a runtime error.
