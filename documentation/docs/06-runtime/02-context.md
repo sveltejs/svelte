@@ -165,10 +165,13 @@ Svelte will warn you if you get it wrong.
 
 Similarly, to pass primitive values through context, use functions as described in [Passing state into functions]($state#Passing-state-into-functions).
 
-## Component testing
+## Mounting components with context
 
-When writing [component tests](testing#Unit-and-component-tests-with-Vitest-Component-testing), it can be useful to create a wrapper component that sets the context in order to check the behaviour of a component that uses it. As of version 5.49, you can do this sort of thing:
+When mounting a component that relies on context, it can be useful to create a wrapper component that sets the context before rendering the component. This is useful in component tests, but the pattern can also be used anywhere you need to mount a component with a specific context.
 
+The context set inside the wrapper is scoped to that mounted component, so it will not affect other components or other `mount` calls.
+
+As of version 5.49, you can mount a component with context like this:
 ```js
 import { mount, unmount } from 'svelte';
 import { expect, test } from 'vitest';
