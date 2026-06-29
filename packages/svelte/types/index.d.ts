@@ -466,6 +466,16 @@ declare module 'svelte' {
 		render: () => string;
 		setup?: (element: Element) => void | (() => void);
 	}): Snippet<Params>;
+	/**
+	 * Creates a key for use with `{#portal ...}` and `{@portal ...}`. It connects the portal source and outlet.
+	 * Example: TODO write out once exact API clear.
+	 * */
+	export function createPortalKey(name: string): PortalKey;
+	class PortalKey {
+		
+		constructor(name: string);
+		v: string;
+	}
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
@@ -1321,6 +1331,12 @@ declare module 'svelte/compiler' {
 			expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		}
 
+		/** A `{@portal foo}` tag */
+		export interface PortalTag extends BaseNode {
+			type: 'PortalTag';
+			expression: Expression;
+		}
+
 		/** A `{@attach foo(...)} tag */
 		export interface AttachTag extends BaseNode {
 			type: 'AttachTag';
@@ -1536,6 +1552,12 @@ declare module 'svelte/compiler' {
 			fragment: Fragment;
 		}
 
+		export interface PortalBlock extends BaseNode {
+			type: 'PortalBlock';
+			expression: Expression;
+			fragment: Fragment;
+		}
+
 		export interface SnippetBlock extends BaseNode {
 			type: 'SnippetBlock';
 			expression: Identifier;
@@ -1597,6 +1619,7 @@ declare module 'svelte/compiler' {
 			| AST.IfBlock
 			| AST.AwaitBlock
 			| AST.KeyBlock
+			| AST.PortalBlock
 			| AST.SnippetBlock;
 
 		export type ElementLike =
@@ -1623,6 +1646,7 @@ declare module 'svelte/compiler' {
 			| AST.DebugTag
 			| AST.ExpressionTag
 			| AST.HtmlTag
+			| AST.PortalTag
 			| AST.RenderTag;
 
 		export type TemplateNode =

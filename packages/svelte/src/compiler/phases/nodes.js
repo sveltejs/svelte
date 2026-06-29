@@ -242,6 +242,10 @@ function* find_descendants(fragment) {
 				yield* find_descendants(node.fragment);
 				break;
 
+			case 'PortalBlock':
+				yield* find_descendants(node.fragment);
+				break;
+
 			case 'AwaitBlock':
 				yield* find_descendants(node.pending);
 				yield* find_descendants(node.then);

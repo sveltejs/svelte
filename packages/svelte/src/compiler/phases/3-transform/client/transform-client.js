@@ -39,6 +39,8 @@ import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
+import { PortalBlock } from './visitors/PortalBlock.js';
+import { PortalTag } from './visitors/PortalTag.js';
 import { Program } from './visitors/Program.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
@@ -51,7 +53,6 @@ import { SvelteDocument } from './visitors/SvelteDocument.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { SveltePortal } from './visitors/SveltePortal.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
@@ -105,6 +106,8 @@ const visitors = {
 	LetDirective,
 	MemberExpression,
 	OnDirective,
+	PortalBlock,
+	PortalTag,
 	Program,
 	RegularElement,
 	RenderTag,
@@ -117,7 +120,6 @@ const visitors = {
 	SvelteElement,
 	SvelteFragment,
 	SvelteBoundary,
-	SveltePortal,
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,

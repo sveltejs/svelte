@@ -445,6 +445,32 @@ function open(parser) {
 		return;
 	}
 
+	if (parser.eat('portal')) {
+		parser.require_whitespace();
+
+		const expression = read_expression(parser);
+		parser.allow_whitespace();
+
+		parser.eat('}', true);
+
+		/** @type {AST.PortalBlock} */
+		const block = parser.append({
+			type: 'PortalBlock',
+			start,
+			end: -1,
+			expression,
+			fragment: create_fragment(),
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
+		});
+
+		parser.stack.push(block);
+		parser.fragments.push(block.fragment);
+
+		return;
+	}
+
 	if (parser.eat('snippet')) {
 		parser.require_whitespace();
 
@@ -675,6 +701,9 @@ function close(parser) {
 		case 'KeyBlock':
 			matched = parser.eat('key', true, false);
 			break;
+		case 'PortalBlock':
+			matched = parser.eat('portal', true, false);
+			break;
 		case 'AwaitBlock':
 			matched = parser.eat('await', true, false);
 			break;
@@ -843,6 +872,28 @@ function special(parser) {
 				arguments: [],
 				path: [],
 				snippets: new Set()
+			}
+		});
+		return;
+	}
+
+	if (parser.eat('portal')) {
+		// {@portal key}
+		parser.require_whitespace();
+
+		const expression = read_expression(parser);
+
+		parser.allow_whitespace();
+		parser.eat('}', true);
+
+		parser.append({
+			type: 'PortalTag',
+			start,
+			end: parser.index,
+			expression,
+			metadata: {
+				expression: new ExpressionMetadata(),
+				path: []
 			}
 		});
 		return;

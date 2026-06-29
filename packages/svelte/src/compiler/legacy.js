@@ -381,6 +381,20 @@ export function convert(source, ast) {
 				return { ...node, type: 'EventHandler' };
 			},
 			// @ts-expect-error
+			PortalBlock(node, { visit }) {
+				remove_surrounding_whitespace_nodes(node.fragment.nodes);
+				return {
+					type: 'PortalBlock',
+					start: node.start,
+					end: node.end,
+					expression: node.expression,
+					children: node.fragment.nodes.map((child) => visit(child))
+				};
+			},
+			PortalTag(node) {
+				return node;
+			},
+			// @ts-expect-error
 			SnippetBlock(node, { visit }) {
 				remove_surrounding_whitespace_nodes(node.body.nodes);
 				return {

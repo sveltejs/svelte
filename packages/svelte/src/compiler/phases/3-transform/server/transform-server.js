@@ -26,6 +26,8 @@ import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
+import { PortalBlock } from './visitors/PortalBlock.js';
+import { PortalTag } from './visitors/PortalTag.js';
 import { Program } from './visitors/Program.js';
 import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
@@ -42,7 +44,6 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { SveltePortal } from './visitors/SveltePortal.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -73,6 +74,8 @@ const template_visitors = {
 	HtmlTag,
 	IfBlock,
 	KeyBlock,
+	PortalBlock,
+	PortalTag,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -84,8 +87,7 @@ const template_visitors = {
 	SvelteHead,
 	SvelteSelf,
 	TitleElement,
-	SvelteBoundary,
-	SveltePortal
+	SvelteBoundary
 };
 
 /**

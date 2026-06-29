@@ -296,6 +296,7 @@ export function clean_nodes(
 			(parent.type === 'Fragment' ||
 				parent.type === 'SnippetBlock' ||
 				parent.type === 'EachBlock' ||
+				parent.type === 'PortalBlock' ||
 				parent.type === 'SvelteComponent' ||
 				parent.type === 'SvelteBoundary' ||
 				parent.type === 'Component' ||
@@ -331,6 +332,7 @@ export function infer_namespace(namespace, parent, nodes) {
 		parent.type === 'SvelteComponent' ||
 		parent.type === 'SvelteFragment' ||
 		parent.type === 'SnippetBlock' ||
+		parent.type === 'PortalBlock' ||
 		parent.type === 'SlotElement'
 	) {
 		const new_namespace = check_nodes_for_namespace(nodes, 'keep');
@@ -392,6 +394,7 @@ function check_nodes_for_namespace(nodes, namespace) {
 						node.type === 'AwaitBlock' ||
 						node.type === 'Fragment' ||
 						node.type === 'KeyBlock' ||
+						node.type === 'PortalBlock' ||
 						node.type === 'RegularElement' ||
 						node.type === 'SvelteElement' ||
 						node.type === 'Text'

@@ -58,6 +58,8 @@ import { Literal } from './visitors/Literal.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { NewExpression } from './visitors/NewExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
+import { PortalBlock } from './visitors/PortalBlock.js';
+import { PortalTag } from './visitors/PortalTag.js';
 import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
@@ -75,7 +77,6 @@ import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { SveltePortal } from './visitors/SveltePortal.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { TemplateElement } from './visitors/TemplateElement.js';
 import { Text } from './visitors/Text.js';
@@ -181,6 +182,8 @@ const visitors = {
 	MemberExpression,
 	NewExpression,
 	OnDirective,
+	PortalBlock,
+	PortalTag,
 	PropertyDefinition,
 	RegularElement,
 	RenderTag,
@@ -198,7 +201,6 @@ const visitors = {
 	SvelteSelf,
 	SvelteWindow,
 	SvelteBoundary,
-	SveltePortal,
 	TaggedTemplateExpression,
 	TemplateElement,
 	Text,

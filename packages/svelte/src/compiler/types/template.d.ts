@@ -194,6 +194,17 @@ export namespace AST {
 		};
 	}
 
+	/** A `{@portal foo}` tag */
+	export interface PortalTag extends BaseNode {
+		type: 'PortalTag';
+		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+			path: SvelteNode[];
+		};
+	}
+
 	/** A `{@attach foo(...)} tag */
 	export interface AttachTag extends BaseNode {
 		type: 'AttachTag';
@@ -430,11 +441,6 @@ export namespace AST {
 		name: 'svelte:boundary';
 	}
 
-	export interface SveltePortal extends BaseElement {
-		type: 'SveltePortal';
-		name: 'svelte:portal';
-	}
-
 	export interface SvelteHead extends BaseElement {
 		type: 'SvelteHead';
 		name: 'svelte:head';
@@ -538,6 +544,16 @@ export namespace AST {
 		};
 	}
 
+	export interface PortalBlock extends BaseNode {
+		type: 'PortalBlock';
+		expression: Expression;
+		fragment: Fragment;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
+	}
+
 	export interface SnippetBlock extends BaseNode {
 		type: 'SnippetBlock';
 		expression: Identifier;
@@ -617,6 +633,7 @@ export namespace AST {
 		| AST.IfBlock
 		| AST.AwaitBlock
 		| AST.KeyBlock
+		| AST.PortalBlock
 		| AST.SnippetBlock;
 
 	export type ElementLike =
@@ -634,8 +651,7 @@ export namespace AST {
 		| AST.SvelteOptionsRaw
 		| AST.SvelteSelf
 		| AST.SvelteWindow
-		| AST.SvelteBoundary
-		| AST.SveltePortal;
+		| AST.SvelteBoundary;
 
 	export type Tag =
 		| AST.AttachTag
@@ -644,6 +660,7 @@ export namespace AST {
 		| AST.DebugTag
 		| AST.ExpressionTag
 		| AST.HtmlTag
+		| AST.PortalTag
 		| AST.RenderTag;
 
 	export type TemplateNode =

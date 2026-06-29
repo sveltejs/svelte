@@ -284,7 +284,7 @@ function apply_selector(
  * @param {number} from
  * @param {number} to
  * @param {Compiler.AST.CSS.Rule} rule
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.PortalTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {Direction} direction
  * @returns {boolean}
  */
@@ -330,6 +330,7 @@ function apply_combinator(relative_selector, relative_selectors, from, to, rule,
 			for (const possible_sibling of siblings.keys()) {
 				if (
 					possible_sibling.type === 'RenderTag' ||
+					possible_sibling.type === 'PortalTag' ||
 					possible_sibling.type === 'SlotElement' ||
 					possible_sibling.type === 'Component'
 				) {
@@ -830,7 +831,7 @@ function unquote(str) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.PortalTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {boolean} adjacent_only
  * @param {Set<Compiler.AST.SnippetBlock>} seen
  */
@@ -900,7 +901,7 @@ function get_ancestor_elements(node, adjacent_only, seen = new Set()) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.PortalTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {boolean} adjacent_only
  * @param {Set<Compiler.AST.SnippetBlock>} seen
  */
@@ -934,7 +935,7 @@ function get_descendant_elements(node, adjacent_only, seen = new Set()) {
 		});
 	}
 
-	walk_children(node.type === 'RenderTag' ? node : node.fragment);
+	walk_children(node.type === 'RenderTag' || node.type === 'PortalTag' ? node : node.fragment);
 
 	// Special handling for <selectedcontent>: it clones the content of the selected <option>,
 	// so descendants of <option> elements in the same <select> should also be considered descendants
@@ -968,7 +969,7 @@ function get_descendant_elements(node, adjacent_only, seen = new Set()) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.PortalTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @returns {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null}
  */
 function get_element_parent(node) {
@@ -987,14 +988,14 @@ function get_element_parent(node) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.PortalTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {Direction} direction
  * @param {boolean} adjacent_only
  * @param {Set<Compiler.AST.SnippetBlock>} seen
- * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag | Compiler.AST.Component, NodeExistsValue>}
+ * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag | Compiler.AST.PortalTag | Compiler.AST.Component, NodeExistsValue>}
  */
 function get_possible_element_siblings(node, direction, adjacent_only, seen = new Set()) {
-	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag | Compiler.AST.Component, NodeExistsValue>} */
+	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag | Compiler.AST.PortalTag | Compiler.AST.Component, NodeExistsValue>} */
 	const result = new Map();
 	const path = node.metadata.path;
 
@@ -1045,6 +1046,8 @@ function get_possible_element_siblings(node, direction, adjacent_only, seen = ne
 				for (const snippet of node.metadata.snippets) {
 					add_to_map(get_possible_nested_siblings(snippet, direction, adjacent_only), result);
 				}
+			} else if (node.type === 'PortalTag') {
+				result.set(node, NODE_PROBABLY_EXISTS);
 			}
 
 			j = direction === FORWARD ? j + 1 : j - 1;
@@ -1088,7 +1091,7 @@ function get_possible_element_siblings(node, direction, adjacent_only, seen = ne
 }
 
 /**
- * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement | Compiler.AST.SnippetBlock | Compiler.AST.Component} node
+ * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.PortalBlock | Compiler.AST.SlotElement | Compiler.AST.SnippetBlock | Compiler.AST.Component} node
  * @param {Direction} direction
  * @param {boolean} adjacent_only
  * @param {Set<Compiler.AST.SnippetBlock>} seen
@@ -1112,6 +1115,7 @@ function get_possible_nested_siblings(node, direction, adjacent_only, seen = new
 			break;
 
 		case 'KeyBlock':
+		case 'PortalBlock':
 		case 'SlotElement':
 			fragments.push(node.fragment);
 			break;
@@ -1234,7 +1238,7 @@ function loop_child(children, direction, adjacent_only, seen) {
 
 /**
  * @param {Compiler.AST.SvelteNode} node
- * @returns {node is Compiler.AST.IfBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement}
+ * @returns {node is Compiler.AST.IfBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.PortalBlock | Compiler.AST.SlotElement}
  */
 function is_block(node) {
 	return (
@@ -1242,6 +1246,7 @@ function is_block(node) {
 		node.type === 'EachBlock' ||
 		node.type === 'AwaitBlock' ||
 		node.type === 'KeyBlock' ||
+		node.type === 'PortalBlock' ||
 		node.type === 'SlotElement'
 	);
 }

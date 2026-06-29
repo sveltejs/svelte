@@ -6,7 +6,7 @@ export class PortalKey {
 }
 
 /**
- * Creates a key for use with a `<svelte:portal>`. It connects the portal source and target.
+ * Creates a key for use with `{#portal ...}` and `{@portal ...}`. It connects the portal source and outlet.
  * Example: TODO write out once exact API clear.
  * @param {string} name
  */

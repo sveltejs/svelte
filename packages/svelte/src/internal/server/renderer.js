@@ -682,8 +682,8 @@ export class Renderer {
 					if (item instanceof Renderer) {
 						const portal_content = item.#collect_content();
 						item.#out.length = 0;
-						content.body.replace(id, id + portal_content.body);
-						content.head.replace(id, id + portal_content.body);
+						content.body = content.body.replace(id, id + portal_content.body);
+						content.head = content.head.replace(id, id + portal_content.body);
 					}
 				}
 			}

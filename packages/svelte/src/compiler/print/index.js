@@ -771,6 +771,20 @@ const svelte_visitors = (comments) => ({
 		}
 	},
 
+	PortalBlock(node, context) {
+		context.write('{#portal ');
+		context.visit(node.expression);
+		context.write('}');
+		block(context, node.fragment);
+		context.write('{/portal}');
+	},
+
+	PortalTag(node, context) {
+		context.write('{@portal ');
+		context.visit(node.expression);
+		context.write('}');
+	},
+
 	RegularElement(node, context) {
 		base_element(node, context, comments);
 	},

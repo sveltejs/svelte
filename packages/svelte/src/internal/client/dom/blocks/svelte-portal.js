@@ -9,13 +9,15 @@ const portals = new Map();
 
 /**
  * @param {TemplateNode} node
- * @param {any} id
+ * @param {any | (() => any)} id
  * @returns {void}
  */
 export function portal_outlet(node, id) {
 	var anchor = node;
+	const get_id = typeof id === 'function' ? id : () => id;
 
 	render_effect(() => {
+		id = get_id();
 		portals.set(id, { anchor });
 
 		return () => {
@@ -45,6 +47,7 @@ export function portal_outlet(node, id) {
  * @returns {void}
  */
 export function portal(target, content) {
+	console.log('huh', target, content);
 	if (target == null) return;
 
 	const is_dom_node = target instanceof Element;

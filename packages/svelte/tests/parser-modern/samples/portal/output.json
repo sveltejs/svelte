@@ -1,0 +1,327 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 160,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "Text",
+				"start": 103,
+				"end": 105,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "PortalTag",
+				"start": 105,
+				"end": 118,
+				"expression": {
+					"type": "Identifier",
+					"start": 114,
+					"end": 117,
+					"loc": {
+						"start": {
+							"line": 7,
+							"column": 9
+						},
+						"end": {
+							"line": 7,
+							"column": 12
+						}
+					},
+					"name": "key"
+				}
+			},
+			{
+				"type": "Text",
+				"start": 118,
+				"end": 120,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "PortalBlock",
+				"start": 120,
+				"end": 160,
+				"expression": {
+					"type": "Identifier",
+					"start": 129,
+					"end": 132,
+					"loc": {
+						"start": {
+							"line": 9,
+							"column": 9
+						},
+						"end": {
+							"line": 9,
+							"column": 12
+						}
+					},
+					"name": "key"
+				},
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 133,
+							"end": 135,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 135,
+							"end": 150,
+							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 10,
+									"column": 2,
+									"character": 136
+								},
+								"end": {
+									"line": 10,
+									"column": 3,
+									"character": 137
+								}
+							},
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "Text",
+										"start": 138,
+										"end": 146,
+										"raw": "portaled",
+										"data": "portaled"
+									}
+								]
+							}
+						},
+						{
+							"type": "Text",
+							"start": 150,
+							"end": 151,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				}
+			}
+		]
+	},
+	"options": null,
+	"comments": [],
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 103,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 94,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 5,
+					"column": 9
+				}
+			},
+			"body": [
+				{
+					"type": "ImportDeclaration",
+					"start": 10,
+					"end": 51,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 2,
+							"column": 42
+						}
+					},
+					"specifiers": [
+						{
+							"type": "ImportSpecifier",
+							"start": 19,
+							"end": 34,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 10
+								},
+								"end": {
+									"line": 2,
+									"column": 25
+								}
+							},
+							"imported": {
+								"type": "Identifier",
+								"start": 19,
+								"end": 34,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 10
+									},
+									"end": {
+										"line": 2,
+										"column": 25
+									}
+								},
+								"name": "createPortalKey"
+							},
+							"local": {
+								"type": "Identifier",
+								"start": 19,
+								"end": 34,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 10
+									},
+									"end": {
+										"line": 2,
+										"column": 25
+									}
+								},
+								"name": "createPortalKey"
+							}
+						}
+					],
+					"source": {
+						"type": "Literal",
+						"start": 42,
+						"end": 50,
+						"loc": {
+							"start": {
+								"line": 2,
+								"column": 33
+							},
+							"end": {
+								"line": 2,
+								"column": 41
+							}
+						},
+						"value": "svelte",
+						"raw": "'svelte'"
+					},
+					"attributes": []
+				},
+				{
+					"type": "VariableDeclaration",
+					"start": 54,
+					"end": 93,
+					"loc": {
+						"start": {
+							"line": 4,
+							"column": 1
+						},
+						"end": {
+							"line": 4,
+							"column": 40
+						}
+					},
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 60,
+							"end": 92,
+							"loc": {
+								"start": {
+									"line": 4,
+									"column": 7
+								},
+								"end": {
+									"line": 4,
+									"column": 39
+								}
+							},
+							"id": {
+								"type": "Identifier",
+								"start": 60,
+								"end": 63,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 7
+									},
+									"end": {
+										"line": 4,
+										"column": 10
+									}
+								},
+								"name": "key"
+							},
+							"init": {
+								"type": "CallExpression",
+								"start": 66,
+								"end": 92,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 13
+									},
+									"end": {
+										"line": 4,
+										"column": 39
+									}
+								},
+								"callee": {
+									"type": "Identifier",
+									"start": 66,
+									"end": 81,
+									"loc": {
+										"start": {
+											"line": 4,
+											"column": 13
+										},
+										"end": {
+											"line": 4,
+											"column": 28
+										}
+									},
+									"name": "createPortalKey"
+								},
+								"arguments": [
+									{
+										"type": "Literal",
+										"start": 82,
+										"end": 91,
+										"loc": {
+											"start": {
+												"line": 4,
+												"column": 29
+											},
+											"end": {
+												"line": 4,
+												"column": 38
+											}
+										},
+										"value": "example",
+										"raw": "'example'"
+									}
+								],
+								"optional": false
+							}
+						}
+					],
+					"kind": "const"
+				}
+			],
+			"sourceType": "module"
+		},
+		"attributes": []
+	}
+}
