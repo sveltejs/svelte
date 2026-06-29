@@ -75,8 +75,11 @@ export function build_element_attributes(node, context, transform) {
 				) {
 					events_to_capture.add(attribute.name);
 				}
-				// the defaultValue/defaultChecked properties don't exist as attributes
-			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
+				// defaultValue/defaultChecked are serialized as value/checked for inputs
+			} else if (
+				node.name === 'input' ||
+				(attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked')
+			) {
 				if (attribute.name === 'class') {
 					if (attribute.metadata.needs_clsx) {
 						attributes.push({
@@ -218,7 +221,9 @@ export function build_element_attributes(node, context, transform) {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
 
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
-			const name = get_attribute_name(node, attribute);
+			if (should_skip_input_default_attribute(node, attribute)) continue;
+
+			const name = get_serialized_attribute_name(node, attribute);
 			const can_use_literal =
 				(name !== 'class' || class_directives.length === 0) &&
 				(name !== 'style' || style_directives.length === 0);
@@ -246,12 +251,26 @@ export function build_element_attributes(node, context, transform) {
 				continue;
 			}
 
-			const value = build_attribute_value(
+			let value = build_attribute_value(
 				attribute.value,
 				context,
 				transform,
 				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 			);
+
+			const fallback = get_input_default_attribute(node, attribute);
+			if (fallback) {
+				value = b.logical(
+					'??',
+					value,
+					build_attribute_value(
+						fallback.value,
+						context,
+						transform,
+						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
+					)
+				);
+			}
 
 			// pre-escape and inline literal attributes :
 			if (can_use_literal && value.type === 'Literal' && typeof value.value === 'string') {
@@ -284,10 +303,70 @@ export function build_element_attributes(node, context, transform) {
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.Attribute} attribute
+ */
+function get_serialized_attribute_name(element, attribute) {
+	return (
+		get_input_default_attribute_name(element, attribute) ?? get_attribute_name(element, attribute)
+	);
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.Attribute | AST.BindDirective} attribute
+ */
+function get_input_default_attribute_name(element, attribute) {
+	if (element.name !== 'input') return null;
+	if (attribute.name === 'defaultValue') return 'value';
+	if (attribute.name === 'defaultChecked') return 'checked';
+	return null;
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {string} name
+ */
+function has_input_attribute(element, name) {
+	return element.attributes.some(
+		(attribute) =>
+			(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+			get_attribute_name(element, attribute) === name
+	);
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.Attribute} attribute
+ */
+function get_input_default_attribute(element, attribute) {
+	if (element.name !== 'input') return null;
+	if (attribute.name !== 'value' && attribute.name !== 'checked') return null;
+
+	const default_name = attribute.name === 'value' ? 'defaultValue' : 'defaultChecked';
+
+	return /** @type {AST.Attribute | null} */ (
+		element.attributes.find(
+			(attribute) => attribute.type === 'Attribute' && attribute.name === default_name
+		) ?? null
+	);
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.Attribute} attribute
+ */
+function should_skip_input_default_attribute(element, attribute) {
+	const name = get_input_default_attribute_name(element, attribute);
+	return name !== null && has_input_attribute(element, name);
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {AST.Attribute | AST.BindDirective} attribute
  */
 function get_attribute_name(element, attribute) {
 	let name = attribute.name;
+
 	if (!element.metadata.svg && !element.metadata.mathml) {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
