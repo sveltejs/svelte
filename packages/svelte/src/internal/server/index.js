@@ -164,7 +164,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		if (is_input) {
 			if (name === 'defaultvalue' || name === 'defaultchecked') {
 				name = name === 'defaultvalue' ? 'value' : 'checked';
-				if (attrs[name]) continue;
+				if (attrs[name] != null) continue;
 			}
 		}
 
