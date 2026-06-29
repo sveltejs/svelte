@@ -1,11 +1,53 @@
-/** @import { EffectNodes, TemplateNode } from '#client' */
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
 import { PortalKey } from '../../../shared/portal.js';
 import { block, remove_effect_dom, render_effect } from '../../reactivity/effects.js';
+import { active_effect, set_active_effect } from '../../runtime.js';
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
 
+/**
+ * @typedef {{ anchor: TemplateNode | undefined, pending: PendingPortal[] }} Portal
+ * @typedef {{ owner: Effect, content: (anchor: TemplateNode) => void }} PendingPortal
+ */
+
+/** @type {Map<any, Portal>} */
 const portals = new Map();
+
+/**
+ * @param {Portal} portal
+ * @param {(anchor: TemplateNode) => void} content
+ * @returns {void}
+ */
+function render_portal(portal, content) {
+	let previous_hydrating = false;
+	let previous_hydrate_node = null;
+
+	let anchor = /** @type {TemplateNode} */ (portal.anchor);
+
+	if (hydrating) {
+		previous_hydrating = true;
+		previous_hydrate_node = hydrate_node;
+		set_hydrate_node((anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor))));
+	}
+
+	const effect = block(() => {
+		content(anchor);
+		return () => {
+			// The parent block will traverse all nodes in the current context, and then state that
+			// child effects (like this one) don't need to traverse the nodes anymore because they
+			// were already removed by the parent. That's not true in this case because the nodes
+			// are somewhere else, so remove them "manually" here.
+			const nodes = /** @type {EffectNodes} */ (effect.nodes);
+			remove_effect_dom(nodes.start, /** @type {TemplateNode} */ (nodes.end));
+		};
+	});
+
+	if (previous_hydrating) {
+		portal.anchor = hydrate_node; // so that next portal block starts from the correct node
+		set_hydrate_node(/** @type {TemplateNode} */ (previous_hydrate_node));
+	}
+}
 
 /**
  * @param {TemplateNode} node
@@ -18,7 +60,22 @@ export function portal_outlet(node, id) {
 
 	render_effect(() => {
 		id = get_id();
-		portals.set(id, { anchor });
+
+		const portal = portals.get(id) ?? { anchor: undefined, pending: [] };
+		portal.anchor = anchor;
+		portals.set(id, portal);
+
+		for (const pending of portal.pending) {
+			const previous_effect = active_effect;
+			set_active_effect(pending.owner);
+
+			try {
+				render_portal(portal, pending.content);
+			} finally {
+				set_active_effect(previous_effect);
+			}
+		}
+		portal.pending.length = 0;
 
 		return () => {
 			portals.delete(id);
@@ -44,7 +101,7 @@ export function portal_outlet(node, id) {
 /**
  * @param {any} target
  * @param {(anchor: TemplateNode) => void} content
- * @returns {void}
+ * @returns {void | (() => void)}
  */
 export function portal(target, content) {
 	if (target == null) return;
@@ -56,60 +113,53 @@ export function portal(target, content) {
 		);
 	}
 
-	const portal = portals.get(target);
-	if (!is_dom_node && !portal) {
-		// TODO can we lift this restriction?
-		throw new Error(
-			'TODO error code: No portal found for given target. Make sure portal target exists before referencing it'
-		);
-	}
-
-	let previous_hydrating = false;
-	let previous_hydrate_node = null;
-
 	/** @type {TemplateNode} */
 	var anchor;
 	if (is_dom_node) {
+		let previous_hydrating = false;
+
 		// Our rendering logic always prepends elements to the anchor. To not confuse users,
 		// adjust the anchor such that the content is portaled _into_ the target.
 		anchor = /** @type {TemplateNode} */ (/** @type {Element} */ (target).firstChild);
 		if (!anchor) {
 			target.appendChild((anchor = document.createTextNode('')));
 		}
-	} else {
-		anchor = portal.anchor;
-	}
 
-	// TODO handle multiple targeting the same portal
-	if (hydrating) {
-		previous_hydrating = true;
-		if (is_dom_node) {
+		if (hydrating) {
+			previous_hydrating = true;
 			// These are not SSR'd, so temporarily disable hydration to properly insert them
 			set_hydrating(false);
-		} else {
-			previous_hydrate_node = hydrate_node;
-			set_hydrate_node((anchor = /** @type {TemplateNode} */ (get_next_sibling(portal.anchor))));
 		}
-	}
 
-	const effect = block(() => {
-		content(anchor);
-		return () => {
-			// The parent block will traverse all nodes in the current context, and then state that
-			// child effects (like this one) don't need to traverse the nodes anymore because they
-			// were already removed by the parent. That's not true in this case because the nodes
-			// are somewhere else, so remove them "manually" here.
-			const nodes = /** @type {EffectNodes} */ (effect.nodes);
-			remove_effect_dom(nodes.start, /** @type {TemplateNode} */ (nodes.end));
-		};
-	});
+		const effect = block(() => {
+			content(anchor);
+			return () => {
+				// The parent block will traverse all nodes in the current context, and then state that
+				// child effects (like this one) don't need to traverse the nodes anymore because they
+				// were already removed by the parent. That's not true in this case because the nodes
+				// are somewhere else, so remove them "manually" here.
+				const nodes = /** @type {EffectNodes} */ (effect.nodes);
+				remove_effect_dom(nodes.start, /** @type {TemplateNode} */ (nodes.end));
+			};
+		});
 
-	if (previous_hydrating) {
-		if (is_dom_node) {
+		if (previous_hydrating) {
 			set_hydrating(true);
-		} else {
-			portal.anchor = hydrate_node; // so that next head block starts from the correct node
-			set_hydrate_node(/** @type {TemplateNode} */ (previous_hydrate_node));
 		}
+	} else {
+		const portal = portals.get(target) ?? { anchor: undefined, pending: [] };
+		portals.set(target, portal);
+
+		if (portal.anchor === undefined) {
+			const pending = { owner: /** @type {Effect} */ (active_effect), content };
+			portal.pending.push(pending);
+
+			return () => {
+				const index = portal.pending.indexOf(pending);
+				if (index !== -1) portal.pending.splice(index, 1);
+			};
+		}
+
+		render_portal(portal, content);
 	}
 }

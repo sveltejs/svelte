@@ -427,7 +427,9 @@ export class Renderer {
 		this.push(BLOCK_OPEN);
 		const id = `<!--portal:${key.v}-->`;
 		this.push(id);
-		this.global.portals.set(id, []);
+		if (!this.global.portals.has(id)) {
+			this.global.portals.set(id, []);
+		}
 		this.push(BLOCK_CLOSE);
 	}
 
@@ -447,12 +449,8 @@ export class Renderer {
 		}
 
 		const id = `<!--portal:${target.v}-->`;
-		const portal = this.global.portals.get(id);
-		if (!portal)
-			// TODO loosen this restriction?
-			throw new Error(
-				'TODO error code: No portal found for given target. Make sure portal target exists before referencing it'
-			);
+		const portal = this.global.portals.get(id) ?? [];
+		this.global.portals.set(id, portal);
 
 		const tmp_payload = new Renderer(this.global, this);
 		content(tmp_payload);
