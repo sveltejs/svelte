@@ -617,6 +617,12 @@ Cannot use `await` in deriveds and template expressions, or at the top level of 
 Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
 ```
 
+### incompatible_with_custom_renderer
+
+```
+%message% is not compatible with `customRenderer`
+```
+
 ### inspect_trace_generator
 
 ```
@@ -1111,6 +1117,12 @@ A component can only have one `<%name%>` element
 
 ```
 Valid `<svelte:...>` tag names are %list%
+```
+
+### svelte_options_customrenderer_disabled
+
+```
+`customRenderer` cannot be set in `<svelte:options>` unless the `experimental.customRenderer` compiler option is enabled
 ```
 
 ### svelte_options_deprecated_tag

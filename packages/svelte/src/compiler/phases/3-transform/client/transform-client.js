@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
 import { build_getter, get_transform } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
-import { dev, filename } from '../../../state.js';
+import { dev, filename, custom_renderer } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
@@ -556,6 +556,12 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
+	if (custom_renderer) {
+		body.unshift(b.imports([['$renderer', '$renderer', true]], custom_renderer));
+	} else {
+		body.unshift(b.imports([], 'svelte/internal/init-operations'));
+	}
+
 	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
 		component_block.body.unshift(
@@ -577,6 +583,18 @@ export function client_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
+	}
+
+	if (custom_renderer !== undefined) {
+		// when the custom renderer feature is enabled every component pushes a renderer: components
+		// with a renderer module push `$renderer`, DOM components push `null`
+		component_block.body.unshift(
+			b.var(
+				'$$pop_renderer',
+				b.call('$.push_renderer', custom_renderer ? b.id('$renderer') : b.literal(null))
+			)
+		);
+		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
 	}
 
 	if (state.events.size > 0) {

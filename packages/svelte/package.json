@@ -59,6 +59,9 @@
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },
+    "./internal/init-operations": {
+      "default": "./src/internal/init-operations.js"
+    },
     "./internal/flags/async": {
       "default": "./src/internal/flags/async.js"
     },
@@ -90,6 +93,10 @@
     "./reactivity/window": {
       "types": "./types/index.d.ts",
       "default": "./src/reactivity/window/index.js"
+    },
+    "./renderer": {
+      "types": "./types/index.d.ts",
+      "default": "./src/renderer/index.js"
     },
     "./server": {
       "types": "./types/index.d.ts",
