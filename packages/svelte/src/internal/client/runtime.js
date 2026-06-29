@@ -34,7 +34,7 @@ import {
 	unfreeze_derived_effects,
 	update_derived
 } from './reactivity/deriveds.js';
-import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
+import { async_mode_flag, tracing_mode_flag, custom_renderers_flag } from '../flags/index.js';
 import { tracing_expressions } from './dev/tracing.js';
 import { get_error } from '../shared/dev.js';
 import {
@@ -447,7 +447,7 @@ export function update_effect(effect) {
 	active_effect = effect;
 	is_updating_effect = true;
 
-	var pop_renderer = push_renderer(effect.r, effect.pr);
+	var pop_renderer = custom_renderers_flag ? push_renderer(effect.r, effect.pr) : undefined;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
