@@ -1,5 +1,17 @@
 # svelte
 
+## 5.56.4
+
+### Patch Changes
+
+- fix: include wrapping parentheses in `{@const}` declarator `end` position ([#18436](https://github.com/sveltejs/svelte/pull/18436))
+
+- fix: always unset reactivity context after restoring it ([#18453](https://github.com/sveltejs/svelte/pull/18453))
+
+- fix: don't notify `searchParams` subscribers when the URL changes without affecting the search string ([#18425](https://github.com/sveltejs/svelte/pull/18425))
+
+- fix: strip `?` from optional parameters in `<script lang="ts">` so generated JavaScript is valid ([#18448](https://github.com/sveltejs/svelte/pull/18448))
+
 ## 5.56.3
 
 ### Patch Changes
