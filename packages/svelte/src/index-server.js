@@ -55,4 +55,4 @@ export { hydratable } from './internal/server/hydratable.js';
 
 export { createRawSnippet } from './internal/server/blocks/snippet.js';
 
-export { createPortalKey } from './internal/shared/svelte-portal.js';
+export { createPortalKey } from './internal/shared/portal.js';

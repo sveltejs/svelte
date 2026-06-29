@@ -14,7 +14,7 @@ import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { has_own_property, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
-import { PortalKey } from '../shared/svelte-portal.js';
+import { PortalKey } from '../shared/portal.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
