@@ -181,4 +181,3 @@ export {
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
-export { invoke_error_boundary } from './error-handling.js';
