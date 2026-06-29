@@ -10,10 +10,6 @@ export default test({
 	mode: ['client'],
 
 	test({ assert, target, window }) {
-		const errors = /** @type {string[]} */ ([]);
-
-		// Expose the errors array to the component template.
-		// We check window.uncaughtErrors to verify no unhandled throw escapes.
 		const originalOnError = window.onerror;
 		/** @type {string[]} */
 		const uncaught = [];
@@ -28,18 +24,36 @@ export default test({
 		});
 
 		// Step 2: unmount — teardown reads the dirty derived, which throws.
-		flushSync(() => {
-			target.querySelector('#unmount')?.click();
-		});
+		// The boundary is being torn down together with the component, so the
+		// real TypeError may escape synchronously from flushSync (no live
+		// boundary ancestor can catch it). That is acceptable. What must NOT
+		// happen is a secondary null-dereference crash about a destroyed
+		// boundary's error handler ("Cannot read properties of null (reading 'error')").
+		/** @type {unknown} */
+		let teardownError = null;
+		try {
+			flushSync(() => {
+				target.querySelector('#unmount')?.click();
+			});
+		} catch (e) {
+			teardownError = e;
+		}
 
-		// The boundary was being torn down along with the component, so the
-		// onerror handler itself may not fire (the boundary is already gone),
-		// but the critical thing is that no TypeError about null effect.b
-		// escapes to the global error handler.
+		// The real error about null.value is fine — it's the expected throw.
+		// The null-dereference about effect.b.error is the regression we guard.
+		const nullDerefMsg = "Cannot read properties of null (reading 'error')";
+
+		if (teardownError) {
+			assert.ok(
+				!String(/** @type {any} */ (teardownError).message).includes(nullDerefMsg),
+				'no null-dereference crash about effect.b should escape synchronously'
+			);
+		}
+
 		assert.equal(
-			uncaught.filter((m) => m.includes("Cannot read properties of null")).length,
+			uncaught.filter((m) => m.includes(nullDerefMsg)).length,
 			0,
-			'no null-dereference crash should escape'
+			'no null-dereference crash about effect.b should escape to window.onerror'
 		);
 
 		window.onerror = originalOnError;

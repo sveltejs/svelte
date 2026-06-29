@@ -14,7 +14,7 @@
 <button id="unmount" onclick={() => (mounted = false)}>unmount</button>
 
 {#if mounted}
-	<svelte:boundary onerror={(e) => errors.push(e.message)}>
+	<svelte:boundary onerror={() => {}}>
 		<Trigger getValue={() => appContext} />
 	</svelte:boundary>
 {/if}
