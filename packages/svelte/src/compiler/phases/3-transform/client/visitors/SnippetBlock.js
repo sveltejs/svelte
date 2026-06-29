@@ -79,10 +79,13 @@ export function SnippetBlock(node, context) {
 		? b.call('$.wrap_snippet', b.id(context.state.analysis.name), b.function(null, args, body))
 		: b.arrow(args, body);
 
-	// wrap snippets in components with a custom renderer so they can only be
-	// rendered by the same renderer that compiled them
-	if (custom_renderer) {
-		snippet = b.call('$.renderer_snippet', b.id('$renderer'), snippet);
+	// In custom-renderer-aware builds, preserve the renderer that compiled the snippet.
+	if (custom_renderer !== undefined) {
+		snippet = b.call(
+			'$.renderer_snippet',
+			custom_renderer ? b.id('$renderer') : b.literal(null),
+			snippet
+		);
 	}
 
 	const declaration = b.const(node.expression, snippet);

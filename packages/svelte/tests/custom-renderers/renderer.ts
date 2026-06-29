@@ -8,11 +8,12 @@
 
 import { createRenderer } from '../../src/renderer/index.js';
 
-type ObjElement = {
+export type ObjElement = {
 	type: 'element';
 	name: string;
 	attributes: Record<string, string>;
 	children: ObjNode[];
+	elements_children: Array<HTMLElement | DocumentFragment | Text | Comment>;
 	listeners: Record<string, Array<{ handler: any; options?: any }>>;
 	parent: ObjNode | null;
 };
@@ -21,10 +22,14 @@ type ObjComment = {
 	type: 'comment';
 	value: string;
 	parent: ObjNode | null;
-	before: (node: any) => void;
 };
-type ObjFragment = { type: 'fragment'; children: ObjNode[]; parent: ObjNode | null };
-type ObjNode = ObjElement | ObjText | ObjComment | ObjFragment;
+export type ObjFragment = {
+	type: 'fragment';
+	children: ObjNode[];
+	parent: ObjNode | null;
+	elements_children: Array<HTMLElement | DocumentFragment | Text | Comment>;
+};
+export type ObjNode = ObjElement | ObjText | ObjComment | ObjFragment;
 
 function insert_node(
 	parent: ObjNode & { children?: ObjNode[] },
@@ -32,6 +37,10 @@ function insert_node(
 	anchor: ObjNode | null
 ) {
 	if (node.type === 'fragment') {
+		if (parent.type === 'element' || parent.type === 'fragment') {
+			parent.elements_children = node.elements_children;
+		}
+
 		const children = [...(node.children ?? [])];
 		for (const child of children) {
 			insert_node(parent, child, anchor);
@@ -69,19 +78,31 @@ function remove_from_parent(node: ObjNode) {
 	children.splice(idx, 1);
 }
 
-export const dom_elements: Array<DocumentFragment | Node> = [];
+const mounted_in_dom_elements = new Map<ObjNode, DocumentFragment | Node>();
+
+const mounted = new Map<
+	HTMLElement | DocumentFragment | Text | Comment,
+	ObjElement | ObjFragment
+>();
 
 const renderer = createRenderer<{
 	fragment: ObjFragment;
 	element: ObjElement;
 	text: ObjText;
 	comment: ObjComment;
+	foreign: {
+		comment: Comment;
+		element: HTMLElement;
+		text: Text;
+		fragment: DocumentFragment;
+	};
 }>({
 	createFragment() {
 		return {
 			type: 'fragment',
 			children: [],
-			parent: null
+			parent: null,
+			elements_children: []
 		};
 	},
 
@@ -92,7 +113,8 @@ const renderer = createRenderer<{
 			attributes: {},
 			children: [],
 			listeners: {},
-			parent: null
+			parent: null,
+			elements_children: []
 		};
 	},
 
@@ -108,12 +130,7 @@ const renderer = createRenderer<{
 		return {
 			type: 'comment',
 			value: data,
-			parent: null,
-			// adding this allows for this renderer to interleave with a DOM-based renderer
-			// the argument will be the DOM node that represent a DOM Component being mounted
-			before(node) {
-				dom_elements.push(node);
-			}
+			parent: null
 		};
 	},
 
@@ -189,6 +206,35 @@ const renderer = createRenderer<{
 		target.listeners[type] = target.listeners[type].filter(
 			(/** @type {any} */ l) => l.handler !== handler
 		);
+	},
+
+	foreign: {
+		insertForeign(parent, element, anchor) {
+			parent.elements_children.push(element);
+			mounted.set(element, parent);
+		},
+		removeForeign(node) {
+			const parent = mounted.get(node);
+			if (!parent) return;
+			const idx = parent.elements_children.indexOf(node);
+			if (idx !== -1) parent.elements_children.splice(idx, 1);
+			mounted.delete(node);
+		},
+		insertIntoForeign(parent, element, anchor) {
+			const custom_rendered = document.createElement('custom-rendered');
+			custom_rendered.textContent = JSON.stringify(element, (key, value) => {
+				if (key === 'parent') return undefined;
+				return value;
+			});
+			parent.insertBefore(custom_rendered, anchor);
+			mounted_in_dom_elements.set(element, custom_rendered);
+		},
+		removeFromForeign(node) {
+			const custom_rendered_node = mounted_in_dom_elements.get(node);
+			if (!custom_rendered_node) return;
+			custom_rendered_node.parentNode?.removeChild(custom_rendered_node);
+			mounted_in_dom_elements.delete(node);
+		}
 	}
 });
 
