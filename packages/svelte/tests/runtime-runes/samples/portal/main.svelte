@@ -1,13 +1,7 @@
-<script>
-	import { createPortalKey } from 'svelte';
-
-	const key = createPortalKey('example');
-</script>
-
 <main>
-	{@portal key}
+	{@portal 'example'}
 </main>
 
-{#portal key}
+{#portal 'example'}
 	<p>portaled</p>
 {/portal}

@@ -1121,12 +1121,12 @@ export function expected_attribute_value(node) {
 }
 
 /**
- * Expected 'if', 'each', 'await', 'key', 'portal' or 'snippet'
+ * Expected 'if', 'each', 'await', 'key' or 'snippet'
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function expected_block_type(node) {
-	e(node, 'expected_block_type', `Expected 'if', 'each', 'await', 'key', 'portal' or 'snippet'\nhttps://svelte.dev/e/expected_block_type`);
+	e(node, 'expected_block_type', `Expected 'if', 'each', 'await', 'key' or 'snippet'\nhttps://svelte.dev/e/expected_block_type`);
 }
 
 /**

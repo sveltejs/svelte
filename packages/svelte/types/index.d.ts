@@ -466,16 +466,6 @@ declare module 'svelte' {
 		render: () => string;
 		setup?: (element: Element) => void | (() => void);
 	}): Snippet<Params>;
-	/**
-	 * Creates a key for use with `{#portal ...}` and `{@portal ...}`. It connects the portal source and outlet.
-	 * Example: TODO write out once exact API clear.
-	 * */
-	export function createPortalKey(name: string): PortalKey;
-	class PortalKey {
-		
-		constructor(name: string);
-		v: string;
-	}
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**

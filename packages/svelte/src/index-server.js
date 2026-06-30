@@ -54,5 +54,3 @@ export {
 export { hydratable } from './internal/server/hydratable.js';
 
 export { createRawSnippet } from './internal/server/blocks/snippet.js';
-
-export { createPortalKey } from './internal/shared/portal.js';

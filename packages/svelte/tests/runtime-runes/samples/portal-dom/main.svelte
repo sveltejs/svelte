@@ -1,7 +1,4 @@
 <script>
-	import { createPortalKey } from 'svelte';
-
-	const key = createPortalKey('example');
 	let target = $state(null);
 </script>
 

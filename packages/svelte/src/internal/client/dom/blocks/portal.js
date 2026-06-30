@@ -1,6 +1,5 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
-import { PortalKey } from '../../../shared/portal.js';
 import { block, remove_effect_dom, render_effect } from '../../reactivity/effects.js';
 import { active_effect, set_active_effect } from '../../runtime.js';
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
@@ -107,12 +106,6 @@ export function portal(target, content) {
 	if (target == null) return;
 
 	const is_dom_node = target instanceof Element;
-	if (!is_dom_node && !(target instanceof PortalKey)) {
-		throw new Error(
-			'TODO error code: target can only be a key instantiated with createPortalKey, or a DOM node'
-		);
-	}
-
 	/** @type {TemplateNode} */
 	var anchor;
 	if (is_dom_node) {

@@ -14,7 +14,6 @@ import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { has_own_property, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
-import { PortalKey } from '../shared/portal.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -422,40 +421,34 @@ export class Renderer {
 		});
 	}
 
-	/** @param {PortalKey} key */
+	/** @param {any} key */
 	portal_outlet(key) {
+		if (key == null) return;
+
 		this.push(BLOCK_OPEN);
-		const id = `<!--portal:${key.v}-->`;
-		this.push(id);
-		if (!this.global.portals.has(id)) {
-			this.global.portals.set(id, []);
-		}
+		const portal = this.global.portals.get(key) ?? { id: undefined, renderers: [] };
+		portal.id = `<!--portal:${this.global.portal_id++}-->`;
+		this.global.portals.set(key, portal);
+		this.push(portal.id);
 		this.push(BLOCK_CLOSE);
 	}
 
 	/**
-	 * @param {PortalKey | undefined} target
+	 * @param {any} target
 	 * @param {(p: Renderer) => void} content
 	 */
 	portal(target, content) {
 		this.push(EMPTY_COMMENT);
 
-		if (!target) return; // probably targets a DOM node - not possible in SSR, ignore
+		if (target == null) return; // probably targets a DOM node - not possible in SSR, ignore
 
-		if (!(target instanceof PortalKey)) {
-			throw new Error(
-				'TODO error code: target can only be a key instantiated with createPortalKey, or a DOM node'
-			);
-		}
-
-		const id = `<!--portal:${target.v}-->`;
-		const portal = this.global.portals.get(id) ?? [];
-		this.global.portals.set(id, portal);
+		const portal = this.global.portals.get(target) ?? { id: undefined, renderers: [] };
+		this.global.portals.set(target, portal);
 
 		const tmp_payload = new Renderer(this.global, this);
 		content(tmp_payload);
 		tmp_payload.push(EMPTY_COMMENT);
-		portal.push(tmp_payload);
+		portal.renderers.push(tmp_payload);
 	}
 
 	/**
@@ -675,13 +668,15 @@ export class Renderer {
 			const renderer = Renderer.#open_render('sync', component, options);
 			const content = renderer.#collect_content();
 
-			for (const [id, portal] of renderer.global.portals) {
-				for (const item of portal) {
+			for (const portal of renderer.global.portals.values()) {
+				if (portal.id === undefined) continue;
+
+				for (const item of portal.renderers) {
 					if (item instanceof Renderer) {
 						const portal_content = item.#collect_content();
 						item.#out.length = 0;
-						content.body = content.body.replace(id, id + portal_content.body);
-						content.head = content.head.replace(id, id + portal_content.body);
+						content.body = content.body.replace(portal.id, portal.id + portal_content.body);
+						content.head = content.head.replace(portal.id, portal.id + portal_content.body);
 					}
 				}
 			}
@@ -712,12 +707,14 @@ export class Renderer {
 				content.head = hydratables + content.head;
 			}
 
-			for (const [id, portal] of renderer.global.portals) {
-				for (const item of portal) {
+			for (const portal of renderer.global.portals.values()) {
+				if (portal.id === undefined) continue;
+
+				for (const item of portal.renderers) {
 					if (item instanceof Renderer) {
 						const portal_content = await item.#collect_content_async();
-						content.body = content.body.replace(id, id + portal_content.body);
-						content.head = content.head.replace(id, id + portal_content.body);
+						content.body = content.body.replace(portal.id, portal.id + portal_content.body);
+						content.head = content.head.replace(portal.id, portal.id + portal_content.body);
 					}
 				}
 			}
@@ -954,8 +951,11 @@ export class SSRState {
 	 */
 	transformError;
 
-	/** @type {Map<string, Renderer[]>} */
+	/** @type {Map<any, { id: string | undefined, renderers: Renderer[] }>} */
 	portals = new Map();
+
+	/** @type {number} */
+	portal_id = 1;
 
 	/** @type {{ path: number[], value: string }} */
 	#title = { path: [], value: '' };

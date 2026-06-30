@@ -253,5 +253,3 @@ export { hydratable } from './internal/client/hydratable.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
 export { tick, untrack, settled } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';
-
-export { createPortalKey } from './internal/shared/portal.js';
