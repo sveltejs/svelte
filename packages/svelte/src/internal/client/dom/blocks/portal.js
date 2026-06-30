@@ -2,7 +2,7 @@
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
 import { block, remove_effect_dom, render_effect } from '../../reactivity/effects.js';
 import { active_effect, set_active_effect } from '../../runtime.js';
-import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
+import { hydrate_next, hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
 
 /**
@@ -56,6 +56,10 @@ function render_portal(portal, content) {
 export function portal_outlet(node, id) {
 	var anchor = node;
 	const get_id = typeof id === 'function' ? id : () => id;
+
+	if (hydrating) {
+		anchor = hydrate_next();
+	}
 
 	render_effect(() => {
 		id = get_id();
