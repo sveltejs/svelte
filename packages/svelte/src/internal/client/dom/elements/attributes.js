@@ -201,7 +201,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (value == null) {
 		element.removeAttribute(attribute);
-	} else if (typeof value !== 'string' && get_setters(element).includes(attribute)) {
+	} else if (typeof value !== 'string' && get_setters(element).has(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
 	} else {
@@ -252,7 +252,7 @@ export function set_custom_element_data(node, prop, value) {
 			// customElements may not be available in browser extension contexts
 			!customElements ||
 			customElements.get(node.getAttribute('is') || node.nodeName.toLowerCase())
-				? get_setters(node).includes(prop)
+				? get_setters(node).has(prop)
 				: value && typeof value === 'object')
 		) {
 			// @ts-expect-error
@@ -472,7 +472,7 @@ function set_attributes(
 				}
 			} else if (
 				is_default ||
-				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
+				(setters.has(name) && (is_custom_element || typeof value !== 'string'))
 			) {
 				// @ts-ignore
 				element[name] = value;
@@ -581,7 +581,7 @@ function get_attributes(element) {
 	);
 }
 
-/** @type {Map<string, string[]>} */
+/** @type {Map<string, Set<string>>} */
 var setters_cache = new Map();
 
 /** @param {Element} element */
@@ -589,7 +589,7 @@ function get_setters(element) {
 	var cache_key = element.getAttribute('is') || element.nodeName;
 	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
-	setters_cache.set(cache_key, (setters = []));
+	setters_cache.set(cache_key, (setters = new Set()));
 
 	var descriptors;
 	var proto = element; // In the case of custom elements there might be setters on the instance
@@ -608,7 +608,7 @@ function get_setters(element) {
 				key !== 'textContent' &&
 				key !== 'innerText'
 			) {
-				setters.push(key);
+				setters.add(key);
 			}
 		}
 
