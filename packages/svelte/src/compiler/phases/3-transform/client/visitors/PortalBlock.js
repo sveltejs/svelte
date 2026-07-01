@@ -15,9 +15,7 @@ export function PortalBlock(node, context) {
 	const body = /** @type {BlockStatement} */ (
 		context.visit(node.fragment, { ...context.state, transform: { ...context.state.transform } })
 	);
-	const portal = b.call('$.portal', value, b.arrow([b.id('$$anchor')], body));
+	const portal = b.call('$.portal', b.thunk(value), b.arrow([b.id('$$anchor')], body));
 
-	context.state.init.push(
-		b.stmt(node.metadata.expression.has_state ? b.call('$.render_effect', b.thunk(portal)) : portal)
-	);
+	context.state.init.push(b.stmt(portal));
 }
