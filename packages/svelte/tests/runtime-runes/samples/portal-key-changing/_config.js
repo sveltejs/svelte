@@ -2,7 +2,6 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	solo: true,
 	html: '<button>toggle portalKey</button> <button>toggle outletKey</button>',
 	test({ assert, target }) {
 		const [togglePortalKey, toggleOutletKey] = target.querySelectorAll('button');
