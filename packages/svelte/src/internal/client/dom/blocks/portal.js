@@ -2,6 +2,7 @@
 /** @import { Batch } from '../../reactivity/batch.js' */
 import { DESTROYED, DESTROYING } from '#client/constants';
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
+import { capture } from '../../reactivity/async.js';
 import { current_batch } from '../../reactivity/batch.js';
 import {
 	block,
@@ -12,7 +13,7 @@ import {
 	render_effect
 } from '../../reactivity/effects.js';
 import { set, source } from '../../reactivity/sources.js';
-import { active_effect, get, untrack } from '../../runtime.js';
+import { active_effect, get, set_active_effect, untrack } from '../../runtime.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -21,15 +22,32 @@ import {
 	set_hydrating
 } from '../hydration.js';
 import { create_text, get_next_sibling, should_defer_append } from '../operations.js';
+import { queue_micro_task } from '../task.js';
 
 /**
- * @typedef {{ anchor: TemplateNode, hydrate: boolean }} Outlet
- * @typedef {{ key: any, anchor: TemplateNode, effect: Effect, fragment: DocumentFragment | null }} PortalBranch
- * @typedef {{ anchor: TemplateNode, hydrate: boolean, client_only: boolean, outlet?: Outlet }} PortalTarget
+ * @typedef {{ anchor: TemplateNode }} Outlet
+ * @typedef {{ outlets: Source<Array<Outlet>>, pending: Set<(outlet: Outlet) => void> }} OutletEntry
+ * @typedef {{ key: any, effect: Effect, fragment: DocumentFragment | null }} PortalBranch
+ * @typedef {{ anchor: TemplateNode, outlet?: Outlet }} PortalTarget
  */
 
-/** @type {Map<any, Source<Array<Outlet>>>} */
+/** @type {Map<any, OutletEntry>} */
 const outlet_map = new Map();
+
+/**
+ * @param {any} key
+ * @returns {OutletEntry}
+ */
+function get_outlet_entry(key) {
+	let entry = outlet_map.get(key);
+
+	if (entry === undefined) {
+		entry = { outlets: source([]), pending: new Set() };
+		outlet_map.set(key, entry);
+	}
+
+	return entry;
+}
 
 /**
  * @param {TemplateNode} node
@@ -44,19 +62,23 @@ export function portal_outlet(node, get_id) {
 	}
 
 	/** @type {Outlet} */
-	var outlet = { anchor, hydrate: hydrating };
+	var outlet = { anchor };
 
 	render_effect(() => {
 		const id = get_id();
 		if (id == null) return;
 
-		const outlets = outlet_map.get(id) ?? source([]);
+		const entry = get_outlet_entry(id);
+		const outlets = entry.outlets;
 
-		outlet_map.set(id, outlets);
 		set(
 			outlets,
 			untrack(() => [...get(outlets), outlet])
 		);
+
+		for (const render of entry.pending) {
+			render(outlet);
+		}
 
 		return () => {
 			set(
@@ -96,6 +118,8 @@ export function portal(get_target, content) {
 	let offscreen = new Map();
 	/** @type {Map<Batch, Map<any, PortalTarget>>} */
 	let pending = new Map();
+	/** @type {{ entry: OutletEntry, render: (outlet: Outlet) => void } | null} */
+	let unrendered = null;
 
 	/** @param {Map<any, PortalBranch>} portals */
 	function destroy_portals(portals) {
@@ -104,6 +128,33 @@ export function portal(get_target, content) {
 		}
 
 		portals.clear();
+	}
+
+	function clear_unrendered() {
+		if (unrendered === null) return;
+
+		const { entry, render } = unrendered;
+		entry.pending.delete(render);
+		unrendered = null;
+	}
+
+	/** @param {OutletEntry} entry */
+	function set_unrendered(entry) {
+		/** @type {(outlet: Outlet) => void} */
+		const render = (outlet) => {
+			const prev_context = capture();
+			portal_context(false);
+
+			try {
+				const portal = create_portal(outlet, { anchor: outlet.anchor, outlet }, false);
+				onscreen.set(outlet, portal);
+			} finally {
+				prev_context(false);
+			}
+		};
+
+		entry.pending.add(render);
+		unrendered = { entry, render };
 	}
 
 	/**
@@ -129,21 +180,23 @@ export function portal(get_target, content) {
 				previous_hydrating = true;
 				set_hydrating(false);
 			}
-		} else if (target.hydrate) {
-			// An outlet can be discovered before the matching portal block runs. Preserve
-			// the global hydration cursor while hydrating from the outlet's own anchor.
-			previous_hydrating = hydrating;
-			previous_hydrate_node = hydrate_node;
-			set_hydrating(true);
-			set_hydrate_node((anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor))));
-		} else if (target.client_only && hydrating) {
-			previous_hydrating = true;
-			set_hydrating(false);
+		} else if (hydrating) {
+			if (target.outlet !== undefined) {
+				// An outlet was discovered before this matching portal block. Preserve
+				// the global hydration cursor while hydrating from the outlet's own anchor.
+				previous_hydrating = true;
+				previous_hydrate_node = hydrate_node;
+				set_hydrate_node((anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor))));
+			} else {
+				// This is a DOM portal, they are not SSR'd, so temporarily disable hydration to avoid claiming the wrong nodes.
+				previous_hydrating = true;
+				set_hydrating(false);
+			}
 		}
 
+		/** @type {PortalBranch} */
 		const portal = {
 			key,
-			anchor: target.anchor,
 			effect: branch(() => {
 				content(anchor);
 				return () => {
@@ -159,19 +212,15 @@ export function portal(get_target, content) {
 		};
 
 		if (previous_hydrate_node !== null) {
-			portal.anchor = hydrate_node;
 			target.anchor = hydrate_node;
-			if (target.outlet !== undefined) {
-				// Future portal instances for this outlet must insert after the hydrated content,
-				// not after the original outlet marker.
-				target.outlet.anchor = hydrate_node;
-				target.outlet.hydrate = false;
-			}
+			// Future portal instances for this outlet must insert after the hydrated content,
+			// not after the original outlet marker.
+			/** @type {Outlet} */ (target.outlet).anchor = hydrate_node;
 			set_hydrate_node(previous_hydrate_node);
 		}
 
-		if (previous_hydrating || target.hydrate) {
-			set_hydrating(previous_hydrating);
+		if (previous_hydrating) {
+			set_hydrating(true);
 		}
 
 		return portal;
@@ -229,7 +278,6 @@ export function portal(get_target, content) {
 				/** @type {TemplateNode} */ (portal.fragment?.lastChild).remove();
 				target.anchor.before(/** @type {DocumentFragment} */ (portal.fragment));
 				portal.fragment = null;
-				portal.anchor = target.anchor;
 				offscreen.delete(key);
 				onscreen.set(key, portal);
 			}
@@ -265,8 +313,12 @@ export function portal(get_target, content) {
 	/** @type {Effect} */
 	let effect;
 
+	/** @type {ReturnType<typeof capture>} */
+	let portal_context;
+
 	block(() => {
 		effect = /** @type {Effect} */ (active_effect);
+		portal_context = capture();
 
 		const target = get_target();
 		/** @type {Map<any, PortalTarget>} */
@@ -280,16 +332,18 @@ export function portal(get_target, content) {
 				target.appendChild((anchor = document.createTextNode('')));
 			}
 
-			targets.set(target, { anchor, hydrate: false, client_only: true });
+			targets.set(target, { anchor });
 		} else if (target != null) {
-			const outlets_source = outlet_map.get(target) ?? source([]);
-			outlet_map.set(target, outlets_source);
+			const entry = get_outlet_entry(target);
+			const outlets_source = entry.outlets;
+			const outlets = get(outlets_source);
 
-			for (const outlet of get(outlets_source)) {
+			// We are adding pending portals to the entry, so that outlets can render them when they are discovered.
+			set_unrendered(entry);
+
+			for (const outlet of outlets) {
 				targets.set(outlet, {
 					anchor: outlet.anchor,
-					hydrate: outlet.hydrate,
-					client_only: false,
 					outlet
 				});
 			}
@@ -305,11 +359,10 @@ export function portal(get_target, content) {
 			let portal = onscreen.get(key) ?? offscreen.get(key);
 
 			if (portal !== undefined) {
-				portal.anchor = target.anchor;
 				if (defer) batch.unskip_effect(portal.effect);
 			} else {
-				portal = create_portal(key, target, defer && !target.hydrate);
-				(defer && !target.hydrate ? offscreen : onscreen).set(key, portal);
+				portal = create_portal(key, target, defer && !(hydrating && target.outlet !== undefined));
+				(portal.fragment !== null ? offscreen : onscreen).set(key, portal);
 			}
 		}
 
@@ -339,6 +392,8 @@ export function portal(get_target, content) {
 		}
 
 		return () => {
+			clear_unrendered();
+
 			if (/** @type {Effect} */ (effect).f & DESTROYING) {
 				destroy_portals(onscreen);
 				destroy_portals(offscreen);

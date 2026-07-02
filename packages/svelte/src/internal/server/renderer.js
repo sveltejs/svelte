@@ -427,7 +427,7 @@ export class Renderer {
 
 		this.push(BLOCK_OPEN);
 		const portal = this.global.portals.get(key) ?? { id: undefined, renderers: [] };
-		portal.id = `<!--portal:${this.global.portal_id++}-->`;
+		portal.id ??= `<!--portal:${this.global.portal_id++}-->`;
 		this.global.portals.set(key, portal);
 		this.push(portal.id);
 		this.push(BLOCK_CLOSE);
@@ -448,7 +448,7 @@ export class Renderer {
 		const tmp_payload = new Renderer(this.global, this);
 		content(tmp_payload);
 		tmp_payload.push(EMPTY_COMMENT);
-		portal.renderers.push(tmp_payload);
+		portal.renderers.unshift(tmp_payload);
 	}
 
 	/**
@@ -675,8 +675,8 @@ export class Renderer {
 					if (item instanceof Renderer) {
 						const portal_content = item.#collect_content();
 						item.#out.length = 0;
-						content.body = content.body.replace(portal.id, portal.id + portal_content.body);
-						content.head = content.head.replace(portal.id, portal.id + portal_content.body);
+						content.body = content.body.replaceAll(portal.id, portal.id + portal_content.body);
+						content.head = content.head.replaceAll(portal.id, portal.id + portal_content.body);
 					}
 				}
 			}
@@ -713,8 +713,8 @@ export class Renderer {
 				for (const item of portal.renderers) {
 					if (item instanceof Renderer) {
 						const portal_content = await item.#collect_content_async();
-						content.body = content.body.replace(portal.id, portal.id + portal_content.body);
-						content.head = content.head.replace(portal.id, portal.id + portal_content.body);
+						content.body = content.body.replaceAll(portal.id, portal.id + portal_content.body);
+						content.head = content.head.replaceAll(portal.id, portal.id + portal_content.body);
 					}
 				}
 			}

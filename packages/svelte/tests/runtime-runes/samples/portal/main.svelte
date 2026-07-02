@@ -1,7 +1,7 @@
 <main>
-	{@portal 'example'}
+	{@portal 'portal'}
 </main>
 
-{#portal 'example'}
+{#portal 'portal'}
 	<p>portaled</p>
 {/portal}
