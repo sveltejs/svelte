@@ -18,7 +18,9 @@ export function visit_function(node, context) {
 
 	context.next({
 		...context.state,
-		function_depth: context.state.function_depth + 1,
+		// Template scopes can move ahead of the analysis state's function depth
+		// without entering a JavaScript function.
+		function_depth: Math.max(context.state.function_depth, context.state.scope.function_depth) + 1,
 		expression: null
 	});
 }

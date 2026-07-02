@@ -7,3 +7,10 @@
 {let e = $state(0), f = e}
 
 {a}{b}{c}{d}{e}{f}
+
+{const phrase = $derived('Hello, ' + a)}
+<button onclick={() => {
+	console.log(phrase);
+}}>
+	Print
+</button>
