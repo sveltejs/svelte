@@ -1,16 +1,11 @@
 /** @import { Effect, Source, TemplateNode } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js' */
 import { DESTROYED, DESTROYING, HEAD_EFFECT } from '#client/constants';
+import { async_mode_flag } from '../../../flags/index.js';
 import { capture } from '../../reactivity/async.js';
-import { current_batch } from '../../reactivity/batch.js';
-import {
-	block,
-	branch,
-	destroy_effect,
-	move_effect,
-	render_effect
-} from '../../reactivity/effects.js';
-import { set, source } from '../../reactivity/sources.js';
+import { current_batch, eager_block_effects } from '../../reactivity/batch.js';
+import { block, branch, destroy_effect, move_effect } from '../../reactivity/effects.js';
+import { internal_set, source } from '../../reactivity/sources.js';
 import { active_effect, get, untrack } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -81,28 +76,6 @@ function get_outlet_entry(key) {
 }
 
 /**
- * Run `fn` now (during hydration, where synchronous timing is required for
- * claiming server-rendered content), or in a microtask otherwise. The latter
- * ensures that outlet (un)registrations - which can happen while a batch is
- * being committed - do not interfere with the commit by scheduling portal
- * updates (which would happen in a new batch) at the wrong moment.
- * @param {() => void} fn
- */
-function run_outside_batch(fn) {
-	if (hydrating) {
-		fn();
-	} else {
-		// TODO this is a hack to get around a (I think) general batch.js bug
-		// where setting state while flushing (render) effects can mess with
-		// #commit() of the earlier batch that runs afterwards, where roots
-		// would not be scheduled for other batches anymore because scheduling
-		// an effect might reach a branch that is already unclean, so scheduling
-		// thinks "oh we already have this root scheduled" (wrong because not in the context of that batch).
-		queue_micro_task(fn);
-	}
-}
-
-/**
  * Returns the node before which the content of a portal with the given
  * sequence number must be inserted, so that the contents of multiple portals
  * appear in the order in which the portals were created
@@ -159,54 +132,60 @@ export function portal_outlet(node, get_id) {
 	if (hydrating) {
 		// `node` is the `<!--[-->` comment — advance to the `<!--portal:N-->` marker.
 		// Server-rendered content of `{#portal ...}` blocks comes right after it
-		// and is claimed by the corresponding blocks during hydration
+		// and is claimed by the corresponding blocks during hydration.
 		anchor = hydrate_next();
 	}
 
 	/** @type {Outlet} */
 	var outlet = { anchor, claim: hydrating ? anchor : null, items: [] };
 
-	// TODO this should be a block effect so it runs during traversal. The way it's right now
-	// it means that a #portal block with async work will have that async work not coordinated
-	// if it's instantiated through this @portal for the first time.
-	render_effect(() => {
+	// A block effect, so that (un)registration happens during batch traversal.
+	// Portals rendering into this outlet are scheduled and re-run within the
+	// same traversal (via `internal_set`, which schedules reactions into the
+	// current batch) - that way, any async work their content contains is
+	// discovered before the batch commits, and the batch waits for it.
+	block(() => {
+		const effect = /** @type {Effect} */ (active_effect);
 		const id = get_id();
 		if (id == null) return;
 
 		const entry = get_outlet_entry(id);
 
-		var registered = false;
-		var cancelled = false;
+		internal_set(entry.outlets, [...entry.outlets.v, outlet]);
 
-		const register = () => {
-			if (cancelled) return;
-			registered = true;
-
-			set(
-				entry.outlets,
-				untrack(() => [...get(entry.outlets), outlet])
-			);
-
-			// during hydration, portals that were created before this outlet claim
-			// their server-rendered content now, while the hydration position is known
-			for (const render of entry.pending) {
-				render(outlet);
-			}
-		};
+		// During hydration, portals that were created before this outlet claim
+		// their server-rendered content now, while the hydration position is known.
+		for (const render of entry.pending) {
+			render(outlet);
+		}
 
 		const unregister = () => {
-			cancelled = true;
-			if (!registered) return;
-
-			set(
+			internal_set(
 				entry.outlets,
-				untrack(() => get(entry.outlets).filter((o) => o !== outlet))
+				entry.outlets.v.filter((o) => o !== outlet)
 			);
 		};
 
-		run_outside_batch(register);
+		return () => {
+			if ((effect.f & (DESTROYED | DESTROYING)) !== 0) {
+				// The outlet is being destroyed, which happens while a batch is being
+				// committed. Unregistering right away would schedule the affected
+				// portals into a new batch mid-commit, interfering with how the
+				// committing batch reruns effects of other in-flight batches, so
+				// defer it (the DOM is already correct: portaled content is removed
+				// together with the outlet, or by the portals' own cleanup)
 
-		return () => run_outside_batch(unregister);
+				// TODO this feels like a hack to get around a (I think) general batch.js bug
+				// where setting state while committing + flushing (render) effects can mess with
+				// rebase of the earlier batches in #commit() that runs afterwards, where roots
+				// would not be scheduled for other batches anymore because scheduling
+				// an effect might reach a branch that is already unclean, so scheduling
+				// thinks "oh we already have this root scheduled" (wrong because not in the context of that batch).
+				queue_micro_task(unregister);
+			} else {
+				unregister();
+			}
+		};
 	});
 
 	if (hydrating) {
@@ -434,7 +413,9 @@ export function portal(get_target, content) {
 		// The outlets for this batch's key may have changed since the batch last
 		// ran (an outlet can be (un)registered by another batch, without this
 		// block necessarily re-running within this batch), so the target
-		// selection is computed from the now-committed state
+		// selection is computed from this batch's view of the world at commit
+		// time. The read must be batch-aware (`get` rather than `.v`), because
+		// other in-flight batches may have eagerly (un)registered outlets
 		/** @type {Set<Outlet | Element>} */
 		var targets = new Set();
 
@@ -442,7 +423,9 @@ export function portal(get_target, content) {
 			if (target instanceof Element) {
 				targets.add(target);
 			} else {
-				for (var outlet of get_outlet_entry(target).outlets.v) {
+				var outlets = untrack(() => get(get_outlet_entry(target).outlets));
+
+				for (var outlet of outlets) {
 					targets.add(outlet);
 				}
 			}
@@ -485,7 +468,15 @@ export function portal(get_target, content) {
 
 		var target = get_target();
 		var batch = /** @type {Batch} */ (current_batch);
-		var defer = should_defer_append();
+		// Unlike other blocks (whose fresh content is always contained by the
+		// parent branch being created (at mount, or offscreen)) a portal renders
+		// its content outside its own subtree, potentially into DOM that is
+		// already visible. Insertion is therefore deferred until the batch
+		// commits even on the block's first run (which `should_defer_append`
+		// alone would treat as an immediate append), so that content never
+		// appears before the rest of the batch.
+		var defer =
+			should_defer_append() || (async_mode_flag && !hydrating && eager_block_effects === null);
 
 		/** @type {Set<Outlet | Element>} */
 		var targets = new Set();
@@ -528,7 +519,7 @@ export function portal(get_target, content) {
 				// an outlet with our key may appear later during this hydration
 				// pass (`{#portal ...}` before `{@portal ...}` in the markup).
 				// Register a callback so it can have us claim our server-rendered
-				// content at its position
+				// content at its position.
 				var entry = get_outlet_entry(target);
 				var restore = capture();
 

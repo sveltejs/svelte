@@ -304,9 +304,6 @@ export class Batch {
 			this.schedule(e);
 		}
 
-		const roots = this.#roots;
-		this.#roots = [];
-
 		this.apply();
 
 		/** @type {Effect[]} */
@@ -321,20 +318,29 @@ export class Batch {
 		 */
 		var updates = (legacy_updates = []);
 
-		for (const root of roots) {
-			try {
-				this.#traverse(root, effects, render_effects);
-			} catch (e) {
-				reset_all(root);
-				// If there's no async work left, this branch is now dead and needs
-				// to be discarded to not become a zombie that is never cleaned up.
-				// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
-				// for a (non-minimal) reproduction that demonstrates a case where this is necessary
-				// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
-				if (!this.#is_deferred()) this.discard();
-				throw e;
+		do {
+			const roots = this.#roots;
+			this.#roots = [];
+
+			for (const root of roots) {
+				try {
+					this.#traverse(root, effects, render_effects);
+				} catch (e) {
+					reset_all(root);
+					// If there's no async work left, this branch is now dead and needs
+					// to be discarded to not become a zombie that is never cleaned up.
+					// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
+					// for a (non-minimal) reproduction that demonstrates a case where this is necessary
+					// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
+					if (!this.#is_deferred()) this.discard();
+					throw e;
+				}
 			}
-		}
+
+			// If state was set during traversal, re-traverse right away to avoid
+			// tearing: e.g. an if block with async work inside could've been toggled,
+			// and without re-traversal we might wrongfully commit/render if there's no other async work left.
+		} while (this.#roots.length > 0);
 
 		// any writes should take effect in a subsequent batch
 		current_batch = null;
