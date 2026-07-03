@@ -42,11 +42,17 @@ import { queue_micro_task } from '../task.js';
 
 /**
  * All known outlets (and portals waiting for outlets) for a given key.
- * `pending` is only used during hydration — it contains render functions of
- * `{#portal ...}` blocks that were created before their outlet, so that the
- * outlet can have them claim their server-rendered content upon initialisation.
+ * - `outlets` is the reactive source portals depend on
+ * - `all` is the canonical registry across all 'worlds' (in-flight batches and
+ *   forks). It is the base for the read-modify-writes to `outlets`: outlets add
+ *   and remove themselves as their effects are created and destroyed, so every
+ *   write carries the full union and registrations of other batches are never
+ *   lost. Batch-aware reads of `outlets` still scope each batch to its own view.
+ * - `pending` it contains render functions of `{#portal ...}` blocks that were
+ *   created before their outlet, so that content is rendered upon initialisation.
  * @typedef {{
  *   outlets: Source<Outlet[]>,
+ *   all: Outlet[],
  *   pending: Set<(outlet: Outlet) => void>
  * }} OutletEntry
  */
@@ -68,7 +74,7 @@ function get_outlet_entry(key) {
 	let entry = outlet_map.get(key);
 
 	if (entry === undefined) {
-		entry = { outlets: source([]), pending: new Set() };
+		entry = { outlets: source([]), all: [], pending: new Set() };
 		outlet_map.set(key, entry);
 	}
 
@@ -151,19 +157,15 @@ export function portal_outlet(node, get_id) {
 
 		const entry = get_outlet_entry(id);
 
-		internal_set(entry.outlets, [...entry.outlets.v, outlet]);
+		internal_set(entry.outlets, (entry.all = [...entry.all, outlet]));
 
-		// During hydration, portals that were created before this outlet claim
-		// their server-rendered content now, while the hydration position is known.
+		// portals that were created before this outlet claim their server-rendered content now
 		for (const render of entry.pending) {
 			render(outlet);
 		}
 
 		const unregister = () => {
-			internal_set(
-				entry.outlets,
-				entry.outlets.v.filter((o) => o !== outlet)
-			);
+			internal_set(entry.outlets, (entry.all = entry.all.filter((o) => o !== outlet)));
 		};
 
 		return () => {
@@ -503,6 +505,7 @@ export function portal(get_target, content) {
 		}
 
 		for (const k of keys) {
+			// Do the get outside the below if-block so we're notified of changes to any outlets source
 			var outlets = get(get_outlet_entry(k).outlets);
 
 			if (k === key) {
@@ -516,7 +519,7 @@ export function portal(get_target, content) {
 			if (target instanceof Element) {
 				targets.add(target);
 			} else if (hydrating) {
-				// an outlet with our key may appear later during this hydration
+				// An outlet with our key may appear later during this hydration
 				// pass (`{#portal ...}` before `{@portal ...}` in the markup).
 				// Register a callback so it can have us claim our server-rendered
 				// content at its position.
