@@ -184,6 +184,14 @@ export class Batch {
 	#maybe_dirty_effects = new Set();
 
 	/**
+	 * Async/block effects that were scheduled in this batch before it was
+	 * started, and stashed so that their tree markers could be reset (see
+	 * #stash). Rescheduled (once) when the batch is processed
+	 * @type {Effect[]}
+	 */
+	#stashed = [];
+
+	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`.
 	 * The value contains child effects that were dirty/maybe_dirty before being reset,
@@ -273,6 +281,52 @@ export class Batch {
 		this.#unskipped_branches.add(effect);
 	}
 
+	/**
+	 * Stash any work that has been scheduled in this (not yet processed) batch as
+	 * deferred work, resetting the 'already scheduled' markers (cleared CLEAN flags
+	 * on branches) on the effect tree. This makes the scheduling state batch-local,
+	 * so that concurrent scheduling into _other_ batches (during a rebase) isn't
+	 * confused by this batch's tree markers. The work is rescheduled when this
+	 * batch is processed.
+	 */
+	#stash() {
+		var roots = this.#roots;
+		this.#roots = [];
+
+		for (const root of roots) {
+			this.#reset(root);
+		}
+	}
+
+	/**
+	 * @param {Effect} effect
+	 */
+	#reset(effect) {
+		// clean branch = nothing scheduled inside, no need to traverse further
+		if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
+			return;
+		}
+
+		if ((effect.f & (DIRTY | MAYBE_DIRTY)) !== 0) {
+			if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
+				// async/block effects run during traversal, so they must not go into
+				// #dirty_effects (whose contents are re-marked on every process) —
+				// stash them for a one-time reschedule instead, keeping their status
+				this.#stashed.push(effect);
+			} else {
+				defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
+			}
+		} else {
+			set_signal_status(effect, CLEAN);
+		}
+
+		var e = effect.first;
+		while (e !== null) {
+			this.#reset(e);
+			e = e.next;
+		}
+	}
+
 	#process() {
 		this.#started = true;
 
@@ -302,6 +356,15 @@ export class Batch {
 		for (const e of this.#maybe_dirty_effects) {
 			set_signal_status(e, MAYBE_DIRTY);
 			this.schedule(e);
+		}
+
+		if (this.#stashed.length > 0) {
+			const stashed = this.#stashed;
+			this.#stashed = [];
+
+			for (const e of stashed) {
+				this.schedule(e);
+			}
 		}
 
 		const roots = this.#roots;
@@ -401,6 +464,14 @@ export class Batch {
 			// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
 			// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 			if (async_mode_flag) {
+				// If effects that ran during this flush wrote state, that work was scheduled
+				// in a new batch, leaving 'already scheduled' markers (cleared CLEAN flags)
+				// on the shared effect tree. Stash it as the new batch's deferred work (which
+				// resets those markers) before rebasing other in-flight batches in #commit —
+				// otherwise scheduling effects in those batches would wrongly bail, assuming
+				// the effects are already covered by a root in _their_ queue
+				if (next_batch !== null) next_batch.#stash();
+
 				this.#commit();
 				// Rebases can activate other batches or null it out, therefore restore the new one here
 				current_batch = next_batch;
