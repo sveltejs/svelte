@@ -25,7 +25,13 @@ import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
-import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
+import {
+	branch,
+	destroy_effect,
+	effect,
+	flush_destroy_errors,
+	managed
+} from '../../reactivity/effects.js';
 import { init_select, select_option } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
 
@@ -537,19 +543,31 @@ export function attribute_effect(
 				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
 			}
 
-			for (let symbol of Object.getOwnPropertySymbols(effects)) {
-				if (!next[symbol]) destroy_effect(effects[symbol]);
-			}
+			// defer attachment-cleanup errors so one throwing cleanup can't strand the
+			// attachment effects still queued for destruction/replacement below (#18415)
+			/** @type {import('../../reactivity/effects.js').DestroyErrors} */
+			var errors = [];
+			var completed = false;
 
-			for (let symbol of Object.getOwnPropertySymbols(next)) {
-				var n = next[symbol];
-
-				if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
-					if (effects[symbol]) destroy_effect(effects[symbol]);
-					effects[symbol] = branch(() => attach(element, () => n));
+			try {
+				for (let symbol of Object.getOwnPropertySymbols(effects)) {
+					if (!next[symbol]) destroy_effect(effects[symbol], true, errors);
 				}
 
-				current[symbol] = n;
+				for (let symbol of Object.getOwnPropertySymbols(next)) {
+					var n = next[symbol];
+
+					if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
+						if (effects[symbol]) destroy_effect(effects[symbol], true, errors);
+						effects[symbol] = branch(() => attach(element, () => n));
+					}
+
+					current[symbol] = n;
+				}
+
+				completed = true;
+			} finally {
+				flush_destroy_errors(errors, completed);
 			}
 
 			prev = current;

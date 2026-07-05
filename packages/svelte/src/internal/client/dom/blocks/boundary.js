@@ -13,6 +13,7 @@ import {
 	block,
 	branch,
 	destroy_effect,
+	flush_destroy_errors,
 	move_effect,
 	pause_effect
 } from '../../reactivity/effects.js';
@@ -408,19 +409,31 @@ export class Boundary {
 	 * @param {unknown} error
 	 */
 	#handle_error(error) {
-		if (this.#main_effect) {
-			destroy_effect(this.#main_effect);
-			this.#main_effect = null;
-		}
+		// defer teardown errors so one throwing teardown can't strand the boundary's
+		// other effects, still queued for destruction below (#18415)
+		/** @type {import('../../reactivity/effects.js').DestroyErrors} */
+		var errors = [];
+		var completed = false;
 
-		if (this.#pending_effect) {
-			destroy_effect(this.#pending_effect);
-			this.#pending_effect = null;
-		}
+		try {
+			if (this.#main_effect) {
+				destroy_effect(this.#main_effect, true, errors);
+				this.#main_effect = null;
+			}
 
-		if (this.#failed_effect) {
-			destroy_effect(this.#failed_effect);
-			this.#failed_effect = null;
+			if (this.#pending_effect) {
+				destroy_effect(this.#pending_effect, true, errors);
+				this.#pending_effect = null;
+			}
+
+			if (this.#failed_effect) {
+				destroy_effect(this.#failed_effect, true, errors);
+				this.#failed_effect = null;
+			}
+
+			completed = true;
+		} finally {
+			flush_destroy_errors(errors, completed);
 		}
 
 		if (hydrating) {

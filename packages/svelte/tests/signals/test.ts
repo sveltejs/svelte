@@ -1521,4 +1521,95 @@ describe('signals', () => {
 			assert.equal(s.reactions, null);
 		};
 	});
+
+	// https://github.com/sveltejs/svelte/issues/18415
+	// Sibling effects are destroyed in a loop. A throwing `$effect` teardown used to abort the
+	// loop, so the effects still queued for destruction were never unsubscribed — they stayed
+	// subscribed to their dependencies (retaining detached DOM) for the lifetime of the parent.
+	// The whole pass must now complete, with the teardown error surfaced once at the end.
+	test('a throwing $effect teardown does not strand the rest of a destroy pass', () => {
+		const src = state(0);
+		const dep = derived(() => $.get(src));
+		let throw_on = -1;
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				for (let i = 0; i < 3; i++) {
+					const idx = i;
+					effect(() => {
+						$.get(dep);
+						return () => {
+							if (idx === throw_on) throw new Error(`teardown boom ${idx}`);
+						};
+					});
+				}
+			});
+		});
+
+		return () => {
+			flushSync();
+			assert.equal(dep.reactions?.length, 3); // three subscribed siblings
+
+			throw_on = 0; // the first-destroyed sibling throws in its teardown
+
+			let thrown;
+			try {
+				destroy();
+			} catch (e) {
+				thrown = e;
+			}
+
+			// the error still surfaces, but the siblings after it were still destroyed
+			assert.isDefined(thrown, 'the teardown error should still surface');
+			assert.equal(dep.reactions, null);
+			assert.equal(src.reactions, null);
+		};
+	});
+
+	// https://github.com/sveltejs/svelte/issues/18415
+	// A destroy pass can only rethrow one teardown error. The rest must not vanish
+	// silently — in DEV they're surfaced via `console.error` so a cascade of throwing
+	// teardowns stays diagnosable.
+	test('surfaces the secondary throwing teardowns of a destroy pass in DEV', () => {
+		/** @type {unknown[]} */
+		const logged: unknown[] = [];
+		const original = console.error;
+		console.error = (...args: unknown[]) => {
+			logged.push(...args);
+		};
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				for (let i = 0; i < 3; i++) {
+					const idx = i;
+					effect(() => {
+						return () => {
+							throw new Error(`teardown boom ${idx}`);
+						};
+					});
+				}
+			});
+		});
+
+		return () => {
+			flushSync();
+
+			let thrown;
+			try {
+				destroy();
+			} catch (e) {
+				thrown = e;
+			} finally {
+				console.error = original;
+			}
+
+			// one error is rethrown, the other two are surfaced rather than dropped
+			assert.ok(thrown instanceof Error, 'the first teardown error is still rethrown');
+			assert.equal(logged.length, 2, 'the other teardown errors are surfaced in DEV');
+			assert.ok(
+				logged.every((e) => e instanceof Error),
+				'each surfaced value is the dropped teardown error'
+			);
+		};
+	});
 });

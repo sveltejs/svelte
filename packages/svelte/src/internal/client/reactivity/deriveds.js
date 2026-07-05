@@ -37,6 +37,7 @@ import {
 	destroy_effect,
 	destroy_effect_children,
 	effect_tracking,
+	flush_destroy_errors,
 	teardown
 } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
@@ -319,8 +320,20 @@ export function destroy_derived_effects(derived) {
 	if (effects !== null) {
 		derived.effects = null;
 
-		for (var i = 0; i < effects.length; i += 1) {
-			destroy_effect(/** @type {Effect} */ (effects[i]));
+		// this loop initiates a destroy pass; collect teardown errors so one throwing
+		// teardown can't strand the effects still queued for destruction (#18415)
+		/** @type {import('./effects.js').DestroyErrors} */
+		var errors = [];
+		var completed = false;
+
+		try {
+			for (var i = 0; i < effects.length; i += 1) {
+				destroy_effect(/** @type {Effect} */ (effects[i]), true, errors);
+			}
+
+			completed = true;
+		} finally {
+			flush_destroy_errors(errors, completed);
 		}
 	}
 }

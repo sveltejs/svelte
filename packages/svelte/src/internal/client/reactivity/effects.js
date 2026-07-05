@@ -438,6 +438,45 @@ export function branch(fn) {
 }
 
 /**
+ * Teardown errors collected during a destroy pass, threaded explicitly through the
+ * destroy call chain. Deferring them lets the whole pass complete — every effect's
+ * structural cleanup (`remove_reactions`, DOM removal, unlinking) must run even if
+ * a sibling's teardown throws, otherwise the un-destroyed siblings stay subscribed
+ * to their dependencies and retain detached DOM for the lifetime of the parent
+ * block (#18415). The frame that CREATED the array (the owner — any destroy entry
+ * point that was not handed one) flushes it when its pass ends.
+ * `closed` is set on flush: destroy passes are synchronous, so a late push means
+ * the invariant was broken — surfaced loudly in DEV via {@link flush_destroy_errors}.
+ * @typedef {unknown[] & { closed?: boolean }} DestroyErrors
+ */
+
+/**
+ * Conclude a destroy pass: rethrow the first deferred teardown error, surface the
+ * rest in DEV. Pass `completed = false` when the pass is unwinding because of a
+ * structural (non-teardown) error — that error must keep propagating, so the
+ * deferred teardown errors are surfaced in DEV instead of being rethrown over it.
+ * @param {DestroyErrors} errors
+ * @param {boolean} completed
+ */
+export function flush_destroy_errors(errors, completed) {
+	errors.closed = true;
+
+	if (errors.length === 0) return;
+
+	if (DEV) {
+		// only the first deferred teardown error can be rethrown (none, if a structural
+		// error is already propagating); surface the rest in DEV so a cascade of
+		// throwing teardowns isn't silently swallowed (#18415)
+		for (var i = completed ? 1 : 0; i < errors.length; i++) {
+			// eslint-disable-next-line no-console
+			console.error(errors[i]);
+		}
+	}
+
+	if (completed) throw errors[0];
+}
+
+/**
  * @param {Effect} effect
  */
 export function execute_effect_teardown(effect) {
@@ -447,6 +486,9 @@ export function execute_effect_teardown(effect) {
 		const previous_reaction = active_reaction;
 		set_is_destroying_effect(true);
 		set_active_reaction(null);
+		// a destroy triggered from within a teardown (e.g. unmounting another root,
+		// guarded by the user's own try/catch) receives no errors array, so it is
+		// naturally its own pass and throws synchronously — no state to isolate
 		try {
 			teardown.call(null);
 		} finally {
@@ -459,9 +501,26 @@ export function execute_effect_teardown(effect) {
 /**
  * @param {Effect} signal
  * @param {boolean} remove_dom
+ * @param {DestroyErrors | null} [errors] enclosing destroy pass's accumulator; omitted = this call owns the pass
  * @returns {void}
  */
-export function destroy_effect_children(signal, remove_dom = false) {
+export function destroy_effect_children(signal, remove_dom = false, errors = null) {
+	if (errors === null) {
+		// this call initiates the destroy pass, so it owns the errors array
+		/** @type {DestroyErrors} */
+		var owned = [];
+		var completed = false;
+
+		try {
+			destroy_effect_children(signal, remove_dom, owned);
+			completed = true;
+		} finally {
+			flush_destroy_errors(owned, completed);
+		}
+
+		return;
+	}
+
 	var effect = signal.first;
 	signal.first = signal.last = null;
 
@@ -480,7 +539,7 @@ export function destroy_effect_children(signal, remove_dom = false) {
 			// this is now an independent root
 			effect.parent = null;
 		} else {
-			destroy_effect(effect, remove_dom);
+			destroy_effect(effect, remove_dom, errors);
 		}
 
 		effect = next;
@@ -489,15 +548,32 @@ export function destroy_effect_children(signal, remove_dom = false) {
 
 /**
  * @param {Effect} signal
+ * @param {DestroyErrors | null} [errors] enclosing destroy pass's accumulator; omitted = this call owns the pass
  * @returns {void}
  */
-export function destroy_block_effect_children(signal) {
+export function destroy_block_effect_children(signal, errors = null) {
+	if (errors === null) {
+		// this call initiates the destroy pass, so it owns the errors array
+		/** @type {DestroyErrors} */
+		var owned = [];
+		var completed = false;
+
+		try {
+			destroy_block_effect_children(signal, owned);
+			completed = true;
+		} finally {
+			flush_destroy_errors(owned, completed);
+		}
+
+		return;
+	}
+
 	var effect = signal.first;
 
 	while (effect !== null) {
 		var next = effect.next;
 		if ((effect.f & BRANCH_EFFECT) === 0) {
-			destroy_effect(effect);
+			destroy_effect(effect, true, errors);
 		}
 		effect = next;
 	}
@@ -506,9 +582,36 @@ export function destroy_block_effect_children(signal) {
 /**
  * @param {Effect} effect
  * @param {boolean} [remove_dom]
+ * @param {DestroyErrors | null} [errors] enclosing destroy pass's accumulator; omitted = this call owns the pass
  * @returns {void}
  */
-export function destroy_effect(effect, remove_dom = true) {
+export function destroy_effect(effect, remove_dom = true, errors = null) {
+	if (errors !== null) {
+		// part of an enclosing destroy pass — the owner of `errors` flushes it
+		destroy(effect, remove_dom, errors);
+		return;
+	}
+
+	// this call initiates the destroy pass, so it owns the errors array
+	/** @type {DestroyErrors} */
+	var owned = [];
+	var completed = false;
+
+	try {
+		destroy(effect, remove_dom, owned);
+		completed = true;
+	} finally {
+		flush_destroy_errors(owned, completed);
+	}
+}
+
+/**
+ * @param {Effect} effect
+ * @param {boolean} remove_dom
+ * @param {DestroyErrors} errors
+ * @returns {void}
+ */
+function destroy(effect, remove_dom, errors) {
 	var removed = false;
 
 	if (
@@ -521,7 +624,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	effect.f |= DESTROYING;
-	destroy_effect_children(effect, remove_dom && !removed);
+	destroy_effect_children(effect, remove_dom && !removed, errors);
 	remove_reactions(effect, 0);
 
 	var transitions = effect.nodes && effect.nodes.t;
@@ -532,7 +635,24 @@ export function destroy_effect(effect, remove_dom = true) {
 		}
 	}
 
-	execute_effect_teardown(effect);
+	try {
+		execute_effect_teardown(effect);
+	} catch (error) {
+		if (DEV && errors.closed) {
+			// destroy passes are synchronous; a teardown error arriving after its pass
+			// flushed means that invariant was broken — surface the violation loudly and
+			// rethrow the error immediately rather than losing it in a closed array
+			// eslint-disable-next-line no-console
+			console.error(
+				'Svelte internal invariant violated: a teardown error was reported after its destroy pass finished'
+			);
+			throw error;
+		}
+
+		// defer the error so a throwing teardown can't abort the destroy pass and
+		// strand the effects still queued for destruction (#18415)
+		errors.push(error);
+	}
 
 	effect.f ^= DESTROYING;
 	effect.f |= DESTROYED;
