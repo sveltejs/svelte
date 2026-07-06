@@ -2622,7 +2622,7 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"], TForeignNodes extends RendererNodes<any, any, any, any, any> | undefined = T extends DefaultNodes ? RendererNodes<any, any, any, any, any> : T["foreign"], R extends Renderer<TFragment, TElement, TTextNode, TComment, TForeignNodes> = Renderer<TFragment, TElement, TTextNode, TComment>>(renderer: R): R;
+	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"], TForeignNodes extends RendererNodes<any, any, any, any, any> | undefined = T extends DefaultNodes ? RendererNodes<any, any, any, any, any> : T["foreign"], R extends Renderer<TFragment, TElement, TTextNode, TComment, TForeignNodes> = Renderer<TFragment, TElement, TTextNode, TComment, TForeignNodes>>(renderer: R): R;
 	type Renderer<
 		TFragment extends object = object,
 		TElement extends object = object,
