@@ -25,6 +25,7 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import { queue_micro_task } from '../dom/task.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -169,6 +170,7 @@ export async function save(promise) {
 
 	return () => {
 		restore();
+		queue_micro_task(unset_context);
 		return value;
 	};
 }
@@ -181,10 +183,10 @@ export async function save(promise) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
-	var previous_async_effect = reactivity_loss_tracker;
+	var previous_reactivity_loss_tracker = reactivity_loss_tracker;
 	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
 	queueMicrotask(() => {
-		if (reactivity_loss_tracker === previous_async_effect) {
+		if (reactivity_loss_tracker === previous_reactivity_loss_tracker) {
 			set_reactivity_loss_tracker(null);
 		}
 	});
@@ -192,12 +194,12 @@ export async function track_reactivity_loss(promise) {
 	var value = await promise;
 
 	return () => {
-		set_reactivity_loss_tracker(previous_async_effect);
+		set_reactivity_loss_tracker(previous_reactivity_loss_tracker);
 		// While this can result in false negatives it also guards against the more important
 		// false positives that would occur if this is the last in a chain of async operations,
 		// and the reactivity_loss_tracker would then stay around until the next async operation happens.
 		queueMicrotask(() => {
-			if (reactivity_loss_tracker === previous_async_effect) {
+			if (reactivity_loss_tracker === previous_reactivity_loss_tracker) {
 				set_reactivity_loss_tracker(null);
 			}
 		});

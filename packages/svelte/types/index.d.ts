@@ -3229,7 +3229,7 @@ declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
 declare namespace $state {
-	type Primitive = string | number | boolean | null | undefined;
+	type Primitive = string | number | bigint | boolean | null | undefined;
 
 	type TypedArray =
 		| Int8Array
