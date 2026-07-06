@@ -13,10 +13,9 @@ import renderer, {
 	type ObjElement,
 	type ObjNode
 } from './renderer.js';
-import { mount, unmount } from '../../src/index-client.js';
 import { writeFile } from 'node:fs/promises';
 import { globSync } from 'tinyglobby';
-import { hydrate, unmount } from 'svelte';
+import { hydrate, unmount, mount } from 'svelte';
 import { render } from 'svelte/server';
 
 // `_config.js` test callbacks rely on inferred parameter types, which
