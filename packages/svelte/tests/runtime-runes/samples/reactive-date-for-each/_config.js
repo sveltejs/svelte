@@ -4,7 +4,6 @@ import { test } from '../../test';
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {
-		debugger;
 		assert.htmlEqual(target.innerHTML, '<ul></ul>');
 		await new Promise((r) => setTimeout(r, 110));
 		assert.htmlEqual(target.innerHTML, '<ul><span>#1 0</span></ul>');

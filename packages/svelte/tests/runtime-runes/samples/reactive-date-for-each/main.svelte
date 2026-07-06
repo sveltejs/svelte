@@ -4,7 +4,6 @@
 	
 	function compactAgo(timestamp, now) {
 		const seconds = Math.max(0, Math.round((now - Date.parse(timestamp)) / 100));
-		debugger
 		return seconds;
 	}
 
