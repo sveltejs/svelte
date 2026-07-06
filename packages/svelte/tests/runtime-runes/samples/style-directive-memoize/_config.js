@@ -19,7 +19,7 @@ export default test({
 	async test({ target, assert, component, logs }) {
 		flushSync();
 		tick();
-		
+
 		assert.deepEqual(logs, ['makeColor()']);
 
 		const btn = target.querySelector('button');
@@ -34,7 +34,6 @@ export default test({
 		btn?.click();
 
 		flushSync();
-
 
 		assert.equal(div?.style.backgroundColor, 'red');
 		assert.equal(div?.style.fontSize, '2em');

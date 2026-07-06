@@ -19,7 +19,7 @@ export default test({
 	async test({ target, assert, logs }) {
 		flushSync();
 		tick();
-		
+
 		assert.deepEqual(logs, ['is_red()']);
 
 		const btn = target.querySelector('button');
