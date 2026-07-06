@@ -54,8 +54,7 @@ import {
 	active_batch,
 	set_cv,
 	get_wv,
-	previous_batch,
-	schedule_effect
+	previous_batch
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
