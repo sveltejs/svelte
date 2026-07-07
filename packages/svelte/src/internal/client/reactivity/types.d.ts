@@ -109,3 +109,12 @@ export interface ValueSnapshot<T = unknown> {
 	v: T;
 	wv: number;
 }
+
+export interface ValueRecord<T = unknown> extends ValueSnapshot<T> {
+	/** the value before the batch's first write (`UNINITIALIZED` if there was none) */
+	pv: unknown;
+	/** the write version before the batch's first write */
+	pwv: number;
+	/** lazily created `{ v: pv, wv: pwv }` snapshot, for time travelling */
+	p: ValueSnapshot<T> | null;
+}

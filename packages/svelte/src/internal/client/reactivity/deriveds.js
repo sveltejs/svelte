@@ -36,7 +36,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { current_batch, get_wv, active_batch, set_cv, previous_batch } from './batch.js';
+import { current_batch, active_batch, overlay_values, set_cv, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, noop } from '../../shared/utils.js';
 
@@ -345,9 +345,12 @@ export function execute_derived(derived) {
 
 	set_active_effect(parent);
 
-	derived_stack ??= [];
-
 	if (DEV) {
+		// the stack allows us to detect self-referencing deriveds (in `get`).
+		// it is maintained in DEV only, because scanning it on every read
+		// is too expensive for production
+		derived_stack ??= [];
+
 		// TODO don't we need eager effects in prod too?
 		let prev_eager_effects = eager_effects;
 		set_eager_effects(new Set());
@@ -364,13 +367,11 @@ export function execute_derived(derived) {
 		}
 	} else {
 		try {
-			derived_stack.push(derived);
 			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
-			derived_stack.pop();
 		}
 	}
 
@@ -386,12 +387,20 @@ export function update_derived(derived) {
 
 	var deps = derived.deps;
 	var cv = Infinity;
+	var overlay = overlay_values;
 
 	if (deps !== null) {
 		cv = -Infinity;
 
 		for (var i = 0; i < deps.length; i++) {
-			var dep_wv = get_wv(deps[i]);
+			var dep = deps[i];
+			var dep_wv = dep.wv;
+
+			if (overlay !== null) {
+				var snapshot = overlay.get(dep);
+				if (snapshot !== undefined) dep_wv = snapshot.wv;
+			}
+
 			if (dep_wv > cv) cv = dep_wv;
 		}
 	}
@@ -415,7 +424,11 @@ export function update_derived(derived) {
 		}
 	}
 
-	if (active_batch === null && (derived.f & CONNECTED) !== 0) {
+	// In the global view (no overlay active) we can cache the fact that the derived
+	// is now consistent with its dependencies, so that reads can skip the dependency
+	// check in `is_dirty`. Don't do this inside a cleanup function, or we would
+	// cache a stale value
+	if (!is_destroying_effect && (derived.f & CONNECTED) !== 0 && overlay_values === null) {
 		derived.f |= CLEAN;
 	}
 }

@@ -30,7 +30,7 @@ import {
 	REACTION_RAN
 } from '#client/constants';
 import * as e from '../errors.js';
-import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
+import { async_mode_flag, legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
@@ -40,7 +40,7 @@ import {
 	legacy_updates,
 	set_cv,
 	get_cv,
-	active_batch,
+	overlay_values,
 	current_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
@@ -193,6 +193,14 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 
 			set_cv(derived);
+
+			// an assignment behaves like a source write: the value is written
+			// through to the signal (below, in `capture`), so the global check
+			// version must be written too — the pair is consistent regardless
+			// of any active overlay
+			if (!batch.is_fork) {
+				derived.cv = write_version;
+			}
 		}
 
 		batch.capture(source, value, increment_write_version());
@@ -341,6 +349,8 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 		// if (wv <= get_cv(reaction)) continue;
 
 		if ((flags & EAGER_EFFECT) !== 0) {
+			reaction.f &= ~CLEAN;
+
 			// Eager effects need to run immediately:
 			// - for $inspect so that the stack trace makes sense
 			// - for $state.eager because they might be without an effect parent
@@ -352,9 +362,16 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 				// If setting state inside an effect, `batch !== active_batch` —
 				// we need to invalidate the current overlay so that subsequent
 				// effects read the correct value
-				active_batch?.values?.delete(derived);
+				overlay_values?.delete(derived);
 
-				batch.current.delete(derived);
+				// In sync mode `update_derived` never captures deriveds into
+				// `batch.current` (only assignments do), and none of the machinery
+				// that consumes stale derived entries (overlays, commit rebasing)
+				// runs — so we can skip this in that case
+				if (async_mode_flag) {
+					batch.uncapture(derived);
+				}
+
 				derived.f &= ~CLEAN;
 
 				if ((flags & WAS_MARKED) === 0) {
@@ -372,6 +389,8 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 			}
 		} else {
 			var effect = /** @type {Effect} */ (reaction);
+
+			effect.f &= ~CLEAN;
 
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
 				eager_block_effects.add(effect);

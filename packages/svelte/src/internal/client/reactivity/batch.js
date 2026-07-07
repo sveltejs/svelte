@@ -1,5 +1,5 @@
 /** @import { Fork } from 'svelte' */
-/** @import { Derived, Effect, Reaction, Source, Value, ValueSnapshot } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value, ValueRecord, ValueSnapshot } from '#client' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -66,6 +66,25 @@ export let current_batch = null;
 export let active_batch = null;
 
 /**
+ * The `values` overlay of the active batch, mirrored into a module-level
+ * variable (kept in sync via `set_active_batch`) so that hot paths can check
+ * for the presence of an overlay with a single comparison.
+ * `null` means we are reading the 'global view'
+ * @type {Map<Value, ValueSnapshot<unknown>> | null}
+ */
+export let overlay_values = null;
+
+/**
+ * Update `active_batch` — and `overlay_values`, which must always equal
+ * `active_batch?.values ?? null`
+ * @param {Batch | null} batch
+ */
+function set_active_batch(batch) {
+	active_batch = batch;
+	overlay_values = batch === null ? null : batch.values;
+}
+
+/**
  * This is needed to avoid overwriting inputs
  * @type {Batch | null}
  */
@@ -127,18 +146,20 @@ export class Batch {
 
 	/**
 	 * The current values of any signals that are updated in this batch.
-	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
-	 * They keys of this map are identical to `this.#previous`
-	 * @type {Map<Value, ValueSnapshot<unknown>>}
+	 * Each record also contains the value/write version from _before_ the update
+	 * took place (`pv`/`pwv`), for time travelling — `pv === UNINITIALIZED` means
+	 * there is no previous value
+	 * @type {Map<Value, ValueRecord<unknown>>}
 	 */
 	current = new Map();
 
 	/**
-	 * The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
-	 * They keys of this map are identical to `this.#current`
-	 * @type {Map<Value, ValueSnapshot<unknown>>}
+	 * Previous values of signals that are deliberately _not_ (or no longer)
+	 * represented in `current` — error values, and deriveds that were
+	 * invalidated during a rebase. Lazily created, as this is rare
+	 * @type {Map<Value, ValueSnapshot<unknown>> | null}
 	 */
-	previous = new Map();
+	#previous = null;
 
 	/**
 	 * The combination of this batch's `current` and other batches' `previous` values,
@@ -200,6 +221,13 @@ export class Batch {
 
 	/** @type {Map<Reaction, number>} */
 	cvs = new Map();
+
+	/**
+	 * `true` if `cvs` contains any deriveds (only the case in rare multi-batch
+	 * scenarios — e.g. rebase sentinels, or recomputations under an overlay).
+	 * This lets `get_cv` skip the map lookup for deriveds in the common case
+	 */
+	has_derived_cvs = false;
 
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
@@ -433,7 +461,7 @@ export class Batch {
 			}
 		}
 
-		active_batch = null;
+		set_active_batch(null);
 
 		if (next_batch !== null) {
 			next_batch.#process();
@@ -514,14 +542,33 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
-		for (const [source, snapshot] of batch.current) {
-			var previous = batch.previous.get(source);
+		for (const [source, record] of batch.current) {
+			var existing = this.current.get(source);
 
-			if (previous && !this.previous.has(source)) {
-				this.previous.set(source, previous);
+			if (existing === undefined) {
+				// adopt the record (including its previous value) — unless this batch
+				// has its own, older previous value for the source
+				var previous = this.#previous?.get(source);
+
+				if (previous !== undefined) {
+					this.#previous?.delete(source);
+					record.pv = previous.v;
+					record.pwv = previous.wv;
+					record.p = previous;
+				}
+
+				this.current.set(source, record);
+			} else {
+				existing.v = record.v;
+				existing.wv = record.wv;
+
+				// this batch's own previous value takes precedence, if it has one
+				if (existing.pv === UNINITIALIZED && record.pv !== UNINITIALIZED) {
+					existing.pv = record.pv;
+					existing.pwv = record.pwv;
+					existing.p = record.p;
+				}
 			}
-
-			this.current.set(source, snapshot);
 		}
 
 		for (const [effect, deferred] of batch.async_deriveds) {
@@ -612,23 +659,59 @@ export class Batch {
 	 * @param {number} wv
 	 */
 	capture(value, v, wv) {
-		if (value.v !== UNINITIALIZED && !this.previous.has(value)) {
-			this.previous.set(value, { v: value.v, wv: value.wv });
-		}
+		var record = this.current.get(value);
 
-		// Don't save errors or they won't be thrown in `runtime.js#get`
-		if ((value.f & ERROR_VALUE) === 0) {
-			var snapshot = { v, wv };
+		if ((value.f & ERROR_VALUE) !== 0) {
+			// Don't save errors, or they won't be thrown in `runtime.js#get` —
+			// but do preserve the previous value, for time travelling
+			if (record === undefined && value.v !== UNINITIALIZED) {
+				var stash = (this.#previous ??= new Map());
 
-			this.current.delete(value); // order must be preserved
+				if (!stash.has(value)) {
+					stash.set(value, { v: value.v, wv: value.wv });
+				}
+			}
+		} else if (record === undefined) {
+			// note: we don't need to preserve write order in the map — every
+			// consumer of `current` uses the write versions in the records,
+			// which encode the ordering
+			var previous = this.#previous?.get(value);
 
-			this.current.set(value, snapshot);
-			active_batch?.values?.set(value, snapshot);
+			if (previous !== undefined) {
+				this.#previous?.delete(value);
+				record = { v, wv, pv: previous.v, pwv: previous.wv, p: previous };
+			} else {
+				record = { v, wv, pv: value.v, pwv: value.wv, p: null };
+			}
+
+			this.current.set(value, record);
+			overlay_values?.set(value, record);
+		} else {
+			record.v = v;
+			record.wv = wv;
+			overlay_values?.set(value, record);
 		}
 
 		if (!this.is_fork) {
 			value.v = v;
 			value.wv = wv;
+		}
+	}
+
+	/**
+	 * Remove a value from `current`, so that it is no longer treated as having
+	 * been changed by this batch (e.g. a derived that needs to be recomputed
+	 * following a rebase). Its previous value is preserved for time travelling
+	 * @param {Value} value
+	 */
+	uncapture(value) {
+		var record = this.current.get(value);
+		if (record === undefined) return;
+
+		this.current.delete(value);
+
+		if (record.pv !== UNINITIALIZED) {
+			(this.#previous ??= new Map()).set(value, (record.p ??= { v: record.pv, wv: record.pwv }));
 		}
 	}
 
@@ -638,7 +721,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
-		active_batch = null;
+		set_active_batch(null);
 	}
 
 	flush() {
@@ -657,7 +740,7 @@ export class Batch {
 			is_processing = false;
 
 			current_batch = null;
-			active_batch = null;
+			set_active_batch(null);
 
 			old_values.clear();
 
@@ -710,8 +793,12 @@ export class Batch {
 
 				if (batch_snapshot) {
 					if (is_earlier && snapshot.v !== batch_snapshot.v) {
-						// bring the value up to date
-						batch.current.set(source, snapshot);
+						// bring the value up to date. Note that we mutate the existing
+						// record rather than sharing ours — records are mutable, and
+						// sharing one between multiple live batches would cause
+						// writes in one batch to leak into another
+						batch_snapshot.v = snapshot.v;
+						batch_snapshot.wv = snapshot.wv;
 					} else {
 						// same value or later batch has more recent value,
 						// no need to re-run these effects
@@ -896,16 +983,24 @@ export class Batch {
 
 	apply() {
 		if (!async_mode_flag) {
-			// TODO previously we bailed here if there was only one (non-fork) batch... maybe we can reinstate that
 			return;
 		}
 
-		if (active_batch === this) return;
-		active_batch = this;
+		// If this is the only batch, and not a fork, the 'global view' is already
+		// correct (values are written through to the signals as they change) —
+		// we don't need an overlay, and `is_dirty` can rely on the `CLEAN` flag
+		if (!this.is_fork && this.#prev === null && this.#next === null) {
+			this.values = null;
+			set_active_batch(this);
+			return;
+		}
+
+		if (active_batch === this && this.values !== null) return;
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		this.values = new Map(this.current);
+		set_active_batch(this);
 
 		// ...and undo changes belonging to other batches unless they intersect
 		for (let batch = first_batch; batch !== null; batch = batch.#next) {
@@ -925,9 +1020,17 @@ export class Batch {
 			}
 
 			if (!intersects) {
-				for (const [value, snapshot] of batch.previous) {
-					if (!this.values.has(value)) {
-						this.values.set(value, snapshot);
+				for (const [value, record] of batch.current) {
+					if (record.pv !== UNINITIALIZED && !this.values.has(value)) {
+						this.values.set(value, (record.p ??= { v: record.pv, wv: record.pwv }));
+					}
+				}
+
+				if (batch.#previous !== null) {
+					for (const [value, snapshot] of batch.#previous) {
+						if (!this.values.has(value)) {
+							this.values.set(value, snapshot);
+						}
 					}
 				}
 			}
@@ -940,6 +1043,10 @@ export class Batch {
 	 */
 	schedule(effect) {
 		last_scheduled_effect = effect;
+
+		// the effect can no longer be considered definitely-clean,
+		// its dependencies need to be checked when it is reached
+		effect.f &= ~CLEAN;
 
 		if (!this.cvs.has(effect)) {
 			this.cvs.set(effect, effect.cv);
@@ -1188,8 +1295,13 @@ function mark_effects(batch, value, sources, marked, checked) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				batch.current.delete(/** @type {Derived} */ (reaction));
+				batch.uncapture(/** @type {Derived} */ (reaction));
 				batch.cvs.set(/** @type {Derived} */ (reaction), -1);
+				batch.has_derived_cvs = true;
+
+				// the sentinel above forces a recomputation within `batch` —
+				// it must not be bypassed by a cached 'definitely clean' state
+				reaction.f &= ~CLEAN;
 
 				mark_effects(batch, /** @type {Derived} */ (reaction), sources, marked, checked);
 			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources, checked)) {
@@ -1310,10 +1422,10 @@ export function eager(fn) {
 
 			try {
 				running_eager_effect = true;
-				active_batch = null;
+				set_active_batch(null);
 				value = fn();
 			} finally {
-				active_batch = previous_batch;
+				set_active_batch(previous_batch);
 				running_eager_effect = previous_running_eager_effect;
 			}
 
@@ -1480,7 +1592,7 @@ export function fork(fn) {
  * @param {Value} value
  */
 export function get_wv(value) {
-	var snapshot = active_batch?.values?.get(value);
+	var snapshot = overlay_values?.get(value);
 	return snapshot ? snapshot.wv : value.wv;
 }
 
@@ -1488,16 +1600,52 @@ export function get_wv(value) {
  * @param {Reaction} reaction
  */
 export function get_cv(reaction) {
-	return active_batch?.cvs.get(reaction) ?? reaction.cv;
+	if (active_batch !== null && ((reaction.f & DERIVED) === 0 || active_batch.has_derived_cvs)) {
+		var cv = active_batch.cvs.get(reaction);
+		if (cv !== undefined) return cv;
+	}
+
+	return reaction.cv;
 }
 
 /**
  * @param {Reaction} reaction
  */
 export function set_cv(reaction, cv = write_version) {
-	// TODO seems weird to have both of these
+	if ((reaction.f & DERIVED) !== 0) {
+		// For deriveds, only update the global check version if it was computed
+		// against the global view. A check version computed under a divergent
+		// overlay could claim more freshness than the (written-through, global)
+		// values warrant, causing reads in the global view to skip a necessary
+		// recomputation
+		if (!current_batch?.is_fork && !running_eager_effect && overlay_values === null) {
+			// in the global view, the batch-scoped entries are redundant —
+			// `get_cv` falls back to the global check version we write here
+			reaction.cv = cv;
+			return;
+		}
+
+		if (current_batch !== null) {
+			current_batch.cvs.set(reaction, cv);
+			current_batch.has_derived_cvs = true;
+		}
+
+		if (active_batch !== null && active_batch !== current_batch) {
+			active_batch.cvs.set(reaction, cv);
+			active_batch.has_derived_cvs = true;
+		}
+
+		return;
+	}
+
+	// For effects the batch-scoped entries are always needed (they update the
+	// snapshots taken in `schedule`, without which an effect that ran would
+	// still appear dirty). The global check version is also always updated:
+	// re-runs with other batches' values are handled explicitly during
+	// rebasing, and a stale-low check version would cause spurious re-runs
+	// (cancelling in-flight async work)
 	current_batch?.cvs.set(reaction, cv);
-	active_batch?.cvs.set(reaction, cv);
+	if (active_batch !== current_batch) active_batch?.cvs.set(reaction, cv);
 
 	if (!current_batch?.is_fork && !running_eager_effect) {
 		reaction.cv = cv;

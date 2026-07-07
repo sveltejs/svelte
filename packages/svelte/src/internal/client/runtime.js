@@ -51,9 +51,8 @@ import {
 	current_batch,
 	flushSync,
 	get_cv,
-	active_batch,
+	overlay_values,
 	set_cv,
-	get_wv,
 	previous_batch
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
@@ -162,20 +161,28 @@ export function is_dirty(reaction) {
 		return true;
 	}
 
+	// If no overlay is active (`overlay_values === null`), we are reading the
+	// 'global view'. In the global view the `CLEAN` flag is a cache of the
+	// dependency check below: it guarantees that no dependency has a write
+	// version newer than the reaction's check version. It must be ignored while
+	// an overlay is active, because the overlay may present different
+	// values/versions than the global ones the flag was computed against.
+	var overlay = overlay_values;
+
 	if (flags & DERIVED) {
 		reaction.f &= ~WAS_MARKED;
 
 		if ((flags & CONNECTED) !== 0) {
-			if (active_batch !== null) {
-				if (active_batch.values?.has(/** @type {Derived} */ (reaction))) {
+			if (overlay !== null) {
+				if (overlay.has(/** @type {Derived} */ (reaction))) {
 					return false;
 				}
-			} else {
-				if ((reaction.f & CLEAN) !== 0) {
-					return false;
-				}
+			} else if ((flags & CLEAN) !== 0) {
+				return false;
 			}
 		}
+	} else if (overlay === null && (flags & CLEAN) !== 0) {
+		return false;
 	}
 
 	var dependencies = /** @type {Value[]} */ (reaction.deps);
@@ -197,9 +204,22 @@ export function is_dirty(reaction) {
 			}
 		}
 
-		if (get_wv(dependency) > cv) {
+		var wv = dependency.wv;
+
+		if (overlay !== null) {
+			var snapshot = overlay.get(dependency);
+			if (snapshot !== undefined) wv = snapshot.wv;
+		}
+
+		if (wv > cv) {
 			return true;
 		}
+	}
+
+	// cache the result of the dependency check, so that subsequent
+	// reads in the global view can skip it
+	if (overlay === null && (flags & CONNECTED) !== 0) {
+		reaction.f |= CLEAN;
 	}
 
 	return false;
@@ -402,10 +422,12 @@ function remove_reaction(signal, dependency) {
 		var derived = /** @type {Derived} */ (dependency);
 
 		// If we are working with a derived that is owned by an effect, then mark it as being
-		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
+		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise.
+		// A disconnected derived no longer receives invalidations, so it must not
+		// carry a `CLEAN` flag that would exempt it from checking its dependencies
 		if ((derived.f & CONNECTED) !== 0) {
 			derived.f ^= CONNECTED;
-			derived.f &= ~WAS_MARKED;
+			derived.f &= ~(WAS_MARKED | CLEAN);
 		}
 
 		// freeze any effects inside this derived
@@ -440,6 +462,11 @@ export function update_effect(effect) {
 	if ((flags & DESTROYED) !== 0) {
 		return;
 	}
+
+	// mark the effect clean before running it — writes to its dependencies
+	// during execution will unset the flag again (via `mark_reactions`
+	// or `schedule`), causing a re-run
+	effect.f |= CLEAN;
 
 	var previous_effect = active_effect;
 	var was_updating_effect = is_updating_effect;
@@ -645,7 +672,9 @@ export function get(signal) {
 	if (is_derived) {
 		var derived = /** @type {Derived} */ (signal);
 
-		if (derived_stack !== null && includes.call(derived_stack, derived)) {
+		// `derived_stack` is only maintained in DEV - would be too costly in production,
+		// so a self-referencing derived returns its stale value there
+		if (DEV && derived_stack !== null && includes.call(derived_stack, derived)) {
 			e.derived_references_self();
 		}
 
@@ -689,8 +718,10 @@ export function get(signal) {
 		}
 	}
 
-	var snapshot = active_batch?.values?.get(signal);
-	if (snapshot) return /** @type {V} */ (snapshot.v);
+	if (overlay_values !== null) {
+		var snapshot = overlay_values.get(signal);
+		if (snapshot !== undefined) return /** @type {V} */ (snapshot.v);
+	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
 		throw signal.v;

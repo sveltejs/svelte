@@ -1,9 +1,9 @@
 /** @import { Equals } from '#client' */
-import { active_batch } from './batch.js';
+import { overlay_values } from './batch.js';
 
 /** @type {Equals} */
 export function equals(value) {
-	var snapshot = active_batch?.values?.get(this);
+	var snapshot = overlay_values?.get(this);
 	return value === (snapshot ? snapshot.v : this.v);
 }
 
