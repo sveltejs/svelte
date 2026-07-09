@@ -665,7 +665,7 @@ export function get(signal) {
 			(derived.f & CONNECTED) === 0 &&
 			!untracking &&
 			active_reaction !== null &&
-			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
+			(active_reaction.f & CONNECTED) !== 0;
 
 		var is_new = (derived.f & REACTION_RAN) === 0;
 
