@@ -307,3 +307,33 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 test('Map.instanceOf', () => {
 	assert.equal(new SvelteMap() instanceof Map, true);
 });
+
+test('map.keys() is not notified when an existing unread key is set to a new value', () => {
+	const map = new SvelteMap([
+		[1, 'a'],
+		[2, 'b']
+	]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(Array.from(map.keys()));
+		});
+	});
+
+	flushSync(() => {
+		map.set(1, 'c');
+	});
+
+	flushSync(() => {
+		map.set(3, 'd');
+	});
+
+	assert.deepEqual(log, [
+		[1, 2],
+		[1, 2, 3]
+	]);
+
+	cleanup();
+});

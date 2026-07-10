@@ -161,19 +161,23 @@ export class SvelteMap extends Map {
 		var sources = this.#sources;
 		var s = sources.get(key);
 		var prev_res = super.get(key);
+		var existed = super.has(key);
 		var res = super.set(key, value);
 		var version = this.#version;
 
 		if (s === undefined) {
-			s = this.#source(0);
+			// if the key existed but was never read individually, nothing tracks it and the key set is unchanged
+			if (!existed) {
+				s = this.#source(0);
 
-			if (DEV) {
-				tag(s, `SvelteMap get(${label(key)})`);
+				if (DEV) {
+					tag(s, `SvelteMap get(${label(key)})`);
+				}
+
+				sources.set(key, s);
+				set(this.#size, super.size);
+				increment(version);
 			}
-
-			sources.set(key, s);
-			set(this.#size, super.size);
-			increment(version);
 		} else if (prev_res !== value) {
 			increment(s);
 
