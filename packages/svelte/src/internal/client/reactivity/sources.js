@@ -38,6 +38,7 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	current_batch,
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates
@@ -223,9 +224,9 @@ export function internal_set(source, value, updated_during_traversal = null) {
 				execute_derived(derived);
 			}
 
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			if (batch_values === null) {
+			// inside a fork the real value is untouched, so the status
+			// (which describes the real value) must be left alone too
+			if (!batch.is_fork) {
 				update_derived_status(derived);
 			}
 		}
@@ -334,7 +335,7 @@ export function increment(source) {
  * @param {Effect[] | null} updated_during_traversal
  * @returns {void}
  */
-function mark_reactions(signal, status, updated_during_traversal) {
+export function mark_reactions(signal, status, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -363,7 +364,15 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		} else if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
-			batch_values?.delete(derived);
+			// claiming the derived for the current batch merges any other live
+			// batch whose reactivity graph overlaps with ours into it
+			current_batch?.claim(derived);
+
+			// invalidate any world-local memoized values
+			if (batch_values !== null) {
+				batch_values.delete(derived);
+				current_batch?.fork_values?.delete(derived);
+			}
 
 			if ((flags & WAS_MARKED) === 0) {
 				// Only connected deriveds being executed outside the update cycle can be reliably unmarked right away

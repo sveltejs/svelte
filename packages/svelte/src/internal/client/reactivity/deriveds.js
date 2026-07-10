@@ -31,13 +31,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import {
-	async_effect,
-	destroy_effect,
-	destroy_effect_children,
-	effect_tracking,
-	teardown
-} from './effects.js';
+import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -90,7 +84,8 @@ export function derived(fn) {
 		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
 		parent: active_effect,
-		ac: null
+		ac: null,
+		batch: null
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -391,33 +386,46 @@ export function execute_derived(derived) {
  */
 export function update_derived(derived) {
 	var value = execute_derived(derived);
+	var batch = current_batch ?? previous_batch;
+	var fork_values = batch !== null && batch.is_fork ? batch.fork_values : null;
+
+	if (fork_values !== null && derived.deps !== null) {
+		// Inside a fork, neither the underlying value nor the status are
+		// updated — the fork's view of the derived lives in the fork's own
+		// overlay, and is simply dropped if the fork is discarded, while the
+		// real status keeps describing the real (untouched) value. (Deriveds
+		// without dependencies never recompute, so they are treated like the
+		// real world below.)
+		var previous = fork_values.has(derived) ? fork_values.get(derived) : derived.v;
+
+		if (
+			previous === UNINITIALIZED ||
+			!derived.equals.call(/** @type {any} */ ({ v: previous }), value)
+		) {
+			derived.wv = increment_write_version();
+		}
+
+		fork_values.set(derived, value);
+		batch_values?.set(derived, [value, null]);
+
+		return;
+	}
 
 	if (!derived.equals(value)) {
 		derived.wv = increment_write_version();
 
-		// in a fork, we don't update the underlying value, just `batch_values`.
-		// the underlying value will be updated when the fork is committed.
-		// otherwise, the next time we get here after a 'real world' state
-		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.deps === null) {
-			if (current_batch !== null) {
-				// We also write to previous_batch because if it exists, it is a sign that we're
-				// currently in the process of flushing effects. These updates to deriveds may belong
-				// to the previous batch, not the new one (which can already exist if an earlier
-				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
-				// but not adding it to current_batch can, too, so we add it to both.
-				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-				current_batch.capture(derived, value, true);
-				previous_batch?.capture(derived, value, true);
-			} else {
-				derived.v = value;
-			}
+		// note the previous value, so that other (non-overlapping) batches can
+		// keep operating against the pre-write world until this one commits
+		if (batch !== null && !batch.is_fork) {
+			batch.record_previous(derived);
+		}
 
-			// deriveds without dependencies should never be recomputed
-			if (derived.deps === null) {
-				set_signal_status(derived, CLEAN);
-				return;
-			}
+		derived.v = value;
+
+		// deriveds without dependencies should never be recomputed
+		if (derived.deps === null) {
+			set_signal_status(derived, CLEAN);
+			return;
 		}
 	}
 
@@ -427,17 +435,7 @@ export function update_derived(derived) {
 		return;
 	}
 
-	// During time traveling we don't want to reset the status so that
-	// traversal of the graph in the other batches still happens
-	if (batch_values !== null) {
-		// only cache the value if we're in a tracking context, otherwise we won't
-		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
-		}
-	} else {
-		update_derived_status(derived);
-	}
+	update_derived_status(derived);
 }
 
 /**

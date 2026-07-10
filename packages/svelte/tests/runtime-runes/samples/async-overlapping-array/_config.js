@@ -30,6 +30,9 @@ export default test({
 			`
 		);
 
+		// the three updates all write `values` and therefore share the each
+		// blocks — they are merged into a single batch, which only commits
+		// (revealing all items at once) when all of its async work has settled
 		shift.click();
 		await tick();
 		shift.click();
@@ -40,14 +43,12 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<button>pop</button>
-				<p>pending=4 values.length=2 values=[1,2]</p>
+				<p>pending=4 values.length=1 values=[1]</p>
 				<div>not keyed:
 					<div>1</div>
-					<div>2</div>
 				</div>
 				<div>keyed:
 					<div>1</div>
-					<div>2</div>
 				</div>
 			`
 		);
@@ -62,16 +63,12 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<button>pop</button>
-				<p>pending=2 values.length=3 values=[1,2,3]</p>
+				<p>pending=2 values.length=1 values=[1]</p>
 				<div>not keyed:
 					<div>1</div>
-					<div>2</div>
-					<div>3</div>
 				</div>
 				<div>keyed:
 					<div>1</div>
-					<div>2</div>
-					<div>3</div>
 				</div>
 			`
 		);

@@ -23,11 +23,14 @@ export default test({
 		f.click();
 		await tick();
 
+		// all three updates write `condition` and therefore share the async
+		// effect — they are merged into a single batch, in which the first two
+		// in-flight runs are superseded. Only resolving the final run commits
 		shift.click();
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
-			'<button>shift</button><button>true</button><button>false</button><h1>no</h1>'
+			'<button>shift</button><button>true</button><button>false</button><h1>yes</h1>'
 		);
 
 		shift.click();

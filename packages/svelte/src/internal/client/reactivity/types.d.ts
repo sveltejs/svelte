@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch.js';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -50,6 +51,13 @@ export interface Reaction extends Signal {
 	deps: null | Value[];
 	/** An AbortController that aborts when the signal is destroyed */
 	ac: null | AbortController;
+	/**
+	 * The batch that most recently claimed this reaction by marking it dirty.
+	 * Only set for deriveds and user/block/async effects — if two batches claim
+	 * the same reaction, their reactivity graphs overlap and they are merged.
+	 * A claim expires when its batch is committed or discarded (`!batch.linked`)
+	 */
+	batch: null | Batch;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {

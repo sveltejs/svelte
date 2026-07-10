@@ -23,7 +23,8 @@ import {
 	ERROR_VALUE,
 	WAS_MARKED,
 	MANAGED_EFFECT,
-	REACTION_RAN
+	REACTION_RAN,
+	TEMPLATE_EXPRESSION
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -49,6 +50,7 @@ import {
 import {
 	Batch,
 	batch_values,
+	claimed_by_other,
 	current_batch,
 	flushSync,
 	previous_batch,
@@ -168,6 +170,27 @@ export function is_dirty(reaction) {
 		for (var i = 0; i < length; i++) {
 			var dependency = dependencies[i];
 
+			if (batch_values !== null && (dependency.f & DERIVED) !== 0) {
+				var is_template = (dependency.f & TEMPLATE_EXPRESSION) !== 0;
+
+				if (is_template || claimed_by_other(/** @type {Derived} */ (dependency)) !== null) {
+					// deriveds that are evaluated per-world (in `get`) while multiple
+					// batches exist: if dirty, treat them as changed — the dirtiness
+					// may originate from a write in our own world, and re-running the
+					// reaction is harmless otherwise
+					if ((dependency.f & (DIRTY | MAYBE_DIRTY)) !== 0) {
+						return true;
+					}
+
+					if (!is_template) {
+						// a clean derived belonging to another live batch's world is
+						// unchanged in ours — the owner's recompute (which may have
+						// bumped its write version) doesn't affect our world
+						continue;
+					}
+				}
+			}
+
 			if (is_dirty(/** @type {Derived} */ (dependency))) {
 				update_derived(/** @type {Derived} */ (dependency));
 			}
@@ -177,12 +200,7 @@ export function is_dirty(reaction) {
 			}
 		}
 
-		if (
-			(flags & CONNECTED) !== 0 &&
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			batch_values === null
-		) {
+		if ((flags & CONNECTED) !== 0) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
@@ -659,34 +677,71 @@ export function get(signal) {
 			return value;
 		}
 
-		// connect disconnected deriveds if we are reading them inside an effect,
-		// or inside another derived that is already connected
-		var should_connect =
-			(derived.f & CONNECTED) === 0 &&
-			!untracking &&
-			active_reaction !== null &&
-			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
+		// While multiple batches exist, some deriveds must be evaluated in the
+		// context of the current world, without touching their cached state:
+		// - deriveds belonging to another live batch's world must not be
+		//   recomputed or have their status reset (the owning batch relies on
+		//   both) — their value in this world follows from `batch_values`
+		// - dirty template expression deriveds are leaves that can be shared
+		//   between non-overlapping batches, so each world evaluates its own value
+		/** @type {Batch | null} */
+		var owner = null;
 
-		var is_new = (derived.f & REACTION_RAN) === 0;
+		if (
+			batch_values !== null &&
+			((derived.f & TEMPLATE_EXPRESSION) !== 0
+				? (derived.f & (DIRTY | MAYBE_DIRTY)) !== 0
+				: (owner = claimed_by_other(derived)) !== null)
+		) {
+			// the world-local value is memoized in `batch_values` (and invalidated
+			// there when dependencies change). Reads are registered with the owner
+			// batch — when it commits, the reader re-runs with the real values
+			if (!batch_values.has(derived)) {
+				batch_values.set(derived, [execute_derived(derived), owner]);
+			}
+		} else {
+			// connect disconnected deriveds if we are reading them inside an effect,
+			// or inside another derived that is already connected
+			var should_connect =
+				(derived.f & CONNECTED) === 0 &&
+				!untracking &&
+				active_reaction !== null &&
+				(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
 
-		if (is_dirty(derived)) {
-			if (should_connect) {
-				// set the flag before `update_derived`, so that the derived
-				// is added as a reaction to its dependencies
-				derived.f |= CONNECTED;
+			var is_new = (derived.f & REACTION_RAN) === 0;
+
+			if (is_dirty(derived)) {
+				if (should_connect) {
+					// set the flag before `update_derived`, so that the derived
+					// is added as a reaction to its dependencies
+					derived.f |= CONNECTED;
+				}
+
+				update_derived(derived);
 			}
 
-			update_derived(derived);
-		}
-
-		if (should_connect && !is_new) {
-			unfreeze_derived_effects(derived);
-			reconnect(derived);
+			if (should_connect && !is_new) {
+				unfreeze_derived_effects(derived);
+				reconnect(derived);
+			}
 		}
 	}
 
-	if (batch_values?.has(signal)) {
-		return batch_values.get(signal);
+	if (batch_values !== null) {
+		var override = batch_values.get(signal);
+
+		if (override !== undefined) {
+			// if we're seeing another live batch's pre-write world, it must
+			// re-run us with the real values when it commits
+			var override_owner = override[1];
+
+			if (override_owner !== null && active_reaction !== null && !untracking) {
+				while (override_owner.merged_into !== null) override_owner = override_owner.merged_into;
+				override_owner.stale_readers.add(active_reaction);
+			}
+
+			return override[0];
+		}
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {

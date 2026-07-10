@@ -21,19 +21,19 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>a</p><p>a</p><p>aa</p><p>1</p>`);
 
-		// resolve the newer (b) batch first. Committing it must not commit the
-		// still-pending `a` batch, whose async work has not completed — `a` must
-		// still read 'a', and the unrelated `c` update must not be blocked
+		// the two batches share the awaited `a + b` expression, so they were
+		// merged into one, superseding the first in-flight run. Resolving the
+		// re-run ('bb', which pop reaches first) commits the combined state,
+		// including the `c` write from the $effect during the flush phase
 		pop.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>a</p><p>b</p><p>ab</p><p>2</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>b</p><p>b</p><p>bb</p><p>2</p>`);
 
-		// stale promise from the `a` batch's first run — resolving it does nothing
+		// stale promises from the superseded runs — resolving them does nothing
 		shift.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>a</p><p>b</p><p>ab</p><p>2</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>b</p><p>b</p><p>bb</p><p>2</p>`);
 
-		// the `a` batch's re-run await ('bb') resolves — everything is committed
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>b</p><p>b</p><p>bb</p><p>2</p>`);

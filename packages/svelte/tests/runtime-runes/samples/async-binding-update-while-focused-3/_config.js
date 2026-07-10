@@ -47,6 +47,9 @@ export default test({
 		);
 		assert.equal(select.value, 'one');
 
+		// both selections write `value` and therefore share the async work —
+		// they are merged into a single batch, in which the first in-flight
+		// run is superseded. Only resolving the final run commits
 		shift.click();
 		await tick();
 		assert.htmlEqual(
@@ -58,7 +61,7 @@ export default test({
 					<option>two</option>
 					<option>three</option>
 				</select>
-				<p>three</p>
+				<p>two</p>
 			`
 		);
 		assert.equal(select.value, 'one');

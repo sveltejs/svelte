@@ -13,9 +13,12 @@ export default test({
 		await tick();
 		increment.click();
 		await tick();
-		middle.click(); // resolve the second increment which will make the if block go away and the first batch discarded
+		// all three increments write `a` and therefore share the async work —
+		// they are merged into a single batch in which the first two in-flight
+		// runs are superseded, so resolving the second one does nothing
+		middle.click();
 		await tick();
-		assert.htmlEqual(div.innerHTML, '2 2');
+		assert.htmlEqual(div.innerHTML, '0 0 0');
 
 		shift.click();
 		await tick();
