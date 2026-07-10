@@ -530,6 +530,10 @@ export class Batch {
 		const mark = (value) => {
 			var reactions = value.reactions;
 			if (reactions === null) return;
+			// skip if value is derived and is not dirty
+			if ((value.f & DERIVED) !== 0 && (value.f & DIRTY) == 0) {
+				return;
+			}
 
 			for (const reaction of reactions) {
 				var flags = reaction.f;
