@@ -737,7 +737,7 @@ export function get(signal) {
 
 			if (override_owner !== null && active_reaction !== null && !untracking) {
 				while (override_owner.merged_into !== null) override_owner = override_owner.merged_into;
-				override_owner.stale_readers.add(active_reaction);
+				(override_owner.stale_readers ??= new Set()).add(active_reaction);
 			}
 
 			return override[0];

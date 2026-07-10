@@ -186,7 +186,7 @@ export function async_derived(fn, label, location) {
 				// boundary can be null if the async derived is inside an $effect.root not connected to the component render tree
 				parent.b?.is_rendered()
 			) {
-				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
+				batch.async_deriveds?.get(effect)?.reject(OBSOLETE);
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
 				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
@@ -196,7 +196,7 @@ export function async_derived(fn, label, location) {
 			}
 
 			deferreds.add(d);
-			batch.async_deriveds.set(effect, d);
+			(batch.async_deriveds ??= new Map()).set(effect, d);
 		}
 
 		/**
