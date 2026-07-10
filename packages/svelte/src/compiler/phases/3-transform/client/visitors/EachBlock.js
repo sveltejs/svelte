@@ -294,8 +294,6 @@ export function EachBlock(node, context) {
 	let key_function = b.id('$.index');
 
 	if (node.metadata.keyed) {
-		// the pattern needs to be visited so that expressions inside it (e.g. computed
-		// keys or default values referencing component scope) are transformed correctly.
 		// can only be keyed when a context is provided
 		const pattern = /** @type {Pattern} */ (
 			context.visit(/** @type {Pattern} */ (node.context), key_state)
