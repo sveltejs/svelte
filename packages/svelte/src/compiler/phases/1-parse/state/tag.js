@@ -783,6 +783,8 @@ function special(parser) {
 
 		const expression_start = parser.index;
 		const init = read_expression(parser);
+		// parser is past wrapping parens, but `init.end` is not — use the parser position
+		const declarator_end = parser.index;
 		if (
 			init.type === 'SequenceExpression' &&
 			!parser.template.substring(expression_start, init.start).includes('(')
@@ -801,7 +803,9 @@ function special(parser) {
 			declaration: {
 				type: 'VariableDeclaration',
 				kind: 'const',
-				declarations: [{ type: 'VariableDeclarator', id, init, start: id.start, end: init.end }],
+				declarations: [
+					{ type: 'VariableDeclarator', id, init, start: id.start, end: declarator_end }
+				],
 				start: start + 2, // start at const, not at @const
 				end: parser.index - 1
 			},
