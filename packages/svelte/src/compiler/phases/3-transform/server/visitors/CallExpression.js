@@ -46,7 +46,7 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$state.eager') {
-		return node.arguments[0];
+		return context.visit(node.arguments[0]);
 	}
 
 	if (rune === '$state.snapshot') {
