@@ -205,7 +205,27 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 </div>
 ```
 
-Effects — including `$effect.pre` — run in tree order, interleaved with template updates. `$effect.pre` therefore runs before DOM updates that are scheduled after it in the same flush (its own component's template, and its children), but effects in ancestor components run earlier and may already have updated the DOM by the time it runs. It is not a phase that runs before every DOM mutation. When using [await expressions](await-expressions), block updates like `{#if ...}` and `{#each ...}` in the same component also run before `$effect.pre`.
+In this example the effect and the `{#each}` block live in the same component, so the measurement is guaranteed to happen before the list updates. Across components the ordering is less intuitive — effects, including `$effect.pre`, run in a single walk of the tree, interleaved with template updates:
+
+```
+state changes
+    │
+    ▼  update — tree order, parents before children
+Parent.svelte
+    $effect.pre
+    template updates       ← DOM changes begin
+    Child.svelte
+        $effect.pre        ← 'pre', yet the parent's DOM already updated
+        template updates
+    │
+    ▼  DOM fully updated
+$effect callbacks
+    │
+    ▼
+tick() resolves
+```
+
+`$effect.pre` therefore runs before DOM updates that are scheduled after it, but it is not a phase that runs before every DOM mutation — effects in ancestor components may already have updated the DOM by the time it runs. When using [await expressions](await-expressions), block updates like `{#if ...}` and `{#each ...}` in the same component also run before `$effect.pre`.
 
 Apart from the timing, `$effect.pre` works exactly like `$effect`.
 
