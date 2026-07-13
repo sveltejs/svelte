@@ -33,11 +33,38 @@ export function generate_report(outdir) {
 
 	write('');
 
-	for (let i = 0; i < results[0].length; i += 1) {
-		write(`${results[0][i].benchmark}`);
+	// match results by benchmark name — branches may have different benchmark
+	// lists (e.g. a benchmark that only exists on one of the branches), so
+	// pairing by array index would misattribute results
+	const by_name = results.map((result) => new Map(result.map((r) => [r.benchmark, r])));
+
+	/** @type {string[]} */
+	const names = [];
+
+	for (const result of results) {
+		for (const { benchmark } of result) {
+			if (!names.includes(benchmark)) {
+				names.push(benchmark);
+			}
+		}
+	}
+
+	for (const name of names) {
+		const entries = by_name.map((map) => map.get(name));
+		const missing = entries
+			.map((entry, b) => (entry === undefined ? branches[b] : null))
+			.filter((branch) => branch !== null);
+
+		write(`${name}`);
+
+		if (missing.length > 0) {
+			write(`  skipped (missing on ${missing.join(', ')})`);
+			write('');
+			continue;
+		}
 
 		for (const metric of ['time', 'gc_time']) {
-			const times = results.map((result) => +result[i][metric]);
+			const times = entries.map((entry) => +entry[metric]);
 			let min = Infinity;
 			let max = -Infinity;
 			let min_index = -1;
