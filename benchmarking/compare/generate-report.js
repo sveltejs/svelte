@@ -18,7 +18,9 @@ export function generate_report(outdir, branches) {
 		.filter((file) => file.endsWith('.json') && (!branches || branches.includes(file.slice(0, -5))))
 		.sort((a, b) => a.localeCompare(b));
 
-	branches ??= result_files.map((file) => file.slice(0, -5));
+	// always do this so that ordering lines up (branches argument might be passed in a different order than the result files are sorted
+	branches = result_files.map((file) => file.slice(0, -5));
+
 	const results = result_files.map((file) =>
 		JSON.parse(fs.readFileSync(path.join(outdir, file), 'utf-8'))
 	);
