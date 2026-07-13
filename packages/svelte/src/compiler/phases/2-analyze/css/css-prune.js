@@ -1,4 +1,5 @@
 /** @import * as Compiler from '#compiler' */
+/** @import { ComponentAnalysis } from '../../types.js' */
 import { walk } from 'zimmerframe';
 import {
 	get_parent_rules,
@@ -126,8 +127,9 @@ const seen = new Set();
  *
  * @param {Compiler.AST.CSS.StyleSheet} stylesheet
  * @param {Iterable<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} elements
+ * @param {ComponentAnalysis} analysis
  */
-export function prune(stylesheet, elements) {
+export function prune(stylesheet, elements, analysis) {
 	walk(/** @type {Compiler.AST.CSS.Node} */ (stylesheet), null, {
 		Rule(node, context) {
 			if (node.metadata.is_global_block) {
@@ -151,6 +153,10 @@ export function prune(stylesheet, elements) {
 					)
 				) {
 					node.metadata.used = true;
+					// fake has_global as true in Snippet to avoid css tree shaking
+					analysis.css.has_global ||= !!element.metadata.path.findLast(
+						(n) => n.type == 'SnippetBlock'
+					)?.metadata?.exported;
 				}
 			}
 
