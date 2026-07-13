@@ -275,6 +275,7 @@ export class Tween {
 				}
 
 				previous_task?.abort();
+				previous_task = null;
 			}
 
 			const elapsed = now - start;
