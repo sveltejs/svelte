@@ -1,7 +1,7 @@
 import { assert, describe, it } from 'vitest';
 import { effect_root } from '../../src/internal/client/reactivity/effects';
 import { push, pop } from '../../src/internal/client/context';
-import { proxy } from '../../src/internal/client/proxy';
+import { proxy, remove_onchange } from '../../src/internal/client/proxy';
 
 function run(fn: () => void) {
 	push({}, true);
@@ -162,6 +162,86 @@ describe('proxy onchange kernel', () => {
 
 			state.x = 42;
 			assert.equal(seen, 42);
+		});
+	});
+
+	it('does not fire when the first write of a property does not change it', () => {
+		run(() => {
+			let count = 0;
+			const state = proxy({ x: 1 } as any, () => count++);
+
+			state.x = 1;
+			assert.equal(count, 0);
+
+			state.x = 2;
+			assert.equal(count, 1);
+		});
+	});
+
+	it('attached callbacks can be detached again (#15069 reassignment path)', () => {
+		run(() => {
+			const logs: string[] = [];
+			const b = proxy({ count: 0 } as any, () => logs.push('b'));
+			const c = () => logs.push('c');
+			proxy(b, c);
+
+			b.count = 1;
+			assert.deepEqual(logs, ['b', 'c']);
+
+			remove_onchange(b, c);
+
+			b.count = 2;
+			assert.deepEqual(logs, ['b', 'c', 'b']);
+		});
+	});
+
+	it('attaching to an existing proxy covers already-materialized children', () => {
+		run(() => {
+			let count = 0;
+			const state = proxy({ a: { b: 0 } } as any);
+			const a = state.a;
+
+			proxy(state, () => count++);
+
+			a.b = 1;
+			assert.equal(count, 1);
+		});
+	});
+
+	it('references captured before a subtree joins an observed tree still notify', () => {
+		run(() => {
+			let count = 0;
+			const inner = proxy({ nested: { v: 0 } } as any);
+			const captured = inner.nested;
+
+			const tree = proxy({} as any, () => count++);
+			tree.slot = inner;
+			assert.equal(count, 1);
+
+			captured.v = 1;
+			assert.equal(count, 2);
+		});
+	});
+
+	it('children created while detached are covered after re-attachment', () => {
+		run(() => {
+			let count = 0;
+			const state = proxy({ child: { v: 0 } } as any, () => count++);
+
+			const child = state.child;
+			state.child = null;
+			assert.equal(count, 1);
+
+			child.v = 1;
+			child.deep = { z: 0 };
+			const deep = child.deep;
+			assert.equal(count, 1);
+
+			state.child = child;
+			assert.equal(count, 2);
+
+			deep.z = 1;
+			assert.equal(count, 3);
 		});
 	});
 

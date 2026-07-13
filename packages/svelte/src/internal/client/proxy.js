@@ -1,4 +1,4 @@
-/** @import { Source } from '#client' */
+/** @import { Effect, Source } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	get,
@@ -9,7 +9,7 @@ import {
 	set_active_reaction,
 	untrack
 } from './runtime.js';
-import { eager_effect } from './reactivity/effects.js';
+import { destroy_effect, eager_effect } from './reactivity/effects.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -39,7 +39,7 @@ const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
  *   self: any;
  *   sources: Map<any, Source<any>>;
  *   links: Array<{ pm: ProxyMeta, k: any }>;
- *   fires: Array<() => void>;
+ *   fires: Array<{ cb: () => void, fire: () => void, e: Effect }>;
  *   observed: boolean;
  * }} ProxyMeta
  */
@@ -47,16 +47,17 @@ const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 /**
  * Creates the dispatch half of an `onchange` root: a notifier source paired with an
  * eager effect, so callbacks run synchronously inside `set()` and inherit the existing
- * fork gating and deferral behaviour
+ * fork gating and deferral behaviour. The original callback is kept alongside so it
+ * can be detached again by identity
  * @param {() => void} onchange
- * @returns {() => void}
+ * @returns {{ cb: () => void, fire: () => void, e: Effect }}
  */
 function create_fire(onchange) {
 	var notifier = source(0);
 	var initial = true;
 	var running = false;
 
-	eager_effect(() => {
+	var effect = eager_effect(() => {
 		get(notifier);
 
 		if (initial) {
@@ -75,7 +76,7 @@ function create_fire(onchange) {
 		}
 	});
 
-	return () => increment(notifier);
+	return { cb: onchange, fire: () => increment(notifier), e: effect };
 }
 
 /**
@@ -88,10 +89,9 @@ function create_fire(onchange) {
 function link_child(child, parent_meta, key) {
 	if (child === null || typeof child !== 'object' || !(STATE_SYMBOL in child)) return;
 
-	var get_meta = /** @type {(() => ProxyMeta) | undefined} */ (child[PROXY_META_SYMBOL]);
-	if (get_meta === undefined) return;
+	var meta = /** @type {ProxyMeta | undefined} */ (child[PROXY_META_SYMBOL]);
+	if (meta === undefined) return;
 
-	var meta = get_meta();
 	var links = meta.links;
 
 	for (var i = 0; i < links.length; i += 1) {
@@ -99,7 +99,23 @@ function link_child(child, parent_meta, key) {
 	}
 
 	links.push({ pm: parent_meta, k: key });
+	observe(meta);
+}
+
+/**
+ * Marks a node observed and links its already-materialized children, so references
+ * captured before the node joined an observed tree still reach a root
+ * @param {ProxyMeta} meta
+ */
+function observe(meta) {
+	if (meta.observed) return;
 	meta.observed = true;
+
+	for (var [key, s] of meta.sources) {
+		if (s.v !== UNINITIALIZED) {
+			link_child(s.v, meta, key);
+		}
+	}
 }
 
 /**
@@ -115,7 +131,7 @@ function collect_roots(meta, visited, fires) {
 	visited.add(meta);
 
 	for (var i = 0; i < meta.fires.length; i += 1) {
-		fires.add(meta.fires[i]);
+		fires.add(meta.fires[i].fire);
 	}
 
 	var links = meta.links;
@@ -143,6 +159,33 @@ function notify_onchange(meta) {
 	collect_roots(meta, new Set(), fires);
 
 	for (var fire of fires) fire();
+}
+
+/**
+ * Detaches a callback previously attached with `proxy(value, onchange)`, used by the
+ * `$state` shell so a reassigned variable's old tree stops firing its callback
+ * @param {any} value
+ * @param {() => void} onchange
+ */
+export function remove_onchange(value, onchange) {
+	if (value === null || typeof value !== 'object' || !(STATE_SYMBOL in value)) return;
+
+	var meta = /** @type {ProxyMeta | undefined} */ (value[PROXY_META_SYMBOL]);
+	if (meta === undefined) return;
+
+	var fires = meta.fires;
+
+	for (var i = 0; i < fires.length; i += 1) {
+		if (fires[i].cb === onchange) {
+			destroy_effect(fires[i].e);
+			fires.splice(i, 1);
+			break;
+		}
+	}
+
+	if (fires.length === 0 && meta.links.length === 0) {
+		meta.observed = false;
+	}
 }
 
 /**
@@ -178,9 +221,9 @@ export function proxy(value, onchange) {
 	if (STATE_SYMBOL in value) {
 		if (onchange !== undefined) {
 			// attach an additional root callback to an existing proxy
-			var m = /** @type {() => ProxyMeta} */ (/** @type {any} */ (value)[PROXY_META_SYMBOL])();
+			var m = /** @type {ProxyMeta} */ (/** @type {any} */ (value)[PROXY_META_SYMBOL]);
 			m.fires.push(create_fire(onchange));
-			m.observed = true;
+			observe(m);
 		}
 		return value;
 	}
@@ -332,7 +375,7 @@ export function proxy(value, onchange) {
 
 			// symbols are never own properties, so this check can live off the hot path
 			if (s === undefined && prop === PROXY_META_SYMBOL) {
-				return () => (meta ??= { self: p, sources, links: [], fires: [], observed: false });
+				return (meta ??= { self: p, sources, links: [], fires: [], observed: false });
 			}
 
 			// create a source, but only if it's an own property and not a prototype property
@@ -367,12 +410,12 @@ export function proxy(value, onchange) {
 			var reflected = Reflect.get(target, prop, receiver);
 
 			if (
+				meta !== null &&
+				meta.observed &&
 				is_proxied_array &&
 				typeof prop === 'string' &&
 				typeof reflected === 'function' &&
-				ARRAY_MUTATING_METHODS.has(prop) &&
-				meta !== null &&
-				meta.observed
+				ARRAY_MUTATING_METHODS.has(prop)
 			) {
 				// batch array methods so e.g. `push` (element + length) fires roots once
 				return batch_eager_method(reflected);
@@ -479,7 +522,7 @@ export function proxy(value, onchange) {
 
 					var np = proxy(value);
 					set(s, np);
-					changed = true;
+					changed = !has || target[prop] !== value;
 
 					if (meta !== null && meta.observed) {
 						link_child(np, /** @type {ProxyMeta} */ (meta), prop);
