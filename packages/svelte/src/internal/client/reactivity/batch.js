@@ -47,6 +47,9 @@ import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { OBSOLETE } from './deriveds.js';
+import * as w from '../warnings.js';
+
+const MAX_ENTANGLED_RESTARTS = 10;
 
 /** @type {Batch | null} */
 let first_batch = null;
@@ -257,6 +260,15 @@ export class Batch {
 	 */
 	skip_previous = false;
 
+	/** Number of times new work has extended this pending batch */
+	restarts = 0;
+
+	/** @type {Batch | null} */
+	waiter = null;
+
+	/** @type {{ batches: Set<Batch>, reactions: Map<Reaction, Batch> } | null} */
+	waiting = null;
+
 	#decrement_queued = false;
 
 	constructor() {
@@ -272,6 +284,7 @@ export class Batch {
 	}
 
 	#is_deferred() {
+		if (this.waiting !== null && this.waiting.batches.size > 0) return true;
 		if (this.is_fork) return true;
 		if (this.#blocking_pending === null) return false;
 
@@ -344,25 +357,103 @@ export class Batch {
 	}
 
 	/**
+	 * Keep this batch separate from a sealed predecessor, coalescing it with any
+	 * other work that is already waiting for that predecessor.
+	 * @param {Batch} owner
+	 * @param {Reaction} reaction
+	 */
+	#wait(owner, reaction) {
+		var waiter = owner.waiter;
+
+		if (waiter !== null) {
+			waiter = waiter.#resolved();
+
+			if (waiter !== this && waiter.linked) {
+				this.#merge(waiter);
+			}
+		} else if (DEV) {
+			w.await_starvation();
+		}
+
+		owner.waiter = this;
+		var waiting = (this.waiting ??= { batches: new Set(), reactions: new Map() });
+		waiting.batches.add(owner);
+		waiting.reactions.set(reaction, owner);
+	}
+
+	/**
+	 * Hand reactions and deferred work to the batch waiting behind this one.
+	 * Ownership changes synchronously so no intervening batch can bypass the waiter.
+	 */
+	#release_waiter() {
+		var waiter = this.waiter;
+		this.waiter = null;
+
+		if (waiter === null || !(waiter = waiter.#resolved()).linked) return;
+
+		waiter.waiting?.batches.delete(this);
+
+		if (waiter.waiting !== null) {
+			for (const [reaction, owner] of waiter.waiting.reactions) {
+				if (owner !== this) continue;
+
+				waiter.waiting.reactions.delete(reaction);
+				if ((reaction.f & DESTROYED) !== 0) continue;
+
+				reaction.batch = waiter;
+
+				if ((reaction.f & DERIVED) !== 0 && (reaction.f & DIRTY) === 0) {
+					set_signal_status(reaction, MAYBE_DIRTY);
+				} else if ((reaction.f & DERIVED) === 0) {
+					var effect = /** @type {Effect} */ (reaction);
+
+					if (waiter.#dirty_effects?.delete(effect)) {
+						set_signal_status(effect, DIRTY);
+						waiter.schedule(effect);
+					} else if (waiter.#maybe_dirty_effects?.delete(effect)) {
+						set_signal_status(effect, MAYBE_DIRTY);
+						waiter.schedule(effect);
+					}
+				}
+			}
+		}
+
+		if (waiter.waiting !== null && waiter.waiting.batches.size > 0) return;
+
+		waiter.waiting = null;
+		var released = /** @type {Batch} */ (waiter);
+
+		queue_micro_task(() => {
+			var batch = released.#resolved();
+
+			if (batch.linked && (batch.waiting === null || batch.waiting.batches.size === 0)) {
+				batch.flush();
+			}
+		});
+	}
+
+	/**
 	 * Take ownership of a reaction. Deriveds and user/block/async effects can
 	 * only ever belong to one live batch — if the reaction is already claimed
 	 * by another live batch, the two reactivity graphs overlap, which means the
-	 * batches describe the same 'world', and they are merged into one.
+	 * batches describe the same 'world', and they are merged into one. After too
+	 * many restarts, new work waits behind the current batch instead.
 	 * Template-level (render/managed) effects are exempt: they are leaves, so
 	 * independent batches can share them without their graphs being entangled.
 	 * Forks are also exempt — they are speculative and live in their own world
 	 * @param {Reaction} reaction
+	 * @returns {boolean} Whether the reaction must wait for a sealed batch
 	 */
 	claim(reaction) {
 		// already claimed by this batch — nothing below could change anything
-		if (reaction.batch === this) return;
+		if (reaction.batch === this) return false;
 
-		if (!async_mode_flag || this.is_fork) return;
+		if (!async_mode_flag || this.is_fork) return false;
 
-		if ((reaction.f & (DERIVED | ASYNC | BLOCK_EFFECT | USER_EFFECT)) === 0) return;
+		if ((reaction.f & (DERIVED | ASYNC | BLOCK_EFFECT | USER_EFFECT)) === 0) return false;
 
 		// template expression deriveds are leaves — they don't entangle
-		if ((reaction.f & TEMPLATE_EXPRESSION) !== 0) return;
+		if ((reaction.f & TEMPLATE_EXPRESSION) !== 0) return false;
 
 		var owner = reaction.batch;
 
@@ -384,14 +475,28 @@ export class Batch {
 				(owner.#dirty_effects ??= new Set()).add(/** @type {Effect} */ (reaction));
 			}
 
-			return;
+			return false;
 		}
 
 		if (owner !== null && owner !== this && owner.linked && !owner.is_fork) {
+			if (owner.waiting !== null && owner.waiting.batches.size > 0) {
+				this.#merge(owner);
+				reaction.batch = this;
+				return false;
+			}
+
+			if (owner.restarts >= MAX_ENTANGLED_RESTARTS) {
+				this.#wait(owner, reaction);
+				return true;
+			}
+
+			var restarts = owner.restarts + (owner.#is_deferred() ? 1 : 0);
 			this.#merge(owner);
+			this.restarts = Math.max(this.restarts, restarts);
 		}
 
 		reaction.batch = this;
+		return false;
 	}
 
 	/**
@@ -499,6 +604,22 @@ export class Batch {
 			other.stale_readers = null;
 		}
 
+		if (other.waiting !== null) {
+			this.waiting ??= { batches: new Set(), reactions: new Map() };
+
+			for (const owner of other.waiting.batches) {
+				this.waiting.batches.add(owner);
+				owner.waiter = this;
+			}
+
+			for (const [reaction, owner] of other.waiting.reactions) {
+				this.waiting.reactions.set(reaction, owner);
+			}
+			other.waiting = null;
+		}
+
+		this.restarts = Math.max(this.restarts, other.restarts);
+
 		// `other`'s settled() promise resolves when this batch settles
 		if (other.#deferred !== null) {
 			const d = other.#deferred;
@@ -565,6 +686,8 @@ export class Batch {
 
 	#process() {
 		this.#started = true;
+
+		if (this.waiting !== null && this.waiting.batches.size > 0) return;
 
 		// this batch may be re-processed (e.g. when effects are scheduled during
 		// its effect-flush phase), in which case async work could still be
@@ -699,6 +822,7 @@ export class Batch {
 
 		if (this.#pending === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
 			this.#unlink();
+			this.#release_waiter();
 
 			if (async_mode_flag) {
 				// now that this batch is committed, reactions that observed its
@@ -891,7 +1015,9 @@ export class Batch {
 			}
 		}
 
+		var was_linked = this.linked;
 		this.#unlink();
+		if (was_linked) this.#release_waiter();
 		this.#deferred?.resolve();
 	}
 
@@ -1046,8 +1172,8 @@ export class Batch {
 		batch_values_owner = batch;
 
 		// undo changes belonging to other live batches — aside from our own
-		// changes, we should only see values that have been committed. Batches
-		// whose graphs overlap were already merged, so there is no ambiguity
+		// changes, we should only see values that have been committed. Overlapping
+		// batches are merged unless one is waiting behind a sealed predecessor
 		for (let other = first_batch; other !== null; other = other.#next) {
 			if (other === batch || other.is_fork) continue;
 
@@ -1078,7 +1204,12 @@ export class Batch {
 	schedule(effect) {
 		last_scheduled_effect = effect;
 
-		this.claim(effect);
+		if (this.claim(effect)) {
+			this.#dirty_effects ??= new Set();
+			this.#maybe_dirty_effects ??= new Set();
+			defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
+			return;
+		}
 
 		// defer render effects inside a pending boundary
 		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later

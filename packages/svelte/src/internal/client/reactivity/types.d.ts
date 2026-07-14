@@ -54,7 +54,8 @@ export interface Reaction extends Signal {
 	/**
 	 * The batch that most recently claimed this reaction by marking it dirty.
 	 * Only set for deriveds and user/block/async effects — if two batches claim
-	 * the same reaction, their reactivity graphs overlap and they are merged.
+	 * the same reaction, their reactivity graphs overlap and they are merged,
+	 * unless the newer batch is waiting behind a sealed predecessor.
 	 * A claim expires when its batch is committed or discarded (`!batch.linked`)
 	 */
 	batch: null | Batch;
