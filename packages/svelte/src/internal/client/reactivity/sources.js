@@ -369,10 +369,8 @@ export function mark_reactions(signal, status, updated_during_traversal) {
 			current_batch?.claim(derived);
 
 			// invalidate any world-local memoized values
-			if (batch_values !== null) {
-				batch_values.delete(derived);
-				current_batch?.fork_values?.delete(derived);
-			}
+			batch_values?.delete(derived);
+			current_batch?.fork_values?.delete(derived);
 
 			if ((flags & WAS_MARKED) === 0) {
 				// Only connected deriveds being executed outside the update cycle can be reliably unmarked right away

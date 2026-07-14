@@ -115,6 +115,25 @@ var source_stacks = new Set();
 
 let uid = 1;
 
+/**
+ * @template T
+ * @param {Set<T> | null} target
+ * @param {Set<T> | null} source
+ * @returns {Set<T> | null}
+ */
+function transfer_set(target, source) {
+	if (source === null || source.size === 0) return target;
+
+	target ??= new Set();
+
+	for (const value of source) {
+		target.add(value);
+	}
+
+	source.clear();
+	return target;
+}
+
 export class Batch {
 	id = uid++;
 
@@ -284,7 +303,7 @@ export class Batch {
 	}
 
 	#is_deferred() {
-		if (this.waiting !== null && this.waiting.batches.size > 0) return true;
+		if (this.waiting !== null) return true;
 		if (this.is_fork) return true;
 		if (this.#blocking_pending === null) return false;
 
@@ -391,34 +410,35 @@ export class Batch {
 
 		if (waiter === null || !(waiter = waiter.#resolved()).linked) return;
 
-		waiter.waiting?.batches.delete(this);
+		var waiting = /** @type {{ batches: Set<Batch>, reactions: Map<Reaction, Batch> }} */ (
+			waiter.waiting
+		);
+		waiting.batches.delete(this);
 
-		if (waiter.waiting !== null) {
-			for (const [reaction, owner] of waiter.waiting.reactions) {
-				if (owner !== this) continue;
+		for (const [reaction, owner] of waiting.reactions) {
+			if (owner !== this) continue;
 
-				waiter.waiting.reactions.delete(reaction);
-				if ((reaction.f & DESTROYED) !== 0) continue;
+			waiting.reactions.delete(reaction);
+			if ((reaction.f & DESTROYED) !== 0) continue;
 
-				reaction.batch = waiter;
+			reaction.batch = waiter;
 
-				if ((reaction.f & DERIVED) !== 0 && (reaction.f & DIRTY) === 0) {
-					set_signal_status(reaction, MAYBE_DIRTY);
-				} else if ((reaction.f & DERIVED) === 0) {
-					var effect = /** @type {Effect} */ (reaction);
+			if ((reaction.f & DERIVED) !== 0 && (reaction.f & DIRTY) === 0) {
+				set_signal_status(reaction, MAYBE_DIRTY);
+			} else if ((reaction.f & DERIVED) === 0) {
+				var effect = /** @type {Effect} */ (reaction);
 
-					if (waiter.#dirty_effects?.delete(effect)) {
-						set_signal_status(effect, DIRTY);
-						waiter.schedule(effect);
-					} else if (waiter.#maybe_dirty_effects?.delete(effect)) {
-						set_signal_status(effect, MAYBE_DIRTY);
-						waiter.schedule(effect);
-					}
+				if (waiter.#dirty_effects?.delete(effect)) {
+					set_signal_status(effect, DIRTY);
+					waiter.schedule(effect);
+				} else if (waiter.#maybe_dirty_effects?.delete(effect)) {
+					set_signal_status(effect, MAYBE_DIRTY);
+					waiter.schedule(effect);
 				}
 			}
 		}
 
-		if (waiter.waiting !== null && waiter.waiting.batches.size > 0) return;
+		if (waiting.batches.size > 0) return;
 
 		waiter.waiting = null;
 		var released = /** @type {Batch} */ (waiter);
@@ -426,7 +446,7 @@ export class Batch {
 		queue_micro_task(() => {
 			var batch = released.#resolved();
 
-			if (batch.linked && (batch.waiting === null || batch.waiting.batches.size === 0)) {
+			if (batch.linked && batch.waiting === null) {
 				batch.flush();
 			}
 		});
@@ -479,7 +499,7 @@ export class Batch {
 		}
 
 		if (owner !== null && owner !== this && owner.linked && !owner.is_fork) {
-			if (owner.waiting !== null && owner.waiting.batches.size > 0) {
+			if (owner.waiting !== null) {
 				this.#merge(owner);
 				reaction.batch = this;
 				return false;
@@ -595,14 +615,8 @@ export class Batch {
 		}
 		other.#scheduled = [];
 
-		if (other.stale_readers !== null) {
-			this.stale_readers ??= new Set();
-
-			for (const reader of other.stale_readers) {
-				this.stale_readers.add(reader);
-			}
-			other.stale_readers = null;
-		}
+		this.stale_readers = transfer_set(this.stale_readers, other.stale_readers);
+		other.stale_readers = null;
 
 		if (other.waiting !== null) {
 			this.waiting ??= { batches: new Set(), reactions: new Map() };
@@ -687,7 +701,7 @@ export class Batch {
 	#process() {
 		this.#started = true;
 
-		if (this.waiting !== null && this.waiting.batches.size > 0) return;
+		if (this.waiting !== null) return;
 
 		// this batch may be re-processed (e.g. when effects are scheduled during
 		// its effect-flush phase), in which case async work could still be
@@ -830,11 +844,8 @@ export class Batch {
 				this.#commit();
 
 				// #commit may have scheduled stale readers into a new batch
-				if (next_batch === null) {
-					next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
-				} else {
-					current_batch = next_batch;
-				}
+				next_batch ??= /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
+				current_batch = next_batch;
 			}
 		}
 
@@ -1050,18 +1061,15 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	increment(blocking, effect) {
-		if (this.merged_into !== null) {
-			this.#resolved().increment(blocking, effect);
-			return;
-		}
+		var batch = this.merged_into === null ? this : this.#resolved();
 
-		this.#pending += 1;
+		batch.#pending += 1;
 
 		if (blocking) {
-			this.#blocking_pending ??= new Map();
+			batch.#blocking_pending ??= new Map();
 
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
-			this.#blocking_pending.set(effect, blocking_pending_count + 1);
+			let blocking_pending_count = batch.#blocking_pending.get(effect) ?? 0;
+			batch.#blocking_pending.set(effect, blocking_pending_count + 1);
 		}
 	}
 
@@ -1070,31 +1078,28 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	decrement(blocking, effect) {
-		if (this.merged_into !== null) {
-			this.#resolved().decrement(blocking, effect);
-			return;
-		}
+		var batch = this.merged_into === null ? this : this.#resolved();
 
-		this.#pending -= 1;
+		batch.#pending -= 1;
 
-		if (blocking && this.#blocking_pending !== null) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
+		if (blocking && batch.#blocking_pending !== null) {
+			let blocking_pending_count = batch.#blocking_pending.get(effect) ?? 0;
 
 			if (blocking_pending_count === 1) {
-				this.#blocking_pending.delete(effect);
+				batch.#blocking_pending.delete(effect);
 			} else {
-				this.#blocking_pending.set(effect, blocking_pending_count - 1);
+				batch.#blocking_pending.set(effect, blocking_pending_count - 1);
 			}
 		}
 
-		if (this.#decrement_queued) return;
-		this.#decrement_queued = true;
+		if (batch.#decrement_queued) return;
+		batch.#decrement_queued = true;
 
 		queue_micro_task(() => {
-			this.#decrement_queued = false;
+			batch.#decrement_queued = false;
 
-			if (this.linked) {
-				this.flush();
+			if (batch.linked) {
+				batch.flush();
 			}
 		});
 	}
@@ -1105,26 +1110,8 @@ export class Batch {
 	 */
 	transfer_effects(dirty_effects, maybe_dirty_effects) {
 		var batch = this.#resolved();
-
-		if (dirty_effects !== null && dirty_effects.size > 0) {
-			batch.#dirty_effects ??= new Set();
-
-			for (const e of dirty_effects) {
-				batch.#dirty_effects.add(e);
-			}
-
-			dirty_effects.clear();
-		}
-
-		if (maybe_dirty_effects !== null && maybe_dirty_effects.size > 0) {
-			batch.#maybe_dirty_effects ??= new Set();
-
-			for (const e of maybe_dirty_effects) {
-				batch.#maybe_dirty_effects.add(e);
-			}
-
-			maybe_dirty_effects.clear();
-		}
+		batch.#dirty_effects = transfer_set(batch.#dirty_effects, dirty_effects);
+		batch.#maybe_dirty_effects = transfer_set(batch.#maybe_dirty_effects, maybe_dirty_effects);
 	}
 
 	/** @param {(batch: Batch) => void} fn */

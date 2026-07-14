@@ -11,7 +11,6 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	DESTROYED,
-	CLEAN,
 	REACTION_RAN,
 	INERT
 } from '#client/constants';
@@ -40,7 +39,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { update_derived_status } from './status.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -421,21 +420,14 @@ export function update_derived(derived) {
 		}
 
 		derived.v = value;
-
-		// deriveds without dependencies should never be recomputed
-		if (derived.deps === null) {
-			set_signal_status(derived, CLEAN);
-			return;
-		}
 	}
 
 	// don't mark derived clean if we're reading it inside a
-	// cleanup function, or it will cache a stale value
-	if (is_destroying_effect) {
-		return;
+	// cleanup function, or it will cache a stale value. deriveds
+	// without dependencies can always be marked clean
+	if (!is_destroying_effect || derived.deps === null) {
+		update_derived_status(derived);
 	}
-
-	update_derived_status(derived);
 }
 
 /**
