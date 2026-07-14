@@ -7,7 +7,7 @@
 
 {aborted}
 
-<button onclick={() => count++}></button>
+<button onclick={() => count++}>increment</button>
 
 {#if count % 2 === 0}
 	<Child {count} bind:aborted={aborted} />

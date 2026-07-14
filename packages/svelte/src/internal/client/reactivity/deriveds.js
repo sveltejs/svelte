@@ -445,27 +445,24 @@ export function update_derived(derived) {
  * @param {Derived} derived
  */
 export function freeze_derived_effects(derived) {
-	if (derived.ac !== null) {
-		without_reactive_context(() => {
-			derived.ac?.abort(STALE_REACTION);
-			derived.ac = null;
-		});
-	}
-
 	if (derived.effects === null) return;
 
 	for (const e of derived.effects) {
 		// if the effect has a teardown function or abort signal, call it
 		if (e.teardown || e.ac) {
 			e.teardown?.();
-			e.ac?.abort(STALE_REACTION);
+			if (e.ac !== null) {
+				without_reactive_context(() => {
+					/** @type {AbortController} */ (e.ac).abort(STALE_REACTION);
+					e.ac = null;
+				});
+			}
 
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence
 			// of a teardown function is what determines whether the
 			// effect runs again during unfreezing (but not for teardown-only effects)
 			if (e.fn !== null) e.teardown = noop;
-			e.ac = null;
 
 			remove_reactions(e, 0);
 			destroy_effect_children(e);

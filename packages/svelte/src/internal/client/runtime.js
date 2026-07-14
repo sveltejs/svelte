@@ -408,6 +408,14 @@ function remove_reaction(signal, dependency) {
 			update_derived_status(derived);
 		}
 
+		// Call abort controller, noone's listening to this derived anymore
+		if (derived.ac !== null) {
+			without_reactive_context(() => {
+				/** @type {AbortController} */ (derived.ac).abort(STALE_REACTION);
+				derived.ac = null;
+			});
+		}
+
 		// freeze any effects inside this derived
 		freeze_derived_effects(derived);
 
