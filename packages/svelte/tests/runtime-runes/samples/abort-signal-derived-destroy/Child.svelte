@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { getAbortSignal } from "svelte";
 
-	let aborted = $state(0);
-
-	let count = $state(0);
+	let { count, aborted = $bindable() } = $props()
 
 	let der = $derived.by(()=>{
 		const signal = getAbortSignal();
@@ -19,6 +17,4 @@
 	})
 </script>
 
-{der}:{aborted}
-
-<button onclick={() => count++}></button>
+{der}
