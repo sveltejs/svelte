@@ -63,6 +63,9 @@ import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
 
+/**
+ * True if updating in an effect context that is reactive (i.e. not branch/root effects)
+ */
 let is_updating_effect = false;
 
 export let is_destroying_effect = false;
@@ -462,7 +465,7 @@ export function update_effect(effect) {
 	var was_updating_effect = is_updating_effect;
 
 	active_effect = effect;
-	is_updating_effect = true;
+	is_updating_effect = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0; // Branch/root effects are not reactive contexts
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
