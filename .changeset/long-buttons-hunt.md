@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: $state.eager() is sometimes incorrect in SSR
+fix: ensure `$state.eager()` is correctly transormed for SSR output
