@@ -1111,6 +1111,16 @@ export class Batch {
 		for (var fork = first_batch; fork !== null; fork = fork.#next) {
 			if (!fork.is_fork || fork.fork_effects === null) continue;
 
+			for (const signal of this.current.keys()) {
+				fork.current.delete(signal);
+				fork.previous.delete(signal);
+			}
+
+			if (fork.current.size === 0) {
+				fork.discard();
+				continue;
+			}
+
 			for (const [effect, version] of fork.fork_effects) {
 				if (
 					version === (effect_versions.get(effect) ?? 0) ||
@@ -1742,19 +1752,23 @@ export function fork(fn) {
 	batch.apply();
 
 	var committed = false;
+	var discarded = false;
 	var settled = batch.settled();
 
 	flushSync(fn);
 
 	return {
 		commit: async () => {
-			if (committed) {
-				await settled;
-				return;
+			// Differentiate between a fork that was implicitly discarded (because all its updates are obsolete,
+			// in which case we don't want to error), and a fork that was explicitly discarded (called fork.discard(),
+			// in which case we do want to error).
+			if (discarded) {
+				e.fork_discarded();
 			}
 
-			if (!batch.linked) {
-				e.fork_discarded();
+			if (committed || !batch.linked) {
+				await settled;
+				return;
 			}
 
 			committed = true;
@@ -1798,6 +1812,8 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
+			discarded = true;
+
 			// cause any MAYBE_DIRTY deriveds to update
 			// if they depend on things thath changed
 			// inside the discarded fork
