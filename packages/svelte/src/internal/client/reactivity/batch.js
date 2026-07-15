@@ -1117,7 +1117,9 @@ export class Batch {
 			}
 
 			if (fork.current.size === 0) {
-				fork.discard();
+				const f = fork;
+				// In a microtask, because discard unlinks and so #next would always be null
+				queue_micro_task(() => f.discard());
 				continue;
 			}
 
@@ -1132,7 +1134,6 @@ export class Batch {
 				var owner = effect.batch && effect.batch.#resolved();
 				if (owner !== this) continue;
 
-				set_signal_status(effect, DIRTY);
 				fork.schedule(effect);
 				var effects = (forks ??= new Map()).get(fork);
 				if (effects === undefined) forks.set(fork, [effect]);
