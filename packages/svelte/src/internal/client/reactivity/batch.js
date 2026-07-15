@@ -154,8 +154,7 @@ export class Batch {
 	#next = null;
 
 	/**
-	 * Lazily initialised — batches churn one-per-flush, so rarely-used
-	 * collections (this and several below) are only allocated on first use
+	 * Lazily initialised for perf reasons
 	 * @type {Map<Effect, ReturnType<typeof deferred<any>> & { id: number }> | null}
 	 */
 	async_deriveds = null;
@@ -177,13 +176,15 @@ export class Batch {
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
-	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
+	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks.
+	 * Lazily initialised for perf reasons.
 	 * @type {Set<(batch: Batch) => void> | null}
 	 */
 	#commit_callbacks = null;
 
 	/**
-	 * If a fork is discarded, we need to destroy any effects that are no longer needed
+	 * If a fork is discarded, we need to destroy any effects that are no longer needed.
+	 * Lazily initialised for perf reasons
 	 * @type {Set<(batch: Batch) => void> | null}
 	 */
 	#discard_callbacks = null;
@@ -194,7 +195,8 @@ export class Batch {
 	#pending = 0;
 
 	/**
-	 * Async effects that are currently in flight, _not_ inside a pending boundary
+	 * Async effects that are currently in flight, _not_ inside a pending boundary.
+	 * Lazily initialised for perf reasons
 	 * @type {Map<Effect, number> | null}
 	 */
 	#blocking_pending = null;
@@ -220,13 +222,15 @@ export class Batch {
 	#scheduled = [];
 
 	/**
-	 * Deferred effects (which run after async work has completed) that are DIRTY
+	 * Deferred effects (which run after async work has completed) that are DIRTY.
+	 * Lazily initialised for perf reasons
 	 * @type {Set<Effect> | null}
 	 */
 	#dirty_effects = null;
 
 	/**
-	 * Deferred effects that are MAYBE_DIRTY
+	 * Deferred effects that are MAYBE_DIRTY.
+	 * Lazily initialised for perf reasons
 	 * @type {Set<Effect> | null}
 	 */
 	#maybe_dirty_effects = null;
@@ -236,6 +240,7 @@ export class Batch {
 	 * is committed — we skip over these during `process`.
 	 * The value contains child effects that were dirty/maybe_dirty before being reset,
 	 * so they can be rescheduled if the branch survives.
+	 * Lazily initialised for perf reasons.
 	 * @type {Map<Effect, { d: Effect[], m: Effect[] }> | null}
 	 */
 	#skipped_branches = null;
@@ -263,7 +268,8 @@ export class Batch {
 	 * this map is the fork's own view of the affected part of the graph, and is
 	 * discarded along with the fork. Committing writes the fork's sources
 	 * through, after which deriveds recompute in the real world.
-	 * `null` unless this batch is (or was) a fork
+	 * `null` unless this batch is (or was) a fork.
+	 * Lazily initialised for perf reasons
 	 * @type {Map<Value, any> | null}
 	 */
 	fork_values = null;
@@ -271,7 +277,8 @@ export class Batch {
 	/**
 	 * Async and block effects that ran or were proven clean inside this fork.
 	 * The version is that of the latest real-world execution when the effect was
-	 * validated. Fork executions do not advance it, so forks remain independent
+	 * validated. Fork executions do not advance it, so forks remain independent.
+	 * Lazily initialised for perf reasons
 	 * @type {Map<Effect, number> | null}
 	 */
 	fork_effects = null;
@@ -279,7 +286,8 @@ export class Batch {
 	/**
 	 * Reactions that observed the pre-write world of this batch (via
 	 * `batch_values`) while it was pending. When this batch commits, they
-	 * re-run with the real values
+	 * re-run with the real values.
+	 * Lazily initialised for perf reasons
 	 * @type {Set<Reaction> | null}
 	 */
 	stale_readers = null;
@@ -381,7 +389,7 @@ export class Batch {
 	 * If this batch was merged into another one, get the surviving batch
 	 * @returns {Batch}
 	 */
-	#resolved() {
+	resolved() {
 		/** @type {Batch} */
 		var batch = this;
 		while (batch.merged_into !== null) batch = batch.merged_into;
@@ -398,7 +406,7 @@ export class Batch {
 		var waiter = owner.waiter;
 
 		if (waiter !== null) {
-			waiter = waiter.#resolved();
+			waiter = waiter.resolved();
 
 			if (waiter !== this && waiter.linked) {
 				this.#merge(waiter);
@@ -421,7 +429,7 @@ export class Batch {
 		var waiter = this.waiter;
 		this.waiter = null;
 
-		if (waiter === null || !(waiter = waiter.#resolved()).linked) return;
+		if (waiter === null || !(waiter = waiter.resolved()).linked) return;
 
 		var waiting = /** @type {{ batches: Set<Batch>, reactions: Map<Reaction, Batch> }} */ (
 			waiter.waiting
@@ -457,7 +465,7 @@ export class Batch {
 		var released = /** @type {Batch} */ (waiter);
 
 		queue_micro_task(() => {
-			var batch = released.#resolved();
+			var batch = released.resolved();
 
 			if (batch.linked && batch.waiting === null) {
 				batch.flush();
@@ -488,11 +496,7 @@ export class Batch {
 		// template expression deriveds are leaves — they don't entangle
 		if ((reaction.f & TEMPLATE_EXPRESSION) !== 0) return false;
 
-		var owner = reaction.batch;
-
-		if (owner !== null) {
-			while (owner.merged_into !== null) owner = owner.merged_into;
-		}
+		var owner = reaction.batch && reaction.batch.resolved();
 
 		if (this.is_eager) {
 			// eager version bumps don't entangle — but an effect that belongs to
@@ -560,17 +564,14 @@ export class Batch {
 			if ((effect.f & DESTROYED) !== 0) continue;
 
 			if (version !== (effect_versions.get(effect) ?? 0)) {
-				var owner = effect.batch;
-				while (owner !== null && owner.merged_into !== null) owner = owner.merged_into;
+				var owner = effect.batch && effect.batch.resolved();
 
 				if (owner !== null && owner !== this && owner.linked && !owner.is_fork) {
 					this.claim(effect);
 				}
-
-				continue;
+			} else {
+				this.claim(effect);
 			}
-
-			this.claim(effect);
 		}
 
 		this.fork_effects = null;
@@ -1041,7 +1042,7 @@ export class Batch {
 	}
 
 	activate() {
-		current_batch = this.#resolved();
+		current_batch = this.resolved();
 	}
 
 	deactivate() {
@@ -1117,9 +1118,7 @@ export class Batch {
 			}
 
 			if (fork.current.size === 0) {
-				const f = fork;
-				// In a microtask, because discard unlinks and so #next would always be null
-				queue_micro_task(() => f.discard());
+				fork.discard();
 				continue;
 			}
 
@@ -1131,7 +1130,7 @@ export class Batch {
 					continue;
 				}
 
-				var owner = effect.batch && effect.batch.#resolved();
+				var owner = effect.batch && effect.batch.resolved();
 				if (owner !== this) continue;
 
 				fork.schedule(effect);
@@ -1145,6 +1144,9 @@ export class Batch {
 			for (const [fork, effects] of forks) {
 				queue_micro_task(() => {
 					if (!fork.linked) return;
+					// TODO this can overfire. Ideally we could bump the version of the sources, then find the connection between the scheduled effects
+					// and those sources, only mark the path along them as (maybe)dirty, and then execute. That way they don't leave a trace behind
+					// and don't overfire. But it's probably a lot more tedious code for little gain in edge cases.
 					for (const effect of effects) set_signal_status(effect, DIRTY);
 					fork.flush();
 				});
@@ -1179,7 +1181,7 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	increment(blocking, effect) {
-		var batch = this.merged_into === null ? this : this.#resolved();
+		var batch = this.resolved();
 
 		batch.#pending += 1;
 
@@ -1196,7 +1198,7 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	decrement(blocking, effect) {
-		var batch = this.merged_into === null ? this : this.#resolved();
+		var batch = this.resolved();
 
 		batch.#pending -= 1;
 
@@ -1227,7 +1229,7 @@ export class Batch {
 	 * @param {Set<Effect> | null} maybe_dirty_effects
 	 */
 	transfer_effects(dirty_effects, maybe_dirty_effects) {
-		var batch = this.#resolved();
+		var batch = this.resolved();
 		batch.#dirty_effects = transfer_set(batch.#dirty_effects, dirty_effects);
 		batch.#maybe_dirty_effects = transfer_set(batch.#maybe_dirty_effects, maybe_dirty_effects);
 	}
@@ -1243,7 +1245,7 @@ export class Batch {
 	}
 
 	settled() {
-		var batch = this.#resolved();
+		var batch = this.resolved();
 		return (batch.#deferred ??= deferred()).promise;
 	}
 
@@ -1264,7 +1266,7 @@ export class Batch {
 	}
 
 	apply() {
-		var batch = this.#resolved();
+		var batch = this.resolved();
 
 		if (!async_mode_flag || (!batch.is_fork && batch.#prev === null && batch.#next === null)) {
 			batch_values = null;
@@ -1530,7 +1532,7 @@ export function claimed_by_other(reaction) {
 	var owner = reaction.batch;
 	if (owner === null) return null;
 
-	while (owner.merged_into !== null) owner = owner.merged_into;
+	owner = owner.resolved();
 	reaction.batch = owner;
 
 	return owner.linked && owner !== batch_values_owner ? owner : null;
@@ -1646,8 +1648,7 @@ function mark_committed_reactions(value, batch, marked, status) {
 			mark_committed_reactions(/** @type {Derived} */ (reaction), batch, marked, MAYBE_DIRTY);
 		} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0) {
 			var effect = /** @type {Effect} */ (reaction);
-			var owner = effect.batch;
-			while (owner !== null && owner.merged_into !== null) owner = owner.merged_into;
+			var owner = effect.batch && effect.batch.resolved();
 
 			var fork_version = batch.fork_effects?.get(effect);
 			var validated =
