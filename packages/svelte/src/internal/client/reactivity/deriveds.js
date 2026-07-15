@@ -96,6 +96,8 @@ export function derived(fn) {
 
 export const OBSOLETE = Symbol('obsolete');
 
+let async_uid = 1;
+
 /**
  * @template V
  * @param {() => V | Promise<V>} fn
@@ -113,13 +115,16 @@ export function async_derived(fn, label, location) {
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
+	var is_fork = current_batch?.is_fork === true;
+	/** @type {((value: Source<V>) => void) | null} */
+	var resolve = null;
 
 	if (DEV) signal.label = label ?? fn.toString();
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Set<ReturnType<typeof deferred<V>>>} */
+	/** @type {Set<ReturnType<typeof deferred<V>> & { id: number }>} */
 	var deferreds = new Set();
 
 	async_effect(() => {
@@ -129,8 +134,8 @@ export function async_derived(fn, label, location) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
 		}
 
-		/** @type {ReturnType<typeof deferred<V>>} */
-		var d = deferred();
+		/** @type {ReturnType<typeof deferred<V>> & { id: number }} */
+		var d = { ...deferred(), id: async_uid++ };
 		promise = d.promise;
 
 		try {
@@ -239,6 +244,8 @@ export function async_derived(fn, label, location) {
 			}
 
 			batch.deactivate();
+
+			if (is_fork) resolve?.(signal);
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -257,6 +264,10 @@ export function async_derived(fn, label, location) {
 	}
 
 	return new Promise((fulfil) => {
+		// Async expressions created in forks continue in their own world. Other
+		// expressions continue to follow the latest run of their shared effect.
+		resolve = fulfil;
+
 		/** @param {Promise<V>} p */
 		function next(p) {
 			function go() {

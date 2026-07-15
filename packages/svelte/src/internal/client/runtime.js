@@ -487,7 +487,7 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.wv = write_version;
-		batch?.record_fork_effect(effect);
+		batch?.record_effect(effect);
 
 		// In DEV, increment versions of any sources that were written to during the effect,
 		// so that they are correctly marked as dirty when the effect re-runs

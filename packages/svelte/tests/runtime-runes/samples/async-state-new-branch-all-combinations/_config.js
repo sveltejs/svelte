@@ -2,7 +2,6 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO more combinations pass on https://github.com/sveltejs/svelte/pull/17971
 	timeout: 20_000,
 	async test({ assert, target }) {
 		const [x, fork_x, y, fork_y, shift, pop, commit_x, commit_y, reset] =

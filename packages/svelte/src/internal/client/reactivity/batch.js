@@ -115,6 +115,11 @@ var source_stacks = new Set();
 
 let uid = 1;
 
+let effect_version = 1;
+
+/** @type {WeakMap<Effect, number>} */
+const effect_versions = new WeakMap();
+
 /**
  * @template T
  * @param {Set<T> | null} target
@@ -151,7 +156,7 @@ export class Batch {
 	/**
 	 * Lazily initialised — batches churn one-per-flush, so rarely-used
 	 * collections (this and several below) are only allocated on first use
-	 * @type {Map<Effect, ReturnType<typeof deferred<any>>> | null}
+	 * @type {Map<Effect, ReturnType<typeof deferred<any>> & { id: number }> | null}
 	 */
 	async_deriveds = null;
 
@@ -266,7 +271,7 @@ export class Batch {
 	/**
 	 * Async and block effects that ran or were proven clean inside this fork.
 	 * When the fork commits, only these effects can retain their speculative results
-	 * @type {Set<Effect> | null}
+	 * @type {Map<Effect, number> | null}
 	 */
 	fork_effects = null;
 
@@ -527,10 +532,45 @@ export class Batch {
 	}
 
 	/** @param {Effect} effect */
-	record_fork_effect(effect) {
-		if (this.is_fork && (effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
-			(this.fork_effects ??= new Set()).add(effect);
+	record_effect(effect) {
+		if ((effect.f & (ASYNC | BLOCK_EFFECT)) === 0) return;
+
+		var version = effect_version++;
+		effect_versions.set(effect, version);
+
+		if (this.is_fork) {
+			(this.fork_effects ??= new Map()).set(effect, version);
 		}
+	}
+
+	claim_fork_effects() {
+		if (this.fork_effects === null) return;
+
+		for (const [effect, version] of this.fork_effects) {
+			if ((effect.f & DESTROYED) !== 0 || version !== effect_versions.get(effect)) {
+				this.#dirty_effects?.delete(effect);
+				this.#maybe_dirty_effects?.delete(effect);
+			}
+		}
+
+		for (const [effect, version] of this.fork_effects) {
+			if ((effect.f & DESTROYED) !== 0) continue;
+
+			if (version !== effect_versions.get(effect)) {
+				var owner = effect.batch;
+				while (owner !== null && owner.merged_into !== null) owner = owner.merged_into;
+
+				if (owner !== null && owner !== this && owner.linked && !owner.is_fork) {
+					this.claim(effect);
+				}
+
+				continue;
+			}
+
+			this.claim(effect);
+		}
+
+		this.fork_effects = null;
 	}
 
 	/**
@@ -561,11 +601,15 @@ export class Batch {
 			this.async_deriveds ??= new Map();
 
 			for (const [effect, d] of other.async_deriveds) {
-				if (this.async_deriveds.has(effect)) {
-					// both batches have an in-flight run of the same async effect
-					// (this can happen via forks, which don't entangle) — `other`'s
-					// run belongs to a world that no longer exists independently
-					d.reject(OBSOLETE);
+				var existing = this.async_deriveds.get(effect);
+
+				if (existing !== undefined) {
+					if (d.id > existing.id) {
+						existing.reject(OBSOLETE);
+						this.async_deriveds.set(effect, d);
+					} else {
+						d.reject(OBSOLETE);
+					}
 				} else {
 					this.async_deriveds.set(effect, d);
 				}
@@ -593,10 +637,10 @@ export class Batch {
 			this.#skipped_branches ??= new Map();
 
 			for (const [effect, tracked] of other.#skipped_branches) {
-				var existing = this.#skipped_branches.get(effect);
-				if (existing) {
-					existing.d.push(...tracked.d);
-					existing.m.push(...tracked.m);
+				var skipped = this.#skipped_branches.get(effect);
+				if (skipped) {
+					skipped.d.push(...tracked.d);
+					skipped.m.push(...tracked.m);
 				} else {
 					this.#skipped_branches.set(effect, tracked);
 				}
@@ -921,7 +965,7 @@ export class Batch {
 						}
 						update_effect(effect);
 					} else if ((flags & MAYBE_DIRTY) !== 0) {
-						this.record_fork_effect(effect);
+						this.record_effect(effect);
 					}
 				}
 
@@ -1210,6 +1254,11 @@ export class Batch {
 	 */
 	schedule(effect) {
 		last_scheduled_effect = effect;
+
+		if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
+			effect_versions.set(effect, effect_version++);
+		}
+
 		if (this.is_fork) this.fork_effects?.delete(effect);
 
 		if (this.claim(effect)) {
@@ -1542,23 +1591,29 @@ function mark_committed_reactions(value, batch, marked, status) {
 
 			mark_committed_reactions(/** @type {Derived} */ (reaction), batch, marked, MAYBE_DIRTY);
 		} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0) {
-			// async and block effects validated inside the fork are left alone —
-			// they already ran with these exact values or were proven unaffected.
-			// But if such an effect belongs to another live batch's world, it must
-			// re-run with the committed values (which also entangles us with that
-			// batch, as with any other write)
-			var owner = /** @type {Effect} */ (reaction).batch;
+			var effect = /** @type {Effect} */ (reaction);
+			var owner = effect.batch;
 			while (owner !== null && owner.merged_into !== null) owner = owner.merged_into;
 
-			if (
-				!batch.fork_effects?.has(/** @type {Effect} */ (reaction)) ||
-				(owner !== null && owner !== batch && owner.linked && !owner.is_fork)
-			) {
+			var fork_version = batch.fork_effects?.get(effect);
+			var validated = fork_version !== undefined && fork_version === effect_versions.get(effect);
+			var stale =
+				batch.stale_readers?.has(effect) === true || owner?.stale_readers?.has(effect) === true;
+
+			if (fork_version === undefined || stale) {
 				if ((reaction.f & DIRTY) === 0) {
 					set_signal_status(reaction, status);
 				}
 
-				batch.schedule(/** @type {Effect} */ (reaction));
+				batch.schedule(effect);
+			} else if (
+				!validated &&
+				owner !== null &&
+				owner !== batch &&
+				owner.linked &&
+				!owner.is_fork
+			) {
+				batch.claim(effect);
 			}
 		} else if ((flags & DIRTY) === 0) {
 			set_signal_status(reaction, status);
@@ -1673,11 +1728,20 @@ export function fork(fn) {
 			/** @type {Map<Value, number>} */
 			var marked = new Map();
 
+			for (var source of batch.current.keys()) {
+				mark_committed_reactions(source, batch, marked, DIRTY);
+			}
+
+			// Marking can entangle the fork with newer work and replace values in
+			// `current`, so only write through once the final world is known.
 			for (var [source, value] of batch.current) {
 				source.v = value;
 				source.wv = increment_write_version();
-				mark_committed_reactions(source, batch, marked, DIRTY);
 			}
+
+			// Effects retained from the speculative world now belong to the real
+			// batch, so subsequent overlapping work can entangle with it.
+			batch.claim_fork_effects();
 
 			batch.deactivate();
 
