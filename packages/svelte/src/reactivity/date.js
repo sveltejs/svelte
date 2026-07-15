@@ -2,8 +2,9 @@
 import { derived } from '../internal/client/index.js';
 import { set, state } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
-import { active_reaction, get, set_active_reaction } from '../internal/client/runtime.js';
+import { get, set_active_reaction } from '../internal/client/runtime.js';
 import { DEV } from 'esm-env';
+import { active_reaction } from '../internal/client/runtime.js';
 
 var inited = false;
 
@@ -51,7 +52,7 @@ export class SvelteDate extends Date {
 	constructor(...params) {
 		// @ts-ignore
 		super(...params);
-
+		debugger;
 		if (DEV) {
 			tag(this.#time, 'SvelteDate.#time');
 		}
