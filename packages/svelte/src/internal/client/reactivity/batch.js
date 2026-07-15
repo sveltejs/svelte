@@ -264,6 +264,13 @@ export class Batch {
 	fork_values = null;
 
 	/**
+	 * Async and block effects that ran or were proven clean inside this fork.
+	 * When the fork commits, only these effects can retain their speculative results
+	 * @type {Set<Effect> | null}
+	 */
+	fork_effects = null;
+
+	/**
 	 * Reactions that observed the pre-write world of this batch (via
 	 * `batch_values`) while it was pending. When this batch commits, they
 	 * re-run with the real values
@@ -517,6 +524,13 @@ export class Batch {
 
 		reaction.batch = this;
 		return false;
+	}
+
+	/** @param {Effect} effect */
+	record_fork_effect(effect) {
+		if (this.is_fork && (effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
+			(this.fork_effects ??= new Set()).add(effect);
+		}
 	}
 
 	/**
@@ -898,11 +912,17 @@ export class Batch {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
-				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) {
-						(this.#maybe_dirty_effects ??= new Set()).add(effect);
+				} else {
+					var dirty = is_dirty(effect);
+
+					if (dirty) {
+						if ((flags & BLOCK_EFFECT) !== 0) {
+							(this.#maybe_dirty_effects ??= new Set()).add(effect);
+						}
+						update_effect(effect);
+					} else if ((flags & MAYBE_DIRTY) !== 0) {
+						this.record_fork_effect(effect);
 					}
-					update_effect(effect);
 				}
 
 				var child = effect.first;
@@ -1190,6 +1210,7 @@ export class Batch {
 	 */
 	schedule(effect) {
 		last_scheduled_effect = effect;
+		if (this.is_fork) this.fork_effects?.delete(effect);
 
 		if (this.claim(effect)) {
 			this.#dirty_effects ??= new Set();
@@ -1488,17 +1509,18 @@ export function eager(fn) {
 
 /**
  * When a fork is committed, deriveds affected by its writes must recompute with
- * the now-committed values, and template/user effects must re-run. Async and
- * block effects are skipped — they already ran inside the fork with these
- * values (their results were captured by the fork's batch), and eager effects
- * are collected so that `$state.eager(...)` expressions update immediately
+ * the now-committed values, and affected effects must be checked. Async and
+ * block effects that were validated inside the fork are skipped, and eager
+ * effects are collected so that `$state.eager(...)` expressions update immediately
  * @param {Value} value
  * @param {Batch} batch
- * @param {Set<Value>} marked
+ * @param {Map<Value, number>} marked
+ * @param {number} status
  */
-function mark_committed_reactions(value, batch, marked) {
-	if (marked.has(value)) return;
-	marked.add(value);
+function mark_committed_reactions(value, batch, marked, status) {
+	var previous_status = marked.get(value);
+	if (previous_status === DIRTY || previous_status === status) return;
+	marked.set(value, status);
 
 	var reactions = value.reactions;
 	if (reactions === null) return;
@@ -1507,34 +1529,39 @@ function mark_committed_reactions(value, batch, marked) {
 		var flags = reaction.f;
 
 		if ((flags & EAGER_EFFECT) !== 0) {
-			set_signal_status(reaction, DIRTY);
+			if ((flags & DIRTY) === 0) {
+				set_signal_status(reaction, status);
+			}
 			eager_effects.add(/** @type {Effect} */ (reaction));
 		} else if ((flags & DERIVED) !== 0) {
 			batch.claim(reaction);
 
 			if ((flags & DIRTY) === 0) {
-				set_signal_status(reaction, MAYBE_DIRTY);
+				set_signal_status(reaction, status);
 			}
 
-			mark_committed_reactions(/** @type {Derived} */ (reaction), batch, marked);
+			mark_committed_reactions(/** @type {Derived} */ (reaction), batch, marked, MAYBE_DIRTY);
 		} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0) {
-			// async and block effects that the fork itself ran are left alone —
-			// they already ran with these exact values. But if such an effect
-			// belongs to another live batch's world, it must re-run with the
-			// committed values (which also entangles us with that batch, as
-			// with any other write)
+			// async and block effects validated inside the fork are left alone —
+			// they already ran with these exact values or were proven unaffected.
+			// But if such an effect belongs to another live batch's world, it must
+			// re-run with the committed values (which also entangles us with that
+			// batch, as with any other write)
 			var owner = /** @type {Effect} */ (reaction).batch;
 			while (owner !== null && owner.merged_into !== null) owner = owner.merged_into;
 
-			if (owner !== null && owner !== batch && owner.linked && !owner.is_fork) {
+			if (
+				!batch.fork_effects?.has(/** @type {Effect} */ (reaction)) ||
+				(owner !== null && owner !== batch && owner.linked && !owner.is_fork)
+			) {
 				if ((reaction.f & DIRTY) === 0) {
-					set_signal_status(reaction, DIRTY);
+					set_signal_status(reaction, status);
 				}
 
 				batch.schedule(/** @type {Effect} */ (reaction));
 			}
 		} else if ((flags & DIRTY) === 0) {
-			set_signal_status(reaction, DIRTY);
+			set_signal_status(reaction, status);
 			batch.schedule(/** @type {Effect} */ (reaction));
 		}
 	}
@@ -1643,13 +1670,13 @@ export function fork(fn) {
 			// entangles us with any overlapping pending batches
 			batch.activate();
 
-			/** @type {Set<Value>} */
-			var marked = new Set();
+			/** @type {Map<Value, number>} */
+			var marked = new Map();
 
 			for (var [source, value] of batch.current) {
 				source.v = value;
 				source.wv = increment_write_version();
-				mark_committed_reactions(source, batch, marked);
+				mark_committed_reactions(source, batch, marked, DIRTY);
 			}
 
 			batch.deactivate();
