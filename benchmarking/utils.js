@@ -268,7 +268,7 @@ function profile_to_markdown(profile) {
 			const id = typeof node.id === 'number' ? node.id : '';
 			const parentId =
 				typeof id === 'number' && included_node_ids.has(parent_by_id.get(id) ?? NaN)
-					? parent_by_id.get(id) ?? ''
+					? (parent_by_id.get(id) ?? '')
 					: '';
 			const functionName =
 				typeof callFrame.functionName === 'string' && callFrame.functionName.length > 0

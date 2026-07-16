@@ -181,8 +181,8 @@ export class SvelteMap extends Map {
 			var v_reactions = version.reactions === null ? null : new Set(version.reactions);
 			var needs_version_increase =
 				v_reactions === null ||
-				!s.reactions?.every((r) =>
-					/** @type {NonNullable<typeof v_reactions>} */ (v_reactions).has(r)
+				!s.reactions?.every(
+					(r) => /** @type {NonNullable<typeof v_reactions>} */ (v_reactions).has(r)
 				);
 			if (needs_version_increase) {
 				increment(version);

@@ -165,9 +165,10 @@ export function createEventDispatcher() {
 	 * @param [options]
 	 */
 	return (type, detail, options) => {
-		const events = /** @type {Record<string, Function | Function[]>} */ (
-			active_component_context.s.$$events
-		)?.[/** @type {string} */ (type)];
+		const events =
+			/** @type {Record<string, Function | Function[]>} */ (active_component_context.s.$$events)?.[
+				/** @type {string} */ (type)
+			];
 
 		if (events) {
 			const callbacks = is_array(events) ? events.slice() : [events];
