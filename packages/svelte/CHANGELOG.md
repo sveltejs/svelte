@@ -1,5 +1,13 @@
 # svelte
 
+## 5.56.6
+
+### Patch Changes
+
+- perf: skip unnecessary blocker analysis when compiling components without top-level await ([#18548](https://github.com/sveltejs/svelte/pull/18548))
+
+- fix: rerun derived that had an abort controller on reconnection ([#18551](https://github.com/sveltejs/svelte/pull/18551))
+
 ## 5.56.5
 
 ### Patch Changes
