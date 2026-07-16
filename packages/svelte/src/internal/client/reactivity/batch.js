@@ -236,6 +236,14 @@ export class Batch {
 	#maybe_dirty_effects = null;
 
 	/**
+	 * Effects run by an eager batch that must be re-established in this batch's world.
+	 * Unlike deferred effects, these are scheduled only once.
+	 * Lazily initialised for perf reasons
+	 * @type {Set<Effect> | null}
+	 */
+	#reestablish_effects = null;
+
+	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`.
 	 * The value contains child effects that were dirty/maybe_dirty before being reset,
@@ -512,8 +520,8 @@ export class Batch {
 				owner.linked &&
 				!owner.is_fork
 			) {
-				// TODO
-				(owner.#dirty_effects ??= new Set()).add(/** @type {Effect} */ (signal));
+				// Not putting this into #dirty_effects to prevent infinite loops
+				(owner.#reestablish_effects ??= new Set()).add(/** @type {Effect} */ (signal));
 			}
 
 			return false;
@@ -640,6 +648,9 @@ export class Batch {
 		this.transfer_effects(other.#dirty_effects, other.#maybe_dirty_effects);
 		other.#dirty_effects = null;
 		other.#maybe_dirty_effects = null;
+
+		this.#reestablish_effects = transfer_set(this.#reestablish_effects, other.#reestablish_effects);
+		other.#reestablish_effects = null;
 
 		if (other.#skipped_branches !== null) {
 			this.#skipped_branches ??= new Map();
@@ -779,6 +790,18 @@ export class Batch {
 			// so that they can be reset afterwards
 			for (const value of this.current.keys()) {
 				source_stacks.add(value);
+			}
+		}
+
+		if (this.#reestablish_effects !== null) {
+			var reestablish_effects = this.#reestablish_effects;
+			this.#reestablish_effects = null;
+
+			for (const e of reestablish_effects) {
+				this.#dirty_effects?.delete(e);
+				this.#maybe_dirty_effects?.delete(e);
+				set_signal_status(e, DIRTY);
+				this.schedule(e);
 			}
 		}
 
