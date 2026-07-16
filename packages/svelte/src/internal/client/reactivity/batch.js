@@ -277,7 +277,6 @@ export class Batch {
 	 * discarded along with the fork. Committing writes the fork's sources
 	 * through, after which deriveds recompute in the real world.
 	 * `null` unless this batch is (or was) a fork.
-	 * Lazily initialised for perf reasons
 	 * @type {Map<Value, any> | null}
 	 */
 	fork_values = null;
@@ -1139,9 +1138,11 @@ export class Batch {
 		for (var fork = first_batch; fork !== null; fork = fork.#next) {
 			if (!fork.is_fork || fork.fork_effects === null) continue;
 
-			for (const signal of this.current.keys()) {
-				fork.current.delete(signal);
-				fork.previous.delete(signal);
+			if (fork.id < this.id) {
+				for (const signal of this.current.keys()) {
+					fork.current.delete(signal);
+					fork.previous.delete(signal);
+				}
 			}
 
 			if (fork.current.size === 0) {
