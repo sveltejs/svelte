@@ -52,7 +52,7 @@ export class SvelteDate extends Date {
 	constructor(...params) {
 		// @ts-ignore
 		super(...params);
-		debugger;
+
 		if (DEV) {
 			tag(this.#time, 'SvelteDate.#time');
 		}
