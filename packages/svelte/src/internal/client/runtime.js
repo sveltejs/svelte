@@ -48,8 +48,8 @@ import {
 	set_dev_stack
 } from './context.js';
 import {
+	active_batch,
 	Batch,
-	batch_values,
 	claimed_by_other,
 	current_batch,
 	flushSync,
@@ -173,7 +173,7 @@ export function is_dirty(reaction) {
 		for (var i = 0; i < length; i++) {
 			var dependency = dependencies[i];
 
-			if (batch_values !== null && (dependency.f & DERIVED) !== 0) {
+			if (active_batch !== null && active_batch.values !== null && (dependency.f & DERIVED) !== 0) {
 				var is_template = (dependency.f & TEMPLATE_EXPRESSION) !== 0;
 
 				if (is_template || claimed_by_other(/** @type {Derived} */ (dependency)) !== null) {
@@ -686,23 +686,24 @@ export function get(signal) {
 		// context of the current world, without touching their cached state:
 		// - deriveds belonging to another live batch's world must not be
 		//   recomputed or have their status reset (the owning batch relies on
-		//   both) — their value in this world follows from `batch_values`
+		//   both) — their value in this world follows from the active overlay
 		// - dirty template expression deriveds are leaves that can be shared
 		//   between non-overlapping batches, so each world evaluates its own value
 		/** @type {Batch | null} */
 		var owner = null;
 
 		if (
-			batch_values !== null &&
+			active_batch !== null &&
+			active_batch.values !== null &&
 			((derived.f & TEMPLATE_EXPRESSION) !== 0
 				? (derived.f & (DIRTY | MAYBE_DIRTY)) !== 0
 				: (owner = claimed_by_other(derived)) !== null)
 		) {
-			// the world-local value is memoized in `batch_values` (and invalidated
+			// the world-local value is memoized in the active overlay (and invalidated
 			// there when dependencies change). Reads are registered with the owner
 			// batch — when it commits, the reader re-runs with the real values
-			if (!batch_values.has(derived)) {
-				batch_values.set(derived, [execute_derived(derived), owner]);
+			if (!active_batch.values.has(derived)) {
+				active_batch.values.set(derived, [execute_derived(derived), owner]);
 			}
 		} else {
 			// connect disconnected deriveds if we are reading them inside an effect,
@@ -732,8 +733,8 @@ export function get(signal) {
 		}
 	}
 
-	if (batch_values !== null) {
-		var override = batch_values.get(signal);
+	if (active_batch !== null && active_batch.values !== null) {
+		var override = active_batch.values.get(signal);
 
 		if (override !== undefined) {
 			// if we're seeing another live batch's pre-write world, it must

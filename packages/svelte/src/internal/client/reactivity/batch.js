@@ -61,29 +61,18 @@ let last_batch = null;
 export let current_batch = null;
 
 /**
+ * The batch whose world is currently applied. This can differ from
+ * `current_batch`, e.g. while a batch's effects are being flushed (during which
+ * `current_batch` is `null`, or a new batch created by writes inside effects).
+ * @type {Batch | null}
+ */
+export let active_batch = null;
+
+/**
  * This is needed to avoid overwriting inputs
  * @type {Batch | null}
  */
 export let previous_batch = null;
-
-/**
- * When time travelling (i.e. working in one batch, while other batches
- * still have ongoing work), we ignore the real values of affected
- * signals in favour of their values within the batch.
- * Entries are `[value, owner]` tuples — `owner` is the live batch whose
- * pre-write value we are seeing (so that the reader can be re-run when
- * that batch commits), or `null` if the value belongs to the current batch
- * @type {Map<Value, [any, Batch | null]> | null}
- */
-export let batch_values = null;
-
-/**
- * The batch whose world `batch_values` currently reflects. This can differ from
- * `current_batch`, e.g. while a batch's effects are being flushed (during which
- * `current_batch` is `null`, or a new batch created by writes inside effects)
- * @type {Batch | null}
- */
-let batch_values_owner = null;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -173,6 +162,15 @@ export class Batch {
 	 * @type {Map<Value, any>}
 	 */
 	previous = new Map();
+
+	/**
+	 * The values visible in this batch's world. Entries are `[value, owner]`
+	 * tuples. `owner` is the live batch whose pre-write value we are seeing,
+	 * or `null` if the value belongs to this batch. For forks this also stores
+	 * world-local derived values between activations.
+	 * @type {Map<Value, [any, Batch | null]> | null}
+	 */
+	values = null;
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
@@ -272,16 +270,6 @@ export class Batch {
 	merged_into = null;
 
 	/**
-	 * Deriveds evaluated inside this fork. Forks don't write values through —
-	 * this map is the fork's own view of the affected part of the graph, and is
-	 * discarded along with the fork. Committing writes the fork's sources
-	 * through, after which deriveds recompute in the real world.
-	 * `null` unless this batch is (or was) a fork.
-	 * @type {Map<Value, any> | null}
-	 */
-	fork_values = null;
-
-	/**
 	 * Async and block effects that ran or were proven clean inside this fork.
 	 * The version is that of the latest real-world execution when the effect was
 	 * validated. Fork executions do not advance it, so forks remain independent.
@@ -291,8 +279,8 @@ export class Batch {
 	fork_effects = null;
 
 	/**
-	 * Reactions that observed the pre-write world of this batch (via
-	 * `batch_values`) while it was pending. When this batch commits, they
+	 * Reactions that observed the pre-write world of this batch via its active
+	 * overlay while it was pending. When this batch commits, they
 	 * re-run with the real values.
 	 * Lazily initialised for perf reasons
 	 * @type {Set<Reaction> | null}
@@ -719,11 +707,13 @@ export class Batch {
 		other.merged_into = this;
 		other.#unlink();
 
-		// if we're mid-flush, `batch_values` was holding back `other`'s values —
+		// if we're mid-flush, the active overlay was holding back `other`'s values —
 		// they are part of this batch's world now, so recompute the overrides
-		if (batch_values !== null && current_batch === this) {
+		if (active_batch !== null && active_batch.values !== null && active_batch.resolved() === this) {
 			this.apply();
 		}
+
+		other.values = null;
 	}
 
 	/**
@@ -928,8 +918,9 @@ export class Batch {
 
 			if (async_mode_flag) {
 				// now that this batch is committed, reactions that observed its
-				// pre-write values (via `batch_values`) re-run with the real ones
+				// pre-write values (via the active overlay) re-run with the real ones
 				this.#commit();
+				this.values = null;
 
 				// #commit may have scheduled stale readers into a new batch
 				next_batch ??= /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
@@ -1056,10 +1047,10 @@ export class Batch {
 	capture(source, value) {
 		this.record_previous(source);
 
-		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
+		// Don't save errors in the active overlay, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
 			this.current.set(source, value);
-			batch_values?.set(source, [value, null]);
+			(active_batch ?? (this.is_fork ? this : null))?.values?.set(source, [value, null]);
 		}
 
 		if (!this.is_fork) {
@@ -1073,8 +1064,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
-		batch_values = null;
-		batch_values_owner = null;
+		active_batch = null;
 	}
 
 	flush() {
@@ -1095,8 +1085,7 @@ export class Batch {
 			is_processing = false;
 
 			current_batch = null;
-			batch_values = null;
-			batch_values_owner = null;
+			active_batch = null;
 
 			old_values.clear();
 
@@ -1110,6 +1099,7 @@ export class Batch {
 
 	discard() {
 		this.fork_effects = null;
+		this.values = null;
 
 		if (this.#discard_callbacks !== null) {
 			for (const fn of this.#discard_callbacks) fn(this);
@@ -1142,6 +1132,7 @@ export class Batch {
 				for (const signal of this.current.keys()) {
 					fork.current.delete(signal);
 					fork.previous.delete(signal);
+					fork.values?.delete(signal);
 				}
 			}
 
@@ -1295,24 +1286,26 @@ export class Batch {
 
 	apply() {
 		var batch = this.resolved();
+		active_batch = batch;
 
 		if (!async_mode_flag || (!batch.is_fork && batch.#prev === null && batch.#next === null)) {
-			batch_values = null;
-			batch_values_owner = null;
+			batch.values = null;
+			return;
+		}
+
+		if (batch.is_fork) {
+			batch.values ??= new Map();
 			return;
 		}
 
 		/** @type {Map<Value, [any, Batch | null]>} */
-		var values = (batch_values = new Map());
-		batch_values_owner = batch;
+		var values = (batch.values = new Map());
 
 		// undo changes belonging to other live batches — aside from our own
 		// changes, we should only see values that have been committed. Overlapping
 		// batches are merged unless one is waiting behind a sealed predecessor
 		for (let other = first_batch; other !== null; other = other.#next) {
-			// Forks are based on the latest real world, not an independently
-			// held-back snapshot of it. Other forks remain separate worlds.
-			if (other === batch || other.is_fork || batch.is_fork) continue;
+			if (other === batch || other.is_fork) continue;
 
 			for (const [source, previous] of other.previous) {
 				if (!values.has(source)) {
@@ -1321,16 +1314,9 @@ export class Batch {
 			}
 		}
 
-		// our own writes (and, in a fork, deriveds evaluated inside the fork)
-		// take precedence over everything else
+		// our own writes take precedence over everything else
 		for (const [source, value] of batch.current) {
 			values.set(source, [value, null]);
-		}
-
-		if (batch.fork_values !== null) {
-			for (const [derived, value] of batch.fork_values) {
-				values.set(derived, [value, null]);
-			}
 		}
 	}
 
@@ -1563,7 +1549,7 @@ export function claimed_by_other(reaction) {
 	owner = owner.resolved();
 	reaction.batch = owner;
 
-	return owner.linked && owner !== batch_values_owner ? owner : null;
+	return owner.linked && owner !== active_batch?.resolved() ? owner : null;
 }
 
 /** @type {Source<number>[]} */
@@ -1613,13 +1599,13 @@ export function eager(fn) {
 		if (initial) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
-			var previous_batch_values = batch_values;
+			var previous_active_batch = active_batch;
 
 			try {
-				batch_values = null;
+				active_batch = null;
 				value = fn();
 			} finally {
-				batch_values = previous_batch_values;
+				active_batch = previous_active_batch;
 			}
 
 			return;
@@ -1778,7 +1764,6 @@ export function fork(fn) {
 
 	var batch = Batch.ensure();
 	batch.is_fork = true;
-	batch.fork_values = new Map();
 	batch.apply();
 
 	var committed = false;
@@ -1804,7 +1789,7 @@ export function fork(fn) {
 			committed = true;
 
 			batch.is_fork = false;
-			batch.fork_values = null;
+			batch.values = null;
 
 			// Write the fork's changes through and invalidate affected deriveds
 			// and template/user effects, so they recompute with the committed
@@ -1863,4 +1848,5 @@ export function fork(fn) {
  */
 export function clear() {
 	first_batch = last_batch = null;
+	active_batch = null;
 }

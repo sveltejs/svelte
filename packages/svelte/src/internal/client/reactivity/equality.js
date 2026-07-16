@@ -1,8 +1,16 @@
-/** @import { Equals } from '#client' */
+/** @import { Equals, Value } from '#client' */
+import { active_batch, current_batch } from './batch.js';
+
+/** @param {Value} signal */
+function get_value(signal) {
+	var batch = active_batch ?? (current_batch?.is_fork ? current_batch : null);
+	var override = batch?.values?.get(signal);
+	return override === undefined ? signal.v : override[0];
+}
 
 /** @type {Equals} */
 export function equals(value) {
-	return value === this.v;
+	return value === get_value(this);
 }
 
 /**
@@ -27,5 +35,5 @@ export function not_equal(a, b) {
 
 /** @type {Equals} */
 export function safe_equals(value) {
-	return !safe_not_equal(value, this.v);
+	return !safe_not_equal(value, get_value(this));
 }

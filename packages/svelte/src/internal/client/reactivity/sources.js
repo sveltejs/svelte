@@ -36,8 +36,8 @@ import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import {
+	active_batch,
 	Batch,
-	batch_values,
 	current_batch,
 	eager_block_effects,
 	schedule_effect,
@@ -371,8 +371,10 @@ export function mark_reactions(signal, status, updated_during_traversal) {
 			current_batch?.claim(derived);
 
 			// invalidate any world-local memoized values
-			batch_values?.delete(derived);
-			current_batch?.fork_values?.delete(derived);
+			active_batch?.values?.delete(derived);
+			if (active_batch !== current_batch && current_batch?.is_fork) {
+				current_batch.values?.delete(derived);
+			}
 
 			if ((flags & WAS_MARKED) === 0) {
 				// Only connected deriveds being executed outside the update cycle can be reliably unmarked right away

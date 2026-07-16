@@ -36,7 +36,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, previous_batch } from './batch.js';
+import { current_batch, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -397,7 +397,7 @@ export function execute_derived(derived) {
 export function update_derived(derived) {
 	var value = execute_derived(derived);
 	var batch = current_batch ?? previous_batch;
-	var fork_values = batch !== null && batch.is_fork ? batch.fork_values : null;
+	var fork_values = batch !== null && batch.is_fork ? batch.values : null;
 
 	if (fork_values !== null && derived.deps !== null) {
 		// Inside a fork, neither the underlying value nor the status are
@@ -406,17 +406,20 @@ export function update_derived(derived) {
 		// real status keeps describing the real (untouched) value. (Deriveds
 		// without dependencies never recompute, so they are treated like the
 		// real world below.)
-		var previous = fork_values.has(derived) ? fork_values.get(derived) : derived.v;
+		var override = fork_values.get(derived);
+		var previous = override === undefined ? derived.v : override[0];
 
 		if (
 			previous === UNINITIALIZED ||
+			// We cannot rely on raw `derived.equals` here, even if it itself does some logic to
+			// get the value from current_batch if possible, because in the context of deriveds
+			// we also do need to check previous_batch (see above).
 			!derived.equals.call(/** @type {any} */ ({ v: previous }), value)
 		) {
 			derived.wv = increment_write_version();
 		}
 
-		fork_values.set(derived, value);
-		batch_values?.set(derived, [value, null]);
+		fork_values.set(derived, [value, null]);
 
 		return;
 	}
