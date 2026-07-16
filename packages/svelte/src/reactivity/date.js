@@ -2,9 +2,8 @@
 import { derived } from '../internal/client/index.js';
 import { set, state } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
-import { get, set_active_reaction } from '../internal/client/runtime.js';
+import { active_reaction, get, set_active_reaction } from '../internal/client/runtime.js';
 import { DEV } from 'esm-env';
-import { active_reaction } from '../internal/client/runtime.js';
 
 var inited = false;
 
