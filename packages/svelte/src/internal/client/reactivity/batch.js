@@ -400,9 +400,9 @@ export class Batch {
 	 * Keep this batch separate from a sealed predecessor, coalescing it with any
 	 * other work that is already waiting for that predecessor.
 	 * @param {Batch} owner
-	 * @param {Reaction} reaction
+	 * @param {Reaction | Value} signal
 	 */
-	#wait(owner, reaction) {
+	#wait(owner, signal) {
 		var waiter = owner.waiter;
 
 		if (waiter !== null) {
@@ -418,7 +418,7 @@ export class Batch {
 		owner.waiter = this;
 		var waiting = (this.waiting ??= { batches: new Set(), reactions: new Map() });
 		waiting.batches.add(owner);
-		waiting.reactions.set(reaction, owner);
+		if (Object.hasOwn(signal, 'deps')) waiting.reactions.set(signal, owner);
 	}
 
 	/**
@@ -431,9 +431,7 @@ export class Batch {
 
 		if (waiter === null || !(waiter = waiter.resolved()).linked) return;
 
-		var waiting = /** @type {{ batches: Set<Batch>, reactions: Map<Reaction, Batch> }} */ (
-			waiter.waiting
-		);
+		var waiting = /** @type {NonNullable<typeof waiter.waiting>} */ (waiter.waiting);
 		waiting.batches.delete(this);
 
 		for (const [reaction, owner] of waiting.reactions) {
@@ -474,42 +472,48 @@ export class Batch {
 	}
 
 	/**
-	 * Take ownership of a reaction. Deriveds and user/block/async effects can
-	 * only ever belong to one live batch — if the reaction is already claimed
+	 * Take ownership of a signal. Sources, deriveds and user/block/async effects can
+	 * only ever belong to one live batch. If the signal is already claimed
 	 * by another live batch, the two reactivity graphs overlap, which means the
 	 * batches describe the same 'world', and they are merged into one. After too
 	 * many restarts, new work waits behind the current batch instead.
 	 * Template-level (render/managed) effects are exempt: they are leaves, so
 	 * independent batches can share them without their graphs being entangled.
-	 * Forks are also exempt — they are speculative and live in their own world
-	 * @param {Reaction} reaction
-	 * @returns {boolean} Whether the reaction must wait for a sealed batch
+	 * Forks are also exempt - they are speculative and live in their own world.
+	 * @param {Reaction | Value} signal
+	 * @returns {boolean} Whether the signal must wait for a sealed batch
 	 */
-	claim(reaction) {
+	claim(signal) {
 		// already claimed by this batch — nothing below could change anything
-		if (reaction.batch === this) return false;
+		if (signal.batch === this) return false;
 
 		if (!async_mode_flag || this.is_fork) return false;
 
-		if ((reaction.f & (DERIVED | ASYNC | BLOCK_EFFECT | USER_EFFECT)) === 0) return false;
+		var is_source = !Object.hasOwn(signal, 'deps');
+
+		if (!is_source && (signal.f & (DERIVED | ASYNC | BLOCK_EFFECT | USER_EFFECT)) === 0) {
+			return false;
+		}
 
 		// template expression deriveds are leaves — they don't entangle
-		if ((reaction.f & TEMPLATE_EXPRESSION) !== 0) return false;
+		if ((signal.f & TEMPLATE_EXPRESSION) !== 0) return false;
 
-		var owner = reaction.batch && reaction.batch.resolved();
+		var owner = signal.batch && signal.batch.resolved();
 
 		if (this.is_eager) {
 			// eager version bumps don't entangle — but an effect that belongs to
 			// another live batch's world, and which we are about to run in ours,
 			// must afterwards be re-established in the owner's world
 			if (
-				(reaction.f & DERIVED) === 0 &&
+				!is_source &&
+				(signal.f & DERIVED) === 0 &&
 				owner !== null &&
 				owner !== this &&
 				owner.linked &&
 				!owner.is_fork
 			) {
-				(owner.#dirty_effects ??= new Set()).add(/** @type {Effect} */ (reaction));
+				// TODO
+				(owner.#dirty_effects ??= new Set()).add(/** @type {Effect} */ (signal));
 			}
 
 			return false;
@@ -518,12 +522,12 @@ export class Batch {
 		if (owner !== null && owner !== this && owner.linked && !owner.is_fork) {
 			if (owner.waiting !== null) {
 				this.#merge(owner);
-				reaction.batch = this;
+				signal.batch = this;
 				return false;
 			}
 
 			if (owner.restarts >= MAX_ENTANGLED_RESTARTS) {
-				this.#wait(owner, reaction);
+				this.#wait(owner, signal);
 				return true;
 			}
 
@@ -532,7 +536,7 @@ export class Batch {
 			this.restarts = Math.max(this.restarts, restarts);
 		}
 
-		reaction.batch = this;
+		signal.batch = this;
 		return false;
 	}
 

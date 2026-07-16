@@ -14,6 +14,14 @@ export interface Signal {
 	f: number;
 	/** Write version */
 	wv: number;
+	/**
+	 * The batch that most recently claimed this signal.
+	 * Only set for sources, non-render-only deriveds and user/block/async effects.
+	 * If two batches claim the same reaction, their reactivity graphs overlap and are merged,
+	 * unless the newer batch is waiting behind a sealed predecessor.
+	 * A claim expires when its batch is committed or discarded (`!batch.linked`)
+	 */
+	batch: null | Batch;
 }
 
 export interface Value<V = unknown> extends Signal {
@@ -51,14 +59,6 @@ export interface Reaction extends Signal {
 	deps: null | Value[];
 	/** An AbortController that aborts when the signal is destroyed */
 	ac: null | AbortController;
-	/**
-	 * The batch that most recently claimed this reaction by marking it dirty.
-	 * Only set for deriveds and user/block/async effects — if two batches claim
-	 * the same reaction, their reactivity graphs overlap and they are merged,
-	 * unless the newer batch is waiting behind a sealed predecessor.
-	 * A claim expires when its batch is committed or discarded (`!batch.linked`)
-	 */
-	batch: null | Batch;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {

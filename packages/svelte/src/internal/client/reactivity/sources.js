@@ -79,6 +79,7 @@ export function source(v, stack) {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
+		batch: null,
 		equals,
 		rv: 0,
 		wv: 0
@@ -233,6 +234,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 		source.wv = increment_write_version();
 
+		batch.claim(source);
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
 		mark_reactions(source, DIRTY, updated_during_traversal);
