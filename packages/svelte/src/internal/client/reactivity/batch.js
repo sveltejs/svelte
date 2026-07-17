@@ -343,10 +343,28 @@ export class Batch {
 	/** Number of times new work has extended this pending batch */
 	restarts = 0;
 
-	/** @type {Batch | null} */
+	/**
+	 * The batch that is waiting for this one to commit or be discarded. Set when
+	 * this batch is 'sealed' (it reached `MAX_ENTANGLED_RESTARTS`) and new
+	 * overlapping work arrives - instead of merging in (which would restart this
+	 * batch's async work yet again, risking starvation), the new work waits
+	 * behind this batch. All work waiting behind the same sealed batch merge
+	 * into a single waiter (see `#wait`), so there is at most one.
+	 * @type {Batch | null}
+	 */
 	waiter = null;
 
-	/** @type {{ batches: Set<Batch>, reactions: Map<Reaction, Batch> } | null} */
+	/**
+	 * Present while this batch is the `waiter` of one or more sealed batches.
+	 * `batches` contains those sealed predecessors - their reactivity graphs are
+	 * non-overlapping (else they would have merged with each other), so
+	 * a waiter that overlaps several of them must wait for all of them.
+	 * `reactions` maps each deferred reaction to the predecessor that currently
+	 * owns it, so that when a predecessor settles, (only) its reactions are
+	 * handed over and rescheduled (see `#release_waiter`). While `waiting` is
+	 * non-null the batch is deferred; it flushes once `batches` empties.
+	 * @type {{ batches: Set<Batch>, reactions: Map<Reaction, Batch> } | null}
+	 */
 	waiting = null;
 
 	#decrement_queued = false;
@@ -694,8 +712,10 @@ export class Batch {
 		other.#scheduled = [];
 
 		// TODO could a newer value have been observed by this and other is older?
-		this.stale_readers = transfer_map(this.stale_readers, other.stale_readers, (observed, seen) =>
-			/** @type {Map<Value, any>} */ (transfer_map(observed, seen))
+		this.stale_readers = transfer_map(
+			this.stale_readers,
+			other.stale_readers,
+			(observed, seen) => /** @type {Map<Value, any>} */ (transfer_map(observed, seen))
 		);
 		other.stale_readers = null;
 
