@@ -103,11 +103,6 @@ var source_stacks = new Set();
 
 let uid = 1;
 
-let effect_version = 1;
-
-/** @type {WeakMap<Effect, number>} */
-const effect_versions = new WeakMap();
-
 /**
  * @template T
  * @param {Set<T> | null} target
@@ -270,11 +265,12 @@ export class Batch {
 	merged_into = null;
 
 	/**
-	 * Async and block effects that ran or were proven clean inside this fork.
-	 * The version is that of the latest real-world execution when the effect was
-	 * validated. Fork executions do not advance it, so forks remain independent.
+	 * Async and block effects that ran or were proven clean inside this fork,
+	 * mapped to whether that validation has since been superseded by a
+	 * real-world run of the effect (see `record_effect`). Runs inside other
+	 * forks don't supersede anything, so forks remain independent.
 	 * Lazily initialised for perf reasons
-	 * @type {Map<Effect, number> | null}
+	 * @type {Map<Effect, boolean> | null}
 	 */
 	fork_effects = null;
 
@@ -541,26 +537,31 @@ export class Batch {
 		if ((effect.f & (ASYNC | BLOCK_EFFECT)) === 0) return;
 
 		if (this.is_fork) {
-			(this.fork_effects ??= new Map()).set(effect, effect_versions.get(effect) ?? 0);
+			(this.fork_effects ??= new Map()).set(effect, false);
 		} else if (ran) {
-			effect_versions.set(effect, effect_version++);
+			// a real-world run supersedes any fork's validation of this effect
+			for (var batch = first_batch; batch !== null; batch = batch.#next) {
+				if (batch.is_fork && batch.fork_effects?.has(effect)) {
+					batch.fork_effects.set(effect, true);
+				}
+			}
 		}
 	}
 
 	claim_fork_effects() {
 		if (this.fork_effects === null) return;
 
-		for (const [effect, version] of this.fork_effects) {
-			if ((effect.f & DESTROYED) !== 0 || version !== (effect_versions.get(effect) ?? 0)) {
+		for (const [effect, superseded] of this.fork_effects) {
+			if ((effect.f & DESTROYED) !== 0 || superseded) {
 				this.#dirty_effects?.delete(effect);
 				this.#maybe_dirty_effects?.delete(effect);
 			}
 		}
 
-		for (const [effect, version] of this.fork_effects) {
+		for (const [effect, superseded] of this.fork_effects) {
 			if ((effect.f & DESTROYED) !== 0) continue;
 
-			if (version !== (effect_versions.get(effect) ?? 0)) {
+			if (superseded) {
 				var owner = effect.batch && effect.batch.resolved();
 
 				if (owner !== null && owner !== this && owner.linked && !owner.is_fork) {
@@ -1154,11 +1155,8 @@ export class Batch {
 				continue;
 			}
 
-			for (const [effect, version] of fork.fork_effects) {
-				if (
-					version === (effect_versions.get(effect) ?? 0) ||
-					(effect.f & (DESTROYED | INERT)) !== 0
-				) {
+			for (const [effect, superseded] of fork.fork_effects) {
+				if (!superseded || (effect.f & (DESTROYED | INERT)) !== 0) {
 					continue;
 				}
 
@@ -1169,7 +1167,7 @@ export class Batch {
 					// the fork's view of every dependency matches the committed
 					// state — the latest real run is valid for the fork's world
 					// too, so it doesn't need to re-run speculatively
-					fork.fork_effects.set(effect, effect_versions.get(effect) ?? 0);
+					fork.fork_effects.set(effect, false);
 					continue;
 				}
 
@@ -1733,20 +1731,18 @@ function mark_committed_reactions(value, batch, marked, status) {
 			var effect = /** @type {Effect} */ (reaction);
 			var owner = effect.batch && effect.batch.resolved();
 
-			var fork_version = batch.fork_effects?.get(effect);
-			var validated =
-				fork_version !== undefined && fork_version === (effect_versions.get(effect) ?? 0);
+			var superseded = batch.fork_effects?.get(effect);
 			var stale =
 				batch.stale_readers?.has(effect) === true || owner?.stale_readers?.has(effect) === true;
 
-			if (fork_version === undefined || stale) {
+			if (superseded === undefined || stale) {
 				if ((reaction.f & DIRTY) === 0) {
 					set_signal_status(reaction, status);
 				}
 
 				batch.schedule(effect);
 			} else if (
-				!validated &&
+				superseded &&
 				owner !== null &&
 				owner !== batch &&
 				owner.linked &&
