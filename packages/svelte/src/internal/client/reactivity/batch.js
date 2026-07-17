@@ -122,6 +122,53 @@ function transfer_set(target, source) {
 	return target;
 }
 
+/**
+ * Transfer entries from `source` into `target`, creating `target` if necessary.
+ * If a key exists in both, `combine` determines the resulting value
+ * (defaulting to the incoming value)
+ * @template K, V
+ * @param {Map<K, V> | null} target
+ * @param {Map<K, V> | null} source
+ * @param {(existing: V, incoming: V) => V} [combine]
+ * @returns {Map<K, V> | null}
+ */
+function transfer_map(target, source, combine) {
+	if (source === null || source.size === 0) return target;
+
+	target ??= new Map();
+
+	for (const [key, value] of source) {
+		target.set(
+			key,
+			combine !== undefined && target.has(key)
+				? combine(/** @type {V} */ (target.get(key)), value)
+				: value
+		);
+	}
+
+	return target;
+}
+
+/**
+ * Transfer commit/discard callbacks from a merged batch, keeping them
+ * bound to the batch they were registered under
+ * @param {Set<(batch: Batch) => void> | null} target
+ * @param {Set<(batch: Batch) => void> | null} source
+ * @param {Batch} batch
+ * @returns {Set<(batch: Batch) => void> | null}
+ */
+function transfer_callbacks(target, source, batch) {
+	if (source === null) return target;
+
+	target ??= new Set();
+
+	for (const fn of source) {
+		target.add(() => fn(batch));
+	}
+
+	return target;
+}
+
 export class Batch {
 	id = uid++;
 
@@ -288,7 +335,8 @@ export class Batch {
 	 * `true` while this batch is flushing its effects and is provably terminal —
 	 * solitary, with no pending async work and nothing scheduled. Such a batch
 	 * unlinks before any other batch can observe its `previous` values, so
-	 * recording them (one `Map` op per derived update) would be dead weight
+	 * recording them (one `Map` op per derived update) would be dead weight.
+	 * This exists for performance reasons only.
 	 */
 	skip_previous = false;
 
@@ -586,50 +634,31 @@ export class Batch {
 
 		// for signals touched by both batches, keep the oldest `previous`
 		// (the value from before either batch touched it)...
-		for (const [source, previous] of other.previous) {
-			if (other_is_older || !this.previous.has(source)) {
-				this.previous.set(source, previous);
-			}
-		}
+		transfer_map(this.previous, other.previous, (existing, incoming) =>
+			other_is_older ? incoming : existing
+		);
 
 		// ...and the newest current value
-		for (const [source, value] of other.current) {
-			if (!other_is_older || !this.current.has(source)) {
-				this.current.set(source, value);
-			}
-		}
+		transfer_map(this.current, other.current, (existing, incoming) =>
+			other_is_older ? existing : incoming
+		);
 
-		if (other.async_deriveds !== null) {
-			this.async_deriveds ??= new Map();
-
-			for (const [effect, d] of other.async_deriveds) {
-				var existing = this.async_deriveds.get(effect);
-
-				if (existing !== undefined) {
-					if (d.id > existing.id) {
-						existing.reject(OBSOLETE);
-						this.async_deriveds.set(effect, d);
-					} else {
-						d.reject(OBSOLETE);
-					}
-				} else {
-					this.async_deriveds.set(effect, d);
-				}
-			}
-			other.async_deriveds = null;
-		}
+		this.async_deriveds = transfer_map(this.async_deriveds, other.async_deriveds, (existing, d) => {
+			var newer = d.id > existing.id;
+			(newer ? existing : d).reject(OBSOLETE);
+			return newer ? d : existing;
+		});
+		other.async_deriveds = null;
 
 		this.#pending += other.#pending;
 		other.#pending = 0;
 
-		if (other.#blocking_pending !== null) {
-			this.#blocking_pending ??= new Map();
-
-			for (const [effect, count] of other.#blocking_pending) {
-				this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
-			}
-			other.#blocking_pending = null;
-		}
+		this.#blocking_pending = transfer_map(
+			this.#blocking_pending,
+			other.#blocking_pending,
+			(existing, count) => existing + count
+		);
+		other.#blocking_pending = null;
 
 		this.transfer_effects(other.#dirty_effects, other.#maybe_dirty_effects);
 		other.#dirty_effects = null;
@@ -638,75 +667,47 @@ export class Batch {
 		this.#reestablish_effects = transfer_set(this.#reestablish_effects, other.#reestablish_effects);
 		other.#reestablish_effects = null;
 
-		if (other.#skipped_branches !== null) {
-			this.#skipped_branches ??= new Map();
-
-			for (const [effect, tracked] of other.#skipped_branches) {
-				var skipped = this.#skipped_branches.get(effect);
-				if (skipped) {
-					skipped.d.push(...tracked.d);
-					skipped.m.push(...tracked.m);
-				} else {
-					this.#skipped_branches.set(effect, tracked);
-				}
-			}
-			other.#skipped_branches = null;
-		}
+		this.#skipped_branches = transfer_map(
+			this.#skipped_branches,
+			other.#skipped_branches,
+			(skipped, tracked) => (skipped.d.push(...tracked.d), skipped.m.push(...tracked.m), skipped)
+		);
+		other.#skipped_branches = null;
 
 		// commit/discard callbacks stay bound to the batch they were registered
 		// under — consumers (branch managers etc) key their state by batch
-		if (other.#commit_callbacks !== null) {
-			this.#commit_callbacks ??= new Set();
+		this.#commit_callbacks = transfer_callbacks(
+			this.#commit_callbacks,
+			other.#commit_callbacks,
+			other
+		);
+		other.#commit_callbacks = null;
 
-			for (const fn of other.#commit_callbacks) {
-				this.#commit_callbacks.add(() => fn(other));
-			}
-			other.#commit_callbacks = null;
-		}
+		this.#discard_callbacks = transfer_callbacks(
+			this.#discard_callbacks,
+			other.#discard_callbacks,
+			other
+		);
+		other.#discard_callbacks = null;
 
-		if (other.#discard_callbacks !== null) {
-			this.#discard_callbacks ??= new Set();
-
-			for (const fn of other.#discard_callbacks) {
-				this.#discard_callbacks.add(() => fn(other));
-			}
-			other.#discard_callbacks = null;
-		}
-
-		for (const effect of other.#scheduled) {
-			this.#scheduled.push(effect);
-		}
+		this.#scheduled.push(...other.#scheduled);
 		other.#scheduled = [];
 
-		if (other.stale_readers !== null) {
-			this.stale_readers ??= new Map();
-
-			for (const [reader, seen] of other.stale_readers) {
-				var observed = this.stale_readers.get(reader);
-
-				if (observed === undefined) {
-					this.stale_readers.set(reader, seen);
-				} else {
-					for (const [signal, value] of seen) {
-						// TODO could a newer value have been observed by this and other is older?
-						observed.set(signal, value);
-					}
-				}
-			}
-			other.stale_readers = null;
-		}
+		// TODO could a newer value have been observed by this and other is older?
+		this.stale_readers = transfer_map(this.stale_readers, other.stale_readers, (observed, seen) =>
+			/** @type {Map<Value, any>} */ (transfer_map(observed, seen))
+		);
+		other.stale_readers = null;
 
 		if (other.waiting !== null) {
-			this.waiting ??= { batches: new Set(), reactions: new Map() };
+			var waiting = (this.waiting ??= { batches: new Set(), reactions: new Map() });
 
 			for (const owner of other.waiting.batches) {
-				this.waiting.batches.add(owner);
+				waiting.batches.add(owner);
 				owner.waiter = this;
 			}
 
-			for (const [reaction, owner] of other.waiting.reactions) {
-				this.waiting.reactions.set(reaction, owner);
-			}
+			transfer_map(waiting.reactions, other.waiting.reactions);
 			other.waiting = null;
 		}
 
