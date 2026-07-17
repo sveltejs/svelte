@@ -738,12 +738,21 @@ export function get(signal) {
 
 		if (override !== undefined) {
 			// if we're seeing another live batch's pre-write world, it must
-			// re-run us with the real values when it commits
+			// re-run us with the real values when it commits (if the value
+			// we saw turns out to differ from the committed one)
 			var override_owner = override[1];
 
 			if (override_owner !== null && active_reaction !== null && !untracking) {
 				override_owner = override_owner.resolved();
-				(override_owner.stale_readers ??= new Set()).add(active_reaction);
+
+				var readers = (override_owner.stale_readers ??= new Map());
+				var seen = readers.get(active_reaction);
+
+				if (seen === undefined) {
+					readers.set(active_reaction, (seen = new Map()));
+				}
+
+				seen.set(signal, override[0]);
 			}
 
 			return override[0];

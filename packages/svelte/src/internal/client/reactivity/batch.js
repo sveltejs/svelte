@@ -22,7 +22,7 @@ import {
 	TEMPLATE_EXPRESSION
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property } from '../../shared/utils.js';
+import { deferred, define_property, has_own_property, includes } from '../../shared/utils.js';
 import {
 	active_reaction,
 	get,
@@ -168,6 +168,7 @@ export class Batch {
 	 * tuples. `owner` is the live batch whose pre-write value we are seeing,
 	 * or `null` if the value belongs to this batch. For forks this also stores
 	 * world-local derived values between activations.
+	 * `null` if no values have been observed yet, or if this is the only batch that exists.
 	 * @type {Map<Value, [any, Batch | null]> | null}
 	 */
 	values = null;
@@ -280,10 +281,11 @@ export class Batch {
 
 	/**
 	 * Reactions that observed the pre-write world of this batch via its active
-	 * overlay while it was pending. When this batch commits, they
-	 * re-run with the real values.
+	 * overlay while it was pending, mapped to the values they saw. When this
+	 * batch commits, readers whose observed values differ from the committed
+	 * ones re-run with the real values.
 	 * Lazily initialised for perf reasons
-	 * @type {Set<Reaction> | null}
+	 * @type {Map<Reaction, Map<Value, any>> | null}
 	 */
 	stale_readers = null;
 
@@ -413,7 +415,7 @@ export class Batch {
 		owner.waiter = this;
 		var waiting = (this.waiting ??= { batches: new Set(), reactions: new Map() });
 		waiting.batches.add(owner);
-		if (Object.hasOwn(signal, 'deps')) waiting.reactions.set(signal, owner);
+		if (has_own_property.call(signal, 'deps')) waiting.reactions.set(signal, owner);
 	}
 
 	/**
@@ -484,7 +486,7 @@ export class Batch {
 
 		if (!async_mode_flag || this.is_fork) return false;
 
-		var is_source = !Object.hasOwn(signal, 'deps');
+		var is_source = !has_own_property.call(signal, 'deps');
 
 		if (!is_source && (signal.f & (DERIVED | ASYNC | BLOCK_EFFECT | USER_EFFECT)) === 0) {
 			return false;
@@ -679,8 +681,23 @@ export class Batch {
 		}
 		other.#scheduled = [];
 
-		this.stale_readers = transfer_set(this.stale_readers, other.stale_readers);
-		other.stale_readers = null;
+		if (other.stale_readers !== null) {
+			this.stale_readers ??= new Map();
+
+			for (const [reader, seen] of other.stale_readers) {
+				var observed = this.stale_readers.get(reader);
+
+				if (observed === undefined) {
+					this.stale_readers.set(reader, seen);
+				} else {
+					for (const [signal, value] of seen) {
+						// TODO could a newer value have been observed by this and other is older?
+						observed.set(signal, value);
+					}
+				}
+			}
+			other.stale_readers = null;
+		}
 
 		if (other.waiting !== null) {
 			this.waiting ??= { batches: new Set(), reactions: new Map() };
@@ -1179,12 +1196,35 @@ export class Batch {
 
 		var batch = Batch.ensure();
 
-		for (const reader of readers) {
+		for (const [reader, seen] of readers) {
 			var flags = reader.f;
 
 			if ((flags & (DESTROYED | INERT | DIRTY)) !== 0) continue;
 
-			set_signal_status(reader, DIRTY);
+			// Only re-run readers that are actually affected by the commit: a
+			// reader observed specific values through this batch's overlay. If
+			// each of those matches the committed value (the write was reverted,
+			// or a derived recomputed to an equal value), or the reader no
+			// longer depends on it, the reader's world didn't change
+			var status = CLEAN;
+
+			for (const [signal, value] of seen) {
+				if (reader.deps === null || !includes.call(reader.deps, signal)) continue;
+
+				if ((signal.f & (DIRTY | MAYBE_DIRTY)) !== 0) {
+					// a derived that hasn't been revalidated with the committed
+					// values yet — the reader's own validation will recompute it
+					// (with equality applying) via `is_dirty`
+					status = MAYBE_DIRTY;
+				} else if (signal.v !== value) {
+					status = DIRTY;
+					break;
+				}
+			}
+
+			if (status === CLEAN) continue;
+
+			set_signal_status(reader, status);
 
 			if ((flags & DERIVED) !== 0) {
 				// invalidate anything that depends on the derived
