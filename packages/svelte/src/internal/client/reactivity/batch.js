@@ -907,15 +907,11 @@ export class Batch {
 			this.#commit_callbacks = null;
 		}
 
-		// while flushing effects, a solitary batch with no pending async work and
-		// nothing scheduled is guaranteed to unlink at the end of this function,
-		// before any other batch could observe its `previous` values — recording
-		// them for derived updates would be pure overhead
-		this.skip_previous =
-			this.#pending === 0 &&
-			this.#scheduled.length === 0 &&
-			first_batch === this &&
-			last_batch === this;
+		// While flushing effects, a solitary batch with no pending async work
+		// is guaranteed to unlink at the end of this function, before any
+		// other batch could observe its `previous` values — recording them
+		// for derived updates would be pure overhead.
+		this.skip_previous = this.#pending === 0 && first_batch === this && last_batch === this;
 
 		previous_batch = this;
 		flush_queued_effects(render_effects);
@@ -926,7 +922,7 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.#pending === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
+		if (this.#pending === 0) {
 			this.#unlink();
 			this.#release_waiter();
 
@@ -939,21 +935,6 @@ export class Batch {
 				// #commit may have scheduled stale readers into a new batch
 				next_batch ??= /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 				current_batch = next_batch;
-			}
-		}
-
-		// Edge case: During traversal new branches might create effects that run immediately and set state,
-		// causing an effect to be scheduled again. We need to traverse the current batch
-		// once more in that case - most of the time this will just clean up dirty branches.
-		if (this.#scheduled.length > 0) {
-			if (next_batch !== null) {
-				for (const e of this.#scheduled) {
-					next_batch.#scheduled.push(e);
-				}
-
-				this.#scheduled = [];
-			} else {
-				next_batch = this;
 			}
 		}
 
