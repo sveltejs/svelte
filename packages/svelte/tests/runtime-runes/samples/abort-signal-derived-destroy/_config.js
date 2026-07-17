@@ -8,7 +8,7 @@ export default test({
 		flushSync(() => {
 			btn?.click();
 		});
-		assert.htmlEqual(target.innerHTML, '1:1 <button></button>');
+		assert.htmlEqual(target.innerHTML, '1 <button>increment</button>');
 		assert.deepEqual(errors, []);
 	}
 });

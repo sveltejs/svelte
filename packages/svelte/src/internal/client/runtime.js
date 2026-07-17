@@ -424,6 +424,16 @@ function remove_reaction(signal, dependency) {
 			update_derived_status(derived);
 		}
 
+		// Call abort controller, noone's listening to this derived anymore
+		if (derived.ac !== null) {
+			without_reactive_context(() => {
+				/** @type {AbortController} */ (derived.ac).abort(STALE_REACTION);
+				derived.ac = null;
+				// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
+				set_signal_status(derived, DIRTY);
+			});
+		}
+
 		// freeze any effects inside this derived
 		freeze_derived_effects(derived);
 
