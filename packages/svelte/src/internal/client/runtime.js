@@ -23,8 +23,7 @@ import {
 	ERROR_VALUE,
 	WAS_MARKED,
 	MANAGED_EFFECT,
-	REACTION_RAN,
-	TEMPLATE_EXPRESSION
+	REACTION_RAN
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -173,25 +172,24 @@ export function is_dirty(reaction) {
 		for (var i = 0; i < length; i++) {
 			var dependency = dependencies[i];
 
-			if (active_batch !== null && active_batch.values !== null && (dependency.f & DERIVED) !== 0) {
-				var is_template = (dependency.f & TEMPLATE_EXPRESSION) !== 0;
-
-				if (is_template || claimed_by_other(/** @type {Derived} */ (dependency)) !== null) {
-					// deriveds that are evaluated per-world (in `get`) while multiple
-					// batches exist: if dirty, treat them as changed — the dirtiness
-					// may originate from a write in our own world, and re-running the
-					// reaction is harmless otherwise
-					if ((dependency.f & (DIRTY | MAYBE_DIRTY)) !== 0) {
-						return true;
-					}
-
-					if (!is_template) {
-						// a clean derived belonging to another live batch's world is
-						// unchanged in ours — the owner's recompute (which may have
-						// bumped its write version) doesn't affect our world
-						continue;
-					}
+			if (
+				active_batch !== null &&
+				active_batch.values !== null &&
+				(dependency.f & DERIVED) !== 0 &&
+				claimed_by_other(/** @type {Derived} */ (dependency)) !== null
+			) {
+				// deriveds belonging to another live batch's world are evaluated
+				// per-world (in `get`): if dirty, treat them as changed — the
+				// dirtiness may originate from a write in our own world, and
+				// re-running the reaction is harmless otherwise
+				if ((dependency.f & (DIRTY | MAYBE_DIRTY)) !== 0) {
+					return true;
 				}
+
+				// a clean derived belonging to another live batch's world is
+				// unchanged in ours — the owner's recompute (which may have
+				// bumped its write version) doesn't affect our world
+				continue;
 			}
 
 			if (is_dirty(/** @type {Derived} */ (dependency))) {
@@ -682,22 +680,18 @@ export function get(signal) {
 			return value;
 		}
 
-		// While multiple batches exist, some deriveds must be evaluated in the
-		// context of the current world, without touching their cached state:
-		// - deriveds belonging to another live batch's world must not be
-		//   recomputed or have their status reset (the owning batch relies on
-		//   both) — their value in this world follows from the active overlay
-		// - dirty template expression deriveds are leaves that can be shared
-		//   between non-overlapping batches, so each world evaluates its own value
+		// While multiple batches exist, deriveds belonging to another live
+		// batch's world must be evaluated in the context of the current world,
+		// without touching their cached state — they must not be recomputed or
+		// have their status reset (the owning batch relies on both), and their
+		// value in this world follows from the active overlay
 		/** @type {Batch | null} */
 		var owner = null;
 
 		if (
 			active_batch !== null &&
 			active_batch.values !== null &&
-			((derived.f & TEMPLATE_EXPRESSION) !== 0
-				? (derived.f & (DIRTY | MAYBE_DIRTY)) !== 0
-				: (owner = claimed_by_other(derived)) !== null)
+			(owner = claimed_by_other(derived)) !== null
 		) {
 			// the world-local value is memoized in the active overlay (and invalidated
 			// there when dependencies change). Reads are registered with the owner

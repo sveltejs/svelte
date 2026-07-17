@@ -1,5 +1,5 @@
 /** @import { Blocker, Effect, Source, Value } from '#client' */
-import { DESTROYED, STALE_REACTION, TEMPLATE_EXPRESSION } from '#client/constants';
+import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -8,7 +8,6 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -39,13 +38,7 @@ export function flatten(blockers, sync, async, fn) {
 	// Filter out already-settled blockers - no need to wait for them
 	var pending = blockers.filter((b) => !b.settled);
 
-	var deriveds = sync.map((expression) => {
-		var signal = d(expression);
-		// template expressions are leaves of the reactivity graph — they don't
-		// entangle batches, and are evaluated per-world while batches overlap
-		signal.f |= TEMPLATE_EXPRESSION;
-		return signal;
-	});
+	var deriveds = sync.map((expression) => d(expression));
 
 	if (DEV) {
 		deriveds.forEach((d, i) => {

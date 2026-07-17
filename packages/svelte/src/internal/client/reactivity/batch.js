@@ -18,8 +18,7 @@ import {
 	MANAGED_EFFECT,
 	REACTION_RAN,
 	DESTROYING,
-	USER_EFFECT,
-	TEMPLATE_EXPRESSION
+	USER_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, has_own_property, includes } from '../../shared/utils.js';
@@ -491,9 +490,6 @@ export class Batch {
 		if (!is_source && (signal.f & (DERIVED | ASYNC | BLOCK_EFFECT | USER_EFFECT)) === 0) {
 			return false;
 		}
-
-		// template expression deriveds are leaves — they don't entangle
-		if ((signal.f & TEMPLATE_EXPRESSION) !== 0) return false;
 
 		var owner = signal.batch && signal.batch.resolved();
 
@@ -1169,6 +1165,14 @@ export class Batch {
 				var owner = effect.batch && effect.batch.resolved();
 				if (owner !== this) continue;
 
+				if (!depends_on_fork_values(effect, fork)) {
+					// the fork's view of every dependency matches the committed
+					// state — the latest real run is valid for the fork's world
+					// too, so it doesn't need to re-run speculatively
+					fork.fork_effects.set(effect, effect_versions.get(effect) ?? 0);
+					continue;
+				}
+
 				fork.schedule(effect);
 				var effects = (forks ??= new Map()).get(fork);
 				if (effects === undefined) forks.set(fork, [effect]);
@@ -1667,6 +1671,31 @@ export function eager(fn) {
 }
 
 /**
+ * Whether `reaction` depends — directly or through deriveds — on a signal
+ * whose value in `fork`'s world differs from the real one (i.e. one of the
+ * fork's own speculative writes)
+ * @param {Reaction} reaction
+ * @param {Batch} fork
+ * @returns {boolean}
+ */
+function depends_on_fork_values(reaction, fork) {
+	var deps = reaction.deps;
+	if (deps === null) return false;
+
+	for (var i = 0; i < deps.length; i++) {
+		var dep = deps[i];
+
+		if (fork.current.has(dep)) return true;
+
+		if ((dep.f & DERIVED) !== 0 && depends_on_fork_values(/** @type {Derived} */ (dep), fork)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * When a fork is committed, deriveds affected by its writes must recompute with
  * the now-committed values, and affected effects must be checked. Async and
  * block effects that were validated inside the fork are skipped, and eager
@@ -1723,7 +1752,20 @@ function mark_committed_reactions(value, batch, marked, status) {
 				owner.linked &&
 				!owner.is_fork
 			) {
-				batch.claim(effect);
+				if (batch.current.has(value) && batch.current.get(value) === value.v) {
+					// the committed value matches the real (pending) one the
+					// in-flight run used — entangling the two batches is enough
+					batch.claim(effect);
+				} else {
+					// the newer in-flight run of this effect was computed with
+					// pre-commit values — entangle with its batch (via `schedule`
+					// -> `claim`) and re-run it with the committed values
+					if ((reaction.f & DIRTY) === 0) {
+						set_signal_status(reaction, status);
+					}
+
+					batch.schedule(effect);
+				}
 			}
 		} else if ((flags & DIRTY) === 0) {
 			set_signal_status(reaction, status);

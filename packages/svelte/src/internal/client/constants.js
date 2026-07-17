@@ -52,14 +52,6 @@ export const EFFECT_OFFSCREEN = 1 << 25;
  * should not be used for any other purpose!
  */
 export const WAS_MARKED = 1 << 16;
-/**
- * A derived created for a template expression. These are leaves of the reactivity
- * graph (there could theoretically be one per read value), so they don't entangle
- * batches — instead, while multiple batches exist, they are evaluated per-world
- * without caching
- */
-export const TEMPLATE_EXPRESSION = 1 << 26;
-
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;
