@@ -28,10 +28,19 @@ const visitors = {
 			!node.metadata.used &&
 			// prevent double-marking of `.unused:is(.unused)`
 			(context.path.at(-2)?.type !== 'PseudoClassSelector' ||
-				/** @type {AST.CSS.ComplexSelector} */ (context.path.at(-4))?.metadata.used)
+				/** @type {AST.CSS.ComplexSelector} */ (context.path.at(-4))?.metadata
+					.used &&
+				// `:is()` / `:where()` means "any member matches", so don't warn an
+				// individual member if a sibling member is used
+				!/** @type {AST.CSS.SelectorList} */ (
+					context.path.at(-1)
+				)?.children?.some((sibling) => sibling.metadata.used))
 		) {
 			const content = context.state.stylesheet.content;
-			const text = content.styles.substring(node.start - content.start, node.end - content.start);
+			const text = content.styles.substring(
+				node.start - content.start,
+				node.end - content.start
+			);
 			w.css_unused_selector(node, text);
 		}
 
