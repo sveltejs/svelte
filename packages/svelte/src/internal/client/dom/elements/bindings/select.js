@@ -56,8 +56,12 @@ export function select_option(select, value, mounting = false) {
  */
 export function init_select(select) {
 	var observer = new MutationObserver(() => {
-		// @ts-ignore
-		select_option(select, select.__value);
+		// If no value was ever provided (e.g. a spread without `value`), leave the
+		// selection alone — re-asserting `undefined` would deselect everything
+		if ('__value' in select) {
+			// @ts-ignore
+			select_option(select, select.__value);
+		}
 		// Deliberately don't update the potential binding value,
 		// the model should be preserved unless explicitly changed
 	});
