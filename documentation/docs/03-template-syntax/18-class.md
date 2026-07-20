@@ -100,4 +100,4 @@ As with other directives, we can use a shorthand when the name of the class coin
 <div class:cool class:lame={!cool}>...</div>
 ```
 
-> [!NOTE] Unless you're using an older version of Svelte, consider avoiding `class:`, since the attribute is more powerful and composable.
+> [!NOTE] Unless you're using an older version of Svelte, consider avoiding `class:`, since the attribute is more powerful and composable. The `class:` directive will eventually be deprecated, but a migration script is needed first.
