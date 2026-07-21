@@ -153,6 +153,22 @@ export class SvelteMap extends Map {
 		return super.get(key);
 	}
 
+	getOrInsert(key, value) {
+		if (super.has(key)) {
+			return /** @type {V} */ (super.get(key));
+		}
+		this.set(key, value);
+		return super.get(key);
+	}
+
+	getOrInsertComputed(key, callbackfn) {
+		if (super.has(key)) {
+			return /** @type {V} */ (super.get(key));
+		}
+		this.set(key, callbackfn(key));
+		return super.get(key);
+	}
+
 	/**
 	 * @param {K} key
 	 * @param {V} value
