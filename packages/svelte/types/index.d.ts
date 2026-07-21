@@ -1905,6 +1905,7 @@ declare module 'svelte/compiler' {
 	type Options = {
 		getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
 		getTrailingComments?: NonNullable<Parameters<typeof ts>[0]>['getTrailingComments'] | undefined;
+		indent?: string; // default tab
 	};
 
 	export {};

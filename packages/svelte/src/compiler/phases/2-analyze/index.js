@@ -1230,6 +1230,10 @@ function calculate_blockers(instance, analysis) {
 		}
 	}
 
+	// With no top-level await, no binding can have a blocker and function tracing
+	// cannot affect the output.
+	if (!awaited) return;
+
 	flush_sync_group();
 
 	for (const fn of functions) {
