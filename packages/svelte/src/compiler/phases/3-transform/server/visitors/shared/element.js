@@ -274,8 +274,9 @@ export function build_element_attributes(node, context, transform) {
 	}
 
 	if (events_to_capture.size !== 0) {
+		// swap the inline attribute for a head script when `csp` is set
 		for (const event of events_to_capture) {
-			context.state.template.push(b.literal(` ${event}="this.__e=event"`));
+			context.state.template.push(b.call('$.event_capture', b.id('$$renderer'), b.literal(event)));
 		}
 	}
 
