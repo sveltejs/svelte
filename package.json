@@ -26,10 +26,10 @@
     "bench:debug": "NODE_ENV=production node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "1.0.0-next.6",
     "@changesets/cli": "^2.29.8",
     "@eslint/js": "^10.0.0",
     "@sveltejs/eslint-config": "^9.0.0",
-    "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
     "@types/picomatch": "^4.0.2",
     "@vitest/coverage-v8": "^4.1.7",
