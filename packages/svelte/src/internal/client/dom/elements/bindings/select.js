@@ -55,7 +55,13 @@ export function select_option(select, value, mounting = false) {
  * @param {HTMLSelectElement} select
  */
 export function init_select(select) {
-	var observer = new MutationObserver(() => {
+	var observer = new MutationObserver((entries) => {
+		// Mutations related to `<selectedcontent>` can never affect the option list.
+		// Reacting to them could revert a user-initiated selection change, because the
+		// records are delivered as soon as any listener returns (e.g. a delegated `input`
+		// handler), which can happen before the `change` handler has updated `__value`
+		if (entries.every(is_selectedcontent_mutation)) return;
+
 		// @ts-ignore
 		select_option(select, select.__value);
 		// Deliberately don't update the potential binding value,
@@ -161,4 +167,23 @@ function get_option_value(option) {
 	} else {
 		return option.value;
 	}
+}
+
+/**
+ * Returns `true` if the mutation stems from the browser mirroring the selected
+ * option's content into `<selectedcontent>`, or from us replacing the
+ * `<selectedcontent>` element with a clone of itself
+ * @param {MutationRecord} entry
+ */
+function is_selectedcontent_mutation(entry) {
+	if (/** @type {Element} */ (entry.target).closest('selectedcontent') !== null) {
+		return true;
+	}
+
+	if (entry.type === 'childList') {
+		var nodes = [...entry.addedNodes, ...entry.removedNodes];
+		return nodes.length > 0 && nodes.every((node) => node.nodeName === 'SELECTEDCONTENT');
+	}
+
+	return false;
 }
