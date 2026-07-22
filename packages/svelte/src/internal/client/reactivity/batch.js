@@ -22,7 +22,6 @@ import {
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
 import {
-	active_effect,
 	active_reaction,
 	get,
 	increment_write_version,
@@ -38,7 +37,6 @@ import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
-import { legacy_is_updating_store } from './store.js';
 import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
 import { OBSOLETE } from './deriveds.js';
@@ -160,10 +158,17 @@ export class Batch {
 	#deferred = null;
 
 	/**
-	 * The root effects that need to be flushed
+	 * Effects that were scheduled in this batch but not yet 'resolved' into the
+	 * root effects that need to be flushed. Resolving — the upwards traversal that
+	 * marks the path to each effect on the shared effect tree (see #resolve) — is
+	 * deferred until the batch is processed, so that the markers are created and
+	 * consumed within a single traversal. Scheduling into other batches (which can
+	 * happen concurrently, e.g. while a batch is committed) can therefore never
+	 * observe (and be confused by) this batch's markers.
+	 * May contain duplicates — deduplication happens during resolving
 	 * @type {Effect[]}
 	 */
-	#roots = [];
+	#scheduled = [];
 
 	/**
 	 * Effects created while this batch was active.
@@ -273,13 +278,56 @@ export class Batch {
 		this.#unskipped_branches.add(effect);
 	}
 
+	/**
+	 * Convert the effects that were scheduled in this batch into the root effects
+	 * that need to be traversed, marking the path to each effect (by clearing the
+	 * `CLEAN` flag on ancestor branches) so that the traversal can find them.
+	 * This happens right before traversal rather than at scheduling time, so that
+	 * the markers left on the (shared) effect tree are created and consumed within
+	 * a single traversal — scheduling into other batches can never observe them
+	 * @returns {Effect[]}
+	 */
+	#resolve() {
+		/** @type {Effect[]} */
+		var roots = [];
+
+		for (const effect of this.#scheduled) {
+			// skip effects that are destroyed, or that already ran (e.g. because
+			// they were reached by the traversal that preceded a drain iteration,
+			// or because they were scheduled twice)
+			if ((effect.f & DESTROYED) !== 0 || (effect.f & (DIRTY | MAYBE_DIRTY)) === 0) continue;
+
+			var e = effect;
+			var covered = false;
+
+			while (e.parent !== null) {
+				e = e.parent;
+				var flags = e.f;
+
+				if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
+					if ((flags & CLEAN) === 0) {
+						// the path to the root was already marked, meaning the
+						// root was already collected — nothing left to do
+						covered = true;
+						break;
+					}
+
+					e.f ^= CLEAN;
+				}
+			}
+
+			if (!covered) {
+				roots.push(e);
+			}
+		}
+
+		this.#scheduled = [];
+
+		return roots;
+	}
+
 	#process() {
 		this.#started = true;
-
-		if (flush_count++ > 1000) {
-			this.#unlink();
-			infinite_loop_guard();
-		}
 
 		if (DEV) {
 			// track all the values that were updated during this flush,
@@ -304,9 +352,6 @@ export class Batch {
 			this.schedule(e);
 		}
 
-		const roots = this.#roots;
-		this.#roots = [];
-
 		this.apply();
 
 		/** @type {Effect[]} */
@@ -321,18 +366,28 @@ export class Batch {
 		 */
 		var updates = (legacy_updates = []);
 
-		for (const root of roots) {
-			try {
-				this.#traverse(root, effects, render_effects);
-			} catch (e) {
-				reset_all(root);
-				// If there's no async work left, this branch is now dead and needs
-				// to be discarded to not become a zombie that is never cleaned up.
-				// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
-				// for a (non-minimal) reproduction that demonstrates a case where this is necessary
-				// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
-				if (!this.#is_deferred()) this.discard();
-				throw e;
+		// Effects can be scheduled during traversal (e.g. because a parent each/await/etc
+		// block updated an internal source, or because an effect invalidated itself)
+		// hence we loop until there are no more scheduled effects.
+		while (this.#scheduled.length > 0) {
+			if (flush_count++ > 1000) {
+				this.#unlink();
+				infinite_loop_guard(); // TODO try to reset_all() here?
+			}
+
+			for (const root of this.#resolve()) {
+				try {
+					this.#traverse(root, effects, render_effects);
+				} catch (e) {
+					reset_all(root);
+					// If there's no async work left, this branch is now dead and needs
+					// to be discarded to not become a zombie that is never cleaned up.
+					// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
+					// for a (non-minimal) reproduction that demonstrates a case where this is necessary
+					// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
+					if (!this.#is_deferred()) this.discard();
+					throw e;
+				}
 			}
 		}
 
@@ -393,7 +448,7 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.#pending === 0 && (this.#roots.length === 0 || next_batch !== null)) {
+		if (this.#pending === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
 			this.#unlink();
 
 			// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
@@ -408,12 +463,15 @@ export class Batch {
 		}
 
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
-		// causing an effect and therefore a root to be scheduled again. We need to traverse the current batch
+		// causing an effect to be scheduled again. We need to traverse the current batch
 		// once more in that case - most of the time this will just clean up dirty branches.
-		if (this.#roots.length > 0) {
+		if (this.#scheduled.length > 0) {
 			if (next_batch !== null) {
-				const batch = next_batch;
-				batch.#roots.push(...this.#roots.filter((r) => !batch.#roots.includes(r)));
+				for (const e of this.#scheduled) {
+					next_batch.#scheduled.push(e);
+				}
+
+				this.#scheduled = [];
 			} else {
 				next_batch = this;
 			}
@@ -711,7 +769,7 @@ export class Batch {
 				// The microtask queue can contain the batch already scheduled to run right
 				// after this one is finished, so throwing the invariant would be wrong here.
 				if (DEV && !batch.#decrement_queued) {
-					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
+					invariant(batch.#scheduled.length === 0, 'Batch has scheduled effects');
 				}
 
 				// A batch was unskipped in a later batch -> tell prior batches to unskip it, too
@@ -767,14 +825,12 @@ export class Batch {
 
 				// Only apply and traverse when we know we triggered async work with marking the effects
 				// and know this won't run anyway right afterwards
-				if (batch.#roots.length > 0 && !batch.#decrement_queued) {
+				if (batch.#scheduled.length > 0 && !batch.#decrement_queued) {
 					batch.apply();
 
-					for (var root of batch.#roots) {
+					for (var root of batch.#resolve()) {
 						batch.#traverse(root, [], []);
 					}
-
-					batch.#roots = [];
 				}
 
 				batch.deactivate();
@@ -938,43 +994,7 @@ export class Batch {
 			return;
 		}
 
-		var e = effect;
-
-		while (e.parent !== null) {
-			e = e.parent;
-			var flags = e.f;
-
-			// if the effect is being scheduled because a parent (each/await/etc) block
-			// updated an internal source, or because a branch is being unskipped,
-			// bail out or we'll cause a second flush
-			if (collected_effects !== null && e === active_effect) {
-				if (async_mode_flag) return;
-
-				// in sync mode, render effects run during traversal. in an extreme edge case
-				// — namely that we're setting a value inside a derived read during traversal —
-				// they can be made dirty after they have already been visited, in which
-				// case we shouldn't bail out. we also shouldn't bail out if we're
-				// updating a store inside a `$:`, since this might invalidate
-				// effects that were already visited
-				if (
-					(active_reaction === null || (active_reaction.f & DERIVED) === 0) &&
-					!legacy_is_updating_store
-				) {
-					return;
-				}
-			}
-
-			if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-				if ((flags & CLEAN) === 0) {
-					// branch is already dirty, bail
-					return;
-				}
-
-				e.f ^= CLEAN;
-			}
-		}
-
-		this.#roots.push(e);
+		this.#scheduled.push(effect);
 	}
 
 	#unlink() {
