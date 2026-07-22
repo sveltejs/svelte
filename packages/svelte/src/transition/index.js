@@ -29,6 +29,18 @@ function split_css_unit(value) {
 }
 
 /**
+ * Elements without a layout box (e.g. inside a `display: none` parent) have computed
+ * dimensions like `auto` that parse to `NaN`, producing keyframe values the browser
+ * rejects (https://github.com/sveltejs/svelte/issues/14205). Treat them as `0` instead
+ * @param {string} value
+ * @returns {number}
+ */
+function parse_dimension(value) {
+	const result = parseFloat(value);
+	return Number.isNaN(result) ? 0 : result;
+}
+
+/**
  * Animates a `blur` filter alongside an element's opacity.
  *
  * @param {Element} node
@@ -116,19 +128,21 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 
 	const opacity = +style.opacity;
 	const primary_property = axis === 'y' ? 'height' : 'width';
-	const primary_property_value = parseFloat(style[primary_property]);
+	const primary_property_value = parse_dimension(style[primary_property]);
 	const secondary_properties = axis === 'y' ? ['top', 'bottom'] : ['left', 'right'];
 	const capitalized_secondary_properties = secondary_properties.map(
 		(e) => /** @type {'Left' | 'Right' | 'Top' | 'Bottom'} */ (`${e[0].toUpperCase()}${e.slice(1)}`)
 	);
-	const padding_start_value = parseFloat(style[`padding${capitalized_secondary_properties[0]}`]);
-	const padding_end_value = parseFloat(style[`padding${capitalized_secondary_properties[1]}`]);
-	const margin_start_value = parseFloat(style[`margin${capitalized_secondary_properties[0]}`]);
-	const margin_end_value = parseFloat(style[`margin${capitalized_secondary_properties[1]}`]);
-	const border_width_start_value = parseFloat(
+	const padding_start_value = parse_dimension(
+		style[`padding${capitalized_secondary_properties[0]}`]
+	);
+	const padding_end_value = parse_dimension(style[`padding${capitalized_secondary_properties[1]}`]);
+	const margin_start_value = parse_dimension(style[`margin${capitalized_secondary_properties[0]}`]);
+	const margin_end_value = parse_dimension(style[`margin${capitalized_secondary_properties[1]}`]);
+	const border_width_start_value = parse_dimension(
 		style[`border${capitalized_secondary_properties[0]}Width`]
 	);
-	const border_width_end_value = parseFloat(
+	const border_width_end_value = parse_dimension(
 		style[`border${capitalized_secondary_properties[1]}Width`]
 	);
 	return {
