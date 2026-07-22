@@ -235,7 +235,7 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.#resolve(/** @type {Batch} */ (current_batch));
+				this.#resolve(Batch.ensure());
 			}
 		});
 	}
@@ -257,7 +257,10 @@ export class Boundary {
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 				this.#pending_effect = branch(() => pending(this.#anchor));
 			} else {
-				this.#resolve(/** @type {Batch} */ (current_batch));
+				// `current_batch` can be null here — e.g. a `flushSync()` at the top
+				// level of a component script flushes and clears the batch while
+				// we are still rendering (#18522) — so ensure one exists
+				this.#resolve(Batch.ensure());
 			}
 		} catch (error) {
 			this.error(error);
