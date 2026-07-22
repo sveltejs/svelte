@@ -1,5 +1,11 @@
 # svelte
 
+## 5.56.7
+
+### Patch Changes
+
+- chore: provide `indent` option for `print` ([#18474](https://github.com/sveltejs/svelte/pull/18474))
+
 ## 5.56.6
 
 ### Patch Changes
