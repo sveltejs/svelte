@@ -708,11 +708,9 @@ export class Batch {
 					batch.discard();
 				}
 			} else if (sources.length > 0) {
-				// The microtask queue can contain the batch already scheduled to run right
-				// after this one is finished, so throwing the invariant would be wrong here.
-				if (DEV && !batch.#decrement_queued) {
-					invariant(batch.#roots.length === 0, 'Batch has scheduled roots');
-				}
+				// A batch can have scheduled effects but decrement_pending wasn't called yet
+				// (can happen after a microtask in e.g. async blocks)
+				const scheduled = batch.#roots.length > 0 || batch.#decrement_queued;
 
 				// A batch was unskipped in a later batch -> tell prior batches to unskip it, too
 				if (is_earlier) {
@@ -767,7 +765,7 @@ export class Batch {
 
 				// Only apply and traverse when we know we triggered async work with marking the effects
 				// and know this won't run anyway right afterwards
-				if (batch.#roots.length > 0 && !batch.#decrement_queued) {
+				if (!scheduled && batch.#roots.length > 0) {
 					batch.apply();
 
 					for (var root of batch.#roots) {
