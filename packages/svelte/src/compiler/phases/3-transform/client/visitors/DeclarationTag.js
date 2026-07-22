@@ -70,7 +70,7 @@ export function add_async_declaration(context, metadata, ids, assignments, kind 
 		context.state.consts.push(kind === 'var' ? b.var(id.name) : b.let(id.name));
 	}
 
-	const blockers = [...metadata.expression.dependencies]
+	const blockers = [...metadata.expression.references]
 		.map((dep) => dep.blocker)
 		.filter((b) => b !== null && b.object !== context.state.async_consts?.id);
 
