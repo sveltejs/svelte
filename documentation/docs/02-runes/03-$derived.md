@@ -62,6 +62,31 @@ let total = $derived(await a + b);
 
 ...both `a` and `b` are tracked, even though `b` is only read once `a` has resolved, after the initial execution. (This does not apply to `await` in functions that are called by the expression, only the expression itself.)
 
+On the other hand, values that are read _asynchronously_ (such as inside asynchronous closures passed to third-party query or observable libraries) will not be tracked automatically. To track these values, read them synchronously outside the asynchronous boundary. A clear pattern for this is to evaluate the dependencies using the `void` operator:
+
+```js
+import { Dexie, liveQuery } from 'dexie';
+
+const db = new Dexie('UserDatabase');
+// ...database setup...
+
+let minAge = $state(18);
+let maxAge = $state(30);
+
+let query = $derived.by(() => {
+	// Read dependencies synchronously so they are tracked
+	void minAge, maxAge;
+
+	return liveQuery(async () => {
+		// Values read inside this callback are not tracked automatically
+		return await db.users
+			.where('age')
+			.between(minAge, maxAge)
+			.toArray();
+	});
+});
+```
+
 To exempt a piece of state from being treated as a dependency, use [`untrack`](svelte#untrack).
 
 ## Overriding derived values
