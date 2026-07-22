@@ -171,11 +171,49 @@ function base_element(node, context, comments) {
 	context.append(child_context);
 }
 
+/**
+ * @param {AST.CSS.SelectorList} node
+ * @param {Context} context
+ * @param {boolean} multiline
+ */
+function print_selector_list(node, context, multiline) {
+	let needs_separator = false;
+	let remaining_selectors = node.children.filter(
+		(child) => child.type === 'ComplexSelector'
+	).length;
+
+	for (let i = 0; i < node.children.length; i += 1) {
+		const child = node.children[i];
+
+		if (child.type === 'CSSComment') {
+			if (needs_separator) context.write(' ');
+			context.visit(child);
+			needs_separator = true;
+			continue;
+		}
+
+		if (needs_separator) {
+			if (multiline) context.newline();
+			else context.write(' ');
+		}
+
+		context.visit(child);
+		needs_separator = true;
+		remaining_selectors -= 1;
+
+		if (remaining_selectors > 0) {
+			context.write(',');
+		}
+	}
+}
+
 /** @type {Visitors<AST.SvelteNode>} */
 const css_visitors = {
 	Atrule(node, context) {
 		context.write(`@${node.name}`);
-		if (node.prelude) context.write(` ${node.prelude}`);
+		if (node.prelude || node.raw) {
+			context.write(` ${node.raw ?? node.prelude}`);
+		}
 
 		if (node.block) {
 			context.write(' ');
@@ -227,6 +265,10 @@ const css_visitors = {
 		context.write(`.${node.name}`);
 	},
 
+	CSSComment(node, context) {
+		context.write(`/*${node.data}*/`);
+	},
+
 	ComplexSelector(node, context) {
 		for (const selector of node.children) {
 			context.visit(selector);
@@ -234,7 +276,7 @@ const css_visitors = {
 	},
 
 	Declaration(node, context) {
-		context.write(`${node.property}: ${node.value};`);
+		context.write(`${node.property}: ${node.raw ?? node.value};`);
 	},
 
 	IdSelector(node, context) {
@@ -258,19 +300,7 @@ const css_visitors = {
 
 		if (node.args) {
 			context.write('(');
-
-			let started = false;
-
-			for (const arg of node.args.children) {
-				if (started) {
-					context.write(', ');
-				}
-
-				context.visit(arg);
-
-				started = true;
-			}
-
+			context.visit(node.args);
 			context.write(')');
 		}
 	},
@@ -294,32 +324,13 @@ const css_visitors = {
 	},
 
 	Rule(node, context) {
-		let started = false;
-
-		for (const selector of node.prelude.children) {
-			if (started) {
-				context.write(',');
-				context.newline();
-			}
-
-			context.visit(selector);
-			started = true;
-		}
-
+		print_selector_list(node.prelude, context, true);
 		context.write(' ');
 		context.visit(node.block);
 	},
 
 	SelectorList(node, context) {
-		let started = false;
-		for (const selector of node.children) {
-			if (started) {
-				context.write(', ');
-			}
-
-			context.visit(selector);
-			started = true;
-		}
+		print_selector_list(node, context, false);
 	},
 
 	TypeSelector(node, context) {

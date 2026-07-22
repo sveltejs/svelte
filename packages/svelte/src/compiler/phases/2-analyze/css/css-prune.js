@@ -7,6 +7,7 @@ import {
 	is_unscoped_pseudo_class
 } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
+import { without_css_comments } from '../../css.js';
 import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
 /** @typedef {typeof NODE_PROBABLY_EXISTS | typeof NODE_DEFINITELY_EXISTS} NodeExistsValue */
@@ -407,11 +408,13 @@ function is_global(selector, rule) {
 			selector_list = owner.prelude;
 		}
 
-		const has_global_selectors = !!selector_list?.children.some((complex_selector) => {
-			return complex_selector.children.every((relative_selector) =>
-				is_global(relative_selector, owner)
-			);
-		});
+		const has_global_selectors =
+			!!selector_list &&
+			without_css_comments(selector_list.children).some((complex_selector) => {
+				return complex_selector.children.every((relative_selector) =>
+					is_global(relative_selector, owner)
+				);
+			});
 		explicitly_global ||= has_global_selectors;
 
 		if (!has_global_selectors && !can_be_global) {
@@ -448,9 +451,11 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				const rules = get_parent_rules(rule);
 				include_self =
 					rules.some((r) =>
-						r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))
+						without_css_comments(r.prelude.children).some((c) =>
+							c.children.some((s) => is_global(s, r))
+						)
 					) ||
-					rules[rules.length - 1].prelude.children.some((c) =>
+					without_css_comments(rules[rules.length - 1].prelude.children).some((c) =>
 						c.children.some((r) =>
 							r.selectors.some(
 								(s) =>
@@ -464,8 +469,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 			// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
 			// selector in a way that is similar to ancestor matching. In a sense, we're treating `.x:has(.y)` as `.x .y`.
-			const complex_selectors = /** @type {Compiler.AST.CSS.SelectorList} */ (selector.args)
-				.children;
+			const complex_selectors = without_css_comments(selector.args.children);
 			let matched = false;
 
 			for (const complex_selector of complex_selectors) {
@@ -522,7 +526,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					relative_selector.selectors.length === 1
 				) {
 					const args = selector.args;
-					const complex_selector = args.children[0];
+					const complex_selector = without_css_comments(args.children)[0];
 					return apply_selector(complex_selector.children, rule, element, BACKWARD);
 				}
 
@@ -533,7 +537,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				// because they are then _more_ likely to bleed out of the component. The exception is complex selectors
 				// with descendants, in which case we scope them all.
 				if (name === 'not' && selector.args) {
-					for (const complex_selector of selector.args.children) {
+					for (const complex_selector of without_css_comments(selector.args.children)) {
 						walk(complex_selector, null, {
 							ComplexSelector(node, context) {
 								node.metadata.used = true;
@@ -565,7 +569,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				if ((name === 'is' || name === 'where') && selector.args) {
 					let matched = false;
 
-					for (const complex_selector of selector.args.children) {
+					for (const complex_selector of without_css_comments(selector.args.children)) {
 						const relative = truncate(complex_selector);
 						const is_global = relative.length === 0;
 
@@ -651,7 +655,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 				const parent = /** @type {Compiler.AST.CSS.Rule} */ (rule.metadata.parent_rule);
 
-				for (const complex_selector of parent.prelude.children) {
+				for (const complex_selector of without_css_comments(parent.prelude.children)) {
 					if (
 						apply_selector(get_relative_selectors(complex_selector), parent, element, direction) ||
 						complex_selector.children.every((s) => is_global(s, parent))

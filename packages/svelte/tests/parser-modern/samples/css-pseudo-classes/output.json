@@ -6,6 +6,12 @@
 		"attributes": [],
 		"children": [
 			{
+				"type": "CSSComment",
+				"start": 12,
+				"end": 58,
+				"data": " test that all these are parsed correctly "
+			},
+			{
 				"type": "Rule",
 				"prelude": {
 					"type": "SelectorList",
@@ -299,6 +305,12 @@
 												"end": 355,
 												"children": [
 													{
+														"type": "CSSComment",
+														"start": 311,
+														"end": 321,
+														"data": "button"
+													},
+													{
 														"type": "ComplexSelector",
 														"start": 324,
 														"end": 330,
@@ -318,6 +330,12 @@
 																"end": 330
 															}
 														]
+													},
+													{
+														"type": "CSSComment",
+														"start": 332,
+														"end": 346,
+														"data": "p after h1"
 													},
 													{
 														"type": "ComplexSelector",

@@ -3,7 +3,12 @@
 /** @import { ComponentAnalysis } from '../../types.js' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
-import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
+import {
+	is_keyframes_node,
+	regex_css_name_boundary,
+	remove_css_prefix,
+	without_css_comments
+} from '../../css.js';
 import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
 import { dev } from '../../../state.js';
 
@@ -168,10 +173,11 @@ const visitors = {
 		}
 
 		if (node.metadata.is_global_block) {
-			const selector = node.prelude.children[0];
+			const selectors = without_css_comments(node.prelude.children);
+			const selector = selectors[0];
 
 			if (
-				node.prelude.children.length === 1 &&
+				selectors.length === 1 &&
 				selector.children.length === 1 &&
 				selector.children[0].selectors.length === 1
 			) {
@@ -197,14 +203,15 @@ const visitors = {
 	},
 	SelectorList(node, { state, next, path }) {
 		const parent = path.at(-1);
+		const selectors = without_css_comments(node.children);
 
 		// Only add comments if we're not inside a complex selector that itself is unused or a global block
 		if (
 			(!is_in_global_block(path) ||
-				(node.children.length > 1 && parent?.type === 'Rule' && parent.metadata.is_global_block)) &&
+				(selectors.length > 1 && parent?.type === 'Rule' && parent.metadata.is_global_block)) &&
 			!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)
 		) {
-			const children = node.children;
+			const children = selectors;
 			let pruning = false;
 			let prune_start = children[0].start;
 			let last = prune_start;
@@ -298,10 +305,12 @@ const visitors = {
 					// In case of multiple :global selectors in a selector list we gotta delete the comma, too, but only if
 					// the next selector is used; if it's unused then the comma deletion happens as part of removal of that next selector
 					if (
-						parent_rule.prelude.children.length > 1 &&
+						without_css_comments(parent_rule.prelude.children).length > 1 &&
 						node.children.length === node.children.findIndex((s) => s === relative_selector) - 1
 					) {
-						const next_selector = parent_rule.prelude.children.find((s) => s.start > global.end);
+						const next_selector = without_css_comments(parent_rule.prelude.children).find(
+							(s) => s.start > global.end
+						);
 						if (next_selector && next_selector.metadata.used) {
 							context.state.code.update(global.end, next_selector.start, '');
 						}
@@ -423,7 +432,7 @@ function remove_preceding_whitespace(end, state) {
  */
 function is_empty(rule, is_in_global_block) {
 	if (rule.metadata.is_global_block) {
-		return rule.block.children.length === 0;
+		return rule.block.children.every((child) => child.type === 'CSSComment');
 	}
 
 	for (const child of rule.block.children) {
@@ -438,7 +447,12 @@ function is_empty(rule, is_in_global_block) {
 		}
 
 		if (child.type === 'Atrule') {
-			if (child.block === null || child.block.children.length > 0) return false;
+			if (
+				child.block === null ||
+				child.block.children.some((child) => child.type !== 'CSSComment')
+			) {
+				return false;
+			}
 		}
 	}
 
@@ -447,7 +461,7 @@ function is_empty(rule, is_in_global_block) {
 
 /** @param {AST.CSS.Rule} rule */
 function is_used(rule) {
-	return rule.prelude.children.some((selector) => selector.metadata.used);
+	return without_css_comments(rule.prelude.children).some((selector) => selector.metadata.used);
 }
 
 /**
