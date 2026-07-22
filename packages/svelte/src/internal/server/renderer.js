@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
+/** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source, HydratableLookupEntry } from './types.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
@@ -12,8 +12,9 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { has_own_property, noop } from '../shared/utils.js';
+import { has_own_property, is_promise, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
+import { serialization_stack } from './hydratable.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -659,7 +660,7 @@ export class Renderer {
 		try {
 			const renderer = Renderer.#open_render('async', component, options);
 			const content = await renderer.#collect_content_async();
-			const hydratables = await renderer.#collect_hydratables();
+			const hydratables = await renderer.#hydratable_block();
 			if (hydratables !== null) {
 				content.head = hydratables + content.head;
 			}
@@ -739,23 +740,6 @@ export class Renderer {
 		return content;
 	}
 
-	async #collect_hydratables() {
-		const ctx = get_render_context().hydratable;
-
-		for (const [_, key] of ctx.unresolved_promises) {
-			// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
-			// serialize it, so we're blocking the response on useless content.
-			w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
-		}
-
-		for (const comparison of ctx.comparisons) {
-			// these reject if there's a mismatch
-			await comparison;
-		}
-
-		return await this.#hydratable_block(ctx);
-	}
-
 	/**
 	 * @template {Record<string, any>} Props
 	 * @param {'sync' | 'async'} mode
@@ -821,29 +805,94 @@ export class Renderer {
 		};
 	}
 
-	/**
-	 * @param {HydratableContext} ctx
-	 */
-	async #hydratable_block(ctx) {
+	async #hydratable_block() {
+		const ctx = get_render_context().hydratable;
+
+		for (const comparison of ctx.comparisons) {
+			// these reject if there's a mismatch
+			await comparison;
+		}
+
 		if (ctx.lookup.size === 0) {
 			return null;
 		}
 
-		let entries = [];
-		let has_promises = false;
+		/** @type {Map<Promise<any>, string>} */
+		const unresolved_promises = new Map();
 
-		for (const [k, v] of ctx.lookup) {
-			if (v.promises) {
-				has_promises = true;
-				for (const p of v.promises) await p;
+		/** @type {Promise<any>[]} */
+		const promises = [];
+		const entries = Array.from(ctx.lookup).map(([k, v]) => [k, v.value]);
+
+		let uid = 1;
+
+		/** @type {string | null} */
+		let serializing = null;
+
+		let serialized = devalue.uneval(entries, (value, uneval) => {
+			if (entries.includes(value)) {
+				serializing = value[0];
 			}
 
-			entries.push(`[${devalue.uneval(k)},${v.serialized}]`);
+			const key = /** @type {string} */ (serializing);
+
+			if (is_promise(value)) {
+				// we serialize promises as `"${i}"`, because it's impossible for that string
+				// to occur 'naturally' (since the quote marks would have to be escaped)
+				// this placeholder is returned synchronously from `uneval`, which includes it in the
+				// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
+				// be replaced.
+				const placeholder = `"${uid++}"`;
+				const p = value
+					.then((v) => {
+						serialized = serialized.replace(
+							placeholder,
+							// use the function form here to prevent any string replacement characters from being interpreted
+							// in `v`, as it's potentially user-controlled and therefore potentially malicious.
+							// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
+							() => {
+								serializing = key;
+								return `r(${uneval(v)})`;
+							}
+						);
+					})
+					// TODO figure out how best to report these errors
+					.catch((devalue_error) => {
+						const entry = /** @type {HydratableLookupEntry} */ (ctx.lookup.get(key));
+
+						e.hydratable_serialization_failed(
+							key,
+							serialization_stack(entry.stack, devalue_error?.stack)
+						);
+					});
+
+				unresolved_promises.set(p, key);
+
+				// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
+				p.catch(() => {}).finally(() => {
+					unresolved_promises.delete(p);
+				});
+
+				promises.push(p);
+				return placeholder;
+			}
+		});
+
+		setTimeout(() => {
+			for (const key of unresolved_promises.values()) {
+				// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
+				// serialize it, so we're blocking the response on useless content.
+				w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
+			}
+		}, 0);
+
+		for (const p of promises) {
+			await p;
 		}
 
 		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
 
-		if (has_promises) {
+		if (promises.length > 0) {
 			prelude = `const r = (v) => Promise.resolve(v);
 				${prelude}`;
 		}
@@ -852,9 +901,7 @@ export class Renderer {
 			{
 				${prelude}
 
-				for (const [k, v] of [
-					${entries.join(',\n\t\t\t\t\t')}
-				]) {
+				for (const [k, v] of ${serialized}) {
 					h.set(k, v);
 				}
 			}
