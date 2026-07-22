@@ -34,7 +34,8 @@ import {
 	ASYNC,
 	CONNECTED,
 	MANAGED_EFFECT,
-	DESTROYING
+	DESTROYING,
+	PAUSED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -610,6 +611,7 @@ export function pause_effect(effect, callback, destroy = true) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
+	effect.f |= PAUSED;
 	pause_children(effect, transitions, true);
 
 	var fn = () => {
@@ -677,6 +679,7 @@ function pause_children(effect, transitions, local) {
  * @param {Effect} effect
  */
 export function resume_effect(effect) {
+	effect.f &= ~PAUSED;
 	resume_children(effect, true);
 }
 
@@ -685,6 +688,10 @@ export function resume_effect(effect) {
  * @param {boolean} local
  */
 function resume_children(effect, local) {
+	// this subtree was paused for its own reasons (e.g. a block whose condition
+	// is still false) — its controller will resume or destroy it
+	if ((effect.f & PAUSED) !== 0) return;
+
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
