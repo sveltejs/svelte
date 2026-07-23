@@ -29,6 +29,7 @@ import {
 	block,
 	branch,
 	destroy_effect,
+	flush_destroy_errors,
 	move_effect,
 	pause_effect,
 	resume_effect
@@ -147,17 +148,29 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 		}
 	}
 
-	for (var i = 0; i < to_destroy.length; i++) {
-		var e = to_destroy[i];
+	// this loop initiates a destroy pass; collect teardown errors so one throwing
+	// teardown can't strand the items still queued for destruction (#18415)
+	/** @type {import('../../reactivity/effects.js').DestroyErrors} */
+	var errors = [];
+	var completed = false;
 
-		if (preserved_effects?.has(e)) {
-			e.f |= EFFECT_OFFSCREEN;
+	try {
+		for (var i = 0; i < to_destroy.length; i++) {
+			var e = to_destroy[i];
 
-			const fragment = document.createDocumentFragment();
-			move_effect(e, fragment);
-		} else {
-			destroy_effect(to_destroy[i], remove_dom);
+			if (preserved_effects?.has(e)) {
+				e.f |= EFFECT_OFFSCREEN;
+
+				const fragment = document.createDocumentFragment();
+				move_effect(e, fragment);
+			} else {
+				destroy_effect(to_destroy[i], remove_dom, errors);
+			}
 		}
+
+		completed = true;
+	} finally {
+		flush_destroy_errors(errors, completed);
 	}
 }
 

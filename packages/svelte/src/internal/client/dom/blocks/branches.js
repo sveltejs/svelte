@@ -3,6 +3,7 @@ import { Batch, current_batch } from '../../reactivity/batch.js';
 import {
 	branch,
 	destroy_effect,
+	flush_destroy_errors,
 	move_effect,
 	pause_effect,
 	resume_effect
@@ -110,55 +111,70 @@ export class BranchManager {
 			}
 		}
 
-		for (const [b, k] of this.#batches) {
-			this.#batches.delete(b);
+		// defer teardown errors so one throwing teardown can't strand the branches
+		// still queued for destruction below (#18415)
+		/** @type {import('../../reactivity/effects.js').DestroyErrors} */
+		var errors = [];
+		var completed = false;
 
-			if (b === batch) {
-				// keep values for newer batches
-				break;
-			}
+		try {
+			for (const [b, k] of this.#batches) {
+				this.#batches.delete(b);
 
-			const offscreen = this.#offscreen.get(k);
-
-			if (offscreen) {
-				// for older batches, destroy offscreen effects
-				// as they will never be committed
-				destroy_effect(offscreen.effect);
-				this.#offscreen.delete(k);
-			}
-		}
-
-		// outro/destroy all onscreen effects...
-		for (const [k, effect] of this.#onscreen) {
-			// ...except the one that was just committed
-			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
-			if (k === key || this.#outroing.has(k)) continue;
-
-			const on_destroy = () => {
-				const keys = Array.from(this.#batches.values());
-
-				if (keys.includes(k)) {
-					// keep the effect offscreen, as another batch will need it
-					var fragment = document.createDocumentFragment();
-					move_effect(effect, fragment);
-
-					fragment.append(create_text()); // TODO can we avoid this?
-
-					this.#offscreen.set(k, { effect, fragment });
-				} else {
-					destroy_effect(effect);
+				if (b === batch) {
+					// keep values for newer batches
+					break;
 				}
 
-				this.#outroing.delete(k);
-				this.#onscreen.delete(k);
-			};
+				const offscreen = this.#offscreen.get(k);
 
-			if (this.#transition || !onscreen) {
-				this.#outroing.add(k);
-				pause_effect(effect, on_destroy, false);
-			} else {
-				on_destroy();
+				if (offscreen) {
+					// for older batches, destroy offscreen effects
+					// as they will never be committed
+					destroy_effect(offscreen.effect, true, errors);
+					this.#offscreen.delete(k);
+				}
 			}
+
+			// outro/destroy all onscreen effects...
+			for (const [k, effect] of this.#onscreen) {
+				// ...except the one that was just committed
+				//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
+				if (k === key || this.#outroing.has(k)) continue;
+
+				const on_destroy = () => {
+					const keys = Array.from(this.#batches.values());
+
+					if (keys.includes(k)) {
+						// keep the effect offscreen, as another batch will need it
+						var fragment = document.createDocumentFragment();
+						move_effect(effect, fragment);
+
+						fragment.append(create_text()); // TODO can we avoid this?
+
+						this.#offscreen.set(k, { effect, fragment });
+					} else {
+						// after an outro transition this callback runs once the pass has
+						// flushed — the destroy then owns its own errors and throws
+						// synchronously, same as any standalone destroy
+						destroy_effect(effect, true, errors.closed ? null : errors);
+					}
+
+					this.#outroing.delete(k);
+					this.#onscreen.delete(k);
+				};
+
+				if (this.#transition || !onscreen) {
+					this.#outroing.add(k);
+					pause_effect(effect, on_destroy, false);
+				} else {
+					on_destroy();
+				}
+			}
+
+			completed = true;
+		} finally {
+			flush_destroy_errors(errors, completed);
 		}
 	};
 
@@ -170,11 +186,23 @@ export class BranchManager {
 
 		const keys = Array.from(this.#batches.values());
 
-		for (const [k, branch] of this.#offscreen) {
-			if (!keys.includes(k)) {
-				destroy_effect(branch.effect);
-				this.#offscreen.delete(k);
+		// this loop initiates a destroy pass; collect teardown errors so one throwing
+		// teardown can't strand the branches still queued for destruction (#18415)
+		/** @type {import('../../reactivity/effects.js').DestroyErrors} */
+		var errors = [];
+		var completed = false;
+
+		try {
+			for (const [k, branch] of this.#offscreen) {
+				if (!keys.includes(k)) {
+					destroy_effect(branch.effect, true, errors);
+					this.#offscreen.delete(k);
+				}
 			}
+
+			completed = true;
+		} finally {
+			flush_destroy_errors(errors, completed);
 		}
 	};
 
