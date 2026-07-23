@@ -171,6 +171,10 @@ This can happen if you render a hydratable on the client that was not rendered o
 
 > Rest element properties of `$props()` such as `%property%` are readonly
 
+## renderer_missing_foreign
+
+> A custom renderer must define `foreign` to interleave with DOM or another custom renderer
+
 ## rune_outside_svelte
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files

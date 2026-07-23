@@ -281,7 +281,7 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
-			var pop_renderer = push_renderer(this.#effect.r);
+			var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
 
 			var fragment = (this.#offscreen_fragment = create_fragment());
 			var anchor = create_text();
@@ -375,7 +375,7 @@ export class Boundary {
 		set_active_reaction(this.#effect);
 		set_component_context(this.#effect.ctx);
 
-		var pop_renderer = push_renderer(this.#effect.r);
+		var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
 
 		try {
 			Batch.ensure();
@@ -419,7 +419,7 @@ export class Boundary {
 			}
 
 			if (this.#offscreen_fragment) {
-				var pop_renderer = push_renderer(this.#effect.r);
+				var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
 				insert_before(this.#anchor, this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
 				pop_renderer?.();
