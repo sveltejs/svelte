@@ -1,4 +1,4 @@
-/** @import { Source } from '#client' */
+/** @import { Effect, Source } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	get,
@@ -6,8 +6,10 @@ import {
 	update_version,
 	active_reaction,
 	set_update_version,
-	set_active_reaction
+	set_active_reaction,
+	untrack
 } from './runtime.js';
+import { destroy_effect, eager_effect } from './reactivity/effects.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -22,7 +24,7 @@ import {
 	flush_eager_effects,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
-import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { PROXY_META_SYMBOL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { tag } from './dev/tracing.js';
@@ -33,13 +35,196 @@ import { tracing_mode_flag } from '../flags/index.js';
 const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 
 /**
+ * @typedef {{
+ *   self: any;
+ *   sources: Map<any, Source<any>>;
+ *   links: Array<{ pm: ProxyMeta, k: any }>;
+ *   fires: Array<{ cb: () => void, fire: () => void, e: Effect }>;
+ *   observed: boolean;
+ * }} ProxyMeta
+ */
+
+/**
+ * Creates the dispatch half of an `onchange` root: a notifier source paired with an
+ * eager effect, so callbacks run synchronously inside `set()` and inherit the existing
+ * fork gating and deferral behaviour. The original callback is kept alongside so it
+ * can be detached again by identity
+ * @param {() => void} onchange
+ * @returns {{ cb: () => void, fire: () => void, e: Effect }}
+ */
+function create_fire(onchange) {
+	var notifier = source(0);
+	var initial = true;
+	var running = false;
+
+	var effect = eager_effect(() => {
+		get(notifier);
+
+		if (initial) {
+			initial = false;
+			return;
+		}
+
+		// guard against the callback synchronously mutating its own tree
+		if (running) return;
+		running = true;
+
+		try {
+			untrack(onchange);
+		} finally {
+			running = false;
+		}
+	});
+
+	return { cb: onchange, fire: () => increment(notifier), e: effect };
+}
+
+/**
+ * Registers `parent_meta[key]` as a (possibly stale) way to reach a root from `child`.
+ * Links are never eagerly removed — they are verified and pruned during `collect_roots`
+ * @param {any} child
+ * @param {ProxyMeta} parent_meta
+ * @param {any} key
+ */
+function link_child(child, parent_meta, key) {
+	if (child === null || typeof child !== 'object' || !(STATE_SYMBOL in child)) return;
+
+	var meta = /** @type {ProxyMeta | undefined} */ (child[PROXY_META_SYMBOL]);
+	if (meta === undefined) return;
+
+	var links = meta.links;
+
+	for (var i = 0; i < links.length; i += 1) {
+		if (links[i].pm === parent_meta && links[i].k === key) return;
+	}
+
+	links.push({ pm: parent_meta, k: key });
+	observe(meta);
+}
+
+/**
+ * Marks a node observed and links its already-materialized children, so references
+ * captured before the node joined an observed tree still reach a root
+ * @param {ProxyMeta} meta
+ */
+function observe(meta) {
+	if (meta.observed) return;
+	meta.observed = true;
+
+	for (var [key, s] of meta.sources) {
+		if (s.v !== UNINITIALIZED) {
+			link_child(s.v, meta, key);
+		}
+	}
+}
+
+/**
+ * Walks rootward from `meta`, verifying each link against the parent's backing source
+ * (`parent.sources.get(key).v === child`). Dead links are pruned in place; live chains
+ * contribute their root callbacks to `fires`
+ * @param {ProxyMeta} meta
+ * @param {Set<ProxyMeta>} visited
+ * @param {Set<() => void>} fires
+ */
+function collect_roots(meta, visited, fires) {
+	if (visited.has(meta)) return;
+	visited.add(meta);
+
+	for (var i = 0; i < meta.fires.length; i += 1) {
+		fires.add(meta.fires[i].fire);
+	}
+
+	var links = meta.links;
+
+	for (var j = links.length - 1; j >= 0; j -= 1) {
+		var link = links[j];
+		var s = link.pm.sources.get(link.k);
+
+		if (s !== undefined && s.v === meta.self) {
+			collect_roots(link.pm, visited, fires);
+		} else {
+			links.splice(j, 1);
+		}
+	}
+
+	if (links.length === 0 && meta.fires.length === 0) {
+		meta.observed = false;
+	}
+}
+
+/** @param {ProxyMeta} meta */
+function notify_onchange(meta) {
+	/** @type {Set<() => void>} */
+	var fires = new Set();
+	collect_roots(meta, new Set(), fires);
+
+	for (var fire of fires) fire();
+}
+
+/**
+ * Detaches a callback previously attached with `proxy(value, onchange)`, used by the
+ * `$state` shell so a reassigned variable's old tree stops firing its callback
+ * @param {any} value
+ * @param {() => void} onchange
+ */
+export function remove_onchange(value, onchange) {
+	if (value === null || typeof value !== 'object' || !(STATE_SYMBOL in value)) return;
+
+	var meta = /** @type {ProxyMeta | undefined} */ (value[PROXY_META_SYMBOL]);
+	if (meta === undefined) return;
+
+	var fires = meta.fires;
+
+	for (var i = 0; i < fires.length; i += 1) {
+		if (fires[i].cb === onchange) {
+			destroy_effect(fires[i].e);
+			fires.splice(i, 1);
+			break;
+		}
+	}
+
+	if (fires.length === 0 && meta.links.length === 0) {
+		meta.observed = false;
+	}
+}
+
+/**
+ * Wraps an array mutating method so onchange roots fire once per method call
+ * rather than once per internal `set` (e.g. `push` writes an element and `length`)
+ * @param {Function} fn
+ */
+function batch_eager_method(fn) {
+	return function (/** @type {any[]} */ ...args) {
+		set_eager_effects_deferred();
+
+		try {
+			// @ts-ignore
+			return fn.apply(this, args);
+		} finally {
+			flush_eager_effects();
+		}
+	};
+}
+
+/**
  * @template T
  * @param {T} value
+ * @param {() => void} [onchange] fires synchronously whenever anything in the tree changes
  * @returns {T}
  */
-export function proxy(value) {
+export function proxy(value, onchange) {
 	// if non-proxyable, or is already a proxy, return `value`
-	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
+	if (typeof value !== 'object' || value === null) {
+		return value;
+	}
+
+	if (STATE_SYMBOL in value) {
+		if (onchange !== undefined) {
+			// attach an additional root callback to an existing proxy
+			var m = /** @type {ProxyMeta} */ (/** @type {any} */ (value)[PROXY_META_SYMBOL]);
+			m.fires.push(create_fire(onchange));
+			observe(m);
+		}
 		return value;
 	}
 
@@ -53,6 +238,13 @@ export function proxy(value) {
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
 	var version = source(0);
+
+	/**
+	 * Only allocated once this proxy participates in an observed tree —
+	 * proxies outside onchange trees never pay for this beyond a null check
+	 * @type {ProxyMeta | null}
+	 */
+	var meta = null;
 
 	var stack = DEV && tracing_mode_flag ? get_error('created at') : null;
 	var parent_version = update_version;
@@ -110,7 +302,7 @@ export function proxy(value) {
 		updating = false;
 	}
 
-	return new Proxy(/** @type {any} */ (value), {
+	var p = new Proxy(/** @type {any} */ (value), {
 		defineProperty(_, prop, descriptor) {
 			if (
 				!('value' in descriptor) ||
@@ -143,20 +335,27 @@ export function proxy(value) {
 
 		deleteProperty(target, prop) {
 			var s = sources.get(prop);
+			var changed = false;
 
 			if (s === undefined) {
 				if (prop in target) {
 					const s = with_parent(() => source(UNINITIALIZED, stack));
 					sources.set(prop, s);
 					increment(version);
+					changed = true;
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
 					}
 				}
 			} else {
+				if (s.v !== UNINITIALIZED) changed = true;
 				set(s, UNINITIALIZED);
 				increment(version);
+			}
+
+			if (changed && meta !== null && meta.observed) {
+				notify_onchange(/** @type {ProxyMeta} */ (meta));
 			}
 
 			return true;
@@ -173,6 +372,11 @@ export function proxy(value) {
 
 			var s = sources.get(prop);
 			var exists = prop in target;
+
+			// symbols are never own properties, so this check can live off the hot path
+			if (s === undefined && prop === PROXY_META_SYMBOL) {
+				return (meta ??= { self: p, sources, links: [], fires: [], observed: false });
+			}
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
@@ -192,10 +396,32 @@ export function proxy(value) {
 
 			if (s !== undefined) {
 				var v = get(s);
+
+				// reads through an observed proxy establish (or refresh) the child's
+				// rootward link — mutation is only possible via a reference obtained
+				// through this trap or the set trap, so coverage matches reactivity's
+				if (meta !== null && meta.observed && v !== UNINITIALIZED) {
+					link_child(v, meta, prop);
+				}
+
 				return v === UNINITIALIZED ? undefined : v;
 			}
 
-			return Reflect.get(target, prop, receiver);
+			var reflected = Reflect.get(target, prop, receiver);
+
+			if (
+				meta !== null &&
+				meta.observed &&
+				is_proxied_array &&
+				typeof prop === 'string' &&
+				typeof reflected === 'function' &&
+				ARRAY_MUTATING_METHODS.has(prop)
+			) {
+				// batch array methods so e.g. `push` (element + length) fires roots once
+				return batch_eager_method(reflected);
+			}
+
+			return reflected;
 		},
 
 		getOwnPropertyDescriptor(target, prop) {
@@ -260,6 +486,7 @@ export function proxy(value) {
 		set(target, prop, value, receiver) {
 			var s = sources.get(prop);
 			var has = prop in target;
+			var changed = false;
 
 			// variable.length = value -> clear all signals with index >= value
 			if (is_proxied_array && prop === 'length') {
@@ -292,7 +519,14 @@ export function proxy(value) {
 					if (DEV) {
 						tag(s, get_label(path, prop));
 					}
-					set(s, proxy(value));
+
+					var np = proxy(value);
+					set(s, np);
+					changed = !has || target[prop] !== value;
+
+					if (meta !== null && meta.observed) {
+						link_child(np, /** @type {ProxyMeta} */ (meta), prop);
+					}
 
 					sources.set(prop, s);
 				}
@@ -300,7 +534,14 @@ export function proxy(value) {
 				has = s.v !== UNINITIALIZED;
 
 				var p = with_parent(() => proxy(value));
-				set(s, p);
+
+				if (meta !== null && meta.observed) {
+					if (s.v !== p) changed = true;
+					set(s, p);
+					link_child(p, meta, prop);
+				} else {
+					set(s, p);
+				}
 			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
@@ -325,6 +566,11 @@ export function proxy(value) {
 				}
 
 				increment(version);
+				changed = true;
+			}
+
+			if (changed && meta !== null && meta.observed) {
+				notify_onchange(/** @type {ProxyMeta} */ (meta));
 			}
 
 			return true;
@@ -351,6 +597,12 @@ export function proxy(value) {
 			e.state_prototype_fixed();
 		}
 	});
+
+	if (onchange !== undefined) {
+		meta = { self: p, sources, links: [], fires: [create_fire(onchange)], observed: true };
+	}
+
+	return p;
 }
 
 /**
