@@ -142,8 +142,9 @@ export function to_style(value, styles) {
 		}
 
 		if (value) {
+			// strip comments; surrounding whitespace is handled by the trims below
 			value = String(value)
-				.replaceAll(/\s*\/\*.*?\*\/\s*/g, '')
+				.replaceAll(/\/\*.*?\*\//g, '')
 				.trim();
 
 			/** @type {boolean | '"' | "'"} */
