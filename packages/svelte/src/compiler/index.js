@@ -10,6 +10,7 @@ import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
 import { transform_component, transform_module } from './phases/3-transform/index.js';
 import { validate_component_options, validate_module_options } from './validate-options.js';
 import * as state from './state.js';
+import * as e from './errors.js';
 export { default as preprocess } from './preprocess/index.js';
 export { print } from './print/index.js';
 
@@ -28,7 +29,37 @@ export function compile(source, options) {
 
 	let parsed = _parse(source);
 
-	const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
+	const {
+		customElement: customElementOptions,
+		customRenderer: custom_renderer,
+		...parsed_options
+	} = parsed.options || {};
+
+	// resolve the per-component custom renderer, taking `<svelte:options customRenderer={...} />`
+	// into account. The normalized option is always a function returning `string | null | undefined`
+	// (see `validate-options.js`). A string opts in to a specific renderer module, `null`/`false`
+	// opts out to plain DOM (while keeping the feature enabled) and `true`/absent inherits whatever
+	// the global option resolves to.
+	let custom_renderer_option = validated.experimental.customRenderer;
+
+	if (custom_renderer !== undefined) {
+		// the feature is a global compiler option — a component can only override the renderer it uses
+		// (or opt out) when `experimental.customRenderer` is enabled. Otherwise nothing pushes a
+		// renderer, so allowing `<svelte:options customRenderer>` would silently do the wrong thing.
+		if (!options.experimental?.customRenderer && parsed.options?.attributes) {
+			for (const attribute of parsed.options.attributes) {
+				if (attribute.name === 'customRenderer') {
+					e.svelte_options_customrenderer_disabled(attribute);
+				}
+			}
+		}
+
+		if (typeof custom_renderer === 'string') {
+			custom_renderer_option = () => custom_renderer;
+		} else if (custom_renderer === false || custom_renderer === null) {
+			custom_renderer_option = () => null;
+		}
+	}
 
 	/** @type {ValidatedCompileOptions} */
 	const combined_options = {
@@ -36,7 +67,11 @@ export function compile(source, options) {
 		...parsed_options,
 		customElementOptions,
 		css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : validated.css,
-		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes
+		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes,
+		experimental: {
+			...validated.experimental,
+			customRenderer: custom_renderer_option
+		}
 	};
 
 	if (parsed.metadata.ts) {

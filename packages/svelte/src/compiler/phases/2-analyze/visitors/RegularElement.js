@@ -17,7 +17,7 @@ import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { object } from '../../../utils/ast.js';
-import { runes } from '../../../state.js';
+import { runes, custom_renderer } from '../../../state.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -25,7 +25,10 @@ import { runes } from '../../../state.js';
  */
 export function RegularElement(node, context) {
 	validate_element(node, context);
-	check_element(node, context);
+
+	if (!custom_renderer) {
+		check_element(node, context);
+	}
 
 	node.metadata.path = [...context.path];
 	context.state.analysis.elements.push(node);
@@ -34,7 +37,9 @@ export function RegularElement(node, context) {
 	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute' && attribute.name === 'value') {
-				e.textarea_invalid_content(node);
+				if (!custom_renderer) {
+					e.textarea_invalid_content(node);
+				}
 			}
 		}
 
@@ -110,7 +115,10 @@ export function RegularElement(node, context) {
 
 	// Special case: <select>, <option> or <optgroup> with rich content needs special hydration handling
 	// We mark the subtree as dynamic so parent elements properly include the child init code
-	if (is_customizable_select_element(node) || node.name === 'selectedcontent') {
+	if (
+		(is_customizable_select_element(node) || node.name === 'selectedcontent') &&
+		!custom_renderer
+	) {
 		// Mark the element's own fragment as dynamic so it's not treated as static
 		node.fragment.metadata.dynamic = true;
 		// Also mark ancestor fragments so parents properly include the child init code
@@ -157,7 +165,7 @@ export function RegularElement(node, context) {
 		mark_subtree_dynamic(context.path);
 	}
 
-	if (context.state.parent_element) {
+	if (context.state.parent_element && !custom_renderer) {
 		let past_parent = false;
 		let only_warn = false;
 		const ancestors = [context.state.parent_element];
@@ -218,7 +226,8 @@ export function RegularElement(node, context) {
 		context.state.analysis.source[node.end - 2] === '/' &&
 		!is_void(node_name) &&
 		!is_svg(node_name) &&
-		!is_mathml(node_name)
+		!is_mathml(node_name) &&
+		!custom_renderer
 	) {
 		w.element_invalid_self_closing_tag(node, node.name);
 	}

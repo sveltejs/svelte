@@ -14,7 +14,17 @@ import * as w from '../../warnings.js';
 import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../context.js';
-import { create_element, get_first_child, get_next_sibling } from '../operations.js';
+import {
+	create_element,
+	get_first_child,
+	get_next_sibling,
+	get_last_child,
+	set_inner_html,
+	insert_before,
+	get_parent_node,
+	node_type,
+	get_node_value
+} from '../operations.js';
 import { active_effect } from '../../runtime.js';
 import { COMMENT_NODE } from '#client/constants';
 
@@ -81,12 +91,12 @@ export function html(
 			// When @html is the only child, use innerHTML directly.
 			// This also handles contenteditable, where the user may delete the anchor comment.
 			effect.nodes = null;
-			parent_node.innerHTML = /** @type {string} */ (value);
+			set_inner_html(parent_node, /** @type {string} */ (value));
 
 			if (value !== '') {
 				assign_nodes(
 					/** @type {TemplateNode} */ (get_first_child(parent_node)),
-					/** @type {TemplateNode} */ (parent_node.lastChild)
+					/** @type {TemplateNode} */ (get_last_child(parent_node))
 				);
 			}
 
@@ -103,16 +113,13 @@ export function html(
 		if (hydrating) {
 			// We're deliberately not trying to repair mismatches between server and client,
 			// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
-			var hash = /** @type {Comment} */ (hydrate_node).data;
+			var hash = get_node_value(hydrate_node);
 
 			/** @type {TemplateNode | null} */
 			var next = hydrate_next();
 			var last = next;
 
-			while (
-				next !== null &&
-				(next.nodeType !== COMMENT_NODE || /** @type {Comment} */ (next).data !== '')
-			) {
+			while (next !== null && (node_type(next) !== COMMENT_NODE || get_node_value(next) !== '')) {
 				last = next;
 				next = get_next_sibling(next);
 			}
@@ -123,7 +130,7 @@ export function html(
 			}
 
 			if (DEV && !skip_warning) {
-				check_hash(/** @type {Element} */ (next.parentNode), hash, value);
+				check_hash(/** @type {Element} */ (get_parent_node(next)), hash, value);
 			}
 
 			assign_nodes(hydrate_node, last);
@@ -139,22 +146,22 @@ export function html(
 		var wrapper = /** @type {HTMLTemplateElement | SVGElement | MathMLElement} */ (
 			create_element(svg ? 'svg' : mathml ? 'math' : 'template', ns)
 		);
-		wrapper.innerHTML = /** @type {any} */ (value);
+		set_inner_html(wrapper, /** @type {any} */ (value));
 
 		/** @type {DocumentFragment | Element} */
 		var node = svg || mathml ? wrapper : /** @type {HTMLTemplateElement} */ (wrapper).content;
 
 		assign_nodes(
 			/** @type {TemplateNode} */ (get_first_child(node)),
-			/** @type {TemplateNode} */ (node.lastChild)
+			/** @type {TemplateNode} */ (get_last_child(node))
 		);
 
 		if (svg || mathml) {
 			while (get_first_child(node)) {
-				anchor.before(/** @type {TemplateNode} */ (get_first_child(node)));
+				insert_before(anchor, /** @type {TemplateNode} */ (get_first_child(node)));
 			}
 		} else {
-			anchor.before(node);
+			insert_before(anchor, node);
 		}
 	});
 }

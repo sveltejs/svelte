@@ -39,8 +39,16 @@ import { Batch, current_batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
-import { create_text } from '../operations.js';
+import {
+	create_text,
+	create_fragment,
+	append_child,
+	insert_before,
+	get_node_value
+} from '../operations.js';
 import { defer_effect } from '../../reactivity/utils.js';
+import { set_signal_status } from '../../reactivity/status.js';
+import { push_renderer } from '../../custom-renderer/state.js';
 
 /**
  * @typedef {{
@@ -163,13 +171,17 @@ export class Boundary {
 				const comment = /** @type {Comment} */ (this.#hydrate_open);
 				hydrate_next();
 
-				const server_rendered_pending = comment.data === HYDRATION_START_ELSE;
-				const server_rendered_failed = comment.data.startsWith(HYDRATION_START_FAILED);
+				const server_rendered_pending = get_node_value(comment) === HYDRATION_START_ELSE;
+				const server_rendered_failed = (get_node_value(comment) ?? '').startsWith(
+					HYDRATION_START_FAILED
+				);
 
 				if (server_rendered_failed) {
 					// Server rendered the failed snippet - hydrate it.
 					// The serialized error is embedded in the comment: <!--[?<json>-->
-					const serialized_error = JSON.parse(comment.data.slice(HYDRATION_START_FAILED.length));
+					const serialized_error = JSON.parse(
+						(get_node_value(comment) ?? '').slice(HYDRATION_START_FAILED.length)
+					);
 					this.#hydrate_failed_content(serialized_error);
 				} else if (server_rendered_pending) {
 					this.#hydrate_pending_content();
@@ -269,17 +281,19 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
-			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+			var pop_renderer = push_renderer(this.#effect.r);
+
+			var fragment = (this.#offscreen_fragment = create_fragment());
 			var anchor = create_text();
 
-			fragment.append(anchor);
+			append_child(fragment, anchor);
 
 			this.#main_effect = this.#run(() => {
 				return branch(() => this.#children(anchor));
 			});
 
 			if (this.#pending_count === 0) {
-				this.#anchor.before(fragment);
+				insert_before(this.#anchor, fragment);
 				this.#offscreen_fragment = null;
 
 				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
@@ -288,6 +302,8 @@ export class Boundary {
 
 				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
+
+			pop_renderer?.();
 		});
 	}
 
@@ -302,7 +318,7 @@ export class Boundary {
 			});
 
 			if (this.#pending_count > 0) {
-				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+				var fragment = (this.#offscreen_fragment = create_fragment());
 				move_effect(this.#main_effect, fragment);
 
 				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
@@ -359,6 +375,8 @@ export class Boundary {
 		set_active_reaction(this.#effect);
 		set_component_context(this.#effect.ctx);
 
+		var pop_renderer = push_renderer(this.#effect.r);
+
 		try {
 			Batch.ensure();
 			return fn();
@@ -369,6 +387,7 @@ export class Boundary {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_ctx);
+			pop_renderer?.();
 		}
 	}
 
@@ -400,8 +419,10 @@ export class Boundary {
 			}
 
 			if (this.#offscreen_fragment) {
-				this.#anchor.before(this.#offscreen_fragment);
+				var pop_renderer = push_renderer(this.#effect.r);
+				insert_before(this.#anchor, this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
+				pop_renderer?.();
 			}
 		}
 	}

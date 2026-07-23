@@ -1,6 +1,6 @@
 import { render_effect } from '../../reactivity/effects.js';
 import { hydrating, set_hydrate_node } from '../hydration.js';
-import { get_first_child } from '../operations.js';
+import { get_first_child, style_set_property, style_remove_property } from '../operations.js';
 
 /**
  * @param {HTMLDivElement | SVGGElement} element
@@ -19,9 +19,9 @@ export function css_props(element, get_styles) {
 			var value = styles[key];
 
 			if (value) {
-				element.style.setProperty(key, value);
+				style_set_property(/** @type {HTMLElement} */ (element), key, value);
 			} else {
-				element.style.removeProperty(key);
+				style_remove_property(/** @type {HTMLElement} */ (element), key);
 			}
 		}
 	});
