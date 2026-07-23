@@ -682,7 +682,7 @@ export function get(signal) {
 
 		var is_new = (derived.f & REACTION_RAN) === 0;
 
-		if (is_dirty(derived)) {
+		if (is_dirty(derived) && (!batch_values?.has(derived) || current_batch?.is_fork)) {
 			if (should_connect) {
 				// set the flag before `update_derived`, so that the derived
 				// is added as a reaction to its dependencies
