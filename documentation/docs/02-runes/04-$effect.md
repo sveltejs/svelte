@@ -147,7 +147,7 @@ declare let size: number;
 $effect(() => {
 	const context = canvas.getContext('2d');
 	
-	+++const draw = (size) => {+++
+	+++const draw = (size: number) => {+++
 		setTimeout(() => {
 			context.fillRect(0, 0, size, size);
 		}, 0);
