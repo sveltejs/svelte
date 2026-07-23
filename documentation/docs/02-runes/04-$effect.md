@@ -132,6 +132,32 @@ $effect(() => {
 });
 ```
 
+Alternatively, you can extract the asynchronous logic into a separate function and pass the reactive values as arguments, which are evaluated synchronously:
+
+```ts
+// @filename: index.ts
+declare let canvas: {
+	width: number;
+	height: number;
+	getContext(type: '2d', options?: CanvasRenderingContext2DSettings): CanvasRenderingContext2D;
+};
+declare let size: number;
+
+// ---cut---
+$effect(() => {
+	const context = canvas.getContext('2d');
+	
+	+++const draw = (size) => {+++
+		setTimeout(() => {
+			context.fillRect(0, 0, size, size);
+		}, 0);
+	};
+
+	// size is read synchronously when the function is called
+	+++draw(size);+++
+});
+```
+
 An effect only reruns when the object it reads changes, not when a property inside it changes. (If you want to observe changes _inside_ an object at dev time, you can use [`$inspect`]($inspect).)
 
 ```svelte
