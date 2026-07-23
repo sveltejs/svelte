@@ -958,7 +958,7 @@ function calculate_blockers(instance, analysis) {
 	 * @param {Set<Binding>} touched
 	 * @param {Set<ESTree.Node>} seen
 	 */
-	const touch = (expression, scope, touched, seen = new Set()) => {
+	const touch = (expression, scope, touched, seen) => {
 		if (seen.has(expression)) return;
 		seen.add(expression);
 
@@ -1015,6 +1015,13 @@ function calculate_blockers(instance, analysis) {
 			}
 		}
 
+		// Share seen nodes across calls so transitive assignments are only visited once.
+		// Keep separate read/write state because the target sets can differ.
+		/** @type {Set<ESTree.Node>} */
+		const writes_seen = new Set();
+		/** @type {Set<ESTree.Node>} */
+		const reads_seen = new Set();
+
 		walk(
 			node,
 			{ scope },
@@ -1044,13 +1051,7 @@ function calculate_blockers(instance, analysis) {
 					const rune = get_rune(node, context.state.scope);
 					if (rune === '$effect') return;
 
-					/** @type {Set<Binding>} */
-					const touched = new Set();
-					touch(node, context.state.scope, touched);
-
-					for (const b of touched) {
-						writes.add(b);
-					}
+					touch(node, context.state.scope, writes, writes_seen);
 				},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
@@ -1066,7 +1067,7 @@ function calculate_blockers(instance, analysis) {
 					// might be called immediately, so we have to touch all references within it. Example:
 					// function foo() { return () => blocker; } foo(); // blocker is touched
 					if (node.argument) {
-						touch(node.argument, context.state.scope, reads);
+						touch(node.argument, context.state.scope, reads, reads_seen);
 					}
 				},
 				// don't look inside functions until they are called
