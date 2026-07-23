@@ -57,6 +57,10 @@
 		display: block;
 	}
 
+	custom-element::part(header) {
+		color: green;
+	}
+
 	.container > .item {
 		color: red;
 	}
