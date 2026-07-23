@@ -35,6 +35,9 @@
     content: "";
     display: block;
   }
+	custom-element::part(header) {
+		color: green;
+	}
   .container > .item { color: red; }
   h1 + p { margin-top: 0; }
 

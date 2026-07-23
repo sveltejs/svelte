@@ -277,6 +277,24 @@ const css_visitors = {
 
 	PseudoElementSelector(node, context) {
 		context.write(`::${node.name}`);
+
+		if (node.args) {
+			context.write('(');
+
+			let started = false;
+
+			for (const arg of node.args.children) {
+				if (started) {
+					context.write(', ');
+				}
+
+				context.visit(arg);
+
+				started = true;
+			}
+
+			context.write(')');
+		}
 	},
 
 	RelativeSelector(node, context) {

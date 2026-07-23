@@ -23,6 +23,9 @@ const visitors = {
 			context.next();
 		}
 	},
+	PseudoElementSelector() {
+		// Skip these. Arguments are global-like, so don't warn.
+	},
 	ComplexSelector(node, context) {
 		if (
 			!node.metadata.used &&

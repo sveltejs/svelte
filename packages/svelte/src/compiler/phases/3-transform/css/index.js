@@ -374,6 +374,9 @@ const visitors = {
 		if (node.name === 'is' || node.name === 'where' || node.name === 'has' || node.name === 'not') {
 			context.next();
 		}
+	},
+	PseudoElementSelector() {
+		// Skip these. Arguments are global-like, don't want to prune them or anything.
 	}
 };
 
