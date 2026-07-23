@@ -18,6 +18,19 @@ A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag
 </div>
 ```
 
+Svelte will omit tags if the leaf property is `null` or `undefined`.
+
+```svelte
+<script>
+	let Widget = $state(null)
+	let child = $state({ widget: null })
+</script>
+
+<Widget />
+<child.widget />
+```
+
+
 ## Element attributes
 
 By default, attributes work exactly like their HTML counterparts.
@@ -180,10 +193,19 @@ The expression will be stringified and escaped to prevent code injections. If yo
 
 ## Comments
 
-You can use HTML comments inside components.
+You can use HTML comments inside components and inside tags.
 
 ```svelte
 <!-- this is a comment! --><h1>Hello world</h1>
+```
+
+```svelte
+<div
+  // this is a comment!
+  data-foo="bar"
+>
+  foo bar
+</div>
 ```
 
 Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually, these are accessibility warnings; make sure that you're disabling them for a good reason.
