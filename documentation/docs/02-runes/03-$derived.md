@@ -65,6 +65,23 @@ let total = $derived(await a + b);
 On the other hand, values that are read _asynchronously_ (such as inside asynchronous closures passed to third-party query or observable libraries) will not be tracked automatically. To track these values, read them synchronously outside the asynchronous boundary. A clear pattern for this is to evaluate the dependencies using the `void` operator:
 
 ```js
+// @filename: ambient.d.ts
+declare module 'dexie' {
+	export class Dexie {
+		constructor(databaseName: string);
+		users: {
+			where(key: string): {
+				between(min: number, max: number): {
+					toArray(): Promise<any[]>;
+				};
+			};
+		};
+	}
+	export function liveQuery<T>(querier: () => T | Promise<T>): any;
+}
+
+// @filename: index.js
+// ---cut---
 import { Dexie, liveQuery } from 'dexie';
 
 const db = new Dexie('UserDatabase');
