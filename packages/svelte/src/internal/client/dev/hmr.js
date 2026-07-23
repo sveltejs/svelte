@@ -5,7 +5,8 @@ import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
-import { active_effect, get } from '../runtime.js';
+import { get } from '../runtime.js';
+import { assign_nodes } from '../dom/template.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
@@ -60,7 +61,10 @@ export function hmr(fn) {
 			// Forward the nodes from the inner effect to the outer active effect which would
 			// get them if the HMR wrapper wasn't there. Do this inside the block not outside
 			// so that HMR updates to the component will also update the nodes on the active effect.
-			/** @type {Effect} */ (active_effect).nodes = effect.nodes;
+			if (effect.nodes) {
+				// only forward the start and end node
+				assign_nodes(effect.nodes.start, effect.nodes.end);
+			}
 		}, EFFECT_TRANSPARENT);
 
 		ran = true;
