@@ -1,7 +1,7 @@
 /** @import { ComponentAnalysis } from '../../types.js' */
 /** @import { AST } from '#compiler' */
-/** @import { Visitors } from 'zimmerframe' */
-import { walk } from 'zimmerframe';
+/** @import { ReadonlyVisitors } from 'zimmerframe' */
+import { walk_readonly } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
 import { is_global, is_unscoped_pseudo_class } from './utils.js';
@@ -15,7 +15,7 @@ import { is_global, is_unscoped_pseudo_class } from './utils.js';
  */
 
 /**
- * @typedef {Visitors<AST.CSS.Node, CssState>} CssVisitors
+ * @typedef {ReadonlyVisitors<AST.CSS.Node, CssState>} CssVisitors
  */
 
 /**
@@ -183,7 +183,7 @@ const css_visitors = {
 		if (node.metadata.is_global_like || node.metadata.is_global) {
 			// So that nested selectors like `:root:not(.x)` are not marked as unused
 			for (const child of node.selectors) {
-				walk(/** @type {AST.CSS.Node} */ (child), null, {
+				walk_readonly(/** @type {AST.CSS.Node} */ (child), null, {
 					ComplexSelector(node, context) {
 						node.metadata.used = true;
 						context.next();
@@ -222,7 +222,7 @@ const css_visitors = {
 						node.metadata.is_global_block = is_global_block = true;
 
 						for (let i = 1; i < child.selectors.length; i++) {
-							walk(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
+							walk_readonly(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
 								ComplexSelector(node) {
 									node.metadata.used = true;
 								}
@@ -327,5 +327,5 @@ export function analyze_css(stylesheet, analysis) {
 		analysis
 	};
 
-	walk(stylesheet, css_state, css_visitors);
+	walk_readonly(stylesheet, css_state, css_visitors);
 }
