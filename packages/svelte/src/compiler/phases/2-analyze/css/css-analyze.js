@@ -284,6 +284,9 @@ const css_visitors = {
 		// visit block list, so parent rule metadata is populated
 		context.visit(node.block, state);
 	},
+	PseudoElementSelector() {
+		// Skip these. Arguments are global-like, so don't analyse.
+	},
 	NestingSelector(node, context) {
 		const rule = /** @type {AST.CSS.Rule} */ (context.state.rule);
 		const parent_rule = rule.metadata.parent_rule;
