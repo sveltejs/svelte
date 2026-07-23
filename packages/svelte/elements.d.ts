@@ -776,7 +776,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	placeholder?: string | undefined | null;
 	slot?: string | undefined | null;
 	spellcheck?: Booleanish | undefined | null;
-	style?: string | undefined | null;
+	style?: StyleValue | undefined | null;
 	tabindex?: number | undefined | null;
 	title?: string | undefined | null;
 	translate?: 'yes' | 'no' | '' | undefined | null;
@@ -1547,7 +1547,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	method?: 'align' | 'stretch' | undefined | null;
 	min?: number | string | undefined | null;
 	name?: string | undefined | null;
-	style?: string | undefined | null;
+	style?: StyleValue | undefined | null;
 	target?: string | undefined | null;
 	type?: string | undefined | null;
 	width?: number | string | undefined | null;
@@ -2076,3 +2076,6 @@ export interface SvelteHTMLElements {
 }
 
 export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;
+
+type StylePrimitive = string | number | false | null | undefined;
+export type StyleValue = StylePrimitive | StyleValue[] | { [key: string]: StylePrimitive };
