@@ -33,3 +33,7 @@ The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the 
 
 The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when _any_ state changes, as opposed to the specified variables.
 
+
+## {@debug ...} vs $inspect
+
+`{@debug ...}` is used in the template. To log reactive values from inside a `<script>` block instead, use [`$inspect`]($inspect).
