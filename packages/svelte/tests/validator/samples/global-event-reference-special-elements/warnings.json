@@ -1,0 +1,38 @@
+[
+	{
+		"code": "attribute_global_event_reference",
+		"message": "You are referencing `globalThis.onresize`. Did you forget to declare a variable with that name?",
+		"start": {
+			"column": 27,
+			"line": 5
+		},
+		"end": {
+			"column": 37,
+			"line": 5
+		}
+	},
+	{
+		"code": "attribute_global_event_reference",
+		"message": "You are referencing `globalThis.onvisibilitychange`. Did you forget to declare a variable with that name?",
+		"start": {
+			"column": 17,
+			"line": 6
+		},
+		"end": {
+			"column": 37,
+			"line": 6
+		}
+	},
+	{
+		"code": "attribute_global_event_reference",
+		"message": "You are referencing `globalThis.onfocus`. Did you forget to declare a variable with that name?",
+		"start": {
+			"column": 13,
+			"line": 7
+		},
+		"end": {
+			"column": 22,
+			"line": 7
+		}
+	}
+]
