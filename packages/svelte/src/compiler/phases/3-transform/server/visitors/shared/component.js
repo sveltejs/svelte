@@ -119,8 +119,9 @@ export function build_inline_component(node, expression, context) {
 			}
 
 			if (attribute.expression.type === 'SequenceExpression') {
-				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
-					.expressions;
+				const [get, set] = /** @type {SequenceExpression} */ (
+					context.visit(attribute.expression)
+				).expressions;
 				const get_id = b.id(context.state.scope.generate('bind_get'));
 				const set_id = b.id(context.state.scope.generate('bind_set'));
 

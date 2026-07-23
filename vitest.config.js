@@ -20,7 +20,7 @@ export default defineConfig({
 						'packages/svelte',
 						importer?.includes('_output/server')
 							? exported.default
-							: exported.browser ?? exported.default
+							: (exported.browser ?? exported.default)
 					);
 				}
 			}

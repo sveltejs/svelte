@@ -28,9 +28,8 @@ export function reactive_import(fn) {
  * @returns {void}
  */
 export function bubble_event($$props, event) {
-	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
-		event.type
-	];
+	var events =
+		/** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[event.type];
 
 	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
 
