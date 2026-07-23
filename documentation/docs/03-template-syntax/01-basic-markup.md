@@ -8,6 +8,14 @@ Markup inside a Svelte component can be thought of as HTML++.
 
 A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag or a tag that uses dot notation, such as `<Widget>` or `<my.stuff>`, indicates a _component_.
 
+Dot notation is resolved when the component is rendered. If any part of the expression can be `null` or `undefined`, guard it first:
+
+```svelte
+{#if Thing?.Item}
+	<Thing.Item />
+{/if}
+```
+
 ```svelte
 <script>
 	import Widget from './Widget.svelte';
