@@ -360,7 +360,9 @@ function set_attributes(
 			// a very rare edge case, and removing the attribute altogether isn't possible either
 			// for the <option value={undefined}> case, so we're not losing any functionality here.
 			// @ts-ignore
-			element.value = element.__value = '';
+			element.value = '';
+			// @ts-ignore
+			element.__value = value;
 			current[key] = value;
 			continue;
 		}
