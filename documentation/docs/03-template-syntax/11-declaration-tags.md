@@ -13,7 +13,7 @@ Declaration tags define local variables inside markup with `const` or `let`:
 
 {#each boxes as box}
 	{const area = box.width * box.height}
-	{const label = `${box.width} ⨉ ${box.height} = ${area}`}
+	{const label = `${box.width} × ${box.height} = ${area}`}
 
 	<p>{label}</p>
 {/each}
