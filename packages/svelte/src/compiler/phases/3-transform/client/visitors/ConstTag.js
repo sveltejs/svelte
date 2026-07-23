@@ -45,18 +45,29 @@ export function ConstTag(node, context) {
 			transform
 		});
 
-		// TODO optimise the simple `{ x } = y` case — we can just return `y`
-		// instead of destructuring it only to return a new object
+		const is_simple_object_pattern =
+			declaration.id.type === 'ObjectPattern' &&
+			declaration.id.properties.every(
+				(p) =>
+					p.type === 'Property' &&
+					!p.computed &&
+					p.key.type === 'Identifier' &&
+					p.value.type === 'Identifier' &&
+					p.key.name === p.value.name
+			);
+
 		const init = build_expression(
 			{ ...context, state: child_state },
 			declaration.init,
 			node.metadata.expression
 		);
 
-		const block = b.block([
-			b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
-			b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
-		]);
+		const block = is_simple_object_pattern
+			? b.block([b.return(init)])
+			: b.block([
+					b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
+					b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
+				]);
 
 		let expression = create_derived(context.state, block, node.metadata.expression.has_await);
 
