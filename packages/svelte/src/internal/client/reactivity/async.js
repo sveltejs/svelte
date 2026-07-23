@@ -8,7 +8,6 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -39,7 +38,7 @@ export function flatten(blockers, sync, async, fn) {
 	// Filter out already-settled blockers - no need to wait for them
 	var pending = blockers.filter((b) => !b.settled);
 
-	var deriveds = sync.map(d);
+	var deriveds = sync.map((expression) => d(expression));
 
 	if (DEV) {
 		deriveds.forEach((d, i) => {

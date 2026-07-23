@@ -26,6 +26,9 @@ export default test({
 		flushSync(() => button2.click());
 		flushSync(() => button2.click());
 
+		// both updates write `input` and therefore share the async work — they
+		// are merged into a single batch, in which the first in-flight run is
+		// superseded. Only resolving the final run commits
 		button1.click();
 		await tick();
 
@@ -34,8 +37,8 @@ export default test({
 			`
 				<button>shift</button>
 				<button>+</button>
-				<p>AA</p>
-				<p>aa</p>
+				<p>A</p>
+				<p>a</p>
 			`
 		);
 

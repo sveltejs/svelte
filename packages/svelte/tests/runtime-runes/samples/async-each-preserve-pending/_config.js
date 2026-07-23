@@ -23,6 +23,9 @@ export default test({
 			`
 		);
 
+		// the three updates all write `values` and therefore share the each
+		// block — they are merged into a single batch, which only commits
+		// (revealing all items at once) when all of its async work has settled
 		shift.click();
 		await tick();
 		assert.htmlEqual(
@@ -31,7 +34,6 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<p>1</p>
-				<p>2</p>
 			`
 		);
 
@@ -43,8 +45,6 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<p>1</p>
-				<p>2</p>
-				<p>3</p>
 			`
 		);
 

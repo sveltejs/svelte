@@ -34,6 +34,10 @@ export default test({
 		`
 		);
 
+		// committing the fork wrote `x`, which the pending y++ batch's async
+		// work depends on — the two are entangled into a single batch (whose
+		// async work was re-run with the committed `x`), so nothing is
+		// committed until all of that work has settled
 		resolve.click();
 		await tick();
 		assert.htmlEqual(
@@ -44,12 +48,6 @@ export default test({
 			<button>resolve</button>
 			<button>commit</button>
 			<hr>
-			world
-			"world"
-			world
-			world
-			world
-			"world"
 		`
 		);
 

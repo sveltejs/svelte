@@ -36,8 +36,9 @@ import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import {
+	active_batch,
 	Batch,
-	batch_values,
+	current_batch,
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates
@@ -78,6 +79,7 @@ export function source(v, stack) {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
+		batch: null,
 		equals,
 		rv: 0,
 		wv: 0
@@ -223,15 +225,16 @@ export function internal_set(source, value, updated_during_traversal = null) {
 				execute_derived(derived);
 			}
 
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			if (batch_values === null) {
+			// inside a fork the real value is untouched, so the status
+			// (which describes the real value) must be left alone too
+			if (!batch.is_fork) {
 				update_derived_status(derived);
 			}
 		}
 
 		source.wv = increment_write_version();
 
+		batch.claim(source);
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
 		mark_reactions(source, DIRTY, updated_during_traversal);
@@ -334,7 +337,7 @@ export function increment(source) {
  * @param {Effect[] | null} updated_during_traversal
  * @returns {void}
  */
-function mark_reactions(signal, status, updated_during_traversal) {
+export function mark_reactions(signal, status, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -363,7 +366,15 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		} else if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
-			batch_values?.delete(derived);
+			// claiming the derived for the current batch merges any other live
+			// batch whose reactivity graph overlaps with ours into it
+			current_batch?.claim(derived);
+
+			// invalidate any world-local memoized values
+			active_batch?.values?.delete(derived);
+			if (active_batch !== current_batch && current_batch?.is_fork) {
+				current_batch.values?.delete(derived);
+			}
 
 			if ((flags & WAS_MARKED) === 0) {
 				// Only connected deriveds being executed outside the update cycle can be reliably unmarked right away
