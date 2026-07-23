@@ -1117,8 +1117,6 @@ function flush_queued_effects(effects) {
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.size > 0) {
-				old_values.clear();
-
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
