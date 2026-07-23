@@ -91,8 +91,8 @@ let minAge = $state(18);
 let maxAge = $state(30);
 
 let query = $derived.by(() => {
-	// Read dependencies synchronously so they are tracked
-	void minAge, maxAge;
+	+++// Read dependencies synchronously so they are tracked+++
+	+++void minAge, maxAge;+++
 
 	return liveQuery(async () => {
 		// Values read inside this callback are not tracked automatically
@@ -102,6 +102,44 @@ let query = $derived.by(() => {
 			.toArray();
 	});
 });
+```
+
+Alternatively, you can extract the asynchronous callback into a separate function and pass the reactive values as arguments, which are evaluated synchronously:
+
+```js
+// @filename: ambient.d.ts
+declare module 'dexie' {
+	export class Dexie {
+		constructor(databaseName: string);
+		users: {
+			where(key: string): {
+				between(min: number, max: number): {
+					toArray(): Promise<any[]>;
+				};
+			};
+		};
+	}
+	export function liveQuery<T>(querier: () => T | Promise<T>): any;
+}
+
+// @filename: index.js
+import { Dexie, liveQuery } from 'dexie';
+
+const db = new Dexie('UserDatabase');
+let minAge = $state(18);
+let maxAge = $state(30);
+// ---cut---
++++function createUserQuery(minAge, maxAge) {+++
+	return liveQuery(async () => {
+		return await db.users
+			.where('age')
+			.between(minAge, maxAge)
+			.toArray();
+	});
+}
+
+// minAge and maxAge are read synchronously when the function is called
+let query = $derived(+++createUserQuery(minAge, maxAge)+++);
 ```
 
 To exempt a piece of state from being treated as a dependency, use [`untrack`](svelte#untrack).
