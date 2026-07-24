@@ -497,4 +497,62 @@ describe('async', () => {
 		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
 		expect(destroyed).toEqual(['a']);
 	});
+
+	test('on_destroy waits for in-flight renderers when an async render rejects', async () => {
+		const events: string[] = [];
+		let initialised = false;
+
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				// rejects while the sibling component below is still in flight
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+
+				renderer.component((renderer) => {
+					renderer.on_destroy(() => events.push(`before-await (initialised: ${initialised})`));
+					renderer.child(async () => {
+						await new Promise((f) => setTimeout(f, 10));
+						initialised = true;
+						renderer.on_destroy(() => events.push('after-await'));
+					});
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(events).toEqual(['before-await (initialised: true)', 'after-await']);
+	});
+
+	test('a throwing on_destroy callback does not mask a sync render error', () => {
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => {
+					throw new Error('cleanup failed');
+				});
+				renderer.child(() => {
+					throw new Error('boom');
+				});
+			});
+		};
+
+		expect(() => Renderer.render(component as unknown as Component).body).toThrow('boom');
+	});
+
+	test('a throwing on_destroy callback does not mask an async render error', async () => {
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => {
+					throw new Error('cleanup failed');
+				});
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+	});
 });

@@ -45,6 +45,12 @@ export class Renderer {
 	#on_destroy = undefined;
 
 	/**
+	 * Whether the `onDestroy` callbacks of this renderer tree have been run.
+	 * @type {boolean}
+	 */
+	#destroyed = false;
+
+	/**
 	 * Whether this renderer is a component body.
 	 * @type {boolean}
 	 */
@@ -628,12 +634,51 @@ export class Renderer {
 	}
 
 	/**
-	 * Runs the `onDestroy` callbacks of this renderer tree,
+	 * Runs the `onDestroy` callbacks of this renderer tree at most once,
 	 * whether the render succeeded or failed.
 	 */
 	#run_on_destroy() {
+		if (this.#destroyed) return;
+		this.#destroyed = true;
+
 		for (const cleanup of this.#collect_on_destroy()) {
 			cleanup();
+		}
+	}
+
+	/**
+	 * Waits until every promise in the tree has settled, including promises created
+	 * while waiting. This makes `#collect_on_destroy` safe to call after a failed
+	 * async render, where siblings of the rejected renderer are still in flight.
+	 */
+	async #settle() {
+		/** @type {Set<Promise<void>>} */
+		const seen = new Set();
+
+		/** @type {Promise<void>[]} */
+		let pending;
+
+		do {
+			pending = [];
+			this.#collect_pending(seen, pending);
+			await Promise.allSettled(pending);
+		} while (pending.length > 0);
+	}
+
+	/**
+	 * @param {Set<Promise<void>>} seen
+	 * @param {Promise<void>[]} pending
+	 */
+	#collect_pending(seen, pending) {
+		if (this.promise !== undefined && !seen.has(this.promise)) {
+			seen.add(this.promise);
+			pending.push(this.promise);
+		}
+
+		for (const child of this.#out) {
+			if (typeof child !== 'string') {
+				child.#collect_pending(seen, pending);
+			}
 		}
 	}
 
@@ -672,9 +717,19 @@ export class Renderer {
 			Renderer.#open_render(renderer, component, options);
 
 			const content = renderer.#collect_content();
-			return Renderer.#close_render(content, renderer);
-		} finally {
+			const result = Renderer.#close_render(content, renderer);
+
 			renderer.#run_on_destroy();
+			return result;
+		} catch (error) {
+			try {
+				renderer.#run_on_destroy();
+			} catch {
+				// a throwing cleanup must not mask the error that failed the render
+			}
+
+			throw error;
+		} finally {
 			abort();
 			set_ssr_context(previous_context);
 		}
@@ -699,9 +754,23 @@ export class Renderer {
 			if (hydratables !== null) {
 				content.head = hydratables + content.head;
 			}
-			return Renderer.#close_render(content, renderer);
-		} finally {
+			const result = Renderer.#close_render(content, renderer);
+
 			renderer.#run_on_destroy();
+			return result;
+		} catch (error) {
+			// in-flight siblings of the rejected renderer must finish initialising
+			// before their cleanup runs, and may register more callbacks after resuming
+			await renderer.#settle();
+
+			try {
+				renderer.#run_on_destroy();
+			} catch {
+				// a throwing cleanup must not mask the error that failed the render
+			}
+
+			throw error;
+		} finally {
 			set_ssr_context(previous_context);
 			abort();
 		}
