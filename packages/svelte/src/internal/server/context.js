@@ -1,6 +1,7 @@
 /** @import { SSRContext } from '#server' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
+import { create_context, get_parent_context } from '../shared/context.js';
 
 /** @type {SSRContext | null} */
 export var ssr_context = null;
@@ -16,18 +17,9 @@ export function set_ssr_context(v) {
  * @since 5.40.0
  */
 export function createContext() {
-	const key = {};
-
-	return [
-		() => {
-			if (!hasContext(key)) {
-				e.missing_context();
-			}
-
-			return getContext(key);
-		},
-		(context) => setContext(key, context)
-	];
+	return /** @type {[() => T, (context: T) => T]} */ (
+		create_context(getContext, setContext, hasContext)
+	);
 }
 
 /**
@@ -92,24 +84,6 @@ export function push(fn) {
 
 export function pop() {
 	ssr_context = /** @type {SSRContext} */ (ssr_context).p;
-}
-
-/**
- * @param {SSRContext} ssr_context
- * @returns {Map<unknown, unknown> | null}
- */
-function get_parent_context(ssr_context) {
-	let parent = ssr_context.p;
-
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
-		parent = parent.p;
-	}
-
-	return null;
 }
 
 /**

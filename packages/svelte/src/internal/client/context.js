@@ -6,6 +6,7 @@ import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 import { BRANCH_EFFECT } from './constants.js';
+import { create_context, get_parent_context } from '../shared/context.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -79,18 +80,9 @@ export function set_dev_current_component_function(fn) {
  * @since 5.40.0
  */
 export function createContext() {
-	const key = {};
-
-	return [
-		() => {
-			if (!hasContext(key)) {
-				e.missing_context();
-			}
-
-			return getContext(key);
-		},
-		(context) => setContext(key, context)
-	];
+	return /** @type {[() => T, (context: T) => T]} */ (
+		create_context(getContext, setContext, hasContext)
+	);
 }
 
 /**
@@ -240,20 +232,4 @@ function get_or_init_context_map(name) {
 	}
 
 	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
-}
-
-/**
- * @param {ComponentContext} component_context
- * @returns {Map<unknown, unknown> | null}
- */
-function get_parent_context(component_context) {
-	let parent = component_context.p;
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
-		parent = parent.p;
-	}
-	return null;
 }
