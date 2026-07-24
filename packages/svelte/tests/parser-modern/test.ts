@@ -158,3 +158,71 @@ it('Strips BOM from the input', () => {
 		]
 	});
 });
+
+it('preserves expression locations after newlines', () => {
+	const input = `<script>let value = 1;</script>
+<p>
+	{value +
+		1}
+</p>
+{#if value}
+	{@const doubled = value * 2}
+	{doubled}
+{/if}`;
+	const ast = parse(input, { modern: true });
+	const positions: Array<[string, number, number, number]> = [];
+
+	JSON.stringify(ast, (_key, value) => {
+		if (value?.type === 'Identifier' && value.start > 30) {
+			positions.push([value.name, value.start, value.loc.start.line, value.loc.start.column]);
+		}
+		return value;
+	});
+
+	assert.deepEqual(positions, [
+		['value', 38, 3, 2],
+		['value', 61, 6, 5],
+		['doubled', 77, 7, 9],
+		['value', 87, 7, 19],
+		['doubled', 100, 8, 2]
+	]);
+});
+
+it('preserves expression locations after CRLF line endings', () => {
+	const ast = parse('{foo}\r\n{bar}\r\n{baz}', { modern: true });
+	const positions: Array<[string, number, number]> = [];
+
+	JSON.stringify(ast, (_key, value) => {
+		if (value?.type === 'Identifier') {
+			positions.push([value.name, value.loc.start.line, value.loc.start.column]);
+		}
+		return value;
+	});
+
+	assert.deepEqual(positions, [
+		['foo', 1, 1],
+		['bar', 2, 1],
+		['baz', 3, 1]
+	]);
+});
+
+it('preserves expression locations across uncommon line endings', () => {
+	const ast = parse('{foo}\r\n{bar}\r{baz}\u2028{qux}\u2029{quux}\n{corge}', { modern: true });
+	const positions: Array<[string, number, number]> = [];
+
+	JSON.stringify(ast, (_key, value) => {
+		if (value?.type === 'Identifier') {
+			positions.push([value.name, value.loc.start.line, value.loc.start.column]);
+		}
+		return value;
+	});
+
+	assert.deepEqual(positions, [
+		['foo', 1, 1],
+		['bar', 2, 1],
+		['baz', 2, 7],
+		['qux', 2, 13],
+		['quux', 2, 19],
+		['corge', 6, 1]
+	]);
+});

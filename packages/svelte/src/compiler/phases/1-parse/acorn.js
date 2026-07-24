@@ -5,9 +5,48 @@ import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
 import * as e from '../../errors.js';
+import { locator } from '../../state.js';
 
 const JSParser = acorn.Parser;
 const TSParser = JSParser.extend(tsPlugin());
+
+/** @type {WeakMap<Parser, boolean>} */
+const standard_line_endings = new WeakMap();
+
+/**
+ * Avoid Acorn's O(index) line-number scan when starting a parser in the middle of a component.
+ * @param {Parser} parser
+ * @param {string} source
+ * @param {number} index
+ * @param {acorn.Options} options
+ */
+function create_parser_at(parser, source, index, options) {
+	const AcornParser = /** @type {any} */ (parser.ts ? TSParser : JSParser);
+	let standard = standard_line_endings.get(parser);
+
+	if (standard === undefined) {
+		standard = !/(?:\r(?!\n)|[\u2028\u2029])/.test(parser.template);
+		standard_line_endings.set(parser, standard);
+	}
+
+	// Destructured each contexts and TypeScript annotations are parsed from adjusted source text,
+	// whose positions intentionally differ from the component source.
+	// Acorn also treats bare CR and Unicode separators differently from Svelte's locator.
+	if (source !== parser.template || !standard) {
+		return new AcornParser(options, source, index);
+	}
+
+	const instance = new AcornParser(options, source);
+	const { line, column } = locator(index);
+
+	instance.pos = instance.start = instance.end = index;
+	instance.lastTokStart = instance.lastTokEnd = index;
+	instance.lineStart = index - column;
+	instance.curLine = line;
+	instance.startLoc = instance.endLoc = instance.curPosition();
+
+	return instance;
+}
 
 /**
  * @typedef {Comment & {
@@ -77,18 +116,18 @@ export function parse(source, comments, typescript, is_script) {
  * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
 export function parse_expression_at(parser, source, index) {
-	const acorn = parser.ts ? TSParser : JSParser;
-
 	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
 
 	try {
-		const ast = acorn.parseExpressionAt(source, index, {
+		const p = create_parser_at(parser, source, index, {
 			onComment,
 			sourceType: 'module',
 			ecmaVersion: 16,
 			locations: true,
 			preserveParens: true
 		});
+		p.nextToken();
+		const ast = p.parseExpression();
 
 		add_comments(ast);
 
@@ -106,16 +145,16 @@ export function parse_expression_at(parser, source, index) {
  */
 export function parse_statement_at(parser, source, index) {
 	// cast to `any`: acorn's Parser constructor and parseStatement/nextToken aren't in its public types
-	const acorn = /** @type {any} */ (parser.ts ? TSParser : JSParser);
 	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
 
 	try {
 		// This is like parseExpressionAt but for statements
-		const p = new acorn(
-			{ onComment, sourceType: 'module', ecmaVersion: 16, locations: true },
-			source,
-			index
-		);
+		const p = create_parser_at(parser, source, index, {
+			onComment,
+			sourceType: 'module',
+			ecmaVersion: 16,
+			locations: true
+		});
 		p.nextToken();
 		const statement = /** @type {Statement} */ (p.parseStatement(null, true, Object.create(null)));
 		add_comments(/** @type {acorn.Node} */ (statement));
