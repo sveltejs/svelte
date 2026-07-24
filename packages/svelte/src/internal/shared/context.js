@@ -32,14 +32,10 @@ export function create_context(get_context, set_context, has_context) {
  */
 export function get_parent_context(context) {
 	let parent = context.p;
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
+	while (parent !== null && parent.c === null) {
 		parent = parent.p;
 	}
-	return null;
+	return parent?.c ?? null;
 }
 
 /**
