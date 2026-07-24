@@ -45,6 +45,12 @@ export class Renderer {
 	#on_destroy = undefined;
 
 	/**
+	 * Whether the `onDestroy` callbacks belonging to this renderer tree have run.
+	 * @type {boolean}
+	 */
+	#on_destroy_ran = false;
+
+	/**
 	 * Whether this renderer is a component body.
 	 * @type {boolean}
 	 */
@@ -316,8 +322,11 @@ export class Renderer {
 	 */
 	component(fn, component_fn) {
 		push(component_fn);
-		const child = this.child(fn);
-		child.#is_component_body = true;
+		// mark before running so `onDestroy` callbacks are still collected if `fn` throws
+		this.child((renderer) => {
+			renderer.#is_component_body = true;
+			return fn(renderer);
+		});
 		pop();
 	}
 
@@ -625,6 +634,19 @@ export class Renderer {
 	}
 
 	/**
+	 * Runs the `onDestroy` callbacks of this renderer tree exactly once,
+	 * whether the render succeeded or failed.
+	 */
+	#run_on_destroy() {
+		if (this.#on_destroy_ran) return;
+		this.#on_destroy_ran = true;
+
+		for (const cleanup of this.#collect_on_destroy()) {
+			cleanup();
+		}
+	}
+
+	/**
 	 * Render a component. Throws if any of the children are performing asynchronous work.
 	 *
 	 * @template {Record<string, any>} Props
@@ -634,12 +656,15 @@ export class Renderer {
 	 */
 	static #render(component, options) {
 		var previous_context = ssr_context;
+		/** @type {Renderer | undefined} */
+		var renderer;
 		try {
-			const renderer = Renderer.#open_render('sync', component, options);
+			renderer = Renderer.#open_render('sync', component, options);
 
 			const content = renderer.#collect_content();
 			return Renderer.#close_render(content, renderer);
 		} finally {
+			renderer?.#run_on_destroy();
 			abort();
 			set_ssr_context(previous_context);
 		}
@@ -655,9 +680,11 @@ export class Renderer {
 	 */
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
+		/** @type {Renderer | undefined} */
+		let renderer;
 
 		try {
-			const renderer = Renderer.#open_render('async', component, options);
+			renderer = Renderer.#open_render('async', component, options);
 			const content = await renderer.#collect_content_async();
 			const hydratables = await renderer.#collect_hydratables();
 			if (hydratables !== null) {
@@ -665,6 +692,7 @@ export class Renderer {
 			}
 			return Renderer.#close_render(content, renderer);
 		} finally {
+			renderer?.#run_on_destroy();
 			set_ssr_context(previous_context);
 			abort();
 		}
@@ -770,16 +798,16 @@ export class Renderer {
 
 		var previous_context = ssr_context;
 
-		try {
-			const renderer = new Renderer(
-				new SSRState(
-					mode,
-					options.idPrefix ? options.idPrefix + '-' : '',
-					options.csp,
-					options.transformError
-				)
-			);
+		const renderer = new Renderer(
+			new SSRState(
+				mode,
+				options.idPrefix ? options.idPrefix + '-' : '',
+				options.csp,
+				options.transformError
+			)
+		);
 
+		try {
 			/** @type {SSRContext} */
 			const context = { p: null, c: options.context ?? null, r: renderer };
 			set_ssr_context(context);
@@ -790,6 +818,11 @@ export class Renderer {
 			renderer.push(BLOCK_CLOSE);
 
 			return renderer;
+		} catch (error) {
+			// restore context first so callbacks run outside it, as on the success path
+			set_ssr_context(previous_context);
+			renderer.#run_on_destroy();
+			throw error;
 		} finally {
 			set_ssr_context(previous_context);
 		}
@@ -801,9 +834,7 @@ export class Renderer {
 	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
-		for (const cleanup of renderer.#collect_on_destroy()) {
-			cleanup();
-		}
+		renderer.#run_on_destroy();
 
 		let head = content.head + renderer.global.get_title();
 		let body = content.body;
