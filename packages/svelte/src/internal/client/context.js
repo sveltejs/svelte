@@ -6,6 +6,7 @@ import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 import { BRANCH_EFFECT } from './constants.js';
+import { create_context, get_or_init_context_map, get_parent_context } from '../shared/context.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -79,18 +80,9 @@ export function set_dev_current_component_function(fn) {
  * @since 5.40.0
  */
 export function createContext() {
-	const key = {};
-
-	return [
-		() => {
-			if (!hasContext(key)) {
-				e.missing_context();
-			}
-
-			return getContext(key);
-		},
-		(context) => setContext(key, context)
-	];
+	return /** @type {[() => T, (context: T) => T]} */ (
+		create_context(getContext, setContext, hasContext)
+	);
 }
 
 /**
@@ -104,7 +96,7 @@ export function createContext() {
  * @returns {T}
  */
 export function getContext(key) {
-	const context_map = get_or_init_context_map('getContext');
+	const context_map = get_or_init_context_map(component_context, 'getContext');
 	const result = /** @type {T} */ (context_map.get(key));
 	return result;
 }
@@ -124,7 +116,7 @@ export function getContext(key) {
  * @returns {T}
  */
 export function setContext(key, context) {
-	const context_map = get_or_init_context_map('setContext');
+	const context_map = get_or_init_context_map(component_context, 'setContext');
 
 	if (async_mode_flag) {
 		var flags = /** @type {Effect} */ (active_effect).f;
@@ -151,7 +143,7 @@ export function setContext(key, context) {
  * @returns {boolean}
  */
 export function hasContext(key) {
-	const context_map = get_or_init_context_map('hasContext');
+	const context_map = get_or_init_context_map(component_context, 'hasContext');
 	return context_map.has(key);
 }
 
@@ -164,7 +156,7 @@ export function hasContext(key) {
  * @returns {T}
  */
 export function getAllContexts() {
-	const context_map = get_or_init_context_map('getAllContexts');
+	const context_map = get_or_init_context_map(component_context, 'getAllContexts');
 	return /** @type {T} */ (context_map);
 }
 
@@ -228,32 +220,4 @@ export function pop(component) {
 /** @returns {boolean} */
 export function is_runes() {
 	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
-}
-
-/**
- * @param {string} name
- * @returns {Map<unknown, unknown>}
- */
-function get_or_init_context_map(name) {
-	if (component_context === null) {
-		e.lifecycle_outside_component(name);
-	}
-
-	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
-}
-
-/**
- * @param {ComponentContext} component_context
- * @returns {Map<unknown, unknown> | null}
- */
-function get_parent_context(component_context) {
-	let parent = component_context.p;
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
-		parent = parent.p;
-	}
-	return null;
 }

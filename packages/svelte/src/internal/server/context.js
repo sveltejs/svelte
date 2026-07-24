@@ -1,6 +1,6 @@
 /** @import { SSRContext } from '#server' */
 import { DEV } from 'esm-env';
-import * as e from './errors.js';
+import { create_context, get_or_init_context_map, get_parent_context } from '../shared/context.js';
 
 /** @type {SSRContext | null} */
 export var ssr_context = null;
@@ -16,18 +16,9 @@ export function set_ssr_context(v) {
  * @since 5.40.0
  */
 export function createContext() {
-	const key = {};
-
-	return [
-		() => {
-			if (!hasContext(key)) {
-				e.missing_context();
-			}
-
-			return getContext(key);
-		},
-		(context) => setContext(key, context)
-	];
+	return /** @type {[() => T, (context: T) => T]} */ (
+		create_context(getContext, setContext, hasContext)
+	);
 }
 
 /**
@@ -36,7 +27,7 @@ export function createContext() {
  * @returns {T}
  */
 export function getContext(key) {
-	const context_map = get_or_init_context_map('getContext');
+	const context_map = get_or_init_context_map(ssr_context, 'getContext');
 	const result = /** @type {T} */ (context_map.get(key));
 
 	return result;
@@ -49,7 +40,7 @@ export function getContext(key) {
  * @returns {T}
  */
 export function setContext(key, context) {
-	get_or_init_context_map('setContext').set(key, context);
+	get_or_init_context_map(ssr_context, 'setContext').set(key, context);
 	return context;
 }
 
@@ -58,24 +49,12 @@ export function setContext(key, context) {
  * @returns {boolean}
  */
 export function hasContext(key) {
-	return get_or_init_context_map('hasContext').has(key);
+	return get_or_init_context_map(ssr_context, 'hasContext').has(key);
 }
 
 /** @returns {Map<any, any>} */
 export function getAllContexts() {
-	return get_or_init_context_map('getAllContexts');
-}
-
-/**
- * @param {string} name
- * @returns {Map<unknown, unknown>}
- */
-function get_or_init_context_map(name) {
-	if (ssr_context === null) {
-		e.lifecycle_outside_component(name);
-	}
-
-	return (ssr_context.c ??= new Map(get_parent_context(ssr_context) || undefined));
+	return get_or_init_context_map(ssr_context, 'getAllContexts');
 }
 
 /**
@@ -92,24 +71,6 @@ export function push(fn) {
 
 export function pop() {
 	ssr_context = /** @type {SSRContext} */ (ssr_context).p;
-}
-
-/**
- * @param {SSRContext} ssr_context
- * @returns {Map<unknown, unknown> | null}
- */
-function get_parent_context(ssr_context) {
-	let parent = ssr_context.p;
-
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
-		parent = parent.p;
-	}
-
-	return null;
 }
 
 /**
