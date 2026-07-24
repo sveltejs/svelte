@@ -2,9 +2,9 @@
 	import { createContext } from 'svelte';
 
 	/** @type {ReturnType<typeof createContext<string>>} */
-	const [get, set] = createContext();
+	const [get, set, has] = createContext();
 
-	export { get };
+	export { get, has };
 </script>
 
 <script>

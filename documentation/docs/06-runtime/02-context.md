@@ -4,7 +4,7 @@ title: Context
 
 Context allows components to access values owned by parent components without passing them down as props (potentially through many layers of intermediate components, known as 'prop-drilling').
 
-By creating a `[get, set]` pair of functions with `createContext`, you can set the context in a parent component and get it in a child component:
+By creating a `[get, set, has]` triplet of functions with `createContext`, you can set the context in a parent component and get it in a child component:
 
 <!-- codeblock:start {"title":"Context","selected":"context.ts"} -->
 ```svelte
@@ -51,6 +51,7 @@ interface User {
 	name: string;
 }
 
+// hasUserContext isn't needed here so it's not defined
 export const [getUserContext, setUserContext] = createContext<User>();
 ```
 <!-- codeblock:end -->

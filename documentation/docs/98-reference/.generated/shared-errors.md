@@ -78,7 +78,7 @@ Certain lifecycle methods can only be used during component initialisation. To f
 Context was not set in a parent component
 ```
 
-The [`createContext()`](svelte#createContext) utility returns a `[get, set]` pair of functions. `get` will throw an error if `set` was not used to set the context in a parent component.
+The [`createContext()`](svelte#createContext) utility returns a `[get, set, has]` triplet of functions. `get` will throw an error if `set` was not used to set the context in a parent component.
 
 ### snippet_without_render_tag
 

@@ -492,13 +492,13 @@ declare module 'svelte' {
 	 */
 	export function fork(fn: () => void): Fork;
 	/**
-	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+	 * Returns a `[get, set, has]` triplet of functions for working with context in a type-safe way.
 	 *
 	 * `get` will throw an error if no parent component called `set`.
 	 *
 	 * @since 5.40.0
 	 */
-	export function createContext<T>(): [() => T, (context: T) => T];
+	export function createContext<T>(): [() => T, (context: T) => T, () => boolean];
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.

@@ -12,7 +12,7 @@ export function set_ssr_context(v) {
 
 /**
  * @template T
- * @returns {[() => T, (context: T) => T]}
+ * @returns {[() => T, (context: T) => T, () => boolean]}
  * @since 5.40.0
  */
 export function createContext() {
@@ -26,7 +26,8 @@ export function createContext() {
 
 			return getContext(key);
 		},
-		(context) => setContext(key, context)
+		(context) => setContext(key, context),
+		() => hasContext(key)
 	];
 }
 
