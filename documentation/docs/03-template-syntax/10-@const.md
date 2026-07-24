@@ -2,6 +2,8 @@
 title: {@const ...}
 ---
 
+> [!NOTE] `{@const x = y}` is legacy syntax — use [`{const x = $derived(y)}`](declaration-tags) instead
+
 The `{@const ...}` tag defines a local constant.
 
 ```svelte

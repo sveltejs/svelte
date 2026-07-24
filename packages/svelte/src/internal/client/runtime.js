@@ -51,6 +51,7 @@ import {
 	batch_values,
 	current_batch,
 	flushSync,
+	previous_batch,
 	schedule_effect
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
@@ -60,6 +61,9 @@ import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
 
+/**
+ * True if updating in an effect context that is reactive (i.e. not branch/root effects)
+ */
 let is_updating_effect = false;
 
 export let is_destroying_effect = false;
@@ -90,18 +94,14 @@ export function set_active_effect(effect) {
 /**
  * When sources are created within a reaction, reading and writing
  * them within that reaction should not cause a re-run
- * @type {null | Source[]}
+ * @type {null | Set<Source>}
  */
 export let current_sources = null;
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
 	if (active_reaction !== null && (!async_mode_flag || (active_reaction.f & DERIVED) !== 0)) {
-		if (current_sources === null) {
-			current_sources = [value];
-		} else {
-			current_sources.push(value);
-		}
+		(current_sources ??= new Set()).add(value);
 	}
 }
 
@@ -202,7 +202,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
-	if (!async_mode_flag && current_sources !== null && includes.call(current_sources, signal)) {
+	if (!async_mode_flag && current_sources !== null && current_sources.has(signal)) {
 		return;
 	}
 
@@ -408,6 +408,16 @@ function remove_reaction(signal, dependency) {
 			update_derived_status(derived);
 		}
 
+		// Call abort controller, noone's listening to this derived anymore
+		if (derived.ac !== null) {
+			without_reactive_context(() => {
+				/** @type {AbortController} */ (derived.ac).abort(STALE_REACTION);
+				derived.ac = null;
+				// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
+				set_signal_status(derived, DIRTY);
+			});
+		}
+
 		// freeze any effects inside this derived
 		freeze_derived_effects(derived);
 
@@ -447,7 +457,7 @@ export function update_effect(effect) {
 	var was_updating_effect = is_updating_effect;
 
 	active_effect = effect;
-	is_updating_effect = true;
+	is_updating_effect = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0; // Branch/root effects are not reactive contexts
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -540,7 +550,7 @@ export function get(signal) {
 		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
-		if (!destroyed && (current_sources === null || !includes.call(current_sources, signal))) {
+		if (!destroyed && (current_sources === null || !current_sources.has(signal))) {
 			var deps = active_reaction.deps;
 
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
@@ -585,6 +595,11 @@ export function get(signal) {
 		if (
 			!untracking &&
 			reactivity_loss_tracker &&
+			// By checking that current/previous batch are null we filter out false positives.
+			// reactivity_loss_tracker is only reset after a microtask, so if a flush happens
+			// before that, we get warnings for things we shouldn't warn on.
+			current_batch === null &&
+			previous_batch === null &&
 			!reactivity_loss_tracker.warned &&
 			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0 &&
 			!reactivity_loss_tracker.effect_deps.has(signal)

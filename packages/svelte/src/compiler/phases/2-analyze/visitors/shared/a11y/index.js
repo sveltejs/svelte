@@ -302,7 +302,7 @@ export function check_element(node, context) {
 			const has_key_event =
 				handlers.has('keydown') || handlers.has('keyup') || handlers.has('keypress');
 			if (!has_key_event) {
-				w.a11y_click_events_have_key_events(node);
+				w.a11y_click_events_have_key_events(node, node.name);
 			}
 		}
 	}

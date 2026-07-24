@@ -115,8 +115,7 @@ function is_last_evaluated_expression(path, node) {
 				break;
 
 			case 'MemberExpression':
-				if (parent.computed && node === parent.object) return false;
-				break;
+				return false;
 
 			case 'ObjectExpression':
 				if (node !== parent.properties.at(-1)) return false;

@@ -30,7 +30,10 @@ export function print(ast, options = undefined) {
 			}),
 			...svelte_visitors(comments),
 			...css_visitors
-		})
+		}),
+		{
+			indent: options?.indent
+		}
 	);
 }
 
@@ -598,6 +601,48 @@ const svelte_visitors = (comments) => ({
 		for (let i = 0; i < declarators.length; i++) {
 			if (i > 0) context.write(', ');
 			context.visit(declarators[i]);
+		}
+
+		context.write('}');
+	},
+
+	DeclarationTag(node, context) {
+		context.write('{');
+
+		// This is duplicated from esrap's handling of VariableDeclaration,
+		// which we need to do in order to omit the trailing semicolon that esrap would add.
+		const open = context.new();
+		const join = context.new();
+		const child_context = context.new();
+
+		context.append(child_context);
+
+		child_context.write(`${node.declaration.kind} `);
+		child_context.append(open);
+
+		const declarations = node.declaration.declarations;
+		let first = true;
+
+		for (const d of declarations) {
+			if (!first) child_context.append(join);
+			first = false;
+
+			child_context.visit(d);
+		}
+
+		const length = child_context.measure() + 2 * (declarations.length - 1);
+
+		const multiline = child_context.multiline || (declarations.length > 1 && length > 50);
+
+		if (multiline) {
+			context.multiline = true;
+
+			if (declarations.length > 1) open.indent();
+			join.write(',');
+			join.newline();
+			if (declarations.length > 1) context.dedent();
+		} else {
+			join.write(', ');
 		}
 
 		context.write('}');

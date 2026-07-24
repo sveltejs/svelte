@@ -1,3 +1,4 @@
+/** @import { TemplateLiteral } from 'estree' */
 /** @import { Namespace } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Node } from './types.js' */
@@ -31,13 +32,28 @@ function build_locations(nodes) {
 
 /**
  * @param {ComponentClientTransformState} state
- * @param {Namespace} namespace
+ * @param {string} name
  * @param {number} [flags]
  */
-export function transform_template(state, namespace, flags = 0) {
+export function transform_template(state, name, flags = 0) {
+	const namespace = state.metadata.namespace;
 	const tree = state.options.fragments === 'tree';
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
+
+	const key =
+		tree || dev
+			? null
+			: get_template_key(
+					/** @type {TemplateLiteral} */ (expression),
+					state.metadata.namespace,
+					flags
+				);
+
+	if (key !== null) {
+		const existing = state.templates.get(key);
+		if (existing !== undefined) return existing;
+	}
 
 	if (tree) {
 		if (namespace === 'svg') flags |= TEMPLATE_USE_SVG;
@@ -63,5 +79,26 @@ export function transform_template(state, namespace, flags = 0) {
 		);
 	}
 
-	return call;
+	const id = state.scope.root.unique(name);
+	state.hoisted.push(b.var(id, call));
+
+	if (key !== null) {
+		state.templates.set(key, id);
+	}
+
+	return id;
+}
+
+/**
+ * Returns a stable key for templates that are safe to deduplicate - plain
+ * `$.from_html`/`from_svg`/`from_mathml` factories with literal arguments - or `null`
+ * for anything else. Dev-mode templates are wrapped in `$.add_locations(...)`, which
+ * embeds per-call-site locations, so they never produce a key and are never shared.
+ * @param {TemplateLiteral} template
+ * @param {Namespace} namespace
+ * @param {number} flags
+ * @returns {string | null}
+ */
+function get_template_key(template, namespace, flags) {
+	return `${namespace} ${flags} ${template.quasis[0].value.raw}`;
 }

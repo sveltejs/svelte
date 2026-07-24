@@ -1303,6 +1303,12 @@ declare module 'svelte/compiler' {
 			};
 		}
 
+		/** A `{let ...}` or `{const ...}` tag */
+		export interface DeclarationTag extends BaseNode {
+			type: 'DeclarationTag';
+			declaration: VariableDeclaration;
+		}
+
 		/** A `{@debug ...}` tag */
 		export interface DebugTag extends BaseNode {
 			type: 'DebugTag';
@@ -1613,6 +1619,7 @@ declare module 'svelte/compiler' {
 		export type Tag =
 			| AST.AttachTag
 			| AST.ConstTag
+			| AST.DeclarationTag
 			| AST.DebugTag
 			| AST.ExpressionTag
 			| AST.HtmlTag
@@ -1847,6 +1854,7 @@ declare module 'svelte/compiler' {
 	type Options = {
 		getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
 		getTrailingComments?: NonNullable<Parameters<typeof ts>[0]>['getTrailingComments'] | undefined;
+		indent?: string; // default tab
 	};
 
 	export {};
@@ -3222,7 +3230,7 @@ declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
 declare namespace $state {
-	type Primitive = string | number | boolean | null | undefined;
+	type Primitive = string | number | bigint | boolean | null | undefined;
 
 	type TypedArray =
 		| Int8Array

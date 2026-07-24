@@ -100,6 +100,7 @@ export function validate_element(node, context) {
 					(n) =>
 						n.type !== 'Comment' &&
 						n.type !== 'ConstTag' &&
+						n.type !== 'DeclarationTag' &&
 						(n.type !== 'Text' || n.data.trim() !== '')
 				).length > 1
 			) {
