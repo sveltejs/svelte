@@ -116,6 +116,10 @@ declare module 'svelte' {
 	 */
 	export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
 
+	type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
+		? I
+		: never;
+
 	/**
 	 * Can be used to create strongly typed Svelte components.
 	 *
@@ -141,7 +145,7 @@ declare module 'svelte' {
 	export interface Component<
 		Props extends Record<string, any> = {},
 		Exports extends Record<string, any> = {},
-		Bindings extends keyof Props | '' = string
+		Bindings extends keyof UnionToIntersection<Required<Props>> | (string & {}) | '' = string
 	> {
 		/**
 		 * @param internal An internal object used by Svelte. Do not use or modify.
@@ -2211,7 +2215,7 @@ declare module 'svelte/motion' {
 		 * 	const tween = Tween.of(() => number);
 		 * </script>
 		 * ```
-		 * 
+		 *
 		 */
 		static of<U>(fn: () => U, options?: TweenOptions<U> | undefined): Tween<U>;
 		
@@ -2265,7 +2269,7 @@ declare module 'svelte/reactivity' {
 	 * ```
 	 */
 	export class SvelteDate extends Date {
-		
+
 		constructor(...params: any[]);
 		#private;
 	}
@@ -2301,12 +2305,12 @@ declare module 'svelte/reactivity' {
 	 * {#if monkeys.has('🙊')}<p>speak no evil</p>{/if}
 	 * ```
 	 *
-	 * 
+	 *
 	 */
 	export class SvelteSet<T> extends Set<T> {
-		
+
 		constructor(value?: Iterable<T> | null | undefined);
-		
+
 		add(value: T): this;
 		#private;
 	}
@@ -2352,12 +2356,12 @@ declare module 'svelte/reactivity' {
 	 * {/if}
 	 * ```
 	 *
-	 * 
+	 *
 	 */
 	export class SvelteMap<K, V> extends Map<K, V> {
-		
+
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-		
+
 		set(key: K, value: V): this;
 		#private;
 	}
@@ -2420,7 +2424,7 @@ declare module 'svelte/reactivity' {
 	 * ```
 	 */
 	export class SvelteURLSearchParams extends URLSearchParams {
-		
+
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
@@ -2496,7 +2500,7 @@ declare module 'svelte/reactivity' {
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	class ReactiveValue<T> {
-		
+
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
@@ -2561,7 +2565,7 @@ declare module 'svelte/reactivity/window' {
 		get current(): number | undefined;
 	};
 	class ReactiveValue<T> {
-		
+
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
@@ -2584,7 +2588,7 @@ declare module 'svelte/server' {
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 					options?: {
-						props?: Omit<Props, '$$slots' | '$$events'>;
+						props?: Props;
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
@@ -2594,7 +2598,7 @@ declare module 'svelte/server' {
 			: [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 					options: {
-						props: Omit<Props, '$$slots' | '$$events'>;
+						props: Props;
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
