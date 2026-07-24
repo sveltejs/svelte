@@ -45,12 +45,6 @@ export class Renderer {
 	#on_destroy = undefined;
 
 	/**
-	 * Whether the `onDestroy` callbacks belonging to this renderer tree have run.
-	 * @type {boolean}
-	 */
-	#on_destroy_ran = false;
-
-	/**
 	 * Whether this renderer is a component body.
 	 * @type {boolean}
 	 */
@@ -634,16 +628,33 @@ export class Renderer {
 	}
 
 	/**
-	 * Runs the `onDestroy` callbacks of this renderer tree exactly once,
+	 * Runs the `onDestroy` callbacks of this renderer tree,
 	 * whether the render succeeded or failed.
 	 */
 	#run_on_destroy() {
-		if (this.#on_destroy_ran) return;
-		this.#on_destroy_ran = true;
-
 		for (const cleanup of this.#collect_on_destroy()) {
 			cleanup();
 		}
+	}
+
+	/**
+	 * @param {'sync' | 'async'} mode
+	 * @param {{ idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} options
+	 * @returns {Renderer}
+	 */
+	static #create(mode, options) {
+		if (options.idPrefix?.includes('--')) {
+			e.invalid_id_prefix();
+		}
+
+		return new Renderer(
+			new SSRState(
+				mode,
+				options.idPrefix ? options.idPrefix + '-' : '',
+				options.csp,
+				options.transformError
+			)
+		);
 	}
 
 	/**
@@ -656,15 +667,14 @@ export class Renderer {
 	 */
 	static #render(component, options) {
 		var previous_context = ssr_context;
-		/** @type {Renderer | undefined} */
-		var renderer;
+		const renderer = Renderer.#create('sync', options);
 		try {
-			renderer = Renderer.#open_render('sync', component, options);
+			Renderer.#open_render(renderer, component, options);
 
 			const content = renderer.#collect_content();
 			return Renderer.#close_render(content, renderer);
 		} finally {
-			renderer?.#run_on_destroy();
+			renderer.#run_on_destroy();
 			abort();
 			set_ssr_context(previous_context);
 		}
@@ -680,11 +690,10 @@ export class Renderer {
 	 */
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
-		/** @type {Renderer | undefined} */
-		let renderer;
+		const renderer = Renderer.#create('async', options);
 
 		try {
-			renderer = Renderer.#open_render('async', component, options);
+			Renderer.#open_render(renderer, component, options);
 			const content = await renderer.#collect_content_async();
 			const hydratables = await renderer.#collect_hydratables();
 			if (hydratables !== null) {
@@ -692,7 +701,7 @@ export class Renderer {
 			}
 			return Renderer.#close_render(content, renderer);
 		} finally {
-			renderer?.#run_on_destroy();
+			renderer.#run_on_destroy();
 			set_ssr_context(previous_context);
 			abort();
 		}
@@ -786,26 +795,13 @@ export class Renderer {
 
 	/**
 	 * @template {Record<string, any>} Props
-	 * @param {'sync' | 'async'} mode
+	 * @param {Renderer} renderer
 	 * @param {import('svelte').Component<Props>} component
 	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} options
-	 * @returns {Renderer}
+	 * @returns {void}
 	 */
-	static #open_render(mode, component, options) {
-		if (options.idPrefix?.includes('--')) {
-			e.invalid_id_prefix();
-		}
-
+	static #open_render(renderer, component, options) {
 		var previous_context = ssr_context;
-
-		const renderer = new Renderer(
-			new SSRState(
-				mode,
-				options.idPrefix ? options.idPrefix + '-' : '',
-				options.csp,
-				options.transformError
-			)
-		);
 
 		try {
 			/** @type {SSRContext} */
@@ -816,13 +812,6 @@ export class Renderer {
 			// @ts-expect-error
 			component(renderer, options.props ?? {});
 			renderer.push(BLOCK_CLOSE);
-
-			return renderer;
-		} catch (error) {
-			// restore context first so callbacks run outside it, as on the success path
-			set_ssr_context(previous_context);
-			renderer.#run_on_destroy();
-			throw error;
 		} finally {
 			set_ssr_context(previous_context);
 		}
@@ -834,7 +823,6 @@ export class Renderer {
 	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
-		renderer.#run_on_destroy();
 
 		let head = content.head + renderer.global.get_title();
 		let body = content.body;
