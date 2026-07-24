@@ -1,4 +1,4 @@
-import { missing_context } from './errors.js';
+import { lifecycle_outside_component, missing_context } from './errors.js';
 
 /**
  * @template T
@@ -40,4 +40,17 @@ export function get_parent_context(context) {
 		parent = parent.p;
 	}
 	return null;
+}
+
+/**
+ * @param {Context | null} context
+ * @param {string} name
+ * @returns {Map<unknown, unknown>}
+ */
+export function get_or_init_context_map(context, name) {
+	if (context === null) {
+		lifecycle_outside_component(name);
+	}
+
+	return (context.c ??= new Map(get_parent_context(context) || undefined));
 }
