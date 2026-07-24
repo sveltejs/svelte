@@ -823,7 +823,6 @@ export class Renderer {
 	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
-
 		let head = content.head + renderer.global.get_title();
 		let body = content.body;
 
