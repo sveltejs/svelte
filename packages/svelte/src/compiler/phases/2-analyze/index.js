@@ -1265,6 +1265,13 @@ function calculate_blockers(instance, analysis) {
 
 		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
 	}
+
+	// a store subscription must wait on whatever blocks the store itself
+	for (const [name, binding] of instance.scope.declarations) {
+		if (binding.kind === 'store_sub') {
+			binding.blocker ??= instance.scope.get(name.slice(1))?.blocker ?? null;
+		}
+	}
 }
 
 /**
