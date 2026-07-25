@@ -16,18 +16,18 @@ export const BRANCH_EFFECT = 1 << 5;
 export const ROOT_EFFECT = 1 << 6;
 export const BOUNDARY_EFFECT = 1 << 7;
 /**
- * Indicates that a reaction is connected to an effect root — either it is an effect,
- * or it is a derived that is depended on by at least one effect. If a derived has
- * no dependents, we can disconnect it from the graph, allowing it to either be
- * GC'd or reconnected later if an effect comes to depend on it again
- */
-/**
  * Set on the effect that `pause_effect` was called on, i.e. the root of a paused subtree,
  * as opposed to its descendants which are merely `INERT`. This allows `resume_effect` on
  * an ancestor to skip subtrees that were paused for their own reasons (such as a block
  * whose condition is still false) rather than resurrecting them
  */
 export const PAUSED = 1 << 8;
+/**
+ * Indicates that a reaction is connected to an effect root — either it is an effect,
+ * or it is a derived that is depended on by at least one effect. If a derived has
+ * no dependents, we can disconnect it from the graph, allowing it to either be
+ * GC'd or reconnected later if an effect comes to depend on it again
+ */
 export const CONNECTED = 1 << 9;
 export const CLEAN = 1 << 10;
 export const DIRTY = 1 << 11;
