@@ -6,6 +6,11 @@
 	}
 
 	const store = await get_store();
+
+	function read() {
+		return $store;
+	}
 </script>
 
 <p>{$store}</p>
+<p>{read()}</p>

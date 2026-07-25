@@ -1227,6 +1227,23 @@ function calculate_blockers(instance, analysis) {
 
 	flush_sync_group();
 
+	// a store subscription must wait on whatever blocks the store itself; this must happen
+	// before function tracing so that functions reading `$store` inherit the blocker
+	for (const [name, binding] of instance.scope.declarations) {
+		if (binding.kind !== 'store_sub') continue;
+
+		const store_blocker = instance.scope.get(name.slice(1))?.blocker;
+		if (!store_blocker) continue;
+
+		if (
+			!binding.blocker ||
+			/** @type {ESTree.SimpleLiteral & { value: number }} */ (binding.blocker.property).value <
+				/** @type {ESTree.SimpleLiteral & { value: number }} */ (store_blocker.property).value
+		) {
+			binding.blocker = store_blocker;
+		}
+	}
+
 	for (const fn of functions) {
 		/** @type {Set<Binding>} */
 		const reads_writes = new Set();
@@ -1264,13 +1281,6 @@ function calculate_blockers(instance, analysis) {
 		);
 
 		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
-	}
-
-	// a store subscription must wait on whatever blocks the store itself
-	for (const [name, binding] of instance.scope.declarations) {
-		if (binding.kind === 'store_sub') {
-			binding.blocker ??= instance.scope.get(name.slice(1))?.blocker ?? null;
-		}
 	}
 }
 
