@@ -494,15 +494,17 @@ declare module 'svelte' {
 	/**
 	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
 	 *
-	 * `get` will throw an error if `set` has not been called in the current component or any of its
-	 * ancestors.
+	 * `get` will throw an error if `set` has not yet been called in the current component or any of
+	 * its ancestors.
 	 *
 	 * @since 5.40.0
 	 */
 	export function createContext<T>(): [() => T, (context: T) => T];
 	/**
 	 * Retrieves the context set with the specified `key` in the current component or any of its
-	 * ancestors. If multiple components set the same key, the closest one takes precedence.
+	 * ancestors. If multiple components set the same key, the value from the closest one is returned.
+	 * A `setContext` call in the current component is only visible to `getContext` calls that run
+	 * after it; before that, `getContext` returns the value set by the closest ancestor, if any.
 	 * Must be called during component initialisation.
 	 *
 	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
