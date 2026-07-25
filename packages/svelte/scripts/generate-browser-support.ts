@@ -55,7 +55,8 @@ type ConditionalRow = {
 const doc_links: Record<string, string | null> = {
 	'`$state.snapshot`': '/docs/svelte/$state#$state.snapshot',
 	'`bind:devicePixelContentBoxSize`': '/docs/svelte/bind#Dimensions',
-	'`flip` from `svelte/animate`': '/docs/svelte/svelte-animate#flip'
+	'`flip` from `svelte/animate`': '/docs/svelte/svelte-animate#flip',
+	'`slide` from `svelte/transition`': '/docs/svelte/svelte-transition#slide'
 };
 
 // Supplemental detection rules for APIs `web-features` doesn't track
@@ -100,6 +101,19 @@ register_extra_rules([
 			safari: null,
 			safari_ios: null
 		}
+	},
+	{
+		// `overflow: hidden` emitted in `slide`'s keyframes (svelte/transition).
+		// Safari only started honouring `overflow` inside Web Animations
+		// keyframes in 18 (#4712); on 14–17 the runtime used to compensate by
+		// setting `element.style.overflow = 'hidden'` for the duration of the
+		// transition, a workaround removed in #18429. `web-features` has no
+		// compat key for per-property keyframe support.
+		string_literal: 'overflow: hidden;',
+		feature_id: 'extra:keyframe-overflow-hidden',
+		name: '`slide` from `svelte/transition`',
+		baseline_year: 2024,
+		versions: { safari: '18', safari_ios: '18' }
 	}
 ]);
 
@@ -138,7 +152,8 @@ const SAFE_TO_IGNORE = new Set(['devicepixelratio', 'trusted-types']);
 const BEHAVIORAL_IGNORE = new Set([
 	'structured-clone',
 	'extra:css-zoom-read',
-	'extra:device-pixel-content-box'
+	'extra:device-pixel-content-box',
+	'extra:keyframe-overflow-hidden'
 ]);
 
 /** Aggregate ignore set — used for the headline floor. */
