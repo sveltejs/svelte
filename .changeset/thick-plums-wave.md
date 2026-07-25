@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: block declaration tags on async values read inside closures
+fix: block declaration tags and `{@const}` on async values read inside closures
