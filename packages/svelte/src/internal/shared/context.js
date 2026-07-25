@@ -30,7 +30,7 @@ export function create_context(get_context, set_context, has_context) {
  * @param {Context} context
  * @returns {Map<unknown, unknown> | null}
  */
-export function get_parent_context(context) {
+function get_parent_context(context) {
 	let parent = context.p;
 	while (parent !== null && parent.c === null) {
 		parent = parent.p;

@@ -6,7 +6,7 @@ import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 import { BRANCH_EFFECT } from './constants.js';
-import { create_context, get_or_init_context_map, get_parent_context } from '../shared/context.js';
+import { create_context, get_or_init_context_map } from '../shared/context.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;

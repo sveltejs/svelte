@@ -1,6 +1,6 @@
 /** @import { SSRContext } from '#server' */
 import { DEV } from 'esm-env';
-import { create_context, get_or_init_context_map, get_parent_context } from '../shared/context.js';
+import { create_context, get_or_init_context_map } from '../shared/context.js';
 
 /** @type {SSRContext | null} */
 export var ssr_context = null;
