@@ -60,7 +60,9 @@ export function process_children(nodes, { visit, state }) {
 				if (evaluated.is_known) {
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
 				} else {
-					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+					expressions.push(
+						b.call('$.escape', /** @type {Expression} */ (visit(node.expression, state)))
+					);
 
 					quasi = b.quasi('', i + 1 === sequence.length);
 					quasis.push(quasi);
@@ -80,7 +82,7 @@ export function process_children(nodes, { visit, state }) {
 		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
 
-			const expression = /** @type {Expression} */ (visit(node.expression));
+			const expression = /** @type {Expression} */ (visit(node.expression, state));
 
 			let call = b.call(
 				'$$renderer.push',

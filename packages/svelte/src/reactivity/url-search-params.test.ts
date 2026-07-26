@@ -244,3 +244,24 @@ test('URLSearchParams.toString', () => {
 test('SvelteURLSearchParams instanceof URLSearchParams', () => {
 	assert.ok(new SvelteURLSearchParams() instanceof URLSearchParams);
 });
+
+test('params.forEach is reactive', () => {
+	const params = new SvelteURLSearchParams('foo=1');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			const entries: string[] = [];
+			params.forEach((value, key) => entries.push(`${key}=${value}`));
+			log.push(entries.join('&'));
+		});
+	});
+
+	flushSync(() => {
+		params.set('foo', '2');
+	});
+
+	assert.deepEqual(log, ['foo=1', 'foo=2']);
+
+	cleanup();
+});

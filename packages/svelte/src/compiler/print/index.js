@@ -30,7 +30,10 @@ export function print(ast, options = undefined) {
 			}),
 			...svelte_visitors(comments),
 			...css_visitors
-		})
+		}),
+		{
+			indent: options?.indent
+		}
 	);
 }
 

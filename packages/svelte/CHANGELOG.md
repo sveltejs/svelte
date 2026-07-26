@@ -1,5 +1,65 @@
 # svelte
 
+## 5.56.8
+
+### Patch Changes
+
+- fix: call `onerror` and provide a working `reset` when hydrating a failed boundary ([#18556](https://github.com/sveltejs/svelte/pull/18556))
+
+- fix: preserve select selection when spread attributes omit value ([#18561](https://github.com/sveltejs/svelte/pull/18561))
+
+## 5.56.7
+
+### Patch Changes
+
+- chore: provide `indent` option for `print` ([#18474](https://github.com/sveltejs/svelte/pull/18474))
+
+## 5.56.6
+
+### Patch Changes
+
+- perf: skip unnecessary blocker analysis when compiling components without top-level await ([#18548](https://github.com/sveltejs/svelte/pull/18548))
+
+- fix: rerun derived that had an abort controller on reconnection ([#18551](https://github.com/sveltejs/svelte/pull/18551))
+
+## 5.56.5
+
+### Patch Changes
+
+- chore: drop dead code that make TSGO fail ([#18496](https://github.com/sveltejs/svelte/pull/18496))
+
+- fix: don't (re)connect deriveds when read inside branch/root effects ([#18527](https://github.com/sveltejs/svelte/pull/18527))
+
+- fix: skip unnecessary derived effect in earlier batch ([#18525](https://github.com/sveltejs/svelte/pull/18525))
+
+- fix: avoid declaration tag warning in event handlers ([#18500](https://github.com/sveltejs/svelte/pull/18500))
+
+- fix: abort deriveds own AbortSignal when it disconnects ([#18400](https://github.com/sveltejs/svelte/pull/18400))
+
+- fix: ensure `$state.eager()` is correctly transormed for SSR output ([#18530](https://github.com/sveltejs/svelte/pull/18530))
+
+- fix: correctly transform declaration tags during SSR ([#18492](https://github.com/sveltejs/svelte/pull/18492))
+
+- fix: transform computed keys in keyed `{#each}` destructuring patterns ([#18521](https://github.com/sveltejs/svelte/pull/18521))
+
+- fix: chain preprocessor sourcemaps with an empty `sources[0]` instead of dropping them ([#18518](https://github.com/sveltejs/svelte/pull/18518))
+
+- fix: clear previous_task reference after abort in Tween to prevent memory leak on interrupted tweens ([#18541](https://github.com/sveltejs/svelte/pull/18541))
+
+- fix: don't treat declaration tags as parts inside each blocks ([#18507](https://github.com/sveltejs/svelte/pull/18507))
+
+## 5.56.4
+
+### Patch Changes
+
+- fix: include wrapping parentheses in `{@const}` declarator `end` position ([#18436](https://github.com/sveltejs/svelte/pull/18436))
+
+- fix: always unset reactivity context after restoring it ([#18453](https://github.com/sveltejs/svelte/pull/18453))
+
+- fix: don't notify `searchParams` subscribers when the URL changes without affecting the search string ([#18425](https://github.com/sveltejs/svelte/pull/18425))
+
+- fix: strip `?` from optional parameters in `<script lang="ts">` so generated JavaScript is valid ([#18448](https://github.com/sveltejs/svelte/pull/18448))
+
 ## 5.56.3
 
 ### Patch Changes

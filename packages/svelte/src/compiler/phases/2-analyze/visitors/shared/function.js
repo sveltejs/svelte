@@ -18,7 +18,9 @@ export function visit_function(node, context) {
 
 	context.next({
 		...context.state,
-		function_depth: context.state.function_depth + 1,
+		// we generally want to use scope.function_depth unless we specifically increased
+		// that in state.function_depth (e.g. a derived)
+		function_depth: Math.max(context.state.scope.function_depth, context.state.function_depth) + 1,
 		expression: null
 	});
 }

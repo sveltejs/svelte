@@ -54,6 +54,11 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 */
 	[REPLACE](params) {
 		if (this.#updating) return;
+
+		// the URL may have changed in a way that leaves the search string untouched —
+		// don't rebuild the params or notify readers if nothing changed
+		if (params.toString() === super.toString()) return;
+
 		this.#updating = true;
 
 		for (const key of [...super.keys()]) {
@@ -124,6 +129,16 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	keys() {
 		get(this.#version);
 		return super.keys();
+	}
+
+	/**
+	 * @param {(value: string, key: string, parent: URLSearchParams) => void} callback
+	 * @param {any} [this_arg]
+	 * @returns {void}
+	 */
+	forEach(callback, this_arg) {
+		get(this.#version);
+		super.forEach(callback, this_arg);
 	}
 
 	/**
