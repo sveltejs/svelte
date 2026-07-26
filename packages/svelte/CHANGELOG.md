@@ -1,5 +1,19 @@
 # svelte
 
+## 5.56.8
+
+### Patch Changes
+
+- fix: call `onerror` and provide a working `reset` when hydrating a failed boundary ([#18556](https://github.com/sveltejs/svelte/pull/18556))
+
+- fix: preserve select selection when spread attributes omit value ([#18561](https://github.com/sveltejs/svelte/pull/18561))
+
+## 5.56.7
+
+### Patch Changes
+
+- chore: provide `indent` option for `print` ([#18474](https://github.com/sveltejs/svelte/pull/18474))
+
 ## 5.56.6
 
 ### Patch Changes

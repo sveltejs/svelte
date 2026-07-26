@@ -56,8 +56,10 @@ export function select_option(select, value, mounting = false) {
  */
 export function init_select(select) {
 	var observer = new MutationObserver(() => {
-		// @ts-ignore
-		select_option(select, select.__value);
+		if ('__value' in select) {
+			// @ts-ignore
+			select_option(select, select.__value);
+		}
 		// Deliberately don't update the potential binding value,
 		// the model should be preserved unless explicitly changed
 	});
