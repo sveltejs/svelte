@@ -26,7 +26,8 @@ import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
 import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
-import { init_select, select_option } from './bindings/select.js';
+import { get_option_value, init_select, select_option } from './bindings/select.js';
+import { is } from '../../proxy.js';
 import { flatten } from '../../reactivity/async.js';
 
 export const CLASS = Symbol('class');
@@ -161,6 +162,30 @@ export function set_default_value(element, value) {
 	const existing_value = element.value;
 	element.defaultValue = value;
 	element.value = existing_value;
+}
+
+/**
+ * `<select>` has no `defaultValue` property. The default selection is instead
+ * expressed through the `selected` attribute of the matching `<option>`, which is
+ * what the form reset algorithm restores, so mark that option and unmark the rest.
+ * The current selection is preserved, since `selected` is the default state only.
+ * @param {HTMLSelectElement} select
+ * @param {any} value
+ */
+export function set_default_select_value(select, value) {
+	// `__value` is set by `<select value>` / `bind:value`. If it is absent, nothing has
+	// asked for a particular option yet, so the default selection should take effect —
+	// which is what the browser does with a `selected` attribute in the markup.
+	var has_explicit_value = '__value' in select;
+	var selected_index = select.selectedIndex;
+
+	for (var option of select.options) {
+		set_selected(option, is(get_option_value(option), value));
+	}
+
+	if (has_explicit_value) {
+		select.selectedIndex = selected_index;
+	}
 }
 
 /**

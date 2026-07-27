@@ -156,7 +156,7 @@ export function bind_select_value(select, get, set = get) {
 }
 
 /** @param {HTMLOptionElement} option */
-function get_option_value(option) {
+export function get_option_value(option) {
 	// __value only exists if the <option> has a value attribute
 	if ('__value' in option) {
 		return option.__value;

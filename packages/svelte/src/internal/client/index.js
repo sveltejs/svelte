@@ -36,6 +36,7 @@ export {
 	set_selected,
 	set_default_checked,
 	set_default_value,
+	set_default_select_value,
 	CLASS,
 	STYLE
 } from './dom/elements/attributes.js';

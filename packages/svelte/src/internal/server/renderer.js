@@ -332,11 +332,14 @@ export class Renderer {
 	 * @returns {void}
 	 */
 	select(attrs, fn, css_hash, classes, styles, flags, is_rich) {
-		const { value, ...select_attrs } = attrs;
+		// the attribute name is lowercased by the compiler, as with any HTML attribute
+		const { value, defaultvalue, ...select_attrs } = attrs;
 
 		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
-			renderer.local.select_value = value;
+			// `<select>` has no defaultValue attribute — it only says which option is
+			// selected by default, so it applies when there is no `value` to override it
+			renderer.local.select_value = value === undefined ? defaultvalue : value;
 			fn(renderer);
 		});
 		this.push(`${is_rich ? '<!>' : ''}</select>`);
