@@ -466,4 +466,31 @@ describe('async', () => {
 		await Renderer.render(component as unknown as Component);
 		expect(destroyed).toEqual(['c', 'e', 'a', 'b', 'b*', 'd']);
 	});
+
+	test('on_destroy runs when synchronous rendering fails', () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => destroyed.push('destroyed'));
+				throw new Error('boom');
+			});
+		};
+
+		expect(() => Renderer.render(component as unknown as Component).body).toThrow('boom');
+		expect(destroyed).toEqual(['destroyed']);
+	});
+
+	test('on_destroy runs when asynchronous rendering fails', async () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component(async (renderer) => {
+				renderer.on_destroy(() => destroyed.push('destroyed'));
+				await Promise.resolve();
+				throw new Error('boom');
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(destroyed).toEqual(['destroyed']);
+	});
 });

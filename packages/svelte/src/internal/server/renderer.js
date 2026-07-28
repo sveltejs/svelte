@@ -197,9 +197,11 @@ export class Renderer {
 	 * Create a child renderer. The child renderer inherits the state from the parent,
 	 * but has its own content.
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
+	 * @param {boolean} [is_component_body]
 	 */
-	child(fn) {
+	child(fn, is_component_body = false) {
 		const child = new Renderer(this.global, this);
+		child.#is_component_body = is_component_body;
 		this.#out.push(child);
 
 		const parent = ssr_context;
@@ -316,9 +318,11 @@ export class Renderer {
 	 */
 	component(fn, component_fn) {
 		push(component_fn);
-		const child = this.child(fn);
-		child.#is_component_body = true;
-		pop();
+		try {
+			this.child(fn, true);
+		} finally {
+			pop();
+		}
 	}
 
 	/**
@@ -634,12 +638,18 @@ export class Renderer {
 	 */
 	static #render(component, options) {
 		var previous_context = ssr_context;
+		/** @type {Renderer | undefined} */
+		let renderer;
+
 		try {
-			const renderer = Renderer.#open_render('sync', component, options);
+			renderer = Renderer.#open_render('sync', component, options);
 
 			const content = renderer.#collect_content();
 			return Renderer.#close_render(content, renderer);
 		} finally {
+			if (renderer) {
+				renderer.#destroy();
+			}
 			abort();
 			set_ssr_context(previous_context);
 		}
@@ -655,9 +665,11 @@ export class Renderer {
 	 */
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
+		/** @type {Renderer | undefined} */
+		let renderer;
 
 		try {
-			const renderer = Renderer.#open_render('async', component, options);
+			renderer = Renderer.#open_render('async', component, options);
 			const content = await renderer.#collect_content_async();
 			const hydratables = await renderer.#collect_hydratables();
 			if (hydratables !== null) {
@@ -665,6 +677,9 @@ export class Renderer {
 			}
 			return Renderer.#close_render(content, renderer);
 		} finally {
+			if (renderer) {
+				renderer.#destroy();
+			}
 			set_ssr_context(previous_context);
 			abort();
 		}
@@ -785,8 +800,13 @@ export class Renderer {
 			set_ssr_context(context);
 
 			renderer.push(BLOCK_OPEN);
-			// @ts-expect-error
-			component(renderer, options.props ?? {});
+			try {
+				// @ts-expect-error
+				component(renderer, options.props ?? {});
+			} catch (error) {
+				renderer.#destroy();
+				throw error;
+			}
 			renderer.push(BLOCK_CLOSE);
 
 			return renderer;
@@ -801,10 +821,6 @@ export class Renderer {
 	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
-		for (const cleanup of renderer.#collect_on_destroy()) {
-			cleanup();
-		}
-
 		let head = content.head + renderer.global.get_title();
 		let body = content.body;
 
@@ -819,6 +835,12 @@ export class Renderer {
 				script: renderer.global.csp.script_hashes
 			}
 		};
+	}
+
+	#destroy() {
+		for (const cleanup of this.#collect_on_destroy()) {
+			cleanup();
+		}
 	}
 
 	/**
