@@ -584,7 +584,16 @@ export function attribute_effect(
 			var select = /** @type {HTMLSelectElement} */ (element);
 
 			effect(() => {
-				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, true);
+				var attrs = /** @type {Record<string | symbol, any>} */ (prev);
+
+				// `defaultValue` is meaningless as a property here, so `set_attributes` cannot
+				// apply it. Mark the default option once the options exist, as we do for the
+				// non-spread case.
+				if ('defaultValue' in attrs) {
+					set_default_select_value(select, attrs.defaultValue);
+				}
+
+				select_option(select, attrs.value, true);
 				init_select(select);
 			});
 		}
