@@ -87,9 +87,12 @@ function sort_const_tags(nodes, state) {
 	/** @type {AST.ConstTag[]} */
 	const sorted = [];
 
+	/** @type {Set<AST.ConstTag>} */
+	const seen = new Set();
+
 	/** @param {Tag} tag */
 	function add(tag) {
-		if (sorted.includes(tag.node)) {
+		if (seen.has(tag.node)) {
 			return;
 		}
 
@@ -98,6 +101,7 @@ function sort_const_tags(nodes, state) {
 			if (dep_tag) add(dep_tag);
 		}
 
+		seen.add(tag.node);
 		sorted.push(tag.node);
 	}
 
