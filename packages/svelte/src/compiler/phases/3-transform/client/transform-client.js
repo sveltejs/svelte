@@ -457,7 +457,8 @@ export function client_component(analysis, options) {
 				b.call(
 					'$.legacy_rest_props',
 					b.id('$$sanitized_props'),
-					b.array(named_props.map((name) => b.literal(name)))
+					// Per-instance Set: deleteProperty mutates exclude via .add
+					b.new('Set', b.array(named_props.map((name) => b.literal(name))))
 				)
 			)
 		);
@@ -477,7 +478,8 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(
 			b.const(
 				'$$sanitized_props',
-				b.call('$.legacy_rest_props', b.id('$$props'), b.array(to_remove))
+				// Per-instance Set: deleteProperty mutates exclude via .add
+				b.call('$.legacy_rest_props', b.id('$$props'), b.new('Set', b.array(to_remove)))
 			)
 		);
 	}

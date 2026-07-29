@@ -284,7 +284,7 @@ export function server_component(analysis, options) {
 				b.call(
 					'$.rest_props',
 					b.id('$$sanitized_props'),
-					b.array(named_props.map((name) => b.literal(name)))
+					b.new('Set', b.array(named_props.map((name) => b.literal(name))))
 				)
 			)
 		);
