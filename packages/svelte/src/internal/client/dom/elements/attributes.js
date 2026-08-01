@@ -1,7 +1,7 @@
 /** @import { Blocker, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
+import { get_descriptors, get_prototype_of, is_array } from '../../../shared/utils.js';
 import { create_event, delegate, delegated, event, event_symbol } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
@@ -178,6 +178,27 @@ export function set_default_select_value(select, value) {
 	// which is what the browser does with a `selected` attribute in the markup.
 	var has_explicit_value = '__value' in select;
 	var selected_index = select.selectedIndex;
+
+	if (select.multiple) {
+		// a `multiple` select takes a list of values, so an option is part of the
+		// default selection when it is a member of that list — mirroring how
+		// `select_option` applies the current value
+		if (!is_array(value)) return;
+
+		var selected = new Set([...select.selectedOptions]);
+
+		for (var multi_option of select.options) {
+			set_selected(multi_option, value.includes(get_option_value(multi_option)));
+		}
+
+		if (has_explicit_value) {
+			for (var option_to_restore of select.options) {
+				option_to_restore.selected = selected.has(option_to_restore);
+			}
+		}
+
+		return;
+	}
 
 	for (var option of select.options) {
 		set_selected(option, is(get_option_value(option), value));
