@@ -261,7 +261,7 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 - [`volume`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume)
 - [`muted`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted)
 
-...and six readonly ones:
+...and seven readonly ones:
 
 - [`duration`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/duration)
 - [`buffered`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/buffered)
