@@ -1503,4 +1503,22 @@ describe('signals', () => {
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
 		};
 	});
+
+	test('derived read in an untracked context should not leak in deps reactions', () => {
+		return () => {
+			let s = state('hello');
+			let a = derived(() => $.get(s));
+			let b = derived(() => $.get(a));
+
+			let destroy = effect_root(() => {
+				$.get(b);
+			});
+
+			destroy();
+
+			// a was spuriously added to s.reactions via is_updating_effect
+			// even though the entire derived chain was read in an untracked context
+			assert.equal(s.reactions, null);
+		};
+	});
 });

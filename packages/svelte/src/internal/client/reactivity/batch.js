@@ -530,6 +530,12 @@ export class Batch {
 		const mark = (value) => {
 			var reactions = value.reactions;
 			if (reactions === null) return;
+			// skip if value is derived and is neither dirty nor maybe dirty. transitive
+			// deriveds (a derived depending on another derived) are only MAYBE_DIRTY, so
+			// we must continue traversing them to reach the effects that depend on them
+			if ((value.f & DERIVED) !== 0 && (value.f & (DIRTY | MAYBE_DIRTY)) === 0) {
+				return;
+			}
 
 			for (const reaction of reactions) {
 				var flags = reaction.f;

@@ -60,8 +60,7 @@ export function init_select(select) {
 		// Reacting to them could revert a user-initiated selection change, because the
 		// records are delivered as soon as any listener returns (e.g. a delegated `input`
 		// handler), which can happen before the `change` handler has updated `__value`
-		if (entries.every(is_selectedcontent_mutation)) return;
-
+		if (entries.every(is_selectedcontent_mutation) || !('__value' in select)) return;
 		// @ts-ignore
 		select_option(select, select.__value);
 		// Deliberately don't update the potential binding value,
