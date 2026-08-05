@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: preserve renderer type when copying during SSR legacy bind: retry, preventing a hydration mismatch with `<svelte:head>`
+fix: don't corrupt renderer type during SSR's legacy `bind:` retry loop
