@@ -315,7 +315,7 @@ function set_attributes(
 	var is_option_element = element.nodeName === OPTION_TAG;
 
 	for (var key in prev) {
-		if (!(key in next)) {
+		if (!(key in next) && key[0] + key[1] !== '$$') {
 			next[key] = null;
 		}
 	}
