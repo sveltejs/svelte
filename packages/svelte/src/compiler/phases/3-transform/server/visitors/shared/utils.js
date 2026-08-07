@@ -286,7 +286,12 @@ export function build_getter(node, state) {
 	}
 
 	if (binding.kind === 'derived') {
-		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(binding.node);
+		// Use the reference `node`, not `binding.node` (the declaration identifier).
+		// Reusing the declaration node would carry its source `loc`, and esrap would
+		// then emit any leading comments from the declaration site next to this call —
+		// e.g. `return // comment\nlater()` which ASI turns into `return undefined`.
+		// See https://github.com/sveltejs/svelte/issues/18607
+		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(node);
 	}
 
 	return node;
