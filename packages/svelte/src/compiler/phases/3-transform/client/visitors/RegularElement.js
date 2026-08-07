@@ -8,6 +8,7 @@ import {
 	is_dom_property,
 	is_load_error_element
 } from '../../../../../utils.js';
+import { escape_html } from '../../../../../escaping.js';
 import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -17,6 +18,7 @@ import {
 	is_custom_element_node,
 	is_customizable_select_element
 } from '../../../nodes.js';
+import { regex_starts_with_newline } from '../../../patterns.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter, get_transform } from '../utils.js';
 import {
@@ -233,7 +235,28 @@ export function RegularElement(node, context) {
 
 			const name = get_attribute_name(node, attribute);
 
-			if (
+			// `<textarea value="...">` — `value` is not a meaningful HTML attribute on
+			// textarea (browsers ignore it). Static values must become child text so the
+			// content (and defaultValue) are set, matching SSR and dynamic `value={...}`.
+			if (node.name === 'textarea' && name === 'value' && is_text_attribute(attribute)) {
+				let data = attribute.value[0].data;
+				// Two or more leading newlines are required to restore a leading newline
+				// immediately after `<textarea>` (HTML removes one). See SSR path.
+				if (regex_starts_with_newline.test(data)) {
+					data = '\n' + data;
+				}
+				if (data) {
+					context.state.template.push_text([
+						{
+							type: 'Text',
+							start: -1,
+							end: -1,
+							data,
+							raw: escape_html(data)
+						}
+					]);
+				}
+			} else if (
 				!is_custom_element &&
 				!cannot_be_set_statically(attribute.name) &&
 				(attribute.value === true || is_text_attribute(attribute)) &&
