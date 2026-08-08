@@ -18,6 +18,11 @@
 	li:nth-child(2n of.a, .b) {
 		background: red;
 	}
+	ul {
+		& li:nth-child(2n of&.important) {
+			background: red;
+		}
+	}
 </style>
 
 <li>Foo</li>

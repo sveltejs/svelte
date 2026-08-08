@@ -2,7 +2,7 @@
 	"css": {
 		"type": "StyleSheet",
 		"start": 0,
-		"end": 441,
+		"end": 511,
 		"attributes": [],
 		"children": [
 			{
@@ -578,44 +578,196 @@
 				},
 				"start": 383,
 				"end": 432
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 434,
+					"end": 436,
+					"children": [
+						{
+							"type": "ComplexSelector",
+							"start": 434,
+							"end": 436,
+							"children": [
+								{
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "ul",
+											"start": 434,
+											"end": 436
+										}
+									],
+									"start": 434,
+									"end": 436
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 437,
+					"end": 502,
+					"children": [
+						{
+							"type": "Rule",
+							"prelude": {
+								"type": "SelectorList",
+								"start": 441,
+								"end": 473,
+								"children": [
+									{
+										"type": "ComplexSelector",
+										"start": 441,
+										"end": 473,
+										"children": [
+											{
+												"type": "RelativeSelector",
+												"combinator": null,
+												"selectors": [
+													{
+														"type": "NestingSelector",
+														"name": "&",
+														"start": 441,
+														"end": 442
+													}
+												],
+												"start": 441,
+												"end": 442
+											},
+											{
+												"type": "RelativeSelector",
+												"combinator": {
+													"type": "Combinator",
+													"name": " ",
+													"start": 442,
+													"end": 443
+												},
+												"selectors": [
+													{
+														"type": "TypeSelector",
+														"name": "li",
+														"start": 443,
+														"end": 445
+													},
+													{
+														"type": "PseudoClassSelector",
+														"name": "nth-child",
+														"args": {
+															"type": "SelectorList",
+															"start": 456,
+															"end": 472,
+															"children": [
+																{
+																	"type": "ComplexSelector",
+																	"start": 456,
+																	"end": 472,
+																	"children": [
+																		{
+																			"type": "RelativeSelector",
+																			"combinator": null,
+																			"selectors": [
+																				{
+																					"type": "Nth",
+																					"value": "2n of",
+																					"start": 456,
+																					"end": 461
+																				},
+																				{
+																					"type": "NestingSelector",
+																					"name": "&",
+																					"start": 461,
+																					"end": 462
+																				},
+																				{
+																					"type": "ClassSelector",
+																					"name": "important",
+																					"start": 462,
+																					"end": 472
+																				}
+																			],
+																			"start": 456,
+																			"end": 472
+																		}
+																	]
+																}
+															]
+														},
+														"start": 445,
+														"end": 473
+													}
+												],
+												"start": 442,
+												"end": 473
+											}
+										]
+									}
+								]
+							},
+							"block": {
+								"type": "Block",
+								"start": 474,
+								"end": 499,
+								"children": [
+									{
+										"type": "Declaration",
+										"start": 479,
+										"end": 494,
+										"property": "background",
+										"value": "red"
+									}
+								]
+							},
+							"start": 441,
+							"end": 499
+						}
+					]
+				},
+				"start": 434,
+				"end": 502
 			}
 		],
 		"content": {
 			"start": 7,
-			"end": 433,
-			"styles": "\n\t/* minifiers drop the whitespace after `of`, since the following token ends the identifier */\n\tli:nth-child(2n of.important) {\n\t\tbackground: red;\n\t}\n\tli:nth-child(even of#first) {\n\t\tbackground: red;\n\t}\n\tli:nth-last-child(-n+3 of[data-active]) {\n\t\tbackground: red;\n\t}\n\tli:nth-child(2n of*) {\n\t\tbackground: red;\n\t}\n\tli:nth-child(2n of:not(.excluded)) {\n\t\tbackground: red;\n\t}\n\tli:nth-child(2n of.a, .b) {\n\t\tbackground: red;\n\t}\n",
+			"end": 503,
+			"styles": "\n\t/* minifiers drop the whitespace after `of`, since the following token ends the identifier */\n\tli:nth-child(2n of.important) {\n\t\tbackground: red;\n\t}\n\tli:nth-child(even of#first) {\n\t\tbackground: red;\n\t}\n\tli:nth-last-child(-n+3 of[data-active]) {\n\t\tbackground: red;\n\t}\n\tli:nth-child(2n of*) {\n\t\tbackground: red;\n\t}\n\tli:nth-child(2n of:not(.excluded)) {\n\t\tbackground: red;\n\t}\n\tli:nth-child(2n of.a, .b) {\n\t\tbackground: red;\n\t}\n\tul {\n\t\t& li:nth-child(2n of&.important) {\n\t\t\tbackground: red;\n\t\t}\n\t}\n",
 			"comment": null
 		}
 	},
 	"js": [],
 	"start": 0,
-	"end": 455,
+	"end": 525,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
 		"nodes": [
 			{
 				"type": "Text",
-				"start": 441,
-				"end": 443,
+				"start": 511,
+				"end": 513,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "RegularElement",
-				"start": 443,
-				"end": 455,
+				"start": 513,
+				"end": 525,
 				"name": "li",
 				"name_loc": {
 					"start": {
-						"line": 23,
+						"line": 28,
 						"column": 1,
-						"character": 444
+						"character": 514
 					},
 					"end": {
-						"line": 23,
+						"line": 28,
 						"column": 3,
-						"character": 446
+						"character": 516
 					}
 				},
 				"attributes": [],
@@ -624,8 +776,8 @@
 					"nodes": [
 						{
 							"type": "Text",
-							"start": 447,
-							"end": 450,
+							"start": 517,
+							"end": 520,
 							"raw": "Foo",
 							"data": "Foo"
 						}
