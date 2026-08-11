@@ -18,7 +18,7 @@ export function css_props(element, get_styles) {
 		for (var key in styles) {
 			var value = styles[key];
 
-			if (value) {
+			if (value != null) {
 				element.style.setProperty(key, value);
 			} else {
 				element.style.removeProperty(key);
