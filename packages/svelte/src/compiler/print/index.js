@@ -19,6 +19,7 @@ const LINE_BREAK_THRESHOLD = 50;
  */
 export function print(ast, options = undefined) {
 	const comments = (ast.type === 'Root' && ast.comments) || [];
+	const state = { preserve_whitespace: 0 };
 	const css_comments =
 		(ast.type === 'Root' ? ast.css?.comments : ast.type === 'StyleSheet' ? ast.comments : null) ||
 		[];
@@ -31,7 +32,7 @@ export function print(ast, options = undefined) {
 				getLeadingComments: options?.getLeadingComments,
 				getTrailingComments: options?.getTrailingComments
 			}),
-			...svelte_visitors(comments),
+			...svelte_visitors(comments, state),
 			...css_visitors(css_comments, comments)
 		}),
 		{
@@ -43,9 +44,15 @@ export function print(ast, options = undefined) {
 /**
  * @param {Context} context
  * @param {AST.SvelteNode} node
+ * @param {boolean} preserve_whitespace
  * @param {boolean} allow_inline
  */
-function block(context, node, allow_inline = false) {
+function block(context, node, preserve_whitespace = false, allow_inline = false) {
+	if (preserve_whitespace) {
+		context.visit(node);
+		return;
+	}
+
 	const child_context = context.new();
 	child_context.visit(node);
 
@@ -146,8 +153,9 @@ function attributes(node, attributes, context, comments) {
  * @param {AST.BaseElement} node
  * @param {Context} context
  * @param {AST.JSComment[]} comments
+ * @param {{ preserve_whitespace: number }} state
  */
-function base_element(node, context, comments) {
+function base_element(node, context, comments, state) {
 	const child_context = context.new();
 
 	child_context.write('<' + node.name);
@@ -173,11 +181,28 @@ function base_element(node, context, comments) {
 		child_context.write(`${multiline_attributes ? '' : ' '}/>`);
 	} else {
 		child_context.write('>');
-		block(child_context, node.fragment, true);
+		block(child_context, node.fragment, state.preserve_whitespace > 0, true);
 		child_context.write(`</${node.name}>`);
 	}
 
 	context.append(child_context);
+}
+
+/**
+ * @param {AST.BaseElement} node
+ * @param {Context} context
+ * @param {AST.JSComment[]} comments
+ * @param {{ preserve_whitespace: number }} state
+ */
+function print_element(node, context, comments, state) {
+	const name = node.name.toLowerCase();
+	const preserve =
+		(node.type === 'RegularElement' || node.type === 'TitleElement') &&
+		(name === 'pre' || name === 'textarea' || name === 'title');
+
+	if (preserve) state.preserve_whitespace += 1;
+	base_element(node, context, comments, state);
+	if (preserve) state.preserve_whitespace -= 1;
 }
 
 /**
@@ -440,9 +465,10 @@ function css_visitors(comments, js_comments) {
 
 /**
  * @param {AST.JSComment[]} comments
+ * @param {{ preserve_whitespace: number }} state
  * @returns {Visitors<AST.SvelteNode>}
  */
-const svelte_visitors = (comments) => ({
+const svelte_visitors = (comments, state) => ({
 	Root(node, context) {
 		if (node.options) {
 			context.write('<svelte:options');
@@ -474,11 +500,27 @@ const svelte_visitors = (comments) => ({
 		context.write('<script');
 		attributes(node, node.attributes, context, comments);
 		context.write('>');
-		block(context, node.content);
+		block(context, node.content, state.preserve_whitespace > 0);
 		context.write('</script>');
 	},
 
 	Fragment(node, context) {
+		if (state.preserve_whitespace > 0) {
+			for (const child of node.nodes) {
+				context.visit(child);
+				context.multiline ||= child.type === 'Text' && /[\r\n]/.test(child.data);
+			}
+			return;
+		}
+
+		const first = node.nodes[0];
+		const last = node.nodes.at(-1);
+		const has_surrounding_whitespace =
+			first?.type === 'Text' &&
+			/^\s/.test(first.data) &&
+			last?.type === 'Text' &&
+			/\s$/.test(last.data);
+
 		/** @type {AST.SvelteNode[][]} */
 		const items = [];
 
@@ -570,6 +612,10 @@ const svelte_visitors = (comments) => ({
 			});
 
 		multiline ||= width > LINE_BREAK_THRESHOLD;
+		// Normally context.newline() also makes context.multiline true, but the below loop only
+		// does that if we have more than one child context. If there's one long text block inside
+		// with whitespace at the edges we wanna split that up, too.
+		context.multiline ||= has_surrounding_whitespace && width > LINE_BREAK_THRESHOLD * 2;
 
 		for (let i = 0; i < child_contexts.length; i += 1) {
 			const prev = child_contexts[i];
@@ -636,7 +682,7 @@ const svelte_visitors = (comments) => ({
 
 		if (node.pending) {
 			context.write('}');
-			block(context, node.pending);
+			block(context, node.pending, state.preserve_whitespace > 0);
 			context.write('{:');
 		} else {
 			context.write(' ');
@@ -647,7 +693,7 @@ const svelte_visitors = (comments) => ({
 			if (node.value) context.visit(node.value);
 			context.write('}');
 
-			block(context, node.then);
+			block(context, node.then, state.preserve_whitespace > 0);
 
 			if (node.catch) {
 				context.write('{:');
@@ -659,7 +705,7 @@ const svelte_visitors = (comments) => ({
 			if (node.error) context.visit(node.error);
 			context.write('}');
 
-			block(context, node.catch);
+			block(context, node.catch, state.preserve_whitespace > 0);
 		}
 
 		context.write('{/await}');
@@ -703,7 +749,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	Component(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	ConstTag(node, context) {
@@ -793,11 +839,11 @@ const svelte_visitors = (comments) => ({
 
 		context.write('}');
 
-		block(context, node.body);
+		block(context, node.body, state.preserve_whitespace > 0);
 
 		if (node.fallback) {
 			context.write('{:else}');
-			block(context, node.fallback);
+			block(context, node.fallback, state.preserve_whitespace > 0);
 		}
 
 		context.write('{/each}');
@@ -821,13 +867,13 @@ const svelte_visitors = (comments) => ({
 			context.visit(node.test);
 			context.write('}');
 
-			block(context, node.consequent);
+			block(context, node.consequent, state.preserve_whitespace > 0);
 		} else {
 			context.write('{#if ');
 			context.visit(node.test);
 			context.write('}');
 
-			block(context, node.consequent);
+			block(context, node.consequent, state.preserve_whitespace > 0);
 		}
 
 		if (node.alternate !== null) {
@@ -839,7 +885,7 @@ const svelte_visitors = (comments) => ({
 				)
 			) {
 				context.write('{:else}');
-				block(context, node.alternate);
+				block(context, node.alternate, state.preserve_whitespace > 0);
 			} else {
 				context.visit(node.alternate);
 			}
@@ -854,7 +900,7 @@ const svelte_visitors = (comments) => ({
 		context.write('{#key ');
 		context.visit(node.expression);
 		context.write('}');
-		block(context, node.fragment);
+		block(context, node.fragment, state.preserve_whitespace > 0);
 		context.write('{/key}');
 	},
 
@@ -886,7 +932,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	RegularElement(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	RenderTag(node, context) {
@@ -896,7 +942,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	SlotElement(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SnippetBlock(node, context) {
@@ -915,7 +961,7 @@ const svelte_visitors = (comments) => ({
 		}
 
 		context.write(')}');
-		block(context, node.body);
+		block(context, node.body, state.preserve_whitespace > 0);
 		context.write('{/snippet}');
 	},
 
@@ -951,11 +997,11 @@ const svelte_visitors = (comments) => ({
 	},
 
 	SvelteBody(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteBoundary(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteComponent(node, context) {
@@ -967,7 +1013,7 @@ const svelte_visitors = (comments) => ({
 		attributes(node, node.attributes, context, comments);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
-			block(context, node.fragment, true);
+			block(context, node.fragment, state.preserve_whitespace > 0, true);
 			context.write(`</svelte:component>`);
 		} else {
 			context.write(' />');
@@ -975,7 +1021,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	SvelteDocument(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteElement(node, context) {
@@ -988,7 +1034,7 @@ const svelte_visitors = (comments) => ({
 
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
-			block(context, node.fragment);
+			block(context, node.fragment, state.preserve_whitespace > 0);
 			context.write(`</svelte:element>`);
 		} else {
 			context.write(' />');
@@ -996,19 +1042,19 @@ const svelte_visitors = (comments) => ({
 	},
 
 	SvelteFragment(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteHead(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteSelf(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteWindow(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	Text(node, context) {
@@ -1016,7 +1062,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	TitleElement(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	TransitionDirective(node, context) {
