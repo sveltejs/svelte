@@ -82,6 +82,7 @@ function attributes(node, attributes, context, comments) {
 	}
 
 	const separator = context.new();
+	let previous_attribute_end = node.start;
 
 	const children = attributes.map((attribute) => {
 		const child_context = context.new();
@@ -90,12 +91,16 @@ function attributes(node, attributes, context, comments) {
 			const comment = comments[comment_index];
 
 			if (comment.start < attribute.start) {
-				if (comment.type === 'Line') {
-					child_context.write('//' + comment.value);
-					child_context.newline();
-				} else {
-					child_context.write('/*' + comment.value + '*/'); // TODO match indentation?
-					child_context.append(separator);
+				// Inside a previous attribute's value can be comments which don't
+				// advance comment_index, therefore this additional check
+				if (comment.start >= previous_attribute_end) {
+					if (comment.type === 'Line') {
+						child_context.write('//' + comment.value);
+						child_context.newline();
+					} else {
+						child_context.write('/*' + comment.value + '*/'); // TODO match indentation?
+						child_context.append(separator);
+					}
 				}
 
 				comment_index += 1;
@@ -105,6 +110,7 @@ function attributes(node, attributes, context, comments) {
 		}
 
 		child_context.visit(attribute);
+		previous_attribute_end = attribute.end;
 
 		length += child_context.measure() + 1;
 
