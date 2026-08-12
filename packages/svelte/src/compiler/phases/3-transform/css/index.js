@@ -374,6 +374,9 @@ const visitors = {
 		if (node.name === 'is' || node.name === 'where' || node.name === 'has' || node.name === 'not') {
 			context.next();
 		}
+	},
+	PseudoElementSelector() {
+		// Functional pseudo-element arguments are not scoped as selectors.
 	}
 };
 

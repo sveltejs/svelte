@@ -20,6 +20,9 @@ const LINE_BREAK_THRESHOLD = 50;
 export function print(ast, options = undefined) {
 	const comments = (ast.type === 'Root' && ast.comments) || [];
 	const state = { preserve_whitespace: 0 };
+	const css_comments =
+		(ast.type === 'Root' ? ast.css?.comments : ast.type === 'StyleSheet' ? ast.comments : null) ||
+		[];
 
 	return esrap.print(
 		ast,
@@ -30,7 +33,7 @@ export function print(ast, options = undefined) {
 				getTrailingComments: options?.getTrailingComments
 			}),
 			...svelte_visitors(comments, state),
-			...css_visitors
+			...css_visitors(css_comments, comments)
 		}),
 		{
 			indent: options?.indent
@@ -202,161 +205,263 @@ function print_element(node, context, comments, state) {
 	if (preserve) state.preserve_whitespace -= 1;
 }
 
-/** @type {Visitors<AST.SvelteNode>} */
-const css_visitors = {
-	Atrule(node, context) {
-		context.write(`@${node.name}`);
-		if (node.prelude) context.write(` ${node.prelude}`);
+/**
+ * @param {AST.CSS.CSSComment[]} comments
+ * @param {AST.JSComment[]} js_comments
+ * @returns {Visitors<AST.SvelteNode>}
+ */
+function css_visitors(comments, js_comments) {
+	let comment_index = 0;
 
-		if (node.block) {
-			context.write(' ');
-			context.visit(node.block);
-		} else {
-			context.write(';');
-		}
-	},
+	/** @param {number} end */
+	const has_comment_before = (end) => comments[comment_index]?.start < end;
 
-	AttributeSelector(node, context) {
-		context.write(`[${node.name}`);
-		if (node.matcher) {
-			context.write(node.matcher);
-			context.write(`"${node.value}"`);
-			if (node.flags) {
-				context.write(` ${node.flags}`);
-			}
-		}
-		context.write(']');
-	},
+	/**
+	 * @param {Context} context
+	 * @param {AST.CSS.CSSComment} comment
+	 */
+	function write_comment(context, comment) {
+		context.write(`/*${comment.value}*/`);
+	}
 
-	Block(node, context) {
-		context.write('{');
+	/**
+	 * @param {Context} context
+	 * @param {number} end
+	 */
+	function write_inline_comments(context, end) {
+		let written = false;
 
-		if (node.children.length > 0) {
-			context.indent();
-			context.newline();
-
-			let started = false;
-
-			for (const child of node.children) {
-				if (started) {
-					context.newline();
-				}
-
-				context.visit(child);
-
-				started = true;
-			}
-
-			context.dedent();
-			context.newline();
+		while (has_comment_before(end)) {
+			if (written) context.write(' ');
+			write_comment(context, comments[comment_index++]);
+			written = true;
 		}
 
-		context.write('}');
-	},
+		return written;
+	}
 
-	ClassSelector(node, context) {
-		context.write(`.${node.name}`);
-	},
+	/**
+	 * @param {Context} context
+	 * @param {string} value
+	 * @param {number} end
+	 */
+	function write_value(context, value, end) {
+		let offset = 0;
 
-	ComplexSelector(node, context) {
-		for (const selector of node.children) {
-			context.visit(selector);
-		}
-	},
-
-	Declaration(node, context) {
-		context.write(`${node.property}: ${node.value};`);
-	},
-
-	IdSelector(node, context) {
-		context.write(`#${node.name}`);
-	},
-
-	NestingSelector(node, context) {
-		context.write('&');
-	},
-
-	Nth(node, context) {
-		context.write(node.value);
-	},
-
-	Percentage(node, context) {
-		context.write(node.value);
-	},
-
-	PseudoClassSelector(node, context) {
-		context.write(`:${node.name}`);
-
-		if (node.args) {
-			context.write('(');
-
-			let started = false;
-
-			for (const arg of node.args.children) {
-				if (started) {
-					context.write(', ');
-				}
-
-				context.visit(arg);
-
-				started = true;
-			}
-
-			context.write(')');
-		}
-	},
-
-	PseudoElementSelector(node, context) {
-		context.write(`::${node.name}`);
-	},
-
-	RelativeSelector(node, context) {
-		if (node.combinator) {
-			if (node.combinator.name === ' ') {
-				context.write(' ');
-			} else {
-				context.write(` ${node.combinator.name} `);
-			}
+		while (has_comment_before(end)) {
+			const comment = comments[comment_index++];
+			const position = Math.max(offset, Math.min(comment.position ?? 0, value.length));
+			context.write(value.slice(offset, position));
+			write_comment(context, comment);
+			offset = position;
 		}
 
-		for (const selector of node.selectors) {
-			context.visit(selector);
-		}
-	},
+		context.write(value.slice(offset));
+	}
 
-	Rule(node, context) {
+	/**
+	 * @param {Context} context
+	 * @param {Array<AST.CSS.Rule | AST.CSS.Atrule | AST.CSS.Declaration>} children
+	 * @param {number} end
+	 * @param {boolean} margins
+	 */
+	function print_children(context, children, end, margins) {
 		let started = false;
 
-		for (const selector of node.prelude.children) {
-			if (started) {
-				context.write(',');
+		const separate = () => {
+			if (!started) return;
+			if (margins) context.margin();
+			context.newline();
+		};
+
+		for (const child of children) {
+			while (has_comment_before(child.start)) {
+				separate();
+				write_comment(context, comments[comment_index++]);
+				started = true;
+			}
+
+			separate();
+			context.visit(child);
+			started = true;
+		}
+
+		while (has_comment_before(end)) {
+			separate();
+			write_comment(context, comments[comment_index++]);
+			started = true;
+		}
+	}
+
+	/**
+	 * @param {AST.CSS.SelectorList} node
+	 * @param {Context} context
+	 * @param {boolean} multiline
+	 */
+	function print_selector_list(node, context, multiline) {
+		let needs_separator = false;
+		let remaining_selectors = node.children.length;
+
+		for (const selector of node.children) {
+			while (has_comment_before(selector.start)) {
+				if (needs_separator) context.write(' ');
+				write_comment(context, comments[comment_index++]);
+				needs_separator = true;
+			}
+
+			if (needs_separator) {
+				if (multiline) context.newline();
+				else context.write(' ');
+			}
+
+			context.visit(selector);
+			needs_separator = true;
+			remaining_selectors -= 1;
+
+			if (remaining_selectors > 0) context.write(',');
+		}
+	}
+
+	return {
+		Atrule(node, context) {
+			context.write(`@${node.name}`);
+
+			const prelude_end = node.block?.start ?? node.end;
+			if (node.prelude || has_comment_before(prelude_end)) {
+				context.write(' ');
+				write_value(context, node.prelude, prelude_end);
+			}
+
+			if (node.block) {
+				context.write(' ');
+				context.visit(node.block);
+			} else {
+				context.write(';');
+			}
+		},
+
+		AttributeSelector(node, context) {
+			context.write(`[${node.name}`);
+			if (node.matcher) {
+				context.write(node.matcher);
+				context.write(`"${node.value}"`);
+				if (node.flags) context.write(` ${node.flags}`);
+			}
+			context.write(']');
+		},
+
+		Block(node, context) {
+			context.write('{');
+
+			if (node.children.length > 0 || has_comment_before(node.end)) {
+				context.indent();
+				context.newline();
+				print_children(context, node.children, node.end, false);
+				context.dedent();
 				context.newline();
 			}
 
-			context.visit(selector);
-			started = true;
-		}
+			context.write('}');
+		},
 
-		context.write(' ');
-		context.visit(node.block);
-	},
+		ClassSelector(node, context) {
+			context.write(`.${node.name}`);
+		},
 
-	SelectorList(node, context) {
-		let started = false;
-		for (const selector of node.children) {
-			if (started) {
-				context.write(', ');
+		ComplexSelector(node, context) {
+			for (const selector of node.children) context.visit(selector);
+		},
+
+		Declaration(node, context) {
+			context.write(`${node.property}: `);
+			write_value(context, node.value, node.end);
+			context.write(';');
+		},
+
+		IdSelector(node, context) {
+			context.write(`#${node.name}`);
+		},
+
+		NestingSelector(node, context) {
+			context.write('&');
+		},
+
+		Nth(node, context) {
+			context.write(node.value);
+		},
+
+		Percentage(node, context) {
+			context.write(node.value);
+		},
+
+		PseudoClassSelector(node, context) {
+			context.write(`:${node.name}`);
+
+			if (node.args) {
+				context.write('(');
+				context.visit(node.args);
+				if (has_comment_before(node.end)) {
+					context.write(' ');
+					write_inline_comments(context, node.end);
+				}
+				context.write(')');
+			}
+		},
+
+		PseudoElementSelector(node, context) {
+			context.write(`::${node.name}`);
+			if (node.args) {
+				context.write('(');
+				context.visit(node.args);
+				if (has_comment_before(node.end)) {
+					context.write(' ');
+					write_inline_comments(context, node.end);
+				}
+				context.write(')');
+			}
+		},
+
+		RelativeSelector(node, context) {
+			if (node.combinator) {
+				if (node.combinator.name === ' ') context.write(' ');
+				else context.write(` ${node.combinator.name} `);
 			}
 
-			context.visit(selector);
-			started = true;
-		}
-	},
+			for (const selector of node.selectors) context.visit(selector);
+		},
 
-	TypeSelector(node, context) {
-		context.write(node.name);
-	}
-};
+		Rule(node, context) {
+			print_selector_list(node.prelude, context, true);
+			context.write(' ');
+			if (write_inline_comments(context, node.block.start)) context.write(' ');
+			context.visit(node.block);
+		},
+
+		SelectorList(node, context) {
+			print_selector_list(node, context, false);
+		},
+
+		StyleSheet(node, context) {
+			context.write('<style');
+			attributes(node, node.attributes, context, js_comments);
+			context.write('>');
+
+			if (node.children.length > 0 || node.comments.length > 0) {
+				context.indent();
+				context.newline();
+				print_children(context, node.children, node.content.end, true);
+				context.dedent();
+				context.newline();
+			}
+
+			context.write('</style>');
+		},
+
+		TypeSelector(node, context) {
+			context.write(node.name);
+		}
+	};
+}
 
 /**
  * @param {AST.JSComment[]} comments
@@ -889,34 +994,6 @@ const svelte_visitors = (comments, state) => ({
 		} else {
 			context.visit(node.value);
 		}
-	},
-
-	StyleSheet(node, context) {
-		context.write('<style');
-		attributes(node, node.attributes, context, comments);
-		context.write('>');
-
-		if (node.children.length > 0) {
-			context.indent();
-			context.newline();
-
-			let started = false;
-
-			for (const child of node.children) {
-				if (started) {
-					context.margin();
-					context.newline();
-				}
-
-				context.visit(child);
-				started = true;
-			}
-
-			context.dedent();
-			context.newline();
-		}
-
-		context.write('</style>');
 	},
 
 	SvelteBody(node, context) {
