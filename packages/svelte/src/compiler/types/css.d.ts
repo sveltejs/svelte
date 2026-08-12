@@ -8,6 +8,15 @@ export namespace _CSS {
 
 	export interface StyleSheetBase extends BaseNode {
 		children: Array<Atrule | Rule>;
+		/** CSS comments in source order */
+		comments: CSSComment[];
+	}
+
+	export interface CSSComment extends BaseNode {
+		type: 'CSSComment';
+		value: string;
+		/** Character offset in a containing declaration value or at-rule prelude */
+		position?: number;
 	}
 
 	export interface StyleSheetFile extends StyleSheetBase {
@@ -135,6 +144,7 @@ export namespace _CSS {
 	export interface PseudoElementSelector extends BaseNode {
 		type: 'PseudoElementSelector';
 		name: string;
+		args?: SelectorList;
 	}
 
 	export interface PseudoClassSelector extends BaseNode {
