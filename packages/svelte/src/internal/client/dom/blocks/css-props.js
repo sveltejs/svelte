@@ -18,10 +18,10 @@ export function css_props(element, get_styles) {
 		for (var key in styles) {
 			var value = styles[key];
 
-			if (value) {
-				element.style.setProperty(key, value);
-			} else {
+			if (value == null || value === '') {
 				element.style.removeProperty(key);
+			} else {
+				element.style.setProperty(key, value);
 			}
 		}
 	});
