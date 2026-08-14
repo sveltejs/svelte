@@ -262,9 +262,6 @@ export function build_attribute_value(
 		: b.literal(/** @type {string} */ (quasi.value.cooked));
 }
 
-/** @type {WeakSet<Identifier>} */
-const derived_callees = new WeakSet();
-
 /**
  * @param {Identifier} node
  * @param {ServerTransformState} state
@@ -275,11 +272,6 @@ export function build_getter(node, state) {
 
 	if (binding === null || node === binding.node) {
 		// No associated binding or the declaration itself which shouldn't be transformed
-		return node;
-	}
-
-	if (derived_callees.has(node)) {
-		// A generated callee may be visited again when it is used in a synthetic attribute
 		return node;
 	}
 
@@ -294,10 +286,7 @@ export function build_getter(node, state) {
 	}
 
 	if (binding.kind === 'derived') {
-		// Use the reference location so that declaration comments are not emitted here
-		const callee = { ...node };
-		derived_callees.add(callee);
-		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(callee);
+		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(node);
 	}
 
 	return node;

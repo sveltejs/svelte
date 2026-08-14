@@ -1,5 +1,6 @@
 import { test } from '../../test';
 
 export default test({
-	html: '<p>LATER</p>'
+	ssrHtml: '<p>LATER</p> <input value="LATER">',
+	html: '<p>LATER</p> <input>'
 });

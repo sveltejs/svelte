@@ -7,7 +7,8 @@
 
 	// a leading comment on the declaration
 	// that spans more than one line
-	const later = $derived.by(() => 'LATER');
+	let later = $derived.by(() => 'LATER');
 </script>
 
 <p>{ctx.later}</p>
+<input bind:value={later} />
