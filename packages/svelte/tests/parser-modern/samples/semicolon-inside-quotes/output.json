@@ -68,6 +68,7 @@
 				"end": 196
 			}
 		],
+		"comments": [],
 		"content": {
 			"start": 43,
 			"end": 197,
@@ -122,5 +123,6 @@
 			}
 		]
 	},
-	"options": null
+	"options": null,
+	"comments": []
 }

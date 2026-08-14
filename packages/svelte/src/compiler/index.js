@@ -176,7 +176,8 @@ export function parseCss(source) {
 		type: 'StyleSheetFile',
 		start: 0,
 		end: source.length,
-		children
+		children,
+		comments: parser.css_comments
 	};
 }
 
