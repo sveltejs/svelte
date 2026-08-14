@@ -732,6 +732,14 @@
 				"end": 502
 			}
 		],
+		"comments": [
+			{
+				"type": "CSSComment",
+				"value": " minifiers drop the whitespace after `of`, since the following token ends the identifier ",
+				"start": 9,
+				"end": 102
+			}
+		],
 		"content": {
 			"start": 7,
 			"end": 503,
