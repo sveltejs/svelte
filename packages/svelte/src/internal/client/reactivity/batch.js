@@ -420,6 +420,7 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
+			old_values.clear();
 			next_batch.#process();
 		}
 	}
