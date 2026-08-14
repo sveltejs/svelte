@@ -206,7 +206,9 @@ export function build_element_attributes(node, context, transform) {
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
 
-		for (const attribute of /** @type {Array<AST.Attribute | TransformedAttribute>} */ (attributes)) {
+		for (const attribute of /** @type {Array<AST.Attribute | TransformedAttribute>} */ (
+			attributes
+		)) {
 			if (attribute.type === 'transformed') {
 				context.state.template.push(
 					b.call(
