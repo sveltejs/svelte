@@ -165,6 +165,15 @@ export function build_inline_component(node, expression, context) {
 	/** @type {Property[]} */
 	const serialized_slots = [];
 
+	// Whitespace and comments surrounding a `{#snippet}` inside a component tag are
+	// formatting, not default-slot content. Under `preserveWhitespace: true` they survive
+	// and get serialized as an implicit default slot, which emits a spurious `children`
+	// prop -- and, when the component already has an explicit `{#snippet children}`, a
+	// *duplicate* `children` key that silently clobbers it. The analysis phase already
+	// treats such siblings as "not content" (`phases/2-analyze/visitors/SnippetBlock.js`
+	// raises `snippet_conflict` only for non-whitespace siblings); agree with it here.
+	const has_snippet = node.fragment.nodes.some((child) => child.type === 'SnippetBlock');
+
 	// Group children by slot
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'SnippetBlock') {
@@ -183,6 +192,13 @@ export function build_inline_component(node, expression, context) {
 				b.init(child.expression.name === 'children' ? 'default' : child.expression.name, b.true)
 			);
 
+			continue;
+		}
+
+		if (
+			has_snippet &&
+			(child.type === 'Comment' || (child.type === 'Text' && !child.data.trim()))
+		) {
 			continue;
 		}
 
