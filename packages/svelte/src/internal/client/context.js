@@ -5,7 +5,8 @@ import { active_effect, active_reaction } from './runtime.js';
 import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
-import { BRANCH_EFFECT } from './constants.js';
+import { BRANCH_EFFECT, COMPONENT_SYMBOL } from './constants.js';
+import { define_property } from '../shared/utils.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -212,6 +213,9 @@ export function pop(component) {
 
 	if (component !== undefined) {
 		context.x = component;
+
+		// mark the exports object, so that storing it in `$state` doesn't turn it into a state proxy
+		define_property(component, COMPONENT_SYMBOL, { value: true });
 	}
 
 	context.i = true;
