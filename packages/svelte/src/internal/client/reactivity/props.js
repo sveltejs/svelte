@@ -235,23 +235,23 @@ const spread_props_handler = {
 		return false;
 	},
 	ownKeys(target) {
-		/** @type {Array<string | symbol>} */
-		const keys = [];
+		/** @type {Set<string | symbol>} */
+		const keys = new Set();
 
 		for (let p of target.props) {
 			if (is_function(p)) p = p();
 			if (!p) continue;
 
 			for (const key in p) {
-				if (!keys.includes(key)) keys.push(key);
+				keys.add(key);
 			}
 
 			for (const key of Object.getOwnPropertySymbols(p)) {
-				if (!keys.includes(key)) keys.push(key);
+				keys.add(key);
 			}
 		}
 
-		return keys;
+		return [...keys];
 	}
 };
 
