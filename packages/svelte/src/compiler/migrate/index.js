@@ -1594,6 +1594,8 @@ function extract_type_and_comment(declarator, state, path) {
 
 	// Try to find jsdoc above the declaration
 	let comment_node = /** @type {Node} */ (parent)?.leadingComments?.at(-1);
+	// HTML comments (e.g. @component) are attached to the Program node without position info
+	if (comment_node?.start === undefined) comment_node = undefined;
 
 	const comment_start = /** @type {any} */ (comment_node)?.start;
 	const comment_end = /** @type {any} */ (comment_node)?.end;
@@ -1603,7 +1605,8 @@ function extract_type_and_comment(declarator, state, path) {
 	}
 
 	// Find trailing comments
-	const trailing_comment_node = /** @type {Node} */ (parent)?.trailingComments?.at(0);
+	let trailing_comment_node = /** @type {Node} */ (parent)?.trailingComments?.at(0);
+	if (trailing_comment_node?.start === undefined) trailing_comment_node = undefined;
 	const trailing_comment_start = /** @type {any} */ (trailing_comment_node)?.start;
 	const trailing_comment_end = /** @type {any} */ (trailing_comment_node)?.end;
 	let trailing_comment =
