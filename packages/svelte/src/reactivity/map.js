@@ -271,4 +271,27 @@ export class SvelteMap extends Map {
 		get(this.#size);
 		return super.size;
 	}
+
+	/**
+	 * @param {K} key
+	 * @param {V} value
+	 * @returns {V}
+	 */
+	getOrInsert(key, value) {
+		if (super.has(key)) return /** @type {V} */ (this.get(key));
+		this.set(key, value);
+		return value;
+	}
+
+	/**
+	 * @param {K} key
+	 * @param {(key: K) => V} callbackFn
+	 * @returns {V}
+	 */
+	getOrInsertComputed(key, callbackFn) {
+		if (super.has(key)) return /** @type {V} */ (this.get(key));
+		const value = callbackFn(key);
+		this.set(key, value);
+		return value;
+	}
 }
