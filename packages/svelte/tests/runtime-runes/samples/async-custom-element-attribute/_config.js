@@ -1,5 +1,11 @@
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	// The test is "should not crash at runtime", nothing else to assert
+	async test({ target, assert }) {
+		await tick();
+		const [element] = target.querySelectorAll('async-custom-element');
+
+		assert.htmlEqual(element.innerHTML, `Hello foobar!`);
+	}
 });
