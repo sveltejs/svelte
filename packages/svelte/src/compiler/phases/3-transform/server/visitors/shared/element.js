@@ -322,10 +322,9 @@ export function build_spread_object(element, attributes, context, transform) {
 				return b.prop('init', b.key(name), value);
 			} else if (attribute.type === 'BindDirective') {
 				const name = get_attribute_name(element, attribute);
+				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 				const value =
-					attribute.expression.type === 'SequenceExpression'
-						? b.call(attribute.expression.expressions[0])
-						: /** @type {Expression} */ (context.visit(attribute.expression));
+					expression.type === 'SequenceExpression' ? b.call(expression.expressions[0]) : expression;
 
 				return b.prop('init', b.key(name), value);
 			}
