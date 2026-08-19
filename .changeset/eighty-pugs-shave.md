@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: print a space before the catch binding in `{#await ... catch x}`
+fix: correctly print `{#await ... catch x}` et al
