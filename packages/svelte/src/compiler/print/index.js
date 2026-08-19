@@ -8,6 +8,58 @@ import { is_void } from '../../utils.js';
 const LINE_BREAK_THRESHOLD = 50;
 
 /**
+ * Serialize an identifier according to CSSOM, while preserving simple escape sequences retained by
+ * the parser.
+ * @param {string} identifier
+ */
+function serialize_identifier(identifier) {
+	const characters = Array.from(identifier);
+	let serialized = '';
+	let position = 0;
+
+	for (let i = 0; i < characters.length; i += 1) {
+		const character = characters[i];
+
+		// Unlike unicode escapes, simple escapes are retained in the AST
+		if (character === '\\' && characters[i + 1] !== undefined) {
+			serialized += character + characters[++i];
+			position += 1;
+			continue;
+		}
+
+		const code = /** @type {number} */ (character.codePointAt(0));
+
+		if (code === 0) {
+			serialized += '\uFFFD';
+		} else if (
+			(code >= 0x01 && code <= 0x1f) ||
+			code === 0x7f ||
+			(position === 0 && code >= 0x30 && code <= 0x39) ||
+			(position === 1 && code >= 0x30 && code <= 0x39 && characters[0] === '-')
+		) {
+			serialized += `\\${code.toString(16)} `;
+		} else if (position === 0 && character === '-' && characters.length === 1) {
+			serialized += '\\-';
+		} else if (
+			code >= 0x80 ||
+			character === '-' ||
+			character === '_' ||
+			(code >= 0x30 && code <= 0x39) ||
+			(code >= 0x41 && code <= 0x5a) ||
+			(code >= 0x61 && code <= 0x7a)
+		) {
+			serialized += character;
+		} else {
+			serialized += `\\${character}`;
+		}
+
+		position += 1;
+	}
+
+	return serialized;
+}
+
+/**
  * `print` converts a Svelte AST node back into Svelte source code.
  * It is primarily intended for tools that parse and transform components using the compiler’s modern AST representation.
  *
@@ -324,7 +376,7 @@ function css_visitors(comments, js_comments) {
 
 	return {
 		Atrule(node, context) {
-			context.write(`@${node.name}`);
+			context.write(`@${serialize_identifier(node.name)}`);
 
 			const prelude_end = node.block?.start ?? node.end;
 			if (node.prelude || has_comment_before(prelude_end)) {
@@ -341,7 +393,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		AttributeSelector(node, context) {
-			context.write(`[${node.name}`);
+			context.write(`[${serialize_identifier(node.name)}`);
 			if (node.matcher) {
 				context.write(node.matcher);
 				context.write(`"${node.value}"`);
@@ -365,7 +417,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		ClassSelector(node, context) {
-			context.write(`.${node.name}`);
+			context.write(`.${serialize_identifier(node.name)}`);
 		},
 
 		ComplexSelector(node, context) {
@@ -379,7 +431,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		IdSelector(node, context) {
-			context.write(`#${node.name}`);
+			context.write(`#${serialize_identifier(node.name)}`);
 		},
 
 		NestingSelector(node, context) {
@@ -395,7 +447,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		PseudoClassSelector(node, context) {
-			context.write(`:${node.name}`);
+			context.write(`:${serialize_identifier(node.name)}`);
 
 			if (node.args) {
 				context.write('(');
@@ -409,7 +461,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		PseudoElementSelector(node, context) {
-			context.write(`::${node.name}`);
+			context.write(`::${serialize_identifier(node.name)}`);
 			if (node.args) {
 				context.write('(');
 				context.visit(node.args);
@@ -458,7 +510,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		TypeSelector(node, context) {
-			context.write(node.name);
+			context.write(node.name === '*' ? '*' : serialize_identifier(node.name));
 		}
 	};
 }
