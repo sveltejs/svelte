@@ -11,6 +11,11 @@ break { color: green; }
 	.a🙂b { color: green; }
 	#\2d 1foo { color: red; }
 	.a\5c b { color: red; }
+	.a\\b { color: red; }
+	.a\5c q { color: red; }
+	.a\\q { color: red; }
+	.a\5c  { color: red; }
+	.a\\ { color: red; }
 	#\5c a { color: red; }
 	[\31 data] { color: red; }
 	:\31 st-child { color: red; }

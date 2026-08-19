@@ -33,11 +33,31 @@
 		color: red;
 	}
 
-	.a\5c b {
+	.a\\b {
 		color: red;
 	}
 
-	#\5c a {
+	.a\\b {
+		color: red;
+	}
+
+	.a\\q {
+		color: red;
+	}
+
+	.a\\q {
+		color: red;
+	}
+
+	.a\\ {
+		color: red;
+	}
+
+	.a\\ {
+		color: red;
+	}
+
+	#\\a {
 		color: red;
 	}
 

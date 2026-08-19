@@ -17,11 +17,11 @@ const REGEX_HEX_DIGIT = /[0-9a-fA-F]/;
  * Re-escape a CSS identifier name so that it prints as valid CSS.
  *
  * `parse` decodes CSS escape sequences when building the AST — `\31` becomes `1`,
- * `\a` becomes a newline — but keeps single-character escapes such as `\.` intact,
- * with the backslash still present in the name. When printing we therefore only
- * need to escape the characters that would be illegal in a bare identifier: a
- * leading digit, `-` followed by a digit, whitespace and control characters, and
- * anything else that is not already escaped.
+ * `\a` becomes a newline — but keeps single-character escapes such as `\.` and
+ * escaped backslashes intact. When printing we therefore only need to escape the
+ * characters that would be illegal in a bare identifier: a leading digit, `-`
+ * followed by a digit, whitespace and control characters, and anything else that
+ * is not already escaped.
  * @param {string} name
  */
 function escape_identifier(name) {
