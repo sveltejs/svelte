@@ -763,7 +763,7 @@ const svelte_visitors = (comments, state) => ({
 		}
 
 		if (node.catch) {
-			context.write(node.value ? 'catch ' : 'catch');
+			context.write(node.error ? 'catch ' : 'catch');
 			if (node.error) context.visit(node.error);
 			context.write('}');
 
