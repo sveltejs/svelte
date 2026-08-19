@@ -1,6 +1,6 @@
 /** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
-import { walk } from 'zimmerframe';
+import { walk_readonly } from 'zimmerframe';
 import * as b from '#compiler/builders';
 
 /**
@@ -149,7 +149,7 @@ export function extract_all_identifiers_from_expression(expr) {
 	/** @type {string[]} */
 	let keypath = [];
 
-	walk(
+	walk_readonly(
 		expr,
 		{},
 		{
@@ -616,7 +616,7 @@ export function build_assignment_value(operator, left, right) {
 export function has_await_expression(node) {
 	let has_await = false;
 
-	walk(node, null, {
+	walk_readonly(node, null, {
 		AwaitExpression(_node, context) {
 			has_await = true;
 			context.stop();
