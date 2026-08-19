@@ -614,7 +614,8 @@ function read_identifier(parser) {
 		if (char === '\\') {
 			const sequence = parser.match_regex(REGEX_UNICODE_SEQUENCE);
 			if (sequence) {
-				identifier += String.fromCodePoint(parseInt(sequence.slice(1), 16));
+				const character = String.fromCodePoint(parseInt(sequence.slice(1), 16));
+				identifier += character === '\\' ? '\\\\' : character;
 				parser.index += sequence.length;
 			} else {
 				identifier += '\\' + parser.template[parser.index + 1];
