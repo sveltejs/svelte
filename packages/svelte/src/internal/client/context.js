@@ -97,8 +97,7 @@ export function createContext() {
 /**
  * Retrieves the context set with the specified `key` in the current component or any of its
  * ancestors. If multiple components set the same key, the value from the closest one is returned.
- * A `setContext` call in the current component is only visible to `getContext` calls that run
- * after it; before that, `getContext` returns the value set by the closest ancestor, if any.
+ * A `setContext` call in the current component is only visible to `getContext` calls that run after it.
  * Must be called during component initialisation.
  *
  * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
