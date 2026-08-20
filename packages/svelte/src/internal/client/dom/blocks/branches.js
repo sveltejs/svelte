@@ -24,9 +24,9 @@ import {
 	push_renderer,
 	current_renderer,
 	parent_renderer,
-	set_parent_renderer,
-	set_renderer
+	set_parent_renderer
 } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
@@ -108,14 +108,18 @@ export class BranchManager {
 	#create_branch(fn) {
 		// we push current renderer twice because branches will always
 		// append to the current renderer
-		var pop_renderer = push_renderer(this.#renderer, this.#renderer);
+		var pop_renderer = custom_renderers_flag
+			? push_renderer(this.#renderer, this.#renderer)
+			: undefined;
 		try {
 			return branch(fn);
 		} finally {
 			pop_renderer?.();
 			// we restore the parent_renderer so that an append after a
 			// branch will append to the correct renderer
-			set_parent_renderer(this.#parent_renderer);
+			if (custom_renderers_flag) {
+				set_parent_renderer(this.#parent_renderer);
+			}
 		}
 	}
 
@@ -126,7 +130,9 @@ export class BranchManager {
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
 
-		var pop_renderer = push_renderer(this.#renderer, this.#parent_renderer);
+		var pop_renderer = custom_renderers_flag
+			? push_renderer(this.#renderer, this.#parent_renderer)
+			: undefined;
 
 		var key = /** @type {Key} */ (this.#batches.get(batch));
 
