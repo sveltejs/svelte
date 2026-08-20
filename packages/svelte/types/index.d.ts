@@ -1774,6 +1774,7 @@ declare module 'svelte/compiler' {
 		export interface TypeSelector extends BaseNode {
 			type: 'TypeSelector';
 			name: string;
+			namespace?: string;
 		}
 
 		export interface IdSelector extends BaseNode {

@@ -520,6 +520,10 @@ function css_visitors(comments, js_comments) {
 		},
 
 		TypeSelector(node, context) {
+			if (node.namespace !== undefined) {
+				context.write(node.namespace === '*' ? '*' : escape_identifier(node.namespace));
+				context.write('|');
+			}
 			context.write(node.name === '*' ? node.name : escape_identifier(node.name));
 		}
 	};
