@@ -1,4 +1,5 @@
 import { chromium } from '@playwright/test';
+import { originalPositionFor, TraceMap } from '@jridgewell/trace-mapping';
 import { build } from 'esbuild';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -119,8 +120,13 @@ async function run_test(
 		],
 		bundle: true,
 		format: 'iife',
-		globalName: 'test'
+		globalName: 'test',
+		outfile: path.resolve(test_dir, `_output/bundle-${hydrate}.js`),
+		sourcemap: 'external'
 	});
+	const bundle = build_result.outputFiles.find((file) => file.path.endsWith('.js'))!;
+	const source_map_file = build_result.outputFiles.find((file) => file.path.endsWith('.js.map'))!;
+	const source_map = new TraceMap(source_map_file.text);
 
 	let build_result_ssr;
 	if (hydrate) {
@@ -213,23 +219,56 @@ async function run_test(
 		}
 
 		// uncomment to see what was generated
-		// fs.writeFileSync(`${test_dir}/_output/bundle-${hydrate}.js`, build_result.outputFiles[0].text);
+		// fs.writeFileSync(`${test_dir}/_output/bundle-${hydrate}.js`, bundle.text);
 		const test_result = await page.evaluate(
-			build_result.outputFiles[0].text + ";test.default(document.querySelector('main'))"
+			bundle.text + ";test.default(document.querySelector('main'))"
 		);
 
 		if (test_result) console.log(test_result);
 		await page.close();
 	} catch (err: any) {
-		pretty_print_browser_assertion(err.message);
+		remap_browser_stack(err, source_map, source_map_file.path);
+		pretty_print_browser_assertion(err);
 		throw err;
 	}
 }
 
-function pretty_print_browser_assertion(message: string) {
-	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
+function remap_browser_stack(error: Error, source_map: TraceMap, source_map_file: string) {
+	if (!error.stack) return;
+	const browser_stack_start = error.message.indexOf('\n    at ');
+	if (browser_stack_start !== -1) error.message = error.message.slice(0, browser_stack_start);
+
+	error.stack = error.stack
+		.split('\n')
+		.map((frame) => {
+			const match = /^\s*at (.+?) \(eval at evaluate .*?, <anonymous>:(\d+):(\d+)\)$/.exec(frame);
+			if (!match) return frame;
+
+			const original = originalPositionFor(source_map, {
+				line: Number(match[2]),
+				column: Number(match[3]) - 1
+			});
+
+			if (original.source == null || original.line == null || original.column == null) return frame;
+
+			const source = path.resolve(path.dirname(source_map_file), original.source);
+			if (source === assert_file) return null;
+
+			return `    at ${match[1]} (${source}:${original.line}:${original.column + 1})`;
+		})
+		.filter((frame) => frame !== null)
+		.join('\n');
+}
+
+function pretty_print_browser_assertion(error: Error) {
+	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(error.message);
 
 	if (match) {
-		assert.equal(match[1], match[2]);
+		try {
+			assert.equal(match[1], match[2]);
+		} catch (assertion_error: any) {
+			assertion_error.stack = `${assertion_error.name}: ${assertion_error.message}${error.stack?.slice(error.stack.indexOf('\n')) ?? ''}`;
+			throw assertion_error;
+		}
 	}
 }
