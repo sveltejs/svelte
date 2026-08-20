@@ -63,6 +63,7 @@ export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+export const PROXY_META_SYMBOL = Symbol('proxy meta');
 export const ATTRIBUTES_CACHE = Symbol('attributes');
 export const CLASS_CACHE = Symbol('class');
 export const STYLE_CACHE = Symbol('style');
