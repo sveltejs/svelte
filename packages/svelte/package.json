@@ -22,6 +22,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
+      "custom-renderer": "./src/index-client.js",
       "worker": "./src/index-server.js",
       "browser": "./src/index-client.js",
       "default": "./src/index-server.js"
@@ -72,13 +73,16 @@
       "default": "./src/internal/flags/tracing.js"
     },
     "./internal/flags/custom-renderer": {
-      "default": "./src/internal/flags/custom-renderer.js"
+      "custom-renderer": "./src/internal/flags/custom-renderer.js",
+      "browser": "./src/internal/flags/custom-renderer.js",
+      "default": "./src/internal/flags/custom-renderer-server.js"
     },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },
     "./legacy": {
       "types": "./types/index.d.ts",
+      "custom-renderer": "./src/legacy/legacy-client.js",
       "worker": "./src/legacy/legacy-server.js",
       "browser": "./src/legacy/legacy-client.js",
       "default": "./src/legacy/legacy-server.js"
@@ -89,6 +93,7 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
+      "custom-renderer": "./src/reactivity/index-client.js",
       "worker": "./src/reactivity/index-server.js",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
@@ -99,7 +104,9 @@
     },
     "./renderer": {
       "types": "./types/index.d.ts",
-      "default": "./src/renderer/index.js"
+      "custom-renderer": "./src/renderer/index.js",
+      "browser": "./src/renderer/index.js",
+      "default": "./src/renderer/index-server.js"
     },
     "./server": {
       "types": "./types/index.d.ts",
@@ -107,6 +114,7 @@
     },
     "./store": {
       "types": "./types/index.d.ts",
+      "custom-renderer": "./src/store/index-client.js",
       "worker": "./src/store/index-server.js",
       "browser": "./src/store/index-client.js",
       "default": "./src/store/index-server.js"
