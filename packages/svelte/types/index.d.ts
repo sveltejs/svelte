@@ -2616,11 +2616,11 @@ declare module 'svelte/server' {
 					}
 				]
 	): RenderOutput;
-	type Csp = { nonce?: string; hash?: boolean };
+	export type Csp = { nonce?: string; hash?: boolean };
 
-	type Sha256Source = `sha256-${string}`;
+	export type Sha256Source = `sha256-${string}`;
 
-	interface SyncRenderOutput {
+	export interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
 		/** @deprecated use `body` instead */
@@ -2632,7 +2632,7 @@ declare module 'svelte/server' {
 		};
 	}
 
-	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
+	export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
 
 	export {};
 }
