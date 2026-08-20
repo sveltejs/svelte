@@ -14,6 +14,7 @@ import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { has_own_property, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
+import { EVENT_CAPTURE_SCRIPT, EVENT_CAPTURE_SCRIPT_SHA256 } from './event-capture.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -511,7 +512,7 @@ export class Renderer {
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
-		/** @type {AccumulatedContent | undefined} */
+		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] } }) | undefined} */
 		let sync;
 		/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
 		let async;
@@ -536,9 +537,10 @@ export class Renderer {
 				}
 			},
 			hashes: {
-				value: {
-					script: ''
-				}
+				get: () => ({
+					// trigger the lazy render so `script_hashes` is populated
+					script: (sync ??= Renderer.#render(component, options)).hashes.script
+				})
 			},
 			then: {
 				value:
@@ -557,7 +559,7 @@ export class Renderer {
 								head: result.head,
 								body: result.body,
 								html: result.body,
-								hashes: { script: [] }
+								hashes: { script: result.hashes.script }
 							});
 							return Promise.resolve(user_result);
 						}
@@ -630,8 +632,8 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
-	 * @returns {AccumulatedContent}
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} options
+	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #render(component, options) {
 		var previous_context = ssr_context;
@@ -813,6 +815,18 @@ export class Renderer {
 			head += `<style id="${hash}">${code}</style>`;
 		}
 
+		// prepend so the listener attaches before any `<svelte:head>`
+		// emitted `<link>`/`<script>` below it can fire
+		if (renderer.global.needs_event_replay_script) {
+			let csp_attr = '';
+			if (renderer.global.csp.nonce) {
+				csp_attr = ` nonce="${renderer.global.csp.nonce}"`;
+			} else if (renderer.global.csp.hash) {
+				renderer.global.csp.script_hashes.push(EVENT_CAPTURE_SCRIPT_SHA256);
+			}
+			head = `<script${csp_attr}>${EVENT_CAPTURE_SCRIPT}</script>` + head;
+		}
+
 		return {
 			head,
 			body,
@@ -888,6 +902,11 @@ export class SSRState {
 
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
+
+	/** Set by `event_capture` under `csp` to ask the renderer to inject the head script.
+	 * @type {boolean}
+	 */
+	needs_event_replay_script = false;
 
 	/**
 	 * `transformError` passed to `render`. Called when an error boundary catches an error.
