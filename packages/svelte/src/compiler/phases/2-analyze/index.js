@@ -1243,7 +1243,7 @@ function calculate_blockers(instance, analysis) {
 		} else {
 			// A concise arrow body is an implicit return, so treat it like the
 			// `ReturnStatement` visitor in `trace_references` would.
-			touch(init.body, fn_scope, reads_writes, reads_writes);
+			touch(init.body, fn_scope, reads_writes, new Set());
 		}
 
 		const max = [...reads_writes].reduce((max, binding) => {
