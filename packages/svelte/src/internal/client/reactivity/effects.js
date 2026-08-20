@@ -34,7 +34,8 @@ import {
 	ASYNC,
 	CONNECTED,
 	MANAGED_EFFECT,
-	DESTROYING
+	DESTROYING,
+	COMMENT_NODE
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -568,6 +569,43 @@ export function destroy_effect(effect, remove_dom = true) {
  * @param {TemplateNode} end
  */
 export function remove_effect_dom(node, end) {
+	if (node === null) return;
+
+	var parent = node.parentNode;
+
+	if (parent !== null && end.parentNode === parent) {
+		/** @type {Node[]} */
+		var preserved = [];
+		var sibling = parent.firstChild;
+
+		while (sibling !== node && sibling?.nodeType === COMMENT_NODE) {
+			preserved.push(sibling);
+			sibling = sibling.nextSibling;
+		}
+
+		if (sibling === node) {
+			sibling = end.nextSibling;
+
+			while (sibling?.nodeType === COMMENT_NODE) {
+				preserved.push(sibling);
+				sibling = sibling.nextSibling;
+			}
+
+			if (sibling === null) {
+				// Ensure `end` follows `node` in this parent before replacing all of its children
+				sibling = node;
+				while (sibling !== null && sibling !== end) sibling = sibling.nextSibling;
+
+				if (sibling === end) {
+					// Chromium can fail to invalidate the layout of a container when an effect is removed
+					// one node at a time. If the effect fills its parent, remove it in a single operation.
+					/** @type {ParentNode} */ (parent).replaceChildren(...preserved);
+					return;
+				}
+			}
+		}
+	}
+
 	while (node !== null) {
 		/** @type {TemplateNode | null} */
 		var next = node === end ? null : get_next_sibling(node);

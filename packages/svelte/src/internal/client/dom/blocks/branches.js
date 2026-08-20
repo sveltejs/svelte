@@ -7,7 +7,7 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { COMMENT_NODE, HMR_ANCHOR } from '../../constants.js';
+import { HMR_ANCHOR } from '../../constants.js';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { DEV } from 'esm-env';
@@ -146,36 +146,7 @@ export class BranchManager {
 
 					this.#offscreen.set(k, { effect, fragment });
 				} else {
-					var nodes = effect.nodes;
-					var parent = this.anchor.parentNode;
-					var removed = false;
-
-					if (
-						nodes !== null &&
-						parent !== null &&
-						nodes.start.parentNode === parent &&
-						nodes.end?.nextSibling === this.anchor &&
-						this.anchor === parent.lastChild
-					) {
-						var sibling = nodes.start.previousSibling;
-						/** @type {Node[]} */
-						var remaining = [this.anchor];
-
-						while (sibling?.nodeType === COMMENT_NODE) {
-							remaining.unshift(sibling);
-							sibling = sibling.previousSibling;
-						}
-
-						if (sibling === null) {
-							// Chromium can fail to invalidate the layout of a container when a branch is removed
-							// one node at a time. If the branch fills its parent, remove it in a single operation.
-							/** @type {Element | DocumentFragment} */ (parent).replaceChildren(...remaining);
-							destroy_effect(effect, false);
-							removed = true;
-						}
-					}
-
-					if (!removed) destroy_effect(effect);
+					destroy_effect(effect);
 				}
 
 				this.#outroing.delete(k);

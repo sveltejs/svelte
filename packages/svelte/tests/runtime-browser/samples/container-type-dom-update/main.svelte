@@ -13,6 +13,9 @@
 	{#if toggled}<div></div>{/if}
 </fieldset>
 
+<div data-comments><!--before-1--><!--before-2-->{#if toggled}<span>removed</span>{/if}<!--after-1--><!--after-2--></div>
+<div data-sibling><i>keep</i>{#if toggled}<span>removed</span>{/if}<!--after--></div>
+
 <style>
 	.container {
 		container-type: inline-size;
