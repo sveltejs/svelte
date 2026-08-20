@@ -1240,9 +1240,8 @@ function calculate_blockers(instance, analysis) {
 		if (init.body.type === 'BlockStatement') {
 			trace_references(init.body, reads_writes, reads_writes, fn_scope);
 		} else {
-			// A concise arrow body is an implicit return, so it gets the same treatment as the
-			// `ReturnStatement` visitor in `trace_references`. Walking it instead would stop dead
-			// on `() => () => blocker`, because the body is itself a function.
+			// A concise arrow body is an implicit return, so treat it like the
+			// `ReturnStatement` visitor in `trace_references` would.
 			touch(init.body, fn_scope, reads_writes);
 		}
 
