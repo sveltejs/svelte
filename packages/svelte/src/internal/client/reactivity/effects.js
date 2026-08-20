@@ -592,16 +592,11 @@ export function remove_effect_dom(node, end) {
 			}
 
 			if (sibling === null) {
-				// Ensure `end` follows `node` in this parent before replacing all of its children
-				sibling = node;
-				while (sibling !== null && sibling !== end) sibling = sibling.nextSibling;
-
-				if (sibling === end) {
-					// Chromium can fail to invalidate the layout of a container when an effect is removed
-					// one node at a time. If the effect fills its parent, remove it in a single operation.
-					/** @type {ParentNode} */ (parent).replaceChildren(...preserved);
-					return;
-				}
+				// Chromium can fail to invalidate the layout of a container when an effect is removed
+				// one node at a time. If the effect fills its parent, remove it in a single operation.
+				// This should also be more performant.
+				/** @type {ParentNode} */ (parent).replaceChildren(...preserved);
+				return;
 			}
 		}
 	}
