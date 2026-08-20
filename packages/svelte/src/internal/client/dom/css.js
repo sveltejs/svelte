@@ -1,37 +1,8 @@
 import { DEV } from 'esm-env';
 import { register_style } from '../dev/css.js';
 import { effect } from '../reactivity/effects.js';
-import { active_effect } from '../runtime.js';
 import { create_element } from './operations.js';
-
-/**
- * Resolves the node whose root should be used to append styles into. The `anchor`
- * is usually connected to the DOM by the time the effect runs, but in some cases
- * (e.g. a component rendered in a deferred/offscreen branch whose anchor node is
- * removed when the branch is committed) it can be disconnected. In that case
- * `getRootNode()` would return the detached node and styles would wrongly end up
- * in `document.head` instead of the enclosing shadow root, so we fall back to a
- * connected node from the surrounding effect tree.
- * @param {Node} anchor
- * @returns {Node}
- */
-function get_style_root(anchor) {
-	if (anchor.isConnected) return anchor;
-
-	var effect = active_effect;
-
-	while (effect !== null) {
-		var start = effect.nodes?.start;
-
-		if (start != null && start.isConnected) {
-			return start;
-		}
-
-		effect = effect.parent;
-	}
-
-	return anchor;
-}
+import { active_effect } from '../runtime.js';
 
 /**
  * @param {Node} anchor
@@ -40,7 +11,11 @@ function get_style_root(anchor) {
 export function append_styles(anchor, css) {
 	// Use an effect to ensure `anchor` is in the DOM, otherwise getRootNode() will yield wrong results
 	effect(() => {
-		var root = get_style_root(anchor).getRootNode();
+		// Bit of a hack: branches.js/each.js use offscreen fragments with temporary text nodes that will
+		// never be connected to the real dom. Therfore walk up to the branch that has created the component
+		// whose styles we want to append, and check its node instead. It will be connected by the time we get here.
+		anchor = active_effect?.parent?.nodes?.start ?? anchor;
+		var root = anchor.getRootNode();
 
 		var target = /** @type {ShadowRoot} */ (root).host
 			? /** @type {ShadowRoot} */ (root)
