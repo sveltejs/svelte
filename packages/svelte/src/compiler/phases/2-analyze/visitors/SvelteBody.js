@@ -2,7 +2,8 @@
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { is_event_attribute } from '../../../utils/ast.js';
-import { check_global_event_reference, disallow_children } from './shared/special-element.js';
+import { disallow_children } from './shared/special-element.js';
+import { check_global_event_reference } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteBody} node
