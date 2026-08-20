@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { Renderer } from '../custom-renderer/types.js' */
 import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
@@ -17,7 +18,8 @@ import {
 } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
-import { current_renderer } from '../custom-renderer/state.js';
+import { current_renderer, parent_renderer } from '../custom-renderer/state.js';
+import * as e from '../errors.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -407,12 +409,50 @@ export function append_child(parent, child) {
  * @param {Node} new_node
  */
 export function insert_before(ref_node, new_node) {
-	if (current_renderer) {
-		var parent = current_renderer.getParent(ref_node);
-		current_renderer.insert(parent, new_node, ref_node);
+	var renderer = current_renderer;
+	var parent = parent_renderer;
+
+	if (renderer === null && parent === null) {
+		// DOM into DOM
+		ref_node.before(new_node);
 		return;
 	}
-	ref_node.before(new_node);
+
+	if (renderer === parent) {
+		// Same custom renderer into itself
+		// The DOM-to-DOM case returned above, so equal renderers here must both be non-null.
+		var same_parent = /** @type {NonNullable<typeof renderer>} */ (renderer).getParent(ref_node);
+		/** @type {NonNullable<typeof renderer>} */ (renderer).insert(
+			/** @type {any} */ (same_parent),
+			new_node,
+			ref_node
+		);
+		return;
+	}
+
+	if (parent === null) {
+		// Custom renderer into DOM
+		var dom_parent = ref_node.parentNode;
+		// The DOM-to-DOM case returned above, so a null parent here means renderer is non-null.
+		get_foreign(/** @type {NonNullable<typeof renderer>} */ (renderer)).insertIntoForeign(
+			dom_parent,
+			new_node,
+			ref_node
+		);
+		return;
+	}
+
+	if (renderer === null) {
+		// DOM into custom renderer
+		var custom_parent = parent.getParent(ref_node);
+		get_foreign(parent).insertForeign(custom_parent, new_node, ref_node);
+		return;
+	}
+
+	// Custom renderer into a different custom renderer
+	var foreign_parent = parent.getParent(ref_node);
+	get_foreign(parent).insertForeign(foreign_parent, new_node, ref_node);
+	return;
 }
 
 /**
@@ -434,11 +474,50 @@ export function insert_after(ref_node, new_node) {
  * @param {ChildNode} node
  */
 export function remove_node(node) {
-	if (current_renderer) {
-		current_renderer.remove(node);
+	var renderer = current_renderer;
+	var parent = parent_renderer;
+
+	if (renderer === null && parent === null) {
+		// DOM from DOM
+		node.remove();
 		return;
 	}
-	node.remove();
+
+	if (renderer === parent) {
+		// Same custom renderer from itself
+		// The DOM-from-DOM case returned above, so equal renderers here must both be non-null.
+		/** @type {NonNullable<typeof renderer>} */ (renderer).remove(node);
+		return;
+	}
+
+	if (parent === null) {
+		// Custom renderer from DOM
+		// The DOM-from-DOM case returned above, so a null parent here means renderer is non-null.
+		get_foreign(/** @type {NonNullable<typeof renderer>} */ (renderer)).removeFromForeign(node);
+		return;
+	}
+
+	if (renderer === null) {
+		// DOM from custom renderer
+		get_foreign(parent).removeForeign(node);
+		return;
+	}
+
+	// Custom renderer from a different custom renderer
+	get_foreign(parent).removeForeign(node);
+}
+
+/**
+ * @param {Renderer} renderer
+ */
+function get_foreign(renderer) {
+	var foreign = renderer.foreign;
+
+	if (foreign == null) {
+		e.renderer_missing_foreign();
+	}
+
+	return foreign;
 }
 
 /**

@@ -9,7 +9,12 @@ import {
 	set_dev_stack
 } from '../context.js';
 import { Boundary } from '../dom/blocks/boundary.js';
-import { current_renderer, set_renderer } from '../custom-renderer/state.js';
+import {
+	current_renderer,
+	parent_renderer,
+	set_parent_renderer,
+	set_renderer
+} from '../custom-renderer/state.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -134,6 +139,7 @@ export function capture() {
 	var previous_component_context = component_context;
 	var previous_batch = /** @type {Batch} */ (current_batch);
 	var previous_renderer = current_renderer;
+	var previous_parent_renderer = parent_renderer;
 
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
@@ -145,6 +151,7 @@ export function capture() {
 		set_component_context(previous_component_context);
 
 		set_renderer(previous_renderer);
+		set_parent_renderer(previous_parent_renderer);
 
 		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
 			// TODO we only need optional chaining here because `{#await ...}` blocks
@@ -277,6 +284,7 @@ export function unset_context(deactivate_batch = true) {
 	set_active_reaction(null);
 	set_component_context(null);
 	set_renderer(null);
+	set_parent_renderer(null);
 	if (deactivate_batch) current_batch?.deactivate();
 
 	if (DEV) {
