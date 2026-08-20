@@ -204,15 +204,18 @@ function read_selector(parser, inside_pseudo_class = false) {
 			});
 		} else if (parser.eat('*')) {
 			let name = '*';
+			/** @type {string | undefined} */
+			let namespace;
 
 			if (parser.eat('|')) {
-				// * is the namespace (which we ignore)
-				name = read_identifier(parser);
+				namespace = name;
+				name = parser.eat('*') ? '*' : read_identifier(parser);
 			}
 
 			relative_selector.selectors.push({
 				type: 'TypeSelector',
 				name,
+				...(namespace !== undefined && { namespace }),
 				start,
 				end: parser.index
 			});
@@ -314,15 +317,18 @@ function read_selector(parser, inside_pseudo_class = false) {
 			});
 		} else if (!parser.match_regex(REGEX_COMBINATOR)) {
 			let name = read_identifier(parser);
+			/** @type {string | undefined} */
+			let namespace;
 
 			if (parser.eat('|')) {
-				// we ignore the namespace when trying to find matching element classes
-				name = read_identifier(parser);
+				namespace = name;
+				name = parser.eat('*') ? '*' : read_identifier(parser);
 			}
 
 			relative_selector.selectors.push({
 				type: 'TypeSelector',
 				name,
+				...(namespace !== undefined && { namespace }),
 				start,
 				end: parser.index
 			});
