@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../../types' */
 import { escape_html } from '../../../../../../escaping.js';
 import { normalize_attribute } from '../../../../../../utils.js';
-import { is_ignored } from '../../../../../state.js';
+import { is_ignored, custom_renderer } from '../../../../../state.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { build_class_directives_object, build_style_directives_object } from '../RegularElement.js';
@@ -134,7 +134,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
  * @param {AST.Attribute} attribute
  */
 export function get_attribute_name(element, attribute) {
-	if (!element.metadata.svg && !element.metadata.mathml) {
+	if (!custom_renderer && !element.metadata.svg && !element.metadata.mathml) {
 		return normalize_attribute(attribute.name);
 	}
 

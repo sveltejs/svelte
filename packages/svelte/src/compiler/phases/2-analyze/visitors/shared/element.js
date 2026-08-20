@@ -4,6 +4,7 @@ import { get_attribute_expression, is_expression_attribute } from '../../../../u
 import { regex_illegal_attribute_character } from '../../../patterns.js';
 import * as e from '../../../../errors.js';
 import * as w from '../../../../warnings.js';
+import { custom_renderer } from '../../../../state.js';
 import {
 	validate_attribute,
 	validate_attribute_name,
@@ -79,12 +80,12 @@ export function validate_element(node, context) {
 				validate_slot_attribute(context, attribute);
 			}
 
-			if (attribute.name === 'is') {
+			if (attribute.name === 'is' && !custom_renderer) {
 				w.attribute_avoid_is(attribute);
 			}
 
 			const correct_name = react_attributes.get(attribute.name);
-			if (correct_name) {
+			if (correct_name && !custom_renderer) {
 				w.attribute_invalid_property_name(attribute, attribute.name, correct_name);
 			}
 

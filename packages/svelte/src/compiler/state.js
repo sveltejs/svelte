@@ -46,6 +46,15 @@ export let dev;
 
 export let runes = false;
 
+/**
+ * The custom renderer for the component currently being compiled:
+ * - `string`: the renderer module path (the component uses a custom renderer)
+ * - `null`: the custom renderer feature is enabled but this component renders to the DOM
+ * - `undefined`: the custom renderer feature is off
+ * @type {string | null | undefined}
+ */
+export let custom_renderer = undefined;
+
 /** @type {(index: number) => Location} */
 export let locator;
 
@@ -139,6 +148,7 @@ export function is_ignored(node, code) {
 export function reset(state) {
 	dev = false;
 	runes = false;
+	custom_renderer = undefined;
 	component_name = UNKNOWN_FILENAME;
 	source = '';
 	source_lines = [];
@@ -155,6 +165,7 @@ export function reset(state) {
  *   component_name?: string;
  *   rootDir?: string;
  *   runes: boolean;
+ *   custom_renderer?: string | null | undefined;
  * }} state
  */
 export function adjust(state) {
@@ -162,6 +173,7 @@ export function adjust(state) {
 
 	dev = state.dev;
 	runes = state.runes;
+	custom_renderer = state.custom_renderer;
 	component_name = state.component_name ?? UNKNOWN_FILENAME;
 
 	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {

@@ -362,6 +362,22 @@ export function invalid_snippet() {
 }
 
 /**
+ * `createRawSnippet` cannot be used with a custom renderer
+ * @returns {never}
+ */
+export function invalid_snippet_in_custom_renderer() {
+	if (DEV) {
+		const error = new Error(`invalid_snippet_in_custom_renderer\n\`createRawSnippet\` cannot be used with a custom renderer\nhttps://svelte.dev/e/invalid_snippet_in_custom_renderer`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/invalid_snippet_in_custom_renderer`);
+	}
+}
+
+/**
  * `%name%(...)` cannot be used in runes mode
  * @param {string} name
  * @returns {never}
@@ -442,6 +458,22 @@ export function set_context_after_init() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/set_context_after_init`);
+	}
+}
+
+/**
+ * A snippet created in a component with a custom renderer cannot be rendered by a different renderer
+ * @returns {never}
+ */
+export function snippet_renderer_mismatch() {
+	if (DEV) {
+		const error = new Error(`snippet_renderer_mismatch\nA snippet created in a component with a custom renderer cannot be rendered by a different renderer\nhttps://svelte.dev/e/snippet_renderer_mismatch`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/snippet_renderer_mismatch`);
 	}
 }
 

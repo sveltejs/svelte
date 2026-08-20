@@ -39,12 +39,13 @@ import {
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
-import { get_next_sibling } from '../dom/operations.js';
+import { get_next_sibling, remove_node, append_child } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, collected_effects, current_batch } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
+import { push_renderer, current_renderer } from '../custom-renderer/state.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -112,7 +113,8 @@ function create_effect(type, fn) {
 		prev: null,
 		teardown: null,
 		wv: 0,
-		ac: null
+		ac: null,
+		r: current_renderer
 	};
 
 	if (DEV) {
@@ -511,6 +513,8 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
+	var pop_renderer = push_renderer(effect.r);
+
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
 		effect.nodes !== null &&
@@ -559,7 +563,10 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.nodes =
 		effect.ac =
 		effect.b =
+		effect.r =
 			null;
+
+	pop_renderer?.();
 }
 
 /**
@@ -572,7 +579,7 @@ export function remove_effect_dom(node, end) {
 		/** @type {TemplateNode | null} */
 		var next = node === end ? null : get_next_sibling(node);
 
-		node.remove();
+		remove_node(/** @type {ChildNode} */ (node));
 		node = next;
 	}
 }
@@ -731,6 +738,8 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
+	var pop_renderer = push_renderer(effect.r);
+
 	/** @type {TemplateNode | null} */
 	var node = effect.nodes.start;
 	var end = effect.nodes.end;
@@ -739,7 +748,9 @@ export function move_effect(effect, fragment) {
 		/** @type {TemplateNode | null} */
 		var next = node === end ? null : get_next_sibling(node);
 
-		fragment.append(node);
+		append_child(fragment, node);
 		node = next;
 	}
+
+	pop_renderer?.();
 }
