@@ -1318,7 +1318,8 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	 * @returns
 	 */
 	const add_declaration = (node, declaration) => {
-		if ([...reactive_declarations.values()].includes(declaration)) return;
+		// Visited set: each ReactiveStatement is stored under exactly one LabeledStatement node
+		if (reactive_declarations.has(node)) return;
 
 		for (const binding of declaration.dependencies) {
 			if (declaration.assignments.has(binding)) continue;
