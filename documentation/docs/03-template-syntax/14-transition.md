@@ -41,27 +41,6 @@ Transitions are local by default. Local transitions only play when the block the
 
 A selection of built-in transitions can be imported from the [`svelte/transition`](svelte-transition) module.
 
-## Accessibility
-
-Transitions are driven by the [Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API) rather than by CSS. A global `@media (prefers-reduced-motion: reduce)` rule that zeroes `transition-duration` and `animation-duration` therefore does not reach them, and someone who has asked their operating system for less motion will still see the full animation.
-
-Use [`prefersReducedMotion`](svelte-motion#prefersReducedMotion) to honour the preference:
-
-```svelte
-<script>
-	import { prefersReducedMotion } from 'svelte/motion';
-	import { fly } from 'svelte/transition';
-
-	let visible = $state(false);
-</script>
-
-{#if visible}
-	<p transition:fly={{ y: prefersReducedMotion.current ? 0 : 200 }}>
-		flies in, unless the user prefers reduced motion
-	</p>
-{/if}
-```
-
 ## Transition parameters
 
 Transitions can have parameters.
@@ -73,6 +52,12 @@ Transitions can have parameters.
 	<div transition:fade={{ duration: 2000 }}>fades in and out over two seconds</div>
 {/if}
 ```
+
+## Accessibility
+
+Transitions are driven by the [Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API) rather than by CSS. A global `@media (prefers-reduced-motion: reduce)` rule that zeroes `transition-duration` and `animation-duration` therefore has no effect on them.
+
+Use [`prefersReducedMotion`](svelte-motion#prefersReducedMotion) to adjust (or completely disable) the transition accordingly for devices who request reduced motion.
 
 ## Custom transition functions
 
