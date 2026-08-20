@@ -3,7 +3,7 @@
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
-import { is_promise, noop } from '../shared/utils.js';
+import { is_promiselike, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
@@ -410,7 +410,7 @@ export function bind_props(props_parent, props_now) {
  * @returns {void}
  */
 function await_block(renderer, promise, pending_fn, then_fn) {
-	if (is_promise(promise)) {
+	if (is_promiselike(promise)) {
 		renderer.push(BLOCK_OPEN);
 		promise.then(null, noop);
 		if (pending_fn !== null) {

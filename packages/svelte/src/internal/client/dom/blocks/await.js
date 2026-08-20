@@ -1,5 +1,5 @@
 /** @import { Source, TemplateNode } from '#client' */
-import { is_promise } from '../../../shared/utils.js';
+import { is_promiselike } from '../../../shared/utils.js';
 import { block } from '../../reactivity/effects.js';
 import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
 import {
@@ -59,7 +59,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		// @ts-ignore coercing `node` to a `Comment` causes TypeScript and Prettier to fight
-		let mismatch = hydrating && is_promise(input) === (node.data === HYDRATION_START_ELSE);
+		let mismatch = hydrating && is_promiselike(input) === (node.data === HYDRATION_START_ELSE);
 
 		if (mismatch) {
 			// Hydration mismatch: remove everything inside the anchor and start fresh
@@ -67,7 +67,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			set_hydrating(false);
 		}
 
-		if (is_promise(input)) {
+		if (is_promiselike(input)) {
 			var restore = capture();
 			var resolved = false;
 

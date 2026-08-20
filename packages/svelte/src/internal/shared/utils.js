@@ -32,8 +32,18 @@ export const noop = () => {};
  * @param {any} value
  * @returns {value is PromiseLike<T>}
  */
-export function is_promise(value) {
+export function is_promiselike(value) {
 	return typeof value?.then === 'function';
+}
+
+/**
+ * @param {any} value
+ * @returns {value is Promise<any>}
+ */
+export function is_promise(value) {
+	// we use this check rather than `instanceof Promise`
+	// because it works cross-realm
+	return Object.prototype.toString.call(value) === '[object Promise]';
 }
 
 /** @param {Function} fn */
