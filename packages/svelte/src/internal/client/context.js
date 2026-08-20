@@ -6,6 +6,7 @@ import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 import { BRANCH_EFFECT } from './constants.js';
+import { create_context, get_or_init_context_map } from '../shared/context.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -72,29 +73,23 @@ export function set_dev_current_component_function(fn) {
 /**
  * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
  *
- * `get` will throw an error if no parent component called `set`.
+ * `get` will throw an error if `set` has not yet been called in the current component or any of
+ * its ancestors.
  *
  * @template T
  * @returns {[() => T, (context: T) => T]}
  * @since 5.40.0
  */
 export function createContext() {
-	const key = {};
-
-	return [
-		() => {
-			if (!hasContext(key)) {
-				e.missing_context();
-			}
-
-			return getContext(key);
-		},
-		(context) => setContext(key, context)
-	];
+	return /** @type {[() => T, (context: T) => T]} */ (
+		create_context(getContext, setContext, hasContext)
+	);
 }
 
 /**
- * Retrieves the context that belongs to the closest parent component with the specified `key`.
+ * Retrieves the context set with the specified `key` in the current component or any of its
+ * ancestors. If multiple components set the same key, the value from the closest one is returned.
+ * A `setContext` call in the current component is only visible to `getContext` calls that run after it.
  * Must be called during component initialisation.
  *
  * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
@@ -104,15 +99,15 @@ export function createContext() {
  * @returns {T}
  */
 export function getContext(key) {
-	const context_map = get_or_init_context_map('getContext');
+	const context_map = get_or_init_context_map(component_context, 'getContext');
 	const result = /** @type {T} */ (context_map.get(key));
 	return result;
 }
 
 /**
  * Associates an arbitrary `context` object with the current component and the specified `key`
- * and returns that object. The context is then available to children of the component
- * (including slotted content) with `getContext`.
+ * and returns that object. The context is then available to the component itself and all of its
+ * descendants (including slotted content) with `getContext`.
  *
  * Like lifecycle functions, this must be called during component initialisation.
  *
@@ -124,7 +119,7 @@ export function getContext(key) {
  * @returns {T}
  */
 export function setContext(key, context) {
-	const context_map = get_or_init_context_map('setContext');
+	const context_map = get_or_init_context_map(component_context, 'setContext');
 
 	if (async_mode_flag) {
 		var flags = /** @type {Effect} */ (active_effect).f;
@@ -144,27 +139,27 @@ export function setContext(key, context) {
 }
 
 /**
- * Checks whether a given `key` has been set in the context of a parent component.
- * Must be called during component initialisation.
+ * Checks whether a given `key` has been set in the context of the current component or any of
+ * its ancestors. Must be called during component initialisation.
  *
  * @param {any} key
  * @returns {boolean}
  */
 export function hasContext(key) {
-	const context_map = get_or_init_context_map('hasContext');
+	const context_map = get_or_init_context_map(component_context, 'hasContext');
 	return context_map.has(key);
 }
 
 /**
- * Retrieves the whole context map that belongs to the closest parent component.
- * Must be called during component initialisation. Useful, for example, if you
- * programmatically create a component and want to pass the existing context to it.
+ * Retrieves the whole context map that belongs to the current component, including entries
+ * inherited from its ancestors. Must be called during component initialisation. Useful, for
+ * example, if you programmatically create a component and want to pass the existing context to it.
  *
  * @template {Map<any, any>} [T=Map<any, any>]
  * @returns {T}
  */
 export function getAllContexts() {
-	const context_map = get_or_init_context_map('getAllContexts');
+	const context_map = get_or_init_context_map(component_context, 'getAllContexts');
 	return /** @type {T} */ (context_map);
 }
 
@@ -228,32 +223,4 @@ export function pop(component) {
 /** @returns {boolean} */
 export function is_runes() {
 	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
-}
-
-/**
- * @param {string} name
- * @returns {Map<unknown, unknown>}
- */
-function get_or_init_context_map(name) {
-	if (component_context === null) {
-		e.lifecycle_outside_component(name);
-	}
-
-	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
-}
-
-/**
- * @param {ComponentContext} component_context
- * @returns {Map<unknown, unknown> | null}
- */
-function get_parent_context(component_context) {
-	let parent = component_context.p;
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
-		parent = parent.p;
-	}
-	return null;
 }

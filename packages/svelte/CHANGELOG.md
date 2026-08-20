@@ -1,5 +1,39 @@
 # svelte
 
+## 5.56.9
+
+### Patch Changes
+
+- fix: skip controlled each fast path while another batch is pending ([#18625](https://github.com/sveltejs/svelte/pull/18625))
+
+- fix: better whitespace handling inside printer ([#18638](https://github.com/sveltejs/svelte/pull/18638))
+
+- fix: don't duplicate comments in attributes ([#18636](https://github.com/sveltejs/svelte/pull/18636))
+
+- fix: preserve CSS comments in the AST printer ([#18637](https://github.com/sveltejs/svelte/pull/18637))
+
+## 5.56.8
+
+### Patch Changes
+
+- fix: call `onerror` and provide a working `reset` when hydrating a failed boundary ([#18556](https://github.com/sveltejs/svelte/pull/18556))
+
+- fix: preserve select selection when spread attributes omit value ([#18561](https://github.com/sveltejs/svelte/pull/18561))
+
+## 5.56.7
+
+### Patch Changes
+
+- chore: provide `indent` option for `print` ([#18474](https://github.com/sveltejs/svelte/pull/18474))
+
+## 5.56.6
+
+### Patch Changes
+
+- perf: skip unnecessary blocker analysis when compiling components without top-level await ([#18548](https://github.com/sveltejs/svelte/pull/18548))
+
+- fix: rerun derived that had an abort controller on reconnection ([#18551](https://github.com/sveltejs/svelte/pull/18551))
+
 ## 5.56.5
 
 ### Patch Changes

@@ -180,7 +180,13 @@ export function set(source, value, should_proxy = false) {
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
-		old_values.set(source, is_destroying_effect ? value : source.v);
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else if (!old_values.has(source)) {
+			// only record the value from before the first write in this flush, otherwise a
+			// teardown would see the value from before whichever write happened to be last
+			old_values.set(source, source.v);
+		}
 
 		var batch = Batch.ensure();
 		batch.capture(source, value);

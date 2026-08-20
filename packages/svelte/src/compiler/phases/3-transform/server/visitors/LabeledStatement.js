@@ -8,6 +8,7 @@ import * as b from '#compiler/builders';
  */
 export function LabeledStatement(node, context) {
 	if (context.state.analysis.runes || context.path.length > 1 || node.label.name !== '$') {
+		context.next();
 		return;
 	}
 

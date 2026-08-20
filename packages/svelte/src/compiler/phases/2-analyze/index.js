@@ -1222,6 +1222,10 @@ function calculate_blockers(instance, analysis) {
 		}
 	}
 
+	// With no top-level await, no binding can have a blocker and function tracing
+	// cannot affect the output.
+	if (!awaited) return;
+
 	flush_sync_group();
 
 	for (const fn of functions) {
@@ -1232,12 +1236,15 @@ function calculate_blockers(instance, analysis) {
 				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init)
 				: fn;
 
-		trace_references(
-			init.body,
-			reads_writes,
-			reads_writes,
-			/** @type {Scope} */ (instance.scopes.get(init))
-		);
+		const fn_scope = /** @type {Scope} */ (instance.scopes.get(init));
+
+		if (init.body.type === 'BlockStatement') {
+			trace_references(init.body, reads_writes, reads_writes, fn_scope);
+		} else {
+			// A concise arrow body is an implicit return, so treat it like the
+			// `ReturnStatement` visitor in `trace_references` would.
+			touch(init.body, fn_scope, reads_writes);
+		}
 
 		const max = [...reads_writes].reduce((max, binding) => {
 			if (binding.blocker) {

@@ -355,7 +355,11 @@ const visitors = {
 						continue;
 					}
 
-					if (selector.type === 'TypeSelector' && selector.name === '*') {
+					if (
+						selector.type === 'TypeSelector' &&
+						selector.name === '*' &&
+						selector.namespace === undefined
+					) {
 						context.state.code.update(selector.start, selector.end, modifier);
 					} else {
 						context.state.code.appendLeft(selector.end, modifier);
@@ -374,6 +378,9 @@ const visitors = {
 		if (node.name === 'is' || node.name === 'where' || node.name === 'has' || node.name === 'not') {
 			context.next();
 		}
+	},
+	PseudoElementSelector() {
+		// Functional pseudo-element arguments are not scoped as selectors.
 	}
 };
 

@@ -86,12 +86,12 @@ export function lifecycle_outside_component(name) {
 }
 
 /**
- * Context was not set in a parent component
+ * Context was not set in the current component or any of its ancestors
  * @returns {never}
  */
 export function missing_context() {
 	if (DEV) {
-		const error = new Error(`missing_context\nContext was not set in a parent component\nhttps://svelte.dev/e/missing_context`);
+		const error = new Error(`missing_context\nContext was not set in the current component or any of its ancestors\nhttps://svelte.dev/e/missing_context`);
 
 		error.name = 'Svelte error';
 

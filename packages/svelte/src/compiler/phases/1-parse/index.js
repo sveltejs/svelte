@@ -50,6 +50,9 @@ export class Parser {
 	/** */
 	index = 0;
 
+	/** @type {AST.CSS.CSSComment[]} */
+	css_comments = [];
+
 	/**
 	 * Creates a minimal parser instance for CSS-only parsing.
 	 * Skips Svelte component parsing setup.
@@ -61,6 +64,7 @@ export class Parser {
 		parser.template = source;
 		parser.index = 0;
 		parser.loose = false;
+		parser.css_comments = [];
 		return parser;
 	}
 
