@@ -11,9 +11,9 @@ export function create_context(get_context, set_context, has_context) {
 	const key = {};
 
 	return [
-		(fallback) => {
+		(...args) => {
 			if (!has_context(key)) {
-				if (fallback !== undefined) return fallback;
+				if (args.length > 0) return args[0];
 				missing_context();
 			}
 
