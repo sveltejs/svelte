@@ -4,7 +4,6 @@
 /** @import { Scope } from '../../../scope' */
 import {
 	cannot_be_set_statically,
-	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element
 } from '../../../../../utils.js';
@@ -13,7 +12,6 @@ import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js'
 import * as b from '#compiler/builders';
 import {
 	create_attribute,
-	ExpressionMetadata,
 	is_custom_element_node,
 	is_customizable_select_element
 } from '../../../nodes.js';
@@ -528,18 +526,12 @@ export function build_class_directives_object(
 ) {
 	let properties = [];
 
-	const metadata = new ExpressionMetadata();
-
 	for (const d of class_directives) {
-		metadata.merge(d.metadata.expression);
-
 		const expression = /** @type Expression */ (context.visit(d.expression));
-		properties.push(b.init(d.name, expression));
+		properties.push(b.init(d.name, memoizer.add(expression, d.metadata.expression)));
 	}
 
-	const directives = b.object(properties);
-
-	return memoizer.add(directives, metadata);
+	return b.object(properties);
 }
 
 /**
@@ -555,23 +547,17 @@ export function build_style_directives_object(
 	const normal = b.object([]);
 	const important = b.object([]);
 
-	const metadata = new ExpressionMetadata();
-
 	for (const d of style_directives) {
-		metadata.merge(d.metadata.expression);
-
 		const expression =
 			d.value === true
 				? build_getter(b.id(d.name), context.state)
 				: build_attribute_value(d.value, context).value;
 
 		const object = d.modifiers.includes('important') ? important : normal;
-		object.properties.push(b.init(d.name, expression));
+		object.properties.push(b.init(d.name, memoizer.add(expression, d.metadata.expression)));
 	}
 
-	const directives = important.properties.length ? b.array([normal, important]) : normal;
-
-	return memoizer.add(directives, metadata);
+	return important.properties.length ? b.array([normal, important]) : normal;
 }
 
 /**
