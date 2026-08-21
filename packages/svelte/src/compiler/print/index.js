@@ -587,15 +587,19 @@ const svelte_visitors = (comments, state) => ({
 			last?.type === 'Text' &&
 			/\s$/.test(last.data);
 
-		/** @type {AST.SvelteNode[][]} */
+		/** @type {{ nodes: AST.SvelteNode[]; leading_whitespace: boolean }[]} */
 		const items = [];
 
 		/** @type {AST.SvelteNode[]} */
 		let sequence = [];
+		let leading_whitespace = false;
 
 		const flush = () => {
-			items.push(sequence);
-			sequence = [];
+			if (sequence.length > 0) {
+				items.push({ nodes: sequence, leading_whitespace });
+				sequence = [];
+				leading_whitespace = false;
+			}
 		};
 
 		for (let i = 0; i < node.nodes.length; i += 1) {
@@ -624,6 +628,7 @@ const svelte_visitors = (comments, state) => ({
 
 				if (child_node.data.startsWith(' ') && prev && prev.type !== 'ExpressionTag') {
 					flush();
+					leading_whitespace = true;
 					child_node.data = child_node.data.trimStart();
 				}
 
@@ -662,20 +667,18 @@ const svelte_visitors = (comments, state) => ({
 		let multiline = false;
 		let width = 0;
 
-		const child_contexts = items
-			.filter((x) => x.length > 0)
-			.map((sequence) => {
-				const child_context = context.new();
+		const child_contexts = items.map(({ nodes, leading_whitespace }) => {
+			const child_context = context.new();
 
-				for (const node of sequence) {
-					child_context.visit(node);
-					multiline ||= child_context.multiline;
-				}
+			for (const node of nodes) {
+				child_context.visit(node);
+				multiline ||= child_context.multiline;
+			}
 
-				width += child_context.measure();
+			width += child_context.measure() + (leading_whitespace ? 1 : 0);
 
-				return child_context;
-			});
+			return { context: child_context, leading_whitespace };
+		});
 
 		multiline ||= width > LINE_BREAK_THRESHOLD;
 		// Normally context.newline() also makes context.multiline true, but the below loop only
@@ -687,14 +690,16 @@ const svelte_visitors = (comments, state) => ({
 			const prev = child_contexts[i];
 			const next = child_contexts[i + 1];
 
-			context.append(prev);
+			context.append(prev.context);
 
 			if (next) {
-				if (prev.multiline || next.multiline) {
+				if (prev.context.multiline || next.context.multiline) {
 					context.margin();
 					context.newline();
 				} else if (multiline) {
 					context.newline();
+				} else if (next.leading_whitespace) {
+					context.write(' ');
 				}
 			}
 		}
