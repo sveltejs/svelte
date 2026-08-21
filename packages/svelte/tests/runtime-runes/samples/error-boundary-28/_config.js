@@ -2,7 +2,6 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	solo: true,
 	// Regression test for https://github.com/sveltejs/svelte/issues/18485.
 	// A $derived that re-executes and throws during teardown should not crash
 	// with "Cannot read properties of null (reading 'error')" and should not
