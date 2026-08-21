@@ -8,7 +8,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
-import { build_getter } from '../../utils.js';
+import { build_getter, is_state_source } from '../../utils.js';
 import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
@@ -271,6 +271,10 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 			const binding = state.scope.get(node.name);
 			if (!binding) return;
+
+			// if it is a state or a derived it means is a declaration tag...in that case we don't want to pass the
+			// value but the signal itself or assignment will break
+			if (is_state_source(binding, state.analysis) || binding.kind === 'derived') return;
 
 			for (const [owner, scope] of state.scopes) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {

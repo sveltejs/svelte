@@ -25,6 +25,7 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import { queue_micro_task } from '../dom/task.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -169,6 +170,7 @@ export async function save(promise) {
 
 	return () => {
 		restore();
+		queue_micro_task(unset_context);
 		return value;
 	};
 }
