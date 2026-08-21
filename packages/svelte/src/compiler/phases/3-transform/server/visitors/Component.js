@@ -9,5 +9,9 @@ import { build_inline_component } from './shared/component.js';
  * @param {ComponentContext} context
  */
 export function Component(node, context) {
-	build_inline_component(node, /** @type {Expression} */ (context.visit(b.id(node.name))), context);
+	build_inline_component(
+		node,
+		/** @type {Expression} */ (context.visit(b.member_id(node.name))),
+		context
+	);
 }

@@ -20,6 +20,8 @@ export function inspect(get_value, inspector, show_stack = false) {
 	// in an error (an `$inspect(object.property)` will run before the
 	// `{#if object}...{/if}` that contains it)
 	eager_effect(() => {
+		error = UNINITIALIZED;
+
 		try {
 			var value = get_value();
 		} catch (e) {

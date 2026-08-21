@@ -28,6 +28,7 @@ import {
 	skipped_deps,
 	new_deps
 } from '../runtime.js';
+import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
@@ -100,6 +101,8 @@ export function derived(fn) {
 	return signal;
 }
 
+export const OBSOLETE = Symbol('obsolete');
+
 /**
  * @template V
  * @param {() => V | Promise<V>} fn
@@ -118,13 +121,13 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label;
+	if (DEV) signal.label = label ?? fn.toString();
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
-	var deferreds = new Map();
+	/** @type {Set<ReturnType<typeof deferred<V>>>} */
+	var deferreds = new Set();
 
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
@@ -141,7 +144,13 @@ export function async_derived(fn, label, location) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn()).then(d.resolve, d.reject).finally(unset_context);
+			Promise.resolve(fn())
+				.then(d.resolve, (e) => {
+					// if the promise was rejected by the user, via `getAbortSignal`, then
+					// wait for a subsequent resolution instead of flushing the batch
+					if (e !== STALE_REACTION) d.reject(e);
+				})
+				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
 			unset_context();
@@ -179,19 +188,21 @@ export function async_derived(fn, label, location) {
 				var decrement_pending = increment_pending();
 			}
 
-			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
-				deferreds.get(batch)?.reject(STALE_REACTION);
-				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
+			if (
+				// boundary can be null if the async derived is inside an $effect.root not connected to the component render tree
+				parent.b?.is_rendered()
+			) {
+				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
 				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
 				for (const d of deferreds.values()) {
-					d.reject(STALE_REACTION);
+					d.reject(OBSOLETE);
 				}
-				deferreds.clear();
 			}
 
-			deferreds.set(batch, d);
+			deferreds.add(d);
+			batch.async_deriveds.set(effect, d);
 		}
 
 		/**
@@ -203,16 +214,10 @@ export function async_derived(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
-			if (decrement_pending) {
-				// don't trigger an update if we're only here because
-				// the promise was superseded before it could resolve
-				var skip = error === STALE_REACTION;
-				decrement_pending(skip);
-			}
+			decrement_pending?.();
+			deferreds.delete(d);
 
-			if (error === STALE_REACTION || (effect.f & DESTROYED) !== 0) {
-				return;
-			}
+			if (error === OBSOLETE) return;
 
 			batch.activate();
 
@@ -226,25 +231,18 @@ export function async_derived(fn, label, location) {
 					signal.f ^= ERROR_VALUE;
 				}
 
-				internal_set(signal, value);
-
-				// All prior async derived runs are now stale
-				for (const [b, d] of deferreds) {
-					deferreds.delete(b);
-					if (b === batch) break;
-					d.reject(STALE_REACTION);
-				}
-
-				if (DEV && location !== undefined) {
+				if (DEV && location !== undefined && !signal.equals(value)) {
 					recent_async_deriveds.add(signal);
 
 					setTimeout(() => {
-						if (recent_async_deriveds.has(signal)) {
+						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
 							w.await_waterfall(/** @type {string} */ (signal.label), location);
 							recent_async_deriveds.delete(signal);
 						}
 					});
 				}
+
+				internal_set(signal, value);
 			}
 
 			batch.deactivate();
@@ -254,8 +252,8 @@ export function async_derived(fn, label, location) {
 	});
 
 	teardown(() => {
-		for (const d of deferreds.values()) {
-			d.reject(STALE_REACTION);
+		for (const d of deferreds) {
+			d.reject(OBSOLETE);
 		}
 	});
 
@@ -344,7 +342,12 @@ export function execute_derived(derived) {
 	var prev_active_effect = active_effect;
 	var parent = derived.parent;
 
-	if (!is_destroying_effect && parent !== null && (parent.f & (DESTROYED | INERT)) !== 0) {
+	if (
+		!is_destroying_effect &&
+		parent !== null &&
+		derived.v !== UNINITIALIZED && // if it was never evaluated before, it's guaranteed to fail downstream, so we try to execute instead
+		(parent.f & (DESTROYED | INERT)) !== 0
+	) {
 		w.derived_inert();
 
 		return derived.v;
@@ -448,14 +451,18 @@ export function freeze_derived_effects(derived) {
 		// if the effect has a teardown function or abort signal, call it
 		if (e.teardown || e.ac) {
 			e.teardown?.();
-			e.ac?.abort(STALE_REACTION);
+			if (e.ac !== null) {
+				without_reactive_context(() => {
+					/** @type {AbortController} */ (e.ac).abort(STALE_REACTION);
+					e.ac = null;
+				});
+			}
 
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence
 			// of a teardown function is what determines whether the
-			// effect runs again during unfreezing
-			e.teardown = noop;
-			e.ac = null;
+			// effect runs again during unfreezing (but not for teardown-only effects)
+			if (e.fn !== null) e.teardown = noop;
 
 			remove_reactions(e, 0);
 			destroy_effect_children(e);
@@ -472,7 +479,7 @@ export function unfreeze_derived_effects(derived) {
 	for (const e of derived.effects) {
 		// if the effect was previously frozen — indicated by the presence
 		// of a teardown function — unfreeze it
-		if (e.teardown) {
+		if (e.teardown && e.fn !== null) {
 			update_effect(e);
 		}
 	}

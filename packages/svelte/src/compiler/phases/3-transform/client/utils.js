@@ -179,3 +179,24 @@ export function create_derived(state, expression, async = false) {
 		return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', thunk);
 	}
 }
+
+/**
+ * @param {Scope} scope
+ * @param {ClientTransformState} state
+ */
+export function get_transform(scope, state) {
+	const transform = { ...state.transform };
+
+	for (const [name, binding] of scope.declarations) {
+		if (
+			binding.kind === 'normal' ||
+			// Reads of `$state(...)` declarations are not
+			// transformed if they are never reassigned
+			(binding.kind === 'state' && !is_state_source(binding, state.analysis))
+		) {
+			delete transform[name];
+		}
+	}
+
+	return transform;
+}

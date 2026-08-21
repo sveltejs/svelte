@@ -7,7 +7,8 @@ import {
 	hydrating,
 	skip_nodes,
 	set_hydrate_node,
-	set_hydrating
+	set_hydrating,
+	hydrate_node
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
@@ -15,6 +16,7 @@ import { is_runes } from '../../context.js';
 import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
 import { capture, unset_context } from '../../reactivity/async.js';
+import { DEV } from 'esm-env';
 
 const PENDING = 0;
 const THEN = 1;
@@ -42,16 +44,16 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var value = runes ? source(v) : mutable_source(v, false, false);
 	var error = runes ? source(v) : mutable_source(v, false, false);
 
+	if (DEV) {
+		value.label = '{#await ...} value';
+		error.label = '{#await ...} error';
+	}
+
 	var branches = new BranchManager(node);
 
 	block(() => {
 		var batch = /** @type {Batch} */ (current_batch);
-
-		// we null out `current_batch` because otherwise `save(...)` will incorrectly restore it —
-		// the batch will already have been committed by the time it resolves
-		batch.deactivate();
 		var input = get_input();
-		batch.activate();
 
 		var destroyed = false;
 
@@ -79,14 +81,16 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				// We don't want to restore the previous batch here; {#await} blocks don't follow the async logic
 				// we have elsewhere, instead pending/resolve/fail states are each their own batch so to speak.
 				restore(false);
+				// ...but it might still be set here. That means a `save(...)` has restored it — but that batch will
+				// likely already have been committed by the time it resolves, and this resolve should be processed
+				// in a separate batch. We're not using batch.deactivate()/activate() above because get_input()
+				// could write to sources, which would then incorrectly create a new batch or could mess with
+				// async_derived expecting a current_batch to exist.
+				if (current_batch === batch) {
+					batch.deactivate();
+				}
 				// Make sure we have a batch, since the branch manager expects one to exist
 				Batch.ensure();
-
-				if (hydrating) {
-					// `restore()` could set `hydrating` to `true`, which we very much
-					// don't want — we want to restore everything _except_ this
-					set_hydrating(false);
-				}
 
 				try {
 					fn();

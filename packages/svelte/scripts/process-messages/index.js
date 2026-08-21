@@ -378,7 +378,6 @@ function run() {
 			};
 
 			const block = esrap.print(
-				// @ts-expect-error some bullshit
 				/** @type {ESTree.Program} */ ({ ...ast, body: [clone] }),
 				ts({ comments: [jsdoc_clone] })
 			).code;

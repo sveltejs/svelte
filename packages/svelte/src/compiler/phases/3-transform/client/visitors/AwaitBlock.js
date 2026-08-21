@@ -71,14 +71,14 @@ export function AwaitBlock(node, context) {
 		'await'
 	);
 
-	if (node.metadata.expression.has_blockers()) {
+	if (node.metadata.expression.has_blockers() || node.metadata.expression.has_await) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
 					node.metadata.expression.blockers(),
-					b.array([]),
+					b.array([]), // {#await await ...} is special insofar that the await should not be waited on
 					b.arrow([context.state.node], b.block([stmt]))
 				)
 			)

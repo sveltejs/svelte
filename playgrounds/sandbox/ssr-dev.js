@@ -29,8 +29,9 @@ polka()
 		const { head, body } = await render(App);
 
 		const html = transformed_template
-			.replace(`<!--ssr-head-->`, head)
-			.replace(`<!--ssr-body-->`, body)
+			// use function form to prevent any string replacement characters from being interpreted
+			.replace(`<!--ssr-head-->`, () => head)
+			.replace(`<!--ssr-body-->`, () => body)
 			// check that Safari doesn't break hydration
 			.replaceAll('+636-555-3226', '<a href="tel:+636-555-3226">+636-555-3226</a>');
 

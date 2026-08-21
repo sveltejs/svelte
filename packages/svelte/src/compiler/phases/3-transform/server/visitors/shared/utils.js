@@ -12,7 +12,7 @@ import {
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
-import { has_await_expression } from '../../../../../utils/ast.js';
+import { has_await_expression, save } from '../../../../../utils/ast.js';
 import { ExpressionMetadata } from '../../../../nodes.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
@@ -60,7 +60,9 @@ export function process_children(nodes, { visit, state }) {
 				if (evaluated.is_known) {
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
 				} else {
-					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+					expressions.push(
+						b.call('$.escape', /** @type {Expression} */ (visit(node.expression, state)))
+					);
 
 					quasi = b.quasi('', i + 1 === sequence.length);
 					quasis.push(quasi);
@@ -80,7 +82,7 @@ export function process_children(nodes, { visit, state }) {
 		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
 
-			const expression = /** @type {Expression} */ (visit(node.expression));
+			const expression = /** @type {Expression} */ (visit(node.expression, state));
 
 			let call = b.call(
 				'$$renderer.push',
@@ -229,18 +231,25 @@ export function build_attribute_value(
 				? node.data.replace(regex_whitespaces_strict, ' ')
 				: node.data;
 		} else {
-			expressions.push(
-				b.call(
-					'$.stringify',
-					transform(
-						/** @type {Expression} */ (context.visit(node.expression)),
-						node.metadata.expression
-					)
-				)
-			);
+			const evaluated = context.state.scope.evaluate(node.expression);
 
-			quasi = b.quasi('', i + 1 === value.length);
-			quasis.push(quasi);
+			if (evaluated.is_known) {
+				quasi.value.cooked += (evaluated.value ?? '') + '';
+			} else {
+				const expression = transform(
+					/** @type {Expression} */ (context.visit(node.expression)),
+					node.metadata.expression
+				);
+
+				expressions.push(
+					evaluated.is_string && evaluated.is_defined
+						? expression
+						: b.call('$.stringify', expression)
+				);
+
+				quasi = b.quasi('', i + 1 === value.length);
+				quasis.push(quasi);
+			}
 		}
 	}
 
@@ -248,7 +257,9 @@ export function build_attribute_value(
 		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
-	return b.template(quasis, expressions);
+	return expressions.length > 0
+		? b.template(quasis, expressions)
+		: b.literal(/** @type {string} */ (quasi.value.cooked));
 }
 
 /**
@@ -275,7 +286,7 @@ export function build_getter(node, state) {
 	}
 
 	if (binding.kind === 'derived') {
-		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(binding.node);
+		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(node);
 	}
 
 	return node;
@@ -334,7 +345,7 @@ export class PromiseOptimiser {
 	 * @param {ExpressionMetadata} metadata
 	 */
 	check_blockers(metadata) {
-		for (const binding of metadata.dependencies) {
+		for (const binding of metadata.references) {
 			if (binding.blocker) {
 				this.#blockers.add(binding.blocker);
 			}
@@ -360,7 +371,7 @@ export class PromiseOptimiser {
 
 		return b.const(
 			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
-			b.await(b.call('Promise.all', promises))
+			save(b.call('Promise.all', promises))
 		);
 	}
 

@@ -43,7 +43,7 @@ The maintainers meet on the final Saturday of each month. While these meetings a
 
 ### Prioritization
 
-We do our best to review PRs and RFCs as they are sent, but it is difficult to keep up. We welcome help in reviewing PRs, RFCs, and issues. If an item aligns with the current priority on our [roadmap](https://svelte.dev/roadmap), it is more likely to be reviewed quickly. PRs to the most important and active ones repositories get reviewed more quickly while PRs to smaller inactive repos may sit for a bit before we periodically come by and review the pending PRs in a batch.
+We do our best to review PRs and RFCs as they are sent, but it is difficult to keep up. We welcome help in reviewing PRs, RFCs, and issues. If an item aligns with the current priority on our [roadmap](https://svelte.dev/roadmap), it is more likely to be reviewed quickly. PRs to the most important and active repositories get reviewed more quickly while PRs to smaller inactive repos may sit for a bit before we periodically come by and review the pending PRs in a batch.
 
 ## Bugs
 

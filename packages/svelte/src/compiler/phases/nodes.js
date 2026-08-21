@@ -102,8 +102,8 @@ export class ExpressionMetadata {
 		if (!this.#blockers) {
 			this.#blockers = new Set();
 
-			for (const d of this.dependencies) {
-				if (d.blocker) this.#blockers.add(d.blocker);
+			for (const r of this.references) {
+				if (r.blocker) this.#blockers.add(r.blocker);
 			}
 		}
 
@@ -217,6 +217,7 @@ function* find_descendants(fragment) {
 			case 'SnippetBlock':
 			case 'DebugTag':
 			case 'ConstTag':
+			case 'DeclarationTag':
 			case 'Comment':
 			case 'ExpressionTag':
 				break;

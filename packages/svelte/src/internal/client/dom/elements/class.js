@@ -1,4 +1,5 @@
 import { to_class } from '../../../shared/attributes.js';
+import { CLASS_CACHE } from '../../constants.js';
 import { hydrating } from '../hydration.js';
 
 /**
@@ -11,8 +12,7 @@ import { hydrating } from '../hydration.js';
  * @returns {Record<string, boolean> | undefined}
  */
 export function set_class(dom, is_html, value, hash, prev_classes, next_classes) {
-	// @ts-expect-error need to add __className to patched prototype
-	var prev = dom.__className;
+	var prev = /** @type {any} */ (dom)[CLASS_CACHE];
 
 	if (
 		hydrating ||
@@ -35,8 +35,7 @@ export function set_class(dom, is_html, value, hash, prev_classes, next_classes)
 			}
 		}
 
-		// @ts-expect-error need to add __className to patched prototype
-		dom.__className = value;
+		/** @type {any} */ (dom)[CLASS_CACHE] = value;
 	} else if (next_classes && prev_classes !== next_classes) {
 		for (var key in next_classes) {
 			var is_present = !!next_classes[key];

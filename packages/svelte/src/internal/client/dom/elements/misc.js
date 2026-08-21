@@ -1,6 +1,7 @@
 import { hydrating } from '../hydration.js';
 import { clear_text_content, get_first_child } from '../operations.js';
 import { queue_micro_task } from '../task.js';
+import { FORM_RESET_HANDLER } from '../../constants.js';
 
 /**
  * @param {HTMLElement} dom
@@ -45,8 +46,7 @@ export function add_form_reset_listener() {
 				Promise.resolve().then(() => {
 					if (!evt.defaultPrevented) {
 						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
-							// @ts-expect-error
-							e.__on_r?.();
+							/** @type {any} */ (e)[FORM_RESET_HANDLER]?.();
 						}
 					}
 				});

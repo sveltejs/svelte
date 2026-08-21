@@ -32,7 +32,6 @@ import {
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { includes } from '../../shared/utils.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
@@ -47,7 +46,7 @@ import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
-/** @type {Set<any>} */
+/** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
 /** @type {Map<Source, any>} */
@@ -158,7 +157,7 @@ export function set(source, value, should_proxy = false) {
 		(!untracking || (active_reaction.f & EAGER_EFFECT) !== 0) &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | EAGER_EFFECT)) !== 0 &&
-		(current_sources === null || !includes.call(current_sources, source))
+		(current_sources === null || !current_sources.has(source))
 	) {
 		e.state_unsafe_mutation();
 	}
@@ -181,7 +180,13 @@ export function set(source, value, should_proxy = false) {
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
-		old_values.set(source, is_destroying_effect ? value : source.v);
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else if (!old_values.has(source)) {
+			// only record the value from before the first write in this flush, otherwise a
+			// teardown would see the value from before whichever write happened to be last
+			old_values.set(source, source.v);
+		}
 
 		var batch = Batch.ensure();
 		batch.capture(source, value);
@@ -272,7 +277,18 @@ export function flush_eager_effects() {
 			set_signal_status(effect, MAYBE_DIRTY);
 		}
 
-		if (is_dirty(effect)) {
+		let dirty;
+
+		try {
+			dirty = is_dirty(effect);
+		} catch {
+			// Dirty-checking can evaluate derived dependencies and throw in cases where
+			// parent effects are about to destroy this eager effect. Run the effect so
+			// its own error handling can deal with transient failures.
+			dirty = true;
+		}
+
+		if (dirty) {
 			update_effect(effect);
 		}
 	}
@@ -338,12 +354,6 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
-		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & EAGER_EFFECT) !== 0) {
-			eager_effects.add(reaction);
-			continue;
-		}
-
 		var not_dirty = (flags & DIRTY) === 0;
 
 		// don't set a DIRTY reaction to MAYBE_DIRTY
@@ -351,7 +361,12 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			set_signal_status(reaction, status);
 		}
 
-		if ((flags & DERIVED) !== 0) {
+		if ((flags & EAGER_EFFECT) !== 0) {
+			// Eager effects need to run immediately:
+			// - for $inspect so that the stack trace makes sense
+			// - for $state.eager because they might be without an effect parent
+			eager_effects.add(/** @type {Effect} */ (reaction));
+		} else if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
 			batch_values?.delete(derived);

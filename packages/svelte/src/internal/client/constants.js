@@ -60,9 +60,16 @@ export const ASYNC = 1 << 22;
 export const ERROR_VALUE = 1 << 23;
 
 export const STATE_SYMBOL = Symbol('$state');
+/** Marks component export objects, so that `proxy(...)` leaves them untouched */
+export const COMPONENT_SYMBOL = Symbol('component');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+export const ATTRIBUTES_CACHE = Symbol('attributes');
+export const CLASS_CACHE = Symbol('class');
+export const STYLE_CACHE = Symbol('style');
+export const TEXT_CACHE = Symbol('text');
+export const FORM_RESET_HANDLER = Symbol('form reset');
 /** An anchor might change, via this symbol on the original anchor we can tell HMR about the updated anchor */
 export const HMR_ANCHOR = Symbol('hmr anchor');
 

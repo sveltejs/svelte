@@ -3,7 +3,6 @@ import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
 import * as devalue from 'devalue';
-import { get_stack } from '../shared/dev.js';
 import { DEV } from 'esm-env';
 import { get_user_code_location } from './dev.js';
 
@@ -65,7 +64,13 @@ function encode(key, value, unresolved) {
 			const placeholder = `"${uid++}"`;
 			const p = value
 				.then((v) => {
-					entry.serialized = entry.serialized.replace(placeholder, `r(${uneval(v)})`);
+					entry.serialized = entry.serialized.replace(
+						placeholder,
+						// use the function form here to prevent any string replacement characters from being interpreted
+						// in `v`, as it's potentially user-controlled and therefore potentially malicious.
+						// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
+						() => `r(${uneval(v)})`
+					);
 				})
 				.catch((devalue_error) =>
 					e.hydratable_serialization_failed(

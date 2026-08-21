@@ -1,5 +1,5 @@
 /** @import { ComponentType, SvelteComponent, Component } from 'svelte' */
-/** @import { Csp, RenderOutput } from '#server' */
+/** @import { Csp, RenderOutput } from '../../server/public.js' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
@@ -151,7 +151,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		// omit functions, internal svelte properties and invalid attribute names
 		if (typeof attrs[name] === 'function') continue;
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
-		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
+		if (name === '' || INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
 		var value = attrs[name];
 		var lower = name.toLowerCase();
