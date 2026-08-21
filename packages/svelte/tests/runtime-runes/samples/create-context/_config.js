@@ -1,5 +1,6 @@
 import { test } from '../../test';
 
 export default test({
-	html: `<h1>hello</h1>`
+	transformError: () => 'boom',
+	html: `<h1>hello</h1> <p>caught</p> fallback`
 });

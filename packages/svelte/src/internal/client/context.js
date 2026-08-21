@@ -74,15 +74,15 @@ export function set_dev_current_component_function(fn) {
 /**
  * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
  *
- * `get` will throw an error if `set` has not yet been called in the current component or any of
- * its ancestors.
+ * `get` will throw an error if it has no fallback passed to it and `set` has not yet
+ * been called in the current component or any of its ancestors.
  *
  * @template T
- * @returns {[() => T, (context: T) => T]}
+ * @returns {[(fallback?: T) => T, (context: T) => T]}
  * @since 5.40.0
  */
 export function createContext() {
-	return /** @type {[() => T, (context: T) => T]} */ (
+	return /** @type {[(fallback?: T) => T, (context: T) => T]} */ (
 		create_context(getContext, setContext, hasContext)
 	);
 }
