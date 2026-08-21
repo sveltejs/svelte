@@ -69,9 +69,21 @@ describe('parseCss', () => {
 	});
 
 	it('parses comments', () => {
-		const ast = parseCss('/* comment */ div { color: red; }');
+		const ast = parseCss(
+			'/* top */ div, /* selector */ span { /* block */ color: /* value */ red; }'
+		);
 		assert.equal(ast.children.length, 1);
 		assert.equal(ast.children[0].type, 'Rule');
+		assert.deepEqual(
+			ast.comments.map((comment) => comment.value),
+			[' top ', ' selector ', ' block ', ' value ']
+		);
+		assert.deepEqual(ast.comments[0], {
+			type: 'CSSComment',
+			value: ' top ',
+			start: 0,
+			end: 9
+		});
 	});
 
 	it('parses complex selectors', () => {
