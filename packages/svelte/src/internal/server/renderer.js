@@ -3,7 +3,7 @@
 /** @import { Csp, RenderOutput, SyncRenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
-import { abort } from './abort-signal.js';
+import { STALE_REACTION } from '../client/constants.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
@@ -44,12 +44,6 @@ export class Renderer {
 	 * @type {(() => void)[] | undefined}
 	 */
 	#on_destroy = undefined;
-
-	/**
-	 * Whether the `onDestroy` callbacks of this renderer tree have been run.
-	 * @type {boolean}
-	 */
-	#destroyed = false;
 
 	/**
 	 * Whether this renderer is a component body.
@@ -186,7 +180,7 @@ export class Renderer {
 		// prevent unhandled rejections, and attach the promise to the renderer instance
 		// so that rejections correctly cause rendering to fail
 		promise.catch(noop);
-		this.promise = promise;
+		this.promise = this.global.track(promise);
 
 		return promises;
 	}
@@ -231,7 +225,7 @@ export class Renderer {
 				e.await_invalid();
 			}
 
-			child.promise = result;
+			child.promise = child.global.track(result);
 		}
 
 		return child;
@@ -279,7 +273,7 @@ export class Renderer {
 					e.await_invalid();
 				}
 				result.catch(noop);
-				child.promise = result;
+				child.promise = child.global.track(result);
 			}
 		} catch (error) {
 			// synchronous errors are handled here, async errors will be handled in #collect_content_async
@@ -299,12 +293,14 @@ export class Renderer {
 					e.await_invalid();
 				}
 
-				child.promise = /** @type {Promise<unknown>} */ (result).then((transformed) => {
-					set_ssr_context(parent_context);
-					child.#out.push(Renderer.#serialize_failed_boundary(transformed));
-					failed_snippet(child, transformed, noop);
-					child.#out.push(BLOCK_CLOSE);
-				});
+				child.promise = child.global.track(
+					/** @type {Promise<unknown>} */ (result).then((transformed) => {
+						set_ssr_context(parent_context);
+						child.#out.push(Renderer.#serialize_failed_boundary(transformed));
+						failed_snippet(child, transformed, noop);
+						child.#out.push(BLOCK_CLOSE);
+					})
+				);
 				child.promise.catch(noop);
 			} else {
 				child.#out.push(Renderer.#serialize_failed_boundary(result));
@@ -636,52 +632,26 @@ export class Renderer {
 	}
 
 	/**
-	 * Runs the `onDestroy` callbacks of this renderer tree at most once,
-	 * whether the render succeeded or failed.
+	 * Runs every `onDestroy` callback in this renderer tree. On a failed render,
+	 * cleanup errors are suppressed so they do not mask the render error.
+	 * @param {boolean} suppress_errors
 	 */
-	#run_on_destroy() {
-		if (this.#destroyed) return;
-		this.#destroyed = true;
+	#run_on_destroy(suppress_errors) {
+		let first_error;
+		let has_error = false;
 
 		for (const cleanup of this.#collect_on_destroy()) {
-			cleanup();
-		}
-	}
-
-	/**
-	 * Waits until every promise in the tree has settled, including promises created
-	 * while waiting. This makes `#collect_on_destroy` safe to call after a failed
-	 * async render, where siblings of the rejected renderer are still in flight.
-	 */
-	async #settle() {
-		/** @type {Set<Promise<void>>} */
-		const seen = new Set();
-
-		/** @type {Promise<void>[]} */
-		let pending;
-
-		do {
-			pending = [];
-			this.#collect_pending(seen, pending);
-			await Promise.allSettled(pending);
-		} while (pending.length > 0);
-	}
-
-	/**
-	 * @param {Set<Promise<void>>} seen
-	 * @param {Promise<void>[]} pending
-	 */
-	#collect_pending(seen, pending) {
-		if (this.promise !== undefined && !seen.has(this.promise)) {
-			seen.add(this.promise);
-			pending.push(this.promise);
-		}
-
-		for (const child of this.#out) {
-			if (typeof child !== 'string') {
-				child.#collect_pending(seen, pending);
+			try {
+				cleanup();
+			} catch (error) {
+				if (!suppress_errors && !has_error) {
+					first_error = error;
+					has_error = true;
+				}
 			}
 		}
+
+		if (has_error) throw first_error;
 	}
 
 	/**
@@ -715,24 +685,26 @@ export class Renderer {
 	static #render(component, options) {
 		var previous_context = ssr_context;
 		const renderer = Renderer.#create('sync', options);
+		/** @type {AccumulatedContent | undefined} */
+		let result;
+		let render_error;
+		let failed = false;
+
 		try {
-			Renderer.#open_render(renderer, component, options);
-
-			const content = renderer.#collect_content();
-			const result = Renderer.#close_render(content, renderer);
-
-			renderer.#run_on_destroy();
-			return result;
-		} catch (error) {
 			try {
-				renderer.#run_on_destroy();
-			} catch {
-				// a throwing cleanup must not mask the error that failed the render
+				Renderer.#open_render(renderer, component, options);
+				result = Renderer.#close_render(renderer.#collect_content(), renderer);
+			} catch (error) {
+				render_error = error;
+				failed = true;
 			}
 
-			throw error;
+			renderer.#run_on_destroy(failed);
+			if (failed) throw render_error;
+
+			return /** @type {AccumulatedContent} */ (result);
 		} finally {
-			abort();
+			renderer.global.abort();
 			set_ssr_context(previous_context);
 		}
 	}
@@ -748,33 +720,34 @@ export class Renderer {
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
 		const renderer = Renderer.#create('async', options);
+		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] } }) | undefined} */
+		let result;
+		let render_error;
+		let failed = false;
 
 		try {
-			Renderer.#open_render(renderer, component, options);
-			const content = await renderer.#collect_content_async();
-			const hydratables = await renderer.#collect_hydratables();
-			if (hydratables !== null) {
-				content.head = hydratables + content.head;
-			}
-			const result = Renderer.#close_render(content, renderer);
-
-			renderer.#run_on_destroy();
-			return result;
-		} catch (error) {
-			// in-flight siblings of the rejected renderer must finish initialising
-			// before their cleanup runs, and may register more callbacks after resuming
-			await renderer.#settle();
-
 			try {
-				renderer.#run_on_destroy();
-			} catch {
-				// a throwing cleanup must not mask the error that failed the render
+				Renderer.#open_render(renderer, component, options);
+				const content = await renderer.#collect_content_async();
+				const hydratables = await renderer.#collect_hydratables();
+				if (hydratables !== null) {
+					content.head = hydratables + content.head;
+				}
+				result = Renderer.#close_render(content, renderer);
+			} catch (error) {
+				render_error = error;
+				failed = true;
+				renderer.global.abort();
+				await renderer.global.settle();
 			}
 
-			throw error;
+			renderer.#run_on_destroy(failed);
+			if (failed) throw render_error;
+
+			return /** @type {AccumulatedContent & { hashes: { script: Sha256Source[] } }} */ (result);
 		} finally {
 			set_ssr_context(previous_context);
-			abort();
+			renderer.global.abort();
 		}
 	}
 
@@ -977,6 +950,14 @@ export class SSRState {
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
 
+	/** @type {Set<Promise<unknown>>} */
+	#pending = new Set();
+
+	/** @type {AbortController | null} */
+	#controller = null;
+
+	#aborted = false;
+
 	/**
 	 * `transformError` passed to `render`. Called when an error boundary catches an error.
 	 * Throws by default if unset in `render`.
@@ -1005,6 +986,38 @@ export class SSRState {
 
 		let uid = 1;
 		this.uid = () => `${id_prefix}s${uid++}`;
+	}
+
+	/**
+	 * @template T
+	 * @param {Promise<T>} promise
+	 * @returns {Promise<T>}
+	 */
+	track(promise) {
+		this.#pending.add(promise);
+		promise.then(
+			() => this.#pending.delete(promise),
+			() => this.#pending.delete(promise)
+		);
+		return promise;
+	}
+
+	async settle() {
+		while (this.#pending.size > 0) {
+			await Promise.allSettled([...this.#pending]);
+		}
+	}
+
+	abort() {
+		if (this.#aborted) return;
+		this.#aborted = true;
+		this.#controller?.abort(STALE_REACTION);
+	}
+
+	get_abort_signal() {
+		const controller = (this.#controller ??= new AbortController());
+		if (this.#aborted) controller.abort(STALE_REACTION);
+		return controller.signal;
 	}
 
 	get_title() {
