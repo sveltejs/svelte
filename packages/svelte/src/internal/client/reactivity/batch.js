@@ -172,6 +172,14 @@ export class Batch {
 	#new_effects = [];
 
 	/**
+	 * Values that were first read by a reaction while this batch was time travelling
+	 * over an earlier batch that changed them. These reads connect the batches even
+	 * though this batch did not write to the values itself.
+	 * @type {Set<Value>}
+	 */
+	#new_dependencies = new Set();
+
+	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
 	 * @type {Set<Effect>}
 	 */
@@ -482,6 +490,12 @@ export class Batch {
 
 		while (batch !== null) {
 			if (!batch.is_fork) {
+				for (const value of this.#new_dependencies) {
+					if (batch.current.has(value)) {
+						return batch;
+					}
+				}
+
 				// if the batches are connected, break
 				for (const [value, [, is_derived]] of this.current) {
 					if (batch.current.has(value) && !is_derived) {
@@ -500,6 +514,10 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
+		for (const value of batch.#new_dependencies) {
+			this.#new_dependencies.add(value);
+		}
+
 		for (const [source, value] of batch.current) {
 			if (!this.previous.has(source) && batch.previous.has(source)) {
 				this.previous.set(source, batch.previous.get(source));
@@ -595,6 +613,28 @@ export class Batch {
 
 		if (!this.is_fork) {
 			source.v = value;
+		}
+	}
+
+	/**
+	 * If a reaction discovers a dependency that was changed by an earlier pending
+	 * batch, connect the two batches and expose the current value while traversing.
+	 * The current batch will be merged into the earlier one before it can commit.
+	 * @param {Value} value
+	 */
+	capture_dependency(value) {
+		if (this.is_fork || this.current.has(value)) return;
+
+		var batch = this.#prev;
+
+		while (batch !== null) {
+			if (!batch.is_fork && batch.current.has(value)) {
+				this.#new_dependencies.add(value);
+				batch_values?.set(value, /** @type {[any, boolean]} */ (batch.current.get(value))[0]);
+				return;
+			}
+
+			batch = batch.#prev;
 		}
 	}
 
