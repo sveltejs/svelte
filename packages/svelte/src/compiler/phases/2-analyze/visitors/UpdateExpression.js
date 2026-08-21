@@ -21,5 +21,9 @@ export function UpdateExpression(node, context) {
 		}
 	}
 
+	if (context.state.expression) {
+		context.state.expression.has_assignment = true;
+	}
+
 	context.next();
 }

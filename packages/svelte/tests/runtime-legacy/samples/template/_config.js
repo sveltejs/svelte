@@ -1,3 +1,4 @@
+import { COMMENT_NODE } from '#client/constants';
 import { ok, test } from '../../test';
 
 export default test({
@@ -41,7 +42,7 @@ export default test({
 		// get all childNodes of template3 except comments
 		let childNodes = [];
 		for (const node of template3.content.childNodes) {
-			if (node.nodeType !== 8) {
+			if (node.nodeType !== COMMENT_NODE) {
 				childNodes.push(/** @type {Element} */ (node));
 			}
 		}

@@ -14,6 +14,7 @@
 
 	class Foo<T> {
 		public name: string;
+		declare bar: string;
 		x = 'x' as const;
 		constructor(name: string) {
 			this.name = name;
@@ -25,6 +26,11 @@
 	abstract class MyAbstractClass {
 		abstract x(): void;
 		y() {}
+	}
+	class Subclass extends Foo<string> {
+		constructor(value: string) {
+			super(value);
+		}
 	}
 
 	declare const declared_const: number;

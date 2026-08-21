@@ -1,4 +1,4 @@
-import { DecodedSourceMap } from '@ampproject/remapping';
+import { DecodedSourceMap } from '@jridgewell/remapping';
 import { Location } from 'locate-character';
 import { MappedCode } from '../utils/mapped_code.js';
 

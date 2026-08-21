@@ -23,13 +23,16 @@ export const TEMPLATE_USE_MATHML = 1 << 3;
 export const HYDRATION_START = '[';
 /** used to indicate that an `{:else}...` block was rendered */
 export const HYDRATION_START_ELSE = '[!';
+/** used to indicate that a boundary's `failed` snippet was rendered on the server */
+export const HYDRATION_START_FAILED = '[?';
 export const HYDRATION_END = ']';
 export const HYDRATION_ERROR = {};
 
 export const ELEMENT_IS_NAMESPACED = 1;
 export const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
+export const ELEMENT_IS_INPUT = 1 << 2;
 
-export const UNINITIALIZED = Symbol();
+export const UNINITIALIZED = Symbol('uninitialized');
 
 // Dev-time component properties
 export const FILENAME = Symbol('filename');
@@ -42,6 +45,8 @@ export const NAMESPACE_MATHML = 'http://www.w3.org/1998/Math/MathML';
 // we use a list of ignorable runtime warnings because not every runtime warning
 // can be ignored and we want to keep the validation for svelte-ignore in place
 export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
+	'await_waterfall',
+	'await_reactivity_loss',
 	'state_snapshot_uncloneable',
 	'binding_property_non_reactive',
 	'hydration_attribute_changed',

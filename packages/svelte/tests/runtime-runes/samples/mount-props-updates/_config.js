@@ -22,7 +22,7 @@ export default test({
 			target.innerHTML,
 			// bar is not set in the parent because it's a readonly property
 			// baz is not set in the parent because while it's a bindable property,
-			// it wasn't set initially so it's treated as a readonly proeprty
+			// it wasn't set initially so it's treated as a readonly property
 			`
 			<button>reset</button> foo 3
 			<div><button>update</button> 1 2 3 4</div>

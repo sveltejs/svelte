@@ -8,5 +8,8 @@ export interface TransformState {
 	readonly scope: Scope;
 	readonly scopes: Map<AST.SvelteNode, Scope>;
 
+	/** `true` if we're transforming the contents of `<script>` */
+	readonly is_instance: boolean;
+
 	readonly state_fields: Map<string, StateField>;
 }

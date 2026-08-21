@@ -8,9 +8,9 @@ import { decode } from '@jridgewell/sourcemap-codec';
 type SourceMapEntry =
 	| string
 	| {
-			/** If not the first occurence, but the nth should be found */
+			/** If not the first occurrence, but the nth should be found */
 			idxOriginal?: number;
-			/** If not the first occurence, but the nth should be found */
+			/** If not the first occurrence, but the nth should be found */
 			idxGenerated?: number;
 			/** The original string to find */
 			str: string;
@@ -31,7 +31,21 @@ interface SourcemapTest extends BaseTest {
 	/** The expected `sources` array in the source map */
 	css_map_sources?: string[];
 	test?: (obj: {
-		assert: typeof assert;
+		// chai 5's `asserts value` signatures trip TS2775 in `_config.js` files
+		// where `assert` is a destructured parameter (non-explicit). Override
+		// the assertion methods we use with non-assertion equivalents.
+		assert: Omit<
+			typeof assert,
+			'ok' | 'isOk' | 'isTrue' | 'isFalse' | 'exists' | 'notExists' | 'instanceOf'
+		> & {
+			ok(value: unknown, message?: string): void;
+			isOk(value: unknown, message?: string): void;
+			isTrue(value: unknown, message?: string): void;
+			isFalse(value: unknown, message?: string): void;
+			exists(value: unknown, message?: string): void;
+			notExists(value: unknown, message?: string): void;
+			instanceOf(value: unknown, type: Function, message?: string): void;
+		};
 		input: string;
 		map_preprocessed: any;
 		code_preprocessed: string;
@@ -95,6 +109,20 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		}
 
 		const decoded = decode(map.mappings);
+
+		/*
+		Decoded sourcemap mappings contain absolute line/column numbers.
+		Negative values are invalid and can cause errors in downstream processing
+		*/
+		for (let l = 0; l < decoded.length; l++) {
+			for (let m of decoded[l]) {
+				if (m.some((i) => i < 0)) {
+					throw new Error(
+						`Invalid mapping with negative value ${JSON.stringify(m)} at line ${l} of the decoded mappings of ${info} sourcemap\n${JSON.stringify(map)}`
+					);
+				}
+			}
+		}
 
 		try {
 			for (let entry of entries) {

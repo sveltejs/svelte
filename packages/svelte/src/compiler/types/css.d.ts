@@ -6,10 +6,26 @@ export namespace _CSS {
 		end: number;
 	}
 
-	export interface StyleSheet extends BaseNode {
+	export interface StyleSheetBase extends BaseNode {
+		children: Array<Atrule | Rule>;
+		/** CSS comments in source order */
+		comments: CSSComment[];
+	}
+
+	export interface CSSComment extends BaseNode {
+		type: 'CSSComment';
+		value: string;
+		/** Character offset in a containing declaration value or at-rule prelude */
+		position?: number;
+	}
+
+	export interface StyleSheetFile extends StyleSheetBase {
+		type: 'StyleSheetFile';
+	}
+
+	export interface StyleSheet extends StyleSheetBase {
 		type: 'StyleSheet';
 		attributes: any[]; // TODO
-		children: Array<Atrule | Rule>;
 		content: {
 			start: number;
 			end: number;
@@ -105,6 +121,7 @@ export namespace _CSS {
 	export interface TypeSelector extends BaseNode {
 		type: 'TypeSelector';
 		name: string;
+		namespace?: string;
 	}
 
 	export interface IdSelector extends BaseNode {
@@ -128,6 +145,7 @@ export namespace _CSS {
 	export interface PseudoElementSelector extends BaseNode {
 		type: 'PseudoElementSelector';
 		name: string;
+		args?: SelectorList;
 	}
 
 	export interface PseudoClassSelector extends BaseNode {

@@ -3,7 +3,7 @@
 import { visit_component } from './shared/component.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { filename } from '../../../state.js';
+import { filename, UNKNOWN_FILENAME } from '../../../state.js';
 
 /**
  * @param {AST.SvelteSelf} node
@@ -23,9 +23,9 @@ export function SvelteSelf(node, context) {
 	}
 
 	if (context.state.analysis.runes) {
-		const name = filename === '(unknown)' ? 'Self' : context.state.analysis.name;
+		const name = filename === UNKNOWN_FILENAME ? 'Self' : context.state.analysis.name;
 		const basename =
-			filename === '(unknown)'
+			filename === UNKNOWN_FILENAME
 				? 'Self.svelte'
 				: /** @type {string} */ (filename.split(/[/\\]/).pop());
 

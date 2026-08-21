@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Statement, Expression } from 'estree' */
+/** @import { BlockStatement, Statement, Expression, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -34,54 +34,92 @@ export function SvelteBoundary(node, context) {
 	const nodes = [];
 
 	/** @type {Statement[]} */
-	const external_statements = [];
+	const const_tags = [];
 
 	/** @type {Statement[]} */
-	const internal_statements = [];
+	const hoisted = [];
 
-	const snippets_visits = [];
+	let has_const = false;
+	let has_declaration = false;
 
-	// Capture the `failed` implicit snippet prop
+	// const tags need to live inside the boundary, but might also be referenced in hoisted snippets.
+	// to resolve this we cheat: we duplicate const tags inside snippets
+	// We'll revert this behavior in the future, it was a mistake to allow this (Component snippets also don't do this).
 	for (const child of node.fragment.nodes) {
-		if (child.type === 'SnippetBlock' && child.expression.name === 'failed') {
-			// we need to delay the visit of the snippets in case they access a ConstTag that is declared
-			// after the snippets so that the visitor for the const tag can be updated
-			snippets_visits.push(() => {
-				/** @type {Statement[]} */
-				const init = [];
-				context.visit(child, { ...context.state, init });
-				props.properties.push(b.prop('init', child.expression, child.expression));
-				external_statements.push(...init);
-			});
-		} else if (child.type === 'ConstTag') {
-			/** @type {Statement[]} */
-			const init = [];
-			context.visit(child, { ...context.state, init });
-
-			if (dev) {
-				// In dev we must separate the declarations from the code
-				// that eagerly evaluate the expression...
-				for (const statement of init) {
-					if (statement.type === 'VariableDeclaration') {
-						external_statements.push(statement);
-					} else {
-						internal_statements.push(statement);
-					}
-				}
-			} else {
-				external_statements.push(...init);
+		if (child.type === 'ConstTag') {
+			has_const = true;
+			if (!context.state.options.experimental.async) {
+				context.visit(child, {
+					...context.state,
+					consts: const_tags,
+					scope: context.state.scopes.get(node.fragment) ?? context.state.scope
+				});
 			}
-		} else {
-			nodes.push(child);
+		}
+
+		if (child.type === 'DeclarationTag') {
+			has_declaration = true;
 		}
 	}
 
-	snippets_visits.forEach((visit) => visit());
+	for (const child of node.fragment.nodes) {
+		if (child.type === 'ConstTag') {
+			if (context.state.options.experimental.async) {
+				nodes.push(child);
+			}
+			continue;
+		}
 
-	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
+		if (child.type === 'SnippetBlock') {
+			if (
+				context.state.options.experimental.async &&
+				(has_const || has_declaration) &&
+				!['failed', 'pending'].includes(child.expression.name)
+			) {
+				// we can't hoist snippets as they may reference const/declaration tags, so we just keep them in the fragment
+				nodes.push(child);
+			} else {
+				/** @type {Statement[]} */
+				const statements = [];
 
-	if (dev && internal_statements.length) {
-		block.body.unshift(...internal_statements);
+				context.visit(child, { ...context.state, snippets: statements });
+
+				const snippet = /** @type {VariableDeclaration} */ (statements[0]);
+
+				const snippet_fn = dev
+					? // @ts-expect-error we know this shape is correct
+						snippet.declarations[0].init.arguments[1]
+					: snippet.declarations[0].init;
+
+				if (!context.state.options.experimental.async) {
+					snippet_fn.body.body.unshift(
+						...const_tags.filter((node) => node.type === 'VariableDeclaration')
+					);
+				}
+
+				if (['failed', 'pending'].includes(child.expression.name)) {
+					props.properties.push(b.prop('init', child.expression, child.expression));
+				}
+
+				hoisted.push(snippet);
+			}
+
+			continue;
+		}
+
+		nodes.push(child);
+	}
+
+	const block = /** @type {BlockStatement} */ (
+		context.visit(
+			{ ...node.fragment, nodes },
+			// Since we're creating a new fragment the reference in scopes can't match, so we gotta attach the right scope manually
+			{ ...context.state, scope: context.state.scopes.get(node.fragment) ?? context.state.scope }
+		)
+	);
+
+	if (!context.state.options.experimental.async) {
+		block.body.unshift(...const_tags);
 	}
 
 	const boundary = b.stmt(
@@ -89,7 +127,5 @@ export function SvelteBoundary(node, context) {
 	);
 
 	context.state.template.push_comment();
-	context.state.init.push(
-		external_statements.length > 0 ? b.block([...external_statements, boundary]) : boundary
-	);
+	context.state.init.push(hoisted.length > 0 ? b.block([...hoisted, boundary]) : boundary);
 }

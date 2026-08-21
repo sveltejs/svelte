@@ -1,0 +1,381 @@
+/** @import { Blocker, Effect, Source, Value } from '#client' */
+import { DESTROYED, STALE_REACTION } from '#client/constants';
+import { DEV } from 'esm-env';
+import {
+	component_context,
+	dev_stack,
+	is_runes,
+	set_component_context,
+	set_dev_stack
+} from '../context.js';
+import { Boundary } from '../dom/blocks/boundary.js';
+import { invoke_error_boundary } from '../error-handling.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction
+} from '../runtime.js';
+import { Batch, current_batch } from './batch.js';
+import {
+	async_derived,
+	reactivity_loss_tracker,
+	derived,
+	derived_safe_equal,
+	set_reactivity_loss_tracker
+} from './deriveds.js';
+import { aborted } from './effects.js';
+import { queue_micro_task } from '../dom/task.js';
+
+/**
+ * @param {Blocker[]} blockers
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
+ * @param {(values: Value[]) => any} fn
+ */
+export function flatten(blockers, sync, async, fn) {
+	const d = is_runes() ? derived : derived_safe_equal;
+
+	// Filter out already-settled blockers - no need to wait for them
+	var pending = blockers.filter((b) => !b.settled);
+
+	var deriveds = sync.map(d);
+
+	if (DEV) {
+		deriveds.forEach((d, i) => {
+			// TODO this is kinda useful for debugging but a lousy implementation —
+			// maybe the compiler could pass through the template string
+			d.label = sync[i]
+				.toString()
+				.replace('() => ', '')
+				.replaceAll('$.eager(() => ', '$state.eager(')
+				.replace(/\$\.get\((.+?)\)/g, (_, id) => id);
+		});
+	}
+
+	if (async.length === 0 && pending.length === 0) {
+		fn(deriveds);
+		return;
+	}
+
+	var parent = /** @type {Effect} */ (active_effect);
+
+	var restore = capture();
+	var blocker_promise =
+		pending.length === 1
+			? pending[0].promise
+			: pending.length > 1
+				? Promise.all(pending.map((b) => b.promise))
+				: null;
+
+	/**
+	 * @param {Source[]} async
+	 */
+	function finish(async) {
+		if ((parent.f & DESTROYED) !== 0) {
+			return;
+		}
+
+		restore();
+
+		try {
+			fn([...deriveds, ...async]);
+		} catch (error) {
+			invoke_error_boundary(error, parent);
+		}
+
+		unset_context();
+	}
+
+	var decrement_pending = increment_pending();
+
+	// Fast path: blockers but no async expressions
+	if (async.length === 0) {
+		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([])).finally(decrement_pending);
+		return;
+	}
+
+	// Full path: has async expressions
+	function run() {
+		Promise.all(async.map((expression) => async_derived(expression)))
+			.then(finish)
+			.catch((error) => invoke_error_boundary(error, parent))
+			.finally(decrement_pending);
+	}
+
+	if (blocker_promise) {
+		blocker_promise.then(() => {
+			restore();
+			run();
+			unset_context();
+		});
+	} else {
+		run();
+	}
+}
+
+/**
+ * @param {Blocker[]} blockers
+ * @param {(values: Value[]) => any} fn
+ */
+export function run_after_blockers(blockers, fn) {
+	flatten(blockers, [], [], fn);
+}
+
+/**
+ * Captures the current effect context so that we can restore it after
+ * some asynchronous work has happened (so that e.g. `await a + b`
+ * causes `b` to be registered as a dependency).
+ */
+export function capture() {
+	var previous_effect = /** @type {Effect} */ (active_effect);
+	var previous_reaction = active_reaction;
+	var previous_component_context = component_context;
+	var previous_batch = /** @type {Batch} */ (current_batch);
+
+	if (DEV) {
+		var previous_dev_stack = dev_stack;
+	}
+
+	return function restore(activate_batch = true) {
+		set_active_effect(previous_effect);
+		set_active_reaction(previous_reaction);
+		set_component_context(previous_component_context);
+
+		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
+			// TODO we only need optional chaining here because `{#await ...}` blocks
+			// are anomalous. Once we retire them we can get rid of it
+			previous_batch?.activate();
+			previous_batch?.apply();
+		}
+
+		if (DEV) {
+			set_reactivity_loss_tracker(null);
+			set_dev_stack(previous_dev_stack);
+		}
+	};
+}
+
+/**
+ * Wraps an `await` expression in such a way that the effect context that was
+ * active before the expression evaluated can be reapplied afterwards —
+ * `await a + b` becomes `(await $.save(a))() + b`
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<() => T>}
+ */
+export async function save(promise) {
+	var restore = capture();
+	var value = await promise;
+
+	return () => {
+		restore();
+		queue_micro_task(unset_context);
+		return value;
+	};
+}
+
+/**
+ * Reset `current_async_effect` after the `promise` resolves, so
+ * that we can emit `await_reactivity_loss` warnings
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<() => T>}
+ */
+export async function track_reactivity_loss(promise) {
+	var previous_reactivity_loss_tracker = reactivity_loss_tracker;
+	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
+	queueMicrotask(() => {
+		if (reactivity_loss_tracker === previous_reactivity_loss_tracker) {
+			set_reactivity_loss_tracker(null);
+		}
+	});
+
+	var value = await promise;
+
+	return () => {
+		set_reactivity_loss_tracker(previous_reactivity_loss_tracker);
+		// While this can result in false negatives it also guards against the more important
+		// false positives that would occur if this is the last in a chain of async operations,
+		// and the reactivity_loss_tracker would then stay around until the next async operation happens.
+		queueMicrotask(() => {
+			if (reactivity_loss_tracker === previous_reactivity_loss_tracker) {
+				set_reactivity_loss_tracker(null);
+			}
+		});
+
+		return value;
+	};
+}
+
+/**
+ * Used in `for await` loops in DEV, so
+ * that we can emit `await_reactivity_loss` warnings
+ * after each `async_iterator` result resolves and
+ * after the `async_iterator` return resolves (if it runs)
+ * @template T
+ * @template TReturn
+ * @param {Iterable<T> | AsyncIterable<T>} iterable
+ * @returns {AsyncGenerator<T, TReturn | undefined>}
+ */
+export async function* for_await_track_reactivity_loss(iterable) {
+	// This is based on the algorithms described in ECMA-262:
+	// ForIn/OfBodyEvaluation
+	// https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset
+	// AsyncIteratorClose
+	// https://tc39.es/ecma262/multipage/abstract-operations.html#sec-asynciteratorclose
+
+	/** @type {AsyncIterator<T, TReturn>} */
+	// @ts-ignore
+	const iterator = iterable[Symbol.asyncIterator]?.() ?? iterable[Symbol.iterator]?.();
+
+	if (iterator === undefined) {
+		throw new TypeError('value is not async iterable');
+	}
+
+	// eslint-disable-next-line no-useless-assignment
+	let invoke_return = true;
+
+	try {
+		while (true) {
+			const { done, value } = (await track_reactivity_loss(iterator.next()))();
+			if (done) {
+				invoke_return = false;
+				break;
+			}
+			var prev = reactivity_loss_tracker;
+			try {
+				yield value;
+			} catch (e) {
+				set_reactivity_loss_tracker(prev);
+				// If the yield throws, we need to call `return` but not return its value, instead rethrow
+				if (iterator.return !== undefined) {
+					(await track_reactivity_loss(iterator.return()))();
+				}
+				throw e;
+			}
+			set_reactivity_loss_tracker(prev);
+		}
+	} catch (error) {
+		invoke_return = false;
+		throw error;
+	} finally {
+		// If the iterator had an abrupt completion (break) and `return` is defined on the iterator, call it and return the value
+		if (invoke_return && iterator.return !== undefined) {
+			// eslint-disable-next-line no-unsafe-finally
+			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))().value);
+		}
+	}
+}
+
+export function unset_context(deactivate_batch = true) {
+	set_active_effect(null);
+	set_active_reaction(null);
+	set_component_context(null);
+	if (deactivate_batch) current_batch?.deactivate();
+
+	if (DEV) {
+		set_reactivity_loss_tracker(null);
+		set_dev_stack(null);
+	}
+}
+
+/**
+ * @param {Array<() => void | Promise<void>>} thunks
+ */
+export function run(thunks) {
+	const restore = capture();
+
+	const decrement_pending = increment_pending();
+
+	var active = /** @type {Effect} */ (active_effect);
+
+	/** @type {null | { error: any }} */
+	var errored = null;
+
+	/** @param {any} error */
+	const handle_error = (error) => {
+		errored = { error }; // wrap in object in case a promise rejects with a falsy value
+
+		if (!aborted(active)) {
+			invoke_error_boundary(error, active);
+		}
+	};
+
+	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+
+	/** @type {Blocker} */
+	var blocker = { promise, settled: false };
+	var blockers = [blocker];
+
+	promise.finally(() => {
+		blocker.settled = true;
+		unset_context();
+	});
+
+	for (const fn of thunks.slice(1)) {
+		promise = promise
+			.then(() => {
+				restore();
+
+				try {
+					if (errored) {
+						throw errored.error;
+					}
+
+					if (aborted(active)) {
+						throw STALE_REACTION;
+					}
+
+					return fn();
+				} finally {
+					// We gotta unset context directly in case the function returns a promise, in which case
+					// unset_context in .finally() would be too late ...
+					unset_context();
+				}
+			})
+			.catch(handle_error);
+
+		const blocker = { promise, settled: false };
+		blockers.push(blocker);
+
+		promise.finally(() => {
+			blocker.settled = true;
+			// ... but we also need it after such a promise has resolved in case it restores our context
+			unset_context();
+		});
+	}
+
+	promise
+		// wait one more tick, so that template effects are
+		// guaranteed to run before `$effect(...)`
+		.then(() => Promise.resolve())
+		.finally(decrement_pending);
+
+	return blockers;
+}
+
+/**
+ * @param {Blocker[]} blockers
+ */
+export function wait(blockers) {
+	return Promise.all(blockers.map((b) => b.promise));
+}
+
+/**
+ * @returns {(skip?: boolean) => void}
+ */
+export function increment_pending() {
+	var effect = /** @type {Effect} */ (active_effect);
+	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
+	var batch = /** @type {Batch} */ (current_batch);
+	var blocking = !!boundary?.is_rendered();
+
+	boundary?.update_pending_count(1, batch);
+	batch.increment(blocking, effect);
+
+	return () => {
+		boundary?.update_pending_count(-1, batch);
+		batch.decrement(blocking, effect);
+	};
+}

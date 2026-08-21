@@ -22,7 +22,18 @@
 						"end": 55,
 						"type": "Binding",
 						"name": "value",
-						"modifiers": [],
+						"name_loc": {
+							"start": {
+								"line": 5,
+								"column": 7,
+								"character": 38
+							},
+							"end": {
+								"line": 5,
+								"column": 17,
+								"character": 48
+							}
+						},
 						"expression": {
 							"type": "Identifier",
 							"start": 50,
@@ -38,7 +49,8 @@
 								}
 							},
 							"name": "name"
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": []
@@ -61,7 +73,7 @@
 				},
 				"end": {
 					"line": 3,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [

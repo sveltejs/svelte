@@ -11,7 +11,7 @@ import * as b from '#compiler/builders';
 export function SnippetBlock(node, context) {
 	let fn = b.function_declaration(
 		node.expression,
-		[b.id('$$payload'), ...node.parameters],
+		[b.id('$$renderer'), ...node.parameters],
 		/** @type {BlockStatement} */ (context.visit(node.body))
 	);
 
@@ -21,7 +21,7 @@ export function SnippetBlock(node, context) {
 	const statements = node.metadata.can_hoist ? context.state.hoisted : context.state.init;
 
 	if (dev) {
-		fn.body.body.unshift(b.stmt(b.call('$.validate_snippet_args', b.id('$$payload'))));
+		fn.body.body.unshift(b.stmt(b.call('$.validate_snippet_args', b.id('$$renderer'))));
 		statements.push(b.stmt(b.call('$.prevent_snippet_stringification', fn.id)));
 	}
 

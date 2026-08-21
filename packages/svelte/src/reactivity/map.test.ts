@@ -207,6 +207,75 @@ test('map handling of undefined values', () => {
 	cleanup();
 });
 
+test('map.has() and map.get() with undefined values', () => {
+	const map = new SvelteMap<string, undefined | string>([['foo', undefined]]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push('has', map.has('foo'));
+		});
+
+		render_effect(() => {
+			log.push('get', map.get('foo'));
+		});
+
+		flushSync(() => {
+			map.delete('foo');
+		});
+
+		flushSync(() => {
+			map.set('bar', undefined);
+		});
+	});
+
+	assert.deepEqual(log, [
+		'has',
+		true,
+		'get',
+		undefined,
+		'has',
+		false,
+		'get',
+		undefined,
+		// set('bar') bumps version, causing has('foo')/get('foo') effects to re-run
+		'has',
+		false,
+		'get',
+		undefined
+	]);
+
+	assert.equal(map.has('bar'), true);
+	assert.equal(map.get('bar'), undefined);
+
+	cleanup();
+});
+
+test('map.delete() triggers size reactivity for keys without per-key sources', () => {
+	const map = new SvelteMap([
+		[1, 'a'],
+		[2, 'b']
+	]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(map.size);
+		});
+
+		// delete key 2 which was never individually read (no per-key source)
+		flushSync(() => {
+			map.delete(2);
+		});
+	});
+
+	assert.deepEqual(log, [2, 1]);
+
+	cleanup();
+});
+
 test('not invoking reactivity when value is not in the map after changes', () => {
 	const map = new SvelteMap([[1, 1]]);
 

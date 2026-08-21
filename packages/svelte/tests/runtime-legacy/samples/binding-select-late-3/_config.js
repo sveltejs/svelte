@@ -28,9 +28,9 @@ export default test({
 			target.innerHTML,
 			`
 			<select>
-				<option value='one'>one</option>
-				<option value='two'>two</option>
-				<option value='three'>three</option>
+				<option>one</option>
+				<option>two</option>
+				<option>three</option>
 			</select>
 			<p>selected: two</p>
 		`

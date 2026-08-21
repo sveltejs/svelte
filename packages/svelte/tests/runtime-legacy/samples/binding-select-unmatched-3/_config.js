@@ -4,7 +4,7 @@ import { ok, test } from '../../test';
 export default test({
 	mode: ['client', 'hydrate'],
 
-	html: `<p>selected: a</p><select><option value="a">a</option><option value="b">b</option><option value="c">c</option></select>`,
+	html: `<p>selected: a</p><select><option>a</option><option>b</option><option>c</option></select>`,
 
 	async test({ assert, component, target }) {
 		const select = target.querySelector('select');
@@ -29,7 +29,7 @@ export default test({
 		// model of selected value should be kept around, even if it is not in the list
 		assert.htmlEqual(
 			target.innerHTML,
-			`<p>selected: a</p><select><option value="b">b</option><option value="c">c</option></select>`
+			`<p>selected: a</p><select><option>b</option><option>c</option></select>`
 		);
 	}
 });

@@ -1,5 +1,5 @@
 import { teardown } from '../../reactivity/effects.js';
-import { define_property, is_array } from '../../../shared/utils.js';
+import { define_property } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import { FILENAME } from '../../../../constants.js';
@@ -11,6 +11,12 @@ import {
 	set_active_reaction
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
+
+/**
+ * Used on elements, as a map of event type -> event handler,
+ * and on events themselves to track which element handled an event
+ */
+export const event_symbol = Symbol('events');
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -128,6 +134,17 @@ export function event(event_name, dom, handler, capture, passive) {
 }
 
 /**
+ * @param {string} event_name
+ * @param {Element} element
+ * @param {EventListener} [handler]
+ * @returns {void}
+ */
+export function delegated(event_name, element, handler) {
+	// @ts-expect-error
+	(element[event_symbol] ??= {})[event_name] = handler;
+}
+
+/**
  * @param {Array<string>} events
  * @returns {void}
  */
@@ -141,6 +158,16 @@ export function delegate(events) {
 	}
 }
 
+// used to store the reference to the currently propagated event
+// to prevent garbage collection between microtasks in Firefox (<= 141)
+// If the event object is GCed too early, the expando __root property
+// set on the event object is lost, causing the event delegation
+// to process the event twice
+let last_propagated_event = null;
+
+// whether a task is already queued to clear `last_propagated_event`
+let last_propagated_event_clear_scheduled = false;
+
 /**
  * @this {EventTarget}
  * @param {Event} event
@@ -153,14 +180,34 @@ export function handle_event_propagation(event) {
 	var path = event.composedPath?.() || [];
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
 
+	last_propagated_event = event;
+
+	// The reference is only needed while the event can still reach another
+	// delegated root, i.e. during the current (synchronous) dispatch and its
+	// microtask checkpoints. Clearing it in a later task preserves the
+	// Firefox workaround while making sure the slot doesn't retain the last
+	// event forever — through `event.target` it would otherwise keep the
+	// entire detached subtree of whatever the user last clicked in alive
+	// until the next delegated event happens to arrive.
+	if (!last_propagated_event_clear_scheduled) {
+		last_propagated_event_clear_scheduled = true;
+		setTimeout(() => {
+			last_propagated_event_clear_scheduled = false;
+			last_propagated_event = null;
+		});
+	}
+
 	// composedPath contains list of nodes the event has propagated through.
-	// We check __root to skip all nodes below it in case this is a
-	// parent of the __root node, which indicates that there's nested
+	// We check `event_symbol` to skip all nodes below it in case this is a
+	// parent of the `event_symbol` node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
 	var path_idx = 0;
 
+	// the `last_propagated_event === event` check is redundant, but
+	// without it the variable will be DCE'd and things will
+	// fail mysteriously in Firefox
 	// @ts-expect-error is added below
-	var handled_at = event.__root;
+	var handled_at = last_propagated_event === event && event[event_symbol];
 
 	if (handled_at) {
 		var at_idx = path.indexOf(handled_at);
@@ -172,7 +219,7 @@ export function handle_event_propagation(event) {
 			// -> ignore, but set handle_at to document/window so that we're resetting the event
 			// chain in case someone manually dispatches the same event object again.
 			// @ts-expect-error
-			event.__root = handler_element;
+			event[event_symbol] = handler_element;
 			return;
 		}
 
@@ -208,9 +255,9 @@ export function handle_event_propagation(event) {
 	});
 
 	// This started because of Chromium issue https://chromestatus.com/feature/5128696823545856,
-	// where removal or moving of of the DOM can cause sync `blur` events to fire, which can cause logic
+	// where removal or moving of the DOM can cause sync `blur` events to fire, which can cause logic
 	// to run inside the current `active_reaction`, which isn't what we want at all. However, on reflection,
-	// it's probably best that all event handled by Svelte have this behaviour, as we don't really want
+	// it's probably best that all events handled by Svelte have this behaviour, as we don't really want
 	// an event handler to run in the context of another reaction or effect.
 	var previous_reaction = active_reaction;
 	var previous_effect = active_effect;
@@ -228,16 +275,11 @@ export function handle_event_propagation(event) {
 		var other_errors = [];
 
 		while (current_target !== null) {
-			/** @type {null | Element} */
-			var parent_element =
-				current_target.assignedSlot ||
-				current_target.parentNode ||
-				/** @type {any} */ (current_target).host ||
-				null;
+			if (current_target === handler_element) break;
 
 			try {
 				// @ts-expect-error
-				var delegated = current_target['__' + event_name];
+				var delegated = current_target[event_symbol]?.[event_name];
 
 				if (
 					delegated != null &&
@@ -246,12 +288,7 @@ export function handle_event_propagation(event) {
 						// -> the target could not have been disabled because it emits the event in the first place
 						event.target === current_target)
 				) {
-					if (is_array(delegated)) {
-						var [fn, ...data] = delegated;
-						fn.apply(current_target, [event, ...data]);
-					} else {
-						delegated.call(current_target, event);
-					}
+					delegated.call(current_target, event);
 				}
 			} catch (error) {
 				if (throw_error) {
@@ -260,10 +297,10 @@ export function handle_event_propagation(event) {
 					throw_error = error;
 				}
 			}
-			if (event.cancelBubble || parent_element === handler_element || parent_element === null) {
-				break;
-			}
-			current_target = parent_element;
+			if (event.cancelBubble) break;
+
+			path_idx++;
+			current_target = path_idx < path.length ? /** @type {Element} */ (path[path_idx]) : null;
 		}
 
 		if (throw_error) {
@@ -277,7 +314,7 @@ export function handle_event_propagation(event) {
 		}
 	} finally {
 		// @ts-expect-error is used above
-		event.__root = handler_element;
+		event[event_symbol] = handler_element;
 		// @ts-ignore remove proxy on currentTarget
 		delete event.currentTarget;
 		set_active_reaction(previous_reaction);

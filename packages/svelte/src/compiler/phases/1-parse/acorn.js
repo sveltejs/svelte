@@ -1,20 +1,37 @@
-/** @import { Comment, Program } from 'estree' */
+/** @import { Comment, Program, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
+/** @import { Parser } from './index.js' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
+import * as e from '../../errors.js';
 
-const ParserWithTS = acorn.Parser.extend(tsPlugin());
+const JSParser = acorn.Parser;
+const TSParser = JSParser.extend(tsPlugin());
+
+/**
+ * @typedef {Comment & {
+ *   start: number;
+ *   end: number;
+ * }} CommentWithLocation
+ */
 
 /**
  * @param {string} source
+ * @param {AST.JSComment[]} comments
  * @param {boolean} typescript
  * @param {boolean} [is_script]
  */
-export function parse(source, typescript, is_script) {
-	const parser = typescript ? ParserWithTS : acorn.Parser;
-	const { onComment, add_comments } = get_comment_handlers(source);
-	// @ts-ignore
-	const parse_statement = parser.prototype.parseStatement;
+export function parse(source, comments, typescript, is_script) {
+	const acorn = typescript ? TSParser : JSParser;
+
+	const { onComment, add_comments } = get_comment_handlers(
+		source,
+		/** @type {CommentWithLocation[]} */ (comments)
+	);
+
+	// @ts-expect-error
+	const parse_statement = acorn.prototype.parseStatement;
 
 	// If we're dealing with a <script> then it might contain an export
 	// for something that doesn't exist directly inside but is inside the
@@ -22,7 +39,7 @@ export function parse(source, typescript, is_script) {
 	// an error in these cases
 	if (is_script) {
 		// @ts-ignore
-		parser.prototype.parseStatement = function (...args) {
+		acorn.prototype.parseStatement = function (...args) {
 			const v = parse_statement.call(this, ...args);
 			// @ts-ignore
 			this.undefinedExports = {};
@@ -30,47 +47,107 @@ export function parse(source, typescript, is_script) {
 		};
 	}
 
-	let ast;
-
 	try {
-		ast = parser.parse(source, {
+		const ast = acorn.parse(source, {
 			onComment,
 			sourceType: 'module',
-			ecmaVersion: 13,
+			ecmaVersion: 16,
 			locations: true
 		});
+
+		add_comments(ast);
+
+		return /** @type {Program} */ (ast);
+	} catch (err) {
+		// TODO the `return` is necessary for TS<7 due to a bug; otherwise
+		// the `finally` block is regarded as unreachable
+		return handle_parse_error(err);
 	} finally {
 		if (is_script) {
-			// @ts-ignore
-			parser.prototype.parseStatement = parse_statement;
+			// @ts-expect-error
+			acorn.prototype.parseStatement = parse_statement;
 		}
 	}
-
-	add_comments(ast);
-
-	return /** @type {Program} */ (ast);
 }
 
 /**
+ * @param {Parser} parser
  * @param {string} source
- * @param {boolean} typescript
  * @param {number} index
  * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
-export function parse_expression_at(source, typescript, index) {
-	const parser = typescript ? ParserWithTS : acorn.Parser;
-	const { onComment, add_comments } = get_comment_handlers(source);
+export function parse_expression_at(parser, source, index) {
+	const acorn = parser.ts ? TSParser : JSParser;
 
-	const ast = parser.parseExpressionAt(source, index, {
-		onComment,
-		sourceType: 'module',
-		ecmaVersion: 13,
-		locations: true
+	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
+
+	try {
+		const ast = acorn.parseExpressionAt(source, index, {
+			onComment,
+			sourceType: 'module',
+			ecmaVersion: 16,
+			locations: true,
+			preserveParens: true
+		});
+
+		add_comments(ast);
+
+		return ast;
+	} catch (e) {
+		handle_parse_error(e);
+	}
+}
+
+/**
+ * @param {Parser} parser
+ * @param {string} source
+ * @param {number} index
+ * @returns {Statement}
+ */
+export function parse_statement_at(parser, source, index) {
+	// cast to `any`: acorn's Parser constructor and parseStatement/nextToken aren't in its public types
+	const acorn = /** @type {any} */ (parser.ts ? TSParser : JSParser);
+	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
+
+	try {
+		// This is like parseExpressionAt but for statements
+		const p = new acorn(
+			{ onComment, sourceType: 'module', ecmaVersion: 16, locations: true },
+			source,
+			index
+		);
+		p.nextToken();
+		const statement = /** @type {Statement} */ (p.parseStatement(null, true, Object.create(null)));
+		add_comments(/** @type {acorn.Node} */ (statement));
+		return statement;
+	} catch (err) {
+		// A statement that runs to the end of the source (e.g. an unterminated declaration tag)
+		// is an EOF, not a stray token; preserve the friendlier `unexpected_eof` diagnostic.
+		if (/** @type {any} */ (err).pos === source.length) e.unexpected_eof(source.length);
+		handle_parse_error(err);
+	}
+}
+
+const regex_position_indicator = / \(\d+:\d+\)$/;
+
+/**
+ * @param {any} err
+ * @returns {never}
+ */
+function handle_parse_error(err) {
+	e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
+}
+
+/**
+ * @param {acorn.Expression} node
+ * @returns {acorn.Expression}
+ */
+export function remove_parens(node) {
+	return walk(node, null, {
+		ParenthesizedExpression(node, context) {
+			return context.visit(node.expression);
+		}
 	});
-
-	add_comments(ast);
-
-	return ast;
 }
 
 /**
@@ -78,26 +155,20 @@ export function parse_expression_at(source, typescript, index) {
  * to add them after the fact. They are needed in order to support `svelte-ignore` comments
  * in JS code and so that `prettier-plugin-svelte` doesn't remove all comments when formatting.
  * @param {string} source
+ * @param {CommentWithLocation[]} comments
+ * @param {number} index
  */
-function get_comment_handlers(source) {
-	/**
-	 * @typedef {Comment & {
-	 *   start: number;
-	 *   end: number;
-	 * }} CommentWithLocation
-	 */
-
-	/** @type {CommentWithLocation[]} */
-	const comments = [];
-
+function get_comment_handlers(source, comments, index = 0) {
 	return {
 		/**
 		 * @param {boolean} block
 		 * @param {string} value
 		 * @param {number} start
 		 * @param {number} end
+		 * @param {import('acorn').Position} [start_loc]
+		 * @param {import('acorn').Position} [end_loc]
 		 */
-		onComment: (block, value, start, end) => {
+		onComment: (block, value, start, end, start_loc, end_loc) => {
 			if (block && /\n/.test(value)) {
 				let a = start;
 				while (a > 0 && source[a - 1] !== '\n') a -= 1;
@@ -109,12 +180,25 @@ function get_comment_handlers(source) {
 				value = value.replace(new RegExp(`^${indentation}`, 'gm'), '');
 			}
 
-			comments.push({ type: block ? 'Block' : 'Line', value, start, end });
+			comments.push({
+				type: block ? 'Block' : 'Line',
+				value,
+				start,
+				end,
+				loc: {
+					start: /** @type {import('acorn').Position} */ (start_loc),
+					end: /** @type {import('acorn').Position} */ (end_loc)
+				}
+			});
 		},
 
 		/** @param {acorn.Node & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }} ast */
 		add_comments(ast) {
 			if (comments.length === 0) return;
+
+			comments = comments
+				.filter((comment) => comment.start >= index)
+				.map(({ type, value, start, end }) => ({ type, value, start, end }));
 
 			walk(ast, null, {
 				_(node, { next, path }) {

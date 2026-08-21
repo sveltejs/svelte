@@ -2,8 +2,8 @@
 /** @import { Processed } from '../preprocess/public.js' */
 /** @import { SourceMap } from 'magic-string' */
 /** @import { Source } from '../preprocess/private.js' */
-/** @import { DecodedSourceMap, SourceMapSegment, RawSourceMap } from '@ampproject/remapping' */
-import remapping from '@ampproject/remapping';
+/** @import { DecodedSourceMap, SourceMapSegment, RawSourceMap } from '@jridgewell/remapping' */
+import remapping from '@jridgewell/remapping';
 import { push_array } from './push_array.js';
 
 /**
@@ -311,6 +311,13 @@ function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_inp
 		typeof preprocessor_map_input === 'string'
 			? JSON.parse(preprocessor_map_input)
 			: preprocessor_map_input;
+	// A preprocessor map with a missing/empty `sources[0]` (e.g. from a MagicString transform
+	// created without a `source` option) can't be matched against `filename` during combination,
+	// which silently drops the chain instead of erroring. Normalize it to `filename` first, the
+	// same way Vite treats an empty `sources[0]` as referring to the file being transformed.
+	if (preprocessor_map.sources?.length === 1 && !preprocessor_map.sources[0]) {
+		preprocessor_map.sources = [filename];
+	}
 	const result_map = combine_sourcemaps(filename, [svelte_map, preprocessor_map]);
 	// Svelte expects a SourceMap which includes toUrl and toString. Instead of wrapping our output in a class,
 	// we just tack on the extra properties.
@@ -398,10 +405,13 @@ export function merge_with_preprocessor_map(result, options, source_name) {
 		// map may contain a different file name. Patch our map beforehand to align sources so merging
 		// with the preprocessor map works correctly.
 		result.map.sources = [file_basename];
-		result.map = apply_preprocessor_sourcemap(
-			file_basename,
+		Object.assign(
 			result.map,
-			/** @type {any} */ (options.sourcemap)
+			apply_preprocessor_sourcemap(
+				file_basename,
+				result.map,
+				/** @type {any} */ (options.sourcemap)
+			)
 		);
 		// After applying the preprocessor map, we need to do the inverse and make the sources
 		// relative to the input file again in case the output code is in a different directory.

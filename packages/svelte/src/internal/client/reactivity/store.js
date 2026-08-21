@@ -6,6 +6,13 @@ import { define_property, noop } from '../../shared/utils.js';
 import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
+import { DEV } from 'esm-env';
+
+/**
+ * We set this to `true` when updating a store so that we correctly
+ * schedule effects if the update takes place inside a `$:` effect
+ */
+export let legacy_is_updating_store = false;
 
 /**
  * Whether or not the prop currently being read is a store binding, as in
@@ -14,7 +21,7 @@ import { mutable_source, set } from './sources.js';
  */
 let is_store_binding = false;
 
-let IS_UNMOUNTED = Symbol();
+let IS_UNMOUNTED = Symbol('unmounted');
 
 /**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
@@ -32,6 +39,10 @@ export function store_get(store, store_name, stores) {
 		source: mutable_source(undefined),
 		unsubscribe: noop
 	});
+
+	if (DEV) {
+		entry.source.label = store_name;
+	}
 
 	// if the component that setup this is already unmounted we don't want to register a subscription
 	if (entry.store !== store && !(IS_UNMOUNTED in stores)) {
@@ -97,7 +108,7 @@ export function store_unsub(store, store_name, stores) {
  * @returns {V}
  */
 export function store_set(store, value) {
-	store.set(value);
+	update_with_flag(store, value);
 	return value;
 }
 
@@ -137,6 +148,21 @@ export function setup_stores() {
 }
 
 /**
+ * @param {Store<V>} store
+ * @param {V} value
+ * @template V
+ */
+function update_with_flag(store, value) {
+	legacy_is_updating_store = true;
+
+	try {
+		store.set(value);
+	} finally {
+		legacy_is_updating_store = false;
+	}
+}
+
+/**
  * Updates a store with a new value.
  * @param {Store<V>} store  the store to update
  * @param {any} expression  the expression that mutates the store
@@ -144,7 +170,7 @@ export function setup_stores() {
  * @template V
  */
 export function store_mutate(store, expression, new_value) {
-	store.set(new_value);
+	update_with_flag(store, new_value);
 	return expression;
 }
 
@@ -155,7 +181,7 @@ export function store_mutate(store, expression, new_value) {
  * @returns {number}
  */
 export function update_store(store, store_value, d = 1) {
-	store.set(store_value + d);
+	update_with_flag(store, store_value + d);
 	return store_value;
 }
 
@@ -167,7 +193,7 @@ export function update_store(store, store_value, d = 1) {
  */
 export function update_pre_store(store, store_value, d = 1) {
 	const value = store_value + d;
-	store.set(value);
+	update_with_flag(store, value);
 	return value;
 }
 

@@ -8,6 +8,6 @@ export default test({
 		btn?.click();
 		flushSync();
 
-		assert.htmlEqual(target.innerHTML, `<button>change</button><p>Error occured</p>`);
+		assert.htmlEqual(target.innerHTML, `<button>change</button><p>Error occurred</p>`);
 	}
 });

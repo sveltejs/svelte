@@ -15,7 +15,18 @@
 						"end": 39,
 						"type": "Action",
 						"name": "tooltip",
-						"modifiers": [],
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 7,
+								"character": 7
+							},
+							"end": {
+								"line": 1,
+								"column": 18,
+								"character": 18
+							}
+						},
 						"expression": {
 							"type": "CallExpression",
 							"start": 21,
@@ -66,7 +77,8 @@
 								}
 							],
 							"optional": false
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": []

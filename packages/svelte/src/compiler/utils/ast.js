@@ -1,4 +1,4 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
@@ -608,4 +608,32 @@ export function build_assignment_value(operator, left, right) {
 			['||=', '&&=', '??='].includes(operator)
 			? b.logical(/** @type {ESTree.LogicalOperator} */ (operator.slice(0, -1)), left, right)
 			: b.binary(/** @type {ESTree.BinaryOperator} */ (operator.slice(0, -1)), left, right);
+}
+
+/**
+ * @param {ESTree.Node} node
+ */
+export function has_await_expression(node) {
+	let has_await = false;
+
+	walk(node, null, {
+		AwaitExpression(_node, context) {
+			has_await = true;
+			context.stop();
+		},
+		// don't traverse into these
+		FunctionDeclaration() {},
+		FunctionExpression() {},
+		ArrowFunctionExpression() {}
+	});
+
+	return has_await;
+}
+
+/**
+ * Turns `await ...` to `(await $.save(...))()`
+ * @param {ESTree.Expression} expression
+ */
+export function save(expression) {
+	return b.call(b.await(b.call('$.save', expression)));
 }

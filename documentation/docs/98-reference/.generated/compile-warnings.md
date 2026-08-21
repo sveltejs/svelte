@@ -62,7 +62,7 @@ Enforce that `autofocus` is not used on elements. Autofocusing elements can caus
 ### a11y_click_events_have_key_events
 
 ```
-Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+Visible, non-interactive element `<%element%>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
 ```
 
 Enforce that visible, non-interactive elements with an `onclick` event are accompanied by a keyboard event handler.
@@ -81,7 +81,7 @@ Coding for the keyboard is important for users with physical disabilities who ca
 ### a11y_consider_explicit_label
 
 ```
-Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
+Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
 ```
 
 ### a11y_distracting_elements
@@ -679,11 +679,11 @@ In HTML, there's [no such thing as a self-closing tag](https://jakearchibald.com
 </div>
 ```
 
-Some templating languages (including Svelte) will 'fix' HTML by turning `<span />` into `<span></span>`. Others adhere to the spec. Both result in ambiguity and confusion when copy-pasting code between different contexts, and as such Svelte prompts you to resolve the ambiguity directly by having an explicit closing tag.
+Some templating languages (including Svelte) will 'fix' HTML by turning `<span />` into `<span></span>`. Others adhere to the spec. Both result in ambiguity and confusion when copy-pasting code between different contexts, so Svelte prompts you to resolve the ambiguity directly by having an explicit closing tag.
 
 To automate this, run the dedicated migration:
 
-```bash
+```sh
 npx sv migrate self-closing-tags
 ```
 
@@ -842,7 +842,7 @@ Reassignments of module-level declarations will not cause reactive statements to
 ### script_unknown_attribute
 
 ```
-Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+Unrecognised attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
 ```
 
 ### slot_element_deprecated

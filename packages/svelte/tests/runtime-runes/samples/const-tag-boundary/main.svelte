@@ -1,14 +1,10 @@
 <script>
-	import FlakyComponent from "./FlakyComponent.svelte";
-	let test=$state(1);
+	let count = $state(1);
 </script>
 
-<button onclick={()=>test++}></button>
+<button onclick={()=>count++}>increment</button>
 
 <svelte:boundary>
-	{@const double = test * 2}
-	{#snippet failed()}
-		<p>{double}</p>
-	{/snippet}
-	<FlakyComponent />
+	{@const double = count * 2}
+	<p>{double}</p>
 </svelte:boundary>

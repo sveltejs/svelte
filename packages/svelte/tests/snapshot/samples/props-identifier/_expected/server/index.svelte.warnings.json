@@ -1,0 +1,142 @@
+[
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/props-identifier/index.svelte",
+		"start": {
+			"line": 3,
+			"column": 1,
+			"character": 33
+		},
+		"end": {
+			"line": 3,
+			"column": 6,
+			"character": 38
+		},
+		"position": [
+			33,
+			38
+		],
+		"frame": "1: <script>\n2:   let props = $props();\n3:   props.a;\n          ^\n4:   props[a];\n5:   props.a.b;"
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/props-identifier/index.svelte",
+		"start": {
+			"line": 4,
+			"column": 1,
+			"character": 43
+		},
+		"end": {
+			"line": 4,
+			"column": 6,
+			"character": 48
+		},
+		"position": [
+			43,
+			48
+		],
+		"frame": "2:   let props = $props();\n3:   props.a;\n4:   props[a];\n          ^\n5:   props.a.b;\n6:   props.a.b = true;"
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/props-identifier/index.svelte",
+		"start": {
+			"line": 5,
+			"column": 1,
+			"character": 54
+		},
+		"end": {
+			"line": 5,
+			"column": 6,
+			"character": 59
+		},
+		"position": [
+			54,
+			59
+		],
+		"frame": "3:   props.a;\n4:   props[a];\n5:   props.a.b;\n          ^\n6:   props.a.b = true;\n7:   props.a = true;"
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/props-identifier/index.svelte",
+		"start": {
+			"line": 6,
+			"column": 1,
+			"character": 66
+		},
+		"end": {
+			"line": 6,
+			"column": 6,
+			"character": 71
+		},
+		"position": [
+			66,
+			71
+		],
+		"frame": "4:   props[a];\n5:   props.a.b;\n6:   props.a.b = true;\n          ^\n7:   props.a = true;\n8:   props[a] = true;"
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/props-identifier/index.svelte",
+		"start": {
+			"line": 7,
+			"column": 1,
+			"character": 85
+		},
+		"end": {
+			"line": 7,
+			"column": 6,
+			"character": 90
+		},
+		"position": [
+			85,
+			90
+		],
+		"frame": " 5:   props.a.b;\n 6:   props.a.b = true;\n 7:   props.a = true;\n           ^\n 8:   props[a] = true;\n 9:   props;"
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/props-identifier/index.svelte",
+		"start": {
+			"line": 8,
+			"column": 1,
+			"character": 102
+		},
+		"end": {
+			"line": 8,
+			"column": 6,
+			"character": 107
+		},
+		"position": [
+			102,
+			107
+		],
+		"frame": " 6:   props.a.b = true;\n 7:   props.a = true;\n 8:   props[a] = true;\n           ^\n 9:   props;\n10: </script>"
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/props-identifier/index.svelte",
+		"start": {
+			"line": 9,
+			"column": 1,
+			"character": 120
+		},
+		"end": {
+			"line": 9,
+			"column": 6,
+			"character": 125
+		},
+		"position": [
+			120,
+			125
+		],
+		"frame": " 7:   props.a = true;\n 8:   props[a] = true;\n 9:   props;\n           ^\n10: </script>\n11: "
+	}
+]

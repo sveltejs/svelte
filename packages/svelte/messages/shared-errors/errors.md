@@ -1,3 +1,7 @@
+## experimental_async_required
+
+> Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
+
 ## invalid_default_snippet
 
 > Cannot use `{@render children(...)}` if the parent component uses `let:` directives. Consider using a named snippet instead
@@ -30,6 +34,10 @@ Here, `List.svelte` is using `{@render children(item)` which means it expects `P
 
 > A snippet function was passed invalid arguments. Snippets should only be instantiated via `{@render ...}`
 
+## invariant_violation
+
+> An invariant violation occurred, meaning Svelte's internal assumptions were flawed. This is a bug in Svelte, not your app — please open an issue at https://github.com/sveltejs/svelte, citing the following message: "%message%"
+
 ## lifecycle_outside_component
 
 > `%name%(...)` can only be used during component initialisation
@@ -51,6 +59,12 @@ Certain lifecycle methods can only be used during component initialisation. To f
 
 <button onclick={handleClick}>click me</button>
 ```
+
+## missing_context
+
+> Context was not set in the current component or any of its ancestors
+
+The [`createContext()`](svelte#createContext) utility returns a `[get, set]` pair of functions. `get` will throw an error if `set` was not used to set the context in the current component or any of its ancestors.
 
 ## snippet_without_render_tag
 

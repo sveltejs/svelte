@@ -1,15 +1,15 @@
 import * as $ from 'svelte/internal/server';
 
-export default function Each_string_template($$payload) {
-	const each_array = $.ensure_array_like(['foo', 'bar', 'baz']);
+export default function Each_string_template($$renderer) {
+	$$renderer.push(`<!--[-->`);
 
-	$$payload.out += `<!--[-->`;
+	const each_array = $.ensure_array_like(['foo', 'bar', 'baz']);
 
 	for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 		let thing = each_array[$$index];
 
-		$$payload.out += `<!---->${$.escape(thing)}, `;
+		$$renderer.push(`<!---->${$.escape(thing)}, `);
 	}
 
-	$$payload.out += `<!--]-->`;
+	$$renderer.push(`<!--]-->`);
 }

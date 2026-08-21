@@ -1,8 +1,9 @@
-import { BROWSER } from 'esm-env';
+import { BROWSER, DEV } from 'esm-env';
 import { on } from '../../events/index.js';
 import { ReactiveValue } from '../reactive-value.js';
 import { get } from '../../internal/client/index.js';
 import { set, source } from '../../internal/client/reactivity/sources.js';
+import { tag } from '../../internal/client/dev/tracing.js';
 
 /**
  * `scrollX.current` is a reactive view of `window.scrollX`. On the server it is `undefined`.
@@ -146,6 +147,10 @@ export const devicePixelRatio = /* @__PURE__ */ new (class DevicePixelRatio {
 	constructor() {
 		if (BROWSER) {
 			this.#update();
+		}
+
+		if (DEV) {
+			tag(this.#dpr, 'window.devicePixelRatio');
 		}
 	}
 

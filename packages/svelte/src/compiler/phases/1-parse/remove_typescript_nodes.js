@@ -27,6 +27,15 @@ const visitors = {
 		delete n.typeArguments;
 		delete n.returnType;
 		delete n.accessibility;
+		delete n.readonly;
+		delete n.definite;
+		delete n.override;
+
+		// `optional` is reused by JS optional chaining (`a?.b`, `a?.()`), so only
+		// strip the TypeScript optional marker (`x?: T`, `m?(): T`, `x?: T` fields)
+		if (n.type !== 'MemberExpression' && n.type !== 'CallExpression') {
+			delete n.optional;
+		}
 	},
 	Decorator(node) {
 		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
@@ -115,11 +124,33 @@ const visitors = {
 	TSDeclareFunction() {
 		return b.empty;
 	},
+	ClassBody(node, context) {
+		const body = [];
+		for (const _child of node.body) {
+			const child = context.visit(_child);
+			if (child.type !== 'PropertyDefinition' || !child.declare) {
+				body.push(child);
+			}
+		}
+		return {
+			...node,
+			body
+		};
+	},
 	ClassDeclaration(node, context) {
 		if (node.declare) {
 			return b.empty;
 		}
+		delete node.abstract;
 		delete node.implements;
+		delete node.superTypeArguments;
+		delete node.superTypeParameters;
+		return context.next();
+	},
+	ClassExpression(node, context) {
+		delete node.implements;
+		delete node.superTypeArguments;
+		delete node.superTypeParameters;
 		return context.next();
 	},
 	MethodDefinition(node, context) {

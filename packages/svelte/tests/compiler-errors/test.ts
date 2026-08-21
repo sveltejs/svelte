@@ -1,10 +1,11 @@
 import * as fs from 'node:fs';
-import { assert, expect } from 'vitest';
+import { assert, expect, it } from 'vitest';
 import { compile, compileModule, type CompileError } from 'svelte/compiler';
 import { suite, type BaseTest } from '../suite';
 import { read_file } from '../helpers.js';
 
 interface CompilerErrorTest extends BaseTest {
+	async?: boolean;
 	error: {
 		code: string;
 		message: string;
@@ -29,7 +30,8 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 
 		try {
 			compile(read_file(`${cwd}/main.svelte`), {
-				generate: 'client'
+				generate: 'client',
+				experimental: { async: config.async ?? false }
 			});
 		} catch (e) {
 			const error = e as CompileError;
@@ -78,3 +80,15 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 export { test };
 
 await run(__dirname);
+
+it('resets the compiler state including filename', () => {
+	// start with something that succeeds
+	compile('<div>hello</div>', { filename: 'foo.svelte' });
+	// then try something that fails in the parsing stage
+	try {
+		compile('<p>hello<div>invalid</p>', { filename: 'bar.svelte' });
+		expect.fail('Expected an error');
+	} catch (e: any) {
+		expect(e.toString()).toContain('bar.svelte');
+	}
+});

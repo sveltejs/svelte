@@ -15,16 +15,40 @@
 						"end": 20,
 						"type": "Action",
 						"name": "autofocus",
-						"modifiers": [],
-						"expression": null
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 7,
+								"character": 7
+							},
+							"end": {
+								"line": 1,
+								"column": 20,
+								"character": 20
+							}
+						},
+						"expression": null,
+						"modifiers": []
 					},
 					{
 						"start": 21,
 						"end": 34,
 						"type": "Action",
 						"name": "autofocus",
-						"modifiers": [],
-						"expression": null
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 21,
+								"character": 21
+							},
+							"end": {
+								"line": 1,
+								"column": 34,
+								"character": 34
+							}
+						},
+						"expression": null,
+						"modifiers": []
 					}
 				],
 				"children": []

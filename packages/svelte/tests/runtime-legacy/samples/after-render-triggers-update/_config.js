@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	skip_mode: ['server'],
+	skip_mode: ['server', 'async-server'],
 
 	get props() {
 		return { value: 'hello!' };

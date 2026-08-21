@@ -11,6 +11,7 @@ import {
 } from 'svelte/store';
 import { source, set } from '../../src/internal/client/reactivity/sources';
 import * as $ from '../../src/internal/client/runtime';
+import { flushSync } from '../../src/internal/client/reactivity/batch';
 import { effect_root, render_effect } from 'svelte/internal/client';
 
 describe('writable', () => {
@@ -602,7 +603,7 @@ describe('toStore', () => {
 		assert.deepEqual(log, [0]);
 
 		set(count, 1);
-		$.flushSync();
+		flushSync();
 		assert.deepEqual(log, [0, 1]);
 
 		unsubscribe();
@@ -625,7 +626,7 @@ describe('toStore', () => {
 		assert.deepEqual(log, [0]);
 
 		set(count, 1);
-		$.flushSync();
+		flushSync();
 		assert.deepEqual(log, [0, 1]);
 
 		store.set(2);
@@ -654,11 +655,11 @@ describe('fromStore', () => {
 		assert.deepEqual(log, [0]);
 
 		store.set(1);
-		$.flushSync();
+		flushSync();
 		assert.deepEqual(log, [0, 1]);
 
 		count.current = 2;
-		$.flushSync();
+		flushSync();
 		assert.deepEqual(log, [0, 1, 2]);
 
 		assert.equal(get(store), 2);

@@ -15,7 +15,18 @@
 						"end": 22,
 						"type": "Class",
 						"name": "foo",
-						"modifiers": [],
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 5,
+								"character": 5
+							},
+							"end": {
+								"line": 1,
+								"column": 14,
+								"character": 14
+							}
+						},
 						"expression": {
 							"type": "Identifier",
 							"start": 16,
@@ -31,7 +42,8 @@
 								}
 							},
 							"name": "isFoo"
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": []

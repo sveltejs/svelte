@@ -2,21 +2,14 @@
 	import Child from './Child.svelte';
 
 	let count = $state(0);
-
-	const things = $derived.by(() => {
-		if (count === 1) {
-			throw new Error('123')
-		}
-		return [1, 2 ,3]
-	})
 </script>
 
 <button onclick={() => count++}>change</button>
 
 <svelte:boundary>
-	<Child {things} />
+	<Child {count} />
 
 	{#snippet failed()}
-		<p>Error occured</p>
+		<p>Error occurred</p>
 	{/snippet}
 </svelte:boundary>

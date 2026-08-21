@@ -1,10 +1,25 @@
-/** @import { Component } from '#server' */
+/** @import { SSRContext } from '#server' */
 import { DEV } from 'esm-env';
-import { on_destroy } from './index.js';
-import * as e from '../shared/errors.js';
+import { create_context, get_or_init_context_map } from '../shared/context.js';
 
-/** @type {Component | null} */
-export var current_component = null;
+/** @type {SSRContext | null} */
+export var ssr_context = null;
+
+/** @param {SSRContext | null} v */
+export function set_ssr_context(v) {
+	ssr_context = v;
+}
+
+/**
+ * @template T
+ * @returns {[() => T, (context: T) => T]}
+ * @since 5.40.0
+ */
+export function createContext() {
+	return /** @type {[() => T, (context: T) => T]} */ (
+		create_context(getContext, setContext, hasContext)
+	);
+}
 
 /**
  * @template T
@@ -12,7 +27,7 @@ export var current_component = null;
  * @returns {T}
  */
 export function getContext(key) {
-	const context_map = get_or_init_context_map('getContext');
+	const context_map = get_or_init_context_map(ssr_context, 'getContext');
 	const result = /** @type {T} */ (context_map.get(key));
 
 	return result;
@@ -25,7 +40,7 @@ export function getContext(key) {
  * @returns {T}
  */
 export function setContext(key, context) {
-	get_or_init_context_map('setContext').set(key, context);
+	get_or_init_context_map(ssr_context, 'setContext').set(key, context);
 	return context;
 }
 
@@ -34,63 +49,45 @@ export function setContext(key, context) {
  * @returns {boolean}
  */
 export function hasContext(key) {
-	return get_or_init_context_map('hasContext').has(key);
+	return get_or_init_context_map(ssr_context, 'hasContext').has(key);
 }
 
 /** @returns {Map<any, any>} */
 export function getAllContexts() {
-	return get_or_init_context_map('getAllContexts');
-}
-
-/**
- * @param {string} name
- * @returns {Map<unknown, unknown>}
- */
-function get_or_init_context_map(name) {
-	if (current_component === null) {
-		e.lifecycle_outside_component(name);
-	}
-
-	return (current_component.c ??= new Map(get_parent_context(current_component) || undefined));
+	return get_or_init_context_map(ssr_context, 'getAllContexts');
 }
 
 /**
  * @param {Function} [fn]
  */
 export function push(fn) {
-	current_component = { p: current_component, c: null, d: null };
+	ssr_context = { p: ssr_context, c: null, r: null };
+
 	if (DEV) {
-		// component function
-		current_component.function = fn;
+		ssr_context.function = fn;
+		ssr_context.element = ssr_context.p?.element;
 	}
 }
 
 export function pop() {
-	var component = /** @type {Component} */ (current_component);
-
-	var ondestroy = component.d;
-
-	if (ondestroy) {
-		on_destroy.push(...ondestroy);
-	}
-
-	current_component = component.p;
+	ssr_context = /** @type {SSRContext} */ (ssr_context).p;
 }
 
 /**
- * @param {Component} component_context
- * @returns {Map<unknown, unknown> | null}
+ * Wraps an `await` expression in such a way that the component context that was
+ * active before the expression evaluated can be reapplied afterwards —
+ * `await a + b()` becomes `(await $.save(a))() + b()`, meaning `b()` will have access
+ * to the context of its component.
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<() => T>}
  */
-function get_parent_context(component_context) {
-	let parent = component_context.p;
+export async function save(promise) {
+	var previous_context = ssr_context;
+	var value = await promise;
 
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
-		parent = parent.p;
-	}
-
-	return null;
+	return () => {
+		ssr_context = previous_context;
+		return value;
+	};
 }

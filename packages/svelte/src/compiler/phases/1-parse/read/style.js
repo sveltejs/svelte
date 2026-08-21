@@ -2,17 +2,20 @@
 /** @import { Parser } from '../index.js' */
 import * as e from '../../../errors.js';
 
-const REGEX_MATCHER = /^[~^$*|]?=/;
+const REGEX_MATCHER = /[~^$*|]?=/y;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
-const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today, but make it future-proof
-const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
-const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
+const REGEX_ATTRIBUTE_FLAGS = /[a-zA-Z]+/y; // only `i` and `s` are valid today, but make it future-proof
+const REGEX_COMBINATOR = /(\+|~|>|\|\|)/y;
+const REGEX_PERCENTAGE = /\d+(\.\d+)?%/y;
+// `of` must be preceded by whitespace, otherwise it would be part of the `<an+b>` token
+// (`2nof` is a single dimension token). It does not need to be followed by whitespace,
+// because a `.`, `#`, `[`, `*`, `:` or `&` already ends the `of` identifier — minifiers rely on that
 const REGEX_NTH_OF =
-	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
+	/(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of(\s+|(?=[.#[*:&])))/y;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
-const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
+const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/y;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
-const REGEX_UNICODE_SEQUENCE = /^\\[0-9a-fA-F]{1,6}(\r\n|\s)?/;
+const REGEX_UNICODE_SEQUENCE = /\\[0-9a-fA-F]{1,6}(\r\n|\s)?/y;
 const REGEX_COMMENT_CLOSE = /\*\//;
 const REGEX_HTML_COMMENT_CLOSE = /-->/;
 
@@ -24,10 +27,12 @@ const REGEX_HTML_COMMENT_CLOSE = /-->/;
  */
 export default function read_style(parser, start, attributes) {
 	const content_start = parser.index;
-	const children = read_body(parser, '</style');
+	parser.css_comments = [];
+	const children = read_body(parser, (p) => p.match('</style') || p.index >= p.template.length);
 	const content_end = parser.index;
 
-	parser.read(/^<\/style\s*>/);
+	parser.eat('</style', true);
+	parser.read(/\s*>/y);
 
 	return {
 		type: 'StyleSheet',
@@ -35,6 +40,7 @@ export default function read_style(parser, start, attributes) {
 		end: parser.index,
 		attributes,
 		children,
+		comments: parser.css_comments,
 		content: {
 			start: content_start,
 			end: content_end,
@@ -46,20 +52,14 @@ export default function read_style(parser, start, attributes) {
 
 /**
  * @param {Parser} parser
- * @param {string} close
- * @returns {any[]}
+ * @param {(parser: Parser) => boolean} finished
+ * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
  */
-function read_body(parser, close) {
+function read_body(parser, finished) {
 	/** @type {Array<AST.CSS.Rule | AST.CSS.Atrule>} */
 	const children = [];
 
-	while (parser.index < parser.template.length) {
-		allow_comment_or_whitespace(parser);
-
-		if (parser.match(close)) {
-			return children;
-		}
-
+	while ((allow_comment_or_whitespace(parser), !finished(parser))) {
 		if (parser.match('@')) {
 			children.push(read_at_rule(parser));
 		} else {
@@ -67,7 +67,7 @@ function read_body(parser, close) {
 		}
 	}
 
-	e.expected_token(parser.template.length, close);
+	return children;
 }
 
 /**
@@ -207,15 +207,18 @@ function read_selector(parser, inside_pseudo_class = false) {
 			});
 		} else if (parser.eat('*')) {
 			let name = '*';
+			/** @type {string | undefined} */
+			let namespace;
 
 			if (parser.eat('|')) {
-				// * is the namespace (which we ignore)
-				name = read_identifier(parser);
+				namespace = name;
+				name = parser.eat('*') ? '*' : read_identifier(parser);
 			}
 
 			relative_selector.selectors.push({
 				type: 'TypeSelector',
 				name,
+				...(namespace !== undefined && { namespace }),
 				start,
 				end: parser.index
 			});
@@ -234,18 +237,22 @@ function read_selector(parser, inside_pseudo_class = false) {
 				end: parser.index
 			});
 		} else if (parser.eat('::')) {
-			relative_selector.selectors.push({
-				type: 'PseudoElementSelector',
-				name: read_identifier(parser),
-				start,
-				end: parser.index
-			});
-			// We read the inner selectors of a pseudo element to ensure it parses correctly,
-			// but we don't do anything with the result.
+			const name = read_identifier(parser);
+			/** @type {AST.CSS.SelectorList | null} */
+			let args = null;
+
 			if (parser.eat('(')) {
-				read_selector_list(parser, true);
+				args = read_selector_list(parser, true);
 				parser.eat(')', true);
 			}
+
+			relative_selector.selectors.push({
+				type: 'PseudoElementSelector',
+				name,
+				start,
+				end: parser.index,
+				...(args && { args })
+			});
 		} else if (parser.eat(':')) {
 			const name = read_identifier(parser);
 
@@ -313,22 +320,25 @@ function read_selector(parser, inside_pseudo_class = false) {
 			});
 		} else if (!parser.match_regex(REGEX_COMBINATOR)) {
 			let name = read_identifier(parser);
+			/** @type {string | undefined} */
+			let namespace;
 
 			if (parser.eat('|')) {
-				// we ignore the namespace when trying to find matching element classes
-				name = read_identifier(parser);
+				namespace = name;
+				name = parser.eat('*') ? '*' : read_identifier(parser);
 			}
 
 			relative_selector.selectors.push({
 				type: 'TypeSelector',
 				name,
+				...(namespace !== undefined && { namespace }),
 				start,
 				end: parser.index
 			});
 		}
 
 		const index = parser.index;
-		allow_comment_or_whitespace(parser);
+		allow_comment_or_whitespace(parser, false);
 
 		if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
 			// rewind, so we know whether to continue building the selector list
@@ -454,7 +464,7 @@ function read_block_item(parser) {
 	// read ahead to understand whether we're dealing with a declaration or a nested rule.
 	// this involves some duplicated work, but avoids a try-catch that would disguise errors
 	const start = parser.index;
-	read_value(parser);
+	read_value(parser, false);
 	const char = parser.template[parser.index];
 	parser.index = start;
 
@@ -497,10 +507,13 @@ function read_declaration(parser) {
 
 /**
  * @param {Parser} parser
+ * @param {boolean} [capture_comments]
  * @returns {string}
  */
-function read_value(parser) {
+function read_value(parser, capture_comments = true) {
 	let value = '';
+	/** @type {AST.CSS.CSSComment[]} */
+	const value_comments = [];
 	let escaped = false;
 	let in_url = false;
 
@@ -513,8 +526,12 @@ function read_value(parser) {
 		if (escaped) {
 			value += '\\' + char;
 			escaped = false;
+			parser.index++;
+			continue;
 		} else if (char === '\\') {
 			escaped = true;
+			parser.index++;
+			continue;
 		} else if (char === quote_mark) {
 			quote_mark = null;
 		} else if (char === ')') {
@@ -524,7 +541,27 @@ function read_value(parser) {
 		} else if (char === '(' && value.slice(-3) === 'url') {
 			in_url = true;
 		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
+			const leading_whitespace = value.length - value.trimStart().length;
+			for (const comment of value_comments) {
+				comment.position = Math.max(
+					0,
+					/** @type {number} */ (comment.position) - leading_whitespace
+				);
+			}
 			return value.trim();
+		} else if (
+			char === '/' &&
+			!in_url &&
+			!quote_mark &&
+			parser.template[parser.index + 1] === '*'
+		) {
+			const comment = read_comment(parser);
+			if (capture_comments) {
+				comment.position = value.length;
+				parser.css_comments.push(comment);
+				value_comments.push(comment);
+			}
+			continue;
 		}
 
 		value += char;
@@ -569,7 +606,7 @@ function read_attribute_value(parser) {
 }
 
 /**
- * https://www.w3.org/TR/css-syntax-3/#ident-token-diagram
+ * @see {@link https://www.w3.org/TR/css-syntax-3/#ident-token-diagram CSS Syntax Module Level 3}
  * @param {Parser} parser
  */
 function read_identifier(parser) {
@@ -586,7 +623,8 @@ function read_identifier(parser) {
 		if (char === '\\') {
 			const sequence = parser.match_regex(REGEX_UNICODE_SEQUENCE);
 			if (sequence) {
-				identifier += String.fromCodePoint(parseInt(sequence.slice(1), 16));
+				const character = String.fromCodePoint(parseInt(sequence.slice(1), 16));
+				identifier += character === '\\' ? '\\\\' : character;
 				parser.index += sequence.length;
 			} else {
 				identifier += '\\' + parser.template[parser.index + 1];
@@ -610,13 +648,16 @@ function read_identifier(parser) {
 	return identifier;
 }
 
-/** @param {Parser} parser */
-function allow_comment_or_whitespace(parser) {
+/**
+ * @param {Parser} parser
+ * @param {boolean} [capture_comments]
+ */
+function allow_comment_or_whitespace(parser, capture_comments = true) {
 	parser.allow_whitespace();
 	while (parser.match('/*') || parser.match('<!--')) {
-		if (parser.eat('/*')) {
-			parser.read_until(REGEX_COMMENT_CLOSE);
-			parser.eat('*/', true);
+		if (parser.match('/*')) {
+			const comment = read_comment(parser);
+			if (capture_comments) parser.css_comments.push(comment);
 		}
 
 		if (parser.eat('<!--')) {
@@ -626,4 +667,32 @@ function allow_comment_or_whitespace(parser) {
 
 		parser.allow_whitespace();
 	}
+}
+
+/**
+ * @param {Parser} parser
+ * @returns {AST.CSS.CSSComment}
+ */
+function read_comment(parser) {
+	const start = parser.index;
+	parser.eat('/*', true);
+	const value = parser.read_until(REGEX_COMMENT_CLOSE);
+	parser.eat('*/', true);
+	const end = parser.index;
+
+	return {
+		type: 'CSSComment',
+		value,
+		start,
+		end
+	};
+}
+
+/**
+ * Parse standalone CSS content (not wrapped in `<style>`).
+ * @param {Parser} parser
+ * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
+ */
+export function parse_stylesheet(parser) {
+	return read_body(parser, (p) => p.index >= p.template.length);
 }

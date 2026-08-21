@@ -1,14 +1,15 @@
-/** @import { Expression, ImportDeclaration, MemberExpression, Program } from 'estree' */
+/** @import { Expression, ImportDeclaration, MemberExpression, Node, Program } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
+import { transform_body } from '../../shared/transform-async.js';
 
 /**
- * @param {Program} _
+ * @param {Program} node
  * @param {ComponentContext} context
  */
-export function Program(_, context) {
+export function Program(node, context) {
 	if (!context.state.analysis.runes) {
 		context.state.transform['$$props'] = {
 			read: (node) => ({ ...node, name: '$$sanitized_props' })
@@ -136,6 +137,17 @@ export function Program(_, context) {
 	}
 
 	add_state_transformers(context);
+
+	if (context.state.is_instance) {
+		return {
+			...node,
+			body: transform_body(
+				context.state.analysis.instance_body,
+				b.id('$.run'),
+				(node) => /** @type {Node} */ (context.visit(node))
+			)
+		};
+	}
 
 	context.next();
 }

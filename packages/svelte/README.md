@@ -19,7 +19,7 @@ You can play around with Svelte in the [tutorial](https://svelte.dev/tutorial), 
 
 When you're ready to build a full-fledge application, we recommend using [SvelteKit](https://svelte.dev/docs/kit):
 
-```bash
+```sh
 npx sv create my-app
 cd my-app
 npm install
@@ -30,7 +30,7 @@ See [the SvelteKit documentation](https://svelte.dev/docs/kit) to learn more.
 
 ## Changelog
 
-[The Changelog for this package is available on GitHub](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
+[The Changelog for this package is available on GitHub](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md).
 
 ## Supporting Svelte
 

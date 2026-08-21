@@ -1,16 +1,20 @@
-/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern } from 'estree' */
+/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
-import { create_expression_metadata } from '../../nodes.js';
-import { parse_expression_at } from '../acorn.js';
+import { ExpressionMetadata } from '../../nodes.js';
+import { parse_expression_at, parse_statement_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
-import { match_bracket } from '../utils/bracket.js';
+import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
-const regex_whitespace_with_closing_curly_brace = /^\s*}/;
+const regex_whitespace_with_closing_curly_brace = /\s*}/y;
+const regex_supported_declaration = /(?:let|const)\b/y;
+const regex_unsupported_declaration = /(?:var|interface|enum)\b/y;
+// `type` is a contextual keyword; this is just a shape hint, confirmed by parsing.
+const regex_maybe_type_declaration = /type\b/y;
 
 const pointy_bois = { '<': '>' };
 
@@ -31,6 +35,20 @@ export default function tag(parser) {
 		}
 	}
 
+	const declaration = read_declaration(parser);
+	if (declaration) {
+		parser.append({
+			type: 'DeclarationTag',
+			start,
+			end: parser.index,
+			declaration: /** @type {VariableDeclaration} */ (declaration),
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
+		});
+		return;
+	}
+
 	const expression = read_expression(parser);
 
 	parser.allow_whitespace();
@@ -42,9 +60,92 @@ export default function tag(parser) {
 		end: parser.index,
 		expression,
 		metadata: {
-			expression: create_expression_metadata()
+			expression: new ExpressionMetadata()
 		}
 	});
+}
+
+/**
+ * @param {Parser} parser
+ * @returns {null | import('estree').VariableDeclaration}
+ */
+function read_declaration(parser) {
+	const start = parser.index;
+
+	const unsupported = parser.match_regex(regex_unsupported_declaration);
+	if (unsupported) {
+		e.declaration_tag_invalid_type({ start, end: start + unsupported.length });
+	}
+
+	if (
+		!parser.match_regex(regex_supported_declaration) &&
+		// `type` is special, since it is not a reserved keyword and can be used
+		// as part of a valid expression. We gotta parse first and then see what it is.
+		!parser.match_regex(regex_maybe_type_declaration)
+	) {
+		return null;
+	}
+
+	const initial_comment_count = parser.root.comments.length;
+
+	/** @type {import('estree').Statement | import('estree').VariableDeclaration} */
+	let declaration;
+	try {
+		declaration = parse_statement_at(parser, parser.template, start);
+	} catch (error) {
+		if (!parser.loose) throw error;
+
+		const end = find_matching_bracket(parser.template, start, '{');
+		if (end === undefined) throw error;
+
+		parser.index = end;
+		const kind = parser.template.startsWith('const', start) ? 'const' : 'let';
+
+		declaration = {
+			type: 'VariableDeclaration',
+			kind,
+			declarations: [
+				{
+					type: 'VariableDeclarator',
+					id: {
+						type: 'Identifier',
+						name: '',
+						start: parser.index,
+						end: parser.index
+					},
+					init: null,
+					start: parser.index,
+					end: parser.index
+				}
+			],
+			start,
+			end
+		};
+	}
+
+	if (declaration.type !== 'VariableDeclaration') {
+		if (declaration.type === 'ExpressionStatement') {
+			parser.root.comments.length = initial_comment_count; // Else they show up duplicated
+			return null;
+		} else {
+			// This is a TSTypeAliasDeclaration
+			e.declaration_tag_invalid_type({
+				start: declaration.start ?? start,
+				end: declaration.end ?? parser.index
+			});
+		}
+	}
+
+	// TODO support using
+	if (declaration.kind !== 'let' && declaration.kind !== 'const') {
+		e.declaration_tag_invalid_type(declaration);
+	}
+
+	parser.index = /** @type {number} */ (declaration.end);
+	parser.allow_whitespace();
+	parser.eat('}', true);
+
+	return declaration;
 }
 
 /** @param {Parser} parser */
@@ -63,7 +164,10 @@ function open(parser) {
 			end: -1,
 			test: read_expression(parser),
 			consequent: create_fragment(),
-			alternate: null
+			alternate: null,
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
 		});
 
 		parser.allow_whitespace();
@@ -174,7 +278,7 @@ function open(parser) {
 
 		if (parser.eat(',')) {
 			parser.allow_whitespace();
-			index = parser.read_identifier();
+			index = parser.read_identifier().name;
 			if (!index) {
 				e.expected_identifier(parser.index);
 			}
@@ -244,7 +348,10 @@ function open(parser) {
 			error: null,
 			pending: null,
 			then: null,
-			catch: null
+			catch: null,
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
 		});
 
 		if (parser.eat('then')) {
@@ -326,7 +433,10 @@ function open(parser) {
 			start,
 			end: -1,
 			expression,
-			fragment: create_fragment()
+			fragment: create_fragment(),
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
 		});
 
 		parser.stack.push(block);
@@ -338,16 +448,10 @@ function open(parser) {
 	if (parser.eat('snippet')) {
 		parser.require_whitespace();
 
-		const name_start = parser.index;
-		let name = parser.read_identifier();
-		const name_end = parser.index;
+		const id = parser.read_identifier();
 
-		if (name === null) {
-			if (parser.loose) {
-				name = '';
-			} else {
-				e.expected_identifier(parser.index);
-			}
+		if (id.name === '' && !parser.loose) {
+			e.expected_identifier(parser.index);
 		}
 
 		parser.allow_whitespace();
@@ -389,7 +493,7 @@ function open(parser) {
 
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
+					parse_expression_at(parser, prelude + `${params} => {}`, params_start)
 				)
 			: { params: [] };
 
@@ -401,12 +505,7 @@ function open(parser) {
 			type: 'SnippetBlock',
 			start,
 			end: -1,
-			expression: {
-				type: 'Identifier',
-				start: name_start,
-				end: name_end,
-				name
-			},
+			expression: id,
 			typeParams: type_params,
 			parameters: function_expression.params,
 			body: create_fragment(),
@@ -461,7 +560,10 @@ function next(parser) {
 				elseif: true,
 				test: expression,
 				consequent: create_fragment(),
-				alternate: null
+				alternate: null,
+				metadata: {
+					expression: new ExpressionMetadata()
+				}
 			});
 
 			parser.stack.push(child);
@@ -624,7 +726,10 @@ function special(parser) {
 			type: 'HtmlTag',
 			start,
 			end: parser.index,
-			expression
+			expression,
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
 		});
 
 		return;
@@ -678,6 +783,8 @@ function special(parser) {
 
 		const expression_start = parser.index;
 		const init = read_expression(parser);
+		// parser is past wrapping parens, but `init.end` is not — use the parser position
+		const declarator_end = parser.index;
 		if (
 			init.type === 'SequenceExpression' &&
 			!parser.template.substring(expression_start, init.start).includes('(')
@@ -696,11 +803,17 @@ function special(parser) {
 			declaration: {
 				type: 'VariableDeclaration',
 				kind: 'const',
-				declarations: [{ type: 'VariableDeclarator', id, init, start: id.start, end: init.end }],
+				declarations: [
+					{ type: 'VariableDeclarator', id, init, start: id.start, end: declarator_end }
+				],
 				start: start + 2, // start at const, not at @const
 				end: parser.index - 1
+			},
+			metadata: {
+				expression: new ExpressionMetadata()
 			}
 		});
+		return;
 	}
 
 	if (parser.eat('render')) {
@@ -725,11 +838,14 @@ function special(parser) {
 			end: parser.index,
 			expression: /** @type {AST.RenderTag['expression']} */ (expression),
 			metadata: {
+				expression: new ExpressionMetadata(),
 				dynamic: false,
 				arguments: [],
 				path: [],
 				snippets: new Set()
 			}
 		});
+		return;
 	}
+	e.expected_tag(parser.index);
 }

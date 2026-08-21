@@ -1,14 +1,15 @@
-/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, LogicalOperator, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types.js' */
 import * as b from '#compiler/builders';
 import {
 	build_assignment_value,
 	get_attribute_expression,
-	is_event_attribute
+	is_event_attribute,
+	is_expression_async
 } from '../../../../utils/ast.js';
 import { dev, locate_node } from '../../../../state.js';
-import { should_proxy } from '../utils.js';
+import { build_getter, should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 import { validate_mutation } from './shared/utils.js';
 import { get_rune } from '../../../scope.js';
@@ -36,14 +37,6 @@ function is_non_coercive_operator(operator) {
 	return ['=', '||=', '&&=', '??='].includes(operator);
 }
 
-/** @type {Record<string, string>} */
-const callees = {
-	'=': '$.assign',
-	'&&=': '$.assign_and',
-	'||=': '$.assign_or',
-	'??=': '$.assign_nullish'
-};
-
 /**
  * @param {AssignmentOperator} operator
  * @param {Pattern} left
@@ -67,18 +60,32 @@ function build_assignment(operator, left, right, context) {
 						in_constructor: rune !== '$derived' && rune !== '$derived.by'
 					};
 
-					return b.assignment(
-						operator,
-						b.member(b.this, field.key),
-						/** @type {Expression} */ (context.visit(right, child_state))
-					);
+					let value = /** @type {Expression} */ (context.visit(right, child_state));
+
+					if (dev) {
+						const declaration = context.path.findLast(
+							(parent) => parent.type === 'ClassDeclaration' || parent.type === 'ClassExpression'
+						);
+						value = b.call(
+							'$.tag',
+							value,
+							b.literal(`${declaration?.id?.name ?? '[class]'}.${name}`)
+						);
+					}
+
+					return b.assignment(operator, b.member(b.this, field.key), value);
 				}
 			}
 
 			// special case — assignment to private state field
 			if (left.property.type === 'PrivateIdentifier') {
+				const logical_operator = ['||=', '&&=', '??='].includes(operator)
+					? /** @type {LogicalOperator} */ (operator.slice(0, -1))
+					: null;
 				let value = /** @type {Expression} */ (
-					context.visit(build_assignment_value(operator, left, right))
+					context.visit(
+						logical_operator === null ? build_assignment_value(operator, left, right) : right
+					)
 				);
 
 				const needs_proxy =
@@ -86,7 +93,15 @@ function build_assignment(operator, left, right, context) {
 					is_non_coercive_operator(operator) &&
 					should_proxy(value, context.state.scope);
 
-				return b.call('$.set', left, value, needs_proxy && b.true);
+				const assignment = b.call('$.set', left, value, needs_proxy && b.true);
+
+				return logical_operator === null
+					? assignment
+					: b.logical(
+							logical_operator,
+							/** @type {Expression} */ (context.visit(left)),
+							assignment
+						);
 			}
 		}
 	}
@@ -128,6 +143,7 @@ function build_assignment(operator, left, right, context) {
 				binding.kind !== 'prop' &&
 				binding.kind !== 'bindable_prop' &&
 				binding.kind !== 'raw_state' &&
+				binding.kind !== 'derived' &&
 				binding.kind !== 'store_sub' &&
 				context.state.analysis.runes &&
 				should_proxy(right, context.state.scope) &&
@@ -137,7 +153,7 @@ function build_assignment(operator, left, right, context) {
 
 	// mutation
 	if (transform?.mutate) {
-		return transform.mutate(
+		let mutation = transform.mutate(
 			object,
 			b.assignment(
 				operator,
@@ -145,14 +161,36 @@ function build_assignment(operator, left, right, context) {
 				/** @type {Expression} */ (context.visit(right))
 			)
 		);
+
+		if (binding.legacy_indirect_bindings.size > 0) {
+			mutation = b.sequence([
+				mutation,
+				b.call(
+					'$.invalidate_inner_signals',
+					b.arrow(
+						[],
+						b.block(
+							Array.from(binding.legacy_indirect_bindings).map((binding) =>
+								b.stmt(build_getter({ ...binding.node }, context.state))
+							)
+						)
+					)
+				)
+			]);
+		}
+
+		return mutation;
 	}
 
 	// in cases like `(object.items ??= []).push(value)`, we may need to warn
 	// if the value gets proxified, since the proxy _isn't_ the thing that
 	// will be pushed to. we do this by transforming it to something like
-	// `$.assign_nullish(object, 'items', [])`
+	// `$.assign(object, 'items', '??=', () => [])`
 	let should_transform =
-		dev && path.at(-1) !== 'ExpressionStatement' && is_non_coercive_operator(operator);
+		dev &&
+		path.at(-1) !== 'ExpressionStatement' &&
+		is_non_coercive_operator(operator) &&
+		!context.state.scope.evaluate(right).is_primitive;
 
 	// special case — ignore `onclick={() => (...)}`
 	if (
@@ -182,32 +220,34 @@ function build_assignment(operator, left, right, context) {
 		path.at(-1) === 'Component' ||
 		path.at(-1) === 'SvelteComponent' ||
 		(path.at(-1) === 'ArrowFunctionExpression' &&
-			path.at(-2) === 'SequenceExpression' &&
-			(path.at(-3) === 'Component' ||
-				path.at(-3) === 'SvelteComponent' ||
-				path.at(-3) === 'BindDirective'))
+			(path.at(-2) === 'BindDirective' ||
+				(path.at(-2) === 'Component' && path.at(-3) === 'Fragment') ||
+				(path.at(-2) === 'SequenceExpression' &&
+					(path.at(-3) === 'Component' ||
+						path.at(-3) === 'SvelteComponent' ||
+						path.at(-3) === 'BindDirective'))))
 	) {
 		should_transform = false;
 	}
 
 	if (left.type === 'MemberExpression' && should_transform) {
-		const callee = callees[operator];
-
-		return /** @type {Expression} */ (
-			context.visit(
-				b.call(
-					callee,
-					/** @type {Expression} */ (left.object),
-					/** @type {Expression} */ (
-						left.computed
-							? left.property
-							: b.literal(/** @type {Identifier} */ (left.property).name)
-					),
-					right,
-					b.literal(locate_node(left))
-				)
-			)
+		const needs_lazy_getter = operator !== '=';
+		const needs_async = needs_lazy_getter && is_expression_async(right);
+		/** @type {Expression} */
+		let e = b.call(
+			needs_async ? '$.assign_async' : '$.assign',
+			/** @type {Expression} */ (left.object),
+			/** @type {Expression} */ (
+				left.computed ? left.property : b.literal(/** @type {Identifier} */ (left.property).name)
+			),
+			b.literal(operator),
+			needs_lazy_getter ? b.arrow([], right, needs_async) : right,
+			b.literal(locate_node(left))
 		);
+		if (needs_async) {
+			e = b.await(e);
+		}
+		return /** @type {Expression} */ (context.visit(e));
 	}
 
 	return null;

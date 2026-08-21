@@ -15,6 +15,18 @@
 						"start": 5,
 						"end": 9,
 						"name": "a",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 5,
+								"character": 5
+							},
+							"end": {
+								"line": 1,
+								"column": 6,
+								"character": 6
+							}
+						},
 						"value": [
 							{
 								"start": 8,
@@ -30,6 +42,18 @@
 						"start": 10,
 						"end": 16,
 						"name": "b",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 10,
+								"character": 10
+							},
+							"end": {
+								"line": 1,
+								"column": 11,
+								"character": 11
+							}
+						},
 						"value": [
 							{
 								"type": "MustacheTag",
@@ -60,6 +84,18 @@
 						"start": 17,
 						"end": 21,
 						"name": "c",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 17,
+								"character": 17
+							},
+							"end": {
+								"line": 1,
+								"column": 18,
+								"character": 18
+							}
+						},
 						"value": [
 							{
 								"start": 20,
@@ -75,6 +111,18 @@
 						"start": 22,
 						"end": 30,
 						"name": "d",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 22,
+								"character": 22
+							},
+							"end": {
+								"line": 1,
+								"column": 23,
+								"character": 23
+							}
+						},
 						"value": [
 							{
 								"type": "MustacheTag",

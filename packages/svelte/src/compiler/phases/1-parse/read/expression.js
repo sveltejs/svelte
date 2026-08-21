@@ -1,6 +1,6 @@
 /** @import { Expression } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import { parse_expression_at } from '../acorn.js';
+import { parse_expression_at, remove_parens } from '../acorn.js';
 import { regex_whitespace } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import { find_matching_bracket } from '../utils/bracket.js';
@@ -34,38 +34,16 @@ export function get_loose_identifier(parser, opening_token) {
  */
 export default function read_expression(parser, opening_token, disallow_loose) {
 	try {
-		const node = parse_expression_at(parser.template, parser.ts, parser.index);
-
-		let num_parens = 0;
-
-		if (node.leadingComments !== undefined && node.leadingComments.length > 0) {
-			parser.index = node.leadingComments.at(-1).end;
-		}
-
-		for (let i = parser.index; i < /** @type {number} */ (node.start); i += 1) {
-			if (parser.template[i] === '(') num_parens += 1;
-		}
+		const node = parse_expression_at(parser, parser.template, parser.index);
 
 		let index = /** @type {number} */ (node.end);
-		if (node.trailingComments !== undefined && node.trailingComments.length > 0) {
-			index = node.trailingComments.at(-1).end;
-		}
 
-		while (num_parens > 0) {
-			const char = parser.template[index];
-
-			if (char === ')') {
-				num_parens -= 1;
-			} else if (!regex_whitespace.test(char)) {
-				e.expected_token(index, ')');
-			}
-
-			index += 1;
-		}
+		const last_comment = parser.root.comments.at(-1);
+		if (last_comment && last_comment.end > index) index = last_comment.end;
 
 		parser.index = index;
 
-		return /** @type {Expression} */ (node);
+		return /** @type {Expression} */ (remove_parens(node));
 	} catch (err) {
 		// If we are in an each loop we need the error to be thrown in cases like
 		// `as { y = z }` so we still throw and handle the error there
@@ -76,6 +54,6 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 			}
 		}
 
-		parser.acorn_error(err);
+		throw err;
 	}
 }

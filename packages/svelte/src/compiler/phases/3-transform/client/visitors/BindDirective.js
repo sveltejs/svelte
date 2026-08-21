@@ -40,22 +40,38 @@ export function BindDirective(node, context) {
 			validate_binding(context.state, node, expression);
 		}
 
-		get = b.thunk(expression);
-
-		/** @type {Expression | undefined} */
-		set = b.unthunk(
-			b.arrow(
-				[b.id('$$value')],
-				/** @type {Expression} */ (
-					context.visit(
-						b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
-					)
-				)
-			)
+		const assignment = /** @type {Expression} */ (
+			context.visit(b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value')))
 		);
 
-		if (get === set) {
-			set = undefined;
+		if (dev) {
+			// in dev, create named functions, so that `$inspect(...)` delivers
+			// useful stack traces
+			get = b.function(b.id('get', node.name_loc), [], b.block([b.return(expression)]));
+			set = b.function(
+				b.id('set', node.name_loc),
+				[b.id('$$value')],
+				b.block([b.stmt(assignment)])
+			);
+		} else {
+			// in prod, optimise for brevity
+			get = b.thunk(expression);
+
+			/** @type {Expression | undefined} */
+			set = b.unthunk(
+				b.arrow(
+					[b.id('$$value')],
+					/** @type {Expression} */ (
+						context.visit(
+							b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
+						)
+					)
+				)
+			);
+
+			if (get === set) {
+				set = undefined;
+			}
 		}
 	}
 
@@ -243,18 +259,32 @@ export function BindDirective(node, context) {
 		}
 	}
 
+	const defer =
+		node.name !== 'this' &&
+		parent.type === 'RegularElement' &&
+		parent.attributes.find((a) => a.type === 'UseDirective');
+
+	let statement = defer ? b.stmt(b.call('$.effect', b.thunk(call))) : b.stmt(call);
+
+	if (node.metadata.expression.is_async()) {
+		statement = b.stmt(
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
+		);
+	}
+
 	// Bindings need to happen after attribute updates, therefore after the render effect, and in order with events/actions.
 	// bind:this is a special case as it's one-way and could influence the render effect.
 	if (node.name === 'this') {
-		context.state.init.push(b.stmt(call));
+		context.state.init.push(statement);
 	} else {
-		const has_use =
-			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
-
-		if (has_use) {
-			context.state.init.push(b.stmt(b.call('$.effect', b.thunk(call))));
+		if (defer) {
+			context.state.init.push(statement);
 		} else {
-			context.state.after_update.push(b.stmt(call));
+			context.state.after_update.push(statement);
 		}
 	}
 }

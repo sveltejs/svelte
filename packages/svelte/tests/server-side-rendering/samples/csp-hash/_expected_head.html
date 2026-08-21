@@ -1,0 +1,12 @@
+<script>
+{
+	const r = (v) => Promise.resolve(v);
+				const h = (window.__svelte ??= {}).h ??= new Map();
+
+	for (const [k, v] of [
+		["key",r("bar")]
+	]) {
+		h.set(k, v);
+	}
+}
+</script>

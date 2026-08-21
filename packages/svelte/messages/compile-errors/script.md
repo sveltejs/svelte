@@ -16,7 +16,7 @@
 
 ## declaration_duplicate_module_import
 
-> Cannot declare a variable with the same name as an import inside `<script module>`
+> Cannot declare a variable with the same name as an import from `<script module>`
 
 ## derived_invalid_export
 
@@ -29,6 +29,10 @@
 ## dollar_prefix_invalid
 
 > The $ prefix is reserved, and cannot be used for variables and imports
+
+## duplicate_class_field
+
+> `%name%` has already been declared
 
 ## each_item_invalid_assignment
 
@@ -70,6 +74,10 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 > `$effect()` can only be used as an expression statement
 
+## experimental_async
+
+> Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless the `experimental.async` compiler option is `true`
+
 ## export_undefined
 
 > `%name%` is not defined
@@ -97,6 +105,10 @@ This turned out to be buggy and unpredictable, particularly when working with de
 ## invalid_arguments_usage
 
 > The arguments keyword cannot be used within the template or at the top level of a component
+
+## legacy_await_invalid
+
+> Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
 
 ## legacy_export_invalid
 
@@ -173,6 +185,18 @@ This turned out to be buggy and unpredictable, particularly when working with de
 ## rune_missing_parentheses
 
 > Cannot use rune without parentheses
+
+Runes are keywords rather than values — they can't be assigned to a variable or passed to a function, only called. Referencing one without parentheses is therefore an error...
+
+```js
+let count = $state;
+```
+
+...whether it's a rune like `$state` or one reached through a property, like `$derived.by`. Add the parentheses, along with any arguments the rune expects:
+
+```js
+let count = $state(0);
+```
 
 ## rune_removed
 

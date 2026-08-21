@@ -4,7 +4,7 @@ title: $bindable
 
 Ordinarily, props go one way, from parent to child. This makes it easy to understand how data flows around your app.
 
-In Svelte, component props can be _bound_, which means that data can also flow _up_ from child to parent. This isn't something you should do often, but it can simplify your code if used sparingly and carefully.
+In Svelte, component props can be _bound_, which means that data can also flow _up_ from child to parent. This isn't something you should do often — overuse can make your data flow unpredictable and your components harder to maintain — but it can simplify your code if used sparingly and carefully.
 
 It also means that a state proxy can be _mutated_ in the child.
 
@@ -52,3 +52,5 @@ In this case, you can specify a fallback value for when no prop is passed at all
 /// file: FancyInput.svelte
 let { value = $bindable('fallback'), ...props } = $props();
 ```
+
+When a bindable prop has a fallback value, the parent must pass a value other than `undefined` if it uses `bind:`. This avoids ambiguity about which value should apply, since the parent and child should share the same value for a binding.

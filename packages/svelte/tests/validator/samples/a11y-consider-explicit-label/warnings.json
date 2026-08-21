@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_consider_explicit_label",
-		"message": "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute",
+		"message": "Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute",
 		"start": {
 			"line": 1,
 			"column": 0
@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "a11y_consider_explicit_label",
-		"message": "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute",
+		"message": "Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute",
 		"start": {
 			"line": 2,
 			"column": 0

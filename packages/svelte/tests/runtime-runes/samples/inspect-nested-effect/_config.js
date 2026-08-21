@@ -1,3 +1,4 @@
+import { normalise_inspect_logs } from '../../../helpers.js';
 import { test } from '../../test';
 
 export default test({
@@ -6,6 +7,6 @@ export default test({
 	},
 
 	async test({ assert, logs }) {
-		assert.deepEqual(logs, ['init', 0, 'update', 1]);
+		assert.deepEqual(normalise_inspect_logs(logs), [0, 1, 'at $effect']);
 	}
 });

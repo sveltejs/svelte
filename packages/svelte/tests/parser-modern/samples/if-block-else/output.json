@@ -43,6 +43,18 @@
 							"start": 11,
 							"end": 21,
 							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 2,
+									"column": 2,
+									"character": 12
+								},
+								"end": {
+									"line": 2,
+									"column": 3,
+									"character": 13
+								}
+							},
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -81,6 +93,18 @@
 							"start": 31,
 							"end": 45,
 							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 4,
+									"column": 2,
+									"character": 32
+								},
+								"end": {
+									"line": 4,
+									"column": 3,
+									"character": 33
+								}
+							},
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",

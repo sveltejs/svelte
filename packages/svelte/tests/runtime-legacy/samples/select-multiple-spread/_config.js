@@ -7,9 +7,8 @@ export default test({
 		assert.equal(options[0].selected, true);
 		assert.equal(options[1].selected, false);
 
-		// Shouldn't change the value because the value is not bound.
-		component.value = ['2'];
-		assert.equal(options[0].selected, true);
-		assert.equal(options[1].selected, false);
+		component.attrs = { value: ['2'] };
+		assert.equal(options[0].selected, false);
+		assert.equal(options[1].selected, true);
 	}
 });

@@ -463,6 +463,16 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:fullscreenerror'?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerror?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
+
+	// Dimensions
+	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
+	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:clientWidth'?: number | undefined | null;
+	readonly 'bind:clientHeight'?: number | undefined | null;
+
+	xmlns?: string | undefined | null;
 }
 
 // All the WAI-ARIA 1.1 attributes from https://www.w3.org/TR/wai-aria-1.1/
@@ -771,7 +781,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	title?: string | undefined | null;
 	translate?: 'yes' | 'no' | '' | undefined | null;
 	inert?: boolean | undefined | null;
-	popover?: 'auto' | 'manual' | '' | undefined | null;
+	popover?: 'auto' | 'manual' | 'hint' | '' | undefined | null;
 	writingsuggestions?: Booleanish | undefined | null;
 
 	// Unknown
@@ -837,28 +847,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 */
 	'bind:innerText'?: string | undefined | null;
 
-	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
-	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:focused'?: boolean | undefined | null;
-
-	// SvelteKit
-	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-preload-code'?:
-		| true
-		| ''
-		| 'eager'
-		| 'viewport'
-		| 'hover'
-		| 'tap'
-		| 'off'
-		| undefined
-		| null;
-	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
-	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
+	readonly 'bind:offsetWidth'?: number | undefined | null;
+	readonly 'bind:offsetHeight'?: number | undefined | null;
 
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
@@ -924,6 +915,17 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	value?: string | string[] | number | undefined | null;
 	popovertarget?: string | undefined | null;
 	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
+	command?:
+		| 'show-modal'
+		| 'close'
+		| 'request-close'
+		| 'show-popover'
+		| 'hide-popover'
+		| 'toggle-popover'
+		| (string & {})
+		| undefined
+		| null;
+	commandfor?: string | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
@@ -950,9 +952,9 @@ export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement
 
 	'bind:open'?: boolean | undefined | null;
 
-	'on:toggle'?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
-	ontoggle?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
-	ontogglecapture?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
+	'on:toggle'?: ToggleEventHandler<HTMLDetailsElement> | undefined | null;
+	ontoggle?: ToggleEventHandler<HTMLDetailsElement> | undefined | null;
+	ontogglecapture?: ToggleEventHandler<HTMLDetailsElement> | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
@@ -979,7 +981,7 @@ export interface HTMLFieldsetAttributes extends HTMLAttributes<HTMLFieldSetEleme
 }
 
 export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
-	acceptcharset?: string | undefined | null;
+	'accept-charset'?: 'utf-8' | (string & {}) | undefined | null;
 	action?: string | undefined | null;
 	autocomplete?: AutoFillBase | undefined | null;
 	enctype?:
@@ -1220,6 +1222,7 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	playsinline?: boolean | undefined | null;
 	preload?: 'auto' | 'none' | 'metadata' | '' | undefined | null;
 	src?: string | undefined | null;
+	srcobject?: MediaStream | MediaSource | File | Blob;
 	/**
 	 * a value between 0 and 1
 	 */
@@ -1249,6 +1252,7 @@ export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
 	charset?: string | undefined | null;
 	content?: string | undefined | null;
 	'http-equiv'?:
+		| 'accept-ch'
 		| 'content-security-policy'
 		| 'content-type'
 		| 'default-style'
@@ -1401,7 +1405,7 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
 	defaultValue?: string | string[] | number | undefined | null;
 	defaultvalue?: string | string[] | number | undefined | null;
-	wrap?: 'hard' | 'soft' | undefined | null;
+	wrap?: 'hard' | 'soft' | 'off' | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
 	onchange?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
@@ -1536,6 +1540,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	height?: number | string | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
+	part?: string | undefined | null;
 	max?: number | string | undefined | null;
 	media?: string | undefined | null;
 	// On the `textPath` element
@@ -1637,6 +1642,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'font-variant'?: number | string | undefined | null;
 	'font-weight'?: number | string | undefined | null;
 	format?: number | string | undefined | null;
+	fr?: number | string | undefined | null;
 	from?: number | string | undefined | null;
 	fx?: number | string | undefined | null;
 	fy?: number | string | undefined | null;
@@ -1809,7 +1815,6 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'xlink:type'?: string | undefined | null;
 	'xml:base'?: string | undefined | null;
 	'xml:lang'?: string | undefined | null;
-	xmlns?: string | undefined | null;
 	'xmlns:xlink'?: string | undefined | null;
 	'xml:space'?: string | undefined | null;
 	y1?: number | string | undefined | null;
@@ -2040,7 +2045,7 @@ export interface SvelteHTMLElements {
 			| undefined
 			| {
 					tag?: string;
-					shadow?: 'open' | 'none' | undefined;
+					shadow?: 'open' | 'none' | ShadowRootInit | undefined;
 					props?:
 						| Record<
 								string,
@@ -2062,11 +2067,12 @@ export interface SvelteHTMLElements {
 	};
 	'svelte:head': { [name: string]: any };
 	'svelte:boundary': {
-		onerror?: (error: unknown, reset: () => void) => void;
-		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
+		onerror?: ((error: unknown, reset: () => void) => void) | null | undefined;
+		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]> | null | undefined;
+		pending?: import('svelte').Snippet | null | undefined;
 	};
 
-	[name: string & {}]: { [name: string]: any };
+	[name: string]: { [name: string]: any };
 }
 
 export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;

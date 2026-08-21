@@ -145,6 +145,7 @@ export function visit_component(node, context) {
 		if (slot_name !== 'default') comments = [];
 	}
 
+	/** @type {Set<string>} */
 	const component_slots = new Set();
 
 	for (const slot_name in nodes) {

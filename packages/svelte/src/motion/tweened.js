@@ -1,13 +1,14 @@
 /** @import { Task } from '../internal/client/types' */
-/** @import { Tweened } from './public' */
-/** @import { TweenedOptions } from './private' */
+/** @import { Tweened, TweenOptions } from './public' */
 import { writable } from '../store/shared/index.js';
 import { raf } from '../internal/client/timing.js';
 import { loop } from '../internal/client/loop.js';
 import { linear } from '../easing/index.js';
 import { is_date } from './utils.js';
-import { set, source } from '../internal/client/reactivity/sources.js';
+import { set, state } from '../internal/client/reactivity/sources.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get, render_effect } from 'svelte/internal/client';
+import { DEV } from 'esm-env';
 
 /**
  * @template T
@@ -82,7 +83,7 @@ function get_interpolator(a, b) {
  * @deprecated Use [`Tween`](https://svelte.dev/docs/svelte/svelte-motion#Tween) instead
  * @template T
  * @param {T} [value]
- * @param {TweenedOptions<T>} [defaults]
+ * @param {TweenOptions<T>} [defaults]
  * @returns {Tweened<T>}
  */
 export function tweened(value, defaults = {}) {
@@ -92,7 +93,7 @@ export function tweened(value, defaults = {}) {
 	let target_value = value;
 	/**
 	 * @param {T} new_value
-	 * @param {TweenedOptions<T>} [opts]
+	 * @param {TweenOptions<T>} [opts]
 	 */
 	function set(new_value, opts) {
 		target_value = new_value;
@@ -175,10 +176,10 @@ export function tweened(value, defaults = {}) {
  * @since 5.8.0
  */
 export class Tween {
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
+	#current;
+	#target;
 
-	/** @type {TweenedOptions<T>} */
+	/** @type {TweenOptions<T>} */
 	#defaults;
 
 	/** @type {import('../internal/client/types').Task | null} */
@@ -186,11 +187,17 @@ export class Tween {
 
 	/**
 	 * @param {T} value
-	 * @param {TweenedOptions<T>} options
+	 * @param {TweenOptions<T>} options
 	 */
 	constructor(value, options = {}) {
-		this.#current.v = this.#target.v = value;
+		this.#current = state(value);
+		this.#target = state(value);
 		this.#defaults = options;
+
+		if (DEV) {
+			tag(this.#current, 'Tween.current');
+			tag(this.#target, 'Tween.target');
+		}
 	}
 
 	/**
@@ -208,7 +215,7 @@ export class Tween {
 	 * ```
 	 * @template U
 	 * @param {() => U} fn
-	 * @param {TweenedOptions<U>} [options]
+	 * @param {TweenOptions<U>} [options]
 	 */
 	static of(fn, options) {
 		const tween = new Tween(fn(), options);
@@ -225,7 +232,7 @@ export class Tween {
 	 *
 	 * If `options` are provided, they will override the tween's defaults.
 	 * @param {T} value
-	 * @param {TweenedOptions<T>} [options]
+	 * @param {TweenOptions<T>} [options]
 	 * @returns
 	 */
 	set(value, options) {
@@ -268,6 +275,7 @@ export class Tween {
 				}
 
 				previous_task?.abort();
+				previous_task = null;
 			}
 
 			const elapsed = now - start;

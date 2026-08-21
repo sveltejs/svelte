@@ -1,18 +1,17 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
-	check_dirtiness,
+	is_dirty,
 	active_effect,
 	active_reaction,
 	update_effect,
 	get,
 	is_destroying_effect,
 	remove_reactions,
-	schedule_effect,
 	set_active_reaction,
 	set_is_destroying_effect,
-	set_signal_status,
 	untrack,
-	untracking
+	untracking,
+	set_active_effect
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -21,36 +20,43 @@ import {
 	EFFECT,
 	DESTROYED,
 	INERT,
-	EFFECT_RAN,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	EFFECT_TRANSPARENT,
 	DERIVED,
-	UNOWNED,
 	CLEAN,
-	INSPECT_EFFECT,
+	EAGER_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT
+	EFFECT_PRESERVED,
+	STALE_REACTION,
+	USER_EFFECT,
+	ASYNC,
+	CONNECTED,
+	MANAGED_EFFECT,
+	DESTROYING,
+	PAUSED
 } from '#client/constants';
-import { set } from './sources.js';
+import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
-import { derived } from './deriveds.js';
-import { component_context, dev_current_component_function } from '../context.js';
+import { component_context, dev_current_component_function, dev_stack } from '../context.js';
+import { Batch, collected_effects, current_batch } from './batch.js';
+import { flatten } from './async.js';
+import { without_reactive_context } from '../dom/elements/bindings/shared.js';
+import { set_signal_status } from './status.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
-	if (active_effect === null && active_reaction === null) {
-		e.effect_orphan(rune);
-	}
+	if (active_effect === null) {
+		if (active_reaction === null) {
+			e.effect_orphan(rune);
+		}
 
-	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
 		e.effect_in_unowned_derived();
 	}
 
@@ -77,73 +83,97 @@ function push_effect(effect, parent_effect) {
 /**
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
- * @param {boolean} sync
- * @param {boolean} push
  * @returns {Effect}
  */
-function create_effect(type, fn, sync, push = true) {
+function create_effect(type, fn) {
 	var parent = active_effect;
 
 	if (DEV) {
 		// Ensure the parent is never an inspect effect
-		while (parent !== null && (parent.f & INSPECT_EFFECT) !== 0) {
+		while (parent !== null && (parent.f & EAGER_EFFECT) !== 0) {
 			parent = parent.parent;
 		}
+	}
+
+	if (parent !== null && (parent.f & INERT) !== 0) {
+		type |= INERT;
 	}
 
 	/** @type {Effect} */
 	var effect = {
 		ctx: component_context,
 		deps: null,
-		nodes_start: null,
-		nodes_end: null,
-		f: type | DIRTY,
+		nodes: null,
+		f: type | DIRTY | CONNECTED,
 		first: null,
 		fn,
 		last: null,
 		next: null,
 		parent,
+		b: parent && parent.b,
 		prev: null,
 		teardown: null,
-		transitions: null,
-		wv: 0
+		wv: 0,
+		ac: null
 	};
 
 	if (DEV) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	if (sync) {
+	current_batch?.register_created_effect(effect);
+
+	/** @type {Effect | null} */
+	var e = effect;
+
+	if ((type & EFFECT) !== 0) {
+		if (collected_effects !== null) {
+			// created during traversal — collect and run afterwards
+			collected_effects.push(effect);
+		} else {
+			// schedule for later
+			Batch.ensure().schedule(effect);
+		}
+	} else if (fn !== null) {
 		try {
 			update_effect(effect);
-			effect.f |= EFFECT_RAN;
 		} catch (e) {
 			destroy_effect(effect);
 			throw e;
 		}
-	} else if (fn !== null) {
-		schedule_effect(effect);
+
+		// if an effect doesn't need to be kept in the tree (because it
+		// won't re-run, has no DOM, and has no teardown etc)
+		// then we skip it and go to its child (if any)
+		if (
+			e.deps === null &&
+			e.teardown === null &&
+			e.nodes === null &&
+			e.first === e.last && // either `null`, or a singular child
+			(e.f & EFFECT_PRESERVED) === 0
+		) {
+			e = e.first;
+			if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
+				e.f |= EFFECT_TRANSPARENT;
+			}
+		}
 	}
 
-	// if an effect has no dependencies, no DOM and no teardown function,
-	// don't bother adding it to the effect tree
-	var inert =
-		sync &&
-		effect.deps === null &&
-		effect.first === null &&
-		effect.nodes_start === null &&
-		effect.teardown === null &&
-		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
+	if (e !== null) {
+		e.parent = parent;
 
-	if (!inert && push) {
 		if (parent !== null) {
-			push_effect(effect, parent);
+			push_effect(e, parent);
 		}
 
 		// if we're in a derived, add the effect there too
-		if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+		if (
+			active_reaction !== null &&
+			(active_reaction.f & DERIVED) !== 0 &&
+			(type & ROOT_EFFECT) === 0
+		) {
 			var derived = /** @type {Derived} */ (active_reaction);
-			(derived.effects ??= []).push(effect);
+			(derived.effects ??= []).push(e);
 		}
 	}
 
@@ -162,7 +192,7 @@ export function effect_tracking() {
  * @param {() => void} fn
  */
 export function teardown(fn) {
-	const effect = create_effect(RENDER_EFFECT, null, false);
+	const effect = create_effect(RENDER_EFFECT, null);
 	set_signal_status(effect, CLEAN);
 	effect.teardown = fn;
 	return effect;
@@ -175,31 +205,36 @@ export function teardown(fn) {
 export function user_effect(fn) {
 	validate_effect('$effect');
 
-	// Non-nested `$effect(...)` in a component should be deferred
-	// until the component is mounted
-	var defer =
-		active_effect !== null &&
-		(active_effect.f & BRANCH_EFFECT) !== 0 &&
-		component_context !== null &&
-		!component_context.m;
-
 	if (DEV) {
 		define_property(fn, 'name', {
 			value: '$effect'
 		});
 	}
 
+	// Non-nested `$effect(...)` in a component should be deferred
+	// until the component is mounted
+	var flags = /** @type {Effect} */ (active_effect).f;
+	var defer =
+		!active_reaction &&
+		(flags & BRANCH_EFFECT) !== 0 &&
+		component_context !== null &&
+		!component_context.i;
+
 	if (defer) {
+		// Top-level `$effect(...)` in an unmounted component — defer until mount
 		var context = /** @type {ComponentContext} */ (component_context);
-		(context.e ??= []).push({
-			fn,
-			effect: active_effect,
-			reaction: active_reaction
-		});
+		(context.e ??= []).push(fn);
 	} else {
-		var signal = effect(fn);
-		return signal;
+		// Everything else — create immediately
+		return create_user_effect(fn);
 	}
+}
+
+/**
+ * @param {() => void | (() => void)} fn
+ */
+export function create_user_effect(fn) {
+	return create_effect(EFFECT | USER_EFFECT, fn);
 }
 
 /**
@@ -214,12 +249,12 @@ export function user_pre_effect(fn) {
 			value: '$effect.pre'
 		});
 	}
-	return render_effect(fn);
+	return create_effect(RENDER_EFFECT | USER_EFFECT, fn);
 }
 
 /** @param {() => void | (() => void)} fn */
-export function inspect_effect(fn) {
-	return create_effect(INSPECT_EFFECT, fn, true);
+export function eager_effect(fn) {
+	return create_effect(EAGER_EFFECT, fn);
 }
 
 /**
@@ -228,7 +263,8 @@ export function inspect_effect(fn) {
  * @returns {() => void}
  */
 export function effect_root(fn) {
-	const effect = create_effect(ROOT_EFFECT, fn, true);
+	Batch.ensure();
+	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn);
 
 	return () => {
 		destroy_effect(effect);
@@ -241,7 +277,8 @@ export function effect_root(fn) {
  * @returns {(options?: { outro?: boolean }) => Promise<void>}
  */
 export function component_root(fn) {
-	const effect = create_effect(ROOT_EFFECT, fn, true);
+	Batch.ensure();
+	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn);
 
 	return (options = {}) => {
 		return new Promise((fulfil) => {
@@ -263,7 +300,7 @@ export function component_root(fn) {
  * @returns {Effect}
  */
 export function effect(fn) {
-	return create_effect(EFFECT, fn, false);
+	return create_effect(EFFECT, fn);
 }
 
 /**
@@ -274,9 +311,10 @@ export function effect(fn) {
 export function legacy_pre_effect(deps, fn) {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
-	/** @type {{ effect: null | Effect, ran: boolean }} */
-	var token = { effect: null, ran: false };
-	context.l.r1.push(token);
+	/** @type {{ effect: null | Effect, ran: boolean, deps: () => any }} */
+	var token = { effect: null, ran: false, deps };
+
+	context.l.$.push(token);
 
 	token.effect = render_effect(() => {
 		deps();
@@ -286,8 +324,19 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		set(context.l.r2, true);
-		untrack(fn);
+
+		var effect = /** @type {Effect} */ (active_effect);
+
+		// here, we lie: by setting `active_effect` to be the parent branch, any writes
+		// that happen inside `fn` will _not_ cause an unnecessary reschedule, because
+		// the affected effects will be children of `active_effect`. this is safe
+		// because these effects are known to run in the correct order
+		try {
+			set_active_effect(effect.parent);
+			untrack(fn);
+		} finally {
+			set_active_effect(effect);
+		}
 	});
 }
 
@@ -295,26 +344,24 @@ export function legacy_pre_effect_reset() {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	render_effect(() => {
-		if (!get(context.l.r2)) return;
-
 		// Run dirty `$:` statements
-		for (var token of context.l.r1) {
+		for (var token of context.l.$) {
+			token.deps();
+
 			var effect = token.effect;
 
 			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
 			// the effects dependencies and correctly ensure each dependency is up-to-date.
-			if ((effect.f & CLEAN) !== 0) {
+			if ((effect.f & CLEAN) !== 0 && effect.deps !== null) {
 				set_signal_status(effect, MAYBE_DIRTY);
 			}
 
-			if (check_dirtiness(effect)) {
+			if (is_dirty(effect)) {
 				update_effect(effect);
 			}
 
 			token.ran = false;
 		}
-
-		context.l.r2.v = false; // set directly to avoid rerunning this effect
 	});
 }
 
@@ -322,26 +369,43 @@ export function legacy_pre_effect_reset() {
  * @param {() => void | (() => void)} fn
  * @returns {Effect}
  */
-export function render_effect(fn) {
-	return create_effect(RENDER_EFFECT, fn, true);
+export function async_effect(fn) {
+	return create_effect(ASYNC | EFFECT_PRESERVED, fn);
+}
+
+/**
+ * @param {() => void | (() => void)} fn
+ * @returns {Effect}
+ */
+export function render_effect(fn, flags = 0) {
+	return create_effect(RENDER_EFFECT | flags, fn);
 }
 
 /**
  * @param {(...expressions: any) => void | (() => void)} fn
- * @param {Array<() => any>} thunks
- * @returns {Effect}
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
+ * @param {Blocker[]} blockers
  */
-export function template_effect(fn, thunks = [], d = derived) {
-	const deriveds = thunks.map(d);
-	const effect = () => fn(...deriveds.map(get));
-
-	if (DEV) {
-		define_property(effect, 'name', {
-			value: '{expression}'
+export function template_effect(fn, sync = [], async = [], blockers = []) {
+	flatten(blockers, sync, async, (values) => {
+		create_effect(RENDER_EFFECT, () => {
+			fn(...values.map(get));
 		});
-	}
+	});
+}
 
-	return block(effect);
+/**
+ * Like `template_effect`, but with an effect which is deferred until the batch commits
+ * @param {(...expressions: any) => void | (() => void)} fn
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
+ * @param {Blocker[]} blockers
+ */
+export function deferred_template_effect(fn, sync = [], async = [], blockers = []) {
+	flatten(blockers, sync, async, (values) => {
+		create_effect(EFFECT, () => fn(...values.map(get)));
+	});
 }
 
 /**
@@ -349,15 +413,30 @@ export function template_effect(fn, thunks = [], d = derived) {
  * @param {number} flags
  */
 export function block(fn, flags = 0) {
-	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	var effect = create_effect(BLOCK_EFFECT | flags, fn);
+	if (DEV) {
+		effect.dev_stack = dev_stack;
+	}
+	return effect;
 }
 
 /**
  * @param {(() => void)} fn
- * @param {boolean} [push]
+ * @param {number} flags
  */
-export function branch(fn, push = true) {
-	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true, push);
+export function managed(fn, flags = 0) {
+	var effect = create_effect(MANAGED_EFFECT | flags, fn);
+	if (DEV) {
+		effect.dev_stack = dev_stack;
+	}
+	return effect;
+}
+
+/**
+ * @param {(() => void)} fn
+ */
+export function branch(fn) {
+	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn);
 }
 
 /**
@@ -372,6 +451,11 @@ export function execute_effect_teardown(effect) {
 		set_active_reaction(null);
 		try {
 			teardown.call(null);
+		} catch (error) {
+			// Route teardown errors through the boundary system so that a live
+			// ancestor <svelte:boundary> can handle them. Boundaries that are
+			// themselves mid-teardown are skipped by invoke_error_boundary.
+			invoke_error_boundary(error, effect.parent);
 		} finally {
 			set_is_destroying_effect(previously_destroying_effect);
 			set_active_reaction(previous_reaction);
@@ -389,6 +473,14 @@ export function destroy_effect_children(signal, remove_dom = false) {
 	signal.first = signal.last = null;
 
 	while (effect !== null) {
+		const controller = effect.ac;
+
+		if (controller !== null) {
+			without_reactive_context(() => {
+				controller.abort(STALE_REACTION);
+			});
+		}
+
 		var next = effect.next;
 
 		if ((effect.f & ROOT_EFFECT) !== 0) {
@@ -426,16 +518,20 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes_start !== null) {
-		remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
+	if (
+		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
+		effect.nodes !== null &&
+		effect.nodes.end !== null
+	) {
+		remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
 		removed = true;
 	}
 
+	effect.f |= DESTROYING;
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
-	set_signal_status(effect, DESTROYED);
 
-	var transitions = effect.transitions;
+	var transitions = effect.nodes && effect.nodes.t;
 
 	if (transitions !== null) {
 		for (const transition of transitions) {
@@ -444,6 +540,9 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	execute_effect_teardown(effect);
+
+	effect.f ^= DESTROYING;
+	effect.f |= DESTROYED;
 
 	var parent = effect.parent;
 
@@ -464,8 +563,9 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.ctx =
 		effect.deps =
 		effect.fn =
-		effect.nodes_start =
-		effect.nodes_end =
+		effect.nodes =
+		effect.ac =
+		effect.b =
 			null;
 }
 
@@ -477,7 +577,7 @@ export function destroy_effect(effect, remove_dom = true) {
 export function remove_effect_dom(node, end) {
 	while (node !== null) {
 		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+		var next = node === end ? null : get_next_sibling(node);
 
 		node.remove();
 		node = next;
@@ -511,24 +611,20 @@ export function unlink_effect(effect) {
  * A paused effect does not update, and the DOM subtree becomes inert.
  * @param {Effect} effect
  * @param {() => void} [callback]
+ * @param {boolean} [destroy]
  */
-export function pause_effect(effect, callback) {
+export function pause_effect(effect, callback, destroy = true) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
+	effect.f |= PAUSED;
 	pause_children(effect, transitions, true);
 
-	run_out_transitions(transitions, () => {
-		destroy_effect(effect);
+	var fn = () => {
+		if (destroy) destroy_effect(effect);
 		if (callback) callback();
-	});
-}
+	};
 
-/**
- * @param {TransitionManager[]} transitions
- * @param {() => void} fn
- */
-export function run_out_transitions(transitions, fn) {
 	var remaining = transitions.length;
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
@@ -545,12 +641,14 @@ export function run_out_transitions(transitions, fn) {
  * @param {TransitionManager[]} transitions
  * @param {boolean} local
  */
-export function pause_children(effect, transitions, local) {
+function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
-	if (effect.transitions !== null) {
-		for (const transition of effect.transitions) {
+	var t = effect.nodes && effect.nodes.t;
+
+	if (t !== null) {
+		for (const transition of t) {
 			if (transition.is_global || local) {
 				transitions.push(transition);
 			}
@@ -561,11 +659,22 @@ export function pause_children(effect, transitions, local) {
 
 	while (child !== null) {
 		var sibling = child.next;
-		var transparent = (child.f & EFFECT_TRANSPARENT) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
-		// TODO we don't need to call pause_children recursively with a linked list in place
-		// it's slightly more involved though as we have to account for `transparent` changing
-		// through the tree.
-		pause_children(child, transitions, transparent ? local : false);
+
+		// If this child is a root effect, then it will become an independent root when its parent
+		// is destroyed, it should therefore not become inert nor partake in transitions.
+		if ((child.f & ROOT_EFFECT) === 0) {
+			var transparent =
+				(child.f & EFFECT_TRANSPARENT) !== 0 ||
+				// If this is a branch effect without a block effect parent,
+				// it means the parent block effect was pruned. In that case,
+				// transparency information was transferred to the branch effect.
+				((child.f & BRANCH_EFFECT) !== 0 && (effect.f & BLOCK_EFFECT) !== 0);
+			// TODO we don't need to call pause_children recursively with a linked list in place
+			// it's slightly more involved though as we have to account for `transparent` changing
+			// through the tree.
+			pause_children(child, transitions, transparent ? local : false);
+		}
+
 		child = sibling;
 	}
 }
@@ -576,6 +685,7 @@ export function pause_children(effect, transitions, local) {
  * @param {Effect} effect
  */
 export function resume_effect(effect) {
+	effect.f &= ~PAUSED;
 	resume_children(effect, true);
 }
 
@@ -584,20 +694,20 @@ export function resume_effect(effect) {
  * @param {boolean} local
  */
 function resume_children(effect, local) {
+	// this subtree was paused for its own reasons (e.g. a block whose condition
+	// is still false) — its controller will resume or destroy it
+	if ((effect.f & PAUSED) !== 0) return;
+
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
-	// Ensure the effect is marked as clean again so that any dirty child
-	// effects can schedule themselves for execution
-	if ((effect.f & CLEAN) === 0) {
-		effect.f ^= CLEAN;
-	}
-
 	// If a dependency of this effect changed while it was paused,
-	// schedule the effect to update
-	if (check_dirtiness(effect)) {
+	// schedule the effect to update. we don't use `is_dirty`
+	// here because we don't want to eagerly recompute a derived like
+	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
+	if ((effect.f & CLEAN) === 0) {
 		set_signal_status(effect, DIRTY);
-		schedule_effect(effect);
+		Batch.ensure().schedule(effect); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
 	}
 
 	var child = effect.first;
@@ -612,11 +722,37 @@ function resume_children(effect, local) {
 		child = sibling;
 	}
 
-	if (effect.transitions !== null) {
-		for (const transition of effect.transitions) {
+	var t = effect.nodes && effect.nodes.t;
+
+	if (t !== null) {
+		for (const transition of t) {
 			if (transition.is_global || local) {
 				transition.in();
 			}
 		}
+	}
+}
+
+export function aborted(effect = /** @type {Effect} */ (active_effect)) {
+	return (effect.f & DESTROYED) !== 0;
+}
+
+/**
+ * @param {Effect} effect
+ * @param {DocumentFragment} fragment
+ */
+export function move_effect(effect, fragment) {
+	if (!effect.nodes) return;
+
+	/** @type {TemplateNode | null} */
+	var node = effect.nodes.start;
+	var end = effect.nodes.end;
+
+	while (node !== null) {
+		/** @type {TemplateNode | null} */
+		var next = node === end ? null : get_next_sibling(node);
+
+		fragment.append(node);
+		node = next;
 	}
 }

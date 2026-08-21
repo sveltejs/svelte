@@ -65,7 +65,7 @@ export function render_stylesheet(source, analysis, options) {
 
 	merge_with_preprocessor_map(css, options, css.map.sources[0]);
 
-	if (dev && options.css === 'injected' && css.code) {
+	if (dev && analysis.inject_styles && css.code) {
 		css.code += `\n/*# sourceMappingURL=${css.map.toUrl()} */`;
 	}
 
@@ -355,7 +355,11 @@ const visitors = {
 						continue;
 					}
 
-					if (selector.type === 'TypeSelector' && selector.name === '*') {
+					if (
+						selector.type === 'TypeSelector' &&
+						selector.name === '*' &&
+						selector.namespace === undefined
+					) {
 						context.state.code.update(selector.start, selector.end, modifier);
 					} else {
 						context.state.code.appendLeft(selector.end, modifier);
@@ -374,6 +378,9 @@ const visitors = {
 		if (node.name === 'is' || node.name === 'where' || node.name === 'has' || node.name === 'not') {
 			context.next();
 		}
+	},
+	PseudoElementSelector() {
+		// Functional pseudo-element arguments are not scoped as selectors.
 	}
 };
 

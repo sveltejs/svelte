@@ -5,6 +5,6 @@ export default test({
 		dev: true
 	},
 	async test({ assert, logs }) {
-		assert.deepEqual(logs, ['init', 1, 'init', 1]);
+		assert.deepEqual(logs, [1, 1]);
 	}
 });

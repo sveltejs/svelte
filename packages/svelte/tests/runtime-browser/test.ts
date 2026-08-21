@@ -42,9 +42,9 @@ const { run: run_browser_tests } = suite_with_variants<
 
 describe.concurrent(
 	'runtime-browser',
-	() => run_browser_tests(__dirname),
 	// Browser tests are brittle and slow on CI
-	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
+	{ timeout: 20000, retry: process.env.CI ? 1 : 0 },
+	() => run_browser_tests(__dirname)
 );
 
 const { run: run_ce_tests } = suite<ReturnType<typeof import('./assert').test>>(
@@ -55,9 +55,9 @@ const { run: run_ce_tests } = suite<ReturnType<typeof import('./assert').test>>(
 
 describe.concurrent(
 	'custom-elements',
-	() => run_ce_tests(__dirname, 'custom-elements-samples'),
 	// Browser tests are brittle and slow on CI
-	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
+	{ timeout: 20000, retry: process.env.CI ? 1 : 0 },
+	() => run_ce_tests(__dirname, 'custom-elements-samples')
 );
 
 async function run_test(
@@ -164,6 +164,7 @@ async function run_test(
 				}
 			],
 			bundle: true,
+			platform: 'node',
 			format: 'iife',
 			globalName: 'test_ssr'
 		});
@@ -196,6 +197,7 @@ async function run_test(
 		const page = await browser.newPage();
 		page.on('console', (message) => {
 			let method = message.type();
+			// @ts-ignore
 			if (method === 'warning') method = 'warn';
 			// @ts-ignore
 			console[method](message.text());
@@ -211,7 +213,7 @@ async function run_test(
 		}
 
 		// uncomment to see what was generated
-		// fs.writeFileSync(`${test_dir}/_actual.js`, build_result.outputFiles[0].text);
+		// fs.writeFileSync(`${test_dir}/_output/bundle-${hydrate}.js`, build_result.outputFiles[0].text);
 		const test_result = await page.evaluate(
 			build_result.outputFiles[0].text + ";test.default(document.querySelector('main'))"
 		);

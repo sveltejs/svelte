@@ -25,24 +25,24 @@ export function SnippetBlock(node, context) {
 
 	context.next({ ...context.state, parent_element: null });
 
-	const can_hoist =
-		context.path.length === 1 &&
-		context.path[0].type === 'Fragment' &&
-		can_hoist_snippet(context.state.scope, context.state.scopes);
+	const is_top_level = context.path.length === 1 && context.path[0].type === 'Fragment';
 
-	const name = node.expression.name;
+	if (is_top_level) {
+		const name = node.expression.name;
 
-	if (can_hoist) {
-		const binding = /** @type {Binding} */ (context.state.scope.get(name));
-		context.state.analysis.module.scope.declarations.set(name, binding);
-	} else {
-		const undefined_export = context.state.analysis.undefined_exports.get(name);
-		if (undefined_export) {
-			e.snippet_invalid_export(undefined_export);
+		if (context.state.analysis.instance.scope.declarations.has(name)) {
+			e.declaration_duplicate(node.expression, name);
+		}
+
+		node.metadata.can_hoist =
+			is_top_level && can_hoist_snippet(context.state.scope, context.state.scopes);
+
+		if (node.metadata.can_hoist) {
+			const name = node.expression.name;
+			const binding = /** @type {Binding} */ (context.state.scope.get(name));
+			context.state.analysis.module.scope.declarations.set(name, binding);
 		}
 	}
-
-	node.metadata.can_hoist = can_hoist;
 
 	const { path } = context;
 	const parent = path.at(-2);
@@ -86,8 +86,13 @@ export function SnippetBlock(node, context) {
 function can_hoist_snippet(scope, scopes, visited = new Set()) {
 	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
+		if (!binding) continue;
 
-		if (!binding || binding.scope.function_depth === 0) {
+		if (binding.blocker) {
+			return false;
+		}
+
+		if (binding.scope.function_depth === 0) {
 			continue;
 		}
 

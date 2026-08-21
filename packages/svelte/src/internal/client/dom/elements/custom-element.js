@@ -2,6 +2,7 @@ import { createClassComponent } from '../../../../legacy/legacy-client.js';
 import { effect_root, render_effect } from '../../reactivity/effects.js';
 import { append } from '../template.js';
 import { define_property, get_descriptor, object_keys } from '../../../shared/utils.js';
+import { create_element } from '../operations.js';
 
 /**
  * @typedef {Object} CustomElementPropDefinition
@@ -35,18 +36,23 @@ if (typeof HTMLElement === 'function') {
 		$$l_u = new Map();
 		/** @type {any} The managed render effect for reflecting attributes */
 		$$me;
+		/** @type {ShadowRoot | null} The ShadowRoot of the custom element */
+		$$shadowRoot = null;
 
 		/**
 		 * @param {*} $$componentCtor
 		 * @param {*} $$slots
-		 * @param {*} use_shadow_dom
+		 * @param {ShadowRootInit | undefined} shadow_root_init
 		 */
-		constructor($$componentCtor, $$slots, use_shadow_dom) {
+		constructor($$componentCtor, $$slots, shadow_root_init) {
 			super();
 			this.$$ctor = $$componentCtor;
 			this.$$s = $$slots;
-			if (use_shadow_dom) {
-				this.attachShadow({ mode: 'open' });
+
+			if (shadow_root_init) {
+				// We need to store the reference to shadow root, because `closed` shadow root cannot be
+				// accessed with `this.shadowRoot`.
+				this.$$shadowRoot = this.attachShadow(shadow_root_init);
 			}
 		}
 
@@ -98,7 +104,7 @@ if (typeof HTMLElement === 'function') {
 					 * @param {Element} anchor
 					 */
 					return (anchor) => {
-						const slot = document.createElement('slot');
+						const slot = create_element('slot');
 						if (name !== 'default') slot.name = name;
 
 						append(anchor, slot);
@@ -136,7 +142,7 @@ if (typeof HTMLElement === 'function') {
 				}
 				this.$$c = createClassComponent({
 					component: this.$$ctor,
-					target: this.shadowRoot || this,
+					target: this.$$shadowRoot || this,
 					props: {
 						...this.$$d,
 						$$slots,
@@ -277,7 +283,7 @@ function get_custom_elements_slots(element) {
  * @param {Record<string, CustomElementPropDefinition>} props_definition  The props to observe
  * @param {string[]} slots  The slots to create
  * @param {string[]} exports  Explicitly exported values, other than props
- * @param {boolean} use_shadow_dom  Whether to use shadow DOM
+ * @param {ShadowRootInit | undefined} shadow_root_init  Options passed to shadow DOM constructor
  * @param {(ce: new () => HTMLElement) => new () => HTMLElement} [extend]
  */
 export function create_custom_element(
@@ -285,12 +291,12 @@ export function create_custom_element(
 	props_definition,
 	slots,
 	exports,
-	use_shadow_dom,
+	shadow_root_init,
 	extend
 ) {
 	let Class = class extends SvelteElement {
 		constructor() {
-			super(Component, slots, use_shadow_dom);
+			super(Component, slots, shadow_root_init);
 			this.$$p_d = props_definition;
 		}
 		static get observedAttributes() {

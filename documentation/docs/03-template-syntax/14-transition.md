@@ -1,5 +1,6 @@
 ---
 title: transition:
+tags: transitions
 ---
 
 A _transition_ is triggered by an element entering or leaving the DOM as a result of a state change.
@@ -51,6 +52,12 @@ Transitions can have parameters.
 	<div transition:fade={{ duration: 2000 }}>fades in and out over two seconds</div>
 {/if}
 ```
+
+## Accessibility
+
+Transitions are driven by the [Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API) rather than by CSS. A global `@media (prefers-reduced-motion: reduce)` rule that zeroes `transition-duration` and `animation-duration` therefore has no effect on them.
+
+Use [`prefersReducedMotion`](svelte-motion#prefersReducedMotion) to adjust (or completely disable) the transition accordingly for devices who request reduced motion.
 
 ## Custom transition functions
 

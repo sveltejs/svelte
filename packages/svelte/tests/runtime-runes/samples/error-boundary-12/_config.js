@@ -5,9 +5,8 @@ export default test({
 	test({ assert, target }) {
 		const btn = target.querySelector('button');
 
-		btn?.click();
-		flushSync();
-
-		assert.htmlEqual(target.innerHTML, `<button>change</button><p>Error occured</p>`);
+		assert.throws(() => {
+			flushSync(() => btn?.click());
+		}, /kaboom/);
 	}
 });

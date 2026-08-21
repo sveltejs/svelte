@@ -1,5 +1,6 @@
 ---
 title: style:
+tags: template-style
 ---
 
 The `style:` directive provides a shorthand for setting multiple styles on an element.
@@ -34,8 +35,16 @@ To mark a style as important, use the `|important` modifier:
 <div style:color|important="red">...</div>
 ```
 
-When `style:` directives are combined with `style` attributes, the directives will take precedence:
+When `style:` directives are combined with `style` attributes, the directives will take precedence,
+even over `!important` properties:
 
 ```svelte
-<div style="color: blue;" style:color="red">This will be red</div>
+<div style:color="red" style="color: blue">This will be red</div>
+<div style:color="red" style="color: blue !important">This will still be red</div>
+```
+
+You can set CSS custom properties:
+
+```svelte
+<div style:--columns={columns}>...</div>
 ```

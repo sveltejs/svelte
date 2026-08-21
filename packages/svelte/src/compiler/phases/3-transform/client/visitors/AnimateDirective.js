@@ -15,14 +15,24 @@ export function AnimateDirective(node, context) {
 			: b.thunk(/** @type {Expression} */ (context.visit(node.expression)));
 
 	// in after_update to ensure it always happens after bind:this
-	context.state.after_update.push(
-		b.stmt(
-			b.call(
-				'$.animation',
-				context.state.node,
-				b.thunk(/** @type {Expression} */ (context.visit(parse_directive_name(node.name)))),
-				expression
-			)
+	let statement = b.stmt(
+		b.call(
+			'$.animation',
+			context.state.node,
+			b.thunk(/** @type {Expression} */ (context.visit(parse_directive_name(node.name)))),
+			expression
 		)
 	);
+
+	if (node.metadata.expression.is_async()) {
+		statement = b.stmt(
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
+		);
+	}
+
+	context.state.after_update.push(statement);
 }
