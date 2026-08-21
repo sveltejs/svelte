@@ -664,14 +664,25 @@ function build_element_attribute_update(element, node_id, name, value, attribute
  * @param {ComponentContext} context
  */
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
-	const { value, has_state } = build_attribute_value(attribute.value, context);
+	const memoizer = new Memoizer();
+	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		memoizer.add(value, metadata)
+	);
 
 	// don't lowercase name, as we set the element's property, which might be case sensitive
 	const call = b.call('$.set_custom_element_data', node_id, b.literal(attribute.name), value);
 
 	// this is different from other updates — it doesn't get grouped,
 	// because set_custom_element_data may not be idempotent
-	const update = has_state ? b.call('$.template_effect', b.thunk(call)) : call;
+	const update = has_state
+		? b.call(
+				'$.template_effect',
+				b.arrow(memoizer.apply(), call),
+				memoizer.sync_values(),
+				memoizer.async_values(),
+				memoizer.blockers()
+			)
+		: call;
 
 	context.state.init.push(b.stmt(update));
 }
