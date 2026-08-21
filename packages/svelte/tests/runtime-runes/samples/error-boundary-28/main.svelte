@@ -10,11 +10,15 @@
 	let appContext = $derived(data.value);
 </script>
 
-<button onclick={() => (broken = true)}>break</button>
-<button onclick={() => (mounted = false)}>unmount</button>
+<svelte:boundary>
+	<button onclick={() => (broken = true)}>break</button>
+	<button onclick={() => (mounted = false)}>unmount</button>
 
-{#if mounted}
-	<svelte:boundary onerror={() => {}}>
+	{#if mounted}
 		<Trigger getValue={() => appContext} />
-	</svelte:boundary>
-{/if}
+	{/if}
+
+	{#snippet failed()}
+		<p>caught</p>
+	{/snippet}
+</svelte:boundary>
