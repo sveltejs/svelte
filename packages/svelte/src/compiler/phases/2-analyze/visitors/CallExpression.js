@@ -121,7 +121,15 @@ export function CallExpression(node, context) {
 				is_class_property_definition(parent) ||
 				is_class_property_assignment_at_constructor_root(parent, context);
 
-			if (!valid) {
+			if (
+				!valid &&
+				(rune !== '$state' ||
+					!(
+						parent.type === 'CallExpression' &&
+						parent.callee.type === 'Identifier' &&
+						parent.callee.name === '$derived'
+					))
+			) {
 				e.state_invalid_placement(node, rune);
 			}
 
