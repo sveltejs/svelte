@@ -355,7 +355,11 @@ const visitors = {
 						continue;
 					}
 
-					if (selector.type === 'TypeSelector' && selector.name === '*') {
+					if (
+						selector.type === 'TypeSelector' &&
+						selector.name === '*' &&
+						selector.namespace === undefined
+					) {
 						context.state.code.update(selector.start, selector.end, modifier);
 					} else {
 						context.state.code.appendLeft(selector.end, modifier);
