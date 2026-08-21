@@ -29,15 +29,14 @@ function split_css_unit(value) {
 }
 
 /**
- * Elements without a layout box (e.g. inside a `display: none` parent) have computed
- * dimensions like `auto` that parse to `NaN`, producing keyframe values the browser
- * rejects (https://github.com/sveltejs/svelte/issues/14205). Treat them as `0` instead
- * @param {string} value
- * @returns {number}
+ * Omits unresolved dimensions rather than passing invalid values to Web Animations.
+ *
+ * @param {string} property
+ * @param {number} value
+ * @param {number} t
  */
-function parse_dimension(value) {
-	const result = parseFloat(value);
-	return Number.isNaN(result) ? 0 : result;
+function css_dimension(property, value, t) {
+	return Number.isNaN(value) ? '' : `${property}: ${t * value}px;`;
 }
 
 /**
@@ -128,21 +127,19 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 
 	const opacity = +style.opacity;
 	const primary_property = axis === 'y' ? 'height' : 'width';
-	const primary_property_value = parse_dimension(style[primary_property]);
+	const primary_property_value = parseFloat(style[primary_property]);
 	const secondary_properties = axis === 'y' ? ['top', 'bottom'] : ['left', 'right'];
 	const capitalized_secondary_properties = secondary_properties.map(
 		(e) => /** @type {'Left' | 'Right' | 'Top' | 'Bottom'} */ (`${e[0].toUpperCase()}${e.slice(1)}`)
 	);
-	const padding_start_value = parse_dimension(
-		style[`padding${capitalized_secondary_properties[0]}`]
-	);
-	const padding_end_value = parse_dimension(style[`padding${capitalized_secondary_properties[1]}`]);
-	const margin_start_value = parse_dimension(style[`margin${capitalized_secondary_properties[0]}`]);
-	const margin_end_value = parse_dimension(style[`margin${capitalized_secondary_properties[1]}`]);
-	const border_width_start_value = parse_dimension(
+	const padding_start_value = parseFloat(style[`padding${capitalized_secondary_properties[0]}`]);
+	const padding_end_value = parseFloat(style[`padding${capitalized_secondary_properties[1]}`]);
+	const margin_start_value = parseFloat(style[`margin${capitalized_secondary_properties[0]}`]);
+	const margin_end_value = parseFloat(style[`margin${capitalized_secondary_properties[1]}`]);
+	const border_width_start_value = parseFloat(
 		style[`border${capitalized_secondary_properties[0]}Width`]
 	);
-	const border_width_end_value = parse_dimension(
+	const border_width_end_value = parseFloat(
 		style[`border${capitalized_secondary_properties[1]}Width`]
 	);
 	return {
@@ -152,13 +149,13 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 		css: (t) =>
 			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`${primary_property}: ${t * primary_property_value}px;` +
-			`padding-${secondary_properties[0]}: ${t * padding_start_value}px;` +
-			`padding-${secondary_properties[1]}: ${t * padding_end_value}px;` +
-			`margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
-			`margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
-			`border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
-			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;` +
+			css_dimension(primary_property, primary_property_value, t) +
+			css_dimension(`padding-${secondary_properties[0]}`, padding_start_value, t) +
+			css_dimension(`padding-${secondary_properties[1]}`, padding_end_value, t) +
+			css_dimension(`margin-${secondary_properties[0]}`, margin_start_value, t) +
+			css_dimension(`margin-${secondary_properties[1]}`, margin_end_value, t) +
+			css_dimension(`border-${secondary_properties[0]}-width`, border_width_start_value, t) +
+			css_dimension(`border-${secondary_properties[1]}-width`, border_width_end_value, t) +
 			`min-${primary_property}: 0`
 	};
 }

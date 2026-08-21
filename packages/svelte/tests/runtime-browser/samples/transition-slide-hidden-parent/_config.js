@@ -1,4 +1,4 @@
-import { test } from '../../assert';
+import { ok, test } from '../../assert';
 
 export default test({
 	async test({ assert, window }) {
@@ -11,14 +11,16 @@ export default test({
 
 		// when the element has no layout box, computed dimensions resolve to 'auto',
 		// which must not end up as NaN values that the browser rejects (#14205)
-		const keyframes = /** @type {KeyframeEffect} */ (animations[0].effect).getKeyframes();
-		assert.ok(keyframes.length > 0);
+		const effect = /** @type {KeyframeEffect} */ (animations[0].effect);
+		const keyframes = effect.getKeyframes();
+		ok(keyframes.length > 0);
+		assert.equal(effect.getTiming().duration, 400);
 
 		for (const keyframe of keyframes) {
-			assert.ok('height' in keyframe, 'height was rejected as an invalid keyframe value');
+			ok(!('height' in keyframe), 'unresolved height should be omitted');
 
 			for (const value of Object.values(keyframe)) {
-				assert.ok(!String(value).includes('NaN'), `unexpected NaN in keyframe: ${value}`);
+				ok(!String(value).includes('NaN'), `unexpected NaN in keyframe: ${value}`);
 			}
 		}
 	}
