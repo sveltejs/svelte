@@ -31,6 +31,17 @@ export function await_reactivity_loss(name) {
 }
 
 /**
+ * Your app is stuck in a loop where async work is repeatedly restarted before it can settle. To prevent the UI from never updating, the most recently settled values were committed and subsequent updates deferred. This usually indicates state that updates more frequently than dependent async work takes to complete
+ */
+export function await_starvation() {
+	if (DEV) {
+		console.warn(`%c[svelte] await_starvation\n%cYour app is stuck in a loop where async work is repeatedly restarted before it can settle. To prevent the UI from never updating, the most recently settled values were committed and subsequent updates deferred. This usually indicates state that updates more frequently than dependent async work takes to complete\nhttps://svelte.dev/e/await_starvation`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_starvation`);
+	}
+}
+
+/**
  * An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
  * @param {string} name
  * @param {string} location

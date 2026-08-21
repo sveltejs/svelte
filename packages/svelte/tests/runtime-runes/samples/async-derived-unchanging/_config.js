@@ -23,11 +23,14 @@ export default test({
 			flushSync(() => increment.click());
 		}
 
+		// all four updates write `count` and therefore share the async work —
+		// they are merged into a single batch, in which the first three
+		// in-flight runs are superseded. Only resolving the final run commits
 		for (let i = 1; i < 5; i += 1) {
 			shift.click();
 			await tick();
 
-			assert.equal(p.innerHTML, `${i}: ${Math.min(i, 3)}`);
+			assert.equal(p.innerHTML, i < 4 ? '0: 0' : '4: 3');
 		}
 	}
 });

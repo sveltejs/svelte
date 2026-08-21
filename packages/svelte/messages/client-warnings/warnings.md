@@ -75,6 +75,10 @@ async function sum(a, b) {
 let total = $derived(await sum(a, b));
 ```
 
+## await_starvation
+
+> Your app is stuck in a loop where async work is repeatedly restarted before it can settle. To prevent the UI from never updating, the most recently settled values were committed and subsequent updates deferred. This usually indicates state that updates more frequently than dependent async work takes to complete
+
 ## await_waterfall
 
 > An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app

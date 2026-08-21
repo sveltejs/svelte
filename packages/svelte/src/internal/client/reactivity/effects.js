@@ -112,14 +112,17 @@ function create_effect(type, fn) {
 		prev: null,
 		teardown: null,
 		wv: 0,
-		ac: null
+		ac: null,
+		batch: null
 	};
 
 	if (DEV) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	current_batch?.register_created_effect(effect);
+	// effects created while a batch is active belong to that batch's world
+	// (claiming is a no-op for template-level effects and inside forks)
+	current_batch?.claim(effect);
 
 	/** @type {Effect | null} */
 	var e = effect;

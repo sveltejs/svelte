@@ -27,6 +27,11 @@ export default test({
 		await tick();
 		assert.htmlEqual(p.innerHTML, 'a 1 | b 0 | c 1');
 
+		// resolve the fork revalidation triggered by the real batch settling
+		pop.click();
+		await tick();
+		assert.htmlEqual(p.innerHTML, 'a 1 | b 0 | c 1');
+
 		commit.click();
 		await tick();
 		assert.htmlEqual(p.innerHTML, 'a 1 | b 1 | c 1');

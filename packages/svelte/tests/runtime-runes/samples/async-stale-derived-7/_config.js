@@ -19,11 +19,12 @@ export default test({
 		await tick();
 		assert.htmlEqual(p.innerHTML, `0 + 0 = 0 | 0 0`);
 
-		// Check that the first batch can still resolve before the second even if one of its async values
-		// is already superseeded (but the subsequent batch as a whole is still pending).
+		// The two batches share the awaited `a + b` expression, so they were
+		// merged into one — resolving the superseded first run does nothing,
+		// and the combined state commits once all async work has settled
 		shift_1.click();
 		await tick();
-		assert.htmlEqual(p.innerHTML, `1 + 0 = 1 | 1 0`);
+		assert.htmlEqual(p.innerHTML, `0 + 0 = 0 | 0 0`);
 
 		shift_1.click();
 		await tick();

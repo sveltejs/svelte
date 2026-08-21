@@ -52,7 +52,6 @@ export const EFFECT_OFFSCREEN = 1 << 25;
  * should not be used for any other purpose!
  */
 export const WAS_MARKED = 1 << 16;
-
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;
