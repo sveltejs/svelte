@@ -5,7 +5,7 @@ Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICE
 
 /**
  * Returns value as is.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -15,7 +15,7 @@ export function linear(t) {
 
 /**
  * Rebound effect on start and end of value range.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -27,7 +27,7 @@ export function backInOut(t) {
 
 /**
  * Rebound effect on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -38,7 +38,7 @@ export function backIn(t) {
 
 /**
  * Rebound effect on end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -49,7 +49,7 @@ export function backOut(t) {
 
 /**
  * Bounce effect on end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -72,7 +72,7 @@ export function bounceOut(t) {
 
 /**
  * Bounce effect on start and end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -82,7 +82,7 @@ export function bounceInOut(t) {
 
 /**
  * Bounce effect on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -92,7 +92,7 @@ export function bounceIn(t) {
 
 /**
  * Circular effect, accelerate on start, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -103,7 +103,7 @@ export function circInOut(t) {
 
 /**
  * Circular effect, accelerate on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -113,7 +113,7 @@ export function circIn(t) {
 
 /**
  * Circular effect, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -123,7 +123,7 @@ export function circOut(t) {
 
 /**
  * Cubic scaling, accelerate on start, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -133,7 +133,7 @@ export function cubicInOut(t) {
 
 /**
  * Cubic scaling, accelerate on start
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -143,7 +143,7 @@ export function cubicIn(t) {
 
 /**
  * Cubic scaling, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -154,7 +154,7 @@ export function cubicOut(t) {
 
 /**
  * Elastic effect on start and end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -169,7 +169,7 @@ export function elasticInOut(t) {
 
 /**
  * Elastic effect on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -179,7 +179,7 @@ export function elasticIn(t) {
 
 /**
  * Elastic effect on end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -189,7 +189,7 @@ export function elasticOut(t) {
 
 /**
  * Exponential effect on start and end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -203,7 +203,7 @@ export function expoInOut(t) {
 
 /**
  * Exponential effect on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -213,7 +213,7 @@ export function expoIn(t) {
 
 /**
  * Exponential effect on end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -223,7 +223,7 @@ export function expoOut(t) {
 
 /**
  * Quadratic scaling, accelerate on start, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -236,7 +236,7 @@ export function quadInOut(t) {
 
 /**
  * Quadratic scaling, accelerate on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -246,7 +246,7 @@ export function quadIn(t) {
 
 /**
  * Quadratic scaling, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -256,7 +256,7 @@ export function quadOut(t) {
 
 /**
  * Quartic scaling, accelerate on start, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -266,7 +266,7 @@ export function quartInOut(t) {
 
 /**
  * Quartic scaling, accelerate on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -276,7 +276,7 @@ export function quartIn(t) {
 
 /**
  * Quartic scaling, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -286,7 +286,7 @@ export function quartOut(t) {
 
 /**
  * Quintic scaling, accelerate on start, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -297,7 +297,7 @@ export function quintInOut(t) {
 
 /**
  * Quintic scaling, accelerate on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -307,7 +307,7 @@ export function quintIn(t) {
 
 /**
  * Quintic scaling, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -317,7 +317,7 @@ export function quintOut(t) {
 
 /**
  * Sinusoidal effect, accelerate on start, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -327,7 +327,7 @@ export function sineInOut(t) {
 
 /**
  * Sinusoidal effect, accelerate on start.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
@@ -339,7 +339,7 @@ export function sineIn(t) {
 
 /**
  * Sinusoidal effect, decelerate towards end.
- * 
+ *
  * @param {number} t
  * @returns {number}
  */
