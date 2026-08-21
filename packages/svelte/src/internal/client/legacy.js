@@ -13,7 +13,7 @@ export let captured_signals = null;
  * @template T
  * @param {() => T} fn
  */
-function capture_signals(fn) {
+export function capture_signals(fn) {
 	var previous_captured_signals = captured_signals;
 
 	try {
