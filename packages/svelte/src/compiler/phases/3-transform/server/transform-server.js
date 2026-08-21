@@ -210,14 +210,25 @@ export function server_component(analysis, options) {
 		];
 	}
 
-	if (
-		[...analysis.instance.scope.declarations.values()].some(
-			(binding) => binding.kind === 'store_sub'
-		)
-	) {
+	const store_subs = [...analysis.instance.scope.declarations.values()].filter(
+		(binding) => binding.kind === 'store_sub'
+	);
+
+	// a blocked subscription is only created once its promise resolves, so its teardown must wait until the render is done
+	const defer_store_teardown = store_subs.some((binding) => binding.blocker);
+
+	if (store_subs.length > 0) {
 		instance.body.unshift(b.var('$$store_subs'));
+
+		const unsubscribe = b.if(
+			b.id('$$store_subs'),
+			b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs')))
+		);
+
 		template.body.push(
-			b.if(b.id('$$store_subs'), b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))))
+			defer_store_teardown
+				? b.stmt(b.call('$$renderer.on_destroy', b.arrow([], b.block([unsubscribe]))))
+				: unsubscribe
 		);
 	}
 
@@ -257,7 +268,7 @@ export function server_component(analysis, options) {
 		);
 	}
 
-	let should_inject_context = dev || analysis.needs_context;
+	let should_inject_context = dev || analysis.needs_context || defer_store_teardown;
 
 	if (should_inject_context) {
 		component_block = b.block([
