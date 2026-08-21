@@ -5,7 +5,8 @@ import { active_effect, active_reaction } from './runtime.js';
 import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
-import { BRANCH_EFFECT } from './constants.js';
+import { BRANCH_EFFECT, COMPONENT_SYMBOL } from './constants.js';
+import { define_property } from '../shared/utils.js';
 import { create_context, get_or_init_context_map } from '../shared/context.js';
 
 /** @type {ComponentContext | null} */
@@ -217,7 +218,16 @@ export function pop(component) {
 		dev_current_component_function = component_context?.function ?? null;
 	}
 
-	return component ?? /** @type {T} */ ({});
+	return mark_as_component(component);
+}
+
+/**
+ * Add a symbol to the object (or create one if undefined) to mark it as a component so it isn't proxified.
+ * @param {any} component
+ */
+export function mark_as_component(component = {}) {
+	define_property(component, COMPONENT_SYMBOL, { value: true });
+	return component;
 }
 
 /** @returns {boolean} */
