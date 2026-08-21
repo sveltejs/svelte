@@ -1,5 +1,5 @@
 /** @import { ComponentContext, Effect } from '#client' */
-import { COMPONENT_SYMBOL, DESTROYING, STATE_SYMBOL } from '#client/constants';
+import { DESTROYING, STATE_SYMBOL } from '#client/constants';
 import { component_context, mark_as_component } from '../../../context.js';
 import { effect, render_effect } from '../../../reactivity/effects.js';
 import { active_effect, untrack } from '../../../runtime.js';
