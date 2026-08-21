@@ -35,9 +35,8 @@ export default test({
 
 		assert.ok(match);
 
-		const [css, mime_type, encoding, css_map_base64] = /** @type {RegExpMatchArray} */ (
-			match
-		).slice(1);
+		const [css, mime_type, encoding, css_map_base64] =
+			/** @type {RegExpMatchArray} */ (match).slice(1);
 		assert.equal(mime_type, 'application/json');
 		assert.equal(encoding, 'utf-8');
 

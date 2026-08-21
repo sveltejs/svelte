@@ -464,8 +464,8 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 			// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
 			// selector in a way that is similar to ancestor matching. In a sense, we're treating `.x:has(.y)` as `.x .y`.
-			const complex_selectors = /** @type {Compiler.AST.CSS.SelectorList} */ (selector.args)
-				.children;
+			const complex_selectors =
+				/** @type {Compiler.AST.CSS.SelectorList} */ (selector.args).children;
 			let matched = false;
 
 			for (const complex_selector of complex_selectors) {

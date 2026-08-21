@@ -254,9 +254,10 @@ export function createBubbler() {
 	}
 
 	return (/**@type {string}*/ type) => (/**@type {Event}*/ event) => {
-		const events = /** @type {Record<string, Function | Function[]>} */ (
-			active_component_context.s.$$events
-		)?.[/** @type {any} */ (type)];
+		const events =
+			/** @type {Record<string, Function | Function[]>} */ (active_component_context.s.$$events)?.[
+				/** @type {any} */ (type)
+			];
 
 		if (events) {
 			const callbacks = is_array(events) ? events.slice() : [events];

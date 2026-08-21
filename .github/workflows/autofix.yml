@@ -58,7 +58,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm -F svelte build
-      - name: Run prettier
+      - name: Run oxfmt
         run: pnpm format
       - name: Commit changes
         run: |
