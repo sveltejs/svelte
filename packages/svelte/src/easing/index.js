@@ -81,7 +81,7 @@ export function bounceInOut(t) {
 }
 
 /**
- * Rebound effect on start.
+ * Bounce effect on start.
  * 
  * @param {number} t
  * @returns {number}
