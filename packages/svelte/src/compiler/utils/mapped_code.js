@@ -311,6 +311,13 @@ function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_inp
 		typeof preprocessor_map_input === 'string'
 			? JSON.parse(preprocessor_map_input)
 			: preprocessor_map_input;
+	// A preprocessor map with a missing/empty `sources[0]` (e.g. from a MagicString transform
+	// created without a `source` option) can't be matched against `filename` during combination,
+	// which silently drops the chain instead of erroring. Normalize it to `filename` first, the
+	// same way Vite treats an empty `sources[0]` as referring to the file being transformed.
+	if (preprocessor_map.sources?.length === 1 && !preprocessor_map.sources[0]) {
+		preprocessor_map.sources = [filename];
+	}
 	const result_map = combine_sourcemaps(filename, [svelte_map, preprocessor_map]);
 	// Svelte expects a SourceMap which includes toUrl and toString. Instead of wrapping our output in a class,
 	// we just tack on the extra properties.
