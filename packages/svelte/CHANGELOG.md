@@ -1,5 +1,45 @@
 # svelte
 
+## 5.57.0
+
+### Minor Changes
+
+- feat: export `RenderOutput`, `SyncRenderOutput`, `Csp` and `Sha256Source` from `svelte/server` ([#18648](https://github.com/sveltejs/svelte/pull/18648))
+
+### Patch Changes
+
+- fix: block template store subscriptions on the promise that assigns the store ([#18582](https://github.com/sveltejs/svelte/pull/18582))
+
+- fix: route $derived teardown errors through invoke_error_boundary ([#18486](https://github.com/sveltejs/svelte/pull/18486))
+
+- fix: warn on undeclared shorthand event handlers on `<svelte:window>`, `<svelte:document>` and `<svelte:body>` ([#18480](https://github.com/sveltejs/svelte/pull/18480))
+
+- fix: prevent onoutroend from firing twice when compilerOptions.hmr is true ([#18655](https://github.com/sveltejs/svelte/pull/18655))
+
+- fix: preserve whitespace after inline elements when printing ([#18685](https://github.com/sveltejs/svelte/pull/18685))
+
+- fix: run `onDestroy` callbacks when a server render throws ([#18585](https://github.com/sveltejs/svelte/pull/18585))
+
+- fix: never apply class hash to elements inside `<svelte:head>` ([#18160](https://github.com/sveltejs/svelte/pull/18160))
+
+- perf: O(n²)→O(n) Map lookups for legacy `$:` reactive statement ordering ([#18602](https://github.com/sveltejs/svelte/pull/18602))
+
+- fix: distinct memoizer on style/class directives ([#18466](https://github.com/sveltejs/svelte/pull/18466))
+
+- fix: don't turn component instances stored in `$state` into state proxies ([#18646](https://github.com/sveltejs/svelte/pull/18646))
+
+- perf: optimize simple object destructuring in `@const` tags ([#18390](https://github.com/sveltejs/svelte/pull/18390))
+
+- fix: don't resurrect outroing elements when an ancestor block is paused and resumed ([#18431](https://github.com/sveltejs/svelte/pull/18431))
+
+- fix: prevent `selectedcontent` mutation from changing the selected option ([#18495](https://github.com/sveltejs/svelte/pull/18495))
+
+- fix: avoid `NaN` keyframe values in `slide` transition for elements without a layout box ([#18430](https://github.com/sveltejs/svelte/pull/18430))
+
+- chore: clarify when `$effect.pre` runs relative to DOM updates ([#18534](https://github.com/sveltejs/svelte/pull/18534))
+
+- fix: scope SSR boundary failed snippets to their boundary ([#18593](https://github.com/sveltejs/svelte/pull/18593))
+
 ## 5.56.10
 
 ### Patch Changes
