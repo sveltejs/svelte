@@ -7,4 +7,5 @@
 <div>dummy</div>
 
 <style>
+	* { color: red }
 </style>

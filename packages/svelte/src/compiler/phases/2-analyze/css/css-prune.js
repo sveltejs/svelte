@@ -150,6 +150,9 @@ export function prune(stylesheet, elements) {
 				seen.clear();
 
 				if (
+					// Elements rendered through <svelte:head> are not style-scopable.
+					// Prevent css hash injection (class="s-...") on tags like <meta>, <link>, <script>.
+					!is_inside_svelte_head(element) &&
 					apply_selector(
 						selectors,
 						/** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule),
@@ -255,8 +258,6 @@ function apply_selector(
 	from = 0,
 	to = relative_selectors.length
 ) {
-	if (is_inside_svelte_head(element)) return false;
-
 	if (from >= to) return false;
 
 	const selector_index = direction === FORWARD ? from : to - 1;
