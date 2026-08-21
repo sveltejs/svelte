@@ -13,7 +13,7 @@ export function create_context(get_context, set_context, has_context) {
 	return [
 		(...args) => {
 			if (!has_context(key)) {
-				if (args.length > 0) return args[0];
+				if (args.length > 0) return /** @type {T} */ (args[0]);
 				missing_context();
 			}
 
