@@ -261,7 +261,7 @@ declare function $effect(fn: () => void | (() => void)): void;
 declare namespace $effect {
 	/**
 	 * Runs code right before a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.
-	 * The timing of the execution is right before DOM updates that are scheduled after it in the same flush; parts of the DOM may already have been updated by the time it runs.
+	 * The timing of the execution is right before the DOM that comes after it is updated; parent DOM may already have been updated by the time it runs.
 	 *
 	 * Example:
 	 * ```ts

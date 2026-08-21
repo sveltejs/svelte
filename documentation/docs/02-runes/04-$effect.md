@@ -205,9 +205,7 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 </div>
 ```
 
-In this example the effect and the `{#each}` block live in the same component, so the measurement runs before the list updates ([await expressions](await-expressions) change this, as described below). Across components there is no separate 'before the DOM updates' phase: effects, including `$effect.pre`, run in a single walk of the tree, interleaved with template updates, and a parent component's `$effect.pre` runs before its children's. By the time a component's `$effect.pre` runs, DOM belonging to other components may already have been updated.
-
-`$effect.pre` therefore runs before DOM updates that are scheduled after it, not before every DOM mutation in the flush. When using [await expressions](await-expressions), block updates like `{#if ...}` and `{#each ...}` in the same component also run before `$effect.pre`.
+`$effect.pre` runs before DOM updates that are scheduled after it, not before every DOM mutation in the flush - DOM of parent components may already be updated. When using [await expressions](await-expressions), block updates like `{#if ...}` and `{#each ...}` in the same component also run before `$effect.pre`.
 
 Apart from the timing, `$effect.pre` works exactly like `$effect`.
 
