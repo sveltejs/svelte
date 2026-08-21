@@ -55,9 +55,11 @@ export const [getUserContext, setUserContext] = createContext<User>();
 ```
 <!-- codeblock:end -->
 
-> [!NOTE] `createContext` was added in version 5.40. If you are using an earlier version of Svelte, you must use `setContext` and `getContext` instead.
-
 This is particularly useful when `Parent.svelte` is not directly aware of `Child.svelte`, but instead renders it as part of a `children` [snippet](snippet) as shown above.
+
+The getter of `createContext` will throw an error there's no ancestor that provided the context. Since version `5.57.0` you can pass a fallback value to `get` to avoid this, if you know the context is optional.
+
+> [!NOTE] `createContext` was added in version 5.40. If you are using an earlier version of Svelte, you must use `setContext` and `getContext` instead.
 
 ## `setContext` and `getContext`
 

@@ -12,11 +12,11 @@ export function set_ssr_context(v) {
 
 /**
  * @template T
- * @returns {[() => T, (context: T) => T]}
+ * @returns {[(fallback?: T) => T, (context: T) => T]}
  * @since 5.40.0
  */
 export function createContext() {
-	return /** @type {[() => T, (context: T) => T]} */ (
+	return /** @type {[(fallback?: T) => T, (context: T) => T]} */ (
 		create_context(getContext, setContext, hasContext)
 	);
 }
