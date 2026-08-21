@@ -23,6 +23,7 @@ import {
 } from '../../utils.js';
 import { Renderer } from './renderer.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
 import { ssr_context } from './context.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -497,6 +498,8 @@ export function derived(fn) {
 		if (arguments.length === 0) {
 			return updated_value ?? get_value();
 		}
+
+		if (DEV) w.derived_reassignment();
 
 		updated_value = new_value;
 		return updated_value;
