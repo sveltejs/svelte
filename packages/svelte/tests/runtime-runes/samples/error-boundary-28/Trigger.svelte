@@ -1,7 +1,7 @@
 <script>
 	let { getValue } = $props();
 
-	// Reads reactive state during teardown, like bits-ui popovers/tooltips do.
+	// Reads reactive state during teardown
 	$effect(() => {
 		return () => {
 			getValue();

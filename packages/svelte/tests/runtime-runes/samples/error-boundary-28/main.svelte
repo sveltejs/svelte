@@ -10,8 +10,8 @@
 	let appContext = $derived(data.value);
 </script>
 
-<button id="break" onclick={() => (broken = true)}>break</button>
-<button id="unmount" onclick={() => (mounted = false)}>unmount</button>
+<button onclick={() => (broken = true)}>break</button>
+<button onclick={() => (mounted = false)}>unmount</button>
 
 {#if mounted}
 	<svelte:boundary onerror={() => {}}>
