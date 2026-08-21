@@ -133,7 +133,7 @@ export function set_untracked_writes(value) {
  **/
 export let write_version = 1;
 
-/** @type {number} Used to version each read of a source of derived to avoid duplicating depedencies inside a reaction */
+/** @type {number} Used to version each read of a source of derived to avoid duplicating dependencies inside a reaction */
 let read_version = 0;
 
 export let update_version = read_version;
@@ -406,6 +406,16 @@ function remove_reaction(signal, dependency) {
 		// DIRTY so it is reexecuted once someone wants its value again.
 		if (derived.v !== UNINITIALIZED) {
 			update_derived_status(derived);
+		}
+
+		// Call abort controller, noone's listening to this derived anymore
+		if (derived.ac !== null) {
+			without_reactive_context(() => {
+				/** @type {AbortController} */ (derived.ac).abort(STALE_REACTION);
+				derived.ac = null;
+				// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
+				set_signal_status(derived, DIRTY);
+			});
 		}
 
 		// freeze any effects inside this derived
