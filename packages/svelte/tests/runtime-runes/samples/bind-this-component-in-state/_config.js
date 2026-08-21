@@ -5,8 +5,7 @@ export default test({
 	html: `<p>child</p>`,
 
 	test({ assert, instance }) {
-		// the instance is an opaque handle: storing it in $state must not
-		// turn it (or anything read through it) into a state proxy
+		// ensure component instance doesn't get proxified (https://github.com/sveltejs/svelte/issues/18416)
 		assert.ok(instance.get_first().myArr === items);
 	}
 });

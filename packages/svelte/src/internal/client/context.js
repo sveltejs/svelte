@@ -213,9 +213,6 @@ export function pop(component) {
 
 	if (component !== undefined) {
 		context.x = component;
-
-		// mark the exports object, so that storing it in `$state` doesn't turn it into a state proxy
-		define_property(component, COMPONENT_SYMBOL, { value: true });
 	}
 
 	context.i = true;
@@ -226,7 +223,16 @@ export function pop(component) {
 		dev_current_component_function = component_context?.function ?? null;
 	}
 
-	return component ?? /** @type {T} */ ({});
+	return mark_as_component(component);
+}
+
+/**
+ * Add a symbol to the object (or create one if undefined) to mark it as a component so it isn't proxified.
+ * @param {any} component
+ */
+export function mark_as_component(component = {}) {
+	define_property(component, COMPONENT_SYMBOL, { value: true });
+	return component;
 }
 
 /** @returns {boolean} */

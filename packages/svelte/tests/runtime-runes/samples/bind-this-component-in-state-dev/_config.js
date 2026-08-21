@@ -9,8 +9,7 @@ export default test({
 	html: `<p>child</p>`,
 
 	test({ assert, instance }) {
-		// same as bind-this-component-in-state, but in dev mode: the two
-		// must agree (https://github.com/sveltejs/svelte/issues/18416)
+		// ensure component instance doesn't get proxified (https://github.com/sveltejs/svelte/issues/18416)
 		assert.ok(instance.get_first().myArr === items);
 	}
 });
