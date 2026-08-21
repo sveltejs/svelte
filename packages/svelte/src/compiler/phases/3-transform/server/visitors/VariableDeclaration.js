@@ -102,9 +102,11 @@ export function VariableDeclaration(node, context) {
 				} else {
 					const call = /** @type {CallExpression} */ (declarator.init);
 
-					let rhs = value;
+					// - cannot be a SpreadElement because refused during analysis
+					// - use args[0] rather than value to avoid visiting twice (above in const value = ... and below in for-ofs)
+					let rhs = /** @type {Expression} */ (call.arguments[0]);
 
-					if (rune !== '$derived' || call.arguments[0].type !== 'Identifier') {
+					if (rune === '$derived.by' || call.arguments[0].type !== 'Identifier') {
 						const id = b.id(context.state.scope.generate('$$d'));
 
 						rhs = b.call(id);
