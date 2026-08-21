@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-distinct memoizer on style/class directives
+fix: distinct memoizer on style/class directives
