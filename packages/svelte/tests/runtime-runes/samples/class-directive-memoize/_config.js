@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // This test counts mutations on hydration
@@ -16,9 +16,8 @@ export default test({
 		<div class="red"></div>
 	`,
 
-	async test({ target, assert, logs }) {
+	test({ target, assert, logs }) {
 		flushSync();
-		tick();
 
 		assert.deepEqual(logs, ['is_red()']);
 
