@@ -1,5 +1,6 @@
 /** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
+import { DEV } from 'esm-env';
 import {
 	clear_text_content,
 	create_text,
@@ -319,6 +320,10 @@ export function unmount(component, options) {
 	if (fn) {
 		mounted_components.delete(component);
 		return fn(options);
+	}
+
+	if (DEV) {
+		w.lifecycle_double_unmount();
 	}
 
 	return Promise.resolve();
