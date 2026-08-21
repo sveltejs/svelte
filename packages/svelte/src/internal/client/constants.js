@@ -60,6 +60,8 @@ export const ASYNC = 1 << 22;
 export const ERROR_VALUE = 1 << 23;
 
 export const STATE_SYMBOL = Symbol('$state');
+/** Marks component export objects, so that `proxy(...)` leaves them untouched */
+export const COMPONENT_SYMBOL = Symbol('component');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');

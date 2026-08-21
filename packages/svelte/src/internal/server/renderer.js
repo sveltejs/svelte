@@ -1,5 +1,6 @@
 /** @import { Component } from 'svelte' */
-/** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
+/** @import { HydratableContext, SSRContext } from './types.js' */
+/** @import { Csp, RenderOutput, SyncRenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
@@ -460,6 +461,7 @@ export class Renderer {
 	 */
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
+		copy.type = this.type;
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promise = this.promise;
 		return copy;

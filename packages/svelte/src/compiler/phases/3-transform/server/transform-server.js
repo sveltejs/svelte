@@ -148,7 +148,7 @@ export function server_component(analysis, options) {
 	const legacy_reactive_declarations = [];
 
 	for (const [node] of analysis.reactive_statements) {
-		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
+		const statement = state.legacy_reactive_statements.get(node);
 		if (statement === undefined) {
 			throw new Error('Could not find reactive statement');
 		}
@@ -165,7 +165,7 @@ export function server_component(analysis, options) {
 			}
 		}
 
-		instance.body.push(statement[1]);
+		instance.body.push(statement);
 	}
 
 	if (legacy_reactive_declarations.length > 0) {

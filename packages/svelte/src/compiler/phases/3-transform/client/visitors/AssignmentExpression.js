@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, LogicalOperator, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types.js' */
 import * as b from '#compiler/builders';
@@ -79,8 +79,13 @@ function build_assignment(operator, left, right, context) {
 
 			// special case — assignment to private state field
 			if (left.property.type === 'PrivateIdentifier') {
+				const logical_operator = ['||=', '&&=', '??='].includes(operator)
+					? /** @type {LogicalOperator} */ (operator.slice(0, -1))
+					: null;
 				let value = /** @type {Expression} */ (
-					context.visit(build_assignment_value(operator, left, right))
+					context.visit(
+						logical_operator === null ? build_assignment_value(operator, left, right) : right
+					)
 				);
 
 				const needs_proxy =
@@ -88,7 +93,15 @@ function build_assignment(operator, left, right, context) {
 					is_non_coercive_operator(operator) &&
 					should_proxy(value, context.state.scope);
 
-				return b.call('$.set', left, value, needs_proxy && b.true);
+				const assignment = b.call('$.set', left, value, needs_proxy && b.true);
+
+				return logical_operator === null
+					? assignment
+					: b.logical(
+							logical_operator,
+							/** @type {Expression} */ (context.visit(left)),
+							assignment
+						);
 			}
 		}
 	}
