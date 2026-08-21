@@ -1875,66 +1875,160 @@ declare module 'svelte/compiler' {
 }
 
 declare module 'svelte/easing' {
+	/**
+	 * Returns value as is.
+	 *
+	 * */
 	export function linear(t: number): number;
-
+	/**
+	 * Rebound effect on start and end of value range.
+	 *
+	 * */
 	export function backInOut(t: number): number;
-
+	/**
+	 * Rebound effect on start.
+	 *
+	 * */
 	export function backIn(t: number): number;
-
+	/**
+	 * Rebound effect on end.
+	 *
+	 * */
 	export function backOut(t: number): number;
-
+	/**
+	 * Bounce effect on end.
+	 *
+	 * */
 	export function bounceOut(t: number): number;
-
+	/**
+	 * Bounce effect on start and end.
+	 *
+	 * */
 	export function bounceInOut(t: number): number;
-
+	/**
+	 * Bounce effect on start.
+	 *
+	 * */
 	export function bounceIn(t: number): number;
-
+	/**
+	 * Circular effect, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function circInOut(t: number): number;
-
+	/**
+	 * Circular effect, accelerate on start.
+	 *
+	 * */
 	export function circIn(t: number): number;
-
+	/**
+	 * Circular effect, decelerate towards end.
+	 *
+	 * */
 	export function circOut(t: number): number;
-
+	/**
+	 * Cubic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function cubicInOut(t: number): number;
-
+	/**
+	 * Cubic scaling, accelerate on start
+	 *
+	 * */
 	export function cubicIn(t: number): number;
-
+	/**
+	 * Cubic scaling, decelerate towards end.
+	 *
+	 * */
 	export function cubicOut(t: number): number;
-
+	/**
+	 * Elastic effect on start and end.
+	 *
+	 * */
 	export function elasticInOut(t: number): number;
-
+	/**
+	 * Elastic effect on start.
+	 *
+	 * */
 	export function elasticIn(t: number): number;
-
+	/**
+	 * Elastic effect on end.
+	 *
+	 * */
 	export function elasticOut(t: number): number;
-
+	/**
+	 * Exponential effect on start and end.
+	 *
+	 * */
 	export function expoInOut(t: number): number;
-
+	/**
+	 * Exponential effect on start.
+	 *
+	 * */
 	export function expoIn(t: number): number;
-
+	/**
+	 * Exponential effect on end.
+	 *
+	 * */
 	export function expoOut(t: number): number;
-
+	/**
+	 * Quadratic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quadInOut(t: number): number;
-
+	/**
+	 * Quadratic scaling, accelerate on start.
+	 *
+	 * */
 	export function quadIn(t: number): number;
-
+	/**
+	 * Quadratic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quadOut(t: number): number;
-
+	/**
+	 * Quartic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quartInOut(t: number): number;
-
+	/**
+	 * Quartic scaling, accelerate on start.
+	 *
+	 * */
 	export function quartIn(t: number): number;
-
+	/**
+	 * Quartic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quartOut(t: number): number;
-
+	/**
+	 * Quintic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quintInOut(t: number): number;
-
+	/**
+	 * Quintic scaling, accelerate on start.
+	 *
+	 * */
 	export function quintIn(t: number): number;
-
+	/**
+	 * Quintic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quintOut(t: number): number;
-
+	/**
+	 * Sinusoidal effect, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function sineInOut(t: number): number;
-
+	/**
+	 * Sinusoidal effect, accelerate on start.
+	 *
+	 * */
 	export function sineIn(t: number): number;
-
+	/**
+	 * Sinusoidal effect, decelerate towards end.
+	 *
+	 * */
 	export function sineOut(t: number): number;
 
 	export {};
