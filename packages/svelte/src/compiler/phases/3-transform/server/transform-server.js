@@ -268,7 +268,6 @@ export function server_component(analysis, options) {
 		);
 	}
 
-	// `on_destroy` callbacks are only collected inside a component body
 	let should_inject_context = dev || analysis.needs_context || defer_store_teardown;
 
 	if (should_inject_context) {
