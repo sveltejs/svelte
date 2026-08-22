@@ -100,7 +100,11 @@ export let current_sources = null;
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
-	if (active_reaction !== null && (!async_mode_flag || (active_reaction.f & DERIVED) !== 0)) {
+	if (
+		active_reaction !== null &&
+		((!async_mode_flag && active_reaction.f & REACTION_IS_UPDATING) ||
+			(active_reaction.f & DERIVED) !== 0)
+	) {
 		(current_sources ??= new Set()).add(value);
 	}
 }
