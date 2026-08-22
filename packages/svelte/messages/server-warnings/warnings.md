@@ -2,7 +2,7 @@
 
 > Assignment to derived state on the server is permanent and will not be recalculated when its dependencies change, unlike on the client where it is temporary
 
-This warning is emitted when you reassign a value created with `$derived` while compiling with `generate: 'server'`. On the client such overrides are temporary and discarded once dependencies change; on the server the derived is memoized with `once(fn)` and the override is stored in a closure (`updated_value`), so it survives forever. See `sveltejs/svelte#18681` for details.
+This warning is emitted when you reassign a value created with `$derived` or `$derived.by` while compiling with `generate: 'server'`. There is no reactivity on the server — derived values do not recompute when dependencies change, including overridden values. On the client, overrides are temporary and discarded when dependencies change.
 
 ## unresolved_hydratable
 
