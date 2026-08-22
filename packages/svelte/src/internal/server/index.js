@@ -347,11 +347,11 @@ export function slot(renderer, $$props, name, slot_props, fallback_fn) {
  * @returns {Record<string, unknown>}
  */
 export function rest_props(props, rest) {
+	const exclude = new Set(rest);
 	/** @type {Record<string, unknown>} */
 	const rest_props = {};
-	let key;
-	for (key of Object.keys(props)) {
-		if (!rest.includes(key)) {
+	for (const key of Object.keys(props)) {
+		if (!exclude.has(key)) {
 			rest_props[key] = props[key];
 		}
 	}
