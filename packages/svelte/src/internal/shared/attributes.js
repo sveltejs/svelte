@@ -90,6 +90,57 @@ export function to_class(value, hash, directives) {
 }
 
 /**
+ * @param {any} value
+ * @returns {string}
+ */
+function escape_style_value(value) {
+	var str = String(value);
+	var escaped = '';
+	/** @type {boolean | '"' | "'"} */
+	var in_str = false;
+	var in_apo = 0;
+	var in_comment = false;
+
+	const len = str.length;
+	for (var i = 0; i < len; i++) {
+		var c = str[i];
+
+		if (c === '\\') {
+			escaped += c;
+			if (i + 1 < len) {
+				escaped += str[++i];
+			}
+			continue;
+		}
+
+		if (in_comment) {
+			if (c === '/' && i > 0 && str[i - 1] === '*') {
+				in_comment = false;
+			}
+		} else if (in_str) {
+			if (c === in_str) {
+				in_str = false;
+			}
+		} else if (c === '/' && i + 1 < len && str[i + 1] === '*') {
+			in_comment = true;
+		} else if (c === '"' || c === "'") {
+			in_str = c;
+		} else if (c === '(') {
+			in_apo++;
+		} else if (c === ')') {
+			if (in_apo > 0) in_apo--;
+		}
+
+		if (c === ';' && !in_comment && in_str === false && in_apo === 0) {
+			continue;
+		}
+		escaped += c;
+	}
+
+	return escaped;
+}
+
+/**
  *
  * @param {Record<string,any>} styles
  * @param {boolean} important
@@ -101,7 +152,7 @@ function append_styles(styles, important = false) {
 	for (var key of Object.keys(styles)) {
 		var value = styles[key];
 		if (value != null && value !== '') {
-			css += ' ' + key + ': ' + value + separator;
+			css += ' ' + key + ': ' + escape_style_value(value) + separator;
 		}
 	}
 
