@@ -1,7 +1,7 @@
 /** @import { Blocker, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
+import { get_descriptors, get_prototype_of, is_array } from '../../../shared/utils.js';
 import { create_event, delegate, delegated, event, event_symbol } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
@@ -26,7 +26,8 @@ import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
 import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
-import { init_select, select_option } from './bindings/select.js';
+import { get_option_value, init_select, select_option } from './bindings/select.js';
+import { is } from '../../proxy.js';
 import { flatten } from '../../reactivity/async.js';
 
 export const CLASS = Symbol('class');
@@ -161,6 +162,51 @@ export function set_default_value(element, value) {
 	const existing_value = element.value;
 	element.defaultValue = value;
 	element.value = existing_value;
+}
+
+/**
+ * `<select>` has no `defaultValue` property. The default selection is instead
+ * expressed through the `selected` attribute of the matching `<option>`, which is
+ * what the form reset algorithm restores, so mark that option and unmark the rest.
+ * The current selection is preserved, since `selected` is the default state only.
+ * @param {HTMLSelectElement} select
+ * @param {any} value
+ */
+export function set_default_select_value(select, value) {
+	// `__value` is set by `<select value>` / `bind:value`. If it is absent, nothing has
+	// asked for a particular option yet, so the default selection should take effect —
+	// which is what the browser does with a `selected` attribute in the markup.
+	var has_explicit_value = '__value' in select;
+	var selected_index = select.selectedIndex;
+
+	if (select.multiple) {
+		// a `multiple` select takes a list of values, so an option is part of the
+		// default selection when it is a member of that list — mirroring how
+		// `select_option` applies the current value
+		if (!is_array(value)) return;
+
+		var selected = new Set([...select.selectedOptions]);
+
+		for (var multi_option of select.options) {
+			set_selected(multi_option, value.includes(get_option_value(multi_option)));
+		}
+
+		if (has_explicit_value) {
+			for (var option_to_restore of select.options) {
+				option_to_restore.selected = selected.has(option_to_restore);
+			}
+		}
+
+		return;
+	}
+
+	for (var option of select.options) {
+		set_selected(option, is(get_option_value(option), value));
+	}
+
+	if (has_explicit_value) {
+		select.selectedIndex = selected_index;
+	}
 }
 
 /**
@@ -560,7 +606,16 @@ export function attribute_effect(
 			var select = /** @type {HTMLSelectElement} */ (element);
 
 			effect(() => {
-				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, true);
+				var attrs = /** @type {Record<string | symbol, any>} */ (prev);
+
+				// `defaultValue` is meaningless as a property here, so `set_attributes` cannot
+				// apply it. Mark the default option once the options exist, as we do for the
+				// non-spread case.
+				if ('defaultValue' in attrs) {
+					set_default_select_value(select, attrs.defaultValue);
+				}
+
+				select_option(select, attrs.value, true);
 				init_select(select);
 			});
 		}
