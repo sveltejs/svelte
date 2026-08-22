@@ -832,6 +832,13 @@ export function analyze_component(root, source, options) {
 					} else {
 						e.export_undefined(specifier, name);
 					}
+				} else {
+					const snippet = [...analysis.snippets].find(
+						(snippet) => snippet.expression.name === name
+					);
+					if (snippet) {
+						snippet.metadata.exported = true;
+					}
 				}
 			}
 		}
@@ -866,7 +873,7 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		prune(analysis.css.ast, analysis.elements);
+		prune(analysis.css.ast, analysis.elements, analysis);
 
 		const { comment } = analysis.css.ast.content;
 		const should_ignore_unused =

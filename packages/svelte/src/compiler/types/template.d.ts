@@ -545,6 +545,7 @@ export namespace AST {
 			/** The set of components/render tags that could render this snippet,
 			 * used for CSS pruning */
 			sites: Set<Component | SvelteComponent | SvelteSelf | RenderTag>;
+			exported: boolean;
 		};
 	}
 
