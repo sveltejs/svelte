@@ -119,22 +119,26 @@ declare module 'svelte' {
 	/**
 	 * Can be used to create strongly typed Svelte components.
 	 *
-	 * #### Example:
+	 * ### Example:
 	 *
 	 * You have component library on npm called `component-library`, from which
 	 * you export a component called `MyComponent`. For Svelte+TypeScript users,
 	 * you want to provide typings. Therefore you create a `index.d.ts`:
+	 *
 	 * ```ts
 	 * import type { Component } from 'svelte';
 	 * export declare const MyComponent: Component<{ foo: string }> {}
 	 * ```
+	 *
 	 * Typing this makes it possible for IDEs like VS Code with the Svelte extension
 	 * to provide intellisense and to use the component like this in a Svelte file
 	 * with TypeScript:
+	 *
 	 * ```svelte
 	 * <script lang="ts">
 	 * 	import { MyComponent } from "component-library";
 	 * </script>
+	 *
 	 * <MyComponent foo={'bar'} />
 	 * ```
 	 */
@@ -2319,10 +2323,10 @@ declare module 'svelte/motion' {
 		 * 	const tween = Tween.of(() => number);
 		 * </script>
 		 * ```
-		 * 
+		 *
 		 */
 		static of<U>(fn: () => U, options?: TweenOptions<U> | undefined): Tween<U>;
-		
+
 		constructor(value: T, options?: TweenOptions<T>);
 		/**
 		 * Sets `tween.target` to `value` and returns a `Promise` that resolves if and when `tween.current` catches up to it.
@@ -2373,7 +2377,7 @@ declare module 'svelte/reactivity' {
 	 * ```
 	 */
 	export class SvelteDate extends Date {
-		
+
 		constructor(...params: any[]);
 		#private;
 	}
@@ -2409,12 +2413,12 @@ declare module 'svelte/reactivity' {
 	 * {#if monkeys.has('🙊')}<p>speak no evil</p>{/if}
 	 * ```
 	 *
-	 * 
+	 *
 	 */
 	export class SvelteSet<T> extends Set<T> {
-		
+
 		constructor(value?: Iterable<T> | null | undefined);
-		
+
 		add(value: T): this;
 		#private;
 	}
@@ -2460,12 +2464,12 @@ declare module 'svelte/reactivity' {
 	 * {/if}
 	 * ```
 	 *
-	 * 
+	 *
 	 */
 	export class SvelteMap<K, V> extends Map<K, V> {
-		
+
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-		
+
 		set(key: K, value: V): this;
 		#private;
 	}
@@ -2528,7 +2532,7 @@ declare module 'svelte/reactivity' {
 	 * ```
 	 */
 	export class SvelteURLSearchParams extends URLSearchParams {
-		
+
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
@@ -2604,7 +2608,7 @@ declare module 'svelte/reactivity' {
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	class ReactiveValue<T> {
-		
+
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
@@ -2669,7 +2673,7 @@ declare module 'svelte/reactivity/window' {
 		get current(): number | undefined;
 	};
 	class ReactiveValue<T> {
-		
+
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
