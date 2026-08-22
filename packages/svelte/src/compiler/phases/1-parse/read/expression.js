@@ -43,6 +43,22 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 
 		parser.index = index;
 
+		if (!parser.ts) {
+			let j = parser.index;
+			while (j < parser.template.length && regex_whitespace.test(parser.template[j])) j++;
+
+			const remaining = parser.template.slice(j);
+
+			if (
+				remaining[0] === ':' ||
+				/^satisfies[\s(]/.test(remaining) ||
+				(remaining[0] === '!' && remaining[1] !== '=') ||
+				(/^as[\s(]/.test(remaining) && !disallow_loose)
+			) {
+				e.js_parse_error(j, `Unexpected token (did you forget to add \`lang="ts"\`?)`);
+			}
+		}
+
 		return /** @type {Expression} */ (remove_parens(node));
 	} catch (err) {
 		// If we are in an each loop we need the error to be thrown in cases like
