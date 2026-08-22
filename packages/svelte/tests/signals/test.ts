@@ -1428,6 +1428,58 @@ describe('signals', () => {
 		};
 	});
 
+	test('class field derived updates after original parent effect is destroyed', () => {
+		return () => {
+			const warn = console.warn;
+			const warnings: string[] = [];
+			console.warn = (...args) => {
+				warnings.push(...args.map(String));
+			};
+
+			class Box {
+				value = state('A');
+				doubled = derived(() => $.get(this.value) + $.get(this.value));
+
+				get result() {
+					return $.get(this.doubled);
+				}
+			}
+
+			let box: Box | undefined;
+			const rendered: string[] = [];
+
+			try {
+				const destroy = effect_root(() => {
+					render_effect(() => {
+						let instance = box;
+						if (instance === undefined) {
+							instance = box = new Box();
+						}
+
+						rendered.push(instance.result);
+					});
+				});
+
+				flushSync();
+				assert.deepEqual(rendered, ['AA']);
+
+				flushSync(() => set(box!.value, 'B'));
+				assert.deepEqual(rendered, ['AA', 'BB']);
+
+				destroy();
+
+				flushSync(() => set(box!.value, 'C'));
+				assert.equal(box!.result, 'CC');
+				assert.deepEqual(
+					warnings.filter((warning) => warning.includes('derived_inert')),
+					[]
+				);
+			} finally {
+				console.warn = warn;
+			}
+		};
+	});
+
 	test('derived when connected should add new dependency to its reaction even when read outside effect', () => {
 		let count_a = state(0);
 		let count_b = state(0);
