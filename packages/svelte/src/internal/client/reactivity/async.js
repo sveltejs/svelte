@@ -371,11 +371,23 @@ export function increment_pending() {
 	var batch = /** @type {Batch} */ (current_batch);
 	var blocking = !!boundary?.is_rendered();
 
-	boundary?.update_pending_count(1, batch);
+	// If we're inside an uncommitted fork (`batch.is_fork === true`), the
+	// pending state changes are speculative — they must not affect the
+	// boundary's pending count. Only the batch's own pending count is
+	// updated (so that `commit` can await the async work). The boundary
+	// (and therefore `$effect.pending()` and any pending snippet) is only
+	// updated once the fork is committed.
+	var is_fork = batch.is_fork;
+
+	if (!is_fork) {
+		boundary?.update_pending_count(1, batch);
+	}
 	batch.increment(blocking, effect);
 
 	return () => {
-		boundary?.update_pending_count(-1, batch);
+		if (!is_fork) {
+			boundary?.update_pending_count(-1, batch);
+		}
 		batch.decrement(blocking, effect);
 	};
 }
