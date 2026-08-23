@@ -1,4 +1,4 @@
-/** @import { ExportNamedDeclaration, Identifier } from 'estree' */
+/** @import { ExportNamedDeclaration, Identifier, VariableDeclaration } from 'estree' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { extract_identifiers } from '../../../utils/ast.js';
@@ -23,11 +23,13 @@ export function ExportNamedDeclaration(node, context) {
 	}
 
 	if (node.declaration?.type === 'VariableDeclaration') {
-		// in runes mode, forbid `export let`
+		// in runes mode, forbid `export let` — unless it declares derived state, in which
+		// case `derived_invalid_export` below is the more useful error
 		if (
 			context.state.analysis.runes &&
 			context.state.ast_type === 'instance' &&
-			node.declaration.kind === 'let'
+			node.declaration.kind === 'let' &&
+			!declares_derived(node.declaration, context)
 		) {
 			e.legacy_export_invalid(node);
 		}
@@ -67,4 +69,20 @@ export function ExportNamedDeclaration(node, context) {
 			}
 		}
 	}
+}
+
+/**
+ * @param {VariableDeclaration} declaration
+ * @param {Context} context
+ */
+function declares_derived(declaration, context) {
+	for (const declarator of declaration.declarations) {
+		for (const id of extract_identifiers(declarator.id)) {
+			if (context.state.scope.get(id.name)?.kind === 'derived') {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
