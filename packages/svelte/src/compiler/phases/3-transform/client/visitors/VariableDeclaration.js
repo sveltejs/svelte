@@ -6,7 +6,13 @@ import { extract_paths, save } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
-import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
+import {
+	async_thunk,
+	get_prop_source,
+	is_prop_source,
+	is_state_source,
+	should_proxy
+} from '../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -213,7 +219,7 @@ export function VariableDeclaration(node, context) {
 						/** @type {Expression} */
 						let call = b.call(
 							'$.async_derived',
-							b.thunk(expression, true),
+							async_thunk(expression),
 							dev && b.literal(declarator.id.name),
 							location ? b.literal(location) : undefined
 						);
@@ -246,7 +252,7 @@ export function VariableDeclaration(node, context) {
 
 							call = b.call(
 								'$.async_derived',
-								b.thunk(expression, true),
+								async_thunk(expression),
 								dev &&
 									b.literal(
 										`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`

@@ -1,8 +1,9 @@
-/** @import { BlockStatement, Expression, Identifier } from 'estree' */
+/** @import { BlockStatement, CallExpression, Expression, Identifier, Node } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
+import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
 import { is_simple_expression, save } from '../../../utils/ast.js';
 import {
@@ -164,6 +165,96 @@ export function should_proxy(node, scope) {
 	return true;
 }
 
+/** @param {Node} node */
+function is_function(node) {
+	return (
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression' ||
+		node.type === 'FunctionDeclaration'
+	);
+}
+
+/**
+ * @param {Node} node
+ * @param {string} name
+ */
+function is_internal_call(node, name) {
+	// `b.call('$.name', ...)` emits a single identifier named `$.name`
+	return (
+		node.type === 'CallExpression' &&
+		node.callee.type === 'Identifier' &&
+		node.callee.name === `$.${name}`
+	);
+}
+
+/**
+ * Whether `$.<name>(...)` is called anywhere in `node` outside nested functions
+ * @param {Node} node
+ * @param {string} name
+ */
+function contains_internal_call(node, name) {
+	let found = false;
+
+	walk(node, null, {
+		_(node, { next, stop }) {
+			if (is_function(node)) return;
+			if (is_internal_call(node, name)) {
+				found = true;
+				stop();
+			}
+			next();
+		}
+	});
+
+	return found;
+}
+
+/**
+ * An async thunk whose body ends by unsetting any reaction context restored by
+ * `$.save` in its last synchronous segment, so the context cannot leak into
+ * foreign microtasks that run before the returned promise settles
+ * @param {Expression | BlockStatement} body
+ */
+export function async_thunk(body) {
+	// only a `$.save` can restore a context, so a thunk without one needs no hooks —
+	// drop the `$.suspend` calls the await visitor emitted optimistically
+	if (!contains_internal_call(body, 'save')) {
+		return b.arrow(
+			[],
+			/** @type {Expression | BlockStatement} */ (
+				walk(/** @type {Node} */ (body), null, {
+					_(node, { next, visit }) {
+						if (is_function(node)) return;
+						if (is_internal_call(node, 'suspend')) {
+							return visit(/** @type {CallExpression} */ (node).arguments[0]);
+						}
+						next();
+					}
+				})
+			),
+			true
+		);
+	}
+
+	// expression bodies end through `$.suspend`, which is the same hook as a suspension
+	if (body.type !== 'BlockStatement') {
+		return b.arrow([], b.call('$.suspend', body), true);
+	}
+
+	return b.arrow(
+		[],
+		b.block([
+			{
+				type: 'TryStatement',
+				block: body,
+				handler: null,
+				finalizer: b.block([b.stmt(b.call('$.unset_restored_context'))])
+			}
+		]),
+		true
+	);
+}
+
 /**
  * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
  * @param {ComponentClientTransformState} state
@@ -171,7 +262,7 @@ export function should_proxy(node, scope) {
  * @param {boolean} [async]
  */
 export function create_derived(state, expression, async = false) {
-	const thunk = b.thunk(expression, async);
+	const thunk = async ? async_thunk(expression) : b.thunk(expression);
 
 	if (async) {
 		return save(b.call('$.async_derived', thunk));

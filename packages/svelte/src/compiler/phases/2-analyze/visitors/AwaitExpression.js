@@ -10,15 +10,18 @@ import * as e from '../../../errors.js';
 export function AwaitExpression(node, context) {
 	const tla = context.state.ast_type === 'instance' && context.state.function_depth === 1;
 
-	// preserve context for awaits that precede other expressions in template or `$derived(...)`
 	if (
 		is_reactive_expression(
 			context.path,
 			context.state.derived_function_depth === context.state.function_depth
-		) &&
-		!is_last_evaluated_expression(context.path, node)
+		)
 	) {
-		context.state.analysis.pickled_awaits.add(node);
+		context.state.analysis.reactive_awaits.add(node);
+
+		// preserve context for awaits that precede other expressions in template or `$derived(...)`
+		if (!is_last_evaluated_expression(context.path, node)) {
+			context.state.analysis.pickled_awaits.add(node);
+		}
 	}
 
 	let suspend = tla;

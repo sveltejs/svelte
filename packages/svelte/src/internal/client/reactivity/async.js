@@ -166,15 +166,42 @@ export function capture() {
  */
 export async function save(promise) {
 	var restore = capture();
+	// the context restored by an earlier `save` in this expression must not
+	// outlive the synchronous segment that is about to end at this `await`
+	unset_restored_context();
 	var value = await promise;
 
 	return () => {
 		restore();
-		queue_micro_task(unset_context);
+		restored = true;
 		return value;
 	};
 }
 
+/** `true` between a `save` thunk restoring a context and the end of that synchronous segment */
+var restored = false;
+
+/**
+ * Unset the context if it was restored by a `save` thunk in the current synchronous
+ * segment. Called at every suspension point and at the end of async expression bodies,
+ * so that a foreign microtask can never run inside a restored reaction context
+ */
+export function unset_restored_context() {
+	if (restored) unset_context();
+}
+
+/**
+ * Production counterpart of `track_reactivity_loss` for awaits that need no
+ * context preservation — `await b` becomes `await $.suspend(b)` so the
+ * suspension still ends any restored context
+ * @template T
+ * @param {T} value
+ * @returns {T}
+ */
+export function suspend(value) {
+	unset_restored_context();
+	return value;
+}
 /**
  * Reset `current_async_effect` after the `promise` resolves, so
  * that we can emit `await_reactivity_loss` warnings
@@ -183,6 +210,7 @@ export async function save(promise) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
+	unset_restored_context();
 	var previous_reactivity_loss_tracker = reactivity_loss_tracker;
 	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
 	queueMicrotask(() => {
@@ -269,6 +297,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 }
 
 export function unset_context(deactivate_batch = true) {
+	restored = false;
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);

@@ -90,7 +90,7 @@ export default function Async_if_chain($$anchor) {
 
 	var node_3 = $.sibling(node_1, 2);
 
-	$.async(node_3, [$$promises[0]], [async () => (await $.save(foo))() > 10], (node_3, $$condition) => {
+	$.async(node_3, [$$promises[0]], [async () => $.suspend((await $.save(foo))() > 10)], (node_3, $$condition) => {
 		var consequent_5 = ($$anchor) => {
 			var text_7 = $.text('foo');
 
@@ -107,7 +107,7 @@ export default function Async_if_chain($$anchor) {
 			var fragment_2 = $.comment();
 			var node_4 = $.first_child(fragment_2);
 
-			$.async(node_4, [$$promises[0]], [async () => (await $.save(foo))() > 5], (node_4, $$condition) => {
+			$.async(node_4, [$$promises[0]], [async () => $.suspend((await $.save(foo))() > 5)], (node_4, $$condition) => {
 				var consequent_7 = ($$anchor) => {
 					var text_9 = $.text('baz');
 

@@ -66,6 +66,8 @@ export interface Analysis {
 	async_deriveds: Set<CallExpression>;
 	/** Awaits needing context preservation */
 	pickled_awaits: Set<AwaitExpression>;
+	/** awaits inside reactive expressions, pickled or not — a restored context must end at each */
+	reactive_awaits: Set<AwaitExpression>;
 }
 
 export interface ComponentAnalysis extends Analysis {

@@ -288,7 +288,8 @@ export function analyze_module(source, options) {
 		async_deriveds: new Set(),
 		comments,
 		classes: new Map(),
-		pickled_awaits: new Set()
+		pickled_awaits: new Set(),
+		reactive_awaits: new Set()
 	};
 
 	state.adjust({
@@ -559,6 +560,7 @@ export function analyze_component(root, source, options) {
 		snippets: new Set(),
 		async_deriveds: new Set(),
 		pickled_awaits: new Set(),
+		reactive_awaits: new Set(),
 		instance_body: {
 			sync: [],
 			async: [],
