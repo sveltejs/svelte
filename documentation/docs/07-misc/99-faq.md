@@ -61,7 +61,7 @@ Note: The `@component` is necessary in the HTML comment which describes your com
 
 ## Does Svelte scale?
 
-There will be a blog post about this eventually, but in the meantime, check out [this issue](https://github.com/sveltejs/svelte/issues/2546).
+Yes. Svelte 5 was rewritten to make larger applications faster and easier to maintain. Its signal-based runtime provides fine-grained reactivity, while [runes](what-are-runes) let you use the same reactive primitives in components and reusable `.svelte.js`/`.svelte.ts` modules. For application-level concerns such as routing, data loading, code-splitting and server-side rendering, use [SvelteKit](/docs/kit). See [Svelte 5 is alive](/blog/svelte-5-is-alive) for more background.
 
 ## Is there a UI component library?
 
