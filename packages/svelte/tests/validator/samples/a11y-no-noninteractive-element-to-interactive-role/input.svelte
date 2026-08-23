@@ -76,6 +76,8 @@
 <menu role="tablist"></menu>
 <menu role="tree"></menu>
 <menu role="treegrid"></menu>
+<!-- label -->
+<label role="tab">tab <input type="checkbox" /></label>
 
 <!-- VALID: elements assigned an interactive role. -->
 <div role="button"></div>

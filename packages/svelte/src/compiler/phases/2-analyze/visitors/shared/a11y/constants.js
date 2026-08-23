@@ -178,7 +178,9 @@ export const a11y_non_interactive_element_to_interactive_role_exceptions = {
 	li: ['menuitem', 'option', 'row', 'tab', 'treeitem'],
 	table: ['grid'],
 	td: ['gridcell'],
-	fieldset: ['radiogroup', 'presentation']
+	fieldset: ['radiogroup', 'presentation'],
+	// <label role="tab"> wrapping a radio input is the standard way to build tabs without JavaScript
+	label: ['tab']
 };
 
 export const combobox_if_list = ['email', 'search', 'tel', 'text', 'url'];
