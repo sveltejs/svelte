@@ -1521,4 +1521,74 @@ describe('signals', () => {
 			assert.equal(s.reactions, null);
 		};
 	});
+
+	// https://github.com/sveltejs/svelte/issues/18414
+	test('a reaction that throws after first-reading a fresh derived does not leak it', () => {
+		const src = state(0);
+		const pane = derived(() => $.get(src));
+		const base = derived(() => $.get(pane) + ':base');
+		const extra = derived(() => $.get(pane) + ':extra');
+		const flag = state(false);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				if ($.get(flag)) {
+					$.get(extra);
+					throw new Error('render boom');
+				} else {
+					$.get(base);
+				}
+			});
+		});
+
+		return () => {
+			try {
+				flushSync(() => set(flag, true));
+			} catch {}
+
+			destroy();
+
+			assert.equal(src.reactions, null);
+		};
+	});
+
+	test('a derived that throws on its first run re-runs when its dependencies change', () => {
+		const s = state(0);
+		const fn = () => {
+			if ($.get(s) === 0) throw new Error('boom');
+			return $.get(s);
+		};
+		const owned = derived(fn);
+		const previous_effect = $.active_effect;
+		$.set_active_effect(null);
+		const unowned = derived(fn);
+		$.set_active_effect(previous_effect);
+		const log: any[] = [];
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				for (const d of [owned, unowned]) {
+					try {
+						log.push($.get(d));
+					} catch {
+						log.push('error');
+					}
+				}
+			});
+		});
+
+		return () => {
+			assert.notEqual(owned.parent, null);
+			assert.equal(unowned.parent, null);
+
+			flushSync();
+			assert.deepEqual(log, ['error', 'error']);
+
+			flushSync(() => set(s, 1));
+			assert.deepEqual(log, ['error', 'error', 1, 1]);
+
+			destroy();
+			assert.equal(s.reactions, null);
+		};
+	});
 });
