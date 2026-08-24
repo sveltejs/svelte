@@ -64,7 +64,7 @@ export function head(hash, render_fn) {
 
 			if (!hydrating) {
 				if (e.nodes === null) {
-					e.nodes = { start: anchor, end: anchor, a: null, t: null };
+					e.nodes = { start: anchor, end: anchor, segments: null, a: null, t: null };
 				} else {
 					e.nodes.end = anchor;
 				}
