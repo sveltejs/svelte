@@ -463,7 +463,7 @@ function set_attributes(
 				}
 			} else if (
 				is_default ||
-				(setters.has(name) && (is_custom_element || typeof value !== 'string'))
+				((is_custom_element || typeof value !== 'string') && setters.has(name))
 			) {
 				// @ts-ignore
 				element[name] = value;
