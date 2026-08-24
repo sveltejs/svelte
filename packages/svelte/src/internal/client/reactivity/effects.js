@@ -45,7 +45,13 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling, remove_node, append_child } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
+import {
+	Batch,
+	clear_last_scheduled_effect,
+	collected_effects,
+	set_teardown_context,
+	teardown_context
+} from './batch.js';
 import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
 import { push_renderer, current_renderer, pop_renderer } from '../custom-renderer/state.js';
@@ -562,6 +568,8 @@ export function destroy_effect(effect, remove_dom = true) {
 	if (DEV) {
 		effect.component_function = null;
 	}
+
+	clear_last_scheduled_effect(effect);
 
 	// `first` and `child` are nulled out in destroy_effect_children
 	// we don't null out `parent` so that error propagation can work correctly

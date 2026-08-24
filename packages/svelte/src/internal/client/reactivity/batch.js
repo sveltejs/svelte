@@ -162,6 +162,16 @@ let last_scheduled_effect = null;
  */
 var rebases = new Set();
 
+/**
+ * @param {Effect} effect
+ * @returns {void}
+ */
+export function clear_last_scheduled_effect(effect) {
+	if (last_scheduled_effect === effect) {
+		last_scheduled_effect = null;
+	}
+}
+
 export let is_flushing_sync = false;
 
 /**

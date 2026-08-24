@@ -2121,6 +2121,7 @@ describe('signals', () => {
 			pop();
 		}
 	});
+<<<<<<< HEAD
 
 	it('prunes the edges of a block effect once the batches that ran it commit', () => {
 		enable_async_mode_flag();
@@ -2185,5 +2186,26 @@ describe('signals', () => {
 			flushSync();
 			disable_async_mode_flag();
 		}
+	});
+
+	test('destroy_effect clears scheduling and effect state (#18623)', () => {
+		return () => {
+			let s = state(0);
+			let e: Effect | undefined;
+
+			let destroy = effect_root(() => {
+				e = effect(() => {
+					$.get(s);
+				});
+			});
+
+			set(s, 1);
+			flushSync();
+
+			destroy();
+
+			assert.equal(e?.deps, null);
+			assert.equal(e?.fn, null);
+		};
 	});
 });
