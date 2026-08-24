@@ -17,3 +17,7 @@
 <div onmouseout={() => {}} onblur={() => {}}></div>
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div onmouseout={() => {}} {...otherProps}></div>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div onmouseover={() => {}} onfocusin={() => {}}></div>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div onmouseout={() => {}} onfocusout={() => {}}></div>
