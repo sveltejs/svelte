@@ -2,7 +2,7 @@ import { render_effect, effect_root } from '../internal/client/reactivity/effect
 import { flushSync } from '../index-client.js';
 import { SvelteDate } from './date.js';
 import { assert, test } from 'vitest';
-import { derived, get } from 'svelte/internal/client';
+import { derived, get, snapshot } from 'svelte/internal/client';
 
 const initial_date = new Date(2023, 0, 2, 0, 0, 0, 0);
 const a = new Date(2024, 1, 3, 1, 1, 1, 1);
@@ -669,6 +669,34 @@ test('Date methods shared between deriveds', () => {
 	});
 
 	assert.deepEqual(log, ['2023/2023', '2024/2024', '2025/2025']);
+
+	cleanup();
+});
+
+test('date is reactive when read through $state.snapshot', () => {
+	const date = new SvelteDate(initial_date);
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(snapshot(date).toISOString());
+		});
+	});
+
+	flushSync(() => {
+		date.setFullYear(a.getFullYear());
+	});
+
+	flushSync(() => {
+		date.setFullYear(b.getFullYear());
+	});
+
+	const after_a = new Date(initial_date);
+	after_a.setFullYear(a.getFullYear());
+	const after_b = new Date(initial_date);
+	after_b.setFullYear(b.getFullYear());
+
+	assert.deepEqual(log, [initial_date.toISOString(), after_a.toISOString(), after_b.toISOString()]);
 
 	cleanup();
 });

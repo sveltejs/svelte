@@ -105,7 +105,10 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 		}
 
 		if (value instanceof Date) {
-			return /** @type {Snapshot<T>} */ (structuredClone(value));
+			// Read the time through the prototype rather than letting
+			// `structuredClone` read the internal slot, so that a reactive
+			// subclass like `SvelteDate` registers a dependency
+			return /** @type {Snapshot<T>} */ (new Date(value.getTime()));
 		}
 
 		if (typeof (/** @type {T & { toJSON?: any } } */ (value).toJSON) === 'function' && !no_tojson) {
