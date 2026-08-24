@@ -183,7 +183,7 @@ export async function save(promise) {
  * Unset the context if a `save` thunk restored it in the current synchronous segment,
  * so that a foreign microtask can never run inside a restored reaction context.
  * Called at every suspension point, and at the end of async expression bodies —
- * `async () => (await $.save(a))().b` becomes `async () => $.unsave((await $.save(a))().b)`
+ * `async () => (await $.save(a))().b` becomes `async () => { try { return (await $.save(a))().b; } finally { $.unsave(); } }`
  * @template T
  * @param {T} [value]
  * @returns {T}
