@@ -124,6 +124,13 @@ const any_selector = {
 const seen = new Set();
 
 /**
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ */
+function is_inside_svelte_head(node) {
+	return node.metadata.path.some((ancestor) => ancestor.type === 'SvelteHead');
+}
+
+/**
  *
  * @param {Compiler.AST.CSS.StyleSheet} stylesheet
  * @param {Iterable<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} elements
@@ -145,6 +152,9 @@ export function prune(stylesheet, elements, analysis) {
 				seen.clear();
 
 				if (
+					// Elements rendered through <svelte:head> are not style-scopable.
+					// Prevent css hash injection (class="s-...") on tags like <meta>, <link>, <script>.
+					!is_inside_svelte_head(element) &&
 					apply_selector(
 						selectors,
 						/** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule),
