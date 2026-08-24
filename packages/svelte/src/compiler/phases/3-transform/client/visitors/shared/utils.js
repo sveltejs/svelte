@@ -16,10 +16,10 @@ import { ExpressionMetadata } from '../../../../nodes.js';
  * from templates and replacing them with `$0`, `$1` etc
  */
 export class Memoizer {
-	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	/** @type {Array<{ id: Identifier, expression: Expression, metadata: ExpressionMetadata }>} */
 	#sync = [];
 
-	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	/** @type {Array<{ id: Identifier, expression: Expression, metadata: ExpressionMetadata }>} */
 	#async = [];
 
 	/** @type {Set<Expression>} */
