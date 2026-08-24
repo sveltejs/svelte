@@ -832,13 +832,11 @@ export function analyze_component(root, source, options) {
 					} else {
 						e.export_undefined(specifier, name);
 					}
-				} else {
-					const snippet = [...analysis.snippets].find(
-						(snippet) => snippet.expression.name === name
-					);
-					if (snippet) {
-						snippet.metadata.exported = true;
-					}
+				} else if (binding.initial?.type === 'SnippetBlock') {
+					// If a snippet is exported, a consumer could only import this named export and not the default export (the component).
+					// In this case we need to set hasGlobal of our output to true so that e.g. vite-plugin-svelte does not tell Vite to
+					// tree-shake the CSS if the default export is not used.
+					analysis.css.has_global = true;
 				}
 			}
 		}
@@ -873,7 +871,7 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		prune(analysis.css.ast, analysis.elements, analysis);
+		prune(analysis.css.ast, analysis.elements);
 
 		const { comment } = analysis.css.ast.content;
 		const should_ignore_unused =

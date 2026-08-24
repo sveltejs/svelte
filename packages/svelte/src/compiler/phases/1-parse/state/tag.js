@@ -511,8 +511,7 @@ function open(parser) {
 			body: create_fragment(),
 			metadata: {
 				can_hoist: false,
-				sites: new Set(),
-				exported: false
+				sites: new Set()
 			}
 		});
 		parser.stack.push(block);
