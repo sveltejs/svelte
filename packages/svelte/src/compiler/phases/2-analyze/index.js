@@ -285,7 +285,7 @@ export function analyze_module(source, options) {
 		runes: true,
 		immutable: true,
 		tracing: false,
-		async_deriveds: new Set(),
+		async_deriveds: new Map(),
 		comments,
 		classes: new Map(),
 		pickled_awaits: new Set()
@@ -557,7 +557,7 @@ export function analyze_component(root, source, options) {
 		source,
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set(),
+		async_deriveds: new Map(),
 		pickled_awaits: new Set(),
 		instance_body: {
 			sync: [],

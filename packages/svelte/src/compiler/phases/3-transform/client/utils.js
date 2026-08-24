@@ -2,6 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
+/** @import { ExpressionMetadata } from '../../nodes.js' */
 /** @import { Scope } from '../../scope.js' */
 import * as b from '#compiler/builders';
 import { is_simple_expression, save } from '../../../utils/ast.js';
@@ -165,19 +166,45 @@ export function should_proxy(node, scope) {
 }
 
 /**
+ * An async thunk. If an `await` inside restores the reaction context via `$.save`,
+ * the body exits through `$.unsave` so the context cannot leak into foreign microtasks
+ * that run before the returned promise settles
+ * @param {Expression | BlockStatement} body
+ * @param {ExpressionMetadata} metadata
+ */
+export function async_thunk(body, metadata) {
+	if (!metadata.has_pickled_await) {
+		return b.arrow([], body, true);
+	}
+
+	const block = body.type === 'BlockStatement' ? body : b.block([b.return(body)]);
+
+	return b.arrow(
+		[],
+		b.block([
+			{
+				type: 'TryStatement',
+				block,
+				handler: null,
+				finalizer: b.block([b.stmt(b.call('$.unsave'))])
+			}
+		]),
+		true
+	);
+}
+
+/**
  * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
  * @param {ComponentClientTransformState} state
  * @param {Expression | BlockStatement} expression
- * @param {boolean} [async]
+ * @param {ExpressionMetadata} [metadata]
  */
-export function create_derived(state, expression, async = false) {
-	const thunk = b.thunk(expression, async);
-
-	if (async) {
-		return save(b.call('$.async_derived', thunk));
-	} else {
-		return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', thunk);
+export function create_derived(state, expression, metadata) {
+	if (metadata?.has_await) {
+		return save(b.call('$.async_derived', async_thunk(expression, metadata)));
 	}
+
+	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', b.thunk(expression));
 }
 
 /**
