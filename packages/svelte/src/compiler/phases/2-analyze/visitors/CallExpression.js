@@ -253,8 +253,11 @@ export function CallExpression(node, context) {
 		});
 
 		if (expression.has_await) {
-			context.state.analysis.async_deriveds.add(node);
+			context.state.analysis.async_deriveds.set(node, expression);
 		}
+
+		// Tell surrounding declaration tag about metadata for correct calculation of blockers etc
+		if (context.state.in_declaration_tag) context.state.expression?.merge(expression);
 	} else if (rune === '$inspect') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {

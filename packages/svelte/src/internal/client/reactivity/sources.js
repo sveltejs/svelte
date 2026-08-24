@@ -32,7 +32,6 @@ import {
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { includes } from '../../shared/utils.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
@@ -158,7 +157,7 @@ export function set(source, value, should_proxy = false) {
 		(!untracking || (active_reaction.f & EAGER_EFFECT) !== 0) &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | EAGER_EFFECT)) !== 0 &&
-		(current_sources === null || !includes.call(current_sources, source))
+		(current_sources === null || !current_sources.has(source))
 	) {
 		e.state_unsafe_mutation();
 	}
@@ -181,7 +180,13 @@ export function set(source, value, should_proxy = false) {
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
-		old_values.set(source, is_destroying_effect ? value : source.v);
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else if (!old_values.has(source)) {
+			// only record the value from before the first write in this flush, otherwise a
+			// teardown would see the value from before whichever write happened to be last
+			old_values.set(source, source.v);
+		}
 
 		var batch = Batch.ensure();
 		batch.capture(source, value);

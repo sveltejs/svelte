@@ -59,19 +59,21 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		mkdirp(path.dirname(output_js));
 
 		if (generate === 'client') {
-			if (AST) {
+			if (AST || PRINT) {
 				const ast = parse(source, {
 					modern: true
 				});
 
-				write(
-					`${cwd}/output/ast/${file}.json`,
-					JSON.stringify(
-						ast,
-						(key, value) => (typeof value === 'bigint' ? ['BigInt', value.toString()] : value),
-						'\t'
-					)
-				);
+				if (AST) {
+					write(
+						`${cwd}/output/ast/${file}.json`,
+						JSON.stringify(
+							ast,
+							(key, value) => (typeof value === 'bigint' ? ['BigInt', value.toString()] : value),
+							'\t'
+						)
+					);
+				}
 
 				if (PRINT) {
 					const printed = print(ast);

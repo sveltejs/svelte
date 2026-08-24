@@ -77,6 +77,9 @@ export class ExpressionMetadata {
 	/** True if the expression contains `await` */
 	has_await = false;
 
+	/** True if an `await` restores the reaction context afterwards, so the thunk must end it */
+	has_pickled_await = false;
+
 	/** True if the expression includes a member expression */
 	has_member_expression = false;
 
@@ -102,8 +105,8 @@ export class ExpressionMetadata {
 		if (!this.#blockers) {
 			this.#blockers = new Set();
 
-			for (const d of this.dependencies) {
-				if (d.blocker) this.#blockers.add(d.blocker);
+			for (const r of this.references) {
+				if (r.blocker) this.#blockers.add(r.blocker);
 			}
 		}
 
@@ -142,6 +145,7 @@ export class ExpressionMetadata {
 		this.has_state ||= source.has_state;
 		this.has_call ||= source.has_call;
 		this.has_await ||= source.has_await;
+		this.has_pickled_await ||= source.has_pickled_await;
 		this.has_member_expression ||= source.has_member_expression;
 		this.has_assignment ||= source.has_assignment;
 		this.#blockers = null; // so that blockers are recalculated
@@ -217,6 +221,7 @@ function* find_descendants(fragment) {
 			case 'SnippetBlock':
 			case 'DebugTag':
 			case 'ConstTag':
+			case 'DeclarationTag':
 			case 'Comment':
 			case 'ExpressionTag':
 				break;

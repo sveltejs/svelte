@@ -103,6 +103,7 @@ export {
 	run,
 	save,
 	track_reactivity_loss,
+	unsave,
 	run_after_blockers,
 	wait
 } from './reactivity/async.js';
@@ -180,4 +181,3 @@ export {
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
-export { invoke_error_boundary } from './error-handling.js';

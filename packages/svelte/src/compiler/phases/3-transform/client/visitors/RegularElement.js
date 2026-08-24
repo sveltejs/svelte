@@ -4,7 +4,6 @@
 /** @import { Scope } from '../../../scope' */
 import {
 	cannot_be_set_statically,
-	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element
 } from '../../../../../utils.js';
@@ -13,12 +12,11 @@ import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js'
 import * as b from '#compiler/builders';
 import {
 	create_attribute,
-	ExpressionMetadata,
 	is_custom_element_node,
 	is_customizable_select_element
 } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter } from '../utils.js';
+import { build_getter, get_transform } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -201,8 +199,8 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	// Let bindings first, they can be used on attributes
-	context.state.init.push(...lets);
+	// Let bindings first, they can be used on attributes and `{@const}` declarations
+	context.state.let_directives.push(...lets);
 
 	const node_id = context.state.node;
 
@@ -300,11 +298,14 @@ export function RegularElement(node, context) {
 		}
 	}
 
+	const scope = /** @type {Scope} */ (context.state.scopes.get(node.fragment));
+
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
 		metadata,
-		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
+		scope,
+		transform: get_transform(scope, context.state),
 		preserve_whitespace: context.state.preserve_whitespace || name === 'pre' || name === 'textarea'
 	};
 
@@ -318,8 +319,19 @@ export function RegularElement(node, context) {
 		state.options.preserveComments
 	);
 
+	const has_declarations = !node.fragment.metadata.transparent;
+
 	/** @type {typeof state} */
-	const child_state = { ...state, init: [], update: [], after_update: [], snippets: [] };
+	const child_state = {
+		...state,
+		init: [],
+		update: [],
+		after_update: [],
+		snippets: [],
+		consts: has_declarations ? [] : state.consts,
+		async_consts: has_declarations ? undefined : state.async_consts,
+		memoizer: has_declarations ? new Memoizer() : state.memoizer
+	};
 
 	for (const node of hoisted) {
 		context.visit(node, child_state);
@@ -360,7 +372,6 @@ export function RegularElement(node, context) {
 		context.state.template.push_comment();
 
 		// Create a separate template for the rich content
-		const template_name = context.state.scope.root.unique(`${name}_content`);
 		const fragment_id = b.id(context.state.scope.generate('fragment'));
 		const anchor_id = b.id(context.state.scope.generate('anchor'));
 
@@ -384,9 +395,8 @@ export function RegularElement(node, context) {
 			}
 		);
 
-		// Transform the template to $.from_html(...) and hoist it
-		const template = transform_template(select_state, metadata.namespace, TEMPLATE_FRAGMENT);
-		context.state.hoisted.push(b.var(template_name, template));
+		// Transform the template to $.from_html(...) and hoist it (deduplicating identical templates)
+		const template_name = transform_template(select_state, `${name}_content`, TEMPLATE_FRAGMENT);
 
 		// Build the rich content function body
 		// The anchor is the child of the element (a hydration marker during hydration)
@@ -427,11 +437,21 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock') || has_declarations) {
+		if (child_state.async_consts && child_state.async_consts.thunks.length > 0) {
+			child_state.consts.push(
+				b.var(
+					child_state.async_consts.id,
+					b.call('$.run', b.array(child_state.async_consts.thunks))
+				)
+			);
+		}
+
 		// Wrap children in `{...}` to avoid declaration conflicts
 		context.state.init.push(
 			b.block([
 				...child_state.snippets,
+				...child_state.consts,
 				...child_state.init,
 				...element_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state) : b.empty,
@@ -506,18 +526,12 @@ export function build_class_directives_object(
 ) {
 	let properties = [];
 
-	const metadata = new ExpressionMetadata();
-
 	for (const d of class_directives) {
-		metadata.merge(d.metadata.expression);
-
 		const expression = /** @type Expression */ (context.visit(d.expression));
-		properties.push(b.init(d.name, expression));
+		properties.push(b.init(d.name, memoizer.add(expression, d.metadata.expression)));
 	}
 
-	const directives = b.object(properties);
-
-	return memoizer.add(directives, metadata);
+	return b.object(properties);
 }
 
 /**
@@ -533,23 +547,17 @@ export function build_style_directives_object(
 	const normal = b.object([]);
 	const important = b.object([]);
 
-	const metadata = new ExpressionMetadata();
-
 	for (const d of style_directives) {
-		metadata.merge(d.metadata.expression);
-
 		const expression =
 			d.value === true
 				? build_getter(b.id(d.name), context.state)
 				: build_attribute_value(d.value, context).value;
 
 		const object = d.modifiers.includes('important') ? important : normal;
-		object.properties.push(b.init(d.name, expression));
+		object.properties.push(b.init(d.name, memoizer.add(expression, d.metadata.expression)));
 	}
 
-	const directives = important.properties.length ? b.array([normal, important]) : normal;
-
-	return memoizer.add(directives, metadata);
+	return important.properties.length ? b.array([normal, important]) : normal;
 }
 
 /**
@@ -642,14 +650,25 @@ function build_element_attribute_update(element, node_id, name, value, attribute
  * @param {ComponentContext} context
  */
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
-	const { value, has_state } = build_attribute_value(attribute.value, context);
+	const memoizer = new Memoizer();
+	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		memoizer.add(value, metadata)
+	);
 
 	// don't lowercase name, as we set the element's property, which might be case sensitive
 	const call = b.call('$.set_custom_element_data', node_id, b.literal(attribute.name), value);
 
 	// this is different from other updates — it doesn't get grouped,
 	// because set_custom_element_data may not be idempotent
-	const update = has_state ? b.call('$.template_effect', b.thunk(call)) : call;
+	const update = has_state
+		? b.call(
+				'$.template_effect',
+				b.arrow(memoizer.apply(), call),
+				memoizer.sync_values(),
+				memoizer.async_values(),
+				memoizer.blockers()
+			)
+		: call;
 
 	context.state.init.push(b.stmt(update));
 }

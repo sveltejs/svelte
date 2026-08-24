@@ -302,7 +302,7 @@ export function check_element(node, context) {
 			const has_key_event =
 				handlers.has('keydown') || handlers.has('keyup') || handlers.has('keypress');
 			if (!has_key_event) {
-				w.a11y_click_events_have_key_events(node);
+				w.a11y_click_events_have_key_events(node, node.name);
 			}
 		}
 	}
@@ -373,11 +373,23 @@ export function check_element(node, context) {
 		}
 	}
 
-	if (!has_spread && handlers.has('mouseover') && !handlers.has('focus')) {
+	// `focus`/`blur` don't bubble, so an element that isn't focusable itself can only be notified
+	// about focus changes inside it through `focusin`/`focusout` — accept those as well
+	if (
+		!has_spread &&
+		handlers.has('mouseover') &&
+		!handlers.has('focus') &&
+		!handlers.has('focusin')
+	) {
 		w.a11y_mouse_events_have_key_events(node, 'mouseover', 'focus');
 	}
 
-	if (!has_spread && handlers.has('mouseout') && !handlers.has('blur')) {
+	if (
+		!has_spread &&
+		handlers.has('mouseout') &&
+		!handlers.has('blur') &&
+		!handlers.has('focusout')
+	) {
 		w.a11y_mouse_events_have_key_events(node, 'mouseout', 'blur');
 	}
 

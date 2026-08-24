@@ -39,7 +39,9 @@ function find_string_end(string, search_start_index, string_start_char) {
  * @returns {number} The index of the end of this regex expression, or `Infinity` if not found.
  */
 function find_regex_end(string, search_start_index) {
-	return find_unescaped_char(string, search_start_index, '/');
+	const slash = find_unescaped_char(string, search_start_index, '/');
+	const eol = find_unescaped_char(string, search_start_index, '\n');
+	return slash < eol ? slash : Infinity;
 }
 
 /**
@@ -105,7 +107,11 @@ export function find_matching_bracket(template, index, open) {
 				continue;
 			case '/': {
 				const next_char = template[i + 1];
-				if (!next_char) continue;
+				if (!next_char) {
+					// `/` is the last character; advance past it so we don't loop forever
+					i++;
+					continue;
+				}
 				if (next_char === '/') {
 					i = infinity_if_negative(template.indexOf('\n', i + 1)) + '\n'.length;
 					continue;
@@ -114,7 +120,12 @@ export function find_matching_bracket(template, index, open) {
 					i = infinity_if_negative(template.indexOf('*/', i + 1)) + '*/'.length;
 					continue;
 				}
-				i = find_regex_end(template, i + 1) + '/'.length;
+				const end = find_regex_end(template, i + 1) + '/'.length;
+				if (end === Infinity) {
+					i++;
+				} else {
+					i = end;
+				}
 				continue;
 			}
 			default: {

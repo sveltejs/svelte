@@ -49,11 +49,11 @@ export function update_pre_prop(fn, d = 1) {
 /**
  * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
  * Is passed the full `$$props` object and excludes the named props.
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, name?: string }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Set<string | symbol>, name?: string }>}}
  */
 const rest_props_handler = {
 	get(target, key) {
-		if (target.exclude.includes(key)) return;
+		if (target.exclude.has(key)) return;
 		return target.props[key];
 	},
 	set(target, key) {
@@ -65,7 +65,7 @@ const rest_props_handler = {
 		return false;
 	},
 	getOwnPropertyDescriptor(target, key) {
-		if (target.exclude.includes(key)) return;
+		if (target.exclude.has(key)) return;
 		if (key in target.props) {
 			return {
 				enumerable: true,
@@ -75,26 +75,23 @@ const rest_props_handler = {
 		}
 	},
 	has(target, key) {
-		if (target.exclude.includes(key)) return false;
+		if (target.exclude.has(key)) return false;
 		return key in target.props;
 	},
 	ownKeys(target) {
-		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.includes(key));
+		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.has(key));
 	}
 };
 
 /**
  * @param {Record<string, unknown>} props
- * @param {string[]} exclude
+ * @param {Set<string>} exclude
  * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function rest_props(props, exclude, name) {
-	return new Proxy(
-		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },
-		rest_props_handler
-	);
+	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
 }
 
 /**

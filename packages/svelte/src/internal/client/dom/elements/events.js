@@ -159,11 +159,14 @@ export function delegate(events) {
 }
 
 // used to store the reference to the currently propagated event
-// to prevent garbage collection between microtasks in Firefox
+// to prevent garbage collection between microtasks in Firefox (<= 141)
 // If the event object is GCed too early, the expando __root property
 // set on the event object is lost, causing the event delegation
 // to process the event twice
 let last_propagated_event = null;
+
+// whether a task is already queued to clear `last_propagated_event`
+let last_propagated_event_clear_scheduled = false;
 
 /**
  * @this {EventTarget}
@@ -178,6 +181,21 @@ export function handle_event_propagation(event) {
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
 
 	last_propagated_event = event;
+
+	// The reference is only needed while the event can still reach another
+	// delegated root, i.e. during the current (synchronous) dispatch and its
+	// microtask checkpoints. Clearing it in a later task preserves the
+	// Firefox workaround while making sure the slot doesn't retain the last
+	// event forever — through `event.target` it would otherwise keep the
+	// entire detached subtree of whatever the user last clicked in alive
+	// until the next delegated event happens to arrive.
+	if (!last_propagated_event_clear_scheduled) {
+		last_propagated_event_clear_scheduled = true;
+		setTimeout(() => {
+			last_propagated_event_clear_scheduled = false;
+			last_propagated_event = null;
+		});
+	}
 
 	// composedPath contains list of nodes the event has propagated through.
 	// We check `event_symbol` to skip all nodes below it in case this is a
@@ -257,12 +275,7 @@ export function handle_event_propagation(event) {
 		var other_errors = [];
 
 		while (current_target !== null) {
-			/** @type {null | Element} */
-			var parent_element =
-				current_target.assignedSlot ||
-				current_target.parentNode ||
-				/** @type {any} */ (current_target).host ||
-				null;
+			if (current_target === handler_element) break;
 
 			try {
 				// @ts-expect-error
@@ -284,10 +297,10 @@ export function handle_event_propagation(event) {
 					throw_error = error;
 				}
 			}
-			if (event.cancelBubble || parent_element === handler_element || parent_element === null) {
-				break;
-			}
-			current_target = parent_element;
+			if (event.cancelBubble) break;
+
+			path_idx++;
+			current_target = path_idx < path.length ? /** @type {Element} */ (path[path_idx]) : null;
 		}
 
 		if (throw_error) {
