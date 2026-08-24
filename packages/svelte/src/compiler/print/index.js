@@ -7,6 +7,68 @@ import { is_void } from '../../utils.js';
 /** Threshold for when content should be formatted on separate lines */
 const LINE_BREAK_THRESHOLD = 50;
 
+/** Characters that are valid in a CSS identifier without escaping */
+const REGEX_IDENTIFIER_CHAR = /^[a-zA-Z0-9_-]$/;
+
+/** Hex digits — a backslash followed by one of these is read as a hex escape */
+const REGEX_HEX_DIGIT = /[0-9a-fA-F]/;
+
+/**
+ * Re-escape a CSS identifier name so that it prints as valid CSS.
+ *
+ * `parse` decodes CSS escape sequences when building the AST — `\31` becomes `1`,
+ * `\a` becomes a newline — but keeps single-character escapes such as `\.` and
+ * escaped backslashes intact. When printing we therefore only need to escape the
+ * characters that would be illegal in a bare identifier: a leading digit, `-`
+ * followed by a digit, whitespace and control characters, and anything else that
+ * is not already escaped.
+ * @param {string} name
+ */
+function escape_identifier(name) {
+	let escaped = '';
+	let i = 0;
+
+	while (i < name.length) {
+		const char = name[i];
+
+		if (char === '\\') {
+			const next = name.charAt(i + 1);
+			if (next === '' || REGEX_HEX_DIGIT.test(next)) {
+				// A literal backslash in a name must itself be escaped: `\5c `
+				// re-parses to a backslash, whereas a backslash followed by a hex
+				// digit (or by nothing) would be read back as a hex escape.
+				escaped += '\\5c ';
+				i += 1;
+				continue;
+			}
+
+			// Already escaped — copy the backslash and the escaped character as-is.
+			escaped += '\\' + next;
+			i += 2;
+			continue;
+		}
+
+		const code = /** @type {number} */ (char.codePointAt(0));
+		const is_leading_digit = i === 0 && char >= '0' && char <= '9';
+		const is_leading_hyphen_digit =
+			i === 0 && char === '-' && name.charAt(i + 1) >= '0' && name.charAt(i + 1) <= '9';
+
+		if (
+			is_leading_digit ||
+			is_leading_hyphen_digit ||
+			!(REGEX_IDENTIFIER_CHAR.test(char) || code >= 160)
+		) {
+			escaped += `\\${code.toString(16)} `;
+		} else {
+			escaped += char;
+		}
+
+		i += 1;
+	}
+
+	return escaped;
+}
+
 /**
  * `print` converts a Svelte AST node back into Svelte source code.
  * It is primarily intended for tools that parse and transform components using the compiler’s modern AST representation.
@@ -324,7 +386,7 @@ function css_visitors(comments, js_comments) {
 
 	return {
 		Atrule(node, context) {
-			context.write(`@${node.name}`);
+			context.write(`@${escape_identifier(node.name)}`);
 
 			const prelude_end = node.block?.start ?? node.end;
 			if (node.prelude || has_comment_before(prelude_end)) {
@@ -341,7 +403,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		AttributeSelector(node, context) {
-			context.write(`[${node.name}`);
+			context.write(`[${escape_identifier(node.name)}`);
 			if (node.matcher) {
 				context.write(node.matcher);
 				context.write(`"${node.value}"`);
@@ -365,7 +427,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		ClassSelector(node, context) {
-			context.write(`.${node.name}`);
+			context.write(`.${escape_identifier(node.name)}`);
 		},
 
 		ComplexSelector(node, context) {
@@ -379,7 +441,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		IdSelector(node, context) {
-			context.write(`#${node.name}`);
+			context.write(`#${escape_identifier(node.name)}`);
 		},
 
 		NestingSelector(node, context) {
@@ -395,7 +457,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		PseudoClassSelector(node, context) {
-			context.write(`:${node.name}`);
+			context.write(`:${escape_identifier(node.name)}`);
 
 			if (node.args) {
 				context.write('(');
@@ -409,7 +471,7 @@ function css_visitors(comments, js_comments) {
 		},
 
 		PseudoElementSelector(node, context) {
-			context.write(`::${node.name}`);
+			context.write(`::${escape_identifier(node.name)}`);
 			if (node.args) {
 				context.write('(');
 				context.visit(node.args);
@@ -458,7 +520,11 @@ function css_visitors(comments, js_comments) {
 		},
 
 		TypeSelector(node, context) {
-			context.write(node.name);
+			if (node.namespace !== undefined) {
+				context.write(node.namespace === '*' ? '*' : escape_identifier(node.namespace));
+				context.write('|');
+			}
+			context.write(node.name === '*' ? node.name : escape_identifier(node.name));
 		}
 	};
 }
@@ -521,15 +587,19 @@ const svelte_visitors = (comments, state) => ({
 			last?.type === 'Text' &&
 			/\s$/.test(last.data);
 
-		/** @type {AST.SvelteNode[][]} */
+		/** @type {{ nodes: AST.SvelteNode[]; leading_whitespace: boolean }[]} */
 		const items = [];
 
 		/** @type {AST.SvelteNode[]} */
 		let sequence = [];
+		let leading_whitespace = false;
 
 		const flush = () => {
-			items.push(sequence);
-			sequence = [];
+			if (sequence.length > 0) {
+				items.push({ nodes: sequence, leading_whitespace });
+				sequence = [];
+				leading_whitespace = false;
+			}
 		};
 
 		for (let i = 0; i < node.nodes.length; i += 1) {
@@ -558,6 +628,7 @@ const svelte_visitors = (comments, state) => ({
 
 				if (child_node.data.startsWith(' ') && prev && prev.type !== 'ExpressionTag') {
 					flush();
+					leading_whitespace = true;
 					child_node.data = child_node.data.trimStart();
 				}
 
@@ -596,20 +667,18 @@ const svelte_visitors = (comments, state) => ({
 		let multiline = false;
 		let width = 0;
 
-		const child_contexts = items
-			.filter((x) => x.length > 0)
-			.map((sequence) => {
-				const child_context = context.new();
+		const child_contexts = items.map(({ nodes, leading_whitespace }) => {
+			const child_context = context.new();
 
-				for (const node of sequence) {
-					child_context.visit(node);
-					multiline ||= child_context.multiline;
-				}
+			for (const node of nodes) {
+				child_context.visit(node);
+				multiline ||= child_context.multiline;
+			}
 
-				width += child_context.measure();
+			width += child_context.measure() + (leading_whitespace ? 1 : 0);
 
-				return child_context;
-			});
+			return { context: child_context, leading_whitespace };
+		});
 
 		multiline ||= width > LINE_BREAK_THRESHOLD;
 		// Normally context.newline() also makes context.multiline true, but the below loop only
@@ -621,14 +690,16 @@ const svelte_visitors = (comments, state) => ({
 			const prev = child_contexts[i];
 			const next = child_contexts[i + 1];
 
-			context.append(prev);
+			context.append(prev.context);
 
 			if (next) {
-				if (prev.multiline || next.multiline) {
+				if (prev.context.multiline || next.context.multiline) {
 					context.margin();
 					context.newline();
 				} else if (multiline) {
 					context.newline();
+				} else if (next.leading_whitespace) {
+					context.write(' ');
 				}
 			}
 		}
@@ -701,7 +772,7 @@ const svelte_visitors = (comments, state) => ({
 		}
 
 		if (node.catch) {
-			context.write(node.value ? 'catch ' : 'catch');
+			context.write(node.error ? 'catch ' : 'catch');
 			if (node.error) context.visit(node.error);
 			context.write('}');
 
