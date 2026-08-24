@@ -291,11 +291,8 @@ function set_attributes(
 	skip_warning = false
 ) {
 	if (hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
-		var input = /** @type {HTMLInputElement} */ (element);
-		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
-
-		if (!(attribute in next)) {
-			remove_input_defaults(input);
+		if (!('defaultValue' in next || 'defaultChecked' in next)) {
+			remove_input_defaults(/** @type {HTMLInputElement} */ (element));
 		}
 	}
 
