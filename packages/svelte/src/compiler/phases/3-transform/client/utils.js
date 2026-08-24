@@ -167,9 +167,8 @@ export function should_proxy(node, scope) {
 
 /**
  * An async thunk. If an `await` inside restores the reaction context via `$.save`,
- * the body ends with `$.unsave` so the context cannot leak into foreign microtasks
- * that run before the returned promise settles. If the body throws instead, the
- * context is unset by the consumer's `finally`, as before
+ * the body exits through `$.unsave` so the context cannot leak into foreign microtasks
+ * that run before the returned promise settles
  * @param {Expression | BlockStatement} body
  * @param {ExpressionMetadata} metadata
  */
@@ -178,16 +177,14 @@ export function async_thunk(body, metadata) {
 		return b.arrow([], body, true);
 	}
 
-	if (body.type !== 'BlockStatement') {
-		return b.arrow([], b.call('$.unsave', body), true);
-	}
+	const block = body.type === 'BlockStatement' ? body : b.block([b.return(body)]);
 
 	return b.arrow(
 		[],
 		b.block([
 			{
 				type: 'TryStatement',
-				block: body,
+				block,
 				handler: null,
 				finalizer: b.block([b.stmt(b.call('$.unsave'))])
 			}

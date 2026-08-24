@@ -8,7 +8,6 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -25,7 +24,6 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
-import { queue_micro_task } from '../dom/task.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -194,6 +192,7 @@ export function unsave(value) {
 	if (restored) unset_context();
 	return /** @type {T} */ (value);
 }
+
 /**
  * Reset `current_async_effect` after the `promise` resolves, so
  * that we can emit `await_reactivity_loss` warnings

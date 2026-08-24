@@ -34,8 +34,34 @@ export default function Async_in_derived($$anchor, $$props) {
 			let no2;
 
 			var promises = $.run([
-				async () => $.unsave(yes1 = (await $.save($.async_derived(async () => $.unsave((await $.save(1))()))))()),
-				async () => $.unsave(yes2 = (await $.save($.async_derived(async () => $.unsave(foo((await $.save(1))())))))()),
+				async () => {
+					try {
+						return yes1 = (await $.save($.async_derived(async () => {
+							try {
+								return (await $.save(1))();
+							} finally {
+								$.unsave();
+							}
+						})))();
+					} finally {
+						$.unsave();
+					}
+				},
+
+				async () => {
+					try {
+						return yes2 = (await $.save($.async_derived(async () => {
+							try {
+								return foo((await $.save(1))());
+							} finally {
+								$.unsave();
+							}
+						})))();
+					} finally {
+						$.unsave();
+					}
+				},
+
 				() => no1 = $.derived(() => (async () => {
 					return await 1;
 				})()),
