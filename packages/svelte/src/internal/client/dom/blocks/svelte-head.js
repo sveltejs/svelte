@@ -52,6 +52,17 @@ export function head(hash, render_fn) {
 		block(() => {
 			var e = branch(() => render_fn(anchor));
 			e.f |= HEAD_EFFECT;
+
+			// include the anchor in the effect's node range (content renders before
+			// it), so teardown removes it instead of leaking one text node in
+			// document.head per mount
+			if (anchor !== undefined) {
+				if (e.nodes === null) {
+					e.nodes = { start: anchor, end: anchor, a: null, t: null };
+				} else {
+					e.nodes.end = anchor;
+				}
+			}
 		});
 	} finally {
 		if (was_hydrating) {
