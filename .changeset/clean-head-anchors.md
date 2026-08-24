@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: remove svelte:head anchors on unmount
+fix: remove `<svelte:head>` anchors on unmount
