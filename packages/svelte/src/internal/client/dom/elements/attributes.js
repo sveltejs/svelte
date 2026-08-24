@@ -315,7 +315,8 @@ function set_attributes(
 	var is_option_element = element.nodeName === OPTION_TAG;
 
 	for (var key in prev) {
-		if (!(key in next)) {
+		// don't null our internal $$onX listeners
+		if (!(key in next) && key[0] + key[1] !== '$$') {
 			next[key] = null;
 		}
 	}

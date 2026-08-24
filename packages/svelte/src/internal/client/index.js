@@ -103,6 +103,7 @@ export {
 	run,
 	save,
 	track_reactivity_loss,
+	unsave,
 	run_after_blockers,
 	wait
 } from './reactivity/async.js';

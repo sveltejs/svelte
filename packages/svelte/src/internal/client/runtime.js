@@ -61,6 +61,9 @@ import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
 
+/**
+ * True if updating in an effect context that is reactive (i.e. not branch/root effects)
+ */
 let is_updating_effect = false;
 
 export let is_destroying_effect = false;
@@ -130,7 +133,7 @@ export function set_untracked_writes(value) {
  **/
 export let write_version = 1;
 
-/** @type {number} Used to version each read of a source of derived to avoid duplicating depedencies inside a reaction */
+/** @type {number} Used to version each read of a source of derived to avoid duplicating dependencies inside a reaction */
 let read_version = 0;
 
 export let update_version = read_version;
@@ -405,6 +408,16 @@ function remove_reaction(signal, dependency) {
 			update_derived_status(derived);
 		}
 
+		// Call abort controller, noone's listening to this derived anymore
+		if (derived.ac !== null) {
+			without_reactive_context(() => {
+				/** @type {AbortController} */ (derived.ac).abort(STALE_REACTION);
+				derived.ac = null;
+				// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
+				set_signal_status(derived, DIRTY);
+			});
+		}
+
 		// freeze any effects inside this derived
 		freeze_derived_effects(derived);
 
@@ -444,7 +457,7 @@ export function update_effect(effect) {
 	var was_updating_effect = is_updating_effect;
 
 	active_effect = effect;
-	is_updating_effect = true;
+	is_updating_effect = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0; // Branch/root effects are not reactive contexts
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
