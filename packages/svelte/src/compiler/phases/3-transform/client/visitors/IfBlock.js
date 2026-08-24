@@ -118,7 +118,7 @@ export function IfBlock(node, context) {
 					'$.async',
 					context.state.node,
 					node.metadata.expression.blockers(),
-					has_await ? b.array([async_thunk(expression)]) : b.void0,
+					has_await ? b.array([async_thunk(expression, node.metadata.expression)]) : b.void0,
 					b.arrow(
 						has_await ? [context.state.node, b.id('$$condition')] : [context.state.node],
 						b.block(statements)

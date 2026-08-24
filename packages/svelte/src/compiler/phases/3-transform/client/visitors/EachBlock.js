@@ -314,7 +314,9 @@ export function EachBlock(node, context) {
 
 	const has_await = node.metadata.expression.has_await;
 
-	const get_collection = has_await ? async_thunk(collection) : b.thunk(collection);
+	const get_collection = has_await
+		? async_thunk(collection, node.metadata.expression)
+		: b.thunk(collection);
 	const thunk = has_await ? b.thunk(b.call('$.get', b.id('$$collection'))) : get_collection;
 
 	const render_args = [b.id('$$anchor'), item];

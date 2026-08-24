@@ -183,24 +183,23 @@ var restored = false;
 
 /**
  * Unset the context if it was restored by a `save` thunk in the current synchronous
- * segment. Called at every suspension point and at the end of async expression bodies,
- * so that a foreign microtask can never run inside a restored reaction context
+ * segment, so that a foreign microtask can never run inside a restored reaction context.
+ * Called at every suspension point, and via `unsave` at the end of async expression bodies
  */
-export function unset_restored_context() {
+function unset_restored_context() {
 	if (restored) unset_context();
 }
 
 /**
- * Production counterpart of `track_reactivity_loss` for awaits that need no
- * context preservation — `await b` becomes `await $.suspend(b)` so the
- * suspension still ends any restored context
+ * Ends the context restored by `save` when an async expression body completes —
+ * `async () => (await $.save(a))().b` becomes `async () => $.unsave((await $.save(a))().b)`
  * @template T
- * @param {T} value
+ * @param {T} [value]
  * @returns {T}
  */
-export function suspend(value) {
+export function unsave(value) {
 	unset_restored_context();
-	return value;
+	return /** @type {T} */ (value);
 }
 /**
  * Reset `current_async_effect` after the `promise` resolves, so

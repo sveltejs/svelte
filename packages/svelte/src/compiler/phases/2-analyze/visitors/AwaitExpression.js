@@ -1,6 +1,7 @@
 /** @import { AwaitExpression, Expression, SpreadElement, Property } from 'estree' */
 /** @import { Context } from '../types' */
 /** @import { AST } from '#compiler' */
+/** @import { ExpressionMetadata } from '../../nodes.js' */
 import * as e from '../../../errors.js';
 
 /**
@@ -16,11 +17,13 @@ export function AwaitExpression(node, context) {
 			context.state.derived_function_depth === context.state.function_depth
 		)
 	) {
-		context.state.analysis.reactive_awaits.add(node);
+		const expression = /** @type {ExpressionMetadata} */ (context.state.expression);
 
-		// preserve context for awaits that precede other expressions in template or `$derived(...)`
-		if (!is_last_evaluated_expression(context.path, node)) {
+		// preserve context for awaits that precede other expressions in template or `$derived(...)`,
+		// and for any await that follows one, so the restored context ends at the next suspension
+		if (expression.has_pickled_await || !is_last_evaluated_expression(context.path, node)) {
 			context.state.analysis.pickled_awaits.add(node);
+			expression.has_pickled_await = true;
 		}
 	}
 

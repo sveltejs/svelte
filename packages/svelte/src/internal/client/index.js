@@ -102,9 +102,8 @@ export {
 	for_await_track_reactivity_loss,
 	run,
 	save,
-	suspend,
 	track_reactivity_loss,
-	unset_restored_context,
+	unsave,
 	run_after_blockers,
 	wait
 } from './reactivity/async.js';

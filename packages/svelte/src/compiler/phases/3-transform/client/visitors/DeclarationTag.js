@@ -86,5 +86,5 @@ export function add_async_declaration(context, metadata, ids, assignments, kind 
 		metadata.expression.has_await ||
 		assignments.some((assignment) => has_await_expression(assignment));
 	const body = assignments.length === 1 ? assignments[0].expression : b.block(assignments);
-	run.thunks.push(has_await ? async_thunk(body) : b.thunk(body));
+	run.thunks.push(has_await ? async_thunk(body, metadata.expression) : b.thunk(body));
 }

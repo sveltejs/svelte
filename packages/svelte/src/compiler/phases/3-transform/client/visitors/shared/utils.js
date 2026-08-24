@@ -43,7 +43,7 @@ export class Memoizer {
 
 		const id = b.id('#'); // filled in later
 
-		(metadata.has_await ? this.#async : this.#sync).push({ id, expression });
+		(metadata.has_await ? this.#async : this.#sync).push({ id, expression, metadata });
 
 		return id;
 	}
@@ -84,7 +84,7 @@ export class Memoizer {
 		if (this.#async.length === 0) return;
 		// use `b.arrow` rather than `b.thunk` so that deferred async/template effects
 		// always read live bindings rather than a possibly stale snapshot.
-		return b.array(this.#async.map((memo) => async_thunk(memo.expression)));
+		return b.array(this.#async.map((memo) => async_thunk(memo.expression, memo.metadata)));
 	}
 
 	sync_values() {

@@ -206,9 +206,10 @@ export function VariableDeclaration(node, context) {
 			}
 
 			if (rune === '$derived' || rune === '$derived.by') {
-				const is_async = context.state.analysis.async_deriveds.has(
+				const metadata = context.state.analysis.async_deriveds.get(
 					/** @type {CallExpression} */ (init)
 				);
+				const is_async = metadata !== undefined;
 
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (context.visit(value));
@@ -219,7 +220,7 @@ export function VariableDeclaration(node, context) {
 						/** @type {Expression} */
 						let call = b.call(
 							'$.async_derived',
-							async_thunk(expression),
+							async_thunk(expression, metadata),
 							dev && b.literal(declarator.id.name),
 							location ? b.literal(location) : undefined
 						);
@@ -252,7 +253,7 @@ export function VariableDeclaration(node, context) {
 
 							call = b.call(
 								'$.async_derived',
-								async_thunk(expression),
+								async_thunk(expression, metadata),
 								dev &&
 									b.literal(
 										`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`

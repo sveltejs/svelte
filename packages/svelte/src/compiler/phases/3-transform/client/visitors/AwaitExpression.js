@@ -21,11 +21,5 @@ export function AwaitExpression(node, context) {
 		return b.call(b.await(b.call('$.track_reactivity_loss', argument)));
 	}
 
-	// a context restored by an earlier pickled await must end at this suspension;
-	// `async_thunk` strips the call again in thunks that contain no `$.save`
-	else if (context.state.analysis.reactive_awaits.has(node)) {
-		return b.await(b.call('$.suspend', argument));
-	}
-
 	return argument === node.argument ? node : { ...node, argument };
 }

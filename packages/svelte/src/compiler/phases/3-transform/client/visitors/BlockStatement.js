@@ -2,7 +2,6 @@
 /** @import { ComponentContext } from '../types' */
 import { add_state_transformers } from './shared/declarations.js';
 import * as b from '#compiler/builders';
-import { async_thunk } from '../utils.js';
 
 /**
  * @param {BlockStatement} node
@@ -23,9 +22,7 @@ export function BlockStatement(node, context) {
 		const call = b.call(
 			'$.trace',
 			/** @type {Expression} */ (tracing),
-			is_async
-				? async_thunk(b.block(node.body.map((n) => /** @type {Statement} */ (context.visit(n)))))
-				: b.thunk(b.block(node.body.map((n) => /** @type {Statement} */ (context.visit(n)))))
+			b.thunk(b.block(node.body.map((n) => /** @type {Statement} */ (context.visit(n)))), is_async)
 		);
 
 		return b.block([b.return(is_async ? b.await(call) : call)]);
