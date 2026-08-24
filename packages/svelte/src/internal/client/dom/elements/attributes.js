@@ -334,7 +334,11 @@ function set_attributes(
 
 		var setters = get_setters(element);
 
-		if (element.nodeName === INPUT_TAG && 'type' in next && ('value' in next || '__value' in next)) {
+		if (
+			element.nodeName === INPUT_TAG &&
+			'type' in next &&
+			('value' in next || '__value' in next)
+		) {
 			var type = next.type;
 
 			if (type !== current.type || (type === undefined && element.hasAttribute('type'))) {
