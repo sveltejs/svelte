@@ -156,6 +156,9 @@ export function capture() {
 	};
 }
 
+/** `true` between a `save` thunk restoring a context and the end of that synchronous segment */
+var restored = false;
+
 /**
  * Wraps an `await` expression in such a way that the effect context that was
  * active before the expression evaluated can be reapplied afterwards —
@@ -168,7 +171,7 @@ export async function save(promise) {
 	var restore = capture();
 	// the context restored by an earlier `save` in this expression must not
 	// outlive the synchronous segment that is about to end at this `await`
-	unset_restored_context();
+	unsave();
 	var value = await promise;
 
 	return () => {
@@ -178,27 +181,17 @@ export async function save(promise) {
 	};
 }
 
-/** `true` between a `save` thunk restoring a context and the end of that synchronous segment */
-var restored = false;
-
 /**
- * Unset the context if it was restored by a `save` thunk in the current synchronous
- * segment, so that a foreign microtask can never run inside a restored reaction context.
- * Called at every suspension point, and via `unsave` at the end of async expression bodies
- */
-function unset_restored_context() {
-	if (restored) unset_context();
-}
-
-/**
- * Ends the context restored by `save` when an async expression body completes —
+ * Unset the context if a `save` thunk restored it in the current synchronous segment,
+ * so that a foreign microtask can never run inside a restored reaction context.
+ * Called at every suspension point, and at the end of async expression bodies —
  * `async () => (await $.save(a))().b` becomes `async () => $.unsave((await $.save(a))().b)`
  * @template T
  * @param {T} [value]
  * @returns {T}
  */
 export function unsave(value) {
-	unset_restored_context();
+	if (restored) unset_context();
 	return /** @type {T} */ (value);
 }
 /**
@@ -209,7 +202,7 @@ export function unsave(value) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
-	unset_restored_context();
+	unsave();
 	var previous_reactivity_loss_tracker = reactivity_loss_tracker;
 	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
 	queueMicrotask(() => {
