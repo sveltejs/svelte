@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-perf: use `$.comment()` for lone-anchor rich select content
+perf: use `$.comment()` for single-comment templates
