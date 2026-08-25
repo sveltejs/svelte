@@ -78,8 +78,14 @@ export default test({
 		button('remove').click();
 		button('clear').click();
 		flushSync();
-		assert.equal([...selects[5].options].some((option) => option.defaultSelected), false);
-		assert.equal([...selects[7].options].some((option) => option.defaultSelected), false);
+		assert.equal(
+			[...selects[5].options].some((option) => option.defaultSelected),
+			false
+		);
+		assert.equal(
+			[...selects[7].options].some((option) => option.defaultSelected),
+			false
+		);
 
 		reset.click();
 		await Promise.resolve();
