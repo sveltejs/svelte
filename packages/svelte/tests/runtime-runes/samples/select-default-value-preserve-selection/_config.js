@@ -28,8 +28,8 @@ export default test({
 			[true, false]
 		);
 
-		// nothing has chosen a selection yet, so the untouched select follows the new default
-		assert.equal(touched.value, 'a');
+		// a default change never moves the current selection
+		assert.equal(touched.value, 'b');
 
 		// a default whose option arrives later selects it
 		load.click();

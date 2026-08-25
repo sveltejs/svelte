@@ -20,20 +20,27 @@ export function set_selected(option, selected) {
 }
 
 /**
- * Sets the options a form reset should restore. Only changes the current
- * selection while nothing has chosen one yet (no `value`, no user change).
+ * Sets the options a form reset should restore. The first call selects
+ * them if nothing has set a value, later calls leave the current selection alone.
  * @param {HTMLSelectElement} select
  * @param {any} value
  */
 export function set_default_select_value(select, value) {
-	if ('__defaultValue' in select && select.__defaultValue === value) return;
+	var mounting = !('__defaultValue' in select);
+	// @ts-expect-error
+	if (!mounting && select.__defaultValue === value) return;
 	// @ts-expect-error
 	select.__defaultValue = value;
-	apply_default_select_value(select);
+	apply_default_select_value(select, !mounting || '__value' in select);
 }
 
-/** @param {HTMLSelectElement} select */
-function apply_default_select_value(select) {
+/**
+ * Marks the options matching `__defaultValue` as selected. Without `preserve`
+ * a newly matching option gets selected, as an inserted `<option selected>` would.
+ * @param {HTMLSelectElement} select
+ * @param {boolean} preserve
+ */
+function apply_default_select_value(select, preserve) {
 	// @ts-expect-error
 	var value = select.__defaultValue;
 	var multiple = select.multiple;
@@ -41,8 +48,6 @@ function apply_default_select_value(select) {
 
 	if (multiple && !is_array(values)) return;
 
-	// @ts-expect-error
-	var preserve = '__value' in select || select.__touched === true;
 	var index = select.selectedIndex;
 	var selected = preserve && multiple ? new Set(select.selectedOptions) : null;
 
@@ -122,7 +127,7 @@ export function init_select(select) {
 		if (entries.every(is_selectedcontent_mutation)) return;
 
 		if ('__defaultValue' in select) {
-			apply_default_select_value(select);
+			apply_default_select_value(select, false);
 		}
 
 		if ('__value' in select) {
@@ -142,15 +147,6 @@ export function init_select(select) {
 		attributes: true,
 		attributeFilter: ['value']
 	});
-
-	listen_to_event_and_reset_event(
-		select,
-		'change',
-		// @ts-expect-error
-		() => (select.__touched = true),
-		// @ts-expect-error
-		() => (select.__touched = false)
-	);
 
 	teardown(() => {
 		observer.disconnect();
