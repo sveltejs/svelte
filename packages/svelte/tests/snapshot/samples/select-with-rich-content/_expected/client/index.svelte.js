@@ -64,10 +64,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.each(select_1, 5, () => items, $.index, ($$anchor, item) => {
 		var option_5 = root_4();
-		var text = $.child(option_5, true);
-
-		$.reset(option_5);
-
+		var text = $.only_child(option_5, true);
 		var option_5_value = {};
 
 		$.template_effect(() => {
@@ -127,10 +124,7 @@ export default function Select_with_rich_content($$anchor) {
 	$.each(select_5, 5, () => items, $.index, ($$anchor, item) => {
 		const x = $.derived_safe_equal(() => $.get(item) * 2);
 		var option_8 = root_4();
-		var text_1 = $.child(option_8, true);
-
-		$.reset(option_8);
-
+		var text_1 = $.only_child(option_8, true);
 		var option_8_value = {};
 
 		$.template_effect(() => {
@@ -165,10 +159,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.each(optgroup_1, 5, () => items, $.index, ($$anchor, item) => {
 		var option_10 = root_4();
-		var text_2 = $.child(option_10, true);
-
-		$.reset(option_10);
-
+		var text_2 = $.only_child(option_10, true);
 		var option_10_value = {};
 
 		$.template_effect(() => {
@@ -208,9 +199,8 @@ export default function Select_with_rich_content($$anchor) {
 			var anchor_4 = $.child(option_12);
 			var fragment_5 = option_content_3();
 			var span = $.first_child(fragment_5);
-			var text_3 = $.child(span, true);
+			var text_3 = $.only_child(span, true);
 
-			$.reset(span);
 			$.template_effect(() => $.set_text(text_3, $.get(item)));
 			$.append(anchor_4, fragment_5);
 		});
@@ -230,10 +220,7 @@ export default function Select_with_rich_content($$anchor) {
 
 			$.each(node_4, 1, () => items, $.index, ($$anchor, item) => {
 				var option_13 = root_4();
-				var text_4 = $.child(option_13, true);
-
-				$.reset(option_13);
-
+				var text_4 = $.only_child(option_13, true);
 				var option_13_value = {};
 
 				$.template_effect(() => {
