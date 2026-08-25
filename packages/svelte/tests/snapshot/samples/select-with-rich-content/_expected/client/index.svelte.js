@@ -75,7 +75,7 @@ export default function Select_with_rich_content($$anchor) {
 			$.set_text(text, $.get(item));
 
 			if (option_5_value !== (option_5_value = $.get(item))) {
-				option_5.__value = $.get(item);
+				option_5.__value = option_5_value;
 			}
 		});
 
@@ -138,7 +138,7 @@ export default function Select_with_rich_content($$anchor) {
 			$.set_text(text_1, $.get(x));
 
 			if (option_8_value !== (option_8_value = $.get(x))) {
-				option_8.__value = $.get(x);
+				option_8.__value = option_8_value;
 			}
 		});
 
@@ -176,7 +176,7 @@ export default function Select_with_rich_content($$anchor) {
 			$.set_text(text_2, $.get(item));
 
 			if (option_10_value !== (option_10_value = $.get(item))) {
-				option_10.__value = $.get(item);
+				option_10.__value = option_10_value;
 			}
 		});
 
@@ -241,7 +241,7 @@ export default function Select_with_rich_content($$anchor) {
 					$.set_text(text_4, $.get(item));
 
 					if (option_13_value !== (option_13_value = $.get(item))) {
-						option_13.__value = $.get(item);
+						option_13.__value = option_13_value;
 					}
 				});
 
