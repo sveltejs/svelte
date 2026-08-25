@@ -540,8 +540,7 @@ export function RegularElement(node, context) {
 			value_attribute.value !== true &&
 			!is_text_attribute(value_attribute);
 
-		// `bind:value` sets up its own observer
-		if ((default_value || dynamic_value) && !bindings.has('value')) {
+		if (default_value || dynamic_value || bindings.has('value')) {
 			context.state.init.push(b.stmt(b.call('$.init_select', node_id)));
 		}
 	}

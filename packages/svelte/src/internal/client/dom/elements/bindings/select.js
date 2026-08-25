@@ -107,16 +107,13 @@ export function select_option(select, value, mounting = false) {
 }
 
 /**
- * Selects the correct option(s) if `value` is given,
- * and then sets up a mutation observer to sync the
- * current selection to the dom when it changes. Such
- * changes could for example occur when options are
- * inside an `#each` block.
+ * Sets up a mutation observer to sync the current selection
+ * and default to the dom when the options change, for example
+ * when they are inside an `#each` block. Called once per `<select>`,
+ * by the compiled output or by `attribute_effect` for spreads.
  * @param {HTMLSelectElement} select
  */
 export function init_select(select) {
-	if ('__observer' in select) return;
-
 	var observer = new MutationObserver((entries) => {
 		// Mutations related to `<selectedcontent>` can never affect the option list.
 		// Reacting to them could revert a user-initiated selection change, because the
@@ -146,9 +143,6 @@ export function init_select(select) {
 		attributeFilter: ['value']
 	});
 
-	// @ts-expect-error
-	select.__observer = observer;
-
 	listen_to_event_and_reset_event(
 		select,
 		'change',
@@ -160,8 +154,6 @@ export function init_select(select) {
 
 	teardown(() => {
 		observer.disconnect();
-		// @ts-expect-error
-		delete select.__observer;
 	});
 }
 
@@ -236,8 +228,6 @@ export function bind_select_value(select, get, set = get) {
 		select.__value = value;
 		mounting = false;
 	});
-
-	init_select(select);
 }
 
 /** @param {HTMLOptionElement} option */
