@@ -494,13 +494,16 @@ declare module 'svelte' {
 	/**
 	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
 	 *
-	 * `get` will throw an error if no parent component called `set`.
+	 * `get` will throw an error if `set` has not yet been called in the current component or any of
+	 * its ancestors.
 	 *
 	 * @since 5.40.0
 	 */
 	export function createContext<T>(): [() => T, (context: T) => T];
 	/**
-	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
+	 * Retrieves the context set with the specified `key` in the current component or any of its
+	 * ancestors. If multiple components set the same key, the value from the closest one is returned.
+	 * A `setContext` call in the current component is only visible to `getContext` calls that run after it.
 	 * Must be called during component initialisation.
 	 *
 	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
@@ -509,8 +512,8 @@ declare module 'svelte' {
 	export function getContext<T>(key: any): T;
 	/**
 	 * Associates an arbitrary `context` object with the current component and the specified `key`
-	 * and returns that object. The context is then available to children of the component
-	 * (including slotted content) with `getContext`.
+	 * and returns that object. The context is then available to the component itself and all of its
+	 * descendants (including slotted content) with `getContext`.
 	 *
 	 * Like lifecycle functions, this must be called during component initialisation.
 	 *
@@ -519,15 +522,15 @@ declare module 'svelte' {
 	 * */
 	export function setContext<T>(key: any, context: T): T;
 	/**
-	 * Checks whether a given `key` has been set in the context of a parent component.
-	 * Must be called during component initialisation.
+	 * Checks whether a given `key` has been set in the context of the current component or any of
+	 * its ancestors. Must be called during component initialisation.
 	 *
 	 * */
 	export function hasContext(key: any): boolean;
 	/**
-	 * Retrieves the whole context map that belongs to the closest parent component.
-	 * Must be called during component initialisation. Useful, for example, if you
-	 * programmatically create a component and want to pass the existing context to it.
+	 * Retrieves the whole context map that belongs to the current component, including entries
+	 * inherited from its ancestors. Must be called during component initialisation. Useful, for
+	 * example, if you programmatically create a component and want to pass the existing context to it.
 	 *
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
@@ -1708,6 +1711,15 @@ declare module 'svelte/compiler' {
 
 		export interface StyleSheetBase extends BaseNode {
 			children: Array<Atrule | Rule>;
+			/** CSS comments in source order */
+			comments: CSSComment[];
+		}
+
+		export interface CSSComment extends BaseNode {
+			type: 'CSSComment';
+			value: string;
+			/** Character offset in a containing declaration value or at-rule prelude */
+			position?: number;
 		}
 
 		export interface StyleSheetFile extends StyleSheetBase {
@@ -1779,6 +1791,7 @@ declare module 'svelte/compiler' {
 		export interface TypeSelector extends BaseNode {
 			type: 'TypeSelector';
 			name: string;
+			namespace?: string;
 		}
 
 		export interface IdSelector extends BaseNode {
@@ -1802,6 +1815,7 @@ declare module 'svelte/compiler' {
 		export interface PseudoElementSelector extends BaseNode {
 			type: 'PseudoElementSelector';
 			name: string;
+			args?: SelectorList;
 		}
 
 		export interface PseudoClassSelector extends BaseNode {
@@ -1868,72 +1882,167 @@ declare module 'svelte/compiler' {
 	type Options = {
 		getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
 		getTrailingComments?: NonNullable<Parameters<typeof ts>[0]>['getTrailingComments'] | undefined;
+		indent?: string; // default tab
 	};
 
 	export {};
 }
 
 declare module 'svelte/easing' {
+	/**
+	 * Returns value as is.
+	 *
+	 * */
 	export function linear(t: number): number;
-
+	/**
+	 * Rebound effect on start and end of value range.
+	 *
+	 * */
 	export function backInOut(t: number): number;
-
+	/**
+	 * Rebound effect on start.
+	 *
+	 * */
 	export function backIn(t: number): number;
-
+	/**
+	 * Rebound effect on end.
+	 *
+	 * */
 	export function backOut(t: number): number;
-
+	/**
+	 * Bounce effect on end.
+	 *
+	 * */
 	export function bounceOut(t: number): number;
-
+	/**
+	 * Bounce effect on start and end.
+	 *
+	 * */
 	export function bounceInOut(t: number): number;
-
+	/**
+	 * Bounce effect on start.
+	 *
+	 * */
 	export function bounceIn(t: number): number;
-
+	/**
+	 * Circular effect, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function circInOut(t: number): number;
-
+	/**
+	 * Circular effect, accelerate on start.
+	 *
+	 * */
 	export function circIn(t: number): number;
-
+	/**
+	 * Circular effect, decelerate towards end.
+	 *
+	 * */
 	export function circOut(t: number): number;
-
+	/**
+	 * Cubic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function cubicInOut(t: number): number;
-
+	/**
+	 * Cubic scaling, accelerate on start
+	 *
+	 * */
 	export function cubicIn(t: number): number;
-
+	/**
+	 * Cubic scaling, decelerate towards end.
+	 *
+	 * */
 	export function cubicOut(t: number): number;
-
+	/**
+	 * Elastic effect on start and end.
+	 *
+	 * */
 	export function elasticInOut(t: number): number;
-
+	/**
+	 * Elastic effect on start.
+	 *
+	 * */
 	export function elasticIn(t: number): number;
-
+	/**
+	 * Elastic effect on end.
+	 *
+	 * */
 	export function elasticOut(t: number): number;
-
+	/**
+	 * Exponential effect on start and end.
+	 *
+	 * */
 	export function expoInOut(t: number): number;
-
+	/**
+	 * Exponential effect on start.
+	 *
+	 * */
 	export function expoIn(t: number): number;
-
+	/**
+	 * Exponential effect on end.
+	 *
+	 * */
 	export function expoOut(t: number): number;
-
+	/**
+	 * Quadratic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quadInOut(t: number): number;
-
+	/**
+	 * Quadratic scaling, accelerate on start.
+	 *
+	 * */
 	export function quadIn(t: number): number;
-
+	/**
+	 * Quadratic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quadOut(t: number): number;
-
+	/**
+	 * Quartic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quartInOut(t: number): number;
-
+	/**
+	 * Quartic scaling, accelerate on start.
+	 *
+	 * */
 	export function quartIn(t: number): number;
-
+	/**
+	 * Quartic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quartOut(t: number): number;
-
+	/**
+	 * Quintic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quintInOut(t: number): number;
-
+	/**
+	 * Quintic scaling, accelerate on start.
+	 *
+	 * */
 	export function quintIn(t: number): number;
-
+	/**
+	 * Quintic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quintOut(t: number): number;
-
+	/**
+	 * Sinusoidal effect, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function sineInOut(t: number): number;
-
+	/**
+	 * Sinusoidal effect, accelerate on start.
+	 *
+	 * */
 	export function sineIn(t: number): number;
-
+	/**
+	 * Sinusoidal effect, decelerate towards end.
+	 *
+	 * */
 	export function sineOut(t: number): number;
 
 	export {};
@@ -2615,11 +2724,11 @@ declare module 'svelte/server' {
 					}
 				]
 	): RenderOutput;
-	type Csp = { nonce?: string; hash?: boolean };
+	export type Csp = { nonce?: string; hash?: boolean };
 
-	type Sha256Source = `sha256-${string}`;
+	export type Sha256Source = `sha256-${string}`;
 
-	interface SyncRenderOutput {
+	export interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
 		/** @deprecated use `body` instead */
@@ -2631,7 +2740,7 @@ declare module 'svelte/server' {
 		};
 	}
 
-	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
+	export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
 
 	export {};
 }
@@ -3480,7 +3589,7 @@ declare function $effect(fn: () => void | (() => void)): void;
 declare namespace $effect {
 	/**
 	 * Runs code right before a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.
-	 * The timing of the execution is right before the DOM is updated.
+	 * The timing of the execution is right before the DOM that comes after it is updated; parent DOM may already have been updated by the time it runs.
 	 *
 	 * Example:
 	 * ```ts

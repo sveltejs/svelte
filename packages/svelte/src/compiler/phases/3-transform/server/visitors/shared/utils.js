@@ -60,7 +60,9 @@ export function process_children(nodes, { visit, state }) {
 				if (evaluated.is_known) {
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
 				} else {
-					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+					expressions.push(
+						b.call('$.escape', /** @type {Expression} */ (visit(node.expression, state)))
+					);
 
 					quasi = b.quasi('', i + 1 === sequence.length);
 					quasis.push(quasi);
@@ -80,7 +82,7 @@ export function process_children(nodes, { visit, state }) {
 		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
 
-			const expression = /** @type {Expression} */ (visit(node.expression));
+			const expression = /** @type {Expression} */ (visit(node.expression, state));
 
 			let call = b.call(
 				'$$renderer.push',
@@ -176,6 +178,36 @@ export function build_template(template) {
 	}
 
 	return statements;
+}
+
+/**
+ * Prepends a hydration marker (e.g. `<!--[0-->`) to a branch. The branch has already been
+ * turned into statements by `build_template`, so if it happens to start with a static
+ * `$$renderer.push(...)` we fold the marker into that call rather than emitting a second one.
+ * @param {BlockStatement} block
+ * @param {string} marker
+ */
+export function prepend_block_marker(block, marker) {
+	const first = block.body[0];
+
+	if (
+		first?.type === 'ExpressionStatement' &&
+		first.expression.type === 'CallExpression' &&
+		first.expression.callee.type === 'Identifier' &&
+		first.expression.callee.name === '$$renderer.push' &&
+		first.expression.arguments.length === 1 &&
+		first.expression.arguments[0].type === 'TemplateLiteral'
+	) {
+		const quasi = first.expression.arguments[0].quasis[0];
+
+		// markers never contain characters that need escaping in a template literal
+		quasi.value.cooked = marker + quasi.value.cooked;
+		quasi.value.raw = marker + quasi.value.raw;
+
+		return;
+	}
+
+	block.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), b.literal(marker))));
 }
 
 /**
@@ -284,7 +316,7 @@ export function build_getter(node, state) {
 	}
 
 	if (binding.kind === 'derived') {
-		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(binding.node);
+		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(node);
 	}
 
 	return node;
