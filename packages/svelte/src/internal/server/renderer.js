@@ -89,7 +89,7 @@ export class Renderer {
 	 * State that is local to the branch it is declared in.
 	 * It will be shallow-copied to all children.
 	 *
-	 * @type {{ select_value: any }}
+	 * @type {{ select_value: any, multiple: boolean }}
 	 */
 	local;
 
@@ -101,7 +101,7 @@ export class Renderer {
 		this.#parent = parent;
 
 		this.global = global;
-		this.local = parent ? { ...parent.local } : { select_value: undefined };
+		this.local = parent ? { ...parent.local } : { select_value: undefined, multiple: false };
 		this.type = parent ? parent.type : 'body';
 	}
 
@@ -344,6 +344,7 @@ export class Renderer {
 		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
 			renderer.local.select_value = value === undefined ? defaultValue : value;
+			renderer.local.multiple = !!select_attrs.multiple;
 			fn(renderer);
 		});
 		this.push(`${is_rich ? '<!>' : ''}</select>`);
@@ -373,7 +374,13 @@ export class Renderer {
 
 			var select_value = this.local.select_value;
 
-			if (is_array(select_value) ? select_value.includes(value) : value === select_value) {
+			if (
+				// Super edge-case, but theoretically someone could use arrays with non-multiple selects,
+				// so we gotta check for the multiple attribute presence, too.
+				this.local.multiple && is_array(select_value)
+					? select_value.includes(value)
+					: value === select_value
+			) {
 				renderer.#out.push(' selected=""');
 			}
 
