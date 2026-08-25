@@ -89,7 +89,7 @@ export class Renderer {
 	 * State that is local to the branch it is declared in.
 	 * It will be shallow-copied to all children.
 	 *
-	 * @type {{ select_value: any, select_default_multiple: boolean }}
+	 * @type {{ select_value: any }}
 	 */
 	local;
 
@@ -101,9 +101,7 @@ export class Renderer {
 		this.#parent = parent;
 
 		this.global = global;
-		this.local = parent
-			? { ...parent.local }
-			: { select_value: undefined, select_default_multiple: false };
+		this.local = parent ? { ...parent.local } : { select_value: undefined };
 		this.type = parent ? parent.type : 'body';
 	}
 
@@ -346,8 +344,6 @@ export class Renderer {
 		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
 			renderer.local.select_value = value === undefined ? defaultValue : value;
-			renderer.local.select_default_multiple =
-				value === undefined && Boolean(select_attrs.multiple);
 			fn(renderer);
 		});
 		this.push(`${is_rich ? '<!>' : ''}</select>`);
@@ -375,11 +371,9 @@ export class Renderer {
 				value = attrs.value;
 			}
 
-			if (
-				this.local.select_default_multiple
-					? is_array(this.local.select_value) && this.local.select_value.includes(value)
-					: value === this.local.select_value
-			) {
+			var select_value = this.local.select_value;
+
+			if (is_array(select_value) ? select_value.includes(value) : value === select_value) {
 				renderer.#out.push(' selected=""');
 			}
 
