@@ -164,6 +164,7 @@ export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
+	only_child,
 	first_child,
 	sibling,
 	$window as window,

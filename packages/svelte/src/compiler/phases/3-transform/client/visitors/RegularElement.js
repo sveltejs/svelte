@@ -1,4 +1,4 @@
-/** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
+/** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -432,7 +432,7 @@ export function RegularElement(node, context) {
 			state: child_state
 		});
 
-		if (needs_reset) {
+		if (needs_reset && !fold_reset_into_child(child_state.init, context.state.node)) {
 			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
 		}
 	}
@@ -750,4 +750,40 @@ function build_element_special_value_attribute(
 	if (is_select_with_value) {
 		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
+}
+
+/**
+ * `<p>{text}</p>` and friends produce `var x = $.child(p, true); $.reset(p);`. That pair is
+ * by far the most common shape in compiled output, and `$.only_child` does both, so fold the
+ * two together when the `$.child(...)` is the last thing we emitted for this element.
+ * @param {Statement[]} init
+ * @param {Expression} node_id
+ * @returns {boolean} whether the reset was folded in
+ */
+function fold_reset_into_child(init, node_id) {
+	const last = init.at(-1);
+
+	if (
+		node_id?.type !== 'Identifier' ||
+		last?.type !== 'VariableDeclaration' ||
+		last.declarations.length !== 1
+	) {
+		return false;
+	}
+
+	const call = last.declarations[0].init;
+
+	if (
+		call?.type !== 'CallExpression' ||
+		call.callee.type !== 'Identifier' ||
+		call.callee.name !== '$.child' ||
+		call.arguments[0]?.type !== 'Identifier' ||
+		call.arguments[0].name !== node_id.name
+	) {
+		return false;
+	}
+
+	call.callee = b.id('$.only_child');
+
+	return true;
 }
