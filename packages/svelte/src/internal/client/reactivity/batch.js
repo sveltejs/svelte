@@ -69,6 +69,16 @@ export let batch_values = null;
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
+/**
+ * @param {Effect} effect
+ * @returns {void}
+ */
+export function clear_last_scheduled_effect(effect) {
+	if (last_scheduled_effect === effect) {
+		last_scheduled_effect = null;
+	}
+}
+
 export let is_flushing_sync = false;
 let is_processing = false;
 
