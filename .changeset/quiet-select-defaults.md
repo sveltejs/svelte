@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: keep the current selection of a `<select>` when its `defaultValue` is applied
+fix: apply `<select defaultValue>` to options that arrive later, and keep a chosen selection when it is reapplied

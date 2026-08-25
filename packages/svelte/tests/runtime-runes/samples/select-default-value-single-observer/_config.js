@@ -1,4 +1,4 @@
-import { ok, test } from '../../test';
+import { test } from '../../test';
 
 let observers = 0;
 const MutationObserver = globalThis.MutationObserver;
@@ -20,10 +20,11 @@ export default test({
 	},
 
 	test({ assert, target }) {
-		const select = target.querySelector('select');
-		ok(select);
-		assert.equal(select.selectedIndex, 0);
-		assert.equal(select.options[1].defaultSelected, true);
-		assert.equal(observers, 1);
+		const selects = target.querySelectorAll('select');
+		for (const select of selects) {
+			assert.equal(select.selectedIndex, 0);
+			assert.equal(select.options[1].defaultSelected, true);
+		}
+		assert.equal(observers, selects.length);
 	}
 });

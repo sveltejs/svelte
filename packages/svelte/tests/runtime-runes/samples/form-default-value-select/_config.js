@@ -62,7 +62,7 @@ export default test({
 		button('add').click();
 		flushSync();
 		await Promise.resolve();
-		check(selects[3], [true, false]);
+		check(selects[3], [false, true]);
 		assert.equal(selects[3].options[1].defaultSelected, true);
 
 		reset.click();

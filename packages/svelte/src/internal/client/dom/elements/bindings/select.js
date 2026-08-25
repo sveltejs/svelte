@@ -20,26 +20,20 @@ export function set_selected(option, selected) {
 }
 
 /**
- * Sets the options a form reset should restore without changing the current selection.
- * The initial call establishes the current selection when no value exists yet.
+ * Sets the options a form reset should restore. Only changes the current
+ * selection while nothing has chosen one yet (no `value`, no user change).
  * @param {HTMLSelectElement} select
  * @param {any} value
  */
 export function set_default_select_value(select, value) {
-	var mounting = !('__defaultValue' in select);
-	// @ts-expect-error
-	if (!mounting && select.__defaultValue === value) return;
+	if ('__defaultValue' in select && select.__defaultValue === value) return;
 	// @ts-expect-error
 	select.__defaultValue = value;
-	apply_default_select_value(select, !mounting || '__value' in select);
+	apply_default_select_value(select);
 }
 
-/**
- * Marks the options matching `__defaultValue` as default-selected
- * @param {HTMLSelectElement} select
- * @param {boolean} preserve whether the current selection must survive
- */
-function apply_default_select_value(select, preserve) {
+/** @param {HTMLSelectElement} select */
+function apply_default_select_value(select) {
 	// @ts-expect-error
 	var value = select.__defaultValue;
 	var multiple = select.multiple;
@@ -47,6 +41,8 @@ function apply_default_select_value(select, preserve) {
 
 	if (multiple && !is_array(values)) return;
 
+	// @ts-expect-error
+	var preserve = '__value' in select || select.__touched === true;
 	var index = select.selectedIndex;
 	var selected = preserve && multiple ? new Set(select.selectedOptions) : null;
 
@@ -119,6 +115,8 @@ export function select_option(select, value, mounting = false) {
  * @param {HTMLSelectElement} select
  */
 export function init_select(select) {
+	if ('__observer' in select) return;
+
 	var observer = new MutationObserver((entries) => {
 		// Mutations related to `<selectedcontent>` can never affect the option list.
 		// Reacting to them could revert a user-initiated selection change, because the
@@ -127,7 +125,7 @@ export function init_select(select) {
 		if (entries.every(is_selectedcontent_mutation)) return;
 
 		if ('__defaultValue' in select) {
-			apply_default_select_value(select, true);
+			apply_default_select_value(select);
 		}
 
 		if ('__value' in select) {
@@ -148,8 +146,22 @@ export function init_select(select) {
 		attributeFilter: ['value']
 	});
 
+	// @ts-expect-error
+	select.__observer = observer;
+
+	listen_to_event_and_reset_event(
+		select,
+		'change',
+		// @ts-expect-error
+		() => (select.__touched = true),
+		// @ts-expect-error
+		() => (select.__touched = false)
+	);
+
 	teardown(() => {
 		observer.disconnect();
+		// @ts-expect-error
+		delete select.__observer;
 	});
 }
 
