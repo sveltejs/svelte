@@ -247,11 +247,11 @@ export function client_component(analysis, options) {
 	}
 
 	for (const [node] of analysis.reactive_statements) {
-		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
+		const statement = state.legacy_reactive_statements.get(node);
 		if (statement === undefined) {
 			throw new Error('Could not find reactive statement');
 		}
-		instance.body.push(statement[1]);
+		instance.body.push(statement);
 	}
 
 	if (analysis.reactive_statements.size > 0) {
