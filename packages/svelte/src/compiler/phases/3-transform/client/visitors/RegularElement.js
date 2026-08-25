@@ -701,28 +701,32 @@ function build_element_special_value_attribute(
 	);
 
 	const evaluated = context.state.scope.evaluate(value);
-	const assignment = b.assignment('=', b.member(node_id, '__value'), value);
 
-	const set_value_assignment = b.assignment(
-		'=',
-		b.member(node_id, 'value'),
-		evaluated.is_defined ? assignment : b.logical('??', assignment, b.literal(''))
-	);
+	/** @param {Expression} value */
+	const build_update = (value) => {
+		const assignment = b.assignment('=', b.member(node_id, '__value'), value);
 
-	const update = b.stmt(
-		is_select_with_value
-			? b.sequence([
-					set_value_assignment,
-					// This ensures a one-way street to the DOM in case it's <select {value}>
-					// and not <select bind:value>. We need it in addition to $.init_select
-					// because the select value is not reflected as an attribute, so the
-					// mutation observer wouldn't notice.
-					b.call('$.select_option', node_id, value)
-				])
-			: synthetic
-				? assignment
-				: set_value_assignment
-	);
+		const set_value_assignment = b.assignment(
+			'=',
+			b.member(node_id, 'value'),
+			evaluated.is_defined ? assignment : b.logical('??', assignment, b.literal(''))
+		);
+
+		return b.stmt(
+			is_select_with_value
+				? b.sequence([
+						set_value_assignment,
+						// This ensures a one-way street to the DOM in case it's <select {value}>
+						// and not <select bind:value>. We need it in addition to $.init_select
+						// because the select value is not reflected as an attribute, so the
+						// mutation observer wouldn't notice.
+						b.call('$.select_option', node_id, value)
+					])
+				: synthetic
+					? assignment
+					: set_value_assignment
+		);
+	};
 
 	if (has_state) {
 		const id = b.id(state.scope.generate(`${node_id.name}_value`));
@@ -733,9 +737,14 @@ function build_element_special_value_attribute(
 		const init = element === 'option' ? b.object([]) : undefined;
 
 		state.init.push(b.var(id, init));
-		state.update.push(b.if(b.binary('!==', id, b.assignment('=', id, value)), b.block([update])));
+
+		// the guard already evaluated `value` into `id`, so read that back rather than
+		// evaluating the same expression (and its signal reads) a second time
+		state.update.push(
+			b.if(b.binary('!==', id, b.assignment('=', id, value)), b.block([build_update(id)]))
+		);
 	} else {
-		state.init.push(update);
+		state.init.push(build_update(value));
 	}
 
 	if (is_select_with_value) {
