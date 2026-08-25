@@ -1,8 +1,7 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-// same fix as async-declaration-closure-read, via the shared helpers — an `{@const}`
-// reading an async value inside a closure must block on it
+// #18469 — a @const in a nested snippet reading an async declaration through a closure must block on it
 export default test({
 	async test({ assert, target }) {
 		await tick();
