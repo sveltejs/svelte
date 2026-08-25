@@ -285,7 +285,7 @@ export function analyze_module(source, options) {
 		runes: true,
 		immutable: true,
 		tracing: false,
-		async_deriveds: new Set(),
+		async_deriveds: new Map(),
 		comments,
 		classes: new Map(),
 		pickled_awaits: new Set()
@@ -557,7 +557,7 @@ export function analyze_component(root, source, options) {
 		source,
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set(),
+		async_deriveds: new Map(),
 		pickled_awaits: new Set(),
 		instance_body: {
 			sync: [],
@@ -832,6 +832,11 @@ export function analyze_component(root, source, options) {
 					} else {
 						e.export_undefined(specifier, name);
 					}
+				} else if (binding.initial?.type === 'SnippetBlock') {
+					// If a snippet is exported, a consumer could only import this named export and not the default export (the component).
+					// In this case we need to set hasGlobal of our output to true so that e.g. vite-plugin-svelte does not tell Vite to
+					// tree-shake the CSS if the default export is not used.
+					analysis.css.has_global = true;
 				}
 			}
 		}
@@ -958,7 +963,7 @@ function calculate_blockers(instance, analysis) {
 	 * @param {Set<Binding>} touched
 	 * @param {Set<ESTree.Node>} seen
 	 */
-	const touch = (expression, scope, touched, seen = new Set()) => {
+	const touch = (expression, scope, touched, seen) => {
 		if (seen.has(expression)) return;
 		seen.add(expression);
 
@@ -1015,6 +1020,13 @@ function calculate_blockers(instance, analysis) {
 			}
 		}
 
+		// Share seen nodes across calls so transitive assignments are only visited once.
+		// Keep separate read/write state because the target sets can differ.
+		/** @type {Set<ESTree.Node>} */
+		const writes_seen = new Set();
+		/** @type {Set<ESTree.Node>} */
+		const reads_seen = new Set();
+
 		walk(
 			node,
 			{ scope },
@@ -1044,13 +1056,7 @@ function calculate_blockers(instance, analysis) {
 					const rune = get_rune(node, context.state.scope);
 					if (rune === '$effect') return;
 
-					/** @type {Set<Binding>} */
-					const touched = new Set();
-					touch(node, context.state.scope, touched);
-
-					for (const b of touched) {
-						writes.add(b);
-					}
+					touch(node, context.state.scope, writes, writes_seen);
 				},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
@@ -1066,7 +1072,7 @@ function calculate_blockers(instance, analysis) {
 					// might be called immediately, so we have to touch all references within it. Example:
 					// function foo() { return () => blocker; } foo(); // blocker is touched
 					if (node.argument) {
-						touch(node.argument, context.state.scope, reads);
+						touch(node.argument, context.state.scope, reads, reads_seen);
 					}
 				},
 				// don't look inside functions until they are called
@@ -1227,6 +1233,23 @@ function calculate_blockers(instance, analysis) {
 
 	flush_sync_group();
 
+	// a store subscription must wait on whatever blocks the store itself; this must happen
+	// before function tracing so that functions reading `$store` inherit the blocker
+	for (const [name, binding] of instance.scope.declarations) {
+		if (binding.kind !== 'store_sub') continue;
+
+		const store_blocker = instance.scope.get(name.slice(1))?.blocker;
+		if (!store_blocker) continue;
+
+		if (
+			!binding.blocker ||
+			/** @type {ESTree.SimpleLiteral & { value: number }} */ (binding.blocker.property).value <
+				/** @type {ESTree.SimpleLiteral & { value: number }} */ (store_blocker.property).value
+		) {
+			binding.blocker = store_blocker;
+		}
+	}
+
 	for (const fn of functions) {
 		/** @type {Set<Binding>} */
 		const reads_writes = new Set();
@@ -1235,12 +1258,15 @@ function calculate_blockers(instance, analysis) {
 				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init)
 				: fn;
 
-		trace_references(
-			init.body,
-			reads_writes,
-			reads_writes,
-			/** @type {Scope} */ (instance.scopes.get(init))
-		);
+		const fn_scope = /** @type {Scope} */ (instance.scopes.get(init));
+
+		if (init.body.type === 'BlockStatement') {
+			trace_references(init.body, reads_writes, reads_writes, fn_scope);
+		} else {
+			// A concise arrow body is an implicit return, so treat it like the
+			// `ReturnStatement` visitor in `trace_references` would.
+			touch(init.body, fn_scope, reads_writes, new Set());
+		}
 
 		const max = [...reads_writes].reduce((max, binding) => {
 			if (binding.blocker) {
@@ -1314,7 +1340,8 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	 * @returns
 	 */
 	const add_declaration = (node, declaration) => {
-		if ([...reactive_declarations.values()].includes(declaration)) return;
+		// Visited set: each ReactiveStatement is stored under exactly one LabeledStatement node
+		if (reactive_declarations.has(node)) return;
 
 		for (const binding of declaration.dependencies) {
 			if (declaration.assignments.has(binding)) continue;

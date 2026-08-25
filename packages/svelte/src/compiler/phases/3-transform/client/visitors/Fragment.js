@@ -141,14 +141,9 @@ export function Fragment(node, context) {
 				flags |= TEMPLATE_USE_IMPORT_NODE;
 			}
 
-			if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'comment') {
-				// special case — we can use `$.comment` instead of creating a unique template
-				state.init.unshift(b.var(id, b.call('$.comment')));
-			} else {
-				const template_name = transform_template(state, 'root', flags);
+			const template_name = transform_template(state, 'root', flags);
 
-				state.init.unshift(b.var(id, b.call(template_name)));
-			}
+			state.init.unshift(b.var(id, b.call(template_name)));
 
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		}
