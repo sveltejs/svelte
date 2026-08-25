@@ -33,10 +33,8 @@ export {
 	set_xlink_attribute,
 	set_value,
 	set_checked,
-	set_selected,
 	set_default_checked,
 	set_default_value,
-	set_default_select_value,
 	CLASS,
 	STYLE
 } from './dom/elements/attributes.js';
@@ -63,7 +61,13 @@ export {
 } from './dom/elements/bindings/media.js';
 export { bind_online } from './dom/elements/bindings/navigator.js';
 export { bind_prop } from './dom/elements/bindings/props.js';
-export { bind_select_value, init_select, select_option } from './dom/elements/bindings/select.js';
+export {
+	bind_select_value,
+	init_select,
+	select_option,
+	set_selected,
+	set_default_select_value
+} from './dom/elements/bindings/select.js';
 export { bind_element_size, bind_resize_observer } from './dom/elements/bindings/size.js';
 export { bind_this } from './dom/elements/bindings/this.js';
 export {

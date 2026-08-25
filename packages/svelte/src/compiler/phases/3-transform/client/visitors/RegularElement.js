@@ -231,7 +231,7 @@ export function RegularElement(node, context) {
 
 			// `<select defaultValue>` needs the options to exist before it can mark one
 			// as selected, so it is handled after the children, alongside `value`
-			if (node.name === 'select' && attribute.name === 'defaultValue') {
+			if (node.name === 'select' && get_attribute_name(node, attribute) === 'defaultValue') {
 				continue;
 			}
 
@@ -521,7 +521,7 @@ export function RegularElement(node, context) {
 	// have been created and had their values assigned
 	if (!has_spread && name === 'select') {
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
-			if (attribute.name === 'defaultValue') {
+			if (get_attribute_name(node, attribute) === 'defaultValue') {
 				const { value, has_state } = build_attribute_value(attribute.value, context, (v, m) =>
 					context.state.memoizer.add(v, m)
 				);
@@ -529,6 +529,9 @@ export function RegularElement(node, context) {
 				const update = b.stmt(b.call('$.set_default_select_value', node_id, value));
 
 				(has_state ? context.state.update : context.state.init).push(update);
+				if (!bindings.has('value')) {
+					context.state.init.push(b.stmt(b.call('$.init_select', node_id)));
+				}
 				break;
 			}
 		}
