@@ -60,7 +60,7 @@ export function decode_character_references(html, is_attribute_value) {
 				return match;
 			}
 
-			return String.fromCodePoint(validate_code(code));
+			return String.fromCodePoint(validate_code(code, is_attribute_value));
 		}
 	);
 }
@@ -75,10 +75,15 @@ const NUL = 0;
 // Also see: https://en.wikipedia.org/wiki/Plane_(Unicode)
 // Also see: https://html.spec.whatwg.org/multipage/parsing.html#preprocessing-the-input-stream
 
-/** @param {number} code */
-function validate_code(code) {
-	// line feed becomes generic whitespace
-	if (code === 10) {
+/**
+ * @param {number} code
+ * @param {boolean} is_attribute_value
+ */
+function validate_code(code, is_attribute_value) {
+	// line feed becomes generic whitespace, since it is collapsed along with the
+	// surrounding whitespace anyway. In an attribute value it is significant, so it
+	// is left alone there
+	if (code === 10 && !is_attribute_value) {
 		return 32;
 	}
 
