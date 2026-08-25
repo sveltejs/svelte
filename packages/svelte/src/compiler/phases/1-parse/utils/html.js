@@ -20,7 +20,7 @@ function reg_exp_entity(entity_name, is_attribute_value) {
 
 /** @param {boolean} is_attribute_value */
 function get_entity_pattern(is_attribute_value) {
-	const reg_exp_num = '#(?:x[a-fA-F\\d]+|\\d+)(?:;)?';
+	const reg_exp_num = '#(?:[xX][a-fA-F\\d]+|\\d+)(?:;)?';
 	const reg_exp_entities = Object.keys(entities).map(
 		/** @param {any} entity_name */ (entity_name) => reg_exp_entity(entity_name, is_attribute_value)
 	);
@@ -50,7 +50,7 @@ export function decode_character_references(html, is_attribute_value) {
 			// Handle named entities
 			if (entity[0] !== '#') {
 				code = entities[entity];
-			} else if (entity[1] === 'x') {
+			} else if (entity[1] === 'x' || entity[1] === 'X') {
 				code = parseInt(entity.substring(2), 16);
 			} else {
 				code = parseInt(entity.substring(1), 10);
