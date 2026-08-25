@@ -163,6 +163,8 @@ export class SvelteURL extends URL {
 	set protocol(value) {
 		super.protocol = value;
 		set(this.#protocol, super.protocol);
+		// changing the protocol can clear the port when it matches the new scheme's default
+		set(this.#port, super.port);
 	}
 
 	get search() {
