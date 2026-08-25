@@ -21,32 +21,52 @@ export function set_selected(option, selected) {
 
 /**
  * Sets the options a form reset should restore without changing the current selection.
- * The initial call is allowed to establish the current selection when no value exists.
+ * The initial call establishes the current selection when no value exists yet.
  * @param {HTMLSelectElement} select
  * @param {any} value
- * @param {boolean} [mounting]
  */
-export function set_default_select_value(select, value, mounting = !('__defaultValue' in select)) {
-	// The DOM cannot recover unmatched, object or multiple defaults from selected options.
-	// Keep the requested value so option mutations can reapply it; property presence also
-	// distinguishes the initial application from later updates when the value is undefined.
+export function set_default_select_value(select, value) {
+	var mounting = !('__defaultValue' in select);
+	// @ts-expect-error
+	if (!mounting && select.__defaultValue === value) return;
 	// @ts-expect-error
 	select.__defaultValue = value;
-	var values = select.multiple ? (value == null ? [] : value) : null;
+	apply_default_select_value(select, !mounting || '__value' in select);
+}
 
-	if (select.multiple && !is_array(values)) return;
-	var selected = !mounting || '__value' in select ? new Set(select.selectedOptions) : null;
+/**
+ * Marks the options matching `__defaultValue` as default-selected
+ * @param {HTMLSelectElement} select
+ * @param {boolean} preserve whether the current selection must survive
+ */
+function apply_default_select_value(select, preserve) {
+	// @ts-expect-error
+	var value = select.__defaultValue;
+	var multiple = select.multiple;
+	var values = multiple ? value ?? [] : null;
+
+	if (multiple && !is_array(values)) return;
+
+	var index = select.selectedIndex;
+	var selected = preserve && multiple ? new Set(select.selectedOptions) : null;
 
 	for (var option of select.options) {
 		var option_value = get_option_value(option);
-		var is_selected = select.multiple
-			? /** @type {any[]} */ (values).includes(option_value)
-			: is(option_value, value);
-		set_selected(option, is_selected);
+		set_selected(
+			option,
+			multiple ? /** @type {any[]} */ (values).includes(option_value) : is(option_value, value)
+		);
 	}
 
+	if (!preserve) return;
+
 	if (selected !== null) {
-		for (option of select.options) option.selected = selected.has(option);
+		for (option of select.options) {
+			var was_selected = selected.has(option);
+			if (option.selected !== was_selected) option.selected = was_selected;
+		}
+	} else if (select.selectedIndex !== index) {
+		select.selectedIndex = index;
 	}
 }
 
@@ -107,7 +127,7 @@ export function init_select(select) {
 		if (entries.every(is_selectedcontent_mutation)) return;
 
 		if ('__defaultValue' in select) {
-			set_default_select_value(select, select.__defaultValue, false);
+			apply_default_select_value(select, true);
 		}
 
 		if ('__value' in select) {

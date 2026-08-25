@@ -529,7 +529,14 @@ export function RegularElement(node, context) {
 				const update = b.stmt(b.call('$.set_default_select_value', node_id, value));
 
 				(has_state ? context.state.update : context.state.init).push(update);
-				if (!bindings.has('value')) {
+				const value_attribute = lookup.get('value');
+				// `build_element_special_value_attribute` already emits `$.init_select` for a dynamic `value`
+				const has_observer =
+					bindings.has('value') ||
+					(value_attribute !== undefined &&
+						value_attribute.value !== true &&
+						!is_text_attribute(value_attribute));
+				if (!has_observer) {
 					context.state.init.push(b.stmt(b.call('$.init_select', node_id)));
 				}
 				break;

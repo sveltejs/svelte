@@ -525,7 +525,7 @@ export function attribute_effect(
 				var select = /** @type {HTMLSelectElement} */ (element);
 
 				if ('defaultValue' in next) {
-					set_default_select_value(select, next.defaultValue, false);
+					set_default_select_value(select, next.defaultValue);
 				}
 
 				if ('value' in next) {
@@ -558,7 +558,7 @@ export function attribute_effect(
 				var attrs = /** @type {Record<string | symbol, any>} */ (prev);
 
 				if ('defaultValue' in attrs) {
-					set_default_select_value(select, attrs.defaultValue, true);
+					set_default_select_value(select, attrs.defaultValue);
 				}
 
 				select_option(select, attrs.value, true);
