@@ -214,12 +214,30 @@ export class Boundary {
 		queue_micro_task(() => {
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
+			var handled = false;
 
 			fragment.append(anchor);
 
 			this.#main_effect = this.#run(() => {
-				return branch(() => this.#children(anchor));
+				try {
+					return branch(() => this.#children(anchor));
+				} catch (error) {
+					try {
+						this.error(error);
+						handled = true;
+					} catch (error) {
+						invoke_error_boundary(error, this.#effect.parent);
+					}
+
+					return null;
+				}
 			});
+
+			if (this.#main_effect === null) {
+				this.#offscreen_fragment = null;
+				if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
+				return;
+			}
 
 			if (this.#pending_count === 0) {
 				this.#anchor.before(fragment);
