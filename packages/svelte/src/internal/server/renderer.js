@@ -13,7 +13,7 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { has_own_property, noop } from '../shared/utils.js';
+import { has_own_property, is_array, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -89,7 +89,7 @@ export class Renderer {
 	 * State that is local to the branch it is declared in.
 	 * It will be shallow-copied to all children.
 	 *
-	 * @type {{ select_value: string | undefined }}
+	 * @type {{ select_value: any, select_default_multiple: boolean }}
 	 */
 	local;
 
@@ -101,7 +101,9 @@ export class Renderer {
 		this.#parent = parent;
 
 		this.global = global;
-		this.local = parent ? { ...parent.local } : { select_value: undefined };
+		this.local = parent
+			? { ...parent.local }
+			: { select_value: undefined, select_default_multiple: false };
 		this.type = parent ? parent.type : 'body';
 	}
 
@@ -338,11 +340,14 @@ export class Renderer {
 	 * @returns {void}
 	 */
 	select(attrs, fn, css_hash, classes, styles, flags, is_rich) {
-		const { value, ...select_attrs } = attrs;
+		const { value, defaultValue, ...select_attrs } = attrs;
+		if (select_attrs.multiple === '') select_attrs.multiple = true;
 
 		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
-			renderer.local.select_value = value;
+			renderer.local.select_value = value === undefined ? defaultValue : value;
+			renderer.local.select_default_multiple =
+				value === undefined && Boolean(select_attrs.multiple);
 			fn(renderer);
 		});
 		this.push(`${is_rich ? '<!>' : ''}</select>`);
@@ -370,7 +375,11 @@ export class Renderer {
 				value = attrs.value;
 			}
 
-			if (value === this.local.select_value) {
+			if (
+				this.local.select_default_multiple
+					? is_array(this.local.select_value) && this.local.select_value.includes(value)
+					: value === this.local.select_value
+			) {
 				renderer.#out.push(' selected=""');
 			}
 

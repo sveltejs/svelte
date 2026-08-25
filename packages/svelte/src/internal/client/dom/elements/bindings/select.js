@@ -7,6 +7,50 @@ import { Batch, current_batch, previous_batch } from '../../../reactivity/batch.
 import { async_mode_flag } from '../../../../flags/index.js';
 
 /**
+ * Sets the `selected` attribute on an option so form reset can restore it.
+ * @param {HTMLOptionElement} option
+ * @param {boolean} selected
+ */
+export function set_selected(option, selected) {
+	if (selected) {
+		if (!option.hasAttribute('selected')) option.setAttribute('selected', '');
+	} else {
+		option.removeAttribute('selected');
+	}
+}
+
+/**
+ * Sets the options a form reset should restore without changing the current selection.
+ * The initial call is allowed to establish the current selection when no value exists.
+ * @param {HTMLSelectElement} select
+ * @param {any} value
+ * @param {boolean} [mounting]
+ */
+export function set_default_select_value(select, value, mounting = !('__defaultValue' in select)) {
+	// The DOM cannot recover unmatched, object or multiple defaults from selected options.
+	// Keep the requested value so option mutations can reapply it; property presence also
+	// distinguishes the initial application from later updates when the value is undefined.
+	// @ts-expect-error
+	select.__defaultValue = value;
+	var values = select.multiple ? (value == null ? [] : value) : null;
+
+	if (select.multiple && !is_array(values)) return;
+	var selected = !mounting || '__value' in select ? new Set(select.selectedOptions) : null;
+
+	for (var option of select.options) {
+		var option_value = get_option_value(option);
+		var is_selected = select.multiple
+			? /** @type {any[]} */ (values).includes(option_value)
+			: is(option_value, value);
+		set_selected(option, is_selected);
+	}
+
+	if (selected !== null) {
+		for (option of select.options) option.selected = selected.has(option);
+	}
+}
+
+/**
  * Selects the correct option(s) (depending on whether this is a multiple select)
  * @template V
  * @param {HTMLSelectElement} select
@@ -60,9 +104,15 @@ export function init_select(select) {
 		// Reacting to them could revert a user-initiated selection change, because the
 		// records are delivered as soon as any listener returns (e.g. a delegated `input`
 		// handler), which can happen before the `change` handler has updated `__value`
-		if (entries.every(is_selectedcontent_mutation) || !('__value' in select)) return;
-		// @ts-ignore
-		select_option(select, select.__value);
+		if (entries.every(is_selectedcontent_mutation)) return;
+
+		if ('__defaultValue' in select) {
+			set_default_select_value(select, select.__defaultValue, false);
+		}
+
+		if ('__value' in select) {
+			select_option(select, select.__value);
+		}
 		// Deliberately don't update the potential binding value,
 		// the model should be preserved unless explicitly changed
 	});
