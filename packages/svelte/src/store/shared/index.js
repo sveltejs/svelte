@@ -139,6 +139,8 @@ export function derived(stores, fn, initial_value) {
 		/** @type {T[]} */
 		const values = [];
 		let pending = 0;
+		/** @type {boolean[]} */
+		const dirty = [];
 		let cleanup = noop;
 		const sync = () => {
 			if (pending) {
@@ -157,13 +159,19 @@ export function derived(stores, fn, initial_value) {
 				store,
 				(value) => {
 					values[i] = value;
-					pending &= ~(1 << i);
+					if (dirty[i]) {
+						dirty[i] = false;
+						pending--;
+					}
 					if (started) {
 						sync();
 					}
 				},
 				() => {
-					pending |= 1 << i;
+					if (!dirty[i]) {
+						dirty[i] = true;
+						pending++;
+					}
 				}
 			)
 		);

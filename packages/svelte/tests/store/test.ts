@@ -397,6 +397,36 @@ describe('derived', () => {
 		unsubscribe();
 	});
 
+	it('prevents diamond dependency problem with 32 or more dependencies', () => {
+		const count = writable(0);
+
+		const values: string[] = [];
+
+		// the shared ancestor feeds two dependencies placed at indices 0 and 32,
+		// which alias each other in a 32-bit dirty bitmask (1 << 32 === 1 << 0)
+		const first = derived(count, ($count) => $count);
+		const last = derived(count, ($count) => $count * 100);
+
+		const stores: Readable<any>[] = [first];
+		for (let i = 1; i < 32; i += 1) {
+			stores.push(readable(0));
+		}
+		stores.push(last);
+
+		const combined = derived(stores, (deps) => `${deps[0]}/${deps[32]}`);
+
+		const unsubscribe = combined.subscribe((v) => {
+			values.push(v as string);
+		});
+
+		assert.deepEqual(values, ['0/0']);
+
+		count.set(1);
+		assert.deepEqual(values, ['0/0', '1/100']);
+
+		unsubscribe();
+	});
+
 	it('derived dependency does not update and shared ancestor updates', () => {
 		const root = writable({ a: 0, b: 0 });
 
