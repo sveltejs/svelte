@@ -4,7 +4,11 @@
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
-import { extract_identifiers, get_parent } from '../../../../utils/ast.js';
+import {
+	extract_identifiers,
+	get_attribute_expression,
+	get_parent
+} from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
@@ -296,5 +300,23 @@ export function validate_export(node, scope, name) {
 
 	if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
 		e.state_invalid_export(node);
+	}
+}
+
+/**
+ * Warns when an event attribute uses the shorthand form (`{onclick}`) but the
+ * referenced name isn't declared, so it silently resolves to the global handler.
+ * @param {AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }} attribute
+ * @param {Context} context
+ */
+export function check_global_event_reference(attribute, context) {
+	const value = get_attribute_expression(attribute);
+
+	if (
+		value.type === 'Identifier' &&
+		value.name === attribute.name &&
+		!context.state.scope.get(value.name)
+	) {
+		w.attribute_global_event_reference(attribute, attribute.name);
 	}
 }

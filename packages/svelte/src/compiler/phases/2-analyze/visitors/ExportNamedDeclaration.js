@@ -1,4 +1,4 @@
-/** @import { ExportNamedDeclaration, Identifier } from 'estree' */
+/** @import { ExportNamedDeclaration, Identifier, VariableDeclaration } from 'estree' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { extract_identifiers } from '../../../utils/ast.js';
@@ -23,15 +23,6 @@ export function ExportNamedDeclaration(node, context) {
 	}
 
 	if (node.declaration?.type === 'VariableDeclaration') {
-		// in runes mode, forbid `export let`
-		if (
-			context.state.analysis.runes &&
-			context.state.ast_type === 'instance' &&
-			node.declaration.kind === 'let'
-		) {
-			e.legacy_export_invalid(node);
-		}
-
 		for (const declarator of node.declaration.declarations) {
 			for (const id of extract_identifiers(declarator.id)) {
 				const binding = context.state.scope.get(id.name);
@@ -45,6 +36,15 @@ export function ExportNamedDeclaration(node, context) {
 					e.state_invalid_export(node);
 				}
 			}
+		}
+
+		// in runes mode, forbid `export let`
+		if (
+			context.state.analysis.runes &&
+			context.state.ast_type === 'instance' &&
+			node.declaration.kind === 'let'
+		) {
+			e.legacy_export_invalid(node);
 		}
 	}
 

@@ -105,6 +105,8 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 		}
 
 		if (value instanceof Date) {
+			// Ensure SvelteDate snapshots are tracked
+			value.getTime();
 			return /** @type {Snapshot<T>} */ (structuredClone(value));
 		}
 
