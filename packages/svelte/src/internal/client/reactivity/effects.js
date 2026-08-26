@@ -773,11 +773,12 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
  * @param {DocumentFragment} fragment
  */
 export function move_effect(effect, fragment) {
-	if (!effect.nodes) return;
+	var nodes = get_effect_nodes(effect);
+	if (nodes === null) return;
 
 	/** @type {TemplateNode | null} */
-	var node = effect.nodes.start;
-	var end = effect.nodes.end;
+	var node = nodes.start;
+	var end = nodes.end;
 
 	while (node !== null) {
 		/** @type {TemplateNode | null} */
