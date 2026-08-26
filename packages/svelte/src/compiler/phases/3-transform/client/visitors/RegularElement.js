@@ -520,20 +520,28 @@ export function RegularElement(node, context) {
 	// deferred from the attribute loop above, so that the options it selects from
 	// have been created and had their values assigned
 	if (!has_spread && name === 'select') {
-		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
-			if (get_attribute_name(node, attribute) === 'defaultValue') {
-				const { value, has_state } = build_attribute_value(attribute.value, context, (v, m) =>
-					context.state.memoizer.add(v, m)
-				);
+		const default_value = /** @type {AST.Attribute[]} */ (attributes).find(
+			(attribute) => get_attribute_name(node, attribute) === 'defaultValue'
+		);
 
-				const update = b.stmt(b.call('$.set_default_select_value', node_id, value));
+		if (default_value) {
+			const { value, has_state } = build_attribute_value(default_value.value, context, (v, m) =>
+				context.state.memoizer.add(v, m)
+			);
 
-				(has_state ? context.state.update : context.state.init).push(update);
-				if (!bindings.has('value')) {
-					context.state.init.push(b.stmt(b.call('$.init_select', node_id)));
-				}
-				break;
-			}
+			(has_state ? context.state.update : context.state.init).push(
+				b.stmt(b.call('$.set_default_select_value', node_id, value))
+			);
+		}
+
+		const value_attribute = lookup.get('value');
+		const dynamic_value =
+			value_attribute !== undefined &&
+			value_attribute.value !== true &&
+			!is_text_attribute(value_attribute);
+
+		if (default_value || dynamic_value || bindings.has('value')) {
+			context.state.init.push(b.stmt(b.call('$.init_select', node_id)));
 		}
 	}
 
@@ -771,10 +779,6 @@ function build_element_special_value_attribute(
 		);
 	} else {
 		state.init.push(build_update(value));
-	}
-
-	if (is_select_with_value) {
-		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
 }
 
