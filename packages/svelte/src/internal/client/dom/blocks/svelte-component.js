@@ -1,4 +1,4 @@
-/** @import { TemplateNode, Dom } from '#client' */
+/** @import { Effect, TemplateNode, Dom } from '#client' */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import { block } from '../../reactivity/effects.js';
 import {
@@ -10,6 +10,8 @@ import {
 	set_hydrating,
 	skip_nodes
 } from '../hydration.js';
+import { active_effect } from '../../runtime.js';
+import { assign_nodes } from '../template.js';
 import { BranchManager } from './branches.js';
 import { HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
 
@@ -58,4 +60,13 @@ export function component(node, get_component, render_fn) {
 
 		branches.ensure(component, component && ((target) => render_fn(target, component)));
 	}, EFFECT_TRANSPARENT);
+
+	// If no anchor comment was created for this block — i.e. it is the sole child of its
+	// parent and renders straight into the parent's anchor — then nothing else will claim
+	// the DOM boundary or step over the closing hydration marker, so do both here.
+	// Otherwise the enclosing `$.append` does it.
+	if (hydrating && /** @type {Effect} */ (active_effect).nodes === null) {
+		assign_nodes(/** @type {TemplateNode} */ (hydration_start_node), hydrate_node);
+		hydrate_next();
+	}
 }

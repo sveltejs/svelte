@@ -280,6 +280,8 @@ export function clean_nodes(
 		/**
 		 * In a case like `{#if x}<Foo />{/if}`, we don't need to wrap the child in
 		 * comments — we can just use the parent block's anchor for the component.
+		 * This applies to dynamic components too; `$.component` claims the DOM boundary
+		 * and steps over the closing hydration marker itself when there is no anchor.
 		 * TODO extend this optimisation to other cases
 		 */
 		is_standalone:
@@ -287,7 +289,6 @@ export function clean_nodes(
 			((first.type === 'RenderTag' && !first.metadata.dynamic) ||
 				(first.type === 'Component' &&
 					!state.options.hmr &&
-					!first.metadata.dynamic &&
 					!first.attributes.some(
 						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
 					))),

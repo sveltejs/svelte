@@ -29,6 +29,7 @@ import {
 	block,
 	branch,
 	destroy_effect,
+	get_effect_nodes,
 	move_effect,
 	pause_effect,
 	resume_effect
@@ -707,14 +708,15 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
  * @param {Text | Element | Comment} anchor
  */
 function move(effect, next, anchor) {
-	if (!effect.nodes) return;
+	var nodes = get_effect_nodes(effect);
+	if (nodes === null) return;
 
-	var node = effect.nodes.start;
-	var end = effect.nodes.end;
+	var node = nodes.start;
+	var end = nodes.end;
 
 	var dest =
 		next && (next.f & EFFECT_OFFSCREEN) === 0
-			? /** @type {EffectNodes} */ (next.nodes).start
+			? /** @type {EffectNodes} */ (get_effect_nodes(next)).start
 			: anchor;
 
 	while (node !== null) {
