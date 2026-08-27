@@ -80,9 +80,6 @@ importers:
       '@types/estree':
         specifier: ^1.0.5
         version: 1.0.8
-      '@types/trusted-types':
-        specifier: ^2.0.7
-        version: 2.0.7
       acorn:
         specifier: ^8.12.1
         version: 8.16.0
@@ -141,6 +138,9 @@ importers:
       '@types/node':
         specifier: ^20.11.5
         version: 20.19.17
+      '@types/trusted-types':
+        specifier: ^2.0.7
+        version: 2.0.7
       baseline-browser-mapping:
         specifier: ^2.10.32
         version: 2.10.32
