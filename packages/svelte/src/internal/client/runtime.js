@@ -572,6 +572,14 @@ export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
 
+	/**
+	 * Whether a read outside the init/update cycle (i.e. after an `await`) added
+	 * `signal` to the reaction's deps for the first time. During the init/update
+	 * cycle this stays `false` — first-time reads are detected by checking
+	 * `deps` instead (new deps accumulate in `new_deps` in that case)
+	 */
+	var first_read = false;
+
 	captured_signals?.add(signal);
 
 	// Register the dependency on the current reaction signal.
@@ -609,6 +617,7 @@ export function get(signal) {
 				active_reaction.deps ??= [];
 				if (!includes.call(active_reaction.deps, signal)) {
 					active_reaction.deps.push(signal);
+					first_read = true;
 				}
 
 				var reactions = signal.reactions;
@@ -716,7 +725,7 @@ export function get(signal) {
 			active_batch.values !== null &&
 			(owner = claimed_by_other(derived)) !== null
 		) {
-			if (is_unseen_read(derived, owner) && entangle(derived)) {
+			if (is_unseen_read(derived, owner, first_read) && entangle(derived)) {
 				// a read with no history can entangle the two batches instead, so
 				// that they commit together — the derived is now part of this
 				// batch's world and behaves normally (below)
@@ -795,9 +804,10 @@ export function get(signal) {
 					var override_value = override[0];
 
 					if (
-						(active_reaction.f & REACTION_IS_UPDATING) !== 0 &&
 						(signal.f & DERIVED) === 0 &&
-						(active_reaction.deps === null || !includes.call(active_reaction.deps, signal))
+						((active_reaction.f & REACTION_IS_UPDATING) !== 0
+							? active_reaction.deps === null || !includes.call(active_reaction.deps, signal)
+							: first_read)
 					) {
 						// the reaction never depended on this signal before the owner's write —
 						// the pre-write world never contained this combination of values.
@@ -849,13 +859,18 @@ export function get(signal) {
  * a reaction never have history.)
  * @param {Value} signal
  * @param {Batch} owner
+ * @param {boolean} first_read whether a post-`await` read just added `signal` to the reaction's deps
  * @returns {boolean}
  */
-function is_unseen_read(signal, owner) {
+function is_unseen_read(signal, owner, first_read) {
 	if (active_reaction === null) return true;
-	if (untracking || (active_reaction.f & REACTION_IS_UPDATING) === 0) return false;
+	if (untracking) return false;
 
-	if (active_reaction.deps !== null && includes.call(active_reaction.deps, signal)) {
+	if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
+		if (active_reaction.deps !== null && includes.call(active_reaction.deps, signal)) {
+			return false;
+		}
+	} else if (!first_read) {
 		return false;
 	}
 
@@ -866,21 +881,22 @@ function is_unseen_read(signal, owner) {
 /**
  * Attempt to entangle the active batch with the batch that owns `signal`,
  * merging their worlds so that both commit together. This is only possible
- * while the batch is traversing the effect tree — before any of its UI has
- * been committed. Returns true if the signal now belongs to the active
- * batch's own world.
+ * while none of the batch's UI has been committed — during effect tree
+ * traversal, or in an async continuation of a still-pending batch. Returns
+ * true if the signal now belongs to the active batch's own world.
  * @param {Value} signal
  * @returns {boolean}
  */
 function entangle(signal) {
-	if (collected_effects === null) {
+	var batch = /** @type {Batch} */ (active_batch).resolved();
+
+	if (collected_effects === null && batch.committed) {
 		// too late — the batch's UI is (at least partially) committed already.
 		// Readers fall back to observing the latest value, and are re-run when
 		// the owner commits (if the value they saw turns out to be stale)
 		return false;
 	}
 
-	var batch = /** @type {Batch} */ (active_batch).resolved();
 	batch.claim(signal);
 
 	// claiming may not have merged the batches (e.g. the owner is sealed, and we

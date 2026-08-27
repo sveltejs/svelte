@@ -303,6 +303,15 @@ export class Batch {
 	is_eager = false;
 
 	/**
+	 * `true` once this batch has committed (some of) its UI — from that point on
+	 * it can no longer entangle with other pending batches on new reads, because
+	 * what is on screen was rendered with this batch's own world (a batch can
+	 * stay live after committing, e.g. while a boundary shows its pending
+	 * snippet until the async work inside it settles)
+	 */
+	committed = false;
+
+	/**
 	 * If this batch was merged into another one (because their reactivity graphs
 	 * turned out to overlap), this points to the batch it was merged into. Stale
 	 * references to this batch (claims on reactions, batches captured in async
@@ -732,6 +741,7 @@ export class Batch {
 		}
 
 		this.restarts = Math.max(this.restarts, other.restarts);
+		this.committed ||= other.committed;
 
 		// `other`'s settled() promise resolves when this batch settles
 		if (other.#deferred !== null) {
@@ -921,6 +931,10 @@ export class Batch {
 		// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
 		this.#dirty_effects = null;
 		this.#maybe_dirty_effects = null;
+
+		// this batch's UI is about to hit the DOM — new reads can no longer
+		// entangle it with other pending batches
+		this.committed = true;
 
 		// append/remove branches
 		if (this.#commit_callbacks !== null) {
