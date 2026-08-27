@@ -58,13 +58,14 @@ export function set_source(value, sourcemap) {
 	source = value;
 	source_lines = source.split('\n');
 
-	const map = (sourcemap && typeof sourcemap === 'object')
-		? new TraceMap( /** @type {any} */ (sourcemap))
-		: null;
+	const map =
+		sourcemap && typeof sourcemap === 'object'
+			? new TraceMap(/** @type {any} */ (sourcemap))
+			: null;
 
 	const l = getLocator(source, { offsetLine: 1 });
 
-	locator = (i, use_sourcemap=false) => {
+	locator = (i, use_sourcemap = false) => {
 		const loc = l(i);
 		if (!loc) throw new Error('An impossible situation occurred');
 		if (use_sourcemap && map) {
