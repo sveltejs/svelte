@@ -2466,6 +2466,10 @@ declare module 'svelte/reactivity' {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
+		getOrInsert(key: K, value: V): V;
+		
+		getOrInsertComputed(key: K, callbackFn: (key: K) => V): V;
+		
 		set(key: K, value: V): this;
 		#private;
 	}
