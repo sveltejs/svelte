@@ -331,16 +331,6 @@ export class Batch {
 	fork_effects = null;
 
 	/**
-	 * Reactions that observed the pre-write world of this batch via its active
-	 * overlay while it was pending, mapped to the values they saw. When this
-	 * batch commits, readers whose observed values differ from the committed
-	 * ones re-run with the real values.
-	 * Lazily initialised for perf reasons
-	 * @type {Map<Reaction, Map<Value, any>> | null}
-	 */
-	stale_readers = null;
-
-	/**
 	 * `true` while this batch is flushing its effects and is provably terminal —
 	 * solitary, with no pending async work and nothing scheduled. Such a batch
 	 * unlinks before any other batch can observe its `previous` values, so
@@ -719,14 +709,6 @@ export class Batch {
 
 		this.#scheduled.push(...other.#scheduled);
 		other.#scheduled = [];
-
-		// TODO could a newer value have been observed by this and other is older?
-		this.stale_readers = transfer_map(
-			this.stale_readers,
-			other.stale_readers,
-			(observed, seen) => /** @type {Map<Value, any>} */ (transfer_map(observed, seen))
-		);
-		other.stale_readers = null;
 
 		if (other.waiting !== null) {
 			var waiting = (this.waiting ??= { batches: new Set(), reactions: new Map() });
@@ -1205,51 +1187,6 @@ export class Batch {
 					for (const effect of effects) set_signal_status(effect, DIRTY);
 					fork.flush();
 				});
-			}
-		}
-
-		if (this.stale_readers === null) return;
-
-		var readers = this.stale_readers;
-		this.stale_readers = null;
-
-		var batch = Batch.ensure();
-
-		for (const [reader, seen] of readers) {
-			var flags = reader.f;
-
-			if ((flags & (DESTROYED | INERT | DIRTY)) !== 0) continue;
-
-			// Only re-run readers that are actually affected by the commit: a
-			// reader observed specific values through this batch's overlay. If
-			// each of those matches the committed value (the write was reverted,
-			// or a derived recomputed to an equal value), or the reader no
-			// longer depends on it, the reader's world didn't change
-			var status = CLEAN;
-
-			for (const [signal, value] of seen) {
-				if (reader.deps === null || !includes.call(reader.deps, signal)) continue;
-
-				if ((signal.f & (DIRTY | MAYBE_DIRTY)) !== 0) {
-					// a derived that hasn't been revalidated with the committed
-					// values yet — the reader's own validation will recompute it
-					// (with equality applying) via `is_dirty`
-					status = MAYBE_DIRTY;
-				} else if (signal.v !== value) {
-					status = DIRTY;
-					break;
-				}
-			}
-
-			if (status === CLEAN) continue;
-
-			set_signal_status(reader, status);
-
-			if ((flags & DERIVED) !== 0) {
-				// invalidate anything that depends on the derived
-				mark_reactions(/** @type {Derived} */ (reader), MAYBE_DIRTY, null);
-			} else {
-				batch.schedule(/** @type {Effect} */ (reader));
 			}
 		}
 	}
@@ -1749,10 +1686,8 @@ function mark_committed_reactions(value, batch, marked, status) {
 			var owner = effect.batch && effect.batch.resolved();
 
 			var superseded = batch.fork_effects?.get(effect);
-			var stale =
-				batch.stale_readers?.has(effect) === true || owner?.stale_readers?.has(effect) === true;
 
-			if (superseded === undefined || stale) {
+			if (superseded === undefined) {
 				if ((reaction.f & DIRTY) === 0) {
 					set_signal_status(reaction, status);
 				}

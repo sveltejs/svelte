@@ -725,7 +725,7 @@ export function get(signal) {
 			active_batch.values !== null &&
 			(owner = claimed_by_other(derived)) !== null
 		) {
-			if (is_unseen_read(derived, owner, first_read) && entangle(derived)) {
+			if (is_unseen_read(derived, first_read) && entangle(derived)) {
 				// a read with no history can entangle the two batches instead, so
 				// that they commit together — the derived is now part of this
 				// batch's world and behaves normally (below)
@@ -794,13 +794,6 @@ export function get(signal) {
 				} else if (!untracking) {
 					override_owner = override_owner.resolved();
 
-					var seen = override_owner.stale_readers?.get(active_reaction);
-
-					// a reader keeps seeing the value it first observed while the owner is pending
-					if (seen !== undefined && seen.has(signal)) {
-						return seen.get(signal);
-					}
-
 					var override_value = override[0];
 
 					if (
@@ -829,14 +822,6 @@ export function get(signal) {
 						override_value = signal.v;
 					}
 
-					var readers = (override_owner.stale_readers ??= new Map());
-
-					if (seen === undefined) {
-						readers.set(active_reaction, (seen = new Map()));
-					}
-
-					seen.set(signal, override_value);
-
 					return override_value;
 				}
 			}
@@ -858,11 +843,10 @@ export function get(signal) {
  * nor observed a value for it while the owner batch was pending. (Reads outside
  * a reaction never have history.)
  * @param {Value} signal
- * @param {Batch} owner
  * @param {boolean} first_read whether a post-`await` read just added `signal` to the reaction's deps
  * @returns {boolean}
  */
-function is_unseen_read(signal, owner, first_read) {
+function is_unseen_read(signal, first_read) {
 	if (active_reaction === null) return true;
 	if (untracking) return false;
 
@@ -874,8 +858,7 @@ function is_unseen_read(signal, owner, first_read) {
 		return false;
 	}
 
-	var seen = owner.resolved().stale_readers?.get(active_reaction);
-	return seen === undefined || !seen.has(signal);
+	return true;
 }
 
 /**
