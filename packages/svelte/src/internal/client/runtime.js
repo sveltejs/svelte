@@ -50,6 +50,7 @@ import {
 	active_batch,
 	Batch,
 	claimed_by_other,
+	collected_effects,
 	current_batch,
 	flushSync,
 	previous_batch,
@@ -708,7 +709,6 @@ export function get(signal) {
 		// have their status reset (the owning batch relies on both), and their
 		// value in this world follows from the active overlay
 		/** @type {Batch | null} */
-		// eslint-disable-next-line no-useless-assignment
 		var owner = null;
 
 		if (
@@ -716,13 +716,20 @@ export function get(signal) {
 			active_batch.values !== null &&
 			(owner = claimed_by_other(derived)) !== null
 		) {
-			// the world-local value is memoized in the active overlay (and invalidated
-			// there when dependencies change). Reads are registered with the owner
-			// batch — when it commits, the reader re-runs with the real values
-			if (!active_batch.values.has(derived)) {
+			if (is_unseen_read(derived, owner) && entangle(derived)) {
+				// a read with no history can entangle the two batches instead, so
+				// that they commit together — the derived is now part of this
+				// batch's world and behaves normally (below)
+				owner = null;
+			} else if (!active_batch.values.has(derived)) {
+				// the world-local value is memoized in the active overlay (and invalidated
+				// there when dependencies change). Reads are registered with the owner
+				// batch — when it commits, the reader re-runs with the real values
 				active_batch.values.set(derived, [execute_derived(derived), owner]);
 			}
-		} else {
+		}
+
+		if (owner === null) {
 			// connect disconnected deriveds if we are reading them inside an effect,
 			// or inside another derived that is already connected
 			var should_connect =
@@ -764,8 +771,11 @@ export function get(signal) {
 					// reads outside a reaction during a flush happen in one-shot init
 					// code (e.g. a component initialising inside a newly-created
 					// branch). They have no dependency history and no re-run
-					// mechanism, so they see the latest value
+					// mechanism — entangle the batches if possible, so that both
+					// worlds commit together, and read the latest value
 					if ((signal.f & DERIVED) === 0) {
+						entangle(signal);
+
 						if ((signal.f & ERROR_VALUE) !== 0) {
 							throw signal.v;
 						}
@@ -775,15 +785,10 @@ export function get(signal) {
 				} else if (!untracking) {
 					override_owner = override_owner.resolved();
 
-					var readers = (override_owner.stale_readers ??= new Map());
-					var seen = readers.get(active_reaction);
-
-					if (seen === undefined) {
-						readers.set(active_reaction, (seen = new Map()));
-					}
+					var seen = override_owner.stale_readers?.get(active_reaction);
 
 					// a reader keeps seeing the value it first observed while the owner is pending
-					if (seen.has(signal)) {
+					if (seen !== undefined && seen.has(signal)) {
 						return seen.get(signal);
 					}
 
@@ -795,13 +800,29 @@ export function get(signal) {
 						(active_reaction.deps === null || !includes.call(active_reaction.deps, signal))
 					) {
 						// the reaction never depended on this signal before the owner's write —
-						// the pre-write world never contained this combination of values,
-						// so read the latest value instead
+						// the pre-write world never contained this combination of values.
+						// Entangle the batches if possible, so that both worlds commit
+						// together and this value is simply the batch's own write...
+						var entangled = entangle(signal);
+
 						if ((signal.f & ERROR_VALUE) !== 0) {
 							throw signal.v;
 						}
 
+						if (entangled) {
+							return signal.v;
+						}
+
+						// ...otherwise, read the latest value — the owner batch will
+						// re-run us when it commits, if the value we saw turns out
+						// to differ from the committed one
 						override_value = signal.v;
+					}
+
+					var readers = (override_owner.stale_readers ??= new Map());
+
+					if (seen === undefined) {
+						readers.set(active_reaction, (seen = new Map()));
 					}
 
 					seen.set(signal, override_value);
@@ -819,6 +840,54 @@ export function get(signal) {
 	}
 
 	return signal.v;
+}
+
+/**
+ * Whether the current read of `signal` — which is owned by another live batch —
+ * has no history: the reader neither depended on the signal in a previous run,
+ * nor observed a value for it while the owner batch was pending. (Reads outside
+ * a reaction never have history.)
+ * @param {Value} signal
+ * @param {Batch} owner
+ * @returns {boolean}
+ */
+function is_unseen_read(signal, owner) {
+	if (active_reaction === null) return true;
+	if (untracking || (active_reaction.f & REACTION_IS_UPDATING) === 0) return false;
+
+	if (active_reaction.deps !== null && includes.call(active_reaction.deps, signal)) {
+		return false;
+	}
+
+	var seen = owner.resolved().stale_readers?.get(active_reaction);
+	return seen === undefined || !seen.has(signal);
+}
+
+/**
+ * Attempt to entangle the active batch with the batch that owns `signal`,
+ * merging their worlds so that both commit together. This is only possible
+ * while the batch is traversing the effect tree — before any of its UI has
+ * been committed. Returns true if the signal now belongs to the active
+ * batch's own world.
+ * @param {Value} signal
+ * @returns {boolean}
+ */
+function entangle(signal) {
+	if (collected_effects === null) {
+		// too late — the batch's UI is (at least partially) committed already.
+		// Readers fall back to observing the latest value, and are re-run when
+		// the owner commits (if the value they saw turns out to be stale)
+		return false;
+	}
+
+	var batch = /** @type {Batch} */ (active_batch).resolved();
+	batch.claim(signal);
+
+	// claiming may not have merged the batches (e.g. the owner is sealed, and we
+	// are now waiting behind it instead) — the recomputed overlay tells us
+	// whether the signal still belongs to another world
+	var override = batch.values?.get(signal);
+	return override === undefined || override[1] === null;
 }
 
 /**

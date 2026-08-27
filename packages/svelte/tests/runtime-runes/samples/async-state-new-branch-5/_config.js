@@ -7,19 +7,29 @@ export default test({
 
 		x.click();
 		await tick();
-
-		y.click();
-		await tick();
-		// the new branch reads `x`, which the pending batch has written, as a new
-		// dependency — the two batches entangle, so the new branch is held back
-		// until the async work completes
 		assert.htmlEqual(
 			target.innerHTML,
 			`
 			<button>x</button>
 			<button>y++</button>
 			<button>resolve</button>
-			<hr>
+			<h1>WORLD</h1>
+		`
+		);
+
+		y.click();
+		await tick();
+		// the new branch reads `upper` — a derived owned by the pending batch — as
+		// a new dependency. The two batches entangle, so the new branch is held
+		// back until the async work completes (rather than rendering with the
+		// derived's pre-write value, 'WORLD')
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<button>x</button>
+			<button>y++</button>
+			<button>resolve</button>
+			<h1>WORLD</h1>
 		`
 		);
 
@@ -32,20 +42,9 @@ export default test({
 			<button>x</button>
 			<button>y++</button>
 			<button>resolve</button>
+			<h1>UNIVERSE</h1>
 			universe
-			universe
-			"universe"
-			universe
-			universe
-			universe
-			"universe"
-			<hr>
-			universe
-			"universe"
-			universe
-			universe
-			universe
-			"universe"
+			<p>UNIVERSE</p>
 		`
 		);
 	}
