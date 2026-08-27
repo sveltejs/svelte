@@ -240,6 +240,7 @@ export function RegularElement(node, context) {
 			if (
 				!is_custom_element &&
 				!cannot_be_set_statically(attribute.name) &&
+				(name !== 'value' || node.name !== 'textarea') &&
 				(attribute.value === true || is_text_attribute(attribute)) &&
 				(name !== 'class' || class_directives.length === 0) &&
 				(name !== 'style' || style_directives.length === 0)
