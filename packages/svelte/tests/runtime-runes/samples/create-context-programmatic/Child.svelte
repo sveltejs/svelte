@@ -9,5 +9,5 @@
 	<h2>it's me</h2>
 {/if}
 {#if !has_unset()}
-  <h2>or not</h2>
+	<h2>or not</h2>
 {/if}
