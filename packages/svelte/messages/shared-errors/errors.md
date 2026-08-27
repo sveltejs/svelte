@@ -64,7 +64,7 @@ Certain lifecycle methods can only be used during component initialisation. To f
 
 > Context was not set in the current component or any of its ancestors
 
-The [`createContext()`](svelte#createContext) utility returns a `[get, set]` pair of functions. `get` will throw an error if `set` was not used to set the context in the current component or any of its ancestors.
+The [`createContext()`](svelte#createContext) utility returns a `[get, set, has]` triplet of functions. `get` will throw an error if `set` was not used to set the context in the current component or any of its ancestors.
 
 ## snippet_without_render_tag
 
