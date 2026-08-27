@@ -146,8 +146,21 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
 	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
+	const names = Object.keys(attrs);
+	let has_input_value = false;
+	let has_input_checked = false;
 
-	for (name of Object.keys(attrs)) {
+	if (is_input) {
+		for (const name of names) {
+			if (attrs[name] == null) continue;
+
+			const lower = name.toLowerCase();
+			if (lower === 'value') has_input_value = true;
+			if (lower === 'checked') has_input_checked = true;
+		}
+	}
+
+	for (name of names) {
 		// omit functions, internal svelte properties and invalid attribute names
 		if (typeof attrs[name] === 'function') continue;
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
@@ -162,9 +175,12 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		if (lower.length > 2 && lower.startsWith('on')) continue;
 
 		if (is_input) {
-			if (name === 'defaultvalue' || name === 'defaultchecked') {
-				name = name === 'defaultvalue' ? 'value' : 'checked';
-				if (attrs[name]) continue;
+			if (name === 'defaultvalue') {
+				name = 'value';
+				if (has_input_value) continue;
+			} else if (name === 'defaultchecked') {
+				name = 'checked';
+				if (has_input_checked) continue;
 			}
 		}
 
