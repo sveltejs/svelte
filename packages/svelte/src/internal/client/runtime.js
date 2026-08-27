@@ -718,6 +718,7 @@ export function get(signal) {
 		// have their status reset (the owning batch relies on both), and their
 		// value in this world follows from the active overlay
 		/** @type {Batch | null} */
+		// eslint-disable-next-line no-useless-assignment
 		var owner = null;
 
 		if (
