@@ -6,13 +6,15 @@ export default test({
 		const inputs = target.children.filter(utils.filter_elements((n) => n.name === 'input'));
 		const button = target.children.find(utils.filter_elements((n) => n.name === 'button'));
 		const select = target.children.find(utils.filter_elements((n) => n.name === 'select'));
-		const selected_option = select.children.find(
-			utils.filter_elements((n) => n.name === 'option' && n.attributes['value'] === 'other')
-		);
 
 		assert.equal(inputs.length, 4);
 		assert.ok(button);
 		assert.ok(select);
+
+		const selected_option = select?.children.find(
+			utils.filter_elements((n) => n.name === 'option' && n.attributes['value'] === 'other')
+		);
+
 		assert.ok(selected_option);
 
 		// Input 1: direct defaultValue attribute
@@ -54,8 +56,8 @@ export default test({
 			'defaultChecked via spread should go through renderer.setAttribute, not element.defaultChecked'
 		);
 
-		assert.equal(select.attributes['defaultValue'], 'default_val');
-		assert.equal(selected_option.attributes['selected'], '');
+		assert.equal(select?.attributes['defaultValue'], 'default_val');
+		assert.equal(selected_option?.attributes['selected'], '');
 
 		// --- After update ---
 		dispatch_event(button, 'click');
@@ -81,7 +83,7 @@ export default test({
 			'updated defaultChecked=false via spread should go through renderer.removeAttribute'
 		);
 
-		assert.equal(select.attributes['defaultValue'], 'new_default');
-		assert.equal(selected_option.attributes['selected'], undefined);
+		assert.equal(select?.attributes['defaultValue'], 'new_default');
+		assert.equal(selected_option?.attributes['selected'], undefined);
 	}
 });
