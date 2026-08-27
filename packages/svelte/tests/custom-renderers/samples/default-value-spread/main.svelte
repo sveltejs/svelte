@@ -10,6 +10,11 @@
 <input type="checkbox" checked defaultChecked={default_chk} />
 <input type="checkbox" checked {...spread_chk} />
 
+<select defaultValue={default_val}>
+	<option value="default_val">Default</option>
+	<option value="other" selected={default_chk}>Other</option>
+</select>
+
 <button onclick={() => {
 	default_val = "new_default";
 	default_chk = false;

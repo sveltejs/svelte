@@ -30,7 +30,8 @@ export function build_attribute_effect(
 ) {
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
-	const is_select = element.type === 'RegularElement' && element.name === 'select';
+	const is_select =
+		!custom_renderer && element.type === 'RegularElement' && element.name === 'select';
 
 	const memoizer = new Memoizer();
 

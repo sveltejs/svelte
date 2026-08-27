@@ -111,9 +111,10 @@ export function set_value(element, value) {
 			(attributes.value =
 				// treat null and undefined the same for the initial value
 				value ?? undefined) ||
-		// @ts-expect-error
 		// `progress` elements always need their value set when it's `0`
-		(element.value === value && (value !== 0 || node_name(element) !== PROGRESS_TAG))
+		(current_renderer == null &&
+			/** @type {any} */ (element).value === value &&
+			(value !== 0 || node_name(element) !== PROGRESS_TAG))
 	) {
 		return;
 	}
@@ -368,8 +369,7 @@ function set_attributes(
 		}
 
 		if (key === 'class') {
-			var is_html =
-				element.namespaceURI === 'http://www.w3.org/1999/xhtml' && current_renderer != null;
+			var is_html = current_renderer == null && element.namespaceURI === NAMESPACE_HTML;
 			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 			current[key] = value;
 			current[CLASS] = next[CLASS];
@@ -619,18 +619,19 @@ function get_attributes(element) {
 	return /** @type {Record<string | symbol, unknown>} **/ (
 		/** @type {any} */ (element)[ATTRIBUTES_CACHE] ??= {
 			[IS_CUSTOM_ELEMENT]: (node_name(element) ?? '').includes('-'),
-			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
+			[IS_HTML]: current_renderer == null && element.namespaceURI === NAMESPACE_HTML
 		}
 	);
 }
 
 /** @type {Map<string, Set<string>>} */
 var setters_cache = new Map();
+var empty_setters = new Set();
 
 /** @param {Element} element */
 function get_setters(element) {
 	// if we have a custom renderer we just skip the check all together
-	if (current_renderer) return [];
+	if (current_renderer) return empty_setters;
 	var cache_key = get_attribute(element, 'is') || (node_name(element) ?? '');
 	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;

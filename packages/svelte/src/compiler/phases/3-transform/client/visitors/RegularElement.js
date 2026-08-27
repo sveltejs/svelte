@@ -234,7 +234,11 @@ export function RegularElement(node, context) {
 
 			// `<select defaultValue>` needs the options to exist before it can mark one
 			// as selected, so it is handled after the children, alongside `value`
-			if (node.name === 'select' && get_attribute_name(node, attribute) === 'defaultValue') {
+			if (
+				!custom_renderer &&
+				node.name === 'select' &&
+				get_attribute_name(node, attribute) === 'defaultValue'
+			) {
 				continue;
 			}
 
@@ -538,7 +542,7 @@ export function RegularElement(node, context) {
 
 	// deferred from the attribute loop above, so that the options it selects from
 	// have been created and had their values assigned
-	if (!has_spread && name === 'select') {
+	if (!custom_renderer && !has_spread && name === 'select') {
 		const default_value = /** @type {AST.Attribute[]} */ (attributes).find(
 			(attribute) => get_attribute_name(node, attribute) === 'defaultValue'
 		);
