@@ -7,6 +7,71 @@ import { Batch, current_batch, previous_batch } from '../../../reactivity/batch.
 import { async_mode_flag } from '../../../../flags/index.js';
 
 /**
+ * Sets the `selected` attribute on an option so form reset can restore it.
+ * @param {HTMLOptionElement} option
+ * @param {boolean} selected
+ */
+export function set_selected(option, selected) {
+	if (selected) {
+		if (!option.hasAttribute('selected')) option.setAttribute('selected', '');
+	} else {
+		option.removeAttribute('selected');
+	}
+}
+
+/**
+ * Sets the options a form reset should restore. The first call selects
+ * them if nothing has set a value, later calls leave the current selection alone.
+ * @param {HTMLSelectElement} select
+ * @param {any} value
+ */
+export function set_default_select_value(select, value) {
+	var mounting = !('__defaultValue' in select);
+	// @ts-expect-error
+	if (!mounting && select.__defaultValue === value) return;
+	// @ts-expect-error
+	select.__defaultValue = value;
+	apply_default_select_value(select, !mounting || '__value' in select);
+}
+
+/**
+ * Marks the options matching `__defaultValue` as selected. Without `preserve`
+ * a newly matching option gets selected, as an inserted `<option selected>` would.
+ * @param {HTMLSelectElement} select
+ * @param {boolean} preserve
+ */
+function apply_default_select_value(select, preserve) {
+	// @ts-expect-error
+	var value = select.__defaultValue;
+	var multiple = select.multiple;
+	var values = multiple ? value ?? [] : null;
+
+	if (multiple && !is_array(values)) return;
+
+	var index = select.selectedIndex;
+	var selected = preserve && multiple ? new Set(select.selectedOptions) : null;
+
+	for (var option of select.options) {
+		var option_value = get_option_value(option);
+		set_selected(
+			option,
+			multiple ? /** @type {any[]} */ (values).includes(option_value) : is(option_value, value)
+		);
+	}
+
+	if (!preserve) return;
+
+	if (selected !== null) {
+		for (option of select.options) {
+			var was_selected = selected.has(option);
+			if (option.selected !== was_selected) option.selected = was_selected;
+		}
+	} else if (select.selectedIndex !== index) {
+		select.selectedIndex = index;
+	}
+}
+
+/**
  * Selects the correct option(s) (depending on whether this is a multiple select)
  * @template V
  * @param {HTMLSelectElement} select
@@ -47,17 +112,25 @@ export function select_option(select, value, mounting = false) {
 }
 
 /**
- * Selects the correct option(s) if `value` is given,
- * and then sets up a mutation observer to sync the
- * current selection to the dom when it changes. Such
- * changes could for example occur when options are
- * inside an `#each` block.
+ * Sets up a mutation observer to sync the current selection
+ * and default to the dom when the options change, for example
+ * when they are inside an `#each` block. Called once per `<select>`,
+ * by the compiled output or by `attribute_effect` for spreads.
  * @param {HTMLSelectElement} select
  */
 export function init_select(select) {
-	var observer = new MutationObserver(() => {
+	var observer = new MutationObserver((entries) => {
+		// Mutations related to `<selectedcontent>` can never affect the option list.
+		// Reacting to them could revert a user-initiated selection change, because the
+		// records are delivered as soon as any listener returns (e.g. a delegated `input`
+		// handler), which can happen before the `change` handler has updated `__value`
+		if (entries.every(is_selectedcontent_mutation)) return;
+
+		if ('__defaultValue' in select) {
+			apply_default_select_value(select, false);
+		}
+
 		if ('__value' in select) {
-			// @ts-ignore
 			select_option(select, select.__value);
 		}
 		// Deliberately don't update the potential binding value,
@@ -151,8 +224,6 @@ export function bind_select_value(select, get, set = get) {
 		select.__value = value;
 		mounting = false;
 	});
-
-	init_select(select);
 }
 
 /** @param {HTMLOptionElement} option */
@@ -163,4 +234,23 @@ function get_option_value(option) {
 	} else {
 		return option.value;
 	}
+}
+
+/**
+ * Returns `true` if the mutation stems from the browser mirroring the selected
+ * option's content into `<selectedcontent>`, or from us replacing the
+ * `<selectedcontent>` element with a clone of itself
+ * @param {MutationRecord} entry
+ */
+function is_selectedcontent_mutation(entry) {
+	if (/** @type {Element} */ (entry.target).closest('selectedcontent') !== null) {
+		return true;
+	}
+
+	if (entry.type === 'childList') {
+		var nodes = [...entry.addedNodes, ...entry.removedNodes];
+		return nodes.length > 0 && nodes.every((node) => node.nodeName === 'SELECTEDCONTENT');
+	}
+
+	return false;
 }
