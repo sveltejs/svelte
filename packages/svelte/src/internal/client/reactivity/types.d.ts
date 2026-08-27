@@ -97,6 +97,8 @@ export interface Effect extends Reaction {
 	b: Boundary | null;
 	/** The renderer this effect was created with */
 	r: Renderer | null;
+	/** The parent renderer this effect was created with */
+	pr: Renderer | null;
 	/** Dev only */
 	component_function?: any;
 	/** Dev only. Only set for certain block effects. Contains a reference to the stack that represents the render tree */
