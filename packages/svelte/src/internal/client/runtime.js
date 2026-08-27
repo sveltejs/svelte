@@ -868,7 +868,7 @@ function is_unseen_read(signal, first_read) {
  * traversal, or in an async continuation of a still-pending batch. Returns
  * true if the signal now belongs to the active batch's own world.
  * @param {Value} signal
- * @returns {boolean}
+ * @returns {boolean} Returns false if the signal was not merged because it has to wait on another batch to commit first
  */
 function entangle(signal) {
 	var batch = /** @type {Batch} */ (active_batch).resolved();
@@ -880,13 +880,7 @@ function entangle(signal) {
 		return false;
 	}
 
-	batch.claim(signal);
-
-	// claiming may not have merged the batches (e.g. the owner is sealed, and we
-	// are now waiting behind it instead) — the recomputed overlay tells us
-	// whether the signal still belongs to another world
-	var override = batch.values?.get(signal);
-	return override === undefined || override[1] === null;
+	return !batch.claim(signal);
 }
 
 /**
