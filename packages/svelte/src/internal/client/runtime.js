@@ -718,7 +718,6 @@ export function get(signal) {
 		// have their status reset (the owning batch relies on both), and their
 		// value in this world follows from the active overlay
 		/** @type {Batch | null} */
-		// eslint-disable-next-line no-useless-assignment
 		var owner = null;
 
 		if (
@@ -793,8 +792,6 @@ export function get(signal) {
 						return signal.v;
 					}
 				} else if (!untracking) {
-					override_owner = override_owner.resolved();
-
 					var override_value = override[0];
 
 					if (
