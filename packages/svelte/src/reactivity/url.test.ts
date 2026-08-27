@@ -240,3 +240,25 @@ test('url.searchParams.forEach re-runs when the search string changes via the UR
 
 	cleanup();
 });
+
+test('url.port is updated when the protocol change clears the port', () => {
+	const url = new SvelteURL('http://example.com:443/');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.port);
+		});
+	});
+
+	flushSync(() => {
+		// 443 is the default port for https, so it gets stripped
+		url.protocol = 'https:';
+	});
+
+	assert.equal(url.port, '');
+	assert.equal(url.href, 'https://example.com/');
+	assert.deepEqual(log, ['443', '']);
+
+	cleanup();
+});

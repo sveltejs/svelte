@@ -1,4 +1,4 @@
-/** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
+/** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -232,6 +232,12 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
+			// `<select defaultValue>` needs the options to exist before it can mark one
+			// as selected, so it is handled after the children, alongside `value`
+			if (node.name === 'select' && get_attribute_name(node, attribute) === 'defaultValue') {
+				continue;
+			}
+
 			const name = get_attribute_name(node, attribute);
 
 			if (
@@ -451,7 +457,7 @@ export function RegularElement(node, context) {
 			state: child_state
 		});
 
-		if (needs_reset) {
+		if (needs_reset && !fold_reset_into_child(child_state.init, context.state.node)) {
 			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
 		}
 	}
@@ -527,6 +533,34 @@ export function RegularElement(node, context) {
 					break;
 				}
 			}
+		}
+	}
+
+	// deferred from the attribute loop above, so that the options it selects from
+	// have been created and had their values assigned
+	if (!has_spread && name === 'select') {
+		const default_value = /** @type {AST.Attribute[]} */ (attributes).find(
+			(attribute) => get_attribute_name(node, attribute) === 'defaultValue'
+		);
+
+		if (default_value) {
+			const { value, has_state } = build_attribute_value(default_value.value, context, (v, m) =>
+				context.state.memoizer.add(v, m)
+			);
+
+			(has_state ? context.state.update : context.state.init).push(
+				b.stmt(b.call('$.set_default_select_value', node_id, value))
+			);
+		}
+
+		const value_attribute = lookup.get('value');
+		const dynamic_value =
+			value_attribute !== undefined &&
+			value_attribute.value !== true &&
+			!is_text_attribute(value_attribute);
+
+		if (default_value || dynamic_value || bindings.has('value')) {
+			context.state.init.push(b.stmt(b.call('$.init_select', node_id)));
 		}
 	}
 
@@ -720,28 +754,32 @@ function build_element_special_value_attribute(
 	);
 
 	const evaluated = context.state.scope.evaluate(value);
-	const assignment = b.assignment('=', b.member(node_id, '__value'), value);
 
-	const set_value_assignment = b.assignment(
-		'=',
-		b.member(node_id, 'value'),
-		evaluated.is_defined ? assignment : b.logical('??', assignment, b.literal(''))
-	);
+	/** @param {Expression} value */
+	const build_update = (value) => {
+		const assignment = b.assignment('=', b.member(node_id, '__value'), value);
 
-	const update = b.stmt(
-		is_select_with_value
-			? b.sequence([
-					set_value_assignment,
-					// This ensures a one-way street to the DOM in case it's <select {value}>
-					// and not <select bind:value>. We need it in addition to $.init_select
-					// because the select value is not reflected as an attribute, so the
-					// mutation observer wouldn't notice.
-					b.call('$.select_option', node_id, value)
-				])
-			: synthetic
-				? assignment
-				: set_value_assignment
-	);
+		const set_value_assignment = b.assignment(
+			'=',
+			b.member(node_id, 'value'),
+			evaluated.is_defined ? assignment : b.logical('??', assignment, b.literal(''))
+		);
+
+		return b.stmt(
+			is_select_with_value
+				? b.sequence([
+						set_value_assignment,
+						// This ensures a one-way street to the DOM in case it's <select {value}>
+						// and not <select bind:value>. We need it in addition to $.init_select
+						// because the select value is not reflected as an attribute, so the
+						// mutation observer wouldn't notice.
+						b.call('$.select_option', node_id, value)
+					])
+				: synthetic
+					? assignment
+					: set_value_assignment
+		);
+	};
 
 	if (has_state) {
 		const id = b.id(state.scope.generate(`${node_id.name}_value`));
@@ -752,12 +790,49 @@ function build_element_special_value_attribute(
 		const init = element === 'option' ? b.object([]) : undefined;
 
 		state.init.push(b.var(id, init));
-		state.update.push(b.if(b.binary('!==', id, b.assignment('=', id, value)), b.block([update])));
+
+		// the guard already evaluated `value` into `id`, so read that back rather than
+		// evaluating the same expression (and its signal reads) a second time
+		state.update.push(
+			b.if(b.binary('!==', id, b.assignment('=', id, value)), b.block([build_update(id)]))
+		);
 	} else {
-		state.init.push(update);
+		state.init.push(build_update(value));
+	}
+}
+
+/**
+ * `<p>{text}</p>` and friends produce `var x = $.child(p, true); $.reset(p);`. That pair is
+ * by far the most common shape in compiled output, and `$.only_child` does both, so fold the
+ * two together when the `$.child(...)` is the last thing we emitted for this element.
+ * @param {Statement[]} init
+ * @param {Expression} node_id
+ * @returns {boolean} whether the reset was folded in
+ */
+function fold_reset_into_child(init, node_id) {
+	const last = init.at(-1);
+
+	if (
+		node_id?.type !== 'Identifier' ||
+		last?.type !== 'VariableDeclaration' ||
+		last.declarations.length !== 1
+	) {
+		return false;
 	}
 
-	if (is_select_with_value) {
-		state.init.push(b.stmt(b.call('$.init_select', node_id)));
+	const call = last.declarations[0].init;
+
+	if (
+		call?.type !== 'CallExpression' ||
+		call.callee.type !== 'Identifier' ||
+		call.callee.name !== '$.child' ||
+		call.arguments[0]?.type !== 'Identifier' ||
+		call.arguments[0].name !== node_id.name
+	) {
+		return false;
 	}
+
+	call.callee = b.id('$.only_child');
+
+	return true;
 }

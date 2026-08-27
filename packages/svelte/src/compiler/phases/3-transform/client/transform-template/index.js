@@ -40,6 +40,12 @@ export function transform_template(state, name, flags = 0) {
 	// custom renderers needs a tree to work because there's no template element we can use
 	const tree = state.options.fragments === 'tree' || custom_renderer;
 
+	const { nodes } = state.template;
+	const is_lone_anchor = nodes.length === 1 && nodes[0].type === 'comment';
+
+	// special case - `$.comment` creates the anchor more cheaply than cloning a template
+	if (is_lone_anchor) return b.id('$.comment');
+
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
 
 	const key =

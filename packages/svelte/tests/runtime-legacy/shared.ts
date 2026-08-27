@@ -177,11 +177,11 @@ export function runtime_suite(runes: boolean) {
 		['dom', 'hydrate', 'ssr', 'async-ssr'],
 		(variant, config, test_name) => {
 			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
-				return true;
+				return 'no-test';
 			}
 
 			if (async_mode && config.skip_async) {
-				return true;
+				return 'no-test';
 			}
 
 			if (variant === 'hydrate') {
@@ -195,9 +195,9 @@ export function runtime_suite(runes: boolean) {
 			) {
 				return 'no-test';
 			}
-
 			if (variant === 'ssr') {
 				if (
+					(test_name.startsWith('async-') && !config.mode?.includes('server')) ||
 					(config.mode && !config.mode.includes('server')) ||
 					(!config.test_ssr &&
 						config.html === undefined &&

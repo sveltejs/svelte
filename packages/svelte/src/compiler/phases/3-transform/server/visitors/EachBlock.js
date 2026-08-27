@@ -2,7 +2,13 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, block_open, block_open_else, create_child_block } from './shared/utils.js';
+import {
+	block_close,
+	block_open,
+	block_open_else,
+	create_child_block,
+	prepend_block_marker
+} from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -51,7 +57,7 @@ export function EachBlock(node, context) {
 
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
-		fallback.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
+		prepend_block_marker(fallback, /** @type {string} */ (block_open_else.value));
 
 		statements.push(
 			b.if(
