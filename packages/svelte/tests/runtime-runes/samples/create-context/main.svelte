@@ -3,8 +3,10 @@
 
 	/** @type {ReturnType<typeof createContext<string>>} */
 	const [get, set, has] = createContext();
+	/** @type {ReturnType<typeof createContext<string>>} */
+	const [, , has_unset] = createContext();
 
-	export { get, has };
+	export { get, has, has_unset };
 </script>
 
 <script>
