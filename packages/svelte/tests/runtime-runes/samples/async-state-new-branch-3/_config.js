@@ -22,6 +22,10 @@ export default test({
 
 		resolve.click();
 		await tick();
+		// the new branch's async expression read `x`, which the pending batch had
+		// written, as a new dependency — the two batches entangled, so even though
+		// the new branch's own async work has completed, it is held back until the
+		// first branch's async work completes too
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -29,19 +33,12 @@ export default test({
 			<button>y++</button>
 			<button>resolve</button>
 			<hr>
-			world
-			"world"
-			world
-			world
-			world
-			"world"
-		` // if this does not show world "world" world world world "world" - then this would also be ok
+		`
 		);
 
 		resolve.click();
 		await tick();
-		resolve.click();
-		await tick();
+		// both branches commit together, fully consistent
 		assert.htmlEqual(
 			target.innerHTML,
 			`
