@@ -103,8 +103,12 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	if (remaining === 0) {
 		// If we're in a controlled each block (i.e. the block is the only child of an
 		// element), and we are removing all items, _and_ there are no out transitions,
-		// we can use the fast path — emptying the element and replacing the anchor
-		var fast_path = transitions.length === 0 && controlled_anchor !== null;
+		// we can use the fast path — emptying the element and replacing the anchor.
+		// Skip the fast path when another batch is still pending on this each block:
+		// that batch's keys still reference EachItems in `state.items`, which
+		// `destroy_effects` needs to preserve offscreen (see #18610).
+		var fast_path =
+			transitions.length === 0 && controlled_anchor !== null && state.pending.size === 0;
 
 		if (fast_path) {
 			var anchor = /** @type {Element} */ (controlled_anchor);

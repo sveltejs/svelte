@@ -46,7 +46,7 @@ export function RegularElement(node, context) {
 		node.attributes.some(
 			(attribute) =>
 				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-					attribute.name === 'value') ||
+					(attribute.name === 'value' || attribute.name.toLowerCase() === 'defaultvalue')) ||
 				attribute.type === 'SpreadAttribute'
 		);
 	const is_option_special = name === 'option';

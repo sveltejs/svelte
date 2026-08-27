@@ -337,6 +337,7 @@ export function transition(flags, element, get_fn, get_params) {
  */
 function animate(element, options, counterpart, t2, on_begin, on_finish) {
 	var is_intro = t2 === 1;
+	var aborted = false;
 
 	if (is_function(options)) {
 		// In the case of a deferred transition (such as `crossfade`), `option` will be
@@ -344,7 +345,6 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 		// once the DOM has been updated...
 		/** @type {Animation} */
 		var a;
-		var aborted = false;
 
 		queue_micro_task(() => {
 			if (aborted) return;
@@ -381,99 +381,112 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 
 	const { delay = 0, css, tick, easing = linear } = options;
 
-	var keyframes = [];
-
-	if (is_intro && counterpart === undefined) {
-		if (tick) {
-			tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
-		}
-
-		if (css) {
-			var styles = css_to_keyframe(css(0, 1));
-			keyframes.push(styles, styles);
-		}
-	}
+	/** @type {globalThis.Animation} */
+	var animation;
 
 	var get_t = () => 1 - t2;
 
-	// create a dummy animation that lasts as long as the delay (but with whatever devtools
-	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
-	// the CSS keyframes aren't created until the DOM is updated
-	//
-	// fill forwards to prevent the element from rendering without styles applied
-	// see https://github.com/sveltejs/svelte/issues/14732
-	var animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
+	// wait a microtask before applying the initial styles and creating the dummy animation,
+	// so that transitions created in the same batch (e.g. on nested elements) all measure
+	// the DOM first (#18421). this still happens before the next paint, so the element
+	// won't be rendered without styles applied (#14732)
+	queue_micro_task(() => {
+		if (aborted) return;
 
-	animation.onfinish = () => {
-		// remove dummy animation from the stack to prevent conflict with main animation
-		animation.cancel();
-
-		on_begin();
-
-		// for bidirectional transitions, we start from the current position,
-		// rather than doing a full intro/outro
-		var t1 = counterpart?.t() ?? 1 - t2;
-		counterpart?.abort();
-
-		var delta = t2 - t1;
-		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
 		var keyframes = [];
 
-		if (duration > 0) {
-			/**
-			 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
-			 * add it as an inline style to work around a Safari <18 bug
-			 * TODO 6.0 remove this, if possible
-			 */
-			var needs_overflow_hidden = false;
+		if (is_intro && counterpart === undefined) {
+			if (tick) {
+				tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+			}
 
 			if (css) {
-				var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
-
-				for (var i = 0; i <= n; i += 1) {
-					var t = t1 + delta * easing(i / n);
-					var styles = css_to_keyframe(css(t, 1 - t));
-					keyframes.push(styles);
-
-					needs_overflow_hidden ||= styles.overflow === 'hidden';
-				}
-			}
-
-			if (needs_overflow_hidden) {
-				/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
-			}
-
-			get_t = () => {
-				var time = /** @type {number} */ (
-					/** @type {globalThis.Animation} */ (animation).currentTime
-				);
-
-				return t1 + delta * easing(time / duration);
-			};
-
-			if (tick) {
-				loop(() => {
-					if (animation.playState !== 'running') return false;
-
-					var t = get_t();
-					tick(t, 1 - t);
-
-					return true;
-				});
+				var styles = css_to_keyframe(css(0, 1));
+				keyframes.push(styles, styles);
 			}
 		}
 
-		animation = element.animate(keyframes, { duration, fill: 'forwards' });
+		// create a dummy animation that lasts as long as the delay (but with whatever devtools
+		// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
+		// the CSS keyframes aren't created until the DOM is updated
+		//
+		// fill forwards to prevent the element from rendering without styles applied
+		// see https://github.com/sveltejs/svelte/issues/14732
+		animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
 
 		animation.onfinish = () => {
-			get_t = () => t2;
-			tick?.(t2, 1 - t2);
-			on_finish();
+			// remove dummy animation from the stack to prevent conflict with main animation
+			animation.cancel();
+
+			on_begin();
+
+			// for bidirectional transitions, we start from the current position,
+			// rather than doing a full intro/outro
+			var t1 = counterpart?.t() ?? 1 - t2;
+			counterpart?.abort();
+
+			var delta = t2 - t1;
+			var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
+			var keyframes = [];
+
+			if (duration > 0) {
+				/**
+				 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
+				 * add it as an inline style to work around a Safari <18 bug
+				 * TODO 6.0 remove this, if possible
+				 */
+				var needs_overflow_hidden = false;
+
+				if (css) {
+					var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
+
+					for (var i = 0; i <= n; i += 1) {
+						var t = t1 + delta * easing(i / n);
+						var styles = css_to_keyframe(css(t, 1 - t));
+						keyframes.push(styles);
+
+						needs_overflow_hidden ||= styles.overflow === 'hidden';
+					}
+				}
+
+				if (needs_overflow_hidden) {
+					/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
+				}
+
+				get_t = () => {
+					var time = /** @type {number} */ (
+						/** @type {globalThis.Animation} */ (animation).currentTime
+					);
+
+					return t1 + delta * easing(time / duration);
+				};
+
+				if (tick) {
+					loop(() => {
+						if (animation.playState !== 'running') return false;
+
+						var t = get_t();
+						tick(t, 1 - t);
+
+						return true;
+					});
+				}
+			}
+
+			animation = element.animate(keyframes, { duration, fill: 'forwards' });
+
+			animation.onfinish = () => {
+				get_t = () => t2;
+				tick?.(t2, 1 - t2);
+				on_finish();
+			};
 		};
-	};
+	});
 
 	return {
 		abort: () => {
+			aborted = true;
+
 			if (animation) {
 				animation.cancel();
 				// This prevents memory leaks in Chromium
