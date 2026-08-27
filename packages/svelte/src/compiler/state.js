@@ -1,6 +1,7 @@
 /** @import { Location } from 'locate-character' */
 /** @import { CompileOptions } from './types' */
 /** @import { AST, Warning } from '#compiler' */
+import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { getLocator } from 'locate-character';
 import { sanitize_location } from '../utils.js';
 
@@ -46,20 +47,33 @@ export let dev;
 
 export let runes = false;
 
-/** @type {(index: number) => Location} */
+/** @type {(index: number, use_sourcemap?: boolean) => Location} */
 export let locator;
 
-/** @param {string} value */
-export function set_source(value) {
+/**
+ * @param {string} value
+ * @param {object | string} [sourcemap]
+ */
+export function set_source(value, sourcemap) {
 	source = value;
 	source_lines = source.split('\n');
 
+	const map = (sourcemap && typeof sourcemap === 'object')
+		? new TraceMap( /** @type {any} */ (sourcemap))
+		: null;
+
 	const l = getLocator(source, { offsetLine: 1 });
 
-	locator = (i) => {
+	locator = (i, use_sourcemap=false) => {
 		const loc = l(i);
 		if (!loc) throw new Error('An impossible situation occurred');
-
+		if (use_sourcemap && map) {
+			const original = originalPositionFor(map, loc);
+			if (original.line != null && original.column != null) {
+				loc.line = original.line;
+				loc.column = original.column;
+			}
+		}
 		return loc;
 	};
 }
