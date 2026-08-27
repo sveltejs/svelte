@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: add has function to createContext
+feat: add `has` function to `createContext`

@@ -51,7 +51,6 @@ interface User {
 	name: string;
 }
 
-// hasUserContext isn't needed here so it's not defined
 export const [getUserContext, setUserContext] = createContext<User>();
 ```
 <!-- codeblock:end -->
