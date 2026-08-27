@@ -10,26 +10,23 @@ export default test({
 
 		y.click();
 		await tick();
+		// the new branch's reactive reads of `x` are new dependencies on a value the
+		// pending batch has written, so they see the latest value ('universe')
 		assert.htmlEqual(
 			target.innerHTML,
 			`
 			<button>x</button>
 			<button>y++</button>
 			<button>resolve</button>
-			world
-		` // if this does not show world - that would also be ok
+			universe
+		`
 		);
 
 		resolve.click();
 		await tick();
-		assert.deepEqual(logs, [
-			'universe',
-			'world',
-			'$effect: world',
-			'$effect: universe',
-			'$effect: universe'
-		]);
-		// assert.deepEqual(logs, ['universe', 'universe', '$effect: universe', '$effect: universe']); // this would also be ok
+		// the init-time console.log runs outside a reaction and sees the latest value;
+		// the second child's $effect already saw the committed value, so it does not re-run
+		assert.deepEqual(logs, ['universe', 'universe', '$effect: universe', '$effect: universe']);
 		assert.htmlEqual(
 			target.innerHTML,
 			`

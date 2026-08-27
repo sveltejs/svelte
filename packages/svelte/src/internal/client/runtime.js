@@ -759,17 +759,55 @@ export function get(signal) {
 			// we saw turns out to differ from the committed one)
 			var override_owner = override[1];
 
-			if (override_owner !== null && active_reaction !== null && !untracking) {
-				override_owner = override_owner.resolved();
+			if (override_owner !== null) {
+				if (active_reaction === null) {
+					// reads outside a reaction during a flush happen in one-shot init
+					// code (e.g. a component initialising inside a newly-created
+					// branch). They have no dependency history and no re-run
+					// mechanism, so they see the latest value
+					if ((signal.f & DERIVED) === 0) {
+						if ((signal.f & ERROR_VALUE) !== 0) {
+							throw signal.v;
+						}
 
-				var readers = (override_owner.stale_readers ??= new Map());
-				var seen = readers.get(active_reaction);
+						return signal.v;
+					}
+				} else if (!untracking) {
+					override_owner = override_owner.resolved();
 
-				if (seen === undefined) {
-					readers.set(active_reaction, (seen = new Map()));
+					var readers = (override_owner.stale_readers ??= new Map());
+					var seen = readers.get(active_reaction);
+
+					if (seen === undefined) {
+						readers.set(active_reaction, (seen = new Map()));
+					}
+
+					// a reader keeps seeing the value it first observed while the owner is pending
+					if (seen.has(signal)) {
+						return seen.get(signal);
+					}
+
+					var override_value = override[0];
+
+					if (
+						(active_reaction.f & REACTION_IS_UPDATING) !== 0 &&
+						(signal.f & DERIVED) === 0 &&
+						(active_reaction.deps === null || !includes.call(active_reaction.deps, signal))
+					) {
+						// the reaction never depended on this signal before the owner's write —
+						// the pre-write world never contained this combination of values,
+						// so read the latest value instead
+						if ((signal.f & ERROR_VALUE) !== 0) {
+							throw signal.v;
+						}
+
+						override_value = signal.v;
+					}
+
+					seen.set(signal, override_value);
+
+					return override_value;
 				}
-
-				seen.set(signal, override[0]);
 			}
 
 			return override[0];

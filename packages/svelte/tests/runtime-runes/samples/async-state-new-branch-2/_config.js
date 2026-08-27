@@ -10,6 +10,8 @@ export default test({
 
 		y.click();
 		await tick();
+		// the new branch's reads of `x` are new dependencies on a value the
+		// pending batch has written, so they see the latest value ('universe')
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -17,13 +19,13 @@ export default test({
 			<button>y++</button>
 			<button>resolve</button>
 			<hr>
-			world
-			"world"
-			world
-			world
-			world
-			"world"
-		` // if this does not show world "world" world world world "world" - then this would also be ok
+			universe
+			"universe"
+			universe
+			universe
+			universe
+			"universe"
+		`
 		);
 
 		resolve.click();
