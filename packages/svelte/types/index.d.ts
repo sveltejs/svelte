@@ -529,14 +529,14 @@ declare module 'svelte' {
 	 */
 	export function fork(fn: () => void): Fork;
 	/**
-	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+	 * Returns a `[get, set, has]` triplet of functions for working with context in a type-safe way.
 	 *
 	 * `get` will throw an error if `set` has not yet been called in the current component or any of
 	 * its ancestors.
 	 *
 	 * @since 5.40.0
 	 */
-	export function createContext<T>(): [() => T, (context: T) => T];
+	export function createContext<T>(): [() => T, (context: T) => T, () => boolean];
 	/**
 	 * Retrieves the context set with the specified `key` in the current component or any of its
 	 * ancestors. If multiple components set the same key, the value from the closest one is returned.
@@ -2516,6 +2516,10 @@ declare module 'svelte/reactivity' {
 	export class SvelteMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
+		
+		getOrInsert(key: K, value: V): V;
+		
+		getOrInsertComputed(key: K, callbackFn: (key: K) => V): V;
 		
 		set(key: K, value: V): this;
 		#private;
