@@ -31,9 +31,8 @@ export default function Async_const($$anchor) {
 			]);
 
 			var p = root();
-			var text = $.child(p, true);
+			var text = $.only_child(p, true);
 
-			$.reset(p);
 			$.template_effect(() => $.set_text(text, $.get(b)), void 0, void 0, [promises[1]]);
 			$.append($$anchor, p);
 		};

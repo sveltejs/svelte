@@ -306,12 +306,14 @@ function get_attribute_name(element, attribute) {
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
 export function build_spread_object(element, attributes, context, transform) {
+	const is_select = element.type === 'RegularElement' && element.name === 'select';
 	const object = b.object(
 		attributes.map((attribute) => {
 			if (attribute.type === 'transformed') {
 				return b.prop('init', b.key(attribute.name), attribute.expression);
 			} else if (attribute.type === 'Attribute') {
-				const name = get_attribute_name(element, attribute);
+				let name = get_attribute_name(element, attribute);
+				if (is_select && name === 'defaultvalue') name = 'defaultValue';
 				const value = build_attribute_value(
 					attribute.value,
 					context,
@@ -322,10 +324,9 @@ export function build_spread_object(element, attributes, context, transform) {
 				return b.prop('init', b.key(name), value);
 			} else if (attribute.type === 'BindDirective') {
 				const name = get_attribute_name(element, attribute);
+				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 				const value =
-					attribute.expression.type === 'SequenceExpression'
-						? b.call(attribute.expression.expressions[0])
-						: /** @type {Expression} */ (context.visit(attribute.expression));
+					expression.type === 'SequenceExpression' ? b.call(expression.expressions[0]) : expression;
 
 				return b.prop('init', b.key(name), value);
 			}

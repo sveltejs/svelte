@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
+import { hydrate_node, hydrating, reset, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor, is_extensible } from '../../shared/utils.js';
@@ -163,6 +163,26 @@ export function first_child(node, is_text = false) {
 	}
 
 	return hydrate_node;
+}
+
+/**
+ * `child`, for the very common case of an element with exactly one child. Resetting the
+ * hydration cursor is part of the same step, so the compiler doesn't have to emit a
+ * separate `reset` call for every `<p>{text}</p>` in an app.
+ * Don't mark this as side-effect-free, hydration needs to walk all nodes
+ * @param {TemplateNode} node
+ * @param {boolean} [is_text]
+ * @returns {TemplateNode | null}
+ */
+export function only_child(node, is_text = false) {
+	if (!hydrating) {
+		return get_first_child(node);
+	}
+
+	var first = child(node, is_text);
+	reset(node);
+
+	return first;
 }
 
 /**

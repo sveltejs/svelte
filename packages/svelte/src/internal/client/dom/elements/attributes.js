@@ -26,7 +26,12 @@ import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
 import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
-import { init_select, select_option } from './bindings/select.js';
+import {
+	init_select,
+	select_option,
+	set_default_select_value,
+	set_selected
+} from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
 
 export const CLASS = Symbol('class');
@@ -120,25 +125,6 @@ export function set_checked(element, checked) {
 
 	// @ts-expect-error
 	element.checked = checked;
-}
-
-/**
- * Sets the `selected` attribute on an `option` element.
- * Not set through the property because that doesn't reflect to the DOM,
- * which means it wouldn't be taken into account when a form is reset.
- * @param {HTMLOptionElement} element
- * @param {boolean} selected
- */
-export function set_selected(element, selected) {
-	if (selected) {
-		// The selected option could've changed via user selection, and
-		// setting the value without this check would set it back.
-		if (!element.hasAttribute('selected')) {
-			element.setAttribute('selected', '');
-		}
-	} else {
-		element.removeAttribute('selected');
-	}
 }
 
 /**
@@ -291,11 +277,8 @@ function set_attributes(
 	skip_warning = false
 ) {
 	if (hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
-		var input = /** @type {HTMLInputElement} */ (element);
-		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
-
-		if (!(attribute in next)) {
-			remove_input_defaults(input);
+		if (!('defaultValue' in next || 'defaultChecked' in next)) {
+			remove_input_defaults(/** @type {HTMLInputElement} */ (element));
 		}
 	}
 
@@ -313,6 +296,7 @@ function set_attributes(
 
 	var current = prev || {};
 	var is_option_element = element.nodeName === OPTION_TAG;
+	var is_select_element = element.nodeName === SELECT_TAG;
 
 	for (var key in prev) {
 		// don't null our internal $$onX listeners
@@ -449,6 +433,9 @@ function set_attributes(
 
 			var is_default = name === 'defaultValue' || name === 'defaultChecked';
 
+			// A select's default value is represented by selected options, not a property.
+			if (is_select_element && name === 'defaultValue') continue;
+
 			if (value == null && !is_custom_element && !is_default) {
 				attributes[key] = null;
 
@@ -534,8 +521,16 @@ export function attribute_effect(
 				skip_warning
 			);
 
-			if (inited && is_select && 'value' in next) {
-				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
+			if (inited && is_select) {
+				var select = /** @type {HTMLSelectElement} */ (element);
+
+				if ('defaultValue' in next) {
+					set_default_select_value(select, next.defaultValue);
+				}
+
+				if ('value' in next) {
+					select_option(select, next.value);
+				}
 			}
 
 			for (let symbol of Object.getOwnPropertySymbols(effects)) {
@@ -560,7 +555,13 @@ export function attribute_effect(
 			var select = /** @type {HTMLSelectElement} */ (element);
 
 			effect(() => {
-				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, true);
+				var attrs = /** @type {Record<string | symbol, any>} */ (prev);
+
+				if ('defaultValue' in attrs) {
+					set_default_select_value(select, attrs.defaultValue);
+				}
+
+				select_option(select, attrs.value, true);
 				init_select(select);
 			});
 		}

@@ -100,6 +100,85 @@ test('map.get(...)', () => {
 	cleanup();
 });
 
+test('map.getOrInsert(...)', () => {
+	const map = new SvelteMap([
+		[2, 2],
+		[3, 3]
+	]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push('get 1', map.getOrInsert(1, 1));
+		});
+
+		render_effect(() => {
+			log.push('get 2', map.getOrInsert(2, 2));
+		});
+
+		render_effect(() => {
+			log.push('get 3', map.getOrInsert(3, 4));
+		});
+	});
+
+	flushSync(() => {
+		map.delete(2);
+	});
+
+	flushSync(() => {
+		map.set(2, 2);
+	});
+
+	assert.deepEqual(log, ['get 1', 1, 'get 2', 2, 'get 3', 3, 'get 2', 2]);
+
+	cleanup();
+});
+
+test('map.getOrInsertComputed(...)', () => {
+	const map = new SvelteMap([
+		[2, 2],
+		[3, 3]
+	]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(
+				'get 1',
+				map.getOrInsertComputed(1, (k) => k)
+			);
+		});
+
+		render_effect(() => {
+			log.push(
+				'get 2',
+				map.getOrInsertComputed(2, (k) => k)
+			);
+		});
+
+		render_effect(() => {
+			log.push(
+				'get 3',
+				map.getOrInsertComputed(3, () => 4)
+			);
+		});
+	});
+
+	flushSync(() => {
+		map.delete(2);
+	});
+
+	flushSync(() => {
+		map.set(2, 2);
+	});
+
+	assert.deepEqual(log, ['get 1', 1, 'get 2', 2, 'get 3', 3, 'get 2', 2]);
+
+	cleanup();
+});
+
 test('map.has(...)', () => {
 	const map = new SvelteMap([
 		[1, 1],
