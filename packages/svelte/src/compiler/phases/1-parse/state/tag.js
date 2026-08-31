@@ -493,7 +493,23 @@ function open(parser) {
 
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(parser, prelude + `${params} => {}`, params_start)
+					(() => {
+						try {
+							return parse_expression_at(parser, prelude + `${params} => {}`, params_start);
+						} catch (err) {
+							if (
+								!parser.ts &&
+								/\b\w+\s*:\s*\w/.test(params) &&
+								/** @type {any} */ (err).code === 'js_parse_error'
+							) {
+								e.js_parse_error(
+									/** @type {any} */ (err).pos,
+									`Unexpected token in snippet parameters. Did you forget to add lang="ts" to the <script> tag?`
+								);
+							}
+							throw err;
+						}
+					})()
 				)
 			: { params: [] };
 
