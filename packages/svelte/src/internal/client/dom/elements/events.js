@@ -98,8 +98,11 @@ export function create_event(event_name, dom, handler, options = {}) {
 		!is_custom_renderer &&
 		(event_name.startsWith('pointer') || event_name.startsWith('touch') || event_name === 'wheel')
 	) {
+		target_handler.__removed = false;
 		queue_micro_task(() => {
-			add_event_listener(dom, event_name, target_handler, options);
+			if (!target_handler.__removed) {
+				add_event_listener(dom, event_name, target_handler, options);
+			}
 		});
 	} else {
 		add_event_listener(dom, event_name, target_handler, options);
@@ -122,6 +125,7 @@ export function on(element, type, handler, options = {}) {
 	var target_handler = create_event(type, element, handler, options);
 
 	return () => {
+		target_handler.__removed = true;
 		remove_event_listener(element, type, target_handler, options);
 	};
 }
@@ -150,6 +154,7 @@ export function event(event_name, dom, handler, capture, passive) {
 			dom instanceof HTMLMediaElement)
 	) {
 		teardown(() => {
+			target_handler.__removed = true;
 			remove_event_listener(dom, event_name, target_handler, options);
 		});
 	}
