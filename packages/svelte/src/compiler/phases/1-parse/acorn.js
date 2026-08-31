@@ -142,17 +142,24 @@ let last_template = '';
 let lf_only = true;
 
 /**
- * Without `startLocation`, acorn counts the lines before `index` on every call.
- * It also breaks lines on bare `\r`, `\u2028` and `\u2029`, which the locator doesn't, so those templates are left to acorn
+ * Without `startLocation`, acorn counts the lines before `index` on every call
  * @param {Parser} parser
  * @param {number} index
  */
 function start_location(parser, index) {
+	return has_lf_line_breaks_only(parser) ? locator(index) : undefined;
+}
+
+/**
+ * acorn breaks lines on bare `\r`, `\u2028` and `\u2029`, which the locator doesn't
+ * @param {Parser} parser
+ */
+export function has_lf_line_breaks_only(parser) {
 	if (parser.template !== last_template) {
 		last_template = parser.template;
 		lf_only = !regex_non_lf_line_break.test(last_template);
 	}
-	return lf_only ? locator(index) : undefined;
+	return lf_only;
 }
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
