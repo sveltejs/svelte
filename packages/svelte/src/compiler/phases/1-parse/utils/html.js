@@ -38,6 +38,8 @@ const entity_pattern_attr_value = get_entity_pattern(true);
  * @param {boolean} is_attribute_value
  */
 export function decode_character_references(html, is_attribute_value) {
+	if (html.indexOf('&') === -1) return html; // fast path
+
 	const entity_pattern = is_attribute_value ? entity_pattern_attr_value : entity_pattern_content;
 	return html.replace(
 		entity_pattern,

@@ -10,25 +10,7 @@ import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
 import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 import * as state from '../../state.js';
-
-/** @param {number} cc */
-function is_whitespace(cc) {
-	// fast path for common whitespace
-	if (cc === 32 || (cc <= 13 && cc >= 9)) return true;
-	// rare whitespace — \u00a0, \u1680, \u2000-\u200a, \u2028, \u2029, \u202f, \u205f, \u3000, \ufeff
-	if (cc < 160) return false;
-	return (
-		cc === 160 ||
-		cc === 5760 ||
-		(cc >= 8192 && cc <= 8202) ||
-		cc === 8232 ||
-		cc === 8233 ||
-		cc === 8239 ||
-		cc === 8287 ||
-		cc === 12288 ||
-		cc === 65279
-	);
-}
+import { is_whitespace } from './utils/whitespace.js';
 
 const regex_lang_attribute =
 	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
@@ -278,8 +260,27 @@ export class Parser {
 		};
 	}
 
+	/** @param {string} delimiter */
+	read_until(delimiter) {
+		if (this.index >= this.template.length) {
+			if (this.loose) return '';
+			e.unexpected_eof(this.template.length);
+		}
+
+		const start = this.index;
+		const index = this.template.indexOf(delimiter, start);
+
+		if (index !== -1) {
+			this.index = index;
+			return this.template.slice(start, this.index);
+		}
+
+		this.index = this.template.length;
+		return this.template.slice(start);
+	}
+
 	/** @param {RegExp} pattern */
-	read_until(pattern) {
+	read_until_regex(pattern) {
 		if (this.index >= this.template.length) {
 			if (this.loose) return '';
 			e.unexpected_eof(this.template.length);
@@ -302,6 +303,7 @@ export class Parser {
 			e.expected_whitespace(this.index);
 		}
 
+		this.index++;
 		this.allow_whitespace();
 	}
 
