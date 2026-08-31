@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-perf: speed up parser a little bit
+perf: avoid regex matching in parser where possible
