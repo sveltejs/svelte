@@ -171,12 +171,6 @@ This can happen if you render a hydratable on the client that was not rendered o
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
-## set_context_after_init
-
-> `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
-
-This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
-
 ## state_descriptors_fixed
 
 > Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
