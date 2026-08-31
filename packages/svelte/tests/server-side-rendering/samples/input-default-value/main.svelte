@@ -6,4 +6,5 @@
 <input type="checkbox" defaultChecked />
 <input {...props} />
 <input {...props} value="" checked={false} />
+<input value="" checked={false} {...props} />
 <input {...props} {...{ VALUE: '', CHECKED: false }} />

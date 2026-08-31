@@ -86,6 +86,7 @@ export function build_element_attributes(node, context, transform) {
 				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
 			) {
 				attributes.push(attribute);
+				// deopt to spread at runtime, where we can handle interaction of value/defaultValue etc
 				has_spread = true;
 				// the defaultValue/defaultChecked properties don't exist as attributes
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
