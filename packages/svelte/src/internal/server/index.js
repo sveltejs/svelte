@@ -168,7 +168,8 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 				// value/checked takes precedence over defaultValue/defaultChecked
 				name = name === 'defaultvalue' ? 'value' : 'checked';
 				if (name in attrs) continue;
-				for (let j = i + 1; j < names.length; j++) {
+				// We're checking prior entries aswell because "name in attrs" is not enough as the attributes may have different casing
+				for (let j = 0; j < names.length; j++) {
 					if (names[j].toLowerCase() === name) continue outer;
 				}
 			}
