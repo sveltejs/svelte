@@ -67,7 +67,7 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 
 /**
  * Most template expressions are an identifier or a `a.b.c` member chain followed by `}`.
- * Those are built directly, with the same shape acorn would produce; anything else goes to acorn
+ * Those are built directly for better parse performance, with the same shape acorn would produce; anything else goes to acorn
  * @param {Parser} parser
  * @returns {Expression | null}
  */
