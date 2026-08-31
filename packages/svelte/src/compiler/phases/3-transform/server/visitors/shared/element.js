@@ -80,6 +80,14 @@ export function build_element_attributes(node, context, transform) {
 				) {
 					events_to_capture.add(attribute.name);
 				}
+			} else if (
+				node.type === 'RegularElement' &&
+				node.name === 'input' &&
+				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
+			) {
+				attributes.push(attribute);
+				// deopt to spread at runtime, where we can handle interaction of value/defaultValue etc
+				has_spread = true;
 				// the defaultValue/defaultChecked properties don't exist as attributes
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
