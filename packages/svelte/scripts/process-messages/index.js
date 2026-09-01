@@ -38,9 +38,9 @@ function run() {
 				messages[category][message.code] = message;
 			}
 
-			const sorted = Array.from(
-				markdown.matchAll(/## ([\w]+)\n\n([^]+?)(?=$|\n\n## )/g),
-			).map((m) => m[0]).sort();
+			const sorted = Array.from(markdown.matchAll(/## ([\w]+)\n\n([^]+?)(?=$|\n\n## )/g))
+				.map((m) => m[0])
+				.sort();
 
 			fs.writeFileSync(
 				`messages/${category}/${file}`,
