@@ -40,16 +40,11 @@ function run() {
 
 			const sorted = Array.from(
 				markdown.matchAll(/## ([\w]+)\n\n([^]+?)(?=$|\n\n## )/g),
-				([_, code]) => ({
-					code,
-					_
-				})
-			);
-			sorted.sort((a, b) => (a.code < b.code ? -1 : 1));
+			).map((m) => m[0]).sort();
 
 			fs.writeFileSync(
 				`messages/${category}/${file}`,
-				sorted.map((x) => x._.trim()).join('\n\n') + '\n'
+				sorted.map((x) => x.trim()).join('\n\n') + '\n'
 			);
 		}
 
