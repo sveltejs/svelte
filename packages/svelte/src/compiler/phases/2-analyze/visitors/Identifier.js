@@ -55,18 +55,18 @@ export function Identifier(node, context) {
 
 				if (!is_rune(name)) {
 					if (name === '$effect.active') {
-						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
+						e.rune_renamed(parent, { name: '$effect.active', replacement: '$effect.tracking' });
 					}
 
 					if (name === '$state.frozen') {
-						e.rune_renamed(parent, '$state.frozen', '$state.raw');
+						e.rune_renamed(parent, { name: '$state.frozen', replacement: '$state.raw' });
 					}
 
 					if (name === '$state.is') {
-						e.rune_removed(parent, '$state.is');
+						e.rune_removed(parent, { name: '$state.is' });
 					}
 
-					e.rune_invalid_name(parent, name);
+					e.rune_invalid_name(parent, { name });
 				}
 			}
 
@@ -148,7 +148,7 @@ export function Identifier(node, context) {
 				}
 			}
 
-			w.state_referenced_locally(node, node.name, type);
+			w.state_referenced_locally(node, { name: node.name, type });
 		}
 
 		if (
@@ -183,7 +183,7 @@ export function Identifier(node, context) {
 							? grand_parent.metadata.scopes.default === binding.scope
 							: context.state.scopes.get(parent) === binding.scope
 					) {
-						e.const_tag_invalid_reference(node, node.name);
+						e.const_tag_invalid_reference(node, { name: node.name });
 					} else {
 						break;
 					}

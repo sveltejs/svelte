@@ -23,7 +23,7 @@ export function log_if_contains_state(method, ...objects) {
 			}
 
 			if (has_state) {
-				w.console_log_state(method);
+				w.console_log_state({ method });
 
 				// eslint-disable-next-line no-console
 				console.log('%c[snapshot]', 'color: grey', ...transformed);

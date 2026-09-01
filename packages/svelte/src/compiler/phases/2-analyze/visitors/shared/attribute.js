@@ -97,7 +97,7 @@ export function validate_slot_attribute(context, attribute, is_component = false
 				const name = attribute.value[0].data;
 
 				if (context.state.component_slots.has(name)) {
-					e.slot_attribute_duplicate(attribute, name, owner.name);
+					e.slot_attribute_duplicate(attribute, { name, component: owner.name });
 				}
 
 				context.state.component_slots.add(name);

@@ -132,6 +132,9 @@ importers:
       '@rollup/plugin-virtual':
         specifier: ^3.0.2
         version: 3.0.2(rollup@4.62.2)
+      '@sveltejs/message-box':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@types/aria-query':
         specifier: ^5.0.4
         version: 5.0.4
@@ -936,6 +939,9 @@ packages:
       eslint-plugin-svelte: '>= 3'
       typescript: '>= 5'
       typescript-eslint: '>= 8'
+
+  '@sveltejs/message-box@1.1.0':
+    resolution: {integrity: sha512-zJ9WUolgv6W4IpAHBSu4da5Uha4Je4ZGrKjVyIY4jWSqkJNbofoCgZxRoLuKExcyXODphzommhsHH/42zxd6zg==}
 
   '@sveltejs/vite-plugin-svelte-inspector@5.0.1':
     resolution: {integrity: sha512-ubWshlMk4bc8mkwWbg6vNvCeT7lGQojE3ijDh3QTR6Zr/R+GXxsGbyH4PExEPpiFmqPhYiVSVmHBjUcVc1JIrA==}
@@ -3071,6 +3077,8 @@ snapshots:
       globals: 17.3.0
       typescript: 5.5.4
       typescript-eslint: 8.56.0(eslint@10.0.0)(typescript@5.5.4)
+
+  '@sveltejs/message-box@1.1.0': {}
 
   '@sveltejs/vite-plugin-svelte-inspector@5.0.1(@sveltejs/vite-plugin-svelte@6.2.0(svelte@packages+svelte)(vite@7.3.5(@types/node@24.5.2)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0)))(svelte@packages+svelte)(vite@7.3.5(@types/node@24.5.2)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0))':
     dependencies:

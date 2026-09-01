@@ -54,14 +54,14 @@ import { set_signal_status } from './status.js';
 export function validate_effect(rune) {
 	if (active_effect === null) {
 		if (active_reaction === null) {
-			e.effect_orphan(rune);
+			e.effect_orphan({ rune });
 		}
 
 		e.effect_in_unowned_derived();
 	}
 
 	if (is_destroying_effect) {
-		e.effect_in_teardown(rune);
+		e.effect_in_teardown({ rune });
 	}
 }
 

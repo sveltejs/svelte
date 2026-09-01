@@ -5,7 +5,10 @@ import { FILENAME } from '../../../constants.js';
 /** @param {Function & { [FILENAME]: string }} target */
 export function check_target(target) {
 	if (target) {
-		e.component_api_invalid_new(target[FILENAME] ?? 'a component', target.name);
+		e.component_api_invalid_new({
+			component: target[FILENAME] ?? 'a component',
+			name: target.name
+		});
 	}
 }
 
@@ -14,7 +17,7 @@ export function legacy_api() {
 
 	/** @param {string} method */
 	function error(method) {
-		e.component_api_changed(method, component[FILENAME]);
+		e.component_api_changed({ method, component: component[FILENAME] });
 	}
 
 	return {

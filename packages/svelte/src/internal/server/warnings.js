@@ -7,23 +7,22 @@ var normal = 'font-weight: normal';
 
 /**
  * A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
- * 
- * The `hydratable` was initialized in:
- * %stack%
- * @param {string} key
- * @param {string} stack
+
+The `hydratable` was initialized in:
+%stack%
+ * @param {{ "key": string, "stack": string }} values
  */
-export function unresolved_hydratable(key, stack) {
+export function unresolved_hydratable(values) {
 	if (DEV) {
 		console.warn(
-			`%c[svelte] unresolved_hydratable\n%cA \`hydratable\` value with key \`${key}\` was created, but at least part of it was not used during the render.
+			`%c[svelte] ${'unresolved_hydratable'}\n%c${`A \`hydratable\` value with key \`${values.key}\` was created, but at least part of it was not used during the render.
 
 The \`hydratable\` was initialized in:
-${stack}\nhttps://svelte.dev/e/unresolved_hydratable`,
+${values.stack}`}\nhttps://svelte.dev/e/${'unresolved_hydratable'}`,
 			bold,
 			normal
 		);
 	} else {
-		console.warn(`https://svelte.dev/e/unresolved_hydratable`);
+		console.warn(`https://svelte.dev/e/${'unresolved_hydratable'}`);
 	}
 }

@@ -24,7 +24,7 @@ export function read_script(parser, start, attributes) {
 	const script_start = parser.index;
 	const data = parser.read_until_regex(regex_closing_script_tag);
 	if (parser.index >= parser.template.length) {
-		e.element_unclosed(parser.template.length, 'script');
+		e.element_unclosed(parser.template.length, { name: 'script' });
 	}
 
 	const source =
@@ -47,7 +47,7 @@ export function read_script(parser, start, attributes) {
 
 	for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 		if (RESERVED_ATTRIBUTES.includes(attribute.name)) {
-			e.script_reserved_attribute(attribute, attribute.name);
+			e.script_reserved_attribute(attribute, { name: attribute.name });
 		}
 
 		if (!ALLOWED_ATTRIBUTES.includes(attribute.name)) {
@@ -57,7 +57,7 @@ export function read_script(parser, start, attributes) {
 		if (attribute.name === 'module') {
 			if (attribute.value !== true) {
 				// Deliberately a generic code to future-proof for potential other attributes
-				e.script_invalid_attribute_value(attribute, attribute.name);
+				e.script_invalid_attribute_value(attribute, { name: attribute.name });
 			}
 
 			context = 'module';

@@ -26,7 +26,7 @@ if (DEV) {
 						return value;
 					}
 
-					e.rune_outside_svelte(rune);
+					e.rune_outside_svelte({ rune });
 				},
 				set: (v) => {
 					value = v;
@@ -90,7 +90,7 @@ export function getAbortSignal() {
  */
 export function onMount(fn) {
 	if (component_context === null) {
-		e.lifecycle_outside_component('onMount');
+		e.lifecycle_outside_component({ name: 'onMount' });
 	}
 
 	if (legacy_mode_flag && component_context.l !== null) {
@@ -114,7 +114,7 @@ export function onMount(fn) {
  */
 export function onDestroy(fn) {
 	if (component_context === null) {
-		e.lifecycle_outside_component('onDestroy');
+		e.lifecycle_outside_component({ name: 'onDestroy' });
 	}
 
 	onMount(() => () => untrack(fn));
@@ -157,7 +157,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 export function createEventDispatcher() {
 	const active_component_context = component_context;
 	if (active_component_context === null) {
-		e.lifecycle_outside_component('createEventDispatcher');
+		e.lifecycle_outside_component({ name: 'createEventDispatcher' });
 	}
 
 	/**
@@ -199,11 +199,11 @@ export function createEventDispatcher() {
  */
 export function beforeUpdate(fn) {
 	if (component_context === null) {
-		e.lifecycle_outside_component('beforeUpdate');
+		e.lifecycle_outside_component({ name: 'beforeUpdate' });
 	}
 
 	if (component_context.l === null) {
-		e.lifecycle_legacy_only('beforeUpdate');
+		e.lifecycle_legacy_only({ name: 'beforeUpdate' });
 	}
 
 	init_update_callbacks(component_context).b.push(fn);
@@ -222,11 +222,11 @@ export function beforeUpdate(fn) {
  */
 export function afterUpdate(fn) {
 	if (component_context === null) {
-		e.lifecycle_outside_component('afterUpdate');
+		e.lifecycle_outside_component({ name: 'afterUpdate' });
 	}
 
 	if (component_context.l === null) {
-		e.lifecycle_legacy_only('afterUpdate');
+		e.lifecycle_legacy_only({ name: 'afterUpdate' });
 	}
 
 	init_update_callbacks(component_context).a.push(fn);

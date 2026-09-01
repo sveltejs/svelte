@@ -267,7 +267,7 @@ export function analyze_module(source, options) {
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			e.global_reference_invalid(references[0].node, name);
+			e.global_reference_invalid(references[0].node, { name });
 		}
 
 		const binding = scope.get(name.slice(1));
@@ -354,7 +354,7 @@ export function analyze_component(root, source, options) {
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			e.global_reference_invalid(references[0].node, name);
+			e.global_reference_invalid(references[0].node, { name });
 		}
 
 		const store_name = name.slice(1);
@@ -402,11 +402,11 @@ export function analyze_component(root, source, options) {
 
 			if (runes_option !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
-					e.global_reference_invalid(references[0].node, name);
+					e.global_reference_invalid(references[0].node, { name });
 				} else if (declaration !== null && is_rune(name)) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
-							w.store_rune_conflict(node, store_name);
+							w.store_rune_conflict(node, { name: store_name });
 						}
 					}
 				}
@@ -762,7 +762,7 @@ export function analyze_component(root, source, options) {
 										type === 'AwaitBlock' ||
 										type === 'KeyBlock'
 									) {
-										w.non_reactive_update(binding.node, name);
+										w.non_reactive_update(binding.node, { name });
 										continue outer;
 									}
 								}
@@ -770,7 +770,7 @@ export function analyze_component(root, source, options) {
 							}
 						}
 
-						w.non_reactive_update(binding.node, name);
+						w.non_reactive_update(binding.node, { name });
 						continue outer;
 					}
 				}
@@ -812,7 +812,7 @@ export function analyze_component(root, source, options) {
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
 				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
-					w.export_let_unused(binding.node, name);
+					w.export_let_unused(binding.node, { name });
 				}
 			}
 		}
@@ -830,7 +830,7 @@ export function analyze_component(root, source, options) {
 					if ([...analysis.snippets].find((snippet) => snippet.expression.name === name)) {
 						e.snippet_invalid_export(specifier);
 					} else {
-						e.export_undefined(specifier, name);
+						e.export_undefined(specifier, { name });
 					}
 				} else if (binding.initial?.type === 'SnippetBlock') {
 					// If a snippet is exported, a consumer could only import this named export and not the default export (the component).
@@ -843,10 +843,9 @@ export function analyze_component(root, source, options) {
 	}
 
 	if (analysis.event_directive_node && analysis.uses_event_attributes) {
-		e.mixed_event_handler_syntaxes(
-			analysis.event_directive_node,
-			analysis.event_directive_node.name
-		);
+		e.mixed_event_handler_syntaxes(analysis.event_directive_node, {
+			name: analysis.event_directive_node.name
+		});
 	}
 
 	for (const [node, resolved] of analysis.snippet_renderers) {
@@ -1326,7 +1325,7 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const cycle = check_graph_for_cycles(edges);
 	if (cycle?.length) {
 		const declaration = /** @type {Tuple[]} */ (lookup.get(cycle[0]))[0];
-		e.reactive_declaration_cycle(declaration[0], cycle.join(' → '));
+		e.reactive_declaration_cycle(declaration[0], { cycle: cycle.join(' → ') });
 	}
 
 	// We use a map and take advantage of the fact that the spec says insertion order is preserved when iterating

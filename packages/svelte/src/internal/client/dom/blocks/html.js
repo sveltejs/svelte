@@ -36,7 +36,8 @@ function check_hash(element, server_hash, value) {
 		location = `in ${dev_current_component_function[FILENAME]}`;
 	}
 
-	w.hydration_html_changed(sanitize_location(location));
+	const sanitized = sanitize_location(location);
+	w.hydration_html_changed(sanitized === undefined ? undefined : { location: sanitized });
 }
 
 /**

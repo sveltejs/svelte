@@ -20,7 +20,7 @@ export function Text(node, context) {
 	) {
 		const message = is_tag_valid_with_parent('#text', context.state.parent_element);
 		if (message) {
-			e.node_invalid_placement(node, message);
+			e.node_invalid_placement(node, { message });
 		}
 	}
 

@@ -11,7 +11,7 @@ export { invalid_default_snippet } from './errors.js';
 export function validate_void_dynamic_element(tag_fn) {
 	const tag = tag_fn();
 	if (tag && is_void(tag)) {
-		w.dynamic_void_element_content(tag);
+		w.dynamic_void_element_content({ tag });
 	}
 }
 
@@ -30,7 +30,7 @@ export function validate_dynamic_element_tag(tag_fn) {
  */
 export function validate_store(store, name) {
 	if (store != null && typeof store.subscribe !== 'function') {
-		e.store_invalid_shape(name);
+		e.store_invalid_shape({ name });
 	}
 }
 

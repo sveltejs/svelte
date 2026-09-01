@@ -42,7 +42,7 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
 
 	if (tag) {
 		if (!REGEX_VALID_TAG_NAME.test(tag)) {
-			e.dynamic_element_invalid_tag(tag);
+			e.dynamic_element_invalid_tag({ tag });
 		}
 		renderer.push(`<${tag}`);
 		attributes_fn();

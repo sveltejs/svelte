@@ -843,7 +843,10 @@ export class Renderer {
 		for (const [_, key] of ctx.unresolved_promises) {
 			// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
 			// serialize it, so we're blocking the response on useless content.
-			w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
+			w.unresolved_hydratable({
+				key,
+				stack: ctx.lookup.get(key)?.stack ?? '<missing stack trace>'
+			});
 		}
 
 		for (const comparison of ctx.comparisons) {

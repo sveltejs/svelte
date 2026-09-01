@@ -45,7 +45,7 @@ export function validate_binding(binding, blockers, get_object, get_property, li
 
 			if (effect.deps === null) {
 				var location = `${filename}:${line}:${column}`;
-				w.binding_property_non_reactive(binding, location);
+				w.binding_property_non_reactive({ binding, location });
 
 				warned = true;
 			}

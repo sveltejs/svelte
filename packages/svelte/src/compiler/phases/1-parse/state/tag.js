@@ -531,7 +531,7 @@ function next(parser) {
 	const block = parser.current(); // TODO type should not be TemplateNode, that's much too broad
 
 	if (block.type === 'IfBlock') {
-		if (!parser.eat('else')) e.expected_token(start, '{:else} or {:else if}');
+		if (!parser.eat('else')) e.expected_token(start, { token: '{:else} or {:else if}' });
 		if (parser.eat('if')) e.block_invalid_elseif(start);
 
 		parser.allow_whitespace();
@@ -580,7 +580,7 @@ function next(parser) {
 	}
 
 	if (block.type === 'EachBlock') {
-		if (!parser.eat('else')) e.expected_token(start, '{:else}');
+		if (!parser.eat('else')) e.expected_token(start, { token: '{:else}' });
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -596,7 +596,7 @@ function next(parser) {
 	if (block.type === 'AwaitBlock') {
 		if (parser.eat('then')) {
 			if (block.then) {
-				e.block_duplicate_clause(start, '{:then}');
+				e.block_duplicate_clause(start, { name: '{:then}' });
 			}
 
 			if (!parser.eat('}')) {
@@ -615,7 +615,7 @@ function next(parser) {
 
 		if (parser.eat('catch')) {
 			if (block.catch) {
-				e.block_duplicate_clause(start, '{:catch}');
+				e.block_duplicate_clause(start, { name: '{:catch}' });
 			}
 
 			if (!parser.eat('}')) {
@@ -632,7 +632,7 @@ function next(parser) {
 			return;
 		}
 
-		e.expected_token(start, '{:then ...} or {:catch ...}');
+		e.expected_token(start, { token: '{:then ...} or {:catch ...}' });
 	}
 
 	e.block_invalid_continuation_placement(start);

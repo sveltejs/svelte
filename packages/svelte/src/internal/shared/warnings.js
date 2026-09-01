@@ -7,34 +7,34 @@ var normal = 'font-weight: normal';
 
 /**
  * `<svelte:element this="%tag%">` is a void element — it cannot have content
- * @param {string} tag
+ * @param {{ "tag": string }} values
  */
-export function dynamic_void_element_content(tag) {
-	if (DEV) {
-		console.warn(`%c[svelte] dynamic_void_element_content\n%c\`<svelte:element this="${tag}">\` is a void element — it cannot have content\nhttps://svelte.dev/e/dynamic_void_element_content`, bold, normal);
-	} else {
-		console.warn(`https://svelte.dev/e/dynamic_void_element_content`);
-	}
-}
-
-/**
- * The following properties cannot be cloned with `$state.snapshot` — the return value contains the originals:
- * 
- * %properties%
- * @param {string | undefined | null} [properties]
- */
-export function state_snapshot_uncloneable(properties) {
+export function dynamic_void_element_content(values) {
 	if (DEV) {
 		console.warn(
-			`%c[svelte] state_snapshot_uncloneable\n%c${properties
-				? `The following properties cannot be cloned with \`$state.snapshot\` — the return value contains the originals:
-
-${properties}`
-				: 'Value cannot be cloned with `$state.snapshot` — the original value was returned'}\nhttps://svelte.dev/e/state_snapshot_uncloneable`,
+			`%c[svelte] ${'dynamic_void_element_content'}\n%c${`\`<svelte:element this="${values.tag}">\` is a void element — it cannot have content`}\nhttps://svelte.dev/e/${'dynamic_void_element_content'}`,
 			bold,
 			normal
 		);
 	} else {
-		console.warn(`https://svelte.dev/e/state_snapshot_uncloneable`);
+		console.warn(`https://svelte.dev/e/${'dynamic_void_element_content'}`);
+	}
+}
+
+/**
+ * Value cannot be cloned with `$state.snapshot` — the original value was returned
+ * @param {void | { "properties": string }} values
+ */
+export function state_snapshot_uncloneable(values) {
+	if (DEV) {
+		console.warn(
+			`%c[svelte] ${'state_snapshot_uncloneable'}\n%c${(values?.properties !== undefined ? `The following properties cannot be cloned with \`$state.snapshot\` — the return value contains the originals:
+
+${values.properties}` : `Value cannot be cloned with \`$state.snapshot\` — the original value was returned`)}\nhttps://svelte.dev/e/${'state_snapshot_uncloneable'}`,
+			bold,
+			normal
+		);
+	} else {
+		console.warn(`https://svelte.dev/e/${'state_snapshot_uncloneable'}`);
 	}
 }

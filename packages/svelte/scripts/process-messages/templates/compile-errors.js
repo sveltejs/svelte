@@ -50,11 +50,11 @@ function e(node, code, message) {
 }
 
 /**
- * MESSAGE
+ * DESCRIPTION
  * @param {null | number | NodeLike} node
- * @param {string} PARAMETER
+ * @param {VALUES} values
  * @returns {never}
  */
-export function CODE(node, PARAMETER) {
-	e(node, 'CODE', `${MESSAGE}\nhttps://svelte.dev/e/${'CODE'}`);
+export function CODE(node, values) {
+	e(node, 'CODE', `${MESSAGE(values)}\nhttps://svelte.dev/e/${'CODE'}`);
 }

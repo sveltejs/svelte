@@ -141,7 +141,7 @@ export function VariableDeclarator(node, context) {
 				(callee.name === '$state' || callee.name === '$derived' || callee.name === '$props') &&
 				context.state.scope.get(callee.name)?.kind !== 'store_sub'
 			) {
-				e.rune_invalid_usage(node.init, callee.name);
+				e.rune_invalid_usage(node.init, { rune: callee.name });
 			}
 		}
 	}

@@ -1375,7 +1375,7 @@ function reset_all(effect) {
  */
 export function fork(fn) {
 	if (!async_mode_flag) {
-		e.experimental_async_required('fork');
+		e.experimental_async_required({ name: 'fork' });
 	}
 
 	if (current_batch !== null) {

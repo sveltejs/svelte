@@ -1,13 +1,13 @@
 import { DEV } from 'esm-env';
 
 /**
- * MESSAGE
- * @param {string} PARAMETER
+ * DESCRIPTION
+ * @param {VALUES} values
  * @returns {never}
  */
-export function CODE(PARAMETER) {
+export function CODE(values) {
 	if (DEV) {
-		const error = new Error(`${'CODE'}\n${MESSAGE}\nhttps://svelte.dev/e/${'CODE'}`);
+		const error = new Error(`${'CODE'}\n${MESSAGE(values)}\nhttps://svelte.dev/e/${'CODE'}`);
 		error.name = 'Svelte error';
 		throw error;
 	} else {
