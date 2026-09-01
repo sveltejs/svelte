@@ -111,12 +111,12 @@ export function derived_references_self(values) {
 
 /**
  * Keyed each block has duplicate key at indexes %a% and %b%
- * @param {{ "a": string, "b": string } | { "value": string, "a": string, "b": string }} values
+ * @param {{ "a": string, "b": string } | { "a": string, "b": string, "value": string }} values
  * @returns {never}
  */
 export function each_key_duplicate(values) {
 	if (DEV) {
-		const error = new Error(`${'each_key_duplicate'}\n${(values?.b !== undefined ? `Keyed each block has duplicate key \`${values.value}\` at indexes ${values.a} and ${values.b}` : `Keyed each block has duplicate key at indexes ${values.a} and ${values.b}`)}\nhttps://svelte.dev/e/${'each_key_duplicate'}`);
+		const error = new Error(`${'each_key_duplicate'}\n${(values?.value !== undefined ? `Keyed each block has duplicate key \`${values.value}\` at indexes ${values.a} and ${values.b}` : `Keyed each block has duplicate key at indexes ${values.a} and ${values.b}`)}\nhttps://svelte.dev/e/${'each_key_duplicate'}`);
 		error.name = 'Svelte error';
 		throw error;
 	} else {
