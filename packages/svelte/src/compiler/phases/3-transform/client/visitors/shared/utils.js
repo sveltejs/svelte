@@ -416,7 +416,11 @@ export function validate_mutation(node, context, expression) {
 				? context.state.transform[left.property.name]
 				: null;
 			if (left.computed) {
-				path.unshift(transform?.read ? transform.read(left.property) : left.property);
+				var read =
+					state.is_instance || transform?.read_template === undefined
+						? transform?.read
+						: transform.read_template;
+				path.unshift(read ? read(left.property) : left.property);
 			} else {
 				path.unshift(b.literal(left.property.name));
 			}

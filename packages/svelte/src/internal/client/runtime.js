@@ -68,9 +68,51 @@ let is_updating_effect = false;
 
 export let is_destroying_effect = false;
 
-/** @param {boolean} value */
-export function set_is_destroying_effect(value) {
-	is_destroying_effect = value;
+/** @type {Effect | null} */
+export let destroying_effect = null;
+
+let is_reading_old_value = false;
+let old_value_read_version = 0;
+
+/** @param {Effect | null} effect */
+export function set_destroying_effect(effect) {
+	destroying_effect = effect;
+	is_destroying_effect = effect !== null;
+}
+
+/**
+ * @template V
+ * @param {() => V} fn
+ * @returns {V}
+ */
+export function with_old_values(fn) {
+	if (!is_destroying_effect) return fn();
+
+	var previous_is_reading_old_value = is_reading_old_value;
+	is_reading_old_value = true;
+
+	try {
+		return fn();
+	} finally {
+		is_reading_old_value = previous_is_reading_old_value;
+	}
+}
+
+/**
+ * @param {Record<string, any>} props
+ * @param {string} key
+ */
+export function get_prop_value(props, key) {
+	if (!is_destroying_effect) return props[key];
+
+	var previous_is_reading_old_value = is_reading_old_value;
+	is_reading_old_value = true;
+
+	try {
+		return props[key];
+	} finally {
+		is_reading_old_value = previous_is_reading_old_value;
+	}
 }
 
 /** @type {null | Reaction} */
@@ -660,7 +702,12 @@ export function get(signal) {
 		}
 	}
 
-	if (is_destroying_effect && old_values.has(signal)) {
+	if (
+		is_destroying_effect &&
+		old_values.has(signal) &&
+		(is_reading_old_value || reaction_depends_on(/** @type {Effect} */ (destroying_effect), signal))
+	) {
+		old_value_read_version += 1;
 		return old_values.get(signal);
 	}
 
@@ -669,6 +716,7 @@ export function get(signal) {
 
 		if (is_destroying_effect) {
 			var value = derived.v;
+			var previous_old_value_read_version = old_value_read_version;
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
@@ -679,7 +727,11 @@ export function get(signal) {
 				value = execute_derived(derived);
 			}
 
-			old_values.set(derived, value);
+			// Don't let a current value calculated for one teardown become the old value
+			// observed by a later teardown in the same flush.
+			if (old_value_read_version !== previous_old_value_read_version) {
+				old_values.set(derived, value);
+			}
 
 			return value;
 		}
@@ -752,6 +804,30 @@ function depends_on_old_values(derived) {
 		}
 
 		if ((dep.f & DERIVED) !== 0 && depends_on_old_values(/** @type {Derived} */ (dep))) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @param {Reaction} reaction
+ * @param {Value} signal
+ * @param {Set<Reaction>} checked
+ */
+function reaction_depends_on(reaction, signal, checked = new Set()) {
+	if (reaction.deps === null || checked.has(reaction)) return false;
+
+	checked.add(reaction);
+
+	for (const dep of reaction.deps) {
+		if (dep === signal) return true;
+
+		if (
+			(dep.f & DERIVED) !== 0 &&
+			reaction_depends_on(/** @type {Derived} */ (dep), signal, checked)
+		) {
 			return true;
 		}
 	}

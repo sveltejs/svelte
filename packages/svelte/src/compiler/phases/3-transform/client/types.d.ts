@@ -26,6 +26,8 @@ export interface ClientTransformState extends TransformState {
 		{
 			/** turn `foo` into e.g. `$.get(foo)` */
 			read: (id: Identifier) => Expression;
+			/** turn `foo` into e.g. `$$props.foo` inside the template */
+			read_template?: (id: Identifier) => Expression;
 			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
 			assign?: (node: Identifier, value: Expression, proxy?: boolean) => Expression;
 			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */

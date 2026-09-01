@@ -8,10 +8,10 @@ export default function Props_identifier($$anchor, $$props) {
 
 	let props = $.rest_props($$props, rest_excludes);
 
-	$$props.a;
+	$.get_prop_value($$props, 'a');
 	props[a];
-	$$props.a.b;
-	$$props.a.b = true;
+	$.get_prop_value($$props, 'a').b;
+	$.get_prop_value($$props, 'a').b = true;
 	props.a = true;
 	props[a] = true;
 	props;

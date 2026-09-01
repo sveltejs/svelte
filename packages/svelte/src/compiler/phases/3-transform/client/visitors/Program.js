@@ -126,11 +126,13 @@ export function Program(node, context) {
 				const key = b.key(binding.prop_alias);
 
 				context.state.transform[name] = {
-					read: (_) => b.member(b.id('$$props'), key, key.type === 'Literal')
+					read: (_) => b.call('$.get_prop_value', b.id('$$props'), b.literal(binding.prop_alias)),
+					read_template: (_) => b.member(b.id('$$props'), key, key.type === 'Literal')
 				};
 			} else {
 				context.state.transform[name] = {
-					read: (node) => b.member(b.id('$$props'), node)
+					read: (_) => b.call('$.get_prop_value', b.id('$$props'), b.literal(name)),
+					read_template: (node) => b.member(b.id('$$props'), node)
 				};
 			}
 		}

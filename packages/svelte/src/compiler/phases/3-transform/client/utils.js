@@ -37,7 +37,10 @@ export function build_getter(node, state) {
 
 		// don't transform the declaration itself
 		if (node !== binding?.node) {
-			return state.transform[node.name].read(node);
+			var transform = state.transform[node.name];
+			return state.is_instance || transform.read_template === undefined
+				? transform.read(node)
+				: transform.read_template(node);
 		}
 	}
 
