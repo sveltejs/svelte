@@ -63,11 +63,7 @@ export function SnippetBlock(node, context) {
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
 			if (dev) {
-				var read =
-					context.state.is_instance || transform[name].read_template === undefined
-						? transform[name].read
-						: transform[name].read_template;
-				declarations.push(b.stmt(read(b.id(name))));
+				declarations.push(b.stmt(transform[name].read(b.id(name))));
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 /** @import { MemberExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
+import { prop_read_may_be_in_teardown } from '../utils.js';
 
 /**
  * @param {MemberExpression} node
@@ -23,7 +24,8 @@ export function MemberExpression(node, context) {
 			parent?.type !== 'UpdateExpression' &&
 			!binding.metadata?.exclude_props?.includes(node.property.name)
 		) {
-			return context.state.is_instance
+			return context.state.is_instance &&
+				prop_read_may_be_in_teardown(binding, node.object, context.state)
 				? b.call('$.get_prop_value', b.id('$$props'), b.literal(node.property.name))
 				: b.member(b.id('$$props'), node.property);
 		}
