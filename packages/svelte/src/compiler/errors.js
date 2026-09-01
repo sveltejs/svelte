@@ -414,7 +414,7 @@ export function rune_invalid_arguments(node, values) {
 /**
  * `%rune%` must be called with %args%
  * @param {null | number | NodeLike} node
- * @param {{ "rune": string, "args": string }} values
+ * @param {{ "rune": string; "args": string }} values
  * @returns {never}
  */
 export function rune_invalid_arguments_length(node, values) {
@@ -484,7 +484,7 @@ export function rune_removed(node, values) {
 /**
  * `%name%` is now `%replacement%`
  * @param {null | number | NodeLike} node
- * @param {{ "name": string, "replacement": string }} values
+ * @param {{ "name": string; "replacement": string }} values
  * @returns {never}
  */
 export function rune_renamed(node, values) {
@@ -904,7 +904,7 @@ export function bind_invalid_expression(node, values) {
 /**
  * `bind:%name%` is not a valid binding
  * @param {null | number | NodeLike} node
- * @param {{ "name": string } | { "name": string, "explanation": string }} values
+ * @param {{ "name": string; "explanation"?: string }} values
  * @returns {never}
  */
 export function bind_invalid_name(node, values) {
@@ -924,7 +924,7 @@ export function bind_invalid_parens(node, values) {
 /**
  * `bind:%name%` can only be used with %elements%
  * @param {null | number | NodeLike} node
- * @param {{ "name": string, "elements": string }} values
+ * @param {{ "name": string; "elements": string }} values
  * @returns {never}
  */
 export function bind_invalid_target(node, values) {
@@ -974,7 +974,7 @@ export function block_invalid_elseif(node, values) {
 /**
  * {#%name% ...} block cannot be %location%
  * @param {null | number | NodeLike} node
- * @param {{ "name": string, "location": string }} values
+ * @param {{ "name": string; "location": string }} values
  * @returns {never}
  */
 export function block_invalid_placement(node, values) {
@@ -1134,7 +1134,7 @@ export function element_invalid_closing_tag(node, values) {
 /**
  * `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
  * @param {null | number | NodeLike} node
- * @param {{ "name": string, "reason": string }} values
+ * @param {{ "name": string; "reason": string }} values
  * @returns {never}
  */
 export function element_invalid_closing_tag_autoclosed(node, values) {
@@ -1174,7 +1174,7 @@ export function event_handler_invalid_modifier(node, values) {
 /**
  * The '%modifier1%' and '%modifier2%' modifiers cannot be used together
  * @param {null | number | NodeLike} node
- * @param {{ "modifier1": string, "modifier2": string }} values
+ * @param {{ "modifier1": string; "modifier2": string }} values
  * @returns {never}
  */
 export function event_handler_invalid_modifier_combination(node, values) {
@@ -1384,7 +1384,7 @@ export function script_reserved_attribute(node, values) {
 /**
  * Duplicate slot name '%name%' in <%component%>
  * @param {null | number | NodeLike} node
- * @param {{ "name": string, "component": string }} values
+ * @param {{ "name": string; "component": string }} values
  * @returns {never}
  */
 export function slot_attribute_duplicate(node, values) {
@@ -1754,7 +1754,7 @@ export function tag_invalid_name(node, values) {
 /**
  * {@%name% ...} tag cannot be %location%
  * @param {null | number | NodeLike} node
- * @param {{ "name": string, "location": string }} values
+ * @param {{ "name": string; "location": string }} values
  * @returns {never}
  */
 export function tag_invalid_placement(node, values) {
@@ -1794,7 +1794,7 @@ export function title_invalid_content(node, values) {
 /**
  * Cannot use `%type%:` alongside existing `%existing%:` directive
  * @param {null | number | NodeLike} node
- * @param {{ "type": string, "existing": string }} values
+ * @param {{ "type": string; "existing": string }} values
  * @returns {never}
  */
 export function transition_conflict(node, values) {

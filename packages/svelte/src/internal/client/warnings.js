@@ -7,7 +7,7 @@ var normal = 'font-weight: normal';
 
 /**
  * Assignment to `%property%` property (%location%) will evaluate to the right-hand side, not the value of `%property%` following the assignment. This may result in unexpected behaviour.
- * @param {{ "property": string, "location": string }} values
+ * @param {{ "property": string; "location": string }} values
  */
 export function assignment_value_stale(values) {
 	if (DEV) {
@@ -39,7 +39,7 @@ export function await_reactivity_loss(values) {
 
 /**
  * An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
- * @param {{ "name": string, "location": string }} values
+ * @param {{ "name": string; "location": string }} values
  */
 export function await_waterfall(values) {
 	if (DEV) {
@@ -55,7 +55,7 @@ export function await_waterfall(values) {
 
 /**
  * `%binding%` is binding to a non-reactive property
- * @param {{ "binding": string } | { "binding": string, "location": string }} values
+ * @param {{ "binding": string; "location"?: string }} values
  */
 export function binding_property_non_reactive(values) {
 	if (DEV) {
@@ -103,7 +103,7 @@ export function derived_inert(values) {
 
 /**
  * %handler% should be a function. Did you mean to %suggestion%?
- * @param {{ "handler": string, "suggestion": string }} values
+ * @param {{ "handler": string; "suggestion": string }} values
  */
 export function event_handler_invalid(values) {
 	if (DEV) {
@@ -135,7 +135,7 @@ export function hydratable_missing_but_expected(values) {
 
 /**
  * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
- * @param {{ "attribute": string, "html": string, "value": string }} values
+ * @param {{ "attribute": string; "html": string; "value": string }} values
  */
 export function hydration_attribute_changed(values) {
 	if (DEV) {
@@ -231,7 +231,7 @@ export function lifecycle_double_unmount(values) {
 
 /**
  * %parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)
- * @param {{ "parent": string, "prop": string, "child": string, "owner": string }} values
+ * @param {{ "parent": string; "prop": string; "child": string; "owner": string }} values
  */
 export function ownership_invalid_binding(values) {
 	if (DEV) {
@@ -247,7 +247,7 @@ export function ownership_invalid_binding(values) {
 
 /**
  * Mutating unbound props (`%name%`, at %location%) is strongly discouraged. Consider using `bind:%prop%={...}` in %parent% (or using a callback) instead
- * @param {{ "name": string, "location": string, "prop": string, "parent": string }} values
+ * @param {{ "name": string; "location": string; "prop": string; "parent": string }} values
  */
 export function ownership_invalid_mutation(values) {
 	if (DEV) {

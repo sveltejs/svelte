@@ -36,7 +36,7 @@ export function bind_invalid_checkbox_value(values) {
 
 /**
  * Component %component% has an export named `%key%` that a consumer component is trying to access using `bind:%key%`, which is disallowed. Instead, use `bind:this` (e.g. `<%name% bind:this={component} />`) and then access the property on the bound component instance (e.g. `component.%key%`)
- * @param {{ "component": string, "key": string, "name": string }} values
+ * @param {{ "component": string; "key": string; "name": string }} values
  * @returns {never}
  */
 export function bind_invalid_export(values) {
@@ -51,7 +51,7 @@ export function bind_invalid_export(values) {
 
 /**
  * A component is attempting to bind to a non-bindable property `%key%` belonging to %component% (i.e. `<%name% bind:%key%={...}>`). To mark a property as bindable: `let { %key% = $bindable() } = $props()`
- * @param {{ "key": string, "component": string, "name": string }} values
+ * @param {{ "key": string; "component": string; "name": string }} values
  * @returns {never}
  */
 export function bind_not_bindable(values) {
@@ -66,7 +66,7 @@ export function bind_not_bindable(values) {
 
 /**
  * Calling `%method%` on a component instance (of %component%) is no longer valid in Svelte 5
- * @param {{ "method": string, "component": string }} values
+ * @param {{ "method": string; "component": string }} values
  * @returns {never}
  */
 export function component_api_changed(values) {
@@ -81,7 +81,7 @@ export function component_api_changed(values) {
 
 /**
  * Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working.
- * @param {{ "component": string, "name": string }} values
+ * @param {{ "component": string; "name": string }} values
  * @returns {never}
  */
 export function component_api_invalid_new(values) {
@@ -111,7 +111,7 @@ export function derived_references_self(values) {
 
 /**
  * Keyed each block has duplicate key at indexes %a% and %b%
- * @param {{ "a": string, "b": string } | { "a": string, "b": string, "value": string }} values
+ * @param {{ "a": string; "b": string; "value"?: string }} values
  * @returns {never}
  */
 export function each_key_duplicate(values) {
@@ -126,7 +126,7 @@ export function each_key_duplicate(values) {
 
 /**
  * Keyed each block has key that is not idempotent — the key for item at index %index% was `%a%` but is now `%b%`. Keys must be the same each time for a given item
- * @param {{ "index": string, "a": string, "b": string }} values
+ * @param {{ "index": string; "a": string; "b": string }} values
  * @returns {never}
  */
 export function each_key_volatile(values) {

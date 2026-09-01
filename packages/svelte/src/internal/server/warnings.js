@@ -10,7 +10,7 @@ var normal = 'font-weight: normal';
 
 The `hydratable` was initialized in:
 %stack%
- * @param {{ "key": string, "stack": string }} values
+ * @param {{ "key": string; "stack": string }} values
  */
 export function unresolved_hydratable(values) {
 	if (DEV) {

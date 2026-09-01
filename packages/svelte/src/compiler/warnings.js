@@ -155,7 +155,7 @@ export function a11y_aria_attributes(node, values) {
 /**
  * '%value%' is an invalid value for 'autocomplete' on `<input type="%type%">`
  * @param {null | NodeLike} node
- * @param {{ "value": string, "type": string }} values
+ * @param {{ "value": string; "type": string }} values
  */
 export function a11y_autocomplete_valid(node, values) {
 	w(node, 'a11y_autocomplete_valid', `${`'${values.value}' is an invalid value for 'autocomplete' on \`<input type="${values.type}">\``}\nhttps://svelte.dev/e/${'a11y_autocomplete_valid'}`);
@@ -236,7 +236,7 @@ export function a11y_img_redundant_alt(node, values) {
 /**
  * The value of '%attribute%' must be a %type%
  * @param {null | NodeLike} node
- * @param {{ "attribute": string, "type": string }} values
+ * @param {{ "attribute": string; "type": string }} values
  */
 export function a11y_incorrect_aria_attribute_type(node, values) {
 	w(node, 'a11y_incorrect_aria_attribute_type', `${`The value of '${values.attribute}' must be a ${values.type}`}\nhttps://svelte.dev/e/${'a11y_incorrect_aria_attribute_type'}`);
@@ -281,7 +281,7 @@ export function a11y_incorrect_aria_attribute_type_integer(node, values) {
 /**
  * The value of '%attribute%' must be exactly one of %values%
  * @param {null | NodeLike} node
- * @param {{ "attribute": string, "values": string }} values
+ * @param {{ "attribute": string; "values": string }} values
  */
 export function a11y_incorrect_aria_attribute_type_token(node, values) {
 	w(node, 'a11y_incorrect_aria_attribute_type_token', `${`The value of '${values.attribute}' must be exactly one of ${values.values}`}\nhttps://svelte.dev/e/${'a11y_incorrect_aria_attribute_type_token'}`);
@@ -290,7 +290,7 @@ export function a11y_incorrect_aria_attribute_type_token(node, values) {
 /**
  * The value of '%attribute%' must be a space-separated list of one or more of %values%
  * @param {null | NodeLike} node
- * @param {{ "attribute": string, "values": string }} values
+ * @param {{ "attribute": string; "values": string }} values
  */
 export function a11y_incorrect_aria_attribute_type_tokenlist(node, values) {
 	w(node, 'a11y_incorrect_aria_attribute_type_tokenlist', `${`The value of '${values.attribute}' must be a space-separated list of one or more of ${values.values}`}\nhttps://svelte.dev/e/${'a11y_incorrect_aria_attribute_type_tokenlist'}`);
@@ -317,7 +317,7 @@ export function a11y_interactive_supports_focus(node, values) {
 /**
  * '%href_value%' is not a valid %href_attribute% attribute
  * @param {null | NodeLike} node
- * @param {{ "href_value": string, "href_attribute": string }} values
+ * @param {{ "href_value": string; "href_attribute": string }} values
  */
 export function a11y_invalid_attribute(node, values) {
 	w(node, 'a11y_invalid_attribute', `${`'${values.href_value}' is not a valid ${values.href_attribute} attribute`}\nhttps://svelte.dev/e/${'a11y_invalid_attribute'}`);
@@ -362,7 +362,7 @@ export function a11y_misplaced_scope(node, values) {
 /**
  * `<%name%>` element should have %article% %sequence% attribute
  * @param {null | NodeLike} node
- * @param {{ "name": string, "article": string, "sequence": string }} values
+ * @param {{ "name": string; "article": string; "sequence": string }} values
  */
 export function a11y_missing_attribute(node, values) {
 	w(node, 'a11y_missing_attribute', `${`\`<${values.name}>\` element should have ${values.article} ${values.sequence} attribute`}\nhttps://svelte.dev/e/${'a11y_missing_attribute'}`);
@@ -380,7 +380,7 @@ export function a11y_missing_content(node, values) {
 /**
  * '%event%' event must be accompanied by '%accompanied_by%' event
  * @param {null | NodeLike} node
- * @param {{ "event": string, "accompanied_by": string }} values
+ * @param {{ "event": string; "accompanied_by": string }} values
  */
 export function a11y_mouse_events_have_key_events(node, values) {
 	w(node, 'a11y_mouse_events_have_key_events', `${`'${values.event}' event must be accompanied by '${values.accompanied_by}' event`}\nhttps://svelte.dev/e/${'a11y_mouse_events_have_key_events'}`);
@@ -398,7 +398,7 @@ export function a11y_no_abstract_role(node, values) {
 /**
  * `<%element%>` cannot have role '%role%'
  * @param {null | NodeLike} node
- * @param {{ "element": string, "role": string }} values
+ * @param {{ "element": string; "role": string }} values
  */
 export function a11y_no_interactive_element_to_noninteractive_role(node, values) {
 	w(node, 'a11y_no_interactive_element_to_noninteractive_role', `${`\`<${values.element}>\` cannot have role '${values.role}'`}\nhttps://svelte.dev/e/${'a11y_no_interactive_element_to_noninteractive_role'}`);
@@ -416,7 +416,7 @@ export function a11y_no_noninteractive_element_interactions(node, values) {
 /**
  * Non-interactive element `<%element%>` cannot have interactive role '%role%'
  * @param {null | NodeLike} node
- * @param {{ "element": string, "role": string }} values
+ * @param {{ "element": string; "role": string }} values
  */
 export function a11y_no_noninteractive_element_to_interactive_role(node, values) {
 	w(node, 'a11y_no_noninteractive_element_to_interactive_role', `${`Non-interactive element \`<${values.element}>\` cannot have interactive role '${values.role}'`}\nhttps://svelte.dev/e/${'a11y_no_noninteractive_element_to_interactive_role'}`);
@@ -443,7 +443,7 @@ export function a11y_no_redundant_roles(node, values) {
 /**
  * `<%element%>` with a %handler% handler must have an ARIA role
  * @param {null | NodeLike} node
- * @param {{ "element": string, "handler": string }} values
+ * @param {{ "element": string; "handler": string }} values
  */
 export function a11y_no_static_element_interactions(node, values) {
 	w(node, 'a11y_no_static_element_interactions', `${`\`<${values.element}>\` with a ${values.handler} handler must have an ARIA role`}\nhttps://svelte.dev/e/${'a11y_no_static_element_interactions'}`);
@@ -461,7 +461,7 @@ export function a11y_positive_tabindex(node, values) {
 /**
  * Elements with the ARIA role "%role%" must have the following attributes defined: %props%
  * @param {null | NodeLike} node
- * @param {{ "role": string, "props": string }} values
+ * @param {{ "role": string; "props": string }} values
  */
 export function a11y_role_has_required_aria_props(node, values) {
 	w(node, 'a11y_role_has_required_aria_props', `${`Elements with the ARIA role "${values.role}" must have the following attributes defined: ${values.props}`}\nhttps://svelte.dev/e/${'a11y_role_has_required_aria_props'}`);
@@ -470,7 +470,7 @@ export function a11y_role_has_required_aria_props(node, values) {
 /**
  * The attribute '%attribute%' is not supported by the role '%role%'
  * @param {null | NodeLike} node
- * @param {{ "attribute": string, "role": string }} values
+ * @param {{ "attribute": string; "role": string }} values
  */
 export function a11y_role_supports_aria_props(node, values) {
 	w(node, 'a11y_role_supports_aria_props', `${`The attribute '${values.attribute}' is not supported by the role '${values.role}'`}\nhttps://svelte.dev/e/${'a11y_role_supports_aria_props'}`);
@@ -479,7 +479,7 @@ export function a11y_role_supports_aria_props(node, values) {
 /**
  * The attribute '%attribute%' is not supported by the role '%role%'. This role is implicit on the element `<%name%>`
  * @param {null | NodeLike} node
- * @param {{ "attribute": string, "role": string, "name": string }} values
+ * @param {{ "attribute": string; "role": string; "name": string }} values
  */
 export function a11y_role_supports_aria_props_implicit(node, values) {
 	w(node, 'a11y_role_supports_aria_props_implicit', `${`The attribute '${values.attribute}' is not supported by the role '${values.role}'. This role is implicit on the element \`<${values.name}>\``}\nhttps://svelte.dev/e/${'a11y_role_supports_aria_props_implicit'}`);
@@ -488,7 +488,7 @@ export function a11y_role_supports_aria_props_implicit(node, values) {
 /**
  * Unknown aria attribute 'aria-%attribute%'
  * @param {null | NodeLike} node
- * @param {{ "attribute": string } | { "attribute": string, "suggestion": string }} values
+ * @param {{ "attribute": string; "suggestion"?: string }} values
  */
 export function a11y_unknown_aria_attribute(node, values) {
 	w(node, 'a11y_unknown_aria_attribute', `${(values?.suggestion !== undefined ? `Unknown aria attribute 'aria-${values.attribute}'. Did you mean '${values.suggestion}'?` : `Unknown aria attribute 'aria-${values.attribute}'`)}\nhttps://svelte.dev/e/${'a11y_unknown_aria_attribute'}`);
@@ -497,7 +497,7 @@ export function a11y_unknown_aria_attribute(node, values) {
 /**
  * Unknown role '%role%'
  * @param {null | NodeLike} node
- * @param {{ "role": string } | { "role": string, "suggestion": string }} values
+ * @param {{ "role": string; "suggestion"?: string }} values
  */
 export function a11y_unknown_role(node, values) {
 	w(node, 'a11y_unknown_role', `${(values?.suggestion !== undefined ? `Unknown role '${values.role}'. Did you mean '${values.suggestion}'?` : `Unknown role '${values.role}'`)}\nhttps://svelte.dev/e/${'a11y_unknown_role'}`);
@@ -515,7 +515,7 @@ export function bidirectional_control_characters(node, values) {
 /**
  * `%code%` is no longer valid — please use `%suggestion%` instead
  * @param {null | NodeLike} node
- * @param {{ "code": string, "suggestion": string }} values
+ * @param {{ "code": string; "suggestion": string }} values
  */
 export function legacy_code(node, values) {
 	w(node, 'legacy_code', `${`\`${values.code}\` is no longer valid — please use \`${values.suggestion}\` instead`}\nhttps://svelte.dev/e/${'legacy_code'}`);
@@ -524,7 +524,7 @@ export function legacy_code(node, values) {
 /**
  * `%code%` is not a recognised code
  * @param {null | NodeLike} node
- * @param {{ "code": string } | { "code": string, "suggestion": string }} values
+ * @param {{ "code": string; "suggestion"?: string }} values
  */
 export function unknown_code(node, values) {
 	w(node, 'unknown_code', `${(values?.suggestion !== undefined ? `\`${values.code}\` is not a recognised code (did you mean \`${values.suggestion}\`?)` : `\`${values.code}\` is not a recognised code`)}\nhttps://svelte.dev/e/${'unknown_code'}`);
@@ -668,7 +668,7 @@ export function reactive_declaration_module_script_dependency(node, values) {
 /**
  * This reference only captures the initial value of `%name%`. Did you mean to reference it inside a %type% instead?
  * @param {null | NodeLike} node
- * @param {{ "name": string, "type": string }} values
+ * @param {{ "name": string; "type": string }} values
  */
 export function state_referenced_locally(node, values) {
 	w(node, 'state_referenced_locally', `${`This reference only captures the initial value of \`${values.name}\`. Did you mean to reference it inside a ${values.type} instead?`}\nhttps://svelte.dev/e/${'state_referenced_locally'}`);
@@ -722,7 +722,7 @@ export function attribute_illegal_colon(node, values) {
 /**
  * '%wrong%' is not a valid HTML attribute. Did you mean '%right%'?
  * @param {null | NodeLike} node
- * @param {{ "wrong": string, "right": string }} values
+ * @param {{ "wrong": string; "right": string }} values
  */
 export function attribute_invalid_property_name(node, values) {
 	w(node, 'attribute_invalid_property_name', `${`'${values.wrong}' is not a valid HTML attribute. Did you mean '${values.right}'?`}\nhttps://svelte.dev/e/${'attribute_invalid_property_name'}`);
@@ -767,7 +767,7 @@ export function component_name_lowercase(node, values) {
 /**
  * This element is implicitly closed by the following `%tag%`, which can cause an unexpected DOM structure. Add an explicit `%closing%` to avoid surprises.
  * @param {null | NodeLike} node
- * @param {{ "tag": string, "closing": string }} values
+ * @param {{ "tag": string; "closing": string }} values
  */
 export function element_implicitly_closed(node, values) {
 	w(node, 'element_implicitly_closed', `${`This element is implicitly closed by the following \`${values.tag}\`, which can cause an unexpected DOM structure. Add an explicit \`${values.closing}\` to avoid surprises.`}\nhttps://svelte.dev/e/${'element_implicitly_closed'}`);
@@ -848,7 +848,7 @@ export function svelte_element_invalid_this(node, values) {
 /**
  * `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
  * @param {null | NodeLike} node
- * @param {{ "name": string, "basename": string }} values
+ * @param {{ "name": string; "basename": string }} values
  */
 export function svelte_self_deprecated(node, values) {
 	w(node, 'svelte_self_deprecated', `${`\`<svelte:self>\` is deprecated — use self-imports (e.g. \`import ${values.name} from './${values.basename}'\`) instead`}\nhttps://svelte.dev/e/${'svelte_self_deprecated'}`);

@@ -50,7 +50,7 @@ export function html_deprecated(values) {
  * Attempted to set `hydratable` with key `%key%` twice with different values.
 
 %stack%
- * @param {{ "key": string, "stack": string }} values
+ * @param {{ "key": string; "stack": string }} values
  * @returns {never}
  */
 export function hydratable_clobbering(values) {
@@ -68,7 +68,7 @@ ${values.stack}`}\nhttps://svelte.dev/e/${'hydratable_clobbering'}`);
 
 Cause:
 %stack%
- * @param {{ "key": string, "stack": string }} values
+ * @param {{ "key": string; "stack": string }} values
  * @returns {never}
  */
 export function hydratable_serialization_failed(values) {
