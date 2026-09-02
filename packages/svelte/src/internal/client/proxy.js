@@ -6,8 +6,7 @@ import {
 	update_version,
 	active_reaction,
 	set_update_version,
-	set_active_reaction,
-	untrack
+	set_active_reaction
 } from './runtime.js';
 import { destroy_effect, eager_effect } from './reactivity/effects.js';
 import {
@@ -21,10 +20,15 @@ import {
 	state as source,
 	set,
 	increment,
-	flush_eager_effects,
-	set_eager_effects_deferred
+	set_eager_effects_deferred,
+	unset_eager_effects_deferred
 } from './reactivity/sources.js';
-import { COMPONENT_SYMBOL, PROXY_META_SYMBOL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import {
+	COMPONENT_SYMBOL,
+	PROXY_META_SYMBOL,
+	PROXY_PATH_SYMBOL,
+	STATE_SYMBOL
+} from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { tag } from './dev/tracing.js';
@@ -39,7 +43,7 @@ const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
  *   self: any;
  *   sources: Map<any, Source<any>>;
  *   links: Array<{ pm: ProxyMeta, k: any }>;
- *   fires: Array<{ cb: () => void, fire: () => void, e: Effect }>;
+ *   fires: Array<{ cb: () => void, n: Source<number>, e: Effect }>;
  *   observed: boolean;
  * }} ProxyMeta
  */
@@ -50,7 +54,7 @@ const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
  * fork gating and deferral behaviour. The original callback is kept alongside so it
  * can be detached again by identity
  * @param {() => void} onchange
- * @returns {{ cb: () => void, fire: () => void, e: Effect }}
+ * @returns {{ cb: () => void, n: Source<number>, e: Effect }}
  */
 function create_fire(onchange) {
 	var notifier = source(0);
@@ -69,14 +73,40 @@ function create_fire(onchange) {
 		if (running) return;
 		running = true;
 
+		// the callback is user code, not part of the effect: it may write state
+		// (which `set` forbids inside eager effects) and must not track its reads
+		var previous_reaction = active_reaction;
+		set_active_reaction(null);
+
 		try {
-			untrack(onchange);
+			onchange();
 		} finally {
+			set_active_reaction(previous_reaction);
 			running = false;
 		}
 	});
 
-	return { cb: onchange, fire: () => increment(notifier), e: effect };
+	return { cb: onchange, n: notifier, e: effect };
+}
+
+/**
+ * Whether `link` still describes where `meta.self` sits in its parent: the parent's
+ * source for that key holds this proxy, or a user wrapper that forwards to it
+ * @param {{ pm: ProxyMeta, k: any }} link
+ * @param {ProxyMeta} meta
+ */
+function is_live(link, meta) {
+	var s = link.pm.sources.get(link.k);
+	if (s === undefined) return false;
+
+	var v = s.v;
+	return (
+		v === meta.self ||
+		(v !== null &&
+			typeof v === 'object' &&
+			STATE_SYMBOL in v &&
+			/** @type {any} */ (v)[PROXY_META_SYMBOL] === meta)
+	);
 }
 
 /**
@@ -94,9 +124,22 @@ function link_child(child, parent_meta, key) {
 
 	var links = meta.links;
 
-	for (var i = 0; i < links.length; i += 1) {
-		if (links[i].pm === parent_meta && links[i].k === key) return;
+	var linked = false;
+
+	// links to this parent under other keys survive only while those slots still hold
+	// the child, so index churn (`unshift`, `sort`) cannot grow the list
+	for (var i = links.length - 1; i >= 0; i -= 1) {
+		var link = links[i];
+		if (link.pm !== parent_meta) continue;
+
+		if (link.k === key) {
+			linked = true;
+		} else if (!is_live(link, meta)) {
+			links.splice(i, 1);
+		}
 	}
+
+	if (linked) return;
 
 	links.push({ pm: parent_meta, k: key });
 	observe(meta);
@@ -119,54 +162,50 @@ function observe(meta) {
 }
 
 /**
- * Walks rootward from `meta`, verifying each link against the parent's backing source
- * (`parent.sources.get(key).v === child`). Dead links are pruned in place; live chains
- * contribute their root callbacks to `fires`
+ * Walks rootward from `meta`, verifying each link against the parent's backing source.
+ * Dead links are pruned in place; live chains contribute their root notifiers to `fires`
  * @param {ProxyMeta} meta
  * @param {Set<ProxyMeta>} visited
- * @param {Set<() => void>} fires
+ * @param {Set<Source<number>>} fires
  */
 function collect_roots(meta, visited, fires) {
 	if (visited.has(meta)) return;
 	visited.add(meta);
 
 	for (var i = 0; i < meta.fires.length; i += 1) {
-		fires.add(meta.fires[i].fire);
+		fires.add(meta.fires[i].n);
 	}
 
 	var links = meta.links;
 
 	for (var j = links.length - 1; j >= 0; j -= 1) {
-		var link = links[j];
-		var s = link.pm.sources.get(link.k);
-
-		if (
-			s !== undefined &&
-			(s.v === meta.self ||
-				// the slot may hold a user wrapper around this proxy, which forwards the meta lookup
-				(s.v !== null &&
-					typeof s.v === 'object' &&
-					STATE_SYMBOL in s.v &&
-					/** @type {any} */ (s.v)[PROXY_META_SYMBOL] === meta))
-		) {
-			collect_roots(link.pm, visited, fires);
+		if (is_live(links[j], meta)) {
+			collect_roots(links[j].pm, visited, fires);
 		} else {
 			links.splice(j, 1);
 		}
-	}
-
-	if (links.length === 0 && meta.fires.length === 0) {
-		meta.observed = false;
 	}
 }
 
 /** @param {ProxyMeta} meta */
 function notify_onchange(meta) {
-	/** @type {Set<() => void>} */
+	/** @type {Set<ProxyMeta>} */
+	var visited = new Set();
+	/** @type {Set<Source<number>>} */
 	var fires = new Set();
-	collect_roots(meta, new Set(), fires);
+	collect_roots(meta, visited, fires);
 
-	for (var fire of fires) fire();
+	if (fires.size === 0) {
+		// nothing reachable fires any more (roots detached, or every route pruned), so the
+		// whole visited region leaves the observed state instead of walking on every write
+		for (var m of visited) {
+			m.links.length = 0;
+			m.observed = false;
+		}
+		return;
+	}
+
+	for (var n of fires) increment(n);
 }
 
 /**
@@ -196,22 +235,34 @@ export function remove_onchange(value, onchange) {
 	}
 }
 
+/** @type {WeakMap<Function, Function>} */
+var batched_methods = new WeakMap();
+
 /**
- * Wraps an array mutating method so onchange roots fire once per method call
- * rather than once per internal `set` (e.g. `push` writes an element and `length`)
+ * Wraps an array mutating method so eager effects run once per method call rather than
+ * once per internal `set` (e.g. `push` writes an element and `length`). Memoised per
+ * method, so `arr.push === arr.push` holds and reads allocate nothing
  * @param {Function} fn
  */
 function batch_eager_method(fn) {
-	return function (/** @type {any[]} */ ...args) {
-		set_eager_effects_deferred();
+	var wrapped = batched_methods.get(fn);
 
-		try {
-			// @ts-ignore
-			return fn.apply(this, args);
-		} finally {
-			flush_eager_effects();
-		}
-	};
+	if (wrapped === undefined) {
+		wrapped = function (/** @type {any[]} */ ...args) {
+			set_eager_effects_deferred();
+
+			try {
+				// @ts-ignore
+				return fn.apply(this, args);
+			} finally {
+				unset_eager_effects_deferred();
+			}
+		};
+
+		batched_methods.set(fn, wrapped);
+	}
+
+	return wrapped;
 }
 
 /**
@@ -325,6 +376,8 @@ export function proxy(value, onchange) {
 				e.state_descriptors_fixed();
 			}
 			var s = sources.get(prop);
+			var changed = s === undefined || s.v !== descriptor.value;
+
 			if (s === undefined) {
 				with_parent(() => {
 					var s = source(descriptor.value, stack);
@@ -336,6 +389,11 @@ export function proxy(value, onchange) {
 				});
 			} else {
 				set(s, descriptor.value, true);
+			}
+
+			if (changed && meta !== null && meta.observed) {
+				link_child(/** @type {Source<any>} */ (sources.get(prop)).v, meta, prop);
+				notify_onchange(meta);
 			}
 
 			return true;
@@ -544,24 +602,18 @@ export function proxy(value, onchange) {
 					set(s, np);
 					changed = !has || target[prop] !== value;
 
-					if (meta !== null && meta.observed) {
-						link_child(np, /** @type {ProxyMeta} */ (meta), prop);
-					}
-
 					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
 
-				var p = with_parent(() => proxy(value));
+				np = with_parent(() => proxy(value));
+				changed = s.v !== np;
+				set(s, np);
+			}
 
-				if (meta !== null && meta.observed) {
-					if (s.v !== p) changed = true;
-					set(s, p);
-					link_child(p, meta, prop);
-				} else {
-					set(s, p);
-				}
+			if (meta !== null && meta.observed) {
+				link_child(np, meta, prop);
 			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
@@ -689,16 +741,7 @@ function inspectable_array(array) {
 				return value;
 			}
 
-			/**
-			 * @this {any[]}
-			 * @param {any[]} args
-			 */
-			return function (...args) {
-				set_eager_effects_deferred();
-				var result = value.apply(this, args);
-				flush_eager_effects();
-				return result;
-			};
+			return batch_eager_method(value);
 		}
 	});
 }

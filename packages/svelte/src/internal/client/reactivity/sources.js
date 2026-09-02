@@ -59,10 +59,19 @@ export function set_eager_effects(v) {
 	eager_effects = v;
 }
 
-let eager_effects_deferred = false;
+// a depth, so a mutating array method called from inside another keeps the outer one deferred
+let eager_effects_deferred = 0;
 
 export function set_eager_effects_deferred() {
-	eager_effects_deferred = true;
+	eager_effects_deferred += 1;
+}
+
+export function unset_eager_effects_deferred() {
+	eager_effects_deferred -= 1;
+
+	if (eager_effects_deferred === 0 && eager_effects.size > 0) {
+		flush_eager_effects();
+	}
 }
 
 /**
@@ -259,7 +268,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+		if (!batch.is_fork && eager_effects.size > 0 && eager_effects_deferred === 0) {
 			flush_eager_effects();
 		}
 	}
@@ -268,32 +277,33 @@ export function internal_set(source, value, updated_during_traversal = null) {
 }
 
 export function flush_eager_effects() {
-	eager_effects_deferred = false;
+	try {
+		for (const effect of eager_effects) {
+			// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+			// instead of just updating the effects - this way we avoid overfiring.
+			if ((effect.f & CLEAN) !== 0) {
+				set_signal_status(effect, MAYBE_DIRTY);
+			}
 
-	for (const effect of eager_effects) {
-		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-		// instead of just updating the effects - this way we avoid overfiring.
-		if ((effect.f & CLEAN) !== 0) {
-			set_signal_status(effect, MAYBE_DIRTY);
+			let dirty;
+
+			try {
+				dirty = is_dirty(effect);
+			} catch {
+				// Dirty-checking can evaluate derived dependencies and throw in cases where
+				// parent effects are about to destroy this eager effect. Run the effect so
+				// its own error handling can deal with transient failures.
+				dirty = true;
+			}
+
+			if (dirty) {
+				update_effect(effect);
+			}
 		}
-
-		let dirty;
-
-		try {
-			dirty = is_dirty(effect);
-		} catch {
-			// Dirty-checking can evaluate derived dependencies and throw in cases where
-			// parent effects are about to destroy this eager effect. Run the effect so
-			// its own error handling can deal with transient failures.
-			dirty = true;
-		}
-
-		if (dirty) {
-			update_effect(effect);
-		}
+	} finally {
+		// an effect that throws must not stay queued, or the next unrelated write would rethrow it
+		eager_effects.clear();
 	}
-
-	eager_effects.clear();
 }
 
 /**
