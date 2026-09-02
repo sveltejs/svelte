@@ -374,4 +374,6 @@ export interface Fork {
 	discard(): void;
 }
 
+export type { StateOptions } from './internal/client/types.js';
+
 export * from './index-client.js';
