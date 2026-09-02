@@ -2,7 +2,7 @@
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import * as b from '#compiler/builders';
-import { build_getter } from '../utils.js';
+import { build_getter, prop_binding_may_be_in_teardown } from '../utils.js';
 
 /**
  * @param {Identifier} node
@@ -22,7 +22,8 @@ export function Identifier(node, context) {
 			context.state.analysis.runes && // can't do this in legacy mode because the proxy does more than just read/write
 			binding !== null &&
 			node !== binding.node &&
-			binding.kind === 'rest_prop'
+			binding.kind === 'rest_prop' &&
+			!prop_binding_may_be_in_teardown(binding, context.state)
 		) {
 			const grand_parent = context.path.at(-2);
 
