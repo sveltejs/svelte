@@ -2,6 +2,7 @@ import { assert, describe, it } from 'vitest';
 import { effect_root } from '../../src/internal/client/reactivity/effects';
 import { push, pop } from '../../src/internal/client/context';
 import { proxy, remove_onchange } from '../../src/internal/client/proxy';
+import { PROXY_META_SYMBOL } from '../../src/internal/client/constants';
 
 function run(fn: () => void) {
 	push({}, true);
@@ -293,6 +294,105 @@ describe('proxy onchange kernel', () => {
 			const descriptor = Object.getOwnPropertyDescriptor(state, 'child');
 			descriptor!.value.x = 2;
 			assert.equal(count, 1);
+		});
+	});
+
+	it('lets the callback write state', () => {
+		run(() => {
+			const other = proxy({ n: 0 } as any);
+			const state = proxy({ a: 1 } as any, () => other.n++);
+
+			state.a = 2;
+			assert.equal(other.n, 1);
+		});
+	});
+
+	it('does not let a throwing callback break later unrelated writes', () => {
+		run(() => {
+			const a = proxy({ v: 0 } as any, () => {
+				throw new Error('boom');
+			});
+			assert.throws(() => (a.v = 1), /boom/);
+
+			const b = proxy({ v: 0 } as any);
+			b.v = 1;
+			assert.equal(b.v, 1);
+		});
+	});
+
+	it('fires once for an array method whose callback mutates another observed array', () => {
+		run(() => {
+			let count = 0;
+			const other = proxy([1] as any[]);
+			const arr = proxy([3, 1, 2] as any[], () => count++);
+
+			arr.sort((x, y) => {
+				other.push(0);
+				return x - y;
+			});
+
+			assert.equal(count, 1);
+		});
+	});
+
+	it('keeps links bounded under index churn', () => {
+		run(() => {
+			const arr = proxy([{ id: 0 }, { id: 1 }, { id: 2 }] as any[], () => {});
+			const last = arr[2];
+
+			for (let i = 3; i < 200; i += 1) {
+				arr.unshift({ id: i });
+			}
+
+			// every element was read through the array's get trap many times under shifting keys
+			for (let i = 0; i < arr.length; i += 1) arr[i];
+
+			assert.equal(last[PROXY_META_SYMBOL].links.length, 1);
+		});
+	});
+
+	it('fires for defineProperty', () => {
+		run(() => {
+			let count = 0;
+			const state = proxy({ a: 1 } as any, () => count++);
+
+			Object.defineProperty(state, 'b', {
+				value: 2,
+				enumerable: true,
+				configurable: true,
+				writable: true
+			});
+			assert.equal(count, 1);
+			assert.equal(state.b, 2);
+		});
+	});
+
+	it('stops walking a subtree once no root can fire', () => {
+		run(() => {
+			const cb = () => {};
+			const state = proxy({ a: { b: 1 } } as any, cb);
+			const child = state.a;
+			assert.equal(child[PROXY_META_SYMBOL].observed, true);
+
+			remove_onchange(state, cb);
+			child.b = 2;
+
+			assert.equal(child[PROXY_META_SYMBOL].observed, false);
+			assert.equal(child[PROXY_META_SYMBOL].links.length, 0);
+		});
+	});
+
+	it('does not loop when the callback mutates its own tree', () => {
+		run(() => {
+			let count = 0;
+			const state = proxy({ a: 1, log: 0 } as any, () => {
+				count++;
+				state.log++;
+			});
+
+			state.a = 2;
+			assert.equal(count, 1);
+			assert.equal(state.log, 1);
 		});
 	});
 });
