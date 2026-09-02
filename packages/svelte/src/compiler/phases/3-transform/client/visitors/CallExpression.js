@@ -5,6 +5,7 @@ import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { should_proxy } from '../utils.js';
 import { get_inspect_args } from '../../utils.js';
+import { get_onchange, with_onchange } from './shared/state.js';
 
 /**
  * @param {CallExpression} node
@@ -40,7 +41,11 @@ export function CallExpression(node, context) {
 			}
 
 			const callee = b.id('$.state', node.callee.loc);
-			return b.call(callee, value);
+			const onchange = get_onchange(
+				/** @type {Expression | undefined} */ (node.arguments[1]),
+				context
+			);
+			return with_onchange(b.call(callee, value), onchange);
 		}
 
 		case '$derived':

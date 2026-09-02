@@ -15,6 +15,11 @@ export interface Signal {
 	wv: number;
 }
 
+export interface StateOptions {
+	/** Called synchronously whenever the state is reassigned or, for `$state`, mutated anywhere in its tree */
+	onchange?: () => void;
+}
+
 export interface Value<V = unknown> extends Signal {
 	/** Equality function */
 	equals: Equals;
@@ -24,6 +29,8 @@ export interface Value<V = unknown> extends Signal {
 	rv: number;
 	/** The latest value for this signal */
 	v: V;
+	/** `onchange` callback, fired on reassignment and attached to every proxy tree this source holds */
+	o?: () => void;
 
 	// dev-only
 	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */

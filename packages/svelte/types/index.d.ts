@@ -458,16 +458,9 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
-	export function hydratable<T>(key: string, fn: () => T): T;
-	/**
-	 * Create a snippet programmatically
-	 * */
-	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
-		render: () => string;
-		setup?: (element: Element) => void | (() => void);
-	}): Snippet<Params>;
-	/** Anything except a function */
-	type NotFunction<T> = T extends Function ? never : T;
+	type Getters<T> = {
+		[K in keyof T]: () => T[K];
+	};
 	/**
 	 * Synchronously flush any pending updates.
 	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
@@ -491,6 +484,20 @@ declare module 'svelte' {
 	 * @since 5.42
 	 */
 	export function fork(fn: () => void): Fork;
+	export interface StateOptions {
+		/** Called synchronously whenever the state is reassigned or, for `$state`, mutated anywhere in its tree */
+		onchange?: () => void;
+	}
+	export function hydratable<T>(key: string, fn: () => T): T;
+	/**
+	 * Create a snippet programmatically
+	 * */
+	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
+		render: () => string;
+		setup?: (element: Element) => void | (() => void);
+	}): Snippet<Params>;
+	/** Anything except a function */
+	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Returns a `[get, set, has]` triplet of functions for working with context in a type-safe way.
 	 *
@@ -605,9 +612,6 @@ declare module 'svelte' {
 	 * ```
 	 * */
 	export function untrack<T>(fn: () => T): T;
-	type Getters<T> = {
-		[K in keyof T]: () => T[K];
-	};
 
 	export {};
 }
@@ -3338,6 +3342,11 @@ declare module 'svelte/types/compiler/interfaces' {
  *
  * @param initial The initial value
  */
+declare function $state<T>(
+	initial: undefined,
+	options?: import('svelte').StateOptions
+): T | undefined;
+declare function $state<T>(initial: T, options?: import('svelte').StateOptions): T;
 declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
@@ -3448,6 +3457,11 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
+	export function raw<T>(
+		initial: undefined,
+		options?: import('svelte').StateOptions
+	): T | undefined;
+	export function raw<T>(initial?: T, options?: import('svelte').StateOptions): T;
 	export function raw<T>(initial: T): T;
 	export function raw<T>(): T | undefined;
 	/**
