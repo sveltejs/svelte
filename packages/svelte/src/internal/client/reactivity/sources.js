@@ -28,7 +28,8 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	CONNECTED,
-	REACTION_IS_UPDATING
+	REACTION_IS_UPDATING,
+	STATE_SYMBOL
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -42,7 +43,7 @@ import {
 	schedule_effect,
 	legacy_updates
 } from './batch.js';
-import { proxy } from '../proxy.js';
+import { proxy, remove_onchange } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
@@ -59,10 +60,19 @@ export function set_eager_effects(v) {
 	eager_effects = v;
 }
 
-let eager_effects_deferred = false;
+// a depth, so a mutating array method called from inside another keeps the outer one deferred
+let eager_effects_deferred = 0;
 
 export function set_eager_effects_deferred() {
-	eager_effects_deferred = true;
+	eager_effects_deferred += 1;
+}
+
+export function unset_eager_effects_deferred() {
+	eager_effects_deferred -= 1;
+
+	if (eager_effects_deferred === 0 && eager_effects.size > 0) {
+		flush_eager_effects();
+	}
 }
 
 /**
@@ -180,6 +190,14 @@ export function set(source, value, should_proxy = false) {
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
+		var callback = source.o;
+
+		if (callback !== undefined) {
+			// the old tree stops reporting to this source's callback, the new one starts
+			remove_onchange(source.v, callback);
+			attach_onchange(value, callback);
+		}
+
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -259,41 +277,82 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+		if (!batch.is_fork && eager_effects.size > 0 && eager_effects_deferred === 0) {
 			flush_eager_effects();
 		}
+
+		if (callback !== undefined) callback();
 	}
 
 	return value;
 }
 
-export function flush_eager_effects() {
-	eager_effects_deferred = false;
+/**
+ * Registers `onchange` on a state source: it fires when the source is reassigned, and
+ * every proxy tree the source holds reports its mutations to it
+ * @template {Source} S
+ * @param {S} source
+ * @param {() => void} callback
+ * @returns {S}
+ */
+export function onchange(source, callback) {
+	var running = false;
 
-	for (const effect of eager_effects) {
-		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-		// instead of just updating the effects - this way we avoid overfiring.
-		if ((effect.f & CLEAN) !== 0) {
-			set_signal_status(effect, MAYBE_DIRTY);
-		}
-
-		let dirty;
+	// one guard per declaration, shared by the reassignment path and every proxy tree
+	// the source holds, so a callback that writes its own state runs once
+	source.o = () => {
+		if (running) return;
+		running = true;
 
 		try {
-			dirty = is_dirty(effect);
-		} catch {
-			// Dirty-checking can evaluate derived dependencies and throw in cases where
-			// parent effects are about to destroy this eager effect. Run the effect so
-			// its own error handling can deal with transient failures.
-			dirty = true;
+			callback();
+		} finally {
+			running = false;
 		}
+	};
 
-		if (dirty) {
-			update_effect(effect);
-		}
+	attach_onchange(source.v, source.o);
+	return source;
+}
+
+/**
+ * @param {unknown} value
+ * @param {() => void} callback
+ */
+function attach_onchange(value, callback) {
+	if (typeof value === 'object' && value !== null && STATE_SYMBOL in value) {
+		proxy(value, callback);
 	}
+}
 
-	eager_effects.clear();
+export function flush_eager_effects() {
+	try {
+		for (const effect of eager_effects) {
+			// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+			// instead of just updating the effects - this way we avoid overfiring.
+			if ((effect.f & CLEAN) !== 0) {
+				set_signal_status(effect, MAYBE_DIRTY);
+			}
+
+			let dirty;
+
+			try {
+				dirty = is_dirty(effect);
+			} catch {
+				// Dirty-checking can evaluate derived dependencies and throw in cases where
+				// parent effects are about to destroy this eager effect. Run the effect so
+				// its own error handling can deal with transient failures.
+				dirty = true;
+			}
+
+			if (dirty) {
+				update_effect(effect);
+			}
+		}
+	} finally {
+		// an effect that throws must not stay queued, or the next unrelated write would rethrow it
+		eager_effects.clear();
+	}
 }
 
 /**
