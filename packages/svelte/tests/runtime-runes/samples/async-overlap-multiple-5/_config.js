@@ -52,7 +52,7 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-			a 0 | b 0 | c 1 | d 1
+			a 0 | b 0 | c 0 | d 0
 			<button>a++</button>
 			<button>c++</button>
 			<button>shift</button>

@@ -9,6 +9,8 @@
 	const items = $derived(extraKey === null ? base : [...base, extraKey]);
 
 	/** @type {((value: string) => void) | undefined} */
+	let resolveA;
+	/** @type {((value: string) => void) | undefined} */
 	let resolveB;
 
 	/**
@@ -19,7 +21,8 @@
 		n === 0
 			? Promise.resolve(`${name}0`)
 			: new Promise((r) => {
-					if (name === 'B') resolveB = r;
+					if (name === 'A') resolveA = r;
+					else resolveB = r;
 				});
 
 	const a = $derived(await gate('A', tickA));
@@ -34,15 +37,12 @@
 		base = [];
 		tickB = 1;
 	}
-
-	function settleB() {
-		resolveB?.('B1');
-	}
 </script>
 
 <button onclick={startA}>startA</button>
 <button onclick={startB}>startB</button>
-<button onclick={settleB}>settleB</button>
+<button onclick={() => resolveA?.('A1')}>settleA</button>
+<button onclick={() => resolveB?.('B1')}>settleB</button>
 
 <p>{a}/{b}</p>
 

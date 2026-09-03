@@ -7,12 +7,21 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch.js';
 
 export interface Signal {
 	/** Flags bitmask */
 	f: number;
 	/** Write version */
 	wv: number;
+	/**
+	 * The batch that most recently claimed this signal.
+	 * Only set for sources, non-render-only deriveds and user/block/async effects.
+	 * If two batches claim the same reaction, their reactivity graphs overlap and are merged,
+	 * unless the newer batch is waiting behind a sealed predecessor.
+	 * A claim expires when its batch is committed or discarded (`!batch.linked`)
+	 */
+	batch: null | Batch;
 }
 
 export interface Value<V = unknown> extends Signal {

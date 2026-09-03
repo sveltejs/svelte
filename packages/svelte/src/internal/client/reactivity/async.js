@@ -37,7 +37,7 @@ export function flatten(blockers, sync, async, fn) {
 	// Filter out already-settled blockers - no need to wait for them
 	var pending = blockers.filter((b) => !b.settled);
 
-	var deriveds = sync.map(d);
+	var deriveds = sync.map((expression) => d(expression));
 
 	if (DEV) {
 		deriveds.forEach((d, i) => {

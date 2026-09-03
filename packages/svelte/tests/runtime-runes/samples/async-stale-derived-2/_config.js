@@ -2,7 +2,7 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO this one is tricky
+	skip: true, // TODO this one is tricky; are the assertions actually correct still? why don't we need two b.click()s at the end? (if so the test passes)
 
 	async test({ assert, target }) {
 		const [increment, a, b] = target.querySelectorAll('button');

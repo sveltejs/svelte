@@ -21,9 +21,12 @@ export default test({
 		await tick();
 		assert.htmlEqual(p.innerHTML, `0 + 0 = 0 | 0 0`);
 
+		// the two batches share the awaited `a + b` expression, so they were
+		// merged into one — resolving the superseded first run does nothing,
+		// and the combined state commits once all async work has settled
 		pop.click();
 		await tick();
-		assert.htmlEqual(p.innerHTML, `1 + 0 = 1 | 1 0`);
+		assert.htmlEqual(p.innerHTML, `0 + 0 = 0 | 0 0`);
 
 		shift.click();
 		await tick();

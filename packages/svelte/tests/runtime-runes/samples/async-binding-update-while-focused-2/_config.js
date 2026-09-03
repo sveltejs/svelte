@@ -25,9 +25,12 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `<button>shift</button><input type="number" /> <p>0</p>`);
 		assert.equal(input.value, '2');
 
+		// both edits write `count` and therefore share the async work — they are
+		// merged into a single batch, in which the first in-flight run is
+		// superseded. Only resolving the final run commits
 		shift.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `<button>shift</button><input type="number" /> <p>1</p>`);
+		assert.htmlEqual(target.innerHTML, `<button>shift</button><input type="number" /> <p>0</p>`);
 		assert.equal(input.value, '2');
 
 		shift.click();
