@@ -9,6 +9,8 @@ export interface SSRContext {
 	c: null | Map<unknown, unknown>;
 	/** renderer */
 	r: null | Renderer;
+	/** True if initialized, i.e. an `await` was reached */
+	i: boolean;
 	/** dev mode only: the current component function */
 	function?: any;
 	/** dev mode only: the current element */

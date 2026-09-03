@@ -446,22 +446,6 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
- * `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
- * @returns {never}
- */
-export function set_context_after_init() {
-	if (DEV) {
-		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/set_context_after_init`);
-	}
-}
-
-/**
  * A snippet created in a component with a custom renderer cannot be rendered by a different renderer
  * @returns {never}
  */

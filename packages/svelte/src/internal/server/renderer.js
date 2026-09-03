@@ -162,6 +162,11 @@ export class Renderer {
 		let promise = Promise.resolve(thunks[0]());
 		const promises = [promise];
 
+		if (context !== null && thunks.length > 1) {
+			// the remaining thunks run after an `await`, by which point it is too late to set context
+			context.i = true;
+		}
+
 		for (const fn of thunks.slice(1)) {
 			promise = promise.then(() => {
 				const previous_context = ssr_context;
@@ -209,7 +214,8 @@ export class Renderer {
 			...ssr_context,
 			p: parent,
 			c: null,
-			r: child
+			r: child,
+			i: ssr_context?.i ?? false
 		});
 
 		const result = fn(child);
@@ -260,7 +266,8 @@ export class Renderer {
 			...ssr_context,
 			p: parent_context,
 			c: null,
-			r: child
+			r: child,
+			i: ssr_context?.i ?? false
 		});
 
 		try {
@@ -859,7 +866,7 @@ export class Renderer {
 
 		try {
 			/** @type {SSRContext} */
-			const context = { p: null, c: options.context ?? null, r: renderer };
+			const context = { p: null, c: options.context ?? null, r: renderer, i: false };
 			set_ssr_context(context);
 
 			renderer.push(BLOCK_OPEN);

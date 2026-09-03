@@ -33,10 +33,14 @@ export let component_name = '<unknown>';
 export let source;
 
 /**
- * The source code split into lines (set by `set_source`)
- * @type {string[]}
+ * The source code split into lines, initialized when a diagnostic needs a code frame
+ * @type {string[] | undefined}
  */
-export let source_lines = [];
+let source_lines;
+
+export function get_source_lines() {
+	return (source_lines ??= source.split('\n'));
+}
 
 /**
  * True if compiling with `dev: true`
@@ -61,7 +65,7 @@ export let locator;
 /** @param {string} value */
 export function set_source(value) {
 	source = value;
-	source_lines = source.split('\n');
+	source_lines = undefined;
 
 	const l = getLocator(source, { offsetLine: 1 });
 
@@ -151,7 +155,7 @@ export function reset(state) {
 	custom_renderer = undefined;
 	component_name = UNKNOWN_FILENAME;
 	source = '';
-	source_lines = [];
+	source_lines = undefined;
 	filename = (state.filename ?? UNKNOWN_FILENAME).replace(/\\/g, '/');
 	warning_filter = state.warning ?? (() => true);
 	warnings = [];
