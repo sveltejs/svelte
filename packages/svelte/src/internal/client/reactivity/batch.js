@@ -17,6 +17,7 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
+	REACTION_IS_UPDATING,
 	DESTROYING
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
@@ -1011,6 +1012,23 @@ export class Batch {
  * @returns {T}
  */
 export function flushSync(fn) {
+	// If we're still constructing the effect tree (e.g. `flushSync` called at the
+	// top of a component script, while the enclosing branch effect's update is in
+	// flight), there is nothing user-visible to flush yet — and flushing the
+	// half-built tree corrupts it: the traverse can't reach branches that aren't
+	// attached to their parent yet, leaving their CLEAN flags unbalanced, which
+	// makes every later `schedule` call on effects inside them bail. The branch's
+	// in-flight update will settle the tree, and the batch flushes normally
+	// afterwards.
+	if (
+		active_effect !== null &&
+		(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0 &&
+		(active_effect.f & REACTION_IS_UPDATING) !== 0
+	) {
+		if (fn) return fn();
+		return;
+	}
+
 	var was_flushing_sync = is_flushing_sync;
 	is_flushing_sync = true;
 
