@@ -350,7 +350,7 @@ export function slot(renderer, $$props, name, slot_props, fallback_fn) {
 
 /**
  * @param {Record<string, unknown>} props
- * @param {string[]} rest
+ * @param {Set<string>} rest
  * @returns {Record<string, unknown>}
  */
 export function rest_props(props, rest) {
@@ -358,7 +358,7 @@ export function rest_props(props, rest) {
 	const rest_props = {};
 	let key;
 	for (key of Object.keys(props)) {
-		if (!rest.includes(key)) {
+		if (!rest.has(key)) {
 			rest_props[key] = props[key];
 		}
 	}
