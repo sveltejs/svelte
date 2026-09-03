@@ -966,16 +966,25 @@ export class Batch {
 			}
 
 			if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-				if ((flags & CLEAN) === 0) {
-					// branch is already dirty, bail
-					return;
-				}
-
+			// Mark the branch dirty if it isn't already. Previously we bailed here
+			// when the branch was already dirty, assuming some batch already had
+			// the root queued for traversal. But CLEAN/DIRTY flags live on the
+			// shared effect tree while `#roots` is per-batch, so that assumption
+			// breaks when the owning batch is dropped (e.g. after a `flushSync()`
+			// inside a render-phase effect drops a batch whose roots were already
+			// populated), leaving the root marked dirty but owned by no batch.
+			// Every later schedule() would then bail here and traverse nothing,
+			// permanently killing the root's reactivity. Instead, keep walking to
+			// the root and enqueue it (deduped) so this batch traverses it.
+			// See https://github.com/sveltejs/svelte/issues/18546
+			if ((flags & CLEAN) !== 0) {
 				e.f ^= CLEAN;
 			}
 		}
 
-		this.#roots.push(e);
+		if (!this.#roots.includes(e)) {
+			this.#roots.push(e);
+		}
 	}
 
 	#unlink() {
