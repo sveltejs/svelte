@@ -230,7 +230,7 @@ const css_visitors = {
 						}
 
 						if (child.combinator && child.combinator.name !== ' ') {
-							e.css_global_block_invalid_combinator(child, child.combinator.name);
+							e.css_global_block_invalid_combinator(child, { name: child.combinator.name });
 						}
 
 						const declaration = node.block.children.find((child) => child.type === 'Declaration');

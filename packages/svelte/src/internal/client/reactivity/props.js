@@ -59,7 +59,7 @@ const rest_props_handler = {
 	set(target, key) {
 		if (DEV) {
 			// TODO should this happen in prod too?
-			e.props_rest_readonly(`${target.name}.${String(key)}`);
+			e.props_rest_readonly({ property: `${target.name}.${String(key)}` });
 		}
 
 		return false;
@@ -326,7 +326,7 @@ export function prop(props, key, flags, fallback) {
 		initial_value = get_fallback();
 
 		if (setter) {
-			if (runes) e.props_invalid_value(key);
+			if (runes) e.props_invalid_value({ key });
 			setter(initial_value);
 		}
 	}

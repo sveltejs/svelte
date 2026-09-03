@@ -123,7 +123,7 @@ export function RegularElement(node, context) {
 		binding.declaration_kind === 'import' &&
 		binding.references.length === 0
 	) {
-		w.component_name_lowercase(node, node.name);
+		w.component_name_lowercase(node, { name: node.name });
 	}
 
 	node.metadata.has_spread = node.attributes.some(
@@ -180,9 +180,9 @@ export function RegularElement(node, context) {
 					const message = is_tag_valid_with_parent(node.name, context.state.parent_element);
 					if (message) {
 						if (only_warn) {
-							w.node_invalid_placement_ssr(node, message);
+							w.node_invalid_placement_ssr(node, { message });
 						} else {
-							e.node_invalid_placement(node, message);
+							e.node_invalid_placement(node, { message });
 						}
 					}
 
@@ -194,9 +194,9 @@ export function RegularElement(node, context) {
 				const message = is_tag_valid_with_ancestor(node.name, ancestors);
 				if (message) {
 					if (only_warn) {
-						w.node_invalid_placement_ssr(node, message);
+						w.node_invalid_placement_ssr(node, { message });
 					} else {
-						e.node_invalid_placement(node, message);
+						e.node_invalid_placement(node, { message });
 					}
 				}
 			} else if (
@@ -220,7 +220,7 @@ export function RegularElement(node, context) {
 		!is_svg(node_name) &&
 		!is_mathml(node_name)
 	) {
-		w.element_invalid_self_closing_tag(node, node.name);
+		w.element_invalid_self_closing_tag(node, { name: node.name });
 	}
 
 	context.next({ ...context.state, parent_element: node.name });

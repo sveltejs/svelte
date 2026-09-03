@@ -618,7 +618,7 @@ export function get(signal) {
 		) {
 			reactivity_loss_tracker.warned = true;
 
-			w.await_reactivity_loss(/** @type {string} */ (signal.label));
+			w.await_reactivity_loss({ name: /** @type {string} */ (signal.label) });
 
 			var trace = get_error('traced at');
 			// eslint-disable-next-line no-console

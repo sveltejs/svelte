@@ -54,7 +54,7 @@ export function ClassBody(node, context) {
 
 		if (rune && is_state_creation_rune(rune)) {
 			if (state_fields.has(name)) {
-				e.state_field_duplicate(node, name);
+				e.state_field_duplicate(node, { name });
 			}
 
 			const _key = (node.type === 'AssignmentExpression' || !node.static ? '' : '@') + name;
@@ -62,7 +62,7 @@ export function ClassBody(node, context) {
 
 			// if there's already a method or assigned field, error
 			if (field && !(field.length === 1 && field[0] === 'prop')) {
-				e.duplicate_class_field(node, _key);
+				e.duplicate_class_field(node, { name: _key });
 			}
 
 			state_fields.set(name, {
@@ -84,7 +84,7 @@ export function ClassBody(node, context) {
 				fields.set(key, [child.value ? 'assigned_prop' : 'prop']);
 				continue;
 			}
-			e.duplicate_class_field(child, key);
+			e.duplicate_class_field(child, { name: key });
 		}
 
 		if (child.type === 'MethodDefinition') {
@@ -102,7 +102,7 @@ export function ClassBody(node, context) {
 					field.includes('prop') ||
 					field.includes('assigned_prop')
 				) {
-					e.duplicate_class_field(child, key);
+					e.duplicate_class_field(child, { name: key });
 				}
 				if (child.kind === 'get') {
 					if (field.length === 1 && field[0] === 'set') {
@@ -118,7 +118,7 @@ export function ClassBody(node, context) {
 					field.push(child.kind);
 					continue;
 				}
-				e.duplicate_class_field(child, key);
+				e.duplicate_class_field(child, { name: key });
 			}
 		}
 	}

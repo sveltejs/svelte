@@ -106,15 +106,17 @@ export default function element(parser) {
 					const end = parent.fragment.nodes[0]?.start ?? start;
 					w.element_implicitly_closed(
 						{ start: parent.start, end },
-						`</${name}>`,
-						`</${parent.name}>`
+						{ tag: `</${name}>`, closing: `</${parent.name}>` }
 					);
 				}
 			} else if (!parser.loose) {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
-					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
+					e.element_invalid_closing_tag_autoclosed(start, {
+						name,
+						reason: parser.last_auto_closed_tag.reason
+					});
 				} else {
-					e.element_invalid_closing_tag(start, name);
+					e.element_invalid_closing_tag(start, { name });
 				}
 			}
 
@@ -138,7 +140,7 @@ export default function element(parser) {
 
 	if (tag.name.startsWith('svelte:') && !meta_tags.has(tag.name)) {
 		const bounds = { start: start + 1, end: start + 1 + tag.name.length };
-		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
+		e.svelte_meta_invalid_tag(bounds, { list: list(Array.from(meta_tags.keys())) });
 	}
 
 	if (!is_valid_element_name(tag.name) && !regex_valid_component_name.test(tag.name)) {
@@ -151,11 +153,11 @@ export default function element(parser) {
 
 	if (root_only_meta_tags.has(tag.name)) {
 		if (tag.name in parser.meta_tags) {
-			e.svelte_meta_duplicate(start, tag.name);
+			e.svelte_meta_duplicate(start, { name: tag.name });
 		}
 
 		if (parent.type !== 'Root') {
-			e.svelte_meta_invalid_placement(start, tag.name);
+			e.svelte_meta_invalid_placement(start, { name: tag.name });
 		}
 
 		parser.meta_tags[tag.name] = true;
@@ -209,7 +211,10 @@ export default function element(parser) {
 
 	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, tag.name)) {
 		const end = parent.fragment.nodes[0]?.start ?? start;
-		w.element_implicitly_closed({ start: parent.start, end }, `<${tag.name}>`, `</${parent.name}>`);
+		w.element_implicitly_closed(
+			{ start: parent.start, end },
+			{ tag: `<${tag.name}>`, closing: `</${parent.name}>` }
+		);
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
@@ -504,7 +509,7 @@ function read_static_attribute(parser) {
 	}
 
 	if (parser.match_regex(regex_starts_with_quote_characters)) {
-		e.expected_token(parser.index, '=');
+		e.expected_token(parser.index, { token: '=' });
 	}
 
 	return create_attribute(tag.name, tag.loc, start, parser.index, value);
@@ -638,14 +643,14 @@ function read_attribute(parser) {
 			end = parser.index;
 		}
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
-		e.expected_token(parser.index, '=');
+		e.expected_token(parser.index, { token: '=' });
 	}
 
 	if (type) {
 		const [directive_name, ...modifiers] = tag.name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
-			e.directive_missing_name({ start, end: start + colon_index + 1 }, tag.name);
+			e.directive_missing_name({ start, end: start + colon_index + 1 }, { type: tag.name });
 		}
 
 		if (type === 'StyleDirective') {
@@ -818,7 +823,7 @@ function read_attribute_value(parser) {
 			const pos = error.position?.[0];
 			if (pos !== undefined && parser.template.slice(pos - 1, pos + 1) === '/>') {
 				parser.index = pos;
-				e.expected_token(pos, quote_mark || '}');
+				e.expected_token(pos, { token: quote_mark || '}' });
 			}
 		}
 		throw error;
@@ -874,13 +879,13 @@ function read_sequence(parser, done, location) {
 				parser.eat('#');
 				// const name = parser.read_until_regex(/[^a-z]/);
 				const name = read_lowercase_name(parser);
-				e.block_invalid_placement(index, name, location);
+				e.block_invalid_placement(index, { name, location });
 			} else if (parser.match('@')) {
 				const index = parser.index - 1;
 				parser.eat('@');
 				// const name = parser.read_until_regex(/[^a-z]/);
 				const name = read_lowercase_name(parser);
-				e.tag_invalid_placement(index, name, location);
+				e.tag_invalid_placement(index, { name, location });
 			}
 
 			flush(parser.index - 1);

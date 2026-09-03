@@ -12,7 +12,10 @@ import * as w from '../warnings.js';
  */
 function compare(a, b, property, location) {
 	if (a !== b && typeof b === 'object' && STATE_SYMBOL in b) {
-		w.assignment_value_stale(property, /** @type {string} */ (sanitize_location(location)));
+		w.assignment_value_stale({
+			property,
+			location: /** @type {string} */ (sanitize_location(location))
+		});
 	}
 
 	return a;

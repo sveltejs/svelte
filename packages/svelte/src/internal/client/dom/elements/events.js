@@ -363,7 +363,7 @@ export function apply(
 		const description = `\`${event_name}\` handler${location}`;
 		const suggestion = remove_parens ? 'remove the trailing `()`' : 'add a leading `() =>`';
 
-		w.event_handler_invalid(description, suggestion);
+		w.event_handler_invalid({ handler: description, suggestion });
 
 		if (error) {
 			throw error;

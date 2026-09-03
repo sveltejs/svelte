@@ -31,7 +31,7 @@ export function SnippetBlock(node, context) {
 		const name = node.expression.name;
 
 		if (context.state.analysis.instance.scope.declarations.has(name)) {
-			e.declaration_duplicate(node.expression, name);
+			e.declaration_duplicate(node.expression, { name });
 		}
 
 		node.metadata.can_hoist =
@@ -56,7 +56,7 @@ export function SnippetBlock(node, context) {
 				attribute.name === node.expression.name
 		)
 	) {
-		e.snippet_shadowing_prop(node, node.expression.name);
+		e.snippet_shadowing_prop(node, { prop: node.expression.name });
 	}
 
 	if (node.expression.name !== 'children') return;

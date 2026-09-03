@@ -12,7 +12,7 @@ import { DEV } from 'esm-env';
  */
 export function hydratable(key, fn) {
 	if (!async_mode_flag) {
-		e.experimental_async_required('hydratable');
+		e.experimental_async_required({ name: 'hydratable' });
 	}
 
 	if (hydrating) {
@@ -23,9 +23,9 @@ export function hydratable(key, fn) {
 		}
 
 		if (DEV) {
-			e.hydratable_missing_but_required(key);
+			e.hydratable_missing_but_required({ key });
 		} else {
-			w.hydratable_missing_but_expected(key);
+			w.hydratable_missing_but_expected({ key });
 		}
 	}
 

@@ -16,7 +16,7 @@ export function SvelteDocument(node, context) {
 		if (attribute.type === 'Attribute' && is_event_attribute(attribute)) {
 			check_global_event_reference(attribute, context);
 		} else if (attribute.type === 'SpreadAttribute' || attribute.type === 'Attribute') {
-			e.illegal_element_attribute(attribute, 'svelte:document');
+			e.illegal_element_attribute(attribute, { name: 'svelte:document' });
 		}
 	}
 

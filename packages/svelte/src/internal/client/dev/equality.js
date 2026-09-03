@@ -19,7 +19,7 @@ export function init_array_prototype_warnings() {
 		if (index === -1) {
 			for (let i = from_index ?? 0; i < this.length; i += 1) {
 				if (get_proxied_value(this[i]) === item) {
-					w.state_proxy_equality_mismatch('array.indexOf(...)');
+					w.state_proxy_equality_mismatch({ operator: 'array.indexOf(...)' });
 					break;
 				}
 			}
@@ -36,7 +36,7 @@ export function init_array_prototype_warnings() {
 		if (index === -1) {
 			for (let i = 0; i <= (from_index ?? this.length - 1); i += 1) {
 				if (get_proxied_value(this[i]) === item) {
-					w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
+					w.state_proxy_equality_mismatch({ operator: 'array.lastIndexOf(...)' });
 					break;
 				}
 			}
@@ -51,7 +51,7 @@ export function init_array_prototype_warnings() {
 		if (!has) {
 			for (let i = 0; i < this.length; i += 1) {
 				if (get_proxied_value(this[i]) === item) {
-					w.state_proxy_equality_mismatch('array.includes(...)');
+					w.state_proxy_equality_mismatch({ operator: 'array.includes(...)' });
 					break;
 				}
 			}
@@ -79,7 +79,7 @@ export function strict_equals(a, b, equal = true) {
 	// which could be disallowed for example in a secure context
 	try {
 		if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
-			w.state_proxy_equality_mismatch(equal ? '===' : '!==');
+			w.state_proxy_equality_mismatch({ operator: equal ? '===' : '!==' });
 		}
 	} catch {}
 
@@ -94,7 +94,7 @@ export function strict_equals(a, b, equal = true) {
  */
 export function equals(a, b, equal = true) {
 	if ((a == b) !== (get_proxied_value(a) == get_proxied_value(b))) {
-		w.state_proxy_equality_mismatch(equal ? '==' : '!=');
+		w.state_proxy_equality_mismatch({ operator: equal ? '==' : '!=' });
 	}
 
 	return (a == b) === equal;

@@ -113,17 +113,20 @@ export function check_element(node, context) {
 		if (name.startsWith('aria-')) {
 			if (invisible_elements.includes(node.name)) {
 				// aria-unsupported-elements
-				w.a11y_aria_attributes(attribute, node.name);
+				w.a11y_aria_attributes(attribute, { name: node.name });
 			}
 
 			const type = name.slice(5);
 			if (!aria_attributes.includes(type)) {
 				const match = fuzzymatch(type, aria_attributes);
-				w.a11y_unknown_aria_attribute(attribute, type, match);
+				w.a11y_unknown_aria_attribute(
+					attribute,
+					match === null ? { attribute: type } : { attribute: type, suggestion: match }
+				);
 			}
 
 			if (name === 'aria-hidden' && regex_heading_tags.test(node.name)) {
-				w.a11y_hidden(attribute, node.name);
+				w.a11y_hidden(attribute, { name: node.name });
 			}
 
 			// aria-proptypes
@@ -151,7 +154,7 @@ export function check_element(node, context) {
 			case 'role': {
 				if (invisible_elements.includes(node.name)) {
 					// aria-unsupported-elements
-					w.a11y_misplaced_role(attribute, node.name);
+					w.a11y_misplaced_role(attribute, { name: node.name });
 				}
 
 				const value = get_static_value(attribute);
@@ -162,10 +165,13 @@ export function check_element(node, context) {
 					const current_role = /** @type {ARIARoleDefinitionKey} current_role */ (c_r);
 
 					if (current_role && is_abstract_role(current_role)) {
-						w.a11y_no_abstract_role(attribute, current_role);
+						w.a11y_no_abstract_role(attribute, { role: current_role });
 					} else if (current_role && !aria_roles.includes(current_role)) {
 						const match = fuzzymatch(current_role, aria_roles);
-						w.a11y_unknown_role(attribute, current_role, match);
+						w.a11y_unknown_role(
+							attribute,
+							match === null ? { role: current_role } : { role: current_role, suggestion: match }
+						);
 					}
 
 					// no-redundant-roles
@@ -176,7 +182,7 @@ export function check_element(node, context) {
 						// <a role="link" /> is ok because without href the a tag doesn't have a role of link
 						!(node.name === 'a' && !attribute_map.has('href'))
 					) {
-						w.a11y_no_redundant_roles(attribute, current_role);
+						w.a11y_no_redundant_roles(attribute, { role: current_role });
 					}
 
 					// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
@@ -185,7 +191,7 @@ export function check_element(node, context) {
 						const has_nested_redundant_role =
 							current_role === a11y_nested_implicit_semantics.get(node.name);
 						if (has_nested_redundant_role) {
-							w.a11y_no_redundant_roles(attribute, current_role);
+							w.a11y_no_redundant_roles(attribute, { role: current_role });
 						}
 					}
 
@@ -201,14 +207,13 @@ export function check_element(node, context) {
 								!has_spread &&
 								required_role_props.some((prop) => !attributes.find((a) => a.name === prop));
 							if (has_missing_props) {
-								w.a11y_role_has_required_aria_props(
-									attribute,
-									current_role,
-									list(
+								w.a11y_role_has_required_aria_props(attribute, {
+									role: current_role,
+									props: list(
 										required_role_props.map((v) => `"${v}"`),
 										'and'
 									)
-								);
+								});
 							}
 						}
 					}
@@ -227,7 +232,7 @@ export function check_element(node, context) {
 							a11y_interactive_handlers.includes(handler)
 						);
 						if (has_interactive_handlers) {
-							w.a11y_interactive_supports_focus(node, current_role);
+							w.a11y_interactive_supports_focus(node, { role: current_role });
 						}
 					}
 
@@ -237,7 +242,10 @@ export function check_element(node, context) {
 						is_interactive &&
 						(is_non_interactive_roles(current_role) || is_presentation_role(current_role))
 					) {
-						w.a11y_no_interactive_element_to_noninteractive_role(node, node.name, current_role);
+						w.a11y_no_interactive_element_to_noninteractive_role(node, {
+							element: node.name,
+							role: current_role
+						});
 					}
 
 					// no-noninteractive-element-to-interactive-role
@@ -249,7 +257,10 @@ export function check_element(node, context) {
 							current_role
 						)
 					) {
-						w.a11y_no_noninteractive_element_to_interactive_role(node, node.name, current_role);
+						w.a11y_no_noninteractive_element_to_interactive_role(node, {
+							element: node.name,
+							role: current_role
+						});
 					}
 				}
 				break;
@@ -302,7 +313,7 @@ export function check_element(node, context) {
 			const has_key_event =
 				handlers.has('keydown') || handlers.has('keyup') || handlers.has('keypress');
 			if (!has_key_event) {
-				w.a11y_click_events_have_key_events(node, node.name);
+				w.a11y_click_events_have_key_events(node, { element: node.name });
 			}
 		}
 	}
@@ -328,9 +339,13 @@ export function check_element(node, context) {
 		for (const attr of attributes) {
 			if (invalid_aria_props.includes(/** @type {ARIAProperty} */ (attr.name))) {
 				if (is_implicit) {
-					w.a11y_role_supports_aria_props_implicit(attr, attr.name, role_value, node.name);
+					w.a11y_role_supports_aria_props_implicit(attr, {
+						attribute: attr.name,
+						role: role_value,
+						name: node.name
+					});
 				} else {
-					w.a11y_role_supports_aria_props(attr, attr.name, role_value);
+					w.a11y_role_supports_aria_props(attr, { attribute: attr.name, role: role_value });
 				}
 			}
 		}
@@ -349,7 +364,7 @@ export function check_element(node, context) {
 			a11y_recommended_interactive_handlers.includes(handler)
 		);
 		if (has_interactive_handlers) {
-			w.a11y_no_noninteractive_element_interactions(node, node.name);
+			w.a11y_no_noninteractive_element_interactions(node, { element: node.name });
 		}
 	}
 
@@ -369,7 +384,10 @@ export function check_element(node, context) {
 			a11y_interactive_handlers.includes(handler)
 		);
 		if (interactive_handlers.length > 0) {
-			w.a11y_no_static_element_interactions(node, node.name, list(interactive_handlers));
+			w.a11y_no_static_element_interactions(node, {
+				element: node.name,
+				handler: list(interactive_handlers)
+			});
 		}
 	}
 
@@ -381,7 +399,7 @@ export function check_element(node, context) {
 		!handlers.has('focus') &&
 		!handlers.has('focusin')
 	) {
-		w.a11y_mouse_events_have_key_events(node, 'mouseover', 'focus');
+		w.a11y_mouse_events_have_key_events(node, { event: 'mouseover', accompanied_by: 'focus' });
 	}
 
 	if (
@@ -390,7 +408,7 @@ export function check_element(node, context) {
 		!handlers.has('blur') &&
 		!handlers.has('focusout')
 	) {
-		w.a11y_mouse_events_have_key_events(node, 'mouseout', 'blur');
+		w.a11y_mouse_events_have_key_events(node, { event: 'mouseout', accompanied_by: 'blur' });
 	}
 
 	// element-specific checks
@@ -417,7 +435,7 @@ export function check_element(node, context) {
 				const href_value = get_static_text_value(href);
 				if (href_value !== null) {
 					if (href_value === '' || href_value === '#' || regex_js_prefix.test(href_value)) {
-						w.a11y_invalid_attribute(href, href_value, href.name);
+						w.a11y_invalid_attribute(href, { href_value, href_attribute: href.name });
 					}
 				}
 			} else if (!has_spread) {
@@ -445,11 +463,10 @@ export function check_element(node, context) {
 			if (type && autocomplete) {
 				const autocomplete_value = get_static_value(autocomplete);
 				if (!is_valid_autocomplete(autocomplete_value)) {
-					w.a11y_autocomplete_valid(
-						autocomplete,
-						/** @type {string} */ (autocomplete_value),
-						type_value ?? '...'
-					);
+					w.a11y_autocomplete_valid(autocomplete, {
+						value: /** @type {string} */ (autocomplete_value),
+						type: type_value ?? '...'
+					});
 				}
 			}
 			break;
@@ -559,7 +576,7 @@ export function check_element(node, context) {
 
 	if (a11y_distracting_elements.includes(node.name)) {
 		// no-distracting-elements
-		w.a11y_distracting_elements(node, node.name);
+		w.a11y_distracting_elements(node, { name: node.name });
 	}
 
 	// Check content
@@ -570,7 +587,7 @@ export function check_element(node, context) {
 		a11y_required_content.includes(node.name) &&
 		!has_content(node)
 	) {
-		w.a11y_missing_content(node, node.name);
+		w.a11y_missing_content(node, { name: node.name });
 	}
 }
 
@@ -885,42 +902,44 @@ function validate_aria_attribute_value(attribute, name, schema, value) {
 		case 'id':
 		case 'string': {
 			if (value === '') {
-				w.a11y_incorrect_aria_attribute_type(attribute, name, 'non-empty string');
+				w.a11y_incorrect_aria_attribute_type(attribute, {
+					attribute: name,
+					type: 'non-empty string'
+				});
 			}
 			break;
 		}
 		case 'number': {
 			if (value === '' || isNaN(+value)) {
-				w.a11y_incorrect_aria_attribute_type(attribute, name, 'number');
+				w.a11y_incorrect_aria_attribute_type(attribute, { attribute: name, type: 'number' });
 			}
 			break;
 		}
 		case 'boolean': {
 			if (value !== 'true' && value !== 'false') {
-				w.a11y_incorrect_aria_attribute_type_boolean(attribute, name);
+				w.a11y_incorrect_aria_attribute_type_boolean(attribute, { attribute: name });
 			}
 			break;
 		}
 		case 'idlist': {
 			if (value === '') {
-				w.a11y_incorrect_aria_attribute_type_idlist(attribute, name);
+				w.a11y_incorrect_aria_attribute_type_idlist(attribute, { attribute: name });
 			}
 			break;
 		}
 		case 'integer': {
 			if (value === '' || !Number.isInteger(+value)) {
-				w.a11y_incorrect_aria_attribute_type_integer(attribute, name);
+				w.a11y_incorrect_aria_attribute_type_integer(attribute, { attribute: name });
 			}
 			break;
 		}
 		case 'token': {
 			const values = (schema.values ?? []).map((value) => value.toString());
 			if (!values.includes(value.toLowerCase())) {
-				w.a11y_incorrect_aria_attribute_type_token(
-					attribute,
-					name,
-					list(values.map((v) => `"${v}"`))
-				);
+				w.a11y_incorrect_aria_attribute_type_token(attribute, {
+					attribute: name,
+					values: list(values.map((v) => `"${v}"`))
+				});
 			}
 			break;
 		}
@@ -932,17 +951,16 @@ function validate_aria_attribute_value(attribute, name, schema, value) {
 					.split(regex_whitespaces)
 					.some((value) => !values.includes(value))
 			) {
-				w.a11y_incorrect_aria_attribute_type_tokenlist(
-					attribute,
-					name,
-					list(values.map((v) => `"${v}"`))
-				);
+				w.a11y_incorrect_aria_attribute_type_tokenlist(attribute, {
+					attribute: name,
+					values: list(values.map((v) => `"${v}"`))
+				});
 			}
 			break;
 		}
 		case 'tristate': {
 			if (value !== 'true' && value !== 'false' && value !== 'mixed') {
-				w.a11y_incorrect_aria_attribute_type_tristate(attribute, name);
+				w.a11y_incorrect_aria_attribute_type_tristate(attribute, { attribute: name });
 			}
 			break;
 		}
@@ -962,5 +980,5 @@ function warn_missing_attribute(node, attributes, name = node.name) {
 			? attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}`
 			: attributes[0];
 
-	w.a11y_missing_attribute(node, name, article, sequence);
+	w.a11y_missing_attribute(node, { name, article, sequence });
 }

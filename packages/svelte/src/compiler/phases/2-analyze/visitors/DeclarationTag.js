@@ -19,7 +19,7 @@ export function DeclarationTag(node, context) {
 			.flatMap((declaration) => extract_identifiers(declaration.id))
 			.find((id) => context.state.analysis.instance.scope.declarations.has(id.name));
 		if (duplicate) {
-			e.declaration_duplicate(duplicate, duplicate.name);
+			e.declaration_duplicate(duplicate, { name: duplicate.name });
 		}
 	}
 

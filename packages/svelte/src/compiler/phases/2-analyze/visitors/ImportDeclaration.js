@@ -22,7 +22,7 @@ export function ImportDeclaration(node, context) {
 						(specifier.imported.name === 'beforeUpdate' ||
 							specifier.imported.name === 'afterUpdate')
 					) {
-						e.runes_mode_invalid_import(specifier, specifier.imported.name);
+						e.runes_mode_invalid_import(specifier, { name: specifier.imported.name });
 					}
 				}
 			}

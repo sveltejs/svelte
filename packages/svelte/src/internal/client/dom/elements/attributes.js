@@ -630,11 +630,11 @@ function check_src_in_dev_hydration(element, attribute, value) {
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
 	if (src_url_equal(element.getAttribute(attribute) ?? '', value)) return;
 
-	w.hydration_attribute_changed(
+	w.hydration_attribute_changed({
 		attribute,
-		element.outerHTML.replace(element.innerHTML, element.innerHTML && '...'),
-		String(value)
-	);
+		html: element.outerHTML.replace(element.innerHTML, element.innerHTML && '...'),
+		value: String(value)
+	});
 }
 
 /**

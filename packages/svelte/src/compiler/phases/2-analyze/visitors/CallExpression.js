@@ -21,7 +21,7 @@ export function CallExpression(node, context) {
 	if (rune && rune !== '$inspect') {
 		for (const arg of node.arguments) {
 			if (arg.type === 'SpreadElement') {
-				e.rune_invalid_spread(node, rune);
+				e.rune_invalid_spread(node, { rune });
 			}
 		}
 	}
@@ -36,7 +36,7 @@ export function CallExpression(node, context) {
 
 		case '$bindable':
 			if (node.arguments.length > 1) {
-				e.rune_invalid_arguments_length(node, '$bindable', 'zero or one arguments');
+				e.rune_invalid_arguments_length(node, { rune: '$bindable', args: 'zero or one arguments' });
 			}
 
 			if (
@@ -58,7 +58,7 @@ export function CallExpression(node, context) {
 
 		case '$host':
 			if (node.arguments.length > 0) {
-				e.rune_invalid_arguments(node, '$host');
+				e.rune_invalid_arguments(node, { rune: '$host' });
 			} else if (context.state.ast_type === 'module' || !context.state.analysis.custom_element) {
 				e.host_invalid_placement(node);
 			}
@@ -67,7 +67,7 @@ export function CallExpression(node, context) {
 
 		case '$props':
 			if (context.state.has_props_rune) {
-				e.props_duplicate(node, rune);
+				e.props_duplicate(node, { rune });
 			}
 
 			context.state.has_props_rune = true;
@@ -81,7 +81,7 @@ export function CallExpression(node, context) {
 			}
 
 			if (node.arguments.length > 0) {
-				e.rune_invalid_arguments(node, rune);
+				e.rune_invalid_arguments(node, { rune });
 			}
 
 			break;
@@ -90,7 +90,7 @@ export function CallExpression(node, context) {
 			const grand_parent = get_parent(context.path, -2);
 
 			if (context.state.analysis.props_id) {
-				e.props_duplicate(node, rune);
+				e.props_duplicate(node, { rune });
 			}
 
 			if (
@@ -104,7 +104,7 @@ export function CallExpression(node, context) {
 			}
 
 			if (node.arguments.length > 0) {
-				e.rune_invalid_arguments(node, rune);
+				e.rune_invalid_arguments(node, { rune });
 			}
 
 			context.state.analysis.props_id = parent.id;
@@ -122,13 +122,13 @@ export function CallExpression(node, context) {
 				is_class_property_assignment_at_constructor_root(parent, context);
 
 			if (!valid) {
-				e.state_invalid_placement(node, rune);
+				e.state_invalid_placement(node, { rune });
 			}
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+				e.rune_invalid_arguments_length(node, { rune, args: 'exactly one argument' });
 			} else if (node.arguments.length > 1) {
-				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+				e.rune_invalid_arguments_length(node, { rune, args: 'zero or one arguments' });
 			}
 
 			break;
@@ -141,7 +141,7 @@ export function CallExpression(node, context) {
 			}
 
 			if (node.arguments.length !== 1) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+				e.rune_invalid_arguments_length(node, { rune, args: 'exactly one argument' });
 			}
 
 			// `$effect` needs context because Svelte needs to know whether it should re-run
@@ -152,14 +152,14 @@ export function CallExpression(node, context) {
 
 		case '$effect.tracking':
 			if (node.arguments.length !== 0) {
-				e.rune_invalid_arguments(node, rune);
+				e.rune_invalid_arguments(node, { rune });
 			}
 
 			break;
 
 		case '$effect.root':
 			if (node.arguments.length !== 1) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+				e.rune_invalid_arguments_length(node, { rune, args: 'exactly one argument' });
 			}
 
 			break;
@@ -173,21 +173,21 @@ export function CallExpression(node, context) {
 
 		case '$inspect':
 			if (node.arguments.length < 1) {
-				e.rune_invalid_arguments_length(node, rune, 'one or more arguments');
+				e.rune_invalid_arguments_length(node, { rune, args: 'one or more arguments' });
 			}
 
 			break;
 
 		case '$inspect().with':
 			if (node.arguments.length !== 1) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+				e.rune_invalid_arguments_length(node, { rune, args: 'exactly one argument' });
 			}
 
 			break;
 
 		case '$inspect.trace': {
 			if (node.arguments.length > 1) {
-				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+				e.rune_invalid_arguments_length(node, { rune, args: 'zero or one arguments' });
 			}
 
 			const grand_parent = context.path.at(-2);
@@ -228,14 +228,14 @@ export function CallExpression(node, context) {
 
 		case '$state.eager':
 			if (node.arguments.length !== 1) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+				e.rune_invalid_arguments_length(node, { rune, args: 'exactly one argument' });
 			}
 
 			break;
 
 		case '$state.snapshot':
 			if (node.arguments.length !== 1) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+				e.rune_invalid_arguments_length(node, { rune, args: 'exactly one argument' });
 			}
 
 			break;
