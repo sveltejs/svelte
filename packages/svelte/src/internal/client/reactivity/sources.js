@@ -28,7 +28,8 @@ import {
 	ASYNC,
 	WAS_MARKED,
 	CONNECTED,
-	REACTION_IS_UPDATING
+	REACTION_IS_UPDATING,
+	COMPONENT_BLOCK
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -289,11 +290,46 @@ export function flush_eager_effects() {
 		}
 
 		if (dirty) {
-			update_effect(effect);
+			// If a dynamic component that is an ancestor of this eager effect is about
+			// to be swapped out (its block effect is dirty), then the component instance
+			// owning this effect is going to be destroyed before the flush. Running it
+			// now would observe props that belong to the *new* component, so we skip it
+			// (e.g. `$inspect(...)` firing with `undefined` for a component that is being
+			// replaced). See https://github.com/sveltejs/svelte/issues/16135
+			if (!is_inside_dirty_component(effect)) {
+				update_effect(effect);
+			}
 		}
 	}
 
 	eager_effects.clear();
+}
+
+/**
+ * Returns `true` if `effect` is nested inside a dynamic component (`<svelte:component>`
+ * or a runes-mode `<Component>` whose reference can change) that is about to be replaced —
+ * i.e. the component's block effect is `DIRTY`, which (because that block only reads the
+ * component value) guarantees the component instance owning this effect will be destroyed
+ * before the flush. Nested dynamic components are also taken into account: if an inner
+ * dynamic component is clean but it is contained in an outer dynamic component that is
+ * being swapped out, the effect will be destroyed with the outer component and must not run.
+ * @param {Effect} effect
+ */
+function is_inside_dirty_component(effect) {
+	var e = effect.parent;
+
+	while (e !== null) {
+		// A dirty component block guarantees its instance is destroyed before the flush.
+		// If a component block is clean we keep walking — an ancestor dynamic component
+		// (into which this one is nested) might be the one being swapped out.
+		if ((e.f & COMPONENT_BLOCK) !== 0 && (e.f & DIRTY) !== 0) {
+			return true;
+		}
+
+		e = e.parent;
+	}
+
+	return false;
 }
 
 /**

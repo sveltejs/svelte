@@ -50,6 +50,13 @@ export const HEAD_EFFECT = 1 << 18;
 export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
 export const EFFECT_OFFSCREEN = 1 << 25;
+/**
+ * Set on the block effect that manages a dynamic component (`<svelte:component>`
+ * or a runes-mode `<Component>` whose reference can change). When this block is
+ * dirty, the component it currently renders is about to be replaced, so eager
+ * effects inside the outgoing component must not fire with the new props.
+ */
+export const COMPONENT_BLOCK = 1 << 26;
 
 // Flags exclusive to deriveds
 /**

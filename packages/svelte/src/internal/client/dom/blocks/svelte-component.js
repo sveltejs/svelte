@@ -1,5 +1,5 @@
 /** @import { TemplateNode, Dom } from '#client' */
-import { EFFECT_TRANSPARENT } from '#client/constants';
+import { COMPONENT_BLOCK, EFFECT_TRANSPARENT } from '#client/constants';
 import { block } from '../../reactivity/effects.js';
 import {
 	hydrate_next,
@@ -57,5 +57,5 @@ export function component(node, get_component, render_fn) {
 		}
 
 		branches.ensure(component, component && ((target) => render_fn(target, component)));
-	}, EFFECT_TRANSPARENT);
+	}, EFFECT_TRANSPARENT | COMPONENT_BLOCK);
 }
