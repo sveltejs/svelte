@@ -8,7 +8,6 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -25,7 +24,6 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
-import { queue_micro_task } from '../dom/task.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -156,6 +154,9 @@ export function capture() {
 	};
 }
 
+/** `true` between a `save` thunk restoring a context and the end of that synchronous segment */
+var restored = false;
+
 /**
  * Wraps an `await` expression in such a way that the effect context that was
  * active before the expression evaluated can be reapplied afterwards —
@@ -166,13 +167,30 @@ export function capture() {
  */
 export async function save(promise) {
 	var restore = capture();
+	// the context restored by an earlier `save` in this expression must not
+	// outlive the synchronous segment that is about to end at this `await`
+	unsave();
 	var value = await promise;
 
 	return () => {
 		restore();
-		queue_micro_task(unset_context);
+		restored = true;
 		return value;
 	};
+}
+
+/**
+ * Unset the context if a `save` thunk restored it in the current synchronous segment,
+ * so that a foreign microtask can never run inside a restored reaction context.
+ * Called at every suspension point, and at the end of async expression bodies —
+ * `async () => (await $.save(a))().b` becomes `async () => { try { return (await $.save(a))().b; } finally { $.unsave(); } }`
+ * @template T
+ * @param {T} [value]
+ * @returns {T}
+ */
+export function unsave(value) {
+	if (restored) unset_context();
+	return /** @type {T} */ (value);
 }
 
 /**
@@ -183,6 +201,7 @@ export async function save(promise) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
+	unsave();
 	var previous_reactivity_loss_tracker = reactivity_loss_tracker;
 	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
 	queueMicrotask(() => {
@@ -269,6 +288,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 }
 
 export function unset_context(deactivate_batch = true) {
+	restored = false;
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
