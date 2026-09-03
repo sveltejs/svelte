@@ -1591,4 +1591,43 @@ describe('signals', () => {
 			assert.equal(s.reactions, null);
 		};
 	});
+
+	// https://github.com/sveltejs/svelte/issues/16814
+	it('does not treat values created for inactive reactions as current', () => {
+		push({}, true);
+
+		const trigger = state(false);
+		const value = state(0);
+		const log: number[] = [];
+		let inactive_reaction: Effect;
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(trigger);
+				inactive_reaction = $.active_reaction as Effect;
+			});
+
+			render_effect(() => {
+				$.get(trigger);
+
+				const reaction = $.active_reaction;
+				$.set_active_reaction(inactive_reaction);
+				$.push_reaction_value(value);
+				$.set_active_reaction(reaction);
+
+				log.push($.get(value));
+			});
+		});
+
+		try {
+			flushSync();
+			flushSync(() => set(trigger, true));
+			flushSync(() => set(value, 1));
+
+			assert.deepEqual(log, [0, 0, 1]);
+		} finally {
+			destroy();
+			pop();
+		}
+	});
 });
