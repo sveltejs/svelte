@@ -3,12 +3,13 @@ import {
 	is_dirty,
 	active_effect,
 	active_reaction,
+	destroying_effect,
 	update_effect,
 	get,
 	is_destroying_effect,
 	remove_reactions,
 	set_active_reaction,
-	set_is_destroying_effect,
+	set_destroying_effect,
 	untrack,
 	untracking,
 	set_active_effect
@@ -445,9 +446,9 @@ export function branch(fn) {
 export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
 	if (teardown !== null) {
-		const previously_destroying_effect = is_destroying_effect;
+		const previous_destroying_effect = destroying_effect;
 		const previous_reaction = active_reaction;
-		set_is_destroying_effect(true);
+		set_destroying_effect(effect);
 		set_active_reaction(null);
 		try {
 			teardown.call(null);
@@ -457,7 +458,7 @@ export function execute_effect_teardown(effect) {
 			// themselves mid-teardown are skipped by invoke_error_boundary.
 			invoke_error_boundary(error, effect.parent);
 		} finally {
-			set_is_destroying_effect(previously_destroying_effect);
+			set_destroying_effect(previous_destroying_effect);
 			set_active_reaction(previous_reaction);
 		}
 	}
