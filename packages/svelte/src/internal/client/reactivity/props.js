@@ -4,8 +4,10 @@ import {
 	PROPS_IS_BINDABLE,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_LAZY_INITIAL,
+	PROPS_IS_RETAINED,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
+	PROPS_IS_UPDATED,
+	UNINITIALIZED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { set, source, update } from './sources.js';
@@ -18,7 +20,7 @@ import {
 	untrack
 } from '../runtime.js';
 import * as e from '../errors.js';
-import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
+import { DESTROYED, DESTROYING, INERT, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -46,15 +48,34 @@ export function update_pre_prop(fn, d = 1) {
 	return value;
 }
 
+/** @typedef {{ props: Record<string | symbol, unknown>, exclude: Set<string | symbol>, name?: string, retained: null | { effect: Effect, values: Map<string | symbol, unknown> } }} RestPropsTarget */
+
+/**
+ * @param {RestPropsTarget} target
+ * @param {string | symbol} key
+ */
+function get_rest_prop(target, key) {
+	var value = target.props[key];
+
+	if (target.retained === null) return value;
+
+	if ((target.retained.effect.f & (INERT | DESTROYING | DESTROYED)) !== 0) {
+		return target.retained.values.has(key) ? target.retained.values.get(key) : value;
+	}
+
+	target.retained.values.set(key, value);
+	return value;
+}
+
 /**
  * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
  * Is passed the full `$$props` object and excludes the named props.
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Set<string | symbol>, name?: string }>}}
+ * @type {ProxyHandler<RestPropsTarget>}
  */
 const rest_props_handler = {
 	get(target, key) {
 		if (target.exclude.has(key)) return;
-		return target.props[key];
+		return get_rest_prop(target, key);
 	},
 	set(target, key) {
 		if (DEV) {
@@ -66,17 +87,29 @@ const rest_props_handler = {
 	},
 	getOwnPropertyDescriptor(target, key) {
 		if (target.exclude.has(key)) return;
-		if (key in target.props) {
+
+		var exists =
+			key in target.props ||
+			(target.retained !== null &&
+				(target.retained.effect.f & (INERT | DESTROYING | DESTROYED)) !== 0 &&
+				target.retained.values.has(key));
+
+		if (exists) {
 			return {
 				enumerable: true,
 				configurable: true,
-				value: target.props[key]
+				value: get_rest_prop(target, key)
 			};
 		}
 	},
 	has(target, key) {
 		if (target.exclude.has(key)) return false;
-		return key in target.props;
+		return (
+			key in target.props ||
+			(target.retained !== null &&
+				(target.retained.effect.f & (INERT | DESTROYING | DESTROYED)) !== 0 &&
+				target.retained.values.has(key))
+		);
 	},
 	ownKeys(target) {
 		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.has(key));
@@ -84,14 +117,28 @@ const rest_props_handler = {
 };
 
 /**
- * @param {Record<string, unknown>} props
- * @param {Set<string>} exclude
+ * @param {Record<string | symbol, unknown>} props
+ * @param {Set<string | symbol>} exclude
  * @param {string} [name]
+ * @param {boolean} [retain]
  * @returns {Record<string, unknown>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function rest_props(props, exclude, name) {
-	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
+export function rest_props(props, exclude, name, retain = false) {
+	/** @type {RestPropsTarget['retained']} */
+	var retained = null;
+
+	if (retain) {
+		retained = {
+			effect: /** @type {Effect} */ (active_effect),
+			values: new Map()
+		};
+	}
+
+	return new Proxy(
+		DEV ? { props, exclude, name, retained } : { props, exclude, retained },
+		rest_props_handler
+	);
 }
 
 /**
@@ -277,6 +324,7 @@ export function prop(props, key, flags, fallback) {
 	var runes = !legacy_mode_flag || (flags & PROPS_IS_RUNES) !== 0;
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
+	var retained = (flags & PROPS_IS_RETAINED) !== 0;
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
@@ -357,6 +405,24 @@ export function prop(props, key, flags, fallback) {
 		};
 	}
 
+	var parent_effect = /** @type {Effect} */ (active_effect);
+
+	if (retained) {
+		var get_value = getter;
+		var retained_value = /** @type {V | typeof UNINITIALIZED} */ (UNINITIALIZED);
+
+		getter = () => {
+			if (
+				(parent_effect.f & (INERT | DESTROYING | DESTROYED)) !== 0 &&
+				retained_value !== UNINITIALIZED
+			) {
+				return retained_value;
+			}
+
+			return (retained_value = get_value());
+		};
+	}
+
 	// prop is never written to — we only need a getter
 	if (runes && (flags & PROPS_IS_UPDATED) === 0) {
 		return getter;
@@ -403,8 +469,6 @@ export function prop(props, key, flags, fallback) {
 	// Capture the initial value if it's bindable
 	if (bindable) get(d);
 
-	var parent_effect = /** @type {Effect} */ (active_effect);
-
 	return /** @type {() => V} */ (
 		function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 			if (arguments.length > 0) {
@@ -423,7 +487,7 @@ export function prop(props, key, flags, fallback) {
 			// special case — avoid recalculating the derived if we're in a
 			// teardown function and the prop was overridden locally, or the
 			// component was already destroyed (people could access props in a timeout)
-			if ((is_destroying_effect && overridden) || (parent_effect.f & DESTROYED) !== 0) {
+			if ((parent_effect.f & (INERT | DESTROYING | DESTROYED)) !== 0 && overridden) {
 				return d.v;
 			}
 
