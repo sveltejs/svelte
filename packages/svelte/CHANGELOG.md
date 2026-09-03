@@ -1,5 +1,23 @@
 # svelte
 
+## 5.57.1
+
+### Patch Changes
+
+- fix: cancel deferred event listeners during cleanup ([#18749](https://github.com/sveltejs/svelte/pull/18749))
+
+- perf: speed up parser interactions with Acorn or avoid them where possible ([#18740](https://github.com/sveltejs/svelte/pull/18740))
+
+- fix: serialize input default values during server rendering ([#18733](https://github.com/sveltejs/svelte/pull/18733))
+
+- fix: throw `set_context_after_init` when `setContext` is called after an `await` during SSR ([#18739](https://github.com/sveltejs/svelte/pull/18739))
+
+- perf: avoid regex matching in parser where possible ([#18736](https://github.com/sveltejs/svelte/pull/18736))
+
+- fix: in non-async mode, only push variable to current_sources when active_reaction is updating ([#18550](https://github.com/sveltejs/svelte/pull/18550))
+
+- fix: recognise `aria-braillelabel` and `aria-brailleroledescription` as known ARIA attributes ([#18765](https://github.com/sveltejs/svelte/pull/18765))
+
 ## 5.57.0
 
 ### Minor Changes
