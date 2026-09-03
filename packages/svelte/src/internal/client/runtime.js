@@ -556,6 +556,14 @@ export function settled() {
 export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
+	var is_new_dependency =
+		batch_values !== null &&
+		!untracking &&
+		((active_reaction !== null &&
+			(active_reaction.deps === null || !includes.call(active_reaction.deps, signal))) ||
+			(active_reaction === null &&
+				active_effect !== null &&
+				(active_effect.f & REACTION_RAN) === 0));
 
 	captured_signals?.add(signal);
 
@@ -715,6 +723,10 @@ export function get(signal) {
 	}
 
 	if (batch_values?.has(signal)) {
+		if (is_new_dependency) {
+			(current_batch ?? previous_batch)?.capture_dependency(signal);
+		}
+
 		return batch_values.get(signal);
 	}
 
