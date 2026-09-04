@@ -1,0 +1,17 @@
+
+	/* the `a` of `an+b`, and a lone `<integer>`, can be negative, and `n` is case-insensitive */
+	li.svelte-xyz:nth-child(-1) {
+		color: red;
+	}
+	li.svelte-xyz:nth-child(-2n) {
+		color: green;
+	}
+	li.svelte-xyz:nth-child(-2n-1) {
+		color: blue;
+	}
+	li.svelte-xyz:nth-child(2N+1) {
+		color: yellow;
+	}
+	li.svelte-xyz:nth-child(-2n-1 of .important) {
+		color: purple;
+	}
