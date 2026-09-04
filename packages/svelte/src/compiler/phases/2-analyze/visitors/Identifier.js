@@ -104,7 +104,8 @@ export function Identifier(node, context) {
 		if (
 			context.state.analysis.runes &&
 			node !== binding.node &&
-			context.state.function_depth === binding.scope.function_depth &&
+			(context.state.function_depth === binding.scope.function_depth ||
+				context.state.outer_function_depth === binding.scope.function_depth) &&
 			// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 			// it's likely not using a primitive value and thus this warning isn't that helpful.
 			((binding.kind === 'state' &&

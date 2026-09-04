@@ -21,6 +21,10 @@ export function visit_function(node, context) {
 		// we generally want to use scope.function_depth unless we specifically increased
 		// that in state.function_depth (e.g. a derived)
 		function_depth: Math.max(context.state.scope.function_depth, context.state.function_depth) + 1,
+		// a real closure boundary makes any outer-scope reference inside it a legitimate
+		// deferred read, not a snapshot capture, so the `outer_function_depth` special-case
+		// from `DeclarationTag` no longer applies once we're inside one
+		outer_function_depth: undefined,
 		expression: null
 	});
 }
