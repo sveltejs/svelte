@@ -88,6 +88,13 @@ export function build_element_attributes(node, context, transform) {
 				attributes.push(attribute);
 				// deopt to spread at runtime, where we can handle interaction of value/defaultValue etc
 				has_spread = true;
+			} else if (
+				node.type === 'RegularElement' &&
+				node.name === 'textarea' &&
+				attribute.name === 'defaultValue' &&
+				renders_default_value_as_content(node)
+			) {
+				content = b.call('$.escape', build_attribute_value(attribute.value, context, transform));
 				// the defaultValue/defaultChecked properties don't exist as attributes
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
@@ -291,6 +298,23 @@ export function build_element_attributes(node, context, transform) {
 	}
 
 	return content;
+}
+
+/**
+ * A `<textarea>` has no value attribute, so `defaultValue` can only be serialized as its content,
+ * which is possible when nothing else already provides one.
+ * @param {AST.RegularElement} node
+ */
+function renders_default_value_as_content(node) {
+	return (
+		node.fragment.nodes.length === 0 &&
+		!node.attributes.some(
+			(attribute) =>
+				attribute.type === 'SpreadAttribute' ||
+				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === 'value')
+		)
+	);
 }
 
 /**
