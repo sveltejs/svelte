@@ -33,6 +33,19 @@ import {
 	set_selected
 } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
+import {
+	has_attribute,
+	get_attribute,
+	remove_attribute,
+	set_attribute as set_attribute_op,
+	remove_event_listener,
+	node_name,
+	set_element_value,
+	set_element_checked,
+	set_element_default_value,
+	set_element_default_checked
+} from '../operations.js';
+import { current_renderer } from '../../custom-renderer/state.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -55,6 +68,8 @@ const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
 export function remove_input_defaults(input) {
 	if (!hydrating) return;
 
+	// we should be safe here from custom renderers as this only run during hydration
+
 	var already_removed = false;
 
 	// We try and remove the default attributes later, rather than sync during hydration.
@@ -66,13 +81,13 @@ export function remove_input_defaults(input) {
 		already_removed = true;
 
 		// Remove the attributes but preserve the values
-		if (input.hasAttribute('value')) {
+		if (has_attribute(input, 'value')) {
 			var value = input.value;
 			set_attribute(input, 'value', null);
 			input.value = value;
 		}
 
-		if (input.hasAttribute('checked')) {
+		if (has_attribute(input, 'checked')) {
 			var checked = input.checked;
 			set_attribute(input, 'checked', null);
 			input.checked = checked;
@@ -96,15 +111,15 @@ export function set_value(element, value) {
 			(attributes.value =
 				// treat null and undefined the same for the initial value
 				value ?? undefined) ||
-		// @ts-expect-error
 		// `progress` elements always need their value set when it's `0`
-		(element.value === value && (value !== 0 || element.nodeName !== PROGRESS_TAG))
+		(current_renderer == null &&
+			/** @type {any} */ (element).value === value &&
+			(value !== 0 || node_name(element) !== PROGRESS_TAG))
 	) {
 		return;
 	}
 
-	// @ts-expect-error
-	element.value = value ?? '';
+	set_element_value(element, value);
 }
 
 /**
@@ -123,8 +138,7 @@ export function set_checked(element, checked) {
 		return;
 	}
 
-	// @ts-expect-error
-	element.checked = checked;
+	set_element_checked(element, checked);
 }
 
 /**
@@ -133,9 +147,7 @@ export function set_checked(element, checked) {
  * @param {boolean} checked
  */
 export function set_default_checked(element, checked) {
-	const existing_value = element.checked;
-	element.defaultChecked = checked;
-	element.checked = existing_value;
+	set_element_default_checked(element, checked);
 }
 
 /**
@@ -144,9 +156,7 @@ export function set_default_checked(element, checked) {
  * @param {string} value
  */
 export function set_default_value(element, value) {
-	const existing_value = element.value;
-	element.defaultValue = value;
-	element.value = existing_value;
+	set_element_default_value(element, value);
 }
 
 /**
@@ -159,12 +169,12 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	var attributes = get_attributes(element);
 
 	if (hydrating) {
-		attributes[attribute] = element.getAttribute(attribute);
+		attributes[attribute] = get_attribute(element, attribute);
 
 		if (
 			attribute === 'src' ||
 			attribute === 'srcset' ||
-			(attribute === 'href' && element.nodeName === LINK_TAG)
+			(attribute === 'href' && node_name(element) === LINK_TAG)
 		) {
 			if (!skip_warning) {
 				check_src_in_dev_hydration(element, attribute, value ?? '');
@@ -186,12 +196,12 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	}
 
 	if (value == null) {
-		element.removeAttribute(attribute);
+		remove_attribute(element, attribute);
 	} else if (typeof value !== 'string' && get_setters(element).has(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
 	} else {
-		element.setAttribute(attribute, value);
+		set_attribute_op(element, attribute, value);
 	}
 }
 
@@ -201,6 +211,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
  * @param {string} value
  */
 export function set_xlink_attribute(dom, attribute, value) {
+	// custom renderer safe since we never emit this
 	dom.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
@@ -210,6 +221,7 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {
+	// custom renderer safe since we never emit this
 	// We need to ensure that setting custom element props, which can
 	// invoke lifecycle methods on other custom elements, does not also
 	// associate those lifecycle methods with the current active reaction
@@ -234,10 +246,10 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			(setters_cache.has(node.getAttribute('is') || node.nodeName) ||
+			(setters_cache.has(get_attribute(node, 'is') || (node_name(node) ?? '')) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
-			customElements.get(node.getAttribute('is') || node.nodeName.toLowerCase())
+			customElements.get(get_attribute(node, 'is') || (node_name(node) ?? '').toLowerCase())
 				? get_setters(node).has(prop)
 				: value && typeof value === 'object')
 		) {
@@ -276,7 +288,7 @@ function set_attributes(
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	if (hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
+	if (hydrating && should_remove_defaults && node_name(element) === INPUT_TAG) {
 		if (!('defaultValue' in next || 'defaultChecked' in next)) {
 			remove_input_defaults(/** @type {HTMLInputElement} */ (element));
 		}
@@ -295,8 +307,8 @@ function set_attributes(
 	}
 
 	var current = prev || {};
-	var is_option_element = element.nodeName === OPTION_TAG;
-	var is_select_element = element.nodeName === SELECT_TAG;
+	var is_option_element = node_name(element) === OPTION_TAG;
+	var is_select_element = node_name(element) === SELECT_TAG;
 
 	for (var key in prev) {
 		// don't null our internal $$onX listeners
@@ -317,7 +329,13 @@ function set_attributes(
 
 	var setters = get_setters(element);
 
-	if (element.nodeName === INPUT_TAG && 'type' in next && ('value' in next || '__value' in next)) {
+	if (
+		// the following logic only make sense in a dev environment
+		current_renderer == null &&
+		node_name(element) === INPUT_TAG &&
+		'type' in next &&
+		('value' in next || '__value' in next)
+	) {
 		var type = next.type;
 
 		if (type !== current.type || (type === undefined && element.hasAttribute('type'))) {
@@ -351,7 +369,7 @@ function set_attributes(
 		}
 
 		if (key === 'class') {
-			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
+			var is_html = current_renderer == null && element.namespaceURI === NAMESPACE_HTML;
 			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 			current[key] = value;
 			current[CLASS] = next[CLASS];
@@ -368,7 +386,7 @@ function set_attributes(
 		var prev_value = current[key];
 
 		// Skip if value is unchanged, unless it's `undefined` and the element still has the attribute
-		if (value === prev_value && !(value === undefined && element.hasAttribute(key))) {
+		if (value === prev_value && !(value === undefined && has_attribute(element, key))) {
 			continue;
 		}
 
@@ -382,7 +400,7 @@ function set_attributes(
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var is_delegated = can_delegate_event(event_name);
+			var is_delegated = current_renderer == null && can_delegate_event(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -396,7 +414,7 @@ function set_attributes(
 				// https://github.com/sveltejs/svelte/issues/11903
 				if (value != null) continue;
 
-				element.removeEventListener(event_name, current[event_handle_key], opts);
+				remove_event_listener(element, event_name, current[event_handle_key], opts);
 				current[event_handle_key] = null;
 			}
 
@@ -406,10 +424,10 @@ function set_attributes(
 			} else if (value != null) {
 				/**
 				 * @this {any}
-				 * @param {Event} evt
+				 * @param {...any} args
 				 */
-				function handle(evt) {
-					current[key].call(this, evt);
+				function handle(...args) {
+					current[key].apply(this, args);
 				}
 
 				current[event_handle_key] = create_event(event_name, element, handle, opts);
@@ -418,11 +436,21 @@ function set_attributes(
 			// avoid using the setter
 			set_attribute(element, key, value);
 		} else if (key === 'autofocus') {
-			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
+			if (current_renderer == null) {
+				autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
+			} else {
+				// In custom renderer mode, just set autofocus as a regular attribute
+				if (value) {
+					set_attribute_op(element, key, value);
+				} else {
+					remove_attribute(element, key);
+				}
+			}
 		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
 			// @ts-ignore We're not running this for custom elements because __value is actually
 			// how Lit stores the current value on the element, and messing with that would break things.
-			element.value = element.__value = value;
+			element.__value = value;
+			set_element_value(element, value);
 		} else if (key === 'selected' && is_option_element) {
 			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
@@ -438,26 +466,39 @@ function set_attributes(
 
 			if (value == null && !is_custom_element && !is_default) {
 				attributes[key] = null;
-
-				if (name === 'value' || name === 'checked') {
+				if ((name === 'value' || name === 'checked') && current_renderer == null) {
 					// removing value/checked also removes defaultValue/defaultChecked — preserve
 					let input = /** @type {HTMLInputElement} */ (element);
 					const use_default = prev === undefined;
 					if (name === 'value') {
 						let previous = input.defaultValue;
-						input.removeAttribute(name);
-						input.defaultValue = previous;
+						remove_attribute(input, name);
+						set_element_default_value(input, previous);
 						// @ts-ignore
-						input.value = input.__value = use_default ? previous : null;
+						set_element_value(input, (input.__value = use_default ? previous : null));
 					} else {
 						let previous = input.defaultChecked;
-						input.removeAttribute(name);
-						input.defaultChecked = previous;
-						input.checked = use_default ? previous : false;
+						remove_attribute(input, name);
+						set_element_default_checked(input, previous);
+						set_element_checked(input, use_default ? previous : false);
 					}
 				} else {
-					element.removeAttribute(key);
+					remove_attribute(element, key);
+					if (name === 'value') {
+						// @ts-ignore
+						element.__value = null;
+					}
 				}
+			} else if (is_default && current_renderer != null) {
+				// Route through the renderer-aware abstraction so custom renderers
+				// see defaultValue/defaultChecked as proper attributes
+				if (name === 'defaultValue') {
+					set_element_default_value(element, value);
+				} else {
+					set_element_default_checked(element, value);
+				}
+				// remove it from attributes's cache
+				if (name in attributes) attributes[name] = UNINITIALIZED;
 			} else if (
 				is_default ||
 				((is_custom_element || typeof value !== 'string') && setters.has(name))
@@ -506,7 +547,7 @@ export function attribute_effect(
 		/** @type {Record<symbol, Effect>} */
 		var effects = {};
 
-		var is_select = element.nodeName === SELECT_TAG;
+		var is_select = node_name(element) === SELECT_TAG;
 		var inited = false;
 
 		managed(() => {
@@ -577,18 +618,21 @@ export function attribute_effect(
 function get_attributes(element) {
 	return /** @type {Record<string | symbol, unknown>} **/ (
 		/** @type {any} */ (element)[ATTRIBUTES_CACHE] ??= {
-			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-'),
-			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
+			[IS_CUSTOM_ELEMENT]: (node_name(element) ?? '').includes('-'),
+			[IS_HTML]: current_renderer == null && element.namespaceURI === NAMESPACE_HTML
 		}
 	);
 }
 
 /** @type {Map<string, Set<string>>} */
 var setters_cache = new Map();
+var empty_setters = new Set();
 
 /** @param {Element} element */
 function get_setters(element) {
-	var cache_key = element.getAttribute('is') || element.nodeName;
+	// if we have a custom renderer we just skip the check all together
+	if (current_renderer) return empty_setters;
+	var cache_key = get_attribute(element, 'is') || (node_name(element) ?? '');
 	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
 	setters_cache.set(cache_key, (setters = new Set()));
@@ -626,9 +670,9 @@ function get_setters(element) {
  * @param {string} value
  */
 function check_src_in_dev_hydration(element, attribute, value) {
-	if (!DEV) return;
+	if (!DEV || current_renderer != null) return;
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
-	if (src_url_equal(element.getAttribute(attribute) ?? '', value)) return;
+	if (src_url_equal(get_attribute(element, attribute) ?? '', value)) return;
 
 	w.hydration_attribute_changed(
 		attribute,
@@ -643,7 +687,7 @@ function check_src_in_dev_hydration(element, attribute, value) {
  * @returns {boolean}
  */
 function src_url_equal(element_src, url) {
-	if (element_src === url) return true;
+	if (element_src === url || current_renderer != null) return true;
 	return new URL(element_src, document.baseURI).href === new URL(url, document.baseURI).href;
 }
 
@@ -658,6 +702,7 @@ function split_srcset(srcset) {
  * @returns {boolean}
  */
 function srcset_url_equal(element, srcset) {
+	if (current_renderer != null) return true;
 	var element_urls = split_srcset(element.srcset);
 	var urls = split_srcset(srcset);
 

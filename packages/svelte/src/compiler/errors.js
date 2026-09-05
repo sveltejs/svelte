@@ -1195,6 +1195,16 @@ export function illegal_element_attribute(node, name) {
 }
 
 /**
+ * %message% is not compatible with `customRenderer`
+ * @param {null | number | NodeLike} node
+ * @param {string} message
+ * @returns {never}
+ */
+export function incompatible_with_custom_renderer(node, message) {
+	e(node, 'incompatible_with_custom_renderer', `${message} is not compatible with \`customRenderer\`\nhttps://svelte.dev/e/incompatible_with_custom_renderer`);
+}
+
+/**
  * %message%
  * @param {null | number | NodeLike} node
  * @param {string} message
@@ -1537,6 +1547,15 @@ export function svelte_meta_invalid_placement(node, name) {
  */
 export function svelte_meta_invalid_tag(node, list) {
 	e(node, 'svelte_meta_invalid_tag', `Valid \`<svelte:...>\` tag names are ${list}\nhttps://svelte.dev/e/svelte_meta_invalid_tag`);
+}
+
+/**
+ * `customRenderer` cannot be set in `<svelte:options>` unless the `experimental.customRenderer` compiler option is enabled
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_customrenderer_disabled(node) {
+	e(node, 'svelte_options_customrenderer_disabled', `\`customRenderer\` cannot be set in \`<svelte:options>\` unless the \`experimental.customRenderer\` compiler option is enabled\nhttps://svelte.dev/e/svelte_options_customrenderer_disabled`);
 }
 
 /**

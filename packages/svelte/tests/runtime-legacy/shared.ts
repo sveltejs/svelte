@@ -514,14 +514,16 @@ async function run_test_variant(
 					};
 				} else {
 					run_hydratables_init();
-					const render = variant === 'hydrate' ? hydrate : mount;
-					instance = render(mod.default, {
+					const options = {
 						target,
 						props,
 						intro: config.intro,
 						recover: config.recover ?? false,
 						transformError: config.transformError
-					});
+					};
+
+					instance =
+						variant === 'hydrate' ? hydrate(mod.default, options) : mount(mod.default, options);
 				}
 			} else {
 				run_hydratables_init();
