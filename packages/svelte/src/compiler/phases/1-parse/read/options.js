@@ -37,7 +37,23 @@ export default function read_options(node) {
 				break; // eslint doesn't know this is unnecessary
 			}
 			case 'customRenderer': {
-				component_options.customRenderer = get_static_value(attribute);
+				const { value } = attribute;
+				const chunk = Array.isArray(value) ? value[0] : value;
+
+				if (chunk === true || !chunk || (Array.isArray(value) && value.length !== 1)) {
+					e.svelte_options_invalid_attribute_value(attribute, 'a string or null');
+				}
+
+				if (chunk.type === 'Text') {
+					component_options.customRenderer = chunk.data;
+				} else if (
+					chunk.expression?.type === 'Literal' &&
+					(typeof chunk.expression.value === 'string' || chunk.expression.value === null)
+				) {
+					component_options.customRenderer = chunk.expression.value;
+				} else {
+					e.svelte_options_invalid_attribute_value(attribute, 'a string or null');
+				}
 				break;
 			}
 			case 'customElement': {

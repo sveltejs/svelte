@@ -37,8 +37,8 @@ export function compile(source, options) {
 
 	// resolve the per-component custom renderer, taking `<svelte:options customRenderer={...} />`
 	// into account. The normalized option is always a function returning `string | null | undefined`
-	// (see `validate-options.js`). A string opts in to a specific renderer module, `null`/`false`
-	// opts out to plain DOM (while keeping the feature enabled) and `true`/absent inherits whatever
+	// (see `validate-options.js`). A string opts in to a specific renderer module, `null`
+	// opts out to plain DOM (while keeping the feature enabled) and an absent option inherits whatever
 	// the global option resolves to.
 	let custom_renderer_option = validated.experimental.customRenderer;
 
@@ -56,7 +56,7 @@ export function compile(source, options) {
 
 		if (typeof custom_renderer === 'string') {
 			custom_renderer_option = () => custom_renderer;
-		} else if (custom_renderer === false || custom_renderer === null) {
+		} else if (custom_renderer === null) {
 			custom_renderer_option = () => null;
 		}
 	}

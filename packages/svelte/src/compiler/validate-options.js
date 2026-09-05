@@ -69,7 +69,15 @@ const common_options = {
 				}
 
 				if (typeof input === 'function') {
-					return input;
+					return (/** @type {{ filename: string }} */ options) => {
+						const result = input(options);
+
+						if (result !== null && result !== undefined && typeof result !== 'string') {
+							throw_error(`${keypath} function must return a string, null or undefined`);
+						}
+
+						return result;
+					};
 				}
 
 				throw_error(`${keypath} should be true, a string or a function, if specified`);

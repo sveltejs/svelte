@@ -34,12 +34,10 @@ export function RegularElement(node, context) {
 	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
-	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
+	if (!custom_renderer && node.name === 'textarea' && node.fragment.nodes.length > 0) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute' && attribute.name === 'value') {
-				if (!custom_renderer) {
-					e.textarea_invalid_content(node);
-				}
+				e.textarea_invalid_content(node);
 			}
 		}
 

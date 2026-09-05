@@ -85,7 +85,7 @@ export namespace AST {
 		preserveWhitespace?: boolean;
 		namespace?: Namespace;
 		css?: 'injected';
-		customRenderer?: string | boolean | null;
+		customRenderer?: string | null;
 		customElement?: {
 			tag?: string;
 			shadow?: 'open' | 'none' | ObjectExpression | undefined;
