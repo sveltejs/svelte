@@ -514,7 +514,73 @@ export function set_node_value(node, value) {
 
 // --- Helpers for style attribute string manipulation (custom renderer) ---
 
-// TODO: check if this can be improved?
+/**
+ * Split only at top-level semicolons, preserving CSS strings, functions and comments.
+ * @param {string} style_string
+ * @returns {string[]} trimmed, non-empty declarations (without trailing `;`)
+ */
+function split_style_declarations(style_string) {
+	/** @type {string[]} */
+	var declarations = [];
+
+	/** @type {false | '"' | "'"} */
+	var in_str = false;
+	var depth = 0;
+	var in_comment = false;
+	var start = 0;
+
+	for (var i = 0; i < style_string.length; i++) {
+		var c = style_string[i];
+
+		if (in_comment) {
+			if (c === '/' && style_string[i - 1] === '*') {
+				in_comment = false;
+			}
+			continue;
+		}
+
+		if (c === '\\') {
+			i++;
+			continue;
+		}
+
+		if (in_str) {
+			if (c === in_str) {
+				in_str = false;
+			}
+			continue;
+		}
+
+		if (c === '/' && style_string[i + 1] === '*') {
+			in_comment = true;
+		} else if (c === '"' || c === "'") {
+			in_str = c;
+		} else if (c === '(') {
+			depth++;
+		} else if (c === ')') {
+			if (depth > 0) depth--;
+		} else if (c === ';' && depth === 0) {
+			var declaration = style_string.slice(start, i).trim();
+			if (declaration) declarations.push(declaration);
+			start = i + 1;
+		}
+	}
+
+	var last = style_string.slice(start).trim();
+	if (last) declarations.push(last);
+
+	return declarations;
+}
+
+/**
+ * @param {string} declaration
+ * @returns {string | null}
+ */
+function declaration_property(declaration) {
+	var colon_index = declaration.indexOf(':');
+	if (colon_index === -1) return null;
+	return declaration.slice(0, colon_index).trim();
+}
 
 /**
  * @param {string} style_string
@@ -525,26 +591,22 @@ export function set_node_value(node, value) {
  */
 function set_style_property_in_string(style_string, property, value, priority) {
 	var declaration = property + ': ' + value + (priority ? ' !' + priority : '');
-	var parts = style_string.split(';');
+	var parts = split_style_declarations(style_string);
 	var found = false;
 
 	for (var i = 0; i < parts.length; i++) {
-		var colon_index = parts[i].indexOf(':');
-		if (colon_index !== -1 && parts[i].substring(0, colon_index).trim() === property) {
-			parts[i] = ' ' + declaration;
+		if (declaration_property(parts[i]) === property) {
+			parts[i] = declaration;
 			found = true;
 			break;
 		}
 	}
 
 	if (!found) {
-		parts.push(' ' + declaration);
+		parts.push(declaration);
 	}
 
-	return parts
-		.map((p) => p.trim())
-		.filter(Boolean)
-		.join('; ');
+	return parts.join('; ');
 }
 
 /**
@@ -553,15 +615,8 @@ function set_style_property_in_string(style_string, property, value, priority) {
  * @returns {string}
  */
 function remove_style_property_in_string(style_string, property) {
-	return style_string
-		.split(';')
-		.filter((part) => {
-			var colon_index = part.indexOf(':');
-			if (colon_index === -1) return false;
-			return part.substring(0, colon_index).trim() !== property;
-		})
-		.map((p) => p.trim())
-		.filter(Boolean)
+	return split_style_declarations(style_string)
+		.filter((part) => declaration_property(part) !== property)
 		.join('; ');
 }
 
