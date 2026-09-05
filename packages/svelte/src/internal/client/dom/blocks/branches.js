@@ -98,91 +98,93 @@ export class BranchManager {
 
 		var pop_renderer = push_renderer(this.#renderer);
 
-		var key = /** @type {Key} */ (this.#batches.get(batch));
+		try {
+			var key = /** @type {Key} */ (this.#batches.get(batch));
 
-		var onscreen = this.#onscreen.get(key);
+			var onscreen = this.#onscreen.get(key);
 
-		if (onscreen) {
-			// effect is already in the DOM — abort any current outro
-			resume_effect(onscreen);
-			this.#outroing.delete(key);
-		} else {
-			// effect is currently offscreen. put it in the DOM
-			var offscreen = this.#offscreen.get(key);
-
-			if (offscreen) {
-				// effect could have been outro'ed before through a prior batch — resume if necessary
-				resume_effect(offscreen.effect);
-				this.#onscreen.set(key, offscreen.effect);
-				this.#offscreen.delete(key);
-
-				if (DEV) {
-					// Tell hmr.js about the anchor it should use for updates,
-					// since the initial one will be removed
-					/** @type {any} */ (get_last_child(offscreen.fragment))[HMR_ANCHOR] = this.anchor;
-				}
-
-				// remove the anchor...
-				remove_node(/** @type {ChildNode} */ (get_last_child(offscreen.fragment)));
-
-				// ...and append the fragment
-				insert_before(this.anchor, offscreen.fragment);
-				onscreen = offscreen.effect;
-			}
-		}
-
-		for (const [b, k] of this.#batches) {
-			this.#batches.delete(b);
-
-			if (b === batch) {
-				// keep values for newer batches
-				break;
-			}
-
-			const offscreen = this.#offscreen.get(k);
-
-			if (offscreen) {
-				// for older batches, destroy offscreen effects
-				// as they will never be committed
-				destroy_effect(offscreen.effect);
-				this.#offscreen.delete(k);
-			}
-		}
-
-		// outro/destroy all onscreen effects...
-		for (const [k, effect] of this.#onscreen) {
-			// ...except the one that was just committed
-			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
-			if (k === key || this.#outroing.has(k)) continue;
-
-			const on_destroy = () => {
-				const keys = Array.from(this.#batches.values());
-
-				if (keys.includes(k)) {
-					// keep the effect offscreen, as another batch will need it
-					var fragment = create_fragment();
-					move_effect(effect, fragment);
-
-					append_child(fragment, create_text()); // TODO can we avoid this?
-
-					this.#offscreen.set(k, { effect, fragment });
-				} else {
-					destroy_effect(effect);
-				}
-
-				this.#outroing.delete(k);
-				this.#onscreen.delete(k);
-			};
-
-			if (this.#transition || !onscreen) {
-				this.#outroing.add(k);
-				pause_effect(effect, on_destroy, false);
+			if (onscreen) {
+				// effect is already in the DOM — abort any current outro
+				resume_effect(onscreen);
+				this.#outroing.delete(key);
 			} else {
-				on_destroy();
-			}
-		}
+				// effect is currently offscreen. put it in the DOM
+				var offscreen = this.#offscreen.get(key);
 
-		pop_renderer?.();
+				if (offscreen) {
+					// effect could have been outro'ed before through a prior batch — resume if necessary
+					resume_effect(offscreen.effect);
+					this.#onscreen.set(key, offscreen.effect);
+					this.#offscreen.delete(key);
+
+					if (DEV) {
+						// Tell hmr.js about the anchor it should use for updates,
+						// since the initial one will be removed
+						/** @type {any} */ (get_last_child(offscreen.fragment))[HMR_ANCHOR] = this.anchor;
+					}
+
+					// remove the anchor...
+					remove_node(/** @type {ChildNode} */ (get_last_child(offscreen.fragment)));
+
+					// ...and append the fragment
+					insert_before(this.anchor, offscreen.fragment);
+					onscreen = offscreen.effect;
+				}
+			}
+
+			for (const [b, k] of this.#batches) {
+				this.#batches.delete(b);
+
+				if (b === batch) {
+					// keep values for newer batches
+					break;
+				}
+
+				const offscreen = this.#offscreen.get(k);
+
+				if (offscreen) {
+					// for older batches, destroy offscreen effects
+					// as they will never be committed
+					destroy_effect(offscreen.effect);
+					this.#offscreen.delete(k);
+				}
+			}
+
+			// outro/destroy all onscreen effects...
+			for (const [k, effect] of this.#onscreen) {
+				// ...except the one that was just committed
+				//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
+				if (k === key || this.#outroing.has(k)) continue;
+
+				const on_destroy = () => {
+					const keys = Array.from(this.#batches.values());
+
+					if (keys.includes(k)) {
+						// keep the effect offscreen, as another batch will need it
+						var fragment = create_fragment();
+						move_effect(effect, fragment);
+
+						append_child(fragment, create_text()); // TODO can we avoid this?
+
+						this.#offscreen.set(k, { effect, fragment });
+					} else {
+						destroy_effect(effect);
+					}
+
+					this.#outroing.delete(k);
+					this.#onscreen.delete(k);
+				};
+
+				if (this.#transition || !onscreen) {
+					this.#outroing.add(k);
+					pause_effect(effect, on_destroy, false);
+				} else {
+					on_destroy();
+				}
+			}
+		} finally {
+			pop_renderer?.();
+		}
 	};
 
 	/**

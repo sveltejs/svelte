@@ -273,30 +273,32 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		var pop_renderer = push_renderer(renderer);
 
-		state.pending.delete(batch);
+		try {
+			state.pending.delete(batch);
 
-		state.fallback = fallback;
-		reconcile(state, array, anchor, flags, get_key);
+			state.fallback = fallback;
+			reconcile(state, array, anchor, flags, get_key);
 
-		if (fallback !== null) {
-			if (array.length === 0) {
-				if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
-					resume_effect(fallback);
+			if (fallback !== null) {
+				if (array.length === 0) {
+					if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
+						resume_effect(fallback);
+					} else {
+						fallback.f ^= EFFECT_OFFSCREEN;
+						move(fallback, null, anchor);
+					}
 				} else {
-					fallback.f ^= EFFECT_OFFSCREEN;
-					move(fallback, null, anchor);
+					pause_effect(fallback, () => {
+						// TODO only null out if no pending batch needs it,
+						// otherwise re-add `fallback.fragment` and move the
+						// effect into it
+						fallback = null;
+					});
 				}
-			} else {
-				pause_effect(fallback, () => {
-					// TODO only null out if no pending batch needs it,
-					// otherwise re-add `fallback.fragment` and move the
-					// effect into it
-					fallback = null;
-				});
 			}
+		} finally {
+			pop_renderer?.();
 		}
-
-		pop_renderer?.();
 	}
 
 	/**

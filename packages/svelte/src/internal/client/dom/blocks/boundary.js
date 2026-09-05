@@ -277,45 +277,47 @@ export class Boundary {
 		queue_micro_task(() => {
 			var pop_renderer = push_renderer(this.#effect.r);
 
-			var fragment = (this.#offscreen_fragment = create_fragment());
-			var anchor = create_text();
-			var handled = false;
+			try {
+				var fragment = (this.#offscreen_fragment = create_fragment());
+				var anchor = create_text();
+				var handled = false;
 
-			append_child(fragment, anchor);
+				append_child(fragment, anchor);
 
-			this.#main_effect = this.#run(() => {
-				try {
-					return branch(() => this.#children(anchor));
-				} catch (error) {
+				this.#main_effect = this.#run(() => {
 					try {
-						this.error(error);
-						handled = true;
+						return branch(() => this.#children(anchor));
 					} catch (error) {
-						invoke_error_boundary(error, this.#effect.parent);
+						try {
+							this.error(error);
+							handled = true;
+						} catch (error) {
+							invoke_error_boundary(error, this.#effect.parent);
+						}
+
+						return null;
 					}
-
-					return null;
-				}
-			});
-
-			if (this.#main_effect === null) {
-				this.#offscreen_fragment = null;
-				if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
-				return;
-			}
-
-			if (this.#pending_count === 0) {
-				insert_before(this.#anchor, fragment);
-				this.#offscreen_fragment = null;
-
-				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
-					this.#pending_effect = null;
 				});
 
-				this.#resolve(/** @type {Batch} */ (current_batch));
-			}
+				if (this.#main_effect === null) {
+					this.#offscreen_fragment = null;
+					if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
+					return;
+				}
 
-			pop_renderer?.();
+				if (this.#pending_count === 0) {
+					insert_before(this.#anchor, fragment);
+					this.#offscreen_fragment = null;
+
+					pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
+						this.#pending_effect = null;
+					});
+
+					this.#resolve(/** @type {Batch} */ (current_batch));
+				}
+			} finally {
+				pop_renderer?.();
+			}
 		});
 	}
 

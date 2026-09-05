@@ -753,17 +753,19 @@ export function move_effect(effect, fragment) {
 
 	var pop_renderer = push_renderer(effect.r);
 
-	/** @type {TemplateNode | null} */
-	var node = effect.nodes.start;
-	var end = effect.nodes.end;
-
-	while (node !== null) {
+	try {
 		/** @type {TemplateNode | null} */
-		var next = node === end ? null : get_next_sibling(node);
+		var node = effect.nodes.start;
+		var end = effect.nodes.end;
 
-		append_child(fragment, node);
-		node = next;
+		while (node !== null) {
+			/** @type {TemplateNode | null} */
+			var next = node === end ? null : get_next_sibling(node);
+
+			append_child(fragment, node);
+			node = next;
+		}
+	} finally {
+		pop_renderer?.();
 	}
-
-	pop_renderer?.();
 }
