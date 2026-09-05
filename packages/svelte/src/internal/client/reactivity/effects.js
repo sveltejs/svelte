@@ -523,59 +523,61 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	var pop_renderer = push_renderer(effect.r, effect.pr);
 
-	if (
-		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
-		effect.nodes !== null &&
-		effect.nodes.end !== null
-	) {
-		remove_effect_nodes(effect);
-		removed = true;
-	}
-
-	effect.f |= DESTROYING;
-	destroy_effect_children(effect, remove_dom && !removed);
-	remove_reactions(effect, 0);
-
-	var transitions = effect.nodes && effect.nodes.t;
-
-	if (transitions !== null) {
-		for (const transition of transitions) {
-			transition.stop();
+	try {
+		if (
+			(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
+			effect.nodes !== null &&
+			effect.nodes.end !== null
+		) {
+			remove_effect_nodes(effect);
+			removed = true;
 		}
+
+		effect.f |= DESTROYING;
+		destroy_effect_children(effect, remove_dom && !removed);
+		remove_reactions(effect, 0);
+
+		var transitions = effect.nodes && effect.nodes.t;
+
+		if (transitions !== null) {
+			for (const transition of transitions) {
+				transition.stop();
+			}
+		}
+
+		execute_effect_teardown(effect);
+
+		effect.f ^= DESTROYING;
+		effect.f |= DESTROYED;
+
+		var parent = effect.parent;
+
+		// If the parent doesn't have any children, then skip this work altogether
+		if (parent !== null && parent.first !== null) {
+			unlink_effect(effect);
+		}
+
+		if (DEV) {
+			effect.component_function = null;
+		}
+
+		// `first` and `child` are nulled out in destroy_effect_children
+		// we don't null out `parent` so that error propagation can work correctly
+		effect.next =
+			effect.prev =
+			effect.teardown =
+			effect.ctx =
+			effect.deps =
+			effect.fn =
+			effect.nodes =
+			effect.ac =
+			effect.b =
+			effect.r =
+			effect.pr =
+				null;
+	} finally {
+		pop_renderer?.();
 	}
-
-	execute_effect_teardown(effect);
-
-	effect.f ^= DESTROYING;
-	effect.f |= DESTROYED;
-
-	var parent = effect.parent;
-
-	// If the parent doesn't have any children, then skip this work altogether
-	if (parent !== null && parent.first !== null) {
-		unlink_effect(effect);
-	}
-
-	if (DEV) {
-		effect.component_function = null;
-	}
-
-	// `first` and `child` are nulled out in destroy_effect_children
-	// we don't null out `parent` so that error propagation can work correctly
-	effect.next =
-		effect.prev =
-		effect.teardown =
-		effect.ctx =
-		effect.deps =
-		effect.fn =
-		effect.nodes =
-		effect.ac =
-		effect.b =
-		effect.r =
-		effect.pr =
-			null;
-
-	pop_renderer?.();
 }
 
 /**
