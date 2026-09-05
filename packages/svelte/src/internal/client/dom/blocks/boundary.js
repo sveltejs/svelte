@@ -431,9 +431,12 @@ export class Boundary {
 
 			if (this.#offscreen_fragment) {
 				var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
-				insert_before(this.#anchor, this.#offscreen_fragment);
-				this.#offscreen_fragment = null;
-				pop_renderer?.();
+				try {
+					insert_before(this.#anchor, this.#offscreen_fragment);
+					this.#offscreen_fragment = null;
+				} finally {
+					pop_renderer?.();
+				}
 			}
 		}
 	}
