@@ -982,6 +982,12 @@ A derived value may be used in other contexts:
 
 See [the note in the docs](legacy-svelte-self) for more info.
 
+### unexpected_head
+
+```
+Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
+```
+
 ### unknown_code
 
 ```
