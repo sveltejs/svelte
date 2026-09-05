@@ -1,0 +1,1 @@
+{x as number}
