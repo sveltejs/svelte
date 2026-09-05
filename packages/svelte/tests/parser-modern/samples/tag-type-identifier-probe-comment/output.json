@@ -56,15 +56,25 @@
 								"column": 35
 							}
 						},
-						"name": "Object",
 						"leadingComments": [
 							{
 								"type": "Block",
 								"value": " probe ",
 								"start": 17,
-								"end": 28
+								"end": 28,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 17
+									},
+									"end": {
+										"line": 1,
+										"column": 28
+									}
+								}
 							}
-						]
+						],
+						"name": "Object"
 					}
 				}
 			}

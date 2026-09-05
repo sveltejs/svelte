@@ -1,12 +1,11 @@
-/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern, VariableDeclaration } from 'estree' */
+/** @import { Expression, Identifier, Pattern, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
-import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { ExpressionMetadata } from '../../nodes.js';
-import { parse_expression_at, parse_statement_at } from '../acorn.js';
+import { parse_params_at, parse_statement_at } from '../js.js';
 import read_pattern from '../read/context.js';
-import read_expression, { get_loose_identifier } from '../read/expression.js';
+import read_expression from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
 import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
@@ -90,12 +89,14 @@ function read_declaration(parser) {
 
 	/** @type {import('estree').Statement | import('estree').VariableDeclaration} */
 	let declaration;
+	/** @type {number} */
+	let end;
 	try {
-		declaration = parse_statement_at(parser, parser.template, start);
+		({ node: declaration, end } = parse_statement_at(parser, start));
 	} catch (error) {
 		if (!parser.loose) throw error;
 
-		const end = find_matching_bracket(parser.template, start, '{');
+		end = /** @type {number} */ (find_matching_bracket(parser.template, start, '{'));
 		if (end === undefined) throw error;
 
 		parser.index = end;
@@ -141,7 +142,7 @@ function read_declaration(parser) {
 		e.declaration_tag_invalid_type(declaration);
 	}
 
-	parser.index = /** @type {number} */ (declaration.end);
+	parser.index = end;
 	parser.allow_whitespace();
 	parser.eat('}', true);
 
@@ -182,80 +183,14 @@ function open(parser) {
 	if (parser.eat('each')) {
 		parser.require_whitespace();
 
-		const template = parser.template;
-		let end = parser.template.length;
-
-		/** @type {Expression | undefined} */
-		let expression;
-
-		// we have to do this loop because `{#each x as { y = z }}` fails to parse —
-		// the `as { y = z }` is treated as an Expression but it's actually a Pattern.
-		// the 'fix' is to backtrack and hide everything from the `as` onwards, until
-		// we get a valid expression
-		while (!expression) {
-			try {
-				expression = read_expression(parser, undefined, true);
-			} catch (err) {
-				end = /** @type {any} */ (err).position[0] - 2;
-
-				while (end > start && parser.template.slice(end, end + 2) !== 'as') {
-					end -= 1;
-				}
-
-				if (end <= start) {
-					if (parser.loose) {
-						expression = get_loose_identifier(parser);
-						if (expression) {
-							break;
-						}
-					}
-					throw err;
-				}
-
-				// @ts-expect-error parser.template is meant to be readonly, this is a special case
-				parser.template = template.slice(0, end);
-			}
-		}
-
-		// @ts-expect-error
-		parser.template = template;
+		// the list ends at the `as` that names the item, so a TypeScript assertion in it needs parens
+		let expression = read_expression(parser, undefined, false, 'as');
 
 		parser.allow_whitespace();
 
 		// {#each} blocks must declare a context – {#each list as item}
-		if (!parser.match('as')) {
-			// this could be a TypeScript assertion that was erroneously eaten.
-
-			if (expression.type === 'SequenceExpression') {
-				expression = expression.expressions[0];
-			}
-
-			let assertion = null;
-			let end = expression.end;
-
-			expression = walk(expression, null, {
-				// @ts-expect-error
-				TSAsExpression(node, context) {
-					if (node.end === /** @type {Expression} */ (expression).end) {
-						assertion = node;
-						end = node.expression.end;
-						return node.expression;
-					}
-
-					context.next();
-				}
-			});
-
-			expression.end = end;
-
-			if (assertion) {
-				// we can't reset `parser.index` to `expression.expression.end` because
-				// it will ignore any parentheses — we need to jump through this hoop
-				let end = /** @type {any} */ (/** @type {any} */ (assertion).typeAnnotation).start - 2;
-				while (parser.template.slice(end, end + 2) !== 'as') end -= 1;
-
-				parser.index = end;
-			}
+		if (!parser.match('as') && expression.type === 'SequenceExpression') {
+			expression = expression.expressions[0];
 		}
 
 		/** @type {Pattern | null} */
@@ -456,8 +391,6 @@ function open(parser) {
 
 		parser.allow_whitespace();
 
-		const params_start = parser.index;
-
 		// snippets could have a generic signature, e.g. `#snippet foo<T>(...)`
 		/** @type {string | undefined} */
 		let type_params;
@@ -474,29 +407,20 @@ function open(parser) {
 
 		parser.allow_whitespace();
 
-		const matched = parser.eat('(', true, false);
+		/** @type {import('estree').Pattern[]} */
+		let parameters = [];
 
-		if (matched) {
-			let parentheses = 1;
+		if (parser.eat('(', true, false)) {
+			const open = parser.index - 1;
 
-			while (parser.index < parser.template.length && (!parser.match(')') || parentheses !== 1)) {
-				if (parser.match('(')) parentheses++;
-				if (parser.match(')')) parentheses--;
-				parser.index += 1;
+			if (find_matching_bracket(parser.template, parser.index, '(') === undefined) {
+				e.expected_token(parser.template.length, ')');
 			}
 
-			parser.eat(')', true);
+			const { params, end } = parse_params_at(parser, open);
+			parameters = params;
+			parser.index = end;
 		}
-
-		let function_expression = matched
-			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(
-						parser,
-						parser.template.slice(0, parser.index) + ' => {}',
-						params_start
-					)
-				)
-			: { params: [] };
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -508,7 +432,7 @@ function open(parser) {
 			end: -1,
 			expression: id,
 			typeParams: type_params,
-			parameters: function_expression.params,
+			parameters,
 			body: create_fragment(),
 			metadata: {
 				can_hoist: false,

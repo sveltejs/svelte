@@ -1,8 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Location } from 'locate-character' */
 /** @import * as ESTree from 'estree' */
-// @ts-expect-error acorn type definitions are borked in the release we use
-import { isIdentifierStart, isIdentifierChar } from 'acorn';
+import { Source, isIdentifierStart, isIdentifierChar } from '@teasel/parser';
 import fragment from './state/fragment.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
@@ -53,6 +52,9 @@ export class Parser {
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
 
+	/** The template as the JavaScript parser holds it, for every expression, pattern and tag in it */
+	js;
+
 	/** @type {AST.TemplateNode[]} */
 	stack = [];
 
@@ -88,6 +90,12 @@ export class Parser {
 		regex_lang_attribute.lastIndex = 0; // reset matched index to pass tests - otherwise declare the regex inside the constructor
 
 		this.ts = match_lang?.[2] === 'ts';
+		this.js = new Source(this.template, {
+			sourceType: 'module',
+			typescript: this.ts,
+			comments: true,
+			locations: true
+		});
 
 		this.root = {
 			css: null,
@@ -229,14 +237,14 @@ export class Parser {
 
 		const code = /** @type {number} */ (this.template.codePointAt(this.index));
 
-		if (isIdentifierStart(code, true)) {
+		if (isIdentifierStart(code)) {
 			let i = this.index;
 			end += code <= 0xffff ? 1 : 2;
 
 			while (end < this.template.length) {
 				const code = /** @type {number} */ (this.template.codePointAt(end));
 
-				if (!isIdentifierChar(code, true)) break;
+				if (!isIdentifierChar(code)) break;
 				end += code <= 0xffff ? 1 : 2;
 			}
 

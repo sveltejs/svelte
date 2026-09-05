@@ -1,8 +1,7 @@
 /** @import { Expression, Identifier } from 'estree' */
 /** @import { Parser } from '../index.js' */
-// @ts-expect-error acorn type definitions are borked in the release we use
-import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import { has_lf_line_breaks_only, parse_expression_at, remove_parens } from '../acorn.js';
+import { isIdentifierStart, isIdentifierChar } from '@teasel/parser';
+import { parse_expression_at } from '../js.js';
 import { regex_whitespace } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import { find_matching_bracket } from '../utils/bracket.js';
@@ -34,23 +33,17 @@ export function get_loose_identifier(parser, opening_token) {
  * @param {Parser} parser
  * @param {string} [opening_token]
  * @param {boolean} [disallow_loose]
+ * @param {'as' | 'in'} [until] a word operator the expression stops before, at the top level
  * @returns {Expression}
  */
-export default function read_expression(parser, opening_token, disallow_loose) {
+export default function read_expression(parser, opening_token, disallow_loose, until) {
 	const simple = read_simple_expression(parser);
 	if (simple) return simple;
 
 	try {
-		const node = parse_expression_at(parser, parser.template, parser.index);
-
-		let index = /** @type {number} */ (node.end);
-
-		const last_comment = parser.root.comments.at(-1);
-		if (last_comment && last_comment.end > index) index = last_comment.end;
-
-		parser.index = index;
-
-		return /** @type {Expression} */ (remove_parens(node));
+		const { node, end } = parse_expression_at(parser, parser.index, until);
+		parser.index = end;
+		return node;
 	} catch (err) {
 		// If we are in an each loop we need the error to be thrown in cases like
 		// `as { y = z }` so we still throw and handle the error there
@@ -65,9 +58,26 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 	}
 }
 
+const regex_non_lf_line_break = /\r(?!\n)|[\u2028\u2029]/;
+
+let last_template = '';
+let lf_only = true;
+
+/**
+ * The parser breaks lines on bare `\r`, `\u2028` and `\u2029`, which the locator doesn't
+ * @param {Parser} parser
+ */
+function has_lf_line_breaks_only(parser) {
+	if (parser.template !== last_template) {
+		last_template = parser.template;
+		lf_only = !regex_non_lf_line_break.test(last_template);
+	}
+	return lf_only;
+}
+
 /**
  * Most template expressions are an identifier or a `a.b.c` member chain followed by `}`.
- * Those are built directly for better parse performance, with the same shape acorn would produce; anything else goes to acorn
+ * Those are built directly for better parse performance, with the same shape the parser would produce; anything else goes to the parser
  * @param {Parser} parser
  * @returns {Expression | null}
  */
@@ -131,13 +141,13 @@ function read_word(template, start) {
 	if (start >= template.length) return -1;
 
 	const code = /** @type {number} */ (template.codePointAt(start));
-	if (!isIdentifierStart(code, true)) return -1;
+	if (!isIdentifierStart(code)) return -1;
 
 	let end = start + (code <= 0xffff ? 1 : 2);
 
 	while (end < template.length) {
 		const code = /** @type {number} */ (template.codePointAt(end));
-		if (!isIdentifierChar(code, true)) break;
+		if (!isIdentifierChar(code)) break;
 		end += code <= 0xffff ? 1 : 2;
 	}
 

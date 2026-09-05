@@ -685,7 +685,7 @@ export class Scope {
 			const binding = this.declarations.get(node.name);
 			if (binding && binding.declaration_kind !== 'var' && declaration_kind !== 'var') {
 				// This also errors on function types, but that's arguably a good thing
-				// declaring function twice is also caught by acorn in the parse phase
+				// declaring function twice is also caught by the parser
 				e.declaration_duplicate(node, node.name);
 			}
 		}

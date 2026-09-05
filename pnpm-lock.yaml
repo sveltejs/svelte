@@ -74,15 +74,12 @@ importers:
       '@jridgewell/sourcemap-codec':
         specifier: ^1.6.0
         version: 1.6.0
-      '@sveltejs/acorn-typescript':
-        specifier: ^1.0.13
-        version: 1.0.13(acorn@8.18.0)
+      '@teasel/parser':
+        specifier: link:../../../teasel/bindings/node
+        version: link:../../../teasel/bindings/node
       '@types/estree':
         specifier: ^1.0.9
         version: 1.0.9
-      acorn:
-        specifier: ^8.18.0
-        version: 8.18.0
       aria-query:
         specifier: 5.3.1
         version: 5.3.1
@@ -141,6 +138,9 @@ importers:
       '@types/trusted-types':
         specifier: ^2.0.7
         version: 2.0.7
+      acorn:
+        specifier: ^8.18.0
+        version: 8.18.0
       baseline-browser-mapping:
         specifier: ^2.10.32
         version: 2.10.32
@@ -919,11 +919,6 @@ packages:
     engines: {node: ^16.0.0 || >=18.0.0}
     peerDependencies:
       eslint: '>=8.40.0'
-
-  '@sveltejs/acorn-typescript@1.0.13':
-    resolution: {integrity: sha512-wgKggnhZVL9Bfx1OaKKTrYY9BFRk6C8UAkQNUcIv1+llzYrIqy+RZm5HPKzn0NpEBvTVhTqB4kQyllZywsRBRQ==}
-    peerDependencies:
-      acorn: ^8.9.0
 
   '@sveltejs/eslint-config@9.0.0':
     resolution: {integrity: sha512-3u9VUYlU0Mc/8Bhc7eRAPgJuUBMaKHzoE8r50WrnVujoxBLW4zfPckR/BFGGNeVUh0F7QGAtxGkV/5pL6CE1Ng==}
@@ -3055,10 +3050,6 @@ snapshots:
       eslint: 10.0.0
       eslint-visitor-keys: 3.4.3
       espree: 9.6.1
-
-  '@sveltejs/acorn-typescript@1.0.13(acorn@8.18.0)':
-    dependencies:
-      acorn: 8.18.0
 
   '@sveltejs/eslint-config@9.0.0(@eslint/js@10.0.1(eslint@10.0.0))(@stylistic/eslint-plugin-js@1.8.0(eslint@10.0.0))(eslint-config-prettier@9.1.0(eslint@10.0.0))(eslint-plugin-n@17.24.0(eslint@10.0.0)(typescript@5.5.4))(eslint-plugin-svelte@3.15.0(eslint@10.0.0)(svelte@packages+svelte))(eslint@10.0.0)(typescript-eslint@8.56.0(eslint@10.0.0)(typescript@5.5.4))(typescript@5.5.4)':
     dependencies:

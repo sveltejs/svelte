@@ -3,7 +3,7 @@
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
-import { parse } from '../1-parse/acorn.js';
+import { parse } from '../1-parse/js.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import {

@@ -1,7 +1,7 @@
 /** @import { Program } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
-import * as acorn from '../acorn.js';
+import { parse } from '../js.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
@@ -31,7 +31,7 @@ export function read_script(parser, start, attributes) {
 		parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
 	parser.read(regex_starts_with_closing_script_tag);
 
-	const ast = acorn.parse(source, parser.root.comments, parser.ts, true);
+	const ast = parse(source, parser.root.comments, parser.ts, true);
 
 	ast.start = script_start;
 

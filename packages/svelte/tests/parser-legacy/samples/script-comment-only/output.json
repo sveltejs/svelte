@@ -40,16 +40,26 @@
 					"column": 9
 				}
 			},
-			"body": [],
-			"sourceType": "module",
-			"trailingComments": [
+			"innerComments": [
 				{
 					"type": "Line",
 					"value": " TODO write some code",
 					"start": 10,
-					"end": 33
+					"end": 33,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 2,
+							"column": 24
+						}
+					}
 				}
-			]
+			],
+			"body": [],
+			"sourceType": "module"
 		}
 	},
 	"_comments": [
