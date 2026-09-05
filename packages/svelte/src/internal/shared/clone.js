@@ -1,7 +1,7 @@
 /** @import { Snapshot } from './types' */
 import { DEV } from 'esm-env';
 import * as w from './warnings.js';
-import { get_prototype_of, is_array, object_prototype } from './utils.js';
+import { define_property, get_prototype_of, is_array, object_prototype } from './utils.js';
 
 /**
  * In dev, we keep track of which properties could not be cloned. In prod
@@ -90,7 +90,7 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 			}
 
 			for (var key of Object.keys(value)) {
-				copy[key] = clone(
+				var cloned_value = clone(
 					// @ts-expect-error
 					value[key],
 					cloned,
@@ -99,6 +99,22 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 					null,
 					no_tojson
 				);
+
+				if (key === '__proto__') {
+					// Assigning `__proto__` runs the setter inherited from `Object.prototype`
+					// rather than creating a property, so the key would be dropped and an
+					// object value would become the copy's prototype, leaving the snapshot
+					// inheriting fields that were data. `structuredClone`, which this
+					// function falls back to below, keeps it as an own property.
+					define_property(copy, key, {
+						value: cloned_value,
+						writable: true,
+						enumerable: true,
+						configurable: true
+					});
+				} else {
+					copy[key] = cloned_value;
+				}
 			}
 
 			return copy;
