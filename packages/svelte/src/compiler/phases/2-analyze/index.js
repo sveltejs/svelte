@@ -9,6 +9,7 @@ import * as w from '../../warnings.js';
 import {
 	extract_identifiers,
 	has_await_expression,
+	is_reference,
 	object,
 	unwrap_pattern
 } from '../../utils/ast.js';
@@ -83,7 +84,6 @@ import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
-import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
 import * as state from '../../state.js';
 
@@ -657,9 +657,7 @@ export function analyze_component(root, source, options) {
 							// @ts-expect-error
 							_: set_scope,
 							Identifier(node, context) {
-								const parent = /** @type {ESTree.Expression} */ (context.path.at(-1));
-
-								if (is_reference(node, parent)) {
+								if (is_reference(node, context.path.at(-1))) {
 									const binding = context.state.scope.get(node.name);
 
 									if (
@@ -981,8 +979,7 @@ function calculate_blockers(instance, analysis) {
 				},
 				ImportDeclaration(node) {},
 				Identifier(node, context) {
-					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-					if (is_reference(node, parent)) {
+					if (is_reference(node, context.path.at(-1))) {
 						const binding = context.state.scope.get(node.name);
 						if (binding) {
 							touched.add(binding);
@@ -1059,8 +1056,7 @@ function calculate_blockers(instance, analysis) {
 					touch(node, context.state.scope, writes, writes_seen);
 				},
 				Identifier(node, context) {
-					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-					if (is_reference(node, parent)) {
+					if (is_reference(node, context.path.at(-1))) {
 						const binding = context.state.scope.get(node.name);
 						if (binding) {
 							reads.add(binding);

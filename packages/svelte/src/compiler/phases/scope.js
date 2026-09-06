@@ -1,7 +1,6 @@
 /** @import { BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super, SimpleLiteral, FunctionExpression, ArrowFunctionExpression } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
-import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
@@ -9,6 +8,7 @@ import * as e from '../errors.js';
 import {
 	extract_identifiers,
 	extract_identifiers_from_destructuring,
+	is_reference,
 	object,
 	unwrap_pattern
 } from '../utils/ast.js';
@@ -1046,17 +1046,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			context.next();
 		},
 
-		// references
 		Identifier(node, { path, state }) {
-			const parent = path.at(-1);
-			if (
-				parent &&
-				is_reference(node, /** @type {Node} */ (parent)) &&
-				// TSTypeAnnotation, TSInterfaceDeclaration etc - these are normally already filtered out,
-				// but for the migration they aren't, so we need to filter them out here
-				// TODO -> once migration script is gone we can remove this check
-				!parent.type.startsWith('TS')
-			) {
+			if (is_reference(node, path.at(-1))) {
 				references.push([state.scope, { node, path: path.slice() }]);
 			}
 		},

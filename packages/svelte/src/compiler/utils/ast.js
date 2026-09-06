@@ -1,6 +1,7 @@
 /** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
+import { bindingOf } from '@teasel/parser';
 import * as b from '#compiler/builders';
 
 /**
@@ -633,4 +634,37 @@ export function has_await_expression(node) {
  */
 export function save(expression) {
 	return b.call(b.await(b.call('$.save', expression)));
+}
+
+/** @type {WeakSet<ESTree.Identifier>} the identifiers the parser makes itself for names in template syntax */
+export const value_names = new WeakSet();
+
+/**
+ * Whether an identifier names a value. The parser answers for what it parsed and marks what it
+ * made; an identifier the compiler built is judged by where it sits.
+ * @param {ESTree.Identifier} node
+ * @param {ESTree.Node | AST.SvelteNode | null | undefined} parent
+ */
+export function is_reference(node, parent) {
+	const binding = bindingOf(node);
+	if (binding !== undefined || value_names.has(node)) return true;
+	if (!parent) return true;
+	switch (parent.type) {
+		case 'MemberExpression':
+			return parent.computed || node === parent.object;
+		case 'MethodDefinition':
+			return parent.computed;
+		case 'PropertyDefinition':
+		case 'Property':
+			return parent.computed || node === parent.value;
+		case 'ExportSpecifier':
+		case 'ImportSpecifier':
+			return node === parent.local;
+		case 'LabeledStatement':
+		case 'BreakStatement':
+		case 'ContinueStatement':
+			return false;
+		default:
+			return !parent.type.startsWith('TS');
+	}
 }

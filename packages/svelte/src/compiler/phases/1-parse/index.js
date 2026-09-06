@@ -3,6 +3,7 @@
 /** @import * as ESTree from 'estree' */
 import { Source, isIdentifierStart, isIdentifierChar } from '@teasel/parser';
 import fragment from './state/fragment.js';
+import { value_names } from '../../utils/ast.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
@@ -96,6 +97,7 @@ export class Parser {
 			typescript: this.ts && (erase ? 'erase' : true),
 			comments: true,
 			locations: true,
+			scopes: true,
 			// a script may export what the component declares elsewhere
 			allowUndeclaredExports: true
 		});
@@ -259,7 +261,8 @@ export class Parser {
 			}
 		}
 
-		return {
+		/** @type {ESTree.Identifier & { start: number, end: number, loc: { start: Location, end: Location } }} */
+		const identifier = {
 			type: 'Identifier',
 			name,
 			start,
@@ -269,6 +272,8 @@ export class Parser {
 				end: state.locator(end)
 			}
 		};
+		value_names.add(identifier);
+		return identifier;
 	}
 
 	/** @param {string} delimiter */

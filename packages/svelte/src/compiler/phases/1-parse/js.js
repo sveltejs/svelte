@@ -18,7 +18,8 @@ export function parse(source, comments, typescript) {
 			sourceType: 'module',
 			typescript,
 			comments: true,
-			locations: true
+			locations: true,
+			scopes: true
 		});
 	} catch (err) {
 		return handle_parse_error(err);
@@ -26,6 +27,8 @@ export function parse(source, comments, typescript) {
 
 	add_comments(source, comments, /** @type {teasel.Comment[]} */ (ast.comments));
 	delete ast.comments;
+	delete ast.scopes;
+	delete ast.bindings;
 
 	return ast;
 }
@@ -51,6 +54,8 @@ export function parse_script(parser, start, end) {
 		/** @type {teasel.Comment[]} */ (ast.comments)
 	);
 	delete ast.comments;
+	delete ast.scopes;
+	delete ast.bindings;
 	unsupported(ast.typescript);
 	delete ast.typescript;
 

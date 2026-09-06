@@ -11,7 +11,7 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
 import { create_attribute, ExpressionMetadata, is_element_node } from '../../nodes.js';
-import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
+import { get_attribute_expression, is_expression_attribute, value_names } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 import { locator } from '../../../state.js';
@@ -712,6 +712,7 @@ function read_attribute(parser) {
 				type: 'Identifier',
 				name: directive.name
 			});
+			value_names.add(/** @type {Identifier} */ (directive.expression));
 		}
 
 		return directive;
@@ -949,7 +950,8 @@ function read_tag(parser, attribute = false) {
 	const name = read_tag_name(parser, attribute);
 	const end = parser.index;
 
-	return {
+	/** @type {Identifier & { start: number, end: number, loc: SourceLocation }} */
+	const identifier = {
 		type: 'Identifier',
 		name,
 		start,
@@ -959,6 +961,8 @@ function read_tag(parser, attribute = false) {
 			end: locator(end)
 		}
 	};
+	value_names.add(identifier);
+	return identifier;
 }
 
 /** @param {Parser} parser */

@@ -8,9 +8,8 @@ import {
 } from '../patterns.js';
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
-import { extract_identifiers } from '../../utils/ast.js';
+import { extract_identifiers, is_reference } from '../../utils/ast.js';
 import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
-import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
 
 /**
@@ -46,9 +45,7 @@ function sort_const_tags(nodes, state) {
 				// @ts-expect-error don't know, don't care
 				_: set_scope,
 				Identifier(node, context) {
-					const parent = /** @type {Expression} */ (context.path.at(-1));
-
-					if (is_reference(node, parent)) {
+					if (is_reference(node, context.path.at(-1))) {
 						const binding = context.state.scope.get(node.name);
 						if (binding) deps.add(binding);
 					}

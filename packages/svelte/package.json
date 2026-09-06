@@ -174,7 +174,7 @@
   "dependencies": {
     "@jridgewell/remapping": "^2.3.5",
     "@jridgewell/sourcemap-codec": "^1.6.0",
-    "@teasel/parser": "link:../../../teasel/bindings/node",
+    "@teasel/parser": "link:../../../teasel/package",
     "@types/estree": "^1.0.9",
     "aria-query": "5.3.1",
     "axobject-query": "^4.1.0",
@@ -182,7 +182,6 @@
     "devalue": "^5.9.2",
     "esm-env": "^1.2.1",
     "esrap": "^2.3.6",
-    "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"

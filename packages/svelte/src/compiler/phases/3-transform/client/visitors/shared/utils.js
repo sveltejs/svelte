@@ -2,11 +2,10 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
-import { object } from '../../../../../utils/ast.js';
+import { is_reference, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
-import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { async_thunk, build_getter, is_state_source } from '../../utils.js';
 import { ExpressionMetadata } from '../../../../nodes.js';
@@ -266,8 +265,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 			if (seen.includes(node.name)) return;
 			seen.push(node.name);
 
-			const parent = /** @type {Expression} */ (path.at(-1));
-			if (!is_reference(node, parent)) return;
+			if (!is_reference(node, path.at(-1))) return;
 
 			const binding = state.scope.get(node.name);
 			if (!binding) return;

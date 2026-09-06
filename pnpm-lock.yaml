@@ -75,8 +75,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@teasel/parser':
-        specifier: link:../../../teasel/bindings/node
-        version: link:../../../teasel/bindings/node
+        specifier: link:../../../teasel/package
+        version: link:../../../teasel/package
       '@types/estree':
         specifier: ^1.0.9
         version: 1.0.9
@@ -98,9 +98,6 @@ importers:
       esrap:
         specifier: ^2.3.6
         version: 2.3.6(@typescript-eslint/types@8.59.4)
-      is-reference:
-        specifier: ^3.0.3
-        version: 3.0.3
       locate-character:
         specifier: ^3.0.0
         version: 3.0.0
@@ -1641,9 +1638,6 @@ packages:
 
   is-reference@1.2.1:
     resolution: {integrity: sha512-U82MsXXiFIrjCK4otLT+o2NA2Cd2g5MLoOVXUZjIOhLurrRxpEXzI8O0KZHr3IjLvlAH1kTPYSuqer5T9ZVBKQ==}
-
-  is-reference@3.0.3:
-    resolution: {integrity: sha512-ixkJoqQvAP88E6wLydLGGqCJsrFUnqoH6HnaczB8XmDH1oaWU+xxdptvikTgaEhtZ53Ky6YXiBuUI2WXLMCwjw==}
 
   is-subdir@1.2.0:
     resolution: {integrity: sha512-2AT6j+gXe/1ueqbW6fLZJiIw3F8iXGJtt0yDrZaBhAZEG1raiTxKWU+IPqMCzQAXOUCKdA4UDMgacKH25XG2Cw==}
@@ -3851,10 +3845,6 @@ snapshots:
   is-potential-custom-element-name@1.0.1: {}
 
   is-reference@1.2.1:
-    dependencies:
-      '@types/estree': 1.0.9
-
-  is-reference@3.0.3:
     dependencies:
       '@types/estree': 1.0.9
 

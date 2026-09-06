@@ -1,7 +1,7 @@
 /** @import { Expression, Identifier } from 'estree' */
 /** @import { Context } from '../types' */
-import is_reference from 'is-reference';
 import { should_proxy } from '../../3-transform/client/utils.js';
+import { is_reference } from '../../../utils/ast.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
