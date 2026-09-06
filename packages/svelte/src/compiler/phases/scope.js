@@ -773,8 +773,9 @@ export class Scope {
 	/**
 	 * @param {Identifier} node
 	 * @param {AST.SvelteNode[]} path
+	 * @param {Binding | null | undefined} [binding] what the parser resolved the reference to
 	 */
-	reference(node, path) {
+	reference(node, path, binding = undefined) {
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
 
@@ -782,11 +783,12 @@ export class Scope {
 
 		references.push({ node, path });
 
-		const binding = this.declarations.get(node.name);
-		if (binding) {
+		// the parser resolved the reference already, or the name walks up
+		binding ??= this.declarations.get(node.name);
+		if (binding !== undefined && binding !== null && binding.scope === this) {
 			binding.references.push({ node, path });
 		} else if (this.parent) {
-			this.parent.reference(node, path);
+			this.parent.reference(node, path, binding);
 		} else {
 			// no binding was found, and this is the top level scope,
 			// which means this is a global
@@ -1414,7 +1416,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	// we do this after the fact, so that we don't need to worry
 	// about encountering references before their declarations
 	for (const [scope, { node, path }] of references) {
-		scope.reference(node, path);
+		scope.reference(node, path, declared(node));
 	}
 
 	for (const [scope, node, value] of updates) {
