@@ -116,10 +116,7 @@ export function parse_statement_at(parser, index) {
 	try {
 		answer = parser.js.parseStatementAt(index);
 	} catch (err) {
-		// A statement that runs to the end of the source (e.g. an unterminated declaration tag)
-		// is an EOF, not a stray token; preserve the friendlier `unexpected_eof` diagnostic.
-		if (/** @type {any} */ (err).pos === parser.template.length)
-			e.unexpected_eof(parser.template.length);
+		if (/** @type {any} */ (err).code === 'unexpected_eof') e.unexpected_eof(parser.template.length);
 		return handle_parse_error(err);
 	}
 
@@ -166,14 +163,12 @@ function unsupported(kept) {
 	}
 }
 
-const regex_position_indicator = / \(\d+:\d+\)$/;
-
 /**
  * @param {any} err
  * @returns {never}
  */
 function handle_parse_error(err) {
-	e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
+	e.js_parse_error(err.pos, err.message);
 }
 
 /**
