@@ -2,9 +2,8 @@
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import * as e from '../../../errors.js';
-import { ExpressionMetadata } from '../../nodes.js';
+import { create_fragment, ExpressionMetadata } from '../../nodes.js';
 import { read_expression, read_params, read_pattern, read_statement } from '../js.js';
-import { create_fragment } from '../../nodes.js';
 import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;

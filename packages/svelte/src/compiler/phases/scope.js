@@ -961,7 +961,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		for (const binding of parsed.bindings) {
 			if ((binding.kind === 'param') !== params) continue;
 			// no node: `arguments`, or a declaration erased with the TypeScript it belonged to
-			if (binding.node === null || binding.kind === 'class-name' || binding.kind === 'pattern') continue;
+			if (binding.node === null || binding.kind === 'class-name' || binding.kind === 'pattern')
+				continue;
 			/** @type {DeclarationKind} */
 			let kind = 'let';
 			switch (binding.kind) {
@@ -1078,10 +1079,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const parsed = scopeOf(/** @type {any} */ (node));
 			const parent = context.path.at(-1);
 			if (parsed === undefined) {
-				const of_function = node.type === 'BlockStatement' && parent && scopeOf(/** @type {any} */ (parent));
+				const of_function =
+					node.type === 'BlockStatement' && parent && scopeOf(/** @type {any} */ (parent));
 				if (
 					of_function &&
-					(parent.type === 'FunctionDeclaration' || parent.type === 'FunctionExpression' || parent.type === 'ArrowFunctionExpression')
+					(parent.type === 'FunctionDeclaration' ||
+						parent.type === 'FunctionExpression' ||
+						parent.type === 'ArrowFunctionExpression')
 				) {
 					// the body holds the non-porous function scope; the parameters live one above
 					const scope = context.state.scope.child();
@@ -1097,7 +1101,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node, scope);
 					declare_parsed(scope, parsed, true, /** @type {any} */ (node));
 					if (node.type === 'FunctionExpression' && node.id) declare_parsed(scope, parsed, false);
-					else if (node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement') declare_parsed(scope, parsed, false);
+					else if (node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement')
+						declare_parsed(scope, parsed, false);
 					return context.next({ scope });
 				}
 				case 'block':
@@ -1211,7 +1216,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		ImportDeclaration(node, { state }) {
 			for (const specifier of node.specifiers) {
-				const binding = declared(specifier.local) ?? state.scope.declare(specifier.local, 'normal', 'import', node);
+				const binding =
+					declared(specifier.local) ??
+					state.scope.declare(specifier.local, 'normal', 'import', node);
 				binding.initial = node;
 			}
 		},
