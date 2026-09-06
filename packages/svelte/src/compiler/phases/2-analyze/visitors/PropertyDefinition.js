@@ -8,10 +8,6 @@ import { get_name } from '../../nodes.js';
  * @param {Context} context
  */
 export function PropertyDefinition(node, context) {
-	if (/** @type {any} */ (node).accessor) {
-		e.typescript_invalid_feature(node, 'accessor fields (related TSC proposal is not stage 4 yet)');
-	}
-
 	const name = get_name(node.key);
 	const field = name && context.state.state_fields.get(name);
 

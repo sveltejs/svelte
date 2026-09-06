@@ -148,6 +148,7 @@ const UNSUPPORTED = {
 	TSModuleDeclaration: 'namespaces with non-type nodes',
 	TSParameterProperty: 'accessibility modifiers on constructor parameters',
 	Decorator: 'decorators (related TSC proposal is not stage 4 yet)',
+	AccessorProperty: 'accessor fields (related TSC proposal is not stage 4 yet)',
 	TSExportAssignment: 'export assignments',
 	TSImportEqualsDeclaration: 'import assignments'
 };
