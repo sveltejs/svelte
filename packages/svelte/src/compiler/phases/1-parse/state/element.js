@@ -4,8 +4,8 @@
 /** @import { Parser } from '../index.js' */
 import { is_void, REGEX_VALID_TAG_NAME } from '../../../../utils.js';
 import { read_expression } from '../js.js';
-import { read_script } from '../read/script.js';
-import read_style from '../read/style.js';
+import { read_script } from '../script.js';
+import read_style from '../css.js';
 import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';

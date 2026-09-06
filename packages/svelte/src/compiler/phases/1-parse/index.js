@@ -6,7 +6,7 @@ import fragment from './state/fragment.js';
 import { value_names } from '../../utils/ast.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
-import read_options from './read/options.js';
+import read_options from './options.js';
 import { is_reserved } from '../../../utils.js';
 import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 import * as state from '../../state.js';

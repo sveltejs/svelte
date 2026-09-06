@@ -1,6 +1,6 @@
 /** @import { AST } from '#compiler' */
-/** @import { Parser } from '../index.js' */
-import * as e from '../../../errors.js';
+/** @import { Parser } from './index.js' */
+import * as e from '../../errors.js';
 
 const REGEX_MATCHER = /[~^$*|]?=/y;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
