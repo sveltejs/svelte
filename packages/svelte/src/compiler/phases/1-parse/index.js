@@ -73,8 +73,9 @@ export class Parser {
 	/**
 	 * @param {string} template
 	 * @param {boolean} loose
+	 * @param {boolean} [erase] hand back JavaScript for TypeScript input, as the compiler wants it
 	 */
-	constructor(template, loose) {
+	constructor(template, loose, erase = false) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
@@ -92,9 +93,11 @@ export class Parser {
 		this.ts = match_lang?.[2] === 'ts';
 		this.js = new Source(this.template, {
 			sourceType: 'module',
-			typescript: this.ts,
+			typescript: this.ts && (erase ? 'erase' : true),
 			comments: true,
-			locations: true
+			locations: true,
+			// a script may export what the component declares elsewhere
+			allowUndeclaredExports: true
 		});
 
 		this.root = {
@@ -337,12 +340,13 @@ export class Parser {
 /**
  * @param {string} template
  * @param {boolean} [loose]
+ * @param {boolean} [erase] hand back JavaScript for TypeScript input, as the compiler wants it
  * @returns {AST.Root}
  */
-export function parse(template, loose = false) {
+export function parse(template, loose = false, erase = false) {
 	state.set_source(template);
 
-	const parser = new Parser(template, loose);
+	const parser = new Parser(template, loose, erase);
 	return parser.root;
 }
 

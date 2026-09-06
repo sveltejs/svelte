@@ -417,8 +417,8 @@ function open(parser) {
 				e.expected_token(parser.template.length, ')');
 			}
 
-			const { params, end } = parse_params_at(parser, open);
-			parameters = params;
+			const { node, end } = parse_params_at(parser, open);
+			parameters = node;
 			parser.index = end;
 		}
 

@@ -5,45 +5,73 @@ import * as teasel from '@teasel/parser';
 import * as e from '../../errors.js';
 
 /**
+ * A standalone module, as `analyze_module` reads one.
  * @param {string} source
  * @param {AST.JSComment[]} comments
  * @param {boolean} typescript
- * @param {boolean} [is_script] a `<script>` may export names the component declares elsewhere
  * @returns {Program}
  */
-export function parse(source, comments, typescript, is_script) {
+export function parse(source, comments, typescript) {
+	let ast;
 	try {
-		const ast = teasel.parse(source, {
+		ast = teasel.parse(source, {
 			sourceType: 'module',
 			typescript,
 			comments: true,
-			locations: true,
-			allowUndeclaredExports: is_script
+			locations: true
 		});
-
-		add_comments(source, comments, /** @type {teasel.Comment[]} */ (ast.comments));
-		delete ast.comments;
-
-		return ast;
 	} catch (err) {
 		return handle_parse_error(err);
 	}
+
+	add_comments(source, comments, /** @type {teasel.Comment[]} */ (ast.comments));
+	delete ast.comments;
+
+	return ast;
+}
+
+/**
+ * The program inside a `<script>`, with the positions of the whole template.
+ * @param {Parser} parser
+ * @param {number} start
+ * @param {number} end
+ * @returns {Program}
+ */
+export function parse_script(parser, start, end) {
+	let ast;
+	try {
+		ast = parser.js.parse(start, end);
+	} catch (err) {
+		return handle_parse_error(err);
+	}
+
+	add_comments(
+		parser.template,
+		parser.root.comments,
+		/** @type {teasel.Comment[]} */ (ast.comments)
+	);
+	delete ast.comments;
+	unsupported(ast.typescript);
+	delete ast.typescript;
+
+	return ast;
 }
 
 /**
  * @param {Parser} parser
  * @param {number} index
- * @param {'as' | 'in'} [until] a word operator the expression stops before, at the top level
+ * @param {'as'} [until] the host's `as` follows the expression, as an each block's item does
  * @returns {{ node: Expression, end: number }}
  */
 export function parse_expression_at(parser, index, until) {
+	let answer;
 	try {
-		const { node, end, comments } = parser.js.parseExpressionAt(index, until);
-		add_comments(parser.template, parser.root.comments, /** @type {teasel.Comment[]} */ (comments));
-		return { node, end };
+		answer = parser.js.parseExpressionAt(index, until);
 	} catch (err) {
 		return handle_parse_error(err);
 	}
+
+	return accept(parser, answer, answer.node);
 }
 
 /**
@@ -52,29 +80,30 @@ export function parse_expression_at(parser, index, until) {
  * @returns {{ node: Pattern, end: number }}
  */
 export function parse_pattern_at(parser, index) {
+	let answer;
 	try {
-		const { node, end, comments } = parser.js.parsePatternAt(index);
-		add_comments(parser.template, parser.root.comments, /** @type {teasel.Comment[]} */ (comments));
-		return { node, end };
+		answer = parser.js.parsePatternAt(index);
 	} catch (err) {
 		return handle_parse_error(err);
 	}
+
+	return accept(parser, answer, answer.node);
 }
 
 /**
  * @param {Parser} parser
- * @param {string} source
  * @param {number} index the opening paren
- * @returns {{ params: Pattern[], end: number }}
+ * @returns {{ node: Pattern[], end: number }}
  */
 export function parse_params_at(parser, index) {
+	let answer;
 	try {
-		const { params, end, comments } = parser.js.parseParamsAt(index);
-		add_comments(parser.template, parser.root.comments, /** @type {teasel.Comment[]} */ (comments));
-		return { params, end };
+		answer = parser.js.parseParamsAt(index);
 	} catch (err) {
 		return handle_parse_error(err);
 	}
+
+	return accept(parser, answer, answer.params);
 }
 
 /**
@@ -83,16 +112,57 @@ export function parse_params_at(parser, index) {
  * @returns {{ node: Statement, end: number }}
  */
 export function parse_statement_at(parser, index) {
+	let answer;
 	try {
-		const { node, end, comments } = parser.js.parseStatementAt(index);
-		add_comments(parser.template, parser.root.comments, /** @type {teasel.Comment[]} */ (comments));
-		return { node, end };
+		answer = parser.js.parseStatementAt(index);
 	} catch (err) {
 		// A statement that runs to the end of the source (e.g. an unterminated declaration tag)
 		// is an EOF, not a stray token; preserve the friendlier `unexpected_eof` diagnostic.
 		if (/** @type {any} */ (err).pos === parser.template.length)
 			e.unexpected_eof(parser.template.length);
 		return handle_parse_error(err);
+	}
+
+	return accept(parser, answer, answer.node);
+}
+
+/**
+ * Keeps an answer's comments, rejects what erasure could not express, and hands back the node
+ * with the offset the parse stopped at.
+ * @template T
+ * @param {Parser} parser
+ * @param {{ end: number, comments?: teasel.Comment[], typescript?: teasel.Kept[] }} answer
+ * @param {T} node
+ * @returns {{ node: T, end: number }}
+ */
+function accept(parser, answer, node) {
+	add_comments(
+		parser.template,
+		parser.root.comments,
+		/** @type {teasel.Comment[]} */ (answer.comments)
+	);
+	unsupported(answer.typescript);
+	return { node, end: answer.end };
+}
+
+/** What erasure leaves in place needs a compiler, not this one */
+const UNSUPPORTED = {
+	TSEnumDeclaration: 'enums',
+	TSModuleDeclaration: 'namespaces with non-type nodes',
+	TSParameterProperty: 'accessibility modifiers on constructor parameters',
+	Decorator: 'decorators (related TSC proposal is not stage 4 yet)',
+	TSExportAssignment: 'export assignments',
+	TSImportEqualsDeclaration: 'import assignments'
+};
+
+/** @param {teasel.Kept[] | undefined} kept */
+function unsupported(kept) {
+	const node = kept?.[0];
+	if (node) {
+		e.typescript_invalid_feature(
+			node,
+			UNSUPPORTED[/** @type {keyof typeof UNSUPPORTED} */ (node.type)] ?? node.type
+		);
 	}
 }
 

@@ -33,7 +33,7 @@ export function get_loose_identifier(parser, opening_token) {
  * @param {Parser} parser
  * @param {string} [opening_token]
  * @param {boolean} [disallow_loose]
- * @param {'as' | 'in'} [until] a word operator the expression stops before, at the top level
+ * @param {'as'} [until] the host's `as` follows the expression, as an each block's item does
  * @returns {Expression}
  */
 export default function read_expression(parser, opening_token, disallow_loose, until) {

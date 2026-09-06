@@ -4,7 +4,6 @@
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
 import { parse as _parse, Parser } from './phases/1-parse/index.js';
-import { remove_typescript_nodes } from './phases/1-parse/remove_typescript_nodes.js';
 import { parse_stylesheet } from './phases/1-parse/read/style.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
 import { transform_component, transform_module } from './phases/3-transform/index.js';
@@ -26,7 +25,7 @@ export function compile(source, options) {
 
 	const validated = validate_component_options(options, '');
 
-	let parsed = _parse(source);
+	const parsed = _parse(source, false, true);
 
 	const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
@@ -38,20 +37,6 @@ export function compile(source, options) {
 		css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : validated.css,
 		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes
 	};
-
-	if (parsed.metadata.ts) {
-		parsed = {
-			...parsed,
-			fragment: parsed.fragment && remove_typescript_nodes(parsed.fragment),
-			instance: parsed.instance && remove_typescript_nodes(parsed.instance),
-			module: parsed.module && remove_typescript_nodes(parsed.module)
-		};
-		if (combined_options.customElementOptions?.extend) {
-			combined_options.customElementOptions.extend = remove_typescript_nodes(
-				combined_options.customElementOptions?.extend
-			);
-		}
-	}
 
 	const analysis = analyze_component(parsed, source, combined_options);
 	const result = transform_component(analysis, source, combined_options);

@@ -1,8 +1,7 @@
 /** @import { Program } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
-import { parse } from '../js.js';
-import { regex_not_newline_characters } from '../../patterns.js';
+import { parse_script } from '../js.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_text_attribute } from '../../../utils/ast.js';
@@ -22,18 +21,13 @@ const ALLOWED_ATTRIBUTES = ['context', 'generics', 'lang', 'module'];
  */
 export function read_script(parser, start, attributes) {
 	const script_start = parser.index;
-	const data = parser.read_until_regex(regex_closing_script_tag);
+	parser.read_until_regex(regex_closing_script_tag);
 	if (parser.index >= parser.template.length) {
 		e.element_unclosed(parser.template.length, 'script');
 	}
 
-	const source =
-		parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
+	const ast = parse_script(parser, script_start, parser.index);
 	parser.read(regex_starts_with_closing_script_tag);
-
-	const ast = parse(source, parser.root.comments, parser.ts, true);
-
-	ast.start = script_start;
 
 	if (ast.loc) {
 		// Acorn always uses `0` as the start of a `Program`, but for sourcemap purposes
