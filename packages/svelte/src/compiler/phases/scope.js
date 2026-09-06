@@ -5,6 +5,7 @@ import { walk } from 'zimmerframe';
 import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
 import * as e from '../errors.js';
+import { bindingOf, scopeOf } from '@teasel/parser';
 import {
 	extract_identifiers,
 	extract_identifiers_from_destructuring,
@@ -944,27 +945,67 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 */
 	const possible_implicit_declarations = [];
 
+	/** @type {Map<import('@teasel/parser').Binding, Binding>} the parser's bindings and ours */
+	const from_parser = new Map();
+
 	/**
+	 * Declares in `scope` what the parser found declared in `parsed`: its parameters, or the rest.
 	 * @param {Scope} scope
-	 * @param {Pattern[]} params
+	 * @param {import('@teasel/parser').Scope} parsed
+	 * @param {boolean} params
+	 * @param {Node | null} [holder] the function, for which parameters are rest parameters
 	 */
-	function add_params(scope, params) {
-		for (const param of params) {
-			for (const node of extract_identifiers(param)) {
-				scope.declare(node, 'normal', param.type === 'RestElement' ? 'rest_param' : 'param');
+	function declare_parsed(scope, parsed, params, holder = null) {
+		for (const binding of parsed.bindings) {
+			if ((binding.kind === 'param') !== params) continue;
+			// no node: `arguments`, or a declaration erased with the TypeScript it belonged to
+			if (binding.node === null || binding.kind === 'class-name' || binding.kind === 'pattern') continue;
+			/** @type {DeclarationKind} */
+			let kind = 'let';
+			switch (binding.kind) {
+				case 'var':
+				case 'let':
+				case 'const':
+				case 'function':
+				case 'import':
+					kind = binding.kind;
+					break;
+				case 'function-name':
+					kind = 'function';
+					break;
+				case 'param':
+					kind = is_rest_param(/** @type {any} */ (holder), binding.node) ? 'rest_param' : 'param';
+					break;
 			}
+			from_parser.set(binding, scope.declare(binding.node, 'normal', kind));
 		}
 	}
 
 	/**
-	 * @type {Visitor<Node, State, AST.SvelteNode>}
+	 * @param {{ params: Pattern[] } | null} holder
+	 * @param {Identifier} id
 	 */
-	const create_block_scope = (node, { state, next }) => {
-		const scope = state.scope.child(true);
-		scopes.set(node, scope);
+	function is_rest_param(holder, id) {
+		const last = holder?.params.at(-1);
+		return last?.type === 'RestElement' && extract_identifiers(last).includes(id);
+	}
 
-		next({ scope });
-	};
+	/** @param {Binding} binding @param {Expression | Node} initial */
+	function set_initial(binding, initial) {
+		binding.initial = /** @type {any} */ (initial);
+		binding.assignments.push({ value: /** @type {Expression} */ (initial), scope: binding.scope });
+	}
+
+	/** The parser's declaration a Svelte binding stands for, once declared. @param {Identifier} id */
+	function declared(id) {
+		const parsed = bindingOf(id);
+		return parsed ? from_parser.get(parsed) : undefined;
+	}
+
+	if (ast.type === 'Program') {
+		const parsed = scopeOf(ast);
+		if (parsed) declare_parsed(scope, parsed, false);
+	}
 
 	/**
 	 * @type {Visitor<AST.ElementLike, State, AST.SvelteNode>}
@@ -1030,6 +1071,48 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	let has_await = false;
 
 	walk(ast, state, {
+		// the scopes JavaScript opens, and what they declare, as the parser found them
+		_(node, context) {
+			const parsed = scopeOf(/** @type {any} */ (node));
+			const parent = context.path.at(-1);
+			if (parsed === undefined) {
+				const of_function = node.type === 'BlockStatement' && parent && scopeOf(/** @type {any} */ (parent));
+				if (
+					of_function &&
+					(parent.type === 'FunctionDeclaration' || parent.type === 'FunctionExpression' || parent.type === 'ArrowFunctionExpression')
+				) {
+					// the body holds the non-porous function scope; the parameters live one above
+					const scope = context.state.scope.child();
+					scopes.set(node, scope);
+					declare_parsed(scope, of_function, false);
+					return context.next({ scope });
+				}
+				return context.next();
+			}
+			switch (parsed.kind) {
+				case 'function': {
+					const scope = context.state.scope.child(true);
+					scopes.set(node, scope);
+					declare_parsed(scope, parsed, true, /** @type {any} */ (node));
+					if (node.type === 'FunctionExpression' && node.id) declare_parsed(scope, parsed, false);
+					else if (node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement') declare_parsed(scope, parsed, false);
+					return context.next({ scope });
+				}
+				case 'block':
+				case 'for':
+				case 'switch':
+				case 'catch':
+				case 'static-block': {
+					const scope = context.state.scope.child(true);
+					scopes.set(node, scope);
+					declare_parsed(scope, parsed, false);
+					return context.next({ scope });
+				}
+				default:
+					return context.next();
+			}
+		},
+
 		AwaitExpression(node, context) {
 			// this doesn't _really_ belong here, but it allows us to
 			// automatically opt into runes mode on encountering
@@ -1126,61 +1209,22 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		ImportDeclaration(node, { state }) {
 			for (const specifier of node.specifiers) {
-				state.scope.declare(specifier.local, 'normal', 'import', node);
+				const binding = declared(specifier.local) ?? state.scope.declare(specifier.local, 'normal', 'import', node);
+				binding.initial = node;
 			}
 		},
 
-		FunctionExpression(node, { state, next }) {
-			const scope = state.scope.child(true);
-			scopes.set(node, scope);
-
-			if (node.id) scope.declare(node.id, 'normal', 'function');
-
-			add_params(scope, node.params);
-			next({ scope });
-		},
-
-		FunctionDeclaration(node, { state, next }) {
-			if (node.id) state.scope.declare(node.id, 'normal', 'function', node);
-
-			const scope = state.scope.child(true);
-			scopes.set(node, scope);
-
-			add_params(scope, node.params);
-			next({ scope });
-		},
-
-		ArrowFunctionExpression(node, { state, next }) {
-			const scope = state.scope.child(true);
-			scopes.set(node, scope);
-
-			add_params(scope, node.params);
-			next({ scope });
-		},
-
-		ForStatement: create_block_scope,
-		ForInStatement: create_block_scope,
-		ForOfStatement: create_block_scope,
-		SwitchStatement: create_block_scope,
-		BlockStatement(node, context) {
-			const parent = context.path.at(-1);
-			if (
-				parent?.type === 'FunctionDeclaration' ||
-				parent?.type === 'FunctionExpression' ||
-				parent?.type === 'ArrowFunctionExpression'
-			) {
-				// The scopes created for the function nodes above handle the function identifier and
-				// parameters, but the block statement itself holds the non-porous function scope
-				const scope = context.state.scope.child();
-				scopes.set(node, scope);
-				context.next({ scope });
-			} else {
-				create_block_scope(node, context);
-			}
+		FunctionDeclaration(node, { next }) {
+			const binding = node.id && declared(node.id);
+			if (binding) set_initial(binding, node);
+			next();
 		},
 
 		ClassDeclaration(node, { state, next }) {
-			if (node.id) state.scope.declare(node.id, 'normal', 'let', node);
+			if (node.id) {
+				const binding = declared(node.id) ?? state.scope.declare(node.id, 'normal', 'let', node);
+				set_initial(binding, node);
+			}
 			next();
 		},
 
@@ -1193,33 +1237,23 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				state.scope.declarators.set(declarator, bindings);
 
 				for (const id of extract_identifiers(declarator.id)) {
-					const binding = state.scope.declare(
-						id,
-						is_parent_const_tag ? 'template' : 'normal',
-						node.kind,
-						declarator.init
-					);
+					let binding = declared(id);
+					if (binding) {
+						if (declarator.init) set_initial(binding, declarator.init);
+					} else {
+						binding = state.scope.declare(
+							id,
+							is_parent_const_tag ? 'template' : 'normal',
+							node.kind,
+							declarator.init
+						);
+					}
 					binding.metadata = { is_template_declaration: true };
 					bindings.push(binding);
 				}
 			}
 
 			next();
-		},
-
-		CatchClause(node, { state, next }) {
-			if (node.param) {
-				const scope = state.scope.child(true);
-				scopes.set(node, scope);
-
-				for (const id of extract_identifiers(node.param)) {
-					scope.declare(id, 'normal', 'let');
-				}
-
-				next({ scope });
-			} else {
-				next();
-			}
 		},
 
 		EachBlock(node, { state, visit }) {
