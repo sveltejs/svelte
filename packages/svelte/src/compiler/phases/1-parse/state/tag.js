@@ -3,9 +3,7 @@
 /** @import { Parser } from '../index.js' */
 import * as e from '../../../errors.js';
 import { ExpressionMetadata } from '../../nodes.js';
-import { parse_params_at, parse_statement_at } from '../js.js';
-import read_pattern from '../read/context.js';
-import read_expression from '../read/expression.js';
+import { read_expression, read_params, read_pattern, read_statement } from '../js.js';
 import { create_fragment } from '../utils/create.js';
 import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
@@ -89,14 +87,12 @@ function read_declaration(parser) {
 
 	/** @type {import('estree').Statement | import('estree').VariableDeclaration} */
 	let declaration;
-	/** @type {number} */
-	let end;
 	try {
-		({ node: declaration, end } = parse_statement_at(parser, start));
+		declaration = read_statement(parser);
 	} catch (error) {
 		if (!parser.loose) throw error;
 
-		end = /** @type {number} */ (find_matching_bracket(parser.template, start, '{'));
+		const end = find_matching_bracket(parser.template, start, '{');
 		if (end === undefined) throw error;
 
 		parser.index = end;
@@ -126,6 +122,7 @@ function read_declaration(parser) {
 
 	if (declaration.type !== 'VariableDeclaration') {
 		if (declaration.type === 'ExpressionStatement') {
+			parser.index = start;
 			parser.root.comments.length = initial_comment_count; // Else they show up duplicated
 			return null;
 		} else {
@@ -142,7 +139,6 @@ function read_declaration(parser) {
 		e.declaration_tag_invalid_type(declaration);
 	}
 
-	parser.index = end;
 	parser.allow_whitespace();
 	parser.eat('}', true);
 
@@ -184,7 +180,7 @@ function open(parser) {
 		parser.require_whitespace();
 
 		// the list ends at the `as` that names the item, so a TypeScript assertion in it needs parens
-		let expression = read_expression(parser, undefined, false, 'as');
+		let expression = read_expression(parser, 'as');
 
 		parser.allow_whitespace();
 
@@ -224,7 +220,7 @@ function open(parser) {
 		if (parser.eat('(')) {
 			parser.allow_whitespace();
 
-			key = read_expression(parser, '(');
+			key = read_expression(parser, undefined, '(');
 			parser.allow_whitespace();
 			parser.eat(')', true);
 			parser.allow_whitespace();
@@ -410,16 +406,14 @@ function open(parser) {
 		/** @type {import('estree').Pattern[]} */
 		let parameters = [];
 
-		if (parser.eat('(', true, false)) {
-			const open = parser.index - 1;
-
-			if (find_matching_bracket(parser.template, parser.index, '(') === undefined) {
+		if (parser.match('(')) {
+			if (find_matching_bracket(parser.template, parser.index + 1, '(') === undefined) {
 				e.expected_token(parser.template.length, ')');
 			}
 
-			const { node, end } = parse_params_at(parser, open);
-			parameters = node;
-			parser.index = end;
+			parameters = read_params(parser);
+		} else if (!parser.loose) {
+			e.expected_token(parser.index, '(');
 		}
 
 		parser.allow_whitespace();

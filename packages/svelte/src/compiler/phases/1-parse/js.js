@@ -3,6 +3,7 @@
 /** @import { Parser } from './index.js' */
 import * as teasel from '@teasel/parser';
 import * as e from '../../errors.js';
+import { find_matching_bracket } from './utils/bracket.js';
 
 /**
  * A standalone module, as `analyze_module` reads one.
@@ -63,88 +64,113 @@ export function parse_script(parser, start, end) {
 }
 
 /**
+ * Reads JavaScript at the cursor with the template's parser and moves the cursor past it.
+ * @template {{ end: number, comments?: teasel.Comment[], typescript?: teasel.Kept[] }} T
  * @param {Parser} parser
- * @param {number} index
- * @param {'as'} [until] the host's `as` follows the expression, as an each block's item does
- * @returns {{ node: Expression, end: number }}
+ * @param {(js: teasel.Source) => T} run
+ * @returns {T}
  */
-export function parse_expression_at(parser, index, until) {
+function read(parser, run) {
 	let answer;
 	try {
-		answer = parser.js.parseExpressionAt(index, until);
+		answer = run(parser.js);
 	} catch (err) {
+		// the parser's syntax errors; a compile error thrown while reading is the host's own
+		if (!(err instanceof SyntaxError)) throw err;
 		return handle_parse_error(err);
 	}
 
-	return accept(parser, answer, answer.node);
-}
-
-/**
- * @param {Parser} parser
- * @param {number} index
- * @returns {{ node: Pattern, end: number }}
- */
-export function parse_pattern_at(parser, index) {
-	let answer;
-	try {
-		answer = parser.js.parsePatternAt(index);
-	} catch (err) {
-		return handle_parse_error(err);
-	}
-
-	return accept(parser, answer, answer.node);
-}
-
-/**
- * @param {Parser} parser
- * @param {number} index the opening paren
- * @returns {{ node: Pattern[], end: number }}
- */
-export function parse_params_at(parser, index) {
-	let answer;
-	try {
-		answer = parser.js.parseParamsAt(index);
-	} catch (err) {
-		return handle_parse_error(err);
-	}
-
-	return accept(parser, answer, answer.params);
-}
-
-/**
- * @param {Parser} parser
- * @param {number} index
- * @returns {{ node: Statement, end: number }}
- */
-export function parse_statement_at(parser, index) {
-	let answer;
-	try {
-		answer = parser.js.parseStatementAt(index);
-	} catch (err) {
-		if (/** @type {any} */ (err).code === 'unexpected_eof') e.unexpected_eof(parser.template.length);
-		return handle_parse_error(err);
-	}
-
-	return accept(parser, answer, answer.node);
-}
-
-/**
- * Keeps an answer's comments, rejects what erasure could not express, and hands back the node
- * with the offset the parse stopped at.
- * @template T
- * @param {Parser} parser
- * @param {{ end: number, comments?: teasel.Comment[], typescript?: teasel.Kept[] }} answer
- * @param {T} node
- * @returns {{ node: T, end: number }}
- */
-function accept(parser, answer, node) {
 	add_comments(
 		parser.template,
 		parser.root.comments,
 		/** @type {teasel.Comment[]} */ (answer.comments)
 	);
 	unsupported(answer.typescript);
-	return { node, end: answer.end };
+	parser.index = answer.end;
+
+	return answer;
+}
+
+/**
+ * @param {Parser} parser
+ * @param {'as'} [until] the host's `as` follows the expression, as an each block's item does
+ * @param {string} [opening_token] the bracket the expression sits in, for loose mode
+ * @returns {Expression}
+ */
+export function read_expression(parser, until, opening_token = '{') {
+	const start = parser.index;
+
+	try {
+		return read(parser, (js) => js.parseExpressionAt(start, until)).node;
+	} catch (err) {
+		if (parser.loose) {
+			// Find the next } and treat it as the end of the expression
+			const end = find_matching_bracket(parser.template, start, opening_token);
+			if (end !== undefined) {
+				parser.index = end;
+				// We don't know what the expression is and signal this by returning an empty identifier
+				return { type: 'Identifier', start, end, name: '' };
+			}
+		}
+
+		throw err;
+	}
+}
+
+/**
+ * @param {Parser} parser
+ * @returns {Pattern}
+ */
+export function read_pattern(parser) {
+	const start = parser.index;
+
+	const id = parser.read_identifier();
+
+	if (id.name !== '') {
+		const after = parser.index;
+		parser.allow_whitespace();
+
+		// a type annotation makes it a job for the parser
+		if (!parser.match(':')) {
+			parser.index = after;
+			return id;
+		}
+	} else {
+		const char = parser.template[start];
+
+		if (char !== '{' && char !== '[') {
+			e.expected_pattern(start);
+		}
+	}
+
+	return read(parser, (js) => js.parsePatternAt(start)).node;
+}
+
+/**
+ * @param {Parser} parser at the opening paren
+ * @returns {Pattern[]}
+ */
+export function read_params(parser) {
+	const start = parser.index;
+	return read(parser, (js) => js.parseParamsAt(start)).params;
+}
+
+/**
+ * @param {Parser} parser
+ * @returns {Statement}
+ */
+export function read_statement(parser) {
+	const start = parser.index;
+
+	return read(parser, (js) => {
+		try {
+			return js.parseStatementAt(start);
+		} catch (err) {
+			if (/** @type {any} */ (err).code === 'unexpected_eof')
+				e.unexpected_eof(parser.template.length);
+			throw err;
+		}
+	}).node;
 }
 
 /** What erasure leaves in place needs a compiler, not this one */

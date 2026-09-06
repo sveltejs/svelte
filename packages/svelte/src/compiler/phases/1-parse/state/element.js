@@ -3,7 +3,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void, REGEX_VALID_TAG_NAME } from '../../../../utils.js';
-import read_expression from '../read/expression.js';
+import { read_expression } from '../js.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
 import { decode_character_references } from '../utils/html.js';
@@ -11,7 +11,11 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
 import { create_attribute, ExpressionMetadata, is_element_node } from '../../nodes.js';
-import { get_attribute_expression, is_expression_attribute, value_names } from '../../../utils/ast.js';
+import {
+	get_attribute_expression,
+	is_expression_attribute,
+	value_names
+} from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 import { locator } from '../../../state.js';
