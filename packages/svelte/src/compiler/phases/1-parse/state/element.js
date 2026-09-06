@@ -9,8 +9,12 @@ import read_style from '../css.js';
 import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { create_fragment } from '../utils/create.js';
-import { create_attribute, ExpressionMetadata, is_element_node } from '../../nodes.js';
+import {
+	create_attribute,
+	create_fragment,
+	ExpressionMetadata,
+	is_element_node
+} from '../../nodes.js';
 import {
 	get_attribute_expression,
 	is_expression_attribute,

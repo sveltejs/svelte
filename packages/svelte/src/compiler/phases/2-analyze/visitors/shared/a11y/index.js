@@ -45,7 +45,7 @@ import {
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import { list } from '../../../../../utils/string.js';
 import { walk } from 'zimmerframe';
-import fuzzymatch from '../../../../1-parse/utils/fuzzymatch.js';
+import fuzzymatch from '../../../../../utils/fuzzymatch.js';
 import { is_content_editable_binding } from '../../../../../../utils.js';
 import * as w from '../../../../../warnings.js';
 
