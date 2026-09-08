@@ -5,7 +5,7 @@ import { set_signal_status } from './status.js';
 /**
  * @param {Value[] | null} deps
  */
-function clear_marked(deps) {
+export function clear_marked(deps) {
 	if (deps === null) return;
 
 	for (const dep of deps) {

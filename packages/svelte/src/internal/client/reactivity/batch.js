@@ -42,7 +42,7 @@ import {
 	update
 } from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
-import { defer_effect } from './utils.js';
+import { clear_marked, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { OBSOLETE } from './deriveds.js';
@@ -72,6 +72,16 @@ export let active_batch = null;
  * @type {Batch | null}
  */
 export let previous_batch = null;
+
+/**
+ * Fork-created offscreen branches can only be traversed by batches that selected them.
+ * Dirty descendants are retained here so later selectors can also pick up their updates.
+ * @type {WeakMap<Effect, { batches: Set<Batch>, d: Set<Effect>, m: Set<Effect> }>}
+ */
+export const speculative_branches = new WeakMap();
+
+/** @type {WeakSet<Effect>} */
+export const speculative_selectors = new WeakSet();
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -425,10 +435,22 @@ export class Batch {
 	 */
 	unskip_effect(effect) {
 		var tracked = this.#skipped_branches?.get(effect);
+		var speculative = speculative_branches.get(effect);
+
+		if (
+			speculative !== undefined &&
+			!Array.from(speculative.batches, (batch) => batch.resolved()).includes(this)
+		) {
+			speculative.batches.add(this);
+			revalidate_branch(effect, this);
+			tracked = {
+				d: [...(tracked?.d ?? []), ...speculative.d],
+				m: [...(tracked?.m ?? []), ...speculative.m]
+			};
+		}
+
 		if (tracked) {
-			/** @type {Map<Effect, { d: Effect[], m: Effect[] }>} */ (this.#skipped_branches).delete(
-				effect
-			);
+			this.#skipped_branches?.delete(effect);
 
 			for (var e of tracked.d) {
 				set_signal_status(e, DIRTY);
@@ -983,6 +1005,31 @@ export class Batch {
 				(flags & INERT) !== 0 ||
 				this.#skipped_branches?.has(effect) === true;
 
+			var speculative = !skip && is_branch ? speculative_branches.get(effect) : undefined;
+
+			if (speculative !== undefined) {
+				var batches = Array.from(speculative.batches, (batch) => batch.resolved());
+
+				if (!batches.includes(this)) {
+					// Do not even dirty-check descendants in a world where they don't exist.
+					// Keep their updates for the batches that can eventually commit this branch.
+					var tracked = { d: [], m: [] };
+					reset_branch(effect, tracked);
+
+					// Another fork's writes only matter if that fork is committed.
+					if (!this.is_fork) {
+						for (const e of tracked.d) speculative.d.add(e);
+						for (const e of tracked.m) speculative.m.add(e);
+
+						for (const batch of batches) {
+							batch.transfer_effects(new Set(tracked.d), new Set(tracked.m));
+						}
+					}
+
+					skip = true;
+				}
+			}
+
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
@@ -993,11 +1040,17 @@ export class Batch {
 				} else {
 					var dirty = is_dirty(effect);
 
+					// Async invalidations are consumed once checked, not replayed when promises settle.
+					if ((flags & ASYNC) !== 0) {
+						this.#maybe_dirty_effects?.delete(effect);
+					}
+
 					if (dirty) {
 						if ((flags & BLOCK_EFFECT) !== 0) {
 							(this.#maybe_dirty_effects ??= new Set()).add(effect);
 						}
 						update_effect(effect);
+						this.#dirty_effects?.delete(effect);
 					} else if ((flags & MAYBE_DIRTY) !== 0) {
 						this.record_effect(effect);
 					}
@@ -1625,21 +1678,30 @@ export function eager(fn) {
 /**
  * Whether `reaction` depends — directly or through deriveds — on a signal
  * whose value in `fork`'s world differs from the real one (i.e. one of the
- * fork's own speculative writes)
+ * fork's own speculative writes), excluding writes superseded by `committing`
  * @param {Reaction} reaction
  * @param {Batch} fork
+ * @param {Batch | null} [committing]
  * @returns {boolean}
  */
-function depends_on_fork_values(reaction, fork) {
+export function depends_on_fork_values(reaction, fork, committing = null) {
 	var deps = reaction.deps;
 	if (deps === null) return false;
 
 	for (var i = 0; i < deps.length; i++) {
 		var dep = deps[i];
 
-		if (fork.current.has(dep)) return true;
+		if (
+			fork.current.has(dep) &&
+			!(committing !== null && fork.id < committing.id && committing.current.has(dep))
+		) {
+			return true;
+		}
 
-		if ((dep.f & DERIVED) !== 0 && depends_on_fork_values(/** @type {Derived} */ (dep), fork)) {
+		if (
+			(dep.f & DERIVED) !== 0 &&
+			depends_on_fork_values(/** @type {Derived} */ (dep), fork, committing)
+		) {
 			return true;
 		}
 	}
@@ -1742,11 +1804,31 @@ function reset_branch(effect, tracked) {
 	}
 
 	set_signal_status(effect, CLEAN);
+	clear_marked(effect.deps);
 
 	var e = effect.first;
 	while (e !== null) {
 		reset_branch(e, tracked);
 		e = e.next;
+	}
+}
+
+/**
+ * A branch adopted from a fork may contain clean selectors that only ran in
+ * the fork's world. Recheck them before publishing any nested branches.
+ * @param {Effect} effect
+ * @param {Batch} batch
+ */
+function revalidate_branch(effect, batch) {
+	for (var e = effect.first; e !== null; e = e.next) {
+		if (speculative_branches.has(e)) continue;
+
+		if (speculative_selectors.has(e)) {
+			set_signal_status(e, DIRTY);
+			batch.schedule(e);
+		}
+
+		revalidate_branch(e, batch);
 	}
 }
 
