@@ -5,7 +5,7 @@ import { walk } from 'zimmerframe';
 import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
 import * as e from '../errors.js';
-import { bindingOf, scopeOf } from '@teasel/parser';
+import { bindingOf, referenceOf, scopeOf } from '@teasel/parser';
 import {
 	extract_identifiers,
 	extract_identifiers_from_destructuring,
@@ -774,6 +774,7 @@ export class Scope {
 	 * @param {Identifier} node
 	 * @param {AST.SvelteNode[]} path
 	 * @param {Binding | null | undefined} [binding] what the parser resolved the reference to
+	 * @returns {Binding | null} what the reference resolved to; null for a global
 	 */
 	reference(node, path, binding = undefined) {
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
@@ -787,13 +788,13 @@ export class Scope {
 		binding ??= this.declarations.get(node.name);
 		if (binding !== undefined && binding !== null && binding.scope === this) {
 			binding.references.push({ node, path });
-		} else if (this.parent) {
-			this.parent.reference(node, path, binding);
-		} else {
-			// no binding was found, and this is the top level scope,
-			// which means this is a global
-			this.root.conflicts.add(node.name);
+			return binding;
 		}
+		if (this.parent) return this.parent.reference(node, path, binding);
+		// no binding was found, and this is the top level scope,
+		// which means this is a global
+		this.root.conflicts.add(node.name);
+		return null;
 	}
 
 	/**
@@ -955,20 +956,25 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @param {Scope} scope
 	 * @param {import('@teasel/parser').Scope} parsed
 	 * @param {boolean} params
-	 * @param {Node | null} [holder] the function, for which parameters are rest parameters
 	 */
-	function declare_parsed(scope, parsed, params, holder = null) {
+	function declare_parsed(scope, parsed, params) {
 		for (const binding of parsed.bindings) {
 			if ((binding.kind === 'param') !== params) continue;
 			// no node: `arguments`, or a declaration erased with the TypeScript it belonged to
 			if (binding.node === null || binding.kind === 'class-name' || binding.kind === 'pattern')
 				continue;
+			const declaration = /** @type {any} */ (binding.declaration);
 			/** @type {DeclarationKind} */
 			let kind = 'let';
+			/** @type {Binding['initial']} */
+			let initial = null;
 			switch (binding.kind) {
 				case 'var':
 				case 'let':
 				case 'const':
+					kind = binding.kind;
+					initial = declaration?.init ?? null;
+					break;
 				case 'function':
 				case 'import':
 					kind = binding.kind;
@@ -977,10 +983,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					kind = 'function';
 					break;
 				case 'param':
-					kind = is_rest_param(/** @type {any} */ (holder), binding.node) ? 'rest_param' : 'param';
+					kind = is_rest_param(declaration, binding.node) ? 'rest_param' : 'param';
 					break;
 			}
-			from_parser.set(binding, scope.declare(binding.node, 'normal', kind));
+			if (declaration?.type === 'FunctionDeclaration' || declaration?.type === 'ClassDeclaration') {
+				initial = declaration;
+			}
+			from_parser.set(binding, scope.declare(binding.node, 'normal', kind, initial));
 		}
 	}
 
@@ -993,21 +1002,20 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		return last?.type === 'RestElement' && extract_identifiers(last).includes(id);
 	}
 
-	/** @param {Binding} binding @param {Expression | Node} initial */
-	function set_initial(binding, initial) {
-		binding.initial = /** @type {any} */ (initial);
-		binding.assignments.push({ value: /** @type {Expression} */ (initial), scope: binding.scope });
-	}
-
 	/** The parser's declaration a Svelte binding stands for, once declared. @param {Identifier} id */
 	function declared(id) {
 		const parsed = bindingOf(id);
 		return parsed ? from_parser.get(parsed) : undefined;
 	}
 
+	let has_await = false;
+
 	if (ast.type === 'Program') {
 		const parsed = scopeOf(ast);
-		if (parsed) declare_parsed(scope, parsed, false);
+		if (parsed) {
+			declare_parsed(scope, parsed, false);
+			has_await = parsed.topLevelAwait;
+		}
 	}
 
 	/**
@@ -1071,8 +1079,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		}
 	};
 
-	let has_await = false;
-
 	walk(ast, state, {
 		// the scopes JavaScript opens, and what they declare, as the parser found them
 		_(node, context) {
@@ -1096,10 +1102,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				return context.next();
 			}
 			switch (parsed.kind) {
+				case 'fragment':
+					// a template expression parsed on its own; an await in it runs when the template does
+					has_await ||= parsed.topLevelAwait;
+					return context.next();
 				case 'function': {
 					const scope = context.state.scope.child(true);
 					scopes.set(node, scope);
-					declare_parsed(scope, parsed, true, /** @type {any} */ (node));
+					declare_parsed(scope, parsed, true);
 					if (node.type === 'FunctionExpression' && node.id) declare_parsed(scope, parsed, false);
 					else if (node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement')
 						declare_parsed(scope, parsed, false);
@@ -1118,22 +1128,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				default:
 					return context.next();
 			}
-		},
-
-		AwaitExpression(node, context) {
-			// this doesn't _really_ belong here, but it allows us to
-			// automatically opt into runes mode on encountering
-			// blocking awaits, without doing an additional walk
-			// before the analysis occurs
-			// TODO remove this in Svelte 7.0 or whenever we get rid of legacy support
-			has_await ||= context.path.every(
-				({ type }) =>
-					type !== 'ArrowFunctionExpression' &&
-					type !== 'FunctionExpression' &&
-					type !== 'FunctionDeclaration'
-			);
-
-			context.next();
 		},
 
 		Identifier(node, { path, state }) {
@@ -1202,18 +1196,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		SvelteSelf: Component,
 		SvelteComponent: Component,
 
-		// updates
-		AssignmentExpression(node, { state, next }) {
-			updates.push([state.scope, node.left, node.right]);
-			next();
-		},
-
-		UpdateExpression(node, { state, next }) {
-			const expression = /** @type {Identifier | MemberExpression} */ (node.argument);
-			updates.push([state.scope, expression, expression]);
-			next();
-		},
-
 		ImportDeclaration(node, { state }) {
 			for (const specifier of node.specifiers) {
 				const binding =
@@ -1221,20 +1203,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					state.scope.declare(specifier.local, 'normal', 'import', node);
 				binding.initial = node;
 			}
-		},
-
-		FunctionDeclaration(node, { next }) {
-			const binding = node.id && declared(node.id);
-			if (binding) set_initial(binding, node);
-			next();
-		},
-
-		ClassDeclaration(node, { state, next }) {
-			if (node.id) {
-				const binding = declared(node.id) ?? state.scope.declare(node.id, 'normal', 'let', node);
-				set_initial(binding, node);
-			}
-			next();
 		},
 
 		VariableDeclaration(node, { state, path, next }) {
@@ -1246,17 +1214,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				state.scope.declarators.set(declarator, bindings);
 
 				for (const id of extract_identifiers(declarator.id)) {
-					let binding = declared(id);
-					if (binding) {
-						if (declarator.init) set_initial(binding, declarator.init);
-					} else {
-						binding = state.scope.declare(
+					const binding =
+						declared(id) ??
+						state.scope.declare(
 							id,
 							is_parent_const_tag ? 'template' : 'normal',
 							node.kind,
 							declarator.init
 						);
-					}
 					binding.metadata = { is_template_declaration: true };
 					bindings.push(binding);
 				}
@@ -1423,7 +1388,15 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	// we do this after the fact, so that we don't need to worry
 	// about encountering references before their declarations
 	for (const [scope, { node, path }] of references) {
-		scope.reference(node, path, declared(node));
+		const binding = scope.reference(node, path, declared(node));
+		// what the parser saw the identifier do; a declaring identifier is no reference to it
+		const parsed = referenceOf(node);
+		if (binding === null || parsed === undefined) continue;
+		if (parsed.write) {
+			binding.reassigned = true;
+			binding.assignments.push({ value: parsed.writeExpr ?? node, scope });
+		}
+		if (parsed.mutate) binding.mutated = true;
 	}
 
 	for (const [scope, node, value] of updates) {
