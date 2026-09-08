@@ -604,14 +604,10 @@ function special(parser) {
 		parser.eat('=', true);
 		parser.allow_whitespace();
 
-		const expression_start = parser.index;
 		const init = read_expression(parser);
 		// parser is past wrapping parens, but `init.end` is not — use the parser position
 		const declarator_end = parser.index;
-		if (
-			init.type === 'SequenceExpression' &&
-			!parser.template.substring(expression_start, init.start).includes('(')
-		) {
+		if (init.type === 'SequenceExpression' && !init.parenthesized) {
 			// const a = (b, c) is allowed but a = b, c = d is not;
 			e.const_tag_invalid_expression(init);
 		}

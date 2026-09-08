@@ -79,6 +79,7 @@
 													"column": 24
 												}
 											},
+											"parenthesized": true,
 											"object": {
 												"type": "Identifier",
 												"start": 36,
@@ -171,6 +172,7 @@
 													"column": 24
 												}
 											},
+											"parenthesized": true,
 											"operator": "=",
 											"left": {
 												"type": "Identifier",
@@ -295,6 +297,7 @@
 													"column": 27
 												}
 											},
+											"parenthesized": true,
 											"properties": [
 												{
 													"type": "Property",
@@ -523,5 +526,6 @@
 			}
 		]
 	},
-	"options": null
+	"options": null,
+	"comments": []
 }

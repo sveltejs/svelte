@@ -98,6 +98,7 @@ export class Parser {
 			locations: true,
 			scopes: true,
 			errorRecovery: loose,
+			parenthesized: true,
 			// a script may export what the component declares elsewhere
 			allowUndeclaredExports: true
 		});

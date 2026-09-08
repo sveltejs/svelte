@@ -665,5 +665,7 @@ declare module 'estree' {
 		end?: number;
 		/** Added by acorn-typescript */
 		typeAnnotation?: any;
+		/** The source wraps the node in parens, from the parser; absent otherwise */
+		parenthesized?: true;
 	}
 }

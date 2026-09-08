@@ -1005,6 +1005,7 @@
 												"column": 60
 											}
 										},
+										"parenthesized": true,
 										"id": null,
 										"expression": false,
 										"generator": false,

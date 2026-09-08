@@ -76,6 +76,9 @@ function clean(ast: AST.SvelteNode) {
 			delete node.leadingComments;
 			// @ts-ignore
 			delete node.trailingComments;
+			// the printer drops parens it does not need
+			// @ts-ignore
+			delete node.parenthesized;
 
 			context.next();
 		},

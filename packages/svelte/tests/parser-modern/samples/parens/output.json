@@ -25,6 +25,7 @@
 							"column": 9
 						}
 					},
+					"parenthesized": true,
 					"leadingComments": [
 						{
 							"type": "Block",
