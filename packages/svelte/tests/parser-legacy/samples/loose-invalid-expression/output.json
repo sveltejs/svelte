@@ -405,29 +405,12 @@
 				"start": 219,
 				"end": 246,
 				"children": [],
-				"context": {
-					"type": "Identifier",
-					"name": "item",
-					"start": 234,
-					"end": 238,
-					"loc": {
-						"start": {
-							"line": 17,
-							"column": 15,
-							"character": 234
-						},
-						"end": {
-							"line": 17,
-							"column": 19,
-							"character": 238
-						}
-					}
-				},
+				"context": null,
 				"expression": {
 					"type": "Identifier",
-					"name": "",
 					"start": 226,
-					"end": 230
+					"end": 238,
+					"name": ""
 				}
 			},
 			{
@@ -484,42 +467,25 @@
 				"end": 295,
 				"expression": {
 					"type": "Identifier",
-					"name": "",
 					"start": 277,
-					"end": 279
-				},
-				"value": {
-					"type": "Identifier",
-					"name": "y",
-					"start": 285,
 					"end": 286,
-					"loc": {
-						"start": {
-							"line": 21,
-							"column": 16,
-							"character": 285
-						},
-						"end": {
-							"line": 21,
-							"column": 17,
-							"character": 286
-						}
-					}
+					"name": ""
 				},
+				"value": null,
 				"error": null,
 				"pending": {
 					"type": "PendingBlock",
+					"start": 287,
+					"end": 287,
+					"children": [],
+					"skip": false
+				},
+				"then": {
+					"type": "ThenBlock",
 					"start": null,
 					"end": null,
 					"children": [],
 					"skip": true
-				},
-				"then": {
-					"type": "ThenBlock",
-					"start": 287,
-					"end": 267,
-					"children": [],
-					"skip": false
 				},
 				"catch": {
 					"type": "CatchBlock",
@@ -542,35 +508,18 @@
 				"end": 324,
 				"expression": {
 					"type": "Identifier",
-					"name": "",
 					"start": 305,
-					"end": 307
+					"end": 315,
+					"name": ""
 				},
 				"value": null,
-				"error": {
-					"type": "Identifier",
-					"name": "y",
-					"start": 314,
-					"end": 315,
-					"loc": {
-						"start": {
-							"line": 23,
-							"column": 17,
-							"character": 314
-						},
-						"end": {
-							"line": 23,
-							"column": 18,
-							"character": 315
-						}
-					}
-				},
+				"error": null,
 				"pending": {
 					"type": "PendingBlock",
-					"start": null,
-					"end": null,
+					"start": 316,
+					"end": 316,
 					"children": [],
-					"skip": true
+					"skip": false
 				},
 				"then": {
 					"type": "ThenBlock",
@@ -581,10 +530,10 @@
 				},
 				"catch": {
 					"type": "CatchBlock",
-					"start": 316,
-					"end": 295,
+					"start": null,
+					"end": null,
 					"children": [],
-					"skip": false
+					"skip": true
 				}
 			}
 		]

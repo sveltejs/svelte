@@ -497,32 +497,15 @@
 				"end": 246,
 				"expression": {
 					"type": "Identifier",
-					"name": "",
 					"start": 226,
-					"end": 230
+					"end": 238,
+					"name": ""
 				},
 				"body": {
 					"type": "Fragment",
 					"nodes": []
 				},
-				"context": {
-					"type": "Identifier",
-					"name": "item",
-					"start": 234,
-					"end": 238,
-					"loc": {
-						"start": {
-							"line": 17,
-							"column": 15,
-							"character": 234
-						},
-						"end": {
-							"line": 17,
-							"column": 19,
-							"character": 238
-						}
-					}
-				}
+				"context": null
 			},
 			{
 				"type": "Text",
@@ -563,34 +546,17 @@
 				"end": 295,
 				"expression": {
 					"type": "Identifier",
-					"name": "",
 					"start": 277,
-					"end": 279
-				},
-				"value": {
-					"type": "Identifier",
-					"name": "y",
-					"start": 285,
 					"end": 286,
-					"loc": {
-						"start": {
-							"line": 21,
-							"column": 16,
-							"character": 285
-						},
-						"end": {
-							"line": 21,
-							"column": 17,
-							"character": 286
-						}
-					}
+					"name": ""
 				},
+				"value": null,
 				"error": null,
-				"pending": null,
-				"then": {
+				"pending": {
 					"type": "Fragment",
 					"nodes": []
 				},
+				"then": null,
 				"catch": null
 			},
 			{
@@ -606,37 +572,21 @@
 				"end": 324,
 				"expression": {
 					"type": "Identifier",
-					"name": "",
 					"start": 305,
-					"end": 307
+					"end": 315,
+					"name": ""
 				},
 				"value": null,
-				"error": {
-					"type": "Identifier",
-					"name": "y",
-					"start": 314,
-					"end": 315,
-					"loc": {
-						"start": {
-							"line": 23,
-							"column": 17,
-							"character": 314
-						},
-						"end": {
-							"line": 23,
-							"column": 18,
-							"character": 315
-						}
-					}
-				},
-				"pending": null,
-				"then": null,
-				"catch": {
+				"error": null,
+				"pending": {
 					"type": "Fragment",
 					"nodes": []
-				}
+				},
+				"then": null,
+				"catch": null
 			}
 		]
 	},
-	"options": null
+	"options": null,
+	"comments": []
 }

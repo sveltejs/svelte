@@ -817,18 +817,19 @@ function read_attribute_value(parser) {
 				if (quote_mark) return parser.match(quote_mark);
 				return !!parser.match_regex(regex_invalid_unquoted_attribute_value);
 			},
-			'in attribute value'
+			'in attribute value',
+			// `<Component test={ />` is an unclosed value, not a regex
+			['/>']
 		);
 	} catch (/** @type {any} */ error) {
-		if (error.code === 'js_parse_error') {
-			// if the attribute value didn't close + self-closing tag
-			// eg: `<Component test={{a:1} />`
-			// acorn may throw a `Unterminated regular expression` because of `/>`
-			const pos = error.position?.[0];
-			if (pos !== undefined && parser.template.slice(pos - 1, pos + 1) === '/>') {
-				parser.index = pos;
-				e.expected_token(pos, quote_mark || '}');
-			}
+		const pos = error.position?.[0];
+		if (
+			error.code === 'js_parse_error' &&
+			pos !== undefined &&
+			parser.template.startsWith('/>', pos)
+		) {
+			parser.index = pos;
+			e.expected_token(pos, quote_mark || '}');
 		}
 		throw error;
 	}
@@ -850,9 +851,10 @@ function read_attribute_value(parser) {
  * @param {Parser} parser
  * @param {() => boolean} done
  * @param {string} location
+ * @param {string[]} [stop_at] the template's tokens that end an expression, see `read_expression`
  * @returns {any[]}
  */
-function read_sequence(parser, done, location) {
+function read_sequence(parser, done, location, stop_at) {
 	/** @type {Array<AST.Text | AST.ExpressionTag>} */
 	const chunks = [];
 	let chunk_start = parser.index;
@@ -895,7 +897,7 @@ function read_sequence(parser, done, location) {
 			flush(parser.index - 1);
 
 			parser.allow_whitespace();
-			const expression = read_expression(parser);
+			const expression = read_expression(parser, stop_at);
 			parser.allow_whitespace();
 			parser.eat('}', true);
 

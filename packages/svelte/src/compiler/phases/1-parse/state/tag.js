@@ -178,15 +178,10 @@ function open(parser) {
 	if (parser.eat('each')) {
 		parser.require_whitespace();
 
-		// the list ends at the `as` that names the item, so a TypeScript assertion in it needs parens
-		let expression = read_expression(parser, 'as');
+		// the list ends at the `as` naming the item or the `,` before the index, so an assertion in it needs parens
+		const expression = read_expression(parser, ['as', ',']);
 
 		parser.allow_whitespace();
-
-		// {#each} blocks must declare a context – {#each list as item}
-		if (!parser.match('as') && expression.type === 'SequenceExpression') {
-			expression = expression.expressions[0];
-		}
 
 		/** @type {Pattern | null} */
 		let context = null;
@@ -197,11 +192,6 @@ function open(parser) {
 			parser.require_whitespace();
 
 			context = read_pattern(parser);
-		} else {
-			// {#each Array.from({ length: 10 }), i} is read as a sequence expression,
-			// which is set back above - we now gotta reset the index as a consequence
-			// to properly read the , i part
-			parser.index = /** @type {number} */ (expression.end);
 		}
 
 		parser.allow_whitespace();
@@ -225,24 +215,7 @@ function open(parser) {
 			parser.allow_whitespace();
 		}
 
-		const matches = parser.eat('}', true, false);
-
-		if (!matches) {
-			// Parser may have read the `as` as part of the expression (e.g. in `{#each foo. as x}`)
-			if (parser.template.slice(parser.index - 4, parser.index) === ' as ') {
-				const prev_index = parser.index;
-				context = read_pattern(parser);
-				parser.eat('}', true);
-				expression = {
-					type: 'Identifier',
-					name: '',
-					start: expression.start,
-					end: prev_index - 4
-				};
-			} else {
-				parser.eat('}', true); // rerun to produce the parser error
-			}
-		}
+		parser.eat('}', true, false);
 
 		/** @type {AST.EachBlock} */
 		const block = parser.append({
@@ -265,7 +238,7 @@ function open(parser) {
 
 	if (parser.eat('await')) {
 		parser.require_whitespace();
-		const expression = read_expression(parser);
+		const expression = read_expression(parser, ['then', 'catch']);
 		parser.allow_whitespace();
 
 		/** @type {AST.AwaitBlock} */
@@ -311,38 +284,7 @@ function open(parser) {
 			parser.fragments.push(block.pending);
 		}
 
-		const matches = parser.eat('}', true, false);
-
-		// Parser may have read the `then/catch` as part of the expression (e.g. in `{#await foo. then x}`)
-		if (!matches) {
-			if (parser.template.slice(parser.index - 6, parser.index) === ' then ') {
-				const prev_index = parser.index;
-				block.value = read_pattern(parser);
-				parser.eat('}', true);
-				block.expression = {
-					type: 'Identifier',
-					name: '',
-					start: expression.start,
-					end: prev_index - 6
-				};
-				block.then = block.pending;
-				block.pending = null;
-			} else if (parser.template.slice(parser.index - 7, parser.index) === ' catch ') {
-				const prev_index = parser.index;
-				block.error = read_pattern(parser);
-				parser.eat('}', true);
-				block.expression = {
-					type: 'Identifier',
-					name: '',
-					start: expression.start,
-					end: prev_index - 7
-				};
-				block.catch = block.pending;
-				block.pending = null;
-			} else {
-				parser.eat('}', true); // rerun to produce the parser error
-			}
-		}
+		parser.eat('}', true, false);
 
 		parser.stack.push(block);
 

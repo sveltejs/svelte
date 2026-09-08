@@ -104,15 +104,15 @@ function read(parser, run) {
 
 /**
  * @param {Parser} parser
- * @param {'as'} [until] the host's `as` follows the expression, as an each block's item does
+ * @param {string[]} [stop_at] the template's own tokens after the expression, which end it
  * @param {string} [opening_token] the bracket the expression sits in, for loose mode
  * @returns {Expression}
  */
-export function read_expression(parser, until, opening_token = '{') {
+export function read_expression(parser, stop_at, opening_token = '{') {
 	const start = parser.index;
 
 	try {
-		const answer = read(parser, (js) => js.parseExpressionAt(start, until));
+		const answer = read(parser, (js) => js.parseExpressionAt(start, stop_at));
 		keep_tables(answer.node, tables(answer));
 		return answer.node;
 	} catch (err) {
