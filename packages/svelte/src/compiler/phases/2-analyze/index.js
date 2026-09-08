@@ -379,20 +379,11 @@ export function analyze_component(root, source, options) {
 				))
 		) {
 			let is_nested_store_subscription_node = undefined;
-			search: for (const reference of references) {
-				for (let i = reference.path.length - 1; i >= 0; i--) {
-					const scope =
-						scopes.get(reference.path[i]) ||
-						module.scopes.get(reference.path[i]) ||
-						instance.scopes.get(reference.path[i]);
-					if (scope) {
-						const owner = scope?.owner(store_name);
-						if (!!owner && owner !== module.scope && owner !== instance.scope) {
-							is_nested_store_subscription_node = reference.node;
-							break search;
-						}
-						break;
-					}
+			for (const reference of references) {
+				const owner = reference.scope.owner(store_name);
+				if (!!owner && owner !== module.scope && owner !== instance.scope) {
+					is_nested_store_subscription_node = reference.node;
+					break;
 				}
 			}
 
@@ -635,7 +626,7 @@ export function analyze_component(root, source, options) {
 					if (
 						path[path.length - 1].type === 'StyleDirective' ||
 						path.some((node) => node.type === 'Fragment') ||
-						(path[1].type === 'LabeledStatement' && path[1].label.name === '$')
+						(path[1]?.type === 'LabeledStatement' && path[1].label.name === '$')
 					) {
 						binding.kind = 'state';
 					}

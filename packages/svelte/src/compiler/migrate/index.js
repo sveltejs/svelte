@@ -746,11 +746,12 @@ const instance_script = {
 				// Analyze declaration bindings to see if they're exclusively updated within a single reactive statement
 				const possible_derived = bindings.every((binding) =>
 					binding.references.every((reference) => {
-						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
-						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
-						const update = reference.path.find((el) => el.type === 'UpdateExpression');
+						const path = reference.path;
+						const declaration = path.find((el) => el.type === 'VariableDeclaration');
+						const assignment = path.find((el) => el.type === 'AssignmentExpression');
+						const update = path.find((el) => el.type === 'UpdateExpression');
 						const labeled = /** @type {LabeledStatement | undefined} */ (
-							reference.path.find((el) => el.type === 'LabeledStatement' && el.label.name === '$')
+							path.find((el) => el.type === 'LabeledStatement' && el.label.name === '$')
 						);
 
 						if (

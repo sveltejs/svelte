@@ -4,6 +4,7 @@
 import * as teasel from '@teasel/parser';
 import * as e from '../../errors.js';
 import { find_matching_bracket } from './utils/bracket.js';
+import { parsed } from '../../utils/ast.js';
 
 /**
  * A standalone module, as `analyze_module` reads one.
@@ -28,10 +29,21 @@ export function parse(source, comments, typescript) {
 
 	add_comments(source, comments, /** @type {teasel.Comment[]} */ (ast.comments));
 	delete ast.comments;
-	delete ast.scopes;
-	delete ast.bindings;
+	parsed.set(ast, tables(ast));
 
 	return ast;
+}
+
+/**
+ * Takes the tables off an answer, so they reach the scope analysis without showing in the tree.
+ * @param {{ scopes?: any; bindings?: any; references?: any }} answer
+ */
+function tables(answer) {
+	const { scopes, bindings, references } = answer;
+	delete answer.scopes;
+	delete answer.bindings;
+	delete answer.references;
+	return { scopes, bindings, references };
 }
 
 /**
@@ -55,8 +67,7 @@ export function parse_script(parser, start, end) {
 		/** @type {teasel.Comment[]} */ (ast.comments)
 	);
 	delete ast.comments;
-	delete ast.scopes;
-	delete ast.bindings;
+	parsed.set(ast, tables(ast));
 	unsupported(ast.typescript);
 	delete ast.typescript;
 
@@ -101,7 +112,9 @@ export function read_expression(parser, until, opening_token = '{') {
 	const start = parser.index;
 
 	try {
-		return read(parser, (js) => js.parseExpressionAt(start, until)).node;
+		const answer = read(parser, (js) => js.parseExpressionAt(start, until));
+		parsed.set(answer.node, tables(answer));
+		return answer.node;
 	} catch (err) {
 		if (parser.loose) {
 			// Find the next } and treat it as the end of the expression
@@ -143,7 +156,9 @@ export function read_pattern(parser) {
 		}
 	}
 
-	return read(parser, (js) => js.parsePatternAt(start)).node;
+	const answer = read(parser, (js) => js.parsePatternAt(start));
+	parsed.set(answer.node, tables(answer));
+	return answer.node;
 }
 
 /**
@@ -152,7 +167,9 @@ export function read_pattern(parser) {
  */
 export function read_params(parser) {
 	const start = parser.index;
-	return read(parser, (js) => js.parseParamsAt(start)).params;
+	const answer = read(parser, (js) => js.parseParamsAt(start));
+	parsed.set(answer.params, tables(answer));
+	return answer.params;
 }
 
 /**
@@ -162,7 +179,7 @@ export function read_params(parser) {
 export function read_statement(parser) {
 	const start = parser.index;
 
-	return read(parser, (js) => {
+	const answer = read(parser, (js) => {
 		try {
 			return js.parseStatementAt(start);
 		} catch (err) {
@@ -170,7 +187,9 @@ export function read_statement(parser) {
 				e.unexpected_eof(parser.template.length);
 			throw err;
 		}
-	}).node;
+	});
+	parsed.set(answer.node, tables(answer));
+	return answer.node;
 }
 
 /** What erasure leaves in place needs a compiler, not this one */

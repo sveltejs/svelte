@@ -2,6 +2,13 @@
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import { bindingOf } from '@teasel/parser';
+
+/**
+ * The parser's answer for each JavaScript root it parsed, a script's program or a template's
+ * expression, pattern, parameter list or declaration: its scope, binding and reference tables.
+ * @type {WeakMap<object, { scopes: import('@teasel/parser').Scope[]; bindings: import('@teasel/parser').Binding[]; references: import('@teasel/parser').Reference[] }>}
+ */
+export const parsed = new WeakMap();
 import * as b from '#compiler/builders';
 
 /**
