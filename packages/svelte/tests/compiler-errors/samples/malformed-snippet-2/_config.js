@@ -4,6 +4,6 @@ export default test({
 	error: {
 		code: 'js_parse_error',
 		message: 'Unexpected token',
-		position: [21, 21]
+		position: [21, 22]
 	}
 });

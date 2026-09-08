@@ -169,15 +169,7 @@ export function read_params(parser) {
 export function read_statement(parser) {
 	const start = parser.index;
 
-	const answer = read(parser, (js) => {
-		try {
-			return js.parseStatementAt(start);
-		} catch (err) {
-			if (/** @type {any} */ (err).code === 'unexpected_eof')
-				e.unexpected_eof(parser.template.length);
-			throw err;
-		}
-	});
+	const answer = read(parser, (js) => js.parseStatementAt(start));
 	keep_tables(answer.node, tables(answer));
 	return answer.node;
 }
@@ -209,7 +201,8 @@ function unsupported(kept) {
  * @returns {never}
  */
 function handle_parse_error(err) {
-	e.js_parse_error(err.pos, err.message);
+	if (err.code === 'unexpected_eof') e.unexpected_eof(err.pos);
+	e.js_parse_error({ start: err.pos, end: err.end }, err.message);
 }
 
 /**
