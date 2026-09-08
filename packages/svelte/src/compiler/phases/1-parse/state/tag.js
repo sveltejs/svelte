@@ -4,7 +4,7 @@
 import * as e from '../../../errors.js';
 import { create_fragment, ExpressionMetadata } from '../../nodes.js';
 import { read_expression, read_params, read_pattern, read_statement } from '../js.js';
-import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
+import { match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 const regex_supported_declaration = /(?:let|const)\b/y;
@@ -84,40 +84,7 @@ function read_declaration(parser) {
 
 	const initial_comment_count = parser.root.comments.length;
 
-	/** @type {import('estree').Statement | import('estree').VariableDeclaration} */
-	let declaration;
-	try {
-		declaration = read_statement(parser);
-	} catch (error) {
-		if (!parser.loose) throw error;
-
-		const end = find_matching_bracket(parser.template, start, '{');
-		if (end === undefined) throw error;
-
-		parser.index = end;
-		const kind = parser.template.startsWith('const', start) ? 'const' : 'let';
-
-		declaration = {
-			type: 'VariableDeclaration',
-			kind,
-			declarations: [
-				{
-					type: 'VariableDeclarator',
-					id: {
-						type: 'Identifier',
-						name: '',
-						start: parser.index,
-						end: parser.index
-					},
-					init: null,
-					start: parser.index,
-					end: parser.index
-				}
-			],
-			start,
-			end
-		};
-	}
+	const declaration = read_statement(parser);
 
 	if (declaration.type !== 'VariableDeclaration') {
 		if (declaration.type === 'ExpressionStatement') {
@@ -348,10 +315,6 @@ function open(parser) {
 		let parameters = [];
 
 		if (parser.match('(')) {
-			if (find_matching_bracket(parser.template, parser.index + 1, '(') === undefined) {
-				e.expected_token(parser.template.length, ')');
-			}
-
 			parameters = read_params(parser);
 		} else if (!parser.loose) {
 			e.expected_token(parser.index, '(');

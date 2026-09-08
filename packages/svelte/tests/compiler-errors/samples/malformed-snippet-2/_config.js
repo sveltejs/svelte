@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'expected_token',
-		message: 'Expected token )',
-		position: [31, 31]
+		code: 'js_parse_error',
+		message: 'Unexpected token',
+		position: [21, 21]
 	}
 });

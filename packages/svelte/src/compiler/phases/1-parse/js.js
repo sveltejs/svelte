@@ -3,7 +3,6 @@
 /** @import { Parser } from './index.js' */
 import * as teasel from '@teasel/parser';
 import * as e from '../../errors.js';
-import { find_matching_bracket } from './utils/bracket.js';
 import { keep_tables } from '../../utils/ast.js';
 
 /**
@@ -67,6 +66,7 @@ export function parse_script(parser, start, end) {
 		/** @type {teasel.Comment[]} */ (ast.comments)
 	);
 	delete ast.comments;
+	delete ast.errors;
 	keep_tables(ast, tables(ast));
 	unsupported(ast.typescript);
 	delete ast.typescript;
@@ -105,29 +105,19 @@ function read(parser, run) {
 /**
  * @param {Parser} parser
  * @param {string[]} [stop_at] the template's own tokens after the expression, which end it
- * @param {string} [opening_token] the bracket the expression sits in, for loose mode
  * @returns {Expression}
  */
-export function read_expression(parser, stop_at, opening_token = '{') {
+export function read_expression(parser, stop_at) {
 	const start = parser.index;
-
-	try {
-		const answer = read(parser, (js) => js.parseExpressionAt(start, stop_at));
-		keep_tables(answer.node, tables(answer));
-		return answer.node;
-	} catch (err) {
-		if (parser.loose) {
-			// Find the next } and treat it as the end of the expression
-			const end = find_matching_bracket(parser.template, start, opening_token);
-			if (end !== undefined) {
-				parser.index = end;
-				// We don't know what the expression is and signal this by returning an empty identifier
-				return { type: 'Identifier', start, end, name: '' };
-			}
-		}
-
-		throw err;
+	const answer = read(parser, (js) => js.parseExpressionAt(start, stop_at));
+	keep_tables(answer.node, tables(answer));
+	const node = answer.node;
+	// the language tools copy an expression's text by its node's range, so the placeholder standing for one that could not be read spans what was read
+	if (node.type === 'Identifier' && node.name === '' && node.start === node.end) {
+		node.start = start;
+		node.end = answer.end;
 	}
+	return node;
 }
 
 /**
