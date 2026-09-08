@@ -8,7 +8,7 @@ import * as e from '../errors.js';
 import { bindingOf, parentOf } from '@teasel/parser';
 import {
 	extract_identifiers,
-	parsed,
+	tables_of,
 	extract_identifiers_from_destructuring,
 	is_reference,
 	object,
@@ -99,17 +99,29 @@ export class Reference {
 	#template;
 
 	/**
+	 * What the parser resolved the identifier to, when it did, and what it saw it do.
+	 * @type {Binding | undefined}
+	 */
+	resolved;
+	/** @type {import('@teasel/parser').Reference | undefined} */
+	parsed;
+
+	/**
 	 * @param {Identifier} node
 	 * @param {Scope} scope
 	 * @param {AST.SvelteNode[]} path the ancestors, or the template's alone when the identifier
 	 * comes from the parser, whose parent links supply the rest
 	 * @param {boolean} [complete]
+	 * @param {Binding} [resolved]
+	 * @param {import('@teasel/parser').Reference} [parsed]
 	 */
-	constructor(node, scope, path, complete = true) {
+	constructor(node, scope, path, complete = true, resolved = undefined, parsed = undefined) {
 		this.node = node;
 		this.scope = scope;
 		this.#template = path;
 		if (complete) this.#path = path;
+		this.resolved = resolved;
+		this.parsed = parsed;
 	}
 
 	/** The ancestors of the identifier, outermost first: the template's, then the JavaScript's. */
@@ -976,10 +988,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	/** @type {State} */
 	const state = { scope };
 
-	/**
-	 * Every reference with the scope it is made from, and what the parser knows of it.
-	 * @type {[Scope, Reference, Binding | undefined, import('@teasel/parser').Reference | undefined][]}
-	 */
+	/** Every reference, resolved once the walk is done. @type {Reference[]} */
 	const references = [];
 
 	/** @type {[Scope, Pattern | MemberExpression, Expression][]} */
@@ -1059,7 +1068,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * The scopes, declarations and references of one parsed answer, from the parser's tables: a
 	 * script's program, or a template's expression, pattern, parameter list or declaration.
 	 * @param {Scope} scope what the answer's outermost scope is here
-	 * @param {NonNullable<ReturnType<typeof parsed.get>>} answer
+	 * @param {NonNullable<ReturnType<typeof tables_of>>} answer
 	 * @param {AST.SvelteNode[]} path the answer's ancestors
 	 * @param {boolean} template the answer's declarations are a const tag's
 	 */
@@ -1073,12 +1082,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			answer.bindings.length === 0
 		) {
 			for (const reference of answer.references) {
-				references.push([
-					scope,
-					new Reference(reference.node, scope, path, false),
-					undefined,
-					reference
-				]);
+				references.push(new Reference(reference.node, scope, path, false, undefined, reference));
 			}
 			return;
 		}
@@ -1205,7 +1209,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		entries.sort((a, b) => /** @type {number} */ (a[0].start) - /** @type {number} */ (b[0].start));
 		for (const [node, scope, binding, reference] of entries) {
-			references.push([scope, new Reference(node, scope, path, false), binding, reference]);
+			references.push(new Reference(node, scope, path, false, binding, reference));
 		}
 	}
 
@@ -1227,7 +1231,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	let has_await = false;
 
 	// a script comes entirely from the parser's tables: nothing in it is walked
-	const program = ast.type === 'Program' ? parsed.get(ast) : undefined;
+	const program = ast.type === 'Program' ? tables_of(ast) : undefined;
 	if (program !== undefined) {
 		has_await = program.scopes[0].topLevelAwait;
 		for (const node of /** @type {Program} */ (ast).body) {
@@ -1333,7 +1337,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		walk(ast, state, {
 			// the JavaScript of a template, parsed on its own: its scopes come from the parser's tables
 			_(node, context) {
-				const answer = parsed.get(node);
+				const answer = tables_of(node);
 				if (answer === undefined) return context.next();
 				has_await ||= answer.scopes[0].topLevelAwait;
 				from_tables(
@@ -1347,12 +1351,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			// an identifier the template built itself, a shorthand attribute's say, is no parser's
 			Identifier(node, { path, state }) {
 				if (is_reference(node, path.at(-1))) {
-					references.push([
-						state.scope,
-						new Reference(node, state.scope, path.slice()),
-						undefined,
-						undefined
-					]);
+					references.push(new Reference(node, state.scope, path.slice()));
 				}
 			},
 
@@ -1523,7 +1522,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					}
 				}
 
-				const params = parsed.get(node.parameters);
+				const params = tables_of(node.parameters);
 				if (params !== undefined) from_tables(child_scope, params, [...context.path, node], false);
 				for (const child of node.body.nodes) {
 					context.visit(child, { scope: child_scope });
@@ -1572,8 +1571,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 	// we do this after the fact, so that we don't need to worry
 	// about encountering references before their declarations
-	for (const [scope, reference, resolved, parsed] of references) {
-		const binding = scope.reference(reference.node, reference.path, resolved, reference);
+	for (const reference of references) {
+		const { scope, parsed } = reference;
+		const binding = scope.reference(reference.node, reference.path, reference.resolved, reference);
 		// what the parser saw the identifier do; a declaring identifier is no reference to it
 		if (binding === null || parsed === undefined) continue;
 		if (parsed.write) {

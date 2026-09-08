@@ -4,11 +4,31 @@ import { walk } from 'zimmerframe';
 import { bindingOf } from '@teasel/parser';
 
 /**
- * The parser's answer for each JavaScript root it parsed, a script's program or a template's
- * expression, pattern, parameter list or declaration: its scope, binding and reference tables.
- * @type {WeakMap<object, { scopes: import('@teasel/parser').Scope[]; bindings: import('@teasel/parser').Binding[]; references: import('@teasel/parser').Reference[] }>}
+ * @typedef {{ scopes: import('@teasel/parser').Scope[]; bindings: import('@teasel/parser').Binding[]; references: import('@teasel/parser').Reference[] }} Tables
+ * the parser's scope, binding and reference tables for one answer
  */
-export const parsed = new WeakMap();
+
+// a symbol on the root: a property load where the walk asks every node, not a map lookup
+const PARSED = Symbol('parsed');
+
+/**
+ * Keeps the parser's tables on the root it parsed, a script's program or a template's
+ * expression, pattern, parameter list or declaration.
+ * @param {object} root
+ * @param {Tables} tables
+ */
+export function keep_tables(root, tables) {
+	/** @type {any} */ (root)[PARSED] = tables;
+}
+
+/**
+ * The parser's tables for a root, when it is one.
+ * @param {object} node
+ * @returns {Tables | undefined}
+ */
+export function tables_of(node) {
+	return /** @type {any} */ (node)[PARSED];
+}
 import * as b from '#compiler/builders';
 
 /**

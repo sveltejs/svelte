@@ -4,7 +4,7 @@
 import * as teasel from '@teasel/parser';
 import * as e from '../../errors.js';
 import { find_matching_bracket } from './utils/bracket.js';
-import { parsed } from '../../utils/ast.js';
+import { keep_tables } from '../../utils/ast.js';
 
 /**
  * A standalone module, as `analyze_module` reads one.
@@ -29,7 +29,7 @@ export function parse(source, comments, typescript) {
 
 	add_comments(source, comments, /** @type {teasel.Comment[]} */ (ast.comments));
 	delete ast.comments;
-	parsed.set(ast, tables(ast));
+	keep_tables(ast, tables(ast));
 
 	return ast;
 }
@@ -67,7 +67,7 @@ export function parse_script(parser, start, end) {
 		/** @type {teasel.Comment[]} */ (ast.comments)
 	);
 	delete ast.comments;
-	parsed.set(ast, tables(ast));
+	keep_tables(ast, tables(ast));
 	unsupported(ast.typescript);
 	delete ast.typescript;
 
@@ -113,7 +113,7 @@ export function read_expression(parser, until, opening_token = '{') {
 
 	try {
 		const answer = read(parser, (js) => js.parseExpressionAt(start, until));
-		parsed.set(answer.node, tables(answer));
+		keep_tables(answer.node, tables(answer));
 		return answer.node;
 	} catch (err) {
 		if (parser.loose) {
@@ -157,7 +157,7 @@ export function read_pattern(parser) {
 	}
 
 	const answer = read(parser, (js) => js.parsePatternAt(start));
-	parsed.set(answer.node, tables(answer));
+	keep_tables(answer.node, tables(answer));
 	return answer.node;
 }
 
@@ -168,7 +168,7 @@ export function read_pattern(parser) {
 export function read_params(parser) {
 	const start = parser.index;
 	const answer = read(parser, (js) => js.parseParamsAt(start));
-	parsed.set(answer.params, tables(answer));
+	keep_tables(answer.params, tables(answer));
 	return answer.params;
 }
 
@@ -188,7 +188,7 @@ export function read_statement(parser) {
 			throw err;
 		}
 	});
-	parsed.set(answer.node, tables(answer));
+	keep_tables(answer.node, tables(answer));
 	return answer.node;
 }
 
