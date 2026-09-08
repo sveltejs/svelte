@@ -1065,6 +1065,23 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 */
 	function from_tables(scope, answer, path, template) {
 		const outermost = answer.scopes[0];
+		// most of a template's expressions declare nothing and open no scope: their references,
+		// in source order already, are all there is
+		if (
+			outermost.kind === 'fragment' &&
+			answer.scopes.length === 1 &&
+			answer.bindings.length === 0
+		) {
+			for (const reference of answer.references) {
+				references.push([
+					scope,
+					new Reference(reference.node, scope, path, false),
+					undefined,
+					reference
+				]);
+			}
+			return;
+		}
 		/** @type {Map<import('@teasel/parser').Scope, Scope>} the parser's scopes and ours; a function's holds its parameters */
 		const ours = new Map([[outermost, scope]]);
 		/** @type {Map<import('@teasel/parser').Scope, Scope>} a function's body, which holds the rest */
