@@ -17,17 +17,17 @@ export default test({
 		await tick();
 		assert.deepEqual(logs, []);
 
-		// an independent batch runs the effect, which reads `x` through the
-		// pending batch's overlay (seeing the held-back value 0)
+		// an independent batch runs the effect, which newly depends on `x` —
+		// it reads the latest value (1) rather than the held-back one (0)
 		y.click();
 		await tick();
-		assert.deepEqual(logs, ['effect 0 1']);
+		assert.deepEqual(logs, ['effect 1 1']);
 
-		// the pending batch settles and commits x === 1 — the effect saw a
-		// stale value and must re-run with the real one
+		// the pending batch settles and commits x === 1 — exactly the value
+		// the effect already saw, so it should not re-run
 		shift.click();
 		await tick();
-		assert.deepEqual(logs, ['effect 0 1', 'effect 1 1']);
+		assert.deepEqual(logs, ['effect 1 1']);
 		assert.htmlEqual(
 			target.innerHTML,
 			'<p>1</p><button>x</button><button>y</button><button>shift</button>'

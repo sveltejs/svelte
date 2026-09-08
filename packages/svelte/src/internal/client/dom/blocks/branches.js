@@ -1,5 +1,11 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { Batch, current_batch } from '../../reactivity/batch.js';
+import {
+	Batch,
+	current_batch,
+	depends_on_fork_values,
+	speculative_branches,
+	speculative_selectors
+} from '../../reactivity/batch.js';
 import {
 	branch,
 	destroy_effect,
@@ -7,7 +13,8 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { HMR_ANCHOR } from '../../constants.js';
+import { EFFECT_PRESERVED, HMR_ANCHOR } from '../../constants.js';
+import { active_effect } from '../../runtime.js';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { DEV } from 'esm-env';
@@ -25,6 +32,9 @@ export class BranchManager {
 
 	/** @type {Map<Batch, Key>} */
 	#batches = new Map();
+
+	/** @type {Effect | null} */
+	#effect = null;
 
 	/**
 	 * Map of keys to effects that are currently rendered in the DOM.
@@ -90,6 +100,8 @@ export class BranchManager {
 			var offscreen = this.#offscreen.get(key);
 
 			if (offscreen) {
+				speculative_branches.delete(offscreen.effect);
+
 				// effect could have been outro'ed before through a prior batch — resume if necessary
 				resume_effect(offscreen.effect);
 				this.#onscreen.set(key, offscreen.effect);
@@ -111,6 +123,14 @@ export class BranchManager {
 		}
 
 		for (const [b, k] of this.#batches) {
+			var fork = b.resolved();
+			if (
+				fork.is_fork &&
+				depends_on_fork_values(/** @type {Effect} */ (this.#effect), fork, batch.resolved())
+			) {
+				continue;
+			}
+
 			this.#batches.delete(b);
 
 			if (b === batch) {
@@ -171,6 +191,8 @@ export class BranchManager {
 		const keys = Array.from(this.#batches.values());
 
 		for (const [k, branch] of this.#offscreen) {
+			speculative_branches.get(branch.effect)?.batches.delete(batch);
+
 			if (!keys.includes(k)) {
 				destroy_effect(branch.effect);
 				this.#offscreen.delete(k);
@@ -185,7 +207,14 @@ export class BranchManager {
 	 */
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
-		var defer = should_defer_append();
+		var defer = batch.is_fork || should_defer_append();
+		this.#effect = /** @type {Effect} */ (active_effect);
+
+		if (batch.is_fork) {
+			// Even constant selectors must survive so another batch can select their branches.
+			this.#effect.f |= EFFECT_PRESERVED;
+			speculative_selectors.add(this.#effect);
+		}
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			if (defer) {
@@ -194,10 +223,16 @@ export class BranchManager {
 
 				fragment.append(target);
 
-				this.#offscreen.set(key, {
-					effect: branch(() => fn(target)),
-					fragment
-				});
+				var effect = branch(() => fn(target));
+				this.#offscreen.set(key, { effect, fragment });
+
+				if (batch.is_fork) {
+					speculative_branches.set(effect, {
+						batches: new Set([batch]),
+						d: new Set(),
+						m: new Set()
+					});
+				}
 			} else {
 				this.#onscreen.set(
 					key,
@@ -221,6 +256,7 @@ export class BranchManager {
 				if (k === key) {
 					batch.unskip_effect(branch.effect);
 				} else {
+					speculative_branches.get(branch.effect)?.batches.delete(batch);
 					batch.skip_effect(branch.effect);
 				}
 			}
@@ -228,6 +264,9 @@ export class BranchManager {
 			batch.oncommit(this.#commit);
 			batch.ondiscard(this.#discard);
 		} else {
+			var offscreen = this.#offscreen.get(key);
+			if (offscreen) batch.unskip_effect(offscreen.effect);
+
 			if (hydrating) {
 				this.anchor = hydrate_node;
 			}
