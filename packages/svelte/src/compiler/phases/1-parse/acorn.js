@@ -1,10 +1,11 @@
-/** @import { Comment, Program } from 'estree' */
+/** @import { Comment, Program, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from './index.js' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
 import * as e from '../../errors.js';
+import { locator } from '../../state.js';
 
 const JSParser = acorn.Parser;
 const TSParser = JSParser.extend(tsPlugin());
@@ -59,7 +60,7 @@ export function parse(source, comments, typescript, is_script) {
 
 		return /** @type {Program} */ (ast);
 	} catch (err) {
-		// TODO the `return` in necessary for TS<7 due to a bug; otherwise
+		// TODO the `return` is necessary for TS<7 due to a bug; otherwise
 		// the `finally` block is regarded as unreachable
 		return handle_parse_error(err);
 	} finally {
@@ -87,7 +88,8 @@ export function parse_expression_at(parser, source, index) {
 			sourceType: 'module',
 			ecmaVersion: 16,
 			locations: true,
-			preserveParens: true
+			preserveParens: true,
+			startLocation: start_location(parser, index)
 		});
 
 		add_comments(ast);
@@ -96,6 +98,68 @@ export function parse_expression_at(parser, source, index) {
 	} catch (e) {
 		handle_parse_error(e);
 	}
+}
+
+/**
+ * @param {Parser} parser
+ * @param {string} source
+ * @param {number} index
+ * @returns {Statement}
+ */
+export function parse_statement_at(parser, source, index) {
+	// cast to `any`: acorn's Parser constructor and parseStatement/nextToken aren't in its public types
+	const acorn = /** @type {any} */ (parser.ts ? TSParser : JSParser);
+	const { onComment, add_comments } = get_comment_handlers(source, parser.root.comments, index);
+
+	try {
+		// This is like parseExpressionAt but for statements
+		const p = new acorn(
+			{
+				onComment,
+				sourceType: 'module',
+				ecmaVersion: 16,
+				locations: true,
+				startLocation: start_location(parser, index)
+			},
+			source,
+			index
+		);
+		p.nextToken();
+		const statement = /** @type {Statement} */ (p.parseStatement(null, true, Object.create(null)));
+		add_comments(/** @type {acorn.Node} */ (statement));
+		return statement;
+	} catch (err) {
+		// A statement that runs to the end of the source (e.g. an unterminated declaration tag)
+		// is an EOF, not a stray token; preserve the friendlier `unexpected_eof` diagnostic.
+		if (/** @type {any} */ (err).pos === source.length) e.unexpected_eof(source.length);
+		handle_parse_error(err);
+	}
+}
+
+const regex_non_lf_line_break = /\r(?!\n)|[\u2028\u2029]/;
+
+let last_template = '';
+let lf_only = true;
+
+/**
+ * Without `startLocation`, acorn counts the lines before `index` on every call
+ * @param {Parser} parser
+ * @param {number} index
+ */
+function start_location(parser, index) {
+	return has_lf_line_breaks_only(parser) ? locator(index) : undefined;
+}
+
+/**
+ * acorn breaks lines on bare `\r`, `\u2028` and `\u2029`, which the locator doesn't
+ * @param {Parser} parser
+ */
+export function has_lf_line_breaks_only(parser) {
+	if (parser.template !== last_template) {
+		last_template = parser.template;
+		lf_only = !regex_non_lf_line_break.test(last_template);
+	}
+	return lf_only;
 }
 
 const regex_position_indicator = / \(\d+:\d+\)$/;

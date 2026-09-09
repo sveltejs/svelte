@@ -55,6 +55,44 @@ test('URLSearchParams.set', () => {
 	cleanup();
 });
 
+test('URLSearchParams.set updates when duplicate values collapse to the same joined string', () => {
+	const params = new SvelteURLSearchParams('a=ab&a=c');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(params.toString());
+		});
+	});
+
+	flushSync(() => {
+		params.set('a', 'abc');
+	});
+
+	assert.deepEqual(log, ['a=ab&a=c', 'a=abc']);
+
+	cleanup();
+});
+
+test('URLSearchParams.set updates when duplicate values collapse to the same comma-joined string', () => {
+	const params = new SvelteURLSearchParams('a=a&a=b');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(params.toString());
+		});
+	});
+
+	flushSync(() => {
+		params.set('a', 'a,b');
+	});
+
+	assert.deepEqual(log, ['a=a&a=b', 'a=a%2Cb']);
+
+	cleanup();
+});
+
 test('URLSearchParams.append', () => {
 	const params = new SvelteURLSearchParams();
 	const log: any = [];
@@ -205,4 +243,25 @@ test('URLSearchParams.toString', () => {
 
 test('SvelteURLSearchParams instanceof URLSearchParams', () => {
 	assert.ok(new SvelteURLSearchParams() instanceof URLSearchParams);
+});
+
+test('params.forEach is reactive', () => {
+	const params = new SvelteURLSearchParams('foo=1');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			const entries: string[] = [];
+			params.forEach((value, key) => entries.push(`${key}=${value}`));
+			log.push(entries.join('&'));
+		});
+	});
+
+	flushSync(() => {
+		params.set('foo', '2');
+	});
+
+	assert.deepEqual(log, ['foo=1', 'foo=2']);
+
+	cleanup();
 });

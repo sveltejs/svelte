@@ -1590,7 +1590,12 @@ function migrate_slot_usage(node, path, state) {
  */
 function extract_type_and_comment(declarator, state, path) {
 	const str = state.str;
-	const parent = path.at(-1);
+	let parent = path.at(-1);
+
+	if (parent?.type === 'Program') {
+		// We don't want comments from the program node
+		parent = undefined;
+	}
 
 	// Try to find jsdoc above the declaration
 	let comment_node = /** @type {Node} */ (parent)?.leadingComments?.at(-1);

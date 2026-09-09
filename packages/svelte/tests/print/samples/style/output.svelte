@@ -19,7 +19,7 @@
 		from {
 			opacity: 0;
 		}
-		50%% {
+		50% {
 			opacity: 0.5;
 		}
 		to {

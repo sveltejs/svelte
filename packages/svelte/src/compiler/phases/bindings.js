@@ -23,7 +23,9 @@ export const binding_properties = {
 		event: 'durationchange',
 		omit_in_ssr: true
 	},
-	focused: {},
+	focused: {
+		omit_in_ssr: true // no corresponding HTML attribute
+	},
 	paused: {
 		valid_elements: ['audio', 'video'],
 		omit_in_ssr: true,

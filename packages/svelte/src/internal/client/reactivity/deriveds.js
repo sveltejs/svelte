@@ -27,6 +27,7 @@ import {
 	skipped_deps,
 	new_deps
 } from '../runtime.js';
+import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
@@ -186,7 +187,10 @@ export function async_derived(fn, label, location) {
 				var decrement_pending = increment_pending();
 			}
 
-			if (/** @type {Boundary} */ (parent.b).is_rendered()) {
+			if (
+				// boundary can be null if the async derived is inside an $effect.root not connected to the component render tree
+				parent.b?.is_rendered()
+			) {
 				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			} else {
 				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
@@ -226,9 +230,7 @@ export function async_derived(fn, label, location) {
 					signal.f ^= ERROR_VALUE;
 				}
 
-				internal_set(signal, value);
-
-				if (DEV && location !== undefined) {
+				if (DEV && location !== undefined && !signal.equals(value)) {
 					recent_async_deriveds.add(signal);
 
 					setTimeout(() => {
@@ -238,6 +240,8 @@ export function async_derived(fn, label, location) {
 						}
 					});
 				}
+
+				internal_set(signal, value);
 			}
 
 			batch.deactivate();
@@ -337,7 +341,12 @@ export function execute_derived(derived) {
 	var prev_active_effect = active_effect;
 	var parent = derived.parent;
 
-	if (!is_destroying_effect && parent !== null && (parent.f & (DESTROYED | INERT)) !== 0) {
+	if (
+		!is_destroying_effect &&
+		parent !== null &&
+		derived.v !== UNINITIALIZED && // if it was never evaluated before, it's guaranteed to fail downstream, so we try to execute instead
+		(parent.f & (DESTROYED | INERT)) !== 0
+	) {
 		w.derived_inert();
 
 		return derived.v;
@@ -439,14 +448,18 @@ export function freeze_derived_effects(derived) {
 		// if the effect has a teardown function or abort signal, call it
 		if (e.teardown || e.ac) {
 			e.teardown?.();
-			e.ac?.abort(STALE_REACTION);
+			if (e.ac !== null) {
+				without_reactive_context(() => {
+					/** @type {AbortController} */ (e.ac).abort(STALE_REACTION);
+					e.ac = null;
+				});
+			}
 
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence
 			// of a teardown function is what determines whether the
-			// effect runs again during unfreezing
-			e.teardown = noop;
-			e.ac = null;
+			// effect runs again during unfreezing (but not for teardown-only effects)
+			if (e.fn !== null) e.teardown = noop;
 
 			remove_reactions(e, 0);
 			destroy_effect_children(e);
@@ -463,7 +476,7 @@ export function unfreeze_derived_effects(derived) {
 	for (const e of derived.effects) {
 		// if the effect was previously frozen — indicated by the presence
 		// of a teardown function — unfreeze it
-		if (e.teardown) {
+		if (e.teardown && e.fn !== null) {
 			update_effect(e);
 		}
 	}

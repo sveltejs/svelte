@@ -1,7 +1,7 @@
 /** @import { CallExpression, Expression, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { dev, is_ignored } from '../../../../state.js';
+import { dev, ignore_map, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { binding_properties } from '../../../bindings.js';
@@ -40,9 +40,15 @@ export function BindDirective(node, context) {
 			validate_binding(context.state, node, expression);
 		}
 
-		const assignment = /** @type {Expression} */ (
-			context.visit(b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value')))
+		const raw_assignment = b.assignment(
+			'=',
+			/** @type {Pattern} */ (node.expression),
+			b.id('$$value')
 		);
+		// The assignment is generated, so inherit any ignores attached to the binding
+		ignore_map.set(raw_assignment, ignore_map.get(node) ?? []);
+
+		const assignment = /** @type {Expression} */ (context.visit(raw_assignment));
 
 		if (dev) {
 			// in dev, create named functions, so that `$inspect(...)` delivers
@@ -58,16 +64,7 @@ export function BindDirective(node, context) {
 			get = b.thunk(expression);
 
 			/** @type {Expression | undefined} */
-			set = b.unthunk(
-				b.arrow(
-					[b.id('$$value')],
-					/** @type {Expression} */ (
-						context.visit(
-							b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
-						)
-					)
-				)
-			);
+			set = b.unthunk(b.arrow([b.id('$$value')], assignment));
 
 			if (get === set) {
 				set = undefined;

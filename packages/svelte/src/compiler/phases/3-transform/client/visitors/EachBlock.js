@@ -12,6 +12,7 @@ import {
 import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
+import { async_thunk } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 import { build_expression, add_svelte_meta } from './shared/utils.js';
 
@@ -294,7 +295,10 @@ export function EachBlock(node, context) {
 	let key_function = b.id('$.index');
 
 	if (node.metadata.keyed) {
-		const pattern = /** @type {Pattern} */ (node.context); // can only be keyed when a context is provided
+		// can only be keyed when a context is provided
+		const pattern = /** @type {Pattern} */ (
+			context.visit(/** @type {Pattern} */ (node.context), key_state)
+		);
 		const expression = /** @type {Expression} */ (
 			context.visit(/** @type {Expression} */ (node.key), key_state)
 		);
@@ -310,7 +314,9 @@ export function EachBlock(node, context) {
 
 	const has_await = node.metadata.expression.has_await;
 
-	const get_collection = b.thunk(collection, has_await);
+	const get_collection = has_await
+		? async_thunk(collection, node.metadata.expression)
+		: b.thunk(collection);
 	const thunk = has_await ? b.thunk(b.call('$.get', b.id('$$collection'))) : get_collection;
 
 	const render_args = [b.id('$$anchor'), item];

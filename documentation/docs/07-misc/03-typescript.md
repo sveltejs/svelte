@@ -170,6 +170,12 @@ If you don't give `$state` an initial value, part of its types will be `undefine
 let count: number = $state();
 ```
 
+You can pass the type directly as a generic parameter to safely handle this. TypeScript will infer the variable as `number | undefined`.
+
+```ts
+let count = $state<number>();
+```
+
 If you know that the variable _will_ be defined before you first use it, use an `as` casting. This is especially useful in the context of classes:
 
 ```ts

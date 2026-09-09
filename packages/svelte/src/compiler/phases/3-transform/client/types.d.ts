@@ -40,6 +40,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
+	/** Deduplicates hoisted templates by content, mapping a template key to its hoisted identifier */
+	readonly templates: Map<string, Identifier>;
 	readonly events: Set<string>;
 	readonly store_to_invalidate?: string;
 

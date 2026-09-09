@@ -5,7 +5,12 @@ import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate, delegated, event, event_symbol } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
-import { IS_XHTML, LOADING_ATTR_SYMBOL } from '#client/constants';
+import {
+	ATTRIBUTES_CACHE,
+	FORM_RESET_HANDLER,
+	IS_XHTML,
+	LOADING_ATTR_SYMBOL
+} from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { is_capture_event, can_delegate_event, normalize_attribute } from '../../../../utils.js';
 import {
@@ -21,7 +26,12 @@ import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
 import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
-import { init_select, select_option } from './bindings/select.js';
+import {
+	init_select,
+	select_option,
+	set_default_select_value,
+	set_selected
+} from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
 
 export const CLASS = Symbol('class');
@@ -69,8 +79,7 @@ export function remove_input_defaults(input) {
 		}
 	};
 
-	// @ts-expect-error
-	input.__on_r = remove_defaults;
+	/** @type {any} */ (input)[FORM_RESET_HANDLER] = remove_defaults;
 	queue_micro_task(remove_defaults);
 	add_form_reset_listener();
 }
@@ -116,25 +125,6 @@ export function set_checked(element, checked) {
 
 	// @ts-expect-error
 	element.checked = checked;
-}
-
-/**
- * Sets the `selected` attribute on an `option` element.
- * Not set through the property because that doesn't reflect to the DOM,
- * which means it wouldn't be taken into account when a form is reset.
- * @param {HTMLOptionElement} element
- * @param {boolean} selected
- */
-export function set_selected(element, selected) {
-	if (selected) {
-		// The selected option could've changed via user selection, and
-		// setting the value without this check would set it back.
-		if (!element.hasAttribute('selected')) {
-			element.setAttribute('selected', '');
-		}
-	} else {
-		element.removeAttribute('selected');
-	}
 }
 
 /**
@@ -197,7 +187,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (value == null) {
 		element.removeAttribute(attribute);
-	} else if (typeof value !== 'string' && get_setters(element).includes(attribute)) {
+	} else if (typeof value !== 'string' && get_setters(element).has(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
 	} else {
@@ -248,7 +238,7 @@ export function set_custom_element_data(node, prop, value) {
 			// customElements may not be available in browser extension contexts
 			!customElements ||
 			customElements.get(node.getAttribute('is') || node.nodeName.toLowerCase())
-				? get_setters(node).includes(prop)
+				? get_setters(node).has(prop)
 				: value && typeof value === 'object')
 		) {
 			// @ts-expect-error
@@ -287,11 +277,8 @@ function set_attributes(
 	skip_warning = false
 ) {
 	if (hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
-		var input = /** @type {HTMLInputElement} */ (element);
-		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
-
-		if (!(attribute in next)) {
-			remove_input_defaults(input);
+		if (!('defaultValue' in next || 'defaultChecked' in next)) {
+			remove_input_defaults(/** @type {HTMLInputElement} */ (element));
 		}
 	}
 
@@ -309,9 +296,11 @@ function set_attributes(
 
 	var current = prev || {};
 	var is_option_element = element.nodeName === OPTION_TAG;
+	var is_select_element = element.nodeName === SELECT_TAG;
 
 	for (var key in prev) {
-		if (!(key in next)) {
+		// don't null our internal $$onX listeners
+		if (!(key in next) && key[0] + key[1] !== '$$') {
 			next[key] = null;
 		}
 	}
@@ -327,6 +316,15 @@ function set_attributes(
 	}
 
 	var setters = get_setters(element);
+
+	if (element.nodeName === INPUT_TAG && 'type' in next && ('value' in next || '__value' in next)) {
+		var type = next.type;
+
+		if (type !== current.type || (type === undefined && element.hasAttribute('type'))) {
+			current.type = type;
+			set_attribute(element, 'type', type, skip_warning);
+		}
+	}
 
 	// since key is captured we use const
 	for (const key in next) {
@@ -435,6 +433,9 @@ function set_attributes(
 
 			var is_default = name === 'defaultValue' || name === 'defaultChecked';
 
+			// A select's default value is represented by selected options, not a property.
+			if (is_select_element && name === 'defaultValue') continue;
+
 			if (value == null && !is_custom_element && !is_default) {
 				attributes[key] = null;
 
@@ -459,7 +460,7 @@ function set_attributes(
 				}
 			} else if (
 				is_default ||
-				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
+				((is_custom_element || typeof value !== 'string') && setters.has(name))
 			) {
 				// @ts-ignore
 				element[name] = value;
@@ -520,8 +521,16 @@ export function attribute_effect(
 				skip_warning
 			);
 
-			if (inited && is_select && 'value' in next) {
-				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
+			if (inited && is_select) {
+				var select = /** @type {HTMLSelectElement} */ (element);
+
+				if ('defaultValue' in next) {
+					set_default_select_value(select, next.defaultValue);
+				}
+
+				if ('value' in next) {
+					select_option(select, next.value);
+				}
 			}
 
 			for (let symbol of Object.getOwnPropertySymbols(effects)) {
@@ -546,7 +555,13 @@ export function attribute_effect(
 			var select = /** @type {HTMLSelectElement} */ (element);
 
 			effect(() => {
-				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, true);
+				var attrs = /** @type {Record<string | symbol, any>} */ (prev);
+
+				if ('defaultValue' in attrs) {
+					set_default_select_value(select, attrs.defaultValue);
+				}
+
+				select_option(select, attrs.value, true);
 				init_select(select);
 			});
 		}
@@ -561,15 +576,14 @@ export function attribute_effect(
  */
 function get_attributes(element) {
 	return /** @type {Record<string | symbol, unknown>} **/ (
-		// @ts-expect-error
-		element.__attributes ??= {
+		/** @type {any} */ (element)[ATTRIBUTES_CACHE] ??= {
 			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-'),
 			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
 		}
 	);
 }
 
-/** @type {Map<string, string[]>} */
+/** @type {Map<string, Set<string>>} */
 var setters_cache = new Map();
 
 /** @param {Element} element */
@@ -577,20 +591,26 @@ function get_setters(element) {
 	var cache_key = element.getAttribute('is') || element.nodeName;
 	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
-	setters_cache.set(cache_key, (setters = []));
+	setters_cache.set(cache_key, (setters = new Set()));
 
 	var descriptors;
 	var proto = element; // In the case of custom elements there might be setters on the instance
 	var element_proto = Element.prototype;
 
-	// Stop at Element, from there on there's only unnecessary setters we're not interested in
+	// Stop at Element, from there on there's only unnecessary (and dangerous, like innerHTML) setters we're not interested in
 	// Do not use constructor.name here as that's unreliable in some browser environments
 	while (element_proto !== proto) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {
-			if (descriptors[key].set) {
-				setters.push(key);
+			if (
+				descriptors[key].set &&
+				// better safe than sorry, we don't want spread attributes to mess with HTML content
+				key !== 'innerHTML' &&
+				key !== 'textContent' &&
+				key !== 'innerText'
+			) {
+				setters.add(key);
 			}
 		}
 

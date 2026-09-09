@@ -30,6 +30,12 @@ const visitors = {
 		delete n.readonly;
 		delete n.definite;
 		delete n.override;
+
+		// `optional` is reused by JS optional chaining (`a?.b`, `a?.()`), so only
+		// strip the TypeScript optional marker (`x?: T`, `m?(): T`, `x?: T` fields)
+		if (n.type !== 'MemberExpression' && n.type !== 'CallExpression') {
+			delete n.optional;
+		}
 	},
 	Decorator(node) {
 		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');

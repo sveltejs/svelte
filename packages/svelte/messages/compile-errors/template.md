@@ -191,6 +191,14 @@ The same applies to components:
 
 > {@debug ...} arguments must be identifiers, not arbitrary expressions
 
+## declaration_tag_invalid_type
+
+> Declaration tags must be `let` or `const` declarations
+
+## declaration_tag_no_legacy_mode
+
+> Declaration tags cannot be used in legacy mode
+
 ## directive_invalid_value
 
 > Directive value must be a JavaScript expression enclosed in curly braces

@@ -4,9 +4,11 @@ import { flushSync } from 'svelte';
 export default test({
 	async test({ assert, target, errors }) {
 		const btn = target.querySelector('button');
+
 		flushSync(() => {
 			btn?.click();
 		});
+		assert.htmlEqual(target.innerHTML, '1:1 <button></button>');
 		assert.deepEqual(errors, []);
 	}
 });

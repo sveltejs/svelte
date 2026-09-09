@@ -22,7 +22,7 @@ import {
 	flush_eager_effects,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
-import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { COMPONENT_SYMBOL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { tag } from './dev/tracing.js';
@@ -38,8 +38,13 @@ const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
  * @returns {T}
  */
 export function proxy(value) {
-	// if non-proxyable, or is already a proxy, return `value`
-	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
+	// if non-proxyable, a component instance, or already a proxy, return `value`
+	if (
+		typeof value !== 'object' ||
+		value === null ||
+		STATE_SYMBOL in value ||
+		COMPONENT_SYMBOL in value
+	) {
 		return value;
 	}
 

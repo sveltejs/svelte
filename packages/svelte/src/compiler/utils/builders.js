@@ -686,7 +686,8 @@ export {
 	if_builder as if,
 	this_instance as this,
 	null_instance as null,
-	debugger_builder as debugger
+	debugger_builder as debugger,
+	new_builder as new
 };
 
 /**

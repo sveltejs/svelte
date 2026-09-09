@@ -32,7 +32,7 @@ export const ELEMENT_IS_NAMESPACED = 1;
 export const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
 export const ELEMENT_IS_INPUT = 1 << 2;
 
-export const UNINITIALIZED = Symbol();
+export const UNINITIALIZED = Symbol('uninitialized');
 
 // Dev-time component properties
 export const FILENAME = Symbol('filename');

@@ -262,6 +262,10 @@ export function convert(source, ast) {
 				};
 			},
 			// @ts-ignore
+			DeclarationTag(node) {
+				return node;
+			},
+			// @ts-ignore
 			KeyBlock(node, { visit }) {
 				remove_surrounding_whitespace_nodes(node.fragment.nodes);
 				return {

@@ -109,7 +109,7 @@ By default, error boundaries have no effect on the server — if an error occurs
 
 Since 5.51 you can control this behaviour for boundaries with a `failed` snippet, by calling [`render(...)`](imperative-component-api#render) with a `transformError` function.
 
-> [!NOTE] If you're using Svelte via a framework such as SvelteKit, you most likely don't have direct access to the `render(...)` call — the framework must configure `transformError` on your behalf. SvelteKit will add support for this in the near future, via the [`handleError`](../kit/hooks#Shared-hooks-handleError) hook.
+> [!NOTE] If you're using Svelte via a framework such as SvelteKit, you most likely don't have direct access to the `render(...)` call — the framework must configure `transformError` on your behalf. SvelteKit will add support for this in the near future, via the [`handleError`](../kit/hooks#handleError) hook.
 
 The `transformError` function must return a JSON-stringifiable object which will be used to render the `failed` snippet. This object will be serialized and used to hydrate the snippet in the browser:
 

@@ -20,7 +20,6 @@ import {
 	EFFECT,
 	DESTROYED,
 	INERT,
-	REACTION_RAN,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	EFFECT_TRANSPARENT,
@@ -35,8 +34,10 @@ import {
 	ASYNC,
 	CONNECTED,
 	MANAGED_EFFECT,
-	DESTROYING
+	DESTROYING,
+	PAUSED
 } from '#client/constants';
+import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
@@ -213,7 +214,11 @@ export function user_effect(fn) {
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
 	var flags = /** @type {Effect} */ (active_effect).f;
-	var defer = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & REACTION_RAN) === 0;
+	var defer =
+		!active_reaction &&
+		(flags & BRANCH_EFFECT) !== 0 &&
+		component_context !== null &&
+		!component_context.i;
 
 	if (defer) {
 		// Top-level `$effect(...)` in an unmounted component — defer until mount
@@ -384,7 +389,9 @@ export function render_effect(fn, flags = 0) {
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)));
+		create_effect(RENDER_EFFECT, () => {
+			fn(...values.map(get));
+		});
 	});
 }
 
@@ -444,6 +451,11 @@ export function execute_effect_teardown(effect) {
 		set_active_reaction(null);
 		try {
 			teardown.call(null);
+		} catch (error) {
+			// Route teardown errors through the boundary system so that a live
+			// ancestor <svelte:boundary> can handle them. Boundaries that are
+			// themselves mid-teardown are skipped by invoke_error_boundary.
+			invoke_error_boundary(error, effect.parent);
 		} finally {
 			set_is_destroying_effect(previously_destroying_effect);
 			set_active_reaction(previous_reaction);
@@ -515,7 +527,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
-	set_signal_status(effect, DESTROYING);
+	effect.f |= DESTROYING;
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
 
@@ -605,6 +617,7 @@ export function pause_effect(effect, callback, destroy = true) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
+	effect.f |= PAUSED;
 	pause_children(effect, transitions, true);
 
 	var fn = () => {
@@ -672,6 +685,7 @@ function pause_children(effect, transitions, local) {
  * @param {Effect} effect
  */
 export function resume_effect(effect) {
+	effect.f &= ~PAUSED;
 	resume_children(effect, true);
 }
 
@@ -680,6 +694,10 @@ export function resume_effect(effect) {
  * @param {boolean} local
  */
 function resume_children(effect, local) {
+	// this subtree was paused for its own reasons (e.g. a block whose condition
+	// is still false) — its controller will resume or destroy it
+	if ((effect.f & PAUSED) !== 0) return;
+
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 

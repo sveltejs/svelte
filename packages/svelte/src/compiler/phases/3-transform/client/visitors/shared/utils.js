@@ -8,7 +8,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
-import { build_getter } from '../../utils.js';
+import { async_thunk, build_getter, is_state_source } from '../../utils.js';
 import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
@@ -16,10 +16,10 @@ import { ExpressionMetadata } from '../../../../nodes.js';
  * from templates and replacing them with `$0`, `$1` etc
  */
 export class Memoizer {
-	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	/** @type {Array<{ id: Identifier, expression: Expression, metadata: ExpressionMetadata }>} */
 	#sync = [];
 
-	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	/** @type {Array<{ id: Identifier, expression: Expression, metadata: ExpressionMetadata }>} */
 	#async = [];
 
 	/** @type {Set<Expression>} */
@@ -43,7 +43,7 @@ export class Memoizer {
 
 		const id = b.id('#'); // filled in later
 
-		(metadata.has_await ? this.#async : this.#sync).push({ id, expression });
+		(metadata.has_await ? this.#async : this.#sync).push({ id, expression, metadata });
 
 		return id;
 	}
@@ -52,7 +52,7 @@ export class Memoizer {
 	 * @param {ExpressionMetadata} metadata
 	 */
 	check_blockers(metadata) {
-		for (const binding of metadata.dependencies) {
+		for (const binding of metadata.references) {
 			if (binding.blocker) {
 				this.#blockers.add(binding.blocker);
 			}
@@ -84,7 +84,7 @@ export class Memoizer {
 		if (this.#async.length === 0) return;
 		// use `b.arrow` rather than `b.thunk` so that deferred async/template effects
 		// always read live bindings rather than a possibly stale snapshot.
-		return b.array(this.#async.map((memo) => b.arrow([], memo.expression, true)));
+		return b.array(this.#async.map((memo) => async_thunk(memo.expression, memo.metadata)));
 	}
 
 	sync_values() {
@@ -271,6 +271,10 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 			const binding = state.scope.get(node.name);
 			if (!binding) return;
+
+			// if it is a state or a derived it means is a declaration tag...in that case we don't want to pass the
+			// value but the signal itself or assignment will break
+			if (is_state_source(binding, state.analysis) || binding.kind === 'derived') return;
 
 			for (const [owner, scope] of state.scopes) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {

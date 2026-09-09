@@ -9,8 +9,9 @@ const { head, body } = await render(App);
 
 const rendered = fs
 	.readFileSync(path.resolve('./dist/client/index.html'), 'utf-8')
-	.replace(`<!--ssr-body-->`, body)
-	.replace(`<!--ssr-head-->`, head);
+	// use function form to prevent any string replacement characters from being interpreted
+	.replace(`<!--ssr-body-->`, () => body)
+	.replace(`<!--ssr-head-->`, () => head);
 
 const types = {
 	'.js': 'application/javascript',

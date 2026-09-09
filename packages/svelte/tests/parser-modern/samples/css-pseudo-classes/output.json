@@ -25,7 +25,35 @@
 											"type": "PseudoElementSelector",
 											"name": "view-transition-old",
 											"start": 60,
-											"end": 81
+											"end": 86,
+											"args": {
+												"type": "SelectorList",
+												"start": 82,
+												"end": 85,
+												"children": [
+													{
+														"type": "ComplexSelector",
+														"start": 82,
+														"end": 85,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "TypeSelector",
+																		"name": "x-y",
+																		"start": 82,
+																		"end": 85
+																	}
+																],
+																"start": 82,
+																"end": 85
+															}
+														]
+													}
+												]
+											}
 										}
 									],
 									"start": 60,
@@ -89,7 +117,35 @@
 																		"type": "PseudoElementSelector",
 																		"name": "view-transition-old",
 																		"start": 119,
-																		"end": 140
+																		"end": 145,
+																		"args": {
+																			"type": "SelectorList",
+																			"start": 141,
+																			"end": 144,
+																			"children": [
+																				{
+																					"type": "ComplexSelector",
+																					"start": 141,
+																					"end": 144,
+																					"children": [
+																						{
+																							"type": "RelativeSelector",
+																							"combinator": null,
+																							"selectors": [
+																								{
+																									"type": "TypeSelector",
+																									"name": "x-y",
+																									"start": 141,
+																									"end": 144
+																								}
+																							],
+																							"start": 141,
+																							"end": 144
+																						}
+																					]
+																				}
+																			]
+																		}
 																	}
 																],
 																"start": 119,
@@ -147,7 +203,35 @@
 											"type": "PseudoElementSelector",
 											"name": "highlight",
 											"start": 171,
-											"end": 182
+											"end": 199,
+											"args": {
+												"type": "SelectorList",
+												"start": 183,
+												"end": 198,
+												"children": [
+													{
+														"type": "ComplexSelector",
+														"start": 183,
+														"end": 198,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "TypeSelector",
+																		"name": "rainbow-color-1",
+																		"start": 183,
+																		"end": 198
+																	}
+																],
+																"start": 183,
+																"end": 198
+															}
+														]
+													}
+												]
+											}
 										}
 									],
 									"start": 171,
@@ -200,7 +284,35 @@
 											"type": "PseudoElementSelector",
 											"name": "part",
 											"start": 234,
-											"end": 240
+											"end": 245,
+											"args": {
+												"type": "SelectorList",
+												"start": 241,
+												"end": 244,
+												"children": [
+													{
+														"type": "ComplexSelector",
+														"start": 241,
+														"end": 244,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "TypeSelector",
+																		"name": "foo",
+																		"start": 241,
+																		"end": 244
+																	}
+																],
+																"start": 241,
+																"end": 244
+															}
+														]
+													}
+												]
+											}
 										}
 									],
 									"start": 220,
@@ -247,7 +359,35 @@
 											"type": "PseudoElementSelector",
 											"name": "slotted",
 											"start": 266,
-											"end": 275
+											"end": 285,
+											"args": {
+												"type": "SelectorList",
+												"start": 276,
+												"end": 284,
+												"children": [
+													{
+														"type": "ComplexSelector",
+														"start": 276,
+														"end": 284,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "ClassSelector",
+																		"name": "content",
+																		"start": 276,
+																		"end": 284
+																	}
+																],
+																"start": 276,
+																"end": 284
+															}
+														]
+													}
+												]
+											}
 										}
 									],
 									"start": 266,
@@ -390,6 +530,26 @@
 				"end": 377
 			}
 		],
+		"comments": [
+			{
+				"type": "CSSComment",
+				"value": " test that all these are parsed correctly ",
+				"start": 12,
+				"end": 58
+			},
+			{
+				"type": "CSSComment",
+				"value": "button",
+				"start": 311,
+				"end": 321
+			},
+			{
+				"type": "CSSComment",
+				"value": "p after h1",
+				"start": 332,
+				"end": 346
+			}
+		],
 		"content": {
 			"start": 7,
 			"end": 378,
@@ -405,5 +565,6 @@
 		"type": "Fragment",
 		"nodes": []
 	},
-	"options": null
+	"options": null,
+	"comments": []
 }
