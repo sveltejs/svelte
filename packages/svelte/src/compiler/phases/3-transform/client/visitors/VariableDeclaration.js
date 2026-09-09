@@ -11,6 +11,7 @@ import {
 	get_prop_source,
 	is_prop_source,
 	is_state_source,
+	prop_binding_may_be_in_teardown,
 	should_proxy
 } from '../utils.js';
 import { get_value } from './shared/declarations.js';
@@ -55,6 +56,7 @@ export function VariableDeclaration(node, context) {
 				}
 
 				if (declarator.id.type === 'Identifier') {
+					const binding = /** @type {Binding} */ (context.state.scope.get(declarator.id.name));
 					const exclude_id = context.state.scope.root.unique('rest_excludes');
 					context.state.hoisted.push(
 						b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
@@ -66,6 +68,11 @@ export function VariableDeclaration(node, context) {
 					if (dev) {
 						// include rest name, so we can provide informative error messages
 						args.push(b.literal(declarator.id.name));
+					}
+
+					if (prop_binding_may_be_in_teardown(binding, context.state)) {
+						if (!dev) args.push(b.void0);
+						args.push(b.true);
 					}
 
 					declarations.push(b.declarator(declarator.id, b.call('$.rest_props', ...args)));
@@ -106,6 +113,8 @@ export function VariableDeclaration(node, context) {
 							}
 						} else {
 							// RestElement
+							const rest_id = /** @type {Identifier} */ (property.argument);
+							const binding = /** @type {Binding} */ (context.state.scope.get(rest_id.name));
 							const exclude_id = context.state.scope.root.unique('rest_excludes');
 							context.state.hoisted.push(
 								b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
@@ -116,7 +125,12 @@ export function VariableDeclaration(node, context) {
 
 							if (dev) {
 								// include rest name, so we can provide informative error messages
-								args.push(b.literal(/** @type {Identifier} */ (property.argument).name));
+								args.push(b.literal(rest_id.name));
+							}
+
+							if (prop_binding_may_be_in_teardown(binding, context.state)) {
+								if (!dev) args.push(b.void0);
+								args.push(b.true);
 							}
 
 							declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
