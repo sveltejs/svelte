@@ -5,6 +5,7 @@
 </script>
 
 <h1>Hello {name}!</h1>
+<slot>fallback</slot>
 
 <style>
 	h1 {

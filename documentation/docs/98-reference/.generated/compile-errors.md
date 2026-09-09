@@ -821,6 +821,18 @@ Cannot use `%rune%` rune in non-runes mode
 Cannot use rune without parentheses
 ```
 
+Runes are keywords rather than values — they can't be assigned to a variable or passed to a function, only called. Referencing one without parentheses is therefore an error...
+
+```js
+let count = $state;
+```
+
+...whether it's a rune like `$state` or one reached through a property, like `$derived.by`. Add the parentheses, along with any arguments the rune expects:
+
+```js
+let count = $state(0);
+```
+
 ### rune_removed
 
 ```

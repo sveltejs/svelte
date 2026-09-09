@@ -52,6 +52,14 @@ export function head(hash, render_fn) {
 		block(() => {
 			var e = branch(() => render_fn(anchor));
 			e.f |= HEAD_EFFECT;
+
+			if (!hydrating) {
+				if (e.nodes === null) {
+					e.nodes = { start: anchor, end: anchor, a: null, t: null };
+				} else {
+					e.nodes.end = anchor;
+				}
+			}
 		});
 	} finally {
 		if (was_hydrating) {

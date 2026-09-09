@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { Renderer, SSRState } from './renderer.js';
 import type { Component } from 'svelte';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
+import { getAbortSignal } from './abort-signal.js';
 
 test('collects synchronous body content by default', () => {
 	const component = (renderer: Renderer) => {
@@ -465,5 +466,177 @@ describe('async', () => {
 
 		await Renderer.render(component as unknown as Component);
 		expect(destroyed).toEqual(['c', 'e', 'a', 'b', 'b*', 'd']);
+	});
+
+	test('on_destroy callbacks run when a sync render throws', () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => destroyed.push('a'));
+				renderer.child(() => {
+					throw new Error('boom');
+				});
+			});
+		};
+
+		expect(() => Renderer.render(component as unknown as Component).body).toThrow('boom');
+		expect(destroyed).toEqual(['a']);
+	});
+
+	test('on_destroy callbacks run when an async render rejects', async () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => destroyed.push('a'));
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(destroyed).toEqual(['a']);
+	});
+
+	test('on_destroy waits for in-flight renderers when an async render rejects', async () => {
+		const events: string[] = [];
+		let initialised = false;
+
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				// rejects while the sibling component below is still in flight
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+
+				renderer.component((renderer) => {
+					renderer.on_destroy(() => events.push(`before-await (initialised: ${initialised})`));
+					renderer.child(async () => {
+						await new Promise((f) => setTimeout(f, 10));
+						initialised = true;
+						renderer.on_destroy(() => events.push('after-await'));
+					});
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(events).toEqual(['before-await (initialised: true)', 'after-await']);
+	});
+
+	test('aborts in-flight renderers before waiting for them', async () => {
+		const events: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+
+				renderer.component((renderer) => {
+					renderer.on_destroy(() => events.push('destroyed'));
+					renderer.child(async () => {
+						const signal = getAbortSignal();
+						await new Promise((_, reject) => {
+							signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+						});
+					});
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(events).toEqual(['destroyed']);
+	});
+
+	test('on_destroy waits for every run invocation when an async render rejects', async () => {
+		const events: string[] = [];
+		let initialised = false;
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => events.push(`destroyed (initialised: ${initialised})`));
+				renderer.run([
+					async () => {
+						await new Promise((resolve) => setTimeout(resolve, 10));
+						initialised = true;
+						renderer.on_destroy(() => events.push('destroyed after await'));
+					}
+				]);
+				renderer.run([
+					async () => {
+						await Promise.resolve();
+						throw new Error('boom');
+					}
+				]);
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(events).toEqual(['destroyed (initialised: true)', 'destroyed after await']);
+	});
+
+	test('abort signals are scoped to a render', async () => {
+		let signal: AbortSignal;
+		let start!: () => void;
+		let resume!: () => void;
+		const started = new Promise<void>((resolve) => (start = resolve));
+		const resumed = new Promise<void>((resolve) => (resume = resolve));
+		const component = (renderer: Renderer) => {
+			renderer.child(async () => {
+				signal = getAbortSignal();
+				start();
+				await resumed;
+			});
+		};
+
+		const first_render = Promise.resolve(Renderer.render(component as unknown as Component));
+		await started;
+		await Renderer.render((() => {}) as unknown as Component);
+		expect(signal!.aborted).toBe(false);
+
+		resume();
+		await first_render;
+		expect(signal!.aborted).toBe(true);
+	});
+
+	test('a throwing on_destroy callback does not mask a sync render error', () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => {
+					destroyed.push('a');
+					throw new Error('cleanup failed');
+				});
+				renderer.on_destroy(() => destroyed.push('b'));
+				renderer.child(() => {
+					throw new Error('boom');
+				});
+			});
+		};
+
+		expect(() => Renderer.render(component as unknown as Component).body).toThrow('boom');
+		expect(destroyed).toEqual(['a', 'b']);
+	});
+
+	test('a throwing on_destroy callback does not mask an async render error', async () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => {
+					destroyed.push('a');
+					throw new Error('cleanup failed');
+				});
+				renderer.on_destroy(() => destroyed.push('b'));
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(destroyed).toEqual(['a', 'b']);
 	});
 });

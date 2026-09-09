@@ -13,7 +13,6 @@ export function UpdateExpression(node, context) {
 
 	if (
 		argument.type === 'MemberExpression' &&
-		argument.object.type === 'ThisExpression' &&
 		argument.property.type === 'PrivateIdentifier' &&
 		context.state.state_fields.has('#' + argument.property.name)
 	) {

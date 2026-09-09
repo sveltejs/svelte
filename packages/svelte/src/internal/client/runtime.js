@@ -21,7 +21,6 @@ import {
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
-	WAS_MARKED,
 	MANAGED_EFFECT,
 	REACTION_RAN
 } from './constants.js';
@@ -61,6 +60,9 @@ import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
 
+/**
+ * True if updating in an effect context that is reactive (i.e. not branch/root effects)
+ */
 let is_updating_effect = false;
 
 export let is_destroying_effect = false;
@@ -97,7 +99,11 @@ export let current_sources = null;
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
-	if (active_reaction !== null && (!async_mode_flag || (active_reaction.f & DERIVED) !== 0)) {
+	if (
+		active_reaction !== null &&
+		((!async_mode_flag && (active_reaction.f & REACTION_IS_UPDATING) !== 0) ||
+			(active_reaction.f & DERIVED) !== 0)
+	) {
 		(current_sources ??= new Set()).add(value);
 	}
 }
@@ -130,7 +136,7 @@ export function set_untracked_writes(value) {
  **/
 export let write_version = 1;
 
-/** @type {number} Used to version each read of a source of derived to avoid duplicating depedencies inside a reaction */
+/** @type {number} Used to version each read of a source of derived to avoid duplicating dependencies inside a reaction */
 let read_version = 0;
 
 export let update_version = read_version;
@@ -155,10 +161,6 @@ export function is_dirty(reaction) {
 
 	if ((flags & DIRTY) !== 0) {
 		return true;
-	}
-
-	if (flags & DERIVED) {
-		reaction.f &= ~WAS_MARKED;
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
@@ -255,37 +257,7 @@ export function update_reaction(reaction) {
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
 		reaction.f |= REACTION_RAN;
-		var deps = reaction.deps;
-
-		// Don't remove reactions during fork;
-		// they must remain for when fork is discarded
-		var is_fork = current_batch?.is_fork;
-
-		if (new_deps !== null) {
-			var i;
-
-			if (!is_fork) {
-				remove_reactions(reaction, skipped_deps);
-			}
-
-			if (deps !== null && skipped_deps > 0) {
-				deps.length = skipped_deps + new_deps.length;
-				for (i = 0; i < new_deps.length; i++) {
-					deps[skipped_deps + i] = new_deps[i];
-				}
-			} else {
-				reaction.deps = deps = new_deps;
-			}
-
-			if (effect_tracking() && (reaction.f & CONNECTED) !== 0) {
-				for (i = skipped_deps; i < deps.length; i++) {
-					(deps[i].reactions ??= []).push(reaction);
-				}
-			}
-		} else if (!is_fork && deps !== null && skipped_deps < deps.length) {
-			remove_reactions(reaction, skipped_deps);
-			deps.length = skipped_deps;
-		}
+		var deps = update_dependencies(reaction);
 
 		// If we're inside an effect and we have untracked writes, then we need to
 		// ensure that if any of those untracked writes result in re-invalidation
@@ -297,7 +269,7 @@ export function update_reaction(reaction) {
 			deps !== null &&
 			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
 		) {
-			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
+			for (var i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
 				schedule_possible_effect_self_invalidation(
 					untracked_writes[i],
 					/** @type {Effect} */ (reaction)
@@ -341,6 +313,9 @@ export function update_reaction(reaction) {
 
 		return result;
 	} catch (error) {
+		// still commit the deps read before the throw, otherwise deriveds connected by this run keep no reader and the reaction never re-runs when they change
+		update_dependencies(reaction);
+
 		return handle_error(error);
 	} finally {
 		reaction.f ^= REACTION_IS_UPDATING;
@@ -353,6 +328,45 @@ export function update_reaction(reaction) {
 		untracking = previous_untracking;
 		update_version = previous_update_version;
 	}
+}
+
+/**
+ * @param {Reaction} reaction
+ */
+function update_dependencies(reaction) {
+	var deps = reaction.deps;
+
+	// Don't remove reactions during fork;
+	// they must remain for when fork is discarded
+	var is_fork = current_batch?.is_fork;
+
+	if (new_deps !== null) {
+		var i;
+
+		if (!is_fork) {
+			remove_reactions(reaction, skipped_deps);
+		}
+
+		if (deps !== null && skipped_deps > 0) {
+			deps.length = skipped_deps + new_deps.length;
+			for (i = 0; i < new_deps.length; i++) {
+				deps[skipped_deps + i] = new_deps[i];
+			}
+		} else {
+			reaction.deps = deps = new_deps;
+		}
+
+		if (effect_tracking() && (reaction.f & CONNECTED) !== 0) {
+			for (i = skipped_deps; i < deps.length; i++) {
+				(deps[i].reactions ??= []).push(reaction);
+			}
+		}
+	} else if (!is_fork && deps !== null && skipped_deps < deps.length) {
+		remove_reactions(reaction, skipped_deps);
+		deps.length = skipped_deps;
+	}
+
+	return deps;
 }
 
 /**
@@ -389,11 +403,8 @@ function remove_reaction(signal, dependency) {
 	) {
 		var derived = /** @type {Derived} */ (dependency);
 
-		// If we are working with a derived that is owned by an effect, then mark it as being
-		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
 		if ((derived.f & CONNECTED) !== 0) {
 			derived.f ^= CONNECTED;
-			derived.f &= ~WAS_MARKED;
 		}
 
 		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is
@@ -403,6 +414,16 @@ function remove_reaction(signal, dependency) {
 		// DIRTY so it is reexecuted once someone wants its value again.
 		if (derived.v !== UNINITIALIZED) {
 			update_derived_status(derived);
+		}
+
+		// Call abort controller, noone's listening to this derived anymore
+		if (derived.ac !== null) {
+			without_reactive_context(() => {
+				/** @type {AbortController} */ (derived.ac).abort(STALE_REACTION);
+				derived.ac = null;
+				// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
+				set_signal_status(derived, DIRTY);
+			});
 		}
 
 		// freeze any effects inside this derived
@@ -444,7 +465,7 @@ export function update_effect(effect) {
 	var was_updating_effect = is_updating_effect;
 
 	active_effect = effect;
-	is_updating_effect = true;
+	is_updating_effect = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0; // Branch/root effects are not reactive contexts
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;

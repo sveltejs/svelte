@@ -3,7 +3,14 @@
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
-import { ERROR_VALUE, BOUNDARY_EFFECT, REACTION_RAN, EFFECT, DESTROYED } from './constants.js';
+import {
+	ERROR_VALUE,
+	BOUNDARY_EFFECT,
+	REACTION_RAN,
+	EFFECT,
+	DESTROYED,
+	DESTROYING
+} from './constants.js';
 import { define_property, get_descriptor } from '../shared/utils.js';
 import { active_effect, active_reaction } from './runtime.js';
 
@@ -50,7 +57,8 @@ export function invoke_error_boundary(error, effect) {
 	}
 
 	while (effect !== null) {
-		if ((effect.f & BOUNDARY_EFFECT) !== 0) {
+		// Skip boundaries that are destroyed/destroying and cannot meaningfully handle the error.
+		if ((effect.f & BOUNDARY_EFFECT) !== 0 && (effect.f & (DESTROYED | DESTROYING)) === 0) {
 			if ((effect.f & REACTION_RAN) === 0) {
 				// we are still creating the boundary effect
 				throw error;

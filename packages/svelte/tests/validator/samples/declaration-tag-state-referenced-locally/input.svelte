@@ -7,3 +7,7 @@
 {let e = $state(0), f = e}
 
 {a}{b}{c}{d}{e}{f}
+
+<button onclick={() => {
+	console.log(a);
+}}>a</button>

@@ -9,13 +9,13 @@ export interface SSRContext {
 	c: null | Map<unknown, unknown>;
 	/** renderer */
 	r: null | Renderer;
+	/** True if initialized, i.e. an `await` was reached */
+	i: boolean;
 	/** dev mode only: the current component function */
 	function?: any;
 	/** dev mode only: the current element */
 	element?: Element;
 }
-
-export type Csp = { nonce?: string; hash?: boolean };
 
 export interface HydratableLookupEntry {
 	value: unknown;
@@ -34,19 +34,3 @@ export interface HydratableContext {
 export interface RenderContext {
 	hydratable: HydratableContext;
 }
-
-export type Sha256Source = `sha256-${string}`;
-
-export interface SyncRenderOutput {
-	/** HTML that goes into the `<head>` */
-	head: string;
-	/** @deprecated use `body` instead */
-	html: string;
-	/** HTML that goes somewhere into the `<body>` */
-	body: string;
-	hashes: {
-		script: Sha256Source[];
-	};
-}
-
-export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;

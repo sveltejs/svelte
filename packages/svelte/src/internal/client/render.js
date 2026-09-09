@@ -10,7 +10,7 @@ import {
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { active_effect } from './runtime.js';
-import { push, pop, component_context } from './context.js';
+import { push, pop, component_context, mark_as_component } from './context.js';
 import { component_root } from './reactivity/effects.js';
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from './dom/hydration.js';
 import { array_from } from '../shared/utils.js';
@@ -23,7 +23,7 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
-import { COMMENT_NODE, STATE_SYMBOL, TEXT_CACHE } from './constants.js';
+import { COMMENT_NODE, TEXT_CACHE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
 
 /**
@@ -193,7 +193,7 @@ function _mount(
 
 				should_intro = intro;
 				// @ts-expect-error the public typings are not what the actual function looks like
-				component = Component(anchor_node, props) || {};
+				component = Component(anchor_node, props) || mark_as_component();
 				should_intro = true;
 
 				if (hydrating) {
@@ -323,11 +323,7 @@ export function unmount(component, options) {
 	}
 
 	if (DEV) {
-		if (STATE_SYMBOL in component) {
-			w.state_proxy_unmount();
-		} else {
-			w.lifecycle_double_unmount();
-		}
+		w.lifecycle_double_unmount();
 	}
 
 	return Promise.resolve();

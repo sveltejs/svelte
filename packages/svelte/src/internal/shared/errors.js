@@ -86,18 +86,34 @@ export function lifecycle_outside_component(name) {
 }
 
 /**
- * Context was not set in a parent component
+ * Context was not set in the current component or any of its ancestors
  * @returns {never}
  */
 export function missing_context() {
 	if (DEV) {
-		const error = new Error(`missing_context\nContext was not set in a parent component\nhttps://svelte.dev/e/missing_context`);
+		const error = new Error(`missing_context\nContext was not set in the current component or any of its ancestors\nhttps://svelte.dev/e/missing_context`);
 
 		error.name = 'Svelte error';
 
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/missing_context`);
+	}
+}
+
+/**
+ * `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+ * @returns {never}
+ */
+export function set_context_after_init() {
+	if (DEV) {
+		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/set_context_after_init`);
 	}
 }
 

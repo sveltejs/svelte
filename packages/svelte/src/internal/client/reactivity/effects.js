@@ -34,8 +34,10 @@ import {
 	ASYNC,
 	CONNECTED,
 	MANAGED_EFFECT,
-	DESTROYING
+	DESTROYING,
+	PAUSED
 } from '#client/constants';
+import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
@@ -449,6 +451,11 @@ export function execute_effect_teardown(effect) {
 		set_active_reaction(null);
 		try {
 			teardown.call(null);
+		} catch (error) {
+			// Route teardown errors through the boundary system so that a live
+			// ancestor <svelte:boundary> can handle them. Boundaries that are
+			// themselves mid-teardown are skipped by invoke_error_boundary.
+			invoke_error_boundary(error, effect.parent);
 		} finally {
 			set_is_destroying_effect(previously_destroying_effect);
 			set_active_reaction(previous_reaction);
@@ -610,6 +617,7 @@ export function pause_effect(effect, callback, destroy = true) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
+	effect.f |= PAUSED;
 	pause_children(effect, transitions, true);
 
 	var fn = () => {
@@ -677,6 +685,7 @@ function pause_children(effect, transitions, local) {
  * @param {Effect} effect
  */
 export function resume_effect(effect) {
+	effect.f &= ~PAUSED;
 	resume_children(effect, true);
 }
 
@@ -685,6 +694,10 @@ export function resume_effect(effect) {
  * @param {boolean} local
  */
 function resume_children(effect, local) {
+	// this subtree was paused for its own reasons (e.g. a block whose condition
+	// is still false) — its controller will resume or destroy it
+	if ((effect.f & PAUSED) !== 0) return;
+
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 

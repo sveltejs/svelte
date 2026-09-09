@@ -8,9 +8,8 @@ export default function Async_top_level_inspect_server($$anchor) {
 	var data;
 	var $$promises = $.run([async () => data = await Promise.resolve(42), () => void 0]);
 	var p = root();
-	var text = $.child(p, true);
+	var text = $.only_child(p, true);
 
-	$.reset(p);
 	$.template_effect(() => $.set_text(text, data), void 0, void 0, [$$promises[1]]);
 	$.append($$anchor, p);
 }

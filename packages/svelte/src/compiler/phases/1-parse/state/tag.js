@@ -488,12 +488,13 @@ function open(parser) {
 			parser.eat(')', true);
 		}
 
-		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
-		const params = parser.template.slice(params_start, parser.index);
-
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(parser, prelude + `${params} => {}`, params_start)
+					parse_expression_at(
+						parser,
+						parser.template.slice(0, parser.index) + ' => {}',
+						params_start
+					)
 				)
 			: { params: [] };
 
