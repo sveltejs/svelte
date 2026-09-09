@@ -13,36 +13,23 @@ import { keep_tables } from '../../utils/ast.js';
  * @returns {Program}
  */
 export function parse(source, comments, typescript) {
-	let ast;
+	let answer;
 	try {
-		ast = teasel.parse(source, {
+		answer = new teasel.Source(source, {
 			sourceType: 'module',
 			typescript,
 			comments: true,
 			locations: true,
 			scopes: true
-		});
+		}).parse();
 	} catch (err) {
 		return handle_parse_error(err);
 	}
 
-	add_comments(source, comments, /** @type {teasel.Comment[]} */ (ast.comments));
-	delete ast.comments;
-	keep_tables(ast, tables(ast));
+	add_comments(source, comments, /** @type {teasel.Comment[]} */ (answer.comments));
+	keep_tables(answer.node, answer);
 
-	return ast;
-}
-
-/**
- * Takes the tables off an answer, so they reach the scope analysis without showing in the tree.
- * @param {{ scopes?: any; bindings?: any; references?: any }} answer
- */
-function tables(answer) {
-	const { scopes, bindings, references } = answer;
-	delete answer.scopes;
-	delete answer.bindings;
-	delete answer.references;
-	return { scopes, bindings, references };
+	return answer.node;
 }
 
 /**
@@ -53,9 +40,9 @@ function tables(answer) {
  * @returns {Program}
  */
 export function parse_script(parser, start, end) {
-	let ast;
+	let answer;
 	try {
-		ast = parser.js.parse(start, end);
+		answer = parser.js.parse('program', start, { end });
 	} catch (err) {
 		return handle_parse_error(err);
 	}
@@ -63,15 +50,12 @@ export function parse_script(parser, start, end) {
 	add_comments(
 		parser.template,
 		parser.root.comments,
-		/** @type {teasel.Comment[]} */ (ast.comments)
+		/** @type {teasel.Comment[]} */ (answer.comments)
 	);
-	delete ast.comments;
-	delete ast.errors;
-	keep_tables(ast, tables(ast));
-	unsupported(ast.typescript);
-	delete ast.typescript;
+	keep_tables(answer.node, answer);
+	unsupported(answer.typescript);
 
-	return ast;
+	return answer.node;
 }
 
 /**
@@ -109,8 +93,8 @@ function read(parser, run) {
  */
 export function read_expression(parser, stop_at) {
 	const start = parser.index;
-	const answer = read(parser, (js) => js.parseExpressionAt(start, stop_at));
-	keep_tables(answer.node, tables(answer));
+	const answer = read(parser, (js) => js.parse('expression', start, { stopAt: stop_at }));
+	keep_tables(answer.node, answer);
 	const node = answer.node;
 	// the language tools copy an expression's text by its node's range, so the placeholder standing for one that could not be read spans what was read
 	if (node.type === 'Identifier' && node.name === '' && node.start === node.end) {
@@ -146,8 +130,8 @@ export function read_pattern(parser) {
 		}
 	}
 
-	const answer = read(parser, (js) => js.parsePatternAt(start));
-	keep_tables(answer.node, tables(answer));
+	const answer = read(parser, (js) => js.parse('pattern', start));
+	keep_tables(answer.node, answer);
 	return answer.node;
 }
 
@@ -157,9 +141,9 @@ export function read_pattern(parser) {
  */
 export function read_params(parser) {
 	const start = parser.index;
-	const answer = read(parser, (js) => js.parseParamsAt(start));
-	keep_tables(answer.params, tables(answer));
-	return answer.params;
+	const answer = read(parser, (js) => js.parse('params', start));
+	keep_tables(answer.node, answer);
+	return answer.node;
 }
 
 /**
@@ -167,7 +151,7 @@ export function read_params(parser) {
  */
 export function read_type_parameters(parser) {
 	const start = parser.index;
-	read(parser, (js) => js.parseTypeParametersAt(start));
+	read(parser, (js) => js.parse('typeParameters', start));
 }
 
 /**
@@ -177,8 +161,8 @@ export function read_type_parameters(parser) {
 export function read_statement(parser) {
 	const start = parser.index;
 
-	const answer = read(parser, (js) => js.parseStatementAt(start));
-	keep_tables(answer.node, tables(answer));
+	const answer = read(parser, (js) => js.parse('statement', start));
+	keep_tables(answer.node, answer);
 	return answer.node;
 }
 

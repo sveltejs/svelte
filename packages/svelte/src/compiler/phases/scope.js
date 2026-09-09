@@ -1004,14 +1004,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	const from_parser = new Map();
 
 	/**
-	 * Declares in `scope` what the parser found declared in `parsed`: its parameters, or the rest.
+	 * Declares in `scope` what the parser found declared in one of its scopes: the parameters, or the rest.
 	 * @param {Scope} scope
-	 * @param {import('@teasel/parser').Scope} parsed
+	 * @param {import('@teasel/parser').Binding[]} bindings
 	 * @param {boolean} params
 	 * @param {boolean} [template] the declarations are a const tag's
 	 */
-	function declare_parsed(scope, parsed, params, template = false) {
-		for (const binding of parsed.bindings) {
+	function declare_parsed(scope, bindings, params, template = false) {
+		for (const binding of bindings) {
 			if ((binding.kind === 'param') !== params) continue;
 			// no node: `arguments`, or a declaration erased with the TypeScript it belonged to
 			if (binding.node === null || binding.kind === 'class-name' || binding.kind === 'pattern')
@@ -1086,6 +1086,15 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 			return;
 		}
+		/** @type {Map<import('@teasel/parser').Scope, import('@teasel/parser').Binding[]>} the answer's bindings by the scope that holds them */
+		const by_scope = new Map();
+		for (const binding of answer.bindings) {
+			const held = by_scope.get(binding.scope);
+			if (held === undefined) by_scope.set(binding.scope, [binding]);
+			else held.push(binding);
+		}
+		/** @param {import('@teasel/parser').Scope} parsed */
+		const of = (parsed) => by_scope.get(parsed) ?? [];
 		/** @type {Map<import('@teasel/parser').Scope, Scope>} the parser's scopes and ours; a function's holds its parameters */
 		const ours = new Map([[outermost, scope]]);
 		/** @type {Map<import('@teasel/parser').Scope, Scope>} a function's body, which holds the rest */
@@ -1108,7 +1117,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			return /** @type {Scope} */ (ours.get(scope));
 		}
 
-		declare_parsed(scope, outermost, false, template);
+		declare_parsed(scope, of(outermost), false, template);
 
 		for (let i = 1; i < answer.scopes.length; i++) {
 			const parsed = answer.scopes[i];
@@ -1124,18 +1133,18 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node, params);
 					ours.set(parsed, params);
 					if (parsed.parent?.kind === 'function-name') ours.set(parsed.parent, params);
-					declare_parsed(params, parsed, true);
+					declare_parsed(params, of(parsed), true);
 					if (
 						node.body.type !== 'BlockStatement' ||
 						(node.type === 'FunctionExpression' && node.id)
 					) {
-						declare_parsed(params, parsed, false);
+						declare_parsed(params, of(parsed), false);
 					}
 					if (node.body.type === 'BlockStatement') {
 						const body = params.child();
 						scopes.set(node.body, body);
 						bodies.set(parsed, body);
-						declare_parsed(body, parsed, false);
+						declare_parsed(body, of(parsed), false);
 					}
 					break;
 				}
@@ -1147,7 +1156,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					const inside = parent.child(true);
 					scopes.set(node, inside);
 					ours.set(parsed, inside);
-					declare_parsed(inside, parsed, false);
+					declare_parsed(inside, of(parsed), false);
 					break;
 				}
 				default:

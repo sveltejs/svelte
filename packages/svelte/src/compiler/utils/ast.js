@@ -4,21 +4,21 @@ import { walk } from 'zimmerframe';
 import { bindingOf } from '@teasel/parser';
 
 /**
- * @typedef {{ scopes: import('@teasel/parser').Scope[]; bindings: import('@teasel/parser').Binding[]; references: import('@teasel/parser').Reference[] }} Tables
- * the parser's scope, binding and reference tables for one answer
+ * @typedef {Required<Pick<import('@teasel/parser').Parsed<unknown>, 'scopes' | 'bindings' | 'references'>>} Tables
+ * the parser's scope, binding and reference tables for one answer, parsed with `scopes`
  */
 
 // a symbol on the root: a property load where the walk asks every node, not a map lookup
 const PARSED = Symbol('parsed');
 
 /**
- * Keeps the parser's tables on the root it parsed, a script's program or a template's
- * expression, pattern, parameter list or declaration.
+ * Keeps the parser's answer on the root it parsed, a script's program or a template's
+ * expression, pattern, parameter list or declaration, for its tables.
  * @param {object} root
- * @param {Tables} tables
+ * @param {import('@teasel/parser').Parsed<unknown>} answer
  */
-export function keep_tables(root, tables) {
-	/** @type {any} */ (root)[PARSED] = tables;
+export function keep_tables(root, answer) {
+	/** @type {any} */ (root)[PARSED] = answer;
 }
 
 /**
