@@ -361,7 +361,9 @@ function mark_reactions(signal, status, updated_during_traversal) {
 	count_deps += length;
 	// Activate the `seen` Set if we think from the unusually high number of deps that
 	// there might be cycles in the graph, to avoid repeated lookups for reactions
-	if (count_deps > 1000000 && seen === null) seen = new Set();
+	// Example: https://github.com/sveltejs/svelte/issues/16658 has a graph with one source
+	// reaching ~10000 distinct deriveds/effects each, resulting in 65 million walks through repeated visits.
+	if (count_deps > 100000 && seen === null) seen = new Set();
 
 	if (seen !== null) {
 		if (seen.has(signal)) return;
