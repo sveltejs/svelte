@@ -3,8 +3,7 @@
 /** @import { Parser } from '../index.js' */
 import * as e from '../../../errors.js';
 import { create_fragment, ExpressionMetadata } from '../../nodes.js';
-import { read_expression, read_params, read_pattern, read_statement } from '../js.js';
-import { match_bracket } from '../utils/bracket.js';
+import { read_expression, read_params, read_pattern, read_statement, read_type_parameters } from '../js.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
 const regex_supported_declaration = /(?:let|const)\b/y;
@@ -12,7 +11,6 @@ const regex_unsupported_declaration = /(?:var|interface|enum)\b/y;
 // `type` is a contextual keyword; this is just a shape hint, confirmed by parsing.
 const regex_maybe_type_declaration = /type\b/y;
 
-const pointy_bois = { '<': '>' };
 
 /** @param {Parser} parser */
 export default function tag(parser) {
@@ -299,14 +297,10 @@ function open(parser) {
 		/** @type {string | undefined} */
 		let type_params;
 
-		// if we match a generic opening
 		if (parser.ts && parser.match('<')) {
 			const start = parser.index;
-			const end = match_bracket(parser, start, pointy_bois);
-
-			type_params = parser.template.slice(start + 1, end - 1);
-
-			parser.index = end;
+			read_type_parameters(parser);
+			type_params = parser.template.slice(start + 1, parser.index - 1);
 		}
 
 		parser.allow_whitespace();

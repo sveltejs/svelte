@@ -1,0 +1,263 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 113,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "Text",
+				"start": 28,
+				"end": 30,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "SnippetBlock",
+				"start": 30,
+				"end": 113,
+				"expression": {
+					"type": "Identifier",
+					"name": "foo",
+					"start": 40,
+					"end": 43,
+					"loc": {
+						"start": {
+							"line": 4,
+							"column": 10,
+							"character": 40
+						},
+						"end": {
+							"line": 4,
+							"column": 13,
+							"character": 43
+						}
+					}
+				},
+				"typeParams": "T extends () => void, U = Array<string>",
+				"parameters": [
+					{
+						"type": "Identifier",
+						"start": 85,
+						"end": 89,
+						"loc": {
+							"start": {
+								"line": 4,
+								"column": 55
+							},
+							"end": {
+								"line": 4,
+								"column": 59
+							}
+						},
+						"typeAnnotation": {
+							"type": "TSTypeAnnotation",
+							"start": 86,
+							"end": 89,
+							"loc": {
+								"start": {
+									"line": 4,
+									"column": 56
+								},
+								"end": {
+									"line": 4,
+									"column": 59
+								}
+							},
+							"typeAnnotation": {
+								"type": "TSTypeReference",
+								"start": 88,
+								"end": 89,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 58
+									},
+									"end": {
+										"line": 4,
+										"column": 59
+									}
+								},
+								"typeName": {
+									"type": "Identifier",
+									"start": 88,
+									"end": 89,
+									"loc": {
+										"start": {
+											"line": 4,
+											"column": 58
+										},
+										"end": {
+											"line": 4,
+											"column": 59
+										}
+									},
+									"name": "T"
+								}
+							}
+						},
+						"name": "x"
+					},
+					{
+						"type": "Identifier",
+						"start": 91,
+						"end": 95,
+						"loc": {
+							"start": {
+								"line": 4,
+								"column": 61
+							},
+							"end": {
+								"line": 4,
+								"column": 65
+							}
+						},
+						"typeAnnotation": {
+							"type": "TSTypeAnnotation",
+							"start": 92,
+							"end": 95,
+							"loc": {
+								"start": {
+									"line": 4,
+									"column": 62
+								},
+								"end": {
+									"line": 4,
+									"column": 65
+								}
+							},
+							"typeAnnotation": {
+								"type": "TSTypeReference",
+								"start": 94,
+								"end": 95,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 64
+									},
+									"end": {
+										"line": 4,
+										"column": 65
+									}
+								},
+								"typeName": {
+									"type": "Identifier",
+									"start": 94,
+									"end": 95,
+									"loc": {
+										"start": {
+											"line": 4,
+											"column": 64
+										},
+										"end": {
+											"line": 4,
+											"column": 65
+										}
+									},
+									"name": "U"
+								}
+							}
+						},
+						"name": "y"
+					}
+				],
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 97,
+							"end": 99,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "ExpressionTag",
+							"start": 99,
+							"end": 102,
+							"expression": {
+								"type": "Identifier",
+								"start": 100,
+								"end": 101,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 2
+									},
+									"end": {
+										"line": 5,
+										"column": 3
+									}
+								},
+								"name": "x"
+							}
+						},
+						{
+							"type": "Text",
+							"start": 102,
+							"end": 103,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				}
+			}
+		]
+	},
+	"options": null,
+	"comments": [],
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 28,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 18,
+			"end": 19,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 2,
+					"column": 9
+				}
+			},
+			"body": [],
+			"sourceType": "module"
+		},
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 8,
+				"end": 17,
+				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 8,
+						"character": 8
+					},
+					"end": {
+						"line": 1,
+						"column": 12,
+						"character": 12
+					}
+				},
+				"value": [
+					{
+						"start": 14,
+						"end": 16,
+						"type": "Text",
+						"raw": "ts",
+						"data": "ts"
+					}
+				]
+			}
+		]
+	}
+}

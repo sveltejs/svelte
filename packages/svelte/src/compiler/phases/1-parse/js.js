@@ -163,6 +163,14 @@ export function read_params(parser) {
 }
 
 /**
+ * @param {Parser} parser at the opening `<`
+ */
+export function read_type_parameters(parser) {
+	const start = parser.index;
+	read(parser, (js) => js.parseTypeParametersAt(start));
+}
+
+/**
  * @param {Parser} parser
  * @returns {Statement}
  */
