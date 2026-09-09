@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: prevent async component batch crash
+fix: initialize components invoked from effects with a batch
