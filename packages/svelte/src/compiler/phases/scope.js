@@ -1278,7 +1278,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			for (const child of node.body.nodes) {
 				visit(child, { scope });
 			}
-			if (node.fallback) visit(node.fallback, { scope });
+			if (node.fallback) visit(node.fallback);
 
 			node.metadata = {
 				expression: new ExpressionMetadata(),
