@@ -1233,6 +1233,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		EachBlock(node, { state, visit }) {
 			visit(node.expression);
+			if (node.fallback) visit(node.fallback);
 
 			// context and children are a new scope
 			const scope = state.scope.child();
@@ -1278,7 +1279,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			for (const child of node.body.nodes) {
 				visit(child, { scope });
 			}
-			if (node.fallback) visit(node.fallback);
 
 			node.metadata = {
 				expression: new ExpressionMetadata(),
