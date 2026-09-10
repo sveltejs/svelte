@@ -77,6 +77,24 @@
 								"raw": "2",
 								"data": "2"
 							}
+						],
+						"leadingComments": [
+							{
+								"type": "Line",
+								"value": " this is a line comment",
+								"start": 20,
+								"end": 45,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 1
+									},
+									"end": {
+										"line": 3,
+										"column": 26
+									}
+								}
+							}
 						]
 					},
 					{
@@ -103,6 +121,56 @@
 								"type": "Text",
 								"raw": "3",
 								"data": "3"
+							}
+						],
+						"leadingComments": [
+							{
+								"type": "Block",
+								"value": " this is a\n\t\tm\n\t\tu\n\t\tl\n\t\tt\n\t\ti\n\t\tl\n\t\ti\n\t\tn\n\t\te\n\t\tcomment\n\t",
+								"start": 61,
+								"end": 123,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 1
+									},
+									"end": {
+										"line": 16,
+										"column": 3
+									}
+								}
+							},
+							{
+								"type": "Line",
+								"value": " oh look another line comment",
+								"start": 125,
+								"end": 156,
+								"loc": {
+									"start": {
+										"line": 17,
+										"column": 1
+									},
+									"end": {
+										"line": 17,
+										"column": 32
+									}
+								}
+							},
+							{
+								"type": "Line",
+								"value": " (two, in fact)",
+								"start": 158,
+								"end": 175,
+								"loc": {
+									"start": {
+										"line": 18,
+										"column": 1
+									},
+									"end": {
+										"line": 18,
+										"column": 18
+									}
+								}
 							}
 						]
 					}
@@ -162,6 +230,40 @@
 								"raw": "1",
 								"data": "1"
 							}
+						],
+						"leadingComments": [
+							{
+								"type": "Block",
+								"value": " inline ",
+								"start": 207,
+								"end": 219,
+								"loc": {
+									"start": {
+										"line": 22,
+										"column": 6
+									},
+									"end": {
+										"line": 22,
+										"column": 18
+									}
+								}
+							},
+							{
+								"type": "Block",
+								"value": " another inline ",
+								"start": 220,
+								"end": 240,
+								"loc": {
+									"start": {
+										"line": 22,
+										"column": 19
+									},
+									"end": {
+										"line": 22,
+										"column": 39
+									}
+								}
+							}
 						]
 					}
 				],
@@ -182,13 +284,11 @@
 			"loc": {
 				"start": {
 					"line": 3,
-					"column": 1,
-					"character": 20
+					"column": 1
 				},
 				"end": {
 					"line": 3,
-					"column": 26,
-					"character": 45
+					"column": 26
 				}
 			}
 		},
@@ -200,13 +300,11 @@
 			"loc": {
 				"start": {
 					"line": 5,
-					"column": 1,
-					"character": 61
+					"column": 1
 				},
 				"end": {
 					"line": 16,
-					"column": 3,
-					"character": 123
+					"column": 3
 				}
 			}
 		},
@@ -218,13 +316,11 @@
 			"loc": {
 				"start": {
 					"line": 17,
-					"column": 1,
-					"character": 125
+					"column": 1
 				},
 				"end": {
 					"line": 17,
-					"column": 32,
-					"character": 156
+					"column": 32
 				}
 			}
 		},
@@ -236,13 +332,11 @@
 			"loc": {
 				"start": {
 					"line": 18,
-					"column": 1,
-					"character": 158
+					"column": 1
 				},
 				"end": {
 					"line": 18,
-					"column": 18,
-					"character": 175
+					"column": 18
 				}
 			}
 		},
@@ -254,13 +348,11 @@
 			"loc": {
 				"start": {
 					"line": 22,
-					"column": 6,
-					"character": 207
+					"column": 6
 				},
 				"end": {
 					"line": 22,
-					"column": 18,
-					"character": 219
+					"column": 18
 				}
 			}
 		},
@@ -272,13 +364,11 @@
 			"loc": {
 				"start": {
 					"line": 22,
-					"column": 19,
-					"character": 220
+					"column": 19
 				},
 				"end": {
 					"line": 22,
-					"column": 39,
-					"character": 240
+					"column": 39
 				}
 			}
 		}

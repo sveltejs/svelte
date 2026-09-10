@@ -32,13 +32,11 @@
 					"loc": {
 						"start": {
 							"line": 3,
-							"column": 7,
-							"character": 46
+							"column": 7
 						},
 						"end": {
 							"line": 3,
-							"column": 15,
-							"character": 54
+							"column": 15
 						}
 					}
 				},
@@ -50,13 +48,11 @@
 					"loc": {
 						"start": {
 							"line": 5,
-							"column": 8,
-							"character": 96
+							"column": 8
 						},
 						"end": {
 							"line": 5,
-							"column": 16,
-							"character": 104
+							"column": 16
 						}
 					}
 				},

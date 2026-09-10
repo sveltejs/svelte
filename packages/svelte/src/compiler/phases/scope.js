@@ -15,6 +15,7 @@ import {
 	unwrap_pattern
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
+import { is_template_node } from './1-parse/index.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
@@ -128,7 +129,11 @@ export class Reference {
 	get path() {
 		if (this.#path === undefined) {
 			const inside = [];
-			for (let parent = parentOf(this.node); parent !== undefined; parent = parentOf(parent)) {
+			for (
+				let parent = parentOf(this.node);
+				parent !== undefined && !is_template_node(parent);
+				parent = parentOf(parent)
+			) {
 				inside.push(/** @type {AST.SvelteNode} */ (parent));
 			}
 			this.#path = this.#template.concat(inside.reverse());
@@ -1202,8 +1207,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					parsed !== outermost &&
 					ours.has(parsed)
 				) {
+					// a fragment has no span of its own: anything inside it is closer
 					const current = /** @type {any} */ (found.node);
-					if (!current || node.start >= current.start) found = parsed;
+					if (!current || current.start === undefined || node.start >= current.start)
+						found = parsed;
 				}
 			}
 			return found;

@@ -244,13 +244,11 @@
 					"loc": {
 						"start": {
 							"line": 19,
-							"column": 12,
-							"character": 138
+							"column": 12
 						},
 						"end": {
 							"line": 19,
-							"column": 13,
-							"character": 139
+							"column": 13
 						}
 					}
 				},

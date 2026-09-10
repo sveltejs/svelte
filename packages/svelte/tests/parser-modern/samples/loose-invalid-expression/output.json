@@ -54,13 +54,11 @@
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 6,
-										"character": 6
+										"column": 6
 									},
 									"end": {
 										"line": 1,
-										"column": 6,
-										"character": 6
+										"column": 6
 									}
 								}
 							}
@@ -832,13 +830,11 @@
 					"loc": {
 						"start": {
 							"line": 15,
-							"column": 16,
-							"character": 197
+							"column": 16
 						},
 						"end": {
 							"line": 15,
-							"column": 20,
-							"character": 201
+							"column": 20
 						}
 					}
 				},
@@ -906,7 +902,7 @@
 				"expression": {
 					"type": "MemberExpression",
 					"start": 226,
-					"end": 231,
+					"end": 233,
 					"loc": {
 						"start": {
 							"line": 17,
@@ -914,7 +910,7 @@
 						},
 						"end": {
 							"line": 17,
-							"column": 12
+							"column": 14
 						}
 					},
 					"object": {
@@ -936,7 +932,7 @@
 					"property": {
 						"type": "Identifier",
 						"start": 231,
-						"end": 231,
+						"end": 233,
 						"loc": {
 							"start": {
 								"line": 17,
@@ -944,36 +940,27 @@
 							},
 							"end": {
 								"line": 17,
-								"column": 12
+								"column": 14
 							}
 						},
-						"name": ""
+						"name": "as"
 					},
 					"computed": false,
 					"optional": false
 				},
 				"body": {
 					"type": "Fragment",
-					"nodes": []
-				},
-				"context": {
-					"type": "Identifier",
-					"name": "item",
-					"start": 234,
-					"end": 238,
-					"loc": {
-						"start": {
-							"line": 17,
-							"column": 15,
-							"character": 234
-						},
-						"end": {
-							"line": 17,
-							"column": 19,
-							"character": 238
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 234,
+							"end": 239,
+							"raw": "item}",
+							"data": "item}"
 						}
-					}
-				}
+					]
+				},
+				"context": null
 			},
 			{
 				"type": "Text",
@@ -1058,7 +1045,7 @@
 				"expression": {
 					"type": "MemberExpression",
 					"start": 277,
-					"end": 280,
+					"end": 284,
 					"loc": {
 						"start": {
 							"line": 21,
@@ -1066,7 +1053,7 @@
 						},
 						"end": {
 							"line": 21,
-							"column": 11
+							"column": 15
 						}
 					},
 					"object": {
@@ -1088,7 +1075,7 @@
 					"property": {
 						"type": "Identifier",
 						"start": 280,
-						"end": 280,
+						"end": 284,
 						"loc": {
 							"start": {
 								"line": 21,
@@ -1096,38 +1083,29 @@
 							},
 							"end": {
 								"line": 21,
-								"column": 11
+								"column": 15
 							}
 						},
-						"name": ""
+						"name": "then"
 					},
 					"computed": false,
 					"optional": false
 				},
-				"value": {
-					"type": "Identifier",
-					"name": "y",
-					"start": 285,
-					"end": 286,
-					"loc": {
-						"start": {
-							"line": 21,
-							"column": 16,
-							"character": 285
-						},
-						"end": {
-							"line": 21,
-							"column": 17,
-							"character": 286
-						}
-					}
-				},
+				"value": null,
 				"error": null,
-				"pending": null,
-				"then": {
+				"pending": {
 					"type": "Fragment",
-					"nodes": []
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 285,
+							"end": 287,
+							"raw": "y}",
+							"data": "y}"
+						}
+					]
 				},
+				"then": null,
 				"catch": null
 			},
 			{
@@ -1144,7 +1122,7 @@
 				"expression": {
 					"type": "MemberExpression",
 					"start": 305,
-					"end": 308,
+					"end": 313,
 					"loc": {
 						"start": {
 							"line": 23,
@@ -1152,7 +1130,7 @@
 						},
 						"end": {
 							"line": 23,
-							"column": 11
+							"column": 16
 						}
 					},
 					"object": {
@@ -1174,7 +1152,7 @@
 					"property": {
 						"type": "Identifier",
 						"start": 308,
-						"end": 308,
+						"end": 313,
 						"loc": {
 							"start": {
 								"line": 23,
@@ -1182,39 +1160,30 @@
 							},
 							"end": {
 								"line": 23,
-								"column": 11
+								"column": 16
 							}
 						},
-						"name": ""
+						"name": "catch"
 					},
 					"computed": false,
 					"optional": false
 				},
 				"value": null,
-				"error": {
-					"type": "Identifier",
-					"name": "y",
-					"start": 314,
-					"end": 315,
-					"loc": {
-						"start": {
-							"line": 23,
-							"column": 17,
-							"character": 314
-						},
-						"end": {
-							"line": 23,
-							"column": 18,
-							"character": 315
-						}
-					}
-				},
-				"pending": null,
-				"then": null,
-				"catch": {
+				"error": null,
+				"pending": {
 					"type": "Fragment",
-					"nodes": []
-				}
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 314,
+							"end": 316,
+							"raw": "y}",
+							"data": "y}"
+						}
+					]
+				},
+				"then": null,
+				"catch": null
 			}
 		]
 	},

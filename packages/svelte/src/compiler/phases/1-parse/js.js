@@ -1,6 +1,5 @@
-/** @import { Expression, Pattern, Program, Statement } from 'estree' */
+/** @import { Program } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { Parser } from './index.js' */
 import * as teasel from '@teasel/parser';
 import * as e from '../../errors.js';
 import { keep_tables } from '../../utils/ast.js';
@@ -26,143 +25,12 @@ export function parse(source, comments, typescript) {
 		return handle_parse_error(err);
 	}
 
-	add_comments(source, comments, /** @type {teasel.Comment[]} */ (answer.comments));
-	keep_tables(answer.node, answer);
-
-	return answer.node;
-}
-
-/**
- * The program inside a `<script>`, with the positions of the whole template.
- * @param {Parser} parser
- * @param {number} start
- * @param {number} end
- * @returns {Program}
- */
-export function parse_script(parser, start, end) {
-	let answer;
-	try {
-		answer = parser.js.parse('program', start, { end });
-	} catch (err) {
-		return handle_parse_error(err);
+	for (const comment of /** @type {teasel.Comment[]} */ (answer.comments)) {
+		dedent(comment, source);
+		comments.push(/** @type {AST.JSComment} */ (comment));
 	}
-
-	add_comments(
-		parser.template,
-		parser.root.comments,
-		/** @type {teasel.Comment[]} */ (answer.comments)
-	);
 	keep_tables(answer.node, answer);
-	unsupported(answer.typescript);
 
-	return answer.node;
-}
-
-/**
- * Reads JavaScript at the cursor with the template's parser and moves the cursor past it.
- * @template {{ end: number, comments?: teasel.Comment[], typescript?: teasel.Kept[] }} T
- * @param {Parser} parser
- * @param {(js: teasel.Source) => T} run
- * @returns {T}
- */
-function read(parser, run) {
-	let answer;
-	try {
-		answer = run(parser.js);
-	} catch (err) {
-		// the parser's syntax errors; a compile error thrown while reading is the host's own
-		if (!(err instanceof SyntaxError)) throw err;
-		return handle_parse_error(err);
-	}
-
-	add_comments(
-		parser.template,
-		parser.root.comments,
-		/** @type {teasel.Comment[]} */ (answer.comments)
-	);
-	unsupported(answer.typescript);
-	parser.index = answer.end;
-
-	return answer;
-}
-
-/**
- * @param {Parser} parser
- * @param {string[]} [stop_at] the template's own tokens after the expression, which end it
- * @returns {Expression}
- */
-export function read_expression(parser, stop_at) {
-	const start = parser.index;
-	const answer = read(parser, (js) => js.parse('expression', start, { stopAt: stop_at }));
-	keep_tables(answer.node, answer);
-	const node = answer.node;
-	// the language tools copy an expression's text by its node's range, so the placeholder standing for one that could not be read spans what was read
-	if (node.type === 'Identifier' && node.name === '' && node.start === node.end) {
-		node.start = start;
-		node.end = answer.end;
-	}
-	return node;
-}
-
-/**
- * @param {Parser} parser
- * @returns {Pattern}
- */
-export function read_pattern(parser) {
-	const start = parser.index;
-
-	const id = parser.read_identifier();
-
-	if (id.name !== '') {
-		const after = parser.index;
-		parser.allow_whitespace();
-
-		// a type annotation makes it a job for the parser
-		if (!parser.match(':')) {
-			parser.index = after;
-			return id;
-		}
-	} else {
-		const char = parser.template[start];
-
-		if (char !== '{' && char !== '[') {
-			e.expected_pattern(start);
-		}
-	}
-
-	const answer = read(parser, (js) => js.parse('pattern', start));
-	keep_tables(answer.node, answer);
-	return answer.node;
-}
-
-/**
- * @param {Parser} parser at the opening paren
- * @returns {Pattern[]}
- */
-export function read_params(parser) {
-	const start = parser.index;
-	const answer = read(parser, (js) => js.parse('params', start));
-	keep_tables(answer.node, answer);
-	return answer.node;
-}
-
-/**
- * @param {Parser} parser at the opening `<`
- */
-export function read_type_parameters(parser) {
-	const start = parser.index;
-	read(parser, (js) => js.parse('typeParameters', start));
-}
-
-/**
- * @param {Parser} parser
- * @returns {Statement}
- */
-export function read_statement(parser) {
-	const start = parser.index;
-
-	const answer = read(parser, (js) => js.parse('statement', start));
-	keep_tables(answer.node, answer);
 	return answer.node;
 }
 
@@ -178,7 +46,7 @@ const UNSUPPORTED = {
 };
 
 /** @param {teasel.Kept[] | undefined} kept */
-function unsupported(kept) {
+export function unsupported(kept) {
 	const node = kept?.[0];
 	if (node) {
 		e.typescript_invalid_feature(
@@ -201,23 +69,18 @@ function handle_parse_error(err) {
  * Comments are needed in order to support `svelte-ignore` comments in JS code and so that
  * `prettier-plugin-svelte` doesn't remove all comments when formatting. A block comment loses
  * the indentation of the line it starts on.
+ * @param {teasel.Comment} comment
  * @param {string} source
- * @param {AST.JSComment[]} comments
- * @param {teasel.Comment[]} parsed
  */
-function add_comments(source, comments, parsed) {
-	for (const comment of parsed) {
-		if (comment.type === 'Block' && comment.value.includes('\n')) {
-			let a = comment.start;
-			while (a > 0 && source[a - 1] !== '\n') a -= 1;
+export function dedent(comment, source) {
+	if (comment.type === 'Block' && comment.value.includes('\n')) {
+		let a = comment.start;
+		while (a > 0 && source[a - 1] !== '\n') a -= 1;
 
-			let b = a;
-			while (/[ \t]/.test(source[b])) b += 1;
+		let b = a;
+		while (/[ \t]/.test(source[b])) b += 1;
 
-			const indentation = source.slice(a, b);
-			comment.value = comment.value.replace(new RegExp(`^${indentation}`, 'gm'), '');
-		}
-
-		comments.push(/** @type {AST.JSComment} */ (comment));
+		const indentation = source.slice(a, b);
+		comment.value = comment.value.replace(new RegExp(`^${indentation}`, 'gm'), '');
 	}
 }

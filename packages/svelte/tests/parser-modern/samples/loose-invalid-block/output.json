@@ -152,13 +152,11 @@
 					"loc": {
 						"start": {
 							"line": 9,
-							"column": 10,
-							"character": 63
+							"column": 10
 						},
 						"end": {
 							"line": 9,
-							"column": 10,
-							"character": 63
+							"column": 10
 						}
 					}
 				},
@@ -195,13 +193,11 @@
 					"loc": {
 						"start": {
 							"line": 12,
-							"column": 10,
-							"character": 87
+							"column": 10
 						},
 						"end": {
 							"line": 12,
-							"column": 13,
-							"character": 90
+							"column": 13
 						}
 					}
 				},

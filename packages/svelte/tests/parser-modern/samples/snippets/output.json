@@ -26,13 +26,11 @@
 					"loc": {
 						"start": {
 							"line": 3,
-							"column": 10,
-							"character": 39
+							"column": 10
 						},
 						"end": {
 							"line": 3,
-							"column": 13,
-							"character": 42
+							"column": 13
 						}
 					}
 				},
