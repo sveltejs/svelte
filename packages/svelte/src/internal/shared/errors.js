@@ -3,6 +3,26 @@
 import { DEV } from 'esm-env';
 
 /**
+ * You need to specify a custom condition to use a custom renderer in a non-browser environment such as Node. Add the `custom-renderer` resolve condition (eg. run Node with `--conditions=custom-renderer`).
+ * 
+ * If you're using a bundler, add `custom-renderer` to its list of resolve conditions instead.
+ * @returns {never}
+ */
+export function custom_renderer_unavailable_on_server() {
+	if (DEV) {
+		const error = new Error(`custom_renderer_unavailable_on_server\nYou need to specify a custom condition to use a custom renderer in a non-browser environment such as Node. Add the \`custom-renderer\` resolve condition (eg. run Node with \`--conditions=custom-renderer\`).
+
+If you're using a bundler, add \`custom-renderer\` to its list of resolve conditions instead.\nhttps://svelte.dev/e/custom_renderer_unavailable_on_server`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/custom_renderer_unavailable_on_server`);
+	}
+}
+
+/**
  * Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
  * @param {string} name
  * @returns {never}
