@@ -35,6 +35,7 @@ export function VariableDeclaration(node, context) {
 				rune === '$inspect' ||
 				rune === '$inspect.trace' ||
 				rune === '$state.snapshot' ||
+				rune === '$state.eager' ||
 				rune === '$host'
 			) {
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
