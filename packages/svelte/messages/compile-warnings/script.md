@@ -1,3 +1,9 @@
+## bindable_prop_not_mutated
+
+> `%name%` is declared with `$bindable()` but is not mutated or reassigned
+
+The `$bindable()` rune marks a prop as two-way bindable, meaning the component can update the value and the parent will see the changes. If the prop is never mutated or reassigned within the component, `$bindable()` has no effect and should be removed.
+
 ## custom_element_props_identifier
 
 > Using a rest element or a non-destructured declaration with `$props()` means that Svelte can't infer what properties to expose when creating a custom element. Consider destructuring all the props or explicitly specifying the `customElement.props` option.

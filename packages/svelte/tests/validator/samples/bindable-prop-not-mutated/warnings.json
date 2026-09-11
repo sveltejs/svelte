@@ -1,0 +1,14 @@
+[
+	{
+		"code": "bindable_prop_not_mutated",
+		"end": {
+			"column": 5,
+			"line": 3
+		},
+		"message": "`foo` is declared with `$bindable()` but is not mutated or reassigned",
+		"start": {
+			"column": 2,
+			"line": 3
+		}
+	}
+]
