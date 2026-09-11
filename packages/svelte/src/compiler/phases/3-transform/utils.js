@@ -9,7 +9,7 @@ import {
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers, is_reference } from '../../utils/ast.js';
-import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
+import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import { set_scope } from '../scope.js';
 
 /**

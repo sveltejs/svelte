@@ -4,6 +4,16 @@ import type { Component } from 'svelte';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
 import { getAbortSignal } from './abort-signal.js';
 
+test('render result properties are inherited', () => {
+	const result = Renderer.render((() => {}) as unknown as Component);
+
+	expect(Object.hasOwn(result, 'head')).toBe(false);
+	expect(Object.hasOwn(result, 'body')).toBe(false);
+	expect(Object.hasOwn(result, 'html')).toBe(false);
+	expect(Object.hasOwn(result, 'hashes')).toBe(false);
+	expect(Object.hasOwn(result, 'then')).toBe(false);
+});
+
 test('collects synchronous body content by default', () => {
 	const component = (renderer: Renderer) => {
 		renderer.push('a');
