@@ -42,7 +42,7 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		if (!this.#url || this.#updating) return;
 		this.#updating = true;
 
-		const search = this.toString();
+		const search = super.toString();
 		this.#url.search = search && `?${search}`;
 
 		this.#updating = false;
