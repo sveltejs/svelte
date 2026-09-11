@@ -2,8 +2,7 @@
 /** @import { Context } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
-import { get_rune } from '../../../scope.js';
-import { should_proxy } from '../utils.js';
+import { get_rune, should_proxy } from '../../../scope.js';
 import { get_inspect_args } from '../../utils.js';
 
 /**
