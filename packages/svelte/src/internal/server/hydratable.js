@@ -14,7 +14,7 @@ import { get_user_code_location } from './dev.js';
  */
 export function hydratable(key, fn) {
 	if (!async_mode_flag) {
-		e.experimental_async_required('hydratable');
+		e.experimental_async_required({ name: 'hydratable' });
 	}
 
 	const { hydratable } = get_render_context();
@@ -73,10 +73,10 @@ function encode(key, value, unresolved) {
 					);
 				})
 				.catch((devalue_error) =>
-					e.hydratable_serialization_failed(
+					e.hydratable_serialization_failed({
 						key,
-						serialization_stack(entry.stack, devalue_error?.stack)
-					)
+						stack: serialization_stack(entry.stack, devalue_error?.stack)
+					})
 				);
 
 			unresolved?.set(p, key);
@@ -127,7 +127,7 @@ async function compare(key, a, b) {
 				? `Occurred at:\n${a_stack}`
 				: `First occurrence at:\n${a_stack}\n\nSecond occurrence at:\n${b_stack}`;
 
-		e.hydratable_clobbering(key, stack);
+		e.hydratable_clobbering({ key, stack });
 	}
 }
 

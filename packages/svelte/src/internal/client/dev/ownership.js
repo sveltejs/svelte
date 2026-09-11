@@ -43,7 +43,7 @@ export function create_ownership_validator(props) {
 
 			const location = sanitize_location(`${component[FILENAME]}:${line}:${column}`);
 
-			w.ownership_invalid_mutation(name, location, prop, parent[FILENAME]);
+			w.ownership_invalid_mutation({ name, location, prop, parent: parent[FILENAME] });
 
 			return result;
 		},
@@ -54,12 +54,12 @@ export function create_ownership_validator(props) {
 		 */
 		binding: (key, child_component, value) => {
 			if (!is_bound_or_unset(props, key) && parent && value()?.[STATE_SYMBOL]) {
-				w.ownership_invalid_binding(
-					component[FILENAME],
-					key,
-					child_component[FILENAME],
-					parent[FILENAME]
-				);
+				w.ownership_invalid_binding({
+					parent: component[FILENAME],
+					prop: key,
+					child: child_component[FILENAME],
+					owner: parent[FILENAME]
+				});
 			}
 		}
 	};

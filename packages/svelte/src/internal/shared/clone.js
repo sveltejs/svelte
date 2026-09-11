@@ -35,7 +35,7 @@ export function snapshot(value, skip_warning = false, no_tojson = false) {
 			let uncloned = slice.map((path) => `- <value>${path}`).join('\n');
 			if (excess > 0) uncloned += `\n- ...and ${excess} more`;
 
-			w.state_snapshot_uncloneable(uncloned);
+			w.state_snapshot_uncloneable({ properties: uncloned });
 		}
 
 		return copy;

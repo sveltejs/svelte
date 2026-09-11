@@ -35,7 +35,7 @@ const visitors = {
 		) {
 			const content = context.state.stylesheet.content;
 			const text = content.styles.substring(node.start - content.start, node.end - content.start);
-			w.css_unused_selector(node, text);
+			w.css_unused_selector(node, { name: text });
 		}
 
 		context.next();

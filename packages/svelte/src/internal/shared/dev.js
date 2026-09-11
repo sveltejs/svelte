@@ -75,5 +75,5 @@ export function invariant(condition, message) {
 		throw new Error('invariant(...) was not guarded by if (DEV)');
 	}
 
-	if (!condition) e.invariant_violation(message);
+	if (!condition) e.invariant_violation({ message });
 }

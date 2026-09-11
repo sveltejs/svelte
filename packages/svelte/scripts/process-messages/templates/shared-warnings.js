@@ -4,13 +4,13 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
- * MESSAGE
- * @param {string} PARAMETER
+ * DESCRIPTION
+ * @param {VALUES} values
  */
-export function CODE(PARAMETER) {
+export function CODE(values) {
 	if (DEV) {
 		console.warn(
-			`%c[svelte] ${'CODE'}\n%c${MESSAGE}\nhttps://svelte.dev/e/${'CODE'}`,
+			`%c[svelte] ${'CODE'}\n%c${MESSAGE(values)}\nhttps://svelte.dev/e/${'CODE'}`,
 			bold,
 			normal
 		);

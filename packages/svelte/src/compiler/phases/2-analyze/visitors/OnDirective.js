@@ -13,7 +13,7 @@ export function OnDirective(node, context) {
 
 		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
 		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
-			w.event_directive_deprecated(node, node.name);
+			w.event_directive_deprecated(node, { name: node.name });
 		}
 	}
 

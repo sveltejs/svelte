@@ -46,7 +46,7 @@ function get_parent_context(context) {
  */
 export function get_or_init_context_map(context, name) {
 	if (context === null) {
-		lifecycle_outside_component(name);
+		lifecycle_outside_component({ name });
 	}
 
 	return (context.c ??= new Map(get_parent_context(context) || undefined));

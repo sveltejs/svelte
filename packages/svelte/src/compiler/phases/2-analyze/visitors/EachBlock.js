@@ -20,7 +20,7 @@ export function EachBlock(node, context) {
 	const id = node.context;
 	if (id?.type === 'Identifier' && (id.name === '$state' || id.name === '$derived')) {
 		// TODO weird that this is necessary
-		e.state_invalid_placement(node, id.name);
+		e.state_invalid_placement(node, { rune: id.name });
 	}
 
 	if (node.key) {

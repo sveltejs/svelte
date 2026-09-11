@@ -42,10 +42,10 @@ function w(node, code, message) {
 export const codes = CODES;
 
 /**
- * MESSAGE
+ * DESCRIPTION
  * @param {null | NodeLike} node
- * @param {string} PARAMETER
+ * @param {VALUES} values
  */
-export function CODE(node, PARAMETER) {
-	w(node, 'CODE', `${MESSAGE}\nhttps://svelte.dev/e/${'CODE'}`);
+export function CODE(node, values) {
+	w(node, 'CODE', `${MESSAGE(values)}\nhttps://svelte.dev/e/${'CODE'}`);
 }

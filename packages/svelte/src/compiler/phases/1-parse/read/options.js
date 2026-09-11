@@ -160,7 +160,9 @@ export default function read_options(node) {
 				} else if (value === 'html' || value === 'mathml' || value === 'svg') {
 					component_options.namespace = value;
 				} else {
-					e.svelte_options_invalid_attribute_value(attribute, `"html", "mathml" or "svg"`);
+					e.svelte_options_invalid_attribute_value(attribute, {
+						list: `"html", "mathml" or "svg"`
+					});
 				}
 
 				break;
@@ -171,7 +173,7 @@ export default function read_options(node) {
 				if (value === 'injected') {
 					component_options.css = value;
 				} else {
-					e.svelte_options_invalid_attribute_value(attribute, `"injected"`);
+					e.svelte_options_invalid_attribute_value(attribute, { list: `"injected"` });
 				}
 
 				break;
@@ -189,7 +191,7 @@ export default function read_options(node) {
 				break;
 			}
 			default:
-				e.svelte_options_unknown_attribute(attribute, name);
+				e.svelte_options_unknown_attribute(attribute, { name });
 		}
 	}
 
@@ -224,7 +226,7 @@ function get_static_value(attribute) {
 function get_boolean_value(attribute) {
 	const value = get_static_value(attribute);
 	if (typeof value !== 'boolean') {
-		e.svelte_options_invalid_attribute_value(attribute, 'true or false');
+		e.svelte_options_invalid_attribute_value(attribute, { list: 'true or false' });
 	}
 	return value;
 }

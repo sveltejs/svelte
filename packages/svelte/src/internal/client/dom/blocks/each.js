@@ -307,7 +307,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				// Check that the key function is idempotent (returns the same value when called twice)
 				var key_again = get_key(value, index);
 				if (key !== key_again) {
-					e.each_key_volatile(String(index), String(key), String(key_again));
+					e.each_key_volatile({ index: String(index), a: String(key), b: String(key_again) });
 				}
 			}
 
@@ -357,7 +357,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				validate_each_keys(array, get_key);
 			} else {
 				// in prod, the additional information isn't printed, so don't bother computing it
-				e.each_key_duplicate('', '', '');
+				e.each_key_duplicate({ a: '', b: '', value: '' });
 			}
 		}
 
@@ -768,7 +768,7 @@ function validate_each_keys(array, key_fn) {
 			let k = String(key);
 			if (k.startsWith('[object ')) k = null;
 
-			e.each_key_duplicate(a, b, k);
+			e.each_key_duplicate(k === null ? { a, b } : { a, b, value: k });
 		}
 
 		keys.set(key, i);

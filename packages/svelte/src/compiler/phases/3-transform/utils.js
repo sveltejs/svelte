@@ -81,7 +81,7 @@ function sort_const_tags(nodes, state) {
 	const cycle = check_graph_for_cycles(edges);
 	if (cycle?.length) {
 		const tag = /** @type {Tag} */ (tags.get(cycle[0]));
-		e.const_tag_cycle(tag.node, cycle.map((binding) => binding.node.name).join(' → '));
+		e.const_tag_cycle(tag.node, { cycle: cycle.map((binding) => binding.node.name).join(' → ') });
 	}
 
 	/** @type {AST.ConstTag[]} */

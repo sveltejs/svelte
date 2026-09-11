@@ -686,7 +686,7 @@ export class Scope {
 			if (binding && binding.declaration_kind !== 'var' && declaration_kind !== 'var') {
 				// This also errors on function types, but that's arguably a good thing
 				// declaring function twice is also caught by acorn in the parse phase
-				e.declaration_duplicate(node, node.name);
+				e.declaration_duplicate(node, { name: node.name });
 			}
 		}
 

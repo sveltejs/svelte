@@ -29,7 +29,7 @@ export function SvelteSelf(node, context) {
 				? 'Self.svelte'
 				: /** @type {string} */ (filename.split(/[/\\]/).pop());
 
-		w.svelte_self_deprecated(node, name, basename);
+		w.svelte_self_deprecated(node, { name, basename });
 	}
 
 	visit_component(node, context);

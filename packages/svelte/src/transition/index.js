@@ -122,7 +122,7 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 	if (DEV && !slide_warning && /(contents|inline|table)/.test(style.display)) {
 		slide_warning = true;
 		Promise.resolve().then(() => (slide_warning = false));
-		w.transition_slide_display(style.display);
+		w.transition_slide_display({ value: style.display });
 	}
 
 	const opacity = +style.opacity;

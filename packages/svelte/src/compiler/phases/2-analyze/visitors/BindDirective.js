@@ -30,11 +30,12 @@ export function BindDirective(node, context) {
 		if (node.name in binding_properties) {
 			const property = binding_properties[node.name];
 			if (property.valid_elements && !property.valid_elements.includes(parent.name)) {
-				e.bind_invalid_target(
-					node,
-					node.name,
-					property.valid_elements.map((valid_element) => `\`<${valid_element}>\``).join(', ')
-				);
+				e.bind_invalid_target(node, {
+					name: node.name,
+					elements: property.valid_elements
+						.map((valid_element) => `\`<${valid_element}>\``)
+						.join(', ')
+				});
 			}
 
 			if (property.invalid_elements && property.invalid_elements.includes(parent.name)) {
@@ -49,11 +50,10 @@ export function BindDirective(node, context) {
 					.map(([property_name]) => property_name)
 					.sort();
 
-				e.bind_invalid_name(
-					node,
-					node.name,
-					`Possible bindings for <${parent.name}> are ${valid_bindings.join(', ')}`
-				);
+				e.bind_invalid_name(node, {
+					name: node.name,
+					explanation: `Possible bindings for <${parent.name}> are ${valid_bindings.join(', ')}`
+				});
 			}
 
 			if (parent.name === 'input' && node.name !== 'this') {
@@ -67,15 +67,14 @@ export function BindDirective(node, context) {
 					}
 				} else {
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-						e.bind_invalid_target(
-							node,
-							node.name,
-							`\`<input type="checkbox">\`${type?.value[0].data === 'radio' ? ` — for \`<input type="radio">\`, use \`bind:group\`` : ''}`
-						);
+						e.bind_invalid_target(node, {
+							name: node.name,
+							elements: `\`<input type="checkbox">\`${type?.value[0].data === 'radio' ? ` — for \`<input type="radio">\`, use \`bind:group\`` : ''}`
+						});
 					}
 
 					if (node.name === 'files' && type?.value[0].data !== 'file') {
-						e.bind_invalid_target(node, node.name, '`<input type="file">`');
+						e.bind_invalid_target(node, { name: node.name, elements: '`<input type="file">`' });
 					}
 				}
 			}
@@ -95,11 +94,10 @@ export function BindDirective(node, context) {
 			}
 
 			if (node.name === 'offsetWidth' && is_svg(parent.name)) {
-				e.bind_invalid_target(
-					node,
-					node.name,
-					`non-\`<svg>\` elements. Use \`bind:clientWidth\` for \`<svg>\` instead`
-				);
+				e.bind_invalid_target(node, {
+					name: node.name,
+					elements: `non-\`<svg>\` elements. Use \`bind:clientWidth\` for \`<svg>\` instead`
+				});
 			}
 
 			if (is_content_editable_binding(node.name)) {
@@ -119,11 +117,11 @@ export function BindDirective(node, context) {
 			if (match) {
 				const property = binding_properties[match];
 				if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
-					e.bind_invalid_name(node, node.name, `Did you mean '${match}'?`);
+					e.bind_invalid_name(node, { name: node.name, explanation: `Did you mean '${match}'?` });
 				}
 			}
 
-			e.bind_invalid_name(node, node.name);
+			e.bind_invalid_name(node, { name: node.name });
 		}
 	}
 
@@ -149,7 +147,7 @@ export function BindDirective(node, context) {
 					i >= leading_comments_start
 				)
 			) {
-				e.bind_invalid_parens(node, node.name);
+				e.bind_invalid_parens(node, { name: node.name });
 			}
 		}
 
@@ -269,7 +267,7 @@ export function BindDirective(node, context) {
 	}
 
 	if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
-		w.bind_invalid_each_rest(binding.node, binding.node.name);
+		w.bind_invalid_each_rest(binding.node, { name: binding.node.name });
 	}
 
 	context.next({ ...context.state, expression: node.metadata.expression });

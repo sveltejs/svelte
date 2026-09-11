@@ -122,7 +122,7 @@ export class Parser {
 				current.end = this.template.length;
 			} else if (current.type === 'RegularElement') {
 				current.end = current.start + 1;
-				e.element_unclosed(current, current.name);
+				e.element_unclosed(current, { name: current.name });
 			} else {
 				current.end = current.start + 1;
 				e.block_unclosed(current);
@@ -171,7 +171,7 @@ export class Parser {
 		}
 
 		if (required && (!this.loose || required_in_loose)) {
-			e.expected_token(this.index, str);
+			e.expected_token(this.index, { token: str });
 		}
 
 		return false;
@@ -244,7 +244,7 @@ export class Parser {
 			this.index = end;
 
 			if (is_reserved(name)) {
-				e.unexpected_reserved_word(start, name);
+				e.unexpected_reserved_word(start, { word: name });
 			}
 		}
 

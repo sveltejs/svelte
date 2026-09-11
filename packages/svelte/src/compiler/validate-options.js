@@ -187,7 +187,7 @@ export const validate_component_options =
 function removed(msg) {
 	return (input) => {
 		if (input !== undefined) {
-			e.options_removed(null, msg);
+			e.options_removed(null, { details: msg });
 		}
 		return /** @type {any} */ (undefined);
 	};
@@ -245,7 +245,7 @@ function object(children, allow_unknown = false) {
 				if (allow_unknown) {
 					output[key] = input[key];
 				} else {
-					e.options_unrecognised(null, `${keypath ? `${keypath}.${key}` : key}`);
+					e.options_unrecognised(null, { keypath: `${keypath ? `${keypath}.${key}` : key}` });
 				}
 			}
 		}
@@ -357,5 +357,5 @@ function parametric(fallback, normalize = (value) => /** @type {ReturnType<F>} *
 
 /** @param {string} msg */
 function throw_error(msg) {
-	e.options_invalid_value(null, msg);
+	e.options_invalid_value(null, { details: msg });
 }

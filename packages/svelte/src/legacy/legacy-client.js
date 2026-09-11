@@ -198,7 +198,7 @@ export function run(fn) {
 				// @ts-ignore
 				filename = dev_current_component_function?.[FILENAME] ?? filename;
 			}
-			w.legacy_recursive_reactive_block(filename);
+			w.legacy_recursive_reactive_block({ filename });
 			set_signal_status(effect, MAYBE_DIRTY);
 		}
 	});
@@ -250,7 +250,7 @@ export function handlers(...handlers) {
 export function createBubbler() {
 	const active_component_context = component_context;
 	if (active_component_context === null) {
-		e.lifecycle_outside_component('createBubbler');
+		e.lifecycle_outside_component({ name: 'createBubbler' });
 	}
 
 	return (/**@type {string}*/ type) => (/**@type {Event}*/ event) => {

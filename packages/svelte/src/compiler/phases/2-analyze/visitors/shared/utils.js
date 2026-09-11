@@ -30,7 +30,7 @@ export function validate_assignment(node, argument, context) {
 				context.state.analysis.props_id != null &&
 				binding?.node === context.state.analysis.props_id
 			) {
-				e.constant_assignment(node, '$props.id()');
+				e.constant_assignment(node, { thing: '$props.id()' });
 			}
 
 			if (binding?.kind === 'each') {
@@ -118,9 +118,9 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 			const thing = binding.declaration_kind === 'import' ? 'import' : 'constant';
 
 			if (is_binding) {
-				e.constant_binding(node, thing);
+				e.constant_binding(node, { thing });
 			} else {
-				e.constant_assignment(node, thing);
+				e.constant_assignment(node, { thing });
 			}
 		}
 	}
@@ -136,7 +136,10 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 export function validate_opening_tag(node, state, expected) {
 	if (state.analysis.source[node.start + 1] !== expected) {
 		// avoid a sea of red and only mark the first few characters
-		e.block_unexpected_character({ start: node.start, end: node.start + 5 }, expected);
+		e.block_unexpected_character(
+			{ start: node.start, end: node.start + 5 },
+			{ character: expected }
+		);
 	}
 }
 
@@ -317,6 +320,6 @@ export function check_global_event_reference(attribute, context) {
 		value.name === attribute.name &&
 		!context.state.scope.get(value.name)
 	) {
-		w.attribute_global_event_reference(attribute, attribute.name);
+		w.attribute_global_event_reference(attribute, { name: attribute.name });
 	}
 }

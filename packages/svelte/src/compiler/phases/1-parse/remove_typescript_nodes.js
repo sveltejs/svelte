@@ -38,7 +38,9 @@ const visitors = {
 		}
 	},
 	Decorator(node) {
-		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
+		e.typescript_invalid_feature(node, {
+			feature: 'decorators (related TSC proposal is not stage 4 yet)'
+		});
 	},
 	ImportDeclaration(node) {
 		if (node.importKind === 'type') return b.empty;
@@ -82,10 +84,9 @@ const visitors = {
 	},
 	PropertyDefinition(node, { next }) {
 		if (node.accessor) {
-			e.typescript_invalid_feature(
-				node,
-				'accessor fields (related TSC proposal is not stage 4 yet)'
-			);
+			e.typescript_invalid_feature(node, {
+				feature: 'accessor fields (related TSC proposal is not stage 4 yet)'
+			});
 		}
 		return next();
 	},
@@ -108,11 +109,13 @@ const visitors = {
 		return context.visit(node.expression);
 	},
 	TSEnumDeclaration(node) {
-		e.typescript_invalid_feature(node, 'enums');
+		e.typescript_invalid_feature(node, { feature: 'enums' });
 	},
 	TSParameterProperty(node, context) {
 		if ((node.readonly || node.accessibility) && context.path.at(-2)?.kind === 'constructor') {
-			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
+			e.typescript_invalid_feature(node, {
+				feature: 'accessibility modifiers on constructor parameters'
+			});
 		}
 		return context.visit(node.parameter);
 	},
@@ -171,7 +174,7 @@ const visitors = {
 		// namespaces can contain non-type nodes
 		const cleaned = /** @type {any[]} */ (node.body.body).map((entry) => context.visit(entry));
 		if (cleaned.some((entry) => entry !== b.empty)) {
-			e.typescript_invalid_feature(node, 'namespaces with non-type nodes');
+			e.typescript_invalid_feature(node, { feature: 'namespaces with non-type nodes' });
 		}
 
 		return b.empty;

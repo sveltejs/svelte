@@ -57,7 +57,7 @@ export function validate_element(node, context) {
 			}
 
 			if (regex_illegal_attribute_character.test(attribute.name)) {
-				e.attribute_invalid_name(attribute, attribute.name);
+				e.attribute_invalid_name(attribute, { name: attribute.name });
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
@@ -79,7 +79,10 @@ export function validate_element(node, context) {
 
 			const correct_name = react_attributes.get(attribute.name);
 			if (correct_name) {
-				w.attribute_invalid_property_name(attribute, attribute.name, correct_name);
+				w.attribute_invalid_property_name(attribute, {
+					wrong: attribute.name,
+					right: correct_name
+				});
 			}
 
 			validate_attribute_name(attribute);
@@ -116,9 +119,9 @@ export function validate_element(node, context) {
 				const b = attribute.intro ? (attribute.outro ? 'transition' : 'in') : 'out';
 
 				if (a === b) {
-					e.transition_duplicate(attribute, a);
+					e.transition_duplicate(attribute, { type: a });
 				} else {
-					e.transition_conflict(attribute, a, b);
+					e.transition_conflict(attribute, { type: a, existing: b });
 				}
 			}
 
@@ -130,7 +133,7 @@ export function validate_element(node, context) {
 			for (const modifier of attribute.modifiers) {
 				if (!EVENT_MODIFIERS.includes(modifier)) {
 					const list = `${EVENT_MODIFIERS.slice(0, -1).join(', ')} or ${EVENT_MODIFIERS.at(-1)}`;
-					e.event_handler_invalid_modifier(attribute, list);
+					e.event_handler_invalid_modifier(attribute, { list });
 				}
 				if (modifier === 'passive') {
 					has_passive_modifier = true;
@@ -138,11 +141,10 @@ export function validate_element(node, context) {
 					conflicting_passive_modifier = modifier;
 				}
 				if (has_passive_modifier && conflicting_passive_modifier) {
-					e.event_handler_invalid_modifier_combination(
-						attribute,
-						'passive',
-						conflicting_passive_modifier
-					);
+					e.event_handler_invalid_modifier_combination(attribute, {
+						modifier1: 'passive',
+						modifier2: conflicting_passive_modifier
+					});
 				}
 			}
 		}

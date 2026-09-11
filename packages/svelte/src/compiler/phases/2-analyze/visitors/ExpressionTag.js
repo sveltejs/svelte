@@ -14,7 +14,7 @@ export function ExpressionTag(node, context) {
 	if (in_template && context.state.parent_element) {
 		const message = is_tag_valid_with_parent('#text', context.state.parent_element);
 		if (message) {
-			e.node_invalid_placement(node, message);
+			e.node_invalid_placement(node, { message });
 		}
 	}
 

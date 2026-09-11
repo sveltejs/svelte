@@ -180,7 +180,7 @@ export function match_bracket(parser, start, brackets = default_brackets) {
 			const expected = /** @type {string} */ (brackets[popped]);
 
 			if (char !== expected) {
-				e.expected_token(i - 1, expected);
+				e.expected_token(i - 1, { token: expected });
 			}
 
 			if (bracket_stack.length === 0) {

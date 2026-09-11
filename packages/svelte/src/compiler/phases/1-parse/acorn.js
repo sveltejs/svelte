@@ -169,7 +169,7 @@ const regex_position_indicator = / \(\d+:\d+\)$/;
  * @returns {never}
  */
 function handle_parse_error(err) {
-	e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
+	e.js_parse_error(err.pos, { message: err.message.replace(regex_position_indicator, '') });
 }
 
 /**

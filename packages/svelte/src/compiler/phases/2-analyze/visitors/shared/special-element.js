@@ -11,6 +11,6 @@ export function disallow_children(node) {
 		const first = nodes[0];
 		const last = nodes[nodes.length - 1];
 
-		e.svelte_meta_invalid_content({ start: first.start, end: last.end }, node.name);
+		e.svelte_meta_invalid_content({ start: first.start, end: last.end }, { name: node.name });
 	}
 }

@@ -50,10 +50,10 @@ export function extract_svelte_ignore(offset, text, runes) {
 				const end = start + code.length;
 
 				if (codes.includes(replacement)) {
-					w.legacy_code({ start, end }, code, replacement);
+					w.legacy_code({ start, end }, { code, suggestion: replacement });
 				} else {
 					const suggestion = fuzzymatch(code, codes);
-					w.unknown_code({ start, end }, code, suggestion);
+					w.unknown_code({ start, end }, suggestion === null ? { code } : { code, suggestion });
 				}
 			}
 
