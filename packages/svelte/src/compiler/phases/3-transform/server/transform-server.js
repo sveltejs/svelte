@@ -288,14 +288,13 @@ export function server_component(analysis, options) {
 		for (const [name, binding] of analysis.instance.scope.declarations) {
 			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
 		}
-
 		component_block.body.unshift(
 			b.const(
 				'$$restProps',
 				b.call(
 					'$.rest_props',
 					b.id('$$sanitized_props'),
-					b.array(named_props.map((name) => b.literal(name)))
+					b.new('Set', b.array(named_props.map((name) => b.literal(name))))
 				)
 			)
 		);
