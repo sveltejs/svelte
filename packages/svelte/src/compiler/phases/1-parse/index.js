@@ -329,10 +329,11 @@ export class Parser {
 /**
  * @param {string} template
  * @param {boolean} [loose]
+ * @param {object | string} [sourcemap]
  * @returns {AST.Root}
  */
-export function parse(template, loose = false) {
-	state.set_source(template);
+export function parse(template, loose = false, sourcemap) {
+	state.set_source(template, sourcemap);
 
 	const parser = new Parser(template, loose);
 	return parser.root;
