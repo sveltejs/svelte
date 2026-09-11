@@ -4,6 +4,7 @@ import { is_tag_valid_with_parent } from '../../../../html-tree-validation.js';
 import { regex_bidirectional_control_characters, regex_not_whitespace } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
+import { custom_renderer } from '../../../state.js';
 import { extract_svelte_ignore } from '../../../utils/extract_svelte_ignore.js';
 
 /**
@@ -16,7 +17,8 @@ export function Text(node, context) {
 	if (
 		parent.type === 'Fragment' &&
 		context.state.parent_element &&
-		regex_not_whitespace.test(node.data)
+		regex_not_whitespace.test(node.data) &&
+		!custom_renderer
 	) {
 		const message = is_tag_valid_with_parent('#text', context.state.parent_element);
 		if (message) {

@@ -1,4 +1,4 @@
-import { create_element } from './operations.js';
+import { create_element, set_inner_html } from './operations.js';
 
 const policy =
 	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location
@@ -20,6 +20,6 @@ export function create_trusted_html(html) {
  */
 export function create_fragment_from_html(html) {
 	var elem = create_element('template');
-	elem.innerHTML = create_trusted_html(html.replaceAll('<!>', '<!---->')); // XHTML compliance
+	set_inner_html(elem, create_trusted_html(html.replaceAll('<!>', '<!---->'))); // XHTML compliance
 	return elem.content;
 }

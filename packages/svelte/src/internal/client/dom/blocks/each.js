@@ -23,7 +23,13 @@ import {
 	create_text,
 	get_first_child,
 	get_next_sibling,
-	should_defer_append
+	should_defer_append,
+	get_parent_node,
+	append_child,
+	create_fragment,
+	insert_before,
+	node_type,
+	get_node_value
 } from '../operations.js';
 import {
 	block,
@@ -43,6 +49,8 @@ import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
 import { tag } from '../../dev/tracing.js';
+
+import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -112,10 +120,10 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 
 		if (fast_path) {
 			var anchor = /** @type {Element} */ (controlled_anchor);
-			var parent_node = /** @type {Element} */ (anchor.parentNode);
+			var parent_node = /** @type {Element} */ (get_parent_node(anchor));
 
 			clear_text_content(parent_node);
-			parent_node.append(anchor);
+			append_child(parent_node, anchor);
 
 			state.items.clear();
 		}
@@ -157,7 +165,7 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 		if (preserved_effects?.has(e)) {
 			e.f |= EFFECT_OFFSCREEN;
 
-			const fragment = document.createDocumentFragment();
+			const fragment = create_fragment();
 			move_effect(e, fragment);
 		} else {
 			destroy_effect(to_destroy[i], remove_dom);
@@ -165,8 +173,34 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 	}
 }
 
-/** @type {TemplateNode} */
-var offscreen_anchor;
+// we need to handle the case of multiple renderers so we need to use a WeakMap of offscreen anchors rather than a single variable.
+// we also need the dom_weak_key since `null` is not a viable WeakKey
+/** @type {WeakMap<WeakKey, TemplateNode>} */
+var offscreen_anchors = new WeakMap();
+var dom_weak_key = {};
+
+/**
+ * Returns an anchor node suitable for offscreen rendering.
+ * When a custom renderer is active, the anchor must have a parent
+ * (so that `getParent()` works), so we place the text node inside
+ * a fragment. The result is cached just like the non-renderer path.
+ * @returns {TemplateNode}
+ */
+function get_offscreen_anchor() {
+	// not doing it inline to please typescript
+	var cached = offscreen_anchors.get(current_renderer ?? dom_weak_key);
+	if (cached) return cached;
+
+	var offscreen_anchor = create_text();
+
+	if (current_renderer) {
+		var fragment = create_fragment();
+		append_child(fragment, offscreen_anchor);
+	}
+
+	offscreen_anchors.set(current_renderer ?? dom_weak_key, offscreen_anchor);
+	return offscreen_anchor;
+}
 
 /**
  * @template V
@@ -186,12 +220,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
+	// Capture the renderer that was active when this each block was created.
+	// Needed so that the commit callback can push the correct renderer when doing
+	// DOM operations outside of an effect context (e.g. as a batch commit callback).
+	var renderer = current_renderer;
+
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
 			? set_hydrate_node(get_first_child(parent_node))
-			: parent_node.appendChild(create_text());
+			: /** @type {Text} */ (append_child(parent_node, create_text()));
 	}
 
 	if (hydrating) {
@@ -232,27 +271,33 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		state.pending.delete(batch);
+		var pop_renderer = push_renderer(renderer);
 
-		state.fallback = fallback;
-		reconcile(state, array, anchor, flags, get_key);
+		try {
+			state.pending.delete(batch);
 
-		if (fallback !== null) {
-			if (array.length === 0) {
-				if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
-					resume_effect(fallback);
+			state.fallback = fallback;
+			reconcile(state, array, anchor, flags, get_key);
+
+			if (fallback !== null) {
+				if (array.length === 0) {
+					if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
+						resume_effect(fallback);
+					} else {
+						fallback.f ^= EFFECT_OFFSCREEN;
+						move(fallback, null, anchor);
+					}
 				} else {
-					fallback.f ^= EFFECT_OFFSCREEN;
-					move(fallback, null, anchor);
+					pause_effect(fallback, () => {
+						// TODO only null out if no pending batch needs it,
+						// otherwise re-add `fallback.fragment` and move the
+						// effect into it
+						fallback = null;
+					});
 				}
-			} else {
-				pause_effect(fallback, () => {
-					// TODO only null out if no pending batch needs it,
-					// otherwise re-add `fallback.fragment` and move the
-					// effect into it
-					fallback = null;
-				});
 			}
+		} finally {
+			pop_renderer?.();
 		}
 	}
 
@@ -290,8 +335,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		for (var index = 0; index < length; index += 1) {
 			if (
 				hydrating &&
-				hydrate_node.nodeType === COMMENT_NODE &&
-				/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
+				node_type(hydrate_node) === COMMENT_NODE &&
+				get_node_value(hydrate_node) === HYDRATION_END
 			) {
 				// The server rendered fewer items than expected,
 				// so break out and continue appending non-hydrated items
@@ -324,7 +369,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			} else {
 				item = create_item(
 					items,
-					first_run ? anchor : (offscreen_anchor ??= create_text()),
+					first_run ? anchor : get_offscreen_anchor(),
 					value,
 					key,
 					index,
@@ -347,7 +392,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			if (first_run) {
 				fallback = branch(() => fallback_fn(anchor));
 			} else {
-				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
+				fallback = branch(() => fallback_fn(get_offscreen_anchor()));
 				fallback.f |= EFFECT_OFFSCREEN;
 			}
 		}
@@ -719,7 +764,7 @@ function move(effect, next, anchor) {
 
 	while (node !== null) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
-		dest.before(node);
+		insert_before(dest, node);
 
 		if (node === end) {
 			return;
