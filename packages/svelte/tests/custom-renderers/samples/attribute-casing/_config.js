@@ -1,8 +1,8 @@
 import { test } from '../../test';
 
 export default test({
-	test({ assert, target }) {
-		const elements = target.children.filter((/** @type {any} */ n) => n.type === 'element');
+	test({ assert, target, utils }) {
+		const elements = target.children.filter(utils.filter_elements());
 
 		assert.equal(elements.length, 4);
 
