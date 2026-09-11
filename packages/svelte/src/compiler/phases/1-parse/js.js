@@ -30,12 +30,13 @@ export function parse(source, comments, typescript) {
 		comments.push(/** @type {AST.JSComment} */ (comment));
 	}
 	// a module read on its own is one piece: its program, in its own scope
+	const scopes = /** @type {teasel.Scope[]} */ (answer.scopes);
 	keep_tables(answer.node, {
 		node: answer.node,
-		scope: answer.scopes[0],
-		scopes: answer.scopes.slice(1),
-		bindings: answer.bindings,
-		references: answer.references
+		scope: scopes[0],
+		scopes: scopes.slice(1),
+		bindings: /** @type {teasel.Binding[]} */ (answer.bindings),
+		references: /** @type {teasel.Reference[]} */ (answer.references)
 	});
 
 	return answer.node;

@@ -12,13 +12,13 @@ import { bindingOf } from '@teasel/parser';
 const PARSED = Symbol('parsed');
 
 /**
- * Keeps the parser's answer on the root it parsed, a script's program or a template's
- * expression, pattern, parameter list or declaration, for its tables.
+ * Keeps the parser's tables on the root they belong to, a script's program or a template's
+ * expression, pattern, parameter list or declaration.
  * @param {object} root
- * @param {import('@teasel/parser').Parsed<unknown>} answer
+ * @param {Tables} tables
  */
-export function keep_tables(root, answer) {
-	/** @type {any} */ (root)[PARSED] = answer;
+export function keep_tables(root, tables) {
+	/** @type {any} */ (root)[PARSED] = tables;
 }
 
 /**
