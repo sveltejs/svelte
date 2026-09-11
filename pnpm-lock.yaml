@@ -75,8 +75,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@teasel/parser':
-        specifier: link:../../../teasel/package
-        version: link:../../../teasel/package
+        specifier: 0.0.1
+        version: 0.0.1
       '@types/estree':
         specifier: ^1.0.9
         version: 1.0.9
@@ -943,6 +943,36 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
       vite: ^6.3.0 || ^7.0.0
+
+  '@teasel/parser-darwin-arm64@0.0.1':
+    resolution: {integrity: sha512-f6zwBhz8pEIswWyZtz9+F/AAbEluT7CHgTL9viYuiKi/Kn8dqQNoMVdunWJt9WvFou1TiywvWktBwMC7xZTC6g==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@teasel/parser-darwin-x64@0.0.1':
+    resolution: {integrity: sha512-6hWBZ4zXiojMcL+1JbGq6QK6cQGZbQjS20KvdIET8XWbACTjl82KKYlMUNm77o88c+3sBOfTOzFKpezEIAjU9g==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@teasel/parser-linux-arm64-gnu@0.0.1':
+    resolution: {integrity: sha512-Zmag9xY9OBsakKL2fwJkcTgSyZV9zDbYmiloewNgNEyq/xvC625lcUCeuEx96t7/todwe9D8nr+amVa7X+meDw==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@teasel/parser-linux-x64-gnu@0.0.1':
+    resolution: {integrity: sha512-l+SFFXx3f2KP8JPBBqDDlssRoNfpPtlmiDRVvSmpvLLAb591XYaZyiP7AhkEvQHZRP9yC0cvd9/aS1VI0q1LOQ==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@teasel/parser-win32-x64-msvc@0.0.1':
+    resolution: {integrity: sha512-9G2xHgyrVMWkEn7q60RslDtHb06tzzBLKAVsCB1GKmjNxI+r9sL0nLmuQvkhCHCXez3rEv22TLsMMO45UaO8Dw==}
+    cpu: [x64]
+    os: [win32]
+
+  '@teasel/parser@0.0.1':
+    resolution: {integrity: sha512-EX86ypOn4lMsXI9WBU/Sv89Emuq1GxXARfDyd6A3UJan0IW4c3LgYTESFTTV10e6eSoR99h0JyMnxOmVzWB8xA==}
 
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
@@ -3077,6 +3107,31 @@ snapshots:
       vitefu: 1.1.1(vite@7.3.5(@types/node@24.5.2)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0))
     transitivePeerDependencies:
       - supports-color
+
+  '@teasel/parser-darwin-arm64@0.0.1':
+    optional: true
+
+  '@teasel/parser-darwin-x64@0.0.1':
+    optional: true
+
+  '@teasel/parser-linux-arm64-gnu@0.0.1':
+    optional: true
+
+  '@teasel/parser-linux-x64-gnu@0.0.1':
+    optional: true
+
+  '@teasel/parser-win32-x64-msvc@0.0.1':
+    optional: true
+
+  '@teasel/parser@0.0.1':
+    dependencies:
+      '@types/estree': 1.0.9
+    optionalDependencies:
+      '@teasel/parser-darwin-arm64': 0.0.1
+      '@teasel/parser-darwin-x64': 0.0.1
+      '@teasel/parser-linux-arm64-gnu': 0.0.1
+      '@teasel/parser-linux-x64-gnu': 0.0.1
+      '@teasel/parser-win32-x64-msvc': 0.0.1
 
   '@types/aria-query@5.0.4': {}
 
