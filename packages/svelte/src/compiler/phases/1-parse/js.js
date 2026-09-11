@@ -29,7 +29,14 @@ export function parse(source, comments, typescript) {
 		dedent(comment, source);
 		comments.push(/** @type {AST.JSComment} */ (comment));
 	}
-	keep_tables(answer.node, answer);
+	// a module read on its own is one piece: its program, in its own scope
+	keep_tables(answer.node, {
+		node: answer.node,
+		scope: answer.scopes[0],
+		scopes: answer.scopes.slice(1),
+		bindings: answer.bindings,
+		references: answer.references
+	});
 
 	return answer.node;
 }

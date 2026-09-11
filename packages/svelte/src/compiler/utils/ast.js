@@ -4,8 +4,8 @@ import { walk } from 'zimmerframe';
 import { bindingOf } from '@teasel/parser';
 
 /**
- * @typedef {Required<Pick<import('@teasel/parser').Parsed<unknown>, 'scopes' | 'bindings' | 'references'>>} Tables
- * the parser's scope, binding and reference tables for one answer, parsed with `scopes`
+ * @typedef {import('@teasel/parser').Root} Tables
+ * the parser's tables for one piece of JavaScript: the scope it sits in, the scopes opened, the bindings declared and the references made inside it
  */
 
 // a symbol on the root: a property load where the walk asks every node, not a map lookup

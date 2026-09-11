@@ -1078,12 +1078,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @param {boolean} template the answer's declarations are a const tag's
 	 */
 	function from_tables(scope, answer, path, template) {
-		const outermost = answer.scopes[0];
+		const outermost = answer.scope;
 		// most of a template's expressions declare nothing and open no scope: their references,
 		// in source order already, are all there is
 		if (
 			outermost.kind === 'fragment' &&
-			answer.scopes.length === 1 &&
+			answer.scopes.length === 0 &&
 			answer.bindings.length === 0
 		) {
 			for (const reference of answer.references) {
@@ -1124,8 +1124,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		declare_parsed(scope, of(outermost), false, template);
 
-		for (let i = 1; i < answer.scopes.length; i++) {
-			const parsed = answer.scopes[i];
+		for (const parsed of answer.scopes) {
 			const node = /** @type {any} */ (parsed.node);
 			const parent = at(
 				/** @type {import('@teasel/parser').Scope} */ (parsed.parent),
@@ -1204,7 +1203,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					node &&
 					node.start <= position &&
 					position < node.end &&
-					parsed !== outermost &&
 					ours.has(parsed)
 				) {
 					// a fragment has no span of its own: anything inside it is closer
@@ -1249,7 +1247,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	// a script comes entirely from the parser's tables: nothing in it is walked
 	const program = ast.type === 'Program' ? tables_of(ast) : undefined;
 	if (program !== undefined) {
-		has_await = program.scopes[0].topLevelAwait;
+		has_await = program.scope.topLevelAwait;
 		for (const node of /** @type {Program} */ (ast).body) {
 			if (
 				allow_reactive_declarations &&
@@ -1355,7 +1353,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			_(node, context) {
 				const answer = tables_of(node);
 				if (answer === undefined) return context.next();
-				has_await ||= answer.scopes[0].topLevelAwait;
+				has_await ||= answer.scope.topLevelAwait;
 				from_tables(
 					context.state.scope,
 					answer,
@@ -1538,8 +1536,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					}
 				}
 
-				const params = tables_of(node.parameters);
-				if (params !== undefined) from_tables(child_scope, params, [...context.path, node], false);
+				for (const param of node.parameters) {
+					const params = tables_of(param);
+					if (params !== undefined) from_tables(child_scope, params, [...context.path, node], false);
+				}
 				for (const child of node.body.nodes) {
 					context.visit(child, { scope: child_scope });
 				}

@@ -1,12 +1,13 @@
 /** @import { AST } from '#compiler' */
 /** @import { Expression, Identifier, Node, Pattern, Program } from 'estree' */
-/** @import { Parsed, Scope } from '@teasel/parser' */
-import { Source, parentOf, scopeOf } from '@teasel/parser';
+/** @import { Parsed } from '@teasel/parser' */
+/** @import { Tables } from '../../utils/ast.js' */
+import { Source } from '@teasel/parser';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import * as state from '../../state.js';
 import { ExpressionMetadata, disallow_children } from '../nodes.js';
-import { keep_tables } from '../../utils/ast.js';
+import { keep_tables, tables_of } from '../../utils/ast.js';
 import { grammar } from './grammar.js';
 import { dedent, unsupported } from './js.js';
 import read_options from './options.js';
@@ -139,17 +140,12 @@ export function parse(template, loose = false, erase = false) {
 	root.end = template.length;
 	root.metadata = { ts };
 
-	/** @type {(Node | Node[])[]} the JavaScript of the template, each piece with its own tables */
-	const roots = [];
-	const finish = new Finish(trimmed, roots);
-	finish.root(root);
-	tables(answer, roots);
+	const roots = /** @type {import('@teasel/parser').Root[]} */ (answer.roots);
+	for (const piece of roots) keep_tables(piece.node, piece);
+	new Finish(trimmed).root(root);
 
 	// a comment between attributes is kept whole, one in JavaScript loses its line's indentation
-	const spans = roots.map((root) => {
-		const [first, last] = Array.isArray(root) ? [root[0], root[root.length - 1]] : [root, root];
-		return [/** @type {number} */ (first?.start), /** @type {number} */ (last?.end)];
-	});
+	const spans = roots.map(({ node }) => [/** @type {number} */ (node.start), /** @type {number} */ (node.end)]);
 	for (const comment of root.comments) {
 		if (spans.some(([start, end]) => comment.start >= start && comment.end <= end))
 			dedent(comment, trimmed);
@@ -163,13 +159,9 @@ export function parse(template, loose = false, erase = false) {
  * location of each name, the options read out of `<svelte:options>`.
  */
 class Finish {
-	/**
-	 * @param {string} template
-	 * @param {(Node | Node[])[]} roots
-	 */
-	constructor(template, roots) {
+	/** @param {string} template */
+	constructor(template) {
 		this.template = template;
-		this.roots = roots;
 	}
 
 	/** @param {AST.Root} root */
@@ -203,7 +195,6 @@ class Finish {
 				e.script_reserved_attribute(attribute, attribute.name);
 			if (!SCRIPT_ALLOWED.includes(attribute.name)) w.script_unknown_attribute(attribute);
 		}
-		this.js(script.content);
 		const { loc } = script.content;
 		if (loc) {
 			// the legacy AST places the program at the tag, not at its contents
@@ -310,10 +301,8 @@ class Finish {
 					// a tag named in text is the literal Svelte writes by hand, quoted its way
 					if (node.tag.type === 'Literal' && node.tag.raw === node.tag.value)
 						node.tag.raw = `'${node.tag.value}'`;
-					else this.js(node.tag);
 					node.metadata.expression = new ExpressionMetadata();
 				}
-				if (node.type === 'SvelteComponent') this.js(node.expression);
 				if (node.type === 'SvelteComponent' || node.type === 'Component') {
 					node.metadata.expression = new ExpressionMetadata();
 				}
@@ -341,7 +330,6 @@ class Finish {
 				this.expression(node, node.declaration);
 				return;
 			case 'DebugTag':
-				for (const identifier of node.identifiers) this.js(identifier);
 				return;
 			case 'IfBlock':
 				this.expression(node, node.test);
@@ -352,17 +340,12 @@ class Finish {
 				const index = /** @type {Identifier | string | undefined} */ (node.index);
 				if (index !== undefined && typeof index !== 'string') node.index = index.name;
 				node.metadata = /** @type {any} */ (null); // filled in later
-				this.js(node.expression);
-				if (node.context) this.js(node.context);
-				if (node.key) this.js(node.key);
 				this.body(node.body);
 				this.body(node.fallback);
 				return;
 			}
 			case 'AwaitBlock':
 				this.expression(node, node.expression);
-				if (node.value) this.js(node.value);
-				if (node.error) this.js(node.error);
 				this.body(node.pending);
 				this.body(node.then);
 				this.body(node.catch);
@@ -373,7 +356,6 @@ class Finish {
 				return;
 			case 'SnippetBlock':
 				node.metadata = { can_hoist: false, sites: new Set() };
-				this.js(node.parameters);
 				this.body(node.body);
 				return;
 		}
@@ -385,7 +367,6 @@ class Finish {
 	 */
 	expression(node, expression) {
 		/** @type {any} */ (node).metadata = { expression: new ExpressionMetadata() };
-		if (expression) this.js(expression);
 	}
 
 	/** @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag>} attributes */
@@ -418,8 +399,10 @@ class Finish {
 					) {
 						attribute.expression = null;
 					} else if (expression) {
-						attribute.expression = /** @type {any} */ (to_expression(expression));
-						this.js(/** @type {Node} */ (attribute.expression));
+						// the pattern's tables move to the expression made of it
+						const converted = to_expression(expression);
+						keep_tables(converted, /** @type {Tables} */ (tables_of(expression)));
+						attribute.expression = /** @type {any} */ (converted);
 					}
 					break;
 				}
@@ -495,115 +478,6 @@ class Finish {
 		);
 	}
 
-	/** @param {Node | Node[]} node a piece of JavaScript the parser read on its own */
-	js(node) {
-		this.roots.push(node);
-	}
-}
-
-/**
- * The parser's tables cut to each piece of JavaScript, as the scope analysis reads them piece by
- * piece: the scopes opened inside it, the bindings declared and the references made there, and
- * first the scope around it.
- * @param {Parsed<AST.Root>} answer
- * @param {(Node | Node[])[]} roots
- */
-function tables(answer, roots) {
-	const scopes = /** @type {Scope[]} */ (answer.scopes);
-	const bindings = /** @type {import('@teasel/parser').Binding[]} */ (answer.bindings);
-	const references = /** @type {import('@teasel/parser').Reference[]} */ (answer.references);
-	/** @type {Scope} */
-	const nowhere = { kind: 'fragment', node: null, parent: null, topLevelAwait: false };
-	// each table in source order, so a root's entries are one run of it; a fragment has no span
-	// and holds JavaScript rather than sitting in it
-	const opening = scopes
-		.filter((scope) => typeof (/** @type {any} */ (scope.node)?.start) === 'number')
-		.sort((a, b) => /** @type {any} */ (a.node).start - /** @type {any} */ (b.node).start);
-	const named = scopes.filter((scope) => scope.node === null);
-	const declaring = bindings
-		.filter((binding) => binding.node !== null)
-		.sort((a, b) => /** @type {any} */ (a.node).start - /** @type {any} */ (b.node).start);
-	const nameless = bindings.filter((binding) => binding.node === null);
-	const referring = [...references].sort(
-		(a, b) => /** @type {number} */ (a.node.start) - /** @type {number} */ (b.node.start)
-	);
-	/**
-	 * The entries of a sorted table inside a span.
-	 * @template T
-	 * @param {T[]} table
-	 * @param {(entry: T) => any} node
-	 * @param {number} start
-	 * @param {number} end
-	 */
-	const within = (table, node, start, end) => {
-		let low = 0;
-		let high = table.length;
-		while (low < high) {
-			const mid = (low + high) >> 1;
-			if (node(table[mid]).start < start) low = mid + 1;
-			else high = mid;
-		}
-		/** @type {T[]} */
-		const found = [];
-		for (let i = low; i < table.length && node(table[i]).start < end; i += 1) {
-			if (node(table[i]).end <= end) found.push(table[i]);
-		}
-		return found;
-	};
-	for (const root of roots) {
-		const list = Array.isArray(root) ? root : [root];
-		if (list.length === 0) continue;
-		const start = /** @type {number} */ (list[0].start);
-		const end = /** @type {number} */ (list[list.length - 1].end);
-		// a script's program is the scope itself; any other piece sits in the scope around it
-		const own =
-			/** @type {any} */ (root).type === 'Program'
-				? scopes.find((scope) => scope.node === root)
-				: undefined;
-		const inside = within(opening, (scope) => scope.node, start, end).filter(
-			(scope) => scope !== own
-		);
-		// a function-name scope has no node of its own; it sits between a scope and the function it names
-		const parents = new Set(inside.map((scope) => scope.parent));
-		const opened =
-			named.length === 0
-				? inside
-				: scopes.filter(
-						(scope) =>
-							scope !== own && (scope.node === null ? parents.has(scope) : inside.includes(scope))
-					);
-		const declared = within(declaring, (binding) => binding.node, start, end);
-		if (nameless.length > 0) {
-			for (const binding of nameless) if (opened.includes(binding.scope)) declared.push(binding);
-		}
-		const made = within(referring, (reference) => reference.node, start, end);
-		const outermost =
-			own ??
-			[...opened.map((scope) => scope.parent), ...declared, ...made]
-				.map((entry) => (entry && 'scope' in entry ? entry.scope : entry))
-				.find((scope) => scope !== null && !opened.includes(/** @type {Scope} */ (scope))) ??
-			around(list[0]) ??
-			nowhere;
-		keep_tables(root, {
-			node: root,
-			end,
-			scopes: [outermost, ...opened],
-			bindings: declared,
-			references: made
-		});
-	}
-}
-
-/**
- * The scope a piece of JavaScript sits in when nothing in it says: the nearest ancestor that opens one.
- * @param {Node} node
- */
-function around(node) {
-	for (let parent = parentOf(node); parent !== undefined; parent = parentOf(parent)) {
-		const scope = scopeOf(parent);
-		if (scope !== undefined) return scope;
-	}
-	return undefined;
 }
 
 /**
