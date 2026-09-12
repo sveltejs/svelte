@@ -299,8 +299,15 @@ class Finish {
 						: /** @type {any} */ ({});
 				if (node.type === 'SvelteElement') {
 					// a tag named in text is the literal Svelte writes by hand, quoted its way
-					if (node.tag.type === 'Literal' && node.tag.raw === node.tag.value)
+					if (node.tag.type === 'Literal' && node.tag.raw === node.tag.value) {
+						const { start, end } = /** @type {{ start: number; end: number }} */ (node.tag);
+						const quoted = this.template[start - 1] === '"' || this.template[start - 1] === "'";
+						w.svelte_element_invalid_this({
+							start: this.template.lastIndexOf('this', start),
+							end: quoted ? end + 1 : end
+						});
 						node.tag.raw = `'${node.tag.value}'`;
+					}
 					node.metadata.expression = new ExpressionMetadata();
 				}
 				if (node.type === 'SvelteComponent' || node.type === 'Component') {
