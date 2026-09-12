@@ -174,7 +174,7 @@
   "dependencies": {
     "@jridgewell/remapping": "^2.3.5",
     "@jridgewell/sourcemap-codec": "^1.6.0",
-    "@teasel/parser": "0.0.4",
+    "@teasel/parser": "0.0.5",
     "@types/estree": "^1.0.9",
     "aria-query": "5.3.1",
     "axobject-query": "^4.1.0",
