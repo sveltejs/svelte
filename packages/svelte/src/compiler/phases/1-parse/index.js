@@ -657,7 +657,7 @@ function throw_error(error, template) {
 				e.tag_invalid_placement(pos, name, location);
 			}
 			if (what.startsWith('svelte:')) e.svelte_meta_invalid_placement(pos, what);
-			e.js_parse_error(range, message);
+			e.js_parse_error(pos, message);
 		}
 		// eslint-disable-next-line no-fallthrough
 		case 'redeclaration':
@@ -682,7 +682,7 @@ function throw_error(error, template) {
 			if (keyword && /(\bas|\bthen|\bcatch|,)\s*$/.test(template.slice(0, pos))) {
 				e.unexpected_reserved_word(pos, keyword[1]);
 			}
-			e.js_parse_error(range, message);
+			e.js_parse_error(pos, message);
 		}
 	}
 }

@@ -70,7 +70,7 @@ export function unsupported(kept) {
  */
 function handle_parse_error(err) {
 	if (err.code === 'unexpected_eof') e.unexpected_eof(err.pos);
-	e.js_parse_error({ start: err.pos, end: err.end }, err.message);
+	e.js_parse_error(err.pos, err.message);
 }
 
 /**
