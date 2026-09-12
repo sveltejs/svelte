@@ -81,17 +81,7 @@ export function BindDirective(node, context) {
 			}
 
 			if (parent.name === 'select' && node.name !== 'this') {
-				const multiple = parent.attributes.find(
-					(a) =>
-						a.type === 'Attribute' &&
-						a.name === 'multiple' &&
-						!is_text_attribute(a) &&
-						a.value !== true
-				);
-
-				if (multiple) {
-					e.attribute_invalid_multiple(multiple);
-				}
+				// We used to forbid dynamic multiple, but we now support it
 			}
 
 			if (node.name === 'offsetWidth' && is_svg(parent.name)) {
