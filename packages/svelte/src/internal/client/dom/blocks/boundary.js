@@ -333,6 +333,11 @@ export class Boundary {
 	#resolve(batch) {
 		this.is_pending = false;
 
+		// If no batch is active (e.g. `flushSync` was called during mount and
+		// flushed the batch the boundary is still inside), create one so the
+		// deferred effects still get flushed instead of being dropped.
+		if (batch === null) batch = Batch.ensure();
+
 		// any effects that were previously deferred should be transferred
 		// to the batch, which will flush in the next microtask
 		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
