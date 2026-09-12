@@ -359,9 +359,9 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 				aborted = true;
 				a?.abort();
 			},
-			deactivate: () => a.deactivate(),
-			reset: () => a.reset(),
-			t: () => a.t()
+			deactivate: () => a?.deactivate(),
+			reset: () => a?.reset(),
+			t: () => a?.t()
 		};
 	}
 
