@@ -16,8 +16,6 @@ const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/y;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
 const REGEX_UNICODE_SEQUENCE = /\\[0-9a-fA-F]{1,6}(\r\n|\s)?/y;
-const REGEX_COMMENT_CLOSE = /\*\//;
-const REGEX_HTML_COMMENT_CLOSE = /-->/;
 
 /**
  * @param {Parser} parser
@@ -478,7 +476,7 @@ function read_block_item(parser) {
 function read_declaration(parser) {
 	const start = parser.index;
 
-	const property = parser.read_until(REGEX_WHITESPACE_OR_COLON);
+	const property = parser.read_until_regex(REGEX_WHITESPACE_OR_COLON);
 	parser.allow_whitespace();
 	parser.eat(':');
 	let index = parser.index;
@@ -661,7 +659,7 @@ function allow_comment_or_whitespace(parser, capture_comments = true) {
 		}
 
 		if (parser.eat('<!--')) {
-			parser.read_until(REGEX_HTML_COMMENT_CLOSE);
+			parser.read_until('-->');
 			parser.eat('-->', true);
 		}
 
@@ -676,7 +674,7 @@ function allow_comment_or_whitespace(parser, capture_comments = true) {
 function read_comment(parser) {
 	const start = parser.index;
 	parser.eat('/*', true);
-	const value = parser.read_until(REGEX_COMMENT_CLOSE);
+	const value = parser.read_until('*/');
 	parser.eat('*/', true);
 	const end = parser.index;
 

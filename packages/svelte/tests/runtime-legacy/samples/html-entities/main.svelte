@@ -2,6 +2,7 @@
 <span>&midast;</span>
 <span>&#x0002A;</span>
 <span>&#x0002A</span>
+<span>&#X0002A;</span>
 <span>&#42;</span>
 
 <span>&#10;</span>

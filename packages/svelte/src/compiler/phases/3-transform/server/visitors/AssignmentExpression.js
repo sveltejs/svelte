@@ -110,7 +110,7 @@ function build_assignment(operator, left, right, context) {
 			context.visit(build_assignment_value(operator, left, right))
 		);
 
-		return b.call(binding.node, value);
+		return b.call(object, value);
 	}
 
 	return null;

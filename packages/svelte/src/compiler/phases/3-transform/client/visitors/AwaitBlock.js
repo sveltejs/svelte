@@ -1,9 +1,9 @@
 /** @import { BlockStatement, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
-import { extract_identifiers, is_expression_async } from '../../../../utils/ast.js';
+import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_derived } from '../utils.js';
+import { async_thunk, create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 import { build_expression, add_svelte_meta } from './shared/utils.js';
 
@@ -15,10 +15,10 @@ export function AwaitBlock(node, context) {
 	context.state.template.push_comment();
 
 	// Visit {#await <expression>} first to ensure that scopes are in the correct order
-	const expression = b.thunk(
-		build_expression(context, node.expression, node.metadata.expression),
-		node.metadata.expression.has_await
-	);
+	const input = build_expression(context, node.expression, node.metadata.expression);
+	const expression = node.metadata.expression.has_await
+		? async_thunk(input, node.metadata.expression)
+		: b.thunk(input);
 
 	let then_block;
 	let catch_block;
