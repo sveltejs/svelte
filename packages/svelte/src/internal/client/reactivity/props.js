@@ -15,7 +15,8 @@ import {
 	get,
 	is_destroying_effect,
 	set_active_effect,
-	untrack
+	untrack,
+	with_old_values
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
@@ -54,7 +55,7 @@ export function update_pre_prop(fn, d = 1) {
 const rest_props_handler = {
 	get(target, key) {
 		if (target.exclude.has(key)) return;
-		return target.props[key];
+		return with_old_values(() => target.props[key]);
 	},
 	set(target, key) {
 		if (DEV) {
@@ -70,7 +71,7 @@ const rest_props_handler = {
 			return {
 				enumerable: true,
 				configurable: true,
-				value: target.props[key]
+				value: with_old_values(() => target.props[key])
 			};
 		}
 	},
@@ -359,7 +360,7 @@ export function prop(props, key, flags, fallback) {
 
 	// prop is never written to — we only need a getter
 	if (runes && (flags & PROPS_IS_UPDATED) === 0) {
-		return getter;
+		return () => with_old_values(getter);
 	}
 
 	// prop is written to, but the parent component had `bind:foo` which
@@ -380,7 +381,7 @@ export function prop(props, key, flags, fallback) {
 					return value;
 				}
 
-				return getter();
+				return with_old_values(getter);
 			}
 		);
 	}
@@ -404,6 +405,7 @@ export function prop(props, key, flags, fallback) {
 	if (bindable) get(d);
 
 	var parent_effect = /** @type {Effect} */ (active_effect);
+	var get_derived = () => get(d);
 
 	return /** @type {() => V} */ (
 		function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
@@ -427,7 +429,7 @@ export function prop(props, key, flags, fallback) {
 				return d.v;
 			}
 
-			return get(d);
+			return with_old_values(get_derived);
 		}
 	);
 }

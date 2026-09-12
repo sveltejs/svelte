@@ -2,7 +2,7 @@
 import { DESTROYING, STATE_SYMBOL } from '#client/constants';
 import { component_context, mark_as_component } from '../../../context.js';
 import { effect, render_effect } from '../../../reactivity/effects.js';
-import { active_effect, untrack } from '../../../runtime.js';
+import { active_effect, untrack, with_old_values } from '../../../runtime.js';
 
 /**
  * @param {any} bound_value
@@ -67,9 +67,11 @@ export function bind_this(
 				p = p.parent;
 			}
 			const teardown = () => {
-				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
-					update(null, ...parts);
-				}
+				with_old_values(() => {
+					if (parts && is_bound_this(get_value(...parts), element_or_component)) {
+						update(null, ...parts);
+					}
+				});
 			};
 			const original_teardown = p.teardown;
 			p.teardown = () => {
