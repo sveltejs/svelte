@@ -1657,7 +1657,7 @@ describe('signals', () => {
 		return () => {
 			flushSync();
 
-			const deps = /** @type {any[]} */ (d.deps);
+			const deps = /** @type {any[]} */ d.deps;
 			assert.ok(deps !== null && deps.length > 0, 'derived should have dependencies');
 			assert.equal(count(deps[0]), 1);
 
@@ -1674,5 +1674,4 @@ describe('signals', () => {
 			destroy();
 		};
 	});
-
 });
