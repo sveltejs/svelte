@@ -23,6 +23,87 @@ import { escape_html } from '../../escaping.js';
  * @typedef {string | Renderer} RendererItem
  */
 
+class RenderResult {
+	/** @type {() => AccumulatedContent} */
+	#render;
+
+	/** @type {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>} */
+	#render_async;
+
+	/** @type {AccumulatedContent | undefined} */
+	#sync;
+
+	/** @type {{ script: '' }} */
+	#hashes = { script: '' };
+
+	/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
+	#promise;
+
+	/**
+	 * @param {() => AccumulatedContent} render
+	 * @param {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>} render_async
+	 */
+	constructor(render, render_async) {
+		this.#render = render;
+		this.#render_async = render_async;
+	}
+
+	#get() {
+		return (this.#sync ??= this.#render());
+	}
+
+	get html() {
+		return this.#get().body;
+	}
+
+	get head() {
+		return this.#get().head;
+	}
+
+	get body() {
+		return this.#get().body;
+	}
+
+	get hashes() {
+		return this.#hashes;
+	}
+
+	/**
+	 * This is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
+	 *
+	 * @template TResult1
+	 * @template [TResult2=never]
+	 * @param {(value: SyncRenderOutput) => TResult1} onfulfilled
+	 * @param {(reason: unknown) => TResult2} onrejected
+	 */
+	then(onfulfilled, onrejected) {
+		if (!async_mode_flag) {
+			const result = this.#get();
+			const user_result = onfulfilled({
+				head: result.head,
+				body: result.body,
+				html: result.body,
+				hashes: { script: [] }
+			});
+			return Promise.resolve(user_result);
+		}
+
+		this.#promise ??= this.#render_async().then((result) => {
+			Object.defineProperty(result, 'html', {
+				// eslint-disable-next-line getter-return
+				get: () => {
+					e.html_deprecated();
+				}
+			});
+			return result;
+		});
+		return this.#promise.then(
+			(result) => onfulfilled(/** @type {SyncRenderOutput} */ (result)),
+			onrejected
+		);
+	}
+}
+
 /**
  * Renderers are basically a tree of `string | Renderer`s, where each `Renderer` in the tree represents
  * work that may or may not have completed. A renderer can be {@link collect}ed to aggregate the
@@ -534,73 +615,17 @@ export class Renderer {
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
-		/** @type {AccumulatedContent | undefined} */
-		let sync;
-		/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
-		let async;
-
-		const result = /** @type {RenderOutput} */ ({});
-		// making these properties non-enumerable so that console.logging
-		// doesn't trigger a sync render
-		Object.defineProperties(result, {
-			html: {
-				get: () => {
-					return (sync ??= Renderer.#render(component, options)).body;
-				}
-			},
-			head: {
-				get: () => {
-					return (sync ??= Renderer.#render(component, options)).head;
-				}
-			},
-			body: {
-				get: () => {
-					return (sync ??= Renderer.#render(component, options)).body;
-				}
-			},
-			hashes: {
-				value: {
-					script: ''
-				}
-			},
-			then: {
-				value:
-					/**
-					 * this is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
-					 *
-					 * @template TResult1
-					 * @template [TResult2=never]
-					 * @param { (value: SyncRenderOutput) => TResult1 } onfulfilled
-					 * @param { (reason: unknown) => TResult2 } onrejected
-					 */
-					(onfulfilled, onrejected) => {
-						if (!async_mode_flag) {
-							const result = (sync ??= Renderer.#render(component, options));
-							const user_result = onfulfilled({
-								head: result.head,
-								body: result.body,
-								html: result.body,
-								hashes: { script: [] }
-							});
-							return Promise.resolve(user_result);
-						}
-						async ??= init_render_context().then(() =>
+		return /** @type {RenderOutput} */ (
+			/** @type {unknown} */ (
+				new RenderResult(
+					() => Renderer.#render(component, options),
+					() =>
+						init_render_context().then(() =>
 							with_render_context(() => Renderer.#render_async(component, options))
-						);
-						return async.then((result) => {
-							Object.defineProperty(result, 'html', {
-								// eslint-disable-next-line getter-return
-								get: () => {
-									e.html_deprecated();
-								}
-							});
-							return onfulfilled(/** @type {SyncRenderOutput} */ (result));
-						}, onrejected);
-					}
-			}
-		});
-
-		return result;
+						)
+				)
+			)
+		);
 	}
 
 	/**

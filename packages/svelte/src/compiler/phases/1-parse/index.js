@@ -5,10 +5,9 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
 import * as e from '../../errors.js';
-import { create_fragment } from './utils/create.js';
+import { create_fragment, disallow_children } from '../nodes.js';
 import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
-import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 import * as state from '../../state.js';
 import { is_whitespace } from './utils/whitespace.js';
 
