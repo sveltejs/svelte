@@ -1198,12 +1198,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			let found = outermost;
 			for (const parsed of answer.scopes) {
 				const node = /** @type {any} */ (parsed.node);
-				if (
-					node &&
-					node.start <= position &&
-					position < node.end &&
-					ours.has(parsed)
-				) {
+				if (node && node.start <= position && position < node.end && ours.has(parsed)) {
 					// a fragment has no span of its own: anything inside it is closer
 					const current = /** @type {any} */ (found.node);
 					if (!current || current.start === undefined || node.start >= current.start)
@@ -1537,7 +1532,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 				for (const param of node.parameters) {
 					const params = tables_of(param);
-					if (params !== undefined) from_tables(child_scope, params, [...context.path, node], false);
+					if (params !== undefined)
+						from_tables(child_scope, params, [...context.path, node], false);
 				}
 				for (const child of node.body.nodes) {
 					context.visit(child, { scope: child_scope });

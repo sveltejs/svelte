@@ -145,7 +145,10 @@ export function parse(template, loose = false, erase = false) {
 	new Finish(trimmed).root(root);
 
 	// a comment between attributes is kept whole, one in JavaScript loses its line's indentation
-	const spans = roots.map(({ node }) => [/** @type {number} */ (node.start), /** @type {number} */ (node.end)]);
+	const spans = roots.map(({ node }) => [
+		/** @type {number} */ (node.start),
+		/** @type {number} */ (node.end)
+	]);
 	for (const comment of root.comments) {
 		if (spans.some(([start, end]) => comment.start >= start && comment.end <= end))
 			dedent(comment, trimmed);
@@ -323,7 +326,8 @@ class Finish {
 				this.expression(node, node.expression);
 				return;
 			case 'RenderTag': {
-				const call = node.expression.type === 'ChainExpression' ? node.expression.expression : node.expression;
+				const call =
+					node.expression.type === 'ChainExpression' ? node.expression.expression : node.expression;
 				if (call.type !== 'CallExpression') e.render_tag_invalid_expression(node.expression);
 				this.expression(node, node.expression);
 				node.metadata = {
@@ -487,7 +491,6 @@ class Finish {
 			`</${name}>`
 		);
 	}
-
 }
 
 /**
