@@ -1674,4 +1674,46 @@ describe('signals', () => {
 			destroy();
 		};
 	});
+	// Reverse check for #18781: the invariant that makes `remove_reaction()`'s
+	// single-removal semantics sufficient is that a dependency's `reactions`
+	// array never contains the same derived more than once. `reconnect()` is the
+	// path that can violate it, so it must be idempotent.
+	test('reconnect() is idempotent', () => {
+		const dep = state(0);
+		const derived_ = derived(() => $.get(dep) * 2);
+
+		const root_destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(derived_);
+				$.get(dep);
+			});
+		});
+
+		const count = () => (dep.reactions ?? []).filter((r: any) => r === derived_).length;
+
+		return () => {
+			flushSync();
+
+			// while connected, the dependency has the derived registered exactly once
+			assert.equal(count(), 1);
+
+			// detaching the last reader clears the dependency's reactions
+			root_destroy();
+			assert.equal(count(), 0);
+			assert.equal(dep.reactions, null);
+
+			// reconnecting registers it again ...
+			reconnect(derived_);
+			assert.equal(count(), 1);
+
+			// ... and reconnecting an already-registered derived is a no-op
+			reconnect(derived_);
+			reconnect(derived_);
+			assert.equal(
+				count(),
+				1,
+				`derived registered ${count()} times on its dependency after repeated reconnect`
+			);
+		};
+	});
 });
