@@ -322,7 +322,9 @@ class Finish {
 			case 'HtmlTag':
 				this.expression(node, node.expression);
 				return;
-			case 'RenderTag':
+			case 'RenderTag': {
+				const call = node.expression.type === 'ChainExpression' ? node.expression.expression : node.expression;
+				if (call.type !== 'CallExpression') e.render_tag_invalid_expression(node.expression);
 				this.expression(node, node.expression);
 				node.metadata = {
 					...node.metadata,
@@ -332,6 +334,7 @@ class Finish {
 					snippets: new Set()
 				};
 				return;
+			}
 			case 'ConstTag':
 			case 'DeclarationTag':
 				this.expression(node, node.declaration);
@@ -591,7 +594,10 @@ function throw_error(error, template) {
 			}
 			// a branch that fits no open block, reported at its sigil
 			if (what === 'else') e.expected_token(pos + 1, '{:else}');
-			if (what === 'else if or else') e.expected_token(pos + 1, '{:else} or {:else if}');
+			if (what === 'else if or else') {
+				if (template.startsWith('{:elseif', pos)) e.block_invalid_elseif(pos + 1);
+				e.expected_token(pos + 1, '{:else} or {:else if}');
+			}
 			if (what === 'then or catch') e.expected_token(pos + 1, '{:then ...} or {:catch ...}');
 			if (what === 'a block name') e.expected_block_type(pos);
 			if (what === 'an attribute value') e.expected_attribute_value(pos);
@@ -638,6 +644,7 @@ function throw_error(error, template) {
 			if (name === 'script') e.script_duplicate(pos);
 			if (name === 'style') e.style_duplicate(pos);
 			if (name.startsWith('svelte:')) e.svelte_meta_duplicate(pos, name);
+			if (name.startsWith('{:')) e.block_duplicate_clause(pos + 1, name);
 			e.attribute_duplicate(range);
 		}
 		// eslint-disable-next-line no-fallthrough
