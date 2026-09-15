@@ -50,6 +50,7 @@ import {
 	batch_values,
 	current_batch,
 	flushSync,
+	held_sources,
 	previous_batch,
 	schedule_effect
 } from './reactivity/batch.js';
@@ -548,6 +549,7 @@ export function settled() {
 export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
+	var first_time = false;
 
 	captured_signals?.add(signal);
 
@@ -557,6 +559,8 @@ export function get(signal) {
 		// it's possible that the effect was already destroyed. In this case,
 		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
+
+		first_time = (active_reaction.f & REACTION_RAN) === 0;
 
 		if (!destroyed && (current_sources === null || !current_sources.has(signal))) {
 			var deps = active_reaction.deps;
@@ -706,7 +710,11 @@ export function get(signal) {
 		}
 	}
 
-	if (batch_values?.has(signal)) {
+	if (current_batch && held_sources?.has(signal)) {
+		current_batch.dependent.add(/** @type {Batch} */ (held_sources.get(signal)));
+	}
+
+	if ((!first_time || current_batch?.is_fork) && batch_values?.has(signal)) {
 		return batch_values.get(signal);
 	}
 

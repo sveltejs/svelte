@@ -43,10 +43,11 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, previous_batch } from './batch.js';
+import { batch_values, current_batch, first_batch, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
+import { queue_micro_task } from '../dom/task.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -133,6 +134,7 @@ export function async_derived(fn, label, location) {
 
 		if (DEV) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
+			effect.label ??= label ?? fn.toString();
 		}
 
 		/** @type {ReturnType<typeof deferred<V>>} */
@@ -178,6 +180,31 @@ export function async_derived(fn, label, location) {
 		}
 
 		var batch = /** @type {Batch} */ (current_batch);
+
+		let next_batch = batch.next;
+		while (next_batch) {
+			if (next_batch.async_deriveds.has(effect)) {
+				next_batch.dependent.add(batch);
+				if (!next_batch.is_fork) {
+					set_signal_status(effect, DIRTY); // TODO ideally we can find out if we really need to rerun or if all dependencies' values are equal
+					// TODO same for block effects; ideally one mechanism for both
+					next_batch.schedule(effect);
+					const b = next_batch;
+					queue_micro_task(() => b.flush());
+				}
+				break; // TODO break correct? Don't we need to do the rerun for all of them?
+			}
+			next_batch = next_batch.next;
+		}
+
+		let prev = batch.prev;
+		while (prev) {
+			if (prev.async_deriveds.has(effect)) {
+				batch.dependent.add(prev);
+				break;
+			}
+			prev = prev.prev;
+		}
 
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
@@ -427,11 +454,15 @@ export function update_derived(derived) {
 
 	// During time traveling we don't want to reset the status so that
 	// traversal of the graph in the other batches still happens
-	if (batch_values !== null) {
+	if (
+		batch_values !== null ||
+		(!current_batch &&
+			first_batch?.next) /* means "read outside of reactivity, e.g. in an event hanlder" */
+	) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
+			batch_values?.set(derived, value);
 		}
 	} else {
 		update_derived_status(derived);

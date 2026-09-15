@@ -42,7 +42,7 @@ import { log_effect_tree } from '../dev/debug.js';
 import { OBSOLETE } from './deriveds.js';
 
 /** @type {Batch | null} */
-let first_batch = null;
+export let first_batch = null;
 
 /** @type {Batch | null} */
 let last_batch = null;
@@ -63,6 +63,12 @@ export let previous_batch = null;
  * @type {Map<Value, any> | null}
  */
 export let batch_values = null;
+
+/**
+ * Sources which were written to before the current batch. Used to discover dependencies between batches.
+ * @type {Map<Value, Batch> | null}
+ */
+export let held_sources = null;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -100,6 +106,15 @@ export class Batch {
 	/** True as soon as `#process` was called */
 	#started = false;
 
+	// TODO temporary
+	get next() {
+		return this.#next;
+	}
+	// TODO temporary
+	get prev() {
+		return this.#prev;
+	}
+
 	linked = true;
 
 	/** @type {Batch | null} */
@@ -107,6 +122,9 @@ export class Batch {
 
 	/** @type {Batch | null} */
 	#next = null;
+
+	/** @type {Set<Batch>} */
+	dependent = new Set();
 
 	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
 	async_deriveds = new Map();
@@ -204,6 +222,8 @@ export class Batch {
 	#unskipped_branches = new Set();
 
 	is_fork = false;
+
+	is_eager = false;
 
 	#decrement_queued = false;
 
@@ -421,7 +441,6 @@ export class Batch {
 		}
 
 		const earlier_batch = this.#find_earlier_batch();
-
 		if (earlier_batch) {
 			// If this batch collected deferred effects during traversal, they still need
 			// to run after being merged into the earlier batch.
@@ -439,6 +458,7 @@ export class Batch {
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
 
+		this.apply(true);
 		previous_batch = this;
 		flush_queued_effects(render_effects);
 		flush_queued_effects(effects);
@@ -536,15 +556,23 @@ export class Batch {
 	}
 
 	#find_earlier_batch() {
+		if (this.is_eager) return null;
+
 		var batch = this.#prev;
 
 		while (batch !== null) {
 			if (!batch.is_fork) {
 				// if the batches are connected, break
-				for (const [value, [, is_derived]] of this.current) {
-					if (batch.current.has(value) && !is_derived) {
-						return batch;
-					}
+				// for (const [value, [, is_derived]] of this.current) {
+				// 	if (batch.current.has(value) && !is_derived) {
+				// 		return batch;
+				// 	}
+				// }
+				if (this.dependent.has(batch)) {
+					// TODO what if there's a fork between the chosen batch and the current one,
+					// then the fork commits (but is still pending), then the chosen batch
+					// finishes - then we would apply UI update of B1+B3 before B2.
+					return batch;
 				}
 			}
 
@@ -604,6 +632,8 @@ export class Batch {
 				} else {
 					var effect = /** @type {Effect} */ (reaction);
 
+					// TODO this overfires e.g. for async-state-new-branch-fork-5 where it reruns
+					// the Child async effects with "world" after commit+first resolve.
 					if (flags & (ASYNC | BLOCK_EFFECT) && !this.async_deriveds.has(effect)) {
 						this.#maybe_dirty_effects.delete(effect);
 						set_signal_status(effect, DIRTY);
@@ -651,8 +681,26 @@ export class Batch {
 			batch_values?.set(source, value);
 		}
 
+		let batch = this.#prev;
+		while (batch) {
+			if (batch.current.has(source)) {
+				this.dependent.add(batch);
+				break;
+			}
+			batch = batch.#prev;
+		}
+
 		if (!this.is_fork) {
-			source.v = value;
+			let is_latest_value = true;
+			batch = this.#next;
+			while (batch) {
+				if (batch.current.has(source)) {
+					is_latest_value = false;
+					break;
+				}
+				batch = batch.#next;
+			}
+			if (is_latest_value) source.v = value;
 		}
 	}
 
@@ -715,6 +763,7 @@ export class Batch {
 	}
 
 	#commit() {
+		return;
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
@@ -928,7 +977,7 @@ export class Batch {
 		return current_batch;
 	}
 
-	apply() {
+	apply(include_later = false) {
 		if (!async_mode_flag || (!this.is_fork && this.#prev === null && this.#next === null)) {
 			batch_values = null;
 			return;
@@ -937,9 +986,29 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map();
+		held_sources = new Map();
 		for (const [source, [value]] of this.current) {
 			batch_values.set(source, value);
 		}
+
+		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+			if (batch === this) continue;
+
+			if (batch.id < this.id) {
+				for (const source of batch.current.keys()) {
+					held_sources.set(source, batch);
+				}
+			}
+
+			if (batch.is_fork) continue;
+
+			if (batch.id > this.id || include_later || this.is_eager) {
+				for (const [source, value] of batch.previous) {
+					if (!batch_values.has(source)) batch_values.set(source, value);
+				}
+			}
+		}
+		return;
 
 		// ...and undo changes belonging to other batches unless they intersect
 		for (let batch = first_batch; batch !== null; batch = batch.#next) {
@@ -1265,6 +1334,8 @@ let eager_versions = [];
 
 function eager_flush() {
 	flushSync(() => {
+		var batch = Batch.ensure();
+		batch.is_eager = true;
 		const eager = eager_versions;
 		eager_versions = [];
 		for (const version of eager) {
@@ -1294,6 +1365,10 @@ export function eager(fn) {
 
 	let version = version_map.get(parent) ?? source(0);
 	version_map.set(parent, version);
+
+	if (DEV) {
+		version.label ??= '$state.eager version';
+	}
 
 	teardown(() => {
 		if (parent.f & DESTROYING) version_map.delete(parent);
@@ -1448,6 +1523,23 @@ export function fork(fn) {
 				set_eager_effects(eager_effects);
 				flush_eager_effects();
 			});
+
+			// let next_batch = batch.next;
+			// while (next_batch) {
+			// 	for (const [effect] of batch.async_deriveds) {
+			// 		if (next_batch.async_deriveds.has(effect)) {
+			// 			next_batch.dependent.add(batch);
+			// 			if (!next_batch.is_fork) {
+			// 				set_signal_status(effect, DIRTY); // TODO ideally we can find out if we really need to rerun or if all dependencies' values are equal
+			// 				// TODO same for block effects; ideally one mechanism for both
+			// 				next_batch.schedule(effect);
+			// 				const b = next_batch;
+			// 				queue_micro_task(() => b.flush());
+			// 			}
+			// 		}
+			// 	}
+			// 	next_batch = next_batch.next;
+			// }
 
 			batch.flush();
 			await settled;
