@@ -1,7 +1,7 @@
 /** @import { FunctionDeclaration } from 'estree' */
 /** @import { Context } from '../types' */
 import { visit_function } from './shared/function.js';
-import { validate_identifier_name } from './shared/utils.js';
+import { validate_identifier_name } from '../../scope.js';
 
 /**
  * @param {FunctionDeclaration} node

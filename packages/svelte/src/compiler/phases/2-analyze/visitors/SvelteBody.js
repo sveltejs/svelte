@@ -3,7 +3,7 @@
 import * as e from '../../../errors.js';
 import { custom_renderer } from '../../../state.js';
 import { is_event_attribute } from '../../../utils/ast.js';
-import { disallow_children } from './shared/special-element.js';
+import { disallow_children } from '../../nodes.js';
 import { check_global_event_reference } from './shared/utils.js';
 
 /**

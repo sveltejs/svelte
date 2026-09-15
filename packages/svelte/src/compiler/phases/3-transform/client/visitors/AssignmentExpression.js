@@ -9,10 +9,10 @@ import {
 	is_expression_async
 } from '../../../../utils/ast.js';
 import { dev, locate_node } from '../../../../state.js';
-import { build_getter, should_proxy } from '../utils.js';
+import { build_getter } from '../utils.js';
+import { should_proxy, get_rune } from '../../../scope.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 import { validate_mutation } from './shared/utils.js';
-import { get_rune } from '../../../scope.js';
 import { get_name } from '../../../nodes.js';
 
 /**
