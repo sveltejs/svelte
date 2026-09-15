@@ -111,26 +111,29 @@ export function parse(template, loose = false, erase = false) {
 	regex_lang_attribute.lastIndex = 0;
 	const ts = match_lang?.[2] === 'ts';
 
+	// the answer is plain objects that owe the source nothing, so the source is released as soon as
+	// it has parsed: left to the collector it costs more to finalize than a small component to parse
+	const source = new Source(trimmed, {
+		host: grammar,
+		sourceType: 'module',
+		typescript: ts && (erase ? 'erase' : true),
+		comments: true,
+		locations: true,
+		scopes: true,
+		errorRecovery: loose,
+		parenthesized: true,
+		// a script may export what the component declares elsewhere
+		allowUndeclaredExports: true
+	});
 	/** @type {Parsed<AST.Root>} */
 	let answer;
 	try {
-		answer = /** @type {any} */ (
-			new Source(trimmed, {
-				host: grammar,
-				sourceType: 'module',
-				typescript: ts && (erase ? 'erase' : true),
-				comments: true,
-				locations: true,
-				scopes: true,
-				errorRecovery: loose,
-				parenthesized: true,
-				// a script may export what the component declares elsewhere
-				allowUndeclaredExports: true
-			})
-		).parse();
+		answer = /** @type {any} */ (source.parse());
 	} catch (error) {
 		if (!(error instanceof SyntaxError)) throw error;
 		throw_error(/** @type {any} */ (error), trimmed);
+	} finally {
+		source[Symbol.dispose]();
 	}
 	unsupported(answer.typescript);
 
