@@ -2,6 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
+import { custom_renderer } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_expression, Memoizer } from './shared/utils.js';
 
@@ -44,6 +45,12 @@ export function RenderTag(node, context) {
 	);
 
 	if (node.metadata.dynamic) {
+		// In custom renderer components, validate that the snippet is compatible
+		// with the current renderer before rendering it
+		if (custom_renderer) {
+			snippet_function = b.call('$.validate_snippet_renderer', b.id('$renderer'), snippet_function);
+		}
+
 		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
 		if (node.expression.type === 'ChainExpression') {
 			snippet_function = b.logical('??', snippet_function, b.id('$.noop'));
@@ -57,6 +64,12 @@ export function RenderTag(node, context) {
 			)
 		);
 	} else {
+		// In custom renderer components, validate that the snippet is compatible
+		// with the current renderer before rendering it
+		if (custom_renderer) {
+			snippet_function = b.call('$.validate_snippet_renderer', b.id('$renderer'), snippet_function);
+		}
+
 		statements.push(
 			add_svelte_meta(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
