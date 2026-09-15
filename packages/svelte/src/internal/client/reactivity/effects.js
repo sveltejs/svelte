@@ -370,7 +370,9 @@ export function legacy_pre_effect_reset() {
  * @returns {Effect}
  */
 export function async_effect(fn) {
-	return create_effect(ASYNC | EFFECT_PRESERVED, fn);
+	const effect = create_effect(ASYNC | EFFECT_PRESERVED, fn);
+	current_batch?.effects_ran.add(effect);
+	return effect;
 }
 
 /**
@@ -417,6 +419,7 @@ export function block(fn, flags = 0) {
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
+	current_batch?.effects_ran.add(effect);
 	return effect;
 }
 

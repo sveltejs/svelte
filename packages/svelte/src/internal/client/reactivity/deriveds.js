@@ -181,21 +181,21 @@ export function async_derived(fn, label, location) {
 
 		var batch = /** @type {Batch} */ (current_batch);
 
-		let next_batch = batch.next;
-		while (next_batch) {
-			if (next_batch.async_deriveds.has(effect)) {
-				next_batch.dependent.add(batch);
-				if (!next_batch.is_fork) {
-					set_signal_status(effect, DIRTY); // TODO ideally we can find out if we really need to rerun or if all dependencies' values are equal
-					// TODO same for block effects; ideally one mechanism for both
-					next_batch.schedule(effect);
-					const b = next_batch;
-					queue_micro_task(() => b.flush());
-				}
-				break; // TODO break correct? Don't we need to do the rerun for all of them?
-			}
-			next_batch = next_batch.next;
-		}
+		// let next_batch = batch.next;
+		// while (next_batch) {
+		// 	if (next_batch.async_deriveds.has(effect)) {
+		// 		next_batch.dependent.add(batch);
+		// 		if (!next_batch.is_fork) {
+		// 			set_signal_status(effect, DIRTY); // TODO ideally we can find out if we really need to rerun or if all dependencies' values are equal
+		// 			// TODO same for block effects; ideally one mechanism for both
+		// 			next_batch.schedule(effect);
+		// 			const b = next_batch;
+		// 			queue_micro_task(() => b.flush());
+		// 		}
+		// 		break; // TODO break correct? Don't we need to do the rerun for all of them?
+		// 	}
+		// 	next_batch = next_batch.next;
+		// }
 
 		let prev = batch.prev;
 		while (prev) {
@@ -283,11 +283,9 @@ export function async_derived(fn, label, location) {
 		}
 	});
 
-	if (DEV) {
-		// add a flag that lets this be printed as a derived
-		// when using `$inspect.trace()`
-		signal.f |= ASYNC;
-	}
+	// Besides prod-logic this also helps in DEV to let this be printed
+	// as a derived when using `$inspect.trace()`
+	signal.f |= ASYNC;
 
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */

@@ -117,6 +117,9 @@ export class Batch {
 
 	linked = true;
 
+	/** @type {Set<Effect>} */
+	effects_ran = new Set();
+
 	/** @type {Batch | null} */
 	#prev = null;
 
@@ -143,6 +146,14 @@ export class Batch {
 	 * @type {Map<Value, any>}
 	 */
 	previous = new Map();
+
+	/**
+	 * TODO run this on fork commit, put in all the effects we have decided we need to rerun,
+	 * it's a map so that we can delete entries if later batches have runs in it; though
+	 * how do we know that this no longer counts for batch 3 but still for batch 2?
+	 * @type {Map<Effect, () => void>}
+	 */
+	on_fork_commit = new Map();
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
@@ -530,6 +541,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
+					this.effects_ran.add(effect);
 					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
 					update_effect(effect);
 				}
@@ -583,6 +595,53 @@ export class Batch {
 	}
 
 	/**
+	 * Mark all reactive trees leading to block/async effects that (indirectly) depend on `value`
+	 * @param {Value} value
+	 * @param {number} status
+	 * @param {boolean} not_yet - whether to mark effects that have not yet run, as opposed to those that have already run
+	 */
+	mark(value, status, not_yet = false) {
+		var reactions = value.reactions;
+		if (reactions === null) return false;
+		// skip if value is derived and is neither dirty nor maybe dirty. transitive
+		// deriveds (a derived depending on another derived) are only MAYBE_DIRTY, so
+		// we must continue traversing them to reach the effects that depend on them
+		// if ((value.f & DERIVED) !== 0 && (value.f & (DIRTY | MAYBE_DIRTY)) === 0) {
+		// 	return;
+		// }
+
+		let marked = false;
+
+		for (const reaction of reactions) {
+			var flags = reaction.f;
+
+			if ((flags & DERIVED) !== 0) {
+				if (this.mark(/** @type {Derived} */ (reaction), MAYBE_DIRTY, not_yet)) {
+					set_signal_status(/** @type {Derived} */ (reaction), status);
+					marked = true;
+				}
+			} else {
+				var effect = /** @type {Effect} */ (reaction);
+
+				if (
+					not_yet
+						? !this.effects_ran.has(effect) &&
+							!this.#dirty_effects.has(effect) &&
+							!this.#maybe_dirty_effects.has(effect)
+						: flags & (ASYNC | BLOCK_EFFECT) && this.effects_ran.has(effect)
+				) {
+					this.#maybe_dirty_effects.delete(effect);
+					set_signal_status(effect, status);
+					this.schedule(effect);
+					marked = true;
+				}
+			}
+		}
+
+		return marked;
+	}
+
+	/**
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
@@ -591,12 +650,40 @@ export class Batch {
 				this.previous.set(source, batch.previous.get(source));
 			}
 
+			if (this.current.get(source)?.[0] !== value[0]) {
+				// this.mark(source, DIRTY);
+			}
 			this.current.set(source, value);
 		}
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
 			if (d) deferred.promise.then(d.resolve).catch(d.reject);
+		}
+
+		for (const c of batch.#commit_callbacks) {
+			this.oncommit(() => c(batch));
+		}
+
+		for (const c of batch.#discard_callbacks) {
+			this.ondiscard(() => c(batch));
+		}
+
+		for (const [s, v] of batch.#skipped_branches) {
+			this.#skipped_branches.set(s, v);
+			this.#unskipped_branches.delete(s);
+		}
+
+		for (const s of batch.#unskipped_branches) {
+			const v = this.#skipped_branches.get(s);
+			// TODO i do wonder at this point if it's less code / easier / more robust to do what mark() below does
+			// instead and just rerun all the block effects. Though it will certainly overrun some blocks, potentially
+			// with bad consequences for e.g. each blocks (could generate a new array etc etc).
+			if (v) {
+				v.d = v.d.filter((e) => !batch.async_deriveds.has(e));
+				v.m = v.m.filter((e) => !batch.async_deriveds.has(e));
+			}
+			this.unskip_effect(s);
 		}
 
 		// Clear them or else those that are still pending might get rejected on discard (after merged-into batch is done).
@@ -633,7 +720,9 @@ export class Batch {
 					var effect = /** @type {Effect} */ (reaction);
 
 					// TODO this overfires e.g. for async-state-new-branch-fork-5 where it reruns
-					// the Child async effects with "world" after commit+first resolve.
+					// the Child async effects with "world" after commit+first resolve; generally
+					// overfires everywhere where the merged effect has async deriveds that are not
+					// in the earlier batch, which it definitely should not rerun.
 					if (flags & (ASYNC | BLOCK_EFFECT) && !this.async_deriveds.has(effect)) {
 						this.#maybe_dirty_effects.delete(effect);
 						set_signal_status(effect, DIRTY);
@@ -643,9 +732,9 @@ export class Batch {
 			}
 		};
 
-		for (const source of this.current.keys()) {
-			mark(source);
-		}
+		// for (const source of this.current.keys()) {
+		// 	mark(source);
+		// }
 
 		this.oncommit(() => batch.discard());
 		batch.#unlink();
@@ -690,18 +779,41 @@ export class Batch {
 			batch = batch.#prev;
 		}
 
-		if (!this.is_fork) {
-			let is_latest_value = true;
-			batch = this.#next;
-			while (batch) {
-				if (batch.current.has(source)) {
-					is_latest_value = false;
-					break;
+		let is_latest_value = true;
+		batch = this.#next;
+		while (batch) {
+			if (source.f & ASYNC) {
+				const b = batch;
+				const run = () => {
+					if (b.mark(source, DIRTY)) {
+						b.flush();
+					}
+				};
+				if (this.is_fork) {
+					// this.on_fork_commit.set({}, run); // TODO
+				} else {
+					queue_micro_task(run);
 				}
-				batch = batch.#next;
 			}
-			if (is_latest_value) source.v = value;
+			if (batch.current.has(source)) {
+				is_latest_value = false;
+			}
+			batch = batch.#next;
 		}
+		if (is_latest_value && !this.is_fork) source.v = value;
+
+		// if (!this.is_fork) {
+		// 	let is_latest_value = true;
+		// 	batch = this.#next;
+		// 	while (batch) {
+		// 		if (batch.current.has(source)) {
+		// 			is_latest_value = false;
+		// 			break;
+		// 		}
+		// 		batch = batch.#next;
+		// 	}
+		// 	if (is_latest_value) source.v = value;
+		// }
 	}
 
 	activate() {
@@ -1505,6 +1617,8 @@ export function fork(fn) {
 			for (var [source, [value]] of batch.current) {
 				source.v = value;
 				source.wv = increment_write_version();
+				// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
+				batch.mark(source, DIRTY, true); // TODO probably better to only DIRTY on first non-seen derived
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
@@ -1524,6 +1638,18 @@ export function fork(fn) {
 				flush_eager_effects();
 			});
 
+			let next_batch = batch.next;
+			while (next_batch) {
+				for (const [source, [, is_derived]] of batch.current) {
+					if (!is_derived && !next_batch.current.has(source)) {
+						if (next_batch.mark(source, DIRTY)) {
+							next_batch.flush();
+						}
+					}
+				}
+				next_batch = next_batch.next;
+			}
+
 			// let next_batch = batch.next;
 			// while (next_batch) {
 			// 	for (const [effect] of batch.async_deriveds) {
@@ -1539,6 +1665,10 @@ export function fork(fn) {
 			// 		}
 			// 	}
 			// 	next_batch = next_batch.next;
+			// }
+
+			// for (const run of batch.on_fork_commit.values()) {
+			// 	run();
 			// }
 
 			batch.flush();
