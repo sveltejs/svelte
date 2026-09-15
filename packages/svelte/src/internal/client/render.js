@@ -45,7 +45,7 @@ export function set_should_intro(value) {
  */
 export function set_text(text, value) {
 	// For objects, we apply string coercion (which might make things like $state array references in the template reactive) before diffing
-	var str = value == null ? '' : typeof value === 'object' ? `${value}` : value;
+	var str = value == null || typeof value === 'symbol' ? '' : typeof value === 'object' ? `${value}` : value;
 	// prettier-ignore
 	if (str !== (/** @type {any} */ (text)[TEXT_CACHE] ??= text.nodeValue)) {
 		/** @type {any} */ (text)[TEXT_CACHE] = str;
