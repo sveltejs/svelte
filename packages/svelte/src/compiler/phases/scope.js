@@ -5,7 +5,7 @@ import { walk } from 'zimmerframe';
 import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
 import * as e from '../errors.js';
-import { bindingOf, parentOf } from '@teasel/parser';
+import { referenceOf, parentOf } from '@teasel/parser';
 import {
 	extract_identifiers,
 	tables_of,
@@ -1086,6 +1086,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			answer.bindings.length === 0
 		) {
 			for (const reference of answer.references) {
+				if (reference.declares) continue;
 				references.push(new Reference(reference.node, scope, path, false, undefined, reference));
 			}
 			return;
@@ -1182,6 +1183,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			]);
 		}
 		for (const reference of answer.references) {
+			if (reference.declares) continue;
 			const binding = reference.binding === null ? undefined : from_parser.get(reference.binding);
 			entries.push([
 				reference.node,
@@ -1232,7 +1234,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 	/** The parser's declaration a Svelte binding stands for, once declared. @param {Identifier} id */
 	function declared(id) {
-		const parsed = bindingOf(id);
+		const parsed = referenceOf(id)?.binding;
 		return parsed ? from_parser.get(parsed) : undefined;
 	}
 

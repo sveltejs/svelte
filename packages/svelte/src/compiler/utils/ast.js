@@ -1,7 +1,7 @@
 /** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
-import { bindingOf } from '@teasel/parser';
+import { referenceOf } from '@teasel/parser';
 
 /**
  * @typedef {import('@teasel/parser').Root} Tables
@@ -673,8 +673,7 @@ export const value_names = new WeakSet();
  * @param {ESTree.Node | AST.SvelteNode | null | undefined} parent
  */
 export function is_reference(node, parent) {
-	const binding = bindingOf(node);
-	if (binding !== undefined || value_names.has(node)) return true;
+	if (referenceOf(node) !== undefined || value_names.has(node)) return true;
 	if (!parent) return true;
 	switch (parent.type) {
 		case 'MemberExpression':
