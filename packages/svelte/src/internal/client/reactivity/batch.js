@@ -465,11 +465,12 @@ export class Batch {
 		this.#dirty_effects.clear();
 		this.#maybe_dirty_effects.clear();
 
+		this.apply(true);
+
 		// append/remove branches
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
 
-		this.apply(true);
 		previous_batch = this;
 		flush_queued_effects(render_effects);
 		flush_queued_effects(effects);
