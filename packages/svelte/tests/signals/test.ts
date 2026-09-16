@@ -18,6 +18,8 @@ import { SvelteSet } from '../../src/reactivity/set';
 import { DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
+import * as batch_module from '../../src/internal/client/reactivity/batch';
+import type { Batch } from '../../src/internal/client/reactivity/batch';
 
 /**
  * @param runes runes mode
@@ -1630,4 +1632,52 @@ describe('signals', () => {
 			pop();
 		}
 	});
+
+	// A committed batch stays reachable from an `{#await}` block or a `save()` thunk for the
+	// block's lifetime, so once it leaves the batch list it must let go of the values it captured
+	for (const async_mode of [false, true]) {
+		it(`releases a committed batch's bookkeeping once it is unlinked (async mode: ${async_mode})`, () => {
+			push({}, true);
+			if (async_mode) enable_async_mode_flag();
+
+			const a = state(0);
+			const b = state(0);
+			const log: number[] = [];
+			let batch: Batch | null = null;
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(a) + $.get(b));
+				});
+			});
+
+			try {
+				flushSync();
+
+				flushSync(() => {
+					set(a, 1);
+					set(b, 2);
+					batch = batch_module.current_batch;
+					assert.ok(batch);
+					assert.equal(batch!.linked, true);
+					assert.equal(batch!.current.size, 2);
+					assert.equal(batch!.previous.size, 2);
+				});
+
+				assert.deepEqual(log, [0, 3]);
+				assert.equal(batch!.linked, false);
+				assert.equal(batch!.current.size, 0);
+				assert.equal(batch!.previous.size, 0);
+
+				// the released batch must not interfere with later ones
+				flushSync(() => set(a, 5));
+				assert.deepEqual(log, [0, 3, 7]);
+				assert.equal(batch!.current.size, 0);
+			} finally {
+				destroy();
+				if (async_mode) disable_async_mode_flag();
+				pop();
+			}
+		});
+	}
 });
