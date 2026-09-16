@@ -15,7 +15,7 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { DESTROYED } from '../../src/internal/client/constants';
+import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
@@ -1516,9 +1516,65 @@ describe('signals', () => {
 
 			destroy();
 
-			// a was spuriously added to s.reactions via is_updating_effect
+			// a was spuriously added to s.reactions
 			// even though the entire derived chain was read in an untracked context
 			assert.equal(s.reactions, null);
+		};
+	});
+
+	test('untracked derived reads inside effects do not reconnect disconnected dependencies', () => {
+		return () => {
+			const source = state({ n: 1, items: [1] });
+			const data = derived(() => $.get(source));
+			const items = derived(() => $.get(data).items);
+			const count = derived(() => Math.max(1, $.get(items).length));
+			const snapshot = derived(() => ({ n: $.get(data).n, count: $.get(count) }));
+			const show = state(true);
+			const trigger = state(0);
+			let rendered = -1;
+			let seen: { n: number; count: number } | undefined;
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					if ($.get(show)) {
+						render_effect(() => {
+							rendered = $.get(snapshot).count;
+						});
+					}
+				});
+
+				render_effect(() => {
+					$.get(trigger);
+					seen = $.untrack(() => $.get(snapshot));
+				});
+			});
+
+			flushSync();
+			assert.equal(rendered, 1);
+
+			flushSync(() => set(show, false));
+			assert.equal(source.reactions, null);
+
+			flushSync(() => set(source, { n: 2, items: [1, 2] }));
+			flushSync(() => set(trigger, 1));
+
+			assert.deepEqual(seen, { n: 2, count: 2 });
+			assert.equal(source.reactions, null);
+			assert.equal(items.reactions, null);
+			assert.equal(count.reactions, null);
+			assert.equal(items.f & CONNECTED, 0);
+			assert.equal(count.f & CONNECTED, 0);
+
+			flushSync(() => set(show, true));
+			assert.equal(rendered, 2);
+			assert.equal(source.reactions?.length, 1);
+
+			flushSync(() => set(source, { n: 3, items: [1] }));
+			assert.equal(rendered, 1);
+
+			destroy();
+			flushSync();
+			assert.equal(source.reactions, null);
 		};
 	});
 
