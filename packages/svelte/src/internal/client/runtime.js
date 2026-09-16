@@ -560,8 +560,6 @@ export function get(signal) {
 		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
-		first_time = (active_reaction.f & REACTION_RAN) === 0;
-
 		if (!destroyed && (current_sources === null || !current_sources.has(signal))) {
 			var deps = active_reaction.deps;
 
@@ -577,8 +575,10 @@ export function get(signal) {
 						skipped_deps++;
 					} else if (new_deps === null) {
 						new_deps = [signal];
+						first_time = true;
 					} else {
 						new_deps.push(signal);
+						first_time = true;
 					}
 				}
 			} else {
@@ -590,6 +590,7 @@ export function get(signal) {
 				active_reaction.deps ??= [];
 				if (!includes.call(active_reaction.deps, signal)) {
 					active_reaction.deps.push(signal);
+					first_time = true;
 				}
 
 				var reactions = signal.reactions;
