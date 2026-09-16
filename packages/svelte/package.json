@@ -56,6 +56,9 @@
     "./internal/client": {
       "default": "./src/internal/client/index.js"
     },
+    "./internal/client/custom-element": {
+      "default": "./src/internal/client/dom/elements/custom-element.js"
+    },
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },

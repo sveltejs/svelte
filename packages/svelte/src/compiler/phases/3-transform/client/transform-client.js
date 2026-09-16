@@ -140,7 +140,18 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
+		hoisted: [
+			b.import_all('$', 'svelte/internal/client'),
+			...(analysis.custom_element
+				? [
+						b.imports(
+							[['create_custom_element', '$$_create_custom_element']],
+							'svelte/internal/client/custom-element'
+						)
+					]
+				: []),
+			...analysis.instance_body.hoisted
+		],
 		templates: new Map(),
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
@@ -641,7 +652,7 @@ export function client_component(analysis, options) {
 		}
 
 		const create_ce = b.call(
-			'$.create_custom_element',
+			'$$_create_custom_element',
 			b.id(analysis.name),
 			b.object(props_str),
 			slots_str,

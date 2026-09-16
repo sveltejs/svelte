@@ -14,7 +14,9 @@ import { create_element } from '../operations.js';
 /** @type {any} */
 let SvelteElement;
 
-if (typeof HTMLElement === 'function') {
+function get_svelte_element() {
+	if (SvelteElement !== undefined || typeof HTMLElement !== 'function') return SvelteElement;
+
 	SvelteElement = class extends HTMLElement {
 		/** The Svelte component constructor */
 		$$ctor;
@@ -223,6 +225,8 @@ if (typeof HTMLElement === 'function') {
 			);
 		}
 	};
+
+	return SvelteElement;
 }
 
 /**
@@ -294,7 +298,7 @@ export function create_custom_element(
 	shadow_root_init,
 	extend
 ) {
-	let Class = class extends SvelteElement {
+	let Class = class extends get_svelte_element() {
 		constructor() {
 			super(Component, slots, shadow_root_init);
 			this.$$p_d = props_definition;

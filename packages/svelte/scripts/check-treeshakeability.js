@@ -147,6 +147,7 @@ function check_bundle(case_name, ...strings) {
 
 check_bundle('Hydration code', 'hydrate_node', 'hydrate_next');
 check_bundle('Legacy code', 'component_context.l');
+check_bundle('Custom element code', 'observedAttributes');
 check_bundle('$inspect.trace', `'CreatedAt'`);
 
 if (failed) {
