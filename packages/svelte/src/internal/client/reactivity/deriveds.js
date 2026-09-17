@@ -122,6 +122,10 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
+	// Besides prod-logic this also helps in DEV to let this be printed
+	// as a derived when using `$inspect.trace()`
+	signal.f |= ASYNC;
+
 	if (DEV) signal.label = label ?? fn.toString();
 
 	// only suspend in async deriveds created on initialisation
@@ -130,7 +134,8 @@ export function async_derived(fn, label, location) {
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
 
-	async_effect(() => {
+	// TODO types; add to source, or special object to not have all the other objects contain another property?
+	signal.e = async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
 		if (DEV) {
@@ -269,6 +274,7 @@ export function async_derived(fn, label, location) {
 					});
 				}
 
+				debugger;
 				internal_set(signal, value);
 			}
 
@@ -283,10 +289,6 @@ export function async_derived(fn, label, location) {
 			d.reject(OBSOLETE);
 		}
 	});
-
-	// Besides prod-logic this also helps in DEV to let this be printed
-	// as a derived when using `$inspect.trace()`
-	signal.f |= ASYNC;
 
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */

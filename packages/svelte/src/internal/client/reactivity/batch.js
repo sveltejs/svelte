@@ -112,7 +112,7 @@ export class Batch {
 	id = uid++;
 
 	/** True as soon as `#process` was called */
-	#started = false;
+	started = false;
 
 	// TODO temporary
 	get next() {
@@ -124,6 +124,9 @@ export class Batch {
 	}
 
 	linked = true;
+
+	/** @type {Map<Effect, number>} */
+	stale_effects = new Map();
 
 	/** @type {Set<Effect>} */
 	effects_ran = new Set();
@@ -224,6 +227,10 @@ export class Batch {
 	 * @type {Set<Effect>}
 	 */
 	#maybe_dirty_effects = new Set();
+
+	get maybe_dirty_effects() {
+		return this.#maybe_dirty_effects; // TODO temporary
+	}
 
 	/**
 	 * Deferred derived effects that are DIRTY
@@ -378,7 +385,7 @@ export class Batch {
 	}
 
 	#process() {
-		this.#started = true;
+		this.started = true;
 
 		if (DEV) {
 			// track all the values that were updated during this flush,
@@ -399,8 +406,10 @@ export class Batch {
 		}
 
 		for (const e of this.#maybe_dirty_effects) {
-			set_signal_status(e, MAYBE_DIRTY);
-			this.schedule(e);
+			if ((e.f & DIRTY) === 0) {
+				set_signal_status(e, MAYBE_DIRTY);
+				this.schedule(e);
+			}
 		}
 
 		for (const d of this.#dirty_deriveds) {
@@ -417,7 +426,7 @@ export class Batch {
 		// TODO does this make the similar logic in fork.commit below obsolete?
 		// TODO feels correct but breaks many tests
 		// for (const [s, [_, is_derived]] of this.current) {
-		// 	if (!is_derived) this.mark(s, DIRTY, true);
+		// if (!is_derived) this.mark(s, MAYBE_DIRTY, true);
 		// }
 
 		this.apply();
@@ -822,19 +831,12 @@ export class Batch {
 			wv_values?.set(source, wv);
 		}
 
-		let batch = this.#prev;
-		while (batch) {
-			if (batch.current.has(source)) {
-				this.dependent.add(batch);
-				break;
-			}
-			batch = batch.#prev;
-		}
-
+		let batch = this.#next;
 		let is_latest_value = !this.is_fork;
-		batch = this.#next;
 		while (batch) {
 			if (source.f & ASYNC) {
+				// TODO I think this is wrong IF the async source was already written to by a later batch;
+				// we gotta check if it's the source is also part of the later batch.
 				const b = batch;
 				const run = () => {
 					if (b.mark(source, DIRTY)) {
@@ -842,7 +844,7 @@ export class Batch {
 					}
 				};
 				if (this.is_fork) {
-					// this.on_fork_commit.set({}, run); // TODO
+					// this.on_fork_commit.set({}, run); // TODO done by mark in commit already?
 				} else {
 					queue_micro_task(run);
 				}
@@ -869,6 +871,34 @@ export class Batch {
 		if (is_latest_value) {
 			source.v = value;
 			source.wv = wv;
+		}
+
+		batch = first_batch;
+		while (batch) {
+			if (batch.id < this.id && batch.current.has(source)) {
+				this.dependent.add(batch);
+			}
+			if (
+				batch.is_fork &&
+				is_latest_value &&
+				((!batch.current.has(source) && !is_derived) ||
+					/** @type {[any, boolean, number]} */ (batch.current.get(source))[0] !== value) &&
+				((source.f & ASYNC) === 0 ||
+					!depends_on(
+						source.e,
+						[...batch.current.keys()].filter((s) => !this.current.has(s)),
+						new Map()
+					))
+			) {
+				batch.current.set(source, [value, is_derived, wv]);
+				const b = batch;
+				queue_micro_task(() => {
+					if (b.mark(source, DIRTY)) {
+						b.flush();
+					}
+				});
+			}
+			batch = batch.#next;
 		}
 
 		// if (!this.is_fork) {
@@ -989,7 +1019,7 @@ export class Batch {
 			);
 
 			// If not started yet or no sources to update (which is e.g. possible for the very first batch) then bail
-			if (!batch.#started || current.length === 0) continue;
+			if (!batch.started || current.length === 0) continue;
 
 			// Re-run async/block effects that depend on distinct values changed in both batches (ignoring deriveds)
 			var others = current.filter((source) => !this.current.has(source));
@@ -1161,7 +1191,7 @@ export class Batch {
 
 			if (!is_processing && !is_flushing_sync) {
 				queue_micro_task(() => {
-					if (!batch.#started) {
+					if (!batch.started) {
 						batch.flush();
 					}
 				});
@@ -1301,6 +1331,8 @@ export class Batch {
  */
 export function flushSync(fn) {
 	var was_flushing_sync = is_flushing_sync;
+	var prev_previous_batch = previous_batch;
+	previous_batch = null;
 	is_flushing_sync = true;
 
 	try {
@@ -1325,6 +1357,7 @@ export function flushSync(fn) {
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
+		previous_batch = prev_previous_batch;
 	}
 }
 
@@ -1708,13 +1741,14 @@ export function fork(fn) {
 				// but has false positives (i.e. values not updated when they should). Needs a better mechanism
 				// maybe current has a fourth entry, "outdated" boolean, and later batches set it for earlier ones?
 				// if (wv >= source.wv) {
-				source.v = value;
 				// Do not use cached wv here; real world might have executed a dependent derived and now have a later version
 				// TODO we need to ensure that the version bumps happen "in order", e.g. in case of source1->derived2 we need to bump S last
-				source.wv = increment_write_version();
 				// }
 
 				if (!is_derived) {
+					source.v = value;
+					source.wv = increment_write_version();
+					// batch.mark(source, ...) TODO re-maybe-dirty- everything?
 					// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
 					batch.mark(source, DIRTY, true); // TODO probably better to only DIRTY on first non-seen derived
 				}

@@ -489,7 +489,64 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-		effect.wv = write_version;
+
+		// TODO consolidate with similar logic in batch.capture()
+		var own_batch = previous_batch ?? current_batch;
+		let is_latest_value = true;
+		// Can be falsy inside flush_eager_effects
+		if (own_batch) {
+			is_latest_value = !own_batch.is_fork;
+			var batch = own_batch.next;
+			while (batch) {
+				if (
+					batch.started && // when flushing user effects writes sources which creates a new batch, then ignore that one
+					(!is_latest_value ||
+						// Check derived's dependencies for outdated values. We only have to check one
+						// level because is_dirty etc will execute the top-most deriveds first, whose result
+						// the later deriveds can use to make a decision ("oh this derived's value is different to what I cached")
+						effect.deps?.some((d) => {
+							var other_current = /** @type {Batch} */ (batch).current;
+							var own_current = /** @type {Batch} */ (own_batch).current;
+							// const y =
+							// 	other_current.has(d) ||
+							// 	(own_current.has(d) &&
+							// 		/** @type {[any, boolean, number]} */ (own_current.get(d))[0] !== d.v);
+							// if (y) debugger;
+							// const x =
+							// 	other_current.has(d) &&
+							// 	(!own_current.has(d) ||
+							// 		/** @type {[any, boolean, number]} */ (own_current.get(d))[0] !==
+							// 			/** @type {[any, boolean, number]} */ (other_current.get(d))[0]);
+							// if (x) debugger;
+							const z = (own_current.get(d)?.[2] ?? d.wv) != d.wv;
+							return z;
+						}))
+				) {
+					is_latest_value = false;
+				}
+				batch = batch.next;
+			}
+		}
+
+		if (is_latest_value) {
+			effect.wv = write_version;
+		} else {
+			// console.log('setting', effect.wv, effect, 'to', write_version, is_latest_value);
+			// effect.wv = write_version;
+			// set_signal_status(effect, MAYBE_DIRTY);
+			// debugger;
+			if (!is_latest_value) {
+				/** @type {Batch} */ (own_batch).stale_effects.set(effect, write_version);
+				var batch = /** @type {Batch} */ (own_batch).next;
+				while (batch) {
+					batch.maybe_dirty_effects.add(effect);
+					batch = batch.next;
+				}
+			}
+
+			// TODO add to maybe_dirty_effects in all subsequent batches here,
+			// removing need for other cross-batch rerun mechanisms / remove need for adding blocks to maybe_dirty?
+		}
 
 		// In DEV, increment versions of any sources that were written to during the effect,
 		// so that they are correctly marked as dirty when the effect re-runs
@@ -719,9 +776,11 @@ export function get(signal) {
 	}
 
 	if (
-		// TODO correct?! I think the failure can only occur in case we see new values for the first time while flushing (render)effects
-		(!first_time ||
-			!previous_batch) /* || current_batch?.is_fork) || signal.v === UNINITIALIZED*/ &&
+		// TODO correct?! I thought the failure can only occur in case we see new values for the first time while flushing (render)effects,
+		// but it can also occur when resolving async deriveds after creating them for the first time, which can happen outside
+		// the effects flush phase.
+		(!first_time || !previous_batch) &&
+		// (!first_time || current_batch?.is_fork || signal.v === UNINITIALIZED) &&
 		batch_values?.has(signal)
 	) {
 		return batch_values.get(signal);
