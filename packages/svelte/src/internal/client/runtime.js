@@ -52,7 +52,8 @@ import {
 	flushSync,
 	held_sources,
 	previous_batch,
-	schedule_effect
+	schedule_effect,
+	wv_values
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
@@ -164,6 +165,8 @@ export function is_dirty(reaction) {
 		return true;
 	}
 
+	var wv = wv_values?.get(reaction) ?? reaction.wv;
+
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = /** @type {Value[]} */ (reaction.deps);
 		var length = dependencies.length;
@@ -175,7 +178,7 @@ export function is_dirty(reaction) {
 				update_derived(/** @type {Derived} */ (dependency));
 			}
 
-			if (dependency.wv > reaction.wv) {
+			if ((wv_values?.get(dependency) ?? dependency.wv) > wv) {
 				return true;
 			}
 		}
@@ -715,7 +718,12 @@ export function get(signal) {
 		current_batch.dependent.add(/** @type {Batch} */ (held_sources.get(signal)));
 	}
 
-	if ((!first_time || current_batch?.is_fork) && batch_values?.has(signal)) {
+	if (
+		// TODO correct?! I think the failure can only occur in case we see new values for the first time while flushing (render)effects
+		(!first_time ||
+			!previous_batch) /* || current_batch?.is_fork) || signal.v === UNINITIALIZED*/ &&
+		batch_values?.has(signal)
+	) {
 		return batch_values.get(signal);
 	}
 

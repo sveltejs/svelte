@@ -196,6 +196,22 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			old_values.set(source, source.v);
 		}
 
+		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
+			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
+			if ((source.f & DIRTY) !== 0) {
+				execute_derived(derived);
+			}
+
+			// During time traveling we don't want to reset the status so that
+			// traversal of the graph in the other batches still happens
+			// TODO
+			if (batch_values === null) {
+				update_derived_status(derived);
+			}
+		}
+
 		var batch = Batch.ensure();
 		batch.capture(source, value);
 
@@ -228,23 +244,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 				source.set_during_effect = true;
 			}
 		}
-
-		if ((source.f & DERIVED) !== 0) {
-			const derived = /** @type {Derived} */ (source);
-
-			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
-			if ((source.f & DIRTY) !== 0) {
-				execute_derived(derived);
-			}
-
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			if (batch_values === null) {
-				update_derived_status(derived);
-			}
-		}
-
-		source.wv = increment_write_version();
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);

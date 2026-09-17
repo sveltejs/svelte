@@ -1,5 +1,5 @@
 /** @import { Fork } from 'svelte' */
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -63,6 +63,14 @@ export let previous_batch = null;
  * @type {Map<Value, any> | null}
  */
 export let batch_values = null;
+
+/**
+ * When time travelling (i.e. working in one batch, while other batches
+ * still have ongoing work), we ignore the real wv of affected
+ * signals in favour of their wv within the batch
+ * @type {Map<Signal, number> | null}
+ */
+export let wv_values = null;
 
 /**
  * Sources which were written to before the current batch. Used to discover dependencies between batches.
@@ -136,7 +144,7 @@ export class Batch {
 	 * The current values of any signals that are updated in this batch.
 	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
 	 * They keys of this map are identical to `this.#previous`
-	 * @type {Map<Value, [any, boolean]>}
+	 * @type {Map<Value, [any, boolean, number]>}
 	 */
 	current = new Map();
 
@@ -216,6 +224,18 @@ export class Batch {
 	 * @type {Set<Effect>}
 	 */
 	#maybe_dirty_effects = new Set();
+
+	/**
+	 * Deferred derived effects that are DIRTY
+	 * @type {Set<Derived>}
+	 */
+	#dirty_deriveds = new Set();
+
+	/**
+	 * Deferred derived effects that are MAYBE_DIRTY
+	 * @type {Set<Derived>}
+	 */
+	#maybe_dirty_deriveds = new Set();
 
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
@@ -382,6 +402,23 @@ export class Batch {
 			set_signal_status(e, MAYBE_DIRTY);
 			this.schedule(e);
 		}
+
+		for (const d of this.#dirty_deriveds) {
+			this.#maybe_dirty_deriveds.delete(d);
+			set_signal_status(d, DIRTY);
+		}
+
+		for (const d of this.#maybe_dirty_deriveds) {
+			set_signal_status(d, MAYBE_DIRTY);
+		}
+
+		// An earlier batch might have created new branches which contain effects that we need
+		// to mark as dirty to also execute them.
+		// TODO does this make the similar logic in fork.commit below obsolete?
+		// TODO feels correct but breaks many tests
+		// for (const [s, [_, is_derived]] of this.current) {
+		// 	if (!is_derived) this.mark(s, DIRTY, true);
+		// }
 
 		this.apply();
 
@@ -692,7 +729,12 @@ export class Batch {
 		batch.async_deriveds.clear();
 
 		// Mark is not guaranteed not touch these, so we transfer them
-		this.transfer_effects(batch.#dirty_effects, batch.#maybe_dirty_effects);
+		this.transfer_effects(
+			batch.#dirty_effects,
+			batch.#maybe_dirty_effects,
+			batch.#dirty_deriveds,
+			batch.#maybe_dirty_deriveds
+		);
 
 		/**
 		 * mark all effects that depend on `batch.current`, except the
@@ -749,7 +791,13 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(effects[i], this.#dirty_effects, this.#maybe_dirty_effects);
+			defer_effect(
+				effects[i],
+				this.#dirty_effects,
+				this.#maybe_dirty_effects,
+				this.#dirty_deriveds,
+				this.#maybe_dirty_deriveds
+			);
 		}
 	}
 
@@ -765,10 +813,13 @@ export class Batch {
 			this.previous.set(source, source.v);
 		}
 
+		const wv = increment_write_version();
+
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, [value, is_derived]);
+			this.current.set(source, [value, is_derived, wv]);
 			batch_values?.set(source, value);
+			wv_values?.set(source, wv);
 		}
 
 		let batch = this.#prev;
@@ -780,7 +831,7 @@ export class Batch {
 			batch = batch.#prev;
 		}
 
-		let is_latest_value = true;
+		let is_latest_value = !this.is_fork;
 		batch = this.#next;
 		while (batch) {
 			if (source.f & ASYNC) {
@@ -796,12 +847,29 @@ export class Batch {
 					queue_micro_task(run);
 				}
 			}
-			if (batch.current.has(source)) {
+			if (
+				!is_latest_value ||
+				batch.current.has(source) ||
+				// Check derived's dependencies for outdated values. We only have to check one
+				// level because is_dirty etc will execute the top-most deriveds first, whose result
+				// the later deriveds can use to make a decision ("oh this derived's value is different to what I cached")
+				((source.f & DERIVED) !== 0 &&
+					/** @type {Derived} */ (source).deps?.some(
+						(d) =>
+							/** @type {Batch} */ (batch).current.has(d) ||
+							(this.current.has(d) &&
+								/** @type {[any, boolean, number]} */ (this.current.get(d))[0] !== d.v)
+					))
+			) {
 				is_latest_value = false;
 			}
 			batch = batch.#next;
 		}
-		if (is_latest_value && !this.is_fork) source.v = value;
+
+		if (is_latest_value) {
+			source.v = value;
+			source.wv = wv;
+		}
 
 		// if (!this.is_fork) {
 		// 	let is_latest_value = true;
@@ -824,6 +892,7 @@ export class Batch {
 	deactivate() {
 		current_batch = null;
 		batch_values = null;
+		wv_values = null;
 	}
 
 	flush() {
@@ -845,6 +914,7 @@ export class Batch {
 
 			current_batch = null;
 			batch_values = null;
+			wv_values = null;
 
 			old_values.clear();
 
@@ -876,6 +946,7 @@ export class Batch {
 	}
 
 	#commit() {
+		// TODO we might need a subset of this still to auto-discard forks
 		return;
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
@@ -1046,14 +1117,24 @@ export class Batch {
 	/**
 	 * @param {Set<Effect>} dirty_effects
 	 * @param {Set<Effect>} maybe_dirty_effects
+	 * @param {Set<Derived>} dirty_deriveds
+	 * @param {Set<Derived>} maybe_dirty_deriveds
 	 */
-	transfer_effects(dirty_effects, maybe_dirty_effects) {
+	transfer_effects(dirty_effects, maybe_dirty_effects, dirty_deriveds, maybe_dirty_deriveds) {
 		for (const e of dirty_effects) {
 			this.#dirty_effects.add(e);
 		}
 
 		for (const e of maybe_dirty_effects) {
 			this.#maybe_dirty_effects.add(e);
+		}
+
+		for (const d of dirty_deriveds) {
+			this.#dirty_deriveds.add(d);
+		}
+
+		for (const d of maybe_dirty_deriveds) {
+			this.#maybe_dirty_deriveds.add(d);
 		}
 
 		dirty_effects.clear();
@@ -1093,15 +1174,18 @@ export class Batch {
 	apply(include_later = false) {
 		if (!async_mode_flag || (!this.is_fork && this.#prev === null && this.#next === null)) {
 			batch_values = null;
+			wv_values = null;
 			return;
 		}
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map();
+		wv_values = new Map();
 		held_sources = new Map();
-		for (const [source, [value]] of this.current) {
+		for (const [source, [value, _, wv]] of this.current) {
 			batch_values.set(source, value);
+			wv_values.set(source, wv);
 		}
 
 		for (let batch = first_batch; batch !== null; batch = batch.#next) {
@@ -1117,7 +1201,10 @@ export class Batch {
 
 			if (batch.id > this.id || include_later || this.is_eager) {
 				for (const [source, value] of batch.previous) {
-					if (!batch_values.has(source)) batch_values.set(source, value);
+					if (!batch_values.has(source)) {
+						batch_values.set(source, value);
+						// TODO I think we need previous_wv in batch.previous
+					}
 				}
 			}
 		}
@@ -1593,6 +1680,7 @@ export function fork(fn) {
 	var batch = Batch.ensure();
 	batch.is_fork = true;
 	batch_values = new Map();
+	wv_values = new Map();
 
 	var committed = false;
 	var settled = batch.settled();
@@ -1615,11 +1703,21 @@ export function fork(fn) {
 			batch.is_fork = false;
 
 			// apply changes and update write versions so deriveds see the change
-			for (var [source, [value]] of batch.current) {
+			for (var [source, [value, is_derived, wv]] of batch.current) {
+				// TODO this if-block tries to accomodate the fact that this value might be obsoleted by a subsequent batch already;
+				// but has false positives (i.e. values not updated when they should). Needs a better mechanism
+				// maybe current has a fourth entry, "outdated" boolean, and later batches set it for earlier ones?
+				// if (wv >= source.wv) {
 				source.v = value;
+				// Do not use cached wv here; real world might have executed a dependent derived and now have a later version
+				// TODO we need to ensure that the version bumps happen "in order", e.g. in case of source1->derived2 we need to bump S last
 				source.wv = increment_write_version();
-				// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
-				batch.mark(source, DIRTY, true); // TODO probably better to only DIRTY on first non-seen derived
+				// }
+
+				if (!is_derived) {
+					// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
+					batch.mark(source, DIRTY, true); // TODO probably better to only DIRTY on first non-seen derived
+				}
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
@@ -1679,9 +1777,9 @@ export function fork(fn) {
 			// cause any MAYBE_DIRTY deriveds to update
 			// if they depend on things thath changed
 			// inside the discarded fork
-			for (var source of batch.current.keys()) {
-				source.wv = increment_write_version();
-			}
+			// for (var source of batch.current.keys()) {
+			// 	source.wv = increment_write_version();
+			// }
 
 			if (!committed && batch.linked) {
 				batch.discard();
