@@ -47,7 +47,7 @@ import { Batch, collected_effects, current_batch } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
-import { push_renderer, current_renderer } from '../custom-renderer/state.js';
+import { push_renderer, current_renderer, parent_renderer } from '../custom-renderer/state.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -116,7 +116,8 @@ function create_effect(type, fn) {
 		teardown: null,
 		wv: 0,
 		ac: null,
-		r: current_renderer
+		r: current_renderer,
+		pr: parent_renderer
 	};
 
 	if (DEV) {
@@ -520,60 +521,63 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	var pop_renderer = push_renderer(effect.r);
+	var pop_renderer = push_renderer(effect.r, effect.pr);
 
-	if (
-		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
-		effect.nodes !== null &&
-		effect.nodes.end !== null
-	) {
-		remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
-		removed = true;
-	}
-
-	effect.f |= DESTROYING;
-	destroy_effect_children(effect, remove_dom && !removed);
-	remove_reactions(effect, 0);
-
-	var transitions = effect.nodes && effect.nodes.t;
-
-	if (transitions !== null) {
-		for (const transition of transitions) {
-			transition.stop();
+	try {
+		if (
+			(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
+			effect.nodes !== null &&
+			effect.nodes.end !== null
+		) {
+			remove_effect_nodes(effect);
+			removed = true;
 		}
+
+		effect.f |= DESTROYING;
+		destroy_effect_children(effect, remove_dom && !removed);
+		remove_reactions(effect, 0);
+
+		var transitions = effect.nodes && effect.nodes.t;
+
+		if (transitions !== null) {
+			for (const transition of transitions) {
+				transition.stop();
+			}
+		}
+
+		execute_effect_teardown(effect);
+
+		effect.f ^= DESTROYING;
+		effect.f |= DESTROYED;
+
+		var parent = effect.parent;
+
+		// If the parent doesn't have any children, then skip this work altogether
+		if (parent !== null && parent.first !== null) {
+			unlink_effect(effect);
+		}
+
+		if (DEV) {
+			effect.component_function = null;
+		}
+
+		// `first` and `child` are nulled out in destroy_effect_children
+		// we don't null out `parent` so that error propagation can work correctly
+		effect.next =
+			effect.prev =
+			effect.teardown =
+			effect.ctx =
+			effect.deps =
+			effect.fn =
+			effect.nodes =
+			effect.ac =
+			effect.b =
+			effect.r =
+			effect.pr =
+				null;
+	} finally {
+		pop_renderer?.();
 	}
-
-	execute_effect_teardown(effect);
-
-	effect.f ^= DESTROYING;
-	effect.f |= DESTROYED;
-
-	var parent = effect.parent;
-
-	// If the parent doesn't have any children, then skip this work altogether
-	if (parent !== null && parent.first !== null) {
-		unlink_effect(effect);
-	}
-
-	if (DEV) {
-		effect.component_function = null;
-	}
-
-	// `first` and `child` are nulled out in destroy_effect_children
-	// we don't null out `parent` so that error propagation can work correctly
-	effect.next =
-		effect.prev =
-		effect.teardown =
-		effect.ctx =
-		effect.deps =
-		effect.fn =
-		effect.nodes =
-		effect.ac =
-		effect.b =
-		effect.r =
-			null;
-
-	pop_renderer?.();
 }
 
 /**
@@ -588,6 +592,26 @@ export function remove_effect_dom(node, end) {
 
 		remove_node(/** @type {ChildNode} */ (node));
 		node = next;
+	}
+}
+
+/**
+ * @param {Effect} effect
+ */
+function remove_effect_nodes(effect) {
+	var nodes = /** @type {NonNullable<Effect['nodes']>} */ (effect.nodes);
+	var segments = nodes.segments;
+
+	if (segments === null) {
+		remove_effect_dom(nodes.start, /** @type {TemplateNode} */ (nodes.end));
+		return;
+	}
+
+	for (var i = segments.length - 1; i >= 0; i--) {
+		var segment = segments[i];
+		var pop_renderer = push_renderer(segment.r, segment.pr);
+		remove_effect_dom(segment.start, /** @type {TemplateNode} */ (segment.end));
+		pop_renderer?.();
 	}
 }
 
@@ -751,7 +775,7 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
-	var pop_renderer = push_renderer(effect.r);
+	var pop_renderer = push_renderer(effect.r, effect.pr);
 
 	try {
 		/** @type {TemplateNode | null} */
