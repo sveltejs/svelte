@@ -1,6 +1,10 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
-import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../../../constants.js';
+import {
+	HYDRATION_ERROR,
+	HYDRATION_START_ELSE,
+	HYDRATION_START_FAILED
+} from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { invoke_error_boundary } from '../../error-handling.js';
 import {
@@ -445,6 +449,10 @@ export class Boundary {
 
 	/** @param {unknown} error */
 	error(error) {
+		if (error === HYDRATION_ERROR) {
+			throw error;
+		}
+
 		// If we have nothing to capture the error, or if we hit an error while
 		// rendering the fallback, re-throw for another boundary to handle
 		if (!this.#props.onerror && !this.#props.failed) {
