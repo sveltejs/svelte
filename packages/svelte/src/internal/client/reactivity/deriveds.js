@@ -443,10 +443,7 @@ export function update_derived(derived) {
 				return;
 			}
 		}
-	} else if (
-		batch_values?.has(derived) &&
-		!derived.equals(/** @type {any[]} */ (batch_values?.get(derived))[0])
-	) {
+	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
 		current_batch?.capture(derived, derived.v);
 	}
 
