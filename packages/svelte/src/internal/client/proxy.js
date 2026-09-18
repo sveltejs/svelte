@@ -204,24 +204,10 @@ export function proxy(value) {
 		},
 
 		getOwnPropertyDescriptor(target, prop) {
+			this.has?.(target, prop);
+
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 			var s = sources.get(prop);
-			var exists = Reflect.has(target, prop);
-
-			if (s === undefined && active_effect !== null && (!exists || descriptor?.writable)) {
-				s = with_parent(() => {
-					var value = descriptor === undefined ? UNINITIALIZED : proxy(descriptor.value);
-					var s = source(value, stack);
-
-					if (DEV) {
-						tag(s, get_label(path, prop));
-					}
-
-					return s;
-				});
-
-				sources.set(prop, s);
-			}
 
 			if (s !== undefined) {
 				var value = get(s);
