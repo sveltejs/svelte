@@ -18,28 +18,35 @@ export default test({
 			target.querySelectorAll('button');
 
 		for (const mode of ['commit', 'reveal', 'second-fork']) {
-			preload.click();
-			flushSync(() => increment.click());
-			assert.htmlEqual(target.innerHTML, buttons);
+			try {
+				preload.click();
+				await tick();
+				increment.click();
+				await tick();
+				assert.htmlEqual(target.innerHTML, buttons);
 
-			if (mode === 'commit') {
-				commit.click();
-				await tick();
-			} else if (mode === 'reveal') {
-				flushSync(() => reveal.click());
-				discard.click();
-			} else {
-				preload_second.click();
-				discard.click();
-				commit_second.click();
-				await tick();
+				if (mode === 'commit') {
+					commit.click();
+					await tick();
+				} else if (mode === 'reveal') {
+					flushSync(() => reveal.click());
+					discard.click();
+				} else {
+					preload_second.click();
+					discard.click();
+					commit_second.click();
+					await tick();
+				}
+
+				assert.htmlEqual(target.innerHTML, `${buttons}<p>1 2</p>`);
+				flushSync(() => increment.click());
+				assert.htmlEqual(target.innerHTML, `${buttons}<p>2 4</p>`);
+				flushSync(() => reset.click());
+				assert.htmlEqual(target.innerHTML, buttons);
+			} catch (e) {
+				/** @type {Error} */ (e).message = `${mode}: ${/** @type {Error} */ (e).message}`;
+				throw e;
 			}
-
-			assert.htmlEqual(target.innerHTML, `${buttons}<p>1 2</p>`);
-			flushSync(() => increment.click());
-			assert.htmlEqual(target.innerHTML, `${buttons}<p>2 4</p>`);
-			flushSync(() => reset.click());
-			assert.htmlEqual(target.innerHTML, buttons);
 		}
 	}
 });

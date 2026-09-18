@@ -278,7 +278,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		!source.equals(/** @type {any[]} */ (batch_values?.get(source))[0])
 	) {
 		current_batch?.capture(source, source.v);
-		// TODO also bump wv_values?
 	}
 
 	return value;

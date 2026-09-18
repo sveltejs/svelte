@@ -20,17 +20,17 @@ export default test({
 		// Transfer an invalidation into the fork while its async work is pending.
 		update.click();
 		await tick();
-		assert.equal(instance.get_calls(), 2); // can also be 1 at this point already, would also be ok
+		assert.equal(instance.get_calls(), 1); // can also be 2 at this point, would also be ok
 
 		try {
 			resolve.click();
 			await tick();
-			assert.equal(instance.get_calls(), 2);
+			assert.equal(instance.get_calls(), 1);
 
 			// Completing the replacement must not replay the same invalidation.
 			resolve.click();
 			await tick();
-			assert.equal(instance.get_calls(), 2);
+			assert.equal(instance.get_calls(), 1);
 		} finally {
 			discard.click();
 			await tick();

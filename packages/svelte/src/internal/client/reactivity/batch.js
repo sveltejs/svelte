@@ -17,7 +17,8 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	DESTROYING
+	DESTROYING,
+	FORK_ONLY_BRANCH
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -246,9 +247,10 @@ export class Batch {
 
 	/**
 	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing
-	 * @type {Set<Effect>}
+	 * true indicates that this branch is new to the eyes of this fork but was already created before.
+	 * @type {Map<Effect, boolean>}
 	 */
-	#unskipped_branches = new Set();
+	#unskipped_branches = new Map();
 
 	is_fork = false;
 
@@ -284,10 +286,9 @@ export class Batch {
 			} else {
 				last_batch.next = this;
 				this.prev = last_batch;
+				last_batch = this;
 			}
 		}
-
-		last_batch = this;
 	}
 
 	#is_deferred() {
@@ -330,8 +331,9 @@ export class Batch {
 	 * any tracked dirty/maybe_dirty child effects
 	 * @param {Effect} effect
 	 * @param {(e: Effect) => void} callback
+	 * @param {boolean} is_fork_init
 	 */
-	unskip_effect(effect, callback = (e) => this.schedule(e)) {
+	unskip_effect(effect, callback = (e) => this.schedule(e), is_fork_init = false) {
 		var tracked = this.#skipped_branches.get(effect);
 		if (tracked) {
 			this.#skipped_branches.delete(effect);
@@ -346,7 +348,7 @@ export class Batch {
 				callback(e);
 			}
 		}
-		this.#unskipped_branches.add(effect);
+		if (!this.#unskipped_branches.has(effect)) this.#unskipped_branches.set(effect, is_fork_init);
 	}
 
 	/**
@@ -432,6 +434,14 @@ export class Batch {
 
 		for (const d of this.#maybe_dirty_deriveds) {
 			set_signal_status(d, MAYBE_DIRTY);
+		}
+
+		if (!this.is_fork) {
+			for (const e of this.#unskipped_branches.keys()) {
+				if (e.f & FORK_ONLY_BRANCH) {
+					e.f ^= FORK_ONLY_BRANCH;
+				}
+			}
 		}
 
 		// An earlier batch might have created new branches which contain effects that we need
@@ -585,13 +595,40 @@ export class Batch {
 		root.f ^= CLEAN;
 
 		var effect = root.first;
+		var all_dirty = null;
 
 		while (effect !== null) {
+			if (all_dirty) {
+				if (effect.f & CLEAN) effect.f ^= CLEAN;
+				if ((effect.f & DIRTY) === 0) effect.f |= MAYBE_DIRTY;
+			}
+
 			var flags = effect.f;
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_branches.has(effect);
+
+			if ((flags & FORK_ONLY_BRANCH) !== 0) {
+				var first_time = this.#unskipped_branches.get(effect);
+
+				if (first_time === undefined) {
+					skip = true;
+					this.skip_effect(effect);
+					reset_branch(
+						effect,
+						/** @type {{d: Effect[], m: Effect[]}} */ (this.#skipped_branches.get(effect))
+					);
+				} else if (first_time) {
+					// We're seeing a fork-only branch for the first time in another fork. We need to traverse
+					// all effects inside it (they're all marked MAYBE_DIRTY). This is necessary because
+					// dependencies of the effects inside could've updated since the last time this branch ran.
+					this.#unskipped_branches.set(effect, false);
+					all_dirty ??= effect;
+					if (effect.f & CLEAN) effect.f ^= CLEAN;
+					skip = false;
+				}
+			}
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
@@ -625,6 +662,8 @@ export class Batch {
 				}
 
 				effect = effect.parent;
+
+				if (effect === all_dirty) all_dirty = null;
 			}
 		}
 	}
@@ -698,7 +737,7 @@ export class Batch {
 						? !this.seen_effects.has(effect) &&
 							!this.#dirty_effects.has(effect) &&
 							!this.#maybe_dirty_effects.has(effect)
-						: flags & (ASYNC | BLOCK_EFFECT) && this.seen_effects.has(effect)
+						: (flags & (ASYNC | BLOCK_EFFECT)) === 0 || this.seen_effects.has(effect)
 				) {
 					this.#maybe_dirty_effects.delete(effect);
 					set_signal_status(effect, status);
@@ -744,7 +783,7 @@ export class Batch {
 			this.#unskipped_branches.delete(s);
 		}
 
-		for (const s of batch.#unskipped_branches) {
+		for (const s of batch.#unskipped_branches.keys()) {
 			const v = this.#skipped_branches.get(s);
 			// TODO i do wonder at this point if it's less code / easier / more robust to do what mark() below does
 			// instead and just rerun all the block effects. Though it will certainly overrun some blocks, potentially
@@ -1882,7 +1921,6 @@ export function fork(fn) {
 			// for (const run of batch.on_fork_commit.values()) {
 			// 	run();
 			// }
-
 			batch.flush();
 			await settled;
 		},

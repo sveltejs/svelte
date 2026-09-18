@@ -7,7 +7,7 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { HMR_ANCHOR } from '../../constants.js';
+import { FORK_ONLY_BRANCH, HMR_ANCHOR } from '../../constants.js';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { DEV } from 'esm-env';
@@ -188,18 +188,26 @@ export class BranchManager {
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
+		var first = false;
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
+			first = true;
+
 			if (defer) {
 				var fragment = document.createDocumentFragment();
 				var target = create_text();
 
 				fragment.append(target);
 
+				const b = branch(() => fn(target));
 				this.#offscreen.set(key, {
-					effect: branch(() => fn(target)),
+					effect: b,
 					fragment
 				});
+
+				if (batch.is_fork) {
+					b.f ^= FORK_ONLY_BRANCH;
+				}
 			} else {
 				this.#onscreen.set(
 					key,
@@ -209,6 +217,15 @@ export class BranchManager {
 		}
 
 		this.#batches.set(batch, key);
+
+		const offscreen = this.#offscreen.get(key);
+		if (offscreen && offscreen.effect.f & FORK_ONLY_BRANCH) {
+			if (batch.is_fork) {
+				batch.unskip_effect(offscreen.effect, undefined, !first);
+			} else {
+				offscreen.effect.f ^= FORK_ONLY_BRANCH;
+			}
+		}
 
 		if (defer) {
 			for (const [k, effect] of this.#onscreen) {
