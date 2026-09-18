@@ -114,28 +114,19 @@ export class Batch {
 	/** True as soon as `#process` was called */
 	started = false;
 
-	// TODO temporary
-	get next() {
-		return this.#next;
-	}
-	// TODO temporary
-	get prev() {
-		return this.#prev;
-	}
-
 	linked = true;
 
 	/** @type {Map<Effect, number>} */
 	stale_effects = new Map();
 
 	/** @type {Set<Effect>} */
-	effects_ran = new Set();
+	seen_effects = new Set();
 
 	/** @type {Batch | null} */
-	#prev = null;
+	prev = null;
 
 	/** @type {Batch | null} */
-	#next = null;
+	next = null;
 
 	/** @type {Set<Batch>} */
 	dependent = new Set();
@@ -270,8 +261,30 @@ export class Batch {
 		if (last_batch === null) {
 			first_batch = last_batch = this;
 		} else {
-			last_batch.#next = this;
-			this.#prev = last_batch;
+			// Put the new batch before the first forked batch
+			let batch = first_batch;
+			while (batch && !batch.is_fork) {
+				batch = batch.next;
+			}
+
+			if (batch) {
+				const prev = batch.prev;
+				this.next = batch;
+				batch.prev = this;
+				if (prev) {
+					prev.next = this;
+					this.prev = prev;
+				} else {
+					first_batch = this;
+				}
+				while (batch) {
+					batch.id = uid++;
+					batch = batch.next;
+				}
+			} else {
+				last_batch.next = this;
+				this.prev = last_batch;
+			}
 		}
 
 		last_batch = this;
@@ -587,10 +600,12 @@ export class Batch {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
-				} else if (is_dirty(effect)) {
-					this.effects_ran.add(effect);
-					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
-					update_effect(effect);
+				} else {
+					this.seen_effects.add(effect);
+					if (is_dirty(effect)) {
+						// if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
+						update_effect(effect);
+					}
 				}
 
 				var child = effect.first;
@@ -617,7 +632,7 @@ export class Batch {
 	#find_earlier_batch() {
 		if (this.is_eager) return null;
 
-		var batch = this.#prev;
+		var batch = this.prev;
 
 		while (batch !== null) {
 			if (!batch.is_fork) {
@@ -635,7 +650,7 @@ export class Batch {
 				}
 			}
 
-			batch = batch.#prev;
+			batch = batch.prev;
 		}
 
 		return null;
@@ -663,8 +678,16 @@ export class Batch {
 			var flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				if (this.mark(/** @type {Derived} */ (reaction), MAYBE_DIRTY, not_yet)) {
-					set_signal_status(/** @type {Derived} */ (reaction), status);
+				var derived = /** @type {Derived} */ (reaction);
+
+				// if (
+				// 	this.current.has(derived) &&
+				// 	(/** @type {any} */ (this.current.get(derived))[0]) === derived.v
+				// ) {
+
+				// }
+				if (this.mark(derived, MAYBE_DIRTY, not_yet)) {
+					set_signal_status(derived, status);
 					marked = true;
 				}
 			} else {
@@ -672,10 +695,10 @@ export class Batch {
 
 				if (
 					not_yet
-						? !this.effects_ran.has(effect) &&
+						? !this.seen_effects.has(effect) &&
 							!this.#dirty_effects.has(effect) &&
 							!this.#maybe_dirty_effects.has(effect)
-						: flags & (ASYNC | BLOCK_EFFECT) && this.effects_ran.has(effect)
+						: flags & (ASYNC | BLOCK_EFFECT) && this.seen_effects.has(effect)
 				) {
 					this.#maybe_dirty_effects.delete(effect);
 					set_signal_status(effect, status);
@@ -831,7 +854,7 @@ export class Batch {
 			wv_values?.set(source, wv);
 		}
 
-		let batch = this.#next;
+		let batch = this.next;
 		let is_latest_value = !this.is_fork;
 		while (batch) {
 			if (source.f & ASYNC) {
@@ -850,22 +873,23 @@ export class Batch {
 				}
 			}
 			if (
-				!is_latest_value ||
-				batch.current.has(source) ||
-				// Check derived's dependencies for outdated values. We only have to check one
-				// level because is_dirty etc will execute the top-most deriveds first, whose result
-				// the later deriveds can use to make a decision ("oh this derived's value is different to what I cached")
-				((source.f & DERIVED) !== 0 &&
-					/** @type {Derived} */ (source).deps?.some(
-						(d) =>
-							/** @type {Batch} */ (batch).current.has(d) ||
-							(this.current.has(d) &&
-								/** @type {[any, boolean, number]} */ (this.current.get(d))[0] !== d.v)
-					))
+				!batch.is_fork &&
+				(!is_latest_value ||
+					batch.current.has(source) ||
+					// Check derived's dependencies for outdated values. We only have to check one
+					// level because is_dirty etc will execute the top-most deriveds first, whose result
+					// the later deriveds can use to make a decision ("oh this derived's value is different to what I cached")
+					((source.f & DERIVED) !== 0 &&
+						/** @type {Derived} */ (source).deps?.some(
+							(d) =>
+								/** @type {Batch} */ (batch).current.has(d) ||
+								(this.current.has(d) &&
+									/** @type {[any, boolean, number]} */ (this.current.get(d))[0] !== d.v)
+						)))
 			) {
 				is_latest_value = false;
 			}
-			batch = batch.#next;
+			batch = batch.next;
 		}
 
 		if (is_latest_value) {
@@ -878,28 +902,65 @@ export class Batch {
 			if (batch.id < this.id && batch.current.has(source)) {
 				this.dependent.add(batch);
 			}
-			if (
-				batch.is_fork &&
-				is_latest_value &&
-				((!batch.current.has(source) && !is_derived) ||
-					/** @type {[any, boolean, number]} */ (batch.current.get(source))[0] !== value) &&
-				((source.f & ASYNC) === 0 ||
-					!depends_on(
-						source.e,
-						[...batch.current.keys()].filter((s) => !this.current.has(s)),
-						new Map()
-					))
-			) {
-				batch.current.set(source, [value, is_derived, wv]);
-				const b = batch;
-				queue_micro_task(() => {
-					if (b.mark(source, DIRTY)) {
-						b.flush();
+
+			if (batch.is_fork && is_latest_value) {
+				const current = batch.current.get(source);
+				batch.current.delete(source);
+
+				if (![...batch.current.values()].some((v) => !v[1])) {
+					batch.discard();
+				} else {
+					if (current) batch.current.set(source, current);
+					if (
+						!is_derived &&
+						(!current || current[0] !== value) &&
+						((source.f & ASYNC) === 0 ||
+							!depends_on(
+								source.e,
+								[...batch.current.keys()].filter((s) => !this.current.has(s)),
+								new Map()
+							))
+					) {
+						batch.current.delete(source);
+						const b = batch;
+						queue_micro_task(() => {
+							if (b.mark(source, DIRTY)) {
+								b.flush();
+							}
+						});
 					}
-				});
+				}
 			}
-			batch = batch.#next;
+			batch = batch.next;
 		}
+
+		// batch = first_batch;
+		// while (batch) {
+		// 	if (batch.id < this.id && batch.current.has(source)) {
+		// 		this.dependent.add(batch);
+		// 	}
+		// 	if (
+		// 		batch.is_fork &&
+		// 		is_latest_value &&
+		// 		((!batch.current.has(source) && !is_derived) ||
+		// 			/** @type {[any, boolean, number]} */ (batch.current.get(source))[0] !== value) &&
+		// 		((source.f & ASYNC) === 0 ||
+		// 			!depends_on(
+		// 				source.e,
+		// 				[...batch.current.keys()].filter((s) => !this.current.has(s)),
+		// 				new Map()
+		// 			))
+		// 	) {
+		// 		batch.current.set(source, [value, is_derived, wv]);
+		// 		const b = batch;
+		// 		queue_micro_task(() => {
+		// 			if (b.mark(source, DIRTY)) {
+		// 				b.flush();
+		// 			}
+		// 		});
+		// 	}
+		// 	batch = batch.#next;
+		// }
 
 		// if (!this.is_fork) {
 		// 	let is_latest_value = true;
@@ -982,7 +1043,7 @@ export class Batch {
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
@@ -1201,8 +1262,8 @@ export class Batch {
 		return current_batch;
 	}
 
-	apply(include_later = false) {
-		if (!async_mode_flag || (!this.is_fork && this.#prev === null && this.#next === null)) {
+	apply(include_earlier = false) {
+		if (!async_mode_flag || (!this.is_fork && this.prev === null && this.next === null)) {
 			batch_values = null;
 			wv_values = null;
 			return;
@@ -1218,7 +1279,7 @@ export class Batch {
 			wv_values.set(source, wv);
 		}
 
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch === this) continue;
 
 			if (batch.id < this.id) {
@@ -1229,7 +1290,7 @@ export class Batch {
 
 			if (batch.is_fork) continue;
 
-			if (batch.id > this.id || include_later || this.is_eager) {
+			if (batch.id > this.id || include_earlier || this.is_eager) {
 				for (const [source, value] of batch.previous) {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, value);
@@ -1241,7 +1302,7 @@ export class Batch {
 		return;
 
 		// ...and undo changes belonging to other batches unless they intersect
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch === this || batch.is_fork) continue;
 
 			// If two batches intersect, the latter batch will be merged into the earlier batch,
@@ -1302,19 +1363,19 @@ export class Batch {
 		// running it multiple times to not corrupt the linked list
 		if (!this.linked) return;
 
-		var prev = this.#prev;
-		var next = this.#next;
+		var prev = this.prev;
+		var next = this.next;
 
 		if (prev === null) {
 			first_batch = next;
 		} else {
-			prev.#next = next;
+			prev.next = next;
 		}
 
 		if (next === null) {
 			last_batch = prev;
 		} else {
-			next.#prev = prev;
+			next.prev = prev;
 		}
 
 		this.linked = false;
@@ -1735,8 +1796,22 @@ export function fork(fn) {
 
 			batch.is_fork = false;
 
+			// Reorder the batches such that there's no forks before this one
+			while (batch.prev && batch.prev.is_fork) {
+				let prev = /** @type {Batch} */ (batch.prev);
+				const id = batch.id;
+				batch.id = prev.id;
+				prev.id = id;
+				prev.next = batch.next;
+				batch.prev = prev.prev;
+				if (prev.prev) {
+					prev.prev.next = batch;
+				}
+				prev.prev = batch;
+			}
+
 			// apply changes and update write versions so deriveds see the change
-			for (var [source, [value, is_derived, wv]] of batch.current) {
+			for (var [source, content] of batch.current) {
 				// TODO this if-block tries to accomodate the fact that this value might be obsoleted by a subsequent batch already;
 				// but has false positives (i.e. values not updated when they should). Needs a better mechanism
 				// maybe current has a fourth entry, "outdated" boolean, and later batches set it for earlier ones?
@@ -1745,12 +1820,15 @@ export function fork(fn) {
 				// TODO we need to ensure that the version bumps happen "in order", e.g. in case of source1->derived2 we need to bump S last
 				// }
 
-				if (!is_derived) {
-					source.v = value;
-					source.wv = increment_write_version();
+				source.v = content[0];
+
+				if (!content[1]) {
+					// TODO what about already-outdated async sources?
+					// is there a situation where they can appear here?
+					content[2] = source.wv = increment_write_version();
 					// batch.mark(source, ...) TODO re-maybe-dirty- everything?
 					// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
-					batch.mark(source, DIRTY, true); // TODO probably better to only DIRTY on first non-seen derived
+					batch.mark(source, MAYBE_DIRTY, true);
 				}
 			}
 
@@ -1771,6 +1849,7 @@ export function fork(fn) {
 				flush_eager_effects();
 			});
 
+			// TODO reuse batch.capture() logic here (maybe we can just call it?)
 			let next_batch = batch.next;
 			while (next_batch) {
 				for (const [source, [, is_derived]] of batch.current) {

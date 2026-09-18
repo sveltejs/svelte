@@ -274,7 +274,6 @@ export function async_derived(fn, label, location) {
 					});
 				}
 
-				debugger;
 				internal_set(signal, value);
 			}
 

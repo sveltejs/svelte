@@ -495,37 +495,47 @@ export function update_effect(effect) {
 		let is_latest_value = true;
 		// Can be falsy inside flush_eager_effects
 		if (own_batch) {
-			is_latest_value = !own_batch.is_fork;
-			var batch = own_batch.next;
-			while (batch) {
-				if (
-					batch.started && // when flushing user effects writes sources which creates a new batch, then ignore that one
-					(!is_latest_value ||
-						// Check derived's dependencies for outdated values. We only have to check one
-						// level because is_dirty etc will execute the top-most deriveds first, whose result
-						// the later deriveds can use to make a decision ("oh this derived's value is different to what I cached")
-						effect.deps?.some((d) => {
-							var other_current = /** @type {Batch} */ (batch).current;
-							var own_current = /** @type {Batch} */ (own_batch).current;
-							// const y =
-							// 	other_current.has(d) ||
-							// 	(own_current.has(d) &&
-							// 		/** @type {[any, boolean, number]} */ (own_current.get(d))[0] !== d.v);
-							// if (y) debugger;
-							// const x =
-							// 	other_current.has(d) &&
-							// 	(!own_current.has(d) ||
-							// 		/** @type {[any, boolean, number]} */ (own_current.get(d))[0] !==
-							// 			/** @type {[any, boolean, number]} */ (other_current.get(d))[0]);
-							// if (x) debugger;
-							const z = (own_current.get(d)?.[2] ?? d.wv) != d.wv;
-							return z;
-						}))
-				) {
-					is_latest_value = false;
-				}
-				batch = batch.next;
-			}
+			is_latest_value =
+				!own_batch.is_fork &&
+				(!effect.deps?.length ||
+					!effect.deps.some((d) => {
+						return (
+							batch_values &&
+							batch_values.has(d) &&
+							(!own_batch?.current.has(d) ||
+								/** @type {any} */ (own_batch.current.get(d))[0] !== d.v)
+						);
+					}));
+			// var batch = own_batch.next;
+			// while (batch) {
+			// 	if (
+			// 		batch.started && // when flushing user effects writes sources which creates a new batch, then ignore that one
+			// 		(!is_latest_value ||
+			// 			// Check derived's dependencies for outdated values. We only have to check one
+			// 			// level because is_dirty etc will execute the top-most deriveds first, whose result
+			// 			// the later deriveds can use to make a decision ("oh this derived's value is different to what I cached")
+			// 			effect.deps?.some((d) => {
+			// 				var other_current = /** @type {Batch} */ (batch).current;
+			// 				var own_current = /** @type {Batch} */ (own_batch).current;
+			// 				// const y =
+			// 				// 	other_current.has(d) ||
+			// 				// 	(own_current.has(d) &&
+			// 				// 		/** @type {[any, boolean, number]} */ (own_current.get(d))[0] !== d.v);
+			// 				// if (y) debugger;
+			// 				// const x =
+			// 				// 	other_current.has(d) &&
+			// 				// 	(!own_current.has(d) ||
+			// 				// 		/** @type {[any, boolean, number]} */ (own_current.get(d))[0] !==
+			// 				// 			/** @type {[any, boolean, number]} */ (other_current.get(d))[0]);
+			// 				// if (x) debugger;
+			// 				const z = (own_current.get(d)?.[2] ?? d.wv) != d.wv;
+			// 				return z;
+			// 			}))
+			// 	) {
+			// 		is_latest_value = false;
+			// 	}
+			// 	batch = batch.next;
+			// }
 		}
 
 		if (is_latest_value) {

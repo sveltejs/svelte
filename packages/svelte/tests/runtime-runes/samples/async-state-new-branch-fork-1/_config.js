@@ -22,7 +22,7 @@ export default test({
 		`
 		);
 
-		commit.click();
+		commit.click(); // puts fork (x) behind y so it has to wait on y first
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
@@ -36,7 +36,7 @@ export default test({
 		`
 		);
 
-		shift.click();
+		shift.click(); // ... which is why nothing happens yet on first shift
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
@@ -46,13 +46,6 @@ export default test({
 			<button>shift</button>
 			<button>pop</button>
 			<button>commit</button>
-			universe
-			universe
-			"universe"
-			universe
-			universe
-			universe
-			"universe"
 			<hr>
 		`
 		);
