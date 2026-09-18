@@ -1183,7 +1183,21 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			]);
 		}
 		for (const reference of answer.references) {
-			if (reference.declares) continue;
+			if (reference.declares) {
+				// `var x` again: the declarator declares the binding the first one made
+				const ours = reference.binding === null ? undefined : from_parser.get(reference.binding);
+				/** @type {any} */
+				let declarator = parentOf(reference.node);
+				while (declarator && /Pattern$|^Property$|^RestElement$/.test(declarator.type)) {
+					declarator = parentOf(declarator);
+				}
+				if (ours && declarator?.type === 'VariableDeclarator') {
+					declarators.push([declarator, ours]);
+					// an initializer there assigns again, so the first one is not the value
+					if (reference.write) ours.reassigned = true;
+				}
+				continue;
+			}
 			const binding = reference.binding === null ? undefined : from_parser.get(reference.binding);
 			entries.push([
 				reference.node,
