@@ -14,7 +14,7 @@ elements name=name attributes=attributes children=fragment
 text Text data=data raw=raw
 comment Comment data=data
 
-element svelte:element    SvelteElement    this=tag:text
+element svelte:element    SvelteElement
 element svelte:component  SvelteComponent  this=expression
 element svelte:self       SvelteSelf
 element svelte:window     SvelteWindow     root once

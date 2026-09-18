@@ -7,7 +7,12 @@ import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import * as state from '../../state.js';
 import { ExpressionMetadata, disallow_children } from '../nodes.js';
-import { keep_tables, tables_of } from '../../utils/ast.js';
+import {
+	get_attribute_expression,
+	is_expression_attribute,
+	keep_tables,
+	tables_of
+} from '../../utils/ast.js';
 import { grammar } from './grammar.js';
 
 // the grammar is read by the engine once, whatever it parses
@@ -306,15 +311,28 @@ class Finish {
 							}
 						: /** @type {any} */ ({});
 				if (node.type === 'SvelteElement') {
-					// a tag named in text is the literal Svelte writes by hand, quoted its way
-					if (node.tag.type === 'Literal' && node.tag.raw === node.tag.value) {
-						const { start, end } = /** @type {{ start: number; end: number }} */ (node.tag);
-						const quoted = this.template[start - 1] === '"' || this.template[start - 1] === "'";
-						w.svelte_element_invalid_this({
-							start: this.template.lastIndexOf('this', start),
-							end: quoted ? end + 1 : end
-						});
-						node.tag.raw = `'${node.tag.value}'`;
+					const index = node.attributes.findIndex(
+						(attribute) => attribute.type === 'Attribute' && attribute.name === 'this'
+					);
+					if (index === -1) e.svelte_element_missing_this(node.start);
+					const definition = /** @type {AST.Attribute} */ (node.attributes.splice(index, 1)[0]);
+					if (definition.value === true) e.svelte_element_missing_this(definition);
+					if (is_expression_attribute(definition)) {
+						node.tag = get_attribute_expression(definition);
+					} else {
+						w.svelte_element_invalid_this(definition);
+						// wrong for `this="h{n}"`, which gives `<h>`: the Svelte 4 behaviour, kept until 6.0 makes it an error
+						const chunk = /** @type {Array<AST.ExpressionTag | AST.Text>} */ (definition.value)[0];
+						node.tag =
+							chunk.type === 'Text'
+								? {
+										type: 'Literal',
+										value: chunk.data,
+										raw: `'${chunk.raw}'`,
+										start: chunk.start,
+										end: chunk.end
+									}
+								: chunk.expression;
 					}
 					node.metadata.expression = new ExpressionMetadata();
 				}
@@ -610,19 +628,8 @@ function throw_error(error, template) {
 			if (what === 'a block name') e.expected_block_type(pos);
 			if (what === 'an attribute value') e.expected_attribute_value(pos);
 			if (what === 'a tag name') e.expected_tag(pos);
-			if (what === 'a this attribute') {
-				if (template.startsWith('<svelte:element', pos)) e.svelte_element_missing_this(pos);
-				e.svelte_component_missing_this(pos);
-			}
-			if (what === 'an expression as this') {
-				if (
-					template.lastIndexOf('<svelte:element', pos) >
-					template.lastIndexOf('<svelte:component', pos)
-				) {
-					e.svelte_element_missing_this(range);
-				}
-				e.svelte_component_invalid_this(range);
-			}
+			if (what === 'a this attribute') e.svelte_component_missing_this(pos);
+			if (what === 'an expression as this') e.svelte_component_invalid_this(range);
 			if (what === 'an expression, not text' || what === 'a value') e.directive_invalid_value(pos);
 			if (what.startsWith('context to be')) e.script_invalid_context(range);
 			if (what === 'module without a value') e.script_invalid_attribute_value(range, 'module');
