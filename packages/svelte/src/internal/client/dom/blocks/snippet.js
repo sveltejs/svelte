@@ -18,6 +18,7 @@ import { prevent_snippet_stringification } from '../../../shared/validate.js';
 import { has_own_property } from '../../../shared/utils.js';
 import { BranchManager } from './branches.js';
 import { current_renderer, push_renderer } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -40,16 +41,18 @@ export function snippet(node, get_snippet, ...args) {
 			snippet,
 			snippet &&
 				((anchor) => {
-					var renderer = /** @type {any} */ (snippet).__renderer;
-					var has_renderer = has_own_property.call(/** @type {any} */ (snippet), '__renderer');
+					if (custom_renderers_flag) {
+						var renderer = /** @type {any} */ (snippet).__renderer;
+						var has_renderer = has_own_property.call(/** @type {any} */ (snippet), '__renderer');
 
-					if (has_renderer) {
-						var pop_renderer = push_renderer(renderer, renderer);
+						if (has_renderer) {
+							var pop_renderer = push_renderer(renderer, renderer);
 
-						try {
-							return snippet(anchor, ...args);
-						} finally {
-							pop_renderer();
+							try {
+								return snippet(anchor, ...args);
+							} finally {
+								pop_renderer();
+							}
 						}
 					}
 

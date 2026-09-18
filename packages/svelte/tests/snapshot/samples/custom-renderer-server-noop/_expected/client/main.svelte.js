@@ -1,4 +1,5 @@
 import $renderer from 'my-custom-renderer';
+import 'svelte/internal/flags/custom-renderer';
 import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
