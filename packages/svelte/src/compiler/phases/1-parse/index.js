@@ -2,13 +2,16 @@
 /** @import { Expression, Identifier, Node, Pattern, Program } from 'estree' */
 /** @import { Parsed } from '@teasel/parser' */
 /** @import { Tables } from '../../utils/ast.js' */
-import { Source } from '@teasel/parser';
+import { Plan, Source } from '@teasel/parser';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import * as state from '../../state.js';
 import { ExpressionMetadata, disallow_children } from '../nodes.js';
 import { keep_tables, tables_of } from '../../utils/ast.js';
 import { grammar } from './grammar.js';
+
+// the grammar is read by the engine once, whatever it parses
+const plan = /** @type {Plan<AST.Root>} */ (new Plan(grammar));
 import { dedent, unsupported } from './js.js';
 import read_options from './options.js';
 import { is_whitespace } from './utils/whitespace.js';
@@ -114,7 +117,6 @@ export function parse(template, loose = false, erase = false) {
 	// the answer is plain objects that owe the source nothing, so the source is released as soon as
 	// it has parsed: left to the collector it costs more to finalize than a small component to parse
 	const source = new Source(trimmed, {
-		host: grammar,
 		sourceType: 'module',
 		typescript: ts && (erase ? 'erase' : true),
 		comments: true,
@@ -128,7 +130,7 @@ export function parse(template, loose = false, erase = false) {
 	/** @type {Parsed<AST.Root>} */
 	let answer;
 	try {
-		answer = /** @type {any} */ (source.parse());
+		answer = source.parse(plan);
 	} catch (error) {
 		if (!(error instanceof SyntaxError)) throw error;
 		throw_error(/** @type {any} */ (error), trimmed);
