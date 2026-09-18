@@ -1,6 +1,7 @@
 import { describe, assert, it } from 'vitest';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
+import { reconnect } from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
 	effect,
@@ -1629,5 +1630,90 @@ describe('signals', () => {
 			destroy();
 			pop();
 		}
+	});
+
+	test('reconnecting a derived does not add a duplicate reaction', () => {
+		// Regression test for #18781. `reconnect()` registers a derived on each
+		// of its dependencies' `reactions` arrays. When it was called for a
+		// derived that was already registered — which happens in the
+		// hide → replace nested state → show cycle — the duplicate entry stayed
+		// behind, because `remove_reaction()` only removes a single occurrence.
+		// That leftover entry kept a strong reference to the unmounted component.
+		let a = state(0);
+		let b = state(0);
+		let which = state(true);
+
+		const d = derived(() => ($.get(which) ? $.get(a) : $.get(b)));
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(d);
+			});
+		});
+
+		/** how often `d` is registered on a given dependency */
+		const count = (dep: any) => (dep.reactions ?? []).filter((r: any) => r === d).length;
+
+		return () => {
+			flushSync();
+
+			const deps = /** @type {any[]} */ d.deps;
+			assert.ok(deps !== null && deps.length > 0, 'derived should have dependencies');
+			assert.equal(count(deps[0]), 1);
+
+			// reconnecting an already-registered derived must be a no-op
+			reconnect(d);
+			reconnect(d);
+
+			assert.equal(
+				count(deps[0]),
+				1,
+				`derived registered ${count(deps[0])} times on its dependency (expected 1)`
+			);
+
+			destroy();
+		};
+	});
+	// Reverse check for #18781: the invariant that makes `remove_reaction()`'s
+	// single-removal semantics sufficient is that a dependency's `reactions`
+	// array never contains the same derived more than once. `reconnect()` is the
+	// path that can violate it, so it must be idempotent.
+	test('reconnect() is idempotent', () => {
+		const dep = state(0);
+		const derived_ = derived(() => $.get(dep) * 2);
+
+		const root_destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(derived_);
+				$.get(dep);
+			});
+		});
+
+		const count = () => (dep.reactions ?? []).filter((r: any) => r === derived_).length;
+
+		return () => {
+			flushSync();
+
+			// while connected, the dependency has the derived registered exactly once
+			assert.equal(count(), 1);
+
+			// detaching the last reader clears the dependency's reactions
+			root_destroy();
+			assert.equal(count(), 0);
+			assert.equal(dep.reactions, null);
+
+			// reconnecting registers it again ...
+			reconnect(derived_);
+			assert.equal(count(), 1);
+
+			// ... and reconnecting an already-registered derived is a no-op
+			reconnect(derived_);
+			reconnect(derived_);
+			assert.equal(
+				count(),
+				1,
+				`derived registered ${count()} times on its dependency after repeated reconnect`
+			);
+		};
 	});
 });

@@ -720,15 +720,23 @@ export function get(signal) {
 /**
  * (Re)connect a disconnected derived, so that it is notified
  * of changes in `mark_reactions`
+ *
+ * Must be idempotent: a derived that is already registered on a dependency
+ * must not be added a second time, otherwise `remove_reaction` can never
+ * fully disconnect it and the derived (and anything its closure retains)
+ * is leaked. Exported for testing.
  * @param {Derived} derived
  */
-function reconnect(derived) {
+export function reconnect(derived) {
 	derived.f |= CONNECTED;
 
 	if (derived.deps === null) return;
 
 	for (const dep of derived.deps) {
-		(dep.reactions ??= []).push(derived);
+		var reactions = (dep.reactions ??= []);
+		if (index_of.call(reactions, derived) === -1) {
+			reactions.push(derived);
+		}
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
 			unfreeze_derived_effects(/** @type {Derived} */ (dep));
