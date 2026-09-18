@@ -37,7 +37,8 @@ import {
 	batch_values,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	current_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -272,6 +273,12 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
+	} else if (
+		batch_values?.has(source) &&
+		!source.equals(/** @type {any[]} */ (batch_values?.get(source))[0])
+	) {
+		current_batch?.capture(source, source.v);
+		// TODO also bump wv_values?
 	}
 
 	return value;

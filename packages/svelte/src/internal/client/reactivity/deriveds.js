@@ -443,6 +443,12 @@ export function update_derived(derived) {
 				return;
 			}
 		}
+	} else if (
+		batch_values?.has(derived) &&
+		!derived.equals(/** @type {any[]} */ (batch_values?.get(derived))[0])
+	) {
+		current_batch?.capture(derived, derived.v);
+		// TODO also bump wv_values?
 	}
 
 	// don't mark derived clean if we're reading it inside a
