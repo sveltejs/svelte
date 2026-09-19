@@ -428,6 +428,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
+			this.#release();
 			return;
 		}
 
@@ -459,6 +460,8 @@ export class Batch {
 				this.#commit();
 				// Rebases can activate other batches or null it out, therefore restore the new one here
 				current_batch = next_batch;
+			} else {
+				this.#release();
 			}
 		}
 
@@ -704,6 +707,7 @@ export class Batch {
 		}
 
 		this.#unlink();
+		this.#release();
 		this.#deferred?.resolve();
 	}
 
@@ -714,12 +718,31 @@ export class Batch {
 		this.#new_effects.push(effect);
 	}
 
+	/**
+	 * A committed or discarded batch is unlinked, but it can still be reachable — an
+	 * `{#await}` block and every `save()` thunk keep their creation-time batch, and a
+	 * `save()` that settles after the commit re-`activate()`s it, so it keeps CAPTURING.
+	 * Its bookkeeping is only meaningful while it is linked (rebasing the other pending
+	 * batches); after that these maps only pin every source, derived and effect — and
+	 * through their contexts, every component and DOM tree — the batch ever touched.
+	 */
+	#release() {
+		this.current.clear();
+		this.previous.clear();
+		this.#new_effects = [];
+	}
+
 	#commit() {
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+		// `batch.discard()` below unlinks `batch`, which clears its `#next` — read it first
+		/** @type {Batch | null} */
+		let next;
+
+		for (let batch = first_batch; batch !== null; batch = next) {
+			next = batch.#next;
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
@@ -837,6 +860,8 @@ export class Batch {
 				batch.deactivate();
 			}
 		}
+
+		this.#release();
 	}
 
 	/**
@@ -1017,6 +1042,13 @@ export class Batch {
 		} else {
 			next.#prev = prev;
 		}
+
+		// An unlinked batch can outlive the list (an `{#await}` block or a `save()` thunk keeps its
+		// creation-time batch, and `oncommit(() => batch.discard())` keeps a merged one). Its own
+		// pointers must not keep every later batch — and their `previous`/`current` maps of old
+		// values — reachable, or a long-lived block pins each navigation's state forever.
+		this.#prev = null;
+		this.#next = null;
 
 		this.linked = false;
 	}
