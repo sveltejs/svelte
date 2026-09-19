@@ -17,13 +17,7 @@ export default test({
 			<button>y++</button>
 			<button>resolve</button>
 			<hr>
-			world
-			"world"
-			world
-			world
-			world
-			"world"
-		` // if this does not show world "world" world world world "world" - then this would also be ok
+		`
 		);
 
 		resolve.click();
