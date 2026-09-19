@@ -1343,6 +1343,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			context.next({ scope: child_scope });
+
+			// the parameters and what the body declares end up in the same function
+			const body_scope = /** @type {Scope} */ (scopes.get(node.body));
+			for (const [name, binding] of body_scope.declarations) {
+				if (child_scope.declarations.has(name)) {
+					e.declaration_duplicate(binding.node, name);
+				}
+			}
 		},
 
 		Fragment: (node, context) => {
