@@ -15,7 +15,7 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { DESTROYED } from '../../src/internal/client/constants';
+import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
@@ -505,6 +505,81 @@ describe('signals', () => {
 			destroy();
 
 			assert(some_state.reactions === null);
+		};
+	});
+
+	test('derived read untracked inside an effect does not stay registered on its dependencies (zombie)', () => {
+		return () => {
+			const source = state({ n: 1, items: [1] });
+			const data = derived(() => $.get(source));
+			const items = derived(() => $.get(data).items);
+			const count = derived(() => Math.max(1, $.get(items).length));
+			const snap = derived(() => ({ n: $.get(data).n, c: $.get(count) }));
+
+			const show = state(true);
+			const ticks = state(0);
+
+			let rendered = -1;
+			let seen: { n: number; c: number } | null = null;
+
+			const destroy = effect_root(() => {
+				// template reader: tracked, toggled by `show`
+				render_effect(() => {
+					if ($.get(show)) {
+						render_effect(() => {
+							rendered = $.get(snap).c;
+						});
+					}
+				});
+
+				// untracked reader: re-runs on `ticks`, reads the chain via untrack
+				render_effect(() => {
+					$.get(ticks);
+					seen = $.untrack(() => $.get(snap));
+				});
+			});
+
+			flushSync();
+			assert.equal(rendered, 1);
+
+			// hide the template reader: the whole chain must disconnect
+			set(show, false);
+			flushSync();
+			assert.equal(source.reactions, null);
+			assert.equal((snap.f & CONNECTED) !== 0, false);
+
+			// change the source while nothing tracked reads the chain,
+			// then re-run the untracked reader
+			set(source, { n: 2, items: [1, 2] });
+			flushSync();
+			set(ticks, 1);
+			flushSync();
+
+			// the untracked read is fresh...
+			assert.deepEqual(seen, { n: 2, c: 2 });
+
+			// ...and it must NOT have left an inner derived (count/items) connected to
+			// its dependencies while nothing is connected to it
+			assert.equal(source.reactions, null);
+			assert.equal(items.reactions, null);
+			assert.equal(count.reactions, null);
+			assert.equal((items.f & CONNECTED) !== 0, false);
+			assert.equal((count.f & CONNECTED) !== 0, false);
+
+			// a tracked reader reconnects the chain
+			set(show, true);
+			flushSync();
+			assert.equal(rendered, 2);
+			assert.equal(source.reactions?.length, 1);
+
+			// and the reconnected chain is reactive
+			set(source, { n: 3, items: [1] });
+			flushSync();
+			assert.equal(rendered, 1);
+
+			destroy();
+			flushSync();
+			assert.equal(source.reactions, null);
 		};
 	});
 
