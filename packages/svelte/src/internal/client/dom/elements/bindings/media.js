@@ -1,4 +1,7 @@
+/** @import { Effect } from '#client' */
+import { INERT } from '#client/constants';
 import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
+import { active_effect } from '../../../runtime.js';
 import { listen } from './shared.js';
 
 /** @param {TimeRanges} ranges */
@@ -19,6 +22,8 @@ function time_ranges_to_array(ranges) {
  * @returns {void}
  */
 export function bind_current_time(media, get, set = get) {
+	var effect = /** @type {Effect} */ (active_effect);
+
 	/** @type {number} */
 	var raf_id;
 	/** @type {number} */
@@ -33,6 +38,8 @@ export function bind_current_time(media, get, set = get) {
 		if (!media.paused) {
 			raf_id = requestAnimationFrame(callback);
 		}
+
+		if ((effect.f & INERT) !== 0) return;
 
 		var next_value = media.currentTime;
 		if (value !== next_value) {
