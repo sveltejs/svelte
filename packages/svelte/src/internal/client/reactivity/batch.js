@@ -79,6 +79,12 @@ export let wv_values = null;
  */
 export let held_sources = null;
 
+/**
+ * Sources where the current batch reads an outdated value not in its own `current` map. Used to discover dependencies between batches.
+ * @type {Map<Value, Batch> | null}
+ */
+export let stale_sources = null;
+
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
@@ -116,6 +122,9 @@ export class Batch {
 	started = false;
 
 	linked = true;
+
+	/** @type {Batch | null} */
+	merged_into = null;
 
 	/** @type {Map<Effect, number>} */
 	stale_effects = new Map();
@@ -852,6 +861,7 @@ export class Batch {
 
 		this.oncommit(() => batch.discard());
 		batch.#unlink();
+		batch.merged_into = this;
 
 		current_batch = this;
 		this.#process();
@@ -896,7 +906,8 @@ export class Batch {
 		let batch = this.next;
 		let is_latest_value = !this.is_fork;
 		while (batch) {
-			if (source.f & ASYNC) {
+			// TODO this is obsolete through runtime.js logic?
+			if (source.f & ASYNC && false) {
 				// TODO I think this is wrong IF the async source was already written to by a later batch;
 				// we gotta check if it's the source is also part of the later batch.
 				const b = batch;
@@ -1015,8 +1026,13 @@ export class Batch {
 		// }
 	}
 
+	/**
+	 * Activate batch - could be merged into another batch in the meantime,
+	 * in which case that other batch becomes the active batch.
+	 * @returns {Batch}
+	 */
 	activate() {
-		current_batch = this;
+		return (current_batch = this.merged_into?.activate() ?? this);
 	}
 
 	deactivate() {
@@ -1045,6 +1061,7 @@ export class Batch {
 			current_batch = null;
 			batch_values = null;
 			wv_values = null;
+			stale_sources = null;
 
 			old_values.clear();
 
@@ -1305,6 +1322,7 @@ export class Batch {
 		if (!async_mode_flag || (!this.is_fork && this.prev === null && this.next === null)) {
 			batch_values = null;
 			wv_values = null;
+			stale_sources = null;
 			return;
 		}
 
@@ -1313,6 +1331,8 @@ export class Batch {
 		batch_values = new Map();
 		wv_values = new Map();
 		held_sources = new Map();
+		stale_sources = new Map();
+
 		for (const [source, [value, _, wv]] of this.current) {
 			batch_values.set(source, value);
 			wv_values.set(source, wv);
@@ -1328,6 +1348,12 @@ export class Batch {
 			}
 
 			if (batch.is_fork) continue;
+
+			if (batch.id > this.id || this.is_eager) {
+				for (const source of batch.current.keys()) {
+					if (!this.current.has(source)) stale_sources.set(source, batch);
+				}
+			}
 
 			if (batch.id > this.id || include_earlier || this.is_eager) {
 				for (const [source, value] of batch.previous) {

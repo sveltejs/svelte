@@ -251,7 +251,7 @@ export function async_derived(fn, label, location) {
 
 			if (error === OBSOLETE) return;
 
-			batch.activate();
+			batch = batch.activate();
 
 			if (error) {
 				signal.f |= ERROR_VALUE;

@@ -45,37 +45,6 @@ export default test({
 		`
 		);
 
-		// how it's on main
-
-		// shift.click();
-		// await tick();
-		// assert.htmlEqual(
-		// 	target.innerHTML,
-		// 	`
-		// 	a 0 | b 0 | c 1 | d 1
-		// 	<button>a++</button>
-		// 	<button>c++</button>
-		// 	<button>shift</button>
-		// 	<button>pop</button>
-		// `
-		// );
-
-		// shift.click();
-		// await tick();
-		// shift.click();
-		// await tick();
-		// assert.htmlEqual(
-		// 	target.innerHTML,
-		// 	`
-		// 	a 1 | b 2 | c 1 | d 3
-		// 	<button>a++</button>
-		// 	<button>c++</button>
-		// 	<button>shift</button>
-		// 	<button>pop</button>
-		// `
-		// );
-
-		// how it's on https://github.com/sveltejs/svelte/pull/17971 and here
 		shift.click();
 		await tick();
 		assert.htmlEqual(

@@ -32,11 +32,11 @@ export default test({
 		await tick();
 
 		// B's continuation first-reads `a`, which is overlaid by the pending
-		// merged batch. B has already committed its UI, so it cannot entangle —
-		// it reads the latest value (1) instead
+		// merged batch's pre-write value (0). This is noticed so B tells C
+		// to rerun the async effect with the current value.
 		shift_t.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>loading 2...</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>loading 1...</p> <p>loading 2...</p>`);
 
 		// revert `a` to 0 inside the pending batch — its eventual commit leaves
 		// `a` unchanged. The write re-runs the late reader (it acquired `a` as a
@@ -51,7 +51,8 @@ export default test({
 		await tick();
 		shift_a.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>async a: 0</p>`);
+		// only rerun from above still pending
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>loading 1...</p> <p>async a: 0</p>`);
 
 		// resolve the late reader's re-run -> it converges on the committed value
 		shift_t.click();

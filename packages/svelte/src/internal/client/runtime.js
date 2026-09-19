@@ -22,7 +22,8 @@ import {
 	STALE_REACTION,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
-	REACTION_RAN
+	REACTION_RAN,
+	ASYNC
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -53,6 +54,7 @@ import {
 	held_sources,
 	previous_batch,
 	schedule_effect,
+	stale_sources,
 	wv_values
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
@@ -61,6 +63,7 @@ import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
+import { queue_micro_task } from './dom/task.js';
 
 /**
  * True if updating in an effect context that is reactive (i.e. not branch/root effects)
@@ -781,8 +784,34 @@ export function get(signal) {
 		}
 	}
 
-	if (current_batch && held_sources?.has(signal)) {
-		current_batch.dependent.add(/** @type {Batch} */ (held_sources.get(signal)));
+	if (current_batch || previous_batch?.is_eager) {
+		const current = /** @type {Batch} */ (current_batch ?? previous_batch);
+		if (!current.is_eager && held_sources?.has(signal)) {
+			current.dependent.add(/** @type {Batch} */ (held_sources.get(signal)));
+		}
+		const batch = stale_sources?.get(signal);
+		if (batch) {
+			if (!current.is_eager) batch.dependent.add(current);
+			// TODO do we only need this for async/block effects?
+			if (active_effect && (is_updating_effect || active_effect.f & ASYNC)) {
+				const effect = active_effect;
+				// TODO can overfire when two stale reads within one effect, because no "already scheduled this" logic.
+				// TODO how to know "ok we already did this now"
+				if (current.is_eager) {
+					batch.oncommit(() => {
+						const b = Batch.ensure();
+						set_signal_status(effect, DIRTY);
+						b.schedule(effect);
+					});
+				} else {
+					queue_micro_task(() => {
+						set_signal_status(effect, DIRTY);
+						batch.schedule(effect);
+						batch.flush();
+					});
+				}
+			}
+		}
 	}
 
 	if (
