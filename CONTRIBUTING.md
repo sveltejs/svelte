@@ -1,3 +1,12 @@
+## Quick Start
+
+```bash
+git clone https://github.com/sveltejs/svelte.git
+cd svelte
+pnpm install
+pnpm build
+```
+
 # Contributing to Svelte
 
 Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into efficient JavaScript that surgically updates the DOM.
