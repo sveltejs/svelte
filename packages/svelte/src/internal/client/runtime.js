@@ -728,7 +728,10 @@ function reconnect(derived) {
 	if (derived.deps === null) return;
 
 	for (const dep of derived.deps) {
-		(dep.reactions ??= []).push(derived);
+		var reactions = (dep.reactions ??= []);
+		if (!includes.call(reactions, derived)) {
+			reactions.push(derived);
+		}
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
 			unfreeze_derived_effects(/** @type {Derived} */ (dep));
