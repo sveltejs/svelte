@@ -910,8 +910,10 @@ const instance_script = {
 				start = /** @type {number} */ (parent.start);
 				end = /** @type {number} */ (parent.end);
 			}
-			while (state.str.original[start] !== '\n') start--;
-			while (state.str.original[end] !== '\n') end++;
+			// remove the declaration's whole line, or what there is of it inside the script
+			const script = /** @type {{ start: number; end: number }} */ (state.analysis.instance.ast);
+			while (start > script.start && state.str.original[start] !== '\n') start--;
+			while (end < script.end && state.str.original[end] !== '\n') end++;
 			state.str.update(start, end, '');
 		}
 	},
