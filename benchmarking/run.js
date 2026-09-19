@@ -1,6 +1,7 @@
 import { fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as $ from '../packages/svelte/src/internal/client/index.js';
+import { compiler_benchmarks } from './benchmarks/compiler/index.js';
 import { reactivity_benchmarks } from './benchmarks/reactivity/index.js';
 import { ssr_benchmarks } from './benchmarks/ssr/index.js';
 import { with_cpu_profile } from './utils.js';
@@ -11,7 +12,9 @@ const single = process.env.BENCH_SINGLE;
 
 if (single) {
 	// child mode — run a single benchmark and report the result to the parent
-	const benchmark = [...reactivity_benchmarks, ...ssr_benchmarks].find((b) => b.label === single);
+	const benchmark = [...compiler_benchmarks, ...reactivity_benchmarks, ...ssr_benchmarks].find(
+		(b) => b.label === single
+	);
 
 	if (!benchmark) {
 		throw new Error(`Unknown benchmark ${single}`);
@@ -33,6 +36,13 @@ if (single) {
 	const filters = process.argv.slice(2);
 
 	const suites = [
+		// Commenting out because we rarely need to run it
+		// {
+		// 	benchmarks: compiler_benchmarks.filter(
+		// 		(b) => filters.length === 0 || filters.some((f) => b.label.includes(f))
+		// 	),
+		// 	name: 'compiler benchmarks'
+		// },
 		{
 			benchmarks: reactivity_benchmarks.filter(
 				(b) => filters.length === 0 || filters.some((f) => b.label.includes(f))

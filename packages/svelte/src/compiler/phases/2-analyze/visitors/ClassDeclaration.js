@@ -1,7 +1,7 @@
 /** @import { ClassDeclaration } from 'estree' */
 /** @import { Context } from '../types' */
 import * as w from '../../../warnings.js';
-import { validate_identifier_name } from './shared/utils.js';
+import { validate_identifier_name } from '../../scope.js';
 
 /**
  * @param {ClassDeclaration} node

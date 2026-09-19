@@ -1,5 +1,5 @@
 import { IGNORABLE_RUNTIME_WARNINGS } from '../../constants.js';
-import fuzzymatch from '../phases/1-parse/utils/fuzzymatch.js';
+import fuzzymatch from './fuzzymatch.js';
 import * as w from '../warnings.js';
 
 const regex_svelte_ignore = /^\s*svelte-ignore\s/;

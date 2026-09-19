@@ -3,11 +3,10 @@
 /** @import { Parser } from '../index.js' */
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
-import { ExpressionMetadata } from '../../nodes.js';
+import { create_fragment, ExpressionMetadata } from '../../nodes.js';
 import { parse_expression_at, parse_statement_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
-import { create_fragment } from '../utils/create.js';
 import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /\s*}/y;
@@ -488,12 +487,13 @@ function open(parser) {
 			parser.eat(')', true);
 		}
 
-		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
-		const params = parser.template.slice(params_start, parser.index);
-
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(parser, prelude + `${params} => {}`, params_start)
+					parse_expression_at(
+						parser,
+						parser.template.slice(0, parser.index) + ' => {}',
+						params_start
+					)
 				)
 			: { params: [] };
 

@@ -19,6 +19,7 @@
     "lint": "eslint && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
+    "profile:compiler": "node ./benchmarking/profile-compiler.js",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
     "changeset:publish": "changeset publish",
     "bench": "NODE_ENV=production node --allow-natives-syntax ./benchmarking/run.js",

@@ -204,16 +204,21 @@ export function proxy(value) {
 		},
 
 		getOwnPropertyDescriptor(target, prop) {
+			this.has?.(target, prop);
+
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+			var s = sources.get(prop);
 
-			if (descriptor && 'value' in descriptor) {
-				var s = sources.get(prop);
-				if (s) descriptor.value = get(s);
-			} else if (descriptor === undefined) {
-				var source = sources.get(prop);
-				var value = source?.v;
+			if (s !== undefined) {
+				var value = get(s);
 
-				if (source !== undefined && value !== UNINITIALIZED) {
+				if (value === UNINITIALIZED) {
+					return undefined;
+				}
+
+				if (descriptor && 'value' in descriptor) {
+					descriptor.value = value;
+				} else {
 					return {
 						enumerable: true,
 						configurable: true,

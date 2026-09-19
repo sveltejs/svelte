@@ -80,6 +80,14 @@ Context was not set in the current component or any of its ancestors
 
 The [`createContext()`](svelte#createContext) utility returns a `[get, set, has]` triplet of functions. `get` will throw an error if `set` was not used to set the context in the current component or any of its ancestors.
 
+### set_context_after_init
+
+```
+`setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+```
+
+This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
+
 ### snippet_without_render_tag
 
 ```

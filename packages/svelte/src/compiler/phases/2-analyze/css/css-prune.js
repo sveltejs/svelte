@@ -145,6 +145,12 @@ export function prune(stylesheet, elements) {
 		},
 		ComplexSelector(node) {
 			const selectors = get_relative_selectors(node);
+			const rule = /** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule);
+
+			// Global and ICSS export rules do not depend on an element in this component
+			if (every_is_global(selectors, 0, selectors.length, rule)) {
+				node.metadata.used = true;
+			}
 
 			for (const element of elements) {
 				seen.clear();
@@ -153,12 +159,7 @@ export function prune(stylesheet, elements) {
 					// Elements rendered through <svelte:head> are not style-scopable.
 					// Prevent css hash injection (class="s-...") on tags like <meta>, <link>, <script>.
 					!is_inside_svelte_head(element) &&
-					apply_selector(
-						selectors,
-						/** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule),
-						element,
-						BACKWARD
-					)
+					apply_selector(selectors, rule, element, BACKWARD)
 				) {
 					node.metadata.used = true;
 				}
