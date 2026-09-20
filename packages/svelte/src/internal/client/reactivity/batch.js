@@ -228,11 +228,7 @@ export class Batch {
 	 * Deferred effects that are MAYBE_DIRTY
 	 * @type {Set<Effect>}
 	 */
-	#maybe_dirty_effects = new Set();
-
-	get maybe_dirty_effects() {
-		return this.#maybe_dirty_effects; // TODO temporary
-	}
+	maybe_dirty_effects = new Set();
 
 	/**
 	 * Deferred derived effects that are DIRTY
@@ -419,12 +415,12 @@ export class Batch {
 		// an if block that contains the last blocking pending effect falsy,
 		// causing the block to no longer be deferred.
 		for (const e of this.#dirty_effects) {
-			this.#maybe_dirty_effects.delete(e);
+			this.maybe_dirty_effects.delete(e);
 			set_signal_status(e, DIRTY);
 			this.schedule(e);
 		}
 
-		for (const e of this.#maybe_dirty_effects) {
+		for (const e of this.maybe_dirty_effects) {
 			if ((e.f & DIRTY) === 0) {
 				set_signal_status(e, MAYBE_DIRTY);
 				this.schedule(e);
@@ -515,7 +511,7 @@ export class Batch {
 
 		// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
 		this.#dirty_effects.clear();
-		this.#maybe_dirty_effects.clear();
+		this.maybe_dirty_effects.clear();
 
 		this.apply(true);
 
@@ -719,10 +715,10 @@ export class Batch {
 					not_yet
 						? !this.seen_effects.has(effect) &&
 							!this.#dirty_effects.has(effect) &&
-							!this.#maybe_dirty_effects.has(effect)
+							!this.maybe_dirty_effects.has(effect)
 						: (flags & (ASYNC | BLOCK_EFFECT)) === 0 || this.seen_effects.has(effect)
 				) {
-					this.#maybe_dirty_effects.delete(effect);
+					this.maybe_dirty_effects.delete(effect);
 					set_signal_status(effect, status);
 					this.schedule(effect);
 					marked = true;
@@ -787,7 +783,7 @@ export class Batch {
 		batch.async_deriveds.clear();
 
 		// Mark is not guaranteed not touch these, so we transfer them
-		this.transfer_effects(batch.#dirty_effects, batch.#maybe_dirty_effects, batch.#dirty_deriveds);
+		this.transfer_effects(batch.#dirty_effects, batch.maybe_dirty_effects, batch.#dirty_deriveds);
 
 		this.oncommit(() => batch.discard());
 		batch.#unlink();
@@ -802,12 +798,7 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(
-				effects[i],
-				this.#dirty_effects,
-				this.#maybe_dirty_effects,
-				this.#dirty_deriveds
-			);
+			defer_effect(effects[i], this.#dirty_effects, this.maybe_dirty_effects, this.#dirty_deriveds);
 		}
 	}
 
@@ -1185,7 +1176,7 @@ export class Batch {
 		}
 
 		for (const e of maybe_dirty_effects) {
-			this.#maybe_dirty_effects.add(e);
+			this.maybe_dirty_effects.add(e);
 		}
 
 		for (const d of dirty_deriveds) {
