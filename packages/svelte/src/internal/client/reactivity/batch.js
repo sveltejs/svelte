@@ -654,16 +654,7 @@ export class Batch {
 
 		while (batch !== null) {
 			if (!batch.is_fork) {
-				// if the batches are connected, break
-				// for (const [value, [, is_derived]] of this.current) {
-				// 	if (batch.current.has(value) && !is_derived) {
-				// 		return batch;
-				// 	}
-				// }
 				if (this.dependent.has(batch)) {
-					// TODO what if there's a fork between the chosen batch and the current one,
-					// then the fork commits (but is still pending), then the chosen batch
-					// finishes - then we would apply UI update of B1+B3 before B2.
 					return batch;
 				}
 			}
@@ -738,9 +729,6 @@ export class Batch {
 				this.previous.set(source, batch.previous.get(source));
 			}
 
-			if (this.current.get(source)?.[0] !== value[0]) {
-				// this.mark(source, DIRTY);
-			}
 			this.current.set(source, value);
 		}
 
@@ -768,9 +756,6 @@ export class Batch {
 
 		for (const s of batch.unskipped_branches.keys()) {
 			const v = this.#skipped_branches.get(s);
-			// TODO i do wonder at this point if it's less code / easier / more robust to do what mark() below does
-			// instead and just rerun all the block effects. Though it will certainly overrun some blocks, potentially
-			// with bad consequences for e.g. each blocks (could generate a new array etc etc).
 			if (v) {
 				v.d = v.d.filter((e) => !batch.async_deriveds.has(e));
 				v.m = v.m.filter((e) => !batch.async_deriveds.has(e));
@@ -782,7 +767,6 @@ export class Batch {
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
 		batch.async_deriveds.clear();
 
-		// Mark is not guaranteed not touch these, so we transfer them
 		this.transfer_effects(batch.#dirty_effects, batch.maybe_dirty_effects, batch.#dirty_deriveds);
 
 		this.oncommit(() => batch.discard());
@@ -858,32 +842,7 @@ export class Batch {
 			}
 
 			if (batch.is_fork && is_latest_value) {
-				const current = batch.current.get(source);
-				batch.current.delete(source);
-
-				if (![...batch.current.values()].some((v) => !v[1])) {
-					batch.discard();
-				} else {
-					if (current) batch.current.set(source, current);
-					if (
-						!is_derived &&
-						(!current || current[0] !== value) &&
-						((source.f & ASYNC) === 0 ||
-							!depends_on(
-								source.e,
-								[...batch.current.keys()].filter((s) => !this.current.has(s)),
-								new Map()
-							))
-					) {
-						batch.current.delete(source);
-						const b = batch;
-						queue_micro_task(() => {
-							if (b.mark(source, DIRTY)) {
-								b.flush();
-							}
-						});
-					}
-				}
+				this.notify_fork(batch, source, is_derived, value);
 			}
 			batch = batch.next;
 		}
@@ -928,6 +887,43 @@ export class Batch {
 		// 	}
 		// 	if (is_latest_value) source.v = value;
 		// }
+	}
+
+	/**
+	 * Tell a fork batch that a source has been updated. Will delete that source from the fork,
+	 * discarding it if it has no other sources left, and rerunning it else with the new value.
+	 * @param {Batch} batch A fork
+	 * @param {Source} source
+	 * @param {boolean} is_derived
+	 * @param {any} value
+	 */
+	notify_fork(batch, source, is_derived, value) {
+		const current = batch.current.get(source);
+		batch.current.delete(source);
+
+		if (![...batch.current.values()].some((v) => !v[1])) {
+			batch.discard();
+		} else {
+			if (current) batch.current.set(source, current);
+			if (
+				!is_derived &&
+				(!current || current[0] !== value) &&
+				((source.f & ASYNC) === 0 ||
+					!depends_on(
+						source.e,
+						[...batch.current.keys()].filter((s) => !this.current.has(s)),
+						new Map()
+					))
+			) {
+				batch.current.delete(source);
+				const b = batch;
+				queue_micro_task(() => {
+					if (b.mark(source, DIRTY)) {
+						b.flush();
+					}
+				});
+			}
+		}
 	}
 
 	/**
@@ -1802,14 +1798,18 @@ export function fork(fn) {
 			batch.flush();
 
 			// Other forks might need to rerun now with the updated state.
-			// TODO reuse batch.capture() logic here (delete values from fork and possibly discard, depend on other batches etc) (maybe we can just call it?)
 			let next_batch = batch.next;
 			while (next_batch) {
-				for (const [source, [, is_derived]] of batch.current) {
-					if (!is_derived && !next_batch.current.has(source)) {
-						if (next_batch.mark(source, DIRTY)) {
-							next_batch.flush();
-						}
+				for (const [source, [value, is_derived]] of batch.current) {
+					if (next_batch.current.has(source)) {
+						batch.notify_fork(next_batch, source, is_derived, value);
+					} else if (!is_derived) {
+						const b = next_batch;
+						queue_micro_task(() => {
+							if (b.mark(source, DIRTY)) {
+								b.flush();
+							}
+						});
 					}
 				}
 				next_batch = next_batch.next;
