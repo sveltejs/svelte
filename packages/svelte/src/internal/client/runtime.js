@@ -25,7 +25,7 @@ import {
 	REACTION_RAN,
 	ASYNC
 } from './constants.js';
-import { old_values } from './reactivity/sources.js';
+import { invalidate, old_values } from './reactivity/sources.js';
 import {
 	reactivity_loss_tracker,
 	execute_derived,
@@ -493,26 +493,16 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		// Did the effect see the latest value of all its dependencies, or (some of) its batch's view?
-		// A dependency is "not latest" if `batch_values` overrides it with a value the batch itself
-		// did not write (i.e. it's another batch's value being hidden from us).
-		// TODO consolidate with similar logic in batch.capture()
-		var own_batch = previous_batch ?? current_batch;
-		let is_latest_value = true;
-		// Can be falsy inside flush_eager_effects
-		if (own_batch) {
-			is_latest_value =
-				!own_batch.is_fork &&
-				(!effect.deps?.length ||
-					!effect.deps.some((d) => {
-						return (
-							batch_values &&
-							batch_values.has(d) &&
-							(!own_batch?.current.has(d) ||
-								/** @type {any} */ (own_batch.current.get(d))[0] !== d.v)
-						);
-					}));
-		}
+		// Did the effect see the latest value of all its dependencies, or (partly) its batch's view
+		// of them, i.e. did `batch_values` hand it a value that differs from the real one? We only
+		// need to look one level deep: a derived that was itself computed from such a value was not
+		// written to the real world either, so it differs as well.
+		var own_batch = previous_batch ?? current_batch; // can be null inside flush_eager_effects
+		var is_latest_value =
+			own_batch === null ||
+			(!own_batch.is_fork &&
+				(effect.deps === null ||
+					!effect.deps.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v)));
 
 		if (is_latest_value) {
 			effect.wv = write_version;
@@ -520,11 +510,10 @@ export function update_effect(effect) {
 			// The effect ran with values that are not the latest ones (it saw its own batch's view).
 			// Don't update its write version — instead remember it so that the batch can bring it
 			// up to date on commit, and tell all subsequent batches that it may need to re-run in their view.
-			/** @type {Batch} */ (own_batch).stale_effects.set(effect, write_version);
-			var batch = /** @type {Batch} */ (own_batch).next;
-			while (batch) {
+			var own = /** @type {Batch} */ (own_batch);
+			own.stale_effects.set(effect, write_version);
+			for (var batch = own.next; batch !== null; batch = batch.next) {
 				batch.maybe_dirty_effects.add(effect);
-				batch = batch.next;
 			}
 		}
 
@@ -764,44 +753,57 @@ export function get(signal) {
 		const batch = stale_sources?.get(signal);
 		if (batch) {
 			if (!current.is_eager) batch.dependent.add(current);
-			// TODO do we only need this for async/block effects?
+
+			// The reaction that read the stale value has to re-run in `batch`'s world. If we're inside
+			// a derived, that's the derived (whose reactions get dirtied): `active_effect` is only the
+			// derived's parent then, not the effect on whose behalf the derived is evaluated (which may
+			// even happen in `is_dirty`, i.e. outside of any effect update)
+			const in_derived = active_reaction !== null && (active_reaction.f & DERIVED) !== 0;
+			const reader = in_derived ? active_reaction : active_effect;
+
+			var reactive =
+				in_derived ||
+				is_updating_effect ||
+				(active_effect !== null && (active_effect.f & ASYNC) !== 0);
+
 			if (
-				active_effect &&
-				(is_updating_effect || active_effect.f & ASYNC) &&
-				// an effect can read several stale values in one run — only schedule the re-run once
-				!batch.stale_readers.has(active_effect)
+				reader !== null &&
+				reactive &&
+				// a reaction can read several stale values in one run — only schedule the re-run once
+				!batch.stale_readers.has(reader)
 			) {
-				const effect = active_effect;
-				batch.stale_readers.add(effect);
+				batch.stale_readers.add(reader);
 
 				if (current.is_eager) {
 					// TODO only do this if we can see that the batch doesn't have this already scheduled in (maybe)dirty effects.
 					batch.oncommit(() => {
-						batch.stale_readers.delete(effect);
-						const b = Batch.ensure();
-						set_signal_status(effect, DIRTY);
-						b.schedule(effect);
+						batch.stale_readers.delete(reader);
+						Batch.ensure();
+						invalidate(reader);
 					});
 				} else {
 					queue_micro_task(() => {
-						batch.stale_readers.delete(effect);
-						set_signal_status(effect, DIRTY);
-						batch.schedule(effect);
-						batch.flush();
+						batch.stale_readers.delete(reader);
+						const b = batch.activate();
+						invalidate(reader);
+						b.flush();
 					});
 				}
 			}
 		}
 	}
 
-	if (
-		// TODO correct?! I thought the failure can only occur in case we see new values for the first time while flushing (render)effects,
-		// but it can also occur when resolving async deriveds after creating them for the first time, which can happen outside
-		// the effects flush phase.
-		(!first_time || !previous_batch) &&
-		// (!first_time || current_batch?.is_fork || signal.v === UNINITIALIZED) &&
-		batch_values?.has(signal)
-	) {
+	// A reaction that reads a signal for the first time must see the latest value, rather than
+	// this batch's view, if that view could hide the write of an _earlier_ batch — the user's
+	// program made that write before this batch's writes, so hiding it could e.g. crash a newly
+	// created branch (see `async-state-read-new-dependency`). Earlier batches' writes are hidden
+	// only while flushing a committing batch (`previous_batch` is set, see `apply(true)`) and in
+	// eager batches (which hide every other batch). Everywhere else `batch_values` only hides
+	// _later_ batches' writes, which is correct even for new readers: that's the state the
+	// program was in when this batch's writes happened.
+	var see_latest = first_time && (previous_batch !== null || current_batch?.is_eager);
+
+	if (!see_latest && batch_values?.has(signal)) {
 		return batch_values.get(signal);
 	}
 

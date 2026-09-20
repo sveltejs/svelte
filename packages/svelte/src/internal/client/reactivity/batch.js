@@ -130,10 +130,10 @@ export class Batch {
 	stale_effects = new Map();
 
 	/**
-	 * Effects that, while running in an earlier batch, read a value that this batch holds
+	 * Reactions that, while running in an earlier batch, read a value that this batch holds
 	 * a newer version of, and that are therefore scheduled to re-run in this batch. Used to
-	 * avoid scheduling the same effect multiple times when it reads more than one such value.
-	 * @type {Set<Effect>}
+	 * avoid scheduling the same reaction multiple times when it reads more than one such value.
+	 * @type {Set<Reaction>}
 	 */
 	stale_readers = new Set();
 
@@ -154,16 +154,17 @@ export class Batch {
 
 	/**
 	 * The current values of any signals that are updated in this batch.
-	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
-	 * They keys of this map are identical to `this.#previous`
+	 * Tuple format: [value, is_derived, write_version] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
+	 * They keys of this map are identical to `this.previous`
 	 * @type {Map<Value, [any, boolean, number]>}
 	 */
 	current = new Map();
 
 	/**
-	 * The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
-	 * They keys of this map are identical to `this.#current`
-	 * @type {Map<Value, any>}
+	 * The values and write versions of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
+	 * Tuple format: [value, write_version]
+	 * They keys of this map are identical to `this.current`
+	 * @type {Map<Value, [any, number]>}
 	 */
 	previous = new Map();
 
@@ -698,7 +699,7 @@ export class Batch {
 	#merge(batch) {
 		for (const [source, value] of batch.current) {
 			if (!this.previous.has(source) && batch.previous.has(source)) {
-				this.previous.set(source, batch.previous.get(source));
+				this.previous.set(source, /** @type {[any, number]} */ (batch.previous.get(source)));
 			}
 
 			this.current.set(source, value);
@@ -767,7 +768,7 @@ export class Batch {
 	 */
 	capture(source, value, is_derived = false) {
 		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, source.v);
+			this.previous.set(source, [source.v, source.wv]);
 		}
 
 		const wv = increment_write_version();
@@ -779,27 +780,31 @@ export class Batch {
 			wv_values?.set(source, wv);
 		}
 
-		let batch = this.next;
+		// The value becomes the real one unless this is a fork or a later batch wrote to the source
+		// as well. For a derived, the same goes if a later batch wrote to one of its dependencies:
+		// the derived value then belongs to that batch's world, not ours. (This is deliberately not
+		// the same check as in `update_effect`: a later batch's write is visible through `batch_values`,
+		// so comparing what was read against the real value could not attribute the value to the right
+		// batch, see `async-dont-rebase-new-batch-4`.) We only need to look one level deep: `is_dirty`
+		// evaluates the top-most deriveds first, so a dependency derived that was itself not the latest
+		// value was not written to the real world, and differs from our value for it.
 		let is_latest_value = !this.is_fork;
-		while (batch) {
+
+		for (let batch = this.next; batch !== null && is_latest_value; batch = batch.next) {
+			if (batch.is_fork) continue;
+
 			if (
-				!batch.is_fork &&
-				(!is_latest_value ||
-					batch.current.has(source) ||
-					// Check derived's dependencies for outdated values. We only have to check one
-					// level because is_dirty etc will execute the top-most deriveds first, whose result
-					// the later deriveds can use to make a decision ("oh this derived's value is different to what I cached")
-					((source.f & DERIVED) !== 0 &&
-						/** @type {Derived} */ (source).deps?.some(
-							(d) =>
-								/** @type {Batch} */ (batch).current.has(d) ||
-								(this.current.has(d) &&
-									/** @type {[any, boolean, number]} */ (this.current.get(d))[0] !== d.v)
-						)))
+				batch.current.has(source) ||
+				((source.f & DERIVED) !== 0 &&
+					/** @type {Derived} */ (source).deps?.some(
+						(d) =>
+							/** @type {Batch} */ (batch).current.has(d) ||
+							(this.current.has(d) &&
+								/** @type {[any, boolean, number]} */ (this.current.get(d))[0] !== d.v)
+					))
 			) {
 				is_latest_value = false;
 			}
-			batch = batch.next;
 		}
 
 		if (is_latest_value) {
@@ -807,8 +812,7 @@ export class Batch {
 			source.wv = wv;
 		}
 
-		batch = first_batch;
-		while (batch) {
+		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch.id < this.id && batch.current.has(source)) {
 				this.dependent.add(batch);
 			}
@@ -816,7 +820,6 @@ export class Batch {
 			if (batch.is_fork && is_latest_value) {
 				this.notify_fork(batch, source, is_derived, value);
 			}
-			batch = batch.next;
 		}
 	}
 
@@ -1048,10 +1051,10 @@ export class Batch {
 			}
 
 			if (batch.id > this.id || include_earlier || this.is_eager) {
-				for (const [source, value] of batch.previous) {
+				for (const [source, [value, wv]] of batch.previous) {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, value);
-						// TODO I think we need previous_wv in batch.previous
+						wv_values.set(source, wv);
 					}
 				}
 			}

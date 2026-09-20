@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	active_reaction,
@@ -348,6 +348,24 @@ export function update_pre(source, d = 1) {
  */
 export function increment(source) {
 	set(source, source.v + 1);
+}
+
+/**
+ * Make `reaction` re-run in the current batch. For a derived this means dirtying
+ * its reactions, as if the derived's value had changed.
+ * @param {Reaction} reaction
+ */
+export function invalidate(reaction) {
+	set_signal_status(reaction, DIRTY);
+
+	if ((reaction.f & DERIVED) !== 0) {
+		seen = null;
+		count_deps = 0;
+		mark_reactions(/** @type {Derived} */ (reaction), DIRTY, null);
+		seen = null;
+	} else {
+		schedule_effect(/** @type {Effect} */ (reaction));
+	}
 }
 
 /**
