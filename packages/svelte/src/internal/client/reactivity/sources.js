@@ -38,7 +38,8 @@ import {
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates,
-	current_batch
+	current_batch,
+	first_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -207,8 +208,11 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 			// During time traveling we don't want to reset the status so that
 			// traversal of the graph in the other batches still happens
-			// TODO
-			if (batch_values === null) {
+			if (
+				batch_values === null &&
+				// could also be "read outside of reactivity", e.g. in an event handler
+				!first_batch?.next
+			) {
 				update_derived_status(derived);
 			}
 		}

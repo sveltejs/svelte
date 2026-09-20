@@ -457,16 +457,14 @@ export function update_derived(derived) {
 	// traversal of the graph in the other batches still happens
 	if (
 		batch_values !== null ||
-		(!current_batch &&
-			first_batch?.next) /* means "read outside of reactivity, e.g. in an event hanlder" */
+		// "read outside of reactivity", e.g. in an event handler
+		(!current_batch && first_batch?.next)
 	) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking() || current_batch?.is_fork) {
 			batch_values?.set(derived, value);
 		}
-		// if (derived.v === value) set_signal_status(derived, MAYBE_DIRTY);
-		// if (!current_batch?.is_fork) set_signal_status(derived, MAYBE_DIRTY);
 		if (derived.v !== UNINITIALIZED) set_signal_status(derived, MAYBE_DIRTY);
 	} else {
 		update_derived_status(derived);
