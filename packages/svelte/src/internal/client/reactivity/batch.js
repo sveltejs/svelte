@@ -241,12 +241,6 @@ export class Batch {
 	#dirty_deriveds = new Set();
 
 	/**
-	 * Deferred derived effects that are MAYBE_DIRTY
-	 * @type {Set<Derived>}
-	 */
-	#maybe_dirty_deriveds = new Set();
-
-	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`.
 	 * The value contains child effects that were dirty/maybe_dirty before being reset,
@@ -438,21 +432,8 @@ export class Batch {
 		}
 
 		for (const d of this.#dirty_deriveds) {
-			this.#maybe_dirty_deriveds.delete(d);
 			set_signal_status(d, DIRTY);
 		}
-
-		for (const d of this.#maybe_dirty_deriveds) {
-			set_signal_status(d, MAYBE_DIRTY);
-		}
-
-		// An earlier batch might have created new branches which contain effects that we need
-		// to mark as dirty to also execute them.
-		// TODO does this make the similar logic in fork.commit below obsolete?
-		// TODO feels correct but breaks many tests
-		// for (const [s, [_, is_derived]] of this.current) {
-		// if (!is_derived) this.mark(s, MAYBE_DIRTY, true);
-		// }
 
 		this.apply();
 
@@ -806,55 +787,7 @@ export class Batch {
 		batch.async_deriveds.clear();
 
 		// Mark is not guaranteed not touch these, so we transfer them
-		this.transfer_effects(
-			batch.#dirty_effects,
-			batch.#maybe_dirty_effects,
-			batch.#dirty_deriveds,
-			batch.#maybe_dirty_deriveds
-		);
-
-		/**
-		 * mark all effects that depend on `batch.current`, except the
-		 * async effects that we just resolved (TODO unless they depend
-		 * on values in this batch that are NOT in the later batch?).
-		 * Through this we also will populate the correct #skipped_branches,
-		 * oncommit callbacks etc, so we don't need to merge them separately.
-		 * @param {Value} value
-		 */
-		const mark = (value) => {
-			var reactions = value.reactions;
-			if (reactions === null) return;
-			// skip if value is derived and is neither dirty nor maybe dirty. transitive
-			// deriveds (a derived depending on another derived) are only MAYBE_DIRTY, so
-			// we must continue traversing them to reach the effects that depend on them
-			if ((value.f & DERIVED) !== 0 && (value.f & (DIRTY | MAYBE_DIRTY)) === 0) {
-				return;
-			}
-
-			for (const reaction of reactions) {
-				var flags = reaction.f;
-
-				if ((flags & DERIVED) !== 0) {
-					mark(/** @type {Derived} */ (reaction));
-				} else {
-					var effect = /** @type {Effect} */ (reaction);
-
-					// TODO this overfires e.g. for async-state-new-branch-fork-5 where it reruns
-					// the Child async effects with "world" after commit+first resolve; generally
-					// overfires everywhere where the merged effect has async deriveds that are not
-					// in the earlier batch, which it definitely should not rerun.
-					if (flags & (ASYNC | BLOCK_EFFECT) && !this.async_deriveds.has(effect)) {
-						this.#maybe_dirty_effects.delete(effect);
-						set_signal_status(effect, DIRTY);
-						this.schedule(effect);
-					}
-				}
-			}
-		};
-
-		// for (const source of this.current.keys()) {
-		// 	mark(source);
-		// }
+		this.transfer_effects(batch.#dirty_effects, batch.#maybe_dirty_effects, batch.#dirty_deriveds);
 
 		this.oncommit(() => batch.discard());
 		batch.#unlink();
@@ -873,8 +806,7 @@ export class Batch {
 				effects[i],
 				this.#dirty_effects,
 				this.#maybe_dirty_effects,
-				this.#dirty_deriveds,
-				this.#maybe_dirty_deriveds
+				this.#dirty_deriveds
 			);
 		}
 	}
@@ -903,22 +835,6 @@ export class Batch {
 		let batch = this.next;
 		let is_latest_value = !this.is_fork;
 		while (batch) {
-			// TODO this is obsolete through runtime.js logic?
-			if (source.f & ASYNC && false) {
-				// TODO I think this is wrong IF the async source was already written to by a later batch;
-				// we gotta check if it's the source is also part of the later batch.
-				const b = batch;
-				const run = () => {
-					if (b.mark(source, DIRTY)) {
-						b.flush();
-					}
-				};
-				if (this.is_fork) {
-					// this.on_fork_commit.set({}, run); // TODO done by mark in commit already?
-				} else {
-					queue_micro_task(run);
-				}
-			}
 			if (
 				!batch.is_fork &&
 				(!is_latest_value ||
@@ -1262,9 +1178,8 @@ export class Batch {
 	 * @param {Set<Effect>} dirty_effects
 	 * @param {Set<Effect>} maybe_dirty_effects
 	 * @param {Set<Derived>} dirty_deriveds
-	 * @param {Set<Derived>} maybe_dirty_deriveds
 	 */
-	transfer_effects(dirty_effects, maybe_dirty_effects, dirty_deriveds, maybe_dirty_deriveds) {
+	transfer_effects(dirty_effects, maybe_dirty_effects, dirty_deriveds) {
 		for (const e of dirty_effects) {
 			this.#dirty_effects.add(e);
 		}
@@ -1275,10 +1190,6 @@ export class Batch {
 
 		for (const d of dirty_deriveds) {
 			this.#dirty_deriveds.add(d);
-		}
-
-		for (const d of maybe_dirty_deriveds) {
-			this.#maybe_dirty_deriveds.add(d);
 		}
 
 		dirty_effects.clear();
@@ -1357,42 +1268,6 @@ export class Batch {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, value);
 						// TODO I think we need previous_wv in batch.previous
-					}
-				}
-			}
-		}
-		return;
-
-		// ...and undo changes belonging to other batches unless they intersect
-		for (let batch = first_batch; batch !== null; batch = batch.next) {
-			if (batch === this || batch.is_fork) continue;
-
-			// If two batches intersect, the latter batch will be merged into the earlier batch,
-			// and we should treat them as a single set of changes
-			var intersects = false;
-
-			if (batch.id < this.id) {
-				for (const [source, [, is_derived]] of batch.current) {
-					// Derived values don't partake in the intersection mechanism, because a derived could
-					// be triggered in one batch already but not the other one yet, causing a false-positive
-					if (is_derived) continue;
-
-					if (this.current.has(source)) {
-						intersects = true;
-						break;
-					}
-				}
-			}
-
-			// Since the latter batch merges into the earlier (if it resolves before the earlier one),
-			// we treat the earlier values as "already applied". This way we don't need to rerun async
-			// effects of the earlier batch in case they are merged.
-			// As a result you can think of batch_values as having the latest values of all intersecting
-			// batches up until this batch.
-			if (!intersects) {
-				for (const [source, previous] of batch.previous) {
-					if (!batch_values.has(source)) {
-						batch_values.set(source, previous);
 					}
 				}
 			}
@@ -1949,26 +1824,6 @@ export function fork(fn) {
 				next_batch = next_batch.next;
 			}
 
-			// let next_batch = batch.next;
-			// while (next_batch) {
-			// 	for (const [effect] of batch.async_deriveds) {
-			// 		if (next_batch.async_deriveds.has(effect)) {
-			// 			next_batch.dependent.add(batch);
-			// 			if (!next_batch.is_fork) {
-			// 				set_signal_status(effect, DIRTY); // TODO ideally we can find out if we really need to rerun or if all dependencies' values are equal
-			// 				// TODO same for block effects; ideally one mechanism for both
-			// 				next_batch.schedule(effect);
-			// 				const b = next_batch;
-			// 				queue_micro_task(() => b.flush());
-			// 			}
-			// 		}
-			// 	}
-			// 	next_batch = next_batch.next;
-			// }
-
-			// for (const run of batch.on_fork_commit.values()) {
-			// 	run();
-			// }
 			await settled;
 		},
 		discard: () => {
