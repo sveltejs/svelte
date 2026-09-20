@@ -544,21 +544,15 @@ export function update_effect(effect) {
 		if (is_latest_value) {
 			effect.wv = write_version;
 		} else {
-			// console.log('setting', effect.wv, effect, 'to', write_version, is_latest_value);
-			// effect.wv = write_version;
-			// set_signal_status(effect, MAYBE_DIRTY);
-			// debugger;
-			if (!is_latest_value) {
-				/** @type {Batch} */ (own_batch).stale_effects.set(effect, write_version);
-				var batch = /** @type {Batch} */ (own_batch).next;
-				while (batch) {
-					batch.maybe_dirty_effects.add(effect);
-					batch = batch.next;
-				}
+			// The effect ran with values that are not the latest ones (it saw its own batch's view).
+			// Don't update its write version — instead remember it so that the batch can bring it
+			// up to date on commit, and tell all subsequent batches that it may need to re-run in their view.
+			/** @type {Batch} */ (own_batch).stale_effects.set(effect, write_version);
+			var batch = /** @type {Batch} */ (own_batch).next;
+			while (batch) {
+				batch.maybe_dirty_effects.add(effect);
+				batch = batch.next;
 			}
-
-			// TODO add to maybe_dirty_effects in all subsequent batches here,
-			// removing need for other cross-batch rerun mechanisms / remove need for adding blocks to maybe_dirty?
 		}
 
 		// In DEV, increment versions of any sources that were written to during the effect,
@@ -646,12 +640,17 @@ export function get(signal) {
 					// rather than updating `new_deps`, which creates GC cost
 					if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
 						skipped_deps++;
-					} else if (new_deps === null) {
-						new_deps = [signal];
-						first_time = true;
 					} else {
-						new_deps.push(signal);
-						first_time = true;
+						if (new_deps === null) {
+							new_deps = [signal];
+						} else {
+							new_deps.push(signal);
+						}
+
+						// Only a signal that wasn't a dependency of this reaction before counts as new —
+						// reading existing dependencies in a different order must not (it would make
+						// the reaction see the latest value instead of its batch's view, see below)
+						first_time = deps === null || !includes.call(deps, signal);
 					}
 				}
 			} else {
@@ -793,19 +792,26 @@ export function get(signal) {
 		if (batch) {
 			if (!current.is_eager) batch.dependent.add(current);
 			// TODO do we only need this for async/block effects?
-			if (active_effect && (is_updating_effect || active_effect.f & ASYNC)) {
+			if (
+				active_effect &&
+				(is_updating_effect || active_effect.f & ASYNC) &&
+				// an effect can read several stale values in one run — only schedule the re-run once
+				!batch.stale_readers.has(active_effect)
+			) {
 				const effect = active_effect;
-				// TODO can overfire when two stale reads within one effect, because no "already scheduled this" logic.
-				// TODO how to know "ok we already did this now"
+				batch.stale_readers.add(effect);
+
 				if (current.is_eager) {
 					// TODO only do this if we can see that the batch doesn't have this already scheduled in (maybe)dirty effects.
 					batch.oncommit(() => {
+						batch.stale_readers.delete(effect);
 						const b = Batch.ensure();
 						set_signal_status(effect, DIRTY);
 						b.schedule(effect);
 					});
 				} else {
 					queue_micro_task(() => {
+						batch.stale_readers.delete(effect);
 						set_signal_status(effect, DIRTY);
 						batch.schedule(effect);
 						batch.flush();

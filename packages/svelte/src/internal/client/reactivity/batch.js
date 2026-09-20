@@ -130,6 +130,14 @@ export class Batch {
 	/** @type {Map<Effect, number>} */
 	stale_effects = new Map();
 
+	/**
+	 * Effects that, while running in an earlier batch, read a value that this batch holds
+	 * a newer version of, and that are therefore scheduled to re-run in this batch. Used to
+	 * avoid scheduling the same effect multiple times when it reads more than one such value.
+	 * @type {Set<Effect>}
+	 */
+	stale_readers = new Set();
+
 	/** @type {Set<Effect>} */
 	seen_effects = new Set();
 
@@ -159,14 +167,6 @@ export class Batch {
 	 * @type {Map<Value, any>}
 	 */
 	previous = new Map();
-
-	/**
-	 * TODO run this on fork commit, put in all the effects we have decided we need to rerun,
-	 * it's a map so that we can delete entries if later batches have runs in it; though
-	 * how do we know that this no longer counts for batch 3 but still for batch 2?
-	 * @type {Map<Effect, () => void>}
-	 */
-	on_fork_commit = new Map();
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
@@ -770,6 +770,10 @@ export class Batch {
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
 			if (d) deferred.promise.then(d.resolve).catch(d.reject);
+		}
+
+		for (const b of batch.dependent) {
+			if (b !== this) this.dependent.add(b);
 		}
 
 		for (const c of batch.#commit_callbacks) {
@@ -1880,6 +1884,7 @@ export function fork(fn) {
 				// TODO we need to ensure that the version bumps happen "in order", e.g. in case of source1->derived2 we need to bump S last
 				// }
 
+				var changed = source.v !== content[0];
 				source.v = content[0];
 
 				if (!content[1]) {
@@ -1889,6 +1894,13 @@ export function fork(fn) {
 					// batch.mark(source, ...) TODO re-maybe-dirty- everything?
 					// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
 					batch.mark(source, MAYBE_DIRTY, true);
+				} else if (changed) {
+					// A derived that was evaluated inside the fork: bump its version too, so that reactions
+					// which read the (then still old) real value _after_ the fork evaluated it — and which are
+					// therefore not in `stale_effects` — see a newer dependency version and re-run.
+					// We deliberately use a fresh version rather than the fork-time `content[2]`, because the
+					// real world may have run reactions since then that would otherwise outrank it.
+					content[2] = source.wv = increment_write_version();
 				}
 			}
 
@@ -1924,7 +1936,7 @@ export function fork(fn) {
 			batch.flush();
 
 			// Other forks might need to rerun now with the updated state.
-			// TODO reuse batch.capture() logic here (maybe we can just call it?)
+			// TODO reuse batch.capture() logic here (delete values from fork and possibly discard, depend on other batches etc) (maybe we can just call it?)
 			let next_batch = batch.next;
 			while (next_batch) {
 				for (const [source, [, is_derived]] of batch.current) {
