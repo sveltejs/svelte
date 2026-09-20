@@ -798,6 +798,7 @@ export function get(signal) {
 				// TODO can overfire when two stale reads within one effect, because no "already scheduled this" logic.
 				// TODO how to know "ok we already did this now"
 				if (current.is_eager) {
+					// TODO only do this if we can see that the batch doesn't have this already scheduled in (maybe)dirty effects.
 					batch.oncommit(() => {
 						const b = Batch.ensure();
 						set_signal_status(effect, DIRTY);
