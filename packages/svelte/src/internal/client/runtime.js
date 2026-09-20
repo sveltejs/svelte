@@ -493,6 +493,9 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
+		// Did the effect see the latest value of all its dependencies, or (some of) its batch's view?
+		// A dependency is "not latest" if `batch_values` overrides it with a value the batch itself
+		// did not write (i.e. it's another batch's value being hidden from us).
 		// TODO consolidate with similar logic in batch.capture()
 		var own_batch = previous_batch ?? current_batch;
 		let is_latest_value = true;
@@ -509,36 +512,6 @@ export function update_effect(effect) {
 								/** @type {any} */ (own_batch.current.get(d))[0] !== d.v)
 						);
 					}));
-			// var batch = own_batch.next;
-			// while (batch) {
-			// 	if (
-			// 		batch.started && // when flushing user effects writes sources which creates a new batch, then ignore that one
-			// 		(!is_latest_value ||
-			// 			// Check derived's dependencies for outdated values. We only have to check one
-			// 			// level because is_dirty etc will execute the top-most deriveds first, whose result
-			// 			// the later deriveds can use to make a decision ("oh this derived's value is different to what I cached")
-			// 			effect.deps?.some((d) => {
-			// 				var other_current = /** @type {Batch} */ (batch).current;
-			// 				var own_current = /** @type {Batch} */ (own_batch).current;
-			// 				// const y =
-			// 				// 	other_current.has(d) ||
-			// 				// 	(own_current.has(d) &&
-			// 				// 		/** @type {[any, boolean, number]} */ (own_current.get(d))[0] !== d.v);
-			// 				// if (y) debugger;
-			// 				// const x =
-			// 				// 	other_current.has(d) &&
-			// 				// 	(!own_current.has(d) ||
-			// 				// 		/** @type {[any, boolean, number]} */ (own_current.get(d))[0] !==
-			// 				// 			/** @type {[any, boolean, number]} */ (other_current.get(d))[0]);
-			// 				// if (x) debugger;
-			// 				const z = (own_current.get(d)?.[2] ?? d.wv) != d.wv;
-			// 				return z;
-			// 			}))
-			// 	) {
-			// 		is_latest_value = false;
-			// 	}
-			// 	batch = batch.next;
-			// }
 		}
 
 		if (is_latest_value) {

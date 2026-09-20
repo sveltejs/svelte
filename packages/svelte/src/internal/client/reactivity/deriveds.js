@@ -48,7 +48,6 @@ import { batch_values, current_batch, first_batch, previous_batch } from './batc
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
-import { queue_micro_task } from '../dom/task.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -187,22 +186,8 @@ export function async_derived(fn, label, location) {
 
 		var batch = /** @type {Batch} */ (current_batch);
 
-		// let next_batch = batch.next;
-		// while (next_batch) {
-		// 	if (next_batch.async_deriveds.has(effect)) {
-		// 		next_batch.dependent.add(batch);
-		// 		if (!next_batch.is_fork) {
-		// 			set_signal_status(effect, DIRTY); // TODO ideally we can find out if we really need to rerun or if all dependencies' values are equal
-		// 			// TODO same for block effects; ideally one mechanism for both
-		// 			next_batch.schedule(effect);
-		// 			const b = next_batch;
-		// 			queue_micro_task(() => b.flush());
-		// 		}
-		// 		break; // TODO break correct? Don't we need to do the rerun for all of them?
-		// 	}
-		// 	next_batch = next_batch.next;
-		// }
-
+		// If an earlier batch has a run of this async effect in flight, the two batches
+		// are related and this one has to wait for (i.e. merge into) the earlier one
 		let prev = batch.prev;
 		while (prev) {
 			if (prev.async_deriveds.has(effect)) {
@@ -418,30 +403,25 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		// in a fork, we don't update the underlying value, just `batch_values`.
-		// the underlying value will be updated when the fork is committed.
-		// otherwise, the next time we get here after a 'real world' state
-		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.deps === null || true) {
-			if (current_batch !== null || previous_batch !== null) {
-				// We also write to previous_batch because if it exists, it is a sign that we're
-				// currently in the process of flushing effects. These updates to deriveds may belong
-				// to the previous batch, not the new one (which can already exist if an earlier
-				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
-				// but not adding it to current_batch can, too, so we add it to both.
-				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-				previous_batch?.capture(derived, value, true);
-				current_batch?.capture(derived, value, true);
-			} else {
-				derived.v = value;
-				derived.wv = increment_write_version();
-			}
+		if (current_batch !== null || previous_batch !== null) {
+			// `capture` decides whether the underlying value is updated (it isn't in a fork,
+			// or if a later batch holds a newer value) and records it in the batch either way.
+			// We also write to previous_batch because if it exists, it is a sign that we're
+			// currently in the process of flushing effects. These updates to deriveds may belong
+			// to the previous batch, not the new one (which can already exist if an earlier
+			// effect wrote to a source). Not adding it to either can cause bugs, so we add it to both.
+			// See https://github.com/sveltejs/svelte/pull/18117 for more details.
+			previous_batch?.capture(derived, value, true);
+			current_batch?.capture(derived, value, true);
+		} else {
+			derived.v = value;
+			derived.wv = increment_write_version();
+		}
 
-			// deriveds without dependencies should never be recomputed
-			if (derived.deps === null) {
-				set_signal_status(derived, CLEAN);
-				return;
-			}
+		// deriveds without dependencies should never be recomputed
+		if (derived.deps === null) {
+			set_signal_status(derived, CLEAN);
+			return;
 		}
 	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
 		current_batch?.capture(derived, derived.v);

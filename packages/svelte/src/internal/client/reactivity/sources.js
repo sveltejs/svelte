@@ -7,7 +7,6 @@ import {
 	get,
 	set_untracked_writes,
 	untrack,
-	increment_write_version,
 	update_effect,
 	current_sources,
 	is_dirty,

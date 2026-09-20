@@ -121,8 +121,6 @@ function create_effect(type, fn) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	current_batch?.register_created_effect(effect);
-
 	/** @type {Effect | null} */
 	var e = effect;
 
