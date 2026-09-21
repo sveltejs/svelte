@@ -70,6 +70,10 @@ let color = type === 'danger' ? 'red' : 'green';
 
 `$inspect.trace` is a debugging tool for reactivity. If something is not updating properly or running more than it should you can add `$inspect.trace(label)` as the first line of an `$effect` or `$derived.by` (or any function they call) to trace their dependencies and discover which one triggered an update.
 
+## `#key` block
+
+While the `#key` block is useful when you want transitions/animations to run when a certain expression change it can be very destructive and should be used sparingly. When using a `#key` block always ask yourself if the same behavior could be achieved using a `$derived`.
+
 ## Events
 
 Any element attribute starting with `on` is treated as an event listener:
