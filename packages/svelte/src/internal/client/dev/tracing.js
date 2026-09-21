@@ -1,4 +1,4 @@
-/** @import { Derived, Reaction, Value } from '#client' */
+/** @import { Derived, Reaction, Source, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
@@ -131,8 +131,10 @@ export function trace(label, fn) {
 }
 
 /**
- * @param {Value} source
+ * @template {Value} T
+ * @param {T} source
  * @param {string} label
+ * @returns {T}
  */
 export function tag(source, label) {
 	source.label = label;

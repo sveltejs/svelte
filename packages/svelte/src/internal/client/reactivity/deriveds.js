@@ -139,7 +139,7 @@ export function async_derived(fn, label, location) {
 
 		if (DEV) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
-			effect.label ??= label ?? fn.toString();
+			// effect.label ??= label ?? fn.toString(); // TODO add dev time labeling for effects in follow-up PR
 		}
 
 		/** @type {ReturnType<typeof deferred<V>>} */

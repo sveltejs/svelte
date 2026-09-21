@@ -827,7 +827,7 @@ export class Batch {
 	 * Tell a fork batch that a source has been updated. Will delete that source from the fork,
 	 * discarding it if it has no other sources left, and rerunning it else with the new value.
 	 * @param {Batch} batch A fork
-	 * @param {Source} source
+	 * @param {Value} source
 	 * @param {boolean} is_derived
 	 * @param {any} value
 	 */
@@ -844,7 +844,7 @@ export class Batch {
 				(!current || current[0] !== value) &&
 				((source.f & ASYNC) === 0 ||
 					!depends_on(
-						source.e,
+						/** @type {Effect} */ (/** @type {Source} */ (source).e),
 						[...batch.current.keys()].filter((s) => !this.current.has(s)),
 						new Map()
 					))
@@ -1283,7 +1283,7 @@ function mark_eager_effects(value, effects) {
 
 /**
  * @param {Reaction} reaction
- * @param {Source[]} sources
+ * @param {Value[]} sources
  * @param {Map<Reaction, boolean>} checked
  */
 function depends_on(reaction, sources, checked) {

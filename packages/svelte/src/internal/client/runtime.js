@@ -96,9 +96,9 @@ export function set_active_effect(effect) {
 }
 
 /**
- * When sources are created within a reaction, reading and writing
+ * When sources/deriveds are created within a reaction, reading and writing
  * them within that reaction should not cause a re-run
- * @type {null | Set<Source>}
+ * @type {null | Set<Value>}
  */
 export let current_sources = null;
 
@@ -126,11 +126,11 @@ export let skipped_deps = 0;
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
- * @type {null | Source[]}
+ * @type {null | Value[]}
  */
 export let untracked_writes = null;
 
-/** @param {null | Source[]} value */
+/** @param {null | Value[]} value */
 export function set_untracked_writes(value) {
 	untracked_writes = value;
 }
