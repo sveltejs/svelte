@@ -1001,7 +1001,7 @@ export class Batch {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 
-			if (!is_processing && !is_flushing_sync) {
+			if (!is_processing) {
 				queue_micro_task(() => {
 					if (!batch.started) {
 						batch.flush();
@@ -1124,9 +1124,7 @@ export function flushSync(fn) {
 		var result;
 
 		if (fn) {
-			if (current_batch !== null && !current_batch.is_fork) {
-				current_batch.flush();
-			}
+			flushSync(); // drain queue via the lower while(true) part
 
 			result = fn();
 		}
@@ -1464,15 +1462,21 @@ export function fork(fn) {
 		e.fork_timing();
 	}
 
-	var batch = Batch.ensure();
-	batch.is_fork = true;
-	batch_values = new Map();
-	wv_values = new Map();
-
 	var committed = false;
-	var settled = batch.settled();
+	/** @type {Promise<void>} */
+	var settled;
+	/** @type {Batch} */
+	var batch;
 
-	flushSync(fn);
+	flushSync(() => {
+		batch = Batch.ensure();
+		batch.is_fork = true;
+		batch_values = new Map();
+		wv_values = new Map();
+		settled = batch.settled();
+
+		fn();
+	});
 
 	return {
 		commit: async () => {
