@@ -14,4 +14,5 @@
 
 {await wait(value)}
 
-<p>{show ? value.x : ''}</p>
+<!-- read value.x twice to ensure it reads latest value not just the first time -->
+<p>{show ? value.x + value.x : ''}</p>

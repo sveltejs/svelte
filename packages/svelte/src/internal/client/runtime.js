@@ -602,17 +602,10 @@ export function get(signal) {
 					// rather than updating `new_deps`, which creates GC cost
 					if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
 						skipped_deps++;
+					} else if (new_deps === null) {
+						new_deps = [signal];
 					} else {
-						if (new_deps === null) {
-							new_deps = [signal];
-						} else {
-							new_deps.push(signal);
-						}
-
-						// Only a signal that wasn't a dependency of this reaction before counts as new —
-						// reading existing dependencies in a different order must not (it would make
-						// the reaction see the latest value instead of its batch's view, see below)
-						first_time = deps === null || !includes.call(deps, signal);
+						new_deps.push(signal);
 					}
 				}
 			} else {
@@ -793,18 +786,21 @@ export function get(signal) {
 		}
 	}
 
-	// A reaction that reads a signal for the first time must see the latest value, rather than
-	// this batch's view, if that view could hide the write of an _earlier_ batch — the user's
-	// program made that write before this batch's writes, so hiding it could e.g. crash a newly
-	// created branch (see `async-state-read-new-dependency`). Earlier batches' writes are hidden
-	// only while flushing a committing batch (`previous_batch` is set, see `apply(true)`) and in
-	// eager batches (which hide every other batch). Everywhere else `batch_values` only hides
-	// _later_ batches' writes, which is correct even for new readers: that's the state the
-	// program was in when this batch's writes happened.
-	var see_latest = first_time && (previous_batch !== null || current_batch?.is_eager);
+	if (batch_values?.has(signal)) {
+		// A reaction that reads a signal for the first time while flushing render effects or
+		// during an eager batch needs to show the latest value, because maybe it would crash
+		// with the old version (see test `async-state-read-new-dependency` and its variants).
+		var see_latest =
+			(previous_batch !== null || current_batch?.is_eager) &&
+			(first_time ||
+				(active_reaction !== null &&
+					!untracking &&
+					(active_reaction.f & REACTION_IS_UPDATING) !== 0 &&
+					(active_reaction.deps === null || !includes.call(active_reaction.deps, signal))));
 
-	if (!see_latest && batch_values?.has(signal)) {
-		return batch_values.get(signal);
+		if (!see_latest) {
+			return batch_values.get(signal);
+		}
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {

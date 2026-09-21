@@ -714,6 +714,12 @@ export class Batch {
 			if (b !== this) this.dependent.add(b);
 		}
 
+		for (let b = first_batch; b !== null; b = b.next) {
+			if (b.dependent.has(batch)) {
+				b.dependent.add(this);
+			}
+		}
+
 		for (const c of batch.#commit_callbacks) {
 			this.oncommit(() => c(batch));
 		}
@@ -836,6 +842,10 @@ export class Batch {
 		batch.current.delete(source);
 
 		if (![...batch.current.values()].some((v) => !v[1])) {
+			// The real world has overtaken every write of this fork, so it is obsolete. Discard it
+			// right away (its speculative branches must not be adopted by anyone), and empty
+			// `current` so that `commit()` can tell this apart from a user-initiated discard
+			batch.current.clear();
 			batch.discard();
 		} else {
 			if (current) batch.current.set(source, current);
@@ -1486,6 +1496,15 @@ export function fork(fn) {
 		commit: async () => {
 			if (committed) {
 				await settled;
+				return;
+			}
+
+			if (batch.current.size === 0) {
+				// Nothing to commit: either the fork never wrote anything (e.g. it assigned a value
+				// that was already current), or the real world has since written to every source
+				// it did write to and the fork was discarded as obsolete (see `notify_fork`)
+				committed = true;
+				batch.discard();
 				return;
 			}
 

@@ -21,7 +21,7 @@ export default test({
 				<button>update</button>
 				<button>show</button>
 				<button>resolve</button>
-				<p>1</p>
+				<p>2</p>
 			`
 		);
 
@@ -34,7 +34,7 @@ export default test({
 				<button>update</button>
 				<button>show</button>
 				<button>resolve</button>
-				<p>1</p>
+				<p>2</p>
 			`
 		);
 	}
