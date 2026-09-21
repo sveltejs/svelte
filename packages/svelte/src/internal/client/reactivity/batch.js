@@ -895,6 +895,7 @@ export class Batch {
 			current_batch = null;
 			batch_values = null;
 			wv_values = null;
+			held_sources = null;
 			stale_sources = null;
 
 			old_values.clear();
@@ -935,8 +936,11 @@ export class Batch {
 	/**
 	 * @param {boolean} blocking
 	 * @param {Effect} effect
+	 * @returns {void}
 	 */
 	decrement(blocking, effect) {
+		if (this.merged_into) return this.merged_into.decrement(blocking, effect);
+
 		this.#pending -= 1;
 
 		if (blocking) {

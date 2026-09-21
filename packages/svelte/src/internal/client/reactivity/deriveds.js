@@ -133,7 +133,6 @@ export function async_derived(fn, label, location) {
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
 
-	// TODO types; add to source, or special object to not have all the other objects contain another property?
 	signal.e = async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
