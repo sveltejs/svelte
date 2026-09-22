@@ -80,7 +80,8 @@ export let wv_values = null;
 export let held_sources = null;
 
 /**
- * Sources where the current batch reads an outdated value not in its own `current` map. Used to discover dependencies between batches.
+ * Sources where the current batch reads an outdated value of a later batch (or if this is an eager batch, any other batch) not in its own `current` map.
+ * Used to discover dependencies between batches.
  * @type {Map<Value, Batch> | null}
  */
 export let stale_sources = null;
@@ -240,8 +241,8 @@ export class Batch {
 	#skipped_branches = new Map();
 
 	/**
-	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing
-	 * true indicates that this branch is new to the eyes of this fork but was already created before.
+	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing.
+	 * `true` indicates that this branch is new to the eyes of this fork but was already created before.
 	 * @type {Map<Effect, boolean>}
 	 */
 	unskipped_branches = new Map();
@@ -766,15 +767,23 @@ export class Batch {
 			wv_values?.set(source, wv);
 		}
 
-		// The value becomes the real one unless this is a fork or a later batch wrote to the source
-		// as well. For a derived, the same goes if a later batch wrote to one of its dependencies:
-		// the derived value then belongs to that batch's world, not ours. (This is deliberately not
-		// the same check as in `update_effect`: a later batch's write is visible through `batch_values`,
+		// A derived computed from inputs that differ from the real values must stay batch-local.
+		// This also happens when committing a later batch hides an earlier batch's pending writes.
+		let is_latest_value =
+			!this.is_fork &&
+			(!is_derived ||
+				!(
+					/** @type {Derived} */ (source).deps?.some(
+						(d) => batch_values?.has(d) && batch_values.get(d) !== d.v
+					)
+				));
+
+		// A later batch may also own a newer value of the source or one of a derived's dependencies.
+		// The check above isn't sufficient here: a later batch's write is visible through `batch_values`,
 		// so comparing what was read against the real value could not attribute the value to the right
-		// batch, see `async-dont-rebase-new-batch-4`.) We only need to look one level deep: `is_dirty`
+		// batch, see `async-dont-rebase-new-batch-4`. We only need to look one level deep: `is_dirty`
 		// evaluates the top-most deriveds first, so a dependency derived that was itself not the latest
 		// value was not written to the real world, and differs from our value for it.
-		let is_latest_value = !this.is_fork;
 
 		for (let batch = this.next; batch !== null && is_latest_value; batch = batch.next) {
 			if (batch.is_fork) continue;
