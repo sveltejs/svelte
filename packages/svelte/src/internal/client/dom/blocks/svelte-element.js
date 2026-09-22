@@ -124,7 +124,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
 				/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = element;
 
-				// Rendering empty children can turn hydration off, but a claimed element is already in place.
+				// we only move the node if we are not hydrating since a claimed element is already in place
 				if (!is_hydrating) anchor.before(element);
 			}
 
