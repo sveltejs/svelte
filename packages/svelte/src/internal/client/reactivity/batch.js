@@ -1050,6 +1050,10 @@ export class Batch {
 			wv_values.set(source, current.wv);
 		}
 
+		for (const [effect, wv] of this.stale_effects) {
+			wv_values.set(effect, wv);
+		}
+
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch === this) continue;
 
@@ -1567,8 +1571,9 @@ export function fork(fn) {
 				}
 			}
 
+			// All the block/async effects the fork executed are now guaranteed to be up to date
 			for (const effect of batch.stale_effects.keys()) {
-				effect.wv = effect.wv > write_version ? effect.wv : write_version;
+				effect.wv = write_version;
 			}
 			batch.stale_effects.clear();
 

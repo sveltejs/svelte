@@ -189,8 +189,10 @@ export function is_dirty(reaction) {
 		if (
 			(flags & CONNECTED) !== 0 &&
 			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			batch_values === null
+			// traversal of the graph in the other batches still happens. Effects
+			// can be reset because block/async effects execute right away and others
+			// are deferred and re-dirtied as needed.
+			(batch_values === null || (flags & DERIVED) === 0)
 		) {
 			set_signal_status(reaction, CLEAN);
 		}
