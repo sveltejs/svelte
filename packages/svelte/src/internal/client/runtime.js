@@ -516,7 +516,7 @@ export function update_effect(effect) {
 			var own = /** @type {Batch} */ (own_batch);
 			own.stale_effects.set(effect, write_version);
 			for (var batch = own.next; batch !== null; batch = batch.next) {
-				batch.maybe_dirty_effects.add(effect);
+				batch.add_dirty_reaction(effect, MAYBE_DIRTY);
 			}
 		}
 

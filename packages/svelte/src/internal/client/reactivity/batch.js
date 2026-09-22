@@ -242,27 +242,19 @@ export class Batch {
 	#scheduled = [];
 
 	/**
-	 * Deferred effects (which run after async work has completed) that are DIRTY
-	 * @type {Set<Effect>}
+	 * Deferred reactions and their status.
+	 *
+	 * Leaf (i.e. not block/async) effects (dirty and maybe_dirty) are stored because we need
+	 * to reset their status when a batch becomes pending, to not pollute other batches.
+	 *
+	 * Dirty deriveds (but not maybe_dirty deriveds) are stored because a derived that definitely
+	 * should execute might get executed in the meantime in another batch (they are lazy, so a DIRTY derived is
+	 * not guaranteed to run immediately). Relying on wv_values is insufficient because if this derived has stale
+	 * dependencies in this batch but is executed with latest dependencies elsewhere, the wv is bumped and would
+	 * incorrectly say "hey we don't need to rerun this" in the context of this batch.
+	 * @type {Map<Reaction, number>}
 	 */
-	#dirty_effects = new Set();
-
-	/**
-	 * Deferred effects that are MAYBE_DIRTY
-	 * @type {Set<Effect>}
-	 */
-	maybe_dirty_effects = new Set();
-
-	/**
-	 * Deferred deriveds that are DIRTY. We need to store these because a derived that definitely should execute
-	 * might get executed in the meantime in another batch (they are lazy, so a DIRTY derived is not guaranteed
-	 * to run immediately). Relying on wv_values is insufficient because if this derived has stale dependencies
-	 * in this batch but is executed with latest dependencies elsewhere, the wv is bumped and would incorrectly
-	 * say "hey we don't need to rerun this" in the context of this batch.
-	 * Lazily initialized for performance reasons.
-	 * @type {Set<Derived> | null}
-	 */
-	#dirty_deriveds = null;
+	#dirty_reactions = new Map();
 
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
@@ -429,22 +421,12 @@ export class Batch {
 		// #is_deferred() is true, because traversing the tree could make
 		// an if block that contains the last blocking pending effect falsy,
 		// causing the block to no longer be deferred.
-		for (const e of this.#dirty_effects) {
-			this.maybe_dirty_effects.delete(e);
-			set_signal_status(e, DIRTY);
-			this.schedule(e);
-		}
-
-		for (const e of this.maybe_dirty_effects) {
-			if ((e.f & DIRTY) === 0) {
-				set_signal_status(e, MAYBE_DIRTY);
-				this.schedule(e);
-			}
-		}
-
-		if (this.#dirty_deriveds !== null) {
-			for (const d of this.#dirty_deriveds) {
-				set_signal_status(d, DIRTY);
+		for (const [reaction, status] of this.#dirty_reactions) {
+			if ((reaction.f & DERIVED) !== 0) {
+				set_signal_status(reaction, status);
+			} else if (status === DIRTY || (reaction.f & DIRTY) === 0) {
+				set_signal_status(reaction, status);
+				this.schedule(/** @type {Effect} */ (reaction));
 			}
 		}
 
@@ -527,8 +509,7 @@ export class Batch {
 		}
 
 		// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
-		this.#dirty_effects.clear();
-		this.maybe_dirty_effects.clear();
+		this.#dirty_reactions.clear();
 
 		this.apply(true);
 
@@ -694,12 +675,12 @@ export class Batch {
 
 				if (
 					not_yet
-						? !this.seen_effects.has(effect) &&
-							!this.#dirty_effects.has(effect) &&
-							!this.maybe_dirty_effects.has(effect)
+						? !this.seen_effects.has(effect) && !this.#dirty_reactions.has(effect)
 						: (flags & (ASYNC | BLOCK_EFFECT)) === 0 || this.seen_effects.has(effect)
 				) {
-					this.maybe_dirty_effects.delete(effect);
+					if (this.#dirty_reactions.get(effect) === MAYBE_DIRTY) {
+						this.#dirty_reactions.delete(effect);
+					}
 					set_signal_status(effect, status);
 					this.schedule(effect);
 					marked = true;
@@ -774,7 +755,7 @@ export class Batch {
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
 		batch.async_deriveds.clear();
 
-		this.transfer_effects(batch.#dirty_effects, batch.maybe_dirty_effects, batch.#dirty_deriveds);
+		this.transfer_reactions(batch.#dirty_reactions);
 
 		this.oncommit(() => batch.discard());
 		batch.#unlink();
@@ -789,12 +770,7 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(
-				effects[i],
-				this.#dirty_effects,
-				this.maybe_dirty_effects,
-				(this.#dirty_deriveds ??= new Set())
-			);
+			defer_effect(effects[i], this.#dirty_reactions);
 		}
 	}
 
@@ -1053,32 +1029,29 @@ export class Batch {
 	}
 
 	/**
-	 * @param {Set<Effect>} dirty_effects
-	 * @param {Set<Effect>} maybe_dirty_effects
-	 * @param {Set<Derived> | null} dirty_deriveds
+	 * @param {Map<Reaction, number>} dirty_reactions
 	 * @returns {void}
 	 */
-	transfer_effects(dirty_effects, maybe_dirty_effects, dirty_deriveds) {
+	transfer_reactions(dirty_reactions) {
 		if (this.merged_into) {
-			return this.merged_into.transfer_effects(dirty_effects, maybe_dirty_effects, dirty_deriveds);
+			return this.merged_into.transfer_reactions(dirty_reactions);
 		}
 
-		for (const e of dirty_effects) {
-			this.#dirty_effects.add(e);
+		for (const [reaction, status] of dirty_reactions) {
+			this.add_dirty_reaction(reaction, status);
 		}
 
-		for (const e of maybe_dirty_effects) {
-			this.maybe_dirty_effects.add(e);
-		}
+		dirty_reactions.clear();
+	}
 
-		if (dirty_deriveds !== null) {
-			for (const d of dirty_deriveds) {
-				(this.#dirty_deriveds ??= new Set()).add(d);
-			}
+	/**
+	 * @param {Reaction} reaction
+	 * @param {number} status
+	 */
+	add_dirty_reaction(reaction, status) {
+		if (status === DIRTY || this.#dirty_reactions.get(reaction) !== DIRTY) {
+			this.#dirty_reactions.set(reaction, status);
 		}
-
-		dirty_effects.clear();
-		maybe_dirty_effects.clear();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
