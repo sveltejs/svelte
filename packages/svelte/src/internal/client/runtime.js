@@ -410,7 +410,7 @@ function remove_reaction(signal, dependency) {
 		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is
 		// never re-executed. This is possible when the derived is only executed once in the context
 		// of a new branch which happens before fork.commit() runs. In this case, the derived still has
-		// UNINITIALIZED as its value, and then when it's loosing its reactions we need to ensure it stays
+		// UNINITIALIZED as its value, and then when it's losing its reactions we need to ensure it stays
 		// DIRTY so it is reexecuted once someone wants its value again.
 		if (derived.v !== UNINITIALIZED) {
 			update_derived_status(derived);
