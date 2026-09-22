@@ -155,17 +155,16 @@ export class Batch {
 
 	/**
 	 * The current values of any signals that are updated in this batch.
-	 * Tuple format: [value, is_derived, write_version] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
+	 * `is_derived` is false for deriveds, too, if they were overridden via assignment.
 	 * They keys of this map are identical to `this.previous`
-	 * @type {Map<Value, [any, boolean, number]>}
+	 * @type {Map<Value, { v: any, wv: number, is_derived: boolean }>}
 	 */
 	current = new Map();
 
 	/**
 	 * The values and write versions of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
-	 * Tuple format: [value, write_version]
 	 * They keys of this map are identical to `this.current`
-	 * @type {Map<Value, [any, number]>}
+	 * @type {Map<Value, { v: any, wv: number }>}
 	 */
 	previous = new Map();
 
@@ -679,7 +678,10 @@ export class Batch {
 	#merge(batch) {
 		for (const [source, value] of batch.current) {
 			if (!this.previous.has(source) && batch.previous.has(source)) {
-				this.previous.set(source, /** @type {[any, number]} */ (batch.previous.get(source)));
+				this.previous.set(
+					source,
+					/** @type {{ v: any, wv: number }} */ (batch.previous.get(source))
+				);
 			}
 
 			this.current.set(source, value);
@@ -759,14 +761,14 @@ export class Batch {
 	 */
 	capture(source, value, is_derived = false) {
 		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, [source.v, source.wv]);
+			this.previous.set(source, { v: source.v, wv: source.wv });
 		}
 
 		const wv = increment_write_version();
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, [value, is_derived, wv]);
+			this.current.set(source, { v: value, wv, is_derived });
 			batch_values?.set(source, value);
 			wv_values?.set(source, wv);
 		}
@@ -798,8 +800,7 @@ export class Batch {
 					/** @type {Derived} */ (source).deps?.some(
 						(d) =>
 							/** @type {Batch} */ (batch).current.has(d) ||
-							(this.current.has(d) &&
-								/** @type {[any, boolean, number]} */ (this.current.get(d))[0] !== d.v)
+							(this.current.has(d) && /** @type {{ v: any }} */ (this.current.get(d)).v !== d.v)
 					))
 			) {
 				is_latest_value = false;
@@ -834,17 +835,17 @@ export class Batch {
 		const current = batch.current.get(source);
 		batch.current.delete(source);
 
-		if (![...batch.current.values()].some((v) => !v[1])) {
+		if (![...batch.current.values()].some((value) => !value.is_derived)) {
 			// The real world has overtaken every write of this fork, so it is obsolete. Discard it
 			// right away (its speculative branches must not be adopted by anyone), and empty
 			// `current` so that `commit()` can tell this apart from a user-initiated discard
 			batch.current.clear();
 			batch.discard();
 		} else {
-			if (current && current[0] !== value) batch.current.set(source, current);
+			if (current && current.v !== value) batch.current.set(source, current);
 			if (
 				!is_derived &&
-				(!current || current[0] !== value) &&
+				(!current || current.v !== value) &&
 				((source.f & ASYNC) === 0 ||
 					!depends_on(
 						/** @type {Effect} */ (/** @type {Source} */ (source).e),
@@ -1044,9 +1045,9 @@ export class Batch {
 		held_sources = new Map();
 		stale_sources = new Map();
 
-		for (const [source, [value, _, wv]] of this.current) {
-			batch_values.set(source, value);
-			wv_values.set(source, wv);
+		for (const [source, current] of this.current) {
+			batch_values.set(source, current.v);
+			wv_values.set(source, current.wv);
 		}
 
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
@@ -1067,10 +1068,10 @@ export class Batch {
 			}
 
 			if (batch.id > this.id || include_earlier || this.is_eager) {
-				for (const [source, [value, wv]] of batch.previous) {
+				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
-						batch_values.set(source, value);
-						wv_values.set(source, wv);
+						batch_values.set(source, previous.v);
+						wv_values.set(source, previous.wv);
 					}
 				}
 			}
@@ -1548,21 +1549,21 @@ export function fork(fn) {
 			// in `batch.current` at this point is the latest value: sources that the real world has
 			// written to in the meantime were removed from the fork via `notify_fork` (an async
 			// source only survives if its effect depends on inputs that only the fork changed).
-			// We use fresh versions rather than the fork-time `content[2]`, because the real world
+			// We use fresh versions rather than the fork-time `content.wv`, because the real world
 			// may have run reactions since then whose versions would otherwise outrank them.
 			for (var [source, content] of batch.current) {
-				var changed = source.v !== content[0];
-				source.v = content[0];
+				var changed = source.v !== content.v;
+				source.v = content.v;
 
-				if (!content[1]) {
-					content[2] = source.wv = increment_write_version();
+				if (!content.is_derived) {
+					content.wv = source.wv = increment_write_version();
 					// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
 					batch.mark(source, MAYBE_DIRTY, true);
 				} else if (changed) {
 					// A derived that was evaluated inside the fork: bump its version too, so that reactions
 					// which read the (then still old) real value _after_ the fork evaluated it — and which are
 					// therefore not in `stale_effects` — see a newer dependency version and re-run.
-					content[2] = source.wv = increment_write_version();
+					content.wv = source.wv = increment_write_version();
 				}
 			}
 
@@ -1600,10 +1601,10 @@ export function fork(fn) {
 			// Other forks might need to rerun now with the updated state.
 			let next_batch = batch.next;
 			while (next_batch) {
-				for (const [source, [value, is_derived]] of batch.current) {
+				for (const [source, current] of batch.current) {
 					if (next_batch.current.has(source)) {
-						batch.notify_fork(next_batch, source, is_derived, value);
-					} else if (!is_derived) {
+						batch.notify_fork(next_batch, source, current.is_derived, current.v);
+					} else if (!current.is_derived) {
 						next_batch.queue_revalidation(source);
 					}
 				}
