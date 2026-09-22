@@ -3,8 +3,7 @@
 /** @import { AST } from './public.js' */
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
-import { parse as _parse, Parser } from './phases/1-parse/index.js';
-import { parse_stylesheet } from './phases/1-parse/css.js';
+import { parse as _parse, parse_css } from './phases/1-parse/index.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
 import { transform_component, transform_module } from './phases/3-transform/index.js';
 import { validate_component_options, validate_module_options } from './validate-options.js';
@@ -119,16 +118,7 @@ export function parseCss(source) {
 
 	state.set_source(source);
 
-	const parser = Parser.forCss(source);
-	const children = parse_stylesheet(parser);
-
-	return {
-		type: 'StyleSheetFile',
-		start: 0,
-		end: source.length,
-		children,
-		comments: parser.css_comments
-	};
+	return { type: 'StyleSheetFile', start: 0, end: source.length, ...parse_css(source) };
 }
 
 /**

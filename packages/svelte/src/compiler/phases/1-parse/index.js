@@ -19,7 +19,6 @@ import { grammar } from './grammar.js';
 const plan = /** @type {Plan<AST.Root>} */ (new Plan(grammar));
 import { dedent, unsupported } from './js.js';
 import read_options from './options.js';
-import { is_whitespace } from './utils/whitespace.js';
 import { list } from '../../utils/string.js';
 
 const VOID =
@@ -168,6 +167,28 @@ export function parse(template, loose = false, erase = false) {
 }
 
 /**
+ * A stylesheet on its own: its rules and its comments, as `parseCss` answers them.
+ * @param {string} css
+ * @returns {{ children: AST.CSS.StyleSheet['children'], comments: AST.CSS.CSSComment[] }}
+ */
+export function parse_css(css) {
+	const source = new Source(css);
+	/** @type {Parsed<any>} */
+	let answer;
+	try {
+		answer = source.parse(Plan.stylesheet);
+	} catch (error) {
+		if (!(error instanceof SyntaxError)) throw error;
+		throw_error(/** @type {any} */ (error), css);
+	} finally {
+		source[Symbol.dispose]();
+	}
+	const { children, comments } = answer.node;
+	Finish.sheet(children, comments);
+	return { children, comments };
+}
+
+/**
  * Brings the parser's tree to the compiler's shape: the metadata each node carries, the
  * location of each name, the options read out of `<svelte:options>`.
  */
@@ -231,10 +252,21 @@ class Finish {
 		delete (/** @type {any} */ (css).loc);
 		this.attributes(css.attributes);
 		css.content.comment = comment_before(root.fragment.nodes, css.start);
+		Finish.sheet(css.children, css.comments);
+		delete (/** @type {any} */ (css.content).loc);
+	}
+
+	/**
+	 * @param {AST.CSS.StyleSheet['children']} children
+	 * @param {AST.CSS.CSSComment[]} comments
+	 */
+	static sheet(children, comments) {
 		const walk = (/** @type {any} */ node) => {
 			if (Array.isArray(node)) return node.forEach(walk);
 			if (!node || typeof node !== 'object') return;
 			delete node.loc;
+			// the parser links every node to its parent and scope; a CSS node has no use for either
+			for (const key of Object.getOwnPropertySymbols(node)) delete node[key];
 			switch (node.type) {
 				case 'Rule':
 					node.metadata = {
@@ -253,9 +285,8 @@ class Finish {
 			}
 			for (const key in node) if (key !== 'metadata') walk(node[key]);
 		};
-		walk(css.children);
-		walk(css.comments);
-		delete (/** @type {any} */ (css.content).loc);
+		walk(children);
+		walk(comments);
 	}
 
 	/**
@@ -533,6 +564,25 @@ function comment_before(nodes, start) {
 	return null;
 }
 
+/** @param {number} cc */
+function is_whitespace(cc) {
+	// fast path for common whitespace
+	if (cc === 32 || (cc <= 13 && cc >= 9)) return true;
+	// rare whitespace — \u00a0, \u1680, \u2000-\u200a, \u2028, \u2029, \u202f, \u205f, \u3000, \ufeff
+	if (cc < 160) return false;
+	return (
+		cc === 160 ||
+		cc === 5760 ||
+		(cc >= 8192 && cc <= 8202) ||
+		cc === 8232 ||
+		cc === 8233 ||
+		cc === 8239 ||
+		cc === 8287 ||
+		cc === 12288 ||
+		cc === 65279
+	);
+}
+
 /**
  * @param {number} start
  * @param {number} end
@@ -706,119 +756,5 @@ function throw_error(error, template) {
 			}
 			e.js_parse_error(pos, message);
 		}
-	}
-}
-
-/**
- * The cursor the stylesheet reader moves over a stylesheet parsed on its own.
- */
-export class Parser {
-	template = '';
-
-	index = 0;
-
-	/** @type {AST.CSS.CSSComment[]} */
-	css_comments = [];
-
-	/** @param {string} source */
-	static forCss(source) {
-		const parser = new Parser();
-		parser.template = source;
-		return parser;
-	}
-
-	/**
-	 * @param {string} str
-	 * @param {boolean} required
-	 */
-	eat(str, required = false) {
-		if (this.match(str)) {
-			this.index += str.length;
-			return true;
-		}
-
-		if (required) {
-			e.expected_token(this.index, str);
-		}
-
-		return false;
-	}
-
-	/** @param {string} str */
-	match(str) {
-		const length = str.length;
-		if (length === 1) {
-			// more performant than slicing
-			return this.template[this.index] === str;
-		}
-
-		return this.template.startsWith(str, this.index);
-	}
-
-	/**
-	 * Match a regex at the current index
-	 * @param {RegExp} pattern  Should have the sticky (`y`) flag so that it only matches at the current index
-	 */
-	match_regex(pattern) {
-		pattern.lastIndex = this.index;
-		const match = pattern.exec(this.template);
-		if (!match || match.index !== this.index) return null;
-
-		return match[0];
-	}
-
-	allow_whitespace() {
-		while (
-			this.index < this.template.length &&
-			is_whitespace(this.template.charCodeAt(this.index))
-		) {
-			this.index++;
-		}
-	}
-
-	/**
-	 * Search for a regex starting at the current index and return the result if it matches
-	 * @param {RegExp} pattern  Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
-	 */
-	read(pattern) {
-		const result = this.match_regex(pattern);
-		if (result) this.index += result.length;
-		return result;
-	}
-
-	/** @param {string} delimiter */
-	read_until(delimiter) {
-		if (this.index >= this.template.length) {
-			e.unexpected_eof(this.template.length);
-		}
-
-		const start = this.index;
-		const index = this.template.indexOf(delimiter, start);
-
-		if (index !== -1) {
-			this.index = index;
-			return this.template.slice(start, this.index);
-		}
-
-		this.index = this.template.length;
-		return this.template.slice(start);
-	}
-
-	/** @param {RegExp} pattern */
-	read_until_regex(pattern) {
-		if (this.index >= this.template.length) {
-			e.unexpected_eof(this.template.length);
-		}
-
-		const start = this.index;
-		const match = pattern.exec(this.template.slice(start));
-
-		if (match) {
-			this.index = start + match.index;
-			return this.template.slice(start, this.index);
-		}
-
-		this.index = this.template.length;
-		return this.template.slice(start);
 	}
 }
