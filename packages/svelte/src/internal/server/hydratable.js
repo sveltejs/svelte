@@ -1,3 +1,4 @@
+/** @import { UnevalReplacer } from 'devalue' */
 /** @import { HydratableLookupEntry } from '#server' */
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
@@ -24,7 +25,7 @@ export function hydratable(key, fn) {
 	if (entry !== undefined) {
 		if (DEV) {
 			const comparison = compare(key, entry, encode(key, fn()));
-			comparison.catch(() => {});
+			comparison.catch(() => { });
 			hydratable.comparisons.push(comparison);
 		}
 
@@ -54,22 +55,24 @@ function encode(key, value, unresolved) {
 
 	let uid = 1;
 
-	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
+	/** @type {UnevalReplacer} */
+	const replacer = (value, js) => {
 		if (is_promise(value)) {
 			// we serialize promises as `"${i}"`, because it's impossible for that string
 			// to occur 'naturally' (since the quote marks would have to be escaped)
 			// this placeholder is returned synchronously from `uneval`, which includes it in the
 			// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
 			// be replaced.
-			const placeholder = `"${uid++}"`;
+			const placeholder = `${uid++}`;
+			const quoted = devalue.uneval(placeholder);
 			const p = value
 				.then((v) => {
 					entry.serialized = entry.serialized.replace(
-						placeholder,
+						quoted,
 						// use the function form here to prevent any string replacement characters from being interpreted
 						// in `v`, as it's potentially user-controlled and therefore potentially malicious.
 						// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
-						() => `r(${uneval(v)})`
+						() => `r(${devalue.uneval(v, replacer)})`
 					);
 				})
 				.catch((devalue_error) =>
@@ -81,12 +84,14 @@ function encode(key, value, unresolved) {
 
 			unresolved?.set(p, key);
 			// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
-			p.catch(() => {}).finally(() => unresolved?.delete(p));
+			p.catch(() => { }).finally(() => unresolved?.delete(p));
 
 			(entry.promises ??= []).push(p);
-			return placeholder;
+			return js`${placeholder}`;
 		}
-	});
+	};
+
+	entry.serialized = devalue.uneval(entry.value, replacer);
 
 	return entry;
 }
