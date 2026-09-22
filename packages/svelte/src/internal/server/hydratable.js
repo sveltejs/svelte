@@ -25,7 +25,7 @@ export function hydratable(key, fn) {
 	if (entry !== undefined) {
 		if (DEV) {
 			const comparison = compare(key, entry, encode(key, fn()));
-			comparison.catch(() => { });
+			comparison.catch(() => {});
 			hydratable.comparisons.push(comparison);
 		}
 
@@ -84,7 +84,7 @@ function encode(key, value, unresolved) {
 
 			unresolved?.set(p, key);
 			// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
-			p.catch(() => { }).finally(() => unresolved?.delete(p));
+			p.catch(() => {}).finally(() => unresolved?.delete(p));
 
 			(entry.promises ??= []).push(p);
 			return js`${placeholder}`;
