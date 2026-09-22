@@ -190,6 +190,17 @@ export class BranchManager {
 		var defer = should_defer_append();
 		var first = false;
 
+		// Re-evaluating in the surviving batch supersedes selections made before a merge,
+		// even though those batches originally had newer IDs and still have commit callbacks.
+		for (const previous of this.#batches.keys()) {
+			for (let merged = previous.merged_into; merged !== null; merged = merged.merged_into) {
+				if (merged === batch) {
+					this.#batches.delete(previous);
+					break;
+				}
+			}
+		}
+
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			first = true;
 

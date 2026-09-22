@@ -720,6 +720,11 @@ export class Batch {
 			}
 		}
 
+		this.#pending += batch.#pending;
+		for (const [effect, count] of batch.#blocking_pending) {
+			this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
+		}
+
 		for (const c of batch.#commit_callbacks) {
 			this.oncommit(() => c(batch));
 		}
@@ -848,7 +853,7 @@ export class Batch {
 			batch.current.clear();
 			batch.discard();
 		} else {
-			if (current) batch.current.set(source, current);
+			if (current && current[0] !== value) batch.current.set(source, current);
 			if (
 				!is_derived &&
 				(!current || current[0] !== value) &&
@@ -862,7 +867,7 @@ export class Batch {
 				batch.current.delete(source);
 				const b = batch;
 				queue_micro_task(() => {
-					if (b.mark(source, DIRTY)) {
+					if (b.linked && b.mark(source, DIRTY)) {
 						b.flush();
 					}
 				});
@@ -979,8 +984,13 @@ export class Batch {
 	 * @param {Set<Effect>} dirty_effects
 	 * @param {Set<Effect>} maybe_dirty_effects
 	 * @param {Set<Derived>} dirty_deriveds
+	 * @returns {void}
 	 */
 	transfer_effects(dirty_effects, maybe_dirty_effects, dirty_deriveds) {
+		if (this.merged_into) {
+			return this.merged_into.transfer_effects(dirty_effects, maybe_dirty_effects, dirty_deriveds);
+		}
+
 		for (const e of dirty_effects) {
 			this.#dirty_effects.add(e);
 		}
@@ -1594,7 +1604,7 @@ export function fork(fn) {
 					} else if (!is_derived) {
 						const b = next_batch;
 						queue_micro_task(() => {
-							if (b.mark(source, DIRTY)) {
+							if (b.linked && b.mark(source, DIRTY)) {
 								b.flush();
 							}
 						});
