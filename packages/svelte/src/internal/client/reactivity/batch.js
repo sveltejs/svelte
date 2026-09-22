@@ -121,7 +121,7 @@ export class Batch {
 	/** True as soon as `#process` was called */
 	started = false;
 
-	linked = true;
+	linked = false;
 
 	/** @type {Batch | null} */
 	merged_into = null;
@@ -253,35 +253,16 @@ export class Batch {
 	#decrement_queued = false;
 
 	constructor() {
-		// link batch
-		if (last_batch === null) {
-			first_batch = last_batch = this;
-		} else {
-			// Put the new batch before the first forked batch
-			let batch = first_batch;
-			while (batch && !batch.is_fork) {
-				batch = batch.next;
-			}
+		// Put the new batch before the first forked batch
+		let batch = first_batch;
+		while (batch && !batch.is_fork) {
+			batch = batch.next;
+		}
 
-			if (batch) {
-				const prev = batch.prev;
-				this.next = batch;
-				batch.prev = this;
-				if (prev) {
-					prev.next = this;
-					this.prev = prev;
-				} else {
-					first_batch = this;
-				}
-				while (batch) {
-					batch.id = uid++;
-					batch = batch.next;
-				}
-			} else {
-				last_batch.next = this;
-				this.prev = last_batch;
-				last_batch = this;
-			}
+		this.insert_before(batch);
+		while (batch) {
+			batch.id = uid++;
+			batch = batch.next;
 		}
 	}
 
@@ -633,16 +614,10 @@ export class Batch {
 	#find_earlier_batch() {
 		if (this.is_eager) return null;
 
-		var batch = this.prev;
-
-		while (batch !== null) {
-			if (!batch.is_fork) {
-				if (this.dependent.has(batch)) {
-					return batch;
-				}
+		for (var batch = this.prev; batch !== null; batch = batch.prev) {
+			if (!batch.is_fork && this.dependent.has(batch)) {
+				return batch;
 			}
-
-			batch = batch.prev;
 		}
 
 		return null;
@@ -865,14 +840,18 @@ export class Batch {
 					))
 			) {
 				batch.current.delete(source);
-				const b = batch;
-				queue_micro_task(() => {
-					if (b.linked && b.mark(source, DIRTY)) {
-						b.flush();
-					}
-				});
+				batch.queue_revalidation(source);
 			}
 		}
+	}
+
+	/** @param {Value} source */
+	queue_revalidation(source) {
+		queue_micro_task(() => {
+			if (this.linked && this.mark(source, DIRTY)) {
+				this.flush();
+			}
+		});
 	}
 
 	/**
@@ -1104,6 +1083,21 @@ export class Batch {
 		}
 
 		this.#scheduled.push(effect);
+	}
+
+	/** @param {Batch | null} next `null` appends to the end of the list */
+	insert_before(next) {
+		this.#unlink();
+		this.prev = next === null ? last_batch : next.prev;
+		this.next = next;
+
+		if (this.prev === null) first_batch = this;
+		else this.prev.next = this;
+
+		if (next === null) last_batch = this;
+		else next.prev = this;
+
+		this.linked = true;
 	}
 
 	#unlink() {
@@ -1526,21 +1520,16 @@ export function fork(fn) {
 
 			batch.is_fork = false;
 
-			// Reorder the batches such that there's no forks before this one
-			while (batch.prev && batch.prev.is_fork) {
-				let prev = /** @type {Batch} */ (batch.prev);
+			// Keep IDs in order, then move the batch before all remaining forks
+			let before = batch;
+			while (before.prev?.is_fork) {
+				const prev = before.prev;
 				const id = batch.id;
 				batch.id = prev.id;
 				prev.id = id;
-				prev.next = batch.next;
-				if (prev.next) prev.next.prev = prev;
-				else last_batch = prev;
-				batch.prev = prev.prev;
-				if (batch.prev) batch.prev.next = batch;
-				else first_batch = batch;
-				batch.next = prev;
-				prev.prev = batch;
+				before = prev;
 			}
+			if (before !== batch) batch.insert_before(before);
 
 			// Apply changes and update write versions so deriveds see the change. Everything still
 			// in `batch.current` at this point is the latest value: sources that the real world has
@@ -1602,12 +1591,7 @@ export function fork(fn) {
 					if (next_batch.current.has(source)) {
 						batch.notify_fork(next_batch, source, is_derived, value);
 					} else if (!is_derived) {
-						const b = next_batch;
-						queue_micro_task(() => {
-							if (b.linked && b.mark(source, DIRTY)) {
-								b.flush();
-							}
-						});
+						next_batch.queue_revalidation(source);
 					}
 				}
 				next_batch = next_batch.next;
