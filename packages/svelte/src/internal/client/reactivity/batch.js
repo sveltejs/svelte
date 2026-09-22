@@ -127,16 +127,29 @@ export class Batch {
 	/** @type {Batch | null} */
 	merged_into = null;
 
-	/** @type {Map<Effect, number>} */
-	stale_effects = new Map();
+	/**
+	 * Effects that were executed with stale values. Its wv is written into the map.
+	 * Lazily initialized for performance reasons.
+	 * @type {Map<Effect, number> | null}
+	 */
+	#stale_effects = null;
+
+	get stale_effects() {
+		return (this.#stale_effects ??= new Map());
+	}
 
 	/**
 	 * Reactions that, while running in an earlier batch, read a value that this batch holds
 	 * a newer version of, and that are therefore scheduled to re-run in this batch. Used to
 	 * avoid scheduling the same reaction multiple times when it reads more than one such value.
-	 * @type {Set<Reaction>}
+	 * Lazily initialized for performance reasons.
+	 * @type {Set<Reaction> | null}
 	 */
-	stale_readers = new Set();
+	#stale_readers = null;
+
+	get stale_readers() {
+		return (this.#stale_readers ??= new Set());
+	}
 
 	/** @type {Set<Effect>} */
 	seen_effects = new Set();
@@ -147,11 +160,27 @@ export class Batch {
 	/** @type {Batch | null} */
 	next = null;
 
-	/** @type {Set<Batch>} */
-	dependent = new Set();
+	/**
+	 * Batches that depend on this batch.
+	 * Lazily initialized for performance reasons.
+	 * @type {Set<Batch> | null}
+	 */
+	#dependent = null;
 
-	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
-	async_deriveds = new Map();
+	get dependent() {
+		return (this.#dependent ??= new Set());
+	}
+
+	/**
+	 * All started async work in this batch.
+	 * Lazily initialized for performance reasons.
+	 * @type {Map<Effect, ReturnType<typeof deferred<any>>> | null}
+	 */
+	#async_deriveds = null;
+
+	get async_deriveds() {
+		return (this.#async_deriveds ??= new Map());
+	}
 
 	/**
 	 * The current values of any signals that are updated in this batch.
@@ -188,9 +217,9 @@ export class Batch {
 
 	/**
 	 * Async effects that are currently in flight, _not_ inside a pending boundary
-	 * @type {Map<Effect, number>}
+	 * @type {Map<Effect, number> | null}
 	 */
-	#blocking_pending = new Map();
+	#blocking_pending = null;
 
 	/**
 	 * A deferred that resolves when the batch is committed, used with `settled()`
@@ -230,9 +259,10 @@ export class Batch {
 	 * to run immediately). Relying on wv_values is insufficient because if this derived has stale dependencies
 	 * in this batch but is executed with latest dependencies elsewhere, the wv is bumped and would incorrectly
 	 * say "hey we don't need to rerun this" in the context of this batch.
-	 * @type {Set<Derived>}
+	 * Lazily initialized for performance reasons.
+	 * @type {Set<Derived> | null}
 	 */
-	#dirty_deriveds = new Set();
+	#dirty_deriveds = null;
 
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
@@ -246,9 +276,14 @@ export class Batch {
 	/**
 	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing.
 	 * `true` indicates that this branch is new to the eyes of this fork but was already created before.
-	 * @type {Map<Effect, boolean>}
+	 * Lazily initialized for performance reasons.
+	 * @type {Map<Effect, boolean> | null}
 	 */
-	unskipped_branches = new Map();
+	#unskipped_branches = null;
+
+	get unskipped_branches() {
+		return (this.#unskipped_branches ??= new Map());
+	}
 
 	is_fork = false;
 
@@ -272,6 +307,7 @@ export class Batch {
 
 	#is_deferred() {
 		if (this.is_fork) return true;
+		if (this.#blocking_pending === null) return false;
 
 		for (const effect of this.#blocking_pending.keys()) {
 			var e = effect;
@@ -406,8 +442,10 @@ export class Batch {
 			}
 		}
 
-		for (const d of this.#dirty_deriveds) {
-			set_signal_status(d, DIRTY);
+		if (this.#dirty_deriveds !== null) {
+			for (const d of this.#dirty_deriveds) {
+				set_signal_status(d, DIRTY);
+			}
 		}
 
 		this.apply();
@@ -703,8 +741,11 @@ export class Batch {
 		}
 
 		this.#pending += batch.#pending;
-		for (const [effect, count] of batch.#blocking_pending) {
-			this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
+		if (batch.#blocking_pending !== null) {
+			const blocking_pending = (this.#blocking_pending ??= new Map());
+			for (const [effect, count] of batch.#blocking_pending) {
+				blocking_pending.set(effect, (blocking_pending.get(effect) ?? 0) + count);
+			}
 		}
 
 		for (const c of batch.#commit_callbacks) {
@@ -748,7 +789,12 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(effects[i], this.#dirty_effects, this.maybe_dirty_effects, this.#dirty_deriveds);
+			defer_effect(
+				effects[i],
+				this.#dirty_effects,
+				this.maybe_dirty_effects,
+				(this.#dirty_deriveds ??= new Set())
+			);
 		}
 	}
 
@@ -760,6 +806,36 @@ export class Batch {
 	 * @param {boolean} [is_derived]
 	 */
 	capture(source, value, is_derived = false) {
+		// Fast path for performance: When render/pre/user effects are flushed and this is the sole batch,
+		// we don't need to capture the value
+		if (
+			is_derived &&
+			current_batch === null &&
+			previous_batch === this &&
+			this.linked &&
+			!this.is_fork &&
+			this.prev === null &&
+			this.next === null &&
+			this.#pending === 0
+		) {
+			source.v = value;
+			source.wv = increment_write_version();
+			return;
+		}
+
+		// Separate method for further optimization; e.g. v8 does only need to invoke
+		// CreateFunctionContext in this internal method due to capturing `this` in a closure.
+		this.#capture(source, value, is_derived);
+	}
+
+	/**
+	 * Keep callbacks that capture `this` out of the fast path above, so that taking it
+	 * doesn't require allocating a function context.
+	 * @param {Value} source
+	 * @param {any} value
+	 * @param {boolean} is_derived
+	 */
+	#capture(source, value, is_derived) {
 		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, { v: source.v, wv: source.wv });
 		}
@@ -778,6 +854,7 @@ export class Batch {
 		let is_latest_value =
 			!this.is_fork &&
 			(!is_derived ||
+				batch_values === null ||
 				!(
 					/** @type {Derived} */ (source).deps?.some(
 						(d) => batch_values?.has(d) && batch_values.get(d) !== d.v
@@ -936,8 +1013,9 @@ export class Batch {
 		this.#pending += 1;
 
 		if (blocking) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
-			this.#blocking_pending.set(effect, blocking_pending_count + 1);
+			const blocking_pending = (this.#blocking_pending ??= new Map());
+			let blocking_pending_count = blocking_pending.get(effect) ?? 0;
+			blocking_pending.set(effect, blocking_pending_count + 1);
 		}
 	}
 
@@ -952,12 +1030,13 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (blocking) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
+			const blocking_pending = (this.#blocking_pending ??= new Map());
+			let blocking_pending_count = blocking_pending.get(effect) ?? 0;
 
 			if (blocking_pending_count === 1) {
-				this.#blocking_pending.delete(effect);
+				blocking_pending.delete(effect);
 			} else {
-				this.#blocking_pending.set(effect, blocking_pending_count - 1);
+				blocking_pending.set(effect, blocking_pending_count - 1);
 			}
 		}
 
@@ -976,7 +1055,7 @@ export class Batch {
 	/**
 	 * @param {Set<Effect>} dirty_effects
 	 * @param {Set<Effect>} maybe_dirty_effects
-	 * @param {Set<Derived>} dirty_deriveds
+	 * @param {Set<Derived> | null} dirty_deriveds
 	 * @returns {void}
 	 */
 	transfer_effects(dirty_effects, maybe_dirty_effects, dirty_deriveds) {
@@ -992,8 +1071,10 @@ export class Batch {
 			this.maybe_dirty_effects.add(e);
 		}
 
-		for (const d of dirty_deriveds) {
-			this.#dirty_deriveds.add(d);
+		if (dirty_deriveds !== null) {
+			for (const d of dirty_deriveds) {
+				(this.#dirty_deriveds ??= new Set()).add(d);
+			}
 		}
 
 		dirty_effects.clear();

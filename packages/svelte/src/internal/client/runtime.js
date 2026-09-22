@@ -503,7 +503,8 @@ export function update_effect(effect) {
 		var is_latest_value =
 			own_batch === null ||
 			(!own_batch.is_fork &&
-				(effect.deps === null ||
+				(batch_values === null ||
+					effect.deps === null ||
 					!effect.deps.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v)));
 
 		if (is_latest_value) {
@@ -740,6 +741,26 @@ export function get(signal) {
 		}
 	}
 
+	// Keep batch-local reads and stale-reader tracking out of the common read path.
+	// Function extraction makes it a bit easier for engines to optimize the get function.
+	if (held_sources !== null || stale_sources !== null || batch_values !== null) {
+		return get_batch_value(signal, first_time);
+	}
+
+	if ((signal.f & ERROR_VALUE) !== 0) {
+		throw signal.v;
+	}
+
+	return signal.v;
+}
+
+/**
+ * @template V
+ * @param {Value<V>} signal
+ * @param {boolean} first_time
+ * @returns {V}
+ */
+function get_batch_value(signal, first_time) {
 	if (current_batch || previous_batch?.is_eager) {
 		const current = /** @type {Batch} */ (current_batch ?? previous_batch);
 		if (!current.is_eager && held_sources?.has(signal)) {
