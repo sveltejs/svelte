@@ -226,7 +226,11 @@ export class Batch {
 	maybe_dirty_effects = new Set();
 
 	/**
-	 * Deferred derived effects that are DIRTY
+	 * Deferred deriveds that are DIRTY. We need to store these because a derived that definitely should execute
+	 * might get executed in the meantime in another batch (they are lazy, so a DIRTY derived is not guaranteed
+	 * to run immediately). Relying on wv_values is insufficient because if this derived has stale dependencies
+	 * in this batch but is executed with latest dependencies elsewhere, the wv is bumped and would incorrectly
+	 * say "hey we don't need to rerun this" in the context of this batch.
 	 * @type {Set<Derived>}
 	 */
 	#dirty_deriveds = new Set();

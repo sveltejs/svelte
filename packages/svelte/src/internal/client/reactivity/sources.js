@@ -416,7 +416,6 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		} else if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
-			batch_values?.delete(derived);
 			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
