@@ -21,7 +21,7 @@ import {
 	FORK_ONLY_BRANCH
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property, includes } from '../../shared/utils.js';
+import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_reaction,
 	get,
@@ -911,11 +911,10 @@ export class Batch {
 				!is_derived &&
 				(!current || current.v !== value) &&
 				((source.f & ASYNC) === 0 ||
-					!depends_on(
-						/** @type {Effect} */ (/** @type {Source} */ (source).e),
-						[...batch.current.keys()].filter((s) => !this.current.has(s)),
-						new Map()
-					))
+					// If the fork ran an async effect, its pending/resolved result belongs to the
+					// fork. Revalidate it when its inputs change, not when another batch resolves
+					// the same expression with a different view of those inputs.
+					!batch.#stale_effects?.has(/** @type {Effect} */ (/** @type {Source} */ (source).e)))
 			) {
 				batch.current.delete(source);
 				batch.queue_revalidation(source);
@@ -1388,33 +1387,6 @@ function mark_eager_effects(value, effects) {
 }
 
 /**
- * @param {Reaction} reaction
- * @param {Value[]} sources
- * @param {Map<Reaction, boolean>} checked
- */
-function depends_on(reaction, sources, checked) {
-	const depends = checked.get(reaction);
-	if (depends !== undefined) return depends;
-
-	if (reaction.deps !== null) {
-		for (const dep of reaction.deps) {
-			if (includes.call(sources, dep)) {
-				return true;
-			}
-
-			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources, checked)) {
-				checked.set(/** @type {Derived} */ (dep), true);
-				return true;
-			}
-		}
-	}
-
-	checked.set(reaction, false);
-
-	return false;
-}
-
-/**
  * @param {Effect} effect
  * @returns {void}
  */
@@ -1623,8 +1595,8 @@ export function fork(fn) {
 
 			// Apply changes and update write versions so deriveds see the change. Everything still
 			// in `batch.current` at this point is the latest value: sources that the real world has
-			// written to in the meantime were removed from the fork via `notify_fork` (an async
-			// source only survives if its effect depends on inputs that only the fork changed).
+			// written to in the meantime were removed from the fork via `notify_fork`, while
+			// async results are kept up to date by revalidating their producers when inputs change.
 			// We use fresh versions rather than the fork-time `content.wv`, because the real world
 			// may have run reactions since then whose versions would otherwise outrank them.
 			for (var [source, content] of batch.current) {
