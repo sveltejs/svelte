@@ -291,7 +291,12 @@ export function handle_event_propagation(event) {
 					(!(/** @type {any} */ (current_target).disabled) ||
 						// DOM could've been updated already by the time this is reached, so we check this as well
 						// -> the target could not have been disabled because it emits the event in the first place
-						event.target === current_target)
+						event.target === current_target ||
+						// for trusted events, an element in the propagation path could not have been
+						// disabled before the event was dispatched (the browser would not have dispatched
+						// it), so it must have been disabled mid-dispatch — e.g. by an effect flushing at
+						// a microtask checkpoint between listeners — and the handler should still fire
+						event.isTrusted)
 				) {
 					delegated.call(current_target, event);
 				}

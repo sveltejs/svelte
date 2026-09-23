@@ -153,6 +153,8 @@ function normalize_children(node) {
  *			InputEvent: typeof InputEvent;
  *			KeyboardEvent: typeof KeyboardEvent;
  *			MouseEvent: typeof MouseEvent;
+ *			// performs a real (trusted) mouse click at viewport coordinates, requires `real_click: true`
+ *			__real_click: (x: number, y: number) => Promise<void>;
  *		};
  *		waitUntil: (fn: any, ms?: number) => Promise<void>;
  *	}) => void;
@@ -160,6 +162,8 @@ function normalize_children(node) {
  *	immutable?: boolean;
  *	dev?: boolean;
  *	warnings?: Warning[];
+ *	// expose `window.__real_click` for dispatching real (trusted) mouse clicks from the test
+ *	real_click?: boolean;
  *}} args
  */
 export function test(args) {
