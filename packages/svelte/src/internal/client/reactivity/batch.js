@@ -899,7 +899,7 @@ export class Batch {
 		const current = batch.current.get(source);
 		batch.current.delete(source);
 
-		if ([...batch.current.values()].every((value) => !value.is_derived)) {
+		if ([...batch.current.values()].every((value) => value.is_derived)) {
 			// The real world has overtaken every write of this fork, so it is obsolete. Discard it
 			// right away (its speculative branches must not be adopted by anyone), and empty
 			// `current` so that `commit()` can tell this apart from a user-initiated discard
