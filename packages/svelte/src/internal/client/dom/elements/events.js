@@ -292,11 +292,11 @@ export function handle_event_propagation(event) {
 						// DOM could've been updated already by the time this is reached, so we check this as well
 						// -> the target could not have been disabled because it emits the event in the first place
 						event.target === current_target ||
-						// an event could have been disabled mid-dispatch by another listener earlier in the
+						// the element could have been disabled mid-dispatch by an earlier listener in the
 						// propagation path (e.g. an `on()` handler on the same element whose effect flushed
 						// at a microtask checkpoint), in which case the handler should still fire. Svelte
-						// records such listeners as `handled_at`, so if we reached the same element, we know
-						// the event was already dispatched to it before it became disabled
+						// records the element an event was already observed reaching as `handled_at`, so
+						// reaching that same element proves it was only disabled after the event arrived
 						current_target === handled_at)
 				) {
 					delegated.call(current_target, event);
