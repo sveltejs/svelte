@@ -8,6 +8,9 @@ export default test({
 
 		input.focus();
 
+		// we need to use `document.execCommand('insertText', false, ...)` to simulate user input
+		// because directly setting an invalid value to `input.value` would simply clear the input
+		// and dispatching an event would not update the input correctly
 		document.execCommand('insertText', false, '250');
 		flushSync();
 		document.execCommand('insertText', false, '.');
