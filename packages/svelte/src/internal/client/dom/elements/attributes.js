@@ -1,7 +1,7 @@
 /** @import { Blocker, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
+import { get_descriptor, get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate, delegated, event, event_symbol } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
@@ -45,6 +45,39 @@ const INPUT_TAG = IS_XHTML ? 'input' : 'INPUT';
 const OPTION_TAG = IS_XHTML ? 'option' : 'OPTION';
 const SELECT_TAG = IS_XHTML ? 'select' : 'SELECT';
 const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
+
+/**
+ * URL attributes without a same-named setter. Writing one, even with its current value, can fetch
+ * or resolve its resource again, e.g. an SVG `<image href>` fires another `load` or `error`
+ */
+const URL_ATTRIBUTES = [
+	'href',
+	'xlink:href',
+	'background',
+	'classid',
+	'codebase',
+	'formaction',
+	'itemid',
+	'longdesc',
+	'manifest',
+	'usemap'
+];
+
+/**
+ * SVG attributes holding a list (of lengths, numbers, transforms or points). Writing one, even with
+ * its current value, replaces the list's items, which detaches those retrieved through `baseVal`.
+ * `x`, `y`, `dx`, `dy` and `rotate` are lists on `<text>` and `<tspan>` only
+ */
+const SVG_LIST_ATTRIBUTES = [
+	'values',
+	'tableValues',
+	'kernelMatrix',
+	'transform',
+	'gradientTransform',
+	'patternTransform',
+	'points'
+];
+const SVG_TEXT_POSITION_ATTRIBUTES = ['x', 'y', 'dx', 'dy', 'rotate'];
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -178,7 +211,8 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		}
 	}
 
-	if (attributes[attribute] === (attributes[attribute] = value)) return;
+	var previous = attributes[attribute];
+	if (previous === (attributes[attribute] = value)) return;
 
 	if (attribute === 'loading') {
 		// @ts-expect-error
@@ -190,9 +224,67 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	} else if (typeof value !== 'string' && get_setters(element).has(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
-	} else {
+	} else if (
+		// during hydration, a number or boolean isn't written again when the server rendered the
+		// same string, unless the write can have another effect
+		!(
+			hydrating &&
+			(typeof value === 'number' || typeof value === 'boolean') &&
+			previous === String(value) &&
+			is_inert_write(element, attribute)
+		)
+	) {
 		element.setAttribute(attribute, value);
 	}
+}
+
+/** @type {Map<string, object>} */
+var native_prototypes = new Map();
+
+/** @type {(this: Element) => string | null} */
+var get_namespace_uri;
+
+/** @type {(this: Element) => string} */
+var get_local_name;
+
+/**
+ * Whether writing an attribute with the value it already has would only produce a mutation record:
+ * not for URL or SVG list attributes (see above), nor for custom elements, whose
+ * `attributeChangedCallback` observes the write. SVG and MathML elements can't be custom elements.
+ * An HTML element is compared by prototype with a new element of its local name, which an upgraded
+ * customized built-in doesn't match, also after its `is` attribute is removed, unless its prototype
+ * was replaced with the native one. The namespace and local name are read with the platform
+ * getters, which a form's named properties or an overriding property can't change
+ * @param {Element} element
+ * @param {string} attribute
+ */
+function is_inert_write(element, attribute) {
+	if (URL_ATTRIBUTES.includes(attribute)) return false;
+
+	get_namespace_uri ??= /** @type {any} */ (get_descriptor(Element.prototype, 'namespaceURI')).get;
+	get_local_name ??= /** @type {any} */ (get_descriptor(Element.prototype, 'localName')).get;
+	var name = get_local_name.call(element);
+
+	if (get_namespace_uri.call(element) !== NAMESPACE_HTML) {
+		return !(
+			SVG_LIST_ATTRIBUTES.includes(attribute) ||
+			((name === 'text' || name === 'tspan') && SVG_TEXT_POSITION_ATTRIBUTES.includes(attribute))
+		);
+	}
+
+	if (name.includes('-')) return false;
+
+	var prototype = native_prototypes.get(name);
+
+	if (prototype === undefined) {
+		// without a `-` in the name, no custom element constructor runs. `createElement` is read from
+		// the prototype, because the document's named properties (e.g. `<form name="createElement">`)
+		// can shadow it
+		var created = get_prototype_of(document).createElement.call(document, name);
+		native_prototypes.set(name, (prototype = get_prototype_of(created)));
+	}
+
+	return get_prototype_of(element) === prototype;
 }
 
 /**
