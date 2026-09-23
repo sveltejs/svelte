@@ -124,7 +124,11 @@ export class Batch {
 
 	linked = false;
 
-	/** @type {Batch | null} */
+	/**
+	 * The batch into which this batch has been merged (because it finished and
+	 * depended on a prior batch that needs to resolve first), if any.
+	 * @type {Batch | null}
+	 */
 	merged_into = null;
 
 	/**
@@ -161,23 +165,27 @@ export class Batch {
 	next = null;
 
 	/**
-	 * Batches that depend on this batch.
-	 * Lazily initialized for performance reasons.
 	 * @type {Set<Batch> | null}
 	 */
 	#dependent = null;
 
+	/**
+	 * Batches that depend on this batch.
+	 * Lazily initialized for performance reasons.
+	 */
 	get dependent() {
 		return (this.#dependent ??= new Set());
 	}
 
 	/**
-	 * All started async work in this batch.
-	 * Lazily initialized for performance reasons.
 	 * @type {Map<Effect, ReturnType<typeof deferred<any>>> | null}
 	 */
 	#async_deriveds = null;
 
+	/**
+	 * All started async work in this batch.
+	 * Lazily initialized for performance reasons.
+	 */
 	get async_deriveds() {
 		return (this.#async_deriveds ??= new Map());
 	}
@@ -266,13 +274,15 @@ export class Batch {
 	#skipped_branches = new Map();
 
 	/**
-	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing.
-	 * `true` indicates that this branch is new to the eyes of this fork but was already created before.
-	 * Lazily initialized for performance reasons.
 	 * @type {Map<Effect, boolean> | null}
 	 */
 	#unskipped_branches = null;
 
+	/**
+	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing.
+	 * `true` indicates that this branch is new to the eyes of this fork but was already created before.
+	 * Lazily initialized for performance reasons.
+	 */
 	get unskipped_branches() {
 		return (this.#unskipped_branches ??= new Map());
 	}
@@ -589,7 +599,8 @@ export class Batch {
 				} else if (first_time) {
 					// We're seeing a fork-only branch for the first time in another fork. We need to traverse
 					// all effects inside it (they're all marked MAYBE_DIRTY). This is necessary because
-					// dependencies of the effects inside could've updated since the last time this branch ran.
+					// dependencies of the effects inside could've updated in the real world since the last time this branch ran.
+					// TODO this can overfire, maybe there's a way to detect which sources actually changed.
 					this.unskipped_branches.set(effect, false);
 					all_dirty ??= effect;
 					if (effect.f & CLEAN) effect.f ^= CLEAN;
@@ -888,7 +899,7 @@ export class Batch {
 		const current = batch.current.get(source);
 		batch.current.delete(source);
 
-		if (![...batch.current.values()].some((value) => !value.is_derived)) {
+		if ([...batch.current.values()].every((value) => !value.is_derived)) {
 			// The real world has overtaken every write of this fork, so it is obsolete. Discard it
 			// right away (its speculative branches must not be adopted by anyone), and empty
 			// `current` so that `commit()` can tell this apart from a user-initiated discard
@@ -1084,6 +1095,13 @@ export class Batch {
 		return current_batch;
 	}
 
+	/**
+	 * - `include_earlier` false: batch_values etc should see the latest values up until itself,
+	 * 	  i.e. including latest value of all earlier batches; previous values only of later batches.
+	 * - `include_earlier` true: the "world view" of batch_values is current values are only of this batch,
+	 *    previous values of all other batches.
+	 * @param {boolean} include_earlier
+	 */
 	apply(include_earlier = false) {
 		if (!async_mode_flag || (!this.is_fork && this.prev === null && this.next === null)) {
 			batch_values = null;
