@@ -422,7 +422,17 @@ function set_attributes(
 		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
 			// @ts-ignore We're not running this for custom elements because __value is actually
 			// how Lit stores the current value on the element, and messing with that would break things.
-			element.value = element.__value = value;
+			element.__value = value;
+
+			if (
+				prev_value == null ||
+				// @ts-ignore
+				element.value !== value ||
+				(value === 0 && element.nodeName === PROGRESS_TAG)
+			) {
+				// @ts-ignore
+				element.value = value;
+			}
 		} else if (key === 'selected' && is_option_element) {
 			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
