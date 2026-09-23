@@ -46,7 +46,7 @@ import { set_signal_status, update_derived_status } from './status.js';
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
-/** @type {Map<Source, any>} */
+/** @type {Map<Value, any>} */
 export const old_values = new Map();
 
 /**
@@ -141,7 +141,7 @@ export function mutate(source, value) {
 
 /**
  * @template V
- * @param {Source<V>} source
+ * @param {Value<V>} source
  * @param {V} value
  * @param {boolean} [should_proxy]
  * @returns {V}
@@ -181,7 +181,7 @@ var count_deps = 0;
 
 /**
  * @template V
- * @param {Source<V>} source
+ * @param {Value<V>} source
  * @param {V} value
  * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}
