@@ -876,7 +876,7 @@ export class Batch {
 			source.wv = wv;
 		}
 
-		for (let batch = first_batch; batch !== null; batch = batch.next) {
+		for (let batch = first_batch; batch !== null && !this.is_eager; batch = batch.next) {
 			if (batch.id < this.id && batch.current.has(source)) {
 				this.dependent.add(batch);
 			}
@@ -1470,7 +1470,7 @@ export function eager(fn) {
 	get(version);
 
 	eager_effect(() => {
-		if (initial) {
+		if (initial && !current_batch?.is_fork) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
