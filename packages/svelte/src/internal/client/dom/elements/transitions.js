@@ -353,15 +353,19 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
-		// we return a facade that allows everything to remain synchronous
+		// we return a facade that allows everything to remain synchronous.
+		// The inner animation is created in a microtask, so until it runs `a`
+		// is `undefined` — every method must tolerate that, as the transition
+		// can be aborted/reset before initialization (e.g. an out-only deferred
+		// transition whose outro is aborted from an `$effect` in the same update)
 		return {
 			abort: () => {
 				aborted = true;
 				a?.abort();
 			},
-			deactivate: () => a.deactivate(),
-			reset: () => a.reset(),
-			t: () => a.t()
+			deactivate: () => a?.deactivate(),
+			reset: () => a?.reset(),
+			t: () => a?.t()
 		};
 	}
 
