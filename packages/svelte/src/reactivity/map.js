@@ -157,6 +157,28 @@ export class SvelteMap extends Map {
 	 * @param {K} key
 	 * @param {V} value
 	 * */
+	getOrInsert(key, value) {
+		if (!super.has(key)) {
+			this.set(key, value);
+		}
+		return /** @type {V} */ (this.get(key));
+	}
+
+	/**
+	 * @param {K} key
+	 * @param {(key: K) => V} callbackFn
+	 */
+	getOrInsertComputed(key, callbackFn) {
+		if (!super.has(key)) {
+			this.set(key, callbackFn(key));
+		}
+		return /** @type {V} */ (this.get(key));
+	}
+
+	/**
+	 * @param {K} key
+	 * @param {V} value
+	 * */
 	set(key, value) {
 		var sources = this.#sources;
 		var s = sources.get(key);

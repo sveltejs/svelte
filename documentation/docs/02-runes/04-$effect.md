@@ -205,6 +205,8 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 </div>
 ```
 
+`$effect.pre` runs before DOM updates that are scheduled after it, not before every DOM mutation in the flush - DOM of parent components may already be updated. When using [await expressions](await-expressions), block updates like `{#if ...}` and `{#each ...}` in the same component also run before `$effect.pre`.
+
 Apart from the timing, `$effect.pre` works exactly like `$effect`.
 
 ## `$effect.tracking`

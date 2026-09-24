@@ -1,4 +1,4 @@
-/** @import { Blocker, Effect, Value } from '#client' */
+/** @import { Blocker, Effect, Source, Value } from '#client' */
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -8,7 +8,6 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
-import { Boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -38,8 +37,22 @@ export function flatten(blockers, sync, async, fn) {
 	// Filter out already-settled blockers - no need to wait for them
 	var pending = blockers.filter((b) => !b.settled);
 
+	var deriveds = sync.map(d);
+
+	if (DEV) {
+		deriveds.forEach((d, i) => {
+			// TODO this is kinda useful for debugging but a lousy implementation —
+			// maybe the compiler could pass through the template string
+			d.label = sync[i]
+				.toString()
+				.replace('() => ', '')
+				.replaceAll('$.eager(() => ', '$state.eager(')
+				.replace(/\$\.get\((.+?)\)/g, (_, id) => id);
+		});
+	}
+
 	if (async.length === 0 && pending.length === 0) {
-		fn(sync.map(d));
+		fn(deriveds);
 		return;
 	}
 
@@ -53,8 +66,10 @@ export function flatten(blockers, sync, async, fn) {
 				? Promise.all(pending.map((b) => b.promise))
 				: null;
 
-	/** @param {Value[]} values */
-	function finish(values) {
+	/**
+	 * @param {Source[]} async
+	 */
+	function finish(async) {
 		if ((parent.f & DESTROYED) !== 0) {
 			return;
 		}
@@ -62,7 +77,7 @@ export function flatten(blockers, sync, async, fn) {
 		restore();
 
 		try {
-			fn(values);
+			fn([...deriveds, ...async]);
 		} catch (error) {
 			invoke_error_boundary(error, parent);
 		}
@@ -74,17 +89,14 @@ export function flatten(blockers, sync, async, fn) {
 
 	// Fast path: blockers but no async expressions
 	if (async.length === 0) {
-		/** @type {Promise<any>} */ (blocker_promise)
-			.then(() => finish(sync.map(d)))
-			.finally(decrement_pending);
-
+		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([])).finally(decrement_pending);
 		return;
 	}
 
 	// Full path: has async expressions
 	function run() {
 		Promise.all(async.map((expression) => async_derived(expression)))
-			.then((result) => finish([...sync.map(d), ...result]))
+			.then(finish)
 			.catch((error) => invoke_error_boundary(error, parent))
 			.finally(decrement_pending);
 	}
@@ -142,6 +154,9 @@ export function capture() {
 	};
 }
 
+/** `true` between a `save` thunk restoring a context and the end of that synchronous segment */
+var restored = false;
+
 /**
  * Wraps an `await` expression in such a way that the effect context that was
  * active before the expression evaluated can be reapplied afterwards —
@@ -152,12 +167,30 @@ export function capture() {
  */
 export async function save(promise) {
 	var restore = capture();
+	// the context restored by an earlier `save` in this expression must not
+	// outlive the synchronous segment that is about to end at this `await`
+	unsave();
 	var value = await promise;
 
 	return () => {
 		restore();
+		restored = true;
 		return value;
 	};
+}
+
+/**
+ * Unset the context if a `save` thunk restored it in the current synchronous segment,
+ * so that a foreign microtask can never run inside a restored reaction context.
+ * Called at every suspension point, and at the end of async expression bodies —
+ * `async () => (await $.save(a))().b` becomes `async () => { try { return (await $.save(a))().b; } finally { $.unsave(); } }`
+ * @template T
+ * @param {T} [value]
+ * @returns {T}
+ */
+export function unsave(value) {
+	if (restored) unset_context();
+	return /** @type {T} */ (value);
 }
 
 /**
@@ -168,10 +201,11 @@ export async function save(promise) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
-	var previous_async_effect = reactivity_loss_tracker;
+	unsave();
+	var previous_reactivity_loss_tracker = reactivity_loss_tracker;
 	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
 	queueMicrotask(() => {
-		if (reactivity_loss_tracker === previous_async_effect) {
+		if (reactivity_loss_tracker === previous_reactivity_loss_tracker) {
 			set_reactivity_loss_tracker(null);
 		}
 	});
@@ -179,12 +213,12 @@ export async function track_reactivity_loss(promise) {
 	var value = await promise;
 
 	return () => {
-		set_reactivity_loss_tracker(previous_async_effect);
+		set_reactivity_loss_tracker(previous_reactivity_loss_tracker);
 		// While this can result in false negatives it also guards against the more important
 		// false positives that would occur if this is the last in a chain of async operations,
 		// and the reactivity_loss_tracker would then stay around until the next async operation happens.
 		queueMicrotask(() => {
-			if (reactivity_loss_tracker === previous_async_effect) {
+			if (reactivity_loss_tracker === previous_reactivity_loss_tracker) {
 				set_reactivity_loss_tracker(null);
 			}
 		});
@@ -254,6 +288,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 }
 
 export function unset_context(deactivate_batch = true) {
+	restored = false;
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
@@ -352,15 +387,15 @@ export function wait(blockers) {
  */
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
-	var boundary = /** @type {Boundary} */ (effect.b);
+	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
 	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = boundary.is_rendered();
+	var blocking = !!boundary?.is_rendered();
 
-	boundary.update_pending_count(1, batch);
+	boundary?.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
 	return () => {
-		boundary.update_pending_count(-1, batch);
+		boundary?.update_pending_count(-1, batch);
 		batch.decrement(blocking, effect);
 	};
 }

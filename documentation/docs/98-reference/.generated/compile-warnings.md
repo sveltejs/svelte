@@ -360,7 +360,7 @@ Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and th
 '%event%' event must be accompanied by '%accompanied_by%' event
 ```
 
-Enforce that `onmouseover` and `onmouseout` are accompanied by `onfocus` and `onblur`, respectively. This helps to ensure that any functionality triggered by these mouse events is also accessible to keyboard users.
+Enforce that `onmouseover` and `onmouseout` are accompanied by `onfocus` (or `onfocusin`) and `onblur` (or `onfocusout`), respectively. This helps to ensure that any functionality triggered by these mouse events is also accessible to keyboard users.
 
 ```svelte
 <!-- A11y: onmouseover must be accompanied by onfocus -->
@@ -842,7 +842,7 @@ Reassignments of module-level declarations will not cause reactive statements to
 ### script_unknown_attribute
 
 ```
-Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+Unrecognised attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
 ```
 
 ### slot_element_deprecated

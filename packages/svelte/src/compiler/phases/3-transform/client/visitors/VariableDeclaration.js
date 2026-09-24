@@ -5,8 +5,8 @@ import { dev, is_ignored, locate_node } from '../../../../state.js';
 import { extract_paths, save } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
-import { get_rune } from '../../../scope.js';
-import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
+import { get_rune, should_proxy } from '../../../scope.js';
+import { async_thunk, get_prop_source, is_prop_source, is_state_source } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -29,6 +29,7 @@ export function VariableDeclaration(node, context) {
 				rune === '$inspect' ||
 				rune === '$inspect.trace' ||
 				rune === '$state.snapshot' ||
+				rune === '$state.eager' ||
 				rune === '$host'
 			) {
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
@@ -49,8 +50,13 @@ export function VariableDeclaration(node, context) {
 				}
 
 				if (declarator.id.type === 'Identifier') {
+					const exclude_id = context.state.scope.root.unique('rest_excludes');
+					context.state.hoisted.push(
+						b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
+					);
+
 					/** @type {Expression[]} */
-					const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+					const args = [b.id('$$props'), exclude_id];
 
 					if (dev) {
 						// include rest name, so we can provide informative error messages
@@ -95,8 +101,13 @@ export function VariableDeclaration(node, context) {
 							}
 						} else {
 							// RestElement
+							const exclude_id = context.state.scope.root.unique('rest_excludes');
+							context.state.hoisted.push(
+								b.var(exclude_id, b.new('Set', b.array(seen.map((name) => b.literal(name)))))
+							);
+
 							/** @type {Expression[]} */
-							const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+							const args = [b.id('$$props'), exclude_id];
 
 							if (dev) {
 								// include rest name, so we can provide informative error messages
@@ -190,14 +201,10 @@ export function VariableDeclaration(node, context) {
 			}
 
 			if (rune === '$derived' || rune === '$derived.by') {
-				const is_async = context.state.analysis.async_deriveds.has(
+				const metadata = context.state.analysis.async_deriveds.get(
 					/** @type {CallExpression} */ (init)
 				);
-
-				// for now, only wrap async derived in $.save if it's not
-				// a top-level instance derived. TODO in future maybe we
-				// can dewaterfall all of them?
-				const should_save = context.state.is_instance && context.state.scope.function_depth > 1;
+				const is_async = metadata !== undefined;
 
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (context.visit(value));
@@ -208,14 +215,12 @@ export function VariableDeclaration(node, context) {
 						/** @type {Expression} */
 						let call = b.call(
 							'$.async_derived',
-							b.thunk(expression, true),
+							async_thunk(expression, metadata),
 							dev && b.literal(declarator.id.name),
 							location ? b.literal(location) : undefined
 						);
 
-						call = should_save ? save(call) : b.await(call);
-
-						declarations.push(b.declarator(declarator.id, call));
+						declarations.push(b.declarator(declarator.id, b.await(call)));
 					} else {
 						if (rune === '$derived') expression = b.thunk(expression);
 
@@ -243,7 +248,7 @@ export function VariableDeclaration(node, context) {
 
 							call = b.call(
 								'$.async_derived',
-								b.thunk(expression, true),
+								async_thunk(expression, metadata),
 								dev &&
 									b.literal(
 										`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
@@ -251,7 +256,7 @@ export function VariableDeclaration(node, context) {
 								location ? b.literal(location) : undefined
 							);
 
-							call = should_save ? save(call) : b.await(call);
+							call = b.await(call);
 						}
 
 						declarations.push(b.declarator(id, call));

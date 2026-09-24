@@ -7,7 +7,6 @@ import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { tick, untrack } from '../../../runtime.js';
-import { is_runes } from '../../../context.js';
 import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 import { async_mode_flag } from '../../../../flags/index.js';
 

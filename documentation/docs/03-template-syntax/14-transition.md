@@ -53,6 +53,12 @@ Transitions can have parameters.
 {/if}
 ```
 
+## Accessibility
+
+Transitions are driven by the [Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API) rather than by CSS. A global `@media (prefers-reduced-motion: reduce)` rule that zeroes `transition-duration` and `animation-duration` therefore has no effect on them.
+
+Use [`prefersReducedMotion`](svelte-motion#prefersReducedMotion) to adjust (or completely disable) the transition accordingly for devices who request reduced motion.
+
 ## Custom transition functions
 
 ```js

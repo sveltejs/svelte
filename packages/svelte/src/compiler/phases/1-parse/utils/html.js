@@ -20,7 +20,7 @@ function reg_exp_entity(entity_name, is_attribute_value) {
 
 /** @param {boolean} is_attribute_value */
 function get_entity_pattern(is_attribute_value) {
-	const reg_exp_num = '#(?:x[a-fA-F\\d]+|\\d+)(?:;)?';
+	const reg_exp_num = '#(?:[xX][a-fA-F\\d]+|\\d+)(?:;)?';
 	const reg_exp_entities = Object.keys(entities).map(
 		/** @param {any} entity_name */ (entity_name) => reg_exp_entity(entity_name, is_attribute_value)
 	);
@@ -38,6 +38,8 @@ const entity_pattern_attr_value = get_entity_pattern(true);
  * @param {boolean} is_attribute_value
  */
 export function decode_character_references(html, is_attribute_value) {
+	if (html.indexOf('&') === -1) return html; // fast path
+
 	const entity_pattern = is_attribute_value ? entity_pattern_attr_value : entity_pattern_content;
 	return html.replace(
 		entity_pattern,
@@ -50,7 +52,7 @@ export function decode_character_references(html, is_attribute_value) {
 			// Handle named entities
 			if (entity[0] !== '#') {
 				code = entities[entity];
-			} else if (entity[1] === 'x') {
+			} else if (entity[1] === 'x' || entity[1] === 'X') {
 				code = parseInt(entity.substring(2), 16);
 			} else {
 				code = parseInt(entity.substring(1), 10);
@@ -60,7 +62,7 @@ export function decode_character_references(html, is_attribute_value) {
 				return match;
 			}
 
-			return String.fromCodePoint(validate_code(code));
+			return String.fromCodePoint(validate_code(code, is_attribute_value));
 		}
 	);
 }
@@ -75,10 +77,15 @@ const NUL = 0;
 // Also see: https://en.wikipedia.org/wiki/Plane_(Unicode)
 // Also see: https://html.spec.whatwg.org/multipage/parsing.html#preprocessing-the-input-stream
 
-/** @param {number} code */
-function validate_code(code) {
-	// line feed becomes generic whitespace
-	if (code === 10) {
+/**
+ * @param {number} code
+ * @param {boolean} is_attribute_value
+ */
+function validate_code(code, is_attribute_value) {
+	// line feed becomes generic whitespace, since it is collapsed along with the
+	// surrounding whitespace anyway. In an attribute value it is significant, so it
+	// is left alone there
+	if (code === 10 && !is_attribute_value) {
 		return 32;
 	}
 

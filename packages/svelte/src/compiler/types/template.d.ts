@@ -160,6 +160,18 @@ export namespace AST {
 		};
 	}
 
+	/** A `{let ...}` or `{const ...}` tag */
+	export interface DeclarationTag extends BaseNode {
+		type: 'DeclarationTag';
+		declaration: VariableDeclaration;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+			/** If this declaration tag contains an await expression, or needs to wait on other async, this is set */
+			promises_id?: Identifier;
+		};
+	}
+
 	/** A `{@debug ...}` tag */
 	export interface DebugTag extends BaseNode {
 		type: 'DebugTag';
@@ -622,6 +634,7 @@ export namespace AST {
 	export type Tag =
 		| AST.AttachTag
 		| AST.ConstTag
+		| AST.DeclarationTag
 		| AST.DebugTag
 		| AST.ExpressionTag
 		| AST.HtmlTag

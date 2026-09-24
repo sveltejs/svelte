@@ -1,4 +1,4 @@
-/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, TemplateNode, TransitionManager } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -103,8 +103,12 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	if (remaining === 0) {
 		// If we're in a controlled each block (i.e. the block is the only child of an
 		// element), and we are removing all items, _and_ there are no out transitions,
-		// we can use the fast path — emptying the element and replacing the anchor
-		var fast_path = transitions.length === 0 && controlled_anchor !== null;
+		// we can use the fast path — emptying the element and replacing the anchor.
+		// Skip the fast path when another batch is still pending on this each block:
+		// that batch's keys still reference EachItems in `state.items`, which
+		// `destroy_effects` needs to preserve offscreen (see #18610).
+		var fast_path =
+			transitions.length === 0 && controlled_anchor !== null && state.pending.size === 0;
 
 		if (fast_path) {
 			var anchor = /** @type {Element} */ (controlled_anchor);
@@ -203,7 +207,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var each_array = derived_safe_equal(() => {
 		var collection = get_collection();
 
-		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
+		return /** @type {V[]} */ (
+			is_array(collection) ? collection : collection == null ? [] : array_from(collection)
+		);
 	});
 
 	if (DEV) {
@@ -658,7 +664,7 @@ function reconcile(state, array, anchor, flags, get_key) {
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
+ * @param {(anchor: Node, item: MaybeSource<V>, index: MaybeSource<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @returns {EachItem}

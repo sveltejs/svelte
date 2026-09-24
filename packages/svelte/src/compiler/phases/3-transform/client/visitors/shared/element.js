@@ -30,6 +30,7 @@ export function build_attribute_effect(
 ) {
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
+	const is_select = element.type === 'RegularElement' && element.name === 'select';
 
 	const memoizer = new Memoizer();
 
@@ -48,7 +49,11 @@ export function build_attribute_effect(
 				context.state.init.push(b.var(id, value));
 				values.push(b.init(attribute.name, b.id(id)));
 			} else {
-				values.push(b.init(attribute.name, value));
+				const name =
+					is_select && normalize_attribute(attribute.name) === 'defaultValue'
+						? 'defaultValue'
+						: attribute.name;
+				values.push(b.init(name, value));
 			}
 		} else {
 			let value = /** @type {Expression} */ (context.visit(attribute));

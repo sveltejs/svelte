@@ -1,5 +1,5 @@
 /** @import { SvelteComponent } from '../index.js' */
-/** @import { Csp } from '#server' */
+/** @import { Csp } from '../server/public.js' */
 import { asClassComponent as as_class_component, createClassComponent } from './legacy-client.js';
 import { render } from '../internal/server/index.js';
 import { async_mode_flag } from '../internal/flags/index.js';

@@ -85,4 +85,4 @@ if (PROFILE_DIR !== null) {
 	console.log(`\nCPU profiles written to ${PROFILE_DIR}`);
 }
 
-generate_report(outdir);
+generate_report(outdir, requested_branches);

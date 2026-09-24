@@ -1,0 +1,92 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 36,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "ExpressionTag",
+				"start": 0,
+				"end": 36,
+				"expression": {
+					"type": "BinaryExpression",
+					"start": 1,
+					"end": 35,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 1
+						},
+						"end": {
+							"line": 1,
+							"column": 35
+						}
+					},
+					"left": {
+						"type": "Identifier",
+						"start": 1,
+						"end": 5,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 1
+							},
+							"end": {
+								"line": 1,
+								"column": 5
+							}
+						},
+						"name": "type"
+					},
+					"operator": "instanceof",
+					"right": {
+						"type": "Identifier",
+						"start": 29,
+						"end": 35,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 29
+							},
+							"end": {
+								"line": 1,
+								"column": 35
+							}
+						},
+						"name": "Object",
+						"leadingComments": [
+							{
+								"type": "Block",
+								"value": " probe ",
+								"start": 17,
+								"end": 28
+							}
+						]
+					}
+				}
+			}
+		]
+	},
+	"options": null,
+	"comments": [
+		{
+			"type": "Block",
+			"value": " probe ",
+			"start": 17,
+			"end": 28,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 17
+				},
+				"end": {
+					"line": 1,
+					"column": 28
+				}
+			}
+		}
+	]
+}

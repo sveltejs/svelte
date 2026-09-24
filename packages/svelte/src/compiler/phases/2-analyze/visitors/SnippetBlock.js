@@ -25,19 +25,24 @@ export function SnippetBlock(node, context) {
 
 	context.next({ ...context.state, parent_element: null });
 
-	const can_hoist =
-		context.path.length === 1 &&
-		context.path[0].type === 'Fragment' &&
-		can_hoist_snippet(context.state.scope, context.state.scopes);
+	const is_top_level = context.path.length === 1 && context.path[0].type === 'Fragment';
 
-	const name = node.expression.name;
+	if (is_top_level) {
+		const name = node.expression.name;
 
-	if (can_hoist) {
-		const binding = /** @type {Binding} */ (context.state.scope.get(name));
-		context.state.analysis.module.scope.declarations.set(name, binding);
+		if (context.state.analysis.instance.scope.declarations.has(name)) {
+			e.declaration_duplicate(node.expression, name);
+		}
+
+		node.metadata.can_hoist =
+			is_top_level && can_hoist_snippet(context.state.scope, context.state.scopes);
+
+		if (node.metadata.can_hoist) {
+			const name = node.expression.name;
+			const binding = /** @type {Binding} */ (context.state.scope.get(name));
+			context.state.analysis.module.scope.declarations.set(name, binding);
+		}
 	}
-
-	node.metadata.can_hoist = can_hoist;
 
 	const { path } = context;
 	const parent = path.at(-2);

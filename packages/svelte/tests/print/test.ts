@@ -12,6 +12,10 @@ const { test, run } = suite<PrintTest>(async (config, cwd) => {
 	const output = print(ast);
 	const outputCode = output.code.endsWith('\n') ? output.code : output.code + '\n';
 
+	// the printed output must itself be valid Svelte — `print` should never emit
+	// code that `parse` cannot read back (e.g. CSS escape sequences must round-trip)
+	parse(outputCode, { modern: true });
+
 	// run `UPDATE_SNAPSHOTS=true pnpm test print` to update print tests
 	if (process.env.UPDATE_SNAPSHOTS) {
 		fs.writeFileSync(`${cwd}/output.svelte`, outputCode);

@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Benchmark comparison</title>
+		<style>
+			:root {
+				color-scheme: light;
+				font-family:
+					Inter,
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					BlinkMacSystemFont,
+					'Segoe UI',
+					sans-serif;
+				font-variant-numeric: tabular-nums;
+				background: #f6f8fa;
+				color: #1f2328;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				background: #f6f8fa;
+			}
+
+			main {
+				width: min(1600px, 100%);
+				margin: 0 auto;
+				padding: 40px clamp(16px, 3vw, 48px) 64px;
+			}
+
+			h1,
+			h2,
+			p {
+				margin-top: 0;
+			}
+
+			h1 {
+				margin-bottom: 8px;
+				font-size: clamp(28px, 4vw, 48px);
+				letter-spacing: -0.04em;
+			}
+
+			h2 {
+				margin-bottom: 14px;
+				font-size: 18px;
+				letter-spacing: -0.01em;
+			}
+
+			.intro {
+				max-width: 780px;
+				margin-bottom: 28px;
+				color: #59636e;
+				line-height: 1.6;
+			}
+
+			.summary {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				gap: 12px;
+				margin-bottom: 32px;
+			}
+
+			.card,
+			.panel {
+				border: 1px solid #d0d7de;
+				background: #ffffff;
+				box-shadow: 0 8px 24px rgb(140 149 159 / 16%);
+			}
+
+			.card {
+				min-height: 112px;
+				padding: 18px 20px;
+				border-radius: 8px;
+			}
+
+			.card-label {
+				margin-bottom: 10px;
+				color: #59636e;
+				font-size: 12px;
+				font-weight: 700;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+
+			.card-value {
+				font-size: 21px;
+				font-weight: 750;
+				letter-spacing: -0.02em;
+			}
+
+			.card-detail {
+				margin-top: 7px;
+				color: #59636e;
+				font-size: 13px;
+			}
+
+			.panel {
+				margin-bottom: 24px;
+				border-radius: 8px;
+				overflow: hidden;
+			}
+
+			.panel-heading {
+				display: flex;
+				align-items: end;
+				justify-content: space-between;
+				gap: 20px;
+				padding: 18px 20px;
+				border-bottom: 1px solid #d8dee4;
+			}
+
+			.panel-heading h2,
+			.panel-heading p {
+				margin-bottom: 0;
+			}
+
+			.help {
+				max-width: 720px;
+				color: #59636e;
+				font-size: 13px;
+				line-height: 1.5;
+			}
+
+			.controls {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 12px;
+				padding: 14px 20px;
+				border-bottom: 1px solid #d8dee4;
+				background: #f6f8fa;
+			}
+
+			label {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				color: #59636e;
+				font-size: 13px;
+				font-weight: 650;
+			}
+
+			select {
+				max-width: 250px;
+				padding: 7px 30px 7px 9px;
+				border: 1px solid #afb8c1;
+				border-radius: 5px;
+				background: #ffffff;
+				color: #1f2328;
+				font: inherit;
+			}
+
+			.table-wrap {
+				overflow: auto;
+			}
+
+			table {
+				width: 100%;
+				border-collapse: separate;
+				border-spacing: 0;
+			}
+
+			th,
+			td {
+				padding: 11px 14px;
+				border-right: 1px solid #d8dee4;
+				border-bottom: 1px solid #d8dee4;
+				text-align: left;
+				vertical-align: middle;
+			}
+
+			th:last-child,
+			td:last-child {
+				border-right: 0;
+			}
+
+			tr:last-child td {
+				border-bottom: 0;
+			}
+
+			th {
+				background: #f6f8fa;
+				color: #59636e;
+				font-size: 12px;
+				font-weight: 700;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+			}
+
+			th button {
+				width: 100%;
+				padding: 0;
+				border: 0;
+				background: transparent;
+				color: inherit;
+				font: inherit;
+				letter-spacing: inherit;
+				text-align: inherit;
+				text-transform: inherit;
+				cursor: pointer;
+			}
+
+			th button:hover,
+			th button:focus-visible {
+				color: #1f2328;
+			}
+
+			.standings td:nth-child(n + 2),
+			.standings th:nth-child(n + 2) {
+				text-align: right;
+			}
+
+			.rank {
+				display: inline-grid;
+				width: 24px;
+				height: 24px;
+				margin-right: 10px;
+				place-items: center;
+				border-radius: 50%;
+				background: #eaeef2;
+				color: #424a53;
+				font-size: 12px;
+				font-weight: 750;
+			}
+
+			.branch-name,
+			.benchmark-name {
+				font-weight: 700;
+			}
+
+			.benchmark-table {
+				min-width: max(900px, 100%);
+			}
+
+			.benchmark-table thead {
+				position: sticky;
+				top: 0;
+				z-index: 3;
+			}
+
+			.benchmark-table th:first-child,
+			.benchmark-table td:first-child {
+				position: sticky;
+				left: 0;
+				z-index: 2;
+				min-width: 220px;
+				background: #ffffff;
+			}
+
+			.benchmark-table th:first-child {
+				z-index: 4;
+				background: #f6f8fa;
+			}
+
+			.benchmark-table th:nth-child(2),
+			.benchmark-table td:nth-child(2) {
+				min-width: 150px;
+			}
+
+			.benchmark-table th:not(:first-child),
+			.benchmark-table td:not(:first-child) {
+				min-width: 175px;
+			}
+
+			.metric {
+				position: relative;
+				isolation: isolate;
+				background: hsl(var(--heat, 210) 74% 94%);
+			}
+
+			.metric::after {
+				position: absolute;
+				z-index: -1;
+				inset: auto 0 0;
+				height: 3px;
+				background: hsl(var(--heat, 210) 65% 43%);
+				content: '';
+			}
+
+			.time {
+				font-size: 15px;
+				font-weight: 750;
+			}
+
+			.delta {
+				margin-left: 7px;
+				color: #424a53;
+				font-size: 12px;
+				font-weight: 650;
+			}
+
+			.secondary {
+				margin-top: 5px;
+				color: #59636e;
+				font-size: 12px;
+			}
+
+			.winner {
+				color: #1a7f37;
+				font-weight: 700;
+			}
+
+			.missing {
+				background: #f6f8fa;
+				color: #6e7781;
+				font-style: italic;
+			}
+
+			footer {
+				color: #6e7781;
+				font-size: 12px;
+				text-align: right;
+			}
+
+			@media (max-width: 760px) {
+				main {
+					padding-top: 24px;
+				}
+
+				.summary {
+					grid-template-columns: 1fr;
+				}
+
+				.panel-heading {
+					align-items: start;
+					flex-direction: column;
+				}
+
+				.controls,
+				label {
+					align-items: stretch;
+					flex-direction: column;
+				}
+
+				select {
+					max-width: none;
+					width: 100%;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Benchmark comparison</h1>
+			<p class="intro">
+				Runtime results across branches. Green cells are fastest for an entry and red cells expose
+				the largest regressions. Overall runtime normalizes every benchmark to its fastest result
+				before averaging, so long-running entries do not outweigh short ones.
+			</p>
+
+			<section class="summary" id="summary" aria-label="Comparison summary"></section>
+
+			<section class="panel">
+				<div class="panel-heading">
+					<div>
+						<h2>Branch standings</h2>
+						<p class="help">
+							Wins count the fastest branch for each comparable entry. Normalized runtime is the
+							average slowdown against each entry's fastest result; lower is better. Click a heading
+							to sort.
+						</p>
+					</div>
+				</div>
+				<div class="table-wrap">
+					<table class="standings">
+						<thead>
+							<tr>
+								<th><button type="button" data-standing-sort="name">Branch</button></th>
+								<th><button type="button" data-standing-sort="wins">Wins</button></th>
+								<th>
+									<button type="button" data-standing-sort="score">Normalized runtime</button>
+								</th>
+							</tr>
+						</thead>
+						<tbody id="standings"></tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="panel">
+				<div class="panel-heading">
+					<div>
+						<h2>Results by benchmark</h2>
+						<p class="help">
+							Each cell shows runtime, difference from the winner, and GC time. Missing entries are
+							excluded from both standings.
+						</p>
+					</div>
+				</div>
+				<div class="controls">
+					<label
+						>Sort benchmarks
+						<select id="benchmark-sort"></select
+					></label>
+					<label
+						>Order branches
+						<select id="branch-order">
+							<option value="name">Branch name</option>
+							<option value="wins">Overall winner by wins</option>
+							<option value="score" selected>Overall winner by normalized runtime</option>
+						</select></label
+					>
+				</div>
+				<div class="table-wrap">
+					<table class="benchmark-table" id="benchmark-table"></table>
+				</div>
+			</section>
+
+			<footer id="generated"></footer>
+		</main>
+
+		<script type="application/json" id="report-data">
+			%%REPORT_DATA%%
+		</script>
+		<script>
+			const report = JSON.parse(document.querySelector('#report-data').textContent);
+			const number = new Intl.NumberFormat('en', {
+				maximumFractionDigits: 2,
+				minimumFractionDigits: 2
+			});
+			const score_number = new Intl.NumberFormat('en', {
+				maximumFractionDigits: 3,
+				minimumFractionDigits: 3
+			});
+
+			function analyze(benchmark) {
+				const complete =
+					benchmark.values.length === report.branches.length &&
+					benchmark.values.every(function (value) {
+						return value !== null && Number.isFinite(value.time) && value.time > 0;
+					});
+
+				if (!complete) return { comparable: false, min: 0, max: 0, winners: [], ratios: [] };
+
+				const times = benchmark.values.map(function (value) {
+					return value.time;
+				});
+				const min = Math.min.apply(null, times);
+				const max = Math.max.apply(null, times);
+				const winners = [];
+
+				times.forEach(function (time, index) {
+					if (time === min) winners.push(index);
+				});
+
+				return {
+					comparable: true,
+					min: min,
+					max: max,
+					winners: winners,
+					ratios: times.map(function (time) {
+						return time / min;
+					})
+				};
+			}
+
+			const analyzed = report.benchmarks.map(function (benchmark, index) {
+				return { benchmark: benchmark, stats: analyze(benchmark), index: index };
+			});
+			const comparable = analyzed.filter(function (entry) {
+				return entry.stats.comparable;
+			});
+			const standings = report.branches.map(function (name, index) {
+				let wins = 0;
+				let score = 0;
+
+				comparable.forEach(function (entry) {
+					if (entry.stats.winners.includes(index)) wins += 1;
+					score += entry.stats.ratios[index];
+				});
+
+				return {
+					name: name,
+					index: index,
+					wins: wins,
+					score: comparable.length === 0 ? Infinity : score / comparable.length
+				};
+			});
+
+			function compare_name(a, b) {
+				return a.name.localeCompare(b.name, undefined, { numeric: true });
+			}
+
+			function order_standings(key, direction) {
+				return standings.slice().sort(function (a, b) {
+					let result;
+					if (key === 'name') result = compare_name(a, b);
+					else result = a[key] - b[key];
+					return result === 0 ? compare_name(a, b) : result * direction;
+				});
+			}
+
+			function best(key, direction) {
+				const ordered = order_standings(key, direction);
+				if (ordered.length === 0) return [];
+				return ordered.filter(function (entry) {
+					return entry[key] === ordered[0][key];
+				});
+			}
+
+			function names(entries) {
+				return entries
+					.map(function (entry) {
+						return entry.name;
+					})
+					.join(', ');
+			}
+
+			function make(tag, class_name, text) {
+				const node = document.createElement(tag);
+				if (class_name) node.className = class_name;
+				if (text !== undefined) node.textContent = text;
+				return node;
+			}
+
+			const wins_best = best('wins', -1);
+			const score_best = best('score', 1);
+			const summary = document.querySelector('#summary');
+			[
+				{
+					label: 'Most benchmark wins',
+					value: comparable.length === 0 ? 'No comparable results' : names(wins_best),
+					detail:
+						comparable.length === 0
+							? ''
+							: wins_best[0].wins + ' of ' + comparable.length + ' entries'
+				},
+				{
+					label: 'Best normalized runtime',
+					value:
+						score_best.length === 0 || !Number.isFinite(score_best[0].score)
+							? 'No comparable results'
+							: names(score_best),
+					detail:
+						score_best.length === 0 || !Number.isFinite(score_best[0].score)
+							? ''
+							: score_number.format(score_best[0].score) + 'x average runtime'
+				},
+				{
+					label: 'Coverage',
+					value: comparable.length + ' comparable entries',
+					detail:
+						report.branches.length +
+						' branches, ' +
+						(report.benchmarks.length - comparable.length) +
+						' incomplete entries'
+				}
+			].forEach(function (item) {
+				const card = make('article', 'card');
+				card.append(
+					make('div', 'card-label', item.label),
+					make('div', 'card-value', item.value),
+					make('div', 'card-detail', item.detail)
+				);
+				summary.append(card);
+			});
+
+			let standing_sort = { key: 'score', direction: 1 };
+
+			function render_standings() {
+				const body = document.querySelector('#standings');
+				body.replaceChildren();
+				const score_order = order_standings('score', 1);
+
+				order_standings(standing_sort.key, standing_sort.direction).forEach(function (entry) {
+					const row = document.createElement('tr');
+					const branch = make('td');
+					branch.append(
+						make('span', 'rank', String(score_order.indexOf(entry) + 1)),
+						make('span', 'branch-name', entry.name)
+					);
+					row.append(
+						branch,
+						make('td', '', String(entry.wins)),
+						make(
+							'td',
+							'',
+							Number.isFinite(entry.score) ? score_number.format(entry.score) + 'x' : 'n/a'
+						)
+					);
+					body.append(row);
+				});
+
+				document.querySelectorAll('[data-standing-sort]').forEach(function (button) {
+					const active = button.dataset.standingSort === standing_sort.key;
+					button
+						.closest('th')
+						.setAttribute(
+							'aria-sort',
+							active ? (standing_sort.direction === 1 ? 'ascending' : 'descending') : 'none'
+						);
+					button.textContent =
+						button.dataset.standingSort === 'name'
+							? 'Branch'
+							: button.dataset.standingSort === 'wins'
+								? 'Wins'
+								: 'Normalized runtime';
+					if (active) button.textContent += standing_sort.direction === 1 ? ' ↑' : ' ↓';
+				});
+			}
+
+			document.querySelectorAll('[data-standing-sort]').forEach(function (button) {
+				button.addEventListener('click', function () {
+					const key = button.dataset.standingSort;
+					if (standing_sort.key === key) standing_sort.direction *= -1;
+					else standing_sort = { key: key, direction: key === 'wins' ? -1 : 1 };
+					render_standings();
+				});
+			});
+
+			const benchmark_sort = document.querySelector('#benchmark-sort');
+			[
+				['original', 'Original run order'],
+				['name', 'Benchmark name'],
+				['winner', 'Winner for entry'],
+				['spread', 'Largest spread']
+			]
+				.concat(
+					report.branches.map(function (branch, index) {
+						return ['branch:' + index, branch + ': slowest relative result'];
+					})
+				)
+				.forEach(function (option) {
+					const node = make('option', '', option[1]);
+					node.value = option[0];
+					benchmark_sort.append(node);
+				});
+
+			function branch_order() {
+				const key = document.querySelector('#branch-order').value;
+				if (key === 'name') return order_standings('name', 1);
+				if (key === 'wins') return order_standings('wins', -1);
+				return order_standings('score', 1);
+			}
+
+			function benchmark_order() {
+				const key = benchmark_sort.value;
+				return analyzed.slice().sort(function (a, b) {
+					if (key === 'original') return a.index - b.index;
+					if (key === 'name') return compare_name(a.benchmark, b.benchmark);
+					if (key === 'winner') {
+						const a_name = a.stats.comparable ? report.branches[a.stats.winners[0]] : '\uffff';
+						const b_name = b.stats.comparable ? report.branches[b.stats.winners[0]] : '\uffff';
+						return a_name.localeCompare(b_name) || compare_name(a.benchmark, b.benchmark);
+					}
+					if (key === 'spread') {
+						const a_spread = a.stats.comparable ? a.stats.max / a.stats.min : -1;
+						const b_spread = b.stats.comparable ? b.stats.max / b.stats.min : -1;
+						return b_spread - a_spread || compare_name(a.benchmark, b.benchmark);
+					}
+
+					const branch = Number(key.slice('branch:'.length));
+					const a_ratio = a.stats.comparable ? a.stats.ratios[branch] : -1;
+					const b_ratio = b.stats.comparable ? b.stats.ratios[branch] : -1;
+					return b_ratio - a_ratio || compare_name(a.benchmark, b.benchmark);
+				});
+			}
+
+			function render_benchmarks() {
+				const table = document.querySelector('#benchmark-table');
+				const branches = branch_order();
+				const head = document.createElement('thead');
+				const head_row = document.createElement('tr');
+				head_row.append(make('th', '', 'Benchmark'), make('th', '', 'Winner'));
+				branches.forEach(function (branch) {
+					head_row.append(make('th', '', branch.name));
+				});
+				head.append(head_row);
+
+				const body = document.createElement('tbody');
+				benchmark_order().forEach(function (entry) {
+					const row = document.createElement('tr');
+					row.append(make('td', 'benchmark-name', entry.benchmark.name));
+
+					const winner_names = entry.stats.winners.map(function (index) {
+						return report.branches[index];
+					});
+					row.append(
+						make(
+							'td',
+							winner_names.length === 0 ? 'missing' : 'winner',
+							winner_names.length === 0 ? 'Incomplete' : winner_names.join(', ')
+						)
+					);
+
+					branches.forEach(function (branch) {
+						const value = entry.benchmark.values[branch.index];
+						if (value === null || !Number.isFinite(value.time)) {
+							row.append(make('td', 'missing', 'Not available'));
+							return;
+						}
+
+						const cell = make('td', entry.stats.comparable ? 'metric' : 'missing');
+						const time = make('span', 'time', number.format(value.time) + ' ms');
+						cell.append(time);
+
+						if (entry.stats.comparable) {
+							const ratio = entry.stats.ratios[branch.index];
+							const heat =
+								entry.stats.max === entry.stats.min
+									? 0
+									: (value.time - entry.stats.min) / (entry.stats.max - entry.stats.min);
+							cell.style.setProperty('--heat', String(Math.round(142 - heat * 137)));
+							cell.append(
+								make(
+									'span',
+									'delta',
+									ratio === 1 ? 'fastest' : '+' + number.format((ratio - 1) * 100) + '%'
+								)
+							);
+						}
+
+						const gc = Number.isFinite(value.gc_time)
+							? number.format(value.gc_time) + ' ms'
+							: 'n/a';
+						cell.append(make('div', 'secondary', 'GC ' + gc));
+						row.append(cell);
+					});
+
+					body.append(row);
+				});
+
+				table.replaceChildren(head, body);
+			}
+
+			benchmark_sort.addEventListener('change', render_benchmarks);
+			document.querySelector('#branch-order').addEventListener('change', render_benchmarks);
+			document.querySelector('#generated').textContent =
+				'Generated ' + new Date(report.generated_at).toLocaleString();
+
+			render_standings();
+			render_benchmarks();
+		</script>
+	</body>
+</html>

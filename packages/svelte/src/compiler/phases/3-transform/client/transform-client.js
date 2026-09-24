@@ -4,7 +4,7 @@
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
-import { build_getter, is_state_source } from './utils.js';
+import { build_getter, get_transform } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -22,6 +22,7 @@ import { ClassBody } from './visitors/ClassBody.js';
 import { Comment } from './visitors/Comment.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
+import { DeclarationTag } from './visitors/DeclarationTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
@@ -66,20 +67,7 @@ const visitors = {
 		const scope = state.scopes.get(node);
 
 		if (scope && scope !== state.scope) {
-			const transform = { ...state.transform };
-
-			for (const [name, binding] of scope.declarations) {
-				if (
-					binding.kind === 'normal' ||
-					// Reads of `$state(...)` declarations are not
-					// transformed if they are never reassigned
-					(binding.kind === 'state' && !is_state_source(binding, state.analysis))
-				) {
-					delete transform[name];
-				}
-			}
-
-			next({ ...state, transform, scope });
+			next({ ...state, transform: get_transform(scope, state), scope });
 		} else {
 			next();
 		}
@@ -99,6 +87,7 @@ const visitors = {
 	Comment,
 	Component,
 	ConstTag,
+	DeclarationTag,
 	DebugTag,
 	EachBlock,
 	ExportNamedDeclaration,
@@ -152,6 +141,7 @@ export function client_component(analysis, options) {
 		scopes: analysis.module.scopes,
 		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
+		templates: new Map(),
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -257,11 +247,11 @@ export function client_component(analysis, options) {
 	}
 
 	for (const [node] of analysis.reactive_statements) {
-		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
+		const statement = state.legacy_reactive_statements.get(node);
 		if (statement === undefined) {
 			throw new Error('Could not find reactive statement');
 		}
-		instance.body.push(statement[1]);
+		instance.body.push(statement);
 	}
 
 	if (analysis.reactive_statements.size > 0) {

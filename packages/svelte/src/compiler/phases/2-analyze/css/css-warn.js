@@ -23,6 +23,9 @@ const visitors = {
 			context.next();
 		}
 	},
+	PseudoElementSelector() {
+		// Don't analyse these
+	},
 	ComplexSelector(node, context) {
 		if (
 			!node.metadata.used &&

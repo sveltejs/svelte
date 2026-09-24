@@ -40,6 +40,7 @@ export function SvelteBoundary(node, context) {
 	const hoisted = [];
 
 	let has_const = false;
+	let has_declaration = false;
 
 	// const tags need to live inside the boundary, but might also be referenced in hoisted snippets.
 	// to resolve this we cheat: we duplicate const tags inside snippets
@@ -55,6 +56,10 @@ export function SvelteBoundary(node, context) {
 				});
 			}
 		}
+
+		if (child.type === 'DeclarationTag') {
+			has_declaration = true;
+		}
 	}
 
 	for (const child of node.fragment.nodes) {
@@ -68,10 +73,10 @@ export function SvelteBoundary(node, context) {
 		if (child.type === 'SnippetBlock') {
 			if (
 				context.state.options.experimental.async &&
-				has_const &&
+				(has_const || has_declaration) &&
 				!['failed', 'pending'].includes(child.expression.name)
 			) {
-				// we can't hoist snippets as they may reference const tags, so we just keep them in the fragment
+				// we can't hoist snippets as they may reference const/declaration tags, so we just keep them in the fragment
 				nodes.push(child);
 			} else {
 				/** @type {Statement[]} */

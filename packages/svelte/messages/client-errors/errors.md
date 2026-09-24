@@ -60,6 +60,10 @@ The key expression in a keyed each block must return the same value when called 
 
 > `%rune%` can only be used inside an effect (e.g. during component initialisation)
 
+Effects can only be created while a parent effect is running. This means that they cannot, for example, be created inside an event handler or after an `await` expression (unless the `await` occurs directly inside a component's `<script>` tag, and not inside an async function).
+
+In very rare cases, it is appropriate to use [`$effect.root`]($effect#$effect.root) so that you can create effects outside the normal component lifecycle.
+
 ## effect_pending_outside_reaction
 
 > `$effect.pending()` can only be called inside an effect or derived
@@ -166,12 +170,6 @@ This can happen if you render a hydratable on the client that was not rendered o
 ## rune_outside_svelte
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
-
-## set_context_after_init
-
-> `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
-
-This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
 ## state_descriptors_fixed
 

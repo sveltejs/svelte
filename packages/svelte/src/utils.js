@@ -434,7 +434,7 @@ const STATE_CREATION_RUNES = /** @type {const} */ ([
 	'$derived.by'
 ]);
 
-const RUNES = /** @type {const} */ ([
+export const RUNES = /** @type {const} */ ([
 	...STATE_CREATION_RUNES,
 	'$state.eager',
 	'$state.snapshot',

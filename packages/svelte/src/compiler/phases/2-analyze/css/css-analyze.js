@@ -312,6 +312,9 @@ const css_visitors = {
 		}
 
 		context.next();
+	},
+	PseudoElementSelector() {
+		// Don't analyse these
 	}
 };
 
