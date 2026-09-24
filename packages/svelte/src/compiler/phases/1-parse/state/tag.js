@@ -17,6 +17,107 @@ const regex_maybe_type_declaration = /type\b/y;
 
 const pointy_bois = { '<': '>' };
 
+/**
+ * Heuristic check for whether the given snippet parameter list (e.g. `(text: string)`)
+ * looks like it contains TypeScript type annotations. Used to augment the parse error
+ * with a hint about `lang="ts"` when parsing the parameters as JavaScript fails.
+ * Conservative by design: string literals and comments are skipped, colons inside
+ * `{}` or `[]` (e.g. object destructuring or object literals) don't count, and
+ * ternaries don't count as annotations.
+ * @param {string} params
+ */
+function looks_like_type_annotation(params) {
+	let curly = 0;
+	let square = 0;
+	let i = 0;
+
+	while (i < params.length) {
+		const char = params[i];
+
+		// skip string literals
+		if (char === '"' || char === "'" || char === '`') {
+			i += 1;
+			while (i < params.length && params[i] !== char) {
+				i += params[i] === '\\' ? 2 : 1;
+			}
+			i += 1;
+			continue;
+		}
+
+		// skip comments
+		if (char === '/' && params[i + 1] === '/') {
+			while (i < params.length && params[i] !== '\n') i += 1;
+			continue;
+		}
+
+		if (char === '/' && params[i + 1] === '*') {
+			i += 2;
+			while (i < params.length && !(params[i] === '*' && params[i + 1] === '/')) i += 1;
+			i += 2;
+			continue;
+		}
+
+		if (char === '{') curly += 1;
+		else if (char === '}') curly -= 1;
+		else if (char === '[') square += 1;
+		else if (char === ']') square -= 1;
+		else if (char === ':' && curly === 0 && square === 0 && is_annotation_colon(params, i)) {
+			return true;
+		}
+
+		i += 1;
+	}
+
+	return false;
+}
+
+/**
+ * Checks whether the colon at the given index plausibly separates a parameter
+ * name from a type annotation, as opposed to e.g. belonging to a ternary.
+ * @param {string} params
+ * @param {number} index
+ */
+function is_annotation_colon(params, index) {
+	// the token before the colon should look like the end of a parameter name:
+	// an identifier, `?` (optional parameter) or a closing bracket (destructured parameter)
+	let j = index - 1;
+	while (j >= 0 && /\s/.test(params[j])) j -= 1;
+	const prev = params[j];
+	if (prev === undefined || !/[\w$?)\]}]/.test(prev)) return false;
+
+	// walk backwards to the start of this segment (`(`, `,`, `=` or the start),
+	// skipping over balanced bracket pairs. A `?` at this level that is neither
+	// an optional parameter marker nor part of `??` means the colon belongs to a ternary
+	let k = j;
+	let depth = 0;
+	while (k >= 0) {
+		const char = params[k];
+
+		if (char === ')' || char === ']' || char === '}') {
+			depth += 1;
+		} else if (char === '(' || char === '[' || char === '{') {
+			if (depth === 0) break;
+			depth -= 1;
+		} else if (depth === 0) {
+			if (char === ',' || char === '=' || char === ';') break;
+
+			if (char === '?') {
+				if (params[k + 1] === '?') {
+					k -= 1; // skip the second `?` of `??`
+				} else {
+					let m = k + 1;
+					while (m < params.length && /\s/.test(params[m])) m += 1;
+					if (params[m] !== ':') return false; // ternary
+				}
+			}
+		}
+
+		k -= 1;
+	}
+
+	return true;
+}
+
 /** @param {Parser} parser */
 export default function tag(parser) {
 	const start = parser.index;
@@ -487,15 +588,35 @@ function open(parser) {
 			parser.eat(')', true);
 		}
 
-		let function_expression = matched
-			? /** @type {ArrowFunctionExpression} */ (
+		let function_expression = { params: [] };
+
+		if (matched) {
+			// the parameters as written in the template, e.g. `(text: string)`
+			const params = parser.template.slice(params_start, parser.index);
+
+			try {
+				function_expression = /** @type {ArrowFunctionExpression} */ (
 					parse_expression_at(
 						parser,
 						parser.template.slice(0, parser.index) + ' => {}',
 						params_start
 					)
-				)
-			: { params: [] };
+				);
+			} catch (caught) {
+				const error = /** @type {any} */ (caught);
+				// parsing the parameters as JavaScript failed — if they look like they contain
+				// TypeScript type annotations, the user probably forgot `lang="ts"`
+				if (!parser.ts && error?.code === 'js_parse_error' && looks_like_type_annotation(params)) {
+					const message = error.message.replace(
+						/\nhttps:\/\/svelte\.dev\/e\/js_parse_error$/,
+						`\nDid you forget to add \`lang="ts"\` to your \`<script>\` tag?`
+					);
+					e.js_parse_error(error.position?.[0] ?? params_start, message);
+				}
+
+				throw error;
+			}
+		}
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
