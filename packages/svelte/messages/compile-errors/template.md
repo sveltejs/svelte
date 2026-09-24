@@ -271,6 +271,10 @@ The same applies to components:
 
 > `<%name%>` does not support non-event attributes or spread attributes
 
+## incompatible_with_custom_renderer
+
+> %message% is not compatible with `customRenderer`
+
 ## js_parse_error
 
 > %message%
@@ -424,6 +428,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## svelte_meta_invalid_tag
 
 > Valid `<svelte:...>` tag names are %list%
+
+## svelte_options_customrenderer_disabled
+
+> `customRenderer` cannot be set in `<svelte:options>` unless the `experimental.customRenderer` compiler option is enabled
 
 ## svelte_options_deprecated_tag
 
