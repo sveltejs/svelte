@@ -132,25 +132,30 @@ export class Batch {
 	merged_into = null;
 
 	/**
-	 * Effects that were executed with stale values. Its wv is written into the map.
-	 * Lazily initialized for performance reasons.
 	 * @type {Map<Effect, number> | null}
 	 */
 	#stale_effects = null;
 
+	/**
+	 * Effects that were executed with stale values. Its wv is written into the map.
+	 * Lazily initialized for performance reasons.
+	 * @type {Map<Effect, number>}
+	 */
 	get stale_effects() {
 		return (this.#stale_effects ??= new Map());
 	}
+
+	/**
+	 * @type {Set<Reaction> | null}
+	 */
+	#stale_readers = null;
 
 	/**
 	 * Reactions that, while running in an earlier batch, read a value that this batch holds
 	 * a newer version of, and that are therefore scheduled to re-run in this batch. Used to
 	 * avoid scheduling the same reaction multiple times when it reads more than one such value.
 	 * Lazily initialized for performance reasons.
-	 * @type {Set<Reaction> | null}
 	 */
-	#stale_readers = null;
-
 	get stale_readers() {
 		return (this.#stale_readers ??= new Set());
 	}
@@ -185,6 +190,7 @@ export class Batch {
 	/**
 	 * All started async work in this batch.
 	 * Lazily initialized for performance reasons.
+	 * @type {Map<Effect, ReturnType<typeof deferred<any>>>}
 	 */
 	get async_deriveds() {
 		return (this.#async_deriveds ??= new Map());
@@ -282,6 +288,7 @@ export class Batch {
 	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing.
 	 * `true` indicates that this branch is new to the eyes of this fork but was already created before.
 	 * Lazily initialized for performance reasons.
+	 * @type {Map<Effect, boolean>}
 	 */
 	get unskipped_branches() {
 		return (this.#unskipped_branches ??= new Map());
