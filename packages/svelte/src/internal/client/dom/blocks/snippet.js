@@ -15,8 +15,9 @@ import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling, insert_before, node_type } from '../operations.js';
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
+import { has_own_property } from '../../../shared/utils.js';
 import { BranchManager } from './branches.js';
-import { current_renderer } from '../../custom-renderer/state.js';
+import { current_renderer, push_renderer } from '../../custom-renderer/state.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -35,7 +36,26 @@ export function snippet(node, get_snippet, ...args) {
 			e.invalid_snippet();
 		}
 
-		branches.ensure(snippet, snippet && ((anchor) => snippet(anchor, ...args)));
+		branches.ensure(
+			snippet,
+			snippet &&
+				((anchor) => {
+					var renderer = /** @type {any} */ (snippet).__renderer;
+					var has_renderer = has_own_property.call(/** @type {any} */ (snippet), '__renderer');
+
+					if (has_renderer) {
+						var pop_renderer = push_renderer(renderer, renderer);
+
+						try {
+							return snippet(anchor, ...args);
+						} finally {
+							pop_renderer();
+						}
+					}
+
+					return snippet(anchor, ...args);
+				})
+		);
 	}, EFFECT_TRANSPARENT);
 }
 
@@ -98,7 +118,16 @@ export function renderer_snippet(expected_renderer, fn) {
  * @returns {T}
  */
 export function validate_snippet_renderer(expected_renderer, fn) {
-	if (fn != null && /** @type {any} */ (fn).__renderer !== expected_renderer) {
+	if (fn == null) return fn;
+
+	var has_renderer = has_own_property.call(/** @type {any} */ (fn), '__renderer');
+
+	if (
+		(expected_renderer === null &&
+			has_renderer &&
+			/** @type {any} */ (fn).__renderer !== expected_renderer) ||
+		(expected_renderer !== null && /** @type {any} */ (fn).__renderer !== expected_renderer)
+	) {
 		e.snippet_renderer_mismatch();
 	}
 	return fn;
