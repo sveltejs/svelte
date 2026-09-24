@@ -1214,6 +1214,16 @@ export function let_directive_invalid_placement(node) {
 }
 
 /**
+ * Cannot use `let:` directives on a component that has a `children` snippet. Use snippet parameters instead (e.g. `{#snippet children({ %name% })}`)
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function let_directive_snippet_conflict(node, name) {
+	e(node, 'let_directive_snippet_conflict', `Cannot use \`let:\` directives on a component that has a \`children\` snippet. Use snippet parameters instead (e.g. \`{#snippet children({ ${name} })}\`)\nhttps://svelte.dev/e/let_directive_snippet_conflict`);
+}
+
+/**
  * Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax
  * @param {null | number | NodeLike} node
  * @param {string} name
