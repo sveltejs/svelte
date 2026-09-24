@@ -131,8 +131,10 @@ export function trace(label, fn) {
 }
 
 /**
- * @param {Value} source
+ * @template {Value} T
+ * @param {T} source
  * @param {string} label
+ * @returns {T}
  */
 export function tag(source, label) {
 	source.label = label;
