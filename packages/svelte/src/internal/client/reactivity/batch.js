@@ -1554,21 +1554,19 @@ export function fork(fn) {
 		e.fork_timing();
 	}
 
+	flushSync();
+
 	var committed = false;
-	/** @type {Promise<void>} */
-	var settled;
-	/** @type {Batch} */
-	var batch;
+	var batch = Batch.ensure();
+	batch.is_fork = true;
 
-	flushSync(() => {
-		batch = Batch.ensure();
-		batch.is_fork = true;
-		batch_values = new Map();
-		wv_values = new Map();
-		settled = batch.settled();
+	batch_values = new Map();
+	wv_values = new Map();
 
-		fn();
-	});
+	var settled = batch.settled();
+
+	fn();
+	flushSync();
 
 	return {
 		commit: async () => {
