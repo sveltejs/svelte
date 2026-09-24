@@ -347,22 +347,21 @@ export class Batch {
 	 * Remove an effect from the #skipped_branches map and reschedule
 	 * any tracked dirty/maybe_dirty child effects
 	 * @param {Effect} effect
-	 * @param {(e: Effect) => void} callback
 	 * @param {boolean} is_fork_init
 	 */
-	unskip_effect(effect, callback = (e) => this.schedule(e), is_fork_init = false) {
+	unskip_effect(effect, is_fork_init = false) {
 		var tracked = this.#skipped_branches.get(effect);
 		if (tracked) {
 			this.#skipped_branches.delete(effect);
 
 			for (var e of tracked.d) {
 				set_signal_status(e, DIRTY);
-				callback(e);
+				this.schedule(e);
 			}
 
 			for (e of tracked.m) {
 				set_signal_status(e, MAYBE_DIRTY);
-				callback(e);
+				this.schedule(e);
 			}
 		}
 		if (!this.unskipped_branches.has(effect)) this.unskipped_branches.set(effect, is_fork_init);

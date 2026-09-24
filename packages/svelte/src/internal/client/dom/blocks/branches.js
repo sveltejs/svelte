@@ -232,7 +232,7 @@ export class BranchManager {
 		const offscreen = this.#offscreen.get(key);
 		if (offscreen && offscreen.effect.f & FORK_ONLY_BRANCH) {
 			if (batch.is_fork) {
-				batch.unskip_effect(offscreen.effect, undefined, !first);
+				batch.unskip_effect(offscreen.effect, !first);
 			} else {
 				offscreen.effect.f ^= FORK_ONLY_BRANCH;
 			}
