@@ -1295,6 +1295,10 @@ export function eager(fn) {
 	let version = version_map.get(parent) ?? source(0);
 	version_map.set(parent, version);
 
+	if (DEV) {
+		version.label ??= '$state.eager version';
+	}
+
 	teardown(() => {
 		if (parent.f & DESTROYING) version_map.delete(parent);
 	});
