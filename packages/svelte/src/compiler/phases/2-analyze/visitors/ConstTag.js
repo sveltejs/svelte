@@ -41,7 +41,8 @@ export function ConstTag(node, context) {
 		expression: node.metadata.expression,
 		// We're treating this like a $derived under the hood
 		function_depth: context.state.function_depth + 1,
-		derived_function_depth: context.state.function_depth + 1
+		derived_function_depth: context.state.function_depth + 1,
+		outer_function_depth: undefined
 	});
 
 	mark_async_declaration(context, node.metadata, [declaration]);
