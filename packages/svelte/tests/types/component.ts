@@ -479,9 +479,9 @@ render(unionComponent, {
 	}
 });
 render(unionComponent, {
-	// @ts-expect-error
 	props: {
 		binding: true,
+		// @ts-expect-error wrong type
 		readonly: 1
 	}
 });

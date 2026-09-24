@@ -721,7 +721,7 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: NoInfer<Props>; context?: Map<any, any>; idPrefix?: string }} options
+	 * @param {{ props?: Props; context?: Map<any, any>; idPrefix?: string }} options
 	 * @returns {AccumulatedContent}
 	 */
 	static #render(component, options) {

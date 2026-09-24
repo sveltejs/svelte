@@ -4,6 +4,11 @@ import type { ComponentProps, Component, SvelteComponent, ComponentType } from '
 export type { Csp, RenderOutput, SyncRenderOutput, Sha256Source } from './public.js';
 
 /**
+ * Prevents `T` from being inferred from the value it annotates (like the built-in `NoInfer`, which requires TypeScript 5.4)
+ */
+type NoInferProps<T> = [T][T extends any ? 0 : never];
+
+/**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  */
@@ -15,7 +20,7 @@ export function render<
 		? [
 				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 				options?: {
-					props?: Props;
+					props?: NoInferProps<Props>;
 					context?: Map<any, any>;
 					idPrefix?: string;
 					csp?: Csp;
@@ -25,7 +30,7 @@ export function render<
 		: [
 				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 				options: {
-					props: Props;
+					props: NoInferProps<Props>;
 					context?: Map<any, any>;
 					idPrefix?: string;
 					csp?: Csp;
