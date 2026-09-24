@@ -11,6 +11,8 @@
 <dt role="term"></dt>
 <fieldset role="group"></fieldset>
 <figure role="figure"></figure>
+<form role="form" aria-label="a form">foo</form>
+<!-- no accessible name, so the landmark role is meaningful rather than redundant -->
 <form role="form">foo</form>
 <h1 role="heading">heading</h1>
 <h2 role="heading">heading</h2>
@@ -29,6 +31,8 @@
 <option role="option"></option>
 <output role="status"></output>
 <progress role="progressbar"></progress>
+<section role="region" aria-label="a region"></section>
+<!-- no accessible name, so the landmark role is meaningful rather than redundant -->
 <section role="region"></section>
 <summary role="button"></summary>
 <table role="table"></table>
@@ -43,6 +47,14 @@
 <header role="banner"></header>
 <footer role="contentinfo"></footer>
 
+<!-- nested asides have no implicit role, so the role is meaningful rather than redundant -->
+<article><aside role="complementary"></aside></article>
+
 <!-- Allowed -->
 <!-- menu has same interactive role exceptions as ul/ol -->
 <menu role="menu"></menu>
+
+<!-- empty alt makes the img presentational, so role="img" is meaningful -->
+<img alt="" role="img" />
+<img alt="" role="presentation" />
+<img alt="a sunset" role="img" />
