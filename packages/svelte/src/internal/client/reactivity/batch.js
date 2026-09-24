@@ -1243,7 +1243,7 @@ export function flushSync(fn) {
 		var result;
 
 		if (fn) {
-			flushSync(); // drain queue via the lower while(true) part
+			flushSync(); // flush anything pending through the while loop below
 
 			result = fn();
 		}
