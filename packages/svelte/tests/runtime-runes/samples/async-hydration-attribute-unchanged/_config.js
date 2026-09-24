@@ -26,8 +26,7 @@ export default test({
 		await tick();
 		observer?.disconnect();
 
-		// hydration resumes inside the `{#if}` once its condition resolves, so its unchanged value is
-		// skipped there, too; an awaited attribute value is applied after hydration and always written
+		// the `{#if}` is hydrated once its condition resolves; an awaited value is applied after hydration
 		assert.deepEqual(written.sort(), ['data-deferred', 'data-m']);
 		assert.htmlEqual(
 			target.innerHTML,
