@@ -169,12 +169,36 @@ export function check_element(node, context) {
 					}
 
 					// no-redundant-roles
+					var implicit_role = get_implicit_role(node.name, attribute_map);
+
+					// an `<img>` with an empty `alt` is exposed as `presentation`, not `img`
 					if (
-						current_role === get_implicit_role(node.name, attribute_map) &&
+						node.name === 'img' &&
+						['', true].includes(get_static_value(attribute_map.get('alt')))
+					) {
+						implicit_role = 'presentation';
+					}
+
+					if (
+						current_role === implicit_role &&
 						// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
 						!['ul', 'ol', 'li', 'menu'].includes(node.name) &&
 						// <a role="link" /> is ok because without href the a tag doesn't have a role of link
-						!(node.name === 'a' && !attribute_map.has('href'))
+						!(node.name === 'a' && !attribute_map.has('href')) &&
+						// <form> and <section> only have their landmark roles when they have
+						// an accessible name — without one the role is meaningful, not redundant
+						!(
+							(node.name === 'form' || node.name === 'section') &&
+							!attribute_map.has('aria-label') &&
+							!attribute_map.has('aria-labelledby') &&
+							!attribute_map.has('title')
+						) &&
+						// <aside> only has its implicit `complementary` role when it is not
+						// nested inside `article`, `aside`, `main`, `nav` or `section`
+						!(
+							node.name === 'aside' &&
+							is_parent(context.path, ['article', 'aside', 'main', 'nav', 'section'])
+						)
 					) {
 						w.a11y_no_redundant_roles(attribute, current_role);
 					}
