@@ -159,3 +159,7 @@ A derived value may be used in other contexts:
 > `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
 
 See [the note in the docs](legacy-svelte-self) for more info.
+
+## unexpected_head
+
+> Using `<head>` (%location%) will likely lead to runtime errors. Use [`<svelte:head>`](https://svelte.dev/docs/svelte/svelte-head) instead
