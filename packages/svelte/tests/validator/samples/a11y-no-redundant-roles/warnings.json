@@ -454,5 +454,17 @@
 			"column": 8,
 			"line": 44
 		}
+	},
+	{
+		"code": "a11y_no_redundant_roles",
+		"end": {
+			"column": 26,
+			"line": 47
+		},
+		"message": "Redundant role 'link'",
+		"start": {
+			"column": 15,
+			"line": 47
+		}
 	}
 ]
