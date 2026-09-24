@@ -420,6 +420,7 @@ export function update_derived(derived) {
 		// deriveds without dependencies should never be recomputed
 		if (derived.deps === null) {
 			set_signal_status(derived, CLEAN);
+			(previous_batch ?? current_batch)?.remove_dirty_reaction(derived);
 			return;
 		}
 	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
@@ -432,8 +433,9 @@ export function update_derived(derived) {
 		return;
 	}
 
-	// During time traveling we don't want to reset the status so that
-	// traversal of the graph in the other batches still happens
+	// During time travelling, keep stale results batch-local. A result computed
+	// from the latest inputs can be marked globally clean, even if it is unchanged
+	// and its write version therefore remains below its dependencies' versions.
 	if (
 		batch_values !== null ||
 		// "read outside of reactivity", e.g. in an event handler
@@ -444,9 +446,23 @@ export function update_derived(derived) {
 		if (effect_tracking() || current_batch?.is_fork) {
 			batch_values?.set(derived, value);
 		}
-		if (derived.v !== UNINITIALIZED) set_signal_status(derived, MAYBE_DIRTY);
+		var is_latest_value =
+			!current_batch?.is_fork &&
+			value === derived.v &&
+			!derived.deps?.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v);
+
+		if (is_latest_value) {
+			update_derived_status(derived);
+		} else if (derived.v !== UNINITIALIZED) {
+			set_signal_status(derived, MAYBE_DIRTY);
+		}
 	} else {
 		update_derived_status(derived);
+	}
+
+	if ((derived.f & CLEAN) !== 0) {
+		// Other batches may still need to check their older inputs on resume.
+		(previous_batch ?? current_batch)?.remove_dirty_reaction(derived);
 	}
 }
 

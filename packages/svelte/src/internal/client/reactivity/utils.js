@@ -35,6 +35,8 @@ function defer_derived(value, dirty_reactions) {
 	if ((derived.f & DIRTY) !== 0) {
 		dirty_reactions.set(derived, DIRTY);
 		set_signal_status(derived, MAYBE_DIRTY);
+	} else if (!dirty_reactions.has(derived)) {
+		dirty_reactions.set(derived, MAYBE_DIRTY);
 	}
 
 	if (derived.deps === null) return;

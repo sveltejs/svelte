@@ -261,11 +261,11 @@ export class Batch {
 	 * Leaf (i.e. not block/async) effects (dirty and maybe_dirty) are stored because we need
 	 * to reset their status when a batch becomes pending, to not pollute other batches.
 	 *
-	 * Dirty deriveds (but not maybe_dirty deriveds) are stored because a derived that definitely
-	 * should execute might get executed in the meantime in another batch (they are lazy, so a DIRTY derived is
-	 * not guaranteed to run immediately). Relying on wv_values is insufficient because if this derived has stale
-	 * dependencies in this batch but is executed with latest dependencies elsewhere, the wv is bumped and would
-	 * incorrectly say "hey we don't need to rerun this" in the context of this batch.
+	 * Dirty and maybe_dirty deriveds are stored because they might be evaluated and
+	 * marked globally clean by another batch before this batch resumes. Restoring
+	 * only DIRTY deriveds is insufficient: a clean parent would skip their checks.
+	 * Relying on wv_values alone is also insufficient, because a later evaluation
+	 * with newer inputs could incorrectly prevent reevaluation with this batch's inputs.
 	 * @type {Map<Reaction, number>}
 	 */
 	#dirty_reactions = new Map();
@@ -1068,6 +1068,12 @@ export class Batch {
 		if (status === DIRTY || this.#dirty_reactions.get(reaction) !== DIRTY) {
 			this.#dirty_reactions.set(reaction, status);
 		}
+	}
+
+	/** @param {Reaction} reaction */
+	remove_dirty_reaction(reaction) {
+		// Check is done for perf reasons
+		if (this.#dirty_reactions.size !== 0) this.#dirty_reactions.delete(reaction);
 	}
 
 	/** @param {(batch: Batch) => void} fn */
