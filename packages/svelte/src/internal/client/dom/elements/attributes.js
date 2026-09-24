@@ -46,10 +46,7 @@ const OPTION_TAG = IS_XHTML ? 'option' : 'OPTION';
 const SELECT_TAG = IS_XHTML ? 'select' : 'SELECT';
 const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
 
-/**
- * URL attributes without a same-named setter. Writing one, even with its current value, can fetch
- * or resolve its resource again, e.g. an SVG `<image href>` fires another `load` or `error`
- */
+/** Writing one of these again can refetch its resource, e.g. `<image href>` fires another `load` */
 const URL_ATTRIBUTES = [
 	'href',
 	'xlink:href',
@@ -63,11 +60,7 @@ const URL_ATTRIBUTES = [
 	'usemap'
 ];
 
-/**
- * SVG attributes holding a list (of lengths, numbers, transforms or points). Writing one, even with
- * its current value, replaces the list's items, which detaches those retrieved through `baseVal`.
- * `x`, `y`, `dx`, `dy` and `rotate` are lists on `<text>` and `<tspan>` only
- */
+/** Writing an SVG list again detaches the items retrieved through `baseVal` */
 const SVG_LIST_ATTRIBUTES = [
 	'values',
 	'tableValues',
@@ -77,6 +70,7 @@ const SVG_LIST_ATTRIBUTES = [
 	'patternTransform',
 	'points'
 ];
+/** Lists on `<text>` and `<tspan>` only */
 const SVG_TEXT_POSITION_ATTRIBUTES = ['x', 'y', 'dx', 'dy', 'rotate'];
 
 /**
@@ -225,8 +219,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		// @ts-ignore
 		element[attribute] = value;
 	} else if (
-		// during hydration, a number or boolean isn't written again when the server rendered the
-		// same string, unless the write can have another effect
+		// while hydrating, skip a number or boolean whose string the server already rendered
 		!(
 			hydrating &&
 			(typeof value === 'number' || typeof value === 'boolean') &&
@@ -248,13 +241,9 @@ var get_namespace_uri;
 var get_local_name;
 
 /**
- * Whether writing an attribute with the value it already has would only produce a mutation record:
- * not for URL or SVG list attributes (see above), nor for custom elements, whose
- * `attributeChangedCallback` observes the write. SVG and MathML elements can't be custom elements.
- * An HTML element is compared by prototype with a new element of its local name, which an upgraded
- * customized built-in doesn't match, also after its `is` attribute is removed, unless its prototype
- * was replaced with the native one. The namespace and local name are read with the platform
- * getters, which a form's named properties or an overriding property can't change
+ * Whether writing an attribute's current value again only produces a mutation record. A custom
+ * element observes it, so an HTML element needs the prototype of a native one. The platform getters
+ * are used because form controls and own properties can shadow `localName` and `namespaceURI`
  * @param {Element} element
  * @param {string} attribute
  */
@@ -277,9 +266,7 @@ function is_inert_write(element, attribute) {
 	var prototype = native_prototypes.get(name);
 
 	if (prototype === undefined) {
-		// without a `-` in the name, no custom element constructor runs. `createElement` is read from
-		// the prototype, because the document's named properties (e.g. `<form name="createElement">`)
-		// can shadow it
+		// read from the prototype, as named properties like `<form name="createElement">` shadow it
 		var created = get_prototype_of(document).createElement.call(document, name);
 		native_prototypes.set(name, (prototype = get_prototype_of(created)));
 	}
