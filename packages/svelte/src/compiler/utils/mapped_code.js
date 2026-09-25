@@ -311,12 +311,24 @@ function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_inp
 		typeof preprocessor_map_input === 'string'
 			? JSON.parse(preprocessor_map_input)
 			: preprocessor_map_input;
-	// A preprocessor map with a missing/empty `sources[0]` (e.g. from a MagicString transform
-	// created without a `source` option) can't be matched against `filename` during combination,
-	// which silently drops the chain instead of erroring. Normalize it to `filename` first, the
-	// same way Vite treats an empty `sources[0]` as referring to the file being transformed.
-	if (preprocessor_map.sources?.length === 1 && !preprocessor_map.sources[0]) {
-		preprocessor_map.sources = [filename];
+	// Normalize source entries in the incoming map so they match the filename (basename) that
+	// svelte uses in its own map, otherwise `@jridgewell/remapping` can't chain the two maps.
+	// - A missing/empty `sources[i]` (e.g. from `new MagicString(code).generateMap()` without a
+	//   `source` option) is treated as "this file", matching Vite's behavior in pluginContainer.
+	// - A full path or relative path whose basename equals `filename` (e.g. from
+	//   `generateMap({ source: id })` where `id` is an absolute Vite module id like
+	//   `/project/src/App.svelte`) also refers to this file, but a strict string comparison
+	//   against the basename fails. Normalize it to `filename` so the chain matches.
+	if (preprocessor_map.sources) {
+		preprocessor_map.sources = preprocessor_map.sources.map((source) => {
+			if (!source) return filename;
+			if (source === filename) return source;
+			// If the source's basename matches `filename`, treat it as referring to this file.
+			// This handles full paths, relative paths with directories, etc. that upstream
+			// tools (Vite, MagicString with `{source: id}`) commonly produce.
+			if (get_basename(source) === filename) return filename;
+			return source;
+		});
 	}
 	const result_map = combine_sourcemaps(filename, [svelte_map, preprocessor_map]);
 	// Svelte expects a SourceMap which includes toUrl and toString. Instead of wrapping our output in a class,

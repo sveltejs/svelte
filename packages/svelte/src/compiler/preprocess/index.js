@@ -13,6 +13,24 @@ import { decode_map } from './decode_sourcemap.js';
 import { replace_in_code, slice_source } from './replace_in_code.js';
 
 /**
+ * Normalize the `sources` array of a preprocessor source map so that any entry referring to
+ * the file being compiled (by basename match — e.g. a full or relative path) is replaced with
+ * `file_basename`. This mirrors the normalization done in `apply_preprocessor_sourcemap` for
+ * upstream plugin maps passed via `compileOptions.sourcemap`.
+ * @param {DecodedSourceMap | undefined} decoded_map
+ * @param {string} file_basename
+ */
+function normalize_preprocessor_sources(decoded_map, file_basename) {
+	if (!decoded_map?.sources) return;
+	for (let i = 0; i < decoded_map.sources.length; i++) {
+		const source = decoded_map.sources[i];
+		if (!source || get_basename(source) === file_basename) {
+			decoded_map.sources[i] = file_basename;
+		}
+	}
+}
+
+/**
  * Represents intermediate states of the preprocessing.
  * Implements the Source interface.
  */
@@ -115,6 +133,7 @@ function processed_content_to_code(processed, location, file_basename) {
 		decoded_map = decode_map(processed);
 		// decoded map may not have sources for empty maps like `{ mappings: '' }`
 		if (decoded_map?.sources) {
+			normalize_preprocessor_sources(decoded_map, file_basename);
 			// offset only segments pointing at original component source
 			const source_index = decoded_map.sources.indexOf(file_basename);
 			if (source_index !== -1) {
@@ -311,14 +330,19 @@ async function process_markup(process, source) {
 		filename: source.filename
 	});
 	if (processed) {
+		/** @type {any} */
+		let map = undefined;
+		if (processed.map) {
+			// TODO: can we use decode_sourcemap?
+			map = typeof processed.map === 'string' ? JSON.parse(processed.map) : processed.map;
+			if (source.file_basename && map.sources) {
+				map = { ...map, sources: map.sources.slice() };
+				normalize_preprocessor_sources(map, source.file_basename);
+			}
+		}
 		return {
 			string: processed.code,
-			map: processed.map
-				? // TODO: can we use decode_sourcemap?
-					typeof processed.map === 'string'
-					? JSON.parse(processed.map)
-					: processed.map
-				: undefined,
+			map,
 			dependencies: processed.dependencies
 		};
 	} else {
