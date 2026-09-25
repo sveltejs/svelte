@@ -143,7 +143,7 @@ export function capture() {
 		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
 			// TODO we only need optional chaining here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
-			previous_batch?.activate();
+			previous_batch = previous_batch?.activate();
 			previous_batch?.apply();
 		}
 

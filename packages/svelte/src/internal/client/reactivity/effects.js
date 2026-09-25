@@ -121,8 +121,6 @@ function create_effect(type, fn) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	current_batch?.register_created_effect(effect);
-
 	/** @type {Effect | null} */
 	var e = effect;
 
@@ -370,7 +368,9 @@ export function legacy_pre_effect_reset() {
  * @returns {Effect}
  */
 export function async_effect(fn) {
-	return create_effect(ASYNC | EFFECT_PRESERVED, fn);
+	const effect = create_effect(ASYNC | EFFECT_PRESERVED, fn);
+	current_batch?.seen_effects.add(effect);
+	return effect;
 }
 
 /**
@@ -417,6 +417,7 @@ export function block(fn, flags = 0) {
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
+	current_batch?.seen_effects.add(effect);
 	return effect;
 }
 

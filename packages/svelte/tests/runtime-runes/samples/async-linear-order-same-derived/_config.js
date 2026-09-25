@@ -15,14 +15,19 @@ export default test({
 		flushSync(() => a.click());
 		flushSync(() => b.click());
 
-		pop.click();
+		shift.click();
 		await tick();
+		assert.htmlEqual(p.innerHTML, '2 + 2 = 4');
 
-		assert.htmlEqual(p.innerHTML, '1 + 3 = 4');
-
-		pop.click();
+		shift.click();
 		await tick();
-
 		assert.htmlEqual(p.innerHTML, '2 + 3 = 5');
+
+		flushSync(() => a.click());
+		flushSync(() => b.click());
+
+		pop.click();
+		await tick();
+		assert.htmlEqual(p.innerHTML, '3 + 4 = 7');
 	}
 });

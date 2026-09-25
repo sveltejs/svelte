@@ -54,6 +54,8 @@ export const EFFECT_OFFSCREEN = 1 << 25;
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;
+/** Set on branch effects that only exist for fork batches */
+export const FORK_ONLY_BRANCH = 1 << 23;
 
 export const ERROR_VALUE = 1 << 23;
 
