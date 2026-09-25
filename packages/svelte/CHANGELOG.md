@@ -1,5 +1,25 @@
 # svelte
 
+## 5.57.2
+
+### Patch Changes
+
+- fix: prevent untracked derived reads from retaining disconnected dependencies ([#18829](https://github.com/sveltejs/svelte/pull/18829))
+
+- fix: flush anything pending before invoking flushSync callback function ([#18878](https://github.com/sveltejs/svelte/pull/18878))
+
+- fix: don't warn about a redundant `link` role on `<area>` elements without an `href` ([#18872](https://github.com/sveltejs/svelte/pull/18872))
+
+- fix: don't overwrite an unchanged spread `value`, preserving incomplete number input ([#18864](https://github.com/sveltejs/svelte/pull/18864))
+
+- fix: read batch-local array on each-block commit ([#18879](https://github.com/sveltejs/svelte/pull/18879))
+
+- fix: error when using `let:` directives on a component with a `children` snippet ([#18873](https://github.com/sveltejs/svelte/pull/18873))
+
+- fix: prevent hydration mismatch recovery from being intercepted by error boundaries ([#18841](https://github.com/sveltejs/svelte/pull/18841))
+
+- fix: preserve dynamic element connections during hydration ([#18855](https://github.com/sveltejs/svelte/pull/18855))
+
 ## 5.57.1
 
 ### Patch Changes
