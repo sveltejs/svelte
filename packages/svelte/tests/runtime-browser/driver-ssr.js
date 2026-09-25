@@ -7,7 +7,7 @@ import { render } from 'svelte/server';
 
 export default function () {
 	const { head, body, html } = render(SvelteComponent, {
-		props: config.props || {},
+		props: config.server_props || config.props || {},
 		idPrefix: config?.id_prefix
 	});
 	return { head, body, html };
