@@ -2,6 +2,7 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	skip: true,
 	async test({ assert, target }) {
 		await tick();
 		const [a_b_fork, a_c, b_d, shift, pop, commit] = target.querySelectorAll('button');

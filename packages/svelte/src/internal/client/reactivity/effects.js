@@ -43,7 +43,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, current_batch } from './batch.js';
+import { Batch, collected_effects } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -368,9 +368,7 @@ export function legacy_pre_effect_reset() {
  * @returns {Effect}
  */
 export function async_effect(fn) {
-	const effect = create_effect(ASYNC | EFFECT_PRESERVED, fn);
-	current_batch?.seen_effects.add(effect);
-	return effect;
+	return create_effect(ASYNC | EFFECT_PRESERVED, fn);
 }
 
 /**
@@ -417,7 +415,6 @@ export function block(fn, flags = 0) {
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
-	current_batch?.seen_effects.add(effect);
 	return effect;
 }
 

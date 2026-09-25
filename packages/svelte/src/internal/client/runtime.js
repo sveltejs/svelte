@@ -502,10 +502,9 @@ export function update_effect(effect) {
 		var own_batch = previous_batch ?? current_batch; // can be null inside flush_eager_effects
 		var is_latest_value =
 			own_batch === null ||
-			(!own_batch.is_fork &&
-				(batch_values === null ||
-					effect.deps === null ||
-					!effect.deps.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v)));
+			batch_values === null ||
+			effect.deps === null ||
+			!effect.deps.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v);
 
 		if (is_latest_value) {
 			effect.wv = write_version;
