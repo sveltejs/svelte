@@ -71,14 +71,15 @@ export function set_eager_effects_deferred() {
  */
 // TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
-	/** @type {Source<V>} */
+	/** @type {Source} */
 	var signal = {
 		f: 0,
 		v,
 		reactions: null,
 		equals,
 		rv: 0,
-		wv: 0
+		wv: 0,
+		e: null
 	};
 
 	if (DEV && tracing_mode_flag) {
