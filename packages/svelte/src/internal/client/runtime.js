@@ -23,7 +23,8 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	ASYNC
+	ASYNC,
+	EAGER_EFFECT
 } from './constants.js';
 import { invalidate, old_values } from './reactivity/sources.js';
 import {
@@ -790,17 +791,20 @@ function get_batch_value(signal, first_time) {
 				batch.stale_readers.add(reader);
 
 				if (current.is_eager) {
-					// TODO only do this if we can see that the batch doesn't have this already scheduled in (maybe)dirty effects.
-					batch.oncommit(() => {
-						batch.stale_readers.delete(reader);
-						Batch.ensure();
-						invalidate(reader);
-					});
+					// Reactions of eager effects with at least one non-eager effect (which we know is true here due to the stale_sources check above)
+					// need to rerun because they could do something like `$state.eager(count) !== count`.
+					if (reader.deps?.some((dep) => dep.f & EAGER_EFFECT)) {
+						batch.oncommit(() => {
+							batch.stale_readers.delete(reader);
+							Batch.ensure();
+							invalidate(reader, DIRTY);
+						});
+					}
 				} else {
 					queue_micro_task(() => {
 						batch.stale_readers.delete(reader);
 						const b = batch.activate();
-						invalidate(reader);
+						invalidate(reader, MAYBE_DIRTY);
 						b.flush();
 					});
 				}

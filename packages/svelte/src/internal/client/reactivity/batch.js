@@ -1291,6 +1291,7 @@ export function eager(fn) {
 	let parent = active_reaction;
 
 	let version = version_map.get(parent) ?? source(0);
+	version.f |= EAGER_EFFECT;
 	version_map.set(parent, version);
 
 	if (DEV) {
@@ -1308,12 +1309,15 @@ export function eager(fn) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
+			var previous_stale_sources = stale_sources;
 
 			try {
 				batch_values = null;
+				stale_sources = null;
 				value = fn();
 			} finally {
 				batch_values = previous_batch_values;
+				stale_sources = previous_stale_sources;
 			}
 
 			return;
