@@ -3,7 +3,7 @@ import { test } from '../../test';
 
 export default test({
 	async test({ assert, target }) {
-		const button = target.querySelector('button');
+		const [button] = target.querySelectorAll('button');
 
 		button.click();
 		flushSync();
