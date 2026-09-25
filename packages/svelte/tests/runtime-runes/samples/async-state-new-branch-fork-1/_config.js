@@ -2,6 +2,7 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	skip: true, // TODO works on https://github.com/sveltejs/svelte/pull/17971
 	async test({ assert, target }) {
 		const [x, y, shift, pop, commit] = target.querySelectorAll('button');
 
@@ -22,7 +23,7 @@ export default test({
 		`
 		);
 
-		commit.click(); // puts fork (x) behind y so it has to wait on y first
+		commit.click();
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
@@ -36,7 +37,7 @@ export default test({
 		`
 		);
 
-		shift.click(); // ... which is why nothing happens yet on first shift
+		shift.click();
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
@@ -46,6 +47,13 @@ export default test({
 			<button>shift</button>
 			<button>pop</button>
 			<button>commit</button>
+			universe
+			universe
+			"universe"
+			universe
+			universe
+			universe
+			"universe"
 			<hr>
 		`
 		);

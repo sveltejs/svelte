@@ -71,15 +71,14 @@ export function set_eager_effects_deferred() {
  */
 // TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
-	/** @type {Source} */
+	/** @type {Source<V>} */
 	var signal = {
 		f: 0,
 		v,
 		reactions: null,
 		equals,
 		rv: 0,
-		wv: 0,
-		e: null
+		wv: 0
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -355,14 +354,15 @@ export function increment(source) {
  * Make `reaction` re-run in the current batch. For a derived this means dirtying
  * its reactions, as if the derived's value had changed.
  * @param {Reaction} reaction
+ * @param {number} status
  */
-export function invalidate(reaction) {
-	set_signal_status(reaction, DIRTY);
+export function invalidate(reaction, status) {
+	set_signal_status(reaction, status);
 
 	if ((reaction.f & DERIVED) !== 0) {
 		seen = null;
 		count_deps = 0;
-		mark_reactions(/** @type {Derived} */ (reaction), DIRTY, null);
+		mark_reactions(/** @type {Derived} */ (reaction), status, null);
 		seen = null;
 	} else {
 		schedule_effect(/** @type {Effect} */ (reaction));

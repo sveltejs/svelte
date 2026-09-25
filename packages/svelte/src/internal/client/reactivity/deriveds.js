@@ -121,10 +121,6 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	// Besides prod-logic this also helps in DEV to let this be printed
-	// as a derived when using `$inspect.trace()`
-	signal.f |= ASYNC;
-
 	if (DEV) signal.label = label ?? fn.toString();
 
 	// only suspend in async deriveds created on initialisation
@@ -133,7 +129,7 @@ export function async_derived(fn, label, location) {
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
 
-	signal.e = async_effect(() => {
+	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
 		if (DEV) {
@@ -273,6 +269,12 @@ export function async_derived(fn, label, location) {
 		}
 	});
 
+	if (DEV) {
+		// add a flag that lets this be printed as a derived
+		// when using `$inspect.trace()`
+		signal.f |= ASYNC;
+	}
+
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
@@ -402,9 +404,18 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		if (current_batch !== null || previous_batch !== null) {
-			// `capture` decides whether the underlying value is updated (it isn't in a fork,
-			// or if a later batch holds a newer value) and records it in the batch either way.
+		// in a fork, we don't update the underlying value, just `batch_values`.
+		// the underlying value will be updated when the fork is committed.
+		// otherwise, the next time we get here after a 'real world' state
+		// change, `derived.equals` may incorrectly return `true`
+		if (current_batch?.is_fork && derived.deps !== null) {
+			// bump the write version so that reactions reading the (then still old)
+			// real value re-run once the fork is discarded — its sources are bumped
+			// on discard, which must outrank this version to trigger recomputation
+			derived.wv = increment_write_version();
+		} else if (current_batch !== null || previous_batch !== null) {
+			// `capture` decides whether the underlying value is updated (it isn't
+			// if a later batch holds a newer value) and records it in the batch either way.
 			// We also write to previous_batch because if it exists, it is a sign that we're
 			// currently in the process of flushing effects. These updates to deriveds may belong
 			// to the previous batch, not the new one (which can already exist if an earlier
@@ -447,7 +458,6 @@ export function update_derived(derived) {
 			batch_values?.set(derived, value);
 		}
 		var is_latest_value =
-			!current_batch?.is_fork &&
 			value === derived.v &&
 			!derived.deps?.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v);
 

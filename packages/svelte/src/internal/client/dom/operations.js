@@ -3,7 +3,7 @@ import { hydrate_node, hydrating, reset, set_hydrate_node } from './hydration.js
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor, is_extensible } from '../../shared/utils.js';
-import { active_effect, new_deps, skipped_deps } from '../runtime.js';
+import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
 import {
 	ATTRIBUTES_CACHE,
@@ -13,7 +13,7 @@ import {
 	TEXT_CACHE,
 	TEXT_NODE
 } from '#client/constants';
-import { current_batch, eager_block_effects } from '../reactivity/batch.js';
+import { eager_block_effects } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
@@ -249,12 +249,7 @@ export function should_defer_append() {
 	if (eager_block_effects !== null) return false;
 
 	var flags = /** @type {Effect} */ (active_effect).f;
-	var ran = (flags & REACTION_RAN) !== 0;
-	if (ran || !current_batch?.is_fork) return ran;
-	// In a fork we generally want to defer the append, unless this is the first run
-	// and that run is terminal, i.e. there are no deps so the e.g. if block can never
-	// rerun, which means it can never end up in commit callbacks for other batches.
-	return new_deps !== null || skipped_deps !== 0;
+	return (flags & REACTION_RAN) !== 0;
 }
 
 /**

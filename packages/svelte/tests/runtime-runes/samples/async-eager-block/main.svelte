@@ -12,9 +12,14 @@
 <button onclick={() => count++}>increment</button>
 <button onclick={() => queued.shift()?.()}>resolve</button>
 
-{await delay(count)} 
+{await delay(count)}
+
 {#if $state.eager(count) !== count}
 	<p>loading...</p>
 {:else}
+	<p>{count}</p>
+{/if}
+
+{#if $state.eager(console.log(count) || count)}
 	<p>{count}</p>
 {/if}
