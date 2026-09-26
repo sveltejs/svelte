@@ -441,7 +441,7 @@ function set_attributes(
 			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
 			var name = key;
-			if (!preserve_attribute_case) {
+			if (!preserve_attribute_case && !(is_custom_element && setters.has(name))) {
 				name = normalize_attribute(name);
 			}
 
