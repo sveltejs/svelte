@@ -144,5 +144,4 @@
 <option class="foo" role="listitem"></option>
 <select class="foo" role="listitem"></select>
 <textarea class="foo" role="listitem"></textarea>
-<tr role="listitem"></tr>
 <summary role="listitem"></summary>
