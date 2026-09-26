@@ -1,0 +1,11 @@
+	div[lang="en"].svelte-xyz {
+		color: red;
+	}
+
+	a[hreflang="en"].svelte-xyz {
+		color: blue;
+	}
+
+	/* (unused) input[autocomplete="on"] {
+		color: green;
+	}*/
