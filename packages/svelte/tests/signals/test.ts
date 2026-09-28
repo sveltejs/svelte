@@ -15,7 +15,7 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { DESTROYED } from '../../src/internal/client/constants';
+import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
@@ -1516,9 +1516,174 @@ describe('signals', () => {
 
 			destroy();
 
-			// a was spuriously added to s.reactions via is_updating_effect
+			// a was spuriously added to s.reactions
 			// even though the entire derived chain was read in an untracked context
 			assert.equal(s.reactions, null);
 		};
+	});
+
+	test('untracked derived reads inside effects do not reconnect disconnected dependencies', () => {
+		return () => {
+			const source = state({ n: 1, items: [1] });
+			const data = derived(() => $.get(source));
+			const items = derived(() => $.get(data).items);
+			const count = derived(() => Math.max(1, $.get(items).length));
+			const snapshot = derived(() => ({ n: $.get(data).n, count: $.get(count) }));
+			const show = state(true);
+			const trigger = state(0);
+			let rendered = -1;
+			let seen: { n: number; count: number } | undefined;
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					if ($.get(show)) {
+						render_effect(() => {
+							rendered = $.get(snapshot).count;
+						});
+					}
+				});
+
+				render_effect(() => {
+					$.get(trigger);
+					seen = $.untrack(() => $.get(snapshot));
+				});
+			});
+
+			flushSync();
+			assert.equal(rendered, 1);
+
+			flushSync(() => set(show, false));
+			assert.equal(source.reactions, null);
+
+			flushSync(() => set(source, { n: 2, items: [1, 2] }));
+			flushSync(() => set(trigger, 1));
+
+			assert.deepEqual(seen, { n: 2, count: 2 });
+			assert.equal(source.reactions, null);
+			assert.equal(items.reactions, null);
+			assert.equal(count.reactions, null);
+			assert.equal(items.f & CONNECTED, 0);
+			assert.equal(count.f & CONNECTED, 0);
+
+			flushSync(() => set(show, true));
+			assert.equal(rendered, 2);
+			assert.equal(source.reactions?.length, 1);
+
+			flushSync(() => set(source, { n: 3, items: [1] }));
+			assert.equal(rendered, 1);
+
+			destroy();
+			flushSync();
+			assert.equal(source.reactions, null);
+		};
+	});
+
+	// https://github.com/sveltejs/svelte/issues/18414
+	test('a reaction that throws after first-reading a fresh derived does not leak it', () => {
+		const src = state(0);
+		const pane = derived(() => $.get(src));
+		const base = derived(() => $.get(pane) + ':base');
+		const extra = derived(() => $.get(pane) + ':extra');
+		const flag = state(false);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				if ($.get(flag)) {
+					$.get(extra);
+					throw new Error('render boom');
+				} else {
+					$.get(base);
+				}
+			});
+		});
+
+		return () => {
+			try {
+				flushSync(() => set(flag, true));
+			} catch {}
+
+			destroy();
+
+			assert.equal(src.reactions, null);
+		};
+	});
+
+	test('a derived that throws on its first run re-runs when its dependencies change', () => {
+		const s = state(0);
+		const fn = () => {
+			if ($.get(s) === 0) throw new Error('boom');
+			return $.get(s);
+		};
+		const owned = derived(fn);
+		const previous_effect = $.active_effect;
+		$.set_active_effect(null);
+		const unowned = derived(fn);
+		$.set_active_effect(previous_effect);
+		const log: any[] = [];
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				for (const d of [owned, unowned]) {
+					try {
+						log.push($.get(d));
+					} catch {
+						log.push('error');
+					}
+				}
+			});
+		});
+
+		return () => {
+			assert.notEqual(owned.parent, null);
+			assert.equal(unowned.parent, null);
+
+			flushSync();
+			assert.deepEqual(log, ['error', 'error']);
+
+			flushSync(() => set(s, 1));
+			assert.deepEqual(log, ['error', 'error', 1, 1]);
+
+			destroy();
+			assert.equal(s.reactions, null);
+		};
+	});
+
+	// https://github.com/sveltejs/svelte/issues/16814
+	it('does not treat values created for inactive reactions as current', () => {
+		push({}, true);
+
+		const trigger = state(false);
+		const value = state(0);
+		const log: number[] = [];
+		let inactive_reaction: Effect;
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(trigger);
+				inactive_reaction = $.active_reaction as Effect;
+			});
+
+			render_effect(() => {
+				$.get(trigger);
+
+				const reaction = $.active_reaction;
+				$.set_active_reaction(inactive_reaction);
+				$.push_reaction_value(value);
+				$.set_active_reaction(reaction);
+
+				log.push($.get(value));
+			});
+		});
+
+		try {
+			flushSync();
+			flushSync(() => set(trigger, true));
+			flushSync(() => set(value, 1));
+
+			assert.deepEqual(log, [0, 0, 1]);
+		} finally {
+			destroy();
+			pop();
+		}
 	});
 });

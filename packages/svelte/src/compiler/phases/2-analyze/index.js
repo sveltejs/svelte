@@ -14,7 +14,7 @@ import {
 } from '../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
-import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
+import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import { create_attribute, is_custom_element_node } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
@@ -285,7 +285,7 @@ export function analyze_module(source, options) {
 		runes: true,
 		immutable: true,
 		tracing: false,
-		async_deriveds: new Set(),
+		async_deriveds: new Map(),
 		comments,
 		classes: new Map(),
 		pickled_awaits: new Set()
@@ -557,7 +557,7 @@ export function analyze_component(root, source, options) {
 		source,
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set(),
+		async_deriveds: new Map(),
 		pickled_awaits: new Set(),
 		instance_body: {
 			sync: [],
@@ -832,6 +832,11 @@ export function analyze_component(root, source, options) {
 					} else {
 						e.export_undefined(specifier, name);
 					}
+				} else if (binding.initial?.type === 'SnippetBlock') {
+					// If a snippet is exported, a consumer could only import this named export and not the default export (the component).
+					// In this case we need to set hasGlobal of our output to true so that e.g. vite-plugin-svelte does not tell Vite to
+					// tree-shake the CSS if the default export is not used.
+					analysis.css.has_global = true;
 				}
 			}
 		}

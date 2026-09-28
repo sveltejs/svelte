@@ -45,7 +45,7 @@ import {
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import { list } from '../../../../../utils/string.js';
 import { walk } from 'zimmerframe';
-import fuzzymatch from '../../../../1-parse/utils/fuzzymatch.js';
+import fuzzymatch from '../../../../../utils/fuzzymatch.js';
 import { is_content_editable_binding } from '../../../../../../utils.js';
 import * as w from '../../../../../warnings.js';
 
@@ -173,8 +173,8 @@ export function check_element(node, context) {
 						current_role === get_implicit_role(node.name, attribute_map) &&
 						// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
 						!['ul', 'ol', 'li', 'menu'].includes(node.name) &&
-						// <a role="link" /> is ok because without href the a tag doesn't have a role of link
-						!(node.name === 'a' && !attribute_map.has('href'))
+						// <a role="link" /> and <area role="link" /> are ok because without href they don't have a role of link
+						!((node.name === 'a' || node.name === 'area') && !attribute_map.has('href'))
 					) {
 						w.a11y_no_redundant_roles(attribute, current_role);
 					}

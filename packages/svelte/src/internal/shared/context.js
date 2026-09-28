@@ -5,7 +5,7 @@ import { lifecycle_outside_component, missing_context } from './errors.js';
  * @param {(key: object) => T} get_context
  * @param {(key: object, context: T) => T} set_context
  * @param {(key: object) => boolean} has_context
- * @returns {[() => T, (context: T) => T]}
+ * @returns {[() => T, (context: T) => T, () => boolean]}
  */
 export function create_context(get_context, set_context, has_context) {
 	const key = {};
@@ -18,7 +18,8 @@ export function create_context(get_context, set_context, has_context) {
 
 			return get_context(key);
 		},
-		(context) => set_context(key, context)
+		(context) => set_context(key, context),
+		() => has_context(key)
 	];
 }
 

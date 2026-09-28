@@ -7,6 +7,7 @@ export default test({
 		<span>*</span>
 		<span>*</span>
 		<span>*</span>
+		<span>*</span>
 
 		<span></span>
 		<span>A</span>

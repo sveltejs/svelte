@@ -161,18 +161,13 @@ export function is_static_element(node) {
 		}
 
 		if (
-			['input', 'textarea'].includes(node.name) &&
+			['input', 'textarea', 'select'].includes(node.name) &&
 			['value', 'checked'].includes(attribute.name)
 		) {
 			return false;
 		}
 
 		if (node.name === 'option' && attribute.name === 'value') {
-			return false;
-		}
-
-		// We need to apply src and loading after appending the img to the DOM for lazy loading to work
-		if (node.name === 'img' && attribute.name === 'loading') {
 			return false;
 		}
 

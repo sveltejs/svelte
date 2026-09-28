@@ -9,19 +9,20 @@ import read_style from '../read/style.js';
 import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { create_fragment } from '../utils/create.js';
-import { create_attribute, ExpressionMetadata, is_element_node } from '../../nodes.js';
+import {
+	create_attribute,
+	create_fragment,
+	ExpressionMetadata,
+	is_element_node
+} from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 import { locator } from '../../../state.js';
-import * as b from '#compiler/builders';
+import { is_whitespace } from '../utils/whitespace.js';
 
 const regex_invalid_unquoted_attribute_value = /(\/>|[\s"'=<>`])/y;
 const regex_closing_textarea_tag = /<\/textarea(\s[^>]*)?>/iy;
-const regex_closing_comment = /-->/;
-const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
-const regex_token_ending_character = /[\s=/>"']/;
 const regex_starts_with_quote_characters = /["']/y;
 const regex_attribute_value = /(?:"([^"]*)"|'([^'])*'|([^>\s]+))/y;
 const regex_doctype_name = /^![a-zA-Z]+$/;
@@ -67,7 +68,7 @@ export default function element(parser) {
 	let parent = parser.current();
 
 	if (parser.eat('!--')) {
-		const data = parser.read_until(regex_closing_comment);
+		const data = parser.read_until('-->');
 		parser.eat('-->', true);
 
 		parser.append({
@@ -81,7 +82,7 @@ export default function element(parser) {
 	}
 
 	if (parser.eat('/')) {
-		const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
+		const name = read_tag_name(parser);
 
 		parser.allow_whitespace();
 		parser.eat('>', true);
@@ -137,7 +138,7 @@ export default function element(parser) {
 		return;
 	}
 
-	const tag = read_tag(parser, regex_whitespace_or_slash_or_closing_tag);
+	const tag = read_tag(parser);
 
 	if (tag.name.startsWith('svelte:') && !meta_tags.has(tag.name)) {
 		const bounds = { start: start + 1, end: start + 1 + tag.name.length };
@@ -475,7 +476,7 @@ function parent_is_shadowroot_template(stack) {
 function read_static_attribute(parser) {
 	const start = parser.index;
 
-	const tag = read_tag(parser, regex_token_ending_character);
+	const tag = read_tag(parser, true);
 	if (!tag.name) return null;
 
 	/** @type {true | Array<AST.Text | AST.ExpressionTag>} */
@@ -607,7 +608,7 @@ function read_attribute(parser) {
 		}
 	}
 
-	const tag = read_tag(parser, regex_token_ending_character);
+	const tag = read_tag(parser, true);
 
 	if (!tag.name) return null;
 
@@ -731,7 +732,7 @@ function read_comment(parser) {
 	const start = parser.index;
 
 	if (parser.eat('//')) {
-		const value = parser.read_until(/\n/);
+		const value = parser.read_until('\n');
 		const end = parser.index;
 
 		return {
@@ -747,7 +748,7 @@ function read_comment(parser) {
 	}
 
 	if (parser.eat('/*')) {
-		const value = parser.read_until(/\*\//);
+		const value = parser.read_until('*/');
 
 		parser.eat('*/');
 		const end = parser.index;
@@ -847,25 +848,21 @@ function read_attribute_value(parser) {
  * @returns {any[]}
  */
 function read_sequence(parser, done, location) {
-	/** @type {AST.Text} */
-	let current_chunk = {
-		start: parser.index,
-		end: -1,
-		type: 'Text',
-		raw: '',
-		data: ''
-	};
-
 	/** @type {Array<AST.Text | AST.ExpressionTag>} */
 	const chunks = [];
+	let chunk_start = parser.index;
 
 	/** @param {number} end */
 	function flush(end) {
-		if (end > current_chunk.start) {
-			current_chunk.raw = parser.template.slice(current_chunk.start, end);
-			current_chunk.data = decode_character_references(current_chunk.raw, true);
-			current_chunk.end = end;
-			chunks.push(current_chunk);
+		if (end > chunk_start) {
+			const raw = parser.template.slice(chunk_start, end);
+			chunks.push({
+				start: chunk_start,
+				end,
+				type: 'Text',
+				raw,
+				data: decode_character_references(raw, true)
+			});
 		}
 	}
 
@@ -879,12 +876,14 @@ function read_sequence(parser, done, location) {
 			if (parser.match('#')) {
 				const index = parser.index - 1;
 				parser.eat('#');
-				const name = parser.read_until(/[^a-z]/);
+				// const name = parser.read_until_regex(/[^a-z]/);
+				const name = read_lowercase_name(parser);
 				e.block_invalid_placement(index, name, location);
 			} else if (parser.match('@')) {
 				const index = parser.index - 1;
 				parser.eat('@');
-				const name = parser.read_until(/[^a-z]/);
+				// const name = parser.read_until_regex(/[^a-z]/);
+				const name = read_lowercase_name(parser);
 				e.tag_invalid_placement(index, name, location);
 			}
 
@@ -907,14 +906,7 @@ function read_sequence(parser, done, location) {
 			};
 
 			chunks.push(chunk);
-
-			current_chunk = {
-				start: parser.index,
-				end: -1,
-				type: 'Text',
-				raw: '',
-				data: ''
-			};
+			chunk_start = parser.index;
 		} else {
 			parser.index++;
 		}
@@ -929,12 +921,36 @@ function read_sequence(parser, done, location) {
 
 /**
  * @param {Parser} parser
- * @param {RegExp} regex
+ * @param {boolean} [attribute]
+ */
+function read_tag_name(parser, attribute = false) {
+	const start = parser.index;
+	if (start >= parser.template.length && !parser.loose) e.unexpected_eof(parser.template.length);
+
+	while (parser.index < parser.template.length) {
+		const cc = parser.template.charCodeAt(parser.index);
+		if (
+			is_whitespace(cc) ||
+			cc === 47 || // /
+			cc === 62 || // >
+			(attribute && (cc === 34 || cc === 39 || cc === 61)) // " ' =
+		) {
+			break;
+		}
+		parser.index += 1;
+	}
+
+	return parser.template.slice(start, parser.index);
+}
+
+/**
+ * @param {Parser} parser
+ * @param {boolean} [attribute]
  * @returns {Identifier & { start: number, end: number, loc: SourceLocation }}
  */
-function read_tag(parser, regex) {
+function read_tag(parser, attribute = false) {
 	const start = parser.index;
-	const name = parser.read_until(regex);
+	const name = read_tag_name(parser, attribute);
 	const end = parser.index;
 
 	return {
@@ -947,4 +963,16 @@ function read_tag(parser, regex) {
 			end: locator(end)
 		}
 	};
+}
+
+/** @param {Parser} parser */
+function read_lowercase_name(parser) {
+	const start = parser.index;
+	while (parser.index < parser.template.length) {
+		const cc = parser.template.charCodeAt(parser.index);
+		// a-z
+		if (cc < 97 || cc > 122) break;
+		parser.index += 1;
+	}
+	return parser.template.slice(start, parser.index);
 }

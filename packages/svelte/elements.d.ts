@@ -1352,6 +1352,9 @@ export interface HTMLSelectAttributes extends HTMLAttributes<HTMLSelectElement> 
 	required?: boolean | undefined | null;
 	size?: number | undefined | null;
 	value?: any;
+	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
+	defaultValue?: any;
+	defaultvalue?: any;
 
 	'on:change'?: ChangeEventHandler<HTMLSelectElement> | undefined | null;
 	onchange?: ChangeEventHandler<HTMLSelectElement> | undefined | null;

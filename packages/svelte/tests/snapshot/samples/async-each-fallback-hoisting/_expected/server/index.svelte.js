@@ -15,8 +15,7 @@ export default function Async_each_fallback_hoisting($$renderer) {
 				$$renderer.push(async () => $.escape(await Promise.reject('This should never be reached')));
 			}
 		} else {
-			$$renderer.push('<!--[!-->');
-			$$renderer.push(`<!---->`);
+			$$renderer.push(`<!--[!--><!---->`);
 			$$renderer.push(async () => $.escape(await Promise.resolve(4)));
 		}
 	});

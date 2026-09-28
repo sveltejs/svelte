@@ -251,6 +251,19 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 </select>
 ```
 
+Since 5.57.0, if a `<select>` has a `defaultValue` and is part of a form, it will revert to that value instead of the empty string when the form is reset. Note that for the initial render the value of the binding takes precedence unless it is `null` or `undefined`.
+
+```svelte
+<form>
+	<select bind:value defaultValue="b">
+		<option>a</option>
+		<option>b</option>
+		<option>c</option>
+	</select>
+	<input type="reset" value="Reset">
+</form>
+```
+
 ## `<audio>`
 
 `<audio>` elements have their own set of bindings — five two-way ones...

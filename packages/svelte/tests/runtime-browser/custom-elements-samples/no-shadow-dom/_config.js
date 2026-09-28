@@ -3,7 +3,7 @@ const tick = () => Promise.resolve();
 
 export default test({
 	async test({ assert, target }) {
-		target.innerHTML = '<custom-element name="world"></custom-element>';
+		target.innerHTML = '<custom-element name="world"><span>slotted</span></custom-element>';
 		await tick();
 		await tick();
 
@@ -15,5 +15,6 @@ export default test({
 		assert.equal(el.shadowRoot, null);
 		assert.equal(h1.innerHTML, 'Hello world!');
 		assert.equal(getComputedStyle(h1).color, 'rgb(255, 0, 0)');
+		assert.equal(el.querySelector('slot').innerHTML, '');
 	}
 });

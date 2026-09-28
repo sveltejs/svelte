@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, create_child_block } from './shared/utils.js';
+import { block_close, create_child_block, prepend_block_marker } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
@@ -10,7 +10,7 @@ import { block_close, create_child_block } from './shared/utils.js';
  */
 export function IfBlock(node, context) {
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
-	consequent.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), b.literal(`<!--[0-->`))));
+	prepend_block_marker(consequent, `<!--[0-->`);
 
 	/** @type {IfStatement} */
 	let if_statement = b.if(/** @type {Expression} */ (context.visit(node.test)), consequent);
@@ -22,7 +22,7 @@ export function IfBlock(node, context) {
 	// Walk the else-if chain, flattening branches
 	for (const elseif of node.metadata.flattened ?? []) {
 		const branch = /** @type {BlockStatement} */ (context.visit(elseif.consequent));
-		branch.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), b.literal(`<!--[${index++}-->`))));
+		prepend_block_marker(branch, `<!--[${index++}-->`);
 
 		current_if = current_if.alternate = b.if(
 			/** @type {Expression} */ (context.visit(elseif.test)),
@@ -34,7 +34,7 @@ export function IfBlock(node, context) {
 	// Handle final else (or remaining async chain)
 	const final_alternate = alt ? /** @type {BlockStatement} */ (context.visit(alt)) : b.block([]);
 
-	final_alternate.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), b.literal(`<!--[-1-->`))));
+	prepend_block_marker(final_alternate, `<!--[-1-->`);
 	current_if.alternate = final_alternate;
 
 	context.state.template.push(

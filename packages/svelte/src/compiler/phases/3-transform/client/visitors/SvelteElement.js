@@ -4,6 +4,7 @@
 import { dev, locator } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
+import { async_thunk } from '../utils.js';
 import { determine_namespace_for_children } from '../../utils.js';
 import {
 	build_attribute_value,
@@ -147,7 +148,7 @@ export function SvelteElement(node, context) {
 					'$.async',
 					context.state.node,
 					node.metadata.expression.blockers(),
-					has_await ? b.array([b.thunk(expression, true)]) : b.void0,
+					has_await ? b.array([async_thunk(expression, node.metadata.expression)]) : b.void0,
 					b.arrow(
 						has_await ? [context.state.node, b.id('$$tag')] : [context.state.node],
 						b.block(statements)

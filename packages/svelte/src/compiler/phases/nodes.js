@@ -1,6 +1,7 @@
 /** @import { Expression, PrivateIdentifier, SourceLocation } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 import * as b from '#compiler/builders';
+import * as e from '../errors.js';
 
 /**
  * All nodes that can appear elsewhere than the top level, have attributes and can contain children
@@ -46,6 +47,35 @@ export function is_custom_element_node(node) {
 }
 
 /**
+ * @param {boolean} transparent
+ * @returns {AST.Fragment}
+ */
+export function create_fragment(transparent = false) {
+	return {
+		type: 'Fragment',
+		nodes: [],
+		metadata: {
+			transparent,
+			dynamic: false
+		}
+	};
+}
+
+/**
+ * @param {AST.SvelteBody | AST.SvelteDocument | AST.SvelteOptionsRaw | AST.SvelteWindow} node
+ */
+export function disallow_children(node) {
+	const { nodes } = node.fragment;
+
+	if (nodes.length > 0) {
+		const first = nodes[0];
+		const last = nodes[nodes.length - 1];
+
+		e.svelte_meta_invalid_content({ start: first.start, end: last.end }, node.name);
+	}
+}
+
+/**
  * @param {string} name
  * @param {SourceLocation | null} name_loc
  * @param {number} start
@@ -76,6 +106,9 @@ export class ExpressionMetadata {
 
 	/** True if the expression contains `await` */
 	has_await = false;
+
+	/** True if an `await` restores the reaction context afterwards, so the thunk must end it */
+	has_pickled_await = false;
 
 	/** True if the expression includes a member expression */
 	has_member_expression = false;
@@ -142,6 +175,7 @@ export class ExpressionMetadata {
 		this.has_state ||= source.has_state;
 		this.has_call ||= source.has_call;
 		this.has_await ||= source.has_await;
+		this.has_pickled_await ||= source.has_pickled_await;
 		this.has_member_expression ||= source.has_member_expression;
 		this.has_assignment ||= source.has_assignment;
 		this.#blockers = null; // so that blockers are recalculated

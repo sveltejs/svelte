@@ -286,7 +286,7 @@ function _extract_paths(paths, inserts, param, expression, update_expression, ha
 					const props = [];
 
 					for (const p of param.properties) {
-						if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
+						if (p.type === 'Property') {
 							if (p.key.type === 'Identifier' && !p.computed) {
 								props.push(b.literal(p.key.name));
 							} else if (p.key.type === 'Literal') {
@@ -548,10 +548,7 @@ export function is_expression_async(expression) {
 				if (property.type === 'SpreadElement') {
 					return is_expression_async(property.argument);
 				} else if (property.type === 'Property') {
-					return (
-						(property.key.type !== 'PrivateIdentifier' && is_expression_async(property.key)) ||
-						is_expression_async(property.value)
-					);
+					return is_expression_async(property.key) || is_expression_async(property.value);
 				}
 			});
 		}

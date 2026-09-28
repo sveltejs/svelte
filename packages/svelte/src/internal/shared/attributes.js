@@ -27,7 +27,8 @@ export function attr(name, value, is_boolean = false) {
 	if (name === 'hidden' && value !== 'until-found') {
 		is_boolean = true;
 	}
-	if (value == null || (!value && is_boolean)) return '';
+	// `''` is a present boolean attribute, as it is in markup and on the client
+	if (value == null || (is_boolean && !value && value !== '')) return '';
 	const normalized =
 		(has_own_property.call(replacements, name) && replacements[name].get(value)) || value;
 	const assignment = is_boolean ? `=""` : `="${escape_html(normalized, true)}"`;

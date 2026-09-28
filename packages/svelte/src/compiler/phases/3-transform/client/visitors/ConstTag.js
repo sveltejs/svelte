@@ -19,7 +19,7 @@ export function ConstTag(node, context) {
 	if (declaration.id.type === 'Identifier') {
 		const init = build_expression(context, declaration.init, node.metadata.expression);
 
-		let expression = create_derived(context.state, init, node.metadata.expression.has_await);
+		let expression = create_derived(context.state, init, node.metadata.expression);
 
 		if (dev) {
 			expression = b.call('$.tag', expression, b.literal(declaration.id.name));
@@ -69,7 +69,7 @@ export function ConstTag(node, context) {
 					b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 				]);
 
-		let expression = create_derived(context.state, block, node.metadata.expression.has_await);
+		let expression = create_derived(context.state, block, node.metadata.expression);
 
 		if (dev) {
 			expression = b.call('$.tag', expression, b.literal('[@const]'));
