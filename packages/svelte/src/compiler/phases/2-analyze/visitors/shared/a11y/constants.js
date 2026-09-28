@@ -281,7 +281,13 @@ export const non_interactive_roles = non_abstract_roles
 	.concat(
 		// The `progressbar` is descended from `widget`, but in practice, its
 		// value is always `readonly`, so we treat it as a non-interactive role.
-		'progressbar'
+		'progressbar',
+		// The `row` role is descended from `widget` in aria-query's data, but a
+		// plain `<tr>` is not keyboard-focusable or operable like a widget, and
+		// its AXObject (`RowRole`) is a structure — so we treat it as a
+		// non-interactive role. Otherwise `<tr onclick>` would incorrectly escape
+		// the `a11y-click-events-have-key-events` warning.
+		'row'
 	);
 
 export const interactive_roles = non_abstract_roles.filter(
