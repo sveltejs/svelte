@@ -588,6 +588,7 @@ function open(parser) {
 			parser.eat(')', true);
 		}
 
+		/** @type {{ params: Pattern[] } | ArrowFunctionExpression} */
 		let function_expression = { params: [] };
 
 		if (matched) {
