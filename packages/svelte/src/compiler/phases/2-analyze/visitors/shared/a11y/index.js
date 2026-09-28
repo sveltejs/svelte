@@ -172,10 +172,8 @@ export function check_element(node, context) {
 					var implicit_role = get_implicit_role(node.name, attribute_map);
 
 					// an `<img>` with an empty `alt` is exposed as `presentation`, not `img`
-					if (
-						node.name === 'img' &&
-						['', true].includes(get_static_value(attribute_map.get('alt')))
-					) {
+					const alt = get_static_value(attribute_map.get('alt'));
+					if (node.name === 'img' && (alt === '' || alt === true)) {
 						implicit_role = 'presentation';
 					}
 
