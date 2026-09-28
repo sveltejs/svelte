@@ -3,11 +3,11 @@
 		"code": "declaration_duplicate",
 		"message": "`item` has already been declared",
 		"start": {
-			"line": 2,
+			"line": 13,
 			"column": 8
 		},
 		"end": {
-			"line": 2,
+			"line": 13,
 			"column": 12
 		}
 	}
