@@ -100,7 +100,10 @@ export interface Effect extends Reaction {
 	dev_stack?: DevStackEntry | null;
 }
 
-export type Source<V = unknown> = Value<V>;
+export interface Source<V = unknown> extends Value<V> {
+	/** Only set for ASYNC signals - the corresponding effect that writes to this source */
+	e: Effect | null;
+}
 
 export type MaybeSource<T = unknown> = T | Source<T>;
 
