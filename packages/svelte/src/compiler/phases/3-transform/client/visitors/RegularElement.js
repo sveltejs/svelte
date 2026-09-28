@@ -46,14 +46,18 @@ export function RegularElement(node, context) {
 	}
 
 	const is_custom_element = is_custom_element_node(node);
+	const is_responsive_image_element =
+		is_html && (name === 'img' || name === 'picture' || name === 'source');
 
 	// cloneNode is faster, but it does not instantiate the underlying class of the
 	// custom element until the template is connected to the dom, which would
 	// cause problems when setting properties on the custom element.
 	// Therefore we need to use importNode instead, which doesn't have this caveat.
 	// Additionally, Webkit browsers need importNode for video elements for autoplay
-	// to work correctly.
-	context.state.template.needs_import_node ||= name === 'video' || is_custom_element;
+	// to work correctly, and Chromium needs it for responsive image elements to
+	// avoid retaining them in the template document after they are removed.
+	context.state.template.needs_import_node ||=
+		name === 'video' || is_responsive_image_element || is_custom_element;
 
 	context.state.template.contains_script_tag ||= name === 'script';
 
