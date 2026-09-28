@@ -457,13 +457,25 @@
 	},
 	{
 		"code": "a11y_no_redundant_roles",
+		"message": "Redundant role 'link'",
+		"start": {
+			"line": 51,
+			"column": 15
+		},
+		"end": {
+			"line": 51,
+			"column": 26
+		}
+	},
+	{
+		"code": "a11y_no_redundant_roles",
 		"message": "Redundant role 'presentation'",
 		"start": {
-			"line": 59,
+			"line": 63,
 			"column": 12
 		},
 		"end": {
-			"line": 59,
+			"line": 63,
 			"column": 31
 		}
 	},
@@ -471,24 +483,12 @@
 		"code": "a11y_no_redundant_roles",
 		"message": "Redundant role 'img'",
 		"start": {
-			"line": 60,
+			"line": 64,
 			"column": 20
 		},
 		"end": {
-			"line": 60,
+			"line": 64,
 			"column": 30
-		}
-	},
-	{
-		"code": "a11y_no_redundant_roles",
-		"end": {
-			"column": 26,
-			"line": 47
-		},
-		"message": "Redundant role 'link'",
-		"start": {
-			"column": 15,
-			"line": 47
 		}
 	}
 ]
