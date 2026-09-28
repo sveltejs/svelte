@@ -1,4 +1,4 @@
-import { test } from '../../assert';
+import { ok, test } from '../../assert';
 
 export default test({
 	// the test performs a real mouse click so the event is trusted
@@ -7,6 +7,7 @@ export default test({
 
 	async test({ assert, target, window, waitUntil }) {
 		const span = target.querySelector('span');
+		ok(span);
 		const rect = span.getBoundingClientRect();
 
 		// a real user click: the browser flushes effects at the microtask
