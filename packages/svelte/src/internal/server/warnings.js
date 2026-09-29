@@ -6,6 +6,17 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
+ * Assignment to derived state on the server is permanent and will not be recalculated when its dependencies change, unlike on the client where it is temporary
+ */
+export function derived_reassignment() {
+	if (DEV) {
+		console.warn(`%c[svelte] derived_reassignment\n%cAssignment to derived state on the server is permanent and will not be recalculated when its dependencies change, unlike on the client where it is temporary\nhttps://svelte.dev/e/derived_reassignment`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/derived_reassignment`);
+	}
+}
+
+/**
  * A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
  * 
  * The `hydratable` was initialized in:
