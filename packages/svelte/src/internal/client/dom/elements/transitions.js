@@ -96,6 +96,10 @@ export function animation(element, get_fn, get_params) {
 
 	/** @type {null | { position: string, width: string, height: string, transform: string }} */
 	var original_styles = null;
+	/** Captured pre-absolute size, set by `capture_size`, consumed by `set_position`. */
+	var frozen_width = '';
+	/** Captured pre-absolute size, set by `capture_size`, consumed by `set_position`. */
+	var frozen_height = '';
 
 	nodes.a ??= {
 		element,
@@ -128,41 +132,57 @@ export function animation(element, get_fn, get_params) {
 				);
 			}
 		},
-		fix() {
+		capture_size() {
+			original_styles = null;
+
 			// If an animation is already running, transforming the element is likely to fail,
 			// because the styles applied by the animation take precedence. In the case of crossfade,
 			// that means the `translate(...)` of the crossfade transition overrules the `translate(...)`
 			// we would apply below, leading to the element jumping somewhere to the top left.
-			if (element.getAnimations().length) return;
+			if (this.element.getAnimations().length) return;
 
 			// It's important to destructure these to get fixed values - the object itself has getters,
-			// and changing the style to 'absolute' can for example influence the width.
-			var { position, width, height } = getComputedStyle(element);
+			// and changing the style to 'absolute' can for example influence the width. We also have
+			// to capture this BEFORE any sibling has been mutated, so that the recorded dimensions
+			// reflect the original layout (matters in flex/grid containers).
+			var { position, width, height } = getComputedStyle(this.element);
 
-			if (position !== 'absolute' && position !== 'fixed') {
-				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
+			if (position === 'absolute' || position === 'fixed') return;
 
-				original_styles = {
-					position: style.position,
-					width: style.width,
-					height: style.height,
-					transform: style.transform
-				};
+			var style = /** @type {HTMLElement | SVGElement} */ (this.element).style;
 
-				style.position = 'absolute';
-				style.width = width;
-				style.height = height;
-				var to = element.getBoundingClientRect();
+			original_styles = {
+				position: style.position,
+				width: style.width,
+				height: style.height,
+				transform: style.transform
+			};
+			frozen_width = width;
+			frozen_height = height;
+		},
+		set_position() {
+			if (original_styles === null) return;
 
-				if (from.left !== to.left || from.top !== to.top) {
-					var transform = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
-					style.transform = style.transform ? `${style.transform} ${transform}` : transform;
-				}
+			var style = /** @type {HTMLElement | SVGElement} */ (this.element).style;
+
+			style.position = 'absolute';
+			style.width = frozen_width;
+			style.height = frozen_height;
+		},
+		set_transform() {
+			if (original_styles === null) return;
+
+			var to = this.element.getBoundingClientRect();
+
+			if (from.left !== to.left || from.top !== to.top) {
+				var style = /** @type {HTMLElement | SVGElement} */ (this.element).style;
+				var translate = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
+				style.transform = style.transform ? `${style.transform} ${translate}` : translate;
 			}
 		},
 		unfix() {
 			if (original_styles) {
-				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
+				var style = /** @type {HTMLElement | SVGElement} */ (this.element).style;
 
 				style.position = original_styles.position;
 				style.width = original_styles.width;
