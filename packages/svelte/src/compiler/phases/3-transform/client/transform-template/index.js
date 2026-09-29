@@ -15,7 +15,7 @@ function build_locations(nodes) {
 	for (const node of nodes) {
 		if (node.type !== 'element') continue;
 
-		const { line, column } = locator(node.start);
+		const { line, column } = locator(node.start, true);
 
 		const expression = b.array([b.literal(line), b.literal(column)]);
 		const children = build_locations(node.children);
