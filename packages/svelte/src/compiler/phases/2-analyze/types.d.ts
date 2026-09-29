@@ -29,6 +29,14 @@ export interface AnalysisState {
 
 	function_depth: number;
 
+	/**
+	 * Set while visiting the declaration of a `{let ...}`/`{const ...}` declaration tag: the
+	 * `function_depth` that applied just outside the tag, i.e. the depth a plain reference at
+	 * that same point in the template would use. Lets `state_referenced_locally` also catch
+	 * non-closure reads of state declared *outside* the tag, not just within it.
+	 */
+	outer_function_depth?: number;
+
 	// legacy stuff
 	reactive_statement: null | ReactiveStatement;
 
