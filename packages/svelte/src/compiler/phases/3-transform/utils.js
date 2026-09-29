@@ -287,7 +287,9 @@ export function clean_nodes(
 			((first.type === 'RenderTag' && !first.metadata.dynamic) ||
 				(first.type === 'Component' &&
 					!state.options.hmr &&
-					!first.metadata.dynamic &&
+					// a dynamic component renders into a branch of its own, so the enclosing
+					// effect owns no nodes and `{#each}` reconciliation cannot move it
+					(!first.metadata.dynamic || parent.type !== 'EachBlock') &&
 					!first.attributes.some(
 						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
 					))),
