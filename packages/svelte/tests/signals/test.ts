@@ -810,6 +810,30 @@ describe('signals', () => {
 		};
 	});
 
+	test('deriveds with changed dependencies clean up after reconnection', () => {
+		const visible = state(true);
+		const first = state(0);
+		const second = state(1);
+		const selected = state(first);
+		const value = derived(() => $.get($.get(selected)));
+
+		return () => {
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					if ($.get(visible)) $.get(value);
+				});
+			});
+
+			flushSync(() => set(visible, false));
+			flushSync(() => set(selected, second));
+			flushSync(() => set(visible, true));
+
+			destroy();
+
+			assert.equal(second.reactions, null);
+		};
+	});
+
 	test('deriveds update upon reconnection #1', () => {
 		let a = state(false);
 		let b = state(false);
