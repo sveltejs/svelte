@@ -62,3 +62,11 @@ This rune, added in 5.14, causes the surrounding function to be _traced_ in deve
 ```
 
 `$inspect.trace` takes an optional first argument which will be used as the label.
+
+## $inspect vs {@debug ...}
+
+Svelte has both `$inspect` and [`{@debug ...}`](@debug) because they debug from different places and do different jobs. `{@debug}` is not deprecated.
+
+Use `$inspect` from `<script>` when you want a development-only log that re-runs as reactive state changes, including nested updates inside objects and arrays. It can take expressions, and `.with()` / `$inspect.trace()` cover custom callbacks and effect tracing. In production it becomes a noop.
+
+Use `{@debug}` when you need to debug from the template itself, or when you want the browser debugger to pause. It only accepts variable names (not expressions like `user.firstname`), and it compiles to `console.log` plus a `debugger` statement.
