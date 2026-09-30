@@ -72,7 +72,7 @@ let color = type === 'danger' ? 'red' : 'green';
 
 ## `#key` block
 
-While the `#key` block is useful when you want transitions/animations to run when a certain expression change it can be very destructive and should be used sparingly. When using a `#key` block always ask yourself if the same behavior could be achieved using a `$derived`.
+While the `#key` block is useful when you want transitions/animations to run when a certain expression change it can be very destructive since it unmounts every element/component inside every time the expression changes and should be used sparingly. When using a `#key` block always ask yourself if the same behavior could be achieved using a `$derived`.
 
 ## Events
 
