@@ -5,14 +5,8 @@ import { dev, is_ignored, locate_node } from '../../../../state.js';
 import { extract_paths, save } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
-import { get_rune } from '../../../scope.js';
-import {
-	async_thunk,
-	get_prop_source,
-	is_prop_source,
-	is_state_source,
-	should_proxy
-} from '../utils.js';
+import { get_rune, should_proxy } from '../../../scope.js';
+import { async_thunk, get_prop_source, is_prop_source, is_state_source } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -35,6 +29,7 @@ export function VariableDeclaration(node, context) {
 				rune === '$inspect' ||
 				rune === '$inspect.trace' ||
 				rune === '$state.snapshot' ||
+				rune === '$state.eager' ||
 				rune === '$host'
 			) {
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));

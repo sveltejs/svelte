@@ -128,44 +128,6 @@ export function is_prop_source(binding, state) {
 }
 
 /**
- * @param {Expression} node
- * @param {Scope | null} scope
- */
-export function should_proxy(node, scope) {
-	if (
-		!node ||
-		node.type === 'Literal' ||
-		node.type === 'TemplateLiteral' ||
-		node.type === 'ArrowFunctionExpression' ||
-		node.type === 'FunctionExpression' ||
-		node.type === 'UnaryExpression' ||
-		node.type === 'BinaryExpression' ||
-		(node.type === 'Identifier' && node.name === 'undefined')
-	) {
-		return false;
-	}
-
-	if (node.type === 'Identifier' && scope !== null) {
-		const binding = scope.get(node.name);
-		// Let's see if the reference is something that can be proxied
-		if (
-			binding !== null &&
-			!binding.reassigned &&
-			binding.initial !== null &&
-			binding.initial.type !== 'FunctionDeclaration' &&
-			binding.initial.type !== 'ClassDeclaration' &&
-			binding.initial.type !== 'ImportDeclaration' &&
-			binding.initial.type !== 'EachBlock' &&
-			binding.initial.type !== 'SnippetBlock'
-		) {
-			return should_proxy(binding.initial, null);
-		}
-	}
-
-	return true;
-}
-
-/**
  * An async thunk. If an `await` inside restores the reaction context via `$.save`,
  * the body exits through `$.unsave` so the context cannot leak into foreign microtasks
  * that run before the returned promise settles
