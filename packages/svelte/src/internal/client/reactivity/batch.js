@@ -1032,15 +1032,15 @@ export class Batch {
  */
 export function flushSync(fn) {
 	var was_flushing_sync = is_flushing_sync;
+	var prev_previous_batch = previous_batch;
+	previous_batch = null;
 	is_flushing_sync = true;
 
 	try {
 		var result;
 
 		if (fn) {
-			if (current_batch !== null && !current_batch.is_fork) {
-				current_batch.flush();
-			}
+			flushSync(); // flush anything pending through the while loop below
 
 			result = fn();
 		}
@@ -1056,6 +1056,7 @@ export function flushSync(fn) {
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
+		previous_batch = prev_previous_batch;
 	}
 }
 
@@ -1295,6 +1296,10 @@ export function eager(fn) {
 	let version = version_map.get(parent) ?? source(0);
 	version_map.set(parent, version);
 
+	if (DEV) {
+		version.label ??= '$state.eager version';
+	}
+
 	teardown(() => {
 		if (parent.f & DESTROYING) version_map.delete(parent);
 	});
@@ -1402,6 +1407,8 @@ export function fork(fn) {
 		e.fork_timing();
 	}
 
+	flushSync();
+
 	var batch = Batch.ensure();
 	batch.is_fork = true;
 	batch_values = new Map();
@@ -1409,7 +1416,8 @@ export function fork(fn) {
 	var committed = false;
 	var settled = batch.settled();
 
-	flushSync(fn);
+	fn();
+	flushSync();
 
 	return {
 		commit: async () => {
