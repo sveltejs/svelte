@@ -326,6 +326,57 @@ export class Batch {
 		return roots;
 	}
 
+	/**
+	 * @param {Effect[]} effects
+	 * @param {Effect[]} render_effects
+	 * @param {boolean} [defer]
+	 */
+	#drain(effects, render_effects, defer = false) {
+		// Effects can be scheduled during traversal (e.g. because a parent each/await/etc
+		// block updated an internal source, or because an effect invalidated itself)
+		// hence we loop until there are no more scheduled effects.
+		while (this.#scheduled.length > 0) {
+			if (defer) {
+				// During a rebase, rendering effects scheduled by block traversal must wait for this batch.
+				// Defer them directly, because traversing their shared root could collect effects from another batch.
+				/** @type {Effect[]} */
+				var deferred = [];
+
+				this.#scheduled = this.#scheduled.filter((effect) => {
+					if ((effect.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
+						deferred.push(effect);
+						return false;
+					}
+
+					return true;
+				});
+
+				this.#defer_effects(deferred);
+				if (this.#scheduled.length === 0) break;
+			}
+
+			if (flush_count++ > 1000) {
+				this.#unlink();
+				infinite_loop_guard(); // TODO try to reset_all() here?
+			}
+
+			for (const root of this.#resolve()) {
+				try {
+					this.#traverse(root, effects, render_effects);
+				} catch (e) {
+					reset_all(root);
+					// If there's no async work left, this branch is now dead and needs
+					// to be discarded to not become a zombie that is never cleaned up.
+					// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
+					// for a (non-minimal) reproduction that demonstrates a case where this is necessary
+					// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
+					if (!this.#is_deferred()) this.discard();
+					throw e;
+				}
+			}
+		}
+	}
+
 	#process() {
 		this.#started = true;
 
@@ -366,30 +417,7 @@ export class Batch {
 		 */
 		var updates = (legacy_updates = []);
 
-		// Effects can be scheduled during traversal (e.g. because a parent each/await/etc
-		// block updated an internal source, or because an effect invalidated itself)
-		// hence we loop until there are no more scheduled effects.
-		while (this.#scheduled.length > 0) {
-			if (flush_count++ > 1000) {
-				this.#unlink();
-				infinite_loop_guard(); // TODO try to reset_all() here?
-			}
-
-			for (const root of this.#resolve()) {
-				try {
-					this.#traverse(root, effects, render_effects);
-				} catch (e) {
-					reset_all(root);
-					// If there's no async work left, this branch is now dead and needs
-					// to be discarded to not become a zombie that is never cleaned up.
-					// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
-					// for a (non-minimal) reproduction that demonstrates a case where this is necessary
-					// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
-					if (!this.#is_deferred()) this.discard();
-					throw e;
-				}
-			}
-		}
+		this.#drain(effects, render_effects);
 
 		// any writes should take effect in a subsequent batch
 		current_batch = null;
@@ -828,10 +856,7 @@ export class Batch {
 				// and know this won't run anyway right afterwards
 				if (batch.#scheduled.length > 0 && !batch.#decrement_queued) {
 					batch.apply();
-
-					for (var root of batch.#resolve()) {
-						batch.#traverse(root, [], []);
-					}
+					batch.#drain([], [], true);
 				}
 
 				batch.deactivate();
