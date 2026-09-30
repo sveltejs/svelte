@@ -1,4 +1,4 @@
-/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, TemplateNode, TransitionManager } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -255,9 +255,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		tag(each_array, '{#each ...}');
 	}
 
-	/** @type {V[]} */
-	var array;
-
 	/** @type {Map<Batch, Set<any>>} */
 	var pending = new Map();
 
@@ -275,6 +272,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		try {
 			state.pending.delete(batch);
+
+			// The effect doesn't necessarily re-run in a batch right before that batch commits
+			// (its view of the collection may not have changed), so we read the collection
+			// as the committing batch sees it rather than using the most recent block run's result
+			var array = get(each_array);
 
 			state.fallback = fallback;
 			reconcile(state, array, anchor, flags, get_key);
@@ -309,7 +311,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	}
 
 	var effect = block(() => {
-		array = /** @type {V[]} */ (get(each_array));
+		var array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -709,7 +711,7 @@ function reconcile(state, array, anchor, flags, get_key) {
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
+ * @param {(anchor: Node, item: MaybeSource<V>, index: MaybeSource<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @returns {EachItem}

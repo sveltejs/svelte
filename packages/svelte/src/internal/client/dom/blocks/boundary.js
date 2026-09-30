@@ -1,5 +1,11 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
+import {
+	BOUNDARY_EFFECT,
+	DESTROYED,
+	DESTROYING,
+	EFFECT_PRESERVED,
+	EFFECT_TRANSPARENT
+} from '#client/constants';
 import {
 	HYDRATION_ERROR,
 	HYDRATION_START_ELSE,
@@ -236,6 +242,8 @@ export class Boundary {
 		var calling_on_error = false;
 
 		const reset = () => {
+			if (this.#is_destroyed()) return;
+
 			if (did_reset) {
 				w.svelte_boundary_reset_noop();
 				return;
@@ -259,6 +267,8 @@ export class Boundary {
 		};
 
 		const invoke_onerror = () => {
+			if (this.#is_destroyed()) return;
+
 			try {
 				calling_on_error = true;
 				this.#props.onerror?.(error, reset);
@@ -271,6 +281,10 @@ export class Boundary {
 		return { reset, invoke_onerror };
 	}
 
+	#is_destroyed() {
+		return (this.#effect.f & (DESTROYED | DESTROYING)) !== 0;
+	}
+
 	#hydrate_pending_content() {
 		const pending = this.#props.pending;
 		if (!pending) return;
@@ -279,6 +293,8 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
+
 			var pop_renderer = push_renderer(this.#effect.r);
 
 			try {
@@ -488,7 +504,7 @@ export class Boundary {
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
 
 			current_batch.oncommit(() => {
-				this.#handle_error(error);
+				if (!this.#is_destroyed()) this.#handle_error(error);
 			});
 		} else {
 			this.#handle_error(error);
@@ -524,11 +540,13 @@ export class Boundary {
 
 		/** @param {unknown} transformed_error */
 		const handle_error_result = (transformed_error) => {
+			if (this.#is_destroyed()) return;
+
 			const { reset, invoke_onerror } = this.#create_reset(transformed_error);
 
 			invoke_onerror();
 
-			if (failed) {
+			if (failed && !this.#is_destroyed()) {
 				this.#failed_effect = this.#run(() => {
 					try {
 						return branch(() => {
@@ -554,6 +572,8 @@ export class Boundary {
 		};
 
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
+
 			// Run the error through the API-level transformError transform (e.g. SvelteKit's handleError)
 			/** @type {unknown} */
 			var result;
