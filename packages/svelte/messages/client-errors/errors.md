@@ -36,6 +36,35 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > A derived value cannot reference itself recursively
 
+This error occurs when a [`$derived`](/docs/svelte/$derived) value reads itself during its computation, either directly or indirectly. This creates a circular dependency.
+
+Often, this happens when trying to accumulate a value or preserve previous state, such as tracking a high score:
+
+```svelte
+<script>
+	var score = $state(0);
+
+	// Error: `highscore` tries to read its own value to compute the new one
+	var highscore = $derived(Math.max(score, highscore ?? 0));
+</script>
+```
+
+To fix this, use a regular [`$state`](/docs/svelte/$state) variable and update it explicitly alongside the source state (for example, in an event handler):
+
+```svelte
+<script>
+	let score = $state(0);
+	let highscore = $state(0);
+
+	function addScore(points) {
+		score += points;
+		highscore = Math.max(score, highscore);
+	}
+</script>
+```
+
+This error can also happen indirectly with circular component bindings, such as when a parent component computes a prop by reading a bound value from a child component that in turn depends on that prop.
+
 ## each_key_duplicate
 
 > Keyed each block has duplicate key at indexes %a% and %b%
