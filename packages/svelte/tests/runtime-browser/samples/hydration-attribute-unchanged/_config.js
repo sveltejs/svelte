@@ -8,6 +8,9 @@ let inputs;
 /** @type {MutationObserver} */
 let observer;
 
+/** @type {{ value: number }} */
+let item;
+
 export default test({
 	mode: ['hydrate'],
 
@@ -22,6 +25,8 @@ export default test({
 		Object.defineProperty(target.querySelector('#local-name'), 'localName', { value: 'bad name' });
 
 		record();
+
+		item = /** @type {any} */ (target.querySelector('text')).x.baseVal.getItem(0);
 
 		observer = new MutationObserver(() => {});
 		observer.observe(target, { attributes: true, subtree: true });
@@ -60,6 +65,10 @@ export default test({
 
 		observer.disconnect();
 
+		// the list item retrieved before hydration is still attached
+		item.value = 2;
+		assert.equal(target.querySelector('text')?.getAttribute('x'), '2');
+
 		assert.deepEqual(shadowed, ['HTMLFormElement', 'HTMLCollection', 'HTMLObjectElement']);
 
 		// no recovery
@@ -84,6 +93,13 @@ export default test({
 				<form data-n="1"><input id="localName"></form>
 				<form data-n="1"><input name="namespaceURI"></form>
 				<xmlns data-n="1">x</xmlns><xmlns:ab data-n="1">x</xmlns:ab><svg><xmlns data-n="1"></xmlns></svg>
+				<svg>
+					<text x="2" rotate="1">a<tspan dy="1">b</tspan></text>
+					<polygon points="1"></polygon>
+					<filter><feColorMatrix type="saturate" values="1"></feColorMatrix></filter>
+					<image href="1"></image>
+					<image xlink:href="1"></image>
+				</svg>
 			`
 		);
 

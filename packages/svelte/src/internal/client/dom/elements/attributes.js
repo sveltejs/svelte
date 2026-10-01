@@ -46,33 +46,6 @@ const OPTION_TAG = IS_XHTML ? 'option' : 'OPTION';
 const SELECT_TAG = IS_XHTML ? 'select' : 'SELECT';
 const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
 
-/** Writing one of these again can refetch its resource, e.g. `<image href>` fires another `load` */
-const URL_ATTRIBUTES = [
-	'href',
-	'xlink:href',
-	'background',
-	'classid',
-	'codebase',
-	'formaction',
-	'itemid',
-	'longdesc',
-	'manifest',
-	'usemap'
-];
-
-/** Writing an SVG list again detaches the items retrieved through `baseVal` */
-const SVG_LIST_ATTRIBUTES = [
-	'values',
-	'tableValues',
-	'kernelMatrix',
-	'transform',
-	'gradientTransform',
-	'patternTransform',
-	'points'
-];
-/** Lists on `<text>` and `<tspan>` only */
-const SVG_TEXT_POSITION_ATTRIBUTES = ['x', 'y', 'dx', 'dy', 'rotate'];
-
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
  * to remove it upon hydration to avoid a bug when someone resets the form value.
@@ -224,7 +197,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 			hydrating &&
 			(typeof value === 'number' || typeof value === 'boolean') &&
 			previous === String(value) &&
-			is_inert_write(element, attribute)
+			is_native_element(element)
 		)
 	) {
 		element.setAttribute(attribute, value);
@@ -241,28 +214,18 @@ var get_namespace_uri;
 var get_local_name;
 
 /**
- * Whether writing an attribute's current value again only produces a mutation record. A custom
- * element observes it, so an HTML element needs the prototype of a native one. The platform getters
- * are used because form controls and own properties can shadow `localName` and `namespaceURI`
+ * Whether the element is not a customized built-in, which would observe writing an attribute's
+ * current value again through `attributeChangedCallback`. Autonomous custom elements never get here,
+ * as they are written with hydration turned off. The platform getters are used because form
+ * controls and own properties can shadow `localName` and `namespaceURI`
  * @param {Element} element
- * @param {string} attribute
  */
-function is_inert_write(element, attribute) {
-	if (URL_ATTRIBUTES.includes(attribute)) return false;
-
+function is_native_element(element) {
 	get_namespace_uri ??= /** @type {any} */ (get_descriptor(Element.prototype, 'namespaceURI')).get;
+	if (get_namespace_uri.call(element) !== NAMESPACE_HTML) return true;
+
 	get_local_name ??= /** @type {any} */ (get_descriptor(Element.prototype, 'localName')).get;
 	var name = get_local_name.call(element);
-
-	if (get_namespace_uri.call(element) !== NAMESPACE_HTML) {
-		return !(
-			SVG_LIST_ATTRIBUTES.includes(attribute) ||
-			((name === 'text' || name === 'tspan') && SVG_TEXT_POSITION_ATTRIBUTES.includes(attribute))
-		);
-	}
-
-	if (name.includes('-')) return false;
-
 	var prototype = native_prototypes.get(name);
 
 	if (prototype === undefined) {

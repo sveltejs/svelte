@@ -72,21 +72,6 @@ function alpha(canvas) {
 /** @type {MutationObserver} */
 let observer;
 
-/** @type {Array<{ element: any, attribute: string, item: { value: number } }>} */
-let lists;
-
-/** @type {number[]} */
-let errors;
-
-const svg_lists = [
-	['text', 'x'],
-	['tspan', 'dy'],
-	['text', 'rotate'],
-	['feColorMatrix', 'values'],
-	['feFuncR', 'tableValues'],
-	['feConvolveMatrix', 'kernelMatrix']
-];
-
 export default test({
 	mode: ['hydrate'],
 
@@ -133,16 +118,6 @@ export default test({
 			context.fillRect(0, 0, 1, 1);
 			ok(alpha(canvas) === 255);
 		}
-
-		lists = svg_lists.map(([name, attribute]) => {
-			const element = /** @type {any} */ (target.querySelector(name));
-			return { element, attribute, item: element[attribute].baseVal.getItem(0) };
-		});
-
-		// on `about:blank` no image can load, and each has reported its error already
-		const images = [...target.querySelectorAll('image')];
-		errors = images.map(() => 0);
-		images.forEach((image, i) => image.addEventListener('error', () => errors[i]++));
 
 		const ObservedButton = observe(HTMLButtonElement, Object.keys(attributes));
 		const Inherited = observe(HTMLButtonElement, ['data-n']);
@@ -203,7 +178,7 @@ export default test({
 		});
 	},
 
-	async test({ assert, component, target }) {
+	test({ assert, component, target }) {
 		// spread `disabled` and `hidden` always use their setters
 		assert.deepEqual(
 			observer
@@ -278,29 +253,6 @@ export default test({
 			assert.equal(canvas.width, 30);
 			assert.equal(canvas.height, 30);
 		}
-
-		// a list attribute write detaches the items retrieved before it
-		assert.deepEqual(
-			lists.map(({ element, attribute, item }) => {
-				item.value = 2;
-				return [
-					element.localName,
-					attribute,
-					item.value,
-					element.getAttribute(attribute),
-					element[attribute].baseVal.getItem(0).value
-				];
-			}),
-			svg_lists.map(([name, attribute]) => [name, attribute, 2, '1', 1])
-		);
-
-		// a URL write resolves it again
-		const start = performance.now();
-		while (errors.some((count) => count === 0) && performance.now() - start < 2000) {
-			await new Promise((resolve) => setTimeout(resolve, 10));
-		}
-		await new Promise((resolve) => setTimeout(resolve, 100));
-		assert.deepEqual(errors, [1, 1, 1, 1, 1, 1]);
 
 		// with the native prototype, a customized built-in is compared as native (a known limitation)
 		assert.deepEqual(

@@ -8,6 +8,7 @@
 		size = 24,
 		label = '2',
 		n = 1,
+		point = 1,
 		spread = { disabled: true, hidden: true, tabindex: -1 }
 	} = $props();
 
@@ -52,3 +53,11 @@
 <xmlns data-n={1}>x</xmlns>
 <xmlns:ab data-n={1}>x</xmlns:ab>
 <svg><xmlns data-n={1}></xmlns></svg>
+
+<svg>
+	<text x={point} rotate={point}>a<tspan {...{ dy: point }}>b</tspan></text>
+	<polygon points={point} />
+	<filter><feColorMatrix type="saturate" values={point} /></filter>
+	<image href={point} />
+	<image {...{ 'xlink:href': point }} />
+</svg>

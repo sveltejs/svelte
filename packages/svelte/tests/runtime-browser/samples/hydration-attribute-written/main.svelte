@@ -10,7 +10,6 @@
 		translate,
 		draggable,
 		href,
-		n = 1,
 		size = 30,
 		observed,
 		native,
@@ -52,21 +51,6 @@
 
 <canvas width={size} height={size}></canvas>
 <canvas {...{ width: size, height: size }}></canvas>
-
-<svg>
-	<text x={n} rotate={n}>a<tspan {...{ dy: n }}>b</tspan></text>
-	<filter>
-		<feColorMatrix type="saturate" {...{ values: n }} />
-		<feComponentTransfer><feFuncR type="discrete" tableValues={n} /></feComponentTransfer>
-		<feConvolveMatrix order="1" {...{ kernelMatrix: n }} />
-	</filter>
-	<image href={n} />
-	<image href={true} />
-	<image {...{ href: n }} />
-	<image {...{ href: true }} />
-	<image {...{ 'xlink:href': n }} />
-	<image {...{ 'xlink:href': true }} />
-</svg>
 
 <button {...observed.retained}>retained</button>
 <button {...observed.removed}>removed</button>
