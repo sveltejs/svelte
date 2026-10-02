@@ -1686,4 +1686,32 @@ describe('signals', () => {
 			pop();
 		}
 	});
+
+	// https://github.com/sveltejs/svelte/issues/18898
+	test('reconnecting a dirty derived does not register duplicate subscriptions', () => {
+		return () => {
+			const enabled = state(false);
+			const shared = state(1);
+			let value: Derived<number>;
+
+			const destroyOwner = effect_root(() => {
+				value = derived(() => ($.get(enabled) ? $.get(shared) : 0));
+				$.untrack(() => $.get(value));
+			});
+
+			flushSync(() => set(enabled, true));
+			const destroyReader = effect_root(() => render_effect(() => $.get(value)));
+
+			// the derived was dirty when the reader attached, so it re-ran with
+			// CONNECTED already set and registered itself on `shared` — reconnecting
+			// must not register it a second time
+			assert.equal(shared.reactions?.length, 1);
+
+			destroyReader();
+			destroyOwner();
+
+			// disposing the reader and owner must remove the single subscription
+			assert.equal(shared.reactions, null);
+		};
+	});
 });
