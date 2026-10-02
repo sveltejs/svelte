@@ -719,7 +719,13 @@ function reconnect(derived) {
 	if (derived.deps === null) return;
 
 	for (const dep of derived.deps) {
-		(dep.reactions ??= []).push(derived);
+		var reactions = (dep.reactions ??= []);
+
+		// `get` sets CONNECTED before re-running a dirty derived, so `update_derived`
+		// may have already registered it as a reaction — don't add it twice
+		if (!includes.call(reactions, derived)) {
+			reactions.push(derived);
+		}
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
 			unfreeze_derived_effects(/** @type {Derived} */ (dep));
