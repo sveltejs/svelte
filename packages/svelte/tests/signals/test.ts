@@ -1700,7 +1700,9 @@ describe('signals', () => {
 			});
 
 			flushSync(() => set(enabled, true));
-			const destroyReader = effect_root(() => render_effect(() => $.get(value)));
+			const destroyReader = effect_root(() => {
+				render_effect(() => $.get(value));
+			});
 
 			// the derived was dirty when the reader attached, so it re-ran with
 			// CONNECTED already set and registered itself on `shared` — reconnecting
