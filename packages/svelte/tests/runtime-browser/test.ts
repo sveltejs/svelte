@@ -30,6 +30,9 @@ const { run: run_browser_tests } = suite_with_variants<
 		if (variant === 'hydrate') {
 			if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
 			if (config.skip_mode?.includes('hydrate')) return true;
+		} else {
+			if (config.mode && !config.mode.includes('client')) return 'no-test';
+			if (config.skip_mode?.includes('client')) return true;
 		}
 
 		return false;

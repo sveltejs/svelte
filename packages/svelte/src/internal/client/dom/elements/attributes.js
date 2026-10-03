@@ -1,7 +1,7 @@
 /** @import { Blocker, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
+import { get_descriptor, get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate, delegated, event, event_symbol } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
@@ -178,7 +178,8 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		}
 	}
 
-	if (attributes[attribute] === (attributes[attribute] = value)) return;
+	var previous = attributes[attribute];
+	if (previous === (attributes[attribute] = value)) return;
 
 	if (attribute === 'loading') {
 		// @ts-expect-error
@@ -190,9 +191,50 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	} else if (typeof value !== 'string' && get_setters(element).has(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
-	} else {
+	} else if (
+		// while hydrating, skip a number or boolean whose string the server already rendered
+		!(
+			hydrating &&
+			(typeof value === 'number' || typeof value === 'boolean') &&
+			previous === String(value) &&
+			is_native_element(element)
+		)
+	) {
 		element.setAttribute(attribute, value);
 	}
+}
+
+/** @type {Map<string, object>} */
+var native_prototypes = new Map();
+
+/** @type {(this: Element) => string | null} */
+var get_namespace_uri;
+
+/** @type {(this: Element) => string} */
+var get_local_name;
+
+/**
+ * Whether the element is not a customized built-in, which would observe writing an attribute's
+ * current value again through `attributeChangedCallback`. Autonomous custom elements never get here,
+ * as they are written with hydration turned off. The platform getters are used because form
+ * controls and own properties can shadow `localName` and `namespaceURI`
+ * @param {Element} element
+ */
+function is_native_element(element) {
+	get_namespace_uri ??= /** @type {any} */ (get_descriptor(Element.prototype, 'namespaceURI')).get;
+	if (get_namespace_uri.call(element) !== NAMESPACE_HTML) return true;
+
+	get_local_name ??= /** @type {any} */ (get_descriptor(Element.prototype, 'localName')).get;
+	var name = get_local_name.call(element);
+	var prototype = native_prototypes.get(name);
+
+	if (prototype === undefined) {
+		// read from the prototype, as named properties like `<form name="createElement">` shadow it
+		var created = get_prototype_of(document).createElement.call(document, name);
+		native_prototypes.set(name, (prototype = get_prototype_of(created)));
+	}
+
+	return get_prototype_of(element) === prototype;
 }
 
 /**
