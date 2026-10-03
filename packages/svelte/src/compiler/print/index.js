@@ -3,6 +3,7 @@
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
 import { is_void } from '../../utils.js';
+import { escape_character_references } from '../phases/1-parse/utils/html.js';
 
 /** Threshold for when content should be formatted on separate lines */
 const LINE_BREAK_THRESHOLD = 50;
@@ -70,6 +71,15 @@ function escape_identifier(name) {
 }
 
 /**
+ * @typedef {{
+ *   preserve_whitespace: number;
+ *   raw_text: number;
+ *   attribute_quote: string | null;
+ *   static_attribute: number;
+ * }} PrintState
+ */
+
+/**
  * `print` converts a Svelte AST node back into Svelte source code.
  * It is primarily intended for tools that parse and transform components using the compiler’s modern AST representation.
  *
@@ -81,7 +91,8 @@ function escape_identifier(name) {
  */
 export function print(ast, options = undefined) {
 	const comments = (ast.type === 'Root' && ast.comments) || [];
-	const state = { preserve_whitespace: 0 };
+	/** @type {PrintState} */
+	const state = { preserve_whitespace: 0, raw_text: 0, attribute_quote: null, static_attribute: 0 };
 	const css_comments =
 		(ast.type === 'Root' ? ast.css?.comments : ast.type === 'StyleSheet' ? ast.comments : null) ||
 		[];
@@ -95,7 +106,7 @@ export function print(ast, options = undefined) {
 				getTrailingComments: options?.getTrailingComments
 			}),
 			...svelte_visitors(comments, state),
-			...css_visitors(css_comments, comments)
+			...css_visitors(css_comments, comments, state)
 		}),
 		{
 			indent: options?.indent
@@ -131,6 +142,48 @@ function block(context, node, preserve_whitespace = false, allow_inline = false)
 		context.dedent();
 		context.newline();
 	}
+}
+
+/**
+ * Prints a quoted attribute value. Double quotes are used unless the value contains
+ * a double quote but no single quote
+ * @param {Array<AST.Text | AST.ExpressionTag>} value
+ * @param {Context} context
+ * @param {PrintState} state
+ */
+function attribute_value(value, context, state) {
+	const text = value.map((chunk) => (chunk.type === 'Text' ? chunk.data : '')).join('');
+	const quote = text.includes('"') && !text.includes("'") ? "'" : '"';
+
+	context.write(quote);
+	state.attribute_quote = quote;
+
+	for (const chunk of value) {
+		context.visit(chunk);
+	}
+
+	state.attribute_quote = null;
+	context.write(quote);
+}
+
+/**
+ * `Text` nodes hold the decoded text, so anything that would be read back as a tag,
+ * an expression, a character reference or the end of the attribute value is escaped
+ * @param {string} data
+ * @param {PrintState} state
+ */
+function escape_text(data, state) {
+	const quote = state.attribute_quote;
+	let text = escape_character_references(data, quote !== null);
+
+	if (quote === null) {
+		return text.replaceAll('<', '&lt;').replaceAll('{', '&#123;');
+	}
+
+	// the attributes of `<script>` and `<style>` are read as plain text
+	if (state.static_attribute === 0) text = text.replaceAll('{', '&#123;');
+
+	return text.replaceAll(quote, quote === '"' ? '&quot;' : '&#39;');
 }
 
 /**
@@ -215,7 +268,7 @@ function attributes(node, attributes, context, comments) {
  * @param {AST.BaseElement} node
  * @param {Context} context
  * @param {AST.JSComment[]} comments
- * @param {{ preserve_whitespace: number }} state
+ * @param {PrintState} state
  */
 function base_element(node, context, comments, state) {
 	const child_context = context.new();
@@ -254,7 +307,7 @@ function base_element(node, context, comments, state) {
  * @param {AST.BaseElement} node
  * @param {Context} context
  * @param {AST.JSComment[]} comments
- * @param {{ preserve_whitespace: number }} state
+ * @param {PrintState} state
  */
 function print_element(node, context, comments, state) {
 	const name = node.name.toLowerCase();
@@ -262,17 +315,23 @@ function print_element(node, context, comments, state) {
 		(node.type === 'RegularElement' || node.type === 'TitleElement') &&
 		(name === 'pre' || name === 'textarea' || name === 'title');
 
+	// the parser keeps the contents of a nested `<script>` or `<style>` verbatim
+	const raw_text = node.type === 'RegularElement' && (name === 'script' || name === 'style');
+
 	if (preserve) state.preserve_whitespace += 1;
+	if (raw_text) state.raw_text += 1;
 	base_element(node, context, comments, state);
 	if (preserve) state.preserve_whitespace -= 1;
+	if (raw_text) state.raw_text -= 1;
 }
 
 /**
  * @param {AST.CSS.CSSComment[]} comments
  * @param {AST.JSComment[]} js_comments
+ * @param {PrintState} state
  * @returns {Visitors<AST.SvelteNode>}
  */
-function css_visitors(comments, js_comments) {
+function css_visitors(comments, js_comments, state) {
 	let comment_index = 0;
 
 	/** @param {number} end */
@@ -505,7 +564,9 @@ function css_visitors(comments, js_comments) {
 
 		StyleSheet(node, context) {
 			context.write('<style');
+			state.static_attribute += 1;
 			attributes(node, node.attributes, context, js_comments);
+			state.static_attribute -= 1;
 			context.write('>');
 
 			if (node.children.length > 0 || node.comments.length > 0) {
@@ -531,7 +592,7 @@ function css_visitors(comments, js_comments) {
 
 /**
  * @param {AST.JSComment[]} comments
- * @param {{ preserve_whitespace: number }} state
+ * @param {PrintState} state
  * @returns {Visitors<AST.SvelteNode>}
  */
 const svelte_visitors = (comments, state) => ({
@@ -564,7 +625,9 @@ const svelte_visitors = (comments, state) => ({
 
 	Script(node, context) {
 		context.write('<script');
+		state.static_attribute += 1;
 		attributes(node, node.attributes, context, comments);
+		state.static_attribute -= 1;
 		context.write('>');
 		block(context, node.content, state.preserve_whitespace > 0);
 		context.write('</script>');
@@ -732,15 +795,9 @@ const svelte_visitors = (comments, state) => ({
 
 		if (Array.isArray(node.value)) {
 			if (node.value.length > 1 || node.value[0].type === 'Text') {
-				context.write('"');
-			}
-
-			for (const chunk of node.value) {
-				context.visit(chunk);
-			}
-
-			if (node.value.length > 1 || node.value[0].type === 'Text') {
-				context.write('"');
+				attribute_value(node.value, context, state);
+			} else {
+				context.visit(node.value[0]);
 			}
 		} else {
 			context.visit(node.value);
@@ -1055,13 +1112,7 @@ const svelte_visitors = (comments, state) => ({
 		context.write('=');
 
 		if (Array.isArray(node.value)) {
-			context.write('"');
-
-			for (const tag of node.value) {
-				context.visit(tag);
-			}
-
-			context.write('"');
+			attribute_value(node.value, context, state);
 		} else {
 			context.visit(node.value);
 		}
@@ -1129,7 +1180,7 @@ const svelte_visitors = (comments, state) => ({
 	},
 
 	Text(node, context) {
-		context.write(node.data);
+		context.write(state.raw_text > 0 ? node.data : escape_text(node.data, state));
 	},
 
 	TitleElement(node, context) {
