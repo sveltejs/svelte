@@ -75,8 +75,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@teasel/parser':
-        specifier: 0.0.15
-        version: 0.0.15
+        specifier: 0.0.16
+        version: 0.0.16
       '@types/estree':
         specifier: ^1.0.9
         version: 1.0.9
@@ -944,35 +944,35 @@ packages:
       svelte: ^5.0.0
       vite: ^6.3.0 || ^7.0.0
 
-  '@teasel/parser-darwin-arm64@0.0.15':
-    resolution: {integrity: sha512-jlC8qIszmtPqErOGIB7MZYz/y65Y+Gzjcnt1Wpv89UwFi1CRFcgNCh52YEfLsgybY7CD/SWxMBsSWaKGzqerFw==}
+  '@teasel/parser-darwin-arm64@0.0.16':
+    resolution: {integrity: sha512-8gJrZ+ZuEmVHIMIHr4Dp9ypOoS1v/offUE/nPVztSuFl/IaC2cYBDEgZBJjBSk++yCf2JAzjD5FyvxQV1pK+fQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@teasel/parser-darwin-x64@0.0.15':
-    resolution: {integrity: sha512-7KGK0T3ufOJlmAjf/qcFM+sbpVCnd164J0Co2i6mnVTOXEjp4nw1hIwGZyVcaJ2WP1A3LiTje56qTamFjWRDkA==}
+  '@teasel/parser-darwin-x64@0.0.16':
+    resolution: {integrity: sha512-waP9rV0xqSZXh1mIg1z124Mj6s/l6FMJjKqJK0Jj7enBf4cjUFZNKbYc3QVJCGCUFpzlE52y2YCRDIhQCIlaqQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@teasel/parser-linux-arm64-gnu@0.0.15':
-    resolution: {integrity: sha512-9Nf4kBlhCSFl/tkdBBeoWoWI2wPzX7htRJcKtOSTAiJ386clnvem2GlZe49Y4RIO18uaebK24ZTn+KH3UPP1iA==}
+  '@teasel/parser-linux-arm64-gnu@0.0.16':
+    resolution: {integrity: sha512-7JpwrHEDkglFG1Xbg9ZPyCZW2lrHU4nn1643NF1nKMg1mQxOJiMsRM3Qh8KFaKjKQc36EXYAT4MhdWAVgcryCQ==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@teasel/parser-linux-x64-gnu@0.0.15':
-    resolution: {integrity: sha512-CigtfEgqUycziHTq1KUjZcPf51wZ2W+w7qJUDPLBogLXZYIkshlbWNsh3jUXqo6QZo68Yn1ZJsf+HLJvDksWtQ==}
+  '@teasel/parser-linux-x64-gnu@0.0.16':
+    resolution: {integrity: sha512-Yt7mJ16EgceUfFjiu3J/t5oj6a5LfCLOCSABcXLxsU8J5Um8SWB1xbfl8p40xwLc0JvyyCwdTjZjeIfpsvSxww==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@teasel/parser-win32-x64-msvc@0.0.15':
-    resolution: {integrity: sha512-nEsALr0rmClmRewUYVdXj+NP9VEP6+n1hRMGAPTZlRz7K4/L0LOXZy6N1qoxP76AS3LdxCFKBFmi4qAdVhoOdw==}
+  '@teasel/parser-win32-x64-msvc@0.0.16':
+    resolution: {integrity: sha512-RMxIe45504Z3A3oTAfCZYD+Ygb4/B69W3IDrSiZCTs2ToyDTgnzdMs8RWLTP2XxplFk3RKqZc5iAyvEDSONTeg==}
     cpu: [x64]
     os: [win32]
 
-  '@teasel/parser@0.0.15':
-    resolution: {integrity: sha512-TYmh7J3WFvf9RD1H2HvNLswulJperW2PrSCUWTQxG8FBJpB0vw4mxDUyNYayi3XbLBiHk9jo8f+AMo1+lVpLVg==}
+  '@teasel/parser@0.0.16':
+    resolution: {integrity: sha512-3qgyjqm5MU4/WBMxk87Gdjc+qB2xv/YU1Frl841xEZ/0nUaY6b6//CR/txdRRsxAeDN+LZeDo3hbZA3VV7q7pA==}
     engines: {node: '>=22.17'}
 
   '@types/aria-query@5.0.4':
@@ -3109,30 +3109,30 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@teasel/parser-darwin-arm64@0.0.15':
+  '@teasel/parser-darwin-arm64@0.0.16':
     optional: true
 
-  '@teasel/parser-darwin-x64@0.0.15':
+  '@teasel/parser-darwin-x64@0.0.16':
     optional: true
 
-  '@teasel/parser-linux-arm64-gnu@0.0.15':
+  '@teasel/parser-linux-arm64-gnu@0.0.16':
     optional: true
 
-  '@teasel/parser-linux-x64-gnu@0.0.15':
+  '@teasel/parser-linux-x64-gnu@0.0.16':
     optional: true
 
-  '@teasel/parser-win32-x64-msvc@0.0.15':
+  '@teasel/parser-win32-x64-msvc@0.0.16':
     optional: true
 
-  '@teasel/parser@0.0.15':
+  '@teasel/parser@0.0.16':
     dependencies:
       '@types/estree': 1.0.9
     optionalDependencies:
-      '@teasel/parser-darwin-arm64': 0.0.15
-      '@teasel/parser-darwin-x64': 0.0.15
-      '@teasel/parser-linux-arm64-gnu': 0.0.15
-      '@teasel/parser-linux-x64-gnu': 0.0.15
-      '@teasel/parser-win32-x64-msvc': 0.0.15
+      '@teasel/parser-darwin-arm64': 0.0.16
+      '@teasel/parser-darwin-x64': 0.0.16
+      '@teasel/parser-linux-arm64-gnu': 0.0.16
+      '@teasel/parser-linux-x64-gnu': 0.0.16
+      '@teasel/parser-win32-x64-msvc': 0.0.16
 
   '@types/aria-query@5.0.4': {}
 
