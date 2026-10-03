@@ -46,6 +46,9 @@ export function build_element_attributes(node, context, transform) {
 	/** @type {Expression | null} */
 	let content = null;
 
+	/** @type {AST.Attribute | null} */
+	let default_value = null;
+
 	let has_spread = false;
 	let events_to_capture = new Set();
 
@@ -53,19 +56,7 @@ export function build_element_attributes(node, context, transform) {
 		if (attribute.type === 'Attribute') {
 			if (attribute.name === 'value') {
 				if (node.name === 'textarea') {
-					if (
-						attribute.value !== true &&
-						Array.isArray(attribute.value) &&
-						attribute.value[0].type === 'Text' &&
-						regex_starts_with_newline.test(attribute.value[0].data)
-					) {
-						// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
-						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
-						// also see related code in analysis phase
-						attribute.value[0].data = '\n' + attribute.value[0].data;
-					}
-
-					content = b.call('$.escape', build_attribute_value(attribute.value, context, transform));
+					content = build_textarea_content(attribute, context, transform);
 				} else if (node.name !== 'select') {
 					// omit value attribute for select elements, it's irrelevant for the initially selected value and has no
 					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
@@ -88,6 +79,13 @@ export function build_element_attributes(node, context, transform) {
 				attributes.push(attribute);
 				// deopt to spread at runtime, where we can handle interaction of value/defaultValue etc
 				has_spread = true;
+			} else if (
+				node.type === 'RegularElement' &&
+				node.name === 'textarea' &&
+				attribute.name === 'defaultValue'
+			) {
+				// handled after the loop, since `value` takes precedence regardless of order
+				default_value = attribute;
 				// the defaultValue/defaultChecked properties don't exist as attributes
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
@@ -202,6 +200,11 @@ export function build_element_attributes(node, context, transform) {
 		}
 	}
 
+	// `<textarea defaultValue>` sets the initial content, unless `value`, `bind:value` or children are present
+	if (default_value !== null && content === null && node.fragment.nodes.length === 0) {
+		content = build_textarea_content(default_value, context, transform);
+	}
+
 	if (has_spread) {
 		build_element_spread_attributes(
 			node,
@@ -291,6 +294,28 @@ export function build_element_attributes(node, context, transform) {
 	}
 
 	return content;
+}
+
+/**
+ * Builds the escaped child content of a `<textarea>` from its `value` or `defaultValue` attribute
+ * @param {AST.Attribute} attribute
+ * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentServerTransformState>} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ */
+function build_textarea_content(attribute, context, transform) {
+	if (
+		attribute.value !== true &&
+		Array.isArray(attribute.value) &&
+		attribute.value[0].type === 'Text' &&
+		regex_starts_with_newline.test(attribute.value[0].data)
+	) {
+		// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
+		// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+		// also see related code in analysis phase
+		attribute.value[0].data = '\n' + attribute.value[0].data;
+	}
+
+	return b.call('$.escape', build_attribute_value(attribute.value, context, transform));
 }
 
 /**
