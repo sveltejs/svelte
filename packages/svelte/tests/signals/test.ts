@@ -1686,4 +1686,40 @@ describe('signals', () => {
 			pop();
 		}
 	});
+
+	// https://github.com/sveltejs/svelte/issues/18898
+	it('does not create duplicate subscriptions when reconnecting a derived', () => {
+		const enabled = state(false);
+		const shared = state(1);
+		let value: Derived<number>;
+
+		const destroy_owner = effect_root(() => {
+			value = derived(() => ($.get(enabled) ? $.get(shared) : 0));
+
+			// evaluate without connecting the derived
+			$.untrack(() => $.get(value));
+		});
+
+		// the derived re-runs with new dependencies discovered, then a reader attaches
+		flushSync(() => set(enabled, true));
+
+		const destroy_reader = effect_root(() => {
+			render_effect(() => $.get(value));
+		});
+
+		try {
+			// the derived should be subscribed to `shared` exactly once
+			assert.equal(shared.reactions?.length, 1);
+			assert.equal(shared.reactions?.[0], value);
+
+			destroy_reader();
+			destroy_owner();
+
+			// disposing the reader and the owner should remove the subscription entirely
+			assert.equal(shared.reactions, null);
+		} finally {
+			destroy_reader();
+			destroy_owner();
+		}
+	});
 });
