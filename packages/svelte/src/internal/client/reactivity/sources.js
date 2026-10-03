@@ -25,7 +25,8 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC
+	ASYNC,
+	DESTROYED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -233,7 +234,11 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			const derived = /** @type {Derived} */ (source);
 
 			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
-			if ((source.f & DIRTY) !== 0) {
+			// MAYBE_DIRTY counts too, or a dependency could keep a stale value and miss a later change back to it,
+			// except once the owner is destroyed (the derived is frozen then, and this would only warn)
+			var parent = derived.parent;
+
+			if ((parent === null || (parent.f & DESTROYED) === 0) && is_dirty(derived)) {
 				execute_derived(derived);
 			}
 
