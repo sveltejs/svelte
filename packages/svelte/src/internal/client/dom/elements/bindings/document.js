@@ -1,4 +1,4 @@
-import { listen } from './shared.js';
+import { listen, without_reactive_context } from './shared.js';
 
 /**
  * @param {(activeElement: Element | null) => void} update
@@ -12,6 +12,7 @@ export function bind_active_element(update) {
 			return;
 		}
 
-		update(document.activeElement);
+		// Removing the focused element fires `focusout` while an effect is running
+		without_reactive_context(() => update(document.activeElement));
 	});
 }
