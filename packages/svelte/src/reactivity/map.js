@@ -169,6 +169,10 @@ export class SvelteMap extends Map {
 	 * @param {(key: K) => V} callbackFn
 	 */
 	getOrInsertComputed(key, callbackFn) {
+		if (typeof callbackFn !== 'function') {
+			throw new TypeError('callbackFn must be a function');
+		}
+
 		if (!super.has(key)) {
 			this.set(key, callbackFn(key));
 		}
