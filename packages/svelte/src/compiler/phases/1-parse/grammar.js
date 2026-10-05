@@ -1,80 +1,169 @@
+import * as g from '@teasel/parser/grammar';
+
+const value = { value: g.bind(g.js.pattern) };
+const error = { error: g.bind(g.js.pattern) };
+const resolved = g.seq(g.opt(value), { then: g.content });
+const rejected = g.seq(g.opt(error), { catch: g.content });
+const transition = { expression: g.value.expression };
+
 /** The template language, as the parser reads it: the delimiters, the elements and their fields, the directives and the blocks. */
-export const grammar = `
-host svelte
+export const grammar = g.grammar('svelte', {
+	document: g.node(
+		'Root',
+		{
+			css: g.doc.style,
+			js: g.literal([]),
+			options: g.literal(null),
+			comments: g.doc.comments,
+			module: g.optional(g.doc.module)
+		},
+		g.scope({ instance: g.optional(g.doc.script) }, g.scope({ fragment: g.content }))
+	),
+	fragment: g.node('Fragment', g.scope({ nodes: g.nodes })),
+	text: g.node('Text', { data: g.text.data, raw: g.text.raw }),
+	comment: g.node('Comment', { data: g.text.data }),
+	delimiters: ['{', '}'],
+	attributes: { expressions: true, shorthand: true },
+	autoclose: true,
+	trim: true,
+	void: [
+		'area',
+		'base',
+		'br',
+		'col',
+		'command',
+		'embed',
+		'hr',
+		'img',
+		'input',
+		'keygen',
+		'link',
+		'meta',
+		'param',
+		'source',
+		'track',
+		'wbr'
+	],
 
-document Root  css=style  js=list  options=null  comments=comments  module?=script:module  { instance?=script  { fragment=fragment } }
-delimiters { }
-attributes expressions shorthand
-sigils open=# branch=: close=/ tag=@
-autoclose
-trim
-void area base br col command embed hr img input keygen link meta param source track wbr
-fragment Fragment nodes scope
-elements name=name attributes=attributes children=fragment
-text Text data=data raw=raw
-comment Comment data=data
+	elements: {
+		fields: { name: g.element.tag, attributes: g.element.attributes, fragment: g.content },
+		rules: {
+			// `this` stays an attribute: a value mixing text and expressions warns where it is promoted
+			'svelte:element': g.element(g.node('SvelteElement')),
+			'svelte:component': g.element(g.node('SvelteComponent', { expression: g.element.this })),
+			'svelte:self': g.element(g.node('SvelteSelf')),
+			'svelte:window': g.element(g.node('SvelteWindow'), { root: true, once: true }),
+			'svelte:document': g.element(g.node('SvelteDocument'), { root: true, once: true }),
+			'svelte:body': g.element(g.node('SvelteBody'), { root: true, once: true }),
+			'svelte:head': g.element(g.node('SvelteHead'), { root: true, once: true }),
+			'svelte:options': g.element(g.node('SvelteOptions'), { root: true, once: true }),
+			'svelte:fragment': g.element(g.node('SvelteFragment')),
+			'svelte:boundary': g.element(g.node('SvelteBoundary')),
+			title: g.element(g.node('TitleElement'), { inside: 'svelte:head' }),
+			slot: g.element(g.node('SlotElement'), { outside: 'shadowrootmode' }),
+			textarea: g.element(g.node('RegularElement'), { content: 'rcdata' }),
+			script: g.element(g.node('RegularElement'), { content: 'raw' }),
+			style: g.element(g.node('RegularElement'), { content: 'raw' })
+		},
+		component: g.element(g.node('Component')),
+		other: g.element(g.node('RegularElement'))
+	},
 
-element svelte:element    SvelteElement
-element svelte:component  SvelteComponent  this=expression
-element svelte:self       SvelteSelf
-element svelte:window     SvelteWindow     root once
-element svelte:document   SvelteDocument   root once
-element svelte:body       SvelteBody       root once
-element svelte:head       SvelteHead       root once
-element svelte:options    SvelteOptions    root once
-element svelte:fragment   SvelteFragment
-element svelte:boundary   SvelteBoundary
-element title             TitleElement     inside svelte:head
-element slot              SlotElement      outside shadowrootmode
-element textarea          RegularElement   rcdata
-element script            RegularElement   raw
-element style             RegularElement   raw
-element component-name    Component
-element *                 RegularElement
+	script: {
+		element: 'script',
+		module: [['context', 'module'], ['module']],
+		typescript: [['lang', 'ts']]
+	},
+	style: 'style',
 
-script script  module=context:module  module=module  typescript=lang:ts
-style  style
+	directives: {
+		arg: ':',
+		modifier: '|',
+		fields: { name: g.directive.arg, modifiers: g.directive.modifiers },
+		rules: {
+			bind: g.directive(g.node('BindDirective', { expression: g.orArg(g.value.expression) }), {
+				unique: 'attributes'
+			}),
+			on: g.directive(g.node('OnDirective', g.opt({ expression: g.value.expression }))),
+			use: g.directive(g.node('UseDirective', g.opt({ expression: g.value.expression }))),
+			class: g.directive(g.node('ClassDirective', { expression: g.orArg(g.value.expression) }), {
+				unique: 'kind'
+			}),
+			style: g.directive(g.node('StyleDirective', { value: g.value.raw }), { unique: 'kind' }),
+			transition: g.directive(
+				g.node('TransitionDirective', g.opt(transition), {
+					intro: g.literal(true),
+					outro: g.literal(true)
+				})
+			),
+			in: g.directive(
+				g.node('TransitionDirective', g.opt(transition), {
+					intro: g.literal(true),
+					outro: g.literal(false)
+				})
+			),
+			out: g.directive(
+				g.node('TransitionDirective', g.opt(transition), {
+					intro: g.literal(false),
+					outro: g.literal(true)
+				})
+			),
+			animate: g.directive(g.node('AnimateDirective', g.opt({ expression: g.value.expression }))),
+			let: g.directive(g.node('LetDirective', { expression: g.bind(g.orArg(g.value.pattern)) }))
+		}
+	},
+	spread: 'SpreadAttribute',
 
-directives arg=: modifier=| field:arg=name field:modifiers=modifiers
-directive bind        BindDirective        expression?name  unique:attribute
-directive on          OnDirective          expression?
-directive use         UseDirective         expression?
-directive class       ClassDirective       expression?name  unique
-directive style       StyleDirective       value  unique
-directive transition  TransitionDirective  expression?  intro outro
-directive in          TransitionDirective  expression?  intro !outro
-directive out         TransitionDirective  expression?  !intro outro
-directive animate     AnimateDirective     expression?
-directive let         LetDirective         pattern?name  declares
-
-spread  SpreadAttribute  expression
-
-block if  IfBlock  chain=elseif
-  open    test=expression  -> consequent
-  branch  else if test=expression  -> alternate chain consequent
-  branch  else  -> alternate
-
-block each  EachBlock
-  open    expression=expression [ as context=pattern ] [ , index?=identifier ] [ ( key?=expression ) ]  -> body declares context index
-  branch  else  -> fallback?
-
-block await  AwaitBlock
-  open    expression=expression [ then [ value=pattern ] -> then declares value | catch [ error=pattern ] -> catch declares error ]  -> pending
-  branch  then [ value=pattern ]  -> then declares value
-  branch  catch [ error=pattern ]  -> catch declares error
-
-block key  KeyBlock
-  open    expression=expression  -> fragment
-
-block snippet  SnippetBlock
-  open    expression=identifier [ typeParams?=typeParameters ] parameters=params  -> body declares expression:outside parameters
-
-tag html    HtmlTag    expression=expression
-tag debug   DebugTag   identifiers=identifiers
-tag const   ConstTag   declaration=const
-tag render  RenderTag  expression=expression
-tag attach  AttachTag  expression=expression  attribute
-
-declaration  DeclarationTag  declaration=statement
-expression   ExpressionTag   expression=expression
-`;
+	sigils: {
+		open: '#',
+		branch: ':',
+		close: '/',
+		tag: '@',
+		blocks: {
+			if: g.block(g.node('IfBlock', { test: g.js.expression }, { consequent: g.content }), {
+				branches: {
+					'else if': g.reopen('alternate', 'elseif'),
+					else: [{ alternate: g.content }]
+				}
+			}),
+			each: g.block(
+				g.node(
+					'EachBlock',
+					{ expression: g.js.expression },
+					g.opt('as', { context: g.bind(g.js.pattern) }),
+					g.opt(',', { index: g.optional(g.bind(g.js.identifier)) }),
+					g.opt('(', { key: g.optional(g.js.expression) }, ')'),
+					{ body: g.content }
+				),
+				{ branches: { else: [{ fallback: g.optional(g.content) }] } }
+			),
+			await: g.block(
+				g.node(
+					'AwaitBlock',
+					{ expression: g.js.expression },
+					g.oneOf(['then', ...resolved], ['catch', ...rejected], [{ pending: g.content }])
+				),
+				{ branches: { then: resolved, catch: rejected } }
+			),
+			key: g.block(g.node('KeyBlock', { expression: g.js.expression }, { fragment: g.content })),
+			snippet: g.block(
+				g.node(
+					'SnippetBlock',
+					{ expression: g.bind.outside(g.js.identifier) },
+					g.opt({ typeParams: g.optional(g.js.typeParameters) }),
+					{ parameters: g.bind(g.js.params) },
+					{ body: g.content }
+				)
+			)
+		},
+		tags: {
+			html: g.tag(g.node('HtmlTag', { expression: g.js.expression })),
+			debug: g.tag(g.node('DebugTag', { identifiers: g.js.identifiers })),
+			const: g.tag(g.node('ConstTag', { declaration: g.js.const })),
+			render: g.tag(g.node('RenderTag', { expression: g.js.expression })),
+			attach: g.tag(g.node('AttachTag', { expression: g.js.expression }), { among: 'attributes' })
+		}
+	},
+	declaration: g.node('DeclarationTag', { declaration: g.js.statement }),
+	expression: g.node('ExpressionTag', { expression: g.js.expression })
+});

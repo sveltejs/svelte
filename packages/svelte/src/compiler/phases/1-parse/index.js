@@ -2,7 +2,7 @@
 /** @import { Expression, Identifier, Node, Pattern, Program } from 'estree' */
 /** @import { Parsed } from '@teasel/parser' */
 /** @import { Tables } from '../../utils/ast.js' */
-import { Plan, Source } from '@teasel/parser';
+import { Source, css } from '@teasel/parser';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import * as state from '../../state.js';
@@ -14,9 +14,6 @@ import {
 	tables_of
 } from '../../utils/ast.js';
 import { grammar } from './grammar.js';
-
-// the grammar is read by the engine once, whatever it parses
-const plan = /** @type {Plan<AST.Root>} */ (new Plan(grammar));
 import { dedent, unsupported } from './js.js';
 import read_options from './options.js';
 import { list } from '../../utils/string.js';
@@ -134,7 +131,7 @@ export function parse(template, loose = false, erase = false) {
 	/** @type {Parsed<AST.Root>} */
 	let answer;
 	try {
-		answer = source.parse(plan);
+		answer = /** @type {Parsed<any>} */ (source.parse(grammar));
 	} catch (error) {
 		if (!(error instanceof SyntaxError)) throw error;
 		throw_error(/** @type {any} */ (error), trimmed);
@@ -168,18 +165,18 @@ export function parse(template, loose = false, erase = false) {
 
 /**
  * A stylesheet on its own: its rules and its comments, as `parseCss` answers them.
- * @param {string} css
+ * @param {string} stylesheet
  * @returns {{ children: AST.CSS.StyleSheet['children'], comments: AST.CSS.CSSComment[] }}
  */
-export function parse_css(css) {
-	const source = new Source(css);
+export function parse_css(stylesheet) {
+	const source = new Source(stylesheet);
 	/** @type {Parsed<any>} */
 	let answer;
 	try {
-		answer = source.parse(Plan.stylesheet);
+		answer = source.parse(css);
 	} catch (error) {
 		if (!(error instanceof SyntaxError)) throw error;
-		throw_error(/** @type {any} */ (error), css);
+		throw_error(/** @type {any} */ (error), stylesheet);
 	} finally {
 		source[Symbol.dispose]();
 	}
