@@ -5,6 +5,7 @@ import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
 import { Batch, current_batch, previous_batch } from '../../../reactivity/batch.js';
 import { async_mode_flag } from '../../../../flags/index.js';
+import { hydrating } from '../../hydration.js';
 
 /**
  * Sets the `selected` attribute on an option so form reset can restore it.
@@ -163,7 +164,8 @@ export function bind_select_value(select, get, set = get) {
 	var batches = new WeakSet();
 	var mounting = true;
 
-	listen_to_event_and_reset_event(select, 'change', (is_reset) => {
+	/** @param {true} [is_reset] */
+	var handler = (is_reset) => {
 		var query = is_reset ? '[selected]' : ':checked';
 		/** @type {unknown} */
 		var value;
@@ -187,7 +189,25 @@ export function bind_select_value(select, get, set = get) {
 		if (current_batch !== null) {
 			batches.add(current_batch);
 		}
-	});
+	};
+
+	listen_to_event_and_reset_event(select, 'change', handler);
+
+	if (hydrating) {
+		var options = Array.from(select.options);
+		var changed;
+		if (select.multiple) {
+			changed = options.some((option) => option.selected !== option.defaultSelected);
+		} else {
+			var index = options.reduce((index, option, i) => (option.defaultSelected ? i : index), -1);
+			// A single-row select implicitly selects its first enabled option.
+			if (index === -1 && select.size <= 1) {
+				index = options.findIndex((option) => !option.matches(':disabled'));
+			}
+			changed = select.selectedIndex !== index;
+		}
+		if (changed) handler();
+	}
 
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
 	effect(() => {
