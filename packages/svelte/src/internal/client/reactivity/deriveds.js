@@ -44,7 +44,13 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, first_batch, previous_batch } from './batch.js';
+import {
+	batch_values,
+	current_batch,
+	first_batch,
+	previous_batch,
+	read_batch_local_value
+} from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -424,7 +430,7 @@ export function update_derived(derived) {
 			return;
 		}
 	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
-		current_batch?.capture(derived, derived.v);
+		current_batch?.capture(derived, derived.v, true);
 	}
 
 	// don't mark derived clean if we're reading it inside a
@@ -446,12 +452,7 @@ export function update_derived(derived) {
 		if (effect_tracking() || current_batch?.is_fork) {
 			batch_values?.set(derived, value);
 		}
-		var is_latest_value =
-			!current_batch?.is_fork &&
-			value === derived.v &&
-			!derived.deps?.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v);
-
-		if (is_latest_value) {
+		if (!current_batch?.is_fork && value === derived.v && !read_batch_local_value(derived)) {
 			update_derived_status(derived);
 		} else if (derived.v !== UNINITIALIZED) {
 			set_signal_status(derived, MAYBE_DIRTY);

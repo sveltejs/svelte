@@ -188,7 +188,7 @@ export class BranchManager {
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
-		var first = false;
+		var offscreen = this.#offscreen.get(key);
 
 		// Re-evaluating in the surviving batch supersedes selections made before a merge,
 		// even though those batches originally had newer IDs and still have commit callbacks.
@@ -201,24 +201,21 @@ export class BranchManager {
 			}
 		}
 
-		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
-			first = true;
+		if (offscreen !== undefined && (offscreen.effect.f & FORK_ONLY_BRANCH) !== 0) {
+			batch.reveal(offscreen.effect);
+		}
 
+		if (fn && !this.#onscreen.has(key) && offscreen === undefined) {
 			if (defer) {
 				var fragment = document.createDocumentFragment();
 				var target = create_text();
 
 				fragment.append(target);
 
-				const b = branch(() => fn(target));
-				this.#offscreen.set(key, {
-					effect: b,
-					fragment
-				});
+				const effect = branch(() => fn(target));
+				if (batch.is_fork) effect.f |= FORK_ONLY_BRANCH;
 
-				if (batch.is_fork) {
-					b.f ^= FORK_ONLY_BRANCH;
-				}
+				this.#offscreen.set(key, { effect, fragment });
 			} else {
 				this.#onscreen.set(
 					key,
@@ -228,15 +225,6 @@ export class BranchManager {
 		}
 
 		this.#batches.set(batch, key);
-
-		const offscreen = this.#offscreen.get(key);
-		if (offscreen && offscreen.effect.f & FORK_ONLY_BRANCH) {
-			if (batch.is_fork) {
-				batch.unskip_effect(offscreen.effect, !first);
-			} else {
-				offscreen.effect.f ^= FORK_ONLY_BRANCH;
-			}
-		}
 
 		if (defer) {
 			for (const [k, effect] of this.#onscreen) {

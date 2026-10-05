@@ -53,6 +53,7 @@ import {
 	flushSync,
 	held_sources,
 	previous_batch,
+	read_batch_local_value,
 	schedule_effect,
 	stale_sources,
 	wv_values
@@ -63,7 +64,6 @@ import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
-import { queue_micro_task } from './dom/task.js';
 
 /**
  * True if updating in an effect context that is reactive (i.e. not branch/root effects)
@@ -495,19 +495,10 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		// Did the effect see the latest value of all its dependencies, or (partly) its batch's view
-		// of them, i.e. did `batch_values` hand it a value that differs from the real one? We only
-		// need to look one level deep: a derived that was itself computed from such a value was not
-		// written to the real world either, so it differs as well.
+		// Did the effect see the latest value of all its dependencies, or (partly) its batch's view of them?
 		var own_batch = previous_batch ?? current_batch; // can be null inside flush_eager_effects
-		var is_latest_value =
-			own_batch === null ||
-			(!own_batch.is_fork &&
-				(batch_values === null ||
-					effect.deps === null ||
-					!effect.deps.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v)));
 
-		if (is_latest_value) {
+		if (own_batch === null || (!own_batch.is_fork && !read_batch_local_value(effect))) {
 			effect.wv = write_version;
 		} else {
 			// The effect ran with values that are not the latest ones (it saw its own batch's view).
@@ -782,27 +773,16 @@ function get_batch_value(signal, first_time) {
 				is_updating_effect ||
 				(active_effect !== null && (active_effect.f & ASYNC) !== 0);
 
-			if (
-				reader !== null &&
-				reactive &&
-				// a reaction can read several stale values in one run — only schedule the re-run once
-				!batch.stale_readers.has(reader)
-			) {
-				batch.stale_readers.add(reader);
-
-				if (current.is_eager) {
+			if (reader !== null && reactive) {
+				if (!current.is_eager) {
+					batch.rerun(reader);
+				} else if (!batch.stale_readers.has(reader)) {
+					batch.stale_readers.add(reader);
 					// TODO only do this if we can see that the batch doesn't have this already scheduled in (maybe)dirty effects.
 					batch.oncommit(() => {
 						batch.stale_readers.delete(reader);
 						Batch.ensure();
 						invalidate(reader);
-					});
-				} else {
-					queue_micro_task(() => {
-						batch.stale_readers.delete(reader);
-						const b = batch.activate();
-						invalidate(reader);
-						b.flush();
 					});
 				}
 			}
