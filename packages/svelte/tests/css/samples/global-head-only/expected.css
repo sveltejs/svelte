@@ -1,2 +1,1 @@
-:export { foo: red; }
 	:is(td, th) { color: red; }
