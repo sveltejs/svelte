@@ -666,15 +666,16 @@ function throw_error(error, template) {
 				e.debug_tag_invalid_arguments(template.lastIndexOf('{@debug', pos) + '{@debug '.length);
 			}
 			// a branch that fits no open block, reported at its sigil
-			if (what === 'else') e.expected_token(pos + 1, '{:else}');
-			if (what === 'else if or else') {
-				if (template.startsWith('{:elseif', pos)) e.block_invalid_elseif(pos + 1);
-				e.expected_token(pos + 1, '{:else} or {:else if}');
+			const tag = template.lastIndexOf('{', pos);
+			if (what === '{:else}') e.expected_token(tag + 1, '{:else}');
+			if (what === '{:else if} or {:else}') {
+				if (template.startsWith('{:elseif', tag)) e.block_invalid_elseif(tag + 1);
+				e.expected_token(tag + 1, '{:else} or {:else if}');
 			}
-			if (what === 'then or catch') e.expected_token(pos + 1, '{:then ...} or {:catch ...}');
-			if (what === 'a block name') e.expected_block_type(pos);
+			if (what === '{:then} or {:catch}') e.expected_token(tag + 1, '{:then ...} or {:catch ...}');
+			if (what.startsWith('{#')) e.expected_block_type(pos);
 			if (what === 'an attribute value') e.expected_attribute_value(pos);
-			if (what === 'a tag name') e.expected_tag(pos);
+			if (what.startsWith('{@')) e.expected_tag(pos);
 			if (what === 'a this attribute') e.svelte_component_missing_this(pos);
 			if (what === 'an expression as this') e.svelte_component_invalid_this(range);
 			if (what === 'an expression, not text' || what === 'a value') e.directive_invalid_value(pos);
