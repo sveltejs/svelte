@@ -22,6 +22,18 @@ export function set_hydrating(value) {
 }
 
 /**
+ * `true` while a component script that started during hydration resumes after a top-level
+ * `await`. The DOM is no longer being hydrated by then, but `hydratable` should still
+ * read the values the server serialized for this component
+ */
+export let hydrating_script = false;
+
+/** @param {boolean} value */
+export function set_hydrating_script(value) {
+	hydrating_script = value;
+}
+
+/**
  * The node that is currently being hydrated. This starts out as the first node inside the opening
  * <!--[--> comment, and updates each time a component calls `$.child(...)` or `$.sibling(...)`.
  * When entering a block (e.g. `{#if ...}`), `hydrate_node` is the block opening comment; by the
