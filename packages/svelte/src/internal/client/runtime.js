@@ -734,7 +734,7 @@ export function get(signal) {
 
 	// Keep batch-local reads and stale-reader tracking out of the common read path.
 	// Function extraction makes it a bit easier for engines to optimize the get function.
-	if (held_sources !== null || stale_sources !== null || batch_values !== null) {
+	if (batch_values !== null) {
 		return get_batch_value(signal, first_time);
 	}
 
