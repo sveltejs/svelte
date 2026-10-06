@@ -90,13 +90,7 @@ export function build_inline_component(node, expression, context) {
 			let expression = /** @type {Expression} */ (context.visit(attribute));
 			props_and_spreads.push(optimiser.transform(expression, attribute.metadata.expression));
 		} else if (attribute.type === 'Attribute') {
-			const value = build_attribute_value(
-				attribute.value,
-				context,
-				optimiser.transform,
-				false,
-				true
-			);
+			const value = build_attribute_value(attribute.value, context, optimiser.transform);
 
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(b.init(attribute.name, value));
