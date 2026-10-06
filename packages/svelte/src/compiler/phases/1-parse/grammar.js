@@ -46,24 +46,24 @@ export const grammar = g.grammar('svelte', {
 		fields: { name: g.element.tag, attributes: g.element.attributes, fragment: g.content },
 		rules: {
 			// `this` stays an attribute: a value mixing text and expressions warns where it is promoted
-			'svelte:element': g.node('SvelteElement'),
+			'svelte:element': { node: 'SvelteElement' },
 			'svelte:component': g.node('SvelteComponent', { expression: g.element.this }),
-			'svelte:self': g.node('SvelteSelf'),
+			'svelte:self': { node: 'SvelteSelf' },
 			'svelte:window': { node: 'SvelteWindow', root: true, once: true },
 			'svelte:document': { node: 'SvelteDocument', root: true, once: true },
 			'svelte:body': { node: 'SvelteBody', root: true, once: true },
 			'svelte:head': { node: 'SvelteHead', root: true, once: true },
 			'svelte:options': { node: 'SvelteOptions', root: true, once: true },
-			'svelte:fragment': g.node('SvelteFragment'),
-			'svelte:boundary': g.node('SvelteBoundary'),
+			'svelte:fragment': { node: 'SvelteFragment' },
+			'svelte:boundary': { node: 'SvelteBoundary' },
 			title: { node: 'TitleElement', inside: 'svelte:head' },
 			slot: { node: 'SlotElement', outside: 'shadowrootmode' },
 			textarea: { node: 'RegularElement', content: 'rcdata' },
 			script: { node: 'RegularElement', content: 'raw' },
 			style: { node: 'RegularElement', content: 'raw' }
 		},
-		component: g.node('Component'),
-		other: g.node('RegularElement')
+		component: { node: 'Component' },
+		other: { node: 'RegularElement' }
 	},
 
 	script: {
