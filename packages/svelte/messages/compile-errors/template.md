@@ -279,6 +279,10 @@ The same applies to components:
 
 > `let:` directive at invalid position
 
+## let_directive_snippet_conflict
+
+> Cannot use `let:` directives on a component that has a `children` snippet. Use snippet parameters instead (e.g. `{#snippet children({ %name% })}`)
+
 ## mixed_event_handler_syntaxes
 
 > Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax

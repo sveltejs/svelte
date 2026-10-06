@@ -1,4 +1,4 @@
-/** @import { Source } from '#client' */
+/** @import { Derived } from '#client' */
 import { derived } from '../internal/client/index.js';
 import { set, state } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
@@ -42,7 +42,7 @@ var inited = false;
 export class SvelteDate extends Date {
 	#time = state(super.getTime());
 
-	/** @type {Map<keyof Date, Source<unknown>>} */
+	/** @type {Map<keyof Date, Derived<unknown>>} */
 	#deriveds = new Map();
 
 	#reaction = active_reaction;
