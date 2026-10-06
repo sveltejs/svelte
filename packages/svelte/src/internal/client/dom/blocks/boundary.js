@@ -165,10 +165,6 @@ export class Boundary {
 
 		this.#effect = block(() => {
 			if (hydrating) {
-				// An unexpected node (for example an element inserted before hydration)
-				// can sit where this boundary's opening comment should be. Reading
-				// `.data` on it throws a TypeError, which a parent boundary treats as
-				// a normal failure instead of a hydration mismatch.
 				const comment_data = read_hydration_instruction(
 					/** @type {TemplateNode} */ (this.#hydrate_open)
 				);
