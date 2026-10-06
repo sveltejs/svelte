@@ -129,8 +129,7 @@ export const grammar = g.grammar('svelte', {
 	},
 
 	constructs: {
-		if: {
-			node: 'IfBlock',
+		IfBlock: {
 			open: {
 				marker: ['{', '#if'],
 				space: true,
@@ -147,8 +146,7 @@ export const grammar = g.grammar('svelte', {
 			],
 			close: { marker: ['{', '/if'], form: ['}'] }
 		},
-		each: {
-			node: 'EachBlock',
+		EachBlock: {
 			open: {
 				marker: ['{', '#each'],
 				space: true,
@@ -164,8 +162,7 @@ export const grammar = g.grammar('svelte', {
 			branches: [{ marker: ['{', ':else'], form: ['}', { fallback: g.optional(g.content) }] }],
 			close: { marker: ['{', '/each'], form: ['}'] }
 		},
-		await: {
-			node: 'AwaitBlock',
+		AwaitBlock: {
 			open: {
 				marker: ['{', '#await'],
 				space: true,
@@ -184,8 +181,7 @@ export const grammar = g.grammar('svelte', {
 			],
 			close: { marker: ['{', '/await'], form: ['}'] }
 		},
-		key: {
-			node: 'KeyBlock',
+		KeyBlock: {
 			open: {
 				marker: ['{', '#key'],
 				space: true,
@@ -193,8 +189,7 @@ export const grammar = g.grammar('svelte', {
 			},
 			close: { marker: ['{', '/key'], form: ['}'] }
 		},
-		snippet: {
-			node: 'SnippetBlock',
+		SnippetBlock: {
 			open: {
 				marker: ['{', '#snippet'],
 				space: true,
@@ -208,38 +203,30 @@ export const grammar = g.grammar('svelte', {
 			},
 			close: { marker: ['{', '/snippet'], form: ['}'] }
 		},
-		html: {
-			node: 'HtmlTag',
+		HtmlTag: {
 			open: { marker: ['{', '@html'], space: true, form: [{ expression: g.js.expression }, '}'] }
 		},
-		debug: {
-			node: 'DebugTag',
+		DebugTag: {
 			open: { marker: ['{', '@debug'], form: [{ identifiers: g.js.identifiers }, '}'] }
 		},
-		const: {
-			node: 'ConstTag',
+		ConstTag: {
 			open: { marker: ['{', '@const'], space: true, form: [{ declaration: g.js.const }, '}'] }
 		},
-		render: {
-			node: 'RenderTag',
+		RenderTag: {
 			open: { marker: ['{', '@render'], space: true, form: [{ expression: g.js.expression }, '}'] }
 		},
-		attach: {
-			node: 'AttachTag',
+		AttachTag: {
 			in: ['attributes'],
 			open: { marker: ['{', '@attach'], space: true, form: [{ expression: g.js.expression }, '}'] }
 		},
-		spread: {
-			node: 'SpreadAttribute',
+		SpreadAttribute: {
 			in: ['attributes'],
 			open: { marker: ['{', '...'], form: [{ expression: g.js.expression }, '}'] }
 		},
-		declaration: {
-			node: 'DeclarationTag',
+		DeclarationTag: {
 			open: { marker: ['{'], form: [{ declaration: g.js.statement }, '}'] }
 		},
-		expression: {
-			node: 'ExpressionTag',
+		ExpressionTag: {
 			in: ['content', 'value', 'rcdata'],
 			open: { marker: ['{'], form: [{ expression: g.js.expression }, '}'] }
 		}

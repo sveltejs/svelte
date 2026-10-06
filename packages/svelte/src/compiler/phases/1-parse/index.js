@@ -674,6 +674,8 @@ function throw_error(error, template) {
 			}
 			if (what === '{:then} or {:catch}') e.expected_token(tag + 1, '{:then ...} or {:catch ...}');
 			if (what.startsWith('{#')) e.expected_block_type(pos);
+			// a close inside a block that wanted its own
+			if (what.startsWith('{/')) e.expected_token(pos, what.slice(2, -1));
 			if (what === 'an attribute value') e.expected_attribute_value(pos);
 			if (what.startsWith('{@')) e.expected_tag(pos);
 			if (what === 'a this attribute') e.svelte_component_missing_this(pos);
