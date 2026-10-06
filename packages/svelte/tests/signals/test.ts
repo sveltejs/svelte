@@ -1578,6 +1578,75 @@ describe('signals', () => {
 		};
 	});
 
+	test('reconnecting deriveds does not duplicate subscriptions', () => {
+		const enabled = state(false);
+		const shared = state(1);
+		let value!: Derived<number>;
+
+		const destroy_owner = effect_root(() => {
+			value = derived(() => ($.get(enabled) ? $.get(shared) : 0));
+			$.untrack(() => $.get(value));
+		});
+
+		const nested_enabled = state(false);
+		const nested_shared = state(1);
+		let inner!: Derived<number>;
+		let outer!: Derived<number>;
+
+		const destroy_nested_owner = effect_root(() => {
+			inner = derived(() => ($.get(nested_enabled) ? $.get(nested_shared) : 0));
+			outer = derived(() => $.get(inner));
+			$.untrack(() => $.get(outer));
+		});
+
+		return () => {
+			flushSync(() => set(enabled, true));
+			const destroy_reader = effect_root(() => {
+				render_effect(() => {
+					$.get(value);
+				});
+			});
+
+			const enabled_subscriptions = enabled.reactions?.length;
+			const shared_subscriptions = shared.reactions?.length;
+			const enabled_reaction = enabled.reactions?.[0];
+			const shared_reaction = shared.reactions?.[0];
+
+			destroy_reader();
+			destroy_owner();
+
+			assert.equal(enabled_subscriptions, 1);
+			assert.equal(shared_subscriptions, 1);
+			assert.equal(enabled_reaction, shared_reaction);
+			assert.equal(enabled.reactions, null);
+			assert.equal(shared.reactions, null);
+
+			flushSync(() => set(nested_enabled, true));
+			const destroy_nested_reader = effect_root(() => {
+				render_effect(() => {
+					$.get(outer);
+				});
+			});
+
+			const nested_enabled_subscriptions = nested_enabled.reactions?.length;
+			const nested_shared_subscriptions = nested_shared.reactions?.length;
+			const nested_enabled_reaction = nested_enabled.reactions?.[0] as Derived<number> | undefined;
+			const nested_shared_reaction = nested_shared.reactions?.[0];
+			const inner_subscriptions = nested_enabled_reaction?.reactions?.length;
+
+			destroy_nested_reader();
+			destroy_nested_owner();
+
+			assert.equal(nested_enabled_subscriptions, 1);
+			assert.equal(nested_shared_subscriptions, 1);
+			assert.equal(inner_subscriptions, 1);
+			assert.equal(nested_enabled_reaction, nested_shared_reaction);
+			assert.equal(nested_enabled.reactions, null);
+			assert.equal(nested_shared.reactions, null);
+			assert.equal(nested_enabled_reaction?.reactions, null);
+		};
+	});
+
 	// https://github.com/sveltejs/svelte/issues/18414
 	test('a reaction that throws after first-reading a fresh derived does not leak it', () => {
 		const src = state(0);
