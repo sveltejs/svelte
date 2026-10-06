@@ -6,22 +6,20 @@ const transition = { expression: g.value.expression };
 
 /** The template language, as the parser reads it: its elements and their fields, its directives, its blocks and tags. */
 export const grammar = g.grammar('svelte', {
-	document: {
-		node: 'Root',
-		form: [
-			{
-				css: g.doc.style,
-				js: g.literal([]),
-				options: g.literal(null),
-				comments: g.doc.comments,
-				module: g.optional(g.doc.module)
-			},
-			g.scope({ instance: g.optional(g.doc.script) }, g.scope({ fragment: g.content }))
-		]
-	},
-	fragment: { node: 'Fragment', form: [g.scope({ nodes: g.nodes })] },
-	text: { node: 'Text', form: [{ data: g.text.data, raw: g.text.raw }] },
-	comment: { node: 'Comment', form: [{ data: g.text.data }] },
+	document: g.node(
+		'Root',
+		{
+			css: g.doc.style,
+			js: g.literal([]),
+			options: g.literal(null),
+			comments: g.doc.comments,
+			module: g.optional(g.doc.module)
+		},
+		g.scope({ instance: g.optional(g.doc.script) }, g.scope({ fragment: g.content }))
+	),
+	fragment: g.node('Fragment', g.scope({ nodes: g.nodes })),
+	text: g.node('Text', { data: g.text.data, raw: g.text.raw }),
+	comment: g.node('Comment', { data: g.text.data }),
 	attributes: { shorthand: ['{', '}'] },
 	autoclose: true,
 	trim: true,
@@ -48,24 +46,24 @@ export const grammar = g.grammar('svelte', {
 		fields: { name: g.element.tag, attributes: g.element.attributes, fragment: g.content },
 		rules: {
 			// `this` stays an attribute: a value mixing text and expressions warns where it is promoted
-			'svelte:element': { node: 'SvelteElement' },
-			'svelte:component': { node: 'SvelteComponent', form: [{ expression: g.element.this }] },
-			'svelte:self': { node: 'SvelteSelf' },
+			'svelte:element': g.node('SvelteElement'),
+			'svelte:component': g.node('SvelteComponent', { expression: g.element.this }),
+			'svelte:self': g.node('SvelteSelf'),
 			'svelte:window': { node: 'SvelteWindow', root: true, once: true },
 			'svelte:document': { node: 'SvelteDocument', root: true, once: true },
 			'svelte:body': { node: 'SvelteBody', root: true, once: true },
 			'svelte:head': { node: 'SvelteHead', root: true, once: true },
 			'svelte:options': { node: 'SvelteOptions', root: true, once: true },
-			'svelte:fragment': { node: 'SvelteFragment' },
-			'svelte:boundary': { node: 'SvelteBoundary' },
+			'svelte:fragment': g.node('SvelteFragment'),
+			'svelte:boundary': g.node('SvelteBoundary'),
 			title: { node: 'TitleElement', inside: 'svelte:head' },
 			slot: { node: 'SlotElement', outside: 'shadowrootmode' },
 			textarea: { node: 'RegularElement', content: 'rcdata' },
 			script: { node: 'RegularElement', content: 'raw' },
 			style: { node: 'RegularElement', content: 'raw' }
 		},
-		component: { node: 'Component' },
-		other: { node: 'RegularElement' }
+		component: g.node('Component'),
+		other: g.node('RegularElement')
 	},
 
 	script: {
@@ -85,28 +83,28 @@ export const grammar = g.grammar('svelte', {
 				form: [{ expression: g.orArg(g.value.expression) }],
 				unique: 'attributes'
 			},
-			on: { node: 'OnDirective', form: [g.opt({ expression: g.value.expression })] },
-			use: { node: 'UseDirective', form: [g.opt({ expression: g.value.expression })] },
+			on: g.node('OnDirective', g.opt({ expression: g.value.expression })),
+			use: g.node('UseDirective', g.opt({ expression: g.value.expression })),
 			class: {
 				node: 'ClassDirective',
 				form: [{ expression: g.orArg(g.value.expression) }],
 				unique: 'kind'
 			},
 			style: { node: 'StyleDirective', form: [{ value: g.value.raw }], unique: 'kind' },
-			transition: {
-				node: 'TransitionDirective',
-				form: [g.opt(transition), { intro: g.literal(true), outro: g.literal(true) }]
-			},
-			in: {
-				node: 'TransitionDirective',
-				form: [g.opt(transition), { intro: g.literal(true), outro: g.literal(false) }]
-			},
-			out: {
-				node: 'TransitionDirective',
-				form: [g.opt(transition), { intro: g.literal(false), outro: g.literal(true) }]
-			},
-			animate: { node: 'AnimateDirective', form: [g.opt({ expression: g.value.expression })] },
-			let: { node: 'LetDirective', form: [{ expression: g.bind(g.orArg(g.value.pattern)) }] }
+			transition: g.node('TransitionDirective', g.opt(transition), {
+				intro: g.literal(true),
+				outro: g.literal(true)
+			}),
+			in: g.node('TransitionDirective', g.opt(transition), {
+				intro: g.literal(true),
+				outro: g.literal(false)
+			}),
+			out: g.node('TransitionDirective', g.opt(transition), {
+				intro: g.literal(false),
+				outro: g.literal(true)
+			}),
+			animate: g.node('AnimateDirective', g.opt({ expression: g.value.expression })),
+			let: g.node('LetDirective', { expression: g.bind(g.orArg(g.value.pattern)) })
 		}
 	},
 
