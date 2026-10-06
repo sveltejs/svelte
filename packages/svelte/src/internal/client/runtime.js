@@ -23,7 +23,9 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	ASYNC
+	ASYNC,
+	EFFECT,
+	RENDER_EFFECT
 } from './constants.js';
 import { invalidate, old_values } from './reactivity/sources.js';
 import {
@@ -504,10 +506,16 @@ export function update_effect(effect) {
 			// The effect ran with values that are not the latest ones (it saw its own batch's view).
 			// Don't update its write version — instead remember it so that the batch can bring it
 			// up to date on commit, and tell all subsequent batches that it may need to re-run in their view.
+			// Render/user effects have made that view visible (in the DOM, or through side effects), which their
+			// write version can't tell: their dependencies may be back to the values the effect last saw for real
+			// (e.g. a derived whose value didn't change), so they are dirty. Block/async effects are only maybe
+			// dirty, since their results are kept per batch, and they run during traversal: marking them dirty
+			// would re-run them (and restart async work) on every process of a pending batch.
 			var own = /** @type {Batch} */ (own_batch);
+			var status = (flags & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 ? DIRTY : MAYBE_DIRTY;
 			own.stale_effects.set(effect, write_version);
 			for (var batch = own.next; batch !== null; batch = batch.next) {
-				batch.add_dirty_reaction(effect, MAYBE_DIRTY);
+				batch.add_dirty_reaction(effect, status);
 			}
 		}
 
