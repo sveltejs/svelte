@@ -1607,7 +1607,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			binding.reassigned = true;
 			binding.assignments.push({ value: parsed.writeExpr ?? reference.node, scope });
 		}
-		if (parsed.mutate) binding.mutated = true;
+		if (parsed.mutate && !deleted(reference.node)) binding.mutated = true;
 	}
 
 	for (const [scope, node, value] of updates) {
@@ -1686,6 +1686,17 @@ function get_global_keypath(node, scope) {
 	if (binding !== null) return null; // rune name, but references a variable or store
 
 	return n.name + joined;
+}
+
+/**
+ * Svelte counts a member assigned to or updated as a mutation, and `delete` is neither.
+ * @param {Identifier} id the root of the chain the parser saw mutated
+ */
+function deleted(id) {
+	let node = parentOf(id);
+	while (node?.type === 'MemberExpression' || node?.type === 'ChainExpression')
+		node = parentOf(node);
+	return node?.type === 'UnaryExpression' && node.operator === 'delete';
 }
 
 /**
