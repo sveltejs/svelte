@@ -103,8 +103,6 @@ export function flatten(blockers, sync, async, fn) {
 
 	if (blocker_promise) {
 		blocker_promise.then(() => {
-			// the effect may have been destroyed while we were waiting for the blockers,
-			// in which case there's no batch to attach new async deriveds to
 			if ((parent.f & DESTROYED) !== 0) {
 				decrement_pending();
 				return;
