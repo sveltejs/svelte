@@ -14,7 +14,7 @@ import {
 	tables_of
 } from '../../utils/ast.js';
 import { grammar } from './grammar.js';
-import { copy_attached, dedent, first_from, unsupported } from './js.js';
+import { dedent, first_from, unsupported } from './js.js';
 import read_options from './options.js';
 import { list } from '../../utils/string.js';
 
@@ -156,11 +156,6 @@ export function parse(template, loose = false, erase = false) {
 		if (finish.in_tags.has(comment)) comment.loc = loc(comment.start, comment.end);
 		else dedent(comment, trimmed);
 	}
-	copy_attached(
-		roots.map((piece) => piece.node),
-		root.comments,
-		ts
-	);
 
 	return root;
 }
@@ -513,12 +508,6 @@ class Finish {
 				default:
 					this.expression(attribute, attribute.expression);
 					attribute.name_loc = this.name_loc(attribute);
-					// the printer places comments at located nodes, and a shorthand's name was never located
-					if (
-						(attribute.type === 'BindDirective' || attribute.type === 'ClassDirective') &&
-						attribute.expression.end === attribute.end
-					)
-						delete attribute.expression.loc;
 			}
 		}
 	}

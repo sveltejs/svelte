@@ -1,4 +1,4 @@
-/** @import { Node, Program } from 'estree' */
+/** @import { Program } from 'estree' */
 /** @import { AST } from '#compiler' */
 import * as teasel from '@teasel/parser';
 import * as e from '../../errors.js';
@@ -29,7 +29,6 @@ export function parse(source, comments, typescript) {
 		dedent(comment, source);
 		comments.push(/** @type {AST.JSComment} */ (comment));
 	}
-	copy_attached([answer.node], /** @type {AST.JSComment[]} */ (answer.comments), !!typescript);
 	// a module read on its own is one piece: its program, in its own scope
 	const scopes = /** @type {teasel.Scope[]} */ (answer.scopes);
 	keep_tables(answer.node, {
@@ -91,55 +90,6 @@ export function dedent(comment, source) {
 
 		const indentation = source.slice(a, b);
 		comment.value = comment.value.replace(new RegExp(`^${indentation}`, 'gm'), '');
-	}
-}
-
-const ATTACHED = /** @type {const} */ (['leadingComments', 'trailingComments', 'innerComments']);
-
-/**
- * A node's comments are copies of the listed ones without their locations, as acorn's attachment made them.
- * @param {Node[]} pieces
- * @param {AST.JSComment[]} comments the listed comments, dedented, in source order
- * @param {boolean} typescript
- */
-export function copy_attached(pieces, comments, typescript) {
-	if (comments.length === 0) return;
-	const listed = new Map(comments.map((comment) => [comment.start, comment]));
-	const { children, extras } = teasel.js;
-
-	/**
-	 * @param {any} node
-	 * @param {number} low
-	 * @param {number} high what lies between the node's siblings: the only comments its subtree can carry
-	 */
-	function visit(node, low, high) {
-		if (node === null || typeof node !== 'object') return;
-		if (Array.isArray(node)) {
-			for (let i = 0; i < node.length; i += 1) {
-				const before = i === 0 ? low : node[i - 1]?.end ?? low;
-				const after = i === node.length - 1 ? high : node[i + 1]?.start ?? high;
-				visit(node[i], before, after);
-			}
-			return;
-		}
-		for (const key of ATTACHED) {
-			const list = /** @type {AST.JSComment[] | undefined} */ (node[key]);
-			if (list === undefined) continue;
-			node[key] = list.map((comment) => {
-				const read = listed.get(comment.start);
-				// the comment before a `<script>` that the compiler puts on its program has no place in the source
-				if (read === undefined) return comment;
-				return { type: comment.type, value: read.value, start: comment.start, end: comment.end };
-			});
-		}
-		const first = comments[first_from(comments, low)];
-		if (first === undefined || first.start >= high) return;
-		for (const key of children[node.type] ?? []) visit(node[key], low, high);
-		if (typescript) for (const key of extras) visit(node[key], low, high);
-	}
-
-	for (const piece of pieces) {
-		visit(piece, /** @type {any} */ (piece).start, /** @type {any} */ (piece).end);
 	}
 }
 

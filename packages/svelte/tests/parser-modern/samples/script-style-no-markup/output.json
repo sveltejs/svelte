@@ -122,7 +122,17 @@
 					"type": "Line",
 					"value": " script and style but no markup",
 					"start": 10,
-					"end": 43
+					"end": 43,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 2,
+							"column": 34
+						}
+					}
 				}
 			]
 		},
