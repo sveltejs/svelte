@@ -32,6 +32,7 @@ import {
 	hydrate_node,
 	hydrating,
 	next,
+	read_hydration_instruction,
 	skip_nodes,
 	set_hydrate_node
 } from '../hydration.js';
@@ -164,16 +165,18 @@ export class Boundary {
 
 		this.#effect = block(() => {
 			if (hydrating) {
-				const comment = /** @type {Comment} */ (this.#hydrate_open);
+				const comment_data = read_hydration_instruction(
+					/** @type {TemplateNode} */ (this.#hydrate_open)
+				);
 				hydrate_next();
 
-				const server_rendered_pending = comment.data === HYDRATION_START_ELSE;
-				const server_rendered_failed = comment.data.startsWith(HYDRATION_START_FAILED);
+				const server_rendered_pending = comment_data === HYDRATION_START_ELSE;
+				const server_rendered_failed = comment_data.startsWith(HYDRATION_START_FAILED);
 
 				if (server_rendered_failed) {
 					// Server rendered the failed snippet - hydrate it.
 					// The serialized error is embedded in the comment: <!--[?<json>-->
-					const serialized_error = JSON.parse(comment.data.slice(HYDRATION_START_FAILED.length));
+					const serialized_error = JSON.parse(comment_data.slice(HYDRATION_START_FAILED.length));
 					this.#hydrate_failed_content(serialized_error);
 				} else if (server_rendered_pending) {
 					this.#hydrate_pending_content();
