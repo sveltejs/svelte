@@ -40,8 +40,6 @@ The `pending` snippet will _not_ be shown for subsequent async updates — for t
 
 > [!NOTE] During server-side rendering, a boundary with a `pending` snippet renders that snippet and ignores the rest of its content. See [Server-side rendering](await-expressions#Server-side-rendering).
 
-> [!NOTE] In the [playground](/playground), your app is rendered inside a boundary with an empty pending snippet, so that you can use `await` without having to create one.
-
 
 ### `failed`
 
