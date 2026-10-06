@@ -35,10 +35,10 @@ import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
+	eager_effects,
 	flush_eager_effects,
 	invalidate,
 	old_values,
-	set_eager_effects,
 	source,
 	update
 } from './sources.js';
@@ -753,7 +753,11 @@ export class Batch {
 			} else {
 				var effect = /** @type {Effect} */ (reaction);
 
-				if (
+				if ((flags & EAGER_EFFECT) !== 0) {
+					// Like in `mark_reactions`, these aren't scheduled but run right away (`flush_eager_effects`).
+					// For revalidations, they already did as part of the real world's write that caused it.
+					if (not_yet) eager_effects.add(effect);
+				} else if (
 					not_yet
 						? !this.seen_effects?.has(effect) && !this.#dirty_reactions.has(effect)
 						: (flags & (ASYNC | BLOCK_EFFECT)) === 0 || this.seen_effects?.has(effect)
@@ -1429,28 +1433,6 @@ function flush_queued_effects(effects) {
 }
 
 /**
- * When committing a fork, we need to trigger eager effects so that
- * any `$state.eager(...)` expressions update immediately. This
- * function allows us to discover them
- * @param {Value} value
- * @param {Set<Effect>} effects
- */
-function mark_eager_effects(value, effects) {
-	if (value.reactions === null) return;
-
-	for (const reaction of value.reactions) {
-		const flags = reaction.f;
-
-		if ((flags & DERIVED) !== 0) {
-			mark_eager_effects(/** @type {Derived} */ (reaction), effects);
-		} else if ((flags & EAGER_EFFECT) !== 0) {
-			set_signal_status(reaction, DIRTY);
-			effects.add(/** @type {Effect} */ (reaction));
-		}
-	}
-}
-
-/**
  * @param {Effect} effect
  * @returns {void}
  */
@@ -1645,51 +1627,28 @@ export function fork(fn) {
 
 			batch.is_fork = false;
 			batch.enqueue();
+			current_batch?.deactivate(); // write as the real world, not within some other batch's view
 
-			// Apply changes and update write versions so deriveds see the change. Everything still
-			// in `batch.current` at this point is the latest value: sources that the real world has
-			// written to in the meantime were removed from the fork via `overtake`, while
-			// async results are kept up to date by revalidating their producers when inputs change.
-			// We use fresh versions rather than the fork-time `content.wv`, because the real world
-			// may have run reactions since then whose versions would otherwise outrank them.
+			// Committing means that the batch writes its values to the real world, just like a real
+			// batch would (which also tells the other forks about it). Everything still in `current` at
+			// this point is the latest value: sources that the real world has written to in the meantime
+			// were removed from the fork via `overtake`, while async results are kept up to date by
+			// revalidating their producers when inputs change. Capturing them anew gives them fresh write
+			// versions, because the real world may have run reactions since that would otherwise outrank them.
 			for (var [source, content] of batch.current) {
-				var changed = source.v !== content.v;
-				source.v = content.v;
-
-				if (!content.is_derived) {
-					content.wv = source.wv = increment_write_version();
-					// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
-					batch.mark(source, MAYBE_DIRTY, true);
-				} else if (changed) {
-					// A derived that was evaluated inside the fork: bump its version too, so that reactions
-					// which read the (then still old) real value _after_ the fork evaluated it — and which are
-					// therefore not in `stale_effects` — see a newer dependency version and re-run.
-					content.wv = source.wv = increment_write_version();
-				}
+				batch.capture(source, content.v, content.is_derived);
+				// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
+				if (!content.is_derived) batch.mark(source, MAYBE_DIRTY, true);
 			}
+
+			// trigger any `$state.eager(...)` expressions with the new state
+			flush_eager_effects();
 
 			// All the block/async effects the fork executed are now guaranteed to be up to date
 			for (const effect of batch.stale_effects.keys()) {
 				effect.wv = write_version;
 			}
 			batch.stale_effects.clear();
-
-			// trigger any `$state.eager(...)` expressions with the new state.
-			// eager effects don't get scheduled like other effects, so we
-			// can't just encounter them during traversal, we need to
-			// proactively flush them
-			// TODO maybe there's a better implementation?
-			flushSync(() => {
-				/** @type {Set<Effect>} */
-				var eager_effects = new Set();
-
-				for (var source of batch.current.keys()) {
-					mark_eager_effects(source, eager_effects);
-				}
-
-				set_eager_effects(eager_effects);
-				flush_eager_effects();
-			});
 
 			// Promote fork-only branches to the real world
 			for (const e of batch.unskipped_branches) {
@@ -1699,18 +1658,6 @@ export function fork(fn) {
 			}
 
 			batch.flush();
-
-			// Committing means the real world writes the fork's values, so tell the other forks about
-			// it like `#capture` does. Batches that were created while flushing (e.g. by an effect
-			// writing to state) are real batches, and must not be treated like that.
-			for (let b = first_batch; b !== null; b = b.next) {
-				if (!b.is_fork) continue;
-
-				for (const [source, current] of batch.current) {
-					b.overtake(source, current.is_derived, current.v);
-				}
-			}
-
 			await settled;
 		},
 		discard: () => {
