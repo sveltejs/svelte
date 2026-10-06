@@ -38,17 +38,7 @@
 							"start": 43,
 							"end": 46,
 							"type": "Identifier",
-							"name": "foo",
-							"loc": {
-								"start": {
-									"line": 5,
-									"column": 13
-								},
-								"end": {
-									"line": 5,
-									"column": 16
-								}
-							}
+							"name": "foo"
 						},
 						"modifiers": []
 					}

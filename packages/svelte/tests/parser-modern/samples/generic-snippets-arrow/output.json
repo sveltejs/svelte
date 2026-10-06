@@ -1,9 +1,63 @@
 {
-	"css": null,
-	"js": [],
+	"type": "Root",
 	"start": 0,
 	"end": 113,
-	"type": "Root",
+	"css": null,
+	"js": [],
+	"options": null,
+	"comments": [],
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 28,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 18,
+			"end": 19,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 2,
+					"column": 9
+				}
+			},
+			"body": [],
+			"sourceType": "module"
+		},
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 8,
+				"end": 17,
+				"name": "lang",
+				"value": [
+					{
+						"type": "Text",
+						"start": 14,
+						"end": 16,
+						"raw": "ts",
+						"data": "ts"
+					}
+				],
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 8,
+						"character": 8
+					},
+					"end": {
+						"line": 1,
+						"column": 12,
+						"character": 12
+					}
+				}
+			}
+		]
+	},
 	"fragment": {
 		"type": "Fragment",
 		"nodes": [
@@ -20,19 +74,21 @@
 				"end": 113,
 				"expression": {
 					"type": "Identifier",
-					"name": "foo",
 					"start": 40,
 					"end": 43,
 					"loc": {
 						"start": {
 							"line": 4,
-							"column": 10
+							"column": 10,
+							"character": 40
 						},
 						"end": {
 							"line": 4,
-							"column": 13
+							"column": 13,
+							"character": 43
 						}
-					}
+					},
+					"name": "foo"
 				},
 				"typeParams": "T extends () => void, U = Array<string>",
 				"parameters": [
@@ -201,60 +257,6 @@
 						}
 					]
 				}
-			}
-		]
-	},
-	"options": null,
-	"comments": [],
-	"instance": {
-		"type": "Script",
-		"start": 0,
-		"end": 28,
-		"context": "default",
-		"content": {
-			"type": "Program",
-			"start": 18,
-			"end": 19,
-			"loc": {
-				"start": {
-					"line": 1,
-					"column": 0
-				},
-				"end": {
-					"line": 2,
-					"column": 9
-				}
-			},
-			"body": [],
-			"sourceType": "module"
-		},
-		"attributes": [
-			{
-				"type": "Attribute",
-				"start": 8,
-				"end": 17,
-				"name": "lang",
-				"name_loc": {
-					"start": {
-						"line": 1,
-						"column": 8,
-						"character": 8
-					},
-					"end": {
-						"line": 1,
-						"column": 12,
-						"character": 12
-					}
-				},
-				"value": [
-					{
-						"start": 14,
-						"end": 16,
-						"type": "Text",
-						"raw": "ts",
-						"data": "ts"
-					}
-				]
 			}
 		]
 	}

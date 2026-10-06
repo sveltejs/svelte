@@ -54,11 +54,13 @@
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 6
+										"column": 6,
+										"character": 6
 									},
 									"end": {
 										"line": 1,
-										"column": 6
+										"column": 6,
+										"character": 6
 									}
 								}
 							}
@@ -120,6 +122,7 @@
 								"type": "Identifier",
 								"start": 25,
 								"end": 25,
+								"name": "",
 								"loc": {
 									"start": {
 										"line": 2,
@@ -129,8 +132,7 @@
 										"line": 2,
 										"column": 10
 									}
-								},
-								"name": ""
+								}
 							}
 						}
 					}
@@ -830,11 +832,13 @@
 					"loc": {
 						"start": {
 							"line": 15,
-							"column": 16
+							"column": 16,
+							"character": 197
 						},
 						"end": {
 							"line": 15,
-							"column": 20
+							"column": 20,
+							"character": 201
 						}
 					}
 				},
@@ -1187,6 +1191,5 @@
 			}
 		]
 	},
-	"options": null,
-	"comments": []
+	"options": null
 }

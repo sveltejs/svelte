@@ -26,11 +26,13 @@
 					"loc": {
 						"start": {
 							"line": 4,
-							"column": 10
+							"column": 10,
+							"character": 40
 						},
 						"end": {
 							"line": 4,
-							"column": 17
+							"column": 17,
+							"character": 47
 						}
 					}
 				},
@@ -159,11 +161,13 @@
 					"loc": {
 						"start": {
 							"line": 8,
-							"column": 10
+							"column": 10,
+							"character": 104
 						},
 						"end": {
 							"line": 8,
-							"column": 25
+							"column": 25,
+							"character": 119
 						}
 					}
 				},

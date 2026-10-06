@@ -16,6 +16,7 @@
 					"type": "Identifier",
 					"start": 5,
 					"end": 5,
+					"name": "",
 					"loc": {
 						"start": {
 							"line": 1,
@@ -25,8 +26,7 @@
 							"line": 1,
 							"column": 5
 						}
-					},
-					"name": ""
+					}
 				},
 				"consequent": {
 					"type": "Fragment",
@@ -52,6 +52,7 @@
 								"type": "Identifier",
 								"start": 17,
 								"end": 17,
+								"name": "",
 								"loc": {
 									"start": {
 										"line": 2,
@@ -61,8 +62,7 @@
 										"line": 2,
 										"column": 10
 									}
-								},
-								"name": ""
+								}
 							},
 							"consequent": {
 								"type": "Fragment",
@@ -107,6 +107,7 @@
 					"type": "Identifier",
 					"start": 42,
 					"end": 42,
+					"name": "",
 					"loc": {
 						"start": {
 							"line": 6,
@@ -116,8 +117,7 @@
 							"line": 6,
 							"column": 7
 						}
-					},
-					"name": ""
+					}
 				},
 				"body": {
 					"type": "Fragment",
@@ -152,11 +152,13 @@
 					"loc": {
 						"start": {
 							"line": 9,
-							"column": 10
+							"column": 10,
+							"character": 63
 						},
 						"end": {
 							"line": 9,
-							"column": 10
+							"column": 10,
+							"character": 63
 						}
 					}
 				},
@@ -193,11 +195,13 @@
 					"loc": {
 						"start": {
 							"line": 12,
-							"column": 10
+							"column": 10,
+							"character": 87
 						},
 						"end": {
 							"line": 12,
-							"column": 13
+							"column": 13,
+							"character": 90
 						}
 					}
 				},
@@ -217,6 +221,5 @@
 			}
 		]
 	},
-	"options": null,
-	"comments": []
+	"options": null
 }

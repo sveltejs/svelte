@@ -14,7 +14,7 @@ import {
 	tables_of
 } from '../../utils/ast.js';
 import { grammar } from './grammar.js';
-import { dedent, unsupported } from './js.js';
+import { copy_attached, dedent, first_from, unsupported } from './js.js';
 import read_options from './options.js';
 import { list } from '../../utils/string.js';
 
@@ -148,17 +148,19 @@ export function parse(template, loose = false, erase = false) {
 
 	const roots = /** @type {import('@teasel/parser').Root[]} */ (answer.roots);
 	for (const piece of roots) keep_tables(piece.node, piece);
-	new Finish(trimmed).root(root);
+	const finish = new Finish(trimmed, root.comments);
+	finish.root(root);
 
-	// a comment between attributes is kept whole, one in JavaScript loses its line's indentation
-	const spans = roots.map(({ node }) => [
-		/** @type {number} */ (node.start),
-		/** @type {number} */ (node.end)
-	]);
+	// a comment between attributes is the template's, kept whole; one in JavaScript loses its line's indentation
 	for (const comment of root.comments) {
-		if (spans.some(([start, end]) => comment.start >= start && comment.end <= end))
-			dedent(comment, trimmed);
+		if (finish.in_tags.has(comment)) comment.loc = loc(comment.start, comment.end);
+		else dedent(comment, trimmed);
 	}
+	copy_attached(
+		roots.map((piece) => piece.node),
+		root.comments,
+		ts
+	);
 
 	return root;
 }
@@ -190,9 +192,16 @@ export function parse_css(stylesheet) {
  * location of each name, the options read out of `<svelte:options>`.
  */
 class Finish {
-	/** @param {string} template */
-	constructor(template) {
+	/** @type {Set<AST.JSComment>} */
+	in_tags = new Set();
+
+	/**
+	 * @param {string} template
+	 * @param {AST.JSComment[]} comments
+	 */
+	constructor(template, comments) {
 		this.template = template;
+		this.comments = comments;
 	}
 
 	/** @param {AST.Root} root */
@@ -299,6 +308,26 @@ class Finish {
 		}
 	}
 
+	/**
+	 * The comments in a start tag outside its attributes.
+	 * @param {AST.ElementLike} node
+	 */
+	tag_comments(node) {
+		const end = node.fragment.nodes[0]?.start ?? node.end;
+		const { comments } = this;
+		for (
+			let i = first_from(comments, node.start);
+			i < comments.length && comments[i].start < end;
+			i += 1
+		) {
+			const comment = comments[i];
+			const inside = node.attributes.some(
+				(attribute) => comment.start >= attribute.start && comment.end <= attribute.end
+			);
+			if (!inside) this.in_tags.add(comment);
+		}
+	}
+
 	/** @param {AST.Fragment | null | undefined} fragment */
 	body(fragment) {
 		if (fragment) this.fragment(fragment, false);
@@ -368,6 +397,7 @@ class Finish {
 					node.metadata.expression = new ExpressionMetadata();
 				}
 				this.attributes(node.attributes);
+				if (this.comments.length !== 0) this.tag_comments(node);
 				this.fragment(node.fragment, true);
 				if (node.type === 'RegularElement') this.implicitly_closed(node);
 				return;
@@ -391,6 +421,9 @@ class Finish {
 				return;
 			}
 			case 'ConstTag':
+				located(node.declaration.declarations[0].id);
+				this.expression(node, node.declaration);
+				return;
 			case 'DeclarationTag':
 				this.expression(node, node.declaration);
 				return;
@@ -404,6 +437,7 @@ class Finish {
 			case 'EachBlock': {
 				const index = /** @type {Identifier | string | undefined} */ (node.index);
 				if (index !== undefined && typeof index !== 'string') node.index = index.name;
+				located(node.context);
 				node.metadata = /** @type {any} */ (null); // filled in later
 				this.body(node.body);
 				this.body(node.fallback);
@@ -411,6 +445,8 @@ class Finish {
 			}
 			case 'AwaitBlock':
 				this.expression(node, node.expression);
+				located(node.value);
+				located(node.error);
 				this.body(node.pending);
 				this.body(node.then);
 				this.body(node.catch);
@@ -421,6 +457,7 @@ class Finish {
 				return;
 			case 'SnippetBlock':
 				node.metadata = { can_hoist: false, sites: new Set() };
+				located(node.expression);
 				this.body(node.body);
 				return;
 		}
@@ -443,6 +480,8 @@ class Finish {
 					attribute.metadata = { delegated: false, needs_clsx: false };
 					attribute.name_loc = this.name_loc(attribute);
 					this.value(attribute.value);
+					if (this.template[attribute.start] === '{')
+						located(/** @type {AST.ExpressionTag} */ (attribute.value).expression);
 					break;
 				case 'SpreadAttribute':
 				case 'AttachTag':
@@ -474,6 +513,12 @@ class Finish {
 				default:
 					this.expression(attribute, attribute.expression);
 					attribute.name_loc = this.name_loc(attribute);
+					// the printer places comments at located nodes, and a shorthand's name was never located
+					if (
+						(attribute.type === 'BindDirective' || attribute.type === 'ClassDirective') &&
+						attribute.expression.end === attribute.end
+					)
+						delete attribute.expression.loc;
 			}
 		}
 	}
@@ -586,6 +631,16 @@ function is_whitespace(cc) {
  */
 function loc(start, end) {
 	return { start: state.locator(start), end: state.locator(end) };
+}
+
+/**
+ * A name the template gives a block, a tag or a shorthand, located with each position's `character` as the
+ * names the compiler read itself were.
+ * @param {Node | null | undefined} node
+ */
+function located(node) {
+	if (node?.type === 'Identifier')
+		node.loc = loc(/** @type {any} */ (node).start, /** @type {any} */ (node).end);
 }
 
 /**
