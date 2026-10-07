@@ -2,6 +2,7 @@
 import { DEV } from 'esm-env';
 import {
 	get,
+	untrack,
 	active_effect,
 	update_version,
 	active_reaction,
@@ -58,6 +59,8 @@ export function proxy(value) {
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
 	var version = source(0);
+	// Used to preserve initial properties when a forked deletion is discarded
+	var original_value = Symbol();
 
 	var stack = DEV && tracing_mode_flag ? get_error('created at') : null;
 	var parent_version = update_version;
@@ -150,16 +153,19 @@ export function proxy(value) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				if (prop in target) {
-					const s = with_parent(() => source(UNINITIALIZED, stack));
+				var descriptor = get_descriptor(target, prop);
+
+				if (descriptor !== undefined) {
+					s = with_parent(() => source(original_value, stack));
 					sources.set(prop, s);
+					set(s, UNINITIALIZED);
 					increment(version);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
 					}
 				}
-			} else {
+			} else if (get_source_value(s) !== UNINITIALIZED) {
 				set(s, UNINITIALIZED);
 				increment(version);
 			}
@@ -197,7 +203,9 @@ export function proxy(value) {
 
 			if (s !== undefined) {
 				var v = get(s);
-				return v === UNINITIALIZED ? undefined : v;
+				if (v === UNINITIALIZED) return Reflect.get(prototype, prop, receiver);
+				if (v === original_value) return Reflect.get(target, prop, receiver);
+				return v;
 			}
 
 			return Reflect.get(target, prop, receiver);
@@ -209,11 +217,24 @@ export function proxy(value) {
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 			var s = sources.get(prop);
 
+			if (s === undefined && active_effect !== null && descriptor === undefined) {
+				s = with_parent(() => source(UNINITIALIZED, stack));
+				sources.set(prop, s);
+
+				if (DEV) {
+					tag(s, get_label(path, prop));
+				}
+			}
+
 			if (s !== undefined) {
 				var value = get(s);
 
 				if (value === UNINITIALIZED) {
 					return undefined;
+				}
+
+				if (value === original_value) {
+					return descriptor;
 				}
 
 				if (descriptor && 'value' in descriptor) {
@@ -237,7 +258,7 @@ export function proxy(value) {
 			}
 
 			var s = sources.get(prop);
-			var has = (s !== undefined && s.v !== UNINITIALIZED) || Reflect.has(target, prop);
+			var has = Reflect.has(target, prop);
 
 			if (
 				s !== undefined ||
@@ -259,9 +280,7 @@ export function proxy(value) {
 				}
 
 				var value = get(s);
-				if (value === UNINITIALIZED) {
-					return false;
-				}
+				return value === UNINITIALIZED ? Reflect.has(prototype, prop) : true;
 			}
 
 			return has;
@@ -269,7 +288,9 @@ export function proxy(value) {
 
 		set(target, prop, value, receiver) {
 			var s = sources.get(prop);
-			var has = prop in target;
+			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+			var source_value = s === undefined ? UNINITIALIZED : get_source_value(s);
+			var has = s === undefined ? descriptor !== undefined : source_value !== UNINITIALIZED;
 
 			// variable.length = value -> clear all signals with index >= value
 			if (is_proxied_array && prop === 'length') {
@@ -296,8 +317,8 @@ export function proxy(value) {
 			// the heuristics of effects will be different vs if we had read the proxied
 			// object property before writing to that property.
 			if (s === undefined) {
-				if (!has || get_descriptor(target, prop)?.writable) {
-					s = with_parent(() => source(undefined, stack));
+				if (!has || descriptor?.writable) {
+					s = with_parent(() => source(has ? proxy(target[prop]) : UNINITIALIZED, stack));
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
@@ -306,14 +327,10 @@ export function proxy(value) {
 
 					sources.set(prop, s);
 				}
-			} else {
-				has = s.v !== UNINITIALIZED;
-
+			} else if (source_value !== original_value || descriptor?.writable) {
 				var p = with_parent(() => proxy(value));
 				set(s, p);
 			}
-
-			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 
 			// Set the new value before updating any signals so that any listeners get the new value
 			if (descriptor?.set) {
@@ -345,11 +362,14 @@ export function proxy(value) {
 
 			var own_keys = Reflect.ownKeys(target).filter((key) => {
 				var source = sources.get(key);
-				return source === undefined || source.v !== UNINITIALIZED;
+				return source === undefined || get_source_value(source) !== UNINITIALIZED;
 			});
 
 			for (var [key, source] of sources) {
-				if (source.v !== UNINITIALIZED && !(key in target)) {
+				if (
+					get_source_value(source) !== UNINITIALIZED &&
+					get_descriptor(target, key) === undefined
+				) {
 					own_keys.push(key);
 				}
 			}
@@ -371,6 +391,15 @@ function get_label(path, prop) {
 	if (typeof prop === 'symbol') return `${path}[Symbol(${prop.description ?? ''})]`;
 	if (regex_is_valid_identifier.test(prop)) return `${path}.${prop}`;
 	return /^\d+$/.test(prop) ? `${path}[${prop}]` : `${path}['${prop}']`;
+}
+
+/**
+ * @template T
+ * @param {Source<T>} source
+ * @returns {T}
+ */
+function get_source_value(source) {
+	return untrack(() => get(source));
 }
 
 /**
