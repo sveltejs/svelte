@@ -1,5 +1,7 @@
 import { proxy } from './proxy';
 import { assert, test } from 'vitest';
+import { disable_async_mode_flag, enable_async_mode_flag } from '../flags';
+import { fork } from './reactivity/batch';
 
 test('does not mutate the original object', () => {
 	const original = { x: 1 };
@@ -130,4 +132,57 @@ test('handles array length mutation', () => {
 	assert.deepEqual(state.length, 0);
 	assert.deepEqual(state, []);
 	assert.deepEqual(state[0], undefined);
+});
+
+test('discards fork-local proxy changes', () => {
+	enable_async_mode_flag();
+
+	try {
+		const added = proxy<{ x?: number }>({});
+		fork(() => {
+			added.x = 1;
+		}).discard();
+
+		assert.equal('x' in added, false);
+		assert.deepEqual(Object.keys(added), []);
+
+		const updated = proxy({ x: 1 });
+		fork(() => {
+			updated.x = 2;
+		}).discard();
+
+		assert.equal(updated.x, 1);
+		assert.deepEqual(Object.keys(updated), ['x']);
+
+		const deleted = proxy<{ x?: number }>({ x: 1 });
+		fork(() => {
+			delete deleted.x;
+		}).discard();
+
+		assert.equal(deleted.x, 1);
+		assert.deepEqual(Object.keys(deleted), ['x']);
+
+		const populated = proxy([1, 2]);
+		fork(() => {
+			populated.length = 0;
+		}).discard();
+
+		assert.deepEqual(populated, [1, 2]);
+
+		const truncated = proxy<number[]>([]);
+		void truncated[0];
+		void truncated[1];
+
+		let fork_value;
+		fork(() => {
+			truncated.push(1, 2);
+			truncated.length = 0;
+			fork_value = [0 in truncated, Object.keys(truncated), truncated.length];
+		}).discard();
+
+		assert.deepEqual(fork_value, [false, [], 0]);
+		assert.deepEqual(truncated, []);
+	} finally {
+		disable_async_mode_flag();
+	}
 });
