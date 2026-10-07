@@ -23,3 +23,19 @@ It's also useful if you want a transition to play whenever a value changes:
 	<div transition:fade>{value}</div>
 {/key}
 ```
+
+To recreate the contents when any of several reactive values changes, use an inline array or object:
+
+```svelte
+{#key [key1, key2]}
+	<Component />
+{/key}
+```
+
+```svelte
+{#key { key1, key2 }}
+	<Component />
+{/key}
+```
+
+Each evaluation creates a new array or object. In runes mode, these are compared by reference rather than by their contents: using an existing object as the key only recreates the contents when its reference changes, not when its properties change.
