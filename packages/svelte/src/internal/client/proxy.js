@@ -2,6 +2,7 @@
 import { DEV } from 'esm-env';
 import {
 	get,
+	is_destroying_effect,
 	update_version,
 	active_reaction,
 	set_update_version,
@@ -19,6 +20,7 @@ import {
 	set,
 	increment,
 	flush_eager_effects,
+	old_values,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
 import { COMPONENT_SYMBOL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
@@ -27,9 +29,25 @@ import * as e from './errors.js';
 import { tag } from './dev/tracing.js';
 import { get_error } from '../shared/dev.js';
 import { tracing_mode_flag } from '../flags/index.js';
+import { batch_values, current_batch } from './reactivity/batch.js';
 
 // TODO move all regexes into shared module?
 const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+
+/** @param {Source<any>} source */
+function get_source_value(source) {
+	return batch_values?.has(source) ? batch_values.get(source) : source.v;
+}
+
+/**
+ * What `get(source)` returns, without tracking it: a teardown sees the value from before the flush
+ * @param {Source<any>} source
+ */
+function read_source_value(source) {
+	return is_destroying_effect && old_values.has(source)
+		? old_values.get(source)
+		: get_source_value(source);
+}
 
 /**
  * @template T
@@ -150,8 +168,13 @@ export function proxy(value) {
 
 			if (s === undefined) {
 				if (prop in target) {
-					const s = with_parent(() => source(UNINITIALIZED, stack));
+					// start from the value a read sees, so that discarding a fork that deletes the key
+					// restores it; an accessor is not called
+					var descriptor = get_descriptor(target, prop);
+					var initial = descriptor?.writable ? descriptor.value : UNINITIALIZED;
+					const s = with_parent(() => source(proxy(initial), stack));
 					sources.set(prop, s);
+					set(s, UNINITIALIZED);
 					increment(version);
 
 					if (DEV) {
@@ -236,7 +259,8 @@ export function proxy(value) {
 			}
 
 			var s = sources.get(prop);
-			var has = (s !== undefined && s.v !== UNINITIALIZED) || Reflect.has(target, prop);
+			var has =
+				(s !== undefined && read_source_value(s) !== UNINITIALIZED) || Reflect.has(target, prop);
 
 			if (
 				s !== undefined ||
@@ -272,16 +296,20 @@ export function proxy(value) {
 
 			// variable.length = value -> clear all signals with index >= value
 			if (is_proxied_array && prop === 'length') {
-				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
+				for (var i = value; i < get_source_value(/** @type {Source<number>} */ (s)); i += 1) {
 					var other_s = sources.get(i + '');
 					if (other_s !== undefined) {
 						set(other_s, UNINITIALIZED);
 					} else if (i in target) {
-						// If the item exists in the original, we need to create an uninitialized source,
-						// else a later read of the property would result in a source being created with
-						// the value of the original item at that index.
-						other_s = with_parent(() => source(UNINITIALIZED, stack));
+						// If the item exists in the original, create a source with that value before
+						// marking it uninitialized. This prevents a discarded fork from hiding the
+						// original item, while ensuring later reads don't recreate it after truncation.
+						// An accessor is not called.
+						var item = get_descriptor(target, i);
+						var item_value = item?.writable ? item.value : UNINITIALIZED;
+						other_s = with_parent(() => source(proxy(item_value), stack));
 						sources.set(i + '', other_s);
+						set(other_s, UNINITIALIZED);
 
 						if (DEV) {
 							tag(other_s, get_label(path, i));
@@ -296,7 +324,11 @@ export function proxy(value) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = with_parent(() => source(undefined, stack));
+					// a new key starts out absent inside a fork, so that discarding the fork removes it.
+					// Elsewhere it starts as `undefined`: `Batch#capture` keeps no previous value for
+					// `UNINITIALIZED`, so time travel would show other batches this batch's value
+					var initial = has ? target[prop] : current_batch?.is_fork ? UNINITIALIZED : undefined;
+					s = with_parent(() => source(proxy(initial), stack));
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
@@ -306,7 +338,7 @@ export function proxy(value) {
 					sources.set(prop, s);
 				}
 			} else {
-				has = s.v !== UNINITIALIZED;
+				has = get_source_value(s) !== UNINITIALIZED;
 
 				var p = with_parent(() => proxy(value));
 				set(s, p);
@@ -328,7 +360,7 @@ export function proxy(value) {
 					var ls = /** @type {Source<number>} */ (sources.get('length'));
 					var n = Number(prop);
 
-					if (Number.isInteger(n) && n >= ls.v) {
+					if (Number.isInteger(n) && n >= get_source_value(ls)) {
 						set(ls, n + 1);
 					}
 				}
@@ -344,11 +376,11 @@ export function proxy(value) {
 
 			var own_keys = Reflect.ownKeys(target).filter((key) => {
 				var source = sources.get(key);
-				return source === undefined || source.v !== UNINITIALIZED;
+				return source === undefined || read_source_value(source) !== UNINITIALIZED;
 			});
 
 			for (var [key, source] of sources) {
-				if (source.v !== UNINITIALIZED && !(key in target)) {
+				if (read_source_value(source) !== UNINITIALIZED && !(key in target)) {
 					own_keys.push(key);
 				}
 			}
