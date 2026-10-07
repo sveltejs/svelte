@@ -34,3 +34,7 @@
 {:catch}
 	<p>Something went wrong</p>
 {/await}
+
+{#await promise}
+	<p>waiting for the promise to resolve...</p>
+{/await}
