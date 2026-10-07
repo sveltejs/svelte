@@ -35,6 +35,7 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	current_batch,
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates
@@ -273,6 +274,8 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
+	} else if (batch_values?.has(source) && !source.equals(batch_values.get(source))) {
+		current_batch?.capture(source, source.v);
 	}
 
 	return value;
