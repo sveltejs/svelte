@@ -70,3 +70,12 @@ Declaration tags can be used anywhere inside the component. They can reference v
 {hello} <!-- 'hello' -->
 ```
 <!-- codeblock:end -->
+
+Like [`{@const ...}`](@const), declaration tags are hoisted to the top of their block, so they can be referenced before the line on which they are declared:
+
+```svelte
+{#each boxes as box}
+	<p>{box.width} * {box.height} = {area}</p>
+	{const area = box.width * box.height}
+{/each}
+```
