@@ -11,6 +11,25 @@ export var get_descriptors = Object.getOwnPropertyDescriptors;
 export var object_prototype = Object.prototype;
 export var array_prototype = Array.prototype;
 export var get_prototype_of = Object.getPrototypeOf;
+
+/**
+ * Walks the prototype chain to find the property descriptor for `key`.
+ * Stops at `Object.prototype` so plain-object lookups behave the same as
+ * `Object.getOwnPropertyDescriptor`. Used so that class instances — whose
+ * accessors live on the prototype — work the same as POJOs in places where
+ * we need to detect a getter/setter pair (e.g. spread/`mount` props).
+ * @param {any} obj
+ * @param {string | symbol} key
+ * @returns {PropertyDescriptor | undefined}
+ */
+export function get_descriptor_in_chain(obj, key) {
+	var current = obj;
+	while (current != null && current !== object_prototype) {
+		var descriptor = get_descriptor(current, key);
+		if (descriptor !== undefined) return descriptor;
+		current = get_prototype_of(current);
+	}
+}
 export var is_extensible = Object.isExtensible;
 export var has_own_property = Object.prototype.hasOwnProperty;
 
