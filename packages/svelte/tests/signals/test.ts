@@ -153,6 +153,46 @@ describe('signals', () => {
 		};
 	});
 
+	test('unowned deriveds track missing property checks on proxies', () => {
+		const value = proxy<Record<string, boolean>>({});
+
+		return () => {
+			const has_x = derived(() => 'x' in value);
+			const owns_y = derived(() => Object.hasOwn(value, 'y'));
+
+			assert.isFalse($.get(has_x));
+			assert.isFalse($.get(owns_y));
+
+			value.x = true;
+			value.y = true;
+
+			assert.isTrue($.get(has_x));
+			assert.isTrue($.get(owns_y));
+
+			delete value.x;
+			delete value.y;
+
+			assert.isFalse($.get(has_x));
+			assert.isFalse($.get(owns_y));
+		};
+	});
+
+	test('unowned deriveds track missing array indexes', () => {
+		const value = proxy<boolean[]>([]);
+
+		return () => {
+			const has_first = derived(() => 0 in value);
+
+			assert.isFalse($.get(has_first));
+
+			value.push(true);
+			assert.isTrue($.get(has_first));
+
+			value.length = 0;
+			assert.isFalse($.get(has_first));
+		};
+	});
+
 	test('derived from state', () => {
 		const log: number[] = [];
 
