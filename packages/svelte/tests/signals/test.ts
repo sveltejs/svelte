@@ -1191,6 +1191,59 @@ describe('signals', () => {
 		};
 	});
 
+	test('Object.hasOwn tracks inherited proxy properties in unowned deriveds', () => {
+		const value = proxy<any>({});
+
+		return () => {
+			const owns_to_string = derived(() => Object.hasOwn(value, 'toString'));
+
+			assert.isFalse($.get(owns_to_string));
+
+			value.toString = 'own';
+			assert.isTrue($.get(owns_to_string));
+
+			delete value.toString;
+			assert.isFalse($.get(owns_to_string));
+		};
+	});
+
+	test('Object.hasOwn tracks inherited proxy properties', () => {
+		const value = proxy<any>({});
+		const log: boolean[] = [];
+
+		render_effect(() => {
+			log.push(Object.hasOwn(value, 'toString'));
+		});
+
+		return () => {
+			flushSync(() => {
+				value.toString = 'own';
+			});
+			flushSync(() => {
+				delete value.toString;
+			});
+
+			assert.deepEqual(log, [false, true, false]);
+		};
+	});
+
+	test('deleting an absent proxy property does not retrigger key effects', (runes) => {
+		if (!runes) return () => {};
+
+		const value = proxy<{ other?: string }>({ other: 'own' });
+		const log: string[][] = [];
+
+		render_effect(() => {
+			log.push(Object.keys(value));
+			delete value.other;
+		});
+
+		return () => {
+			flushSync();
+			assert.deepEqual(log, [['other'], []]);
+		};
+	});
+
 	test('proxy version state does not trigger self-dependency guard', () => {
 		return () => {
 			const s = proxy({ a: { b: 1 } });
