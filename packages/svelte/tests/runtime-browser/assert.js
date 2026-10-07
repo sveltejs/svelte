@@ -127,6 +127,8 @@ function normalize_children(node) {
  *	ssrHtml?: string;
  *	id_prefix?: string;
  *	props?: Props;
+ *	server_props?: Props;
+ *	options?: Record<string, any>;
  *	compileOptions?: Partial<CompileOptions>;
  *	before_test?: () => void;
  *	test?: (args: {
