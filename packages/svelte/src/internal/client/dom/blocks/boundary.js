@@ -54,6 +54,7 @@ import {
 import { defer_effect } from '../../reactivity/utils.js';
 import { set_signal_status } from '../../reactivity/status.js';
 import { push_renderer } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 /**
  * @typedef {{
@@ -294,7 +295,9 @@ export class Boundary {
 		queue_micro_task(() => {
 			if (this.#is_destroyed()) return;
 
-			var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
+			var pop_renderer = custom_renderers_flag
+				? push_renderer(this.#effect.r, this.#effect.pr)
+				: undefined;
 
 			try {
 				var fragment = (this.#offscreen_fragment = create_fragment());
@@ -408,7 +411,9 @@ export class Boundary {
 		set_active_reaction(this.#effect);
 		set_component_context(this.#effect.ctx);
 
-		var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
+		var pop_renderer = custom_renderers_flag
+			? push_renderer(this.#effect.r, this.#effect.pr)
+			: undefined;
 
 		try {
 			Batch.ensure();
@@ -449,7 +454,9 @@ export class Boundary {
 			}
 
 			if (this.#offscreen_fragment) {
-				var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
+				var pop_renderer = custom_renderers_flag
+					? push_renderer(this.#effect.r, this.#effect.pr)
+					: undefined;
 				try {
 					insert_before(this.#anchor, this.#offscreen_fragment);
 					this.#offscreen_fragment = null;

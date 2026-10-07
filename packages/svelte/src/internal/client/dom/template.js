@@ -16,6 +16,7 @@ import {
 	TEMPLATE_USE_SVG
 } from '../../../constants.js';
 import { current_renderer, parent_renderer } from '../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../flags/index.js';
 import { active_effect } from '../runtime.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import {
@@ -75,6 +76,7 @@ export function assign_nodes(start, end) {
  */
 function should_segment_nodes(effect) {
 	return (
+		custom_renderers_flag &&
 		(current_renderer !== effect.r || parent_renderer !== effect.pr) &&
 		(current_renderer?.foreign != null || parent_renderer?.foreign != null)
 	);

@@ -4,6 +4,8 @@ export let async_mode_flag = false;
 export let legacy_mode_flag = false;
 /** True if $inspect.trace is used */
 export let tracing_mode_flag = false;
+/** True if custom renderers are used */
+export let custom_renderers_flag = false;
 
 export function enable_async_mode_flag() {
 	async_mode_flag = true;
@@ -20,4 +22,8 @@ export function enable_legacy_mode_flag() {
 
 export function enable_tracing_mode_flag() {
 	tracing_mode_flag = true;
+}
+
+export function enable_custom_renderers_flag() {
+	custom_renderers_flag = true;
 }
