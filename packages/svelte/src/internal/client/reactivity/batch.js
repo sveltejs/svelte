@@ -1141,7 +1141,8 @@ function flush_queued_effects(effects) {
 			if (eager_block_effects?.size > 0) {
 				old_values.clear();
 
-				for (const e of eager_block_effects) {
+				const eager_effects = eager_block_effects;
+				for (const e of eager_effects) {
 					// Skip eager effects that have already been unmounted
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
 
@@ -1150,8 +1151,8 @@ function flush_queued_effects(effects) {
 					const ordered_effects = [e];
 					let ancestor = e.parent;
 					while (ancestor !== null) {
-						if (eager_block_effects.has(ancestor)) {
-							eager_block_effects.delete(ancestor);
+						if (eager_effects.has(ancestor)) {
+							eager_effects.delete(ancestor);
 							ordered_effects.push(ancestor);
 						}
 						ancestor = ancestor.parent;
@@ -1162,10 +1163,15 @@ function flush_queued_effects(effects) {
 						// Skip eager effects that have already been unmounted
 						if ((e.f & (DESTROYED | INERT)) !== 0) continue;
 						update_effect(e);
+
+						// A nested flush replaces the set and handles the remaining eager effects
+						if (eager_block_effects !== eager_effects) break;
 					}
+
+					if (eager_block_effects !== eager_effects) break;
 				}
 
-				eager_block_effects.clear();
+				if (eager_block_effects === eager_effects) eager_effects.clear();
 			}
 		}
 	}
