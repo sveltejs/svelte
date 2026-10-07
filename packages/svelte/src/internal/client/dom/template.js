@@ -52,8 +52,6 @@ export function assign_nodes(start, end) {
 /*#__NO_SIDE_EFFECTS__*/
 export function from_html(content, flags) {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
-
 	/** @type {Node} */
 	var node;
 
@@ -74,9 +72,9 @@ export function from_html(content, flags) {
 			if (!is_fragment) node = /** @type {TemplateNode} */ (get_first_child(node));
 		}
 
-		var clone = /** @type {TemplateNode} */ (
-			use_import_node || is_firefox ? document.importNode(node, true) : node.cloneNode(true)
-		);
+		// Keep clones in the page document to avoid repeated cross-document adoption
+		// when templates are assembled with page-document fragments.
+		var clone = /** @type {TemplateNode} */ (document.importNode(node, true));
 
 		if (is_fragment) {
 			var start = /** @type {TemplateNode} */ (get_first_child(clone));
