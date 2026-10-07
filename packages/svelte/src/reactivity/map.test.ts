@@ -135,6 +135,35 @@ test('map.getOrInsert(...)', () => {
 	cleanup();
 });
 
+test('map.getOrInsertComputed(...) rejects non-function callbacks', () => {
+	const map = new SvelteMap([['present', 1]]);
+
+	for (const callback of [undefined, null, false, 0, 1n, 'callback', Symbol(), {}, []]) {
+		for (const key of ['present', 'missing']) {
+			assert.throws(() => map.getOrInsertComputed(key, callback as any), TypeError);
+		}
+	}
+
+	assert.deepEqual(Array.from(map), [['present', 1]]);
+});
+
+test('map.getOrInsertComputed(...) does not call callbacks for existing keys', () => {
+	const map = new SvelteMap<string, number | undefined>([
+		['present', 1],
+		['undefined', undefined]
+	]);
+	const callback = () => {
+		throw new Error('callback should not be called');
+	};
+
+	assert.equal(map.getOrInsertComputed('present', callback), 1);
+	assert.equal(map.getOrInsertComputed('undefined', callback), undefined);
+	assert.deepEqual(Array.from(map), [
+		['present', 1],
+		['undefined', undefined]
+	]);
+});
+
 test('map.getOrInsertComputed(...)', () => {
 	const map = new SvelteMap([
 		[2, 2],
