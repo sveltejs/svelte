@@ -294,7 +294,7 @@ export class Boundary {
 		queue_micro_task(() => {
 			if (this.#is_destroyed()) return;
 
-			var pop_renderer = push_renderer(this.#effect.r);
+			var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
 
 			try {
 				var fragment = (this.#offscreen_fragment = create_fragment());
@@ -408,7 +408,7 @@ export class Boundary {
 		set_active_reaction(this.#effect);
 		set_component_context(this.#effect.ctx);
 
-		var pop_renderer = push_renderer(this.#effect.r);
+		var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
 
 		try {
 			Batch.ensure();
@@ -449,10 +449,13 @@ export class Boundary {
 			}
 
 			if (this.#offscreen_fragment) {
-				var pop_renderer = push_renderer(this.#effect.r);
-				insert_before(this.#anchor, this.#offscreen_fragment);
-				this.#offscreen_fragment = null;
-				pop_renderer?.();
+				var pop_renderer = push_renderer(this.#effect.r, this.#effect.pr);
+				try {
+					insert_before(this.#anchor, this.#offscreen_fragment);
+					this.#offscreen_fragment = null;
+				} finally {
+					pop_renderer?.();
+				}
 			}
 		}
 	}

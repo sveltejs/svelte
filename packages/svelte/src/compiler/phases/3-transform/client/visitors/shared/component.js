@@ -395,8 +395,12 @@ export function build_component(node, component_name, loc, context) {
 					? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
 					: slot_fn;
 
-				if (custom_renderer) {
-					children_fn = b.call('$.renderer_snippet', b.id('$renderer'), children_fn);
+				if (custom_renderer !== undefined) {
+					children_fn = b.call(
+						'$.renderer_snippet',
+						custom_renderer ? b.id('$renderer') : b.literal(null),
+						children_fn
+					);
 				}
 
 				// create `children` prop...
