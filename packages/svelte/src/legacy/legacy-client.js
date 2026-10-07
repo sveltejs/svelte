@@ -113,7 +113,7 @@ class Svelte4Component {
 			}
 		);
 
-		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
+		const render_options = {
 			target: options.target,
 			anchor: options.anchor,
 			props,
@@ -121,7 +121,11 @@ class Svelte4Component {
 			intro: options.intro ?? false,
 			recover: options.recover,
 			transformError: options.transformError
-		});
+		};
+
+		this.#instance = options.hydrate
+			? hydrate(options.component, render_options)
+			: mount(options.component, render_options);
 
 		// We don't flushSync for custom element wrappers or if the user doesn't want it,
 		// or if we're in async mode since `flushSync()` will fail

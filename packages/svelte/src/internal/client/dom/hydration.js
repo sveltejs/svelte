@@ -8,7 +8,7 @@ import {
 	HYDRATION_START_ELSE
 } from '../../../constants.js';
 import * as w from '../warnings.js';
-import { get_next_sibling } from './operations.js';
+import { get_next_sibling, get_node_value, node_type, remove_node } from './operations.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -89,8 +89,8 @@ export function skip_nodes(remove = true) {
 	var node = hydrate_node;
 
 	while (true) {
-		if (node.nodeType === COMMENT_NODE) {
-			var data = /** @type {Comment} */ (node).data;
+		if (node_type(node) === COMMENT_NODE) {
+			var data = get_node_value(node) ?? '';
 
 			if (data === HYDRATION_END) {
 				if (depth === 0) return node;
@@ -106,7 +106,7 @@ export function skip_nodes(remove = true) {
 		}
 
 		var next = /** @type {TemplateNode} */ (get_next_sibling(node));
-		if (remove) node.remove();
+		if (remove) remove_node(node);
 		node = next;
 	}
 }
@@ -116,10 +116,10 @@ export function skip_nodes(remove = true) {
  * @param {TemplateNode} node
  */
 export function read_hydration_instruction(node) {
-	if (!node || node.nodeType !== COMMENT_NODE) {
+	if (!node || node_type(node) !== COMMENT_NODE) {
 		w.hydration_mismatch();
 		throw HYDRATION_ERROR;
 	}
 
-	return /** @type {Comment} */ (node).data;
+	return get_node_value(node) ?? '';
 }
