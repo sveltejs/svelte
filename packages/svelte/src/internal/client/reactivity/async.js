@@ -339,7 +339,7 @@ export function run(thunks) {
 		promise = promise
 			.then(() => {
 				restore();
-				set_hydrating_script(was_hydrating);
+				set_hydrating_script(was_hydrating ? component_context : null);
 
 				try {
 					if (errored) {
@@ -352,7 +352,7 @@ export function run(thunks) {
 
 					return fn();
 				} finally {
-					set_hydrating_script(false);
+					set_hydrating_script(null);
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
 					unset_context();

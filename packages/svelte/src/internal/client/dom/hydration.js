@@ -1,4 +1,4 @@
-/** @import { TemplateNode } from '#client' */
+/** @import { ComponentContext, TemplateNode } from '#client' */
 
 import { COMMENT_NODE } from '#client/constants';
 import {
@@ -22,13 +22,14 @@ export function set_hydrating(value) {
 }
 
 /**
- * `true` while a component script that started during hydration resumes after a top-level
- * `await`. The DOM is no longer being hydrated by then, but `hydratable` should still
- * read the values the server serialized for this component
+ * The component whose script is resuming after a top-level `await`, if that script started
+ * during hydration. The DOM is no longer being hydrated by then, but `hydratable` should still
+ * read the values the server serialized for this component (and only this component)
+ * @type {ComponentContext | null}
  */
-export let hydrating_script = false;
+export let hydrating_script = null;
 
-/** @param {boolean} value */
+/** @param {ComponentContext | null} value */
 export function set_hydrating_script(value) {
 	hydrating_script = value;
 }
