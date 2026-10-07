@@ -8,7 +8,7 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
-import { hydrating, set_hydrating } from '../dom/hydration.js';
+import { hydrating, hydrating_component, set_hydrating_component } from '../dom/hydration.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -168,6 +168,8 @@ var restored = false;
  */
 export async function save(promise) {
 	var restore = capture();
+	var was_hydrating =
+		hydrating || (hydrating_component !== null && hydrating_component === component_context);
 	// the context restored by an earlier `save` in this expression must not
 	// outlive the synchronous segment that is about to end at this `await`
 	unsave();
@@ -176,6 +178,7 @@ export async function save(promise) {
 	return () => {
 		restore();
 		restored = true;
+		if (was_hydrating) set_hydrating_component(component_context);
 		return value;
 	};
 }
@@ -290,6 +293,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 
 export function unset_context(deactivate_batch = true) {
 	restored = false;
+	set_hydrating_component(null);
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
@@ -339,7 +343,7 @@ export function run(thunks) {
 		promise = promise
 			.then(() => {
 				restore();
-				if (was_hydrating) set_hydrating(true);
+				if (was_hydrating) set_hydrating_component(component_context);
 
 				try {
 					if (errored) {
@@ -352,7 +356,6 @@ export function run(thunks) {
 
 					return fn();
 				} finally {
-					if (was_hydrating) set_hydrating(false);
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
 					unset_context();
