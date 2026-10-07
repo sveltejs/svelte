@@ -1,3 +1,9 @@
+## derived_reassignment
+
+> Assignment to derived state on the server is permanent and will not be recalculated when its dependencies change, unlike on the client where it is temporary
+
+This warning is emitted when you reassign a value created with `$derived` or `$derived.by` while compiling with `generate: 'server'`. There is no reactivity on the server — derived values do not recompute when dependencies change, including overridden values. On the client, overrides are temporary and discarded when dependencies change.
+
 ## unresolved_hydratable
 
 > A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
