@@ -68,6 +68,7 @@ export const CLASS_CACHE = Symbol('class');
 export const STYLE_CACHE = Symbol('style');
 export const TEXT_CACHE = Symbol('text');
 export const FORM_RESET_HANDLER = Symbol('form reset');
+export const HYDRATION_FORM_STATE = Symbol('hydration form state');
 /** An anchor might change, via this symbol on the original anchor we can tell HMR about the updated anchor */
 export const HMR_ANCHOR = Symbol('hmr anchor');
 
