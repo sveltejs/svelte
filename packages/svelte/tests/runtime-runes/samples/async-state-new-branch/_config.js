@@ -11,26 +11,19 @@ export default test({
 
 		y.click();
 		await tick();
-		assert.deepEqual(logs, ['universe', 'world', '$effect: world']);
+		assert.deepEqual(logs, ['universe', 'universe']);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
 			<button>x</button>
 			<button>y++</button>
 			<button>resolve</button>
-			world
 		`
 		);
 
 		resolve.click();
 		await tick();
-		assert.deepEqual(logs, [
-			'universe',
-			'world',
-			'$effect: world',
-			'$effect: universe',
-			'$effect: universe'
-		]);
+		assert.deepEqual(logs, ['universe', 'universe', '$effect: universe', '$effect: universe']);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
