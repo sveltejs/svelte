@@ -8,7 +8,7 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
-import { hydrating, set_hydrating_script } from '../dom/hydration.js';
+import { hydrating, set_hydrating } from '../dom/hydration.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -339,7 +339,7 @@ export function run(thunks) {
 		promise = promise
 			.then(() => {
 				restore();
-				set_hydrating_script(was_hydrating ? component_context : null);
+				if (was_hydrating) set_hydrating(true);
 
 				try {
 					if (errored) {
@@ -352,7 +352,7 @@ export function run(thunks) {
 
 					return fn();
 				} finally {
-					set_hydrating_script(null);
+					if (was_hydrating) set_hydrating(false);
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
 					unset_context();
