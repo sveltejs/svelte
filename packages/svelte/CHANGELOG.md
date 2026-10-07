@@ -1,5 +1,13 @@
 # svelte
 
+## 5.57.3
+
+### Patch Changes
+
+- fix: keep creating state sources for property checks during component init ([#18949](https://github.com/sveltejs/svelte/pull/18949))
+
+- fix: track missing state property checks in unowned deriveds ([#18944](https://github.com/sveltejs/svelte/pull/18944))
+
 ## 5.57.2
 
 ### Patch Changes
