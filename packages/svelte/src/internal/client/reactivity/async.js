@@ -1,5 +1,5 @@
 /** @import { Blocker, Effect, Source, Value } from '#client' */
-import { DESTROYED, STALE_REACTION } from '#client/constants';
+import { DESTROYED, FORK_ONLY_BRANCH, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -15,7 +15,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { Batch, current_batch } from './batch.js';
+import { Batch, current_batch, first_batch } from './batch.js';
 import {
 	async_derived,
 	reactivity_loss_tracker,
@@ -24,6 +24,7 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -58,7 +59,7 @@ export function flatten(blockers, sync, async, fn) {
 
 	var parent = /** @type {Effect} */ (active_effect);
 
-	var restore = capture();
+	var restore = capture(true);
 	var blocker_promise =
 		pending.length === 1
 			? pending[0].promise
@@ -74,7 +75,7 @@ export function flatten(blockers, sync, async, fn) {
 			return;
 		}
 
-		restore();
+		restore(true, async);
 
 		try {
 			fn([...deriveds, ...async]);
@@ -124,8 +125,10 @@ export function run_after_blockers(blockers, fn) {
  * Captures the current effect context so that we can restore it after
  * some asynchronous work has happened (so that e.g. `await a + b`
  * causes `b` to be registered as a dependency).
+ * @param {boolean} [content] Whether the context is restored to continue creating content (as opposed to
+ * continuing a reaction's run), which can be adopted by other batches in the meantime (see `resume_batch`)
  */
-export function capture() {
+export function capture(content = false) {
 	var previous_effect = /** @type {Effect} */ (active_effect);
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
@@ -135,7 +138,11 @@ export function capture() {
 		var previous_dev_stack = dev_stack;
 	}
 
-	return function restore(activate_batch = true) {
+	/**
+	 * @param {boolean} [activate_batch]
+	 * @param {Source[]} [signals] The async deriveds whose results the content is about to show
+	 */
+	return function restore(activate_batch = true, signals = []) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
@@ -144,7 +151,13 @@ export function capture() {
 			// TODO we only need optional chaining here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
 			previous_batch = previous_batch?.activate();
-			previous_batch?.apply();
+
+			var batch =
+				content && previous_batch?.is_fork
+					? resume_batch(previous_batch, previous_effect, signals)
+					: previous_batch;
+
+			batch?.apply();
 		}
 
 		if (DEV) {
@@ -152,6 +165,40 @@ export function capture() {
 			set_dev_stack(previous_dev_stack);
 		}
 	};
+}
+
+/**
+ * Returns the batch in which to continue creating content (inside `effect`) that `fork` started creating.
+ * The content can be adopted by other batches in the meantime (see `Batch#reveal`), in which case the
+ * fork's world is no longer (the only) one the content lives in:
+ * - once the real world adopted it, creation continues in the real world (which then depends on/merges
+ *   into the batch that adopted it, if that is still pending). Unless the real world doesn't have results
+ *   for the async expressions yet — that batch is still waiting for them and will re-run the content then
+ * - if the fork was discarded, creation continues in a fork that adopted it
+ * Real batches don't need this: content they share is handled by merging them.
+ * @param {Batch} fork
+ * @param {Effect} effect
+ * @param {Source[]} signals
+ * @returns {Batch}
+ */
+function resume_batch(fork, effect, signals) {
+	var branch = /** @type {Effect | null} */ (effect);
+	while (branch !== null && (branch.f & FORK_ONLY_BRANCH) === 0) branch = branch.parent;
+
+	if (branch === null) {
+		if (signals.some((s) => s.v === UNINITIALIZED)) return fork;
+
+		fork.deactivate();
+		return Batch.ensure();
+	}
+
+	if (!fork.linked) {
+		for (var b = first_batch; b !== null; b = b.next) {
+			if (b.is_fork && b.unskipped_branches.has(branch)) return b.activate();
+		}
+	}
+
+	return fork;
 }
 
 /** `true` between a `save` thunk restoring a context and the end of that synchronous segment */
@@ -304,7 +351,7 @@ export function unset_context(deactivate_batch = true) {
  * @param {Array<() => void | Promise<void>>} thunks
  */
 export function run(thunks) {
-	const restore = capture();
+	const restore = capture(true);
 
 	const decrement_pending = increment_pending();
 

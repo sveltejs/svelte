@@ -35,7 +35,14 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { BRANCH_EFFECT, COMMENT_NODE, DESTROYED, EFFECT_OFFSCREEN, INERT } from '#client/constants';
+import {
+	BRANCH_EFFECT,
+	COMMENT_NODE,
+	DESTROYED,
+	EFFECT_OFFSCREEN,
+	FORK_ONLY_BRANCH,
+	INERT
+} from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
@@ -262,7 +269,27 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	 * @param {Batch} batch
 	 */
 	function discard(batch) {
-		state.pending.delete(batch);
+		pending.delete(batch);
+
+		if (batch.is_fork) {
+			// destroy items (and the fallback) that only existed for this fork, unless another fork needs them
+			var needed = [...pending.values()];
+
+			for (const [key, item] of items) {
+				if ((item.e.f & FORK_ONLY_BRANCH) !== 0 && !needed.some((keys) => keys.has(key))) {
+					destroy_effect(item.e);
+				}
+			}
+
+			if (
+				fallback !== null &&
+				(fallback.f & FORK_ONLY_BRANCH) !== 0 &&
+				!needed.some((keys) => keys.size === 0)
+			) {
+				destroy_effect(fallback);
+				fallback = null;
+			}
+		}
 	}
 
 	var effect = block(() => {
@@ -320,6 +347,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				if (item.v) internal_set(item.v, value);
 				if (item.i) internal_set(item.i, index);
 
+				// like branches of other blocks, an item created by a fork has
+				// to be brought up to date with the batch that adopts it
+				if ((item.e.f & FORK_ONLY_BRANCH) !== 0) batch.reveal(item.e);
+
 				if (defer) {
 					batch.unskip_effect(item.e);
 				}
@@ -337,6 +368,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				if (!first_run) {
 					item.e.f |= EFFECT_OFFSCREEN;
+
+					if (batch.is_fork) {
+						item.e.f |= FORK_ONLY_BRANCH;
+						batch.unskip_effect(item.e);
+					}
 				}
 
 				items.set(key, item);
@@ -345,12 +381,23 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			keys.add(key);
 		}
 
-		if (length === 0 && fallback_fn && !fallback) {
-			if (first_run) {
-				fallback = branch(() => fallback_fn(anchor));
-			} else {
-				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
-				fallback.f |= EFFECT_OFFSCREEN;
+		if (length === 0 && fallback_fn) {
+			if (!fallback) {
+				if (first_run) {
+					fallback = branch(() => fallback_fn(anchor));
+				} else {
+					fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
+					fallback.f |= EFFECT_OFFSCREEN;
+
+					if (batch.is_fork) {
+						fallback.f |= FORK_ONLY_BRANCH;
+						batch.unskip_effect(fallback);
+					}
+				}
+			} else if ((fallback.f & FORK_ONLY_BRANCH) !== 0) {
+				// same as for items created by a fork
+				batch.reveal(fallback);
+				batch.unskip_effect(fallback);
 			}
 		}
 

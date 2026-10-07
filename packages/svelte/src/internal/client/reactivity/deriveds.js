@@ -192,14 +192,18 @@ export function async_derived(fn, label, location) {
 		var batch = /** @type {Batch} */ (current_batch);
 
 		// If an earlier batch has a run of this async effect in flight, the two batches
-		// are related and this one has to wait for (i.e. merge into) the earlier one
-		let prev = batch.prev;
-		while (prev) {
-			if (prev.async_deriveds.has(effect)) {
-				batch.dependent.add(prev);
-				break;
+		// are related and this one has to wait for (i.e. merge into) the earlier one.
+		// Same for forks, though the other way around (the fork has to wait for this batch).
+		let other = first_batch;
+		while (other) {
+			if (other !== batch && other.async_deriveds.has(effect)) {
+				if (other.id < batch.id) {
+					batch.dependent.add(other);
+				} else if (other.is_fork) {
+					other.dependent.add(batch);
+				}
 			}
-			prev = prev.prev;
+			other = other.next;
 		}
 
 		if (should_suspend) {
@@ -282,7 +286,14 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
-			function go() {
+			/** @param {unknown} error */
+			function go(error) {
+				if (p === promise && error === OBSOLETE) {
+					// The latest run was discarded (i.e. its batch which was a fork): wait for the latest run that's
+					// still in flight (if any), as it's the one whose result the (adopted) content will show
+					for (const d of deferreds) promise = d.promise;
+				}
+
 				if (p === promise) {
 					fulfil(signal);
 				} else {

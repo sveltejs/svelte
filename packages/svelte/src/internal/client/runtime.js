@@ -514,7 +514,7 @@ export function update_effect(effect) {
 			var own = /** @type {Batch} */ (own_batch);
 			var status = (flags & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 ? DIRTY : MAYBE_DIRTY;
 			own.stale_effects.set(effect, write_version);
-			for (var batch = own.next; batch !== null; batch = batch.next) {
+			for (var batch = own.next; batch !== null && effect.deps !== null; batch = batch.next) {
 				batch.add_dirty_reaction(effect, status);
 			}
 		}

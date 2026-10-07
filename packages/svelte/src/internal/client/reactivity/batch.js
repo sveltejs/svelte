@@ -428,8 +428,9 @@ export class Batch {
 
 	/**
 	 * Schedule all effects inside a revealed branch. Effects that ran without dependencies are the
-	 * same in every batch. Branches inside it that only exist for (other) forks are left alone, the
-	 * traversal skips them anyway.
+	 * same in every batch — except async effects, whose results only exist in the batch that ran
+	 * them. Branches inside it that only exist for (other) forks are left alone, the traversal skips
+	 * them anyway.
 	 * TODO this can overfire, maybe there's a way to detect which effects saw values that differ.
 	 * @param {Effect} effect
 	 */
@@ -437,7 +438,8 @@ export class Batch {
 		if (
 			(effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 &&
 			effect.fn !== null &&
-			(effect.deps !== null || (effect.f & REACTION_RAN) === 0)
+			// TODO maybe we find a way to instead find the (pending) async effect and set the resulting value on this batch
+			(effect.deps !== null || (effect.f & (REACTION_RAN | ASYNC)) !== REACTION_RAN)
 		) {
 			set_signal_status(effect, DIRTY);
 			this.schedule(effect);
