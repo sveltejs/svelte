@@ -8,6 +8,7 @@ import * as w from '../../warnings.js';
 import {
 	ATTRIBUTES_CACHE,
 	FORM_RESET_HANDLER,
+	HYDRATION_FORM_STATE,
 	IS_XHTML,
 	LOADING_ATTR_SYMBOL
 } from '#client/constants';
@@ -39,6 +40,8 @@ export const STYLE = Symbol('style');
 
 const IS_CUSTOM_ELEMENT = Symbol('is custom element');
 const IS_HTML = Symbol('is html');
+const VALUE_SET = Symbol('value set');
+const CHECKED_SET = Symbol('checked set');
 
 const LINK_TAG = IS_XHTML ? 'link' : 'LINK';
 const INPUT_TAG = IS_XHTML ? 'input' : 'INPUT';
@@ -47,13 +50,41 @@ const SELECT_TAG = IS_XHTML ? 'select' : 'SELECT';
 const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
 
 /**
+ * Returns whether a form control was modified before hydration.
+ * @param {Element} element
+ * @param {string} property
+ */
+function should_preserve_user_state(element, property) {
+	if (!hydrating && !(/** @type {any} */ (element)[HYDRATION_FORM_STATE])) return false;
+
+	var input = /** @type {HTMLInputElement} */ (element);
+
+	return property === 'value'
+		? 'defaultValue' in input && input.defaultValue !== input.value
+		: property === 'checked' && 'defaultChecked' in input && input.defaultChecked !== input.checked;
+}
+
+/**
+ * @param {Element} element
+ * @param {boolean} [is_hydrating]
+ */
+export function mark_hydration_form_state(element, is_hydrating = hydrating) {
+	if (is_hydrating) {
+		/** @type {any} */ (element)[HYDRATION_FORM_STATE] = true;
+	}
+}
+
+/**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
  * to remove it upon hydration to avoid a bug when someone resets the form value.
  * @param {HTMLInputElement} input
+ * @param {boolean} [is_hydrating]
  * @returns {void}
  */
-export function remove_input_defaults(input) {
-	if (!hydrating) return;
+export function remove_input_defaults(input, is_hydrating = hydrating) {
+	if (!is_hydrating) return;
+
+	mark_hydration_form_state(input, is_hydrating);
 
 	var already_removed = false;
 
@@ -90,6 +121,8 @@ export function remove_input_defaults(input) {
  */
 export function set_value(element, value) {
 	var attributes = get_attributes(element);
+	var initial = attributes[VALUE_SET] !== true;
+	attributes[VALUE_SET] = true;
 
 	if (
 		attributes.value ===
@@ -98,7 +131,8 @@ export function set_value(element, value) {
 				value ?? undefined) ||
 		// @ts-expect-error
 		// `progress` elements always need their value set when it's `0`
-		(element.value === value && (value !== 0 || element.nodeName !== PROGRESS_TAG))
+		(element.value === value && (value !== 0 || element.nodeName !== PROGRESS_TAG)) ||
+		(initial && should_preserve_user_state(element, 'value'))
 	) {
 		return;
 	}
@@ -113,12 +147,15 @@ export function set_value(element, value) {
  */
 export function set_checked(element, checked) {
 	var attributes = get_attributes(element);
+	var initial = attributes[CHECKED_SET] !== true;
+	attributes[CHECKED_SET] = true;
 
 	if (
 		attributes.checked ===
-		(attributes.checked =
-			// treat null and undefined the same for the initial value
-			checked ?? undefined)
+			(attributes.checked =
+				// treat null and undefined the same for the initial value
+				checked ?? undefined) ||
+		(initial && should_preserve_user_state(element, 'checked'))
 	) {
 		return;
 	}
@@ -266,6 +303,7 @@ export function set_custom_element_data(node, prop, value) {
  * @param {string} [css_hash]
  * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
+ * @param {boolean} [is_hydrating]
  * @returns {Record<string, any>}
  */
 function set_attributes(
@@ -274,11 +312,20 @@ function set_attributes(
 	next,
 	css_hash,
 	should_remove_defaults = false,
-	skip_warning = false
+	skip_warning = false,
+	is_hydrating = hydrating
 ) {
-	if (hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
+	if (
+		is_hydrating &&
+		!element.nodeName.includes('-') &&
+		('defaultValue' in element || 'defaultChecked' in element)
+	) {
+		mark_hydration_form_state(element, is_hydrating);
+	}
+
+	if (is_hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
 		if (!('defaultValue' in next || 'defaultChecked' in next)) {
-			remove_input_defaults(/** @type {HTMLInputElement} */ (element));
+			remove_input_defaults(/** @type {HTMLInputElement} */ (element), is_hydrating);
 		}
 	}
 
@@ -434,10 +481,11 @@ function set_attributes(
 				// 3. the spreaded value is ''
 				// 4. updating input.value would thus, clear the user value
 				if (
-					prev_value == null ||
-					// @ts-ignore
-					element.value !== value ||
-					(value === 0 && element.nodeName === PROGRESS_TAG)
+					!(prev === undefined && should_preserve_user_state(element, 'value')) &&
+					(prev_value == null ||
+						// @ts-ignore
+						element.value !== value ||
+						(value === 0 && element.nodeName === PROGRESS_TAG))
 				) {
 					// @ts-ignore
 					element.value = value;
@@ -462,17 +510,23 @@ function set_attributes(
 						// removing value/checked also removes defaultValue/defaultChecked — preserve
 						let input = /** @type {HTMLInputElement} */ (element);
 						const use_default = prev === undefined;
+						const preserve_user_state = use_default && should_preserve_user_state(element, name);
 						if (name === 'value') {
 							let previous = input.defaultValue;
+							let current = input.value;
 							input.removeAttribute(name);
 							input.defaultValue = previous;
+							let next = use_default ? previous : null;
 							// @ts-ignore
-							input.value = input.__value = use_default ? previous : null;
+							input.__value = next;
+							// @ts-ignore
+							input.value = preserve_user_state ? current : next;
 						} else {
 							let previous = input.defaultChecked;
+							let current = input.checked;
 							input.removeAttribute(name);
 							input.defaultChecked = previous;
-							input.checked = use_default ? previous : false;
+							input.checked = preserve_user_state ? current : use_default ? previous : false;
 						}
 					} else {
 						element.removeAttribute(key);
@@ -481,8 +535,10 @@ function set_attributes(
 					is_default ||
 					((is_custom_element || typeof value !== 'string') && setters.has(name))
 				) {
-					// @ts-ignore
-					element[name] = value;
+					if (!(prev === undefined && should_preserve_user_state(element, name))) {
+						// @ts-ignore
+						element[name] = value;
+					}
 					// remove it from attributes's cache
 					if (name in attributes) attributes[name] = UNINITIALIZED;
 				} else if (typeof value !== 'function') {
@@ -519,6 +575,8 @@ export function attribute_effect(
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
+	var was_hydrating = hydrating;
+
 	flatten(blockers, sync, async, (values) => {
 		/** @type {Record<string | symbol, any> | undefined} */
 		var prev = undefined;
@@ -538,7 +596,8 @@ export function attribute_effect(
 				next,
 				css_hash,
 				should_remove_defaults,
-				skip_warning
+				skip_warning,
+				prev === undefined && was_hydrating
 			);
 
 			if (inited && is_select) {
