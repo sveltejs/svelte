@@ -31,7 +31,7 @@ export function read_script(parser, start, attributes) {
 		parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
 	parser.read(regex_starts_with_closing_script_tag);
 
-	const ast = acorn.parse(source, parser.root.comments, parser.ts, true);
+	const ast = acorn.parse(source, parser.root.comments, parser.ts, true, script_start);
 
 	ast.start = script_start;
 

@@ -22,13 +22,15 @@ const TSParser = JSParser.extend(tsPlugin());
  * @param {AST.JSComment[]} comments
  * @param {boolean} typescript
  * @param {boolean} [is_script]
+ * @param {number} [index] where the script starts: the comments before it are not its own
  */
-export function parse(source, comments, typescript, is_script) {
+export function parse(source, comments, typescript, is_script, index = 0) {
 	const acorn = typescript ? TSParser : JSParser;
 
 	const { onComment, add_comments } = get_comment_handlers(
 		source,
-		/** @type {CommentWithLocation[]} */ (comments)
+		/** @type {CommentWithLocation[]} */ (comments),
+		index
 	);
 
 	// @ts-expect-error
