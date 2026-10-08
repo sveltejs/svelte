@@ -130,7 +130,7 @@ function create_effect(type, fn) {
 			collected_effects.push(effect);
 		} else {
 			// schedule for later
-			Batch.ensure().schedule(effect);
+			Batch.ensure().schedule(effect, DIRTY);
 		}
 	} else if (fn !== null) {
 		try {
@@ -707,8 +707,7 @@ function resume_children(effect, local) {
 	// here because we don't want to eagerly recompute a derived like
 	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
 	if ((effect.f & CLEAN) === 0) {
-		set_signal_status(effect, DIRTY);
-		Batch.ensure().schedule(effect); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
+		Batch.ensure().schedule(effect, DIRTY); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
 	}
 
 	var child = effect.first;

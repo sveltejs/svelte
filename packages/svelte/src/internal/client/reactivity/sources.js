@@ -357,15 +357,14 @@ export function increment(source) {
  * @param {Reaction} reaction
  */
 export function invalidate(reaction) {
-	set_signal_status(reaction, DIRTY);
-
 	if ((reaction.f & DERIVED) !== 0) {
+		set_signal_status(reaction, DIRTY);
 		seen = null;
 		count_deps = 0;
 		mark_reactions(/** @type {Derived} */ (reaction), DIRTY, null);
 		seen = null;
 	} else {
-		schedule_effect(/** @type {Effect} */ (reaction));
+		schedule_effect(/** @type {Effect} */ (reaction), DIRTY);
 	}
 }
 
@@ -403,8 +402,12 @@ function mark_reactions(signal, status, updated_during_traversal) {
 
 		var not_dirty = (flags & DIRTY) === 0;
 
-		// don't set a DIRTY reaction to MAYBE_DIRTY
-		if (not_dirty) {
+		// don't set a DIRTY reaction to MAYBE_DIRTY. Scheduled effects get
+		// their status from the batch they're scheduled in (see `Batch#schedule`)
+		if (
+			not_dirty &&
+			((flags & (EAGER_EFFECT | DERIVED)) !== 0 || updated_during_traversal !== null)
+		) {
 			set_signal_status(reaction, status);
 		}
 
@@ -427,7 +430,7 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			if (updated_during_traversal !== null) {
 				updated_during_traversal.push(effect);
 			} else {
-				schedule_effect(effect);
+				schedule_effect(effect, status);
 			}
 		}
 	}

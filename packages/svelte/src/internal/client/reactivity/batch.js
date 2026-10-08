@@ -286,6 +286,13 @@ export class Batch {
 	#scheduled = [];
 
 	/**
+	 * Effects scheduled outside of a flush, and the status they are to have. Their status is only
+	 * applied when this batch is processed, so that other batches don't run them before that
+	 * @type {Map<Effect, number>}
+	 */
+	#unprocessed = new Map();
+
+	/**
 	 * Deferred reactions and their status.
 	 *
 	 * Leaf (i.e. not block/async) effects (dirty and maybe_dirty) are stored because we need
@@ -402,13 +409,11 @@ export class Batch {
 			this.#skipped_branches.delete(effect);
 
 			for (var e of tracked.d) {
-				set_signal_status(e, DIRTY);
-				this.schedule(e);
+				this.schedule(e, DIRTY);
 			}
 
 			for (e of tracked.m) {
-				set_signal_status(e, MAYBE_DIRTY);
-				this.schedule(e);
+				this.schedule(e, MAYBE_DIRTY);
 			}
 		}
 		this.unskipped_branches.add(effect);
@@ -441,8 +446,7 @@ export class Batch {
 			// TODO maybe we find a way to instead find the (pending) async effect and set the resulting value on this batch
 			(effect.deps !== null || (effect.f & (REACTION_RAN | ASYNC)) !== REACTION_RAN)
 		) {
-			set_signal_status(effect, DIRTY);
-			this.schedule(effect);
+			this.schedule(effect, DIRTY);
 
 			// The effect's state will reflect this batch, so other forks that ran it need to re-run it.
 			// Not so for async effects, as their result is stored in the fork and remains valid.
@@ -524,11 +528,16 @@ export class Batch {
 		for (const [reaction, status] of this.#dirty_reactions) {
 			if ((reaction.f & DERIVED) !== 0) {
 				set_signal_status(reaction, status);
-			} else if (status === DIRTY || (reaction.f & DIRTY) === 0) {
-				set_signal_status(reaction, status);
-				this.schedule(/** @type {Effect} */ (reaction));
+			} else {
+				this.schedule(/** @type {Effect} */ (reaction), status);
 			}
 		}
+
+		for (const [effect, status] of this.#unprocessed) {
+			this.#add(effect, status);
+		}
+
+		this.#unprocessed.clear();
 
 		this.apply();
 
@@ -575,7 +584,8 @@ export class Batch {
 		if (updates.length > 0) {
 			var batch = Batch.ensure();
 			for (const e of updates) {
-				batch.schedule(e);
+				// these were marked during traversal already (see `mark_reactions`), unless they ran since
+				if ((e.f & CLEAN) === 0) batch.schedule(e, e.f & (DIRTY | MAYBE_DIRTY));
 			}
 		}
 
@@ -633,6 +643,7 @@ export class Batch {
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
 		// causing an effect to be scheduled again. We need to traverse the current batch
 		// once more in that case - most of the time this will just clean up dirty branches.
+		// TODO I think we can delete this now since we re-iterate above
 		if (this.#scheduled.length > 0) {
 			if (next_batch !== null) {
 				for (const e of this.#scheduled) {
@@ -767,8 +778,7 @@ export class Batch {
 					if (this.#dirty_reactions.get(effect) === MAYBE_DIRTY) {
 						this.#dirty_reactions.delete(effect);
 					}
-					set_signal_status(effect, status);
-					this.schedule(effect);
+					this.schedule(effect, status);
 					marked = true;
 				}
 			}
@@ -1239,11 +1249,38 @@ export class Batch {
 	}
 
 	/**
-	 *
+	 * Schedule `effect` to run in this batch. Outside of a flush (and of effects running
+	 * synchronously, e.g. during mount), the status is kept to this batch until it is processed, so that other
+	 * batches don't run the effect (and mark it clean) before that, and so that other batches scheduling it don't
+	 * skip it as already dirty. During a flush it is applied right away, so that the ongoing flush can run the effect
 	 * @param {Effect} effect
+	 * @param {number} status `DIRTY` or `MAYBE_DIRTY`
 	 */
-	schedule(effect) {
+	schedule(effect, status) {
 		last_scheduled_effect = effect;
+
+		if (
+			is_processing ||
+			active_reaction !== null ||
+			// fast path to avoid map lookups when there's only one batch (no danger of other batches stealing this batch's effects)
+			(!this.is_fork && !(/** @type {Batch} */ (first_batch).next))
+		) {
+			this.#add(effect, status);
+		} else if (status === DIRTY || this.#unprocessed.get(effect) !== DIRTY) {
+			this.#unprocessed.set(effect, status);
+		}
+	}
+
+	/**
+	 * Apply the status to `effect` and add it to the effects that this batch is going to process
+	 * @param {Effect} effect
+	 * @param {number} status
+	 */
+	#add(effect, status) {
+		// don't set a DIRTY effect to MAYBE_DIRTY
+		if ((effect.f & DIRTY) === 0) {
+			set_signal_status(effect, status);
+		}
 
 		// defer render effects inside a pending boundary
 		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
@@ -1253,10 +1290,9 @@ export class Batch {
 			(effect.f & REACTION_RAN) === 0
 		) {
 			effect.b.defer_effect(effect);
-			return;
+		} else {
+			this.#scheduled.push(effect);
 		}
-
-		this.#scheduled.push(effect);
 	}
 
 	#unlink() {
@@ -1436,10 +1472,11 @@ function flush_queued_effects(effects) {
 
 /**
  * @param {Effect} effect
+ * @param {number} status `DIRTY` or `MAYBE_DIRTY`
  * @returns {void}
  */
-export function schedule_effect(effect) {
-	/** @type {Batch} */ (current_batch).schedule(effect);
+export function schedule_effect(effect, status) {
+	/** @type {Batch} */ (current_batch).schedule(effect, status);
 }
 
 /** @type {Source<number>[]} */

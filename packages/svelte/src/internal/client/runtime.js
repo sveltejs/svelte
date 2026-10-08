@@ -222,12 +222,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
-			if (root) {
-				set_signal_status(reaction, DIRTY);
-			} else if ((reaction.f & CLEAN) !== 0) {
-				set_signal_status(reaction, MAYBE_DIRTY);
-			}
-			schedule_effect(/** @type {Effect} */ (reaction));
+			schedule_effect(/** @type {Effect} */ (reaction), root ? DIRTY : MAYBE_DIRTY);
 		}
 	}
 }
@@ -512,7 +507,7 @@ export function update_effect(effect) {
 			// dirty, since their results are kept per batch, and they run during traversal: marking them dirty
 			// would re-run them (and restart async work) on every process of a pending batch.
 			var own = /** @type {Batch} */ (own_batch);
-			var status = (flags & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 ? DIRTY : MAYBE_DIRTY;
+			var status = (flags & (BLOCK_EFFECT | ASYNC)) !== 0 ? MAYBE_DIRTY : DIRTY;
 			own.stale_effects.set(effect, write_version);
 			for (var batch = own.next; batch !== null && effect.deps !== null; batch = batch.next) {
 				batch.add_dirty_reaction(effect, status);
