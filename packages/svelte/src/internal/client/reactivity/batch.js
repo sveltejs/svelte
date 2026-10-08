@@ -40,6 +40,7 @@ import { set_signal_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { log_effect_tree } from '../dev/debug.js';
 import { OBSOLETE } from './deriveds.js';
+import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 
 /** @type {Batch | null} */
 let first_batch = null;
@@ -435,8 +436,11 @@ export class Batch {
 		this.#dirty_effects.clear();
 		this.#maybe_dirty_effects.clear();
 
-		// append/remove branches
-		for (const fn of this.#commit_callbacks) fn(this);
+		// append/remove branches. If `flushSync` was called inside an effect, that effect is
+		// still the active reaction, and it must not track what these callbacks read
+		without_reactive_context(() => {
+			for (const fn of this.#commit_callbacks) fn(this);
+		});
 		this.#commit_callbacks.clear();
 
 		previous_batch = this;
