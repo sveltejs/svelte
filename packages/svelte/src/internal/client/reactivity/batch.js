@@ -404,18 +404,24 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	unskip_effect(effect) {
-		var tracked = this.#skipped_branches.get(effect);
-		if (tracked) {
-			this.#skipped_branches.delete(effect);
+		for (var batch = /** @type {Batch | null} */ (this); batch !== null; batch = batch.prev) {
+			// Earlier (non-fork) batches that skip this branch have reset the effects inside it that are
+			// dirty because of their changes. This batch sees those changes as well, so it runs them, too
+			var tracked =
+				batch === this || !batch.is_fork ? batch.#skipped_branches.get(effect) : undefined;
 
-			for (var e of tracked.d) {
-				this.schedule(e, DIRTY);
-			}
+			if (tracked) {
+				for (var e of tracked.d) {
+					this.schedule(e, DIRTY);
+				}
 
-			for (e of tracked.m) {
-				this.schedule(e, MAYBE_DIRTY);
+				for (e of tracked.m) {
+					this.schedule(e, MAYBE_DIRTY);
+				}
 			}
 		}
+
+		this.#skipped_branches.delete(effect);
 		this.unskipped_branches.add(effect);
 	}
 

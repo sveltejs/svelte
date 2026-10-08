@@ -166,6 +166,13 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 
 			const fragment = document.createDocumentFragment();
 			move_effect(e, fragment);
+
+			// `reconcile` expects offscreen items to come after all onscreen items
+			if (e !== state.effect.last) {
+				link(state, e.prev, e.next);
+				link(state, state.effect.last, e);
+				link(state, e, null);
+			}
 		} else {
 			destroy_effect(to_destroy[i], remove_dom);
 		}
