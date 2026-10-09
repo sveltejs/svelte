@@ -48,6 +48,7 @@ import {
 	batch_values,
 	current_batch,
 	first_batch,
+	own_value,
 	previous_batch,
 	read_batch_local_value
 } from './batch.js';
@@ -243,9 +244,16 @@ export function async_derived(fn, label, location) {
 			decrement_pending?.();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) return;
+			// Discarding a fork rejects its runs that are still in flight, but this one may have resolved just
+			// before, with only this handler pending. Its result must not end up in the discarded fork (which
+			// `commit()` would then reject as discarded, rather than treat as obsolete, see `overtake`).
+			// TODO ideally we also do this to non-fork unlinked batches but there's some cases where that would
+			// fail (e.g. when nothing waited for this result, as in a disconnected `$effect.root`); investigate
+			// and properly fix at some point
+			if (error === OBSOLETE || (batch.is_fork && !batch.linked)) return;
 
 			batch = batch.activate();
+			batch.apply();
 
 			if (error) {
 				signal.f |= ERROR_VALUE;
@@ -417,8 +425,9 @@ export function execute_derived(derived) {
  */
 export function update_derived(derived) {
 	var value = execute_derived(derived);
+	var d = own_value(derived);
 
-	if (!derived.equals(value)) {
+	if (d.v === derived.v ? !derived.equals(value) : !derived.equals.call(d, value)) {
 		if (current_batch !== null || previous_batch !== null) {
 			// `capture` decides whether the underlying value is updated (it isn't in a fork,
 			// or if a later batch holds a newer value) and records it in the batch either way.
@@ -440,8 +449,6 @@ export function update_derived(derived) {
 			(previous_batch ?? current_batch)?.remove_dirty_reaction(derived);
 			return;
 		}
-	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
-		current_batch?.capture(derived, derived.v, true);
 	}
 
 	// don't mark derived clean if we're reading it inside a

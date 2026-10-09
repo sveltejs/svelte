@@ -38,7 +38,8 @@ import {
 	schedule_effect,
 	legacy_updates,
 	current_batch,
-	first_batch
+	first_batch,
+	own_value
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -189,7 +190,8 @@ var count_deps = 0;
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals(value)) {
+	var s = own_value(source);
+	if (s.v === source.v ? !source.equals(value) : !source.equals.call(s, value)) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -277,8 +279,9 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
-	} else if (batch_values?.has(source) && !source.equals(batch_values?.get(source))) {
-		current_batch?.capture(source, source.v);
+	} else if (batch_values !== null && current_batch?.linked && !current_batch.current.has(source)) {
+		// Value is equal to the real world, still save it for correct computation of batch_values etc.
+		current_batch.capture(source, value, false, true);
 	}
 
 	return value;

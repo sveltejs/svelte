@@ -100,25 +100,24 @@ export default test({
 				await reset();
 
 				// a real batch adopts an item with a different value after the fork's results are in
-				// (TODO also commit the fork here, once the fork re-running the unkeyed item's expression
-				// with the real world's new value no longer keeps the fork's outdated result)
-				if (finish === 'discard') {
-					fork_append_2.click();
-					resolve_all.click();
-					await tick();
-					instance.log.length = 0;
+				fork_append_2.click();
+				resolve_all.click();
+				await tick();
+				instance.log.length = 0;
 
-					append_5.click();
-					await settle();
-					assert.htmlEqual(output.innerHTML, html([0, 1, 5]));
-					// keyed: a new item, unkeyed: the adopted item's input changed (and the fork revalidates it)
-					assert.deepEqual(instance.log.sort(), ['cc', 'k5', 'u5', 'u5']);
+				append_5.click();
+				await settle();
+				assert.htmlEqual(output.innerHTML, html([0, 1, 5]));
+				// keyed: a new item, unkeyed: the adopted item's input changed (and the fork revalidates it)
+				assert.deepEqual(instance.log.sort(), ['cc', 'k5', 'u5', 'u5']);
 
-					discard.click();
-					await settle();
-					assert.htmlEqual(output.innerHTML, html([0, 1, 5]));
-					await reset();
-				}
+				// the fork's revalidated result for the unkeyed item equals the real one, it must not
+				// commit its outdated result for it
+				if (finish === 'discard') discard.click();
+				else commit.click();
+				await settle();
+				assert.htmlEqual(output.innerHTML, html([0, 1, 5]));
+				await reset();
 			} catch (e) {
 				/** @type {Error} */ (e).message = `${finish}: ${/** @type {Error} */ (e).message}`;
 				throw e;

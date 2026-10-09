@@ -111,6 +111,18 @@ export function read_batch_local_value(reaction) {
 	return false;
 }
 
+/**
+ * What a new value of `signal` is compared against (as the `this` of its `equals`). While several batches
+ * exist (which is when a batch view is set up), that is what the current batch holds, rather than the
+ * signal itself: the batch's own (e.g. outdated async) value can differ from the real one
+ * @param {Value} signal
+ * @returns {{ v: any }}
+ */
+export function own_value(signal) {
+	var own = batch_values === null ? undefined : current_batch?.current.get(signal);
+	return own === undefined ? signal : own;
+}
+
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
@@ -882,8 +894,9 @@ export class Batch {
 	 * @param {Value} source
 	 * @param {any} value
 	 * @param {boolean} [is_derived]
+	 * @param {boolean} [no_bump] True if the value is seen as equal, but this batch doesn't contain the value yet
 	 */
-	capture(source, value, is_derived = false) {
+	capture(source, value, is_derived = false, no_bump = false) {
 		// Fast path for performance: When render/pre/user effects are flushed and this is the sole batch,
 		// we don't need to capture the value
 		if (
@@ -903,7 +916,7 @@ export class Batch {
 
 		// Separate method for further optimization; e.g. v8 does only need to invoke
 		// CreateFunctionContext in this internal method due to capturing `this` in a closure.
-		this.#capture(source, value, is_derived);
+		this.#capture(source, value, is_derived, no_bump);
 	}
 
 	/**
@@ -912,13 +925,17 @@ export class Batch {
 	 * @param {Value} source
 	 * @param {any} value
 	 * @param {boolean} is_derived
+	 * @param {boolean} no_bump
 	 */
-	#capture(source, value, is_derived) {
+	#capture(source, value, is_derived, no_bump) {
 		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, { v: source.v, wv: source.wv });
 		}
 
-		const wv = increment_write_version();
+		// no_bump true means we see the same value as the real world but we still want to
+		// record it in our batch in case it becomes important later for batch_values etc
+		// calculation - we don't want to actually bump the wv etc.
+		const wv = no_bump ? source.wv : increment_write_version();
 
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
@@ -930,7 +947,9 @@ export class Batch {
 		// A derived computed from inputs that differ from the real values must stay batch-local.
 		// This also happens when committing a later batch hides an earlier batch's pending writes.
 		let is_latest_value =
-			!this.is_fork && !(is_derived && read_batch_local_value(/** @type {Derived} */ (source)));
+			!this.is_fork &&
+			!no_bump &&
+			!(is_derived && read_batch_local_value(/** @type {Derived} */ (source)));
 
 		// A later batch may also own a newer value of the source or one of a derived's dependencies.
 		// The check above isn't sufficient here: a later batch's write is visible through `batch_values`,
@@ -975,7 +994,8 @@ export class Batch {
 	 * Tell this fork that the real world has written `value` to `source`. This overtakes the
 	 * fork's own write to it, unless that is a value the fork computed itself (a derived or
 	 * the result of an async effect the fork ran). The fork is revalidated with the new value,
-	 * or discarded if it has nothing (but deriveds) left to commit.
+	 * or discarded if it has nothing left to commit (only deriveds, and values that equal the
+	 * real ones, e.g. ones it merely holds, see `internal_set`).
 	 * @param {Value} source
 	 * @param {boolean} is_derived
 	 * @param {any} value
@@ -984,10 +1004,14 @@ export class Batch {
 		const current = this.current.get(source);
 		this.current.delete(source);
 
-		if ([...this.current.values()].every((value) => value.is_derived)) {
-			// The real world has overtaken every write of this fork, so it is obsolete. Discard it
-			// right away (its speculative branches must not be adopted by anyone), and empty
-			// `current` so that `commit()` can tell this apart from a user-initiated discard
+		if (
+			[...this.current].every(
+				([written, content]) => content.is_derived || written.equals(content.v)
+			)
+		) {
+			// The real world has overtaken every write of this fork that would change anything, so it
+			// is obsolete. Discard it right away (its speculative branches must not be adopted by anyone),
+			// and empty `current` so that `commit()` can tell this apart from a user-initiated discard
 			this.current.clear();
 			this.discard();
 		} else if (current === undefined || current.v !== value) {
@@ -1681,6 +1705,11 @@ export function fork(fn) {
 			// revalidating their producers when inputs change. Capturing them anew gives them fresh write
 			// versions, because the real world may have run reactions since that would otherwise outrank them.
 			for (var [source, content] of batch.current) {
+				// Values that equal the real ones (e.g. ones the fork only holds, see `internal_set`) don't change
+				// the real world. Capturing them would give them a new write version, which would make every
+				// reaction that the fork hasn't seen yet look dirty
+				if (source.equals(content.v)) continue;
+
 				batch.capture(source, content.v, content.is_derived);
 				// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
 				if (!content.is_derived) batch.mark(source, MAYBE_DIRTY, true);
