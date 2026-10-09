@@ -6,24 +6,11 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
- * The value with key `%key%` in `Warp` `%id%` was created, but at least part of it was not used during the render.
- * 
- * The value was set in:
- * %stack%
- * @param {string} key
- * @param {string} id
- * @param {string} stack
+ * Part of the data added to `Warp` instances was not used during the render, so the response was delayed until it resolved.
  */
-export function unresolved_warp(key, id, stack) {
+export function unresolved_warp() {
 	if (DEV) {
-		console.warn(
-			`%c[svelte] unresolved_warp\n%cThe value with key \`${key}\` in \`Warp\` \`${id}\` was created, but at least part of it was not used during the render.
-
-The value was set in:
-${stack}\nhttps://svelte.dev/e/unresolved_warp`,
-			bold,
-			normal
-		);
+		console.warn(`%c[svelte] unresolved_warp\n%cPart of the data added to \`Warp\` instances was not used during the render, so the response was delayed until it resolved.\nhttps://svelte.dev/e/unresolved_warp`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/unresolved_warp`);
 	}

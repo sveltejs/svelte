@@ -78,7 +78,7 @@ Values added to a `Warp` on the server may already be in use (or on their way to
 
 ## warp_serialization_failed
 
-> Failed to serialize the value with key `%key%` in `Warp` `%id%`.
+> Failed to serialize data added to a `Warp`.
 >
 > `Warp` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/devalue) can, including promises. To serialize other values, pass a `replacer` to `render` or `withWarp`.
 >

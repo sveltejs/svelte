@@ -156,19 +156,17 @@ export function warp_method_unsupported(method) {
 }
 
 /**
- * Failed to serialize the value with key `%key%` in `Warp` `%id%`.
+ * Failed to serialize data added to a `Warp`.
  * 
  * `Warp` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/devalue) can, including promises. To serialize other values, pass a `replacer` to `render` or `withWarp`.
  * 
  * Cause:
  * %stack%
- * @param {string} key
- * @param {string} id
  * @param {string} stack
  * @returns {never}
  */
-export function warp_serialization_failed(key, id, stack) {
-	const error = new Error(`warp_serialization_failed\nFailed to serialize the value with key \`${key}\` in \`Warp\` \`${id}\`.
+export function warp_serialization_failed(stack) {
+	const error = new Error(`warp_serialization_failed\nFailed to serialize data added to a \`Warp\`.
 
 \`Warp\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/devalue) can, including promises. To serialize other values, pass a \`replacer\` to \`render\` or \`withWarp\`.
 
