@@ -22,7 +22,13 @@ import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { ignore_map, get_ignore_snapshot, pop_ignore, push_ignore } from '../../state.js';
+import {
+	ignorable,
+	ignore_map,
+	get_ignore_snapshot,
+	pop_ignore,
+	push_ignore
+} from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -92,50 +98,53 @@ import * as state from '../../state.js';
  */
 const visitors = {
 	_(node, { state, next, path }) {
-		const parent = path.at(-1);
-
 		/** @type {string[]} */
 		const ignores = [];
 
-		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
-			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
+		// every node's snapshot would be empty, as is the stack a warning falls back to
+		if (ignorable) {
+			const parent = path.at(-1);
 
-			for (let i = idx - 1; i >= 0; i--) {
-				const prev = parent.nodes[i];
+			if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
+				const idx = parent.nodes.indexOf(/** @type {any} */ (node));
 
-				if (prev.type === 'Comment') {
-					ignores.push(
-						...extract_svelte_ignore(
-							prev.start + 4 /* '<!--'.length */,
-							prev.data,
-							state.analysis.runes
-						)
-					);
-				} else if (prev.type !== 'Text') {
-					break;
+				for (let i = idx - 1; i >= 0; i--) {
+					const prev = parent.nodes[i];
+
+					if (prev.type === 'Comment') {
+						ignores.push(
+							...extract_svelte_ignore(
+								prev.start + 4 /* '<!--'.length */,
+								prev.data,
+								state.analysis.runes
+							)
+						);
+					} else if (prev.type !== 'Text') {
+						break;
+					}
+				}
+			} else {
+				const comments = /** @type {any} */ (node).leadingComments;
+
+				if (comments) {
+					for (const comment of comments) {
+						ignores.push(
+							...extract_svelte_ignore(
+								comment.start + 2 /* '//'.length */,
+								comment.value,
+								state.analysis.runes
+							)
+						);
+					}
 				}
 			}
-		} else {
-			const comments = /** @type {any} */ (node).leadingComments;
 
-			if (comments) {
-				for (const comment of comments) {
-					ignores.push(
-						...extract_svelte_ignore(
-							comment.start + 2 /* '//'.length */,
-							comment.value,
-							state.analysis.runes
-						)
-					);
-				}
+			if (ignores.length > 0) {
+				push_ignore(ignores);
 			}
-		}
 
-		if (ignores.length > 0) {
-			push_ignore(ignores);
+			ignore_map.set(node, get_ignore_snapshot());
 		}
-
-		ignore_map.set(node, get_ignore_snapshot());
 
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);

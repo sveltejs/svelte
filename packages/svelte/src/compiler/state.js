@@ -85,6 +85,9 @@ export let warning_filter;
  */
 export let ignore_stack = [];
 
+/** Whether the source holds `svelte-ignore`, without which no comment ignores a warning */
+export let ignorable = false;
+
 /**
  * For each node the list of warnings that should be ignored for that node.
  * Exists in addition to `ignore_stack` because not all warnings are emitted
@@ -176,4 +179,5 @@ export function adjust(state) {
 	ignore_stack = [];
 	ignore_map.clear();
 	cached_ignore_snapshot = null;
+	ignorable = source.includes('svelte-ignore');
 }
