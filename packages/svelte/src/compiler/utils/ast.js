@@ -8,6 +8,17 @@ import { referenceOf } from '@teasel/parser';
  * the parser's tables for one piece of JavaScript: the scope it sits in, the scopes opened, the bindings declared and the references made inside it
  */
 
+/**
+ * @typedef {Tables & { names?: Named[] }} Document
+ * the parser's tables for a whole component or module, and what the template names that the parser does not bind
+ */
+
+/**
+ * @typedef {{ host: any, name: string } | { component: any } | { bind: any }} Named
+ * a name the template reads outside JavaScript (a component's tag, a directive's function, a
+ * `style:` shorthand), a component, whose slots are scopes, or a `bind:`, which writes its expression
+ */
+
 // a symbol on the root: a property load where the walk asks every node, not a map lookup
 const PARSED = Symbol('parsed');
 
@@ -15,7 +26,7 @@ const PARSED = Symbol('parsed');
  * Keeps the parser's tables on the root they belong to, a script's program or a template's
  * expression, pattern, parameter list or declaration.
  * @param {object} root
- * @param {Tables} tables
+ * @param {Document} tables
  */
 export function keep_tables(root, tables) {
 	/** @type {any} */ (root)[PARSED] = tables;

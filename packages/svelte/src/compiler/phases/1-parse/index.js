@@ -149,6 +149,14 @@ export function parse(template, loose = false, erase = false) {
 	for (const piece of roots) keep_tables(piece.node, piece);
 	const finish = new Finish(trimmed, root.comments);
 	finish.root(root);
+	keep_tables(root, {
+		node: /** @type {any} */ (root),
+		scope: /** @type {import('@teasel/parser').Scope[]} */ (answer.scopes)[0],
+		scopes: /** @type {import('@teasel/parser').Scope[]} */ (answer.scopes),
+		bindings: /** @type {import('@teasel/parser').Binding[]} */ (answer.bindings),
+		references: /** @type {import('@teasel/parser').Reference[]} */ (answer.references),
+		names: finish.names
+	});
 
 	// a comment between attributes is the template's, kept whole; one in JavaScript loses its line's indentation
 	for (const comment of root.comments) {
@@ -188,6 +196,9 @@ export function parse_css(stylesheet) {
 class Finish {
 	/** @type {Set<AST.JSComment>} */
 	in_tags = new Set();
+
+	/** @type {import('../../utils/ast.js').Named[]} */
+	names = [];
 
 	/**
 	 * @param {string} template
@@ -383,6 +394,13 @@ class Finish {
 				if (node.type === 'SvelteComponent' || node.type === 'Component') {
 					node.metadata.expression = new ExpressionMetadata();
 				}
+				if (
+					node.type === 'Component' ||
+					node.type === 'SvelteComponent' ||
+					node.type === 'SvelteSelf'
+				) {
+					this.names.push({ component: node });
+				}
 				this.attributes(node.attributes);
 				if (this.comments.length !== 0) this.tag_comments(node);
 				this.fragment(node.fragment, true);
@@ -477,6 +495,7 @@ class Finish {
 					this.expression(attribute, null);
 					attribute.name_loc = this.name_loc(attribute);
 					this.value(attribute.value);
+					if (attribute.value === true) this.names.push({ host: attribute, name: attribute.name });
 					break;
 				case 'LetDirective': {
 					this.expression(attribute, null);
@@ -499,6 +518,15 @@ class Finish {
 				default:
 					this.expression(attribute, attribute.expression);
 					attribute.name_loc = this.name_loc(attribute);
+					if (
+						attribute.type === 'TransitionDirective' ||
+						attribute.type === 'AnimateDirective' ||
+						attribute.type === 'UseDirective'
+					) {
+						this.names.push({ host: attribute, name: attribute.name.split('.')[0] });
+					} else if (attribute.type === 'BindDirective') {
+						this.names.push({ bind: attribute });
+					}
 			}
 		}
 	}

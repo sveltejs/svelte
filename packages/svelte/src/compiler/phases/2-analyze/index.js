@@ -217,33 +217,6 @@ const visitors = {
 };
 
 /**
- * @param {AST.Script | null} script
- * @param {ScopeRoot} root
- * @param {boolean} allow_reactive_declarations
- * @param {Scope | null} parent
- * @returns {Js}
- */
-function js(script, root, allow_reactive_declarations, parent) {
-	/** @type {ESTree.Program} */
-	const ast = script?.content ?? {
-		type: 'Program',
-		sourceType: 'module',
-		start: -1,
-		end: -1,
-		body: []
-	};
-
-	const { scope, scopes, has_await } = create_scopes(
-		ast,
-		root,
-		allow_reactive_declarations,
-		parent
-	);
-
-	return { ast, scope, scopes, has_await };
-}
-
-/**
  * @param {string} filename
  */
 function get_component_name(filename) {
@@ -271,7 +244,7 @@ export function analyze_module(source, options) {
 	state.set_source(source);
 	const ast = parse(source, comments, false);
 
-	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
+	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot()).module;
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -342,15 +315,8 @@ export function analyze_module(source, options) {
 export function analyze_component(root, source, options) {
 	const scope_root = new ScopeRoot();
 
-	const module = js(root.module, scope_root, false, null);
-	const instance = js(root.instance, scope_root, true, module.scope);
-
-	const { scope, scopes, has_await } = create_scopes(
-		root.fragment,
-		scope_root,
-		false,
-		instance.scope
-	);
+	const { module, instance, template: built } = create_scopes(root, scope_root);
+	const { scope, scopes, has_await } = built;
 
 	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };

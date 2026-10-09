@@ -5,17 +5,8 @@ import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
 import * as e from '../errors.js';
 import { referenceOf, parentOf } from '@teasel/parser';
-import {
-	extract_identifiers,
-	tables_of,
-	extract_identifiers_from_destructuring,
-	is_reference,
-	object,
-	unwrap_pattern
-} from '../utils/ast.js';
+import { extract_identifiers, tables_of, object, unwrap_pattern } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
-import { is_template_node } from './1-parse/index.js';
-import { CHILDREN } from '../utils/walk.js';
 import { determine_slot } from '../utils/slot.js';
 
 const UNKNOWN = Symbol('unknown');
@@ -95,8 +86,8 @@ export class Reference {
 	scope;
 	/** @type {AST.SvelteNode[] | undefined} */
 	#path;
-	/** @type {AST.SvelteNode[]} the template's ancestors, above the JavaScript the identifier sits in */
-	#template;
+	/** @type {AST.SvelteNode | undefined} the template node that reads a name it holds, for an identifier the template made */
+	#anchor;
 
 	/**
 	 * What the parser resolved the identifier to, when it did, and what it saw it do.
@@ -109,33 +100,30 @@ export class Reference {
 	/**
 	 * @param {Identifier} node
 	 * @param {Scope} scope
-	 * @param {AST.SvelteNode[]} path the ancestors, or the template's alone when the identifier
-	 * comes from the parser, whose parent links supply the rest
-	 * @param {boolean} [complete]
-	 * @param {Binding} [resolved]
-	 * @param {import('@teasel/parser').Reference} [parsed]
+	 * @param {Binding | undefined} resolved
+	 * @param {import('@teasel/parser').Reference | undefined} parsed
+	 * @param {AST.SvelteNode} [anchor]
 	 */
-	constructor(node, scope, path, complete = true, resolved = undefined, parsed = undefined) {
+	constructor(node, scope, resolved, parsed, anchor) {
 		this.node = node;
 		this.scope = scope;
-		this.#template = path;
-		if (complete) this.#path = path;
 		this.resolved = resolved;
 		this.parsed = parsed;
+		this.#anchor = anchor;
 	}
 
-	/** The ancestors of the identifier, outermost first: the template's, then the JavaScript's. */
+	/** The ancestors of the identifier, outermost first, from the component's fragment or the script's program. */
 	get path() {
 		if (this.#path === undefined) {
-			const inside = [];
+			const path = [];
 			for (
-				let parent = parentOf(this.node);
-				parent !== undefined && !is_template_node(parent);
-				parent = parentOf(parent)
+				let node = /** @type {any} */ (this.#anchor ?? parentOf(this.node));
+				node !== undefined && node.type !== 'Root' && node.type !== 'Script';
+				node = parentOf(node)
 			) {
-				inside.push(/** @type {AST.SvelteNode} */ (parent));
+				path.push(/** @type {AST.SvelteNode} */ (node));
 			}
-			this.#path = this.#template.concat(inside.reverse());
+			this.#path = path.reverse();
 		}
 		return this.#path;
 	}
@@ -833,15 +821,6 @@ export class Scope {
 	}
 
 	/**
-	 * @param {Identifier} node
-	 * @param {AST.SvelteNode[]} path
-	 * @returns {Binding | null} what the reference resolved to; null for a global
-	 */
-	reference(node, path) {
-		return this.record(new Reference(node, this, path));
-	}
-
-	/**
 	 * @param {Reference} reference
 	 * @param {Binding | null | undefined} [binding] what the parser resolved the reference to
 	 * @returns {Binding | null} what the reference resolved to; null for a global
@@ -987,262 +966,320 @@ export class ScopeRoot {
 }
 
 /**
- * @param {AST.SvelteNode} ast
- * @param {ScopeRoot} root
- * @param {boolean} allow_reactive_declarations
- * @param {Scope | null} parent
+ * @typedef {{ ast: Program, scope: Scope, scopes: Map<AST.SvelteNode, Scope>, has_await: boolean }} Js
+ * @typedef {{ scope: Scope, scopes: Map<AST.SvelteNode, Scope>, has_await: boolean }} Scopes
  */
-export function create_scopes(ast, root, allow_reactive_declarations, parent) {
+
+const COMPONENTS = new Set(['Component', 'SvelteComponent', 'SvelteSelf']);
+const ELEMENTS = new Set(['RegularElement', 'SvelteElement', 'SlotElement', 'SvelteFragment']);
+const HOSTS = new Set(['EachBlock', 'SnippetBlock', 'AwaitBlock', 'LetDirective']);
+
+/**
+ * Whether `binding` is in `scope` or a scope around it.
+ * @param {Scope | null} scope
+ * @param {Binding} binding
+ */
+function sees(scope, binding) {
+	for (; scope !== null; scope = scope.parent) if (scope === binding.scope) return true;
+	return false;
+}
+
+/** @returns {Program} */
+function empty_program() {
+	return { type: 'Program', sourceType: 'module', start: -1, end: -1, body: [] };
+}
+
+/**
+ * Svelte's scopes, built in one pass over the scopes, bindings and references the parser answered
+ * for the whole document, a component's or a module's: a scope for each of its scopes, a binding
+ * for each of its bindings with the kind the template gives it, a reference for each of its
+ * references, bound to what the parser resolved it to. Svelte's own scopes stand among them: one
+ * per element, the one an await block's value is read in, a component's slots, a `$:` statement's.
+ * @param {AST.Root | Program} document
+ * @param {ScopeRoot} root
+ * @returns {{ module: Js, instance: Js, template: Scopes }}
+ */
+export function create_scopes(document, root) {
+	const tables = /** @type {import('../utils/ast.js').Document} */ (tables_of(document));
+	const component = document.type === 'Root' ? /** @type {AST.Root} */ (document) : null;
+	const module_ast = component
+		? component.module?.content ?? empty_program()
+		: /** @type {Program} */ (document);
+	const instance_ast = component?.instance?.content ?? empty_program();
+
 	/**
-	 * A map of node->associated scope. A node appearing in this map does not necessarily mean that it created a scope
+	 * The scope a walk switches to at each node that opens one.
 	 * @type {Map<AST.SvelteNode, Scope>}
 	 */
 	const scopes = new Map();
-	const scope = new Scope(root, parent, false);
-	scopes.set(ast, scope);
+	/** @type {Map<object, Scope>} the scope what sits under a node is in, beside the nodes `scopes` keys: a block's parts, a component's content */
+	const near = new Map();
+	/** @type {Map<object, Scope>} a named slot's scope, by the child that fills it */
+	const slotted = new Map();
+	/** @type {Map<import('@teasel/parser').Scope, Scope>} where each of the parser's scopes declares; a function's holds its parameters */
+	const ours = new Map();
+	/** @type {Map<import('@teasel/parser').Scope, Scope>} a function's body, which holds the rest */
+	const bodies = new Map();
+	/** @type {Map<import('@teasel/parser').Binding, Binding>} the parser's bindings and ours */
+	const from_parser = new Map();
+	/** @type {Map<import('@teasel/parser').Binding, Binding>} an await value's second declaration, where its pattern is read */
+	const read_at = new Map();
+	/** @type {Set<Binding>} bindings the parser sees from more places than the template lets them be seen: a component's `let:`, an await value */
+	const fenced = new Set();
 
-	/** Every reference, resolved once the walk is done. @type {Reference[]} */
-	const references = [];
-
-	/** @type {[Scope, Pattern | MemberExpression, Expression][]} */
-	const updates = [];
+	const module = new Scope(root, null, false);
+	scopes.set(module_ast, module);
+	near.set(module_ast, module);
+	ours.set(tables.scope, module);
+	const instance = module.child();
+	scopes.set(instance_ast, instance);
+	near.set(instance_ast, instance);
+	/** @type {Scope} */
+	let template = instance;
 
 	/**
-	 * An array of reactive declarations, i.e. the `a` in `$: a = b * 2`
+	 * The scope the nodes under `node` are in.
+	 * @param {any} node
+	 * @returns {Scope}
+	 */
+	function at(node) {
+		for (let n = node; n !== undefined; n = parentOf(n)) {
+			const scope = near.get(n) ?? slotted.get(n);
+			if (scope !== undefined) return scope;
+		}
+		return module;
+	}
+
+	/**
+	 * The scope a node sits in.
+	 * @param {any} node
+	 */
+	function around(node) {
+		return slotted.get(node) ?? at(parentOf(node));
+	}
+
+	/** @param {any} element */
+	function element_scope(element) {
+		let scope = scopes.get(element);
+		if (scope === undefined) {
+			scope = around(element).child();
+			scopes.set(element, scope);
+			near.set(element, scope);
+		}
+		return scope;
+	}
+
+	/**
+	 * A component's slots: the default, which holds its content, and one per child a named slot takes.
+	 * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
+	 */
+	function slots(node) {
+		if (node.metadata.scopes === undefined) {
+			const outer = around(node);
+			node.metadata.scopes = { default: outer.child() };
+			for (const child of node.fragment.nodes) {
+				const name = determine_slot(child);
+				if (name !== null) slotted.set(child, (node.metadata.scopes[name] = outer.child()));
+			}
+		}
+		return node.metadata.scopes;
+	}
+
+	/** @param {any} node a component that `let:` declares in */
+	function let_scope(node) {
+		return determine_slot(node) ? around(node) : slots(node).default;
+	}
+
+	/** @type {AST.EachBlock[]} */
+	const eaches = [];
+
+	/**
+	 * @param {import('@teasel/parser').Scope} parsed
+	 * @param {any} node
+	 */
+	function fragment(parsed, node) {
+		const parent = /** @type {any} */ (parentOf(node));
+		/** @type {Scope} */
+		let scope;
+		if (parent.type === 'Root') {
+			template = instance.child();
+			scope = template.child(node.metadata.transparent);
+			scopes.set(node, scope);
+		} else if (parent.type === 'EachBlock' && parent.body === node) {
+			scope = around(parent).child();
+			scopes.set(parent, scope);
+			if (parent.context) near.set(parent.context, scope);
+			if (parent.key) near.set(parent.key, scope);
+			eaches.push(parent);
+		} else if (parent.type === 'SnippetBlock' && parent.body === node) {
+			scope = around(parent).child();
+			scopes.set(parent, scope);
+			for (const param of parent.parameters) near.set(param, scope);
+		} else if (COMPONENTS.has(parent.type)) {
+			scope = slots(parent).default;
+		} else {
+			scope = (ELEMENTS.has(parent.type) ? element_scope(parent) : at(parent)).child(
+				node.metadata.transparent
+			);
+			scopes.set(node, scope);
+			if (parent.type === 'AwaitBlock') {
+				const pattern =
+					parent.then === node ? parent.value : parent.catch === node ? parent.error : null;
+				if (pattern) {
+					const inside = at(parent).child();
+					scopes.set(pattern, inside);
+					near.set(pattern, inside);
+				}
+			}
+		}
+		near.set(node, scope);
+		ours.set(parsed, scope);
+	}
+
+	/**
+	 * The `$:` statements of an instance script, each a scope of its own; an undeclared name one
+	 * assigns is declared by it.
 	 * @type {Identifier[]}
 	 */
 	const possible_implicit_declarations = [];
-
-	/** @type {Map<import('@teasel/parser').Binding, Binding>} the parser's bindings and ours */
-	const from_parser = new Map();
-
-	/**
-	 * Declares in `scope` what the parser found declared in one of its scopes: the parameters, or the rest.
-	 * @param {Scope} scope
-	 * @param {import('@teasel/parser').Binding[]} bindings
-	 * @param {boolean} params
-	 * @param {boolean} [template] the declarations are a const tag's
-	 */
-	function declare_parsed(scope, bindings, params, template = false) {
-		for (const binding of bindings) {
-			if ((binding.kind === 'param') !== params) continue;
-			// no node: `arguments`, or a declaration erased with the TypeScript it belonged to
-			if (binding.node === null || binding.kind === 'class-name' || binding.kind === 'pattern')
-				continue;
-			const declaration = /** @type {any} */ (binding.declaration);
-			/** @type {DeclarationKind} */
-			let kind = 'let';
-			/** @type {Binding['initial']} */
-			let initial = null;
-			switch (binding.kind) {
-				case 'var':
-				case 'let':
-				case 'const':
-					kind = binding.kind;
-					initial = declaration?.init ?? null;
-					break;
-				case 'function':
-				case 'import':
-					kind = binding.kind;
-					break;
-				case 'function-name':
-					kind = 'function';
-					break;
-				case 'param':
-					kind = is_rest_param(declaration, binding.node) ? 'rest_param' : 'param';
-					break;
-			}
-			if (declaration?.type === 'FunctionDeclaration' || declaration?.type === 'ClassDeclaration') {
-				initial = declaration;
-			}
-			const ours = scope.declare(binding.node, template ? 'template' : 'normal', kind, initial);
-			from_parser.set(binding, ours);
-			if (declaration?.type === 'VariableDeclarator') {
-				ours.metadata = { is_template_declaration: true };
-				declarators.push([declaration, ours]);
+	if (component) {
+		for (const node of instance_ast.body) {
+			if (node.type !== 'LabeledStatement' || node.label.name !== '$') continue;
+			const inside = instance.child();
+			scopes.set(node, inside);
+			near.set(node, inside);
+			if (
+				node.body.type === 'ExpressionStatement' &&
+				node.body.expression.type === 'AssignmentExpression'
+			) {
+				for (const id of extract_identifiers(node.body.expression.left)) {
+					if (!id.name.startsWith('$')) possible_implicit_declarations.push(id);
+				}
 			}
 		}
 	}
 
-	/**
-	 * Each declarator with what it declares, for the scope at its own position: a `var` hoists
-	 * past the block it sits in, and the block is the scope a visitor of the declaration sees.
-	 * @type {[VariableDeclarator, Binding][]}
-	 */
+	let has_await = false;
+
+	for (const parsed of tables.scopes) {
+		const node = /** @type {any} */ (parsed.node);
+		switch (parsed.kind) {
+			case 'module':
+				ours.set(parsed, module);
+				break;
+			case 'script':
+				ours.set(parsed, component ? instance : module);
+				break;
+			case 'fragment':
+				// without an instance script, the scope that script would open has no node
+				if (node === null) {
+					ours.set(parsed, instance);
+					break;
+				}
+				has_await ||= parsed.topLevelAwait;
+				fragment(parsed, node);
+				break;
+			case 'function': {
+				// the parameters live one above the body, which holds the non-porous function scope
+				const params = around(node).child(true);
+				scopes.set(node, params);
+				near.set(node, params);
+				ours.set(parsed, params);
+				if (parsed.parent?.kind === 'function-name') ours.set(parsed.parent, params);
+				if (node.body.type === 'BlockStatement') {
+					const body = params.child();
+					scopes.set(node.body, body);
+					near.set(node.body, body);
+					bodies.set(parsed, body);
+				}
+				break;
+			}
+			case 'block':
+				// a `let:` declares in a component's default slot or in the element that carries it
+				if (COMPONENTS.has(node.type)) {
+					ours.set(parsed, let_scope(node));
+					break;
+				}
+				if (ELEMENTS.has(node.type)) {
+					ours.set(parsed, element_scope(node));
+					break;
+				}
+			// fallthrough
+			case 'for':
+			case 'switch':
+			case 'catch':
+			case 'static-block': {
+				const inside = around(node).child(true);
+				scopes.set(node, inside);
+				near.set(node, inside);
+				ours.set(parsed, inside);
+				break;
+			}
+			default:
+				ours.set(
+					parsed,
+					node ? around(node) : /** @type {Scope} */ (ours.get(/** @type {any} */ (parsed.parent)))
+				);
+		}
+	}
+
+	/** @type {[VariableDeclarator, Binding][]} */
 	const declarators = [];
 
 	/**
-	 * The `$:` statements of an instance script, each with the scope it opens, for what sits in them.
-	 * @type {[number, number, Scope][]}
+	 * A binding of a template block, by the block that declares it and the part of it that does.
+	 * @param {import('@teasel/parser').Declared} parsed
+	 * @returns {Binding | undefined}
 	 */
-	const labeled = [];
-
-	/**
-	 * The scopes, declarations and references of one parsed answer, from the parser's tables: a
-	 * script's program, or a template's expression, pattern, parameter list or declaration.
-	 * @param {Scope} scope what the answer's outermost scope is here
-	 * @param {NonNullable<ReturnType<typeof tables_of>>} answer
-	 * @param {AST.SvelteNode[]} path the answer's ancestors
-	 * @param {boolean} template the answer's declarations are a const tag's
-	 */
-	function from_tables(scope, answer, path, template) {
-		const outermost = answer.scope;
-		// most of a template's expressions declare nothing and open no scope: their references,
-		// in source order already, are all there is
-		if (
-			outermost.kind === 'fragment' &&
-			answer.scopes.length === 0 &&
-			answer.bindings.length === 0
-		) {
-			for (const reference of answer.references) {
-				if (reference.declares) continue;
-				references.push(new Reference(reference.node, scope, path, false, undefined, reference));
+	function declare_hosted(parsed) {
+		const id = parsed.node;
+		/** @type {any} */
+		let part = id;
+		/** @type {any} */
+		let host = parentOf(id);
+		let rest = false;
+		while (host !== undefined && !HOSTS.has(host.type)) {
+			if (host.type === 'RestElement') rest = true;
+			part = host;
+			host = parentOf(host);
+		}
+		switch (host?.type) {
+			case 'EachBlock': {
+				const scope = /** @type {Scope} */ (scopes.get(host));
+				if (part === host.context) {
+					const binding = scope.declare(id, 'each', 'const');
+					binding.metadata = { inside_rest: rest };
+					return binding;
+				}
+				const keyed =
+					host.key &&
+					(host.key.type !== 'Identifier' || !host.index || host.key.name !== host.index);
+				return scope.declare(id, keyed ? 'template' : 'static', 'const', host);
 			}
-			return;
-		}
-		/** @type {Map<import('@teasel/parser').Scope, import('@teasel/parser').Binding[]>} the answer's bindings by the scope that holds them */
-		const by_scope = new Map();
-		for (const binding of answer.bindings) {
-			const held = by_scope.get(binding.scope);
-			if (held === undefined) by_scope.set(binding.scope, [binding]);
-			else held.push(binding);
-		}
-		/** @param {import('@teasel/parser').Scope} parsed */
-		const of = (parsed) => by_scope.get(parsed) ?? [];
-		/** @type {Map<import('@teasel/parser').Scope, Scope>} the parser's scopes and ours; a function's holds its parameters */
-		const ours = new Map([[outermost, scope]]);
-		/** @type {Map<import('@teasel/parser').Scope, Scope>} a function's body, which holds the rest */
-		const bodies = new Map();
-
-		/**
-		 * Our scope at a position inside the parser's: a function's body from where it starts, a
-		 * `$:` statement's inside one.
-		 * @param {import('@teasel/parser').Scope} scope
-		 * @param {number} position
-		 */
-		function at(scope, position) {
-			const body = bodies.get(scope);
-			if (body !== undefined && position >= /** @type {any} */ (scope.node).body.start) return body;
-			if (scope === outermost) {
-				for (const [start, end, inside] of labeled) {
-					if (position >= start && position < end) return inside;
-				}
+			case 'SnippetBlock':
+				if (part === host.expression) return around(host).declare(id, 'normal', 'function', host);
+				return /** @type {Scope} */ (scopes.get(host)).declare(id, 'snippet', 'let');
+			case 'AwaitBlock': {
+				const value = part === host.value;
+				const binding = /** @type {Scope} */ (near.get(value ? host.then : host.catch)).declare(
+					id,
+					'template',
+					'const'
+				);
+				read_at.set(parsed, /** @type {Scope} */ (near.get(part)).declare(id, 'normal', 'const'));
+				fenced.add(binding);
+				return binding;
 			}
-			return /** @type {Scope} */ (ours.get(scope));
-		}
-
-		declare_parsed(scope, of(outermost), false, template);
-
-		for (const parsed of answer.scopes) {
-			const node = /** @type {any} */ (parsed.node);
-			const parent = at(
-				/** @type {import('@teasel/parser').Scope} */ (parsed.parent),
-				node?.start ?? 0
-			);
-			switch (parsed.kind) {
-				case 'function': {
-					// the parameters live one above the body, which holds the non-porous function scope
-					const params = parent.child(true);
-					scopes.set(node, params);
-					ours.set(parsed, params);
-					if (parsed.parent?.kind === 'function-name') ours.set(parsed.parent, params);
-					declare_parsed(params, of(parsed), true);
-					if (
-						node.body.type !== 'BlockStatement' ||
-						(node.type === 'FunctionExpression' && node.id)
-					) {
-						declare_parsed(params, of(parsed), false);
-					}
-					if (node.body.type === 'BlockStatement') {
-						const body = params.child();
-						scopes.set(node.body, body);
-						bodies.set(parsed, body);
-						declare_parsed(body, of(parsed), false);
-					}
-					break;
-				}
-				case 'block':
-				case 'for':
-				case 'switch':
-				case 'catch':
-				case 'static-block': {
-					const inside = parent.child(true);
-					scopes.set(node, inside);
-					ours.set(parsed, inside);
-					declare_parsed(inside, of(parsed), false);
-					break;
-				}
-				default:
-					ours.set(parsed, parent);
+			case 'LetDirective': {
+				const owner = /** @type {any} */ (parentOf(host));
+				const scope = COMPONENTS.has(owner.type) ? let_scope(owner) : element_scope(owner);
+				const binding = scope.declare(id, 'template', 'const');
+				let declared = scope.declarators.get(host);
+				if (!declared) scope.declarators.set(host, (declared = []));
+				declared.push(binding);
+				if (COMPONENTS.has(owner.type)) fenced.add(binding);
+				return binding;
 			}
-		}
-
-		/** @type {[Identifier, Scope, Binding | undefined, import('@teasel/parser').Reference | undefined][]} */
-		const entries = [];
-		// a declaring identifier counts as a reference to what it declares, as the walk had it;
-		// an import's did not, since the walk never entered an import declaration
-		for (const binding of answer.bindings) {
-			if (binding.node === null || binding.kind === 'import') continue;
-			const declared = from_parser.get(binding);
-			entries.push([
-				binding.node,
-				declared?.scope ?? at(binding.scope, /** @type {number} */ (binding.node.start)),
-				declared,
-				undefined
-			]);
-		}
-		for (const reference of answer.references) {
-			if (reference.declares) {
-				// `var x` again: the declarator declares the binding the first one made
-				const ours = reference.binding === null ? undefined : from_parser.get(reference.binding);
-				/** @type {any} */
-				let declarator = parentOf(reference.node);
-				while (declarator && /Pattern$|^Property$|^RestElement$/.test(declarator.type)) {
-					declarator = parentOf(declarator);
-				}
-				if (ours && declarator?.type === 'VariableDeclarator') {
-					declarators.push([declarator, ours]);
-					// an initializer there assigns again, so the first one is not the value
-					if (reference.write) ours.reassigned = true;
-				}
-				continue;
-			}
-			const binding = reference.binding === null ? undefined : from_parser.get(reference.binding);
-			entries.push([
-				reference.node,
-				at(reference.scope, /** @type {number} */ (reference.node.start)),
-				binding,
-				reference
-			]);
-		}
-		/**
-		 * The innermost of the parser's scopes around a position, by the ranges of the nodes that open them.
-		 * @param {number} position
-		 */
-		const innermost = (position) => {
-			let found = outermost;
-			for (const parsed of answer.scopes) {
-				const node = /** @type {any} */ (parsed.node);
-				if (node && node.start <= position && position < node.end && ours.has(parsed)) {
-					// a fragment has no span of its own: anything inside it is closer
-					const current = /** @type {any} */ (found.node);
-					if (!current || current.start === undefined || node.start >= current.start)
-						found = parsed;
-				}
-			}
-			return found;
-		};
-		for (const [declarator, binding] of declarators.splice(0)) {
-			const position = /** @type {number} */ (declarator.start);
-			const here = at(innermost(position), position);
-			let declared = here.declarators.get(declarator);
-			if (!declared) here.declarators.set(declarator, (declared = []));
-			declared.push(binding);
-		}
-
-		entries.sort((a, b) => /** @type {number} */ (a[0].start) - /** @type {number} */ (b[0].start));
-		for (const [node, scope, binding, reference] of entries) {
-			references.push(new Reference(node, scope, path, false, binding, reference));
 		}
 	}
 
@@ -1255,366 +1292,187 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		return last?.type === 'RestElement' && extract_identifiers(last).includes(id);
 	}
 
-	/** The parser's declaration a Svelte binding stands for, once declared. @param {Identifier} id */
-	function declared(id) {
-		const parsed = referenceOf(id)?.binding;
-		return parsed ? from_parser.get(parsed) : undefined;
+	for (const parsed of tables.bindings) {
+		// no node: `arguments`, or a declaration erased with the TypeScript it belonged to
+		if (parsed.node === null || parsed.kind === 'class-name') continue;
+		if (parsed.kind === 'pattern') {
+			const binding = declare_hosted(parsed);
+			if (binding !== undefined) from_parser.set(parsed, binding);
+			continue;
+		}
+		const declaration = /** @type {any} */ (parsed.declaration);
+		/** @type {DeclarationKind} */
+		let kind = 'let';
+		/** @type {Binding['initial']} */
+		let initial = null;
+		switch (parsed.kind) {
+			case 'var':
+			case 'let':
+			case 'const':
+				kind = parsed.kind;
+				initial = declaration?.init ?? null;
+				break;
+			case 'function':
+			case 'import':
+				kind = parsed.kind;
+				break;
+			case 'function-name':
+				kind = 'function';
+				break;
+			case 'param':
+				kind = is_rest_param(declaration, parsed.node) ? 'rest_param' : 'param';
+				break;
+		}
+		if (declaration?.type === 'FunctionDeclaration' || declaration?.type === 'ClassDeclaration') {
+			initial = declaration;
+		}
+		const scope = /** @type {Scope} */ (
+			parsed.kind === 'param'
+				? ours.get(parsed.scope)
+				: bodies.get(parsed.scope) ?? ours.get(parsed.scope)
+		);
+		const tag =
+			declaration?.type === 'VariableDeclarator' &&
+			parentOf(parentOf(declaration))?.type === 'ConstTag';
+		const binding = scope.declare(parsed.node, tag ? 'template' : 'normal', kind, initial);
+		from_parser.set(parsed, binding);
+		if (declaration?.type === 'VariableDeclarator') {
+			binding.metadata = { is_template_declaration: true };
+			declarators.push([declaration, binding]);
+		}
 	}
 
-	let has_await = false;
+	// numbered inner blocks first, as the walk that built these scopes before named them
+	eaches.sort((a, b) => a.end - b.end);
+	for (const node of eaches) {
+		const scope = /** @type {Scope} */ (scopes.get(node));
+		node.metadata = {
+			expression: new ExpressionMetadata(),
+			keyed: false,
+			contains_group_binding: false,
+			index: root.unique('$$index'),
+			declarations: scope.declarations,
+			is_controlled: false,
+			// filled in during analysis
+			transitive_deps: new Set()
+		};
+	}
 
-	// a script comes entirely from the parser's tables: nothing in it is walked
-	const program = ast.type === 'Program' ? tables_of(ast) : undefined;
-	if (program !== undefined) {
-		has_await = program.scope.topLevelAwait;
-		for (const node of /** @type {Program} */ (ast).body) {
-			if (
-				allow_reactive_declarations &&
-				node.type === 'LabeledStatement' &&
-				node.label.name === '$'
-			) {
-				// create a scope for the $: block
-				const inside = scope.child();
-				scopes.set(node, inside);
-				labeled.push([
-					/** @type {number} */ (node.start),
-					/** @type {number} */ (node.end),
-					inside
-				]);
-				if (
-					node.body.type === 'ExpressionStatement' &&
-					node.body.expression.type === 'AssignmentExpression'
-				) {
-					for (const id of extract_identifiers(node.body.expression.left)) {
-						if (!id.name.startsWith('$')) {
-							possible_implicit_declarations.push(id);
-						}
-					}
-				}
-			}
-		}
-		from_tables(scope, program, [], false);
+	for (const id of possible_implicit_declarations) {
+		// TODO can also be legacy_reactive if declared outside of reactive statement
+		if (instance.get(id.name) === null) instance.declare(id, 'legacy_reactive', 'let');
+	}
+
+	for (const [ast, scope] of [
+		[module_ast, module],
+		[instance_ast, instance]
+	]) {
 		for (const node of /** @type {Program} */ (ast).body) {
 			if (node.type !== 'ImportDeclaration') continue;
 			// a type-only import binds nothing to the parser; the declaration is the initial value
 			for (const specifier of node.specifiers) {
+				const parsed = referenceOf(specifier.local)?.binding;
 				const binding =
-					declared(specifier.local) ?? scope.declare(specifier.local, 'normal', 'import', node);
+					(parsed && from_parser.get(parsed)) ??
+					/** @type {Scope} */ (scope).declare(specifier.local, 'normal', 'import', node);
 				binding.initial = node;
 			}
 		}
 	}
 
-	/** @type {AST.SvelteNode[]} the template's ancestors, outermost first */
-	const path = [];
+	// each region's references in source order, the template's after the names it reads outside
+	// JavaScript, as the walk recorded them before
+	/** @type {Reference[][]} */
+	const regions = [[], [], []];
+	/** @param {any} node */
+	const region = (node) =>
+		node.start >= /** @type {number} */ (module_ast.start) &&
+		node.end <= /** @type {number} */ (module_ast.end)
+			? 0
+			: node.start >= /** @type {number} */ (instance_ast.start) &&
+				  node.end <= /** @type {number} */ (instance_ast.end)
+				? 1
+				: 2;
 
-	/**
-	 * @param {any} node
-	 * @param {Scope} scope
-	 */
-	function next(node, scope) {
-		path.push(node);
-		const keys = CHILDREN[node.type];
-		for (let k = 0; k < keys.length; k++) {
-			const value = node[keys[k]];
-			if (Array.isArray(value)) {
-				for (let i = 0; i < value.length; i++) if (value[i]?.type) visit(value[i], scope);
-			} else if (value?.type) {
-				visit(value, scope);
+	/** @type {Reference[]} */
+	const named = [];
+	/** @type {[Scope, Identifier | MemberExpression, Expression][]} */
+	const updates = [];
+	for (const entry of tables.names ?? []) {
+		if ('component' in entry) {
+			const node = entry.component;
+			slots(node);
+			if (node.type === 'Component') {
+				named.push(
+					new Reference(b.id(node.name.split('.')[0]), around(node), undefined, undefined, node)
+				);
 			}
-		}
-		path.pop();
-	}
-
-	/**
-	 * @param {AST.SvelteNode} node
-	 * @param {any} child
-	 * @param {Scope} scope
-	 */
-	function visit_under(node, child, scope) {
-		path.push(node);
-		visit(child, scope);
-		path.pop();
-	}
-
-	/**
-	 * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
-	 * @param {Scope} scope
-	 */
-	function component(node, scope) {
-		node.metadata.scopes = {
-			default: scope.child()
-		};
-
-		if (node.type === 'SvelteComponent') {
-			visit_under(node, node.expression, scope);
-		}
-
-		const default_scope = determine_slot(node) ? scope : node.metadata.scopes.default;
-
-		for (const attribute of node.attributes) {
-			visit_under(node, attribute, attribute.type === 'LetDirective' ? default_scope : scope);
-		}
-
-		for (const child of node.fragment.nodes) {
-			let inside = default_scope;
-
-			const slot_name = determine_slot(child);
-
-			if (slot_name !== null) {
-				inside = node.metadata.scopes[slot_name] = scope.child();
-			}
-
-			visit_under(node, child, inside);
+		} else if ('bind' in entry) {
+			const expression = entry.bind.expression;
+			if (expression.type !== 'SequenceExpression')
+				updates.push([at(entry.bind), expression, expression]);
+		} else {
+			named.push(new Reference(b.id(entry.name), at(entry.host), undefined, undefined, entry.host));
 		}
 	}
 
-	/**
-	 * @param {any} node
-	 * @param {Scope} scope
-	 */
-	function visit(node, scope) {
-		// the JavaScript of a template, parsed on its own: its scopes come from the parser's tables
-		const answer = tables_of(node);
-		if (answer !== undefined) {
-			has_await ||= answer.scope.topLevelAwait;
-			from_tables(scope, answer, path.slice(), path.at(-1)?.type === 'ConstTag');
-			return;
+	// a declaring identifier counts as a reference to what it declares, as the walk had it;
+	// an import's did not, since the walk never entered an import declaration
+	for (const parsed of tables.bindings) {
+		if (parsed.node === null || parsed.kind === 'import') continue;
+		const declared = read_at.get(parsed) ?? from_parser.get(parsed);
+		regions[region(parsed.node)].push(
+			new Reference(parsed.node, declared?.scope ?? at(parsed.node), declared, undefined)
+		);
+	}
+	for (const parsed of tables.references) {
+		if (parsed.declares) {
+			// `var x` again: the declarator declares the binding the first one made
+			const binding = parsed.binding === null ? undefined : from_parser.get(parsed.binding);
+			/** @type {any} */
+			let declarator = parentOf(parsed.node);
+			while (declarator && /Pattern$|^Property$|^RestElement$/.test(declarator.type)) {
+				declarator = parentOf(declarator);
+			}
+			if (binding && declarator?.type === 'VariableDeclarator') {
+				declarators.push([declarator, binding]);
+				// an initializer there assigns again, so the first one is not the value
+				if (parsed.write) binding.reassigned = true;
+			}
+			continue;
 		}
-
-		switch (node.type) {
-			// an identifier the template built itself, a shorthand attribute's say, is no parser's
-			case 'Identifier':
-				if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
-					references.push(new Reference(node, scope, path.slice()));
-				}
-				return;
-
-			// a const tag's declaration is built around its parsed pattern and initializer, so the
-			// parser has no tables for it; its pattern and initializer are visited as usual
-			case 'VariableDeclaration':
-				for (const declarator of node.declarations) {
-					/** @type {Binding[]} */
-					const bindings = [];
-					scope.declarators.set(declarator, bindings);
-					for (const id of extract_identifiers(declarator.id)) {
-						const binding = scope.declare(id, 'template', node.kind, declarator.init);
-						binding.metadata = { is_template_declaration: true };
-						bindings.push(binding);
-					}
-				}
-				next(node, scope);
-				return;
-
-			case 'SvelteFragment':
-			case 'SlotElement':
-			case 'SvelteElement':
-			case 'RegularElement': {
-				const inside = scope.child();
-				scopes.set(node, inside);
-				next(node, inside);
-				return;
-			}
-
-			case 'LetDirective': {
-				/** @type {Binding[]} */
-				const bindings = [];
-				scope.declarators.set(node, bindings);
-
-				if (node.expression) {
-					for (const id of extract_identifiers_from_destructuring(node.expression)) {
-						const binding = scope.declare(id, 'template', 'const');
-						scope.reference(id, [/** @type {AST.SvelteNode} */ (path.at(-1)), node]);
-						bindings.push(binding);
-					}
-				} else {
-					/** @type {Identifier} */
-					const id = {
-						name: node.name,
-						type: 'Identifier',
-						start: node.start,
-						end: node.end
-					};
-					const binding = scope.declare(id, 'template', 'const');
-					scope.reference(id, [/** @type {AST.SvelteNode} */ (path.at(-1)), node]);
-					bindings.push(binding);
-				}
-				return;
-			}
-
-			case 'Component':
-				scope.reference(b.id(node.name.split('.')[0]), path);
-				component(node, scope);
-				return;
-
-			case 'SvelteSelf':
-			case 'SvelteComponent':
-				component(node, scope);
-				return;
-
-			case 'EachBlock': {
-				visit_under(node, node.expression, scope);
-				if (node.fallback) visit_under(node, node.fallback, scope);
-
-				// context and children are a new scope
-				const inside = scope.child();
-				scopes.set(node, inside);
-
-				if (node.context) {
-					/** @type {Set<Identifier>} */
-					const rest = new Set();
-					bound_in_rest(node.context, false, rest);
-
-					// declarations
-					for (const id of extract_identifiers(node.context)) {
-						const binding = inside.declare(id, 'each', 'const');
-						binding.metadata = { inside_rest: rest.has(id) };
-					}
-
-					// Visit to pick up references from default initializers
-					visit_under(node, node.context, inside);
-				}
-
-				if (node.index) {
-					const is_keyed =
-						node.key &&
-						(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-					inside.declare(b.id(node.index), is_keyed ? 'template' : 'static', 'const', node);
-				}
-				if (node.key) visit_under(node, node.key, inside);
-
-				// children
-				for (const child of node.body.nodes) {
-					visit_under(node, child, inside);
-				}
-
-				node.metadata = {
-					expression: new ExpressionMetadata(),
-					keyed: false,
-					contains_group_binding: false,
-					index: inside.root.unique('$$index'),
-					declarations: inside.declarations,
-					is_controlled: false,
-					// filled in during analysis
-					transitive_deps: new Set()
-				};
-				return;
-			}
-
-			case 'AwaitBlock':
-				visit_under(node, node.expression, scope);
-
-				if (node.pending) {
-					visit_under(node, node.pending, scope);
-				}
-
-				if (node.then) {
-					visit_under(node, node.then, scope);
-					if (node.value) {
-						const then_scope = /** @type {Scope} */ (scopes.get(node.then));
-						const value_scope = scope.child();
-						scopes.set(node.value, value_scope);
-						visit_under(node, node.value, value_scope);
-						for (const id of extract_identifiers(node.value)) {
-							then_scope.declare(id, 'template', 'const');
-							value_scope.declare(id, 'normal', 'const');
-						}
-					}
-				}
-
-				if (node.catch) {
-					visit_under(node, node.catch, scope);
-					if (node.error) {
-						const catch_scope = /** @type {Scope} */ (scopes.get(node.catch));
-						const error_scope = scope.child();
-						scopes.set(node.error, error_scope);
-						visit_under(node, node.error, error_scope);
-						for (const id of extract_identifiers(node.error)) {
-							catch_scope.declare(id, 'template', 'const');
-							error_scope.declare(id, 'normal', 'const');
-						}
-					}
-				}
-				return;
-
-			case 'SnippetBlock': {
-				scope.declare(node.expression, 'normal', 'function', node);
-
-				const inside = scope.child();
-				scopes.set(node, inside);
-
-				for (const param of node.parameters) {
-					for (const id of extract_identifiers(param)) {
-						inside.declare(id, 'snippet', 'let');
-					}
-				}
-
-				for (const param of node.parameters) {
-					const params = tables_of(param);
-					if (params !== undefined) from_tables(inside, params, [...path, node], false);
-				}
-				for (const child of node.body.nodes) {
-					visit_under(node, child, inside);
-				}
-				return;
-			}
-
-			case 'Fragment': {
-				const inside = scope.child(node.metadata.transparent);
-				scopes.set(node, inside);
-				next(node, inside);
-				return;
-			}
-
-			case 'BindDirective':
-				if (node.expression.type !== 'SequenceExpression') {
-					const expression = /** @type {Identifier | MemberExpression} */ (node.expression);
-					updates.push([scope, expression, expression]);
-				}
-				next(node, scope);
-				return;
-
-			case 'TransitionDirective':
-			case 'AnimateDirective':
-			case 'UseDirective':
-				scope.reference(b.id(node.name.split('.')[0]), path);
-				if (node.expression) visit_under(node, node.expression, scope);
-				return;
-
-			// the shorthand `<button style:height />` names the variable as the CSS property
-			case 'StyleDirective':
-				if (node.value === true) {
-					scope.reference(b.id(node.name), path.concat(node));
-				}
-				next(node, scope);
-				return;
-
-			default:
-				next(node, scope);
-		}
+		const scope = at(parsed.node);
+		let binding = parsed.binding === null ? undefined : from_parser.get(parsed.binding);
+		if (binding !== undefined && fenced.has(binding) && !sees(scope, binding)) binding = undefined;
+		regions[region(parsed.node)].push(new Reference(parsed.node, scope, binding, parsed));
 	}
 
-	if (program === undefined) visit(ast, scope);
-
-	for (const id of possible_implicit_declarations) {
-		const binding = scope.get(id.name);
-		if (binding) continue; // TODO can also be legacy_reactive if declared outside of reactive statement
-
-		scope.declare(id, 'legacy_reactive', 'let');
+	for (const [declarator, binding] of declarators) {
+		const here = at(declarator);
+		let declared = here.declarators.get(declarator);
+		if (!declared) here.declarators.set(declarator, (declared = []));
+		declared.push(binding);
 	}
 
-	// we do this after the fact, so that we don't need to worry
-	// about encountering references before their declarations
-	for (const reference of references) {
-		const { scope, parsed } = reference;
-		const binding = scope.record(reference, reference.resolved);
-		// what the parser saw the identifier do; a declaring identifier is no reference to it
-		if (binding === null || parsed === undefined) continue;
-		if (parsed.write) {
-			binding.reassigned = true;
-			binding.assignments.push({ value: parsed.writeExpr ?? reference.node, scope });
+	const by_start = (/** @type {Reference} */ a, /** @type {Reference} */ b) =>
+		/** @type {number} */ (a.node.start) - /** @type {number} */ (b.node.start);
+	for (const references of [
+		regions[0].sort(by_start),
+		regions[1].sort(by_start),
+		named,
+		regions[2].sort(by_start)
+	]) {
+		for (const reference of references) {
+			const { scope, parsed } = reference;
+			const binding = scope.record(reference, reference.resolved);
+			// what the parser saw the identifier do; a declaring identifier is no reference to it
+			if (binding === null || parsed === undefined) continue;
+			if (parsed.write) {
+				binding.reassigned = true;
+				binding.assignments.push({ value: parsed.writeExpr ?? reference.node, scope });
+			}
+			if (parsed.mutate && !deleted(reference.node)) binding.mutated = true;
 		}
-		if (parsed.mutate && !deleted(reference.node)) binding.mutated = true;
 	}
 
 	for (const [scope, node, value] of updates) {
@@ -1634,38 +1492,15 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	return {
-		has_await,
-		scope,
-		scopes
+		module: { ast: module_ast, scope: module, scopes, has_await: tables.scope.topLevelAwait },
+		instance: {
+			ast: instance_ast,
+			scope: instance,
+			scopes,
+			has_await: tables.scopes.some((s) => s.kind === 'script' && s.topLevelAwait)
+		},
+		template: { scope: template, scopes, has_await }
 	};
-}
-
-/**
- * @param {Pattern} pattern
- * @param {boolean} inside
- * @param {Set<Identifier>} out
- */
-function bound_in_rest(pattern, inside, out) {
-	switch (pattern.type) {
-		case 'Identifier':
-			if (inside) out.add(pattern);
-			break;
-		case 'ObjectPattern':
-			for (const property of pattern.properties) {
-				bound_in_rest(property.type === 'RestElement' ? property : property.value, inside, out);
-			}
-			break;
-		case 'ArrayPattern':
-			for (const element of pattern.elements) {
-				if (element) bound_in_rest(element, inside, out);
-			}
-			break;
-		case 'AssignmentPattern':
-			bound_in_rest(pattern.left, inside, out);
-			break;
-		case 'RestElement':
-			bound_in_rest(pattern.argument, true, out);
-	}
 }
 
 /**
