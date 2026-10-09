@@ -70,6 +70,12 @@ Each `withWarp` call can only contain one `render`, since all the values added t
 
 > `withWarp(...)` cannot be called inside another `withWarp(...)` or `render(...)` call
 
+## warp_key_exists
+
+> Key `%key%` has already been set in `Warp` `%id%`%stack%
+
+On the server, each key in a `Warp` can only be set once. Something may already have read the first value during the render, so replacing it would mean the client hydrates with different data than the server rendered with. Use `getOrInsert` or `getOrInsertComputed` if the value might already exist.
+
 ## warp_method_unsupported
 
 > `warp.%method%(...)` is not supported on the server
