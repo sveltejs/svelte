@@ -802,7 +802,14 @@ export class Scope {
 	 * @returns {Binding | null}
 	 */
 	get(name) {
-		return this.declarations.get(name) ?? this.parent?.get(name) ?? null;
+		/** @type {Scope | null} */
+		let scope = this;
+		do {
+			const binding = scope.declarations.get(name);
+			if (binding !== undefined) return binding;
+			scope = scope.parent;
+		} while (scope !== null);
+		return null;
 	}
 
 	/**
