@@ -121,7 +121,7 @@ export function parse(template, loose = false, erase = false) {
 		sourceType: 'module',
 		typescript: ts && (erase ? 'erase' : true),
 		comments: true,
-		locations: true,
+		locations: 'js',
 		scopes: true,
 		errorRecovery: loose,
 		parenthesized: true,
@@ -141,7 +141,6 @@ export function parse(template, loose = false, erase = false) {
 	unsupported(answer.typescript);
 
 	const root = answer.node;
-	delete (/** @type {any} */ (root).loc);
 	root.start = 0;
 	root.end = template.length;
 	root.metadata = { ts };
@@ -223,7 +222,6 @@ class Finish {
 	 * @param {AST.Root} root
 	 */
 	script(script, root) {
-		delete (/** @type {any} */ (script).loc);
 		this.attributes(script.attributes);
 		for (const attribute of /** @type {AST.Attribute[]} */ (script.attributes)) {
 			if (SCRIPT_RESERVED.includes(attribute.name))
@@ -250,11 +248,9 @@ class Finish {
 	 * @param {AST.Root} root
 	 */
 	css(css, root) {
-		delete (/** @type {any} */ (css).loc);
 		this.attributes(css.attributes);
 		css.content.comment = comment_before(root.fragment.nodes, css.start);
 		Finish.sheet(css.children, css.comments);
-		delete (/** @type {any} */ (css.content).loc);
 	}
 
 	/**
@@ -265,7 +261,6 @@ class Finish {
 		const walk = (/** @type {any} */ node) => {
 			if (Array.isArray(node)) return node.forEach(walk);
 			if (!node || typeof node !== 'object') return;
-			delete node.loc;
 			// the parser links every node to its parent and scope; a CSS node has no use for either
 			for (const key of Object.getOwnPropertySymbols(node)) delete node[key];
 			switch (node.type) {
@@ -295,7 +290,6 @@ class Finish {
 	 * @param {boolean} transparent
 	 */
 	fragment(fragment, transparent) {
-		delete (/** @type {any} */ (fragment).loc);
 		fragment.metadata = { transparent, dynamic: false };
 		for (const node of fragment.nodes) this.node(node);
 		if (transparent && fragment.nodes.some((node) => node.type === 'DeclarationTag')) {
@@ -330,8 +324,6 @@ class Finish {
 
 	/** @param {AST.TemplateNode} node */
 	node(node) {
-		// the parser locates every node; the AST locates the JavaScript ones
-		delete (/** @type {any} */ (node).loc);
 		switch (node.type) {
 			case 'Text':
 			case 'Comment':
@@ -469,7 +461,6 @@ class Finish {
 	/** @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag>} attributes */
 	attributes(attributes) {
 		for (const attribute of attributes) {
-			delete (/** @type {any} */ (attribute).loc);
 			switch (attribute.type) {
 				case 'Attribute':
 					attribute.metadata = { delegated: false, needs_clsx: false };
@@ -516,7 +507,6 @@ class Finish {
 	value(value) {
 		if (value === true) return;
 		for (const chunk of Array.isArray(value) ? value : [value]) {
-			delete (/** @type {any} */ (chunk).loc);
 			if (chunk.type === 'ExpressionTag') this.expression(chunk, chunk.expression);
 		}
 	}
