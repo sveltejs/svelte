@@ -654,24 +654,8 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.#pending === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
+		if (this.#pending === 0) {
 			this.#unlink();
-		}
-
-		// Edge case: During traversal new branches might create effects that run immediately and set state,
-		// causing an effect to be scheduled again. We need to traverse the current batch
-		// once more in that case - most of the time this will just clean up dirty branches.
-		// TODO I think we can delete this now since we re-iterate above
-		if (this.#scheduled.length > 0) {
-			if (next_batch !== null) {
-				for (const e of this.#scheduled) {
-					next_batch.#scheduled.push(e);
-				}
-
-				this.#scheduled = [];
-			} else {
-				next_batch = this;
-			}
 		}
 
 		if (next_batch !== null) {

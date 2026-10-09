@@ -436,8 +436,9 @@ export function update_derived(derived) {
 			// to the previous batch, not the new one (which can already exist if an earlier
 			// effect wrote to a source). Not adding it to either can cause bugs, so we add it to both.
 			// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-			previous_batch?.capture(derived, value, true);
+			// Order matters: current_batch first so it gets the correct previous value.
 			current_batch?.capture(derived, value, true);
+			previous_batch?.capture(derived, value, true, current_batch !== null);
 		} else {
 			derived.v = value;
 			derived.wv = increment_write_version();
