@@ -318,7 +318,7 @@ describe('streaming', () => {
 
 	/** Collects the tail, and returns the revived values once everything has been evaluated */
 	async function revive_streamed(head: string, tail: AsyncIterable<string>) {
-		const window: { __svelte?: { w?: Map<string, Map<unknown, unknown>> } } = {};
+		const window: { __svelte?: { w?: Map<string, Map<unknown, unknown>>; s?: number } } = {};
 		const run = (html: string) => {
 			for (const [, script] of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
 				new Function('window', script)(window);
@@ -329,9 +329,13 @@ describe('streaming', () => {
 
 		const chunks: string[] = [];
 		for await (const chunk of tail) {
+			// the client is told that a stream is in progress until the last chunk
+			expect(window.__svelte?.s).toBe(1);
 			chunks.push(chunk);
 			run(chunk);
 		}
+
+		expect(window.__svelte?.s).toBe(0);
 
 		return { values: window.__svelte?.w, chunks };
 	}

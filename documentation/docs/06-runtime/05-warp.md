@@ -159,6 +159,8 @@ response.end('</body></html>');
 
 If you stop iterating over `tail` early, the background work is stopped. Since the streamed `<script>` tags can't be known in advance, streaming can't be used with `csp: { hash: true }` — use a `nonce` instead.
 
+You can still change a `Warp` on the client while values are streaming in. Your changes take precedence over the values from the server, including ones that arrive later — for example, after `warp.clear()`, values streamed in afterwards won't be visible. This means that a component which is still waiting for data from the server will load it again on the client instead.
+
 ## CSP
 
 `Warp` adds an inline `<script>` block to the `head` returned from `render`. If you're using [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) (CSP), this script will likely fail to run. You can provide a `nonce` to `render`:

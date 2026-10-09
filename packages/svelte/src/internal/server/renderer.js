@@ -1040,9 +1040,15 @@ export class Renderer {
 			serialization_failed(serialization_error);
 		}
 
+		const streaming = late !== null && ready.next !== null;
+
 		const body = `
 			{
-				const w = (window.__svelte ??= {}).w ??= new Map();
+				const w = (window.__svelte ??= {}).w ??= new Map();${
+					// while this is above zero, changes made to the client's `Warp`s are kept separate,
+					// so they can't interfere with the values that are still being streamed in
+					streaming ? '\n\t\t\t\twindow.__svelte.s = (window.__svelte.s ?? 0) + 1;' : ''
+				}
 
 				for (const [id, values] of ${late === null ? head : `(${head})[0]`}) {
 					const existing = w.get(id);
@@ -1068,10 +1074,14 @@ export class Renderer {
 
 		return {
 			head: `\n\t\t<script${csp_attr}>${body}</script>`,
-			tail:
-				late === null || !ready.next
-					? empty()
-					: stream_scripts(tail, ready.next, csp_attr, late.close)
+			tail: streaming
+				? stream_scripts(
+						tail,
+						/** @type {Promise<IteratorResult<string>>} */ (ready.next),
+						csp_attr,
+						late.close
+					)
+				: empty()
 		};
 	}
 
@@ -1226,26 +1236,30 @@ function stream_scripts(tail, next, csp_attr, close) {
  * @returns {AsyncGenerator<string>}
  */
 async function* generate_scripts(tail, next, csp_attr) {
-	while (true) {
-		const result = await next;
-		if (result.done) return;
+	let done = false;
 
-		let code = result.value;
-		next = tail.next();
+	while (!done) {
+		let code = '';
+		let result = await next;
 
 		while (true) {
+			if (result.done) {
+				// tell the client that this stream has finished
+				code += 'window.__svelte.s -= 1;';
+				done = true;
+				break;
+			}
+
+			code += result.value;
+			next = tail.next();
+
 			const more = await Promise.race([
 				next,
 				new Promise((fulfil) => setTimeout(() => fulfil(MACROTASK), 0))
 			]);
 
 			if (more === MACROTASK) break;
-
-			const { done, value } = /** @type {IteratorResult<string>} */ (more);
-			if (done) break;
-
-			code += value;
-			next = tail.next();
+			result = /** @type {IteratorResult<string>} */ (more);
 		}
 
 		yield `<script${csp_attr}>${code}</script>`;
