@@ -978,24 +978,30 @@ export class Batch {
 	}
 
 	/**
-	 *
 	 * @param {Effect} effect
+	 * @param {Effect[] | null} [queue] Newly created user effects can skip traversal
 	 */
-	schedule(effect) {
+	schedule(effect, queue = null) {
 		last_scheduled_effect = effect;
 
 		// defer render effects inside a pending boundary
 		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
 		if (
-			effect.b?.is_pending &&
 			(effect.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
 			(effect.f & REACTION_RAN) === 0
 		) {
-			effect.b.defer_effect(effect);
-			return;
+			var boundary = effect.b;
+			while (boundary !== null && !boundary.is_pending) {
+				boundary = boundary.parent;
+			}
+
+			if (boundary !== null) {
+				boundary.defer_effect(effect);
+				return;
+			}
 		}
 
-		this.#scheduled.push(effect);
+		(queue ?? this.#scheduled).push(effect);
 	}
 
 	#unlink() {

@@ -356,6 +356,10 @@ export class Boundary {
 	#resolve(batch) {
 		this.is_pending = false;
 
+		// The batch may have been merged into an earlier one while this boundary was pending.
+		// In that case it will no longer flush, so release effects into a live batch instead.
+		if (!batch.linked) batch = Batch.ensure();
+
 		// any effects that were previously deferred should be transferred
 		// to the batch, which will flush in the next microtask
 		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
