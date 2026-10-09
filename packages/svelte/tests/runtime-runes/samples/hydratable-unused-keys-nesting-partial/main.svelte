@@ -8,10 +8,10 @@
 		() => {
 			return {
 				used: new Promise(
-					(res, rej) => environment === 'server' ? setTimeout(() => res('did you ever hear the tragedy of darth plagueis the wise?'), 0) : rej('should not run')
+					(res, rej) => environment === 'server' ? setTimeout(() => res('did you ever hear the tragedy of darth plagueis the wise?'), 10) : rej('should not run')
 				),
 				unused: new Promise(
-					(res, rej) => environment === 'server' ? setTimeout(() => res('no, sith daddy, please tell me'), 0) : rej('should not run')
+					(res, rej) => environment === 'server' ? setTimeout(() => res('no, sith daddy, please tell me'), 50) : rej('should not run')
 				),
 			}
 		}

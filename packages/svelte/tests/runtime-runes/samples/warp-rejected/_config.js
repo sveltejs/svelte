@@ -13,7 +13,10 @@ export default test({
 
 	test_ssr({ assert, warnings }) {
 		assert.strictEqual(warnings.length, 1);
-		assert.include(warnings[0], 'The value with key `data` in `Warp` `app`');
+		assert.include(
+			warnings[0],
+			'Part of the data added to `Warp` instances was not used during the render'
+		);
 	},
 
 	async test({ assert, target }) {

@@ -1,11 +1,6 @@
 ## unresolved_warp
 
-> The value with key `%key%` in `Warp` `%id%` was created, but at least part of it was not used during the render.
->
-> The value was set in:
-> %stack%
-
-The server has to wait for this value to resolve before it can send the rendered HTML, which delays the response even though the value was not needed for the render.
+> Part of the data added to `Warp` instances was not used during the render, so the response was delayed until it resolved.
 
 The most likely cause of this is creating a value in the `script` block of your component and then `await`ing
 the result inside a `svelte:boundary` with a `pending` snippet:
