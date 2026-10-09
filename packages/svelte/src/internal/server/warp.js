@@ -5,6 +5,7 @@ import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import { get_user_code_location } from './dev.js';
 import * as e from './errors.js';
+import { get_or_insert_computed } from '../shared/utils.js';
 
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
@@ -71,10 +72,10 @@ export class Warp {
 		const store = get_store();
 		const values = /** @type {Map<K, V>} */ (get_values(store, this.#id));
 
-		if (values.has(key)) return /** @type {V} */ (values.get(key));
-
-		set(store, this.#id, key, value);
-		return value;
+		return get_or_insert_computed(values, key, () => {
+			record(store, this.#id, key, value);
+			return value;
+		});
 	}
 
 	/**
@@ -87,11 +88,11 @@ export class Warp {
 		const store = get_store();
 		const values = /** @type {Map<K, V>} */ (get_values(store, this.#id));
 
-		if (values.has(key)) return /** @type {V} */ (values.get(key));
-
-		const value = callback(key);
-		set(store, this.#id, key, value);
-		return value;
+		return get_or_insert_computed(values, key, (key) => {
+			const value = callback(key);
+			record(store, this.#id, key, value);
+			return value;
+		});
 	}
 
 	/**
@@ -174,11 +175,22 @@ function get_values(store, id) {
  * @param {unknown} value
  */
 function set(store, id, key, value) {
+	record(store, id, key, value);
+	get_values(store, id).set(key, value);
+}
+
+/**
+ * Does everything that needs to happen when a value is added, other than actually adding it.
+ * Throws if it can't be added, so that `getOrInsertComputed` doesn't add it either
+ * @param {WarpStore} store
+ * @param {string} id
+ * @param {WarpKey} key
+ * @param {unknown} value
+ */
+function record(store, id, key, value) {
 	if (store.emitted) {
 		e.warp_set_after_render(id, String(key));
 	}
-
-	get_values(store, id).set(key, value);
 
 	if (DEV) {
 		let stacks = store.stacks.get(id);
