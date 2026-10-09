@@ -83,19 +83,18 @@ describe('Warp', () => {
 		expect(values?.get('other')?.get('a')).toBe(2);
 	});
 
-	test('waits for promises, including nested ones, and inlines them as resolved', async () => {
+	test('waits for promises, including nested ones', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		try {
 			const { head } = await render(() => {
 				warp.set(
 					'a',
-					Promise.resolve({ nested: new Promise((fulfil) => setTimeout(() => fulfil(42))) })
+					Promise.resolve({ nested: new Promise((fulfil) => setTimeout(() => fulfil(42), 20)) })
 				);
 			});
 
 			const a = await revive(head)?.get('test')?.get('a');
-			expect(head).toContain('Promise.resolve(');
 			expect(await (a as any).nested).toBe(42);
 
 			// the nested promise was still pending when the render finished

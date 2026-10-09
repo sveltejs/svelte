@@ -6,7 +6,7 @@
 	const warp = new Warp<string, Promise<string>>('app');
 	const data = warp.getOrInsertComputed(
 		'data',
-		() => new Promise((_, reject) => setTimeout(() => reject(new Error(`from ${environment}`))))
+		() => new Promise((_, reject) => setTimeout(() => reject(new Error(`from ${environment}`)), 10))
 	);
 </script>
 

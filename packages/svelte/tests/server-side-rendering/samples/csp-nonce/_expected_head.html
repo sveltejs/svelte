@@ -3,7 +3,7 @@
 			{
 				const w = (window.__svelte ??= {}).w ??= new Map();
 
-				for (const [id, values] of new Map([["svelte:hydratable",new Map([["key",Promise.resolve("bar")]])]])) {
+				for (const [id, values] of (()=>{let n=window.__svelte.d||(window.__svelte.d={__proto__:null}),s=(n["w"]={o:[],p:[]});s.d=(i)=>{let p=new Promise((a,b)=>{s.p[i]=[a,b]});p.catch(()=>{});return p};s.r=(i,k,v)=>{s.p[i][k](v);delete s.p[i]};return (s.o[0]=new Map([["svelte:hydratable",(s.o[1]=new Map([["key",(s.o[2]=s.d(0))]]))]]))})()) {
 					const existing = w.get(id);
 
 					if (existing) {
@@ -12,5 +12,6 @@
 						w.set(id, values);
 					}
 				}
+				((s)=>{s.r(0,0,"bar");delete window.__svelte.d["w"]})(window.__svelte.d["w"]);
 			}
 		</script>
