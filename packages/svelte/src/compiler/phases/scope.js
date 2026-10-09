@@ -1034,8 +1034,9 @@ export function create_scopes(document, root) {
 	const instance = module.child();
 	scopes.set(instance_ast, instance);
 	near.set(instance_ast, instance);
-	/** @type {Scope} */
-	let template = instance;
+	// the level a template expression runs at: one below the script and one above what the
+	// template declares, so it reads both as a closure does (`state_referenced_locally`)
+	const template = instance.child();
 
 	/**
 	 * The scope the nodes under `node` are in.
@@ -1058,7 +1059,7 @@ export function create_scopes(document, root) {
 		return slotted.get(node) ?? at(parentOf(node));
 	}
 
-	/** @param {any} element */
+	/** @param {any} element an element `let:` declares in, a scope of its own as the parser has it */
 	function element_scope(element) {
 		let scope = scopes.get(element);
 		if (scope === undefined) {
@@ -1102,7 +1103,6 @@ export function create_scopes(document, root) {
 		/** @type {Scope} */
 		let scope;
 		if (parent.type === 'Root') {
-			template = instance.child();
 			scope = template.child(node.metadata.transparent);
 			scopes.set(node, scope);
 		} else if (parent.type === 'EachBlock' && parent.body === node) {
@@ -1118,9 +1118,7 @@ export function create_scopes(document, root) {
 		} else if (COMPONENTS.has(parent.type)) {
 			scope = slots(parent).default;
 		} else {
-			scope = (ELEMENTS.has(parent.type) ? element_scope(parent) : at(parent)).child(
-				node.metadata.transparent
-			);
+			scope = at(parent).child(node.metadata.transparent);
 			scopes.set(node, scope);
 			if (parent.type === 'AwaitBlock') {
 				const pattern =
