@@ -31,8 +31,6 @@ export interface WarpStore {
 
 export interface RenderContext {
 	warp: WarpStore;
-	/** Whether this context was created by `render` or by `withWarp` */
-	owner: 'render' | 'withWarp';
 	/** Whether a `render` has claimed this context. Each context can only be rendered once */
 	rendered: boolean;
 	/** The `replacer` passed to `withWarp` */

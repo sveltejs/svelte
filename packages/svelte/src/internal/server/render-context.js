@@ -29,11 +29,11 @@ function get_render_context_safe() {
 }
 
 /**
- * @param {RenderContext['owner']} owner
+ * @param {boolean} rendered
  * @param {UnevalReplacer | undefined} replacer
  * @returns {RenderContext}
  */
-function create_render_context(owner, replacer) {
+function create_render_context(rendered, replacer) {
 	return {
 		warp: {
 			values: new Map(),
@@ -41,8 +41,7 @@ function create_render_context(owner, replacer) {
 			comparisons: [],
 			emitted: false
 		},
-		owner,
-		rendered: owner === 'render',
+		rendered,
 		replacer
 	};
 }
@@ -57,8 +56,7 @@ function create_render_context(owner, replacer) {
 export async function with_render_context(fn) {
 	const existing = get_render_context_safe();
 
-	// a `render` inside another `render` (rather than inside `withWarp`) gets its own context
-	if (existing?.owner === 'withWarp') {
+	if (existing !== null) {
 		if (existing.rendered) {
 			e.warp_context_already_rendered();
 		}
@@ -68,7 +66,7 @@ export async function with_render_context(fn) {
 	}
 
 	await init_render_context();
-	return run(create_render_context('render', undefined), fn);
+	return run(create_render_context(true, undefined), fn);
 }
 
 /**
@@ -87,7 +85,7 @@ export async function withWarp(fn, options = {}) {
 	}
 
 	await init_render_context();
-	return run(create_render_context('withWarp', options.replacer), async () => fn());
+	return run(create_render_context(false, options.replacer), async () => fn());
 }
 
 /**
