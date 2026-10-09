@@ -57,8 +57,15 @@ export function SvelteBoundary(node, context) {
 	let children_body;
 
 	if (pending_attribute || pending_snippet) {
+		// with `experimental.streaming`, the children are rendered in the background (and their output
+		// discarded), so that any data they need starts loading on the server and can be streamed to the client
+		const background = context.state.options.experimental.streaming
+			? [b.stmt(b.call('$$renderer.background', b.arrow([b.id('$$renderer')], children_block)))]
+			: [];
+
 		if (pending_attribute && is_pending_attr_nullish && !pending_snippet) {
 			const { callee, pending_block } = build_pending_attribute_block(pending_attribute, context);
+			pending_block.body.push(...background);
 
 			children_body = b.block([
 				b.if(
@@ -71,6 +78,8 @@ export function SvelteBoundary(node, context) {
 			children_body = pending_attribute
 				? build_pending_attribute_block(pending_attribute, context).pending_block
 				: build_pending_snippet_block(/** @type {AST.SnippetBlock} */ (pending_snippet), context);
+
+			children_body.body.push(...background);
 		}
 	} else {
 		children_body = b.block(build_template([block_open, children_block, block_close]));

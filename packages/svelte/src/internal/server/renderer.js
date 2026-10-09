@@ -2,7 +2,7 @@
 /** @import { UnevalReplacer } from 'devalue' */
 /** @import { RenderContext, SSRContext, WarpStore } from './types.js' */
 /** @import { WarpKey } from '#shared' */
-/** @import { Csp, RenderOutput, SyncRenderOutput, Sha256Source } from '../../server/public.js' */
+/** @import { AsyncRenderOutput, Csp, RenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { STALE_REACTION } from '../client/constants.js';
@@ -15,7 +15,7 @@ import { attributes } from './index.js';
 import { with_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { has_own_property, is_array, noop } from '../shared/utils.js';
+import { deferred, has_own_property, is_array, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -29,7 +29,7 @@ class RenderResult {
 	/** @type {() => AccumulatedContent} */
 	#render;
 
-	/** @type {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>} */
+	/** @type {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] }, tail: AsyncIterable<string> }>} */
 	#render_async;
 
 	/** @type {AccumulatedContent | undefined} */
@@ -38,12 +38,12 @@ class RenderResult {
 	/** @type {{ script: '' }} */
 	#hashes = { script: '' };
 
-	/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
+	/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] }, tail: AsyncIterable<string> }> | undefined} */
 	#promise;
 
 	/**
 	 * @param {() => AccumulatedContent} render
-	 * @param {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>} render_async
+	 * @param {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] }, tail: AsyncIterable<string> }>} render_async
 	 */
 	constructor(render, render_async) {
 		this.#render = render;
@@ -75,7 +75,7 @@ class RenderResult {
 	 *
 	 * @template TResult1
 	 * @template [TResult2=never]
-	 * @param {(value: SyncRenderOutput) => TResult1} onfulfilled
+	 * @param {(value: AsyncRenderOutput) => TResult1} onfulfilled
 	 * @param {(reason: unknown) => TResult2} onrejected
 	 */
 	then(onfulfilled, onrejected) {
@@ -85,7 +85,8 @@ class RenderResult {
 				head: result.head,
 				body: result.body,
 				html: result.body,
-				hashes: { script: [] }
+				hashes: { script: [] },
+				tail: empty()
 			});
 			return Promise.resolve(user_result);
 		}
@@ -100,7 +101,7 @@ class RenderResult {
 			return result;
 		});
 		return this.#promise.then(
-			(result) => onfulfilled(/** @type {SyncRenderOutput} */ (result)),
+			(result) => onfulfilled(/** @type {AsyncRenderOutput} */ (result)),
 			onrejected
 		);
 	}
@@ -398,6 +399,57 @@ export class Renderer {
 				child.#out.push(BLOCK_CLOSE);
 			}
 		}
+	}
+
+	/**
+	 * Runs the children of a pending boundary in the background, discarding their output, so that the
+	 * data they need starts loading on the server. Only used with `experimental.streaming`.
+	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
+	 */
+	background(fn) {
+		if (this.global.mode === 'sync') return;
+
+		const state = this.global.get_background();
+		const renderer = new Renderer(state, this);
+		state.background_renderers.push(renderer);
+
+		const parent = ssr_context;
+
+		set_ssr_context({
+			...ssr_context,
+			p: parent,
+			c: null,
+			r: renderer,
+			i: ssr_context?.i ?? false
+		});
+
+		try {
+			const result = fn(renderer);
+
+			if (result instanceof Promise) {
+				result.catch(noop);
+				result.finally(() => set_ssr_context(null)).catch(noop);
+				renderer.promise = state.track(result);
+			}
+		} catch {
+			// the client will render the children itself, and handle the error then
+		} finally {
+			set_ssr_context(parent);
+		}
+	}
+
+	/**
+	 * Called once the background work has settled, or is no longer needed
+	 * @param {SSRState} state
+	 */
+	static finish_background(state) {
+		state.abort();
+
+		for (const renderer of state.background_renderers) {
+			renderer.#run_on_destroy(true);
+		}
+
+		state.background_renderers.length = 0;
 	}
 
 	/**
@@ -758,12 +810,12 @@ export class Renderer {
 	 * @param {Component<Props>} component
 	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; replacer?: UnevalReplacer }} options
 	 * @param {RenderContext} context
-	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
+	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] }, tail: AsyncIterable<string> }>}
 	 */
 	static async #render_async(component, options, context) {
 		const previous_context = ssr_context;
 		const renderer = Renderer.#create('async', options);
-		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] } }) | undefined} */
+		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] }, tail: AsyncIterable<string> }) | undefined} */
 		let result;
 		let render_error;
 		let failed = false;
@@ -772,25 +824,39 @@ export class Renderer {
 			try {
 				Renderer.#open_render(renderer, component, options);
 				const content = await renderer.#collect_content_async();
+				const background = renderer.global.background;
+
+				if (background !== null) {
+					context.background = background.settle();
+				}
+
 				const warp = await renderer.#collect_warp(
 					context.warp,
-					compose_replacers(options.replacer, context.replacer)
+					compose_replacers(options.replacer, context.replacer),
+					background
 				);
-				if (warp !== null) {
-					content.head = warp + content.head;
+				if (warp.head !== null) {
+					content.head = warp.head + content.head;
 				}
-				result = Renderer.#close_render(content, renderer);
+				result = { ...Renderer.#close_render(content, renderer), tail: warp.tail };
 			} catch (error) {
 				render_error = error;
 				failed = true;
 				renderer.global.abort();
 				await renderer.global.settle();
+
+				if (renderer.global.background !== null) {
+					context.warp.late = null;
+					Renderer.finish_background(renderer.global.background);
+				}
 			}
 
 			renderer.#run_on_destroy(failed);
 			if (failed) throw render_error;
 
-			return /** @type {AccumulatedContent & { hashes: { script: Sha256Source[] } }} */ (result);
+			return /** @type {AccumulatedContent & { hashes: { script: Sha256Source[] }, tail: AsyncIterable<string> }} */ (
+				result
+			);
 		} finally {
 			set_ssr_context(previous_context);
 			renderer.global.abort();
@@ -867,30 +933,41 @@ export class Renderer {
 	}
 
 	/**
-	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them
-	 * on the client, waiting for any promises inside them to settle first.
+	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them on the client.
+	 *
+	 * If there's no background work, this waits for every promise to settle first. Otherwise, the work inside
+	 * pending boundaries may still be going on, and the client is waiting for it — so only the promises that
+	 * have already settled are resolved in the `<script>`, and the rest (along with any values added later)
+	 * are streamed to the client via the `tail`.
 	 * @param {WarpStore} store
 	 * @param {UnevalReplacer | undefined} replacer
-	 * @returns {Promise<string | null>}
+	 * @param {SSRState | null} background
+	 * @returns {Promise<{ head: string | null, tail: AsyncIterable<string> }>}
 	 */
-	async #collect_warp(store, replacer) {
+	async #collect_warp(store, replacer, background) {
 		// these reject if there's a mismatch. a loop, as more can be added while we're awaiting
 		for (let i = 0; i < store.comparisons.length; i += 1) {
 			await store.comparisons[i];
 		}
 
+		if (background !== null && this.global.csp.hash) {
+			e.invalid_csp_streaming();
+		}
+
 		store.emitted = true;
 
 		/** @type {Map<string, Map<WarpKey, unknown>>} */
-		const payload = new Map();
+		const values = new Map();
 
-		for (const [id, values] of store.values) {
-			if (values.size > 0) payload.set(id, values);
+		for (const [id, v] of store.values) {
+			if (v.size > 0) values.set(id, v);
 		}
 
-		if (payload.size === 0) {
-			return null;
+		if (values.size === 0 && background === null) {
+			return { head: null, tail: empty() };
 		}
+
+		const late = background === null ? null : stream_late_values(store, background);
 
 		/** @type {unknown} */
 		let serialization_error = null;
@@ -899,34 +976,59 @@ export class Renderer {
 		let stream;
 
 		try {
-			stream = devalue.unevalStream(payload, replacer, {
-				id: `${this.global.id_prefix}w`,
-				scope: 'window.__svelte.d',
-				transformError: (error) => {
-					// a promise resolved to something that can't be serialized
-					if (error instanceof devalue.DevalueError) {
-						serialization_error ??= error;
-						return;
+			stream = devalue.unevalStream(
+				late === null ? values : [values, late.values],
+				(thing, js) => {
+					if (thing instanceof LateValues) {
+						// add the values to the client's `Warp`s as soon as this is evaluated, rather than
+						// when the promise resolves, so that they're there before anything awaiting the
+						// promises resolved in the same block runs
+						return js`((e, n) => {
+							const w = window.__svelte.w;
+							for (const [id, k, v] of e) {
+								let m = w.get(id);
+								if (!m) w.set(id, (m = new Map()));
+								m.set(k, v);
+							}
+							return n;
+						})(${thing.entries}, ${thing.next})`;
 					}
 
-					// rejected promises reject on the client too, with whatever `transformError` returns
-					return this.global.transformError(error);
+					return replacer?.(thing, js);
+				},
+				{
+					id: `${this.global.id_prefix}w`,
+					scope: 'window.__svelte.d',
+					transformError: (error) => {
+						// a promise resolved to something that can't be serialized. if we're streaming, it's too
+						// late to fail the render, so the promise rejects on the client with a generic error instead
+						if (error instanceof devalue.DevalueError) {
+							serialization_error ??= error;
+							return;
+						}
+
+						// rejected promises reject on the client too, with whatever `transformError` returns
+						return this.global.transformError(error);
+					}
 				}
-			});
+			);
 		} catch (error) {
+			late?.close();
 			serialization_failed(error);
 		}
 
 		const { head, tail } = stream;
+
+		// promises that have already settled are resolved in the head script
 		const ready = await take_ready(tail);
 		let blocks = ready.blocks;
 
-		if (!ready.done) {
+		if (late === null && ready.next) {
 			// this is a problem -- it means we've finished the render but we're still waiting on a promise
 			// to resolve so we can serialize it, so we're blocking the response on useless content.
 			w.unresolved_warp();
 
-			let result = await /** @type {Promise<IteratorResult<string>>} */ (ready.next);
+			let result = await ready.next;
 
 			while (!result.done) {
 				blocks += `\n\t\t\t\t${result.value}`;
@@ -934,7 +1036,7 @@ export class Renderer {
 			}
 		}
 
-		if (serialization_error !== null) {
+		if (late === null && serialization_error !== null) {
 			serialization_failed(serialization_error);
 		}
 
@@ -942,7 +1044,7 @@ export class Renderer {
 			{
 				const w = (window.__svelte ??= {}).w ??= new Map();
 
-				for (const [id, values] of ${head}) {
+				for (const [id, values] of ${late === null ? head : `(${head})[0]`}) {
 					const existing = w.get(id);
 
 					if (existing) {
@@ -964,7 +1066,13 @@ export class Renderer {
 			this.global.csp.script_hashes.push(`sha256-${hash}`);
 		}
 
-		return `\n\t\t<script${csp_attr}>${body}</script>`;
+		return {
+			head: `\n\t\t<script${csp_attr}>${body}</script>`,
+			tail:
+				late === null || !ready.next
+					? empty()
+					: stream_scripts(tail, ready.next, csp_attr, late.close)
+		};
 	}
 
 	/**
@@ -1016,11 +1124,139 @@ export class Renderer {
 
 const MACROTASK = Symbol('macrotask');
 
+/** Values that were added to `Warp` instances after the `head` was generated */
+class LateValues {
+	/**
+	 * @param {Array<[string, WarpKey, unknown]>} entries
+	 * @param {Promise<LateValues | null> | null} next
+	 */
+	constructor(entries, next) {
+		this.entries = entries;
+		this.next = next;
+	}
+}
+
+/** @returns {AsyncIterable<string>} */
+async function* empty() {}
+
+/**
+ * Streams the values that are added to `Warp` instances after the `head` was generated,
+ * as a chain of promises that each resolve to a batch of values and the next promise.
+ * The chain ends once the background work is done.
+ * @param {WarpStore} store
+ * @param {SSRState} background
+ */
+function stream_late_values(store, background) {
+	/** @type {Array<[string, WarpKey, unknown]>} */
+	let entries = [];
+	let link = /** @type {ReturnType<typeof deferred<LateValues | null>>} */ (deferred());
+	let scheduled = false;
+	let closed = false;
+
+	const values = link.promise;
+
+	function flush() {
+		if (!scheduled || closed) return;
+		scheduled = false;
+
+		const current = link;
+		link = deferred();
+		current.resolve(new LateValues(entries, link.promise));
+		entries = [];
+	}
+
+	function close() {
+		if (closed) return;
+		closed = true;
+
+		store.late = null;
+		link.resolve(entries.length > 0 ? new LateValues(entries, null) : null);
+		entries = [];
+
+		Renderer.finish_background(background);
+	}
+
+	store.late = (id, key, value) => {
+		entries.push([id, key, value]);
+
+		if (!scheduled) {
+			scheduled = true;
+			queueMicrotask(flush);
+		}
+	};
+
+	background.settle().then(close, close);
+
+	return { values, close };
+}
+
+/**
+ * @param {AsyncIterator<string>} tail
+ * @param {Promise<IteratorResult<string>>} next The pending result of `tail.next()`
+ * @param {string} csp_attr
+ * @param {() => void} close
+ * @returns {AsyncIterable<string>}
+ */
+function stream_scripts(tail, next, csp_attr, close) {
+	const generator = generate_scripts(tail, next, csp_attr);
+
+	/** @type {AsyncIterableIterator<string>} */
+	const iterator = {
+		next: () => generator.next(),
+		// if the consumer stops early, stop the background work. this is
+		// done here because `return` doesn't run a generator that hasn't started
+		return: async () => {
+			close();
+			await tail.return?.();
+			return generator.return(undefined);
+		},
+		[Symbol.asyncIterator]: () => iterator
+	};
+
+	return iterator;
+}
+
+/**
+ * Turns the blocks from `unevalStream` into `<script>` tags. Blocks that arrive at around the same time are
+ * combined, so that server-side work which was waiting on a promise that just resolved has a chance to add
+ * the values that depend on it — otherwise, the client might not receive them before it needs them.
+ * @param {AsyncIterator<string>} tail
+ * @param {Promise<IteratorResult<string>>} next
+ * @param {string} csp_attr
+ * @returns {AsyncGenerator<string>}
+ */
+async function* generate_scripts(tail, next, csp_attr) {
+	while (true) {
+		const result = await next;
+		if (result.done) return;
+
+		let code = result.value;
+		next = tail.next();
+
+		while (true) {
+			const more = await Promise.race([
+				next,
+				new Promise((fulfil) => setTimeout(() => fulfil(MACROTASK), 0))
+			]);
+
+			if (more === MACROTASK) break;
+
+			const { done, value } = /** @type {IteratorResult<string>} */ (more);
+			if (done) break;
+
+			code += value;
+			next = tail.next();
+		}
+
+		yield `<script${csp_attr}>${code}</script>`;
+	}
+}
+
 /**
  * Takes the blocks from `tail` that are ready now — i.e. the ones for promises that have already
  * settled, which `unevalStream` emits within a few microtasks — without waiting for the rest
  * @param {AsyncIterator<string>} tail
- * @returns {Promise<{ blocks: string, done: boolean, next?: Promise<IteratorResult<string>> }>}
+ * @returns {Promise<{ blocks: string, next: Promise<IteratorResult<string>> | null }>}
  */
 async function take_ready(tail) {
 	let blocks = '';
@@ -1034,11 +1270,11 @@ async function take_ready(tail) {
 
 		if (result === MACROTASK) {
 			// the block this resolves to is the next one, so it must not be dropped
-			return { blocks, done: false, next };
+			return { blocks, next };
 		}
 
 		const { done, value } = /** @type {IteratorResult<string>} */ (result);
-		if (done) return { blocks, done: true };
+		if (done) return { blocks, next: null };
 
 		blocks += `\n\t\t\t\t${value}`;
 	}
@@ -1075,6 +1311,18 @@ export class SSRState {
 
 	/** @readonly @type {string} */
 	id_prefix;
+
+	/**
+	 * The state for work started in the background by pending boundaries, if there is any
+	 * @type {SSRState | null}
+	 */
+	background = null;
+
+	/**
+	 * The renderers for work started in the background, if this is the state for that work
+	 * @type {Renderer[]}
+	 */
+	background_renderers = [];
 
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
@@ -1149,6 +1397,17 @@ export class SSRState {
 		const controller = (this.#controller ??= new AbortController());
 		if (this.#aborted) controller.abort(STALE_REACTION);
 		return controller.signal;
+	}
+
+	/** @returns {SSRState} */
+	get_background() {
+		if (this.background === null) {
+			// background work gets its own state, so that it can't affect the rendered output
+			this.background = new SSRState(this.mode, this.id_prefix, this.csp, this.transformError);
+			this.background.background = this.background;
+		}
+
+		return this.background;
 	}
 
 	get_title() {
