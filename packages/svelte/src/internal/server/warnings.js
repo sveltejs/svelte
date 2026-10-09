@@ -6,24 +6,25 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
- * A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
+ * The value with key `%key%` in `Warp` `%id%` was created, but at least part of it was not used during the render.
  * 
- * The `hydratable` was initialized in:
+ * The value was set in:
  * %stack%
  * @param {string} key
+ * @param {string} id
  * @param {string} stack
  */
-export function unresolved_hydratable(key, stack) {
+export function unresolved_warp(key, id, stack) {
 	if (DEV) {
 		console.warn(
-			`%c[svelte] unresolved_hydratable\n%cA \`hydratable\` value with key \`${key}\` was created, but at least part of it was not used during the render.
+			`%c[svelte] unresolved_warp\n%cThe value with key \`${key}\` in \`Warp\` \`${id}\` was created, but at least part of it was not used during the render.
 
-The \`hydratable\` was initialized in:
-${stack}\nhttps://svelte.dev/e/unresolved_hydratable`,
+The value was set in:
+${stack}\nhttps://svelte.dev/e/unresolved_warp`,
 			bold,
 			normal
 		);
 	} else {
-		console.warn(`https://svelte.dev/e/unresolved_hydratable`);
+		console.warn(`https://svelte.dev/e/unresolved_warp`);
 	}
 }

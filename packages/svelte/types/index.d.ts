@@ -458,7 +458,53 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
+	/**
+	 * @deprecated Use [`Warp`](https://svelte.dev/docs/svelte/warp) instead
+	 * */
 	export function hydratable<T>(key: string, fn: () => T): T;
+	/**
+	 * A `Map` whose contents are sent from the server to the client. Values added to it
+	 * during server rendering (or inside `withWarp`) are serialized into the rendered
+	 * HTML, so that the same `Warp` can read them on the client during hydration.
+	 *
+	 * Values can be anything [`devalue`](https://github.com/sveltejs/devalue) can serialize,
+	 * including promises.
+	 *
+	 * 
+	 */
+	export class Warp<K extends WarpKey, V> implements Map<K, V> {
+		/**
+		 * @param id A unique identifier for this `Warp`, which must match on the server and the client.
+		 * Libraries should prefix it with their package name to avoid collisions.
+		 */
+		constructor(id: string);
+		
+		get(key: K): V | undefined;
+		
+		has(key: K): boolean;
+		
+		set(key: K, value: V): this;
+		/**
+		 * Returns the value for `key` if it exists, otherwise adds `value` and returns it.
+		 * */
+		getOrInsert(key: K, value: V): V;
+		/**
+		 * Returns the value for `key` if it exists, otherwise calls `callback` and adds the result.
+		 * */
+		getOrInsertComputed(key: K, callback: (key: K) => V): V;
+		
+		delete(key: K): boolean;
+		clear(): void;
+		
+		forEach(callback: (value: V, key: K, map: Map<K, V>) => void, this_arg?: any): void;
+		entries(): IterableIterator<[K, V]>;
+		keys(): IterableIterator<K>;
+		values(): IterableIterator<V>;
+		get size(): number;
+		[Symbol.iterator](): IterableIterator<[K, V]>;
+		get [Symbol.toStringTag](): string;
+		#private;
+	}
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -608,6 +654,8 @@ declare module 'svelte' {
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
+
+	type WarpKey = string | number | boolean | bigint;
 
 	export {};
 }
@@ -2683,6 +2731,7 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/server' {
+	import type { UnevalReplacer } from 'devalue';
 	import type { ComponentProps, Component, SvelteComponent, ComponentType } from 'svelte';
 	/**
 	 * Only available on the server and when compiling with the `server` option.
@@ -2701,6 +2750,11 @@ declare module 'svelte/server' {
 						idPrefix?: string;
 						csp?: Csp;
 						transformError?: (error: unknown) => unknown | Promise<unknown>;
+						/**
+						 * Customizes how values added to `Warp` instances are serialized. See [`devalue`](https://github.com/sveltejs/devalue#custom-types) for details.
+						 * If the render happens inside `withWarp`, this replacer runs before the one passed to `withWarp`.
+						 */
+						replacer?: UnevalReplacer;
 					}
 				]
 			: [
@@ -2711,9 +2765,30 @@ declare module 'svelte/server' {
 						idPrefix?: string;
 						csp?: Csp;
 						transformError?: (error: unknown) => unknown | Promise<unknown>;
+						/**
+						 * Customizes how values added to `Warp` instances are serialized. See [`devalue`](https://github.com/sveltejs/devalue#custom-types) for details.
+						 * If the render happens inside `withWarp`, this replacer runs before the one passed to `withWarp`.
+						 */
+						replacer?: UnevalReplacer;
 					}
 				]
 	): RenderOutput;
+
+	/**
+	 * Only available on the server. Runs `fn` with a context in which `Warp` instances can be used.
+	 * A `render` call inside `fn` will use the same context, and serialize all the values added to
+	 * `Warp` instances inside `fn` — whether they were added before or during the render.
+	 * Only one `render` can happen inside a given `withWarp`.
+	 */
+	export function withWarp<T>(
+		fn: () => T | Promise<T>,
+		options?: {
+			/**
+			 * Customizes how values added to `Warp` instances are serialized. See [`devalue`](https://github.com/sveltejs/devalue#custom-types) for details.
+			 */
+			replacer?: UnevalReplacer;
+		}
+	): Promise<T>;
 	export type Csp = { nonce?: string; hash?: boolean };
 
 	export type Sha256Source = `sha256-${string}`;

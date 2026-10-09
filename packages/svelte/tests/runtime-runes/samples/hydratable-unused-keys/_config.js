@@ -11,7 +11,7 @@ export default test({
 	test_ssr({ assert, warnings }) {
 		assert.strictEqual(warnings.length, 1);
 		// for some strange reason we trim the error code off the beginning of warnings so I can't actually assert it
-		assert.include(warnings[0], 'A `hydratable` value with key `unused_key`');
+		assert.include(warnings[0], 'The value with key `unused_key` in `Warp` `svelte:hydratable`');
 	},
 
 	async test({ assert, target }) {
