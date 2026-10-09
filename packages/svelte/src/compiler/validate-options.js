@@ -44,7 +44,8 @@ const common_options = {
 	warningFilter: fun(() => true),
 
 	experimental: object({
-		async: boolean(false)
+		async: boolean(false),
+		streaming: boolean(false)
 	})
 };
 

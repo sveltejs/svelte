@@ -23,8 +23,13 @@ export interface WarpStore {
 	values: Map<string, Map<WarpKey, unknown>>;
 	/** dev-only: where each value was set, keyed by the `Warp`'s id */
 	stacks: Map<string, Map<WarpKey, string>>;
-	/** Whether the values have been serialized, after which no more can be added */
+	/** Whether the values have been serialized into the `head` */
 	emitted: boolean;
+	/**
+	 * When streaming, receives values that are set after the `head` has been generated, so they can be
+	 * sent to the client in the `tail`. If `null` once the values have been serialized, no more can be added
+	 */
+	late: ((id: string, key: WarpKey, value: unknown) => void) | null;
 }
 
 export interface RenderContext {
@@ -33,4 +38,6 @@ export interface RenderContext {
 	rendered: boolean;
 	/** The `replacer` passed to `withWarp` */
 	replacer: UnevalReplacer | undefined;
+	/** Settles when the background work of the render (inside pending boundaries) is done, if there is any */
+	background: Promise<void> | null;
 }

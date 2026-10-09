@@ -36,6 +36,12 @@ The `html` property of server render results has been deprecated. Use `body` ins
 `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
 ```
 
+### invalid_csp_streaming
+
+```
+`csp.hash` cannot be used with `experimental.streaming`, since the streamed `<script>` tags cannot be known in advance. Use `csp.nonce` instead.
+```
+
 ### invalid_id_prefix
 
 ```
