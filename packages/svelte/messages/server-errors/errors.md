@@ -44,6 +44,10 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 
 > `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
 
+## invalid_csp_streaming
+
+> `csp.hash` cannot be used with `experimental.streaming`, since the streamed `<script>` tags cannot be known in advance. Use `csp.nonce` instead.
+
 ## invalid_id_prefix
 
 > The `idPrefix` option cannot include `--`.

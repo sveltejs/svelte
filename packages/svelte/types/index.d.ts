@@ -497,8 +497,11 @@ declare module 'svelte' {
 		clear(): void;
 		
 		forEach(callback: (value: V, key: K, map: Map<K, V>) => void, this_arg?: any): void;
+		
 		entries(): IterableIterator<[K, V]>;
+		
 		keys(): IterableIterator<K>;
+		
 		values(): IterableIterator<V>;
 		get size(): number;
 		[Symbol.iterator](): IterableIterator<[K, V]>;
@@ -1246,6 +1249,17 @@ declare module 'svelte/compiler' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * During server rendering, start the work inside `<svelte:boundary>` elements with a `pending` snippet,
+			 * instead of only rendering the `pending` snippet. Values added to `Warp` instances by that work are
+			 * streamed to the client via the `tail` of the render result, so that the client doesn't need to redo it.
+			 * Requires `experimental.async`.
+			 *
+			 * If you use this, you **must** write every chunk of `tail` into the response after the rendered HTML.
+			 * Otherwise, promises on the client will never settle.
+			 * @since 5.58
+			 */
+			streaming?: boolean;
 		};
 	}
 	/**
@@ -2805,7 +2819,16 @@ declare module 'svelte/server' {
 		};
 	}
 
-	export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
+	export interface AsyncRenderOutput extends SyncRenderOutput {
+		/**
+		 * `<script>` tags that must be written into the response after the rendered HTML, in order.
+		 * When using `experimental.streaming`, these send the data loaded inside `<svelte:boundary>` elements
+		 * with a `pending` snippet to the client as it becomes available. Otherwise, this is empty.
+		 */
+		tail: AsyncIterable<string>;
+	}
+
+	export type RenderOutput = SyncRenderOutput & PromiseLike<AsyncRenderOutput>;
 
 	export {};
 }
@@ -3371,6 +3394,17 @@ declare module 'svelte/types/compiler/interfaces' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * During server rendering, start the work inside `<svelte:boundary>` elements with a `pending` snippet,
+			 * instead of only rendering the `pending` snippet. Values added to `Warp` instances by that work are
+			 * streamed to the client via the `tail` of the render result, so that the client doesn't need to redo it.
+			 * Requires `experimental.async`.
+			 *
+			 * If you use this, you **must** write every chunk of `tail` into the response after the rendered HTML.
+			 * Otherwise, promises on the client will never settle.
+			 * @since 5.58
+			 */
+			streaming?: boolean;
 		};
 	}
 	/**

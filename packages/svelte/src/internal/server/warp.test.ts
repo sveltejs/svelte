@@ -5,6 +5,7 @@ import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.
 import { withWarp } from './render-context.js';
 import { Warp } from './warp.js';
 import { hydratable } from './hydratable.js';
+import { getAbortSignal } from './abort-signal.js';
 
 beforeAll(() => {
 	enable_async_mode_flag();
@@ -307,5 +308,180 @@ describe('hydratable', () => {
 		const values = revive(head);
 		expect(values?.get('svelte:hydratable')?.get('a')).toBe(1);
 		expect(values?.get('test')?.get('a')).toBe(2);
+	});
+});
+
+describe('streaming', () => {
+	function delay<T>(value: T, ms = 0) {
+		return new Promise<T>((fulfil) => setTimeout(() => fulfil(value), ms));
+	}
+
+	/** Collects the tail, and returns the revived values once everything has been evaluated */
+	async function revive_streamed(head: string, tail: AsyncIterable<string>) {
+		const window: { __svelte?: { w?: Map<string, Map<unknown, unknown>>; s?: number } } = {};
+		const run = (html: string) => {
+			for (const [, script] of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+				new Function('window', script)(window);
+			}
+		};
+
+		run(head);
+
+		const chunks: string[] = [];
+		for await (const chunk of tail) {
+			// the client is told that a stream is in progress until the last chunk
+			expect(window.__svelte?.s).toBe(1);
+			chunks.push(chunk);
+			run(chunk);
+		}
+
+		expect(window.__svelte?.s).toBe(0);
+
+		return { values: window.__svelte?.w, chunks };
+	}
+
+	test('has an empty tail without background work', async () => {
+		const { tail } = await render(() => {
+			warp.set('a', Promise.resolve(1));
+		});
+
+		const chunks = [];
+		for await (const chunk of tail) chunks.push(chunk);
+		expect(chunks).toEqual([]);
+	});
+
+	test('discards the output of background work', async () => {
+		const { body, head } = await render((renderer) => {
+			renderer.push('<p>loading</p>');
+			renderer.background(async (renderer) => {
+				await delay(null);
+				renderer.push('<p>loaded</p>');
+				renderer.title((renderer) => renderer.push('<title>nope</title>'));
+			});
+		});
+
+		expect(body).toBe('<!--[--><p>loading</p><!--]-->');
+		expect(head).not.toContain('nope');
+	});
+
+	test('streams values that are pending when the head is generated', async () => {
+		const { head, tail } = await render((renderer) => {
+			warp.set('settled', Promise.resolve('settled'));
+			renderer.background(() => {
+				warp.set('pending', delay('later', 10));
+			});
+		});
+
+		// the settled promise is resolved in the head script, while the pending one is not
+		expect(head).toMatch(/s\.r\(\d+,0,"settled"\)/);
+		expect(head).not.toContain('"later"');
+
+		const { values, chunks } = await revive_streamed(head, tail);
+		expect(chunks.length).toBeGreaterThan(0);
+		expect(await values?.get('test')?.get('settled')).toBe('settled');
+		expect(await values?.get('test')?.get('pending')).toBe('later');
+	});
+
+	test('streams values that are added after the head is generated', async () => {
+		const { head, tail } = await render((renderer) => {
+			renderer.background(async () => {
+				const user = await warp.getOrInsertComputed('user', () => delay({ id: 1 }, 10));
+				warp.getOrInsertComputed(`posts:${user.id}`, () => delay(['a', 'b'], 10));
+			});
+		});
+
+		const { values } = await revive_streamed(head, tail);
+		expect(await values?.get('test')?.get('user')).toEqual({ id: 1 });
+		expect(await values?.get('test')?.get('posts:1')).toEqual(['a', 'b']);
+	});
+
+	test('adds values that depend on a promise in the same chunk that resolves it', async () => {
+		const { head, tail } = await render((renderer) => {
+			renderer.background(async () => {
+				const user = await warp.getOrInsertComputed('user', () => delay({ id: 1 }, 10));
+				warp.set(`name:${user.id}`, 'Rich');
+			});
+		});
+
+		const window: { __svelte?: { w?: Map<string, Map<unknown, unknown>> } } = {};
+		new Function('window', head.match(/<script>([\s\S]*?)<\/script>/)![1])(window);
+
+		const user = window.__svelte?.w?.get('test')?.get('user') as Promise<unknown>;
+		let found: unknown;
+		user.then(() => (found = window.__svelte?.w?.get('test')?.get('name:1')));
+
+		for await (const chunk of tail) {
+			new Function('window', chunk.replace(/^<script>/, '').replace(/<\/script>$/, ''))(window);
+		}
+
+		await user;
+		expect(found).toBe('Rich');
+	});
+
+	test('stops background work if the tail is abandoned', async () => {
+		let signal: AbortSignal | undefined;
+		let destroyed = false;
+
+		const { tail } = await render((renderer) => {
+			renderer.background((renderer) => {
+				renderer.component((renderer) => {
+					signal = getAbortSignal();
+					renderer.on_destroy(() => (destroyed = true));
+					warp.set('never', new Promise(() => {}));
+					return new Promise(() => {});
+				});
+			});
+		});
+
+		const iterator = tail[Symbol.asyncIterator]();
+		expect(signal?.aborted).toBe(false);
+		await iterator.return?.();
+
+		expect(signal?.aborted).toBe(true);
+		expect(destroyed).toBe(true);
+	});
+
+	test('cannot add values after the background work is done', async () => {
+		let promise: Promise<void> | undefined;
+
+		const { tail } = await render((renderer) => {
+			renderer.background(async () => {
+				await delay(null);
+			});
+
+			promise = delay(null, 20).then(() => {
+				warp.set('a', 1);
+			});
+		});
+
+		for await (const _ of tail);
+
+		await expect(promise).rejects.toThrow('warp_set_after_render');
+	});
+
+	test('cannot be used with csp.hash', async () => {
+		await expect(
+			render(
+				(renderer) => {
+					renderer.background(() => {});
+				},
+				{ csp: { hash: true } }
+			)
+		).rejects.toThrow('invalid_csp_streaming');
+	});
+
+	test('adds the nonce to streamed scripts', async () => {
+		const { tail } = await render(
+			(renderer) => {
+				renderer.background(() => {
+					warp.set('a', delay(1));
+				});
+			},
+			{ csp: { nonce: 'xyz' } }
+		);
+
+		for await (const chunk of tail) {
+			expect(chunk.startsWith('<script nonce="xyz">')).toBe(true);
+		}
 	});
 });

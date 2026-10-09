@@ -120,6 +120,47 @@ const { head, body } = await withWarp(async () => {
 
 `withWarp` also accepts a `replacer`, which is used for any values the `replacer` passed to `render` doesn't handle. Each `withWarp` can only contain one `render`.
 
+## Streaming
+
+By default, when the server encounters a [`<svelte:boundary>`](svelte-boundary) with a `pending` snippet, it renders the `pending` snippet and nothing else. The client then renders the boundary's contents itself, which means any data they need only starts loading once the page has hydrated.
+
+With the `experimental.streaming` compiler option, the server also starts rendering the boundary's contents in the background (discarding the output). Any values they add to a `Warp` are sent to the client as soon as they're available, so the client can use them instead of loading the data again:
+
+```js
+/// file: svelte.config.js
+export default {
+	compilerOptions: {
+		experimental: {
+			async: true,
+			streaming: true
+		}
+	}
+};
+```
+
+Values that have already resolved by the time the HTML is rendered are included in the `head`, as usual. The rest are streamed via the `tail` of the render result, which contains `<script>` tags that you **must** write into the response after the HTML — otherwise, promises on the client that are waiting for data from the server will never settle:
+
+```js
+/// file: server.js
+// @noErrors
+import { render } from 'svelte/server';
+import App from './App.svelte';
+// ---cut---
+const { head, body, tail } = await render(App);
+
+response.write(`<html><head>${head}</head><body>${body}`);
+
+for await (const script of tail) {
+	response.write(script);
+}
+
+response.end('</body></html>');
+```
+
+If you stop iterating over `tail` early, the background work is stopped. Since the streamed `<script>` tags can't be known in advance, streaming can't be used with `csp: { hash: true }` — use a `nonce` instead.
+
+You can still change a `Warp` on the client while values are streaming in. Your changes take precedence over the values from the server, including ones that arrive later — for example, after `warp.clear()`, values streamed in afterwards won't be visible. This means that a component which is still waiting for data from the server will load it again on the client instead.
+
 ## CSP
 
 `Warp` adds an inline `<script>` block to the `head` returned from `render`. If you're using [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) (CSP), this script will likely fail to run. You can provide a `nonce` to `render`:
@@ -176,7 +217,7 @@ response.headers.set(
  );
 ```
 
-We recommend using `nonce` over hash if you can, as `hash` will interfere with streaming SSR in the future.
+We recommend using `nonce` over hash if you can, as `hash` cannot be used with [streaming](#Streaming).
 
 ## `hydratable`
 

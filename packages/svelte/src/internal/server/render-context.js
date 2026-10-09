@@ -39,10 +39,12 @@ function create_render_context(rendered, replacer) {
 			values: new Map(),
 			stacks: new Map(),
 			comparisons: [],
-			emitted: false
+			emitted: false,
+			late: null
 		},
 		rendered,
-		replacer
+		replacer,
+		background: null
 	};
 }
 
@@ -96,15 +98,23 @@ export async function withWarp(fn, options = {}) {
  */
 async function run(ctx, fn) {
 	if (in_webcontainer()) {
-		const { promise, resolve } = deferred();
+		const { promise: lock, resolve } = deferred();
 		const previous_render = current_render;
-		current_render = promise;
+		current_render = lock;
 		await previous_render;
 		context = ctx;
-		return fn(ctx).finally(() => {
-			context = null;
-			resolve();
-		});
+		const promise = fn(ctx);
+
+		// background work after the render still needs the context, so hold on to it until that's done
+		promise
+			.then(() => ctx.background)
+			.catch(noop)
+			.finally(() => {
+				context = null;
+				resolve();
+			});
+
+		return promise;
 	}
 
 	try {

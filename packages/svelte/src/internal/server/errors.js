@@ -82,6 +82,18 @@ export function invalid_csp() {
 }
 
 /**
+ * `csp.hash` cannot be used with `experimental.streaming`, since the streamed `<script>` tags cannot be known in advance. Use `csp.nonce` instead.
+ * @returns {never}
+ */
+export function invalid_csp_streaming() {
+	const error = new Error(`invalid_csp_streaming\n\`csp.hash\` cannot be used with \`experimental.streaming\`, since the streamed \`<script>\` tags cannot be known in advance. Use \`csp.nonce\` instead.\nhttps://svelte.dev/e/invalid_csp_streaming`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * The `idPrefix` option cannot include `--`.
  * @returns {never}
  */
