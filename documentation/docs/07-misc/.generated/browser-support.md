@@ -2,12 +2,14 @@
 
 | Browser | Minimum version |
 | - | - |
-| Chrome/Edge | 148 |
-| Firefox | 151 |
-| Safari | 26.5 |
-| Opera | 132 |
-| Android WebView | 148 |
+| Chrome/Edge | 87 |
+| Firefox | 83 |
+| Safari | 14 |
+| Opera | 73 |
+| Opera (Android) | 62 |
+| Samsung Internet | 14.0 |
+| Android WebView | 87 |
 | Internet Explorer | not supported |
 
 
-> [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of 2026.
+> [!NOTE] This equates to a <a href="https://web-platform-dx.github.io/baseline/">Baseline</a> target of 2020.
