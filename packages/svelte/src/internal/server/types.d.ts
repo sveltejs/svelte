@@ -1,4 +1,5 @@
-import type { MaybePromise } from '#shared';
+import type { UnevalReplacer } from 'devalue';
+import type { MaybePromise, WarpKey } from '#shared';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -17,20 +18,23 @@ export interface SSRContext {
 	element?: Element;
 }
 
-export interface HydratableLookupEntry {
-	value: unknown;
-	serialized: string;
-	promises?: Array<Promise<void>>;
-	/** dev-only */
-	stack?: string;
-}
-
-export interface HydratableContext {
-	lookup: Map<string, HydratableLookupEntry>;
+export interface WarpStore {
+	/** The values stored in each `Warp`, keyed by the `Warp`'s id */
+	values: Map<string, Map<WarpKey, unknown>>;
+	/** dev-only: where each value was set, keyed by the `Warp`'s id */
+	stacks: Map<string, Map<WarpKey, string>>;
+	/** dev-only: `hydratable` clobbering checks, which reject on mismatch */
 	comparisons: Promise<void>[];
-	unresolved_promises: Map<Promise<string>, string>;
+	/** Whether the values have been serialized, after which no more can be added */
+	emitted: boolean;
 }
 
 export interface RenderContext {
-	hydratable: HydratableContext;
+	warp: WarpStore;
+	/** Whether this context was created by `render` or by `withWarp` */
+	owner: 'render' | 'withWarp';
+	/** Whether a `render` has claimed this context. Each context can only be rendered once */
+	rendered: boolean;
+	/** The `replacer` passed to `withWarp` */
+	replacer: UnevalReplacer | undefined;
 }

@@ -52,5 +52,6 @@ export {
 } from './internal/server/context.js';
 
 export { hydratable } from './internal/server/hydratable.js';
+export { Warp } from './internal/server/warp.js';
 
 export { createRawSnippet } from './internal/server/blocks/snippet.js';

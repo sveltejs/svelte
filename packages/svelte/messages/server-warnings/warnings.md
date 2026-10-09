@@ -1,19 +1,22 @@
-## unresolved_hydratable
+## unresolved_warp
 
-> A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
+> The value with key `%key%` in `Warp` `%id%` was created, but at least part of it was not used during the render.
 >
-> The `hydratable` was initialized in:
+> The value was set in:
 > %stack%
 
-The most likely cause of this is creating a `hydratable` in the `script` block of your component and then `await`ing
+The server has to wait for this value to resolve before it can send the rendered HTML, which delays the response even though the value was not needed for the render.
+
+The most likely cause of this is creating a value in the `script` block of your component and then `await`ing
 the result inside a `svelte:boundary` with a `pending` snippet:
 
 ```svelte
 <script>
-  import { hydratable } from 'svelte';
+	import { Warp } from 'svelte';
 	import { getUser } from '$lib/get-user.js';
 
-	const user = hydratable('user', getUser);
+	const warp = new Warp('my-app');
+	const user = warp.getOrInsertComputed('user', getUser);
 </script>
 
 <svelte:boundary>
@@ -25,6 +28,6 @@ the result inside a `svelte:boundary` with a `pending` snippet:
 </svelte:boundary>
 ```
 
-Consider inlining the `hydratable` call inside the boundary so that it's not called on the server.
+Consider moving the `getOrInsertComputed` call inside the boundary so that it's not called on the server.
 
-Note that this can also happen when a `hydratable` contains multiple promises and some but not all of them have been used.
+Note that this can also happen when a value contains multiple promises and some but not all of them have been used.
