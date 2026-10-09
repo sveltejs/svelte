@@ -14,7 +14,6 @@
     "!src/**/*.test.*",
     "!src/**/*.d.ts",
     "types",
-    "compiler",
     "README.md"
   ],
   "module": "src/index-client.js",
@@ -40,7 +39,6 @@
     },
     "./compiler": {
       "types": "./types/index.d.ts",
-      "require": "./compiler/index.js",
       "default": "./src/compiler/index.js"
     },
     "./easing": {
@@ -138,8 +136,8 @@
     "templating"
   ],
   "scripts": {
-    "build": "rollup -c && pnpm generate && node scripts/check-treeshakeability.js",
-    "dev": "node scripts/process-messages -w & rollup -cw",
+    "build": "pnpm generate:version && pnpm generate && node scripts/check-treeshakeability.js",
+    "dev": "node scripts/process-messages -w",
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:tsgo": "tsgo --project tsconfig.runtime.json --skipLibCheck && tsgo --skipLibCheck",
     "check:watch": "tsc --watch",
@@ -153,9 +151,7 @@
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.25",
     "@playwright/test": "^1.62.0",
-    "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
-    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
