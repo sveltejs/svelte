@@ -5,7 +5,7 @@
 
 	const warp = new Warp('app');
 	const unresolved = warp.getOrInsertComputed('unused_key', () => new Promise(
-		(res, rej) => environment === 'server' ? setTimeout(() => res('did you ever hear the tragedy of darth plagueis the wise?'), 0) : rej('should not run')
+		(res, rej) => environment === 'server' ? setTimeout(() => res('did you ever hear the tragedy of darth plagueis the wise?'), 10) : rej('should not run')
 	));
 </script>
 

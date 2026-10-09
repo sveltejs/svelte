@@ -13,11 +13,9 @@ import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
 import { with_render_context } from './render-context.js';
-import { get_stack, is_promise } from './warp.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { has_own_property, is_array, noop } from '../shared/utils.js';
-import { DEV } from 'esm-env';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -869,8 +867,8 @@ export class Renderer {
 	}
 
 	/**
-	 * Waits for the values added to `Warp` instances to resolve, then serializes them
-	 * into a `<script>` that recreates them on the client.
+	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them
+	 * on the client, waiting for any promises inside them to settle first.
 	 * @param {WarpStore} store
 	 * @param {UnevalReplacer | undefined} replacer
 	 * @returns {Promise<string | null>}
@@ -879,18 +877,6 @@ export class Renderer {
 		// these reject if there's a mismatch. a loop, as more can be added while we're awaiting
 		for (let i = 0; i < store.comparisons.length; i += 1) {
 			await store.comparisons[i];
-		}
-
-		/** @type {Map<Promise<unknown>, unknown>} */
-		const resolved = new Map();
-		/** @type {Set<Promise<unknown>>} */
-		const visited = new Set();
-
-		// values can be added while we're awaiting, and Map iteration includes them
-		for (const [id, values] of store.values) {
-			for (const [key, value] of values) {
-				await resolve_warp_value(store, id, key, value, replacer, resolved, visited);
-			}
 		}
 
 		store.emitted = true;
@@ -906,27 +892,50 @@ export class Renderer {
 			return null;
 		}
 
-		const { head, tail } = devalue.unevalStream(
-			payload,
-			(thing, js) => {
-				if (is_promise(thing) && resolved.has(thing)) {
-					return js`Promise.resolve(${resolved.get(thing)})`;
-				}
+		/** @type {unknown} */
+		let serialization_error = null;
 
-				return replacer?.(thing, js);
-			},
-			{
+		/** @type {ReturnType<typeof devalue.unevalStream>} */
+		let stream;
+
+		try {
+			stream = devalue.unevalStream(payload, replacer, {
 				id: `${this.global.id_prefix}w`,
 				scope: 'window.__svelte.d',
-				// rejected promises reject on the client too, with whatever `transformError` returns
-				transformError: (error) => this.global.transformError(error)
-			}
-		);
+				transformError: (error) => {
+					// a promise resolved to something that can't be serialized
+					if (error instanceof devalue.DevalueError) {
+						serialization_error ??= error;
+						return;
+					}
 
-		// every promise has settled, so the tail is only rejections and finishes right away
-		let blocks = '';
-		for await (const block of tail) {
-			blocks += `\n\t\t\t${block}`;
+					// rejected promises reject on the client too, with whatever `transformError` returns
+					return this.global.transformError(error);
+				}
+			});
+		} catch (error) {
+			serialization_failed(error);
+		}
+
+		const { head, tail } = stream;
+		const ready = await take_ready(tail);
+		let blocks = ready.blocks;
+
+		if (!ready.done) {
+			// this is a problem -- it means we've finished the render but we're still waiting on a promise
+			// to resolve so we can serialize it, so we're blocking the response on useless content.
+			w.unresolved_warp();
+
+			let result = await /** @type {Promise<IteratorResult<string>>} */ (ready.next);
+
+			while (!result.done) {
+				blocks += `\n\t\t\t\t${result.value}`;
+				result = await tail.next();
+			}
+		}
+
+		if (serialization_error !== null) {
+			serialization_failed(serialization_error);
 		}
 
 		const body = `
@@ -1005,104 +1014,43 @@ export class Renderer {
 	}
 }
 
-const PENDING = Symbol('pending');
+const MACROTASK = Symbol('macrotask');
 
 /**
- * Returns the outcome of `promise` if it has already settled, or `PENDING` otherwise
- * @param {Promise<unknown>} promise
- * @returns {Promise<{ ok: boolean, value: unknown } | typeof PENDING>}
+ * Takes the blocks from `tail` that are ready now — i.e. the ones for promises that have already
+ * settled, which `unevalStream` emits within a few microtasks — without waiting for the rest
+ * @param {AsyncIterator<string>} tail
+ * @returns {Promise<{ blocks: string, done: boolean, next?: Promise<IteratorResult<string>> }>}
  */
-function peek(promise) {
-	// if `promise` has settled, its reaction is queued before the one for the already-resolved `PENDING`
-	return Promise.race([promise, Promise.resolve(PENDING)]).then(
-		(value) => (value === PENDING ? PENDING : { ok: true, value }),
-		(value) => ({ ok: false, value })
-	);
-}
+async function take_ready(tail) {
+	let blocks = '';
 
-/**
- * Finds the promises inside a `Warp` value (including inside the values those promises resolve to),
- * waits for them to settle, and records the values of the ones that resolved
- * @param {WarpStore} store
- * @param {string} id
- * @param {WarpKey} key
- * @param {unknown} value
- * @param {UnevalReplacer | undefined} replacer
- * @param {Map<Promise<unknown>, unknown>} resolved
- * @param {Set<Promise<unknown>>} visited
- */
-async function resolve_warp_value(store, id, key, value, replacer, resolved, visited) {
-	let warned = false;
-	const queue = [value];
+	while (true) {
+		const next = tail.next();
+		const result = await Promise.race([
+			next,
+			new Promise((fulfil) => setTimeout(() => fulfil(MACROTASK), 0))
+		]);
 
-	while (queue.length > 0) {
-		/** @type {Promise<unknown>[]} */
-		const promises = [];
-
-		try {
-			// we only care about the promises this finds, and whether it throws
-			devalue.uneval(queue.splice(0), (thing, js) => {
-				if (is_promise(thing)) {
-					if (!visited.has(thing)) {
-						visited.add(thing);
-						promises.push(thing);
-					}
-
-					return js`0`;
-				}
-
-				return replacer?.(thing, js);
-			});
-		} catch (error) {
-			e.warp_serialization_failed(
-				String(key),
-				id,
-				serialization_stack(
-					DEV ? get_stack(store, id, key) : undefined,
-					/** @type {any} */ (error)?.stack
-				)
-			);
+		if (result === MACROTASK) {
+			// the block this resolves to is the next one, so it must not be dropped
+			return { blocks, done: false, next };
 		}
 
-		for (const promise of promises) {
-			let outcome = await peek(promise);
+		const { done, value } = /** @type {IteratorResult<string>} */ (result);
+		if (done) return { blocks, done: true };
 
-			if (outcome === PENDING) {
-				if (!warned) {
-					// this is a problem -- it means we've finished the render but we're still waiting on a promise
-					// to resolve so we can serialize it, so we're blocking the response on useless content.
-					warned = true;
-					w.unresolved_warp(String(key), id, get_stack(store, id, key));
-				}
-
-				outcome = await promise.then(
-					(value) => ({ ok: true, value }),
-					(value) => ({ ok: false, value })
-				);
-			}
-
-			// rejected promises are left for `unevalStream`, which rejects them on the client
-			if (outcome.ok) {
-				resolved.set(promise, outcome.value);
-				queue.push(outcome.value);
-			}
-		}
+		blocks += `\n\t\t\t\t${value}`;
 	}
 }
 
 /**
- * @param {string | undefined} root_stack
- * @param {string | undefined} uneval_stack
+ * @param {unknown} error
+ * @returns {never}
  */
-function serialization_stack(root_stack, uneval_stack) {
-	let out = '';
-	if (root_stack) {
-		out += root_stack + '\n';
-	}
-	if (uneval_stack) {
-		out += 'Caused by:\n' + uneval_stack + '\n';
-	}
-	return out || '<missing stack trace>';
+function serialization_failed(error) {
+	const { stack, path } = /** @type {any} */ (error) ?? {};
+	e.warp_serialization_failed((stack ?? String(error)) + (path ? `\n(at \`${path}\`)` : ''));
 }
 
 /**
