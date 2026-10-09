@@ -45,7 +45,7 @@ const warp = new Warp<string, number>('my-app');
 const rand = warp.getOrInsertComputed('random', () => Math.random());
 ```
 
-On the client, a `Warp` behaves like any other `Map` — values you add to it stay there until you remove them with `delete` or `clear`. On the server, values can't be removed, since they may already be in use or on their way to the client.
+On the client, a `Warp` behaves like any other `Map` — values you add to it stay there until you remove them with `delete` or `clear`. On the server, each key can only be set once, and values can't be removed, since they may already be in use or on their way to the client. For the same reason, treat values as immutable once they've been added to a `Warp`.
 
 Keys can be strings, numbers, booleans or bigints. If you're a library author, use your package name as the `Warp`'s id, so that it doesn't conflict with other libraries:
 

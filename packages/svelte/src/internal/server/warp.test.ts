@@ -276,6 +276,25 @@ describe('withWarp', () => {
 		expect(values?.get('a')).toBe('render');
 		expect(values?.get('b')).toBe('withWarp');
 	});
+
+	test('throws when a key is set twice', async () => {
+		await expect(
+			render(() => {
+				warp.set('a', 1);
+				warp.set('a', 2);
+			})
+		).rejects.toThrow('warp_key_exists');
+	});
+
+	test('getOrInsert does not throw when the key exists', async () => {
+		const { head } = await render(() => {
+			warp.set('a', 1);
+			expect(warp.getOrInsert('a', 2)).toBe(1);
+			expect(warp.getOrInsertComputed('a', () => 3)).toBe(1);
+		});
+
+		expect(revive(head)?.get('test')?.get('a')).toBe(1);
+	});
 });
 
 describe('hydratable', () => {

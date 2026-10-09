@@ -58,7 +58,17 @@ export class Warp {
 	 * @returns {this}
 	 */
 	set(key, value) {
-		set(get_store(), this.#id, key, value);
+		const store = get_store();
+
+		if (get_values(store, this.#id).has(key)) {
+			e.warp_key_exists(
+				String(key),
+				this.#id,
+				DEV ? `. It was first set in:\n${get_stack(store, this.#id, key)}` : ''
+			);
+		}
+
+		set(store, this.#id, key, value);
 		return this;
 	}
 
