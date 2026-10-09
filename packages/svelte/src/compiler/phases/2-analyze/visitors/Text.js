@@ -24,6 +24,9 @@ export function Text(node, context) {
 		}
 	}
 
+	// `search` first: `matchAll` clones the expression, and nearly no text holds one of these
+	if (node.data.search(regex_bidirectional_control_characters) === -1) return;
+
 	regex_bidirectional_control_characters.lastIndex = 0;
 	for (const match of node.data.matchAll(regex_bidirectional_control_characters)) {
 		let is_ignored = false;
