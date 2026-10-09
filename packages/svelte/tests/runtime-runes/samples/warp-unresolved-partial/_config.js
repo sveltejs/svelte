@@ -11,7 +11,6 @@ export default test({
 
 	test_ssr({ assert, warnings }) {
 		assert.strictEqual(warnings.length, 1);
-		// for some strange reason we trim the error code off the beginning of warnings so I can't actually assert it
 		assert.include(
 			warnings[0],
 			'Part of the data added to `Warp` instances was not used during the render'
@@ -19,7 +18,7 @@ export default test({
 	},
 
 	async test({ assert, target }) {
-		// make sure the hydratable promise on the client has a chance to run and reject (it shouldn't, because the server data should be used)
+		// make sure the warp promise on the client has a chance to run and reject (it shouldn't, because the server data should be used)
 		await tick();
 
 		assert.htmlEqual(

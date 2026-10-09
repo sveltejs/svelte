@@ -1,12 +1,18 @@
-/** @import { HydratableLookupEntry } from '#server' */
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
+import { Warp, get_stack, is_promise } from './warp.js';
 import * as e from './errors.js';
 import * as devalue from 'devalue';
 import { DEV } from 'esm-env';
 import { get_user_code_location } from './dev.js';
 
+export const HYDRATABLE_ID = 'svelte:hydratable';
+
+/** @type {Warp<string, any>} */
+const warp = new Warp(HYDRATABLE_ID);
+
 /**
+ * @deprecated Use [`Warp`](https://svelte.dev/docs/svelte/warp) instead
  * @template T
  * @param {string} key
  * @param {() => T} fn
@@ -17,111 +23,79 @@ export function hydratable(key, fn) {
 		e.experimental_async_required('hydratable');
 	}
 
-	const { hydratable } = get_render_context();
+	if (warp.has(key)) {
+		const value = warp.get(key);
 
-	let entry = hydratable.lookup.get(key);
-
-	if (entry !== undefined) {
 		if (DEV) {
-			const comparison = compare(key, entry, encode(key, fn()));
+			const store = get_render_context().warp;
+			const comparison = compare(key, value, fn(), get_stack(store, HYDRATABLE_ID, key));
 			comparison.catch(() => {});
-			hydratable.comparisons.push(comparison);
+			store.comparisons.push(comparison);
 		}
 
-		return /** @type {T} */ (entry.value);
+		return value;
 	}
 
 	const value = fn();
-
-	entry = encode(key, value, hydratable.unresolved_promises);
-	hydratable.lookup.set(key, entry);
-
+	warp.set(key, value);
 	return value;
 }
 
 /**
- * @param {string} key
- * @param {any} value
- * @param {Map<Promise<any>, string>} [unresolved]
+ * Serializes a value, waiting for any promises inside it to resolve
+ * @param {unknown} value
+ * @returns {Promise<string>}
  */
-function encode(key, value, unresolved) {
-	/** @type {HydratableLookupEntry} */
-	const entry = { value, serialized: '' };
+async function serialize(value) {
+	/** @type {Map<Promise<unknown>, unknown>} */
+	const resolved = new Map();
+	/** @type {unknown[]} */
+	const pending = [value];
 
-	if (DEV) {
-		entry.stack = get_user_code_location();
-	}
+	while (pending.length > 0) {
+		/** @type {Promise<unknown>[]} */
+		const promises = [];
 
-	let uid = 1;
+		devalue.uneval(pending.splice(0), (thing, js) => {
+			if (is_promise(thing)) {
+				if (!resolved.has(thing)) promises.push(thing);
+				return js`0`;
+			}
+		});
 
-	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
-		if (is_promise(value)) {
-			// we serialize promises as `"${i}"`, because it's impossible for that string
-			// to occur 'naturally' (since the quote marks would have to be escaped)
-			// this placeholder is returned synchronously from `uneval`, which includes it in the
-			// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
-			// be replaced.
-			const placeholder = `"${uid++}"`;
-			const p = value
-				.then((v) => {
-					entry.serialized = entry.serialized.replace(
-						placeholder,
-						// use the function form here to prevent any string replacement characters from being interpreted
-						// in `v`, as it's potentially user-controlled and therefore potentially malicious.
-						// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
-						() => `r(${uneval(v)})`
-					);
-				})
-				.catch((devalue_error) =>
-					e.hydratable_serialization_failed(
-						key,
-						serialization_stack(entry.stack, devalue_error?.stack)
-					)
-				);
-
-			unresolved?.set(p, key);
-			// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
-			p.catch(() => {}).finally(() => unresolved?.delete(p));
-
-			(entry.promises ??= []).push(p);
-			return placeholder;
+		for (const promise of promises) {
+			const v = await promise;
+			resolved.set(promise, v);
+			pending.push(v);
 		}
+	}
+
+	return devalue.uneval(value, (thing, js) => {
+		if (is_promise(thing)) return js`r(${resolved.get(thing)})`;
 	});
-
-	return entry;
-}
-
-/**
- * @param {any} value
- * @returns {value is Promise<any>}
- */
-function is_promise(value) {
-	// we use this check rather than `instanceof Promise`
-	// because it works cross-realm
-	return Object.prototype.toString.call(value) === '[object Promise]';
 }
 
 /**
  * @param {string} key
- * @param {HydratableLookupEntry} a
- * @param {HydratableLookupEntry} b
+ * @param {unknown} a
+ * @param {unknown} b
+ * @param {string} a_stack
  */
-async function compare(key, a, b) {
-	// note: these need to be loops (as opposed to Promise.all) because
-	// additional promises can get pushed to them while we're awaiting
-	// an earlier one
-	for (const p of a?.promises ?? []) {
-		await p;
+async function compare(key, a, b, a_stack) {
+	const b_stack = get_user_code_location();
+
+	let a_serialized;
+	let b_serialized;
+
+	try {
+		a_serialized = await serialize(a);
+		b_serialized = await serialize(b);
+	} catch {
+		// serialization errors are surfaced separately, when the value is serialized for real
+		return;
 	}
 
-	for (const p of b?.promises ?? []) {
-		await p;
-	}
-
-	if (a.serialized !== b.serialized) {
-		const a_stack = /** @type {string} */ (a.stack);
-		const b_stack = /** @type {string} */ (b.stack);
-
+	if (a_serialized !== b_serialized) {
 		const stack =
 			a_stack === b_stack
 				? `Occurred at:\n${a_stack}`
@@ -129,19 +103,4 @@ async function compare(key, a, b) {
 
 		e.hydratable_clobbering(key, stack);
 	}
-}
-
-/**
- * @param {string | undefined} root_stack
- * @param {string | undefined} uneval_stack
- */
-function serialization_stack(root_stack, uneval_stack) {
-	let out = '';
-	if (root_stack) {
-		out += root_stack + '\n';
-	}
-	if (uneval_stack) {
-		out += 'Caused by:\n' + uneval_stack + '\n';
-	}
-	return out || '<missing stack trace>';
 }

@@ -1,5 +1,6 @@
 // @ts-ignore -- we don't include node types in the production build
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
+/** @import { UnevalReplacer } from 'devalue' */
 /** @import { RenderContext } from '#server' */
 
 import { deferred, noop } from '../shared/utils.js';
@@ -13,7 +14,7 @@ let context = null;
 
 /** @returns {RenderContext} */
 export function get_render_context() {
-	const store = context ?? als?.getStore();
+	const store = get_render_context_safe();
 
 	if (!store) {
 		e.server_context_required();
@@ -22,33 +23,97 @@ export function get_render_context() {
 	return store;
 }
 
+/** @returns {RenderContext | null} */
+function get_render_context_safe() {
+	return context ?? als?.getStore() ?? null;
+}
+
 /**
+ * @param {boolean} rendered
+ * @param {UnevalReplacer | undefined} replacer
+ * @returns {RenderContext}
+ */
+function create_render_context(rendered, replacer) {
+	return {
+		warp: {
+			values: new Map(),
+			stacks: new Map(),
+			comparisons: [],
+			emitted: false
+		},
+		rendered,
+		replacer
+	};
+}
+
+/**
+ * Runs `fn` with a render context. If `fn` is running inside `withWarp`,
+ * that context is used — but only for one render.
  * @template T
- * @param {() => Promise<T>} fn
+ * @param {(context: RenderContext) => Promise<T>} fn
  * @returns {Promise<T>}
  */
 export async function with_render_context(fn) {
-	context = {
-		hydratable: {
-			lookup: new Map(),
-			comparisons: [],
-			unresolved_promises: new Map()
-		}
-	};
+	const existing = get_render_context_safe();
 
+	if (existing !== null) {
+		if (existing.rendered) {
+			e.warp_context_already_rendered();
+		}
+
+		existing.rendered = true;
+		return fn(existing);
+	}
+
+	await init_render_context();
+	return run(create_render_context(true, undefined), fn);
+}
+
+/**
+ * Only available on the server. Runs `fn` with a context in which `Warp` instances
+ * can be used. A `render` call inside `fn` will use the same context, and serialize
+ * all the values added to `Warp` instances inside `fn` — whether they were added
+ * before or during the render. Only one `render` can happen inside a given `withWarp`.
+ * @template T
+ * @param {() => T | Promise<T>} fn
+ * @param {{ replacer?: UnevalReplacer }} [options]
+ * @returns {Promise<T>}
+ */
+export async function withWarp(fn, options = {}) {
+	if (get_render_context_safe()) {
+		e.warp_context_nested();
+	}
+
+	await init_render_context();
+	return run(create_render_context(false, options.replacer), async () => fn());
+}
+
+/**
+ * @template T
+ * @param {RenderContext} ctx
+ * @param {(context: RenderContext) => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+async function run(ctx, fn) {
 	if (in_webcontainer()) {
 		const { promise, resolve } = deferred();
 		const previous_render = current_render;
 		current_render = promise;
 		await previous_render;
-		return fn().finally(resolve);
+		context = ctx;
+		return fn(ctx).finally(() => {
+			context = null;
+			resolve();
+		});
 	}
 
 	try {
 		if (als === null) {
 			e.async_local_storage_unavailable();
 		}
-		return als.run(context, fn);
+
+		context = ctx;
+		return als.run(ctx, () => fn(ctx));
 	} finally {
 		context = null;
 	}

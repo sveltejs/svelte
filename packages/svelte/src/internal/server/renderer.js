@@ -1,5 +1,7 @@
 /** @import { Component } from 'svelte' */
-/** @import { HydratableContext, SSRContext } from './types.js' */
+/** @import { UnevalReplacer } from 'devalue' */
+/** @import { RenderContext, SSRContext, WarpStore } from './types.js' */
+/** @import { WarpKey } from '#shared' */
 /** @import { Csp, RenderOutput, SyncRenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
@@ -10,7 +12,7 @@ import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
-import { get_render_context, with_render_context, init_render_context } from './render-context.js';
+import { with_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { has_own_property, is_array, noop } from '../shared/utils.js';
@@ -611,7 +613,7 @@ export class Renderer {
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown; replacer?: UnevalReplacer }} [options]
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
@@ -620,9 +622,7 @@ export class Renderer {
 				new RenderResult(
 					() => Renderer.#render(component, options),
 					() =>
-						init_render_context().then(() =>
-							with_render_context(() => Renderer.#render_async(component, options))
-						)
+						with_render_context((context) => Renderer.#render_async(component, options, context))
 				)
 			)
 		);
@@ -756,10 +756,11 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; replacer?: UnevalReplacer }} options
+	 * @param {RenderContext} context
 	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
 	 */
-	static async #render_async(component, options) {
+	static async #render_async(component, options, context) {
 		const previous_context = ssr_context;
 		const renderer = Renderer.#create('async', options);
 		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] } }) | undefined} */
@@ -771,9 +772,12 @@ export class Renderer {
 			try {
 				Renderer.#open_render(renderer, component, options);
 				const content = await renderer.#collect_content_async();
-				const hydratables = await renderer.#collect_hydratables();
-				if (hydratables !== null) {
-					content.head = hydratables + content.head;
+				const warp = await renderer.#collect_warp(
+					context.warp,
+					compose_replacers(options.replacer, context.replacer)
+				);
+				if (warp !== null) {
+					content.head = warp + content.head;
 				}
 				result = Renderer.#close_render(content, renderer);
 			} catch (error) {
@@ -862,21 +866,105 @@ export class Renderer {
 		return content;
 	}
 
-	async #collect_hydratables() {
-		const ctx = get_render_context().hydratable;
-
-		for (const [_, key] of ctx.unresolved_promises) {
-			// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
-			// serialize it, so we're blocking the response on useless content.
-			w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
+	/**
+	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them
+	 * on the client, waiting for any promises inside them to settle first.
+	 * @param {WarpStore} store
+	 * @param {UnevalReplacer | undefined} replacer
+	 * @returns {Promise<string | null>}
+	 */
+	async #collect_warp(store, replacer) {
+		// these reject if there's a mismatch. a loop, as more can be added while we're awaiting
+		for (let i = 0; i < store.comparisons.length; i += 1) {
+			await store.comparisons[i];
 		}
 
-		for (const comparison of ctx.comparisons) {
-			// these reject if there's a mismatch
-			await comparison;
+		store.emitted = true;
+
+		/** @type {Map<string, Map<WarpKey, unknown>>} */
+		const payload = new Map();
+
+		for (const [id, values] of store.values) {
+			if (values.size > 0) payload.set(id, values);
 		}
 
-		return await this.#hydratable_block(ctx);
+		if (payload.size === 0) {
+			return null;
+		}
+
+		/** @type {unknown} */
+		let serialization_error = null;
+
+		/** @type {ReturnType<typeof devalue.unevalStream>} */
+		let stream;
+
+		try {
+			stream = devalue.unevalStream(payload, replacer, {
+				id: `${this.global.id_prefix}w`,
+				scope: 'window.__svelte.d',
+				transformError: (error) => {
+					// a promise resolved to something that can't be serialized
+					if (error instanceof devalue.DevalueError) {
+						serialization_error ??= error;
+						return;
+					}
+
+					// rejected promises reject on the client too, with whatever `transformError` returns
+					return this.global.transformError(error);
+				}
+			});
+		} catch (error) {
+			serialization_failed(error);
+		}
+
+		const { head, tail } = stream;
+		const ready = await take_ready(tail);
+		let blocks = ready.blocks;
+
+		if (!ready.done) {
+			// this is a problem -- it means we've finished the render but we're still waiting on a promise
+			// to resolve so we can serialize it, so we're blocking the response on useless content.
+			w.unresolved_warp();
+
+			let result = await /** @type {Promise<IteratorResult<string>>} */ (ready.next);
+
+			while (!result.done) {
+				blocks += `\n\t\t\t\t${result.value}`;
+				result = await tail.next();
+			}
+		}
+
+		if (serialization_error !== null) {
+			serialization_failed(serialization_error);
+		}
+
+		const body = `
+			{
+				const w = (window.__svelte ??= {}).w ??= new Map();
+
+				for (const [id, values] of ${head}) {
+					const existing = w.get(id);
+
+					if (existing) {
+						for (const [k, v] of values) existing.set(k, v);
+					} else {
+						w.set(id, values);
+					}
+				}${blocks}
+			}
+		`;
+
+		let csp_attr = '';
+		if (this.global.csp.nonce) {
+			csp_attr = ` nonce="${this.global.csp.nonce}"`;
+		} else if (this.global.csp.hash) {
+			// note to future selves: this doesn't need to be optimized with a Map<body, hash>
+			// because the it's impossible for identical data to occur multiple times in a single render
+			const hash = await sha256(body);
+			this.global.csp.script_hashes.push(`sha256-${hash}`);
+		}
+
+		return `\n\t\t<script${csp_attr}>${body}</script>`;
 	}
 
 	/**
@@ -924,59 +1012,55 @@ export class Renderer {
 			}
 		};
 	}
+}
 
-	/**
-	 * @param {HydratableContext} ctx
-	 */
-	async #hydratable_block(ctx) {
-		if (ctx.lookup.size === 0) {
-			return null;
+const MACROTASK = Symbol('macrotask');
+
+/**
+ * Takes the blocks from `tail` that are ready now — i.e. the ones for promises that have already
+ * settled, which `unevalStream` emits within a few microtasks — without waiting for the rest
+ * @param {AsyncIterator<string>} tail
+ * @returns {Promise<{ blocks: string, done: boolean, next?: Promise<IteratorResult<string>> }>}
+ */
+async function take_ready(tail) {
+	let blocks = '';
+
+	while (true) {
+		const next = tail.next();
+		const result = await Promise.race([
+			next,
+			new Promise((fulfil) => setTimeout(() => fulfil(MACROTASK), 0))
+		]);
+
+		if (result === MACROTASK) {
+			// the block this resolves to is the next one, so it must not be dropped
+			return { blocks, done: false, next };
 		}
 
-		let entries = [];
-		let has_promises = false;
+		const { done, value } = /** @type {IteratorResult<string>} */ (result);
+		if (done) return { blocks, done: true };
 
-		for (const [k, v] of ctx.lookup) {
-			if (v.promises) {
-				has_promises = true;
-				for (const p of v.promises) await p;
-			}
-
-			entries.push(`[${devalue.uneval(k)},${v.serialized}]`);
-		}
-
-		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
-
-		if (has_promises) {
-			prelude = `const r = (v) => Promise.resolve(v);
-				${prelude}`;
-		}
-
-		const body = `
-			{
-				${prelude}
-
-				for (const [k, v] of [
-					${entries.join(',\n\t\t\t\t\t')}
-				]) {
-					h.set(k, v);
-				}
-			}
-		`;
-
-		let csp_attr = '';
-		if (this.global.csp.nonce) {
-			csp_attr = ` nonce="${this.global.csp.nonce}"`;
-		} else if (this.global.csp.hash) {
-			// note to future selves: this doesn't need to be optimized with a Map<body, hash>
-			// because the it's impossible for identical data to occur multiple times in a single render
-			// (this would require the same hydratable key:value pair to be serialized multiple times)
-			const hash = await sha256(body);
-			this.global.csp.script_hashes.push(`sha256-${hash}`);
-		}
-
-		return `\n\t\t<script${csp_attr}>${body}</script>`;
+		blocks += `\n\t\t\t\t${value}`;
 	}
+}
+
+/**
+ * @param {unknown} error
+ * @returns {never}
+ */
+function serialization_failed(error) {
+	const { stack, path } = /** @type {any} */ (error) ?? {};
+	e.warp_serialization_failed((stack ?? String(error)) + (path ? `\n(at \`${path}\`)` : ''));
+}
+
+/**
+ * @param {UnevalReplacer | undefined} a
+ * @param {UnevalReplacer | undefined} b
+ * @returns {UnevalReplacer | undefined}
+ */
+function compose_replacers(a, b) {
+	if (!a || !b) return a ?? b;
+	return (value, js) => a(value, js) || b(value, js);
 }
 
 export class SSRState {
@@ -988,6 +1072,9 @@ export class SSRState {
 
 	/** @readonly @type {() => string} */
 	uid;
+
+	/** @readonly @type {string} */
+	id_prefix;
 
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
@@ -1025,6 +1112,8 @@ export class SSRState {
 			((error) => {
 				throw error;
 			});
+
+		this.id_prefix = id_prefix;
 
 		let uid = 1;
 		this.uid = () => `${id_prefix}s${uid++}`;

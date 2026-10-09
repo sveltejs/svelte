@@ -1,12 +1,17 @@
-<script>
-{
-	const r = (v) => Promise.resolve(v);
-				const h = (window.__svelte ??= {}).h ??= new Map();
 
-	for (const [k, v] of [
-		["key",r("bar")]
-	]) {
-		h.set(k, v);
-	}
-}
-</script>
+		<script>
+			{
+				const w = (window.__svelte ??= {}).w ??= new Map();
+
+				for (const [id, values] of (()=>{let n=window.__svelte.d||(window.__svelte.d={__proto__:null}),s=(n["w"]={o:[],p:[]});s.d=(i)=>{let p=new Promise((a,b)=>{s.p[i]=[a,b]});p.catch(()=>{});return p};s.r=(i,k,v)=>{s.p[i][k](v);delete s.p[i]};return (s.o[0]=new Map([["svelte:hydratable",(s.o[1]=new Map([["key",(s.o[2]=s.d(0))]]))]]))})()) {
+					const existing = w.get(id);
+
+					if (existing) {
+						for (const [k, v] of values) existing.set(k, v);
+					} else {
+						w.set(id, values);
+					}
+				}
+				((s)=>{s.r(0,0,"bar");delete window.__svelte.d["w"]})(window.__svelte.d["w"]);
+			}
+		</script>

@@ -70,30 +70,6 @@ ${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
 }
 
 /**
- * Failed to serialize `hydratable` data for key `%key%`.
- * 
- * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
- * 
- * Cause:
- * %stack%
- * @param {string} key
- * @param {string} stack
- * @returns {never}
- */
-export function hydratable_serialization_failed(key, stack) {
-	const error = new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data for key \`${key}\`.
-
-\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises.
-
-Cause:
-${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
-
-	error.name = 'Svelte error';
-
-	throw error;
-}
-
-/**
  * `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
  * @returns {never}
  */
@@ -136,6 +112,95 @@ export function lifecycle_function_unavailable(name) {
  */
 export function server_context_required() {
 	const error = new Error(`server_context_required\nCould not resolve \`render\` context.\nhttps://svelte.dev/e/server_context_required`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * `render(...)` was called more than once inside the same `withWarp(...)` call
+ * @returns {never}
+ */
+export function warp_context_already_rendered() {
+	const error = new Error(`warp_context_already_rendered\n\`render(...)\` was called more than once inside the same \`withWarp(...)\` call\nhttps://svelte.dev/e/warp_context_already_rendered`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * `withWarp(...)` cannot be called inside another `withWarp(...)` or `render(...)` call
+ * @returns {never}
+ */
+export function warp_context_nested() {
+	const error = new Error(`warp_context_nested\n\`withWarp(...)\` cannot be called inside another \`withWarp(...)\` or \`render(...)\` call\nhttps://svelte.dev/e/warp_context_nested`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Key `%key%` has already been set in `Warp` `%id%`%stack%
+ * @param {string} key
+ * @param {string} id
+ * @param {string} stack
+ * @returns {never}
+ */
+export function warp_key_exists(key, id, stack) {
+	const error = new Error(`warp_key_exists\nKey \`${key}\` has already been set in \`Warp\` \`${id}\`${stack}\nhttps://svelte.dev/e/warp_key_exists`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * `warp.%method%(...)` is not supported on the server
+ * @param {string} method
+ * @returns {never}
+ */
+export function warp_method_unsupported(method) {
+	const error = new Error(`warp_method_unsupported\n\`warp.${method}(...)\` is not supported on the server\nhttps://svelte.dev/e/warp_method_unsupported`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Failed to serialize data added to a `Warp`.
+ * 
+ * `Warp` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/devalue) can, including promises. To serialize other values, pass a `replacer` to `render` or `withWarp`.
+ * 
+ * Cause:
+ * %stack%
+ * @param {string} stack
+ * @returns {never}
+ */
+export function warp_serialization_failed(stack) {
+	const error = new Error(`warp_serialization_failed\nFailed to serialize data added to a \`Warp\`.
+
+\`Warp\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/devalue) can, including promises. To serialize other values, pass a \`replacer\` to \`render\` or \`withWarp\`.
+
+Cause:
+${stack}\nhttps://svelte.dev/e/warp_serialization_failed`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Cannot set key `%key%` in `Warp` `%id%` after its values have been serialized
+ * @param {string} key
+ * @param {string} id
+ * @returns {never}
+ */
+export function warp_set_after_render(key, id) {
+	const error = new Error(`warp_set_after_render\nCannot set key \`${key}\` in \`Warp\` \`${id}\` after its values have been serialized\nhttps://svelte.dev/e/warp_set_after_render`);
 
 	error.name = 'Svelte error';
 
