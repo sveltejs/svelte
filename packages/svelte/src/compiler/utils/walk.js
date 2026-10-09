@@ -24,8 +24,8 @@ function fields(node) {
 	const listed = CHILDREN[node.type];
 	if (listed !== undefined) {
 		let plain = true;
-		for (const key of EXTRAS) {
-			if (node[key] != null) {
+		for (let i = 0; i < EXTRAS.length; i++) {
+			if (node[EXTRAS[i]] != null) {
 				plain = false;
 				break;
 			}
@@ -69,7 +69,10 @@ export function walk(node, state, visitors) {
 		let clone;
 
 		path.push(node);
-		for (const key of fields(node)) {
+		// indexed: for...of allocated an iterator result per field
+		const keys = fields(node);
+		for (let k = 0; k < keys.length; k++) {
+			const key = keys[k];
 			const child_node = /** @type {any} */ (node)[key];
 			if (child_node && typeof child_node === 'object') {
 				if (Array.isArray(child_node)) {

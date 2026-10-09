@@ -1307,10 +1307,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 */
 	function next(node, scope) {
 		path.push(node);
-		for (const key of CHILDREN[node.type]) {
-			const value = node[key];
+		const keys = CHILDREN[node.type];
+		for (let k = 0; k < keys.length; k++) {
+			const value = node[keys[k]];
 			if (Array.isArray(value)) {
-				for (const child of value) if (child?.type) visit(child, scope);
+				for (let i = 0; i < value.length; i++) if (value[i]?.type) visit(value[i], scope);
 			} else if (value?.type) {
 				visit(value, scope);
 			}
