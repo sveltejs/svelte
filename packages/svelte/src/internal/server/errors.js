@@ -143,6 +143,21 @@ export function warp_context_nested() {
 }
 
 /**
+ * Key `%key%` has already been set in `Warp` `%id%`%stack%
+ * @param {string} key
+ * @param {string} id
+ * @param {string} stack
+ * @returns {never}
+ */
+export function warp_key_exists(key, id, stack) {
+	const error = new Error(`warp_key_exists\nKey \`${key}\` has already been set in \`Warp\` \`${id}\`${stack}\nhttps://svelte.dev/e/warp_key_exists`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `warp.%method%(...)` is not supported on the server
  * @param {string} method
  * @returns {never}
