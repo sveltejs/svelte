@@ -13,6 +13,9 @@ export var array_prototype = Array.prototype;
 export var get_prototype_of = Object.getPrototypeOf;
 export var is_extensible = Object.isExtensible;
 export var has_own_property = Object.prototype.hasOwnProperty;
+// these are new, and not available everywhere yet
+var map_get_or_insert = /** @type {any} */ (Map.prototype).getOrInsert;
+var map_get_or_insert_computed = /** @type {any} */ (Map.prototype).getOrInsertComputed;
 
 /**
  * @param {any} thing
@@ -23,6 +26,40 @@ export function is_function(thing) {
 }
 
 export const noop = () => {};
+
+/**
+ * `map.getOrInsert(key, value)`, using the native implementation if there is one
+ * @template K, V
+ * @param {Map<K, V>} map
+ * @param {K} key
+ * @param {V} value
+ * @returns {V}
+ */
+export function get_or_insert(map, key, value) {
+	if (map_get_or_insert !== undefined) return map_get_or_insert.call(map, key, value);
+	if (map.has(key)) return /** @type {V} */ (map.get(key));
+	map.set(key, value);
+	return value;
+}
+
+/**
+ * `map.getOrInsertComputed(key, callback)`, using the native implementation if there is one
+ * @template K, V
+ * @param {Map<K, V>} map
+ * @param {K} key
+ * @param {(key: K) => V} callback
+ * @returns {V}
+ */
+export function get_or_insert_computed(map, key, callback) {
+	if (map_get_or_insert_computed !== undefined) {
+		return map_get_or_insert_computed.call(map, key, callback);
+	}
+
+	if (map.has(key)) return /** @type {V} */ (map.get(key));
+	const value = callback(key);
+	map.set(key, value);
+	return value;
+}
 
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
