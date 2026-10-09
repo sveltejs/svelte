@@ -1,6 +1,7 @@
 /** @import { WarpKey } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import * as e from './errors.js';
+import { get_or_insert, get_or_insert_computed } from '../shared/utils.js';
 
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
@@ -76,10 +77,7 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsert(key, value) {
-		const values = this.#values();
-		if (values.has(key)) return /** @type {V} */ (values.get(key));
-		values.set(key, value);
-		return value;
+		return get_or_insert(this.#values(), key, value);
 	}
 
 	/**
@@ -89,11 +87,7 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsertComputed(key, callback) {
-		const values = this.#values();
-		if (values.has(key)) return /** @type {V} */ (values.get(key));
-		const value = callback(key);
-		values.set(key, value);
-		return value;
+		return get_or_insert_computed(this.#values(), key, callback);
 	}
 
 	/**
