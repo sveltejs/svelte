@@ -1,6 +1,7 @@
 import type { Store, WarpKey } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Batch } from './reactivity/batch.js';
+import type { Overlay } from './warp.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
 declare global {
@@ -8,6 +9,10 @@ declare global {
 		__svelte?: {
 			/** `Warp` values, keyed by the `Warp`'s id */
 			w?: Map<string, Map<WarpKey, unknown>>;
+			/** The number of `Warp` streams that haven't finished yet */
+			s?: number;
+			/** Changes made to `Warp`s while values were streaming in, keyed by the `Warp`'s id */
+			m?: Map<string, Overlay>;
 		};
 	}
 }

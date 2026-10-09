@@ -497,8 +497,11 @@ declare module 'svelte' {
 		clear(): void;
 		
 		forEach(callback: (value: V, key: K, map: Map<K, V>) => void, this_arg?: any): void;
+		
 		entries(): IterableIterator<[K, V]>;
+		
 		keys(): IterableIterator<K>;
+		
 		values(): IterableIterator<V>;
 		get size(): number;
 		[Symbol.iterator](): IterableIterator<[K, V]>;
