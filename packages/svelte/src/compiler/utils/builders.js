@@ -1,5 +1,5 @@
 /** @import * as ESTree from 'estree' */
-import { walk } from 'zimmerframe';
+import { walk } from './walk.js';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
 import { has_await_expression } from './ast.js';

@@ -7,7 +7,7 @@ import {
 	regex_starts_with_whitespaces
 } from '../patterns.js';
 import * as e from '../../errors.js';
-import { walk } from 'zimmerframe';
+import { walk } from '../../utils/walk.js';
 import { extract_identifiers, is_reference } from '../../utils/ast.js';
 import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import { set_scope } from '../scope.js';

@@ -4,7 +4,7 @@
 /** @import { Scope } from '../phases/scope.js' */
 /** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
-import { walk } from 'zimmerframe';
+import { walk } from '../utils/walk.js';
 import { parse, regex_valid_component_name } from '../phases/1-parse/index.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';

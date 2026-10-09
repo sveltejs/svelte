@@ -1,7 +1,7 @@
 /** @import { LegacyRoot } from './types/legacy-nodes.js' */
 /** @import { CompileOptions, CompileResult, ValidatedCompileOptions, ModuleCompileOptions } from '#compiler' */
 /** @import { AST } from './public.js' */
-import { walk as zimmerframe_walk } from 'zimmerframe';
+import { walk as walk_ast } from './utils/walk.js';
 import { convert } from './legacy.js';
 import { parse as _parse, parse_css } from './phases/1-parse/index.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
@@ -142,7 +142,7 @@ function to_public_ast(source, ast, modern) {
 		});
 
 		// remove things that we don't want to treat as public API
-		return zimmerframe_walk(ast, null, {
+		return walk_ast(ast, null, {
 			_(node, { next }) {
 				clean(node);
 				next();

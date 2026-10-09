@@ -1,6 +1,6 @@
 /** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
-import { walk } from 'zimmerframe';
+import { walk } from './walk.js';
 import { referenceOf } from '@teasel/parser';
 
 /**

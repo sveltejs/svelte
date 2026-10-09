@@ -1,6 +1,6 @@
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { AST } from '#compiler' */
-import { walk } from 'zimmerframe';
+import { walk } from '../../../utils/walk.js';
 import * as w from '../../../warnings.js';
 import { is_keyframes_node } from '../../css.js';
 

@@ -15,11 +15,8 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { is_template_node } from './1-parse/index.js';
-import { grammar } from './1-parse/grammar.js';
+import { CHILDREN } from '../utils/walk.js';
 import { determine_slot } from '../utils/slot.js';
-
-/** @type {Record<string, readonly string[]>} the fields holding nodes: the grammar's, and the `tag` phase 1 promotes from `this` */
-const CHILDREN = { ...grammar.children, SvelteElement: [...grammar.children.SvelteElement, 'tag'] };
 
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
