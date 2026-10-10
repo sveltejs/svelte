@@ -427,7 +427,7 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 	var d = own_value(derived);
 
-	if (d.v === derived.v ? !derived.equals(value) : !derived.equals.call(d, value)) {
+	if (d === derived ? !derived.equals(value) : !derived.equals.call(d, value)) {
 		if (current_batch !== null || previous_batch !== null) {
 			// `capture` decides whether the underlying value is updated (it isn't in a fork,
 			// or if a later batch holds a newer value) and records it in the batch either way.
@@ -436,9 +436,8 @@ export function update_derived(derived) {
 			// to the previous batch, not the new one (which can already exist if an earlier
 			// effect wrote to a source). Not adding it to either can cause bugs, so we add it to both.
 			// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-			// Order matters: current_batch first so it gets the correct previous value.
+			previous_batch?.capture(derived, value, true);
 			current_batch?.capture(derived, value, true);
-			previous_batch?.capture(derived, value, true, current_batch !== null);
 		} else {
 			derived.v = value;
 			derived.wv = increment_write_version();

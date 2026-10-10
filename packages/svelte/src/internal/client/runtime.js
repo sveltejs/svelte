@@ -52,6 +52,7 @@ import {
 	Batch,
 	batch_values,
 	current_batch,
+	first_batch,
 	flushSync,
 	held_sources,
 	previous_batch,
@@ -342,16 +343,16 @@ export function update_reaction(reaction) {
 function update_dependencies(reaction) {
 	var deps = reaction.deps;
 
-	// Don't remove reactions during fork;
-	// they must remain for when fork is discarded
-	var is_fork = current_batch?.is_fork;
-
 	if (new_deps !== null) {
 		var i;
 
-		if (!is_fork) {
-			remove_reactions(reaction, skipped_deps);
+		if (deps !== null && skipped_deps < deps.length && keep_dependencies(deps)) {
+			for (i = skipped_deps; i < deps.length; i++) {
+				if (!includes.call(new_deps, deps[i])) new_deps.push(deps[i]);
+			}
 		}
+
+		remove_reactions(reaction, skipped_deps);
 
 		if (deps !== null && skipped_deps > 0) {
 			deps.length = skipped_deps + new_deps.length;
@@ -367,12 +368,37 @@ function update_dependencies(reaction) {
 				(deps[i].reactions ??= []).push(reaction);
 			}
 		}
-	} else if (!is_fork && deps !== null && skipped_deps < deps.length) {
+	} else if (deps !== null && skipped_deps < deps.length && !keep_dependencies(deps)) {
 		remove_reactions(reaction, skipped_deps);
 		deps.length = skipped_deps;
 	}
 
 	return deps;
+}
+
+/**
+ * Whether a reaction should keep the dependencies it didn't read this time. While several batches exist (or in
+ * a fork), they're needed if it read a value that some batch changes: other batches (or the real world, once the
+ * fork is discarded) see another value for it, so the reaction may take another path there (e.g. `a || b` with a
+ * different `a`), in which it depends on them
+ * @param {Value[]} deps the previous dependencies, of which the first `skipped_deps` were read again
+ */
+function keep_dependencies(deps) {
+	if (batch_values === null) return false;
+
+	for (var batch = first_batch; batch !== null; batch = batch.next) {
+		for (var i = 0; i < skipped_deps; i++) {
+			if (batch.current.has(deps[i])) return true;
+		}
+
+		if (new_deps !== null) {
+			for (i = 0; i < new_deps.length; i++) {
+				if (batch.current.has(new_deps[i])) return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /**

@@ -191,7 +191,8 @@ var count_deps = 0;
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	var s = own_value(source);
-	if (s.v === source.v ? !source.equals(value) : !source.equals.call(s, value)) {
+
+	if (s === source ? !source.equals(value) : !source.equals.call(s, value)) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {

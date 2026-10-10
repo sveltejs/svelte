@@ -119,8 +119,17 @@ export function read_batch_local_value(reaction) {
  * @returns {{ v: any }}
  */
 export function own_value(signal) {
-	var own = batch_values === null ? undefined : current_batch?.current.get(signal);
-	return own === undefined ? signal : own;
+	if (batch_values === null) return signal;
+
+	var own = current_batch?.current.get(signal);
+	if (own !== undefined) return own;
+
+	// Outside of effect flushes, the view is the one of the current batch: it may show another value, e.g. a later
+	// batch's previous one. While effects are flushed, the view is the one of the flushed batch, but writes belong
+	// to a new batch (and deriveds are captured into both)
+	return previous_batch === null && batch_values.has(signal)
+		? { v: batch_values.get(signal) }
+		: signal;
 }
 
 /** @type {Effect | null} */
