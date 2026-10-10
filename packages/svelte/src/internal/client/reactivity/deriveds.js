@@ -12,7 +12,8 @@ import {
 	DESTROYED,
 	CLEAN,
 	REACTION_RAN,
-	INERT
+	INERT,
+	MAYBE_DIRTY
 } from '#client/constants';
 import {
 	active_reaction,
@@ -43,7 +44,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, previous_batch } from './batch.js';
+import { batch_values, current_batch, first_batch, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -120,6 +121,10 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
+	// Besides prod-logic this also helps in DEV to let this be printed
+	// as a derived when using `$inspect.trace()`
+	signal.f |= ASYNC;
+
 	if (DEV) signal.label = label ?? fn.toString();
 
 	// only suspend in async deriveds created on initialisation
@@ -128,11 +133,12 @@ export function async_derived(fn, label, location) {
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
 
-	async_effect(() => {
+	signal.e = async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
 		if (DEV) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
+			// effect.label ??= label ?? fn.toString(); // TODO add dev time labeling for effects in follow-up PR
 		}
 
 		/** @type {ReturnType<typeof deferred<V>>} */
@@ -179,6 +185,17 @@ export function async_derived(fn, label, location) {
 
 		var batch = /** @type {Batch} */ (current_batch);
 
+		// If an earlier batch has a run of this async effect in flight, the two batches
+		// are related and this one has to wait for (i.e. merge into) the earlier one
+		let prev = batch.prev;
+		while (prev) {
+			if (prev.async_deriveds.has(effect)) {
+				batch.dependent.add(prev);
+				break;
+			}
+			prev = prev.prev;
+		}
+
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
 			// we will decrement to zero before the work that depends on this promise (e.g. a
@@ -218,7 +235,7 @@ export function async_derived(fn, label, location) {
 
 			if (error === OBSOLETE) return;
 
-			batch.activate();
+			batch = batch.activate();
 
 			if (error) {
 				signal.f |= ERROR_VALUE;
@@ -255,12 +272,6 @@ export function async_derived(fn, label, location) {
 			d.reject(OBSOLETE);
 		}
 	});
-
-	if (DEV) {
-		// add a flag that lets this be printed as a derived
-		// when using `$inspect.trace()`
-		signal.f |= ASYNC;
-	}
 
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
@@ -391,32 +402,29 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		derived.wv = increment_write_version();
-
-		// in a fork, we don't update the underlying value, just `batch_values`.
-		// the underlying value will be updated when the fork is committed.
-		// otherwise, the next time we get here after a 'real world' state
-		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.deps === null) {
-			if (current_batch !== null) {
-				// We also write to previous_batch because if it exists, it is a sign that we're
-				// currently in the process of flushing effects. These updates to deriveds may belong
-				// to the previous batch, not the new one (which can already exist if an earlier
-				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
-				// but not adding it to current_batch can, too, so we add it to both.
-				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-				current_batch.capture(derived, value, true);
-				previous_batch?.capture(derived, value, true);
-			} else {
-				derived.v = value;
-			}
-
-			// deriveds without dependencies should never be recomputed
-			if (derived.deps === null) {
-				set_signal_status(derived, CLEAN);
-				return;
-			}
+		if (current_batch !== null || previous_batch !== null) {
+			// `capture` decides whether the underlying value is updated (it isn't in a fork,
+			// or if a later batch holds a newer value) and records it in the batch either way.
+			// We also write to previous_batch because if it exists, it is a sign that we're
+			// currently in the process of flushing effects. These updates to deriveds may belong
+			// to the previous batch, not the new one (which can already exist if an earlier
+			// effect wrote to a source). Not adding it to either can cause bugs, so we add it to both.
+			// See https://github.com/sveltejs/svelte/pull/18117 for more details.
+			previous_batch?.capture(derived, value, true);
+			current_batch?.capture(derived, value, true);
+		} else {
+			derived.v = value;
+			derived.wv = increment_write_version();
 		}
+
+		// deriveds without dependencies should never be recomputed
+		if (derived.deps === null) {
+			set_signal_status(derived, CLEAN);
+			(previous_batch ?? current_batch)?.remove_dirty_reaction(derived);
+			return;
+		}
+	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
+		current_batch?.capture(derived, derived.v);
 	}
 
 	// don't mark derived clean if we're reading it inside a
@@ -425,16 +433,36 @@ export function update_derived(derived) {
 		return;
 	}
 
-	// During time traveling we don't want to reset the status so that
-	// traversal of the graph in the other batches still happens
-	if (batch_values !== null) {
+	// During time travelling, keep stale results batch-local. A result computed
+	// from the latest inputs can be marked globally clean, even if it is unchanged
+	// and its write version therefore remains below its dependencies' versions.
+	if (
+		batch_values !== null ||
+		// "read outside of reactivity", e.g. in an event handler
+		(!current_batch && first_batch?.next)
+	) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
+			batch_values?.set(derived, value);
+		}
+		var is_latest_value =
+			!current_batch?.is_fork &&
+			value === derived.v &&
+			!derived.deps?.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v);
+
+		if (is_latest_value) {
+			update_derived_status(derived);
+		} else if (derived.v !== UNINITIALIZED) {
+			set_signal_status(derived, MAYBE_DIRTY);
 		}
 	} else {
 		update_derived_status(derived);
+	}
+
+	if ((derived.f & CLEAN) !== 0) {
+		// Other batches may still need to check their older inputs on resume.
+		(previous_batch ?? current_batch)?.remove_dirty_reaction(derived);
 	}
 }
 

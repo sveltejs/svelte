@@ -2,7 +2,6 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO works on https://github.com/sveltejs/svelte/pull/17971
 	async test({ assert, target }) {
 		await tick();
 		const [a_b, a_c, b_d, shift, pop] = target.querySelectorAll('button');
@@ -63,21 +62,7 @@ export default test({
 		`
 		);
 
-		pop.click(); // second b resolved, still pending: [b, a]
-		await tick();
-		assert.htmlEqual(
-			target.innerHTML,
-			`
-			a 0 | b 0 | c 0 | d 0
-			<button>a and b</button>
-			<button>a and c</button>
-			<button>b and d</button>
-			<button>shift</button>
-			<button>pop</button>
-		`
-		);
-
-		shift.click(); // first b resolved, first + last batch settled, still pending: [a]
+		pop.click(); // second b resolved, still pending: [b, a] but b is now obsolete
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
@@ -91,6 +76,8 @@ export default test({
 		`
 		);
 
+		shift.click(); // first b resolved, first + last batch settled, still pending: [a]
+		await tick();
 		shift.click(); // all resolved
 		await tick();
 		assert.htmlEqual(

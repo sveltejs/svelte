@@ -1,4 +1,4 @@
-/** @import { Effect, Source, TemplateNode, } from '#client' */
+/** @import { Effect, Reaction, Source, TemplateNode, } from '#client' */
 import {
 	BOUNDARY_EFFECT,
 	DESTROYED,
@@ -112,11 +112,8 @@ export class Boundary {
 	#pending_count = 0;
 	#pending_count_update_queued = false;
 
-	/** @type {Set<Effect>} */
-	#dirty_effects = new Set();
-
-	/** @type {Set<Effect>} */
-	#maybe_dirty_effects = new Set();
+	/** @type {Map<Reaction, number>} */
+	#dirty_reactions = new Map();
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -358,7 +355,7 @@ export class Boundary {
 
 		// any effects that were previously deferred should be transferred
 		// to the batch, which will flush in the next microtask
-		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
+		batch.transfer_reactions(this.#dirty_reactions);
 	}
 
 	/**
@@ -366,7 +363,7 @@ export class Boundary {
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
+		defer_effect(effect, this.#dirty_reactions);
 	}
 
 	/**

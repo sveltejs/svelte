@@ -4,12 +4,13 @@
 	let tickA = $state(0);
 	let tickB = $state(0);
 
-	// Two independent sources so the batches touch disjoint source sets
-	// and are not merged.
-	const items = $derived(extraKey === null ? base : [...base, extraKey]);
+	// Two independent sources so the batches touch disjoint source sets and are not merged.
+	const items = $derived(base.length ? extraKey === null ? base : [...base, extraKey] : []);
 
 	/** @type {((value: string) => void) | undefined} */
 	let resolveB;
+	/** @type {((value: string) => void) | undefined} */
+	let resolveA;
 
 	/**
 	 * @param {string} name
@@ -20,6 +21,7 @@
 			? Promise.resolve(`${name}0`)
 			: new Promise((r) => {
 					if (name === 'B') resolveB = r;
+					else resolveA = r;
 				});
 
 	const a = $derived(await gate('A', tickA));
@@ -38,11 +40,15 @@
 	function settleB() {
 		resolveB?.('B1');
 	}
+	function settleA() {
+		resolveA?.('A1');
+	}
 </script>
 
 <button onclick={startA}>startA</button>
 <button onclick={startB}>startB</button>
 <button onclick={settleB}>settleB</button>
+<button onclick={settleA}>settleA</button>
 
 <p>{a}/{b}</p>
 
