@@ -103,6 +103,11 @@ export function flatten(blockers, sync, async, fn) {
 
 	if (blocker_promise) {
 		blocker_promise.then(() => {
+			if ((parent.f & DESTROYED) !== 0) {
+				decrement_pending();
+				return;
+			}
+
 			restore();
 			run();
 			unset_context();

@@ -66,11 +66,6 @@ import { set_signal_status, update_derived_status } from './reactivity/status.js
 import * as w from './warnings.js';
 import { queue_micro_task } from './dom/task.js';
 
-/**
- * True if updating in an effect context that is reactive (i.e. not branch/root effects)
- */
-let is_updating_effect = false;
-
 export let is_destroying_effect = false;
 
 /** @param {boolean} value */
@@ -420,7 +415,7 @@ function remove_reaction(signal, dependency) {
 		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is
 		// never re-executed. This is possible when the derived is only executed once in the context
 		// of a new branch which happens before fork.commit() runs. In this case, the derived still has
-		// UNINITIALIZED as its value, and then when it's loosing its reactions we need to ensure it stays
+		// UNINITIALIZED as its value, and then when it's losing its reactions we need to ensure it stays
 		// DIRTY so it is reexecuted once someone wants its value again.
 		if (derived.v !== UNINITIALIZED) {
 			update_derived_status(derived);
@@ -472,10 +467,8 @@ export function update_effect(effect) {
 	set_signal_status(effect, CLEAN);
 
 	var previous_effect = active_effect;
-	var was_updating_effect = is_updating_effect;
 
 	active_effect = effect;
-	is_updating_effect = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0; // Branch/root effects are not reactive contexts
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -531,7 +524,6 @@ export function update_effect(effect) {
 			}
 		}
 	} finally {
-		is_updating_effect = was_updating_effect;
 		active_effect = previous_effect;
 
 		if (DEV) {
@@ -715,13 +707,12 @@ export function get(signal) {
 			return value;
 		}
 
-		// connect disconnected deriveds if we are reading them inside an effect,
-		// or inside another derived that is already connected
+		// connect disconnected deriveds when reading them inside a connected reaction
 		var should_connect =
 			(derived.f & CONNECTED) === 0 &&
 			!untracking &&
 			active_reaction !== null &&
-			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
+			(active_reaction.f & CONNECTED) !== 0;
 
 		var is_new = (derived.f & REACTION_RAN) === 0;
 
@@ -847,7 +838,13 @@ function reconnect(derived) {
 	if (derived.deps === null) return;
 
 	for (const dep of derived.deps) {
-		(dep.reactions ??= []).push(derived);
+		var reactions = dep.reactions;
+
+		if (reactions === null) {
+			dep.reactions = [derived];
+		} else if (!includes.call(reactions, derived)) {
+			reactions.push(derived);
+		}
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
 			unfreeze_derived_effects(/** @type {Derived} */ (dep));
