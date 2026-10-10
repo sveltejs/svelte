@@ -16,8 +16,7 @@ import {
 	EAGER_EFFECT,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
-	REACTION_RAN,
-	DESTROYING
+	REACTION_RAN
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
@@ -33,7 +32,7 @@ import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
-import { eager_effect, teardown, unlink_effect } from './effects.js';
+import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
@@ -1274,8 +1273,9 @@ function eager_flush() {
 	});
 }
 
-/** @type {Map<Reaction, Source<number>>} */
-var version_map = new Map();
+// Keep versions stable across reruns without retaining the reactions that read them.
+/** @type {WeakMap<Reaction, Source<number>>} */
+var version_map = new WeakMap();
 
 /**
  * Implementation of `$state.eager(fn())`
@@ -1299,10 +1299,6 @@ export function eager(fn) {
 	if (DEV) {
 		version.label ??= '$state.eager version';
 	}
-
-	teardown(() => {
-		if (parent.f & DESTROYING) version_map.delete(parent);
-	});
 
 	get(version);
 
