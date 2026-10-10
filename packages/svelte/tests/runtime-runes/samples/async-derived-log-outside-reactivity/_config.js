@@ -2,7 +2,6 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO fix
 	async test({ assert, target, logs }) {
 		await tick();
 

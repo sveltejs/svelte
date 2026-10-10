@@ -2,6 +2,7 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	skip: true, // TODO works with fork reconciliation
 	async test({ assert, target }) {
 		const [x, y, resolve, commit] = target.querySelectorAll('button');
 

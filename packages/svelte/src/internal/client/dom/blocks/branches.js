@@ -110,13 +110,15 @@ export class BranchManager {
 			}
 		}
 
-		for (const [b, k] of this.#batches) {
-			this.#batches.delete(b);
+		this.#batches.delete(batch);
 
-			if (b === batch) {
+		for (const [b, k] of this.#batches) {
+			if (b.id > batch.id) {
 				// keep values for newer batches
-				break;
+				continue;
 			}
+
+			this.#batches.delete(b);
 
 			const offscreen = this.#offscreen.get(k);
 
@@ -186,6 +188,17 @@ export class BranchManager {
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
+
+		// Re-evaluating in the surviving batch supersedes selections made before a merge,
+		// even though those batches originally had newer IDs and still have commit callbacks.
+		for (const previous of this.#batches.keys()) {
+			for (let merged = previous.merged_into; merged !== null; merged = merged.merged_into) {
+				if (merged === batch) {
+					this.#batches.delete(previous);
+					break;
+				}
+			}
+		}
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			if (defer) {
