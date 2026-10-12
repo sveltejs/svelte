@@ -352,16 +352,17 @@ export function increment(source) {
  * Make `reaction` re-run in the current batch. For a derived this means dirtying
  * its reactions, as if the derived's value had changed.
  * @param {Reaction} reaction
+ * @param {number} status
  */
-export function invalidate(reaction) {
+export function invalidate(reaction, status) {
 	if ((reaction.f & DERIVED) !== 0) {
-		set_signal_status(reaction, DIRTY);
+		set_signal_status(reaction, status);
 		seen = null;
 		count_deps = 0;
-		mark_reactions(/** @type {Derived} */ (reaction), DIRTY, null);
+		mark_reactions(/** @type {Derived} */ (reaction), status, null);
 		seen = null;
 	} else {
-		schedule_effect(/** @type {Effect} */ (reaction), DIRTY);
+		schedule_effect(/** @type {Effect} */ (reaction), status);
 	}
 }
 

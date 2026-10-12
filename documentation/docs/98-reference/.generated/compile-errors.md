@@ -677,6 +677,12 @@ Cannot use `$$restProps` in runes mode
 `let:` directive at invalid position
 ```
 
+### let_directive_snippet_conflict
+
+```
+Cannot use `let:` directives on a component that has a `children` snippet. Use snippet parameters instead (e.g. `{#snippet children({ %name% })}`)
+```
+
 ### mixed_event_handler_syntaxes
 
 ```

@@ -1014,8 +1014,9 @@ export class Batch {
 	 * Re-run `reaction` in this batch, because it ran with values that differ from this batch's view.
 	 * If this batch is gone by then, re-run it in the real world instead.
 	 * @param {Reaction} reaction
+	 * @param {number} [status]
 	 */
-	rerun(reaction) {
+	rerun(reaction, status = DIRTY) {
 		// a reaction can be stale in several ways at once — only schedule the re-run once
 		if (this.stale_readers.has(reaction)) return;
 		this.stale_readers.add(reaction);
@@ -1024,7 +1025,7 @@ export class Batch {
 			this.stale_readers.delete(reaction);
 			if (!this.activate().linked) this.deactivate();
 			var batch = Batch.ensure();
-			invalidate(reaction);
+			invalidate(reaction, status);
 			batch.flush();
 		});
 	}
@@ -1515,6 +1516,7 @@ export function eager(fn) {
 	let parent = active_reaction;
 
 	let version = version_map.get(parent) ?? source(0);
+	version.f |= EAGER_EFFECT;
 	version_map.set(parent, version);
 
 	if (DEV) {
@@ -1532,12 +1534,15 @@ export function eager(fn) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
+			var previous_stale_sources = stale_sources;
 
 			try {
 				batch_values = null;
+				stale_sources = null;
 				value = fn();
 			} finally {
 				batch_values = previous_batch_values;
+				stale_sources = previous_stale_sources;
 			}
 
 			return;

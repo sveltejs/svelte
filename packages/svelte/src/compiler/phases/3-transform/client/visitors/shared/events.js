@@ -119,8 +119,9 @@ export function build_event_handler(node, metadata, context) {
 
 		// local variable can be assigned directly
 		// except in dev mode where when need $.apply()
-		// in order to handle warnings.
-		if (!dev && binding?.declaration_kind !== 'import') {
+		// in order to handle warnings, or when it is
+		// assigned after a top-level `await`
+		if (!dev && binding?.declaration_kind !== 'import' && !binding?.blocker) {
 			return handler;
 		}
 	}
