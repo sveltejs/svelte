@@ -349,19 +349,18 @@ describe('proxy onchange kernel', () => {
 	});
 
 	it('keeps links bounded under index churn', () => {
-		run(() => {
-			const arr = proxy([{ id: 0 }, { id: 1 }, { id: 2 }] as any[], () => {});
-			const last = arr[2];
+		// dev mode captures a stack trace for every repeated write inside an effect
+		const arr = proxy([{ id: 0 }, { id: 1 }, { id: 2 }] as any[], () => {});
+		const last = arr[2];
 
-			for (let i = 3; i < 200; i += 1) {
-				arr.unshift({ id: i });
-			}
+		for (let i = 3; i < 200; i += 1) {
+			arr.unshift({ id: i });
+		}
 
-			// every element was read through the array's get trap many times under shifting keys
-			for (let i = 0; i < arr.length; i += 1) arr[i];
+		// every element was read through the array's get trap many times under shifting keys
+		for (let i = 0; i < arr.length; i += 1) arr[i];
 
-			assert.equal(last[PROXY_META_SYMBOL].links.length, 1);
-		});
+		assert.equal(last[PROXY_META_SYMBOL].links.length, 1);
 	});
 
 	it('fires for defineProperty', () => {
