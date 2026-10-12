@@ -13,7 +13,8 @@ import {
 	is_dirty,
 	untracking,
 	is_destroying_effect,
-	push_reaction_value
+	push_reaction_value,
+	set_active_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -203,7 +204,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (callback !== undefined) {
 			// the old tree stops reporting to this source's callback, the new one starts
 			remove_onchange(source.v, callback);
-			attach_onchange(value, callback);
+			attach_onchange(value, callback, /** @type {Effect | null} */ (source.oe));
 		}
 
 		if (is_destroying_effect) {
@@ -303,10 +304,12 @@ export function internal_set(source, value, updated_during_traversal = null) {
  * every proxy tree the source holds reports its mutations to it
  * @template {Source} S
  * @param {S} source
- * @param {() => void} callback
+ * @param {(() => void) | undefined} callback
  * @returns {S}
  */
 export function onchange(source, callback) {
+	if (callback === undefined) return source;
+
 	var running = false;
 
 	// one guard per declaration, shared by the reassignment path and every proxy tree
@@ -322,47 +325,54 @@ export function onchange(source, callback) {
 		}
 	};
 
-	attach_onchange(source.v, source.o);
+	source.oe = active_effect;
+	attach_onchange(source.v, source.o, active_effect);
 	return source;
 }
 
 /**
  * @param {unknown} value
  * @param {() => void} callback
+ * @param {Effect | null} owner the effect that registered `callback`, which owns its effect in every tree
  */
-function attach_onchange(value, callback) {
+function attach_onchange(value, callback, owner) {
 	if (typeof value === 'object' && value !== null && STATE_SYMBOL in value) {
-		proxy(value, callback);
+		var previous_effect = active_effect;
+		set_active_effect(owner);
+
+		try {
+			proxy(value, callback);
+		} finally {
+			set_active_effect(previous_effect);
+		}
 	}
 }
 
 export function flush_eager_effects() {
-	try {
-		for (const effect of eager_effects) {
-			// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-			// instead of just updating the effects - this way we avoid overfiring.
-			if ((effect.f & CLEAN) !== 0) {
-				set_signal_status(effect, MAYBE_DIRTY);
-			}
-
-			let dirty;
-
-			try {
-				dirty = is_dirty(effect);
-			} catch {
-				// Dirty-checking can evaluate derived dependencies and throw in cases where
-				// parent effects are about to destroy this eager effect. Run the effect so
-				// its own error handling can deal with transient failures.
-				dirty = true;
-			}
-
-			if (dirty) {
-				update_effect(effect);
-			}
-		}
-	} finally {
+	for (const effect of eager_effects) {
 		// an effect that throws must not stay queued, or the next unrelated write would rethrow it
-		eager_effects.clear();
+		eager_effects.delete(effect);
+
+		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+		// instead of just updating the effects - this way we avoid overfiring.
+		if ((effect.f & CLEAN) !== 0) {
+			set_signal_status(effect, MAYBE_DIRTY);
+		}
+
+		let dirty;
+
+		try {
+			dirty = is_dirty(effect);
+		} catch {
+			// Dirty-checking can evaluate derived dependencies and throw in cases where
+			// parent effects are about to destroy this eager effect. Run the effect so
+			// its own error handling can deal with transient failures.
+			dirty = true;
+		}
+
+		if (dirty) {
+			update_effect(effect);
+		}
 	}
 }
 

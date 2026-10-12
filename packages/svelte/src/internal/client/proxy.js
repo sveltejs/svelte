@@ -285,9 +285,12 @@ export function proxy(value, onchange) {
 	if (STATE_SYMBOL in value) {
 		if (onchange !== undefined) {
 			// attach an additional root callback to an existing proxy
-			var m = /** @type {ProxyMeta} */ (/** @type {any} */ (value)[PROXY_META_SYMBOL]);
-			m.fires.push(create_fire(onchange));
-			observe(m);
+			var m = /** @type {ProxyMeta | undefined} */ (/** @type {any} */ (value)[PROXY_META_SYMBOL]);
+
+			if (m !== undefined) {
+				m.fires.push(create_fire(onchange));
+				observe(m);
+			}
 		}
 		return value;
 	}

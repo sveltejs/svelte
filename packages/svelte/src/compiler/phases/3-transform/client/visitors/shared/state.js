@@ -9,19 +9,33 @@ import * as b from '#compiler/builders';
  * @returns {Expression | undefined}
  */
 export function get_onchange(options, context) {
-	if (options?.type !== 'ObjectExpression') return;
+	if (options === undefined) return;
 
-	const property = options.properties.find(
-		(property) =>
-			property.type === 'Property' &&
-			!property.computed &&
-			property.key.type === 'Identifier' &&
-			property.key.name === 'onchange'
-	);
+	if (
+		options.type === 'ObjectExpression' &&
+		options.properties.every(
+			(property) => property.type === 'Property' && property.kind === 'init' && !property.computed
+		)
+	) {
+		/** @type {Property | undefined} */
+		let onchange;
 
-	if (property === undefined) return;
+		for (const property of /** @type {Property[]} */ (options.properties)) {
+			const key = property.key;
 
-	return /** @type {Expression} */ (context.visit(/** @type {Property} */ (property).value));
+			if (
+				(key.type === 'Identifier' && key.name === 'onchange') ||
+				(key.type === 'Literal' && key.value === 'onchange')
+			) {
+				onchange = property;
+			}
+		}
+
+		return onchange && /** @type {Expression} */ (context.visit(onchange.value));
+	}
+
+	// spreads, accessors, computed keys and options held in a variable are only known at runtime
+	return b.member(/** @type {Expression} */ (context.visit(options)), 'onchange', false, true);
 }
 
 /**

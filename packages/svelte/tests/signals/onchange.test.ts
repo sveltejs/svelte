@@ -1,5 +1,10 @@
 import { assert, describe, it } from 'vitest';
-import { effect_root } from '../../src/internal/client/reactivity/effects';
+import {
+	destroy_effect,
+	effect_root,
+	render_effect
+} from '../../src/internal/client/reactivity/effects';
+import { onchange, set, state } from '../../src/internal/client/reactivity/sources';
 import { push, pop } from '../../src/internal/client/context';
 import { proxy, remove_onchange } from '../../src/internal/client/proxy';
 import { PROXY_META_SYMBOL } from '../../src/internal/client/constants';
@@ -317,6 +322,50 @@ describe('proxy onchange kernel', () => {
 			const b = proxy({ v: 0 } as any);
 			b.v = 1;
 			assert.equal(b.v, 1);
+		});
+	});
+
+	it('keeps other queued callbacks when one throws', () => {
+		run(() => {
+			let count = 0;
+			const arr = proxy([] as any[], () => {
+				throw new Error('boom');
+			});
+			proxy(arr, () => count++);
+
+			assert.throws(() => arr.push(1), /boom/);
+
+			const other = proxy({ v: 0 } as any);
+			other.v = 1;
+			assert.equal(count, 1);
+		});
+	});
+
+	it('attaches to an existing proxy that hides its metadata', () => {
+		run(() => {
+			const inner = proxy({ x: 1 } as any);
+			const wrapped = new Proxy(inner, {
+				get: (target, prop) => (typeof prop === 'symbol' ? undefined : target[prop])
+			});
+
+			assert.doesNotThrow(() => proxy(wrapped, () => {}));
+		});
+	});
+
+	it('keeps a reassigned tree reporting after the reassigning effect is destroyed', () => {
+		run(() => {
+			let count = 0;
+			const s = onchange(state(proxy({ n: 0 } as any)), () => count++);
+
+			const reassigning = render_effect(() => {
+				set(s, { n: 1 }, true);
+			});
+			assert.equal(count, 1);
+
+			destroy_effect(reassigning);
+
+			s.v.n = 2;
+			assert.equal(count, 2);
 		});
 	});
 

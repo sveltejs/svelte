@@ -31,6 +31,8 @@ export interface Value<V = unknown> extends Signal {
 	v: V;
 	/** `onchange` callback, fired on reassignment and attached to every proxy tree this source holds */
 	o?: () => void;
+	/** The effect that registered `o`, which keeps owning the callback's effect when a reassignment attaches it to a new tree */
+	oe?: Effect | null;
 
 	// dev-only
 	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */
