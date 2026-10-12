@@ -61,7 +61,7 @@ Note: The `@component` is necessary in the HTML comment which describes your com
 
 ## Does Svelte scale?
 
-There will be a blog post about this eventually, but in the meantime, check out [this issue](https://github.com/sveltejs/svelte/issues/2546).
+Svelte can be used on its own or via [SvelteKit](/docs/kit), which lets you [build almost anything](/docs/kit/project-types). As an app grows, you can share reusable reactive logic and state between components with [`.svelte.js` and `.svelte.ts` files](/docs/svelte/svelte-js-files), and make values available to a whole component subtree with [context](/docs/svelte/context) rather than passing them down through every layer of props. See [best practices](/docs/svelte/best-practices) for guidance on writing fast, robust Svelte code.
 
 ## Is there a UI component library?
 
