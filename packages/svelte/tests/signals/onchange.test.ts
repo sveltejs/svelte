@@ -335,6 +335,19 @@ describe('proxy onchange kernel', () => {
 		});
 	});
 
+	it('writes each root notifier once per array method', () => {
+		run(() => {
+			const arr = proxy([{ id: 0 }, { id: 1 }, { id: 2 }] as any[], () => {});
+			const notifier = arr[PROXY_META_SYMBOL].fires[0].n;
+
+			arr.unshift({ id: 3 });
+			assert.equal(notifier.v, 1);
+
+			arr.unshift({ id: 4 });
+			assert.equal(notifier.v, 2);
+		});
+	});
+
 	it('keeps links bounded under index churn', () => {
 		run(() => {
 			const arr = proxy([{ id: 0 }, { id: 1 }, { id: 2 }] as any[], () => {});

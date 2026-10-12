@@ -20,11 +20,13 @@ import {
 	state as source,
 	set,
 	increment,
+	eager_effects,
 	set_eager_effects_deferred,
 	unset_eager_effects_deferred
 } from './reactivity/sources.js';
 import {
 	COMPONENT_SYMBOL,
+	DIRTY,
 	PROXY_META_SYMBOL,
 	PROXY_PATH_SYMBOL,
 	STATE_SYMBOL
@@ -163,17 +165,17 @@ function observe(meta) {
 
 /**
  * Walks rootward from `meta`, verifying each link against the parent's backing source.
- * Dead links are pruned in place; live chains contribute their root notifiers to `fires`
+ * Dead links are pruned in place; live chains contribute their roots to `fires`
  * @param {ProxyMeta} meta
  * @param {Set<ProxyMeta>} visited
- * @param {Set<Source<number>>} fires
+ * @param {Set<ProxyMeta['fires'][number]>} fires
  */
 function collect_roots(meta, visited, fires) {
 	if (visited.has(meta)) return;
 	visited.add(meta);
 
 	for (var i = 0; i < meta.fires.length; i += 1) {
-		fires.add(meta.fires[i].n);
+		fires.add(meta.fires[i]);
 	}
 
 	var links = meta.links;
@@ -191,7 +193,7 @@ function collect_roots(meta, visited, fires) {
 function notify_onchange(meta) {
 	/** @type {Set<ProxyMeta>} */
 	var visited = new Set();
-	/** @type {Set<Source<number>>} */
+	/** @type {Set<ProxyMeta['fires'][number]>} */
 	var fires = new Set();
 	collect_roots(meta, visited, fires);
 
@@ -205,7 +207,10 @@ function notify_onchange(meta) {
 		return;
 	}
 
-	for (var n of fires) increment(n);
+	for (var fire of fires) {
+		// a queued dirty eager effect already runs once, and every extra write costs a dev stack trace
+		if ((fire.e.f & DIRTY) === 0 || !eager_effects.has(fire.e)) increment(fire.n);
+	}
 }
 
 /**
