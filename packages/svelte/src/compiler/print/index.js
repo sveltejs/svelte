@@ -754,7 +754,9 @@ const svelte_visitors = (comments, state) => ({
 		if (node.pending) {
 			context.write('}');
 			block(context, node.pending, state.preserve_whitespace > 0);
-			context.write('{:');
+			if (node.then || node.catch) {
+				context.write('{:');
+			}
 		} else {
 			context.write(' ');
 		}

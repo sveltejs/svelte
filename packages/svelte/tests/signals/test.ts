@@ -15,7 +15,7 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { DESTROYED } from '../../src/internal/client/constants';
+import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
@@ -150,6 +150,46 @@ describe('signals', () => {
 			// ensure we're not leaking reactions
 			assert.equal(obj.reactions, null);
 			assert.equal(d.reactions, null);
+		};
+	});
+
+	test('unowned deriveds track missing property checks on proxies', () => {
+		const value = proxy<Record<string, boolean>>({});
+
+		return () => {
+			const has_x = derived(() => 'x' in value);
+			const owns_y = derived(() => Object.hasOwn(value, 'y'));
+
+			assert.isFalse($.get(has_x));
+			assert.isFalse($.get(owns_y));
+
+			value.x = true;
+			value.y = true;
+
+			assert.isTrue($.get(has_x));
+			assert.isTrue($.get(owns_y));
+
+			delete value.x;
+			delete value.y;
+
+			assert.isFalse($.get(has_x));
+			assert.isFalse($.get(owns_y));
+		};
+	});
+
+	test('unowned deriveds track missing array indexes', () => {
+		const value = proxy<boolean[]>([]);
+
+		return () => {
+			const has_first = derived(() => 0 in value);
+
+			assert.isFalse($.get(has_first));
+
+			value.push(true);
+			assert.isTrue($.get(has_first));
+
+			value.length = 0;
+			assert.isFalse($.get(has_first));
 		};
 	});
 
@@ -1516,9 +1556,134 @@ describe('signals', () => {
 
 			destroy();
 
-			// a was spuriously added to s.reactions via is_updating_effect
+			// a was spuriously added to s.reactions
 			// even though the entire derived chain was read in an untracked context
 			assert.equal(s.reactions, null);
+		};
+	});
+
+	test('untracked derived reads inside effects do not reconnect disconnected dependencies', () => {
+		return () => {
+			const source = state({ n: 1, items: [1] });
+			const data = derived(() => $.get(source));
+			const items = derived(() => $.get(data).items);
+			const count = derived(() => Math.max(1, $.get(items).length));
+			const snapshot = derived(() => ({ n: $.get(data).n, count: $.get(count) }));
+			const show = state(true);
+			const trigger = state(0);
+			let rendered = -1;
+			let seen: { n: number; count: number } | undefined;
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					if ($.get(show)) {
+						render_effect(() => {
+							rendered = $.get(snapshot).count;
+						});
+					}
+				});
+
+				render_effect(() => {
+					$.get(trigger);
+					seen = $.untrack(() => $.get(snapshot));
+				});
+			});
+
+			flushSync();
+			assert.equal(rendered, 1);
+
+			flushSync(() => set(show, false));
+			assert.equal(source.reactions, null);
+
+			flushSync(() => set(source, { n: 2, items: [1, 2] }));
+			flushSync(() => set(trigger, 1));
+
+			assert.deepEqual(seen, { n: 2, count: 2 });
+			assert.equal(source.reactions, null);
+			assert.equal(items.reactions, null);
+			assert.equal(count.reactions, null);
+			assert.equal(items.f & CONNECTED, 0);
+			assert.equal(count.f & CONNECTED, 0);
+
+			flushSync(() => set(show, true));
+			assert.equal(rendered, 2);
+			assert.equal(source.reactions?.length, 1);
+
+			flushSync(() => set(source, { n: 3, items: [1] }));
+			assert.equal(rendered, 1);
+
+			destroy();
+			flushSync();
+			assert.equal(source.reactions, null);
+		};
+	});
+
+	test('reconnecting deriveds does not duplicate subscriptions', () => {
+		const enabled = state(false);
+		const shared = state(1);
+		let value!: Derived<number>;
+
+		const destroy_owner = effect_root(() => {
+			value = derived(() => ($.get(enabled) ? $.get(shared) : 0));
+			$.untrack(() => $.get(value));
+		});
+
+		const nested_enabled = state(false);
+		const nested_shared = state(1);
+		let inner!: Derived<number>;
+		let outer!: Derived<number>;
+
+		const destroy_nested_owner = effect_root(() => {
+			inner = derived(() => ($.get(nested_enabled) ? $.get(nested_shared) : 0));
+			outer = derived(() => $.get(inner));
+			$.untrack(() => $.get(outer));
+		});
+
+		return () => {
+			flushSync(() => set(enabled, true));
+			const destroy_reader = effect_root(() => {
+				render_effect(() => {
+					$.get(value);
+				});
+			});
+
+			const enabled_subscriptions = enabled.reactions?.length;
+			const shared_subscriptions = shared.reactions?.length;
+			const enabled_reaction = enabled.reactions?.[0];
+			const shared_reaction = shared.reactions?.[0];
+
+			destroy_reader();
+			destroy_owner();
+
+			assert.equal(enabled_subscriptions, 1);
+			assert.equal(shared_subscriptions, 1);
+			assert.equal(enabled_reaction, shared_reaction);
+			assert.equal(enabled.reactions, null);
+			assert.equal(shared.reactions, null);
+
+			flushSync(() => set(nested_enabled, true));
+			const destroy_nested_reader = effect_root(() => {
+				render_effect(() => {
+					$.get(outer);
+				});
+			});
+
+			const nested_enabled_subscriptions = nested_enabled.reactions?.length;
+			const nested_shared_subscriptions = nested_shared.reactions?.length;
+			const nested_enabled_reaction = nested_enabled.reactions?.[0] as Derived<number> | undefined;
+			const nested_shared_reaction = nested_shared.reactions?.[0];
+			const inner_subscriptions = nested_enabled_reaction?.reactions?.length;
+
+			destroy_nested_reader();
+			destroy_nested_owner();
+
+			assert.equal(nested_enabled_subscriptions, 1);
+			assert.equal(nested_shared_subscriptions, 1);
+			assert.equal(inner_subscriptions, 1);
+			assert.equal(nested_enabled_reaction, nested_shared_reaction);
+			assert.equal(nested_enabled.reactions, null);
+			assert.equal(nested_shared.reactions, null);
+			assert.equal(nested_enabled_reaction?.reactions, null);
 		};
 	});
 
