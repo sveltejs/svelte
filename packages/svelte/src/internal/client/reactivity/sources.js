@@ -38,7 +38,6 @@ import {
 	schedule_effect,
 	legacy_updates,
 	current_batch,
-	first_batch,
 	own_value
 } from './batch.js';
 import { proxy } from '../proxy.js';
@@ -190,9 +189,7 @@ var count_deps = 0;
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	var s = own_value(source);
-
-	if (s === source ? !source.equals(value) : !source.equals.call(s, value)) {
+	if (!source.equals.call(own_value(source), value)) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -211,11 +208,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 			// During time traveling we don't want to reset the status so that
 			// traversal of the graph in the other batches still happens
-			if (
-				batch_values === null &&
-				// could also be "read outside of reactivity", e.g. in an event handler
-				!first_batch?.next
-			) {
+			if (batch_values === null) {
 				update_derived_status(derived);
 			}
 		}

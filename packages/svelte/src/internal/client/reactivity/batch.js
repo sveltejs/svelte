@@ -387,22 +387,12 @@ export class Batch {
 		if (this.is_fork) return true;
 		if (this.#blocking_pending === null) return false;
 
-		for (const effect of this.#blocking_pending.keys()) {
-			var e = effect;
-			var skipped = false;
-
-			while (e.parent !== null) {
-				if (this.#skipped_branches.has(e)) {
-					skipped = true;
-					break;
-				}
-
+		for (let e of this.#blocking_pending.keys()) {
+			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
+			while (e.parent !== null && !this.#skipped_branches.has(e)) {
 				e = e.parent;
 			}
-
-			if (!skipped) {
-				return true;
-			}
+			if (e.parent === null) return true;
 		}
 
 		return false;
@@ -786,9 +776,6 @@ export class Batch {
 						? !this.seen_effects?.has(effect) && !this.#dirty_reactions.has(effect)
 						: (flags & (ASYNC | BLOCK_EFFECT)) === 0 || this.seen_effects?.has(effect)
 				) {
-					if (this.#dirty_reactions.get(effect) === MAYBE_DIRTY) {
-						this.#dirty_reactions.delete(effect);
-					}
 					this.schedule(effect, status);
 					marked = true;
 				}
@@ -949,7 +936,7 @@ export class Batch {
 		// so comparing what was read against the real value could not attribute the value to the right
 		// batch, see `async-dont-rebase-new-batch-4`. We only need to look one level deep: `is_dirty`
 		// evaluates the top-most deriveds first, so a dependency derived that was itself not the latest
-		// value was not written to the real world, and differs from our value for it.
+		// value was not written to the real world, which the check above already catches.
 
 		for (let batch = this.next; batch !== null && is_latest_value; batch = batch.next) {
 			if (batch.is_fork) continue;
@@ -957,10 +944,8 @@ export class Batch {
 			if (
 				batch.current.has(source) ||
 				((source.f & DERIVED) !== 0 &&
-					/** @type {Derived} */ (source).deps?.some(
-						(d) =>
-							/** @type {Batch} */ (batch).current.has(d) ||
-							(this.current.has(d) && /** @type {{ v: any }} */ (this.current.get(d)).v !== d.v)
+					/** @type {Derived} */ (source).deps?.some((d) =>
+						/** @type {Batch} */ (batch).current.has(d)
 					))
 			) {
 				is_latest_value = false;
@@ -1018,7 +1003,9 @@ export class Batch {
 			) {
 				if (current !== undefined) this.current.set(source, current);
 			} else {
-				this.queue_revalidation(source);
+				queue_micro_task(() => {
+					if (this.linked && this.mark(source, DIRTY)) this.flush();
+				});
 			}
 		}
 	}
@@ -1039,15 +1026,6 @@ export class Batch {
 			var batch = Batch.ensure();
 			invalidate(reaction);
 			batch.flush();
-		});
-	}
-
-	/** @param {Value} source */
-	queue_revalidation(source) {
-		queue_micro_task(() => {
-			if (this.linked && this.mark(source, DIRTY)) {
-				this.flush();
-			}
 		});
 	}
 

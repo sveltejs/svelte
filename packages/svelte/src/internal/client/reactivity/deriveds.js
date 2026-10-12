@@ -195,8 +195,7 @@ export function async_derived(fn, label, location) {
 		// If an earlier batch has a run of this async effect in flight, the two batches
 		// are related and this one has to wait for (i.e. merge into) the earlier one.
 		// Same for forks, though the other way around (the fork has to wait for this batch).
-		let other = first_batch;
-		while (other) {
+		for (let other = first_batch; other !== null; other = other.next) {
 			if (other !== batch && other.async_deriveds.has(effect)) {
 				if (other.id < batch.id) {
 					batch.dependent.add(other);
@@ -204,7 +203,6 @@ export function async_derived(fn, label, location) {
 					other.dependent.add(batch);
 				}
 			}
-			other = other.next;
 		}
 
 		if (should_suspend) {
@@ -425,9 +423,7 @@ export function execute_derived(derived) {
  */
 export function update_derived(derived) {
 	var value = execute_derived(derived);
-	var d = own_value(derived);
-
-	if (d === derived ? !derived.equals(value) : !derived.equals.call(d, value)) {
+	if (!derived.equals.call(own_value(derived), value)) {
 		if (current_batch !== null || previous_batch !== null) {
 			// `capture` decides whether the underlying value is updated (it isn't in a fork,
 			// or if a later batch holds a newer value) and records it in the batch either way.
@@ -460,11 +456,7 @@ export function update_derived(derived) {
 	// During time travelling, keep stale results batch-local. A result computed
 	// from the latest inputs can be marked globally clean, even if it is unchanged
 	// and its write version therefore remains below its dependencies' versions.
-	if (
-		batch_values !== null ||
-		// "read outside of reactivity", e.g. in an event handler
-		(!current_batch && first_batch?.next)
-	) {
+	if (batch_values !== null) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking() || current_batch?.is_fork) {
