@@ -143,6 +143,21 @@ export class Batch {
 		return (this.#stale_effects ??= new Map());
 	}
 
+	/**
+	 * @type {Set<Reaction> | null}
+	 */
+	#stale_readers = null;
+
+	/**
+	 * Reactions that, while running in an earlier batch, read a value that this batch holds
+	 * a newer version of, and that are therefore scheduled to re-run in this batch. Used to
+	 * avoid scheduling the same reaction multiple times when it reads more than one such value.
+	 * Lazily initialized for performance reasons.
+	 */
+	get stale_readers() {
+		return (this.#stale_readers ??= new Set());
+	}
+
 	/** @type {Batch | null} */
 	prev = null;
 
