@@ -748,8 +748,6 @@ function get_batch_value(signal, first_time) {
 		}
 		const batch = stale_sources?.get(signal);
 		if (batch) {
-			if (!current.is_eager) batch.dependent.add(current);
-
 			// The reaction that read the stale value has to re-run in `batch`'s world. If we're inside
 			// a derived, that's the derived (whose reactions get dirtied): `active_effect` is only the
 			// derived's parent then, not the effect on whose behalf the derived is evaluated (which may

@@ -581,8 +581,6 @@ export class Batch {
 	}
 
 	#find_earlier_batch() {
-		if (this.is_eager) return null;
-
 		for (var batch = this.prev; batch !== null; batch = batch.prev) {
 			if (!batch.is_fork && this.dependent.has(batch)) {
 				return batch;
@@ -1271,15 +1269,12 @@ export function eager(fn) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
-			var previous_stale_sources = stale_sources;
 
 			try {
 				batch_values = null;
-				stale_sources = null;
 				value = fn();
 			} finally {
 				batch_values = previous_batch_values;
-				stale_sources = previous_stale_sources;
 			}
 
 			return;
@@ -1402,7 +1397,7 @@ export function fork(fn) {
 			// apply changes and update write versions so deriveds see the change
 			for (var [source, content] of batch.current) {
 				source.v = content.v;
-				content.wv = source.wv = increment_write_version();
+				source.wv = increment_write_version();
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
