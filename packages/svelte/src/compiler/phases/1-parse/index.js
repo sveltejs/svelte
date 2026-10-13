@@ -1,6 +1,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { Expression, Identifier, Node, Pattern, Program } from 'estree' */
-/** @import { Parsed } from '@teasel/parser' */
+/** @import { Parsed, ParseError } from '@teasel/parser' */
 /** @import { Tables } from '../../utils/ast.js' */
 import { Source, css } from '@teasel/parser';
 import * as e from '../../errors.js';
@@ -14,7 +14,7 @@ import {
 	tables_of
 } from '../../utils/ast.js';
 import { grammar } from './grammar.js';
-import { dedent, first_from, unsupported } from './js.js';
+import { dedent, first_from, sentence, unsupported } from './js.js';
 import read_options from './options.js';
 import { list } from '../../utils/string.js';
 
@@ -698,19 +698,19 @@ function to_expression(node) {
 
 /**
  * The parser's error as the compiler's: what it expected or found, at the same place.
- * @param {{ code: string, message: string, pos: number, end: number }} error
+ * @param {ParseError} error
  * @param {string} template
  * @returns {never}
  */
 function throw_error(error, template) {
-	const { code, message, pos, end } = error;
+	const { code, args, pos, end } = error;
 	const range = { start: pos, end };
 	switch (code) {
 		case 'unexpected_eof':
 			e.unexpected_eof(pos);
 		// eslint-disable-next-line no-fallthrough
 		case 'expected': {
-			const what = message.slice('Expected '.length);
+			const what = args[0];
 			if (what === 'whitespace') e.expected_whitespace(pos);
 			if (what === 'an identifier') {
 				let brace = pos;
@@ -752,7 +752,7 @@ function throw_error(error, template) {
 		}
 		// eslint-disable-next-line no-fallthrough
 		case 'unclosed': {
-			const name = message.slice(0, -' is not closed'.length);
+			const name = args[0];
 			// a script or style open at the end: what was left open, or nothing at all past the tag
 			if (pos === template.length && /<(script|style)[^>]*>$/.test(template)) e.unexpected_eof(pos);
 			if (template[pos] === '{') e.block_unclosed(range);
@@ -760,14 +760,14 @@ function throw_error(error, template) {
 		}
 		// eslint-disable-next-line no-fallthrough
 		case 'unexpected_close': {
-			const [name, reason] = message.slice('Unexpected closing '.length).split(', closed by ');
+			const [name, reason] = args[0].split(', closed by ');
 			if (template[pos] === '{') e.block_unexpected_close(pos + 1);
 			if (reason) e.element_invalid_closing_tag_autoclosed(pos, name, reason);
 			e.element_invalid_closing_tag(pos, name);
 		}
 		// eslint-disable-next-line no-fallthrough
 		case 'duplicate': {
-			const name = message.slice('Duplicate '.length);
+			const name = args[0];
 			if (name === 'script') e.script_duplicate(pos);
 			if (name === 'style') e.style_duplicate(pos);
 			if (name.startsWith('svelte:')) e.svelte_meta_duplicate(pos, name);
@@ -776,7 +776,7 @@ function throw_error(error, template) {
 		}
 		// eslint-disable-next-line no-fallthrough
 		case 'placement': {
-			const what = message.slice(0, -' is not allowed here'.length);
+			const what = args[0];
 			if (what === 'A closing tag of a void element') e.void_element_invalid_content(pos);
 			if (what === 'A declaration of that kind') e.declaration_tag_invalid_type(range);
 			if (what === 'A branch outside its block') e.block_invalid_continuation_placement(pos + 1);
@@ -791,32 +791,28 @@ function throw_error(error, template) {
 				e.tag_invalid_placement(pos, name, location);
 			}
 			if (what.startsWith('svelte:')) e.svelte_meta_invalid_placement(pos, what);
-			e.js_parse_error(pos, message);
+			e.js_parse_error(pos, sentence(error));
 		}
 		// eslint-disable-next-line no-fallthrough
 		case 'redeclaration':
-			e.declaration_duplicate(
-				range,
-				message.slice("Identifier '".length, -"' has already been declared".length)
-			);
+			e.declaration_duplicate(range, args[0]);
 		// eslint-disable-next-line no-fallthrough
 		case 'invalid_name':
 			if (template.startsWith('svelte:', pos)) e.svelte_meta_invalid_tag(range, list(META_TAGS));
 			e.tag_invalid_name(range);
 		// eslint-disable-next-line no-fallthrough
 		case 'reserved_word':
-			e.unexpected_reserved_word(
-				pos,
-				message.slice("The keyword '".length, -"' is reserved".length)
-			);
+			e.unexpected_reserved_word(pos, args[0]);
 		// eslint-disable-next-line no-fallthrough
 		default: {
 			// a keyword where the template wanted a name of its own, an each block's context say
-			const keyword = /^Unexpected keyword '(\w+)'$/.exec(message);
-			if (keyword && /(\bas|\bthen|\bcatch|,)\s*$/.test(template.slice(0, pos))) {
-				e.unexpected_reserved_word(pos, keyword[1]);
+			if (
+				code === 'unexpected_keyword' &&
+				/(\bas|\bthen|\bcatch|,)\s*$/.test(template.slice(0, pos))
+			) {
+				e.unexpected_reserved_word(pos, args[0]);
 			}
-			e.js_parse_error(pos, message);
+			e.js_parse_error(pos, sentence(error));
 		}
 	}
 }
