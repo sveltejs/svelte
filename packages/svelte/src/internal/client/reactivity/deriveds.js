@@ -44,7 +44,7 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, first_batch, previous_batch } from './batch.js';
+import { batch_values, current_batch, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
@@ -445,15 +445,11 @@ export function update_derived(derived) {
 	// During time travelling, keep stale results batch-local. A result computed
 	// from the latest inputs can be marked globally clean, even if it is unchanged
 	// and its write version therefore remains below its dependencies' versions.
-	if (
-		batch_values !== null ||
-		// "read outside of reactivity", e.g. in an event handler
-		(!current_batch && first_batch?.next)
-	) {
+	if (batch_values !== null) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values?.set(derived, value);
+			batch_values.set(derived, value);
 		}
 		var is_latest_value =
 			value === derived.v &&
