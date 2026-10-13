@@ -3,7 +3,11 @@ import { Warp } from './warp.js';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
 
 let window: {
-	__svelte?: { w?: Map<string, Map<unknown, unknown>>; s?: number; m?: Map<any, any> };
+	__svelte?: {
+		w?: Map<string, Map<unknown, unknown>>;
+		s?: number;
+		t?: Map<string, Set<unknown> | true>;
+	};
 };
 let document: { readyState: string };
 
@@ -38,15 +42,16 @@ afterEach(() => {
 });
 
 describe('when not streaming', () => {
-	test('changes the values directly', () => {
+	test('changes the values directly, without recording them', () => {
 		const warp = new Warp('test');
 		warp.set('c', 3);
 		warp.delete('a');
+		warp.getOrInsert('d', 4);
+		warp.getOrInsertComputed('e', () => 5);
+		warp.clear();
 
-		expect([...base()]).toEqual([
-			['b', 2],
-			['c', 3]
-		]);
+		expect([...base()]).toEqual([]);
+		expect(window.__svelte!.t).toBeUndefined();
 	});
 });
 
@@ -55,104 +60,63 @@ describe('while streaming', () => {
 		window.__svelte!.s = 1;
 	});
 
-	test('does not change the values the stream writes to', () => {
+	test('changes the values directly, like a Map', () => {
 		const warp = new Warp('test');
-		warp.set('a', 10);
-		warp.delete('b');
 		warp.set('c', 3);
+		warp.delete('a');
+		warp.set('a', 10);
 
 		expect([...base()]).toEqual([
-			['a', 1],
-			['b', 2]
-		]);
-
-		expect(warp.get('a')).toBe(10);
-		expect(warp.has('b')).toBe(false);
-		expect(warp.size).toBe(2);
-		expect([...warp]).toEqual([
-			['a', 10],
-			['c', 3]
-		]);
-	});
-
-	test('shows values that arrive later, unless they were changed', () => {
-		const warp = new Warp('test');
-		warp.set('late', 'client');
-		warp.delete('deleted');
-
-		base().set('late', 'server');
-		base().set('deleted', 'server');
-		base().set('new', 'server');
-
-		expect(warp.get('late')).toBe('client');
-		expect(warp.has('deleted')).toBe(false);
-		expect(warp.get('new')).toBe('server');
-	});
-
-	test('handles setting values after clearing', () => {
-		const warp = new Warp('test');
-		warp.set('c', 3);
-		warp.clear();
-		warp.set('b', 20);
-
-		// arrives after the clear, so is hidden by it
-		base().set('late', 'server');
-
-		expect(warp.has('a')).toBe(false);
-		expect(warp.get('b')).toBe(20);
-		expect(warp.has('c')).toBe(false);
-		expect(warp.has('late')).toBe(false);
-		expect([...warp.keys()]).toEqual(['b']);
-	});
-
-	test('keeps the order a Map would have', () => {
-		const warp = new Warp('test');
-		warp.set('c', 3);
-		warp.delete('a');
-		warp.set('a', 10);
-		warp.set('b', 20);
-
-		const expected = [
-			['b', 20],
+			['b', 2],
 			['c', 3],
 			['a', 10]
-		];
-
-		expect([...warp]).toEqual(expected);
-
-		window.__svelte!.s = 0;
-		expect([...warp]).toEqual(expected);
-		expect([...base()]).toEqual(expected);
+		]);
 	});
 
-	test('getOrInsertComputed uses the overlay', () => {
+	test('records the keys that were changed', () => {
 		const warp = new Warp('test');
-		warp.delete('a');
+		warp.set('a', 10);
+		warp.delete('missing');
+		warp.getOrInsert('b', 20);
+		warp.getOrInsert('c', 3);
+		warp.getOrInsertComputed('b', () => 20);
+		warp.getOrInsertComputed('d', () => 4);
 
-		expect(warp.getOrInsertComputed('a', () => 10)).toBe(10);
-		expect(warp.getOrInsertComputed('b', () => 20)).toBe(2);
-		expect(base().get('a')).toBe(1);
+		// reading, or getOrInsert(Computed) on an existing key, doesn't count as a change
+		warp.get('x');
+		warp.has('y');
+
+		expect(window.__svelte!.t?.get('test')).toEqual(new Set(['a', 'missing', 'c', 'd']));
 	});
 
-	test('applies the changes once the stream finishes', () => {
+	test('does not record the key if getOrInsertComputed throws', () => {
 		const warp = new Warp('test');
+
+		expect(() =>
+			warp.getOrInsertComputed('c', () => {
+				throw new Error('nope');
+			})
+		).toThrow('nope');
+
+		expect(window.__svelte!.t?.get('test')).toBeUndefined();
+	});
+
+	test('records that a Warp was cleared', () => {
+		const warp = new Warp('test');
+		warp.set('a', 10);
 		warp.clear();
-		warp.set('c', 3);
+		warp.set('b', 20);
 
-		window.__svelte!.s = 0;
-
-		expect([...warp]).toEqual([['c', 3]]);
-		expect([...base()]).toEqual([['c', 3]]);
-		expect(window.__svelte!.m!.size).toBe(0);
+		expect(window.__svelte!.t?.get('test')).toBe(true);
+		expect([...base()]).toEqual([['b', 20]]);
 	});
 
-	test('applies the changes once the document has loaded, even if the stream did not finish', () => {
-		const warp = new Warp('test');
-		warp.delete('a');
-
+	test('does not record changes once the document has loaded, even if the stream did not finish', () => {
 		document.readyState = 'interactive';
 
-		expect(warp.has('a')).toBe(false);
-		expect([...base()]).toEqual([['b', 2]]);
+		const warp = new Warp('test');
+		warp.set('a', 10);
+
+		expect(window.__svelte!.t).toBeUndefined();
 	});
 });

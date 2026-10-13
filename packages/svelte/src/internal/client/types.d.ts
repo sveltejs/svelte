@@ -1,7 +1,6 @@
 import type { Store, WarpKey } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Batch } from './reactivity/batch.js';
-import type { Overlay } from './warp.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
 declare global {
@@ -11,8 +10,12 @@ declare global {
 			w?: Map<string, Map<WarpKey, unknown>>;
 			/** The number of `Warp` streams that haven't finished yet */
 			s?: number;
-			/** Changes made to `Warp`s while values were streaming in, keyed by the `Warp`'s id */
-			m?: Map<string, Overlay>;
+			/**
+			 * The keys that were changed in each `Warp` while values were streaming in, keyed by the `Warp`'s id,
+			 * or `true` if the `Warp` was cleared. Streamed values for these keys are discarded, so they can't
+			 * overwrite the changes
+			 */
+			t?: Map<string, Set<WarpKey> | true>;
 		};
 	}
 }

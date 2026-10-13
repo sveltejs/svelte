@@ -977,10 +977,14 @@ export class Renderer {
 					if (thing instanceof LateValues) {
 						// add the values to the client's `Warp`s as soon as this is evaluated, rather than
 						// when the promise resolves, so that they're there before anything awaiting the
-						// promises resolved in the same block runs
+						// promises resolved in the same block runs. values for keys that the client has changed
+						// in the meantime are discarded, so that they don't overwrite the changes
 						return js`((e, n) => {
 							const w = window.__svelte.w;
+							const t = window.__svelte.t;
 							for (const [id, k, v] of e) {
+								const c = t?.get(id);
+								if (c === true || c?.has(k)) continue;
 								let m = w.get(id);
 								if (!m) w.set(id, (m = new Map()));
 								m.set(k, v);
@@ -1040,8 +1044,8 @@ export class Renderer {
 		const body = `
 			{
 				const w = (window.__svelte ??= {}).w ??= new Map();${
-					// while this is above zero, changes made to the client's `Warp`s are kept separate,
-					// so they can't interfere with the values that are still being streamed in
+					// while this is above zero, the client records the keys it changes in its `Warp`s,
+					// so that values which are streamed in later don't overwrite the changes
 					streaming ? '\n\t\t\t\twindow.__svelte.s = (window.__svelte.s ?? 0) + 1;' : ''
 				}
 
@@ -1049,7 +1053,12 @@ export class Renderer {
 					const existing = w.get(id);
 
 					if (existing) {
-						for (const [k, v] of values) existing.set(k, v);
+						const t = window.__svelte.t?.get(id);
+						if (t === true) continue;
+
+						for (const [k, v] of values) {
+							if (!t?.has(k)) existing.set(k, v);
+						}
 					} else {
 						w.set(id, values);
 					}

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import type { Component } from 'svelte';
 import { Renderer } from './renderer.js';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
@@ -6,6 +6,7 @@ import { withWarp } from './render-context.js';
 import { Warp } from './warp.js';
 import { hydratable } from './hydratable.js';
 import { getAbortSignal } from './abort-signal.js';
+import { Warp as ClientWarp } from '../client/warp.js';
 
 beforeAll(() => {
 	enable_async_mode_flag();
@@ -545,6 +546,249 @@ describe('streaming', () => {
 				{ csp: { hash: true } }
 			)
 		).rejects.toThrow('invalid_csp_streaming');
+	});
+
+	describe('client changes', () => {
+		const client = new ClientWarp<string, any>('test');
+		const other_client = new ClientWarp<string, any>('other');
+		const other = new Warp<string, any>('other');
+
+		/**
+		 * Runs the head and the tail against a shared fake `window`, which the client `Warp`s also use,
+		 * calling `change` after the head (i.e. while values are still streaming in)
+		 */
+		async function stream_to_client(
+			{ head, tail }: { head: string; tail: AsyncIterable<string> },
+			change: () => void
+		) {
+			const window: Record<string, any> = {};
+			vi.stubGlobal('window', window);
+			vi.stubGlobal('document', { readyState: 'loading' });
+
+			const run = (html: string) => {
+				for (const [, script] of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+					new Function('window', script)(window);
+				}
+			};
+
+			run(head);
+			expect(window.__svelte.s).toBe(1);
+			change();
+
+			for await (const chunk of tail) run(chunk);
+
+			expect(window.__svelte.s).toBe(0);
+			// nothing is left in devalue's table once the stream is done
+			expect(Object.keys(window.__svelte.d ?? {})).toEqual([]);
+		}
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		test('are not overwritten by values streamed in later', async () => {
+			let a: unknown;
+
+			await stream_to_client(
+				await render((renderer) => {
+					warp.set('a', 1);
+					renderer.background(async () => {
+						await delay(null, 10);
+						warp.set('a2', 'server');
+						warp.set('b', 'server');
+						warp.set('c', 'server');
+						warp.set('d', 'server');
+					});
+				}),
+				() => {
+					client.set('b', 'client');
+					client.delete('c');
+					a = client.getOrInsertComputed('d', () => 'client');
+				}
+			);
+
+			expect(a).toBe('client');
+			expect([...client]).toEqual([
+				['a', 1],
+				['b', 'client'],
+				['d', 'client'],
+				['a2', 'server']
+			]);
+		});
+
+		test('are not overwritten for keys that devalue encodes differently', async () => {
+			// long strings are deduplicated into devalue's table
+			const long = 'x'.repeat(300);
+			const keys = [long, 10n, -0, NaN, true];
+			const mixed = new ClientWarp<any, any>('mixed');
+			const server = new Warp<any, any>('mixed');
+
+			await stream_to_client(
+				await render((renderer) => {
+					server.set(long + '!', long);
+					renderer.background(async () => {
+						await delay(null, 10);
+						for (const key of keys) server.set(key, 'server');
+					});
+				}),
+				() => {
+					for (const key of keys) mixed.set(key, 'client');
+				}
+			);
+
+			for (const key of keys) expect(mixed.get(key)).toBe('client');
+			expect(mixed.get(0)).toBe('client');
+			expect(mixed.size).toBe(keys.length + 1);
+		});
+
+		test('hide everything streamed in after a clear', async () => {
+			await stream_to_client(
+				await render((renderer) => {
+					warp.set('a', 1);
+					other.set('a', 1);
+					renderer.background(async () => {
+						await delay(null, 10);
+						warp.set('b', 'server');
+						other.set('b', 'server');
+					});
+				}),
+				() => {
+					client.clear();
+					client.set('c', 'client');
+				}
+			);
+
+			expect([...client]).toEqual([['c', 'client']]);
+			expect([...other_client]).toEqual([
+				['a', 1],
+				['b', 'server']
+			]);
+		});
+
+		test('do not break references to objects whose key was deleted, replaced or cleared', async () => {
+			const shared = { child: { value: 1 } };
+			const seen: Record<string, unknown> = {};
+
+			await stream_to_client(
+				await render((renderer) => {
+					warp.set('deleted', shared);
+					warp.set('replaced', shared.child);
+					other.set('cleared', [shared]);
+
+					renderer.background(async () => {
+						await delay(null, 10);
+						warp.set('later', shared);
+						warp.set('later:child', shared.child);
+						other.set('later', 'hidden');
+
+						await delay(null, 20);
+						warp.set('even-later', [shared, shared.child]);
+					});
+				}),
+				() => {
+					seen.shared = client.get('deleted');
+					seen.child = client.get('replaced');
+					seen.array = other_client.get('cleared');
+
+					client.delete('deleted');
+					client.set('replaced', { child: 'imposter' });
+					other_client.clear();
+				}
+			);
+
+			expect(seen.shared).toEqual(shared);
+			expect(client.get('later')).toBe(seen.shared);
+			expect(client.get('later:child')).toBe(seen.child);
+			expect(client.get('even-later')).toEqual([seen.shared, seen.child]);
+			expect(client.get('even-later')[0]).toBe(seen.shared);
+			expect(client.get('even-later')[1]).toBe(seen.child);
+			expect((seen.array as unknown[])[0]).toBe(seen.shared);
+			expect(client.get('replaced')).toEqual({ child: 'imposter' });
+			expect(other_client.size).toBe(0);
+		});
+
+		test('do not break references to streamed values that were discarded', async () => {
+			const shared = { child: { value: 1 } };
+			const discarded = { value: 'discarded' };
+
+			await stream_to_client(
+				await render((renderer) => {
+					renderer.background(async () => {
+						await delay(null, 10);
+						// discarded on the client, because it changed these keys
+						warp.set('touched', shared);
+						other.set('cleared', discarded);
+						// in the same batch
+						warp.set('same-batch', shared.child);
+
+						await delay(null, 20);
+						// in a later batch
+						warp.set('later', [shared, discarded]);
+					});
+				}),
+				() => {
+					client.set('touched', 'client');
+					other_client.clear();
+				}
+			);
+
+			expect(client.get('touched')).toBe('client');
+			expect(other_client.has('cleared')).toBe(false);
+
+			const [s, d] = client.get('later');
+			expect(s).toEqual(shared);
+			expect(d).toEqual(discarded);
+			expect(client.get('same-batch')).toBe(s.child);
+		});
+
+		test('do not break references to the results of promises whose key was deleted', async () => {
+			const shared = { value: 1 };
+			let promise: Promise<unknown> | undefined;
+
+			await stream_to_client(
+				await render((renderer) => {
+					warp.set('promise', delay(shared, 10));
+
+					renderer.background(async () => {
+						await delay(null, 30);
+						warp.set('later', shared);
+					});
+				}),
+				() => {
+					promise = client.get('promise');
+					client.delete('promise');
+					client.set('promise', 'client');
+				}
+			);
+
+			expect(await promise).toBe(client.get('later'));
+			expect(client.get('promise')).toBe('client');
+		});
+
+		test('are respected by the head of a later render', async () => {
+			const first = await render((renderer) => {
+				renderer.background(async () => {
+					await delay(null, 10);
+				});
+			});
+
+			const second = await render(() => {
+				warp.set('a', 'server');
+				warp.set('b', 'server');
+			});
+
+			await stream_to_client(first, () => {
+				client.set('a', 'client');
+
+				// a second render on the same page, e.g. an island, whose head is evaluated while the first is still streaming
+				new Function('window', second.head.match(/<script>([\s\S]*?)<\/script>/)![1])(window);
+			});
+
+			expect([...client]).toEqual([
+				['a', 'client'],
+				['b', 'server']
+			]);
+		});
 	});
 
 	test('adds the nonce to streamed scripts', async () => {
