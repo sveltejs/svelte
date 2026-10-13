@@ -23,8 +23,6 @@ export interface WarpStore {
 	values: Map<string, Map<WarpKey, unknown>>;
 	/** dev-only: where each value was set, keyed by the `Warp`'s id */
 	stacks: Map<string, Map<WarpKey, string>>;
-	/** dev-only: `hydratable` clobbering checks, which reject on mismatch */
-	comparisons: Promise<void>[];
 	/** Whether the values have been serialized, after which no more can be added */
 	emitted: boolean;
 }

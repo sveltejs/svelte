@@ -20,26 +20,6 @@ The value passed to the `this` prop of `<svelte:element>` must be a valid HTML e
 
 > The `html` property of server render results has been deprecated. Use `body` instead.
 
-## hydratable_clobbering
-
-> Attempted to set `hydratable` with key `%key%` twice with different values.
->
-> %stack%
-
-This error occurs when using `hydratable` multiple times with the same key. To avoid this, you can:
-- Ensure all invocations with the same key result in the same value
-- Update the keys to make both instances unique
-
-```svelte
-<script>
-  import { hydratable } from 'svelte';
-
-  // which one should "win" and be serialized in the rendered response?
-  const one = hydratable('not-unique', () => 1);
-  const two = hydratable('not-unique', () => 2);
-</script>
-```
-
 ## invalid_csp
 
 > `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.

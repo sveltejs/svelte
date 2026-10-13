@@ -373,4 +373,16 @@ describe('hydratable', () => {
 		expect(values?.get('svelte:hydratable')?.get('a')).toBe(1);
 		expect(values?.get('test')?.get('a')).toBe(2);
 	});
+
+	test('keeps the first value for a key without calling fn again', async () => {
+		const second = vi.fn(() => 2);
+
+		const { head } = await render(() => {
+			expect(hydratable('a', () => 1)).toBe(1);
+			expect(hydratable('a', second)).toBe(1);
+		});
+
+		expect(second).not.toHaveBeenCalled();
+		expect(revive(head)?.get('svelte:hydratable')?.get('a')).toBe(1);
+	});
 });

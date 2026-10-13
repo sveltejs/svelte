@@ -38,7 +38,6 @@ function create_render_context(rendered, replacer) {
 		warp: {
 			values: new Map(),
 			stacks: new Map(),
-			comparisons: [],
 			emitted: false
 		},
 		rendered,
