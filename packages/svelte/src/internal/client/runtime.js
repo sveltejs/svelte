@@ -764,27 +764,18 @@ function get_batch_value(signal, first_time) {
 				(active_effect !== null && active_reaction === active_effect && (active_effect.f & REACTION_IS_UPDATING) !== 0) ||
 				(active_effect !== null && (active_effect.f & ASYNC) !== 0);
 
-			if (
-				reader !== null &&
-				reactive &&
-				// a reaction can read several stale values in one run — only schedule the re-run once
-				!batch.stale_readers.has(reader)
-			) {
-				batch.stale_readers.add(reader);
-
+			if (reader !== null && reactive) {
 				if (current.is_eager) {
 					// Reactions of eager effects with at least one non-eager effect (which we know is true here due to the stale_sources check above)
 					// need to rerun because they could do something like `$state.eager(count) !== count`.
 					if (reader.deps?.some((dep) => dep.f & EAGER_EFFECT)) {
 						batch.oncommit(() => {
-							batch.stale_readers.delete(reader);
 							Batch.ensure();
 							invalidate(reader, DIRTY);
 						});
 					}
 				} else {
 					queue_micro_task(() => {
-						batch.stale_readers.delete(reader);
 						const b = batch.activate();
 						invalidate(reader, MAYBE_DIRTY);
 						b.flush();
