@@ -137,6 +137,32 @@ describe('Warp', () => {
 		await expect(revive(head)?.get('test')?.get('a')).rejects.toEqual({ message: 'SECRET' });
 	});
 
+	test('calls transformError once for a rejection caught by a boundary', async () => {
+		const transform_error = vi.fn((error) => ({ message: (error as Error).message }));
+
+		const { head, body } = await render(
+			(renderer) => {
+				const promise = Promise.reject(new Error('secret'));
+				promise.catch(() => {});
+				warp.set('a', promise);
+
+				renderer.boundary(
+					{
+						failed: (renderer, error) => renderer.push((error as Error).message)
+					},
+					async () => {
+						await promise;
+					}
+				);
+			},
+			{ transformError: transform_error }
+		);
+
+		expect(body).toContain('secret');
+		await expect(revive(head)?.get('test')?.get('a')).rejects.toEqual({ message: 'secret' });
+		expect(transform_error).toHaveBeenCalledOnce();
+	});
+
 	test('rejects promises on the client with a generic error by default', async () => {
 		const { head } = await render(() => {
 			const promise = Promise.reject(new Error('secret'));
