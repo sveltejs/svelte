@@ -609,6 +609,8 @@ export class Batch {
 	}
 
 	#find_earlier_batch() {
+		if (this.is_eager) return null;
+
 		for (var batch = this.prev; batch !== null; batch = batch.prev) {
 			if (!batch.is_fork && this.dependent.has(batch)) {
 				return batch;
