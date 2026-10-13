@@ -431,7 +431,6 @@ export function update_derived(derived) {
 		// deriveds without dependencies should never be recomputed
 		if (derived.deps === null) {
 			set_signal_status(derived, CLEAN);
-			(previous_batch ?? current_batch)?.remove_dirty_reaction(derived);
 			return;
 		}
 	}
