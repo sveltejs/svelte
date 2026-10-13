@@ -429,10 +429,9 @@ export class Batch {
 		// an if block that contains the last blocking pending effect falsy,
 		// causing the block to no longer be deferred.
 		for (const [reaction, status] of this.#dirty_reactions) {
-			if ((reaction.f & DERIVED) !== 0) {
-				set_signal_status(reaction, status);
-			} else if (status === DIRTY || (reaction.f & DIRTY) === 0) {
-				set_signal_status(reaction, status);
+			set_signal_status(reaction, status);
+
+			if ((reaction.f & DERIVED) === 0) {
 				this.schedule(/** @type {Effect} */ (reaction));
 			}
 		}
@@ -585,6 +584,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
+					if ((flags & BLOCK_EFFECT) !== 0) this.add_dirty_reaction(effect, MAYBE_DIRTY);
 					update_effect(effect);
 				}
 
@@ -959,7 +959,7 @@ export class Batch {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 
-			if (!is_processing) {
+			if (!is_processing && !is_flushing_sync) {
 				queue_micro_task(() => {
 					if (!batch.started) {
 						batch.flush();
