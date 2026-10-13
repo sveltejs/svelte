@@ -37,7 +37,6 @@ import {
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates,
-	current_batch,
 	first_batch
 } from './batch.js';
 import { proxy } from '../proxy.js';
@@ -276,8 +275,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
-	} else if (batch_values?.has(source) && !source.equals(batch_values?.get(source))) {
-		current_batch?.capture(source, source.v);
 	}
 
 	return value;

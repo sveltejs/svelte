@@ -434,8 +434,6 @@ export function update_derived(derived) {
 			(previous_batch ?? current_batch)?.remove_dirty_reaction(derived);
 			return;
 		}
-	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
-		current_batch?.capture(derived, derived.v);
 	}
 
 	// don't mark derived clean if we're reading it inside a
