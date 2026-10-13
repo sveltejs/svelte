@@ -749,14 +749,12 @@ function build_element_special_value_attribute(
 
 		return b.stmt(
 			is_select_with_value
-				? b.sequence([
-						set_value_assignment,
-						// This ensures a one-way street to the DOM in case it's <select {value}>
-						// and not <select bind:value>. We need it in addition to $.init_select
-						// because the select value is not reflected as an attribute, so the
-						// mutation observer wouldn't notice.
-						b.call('$.select_option', node_id, value)
-					])
+				? // This ensures a one-way street to the DOM in case it's <select {value}>
+					// and not <select bind:value>. We need it in addition to $.init_select
+					// because the select value is not reflected as an attribute, so the
+					// mutation observer wouldn't notice. During hydration a selection the
+					// user already made wins over the server value.
+					b.call('$.set_select_value_preserving_user_selection', node_id, value)
 				: synthetic
 					? assignment
 					: set_value_assignment
