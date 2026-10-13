@@ -998,7 +998,7 @@ export class Batch {
 			wv_values.set(source, current.wv);
 		}
 
-		for (const [effect, wv] of this.stale_effects) {
+		for (const [effect, wv] of this.#stale_effects ?? []) {
 			wv_values.set(effect, wv);
 		}
 
