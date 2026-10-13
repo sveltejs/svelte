@@ -57,7 +57,7 @@ export function ConstTag(node, context) {
 			);
 
 		const init = build_expression(
-			{ ...context, state: child_state },
+			context.with(child_state),
 			declaration.init,
 			node.metadata.expression
 		);

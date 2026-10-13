@@ -1,6 +1,6 @@
 /** @import { ComponentAnalysis } from '../../types.js' */
 /** @import { AST } from '#compiler' */
-/** @import { Visitors } from 'zimmerframe' */
+/** @import { Visitors } from '../../../utils/walk.js' */
 import { walk } from '../../../utils/walk.js';
 import * as e from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';

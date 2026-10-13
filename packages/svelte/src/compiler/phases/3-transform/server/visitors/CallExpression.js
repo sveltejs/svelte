@@ -60,7 +60,7 @@ export function CallExpression(node, context) {
 	if (rune === '$inspect' || rune === '$inspect().with') {
 		if (!dev) return b.empty;
 
-		const { args, inspector } = get_inspect_args(rune, node, context.visit);
+		const { args, inspector } = get_inspect_args(rune, node, context);
 
 		return rune === '$inspect'
 			? b.call(inspector, b.literal('$inspect('), ...args, b.literal(')'))

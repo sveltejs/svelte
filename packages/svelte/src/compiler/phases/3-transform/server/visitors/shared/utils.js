@@ -33,7 +33,8 @@ export const empty_comment = b.literal(EMPTY_COMMENT);
  * @param {Array<AST.SvelteNode>} nodes
  * @param {ComponentContext} context
  */
-export function process_children(nodes, { visit, state }) {
+export function process_children(nodes, context) {
+	const { state } = context;
 	/** @type {Array<AST.Text | AST.Comment | AST.ExpressionTag>} */
 	let sequence = [];
 
@@ -61,7 +62,7 @@ export function process_children(nodes, { visit, state }) {
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
 				} else {
 					expressions.push(
-						b.call('$.escape', /** @type {Expression} */ (visit(node.expression, state)))
+						b.call('$.escape', /** @type {Expression} */ (context.visit(node.expression, state)))
 					);
 
 					quasi = b.quasi('', i + 1 === sequence.length);
@@ -82,7 +83,7 @@ export function process_children(nodes, { visit, state }) {
 		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
 
-			const expression = /** @type {Expression} */ (visit(node.expression, state));
+			const expression = /** @type {Expression} */ (context.visit(node.expression, state));
 
 			let call = b.call(
 				'$$renderer.push',
@@ -100,7 +101,7 @@ export function process_children(nodes, { visit, state }) {
 			sequence.push(node);
 		} else {
 			flush();
-			visit(node, { ...state });
+			context.visit(node, { ...state });
 		}
 	}
 

@@ -10,7 +10,7 @@ import { process_children, build_template } from './shared/utils.js';
 export function TitleElement(node, context) {
 	// title is guaranteed to contain only text/expression tag children
 	const template = [b.literal('<title>')];
-	process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
+	process_children(node.fragment.nodes, context.with({ ...context.state, template }));
 	template.push(b.literal('</title>'));
 
 	context.state.init.push(

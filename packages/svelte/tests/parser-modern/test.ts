@@ -3,7 +3,7 @@ import { assert, it } from 'vitest';
 import { parse, print } from 'svelte/compiler';
 import { try_load_json } from '../helpers.js';
 import { suite, type BaseTest } from '../suite.js';
-import { walk } from 'zimmerframe';
+import { walk } from '../../src/compiler/utils/walk.js';
 import type { AST } from 'svelte/compiler';
 
 interface ParserTest extends BaseTest {}
@@ -61,25 +61,26 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 	}
 });
 
+function strip(node: any) {
+	delete node.start;
+	delete node.end;
+	delete node.loc;
+	delete node.name_loc;
+	delete node.leadingComments;
+	delete node.trailingComments;
+	// the printer drops parens it does not need
+	delete node.parenthesized;
+}
+
 function clean(ast: AST.SvelteNode) {
 	return walk(ast, null, {
 		_(node, context) {
-			// @ts-ignore
-			delete node.start;
-			// @ts-ignore
-			delete node.end;
-			// @ts-ignore
-			delete node.loc;
-			// @ts-ignore
-			delete node.name_loc;
-			// @ts-ignore
-			delete node.leadingComments;
-			// @ts-ignore
-			delete node.trailingComments;
-			// the printer drops parens it does not need
-			// @ts-ignore
-			delete node.parenthesized;
-
+			strip(node);
+			context.next();
+		},
+		Root(node, context) {
+			// a comment is no child of the tree: the walk does not reach it
+			for (const comment of node.comments ?? []) strip(comment);
 			context.next();
 		},
 		StyleSheet(node, context) {

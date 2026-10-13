@@ -90,14 +90,17 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly is_standalone: boolean;
 }
 
-export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
-export type Visitors = import('zimmerframe').Visitors<AST.SvelteNode, any>;
+export type Context = import('../../../utils/walk.js').Context<
+	AST.SvelteNode,
+	ClientTransformState
+>;
+export type Visitors = import('../../../utils/walk.js').Visitors<AST.SvelteNode, any>;
 
-export type ComponentContext = import('zimmerframe').Context<
+export type ComponentContext = import('../../../utils/walk.js').Context<
 	AST.SvelteNode,
 	ComponentClientTransformState
 >;
-export type ComponentVisitors = import('zimmerframe').Visitors<
+export type ComponentVisitors = import('../../../utils/walk.js').Visitors<
 	AST.SvelteNode,
 	ComponentClientTransformState
 >;

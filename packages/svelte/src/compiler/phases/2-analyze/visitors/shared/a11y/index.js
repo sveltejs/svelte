@@ -472,7 +472,7 @@ export function check_element(node, context) {
 					node,
 					{},
 					{
-						_(node, { next }) {
+						_(node, context) {
 							if (
 								node.type === 'SvelteElement' ||
 								node.type === 'SlotElement' ||
@@ -483,7 +483,7 @@ export function check_element(node, context) {
 							) {
 								has = true;
 							} else {
-								next();
+								context.next();
 							}
 						}
 					}

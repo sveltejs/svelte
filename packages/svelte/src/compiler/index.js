@@ -143,9 +143,9 @@ function to_public_ast(source, ast, modern) {
 
 		// remove things that we don't want to treat as public API
 		return walk_ast(ast, null, {
-			_(node, { next }) {
+			_(node, context) {
 				clean(node);
-				next();
+				context.next();
 			}
 		});
 	}
