@@ -1107,11 +1107,28 @@ export class SSRState {
 		this.mode = mode;
 		this.csp = { ...csp, script_hashes: [] };
 
-		this.transformError =
-			transformError ??
-			((error) => {
+		if (transformError) {
+			// the same error can reach both a boundary and a `Warp` (when an awaited `Warp` promise
+			// rejects), so only transform it once, to avoid e.g. logging it twice
+			/** @type {WeakMap<object, unknown>} */
+			const transformed = new WeakMap();
+
+			this.transformError = (error) => {
+				if (error === null || (typeof error !== 'object' && typeof error !== 'function')) {
+					return transformError(error);
+				}
+
+				if (!transformed.has(error)) {
+					transformed.set(error, transformError(error));
+				}
+
+				return transformed.get(error);
+			};
+		} else {
+			this.transformError = (error) => {
 				throw error;
-			});
+			};
+		}
 
 		this.id_prefix = id_prefix;
 
