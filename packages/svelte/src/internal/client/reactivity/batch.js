@@ -98,15 +98,15 @@ export class Batch {
 	id = uid++;
 
 	/** True as soon as `#process` was called */
-	#started = false;
+	started = false;
 
 	linked = true;
 
 	/** @type {Batch | null} */
-	#prev = null;
+	prev = null;
 
 	/** @type {Batch | null} */
-	#next = null;
+	next = null;
 
 	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
 	async_deriveds = new Map();
@@ -205,8 +205,8 @@ export class Batch {
 		if (last_batch === null) {
 			first_batch = last_batch = this;
 		} else {
-			last_batch.#next = this;
-			this.#prev = last_batch;
+			last_batch.next = this;
+			this.prev = last_batch;
 		}
 
 		last_batch = this;
@@ -320,7 +320,7 @@ export class Batch {
 	}
 
 	#process() {
-		this.#started = true;
+		this.started = true;
 
 		if (DEV) {
 			// track all the values that were updated during this flush,
@@ -522,7 +522,7 @@ export class Batch {
 	}
 
 	#find_earlier_batch() {
-		var batch = this.#prev;
+		var batch = this.prev;
 
 		while (batch !== null) {
 			if (!batch.is_fork) {
@@ -534,7 +534,7 @@ export class Batch {
 				}
 			}
 
-			batch = batch.#prev;
+			batch = batch.prev;
 		}
 
 		return null;
@@ -705,7 +705,7 @@ export class Batch {
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
@@ -742,7 +742,7 @@ export class Batch {
 			);
 
 			// If not started yet or no sources to update (which is e.g. possible for the very first batch) then bail
-			if (!batch.#started || current.length === 0) continue;
+			if (!batch.started || current.length === 0) continue;
 
 			// Re-run async/block effects that depend on distinct values changed in both batches (ignoring deriveds)
 			var others = current.filter((source) => !this.current.has(source));
@@ -908,7 +908,7 @@ export class Batch {
 
 			if (!is_processing && !is_flushing_sync) {
 				queue_micro_task(() => {
-					if (!batch.#started) {
+					if (!batch.started) {
 						batch.flush();
 					}
 				});
@@ -919,7 +919,7 @@ export class Batch {
 	}
 
 	apply() {
-		if (!async_mode_flag || (!this.is_fork && this.#prev === null && this.#next === null)) {
+		if (!async_mode_flag || (!this.is_fork && this.prev === null && this.next === null)) {
 			batch_values = null;
 			return;
 		}
@@ -932,7 +932,7 @@ export class Batch {
 		}
 
 		// ...and undo changes belonging to other batches unless they intersect
-		for (let batch = first_batch; batch !== null; batch = batch.#next) {
+		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch === this || batch.is_fork) continue;
 
 			// If two batches intersect, the latter batch will be merged into the earlier batch,
@@ -993,19 +993,19 @@ export class Batch {
 		// running it multiple times to not corrupt the linked list
 		if (!this.linked) return;
 
-		var prev = this.#prev;
-		var next = this.#next;
+		var prev = this.prev;
+		var next = this.next;
 
 		if (prev === null) {
 			first_batch = next;
 		} else {
-			prev.#next = next;
+			prev.next = next;
 		}
 
 		if (next === null) {
 			last_batch = prev;
 		} else {
-			next.#prev = prev;
+			next.prev = prev;
 		}
 
 		this.linked = false;
