@@ -771,7 +771,9 @@ function throw_error(error, template) {
 			if (name === 'script') e.script_duplicate(pos);
 			if (name === 'style') e.style_duplicate(pos);
 			if (name.startsWith('svelte:')) e.svelte_meta_duplicate(pos, name);
-			if (name.startsWith('{:')) e.block_duplicate_clause(pos + 1, name);
+			// a branch after {:else} is a second else, whatever keyword it arrived with
+			if (name.startsWith('{:'))
+				e.block_duplicate_clause(pos + 1, name === '{:else if}' ? '{:else}' : name);
 			e.attribute_duplicate(range);
 		}
 		// eslint-disable-next-line no-fallthrough
