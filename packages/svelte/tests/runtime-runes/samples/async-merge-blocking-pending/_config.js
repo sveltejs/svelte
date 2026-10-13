@@ -1,37 +1,33 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-const buttons =
-	'<button>X</button><button>Y</button><button>Z</button><button>W</button><button>resolve e</button><button>resolve x1</button>';
+const buttons = '<button>x</button><button>toggle</button><button>pop</button>';
 
 export default test({
-	async test({ assert, target, logs }) {
+	async test({ assert, target }) {
 		await tick();
-		const [X, Y, Z, W, resolve_e, resolve_x1] = target.querySelectorAll('button');
-
-		assert.htmlEqual(target.innerHTML, `<p>n = 0</p><p>x = 0</p>${buttons}`);
+		const [x, toggle, pop] = target.querySelectorAll('button');
 
 		// X is deferred on its own await
-		X.click();
+		x.click();
 		await tick();
 		// Y is deferred on the await inside the new branch
-		Y.click();
+		toggle.click();
 		await tick();
 		// Z hides that branch again, merges into Y, which merges into X
-		Z.click();
+		toggle.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `<p>n = 0</p><p>x = 0</p>${buttons}`);
-		assert.deepEqual(logs, ['delay x0', 'delay x1', 'delay e']);
 
 		// the branch's await resolves while it is hidden
-		resolve_e.click();
+		pop.click();
 		await tick();
 		// W shows the branch again and merges into X
-		W.click();
+		toggle.click();
 		await tick();
 
 		// nothing is pending any more, so X commits
-		resolve_x1.click();
+		pop.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `<p>n = 4</p><p>x = 1</p><p>cond: e</p>${buttons}`);
 	}

@@ -3,22 +3,17 @@
 	let b = $state(0);
 	let pend = false;
 
-	const pending = new Map();
+	const deferred = [];
 
-	function delay(key, value) {
+	function delay(value) {
 		if (!pend) return value;
-		return new Promise((resolve) => pending.set(key, () => resolve(value)));
+		return new Promise((resolve) => deferred.push(() => resolve(value)));
 	}
 
-	function resolve(key) {
-		pending.get(key)();
-		pending.delete(key);
-	}
-
-	const k = $derived(b === 0 ? await delay(`a${a}`, a) : 'B');
+	const k = $derived(b === 0 ? await delay(a) : 'B');
 </script>
 
-<p>{await delay(`b${b}`, b)}</p>
+<p>{await delay(b)}</p>
 
 {#key k}
 	<p>{k}</p>
@@ -26,5 +21,4 @@
 
 <button onclick={() => { pend = true; a = 1; }}>a</button>
 <button onclick={() => { pend = true; b = 1; }}>b</button>
-<button onclick={() => resolve('a1')}>resolve a1</button>
-<button onclick={() => resolve('b1')}>resolve b1</button>
+<button onclick={() => deferred.shift()()}>shift</button>
