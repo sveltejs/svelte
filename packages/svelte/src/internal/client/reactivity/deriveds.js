@@ -433,6 +433,8 @@ export function update_derived(derived) {
 			set_signal_status(derived, CLEAN);
 			return;
 		}
+	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
+		current_batch?.capture(derived, derived.v);
 	}
 
 	// don't mark derived clean if we're reading it inside a
