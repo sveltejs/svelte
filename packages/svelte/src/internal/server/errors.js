@@ -52,24 +52,6 @@ export function html_deprecated() {
 }
 
 /**
- * Attempted to set `hydratable` with key `%key%` twice with different values.
- * 
- * %stack%
- * @param {string} key
- * @param {string} stack
- * @returns {never}
- */
-export function hydratable_clobbering(key, stack) {
-	const error = new Error(`hydratable_clobbering\nAttempted to set \`hydratable\` with key \`${key}\` twice with different values.
-
-${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
-
-	error.name = 'Svelte error';
-
-	throw error;
-}
-
-/**
  * `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
  * @returns {never}
  */

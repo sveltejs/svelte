@@ -220,15 +220,6 @@ function record(store, id, key, value) {
  * @param {string} id
  * @param {WarpKey} key
  */
-export function get_stack(store, id, key) {
+function get_stack(store, id, key) {
 	return store.stacks.get(id)?.get(key) ?? '<missing stack trace>';
-}
-
-/**
- * @param {unknown} value
- * @returns {value is Promise<unknown>}
- */
-export function is_promise(value) {
-	// we use this check rather than `instanceof Promise` because it works cross-realm
-	return Object.prototype.toString.call(value) === '[object Promise]';
 }
