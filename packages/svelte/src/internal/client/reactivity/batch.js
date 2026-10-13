@@ -621,6 +621,12 @@ export class Batch {
 		}
 
 		this.#pending += batch.#pending;
+		if (batch.#blocking_pending !== null) {
+			const blocking_pending = (this.#blocking_pending ??= new Map());
+			for (const [effect, count] of batch.#blocking_pending) {
+				blocking_pending.set(effect, (blocking_pending.get(effect) ?? 0) + count);
+			}
+		}
 
 		for (const c of batch.#commit_callbacks) {
 			this.oncommit(() => c(batch));
