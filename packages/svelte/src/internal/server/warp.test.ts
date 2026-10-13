@@ -176,7 +176,7 @@ describe('Warp', () => {
 			);
 		});
 
-		await expect(promise).rejects.toThrow('warp_set_after_render');
+		await expect(promise).rejects.toThrow('Cannot set key `a` in `Warp` `test`');
 	});
 
 	test('uses the replacer passed to render', async () => {
