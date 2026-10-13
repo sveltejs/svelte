@@ -61,7 +61,7 @@ Note: The `@component` is necessary in the HTML comment which describes your com
 
 ## Does Svelte scale?
 
-Svelte can be used on its own or via [SvelteKit](/docs/kit), which lets you [build almost anything](/docs/kit/project-types). As an app grows, you can share reusable reactive logic and state between components with [`.svelte.js` and `.svelte.ts` files](/docs/svelte/svelte-js-files), and make values available to a whole component subtree with [context](/docs/svelte/context) rather than passing them down through every layer of props. See [best practices](/docs/svelte/best-practices) for guidance on writing fast, robust Svelte code.
+Svelte compiles each component to plain JavaScript that relies on a runtime shared by all components, and your bundler only includes the parts of that runtime your app actually uses. A Svelte app therefore has a base cost for that shared runtime, and each additional component adds roughly the size of its own compiled output. Because [SvelteKit](/docs/kit) splits your code so that [only what the current page needs is loaded](/docs/kit/performance), the JavaScript a visitor downloads depends on the pages they visit rather than on the size of the whole app. Use your bundler's analysis tools to see what ends up in each chunk.
 
 ## Is there a UI component library?
 
