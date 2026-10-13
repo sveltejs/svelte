@@ -662,6 +662,10 @@ export class Batch {
 			this.oncommit(() => c(batch));
 		}
 
+		for (const c of batch.#discard_callbacks) {
+			this.ondiscard(() => c(batch));
+		}
+
 		for (const [s, v] of batch.#skipped_branches) {
 			this.#skipped_branches.set(s, v);
 			this.unskipped_branches.delete(s);
