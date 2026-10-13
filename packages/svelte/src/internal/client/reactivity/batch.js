@@ -229,14 +229,14 @@ export class Batch {
 	/**
 	 * The current values of any signals that are updated in this batch.
 	 * `is_derived` is false for deriveds, too, if they were overridden via assignment.
-	 * They keys of this map are identical to `this.previous`
+	 * The keys of this map are identical to `this.previous`
 	 * @type {Map<Value, { v: any, wv: number, is_derived: boolean }>}
 	 */
 	current = new Map();
 
 	/**
 	 * The values and write versions of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
-	 * They keys of this map are identical to `this.current`
+	 * The keys of this map are identical to `this.current`
 	 * @type {Map<Value, { v: any, wv: number }>}
 	 */
 	previous = new Map();
