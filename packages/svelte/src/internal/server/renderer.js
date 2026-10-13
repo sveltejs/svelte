@@ -874,11 +874,6 @@ export class Renderer {
 	 * @returns {Promise<string | null>}
 	 */
 	async #collect_warp(store, replacer) {
-		// these reject if there's a mismatch. a loop, as more can be added while we're awaiting
-		for (let i = 0; i < store.comparisons.length; i += 1) {
-			await store.comparisons[i];
-		}
-
 		store.emitted = true;
 
 		/** @type {Map<string, Map<WarpKey, unknown>>} */
