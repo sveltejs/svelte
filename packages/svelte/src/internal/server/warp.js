@@ -199,7 +199,7 @@ function set(store, id, key, value) {
  */
 function record(store, id, key, value) {
 	if (store.emitted) {
-		e.warp_set_after_render(id, String(key));
+		e.warp_set_after_render(String(key), id);
 	}
 
 	if (DEV) {
