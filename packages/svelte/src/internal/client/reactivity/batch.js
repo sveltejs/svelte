@@ -1431,7 +1431,7 @@ export function fork(fn) {
 			// apply changes and update write versions so deriveds see the change
 			for (var [source, content] of batch.current) {
 				source.v = content.v;
-				source.wv = increment_write_version();
+				content.wv = source.wv = increment_write_version();
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
