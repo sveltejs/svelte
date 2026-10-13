@@ -129,6 +129,20 @@ export class Batch {
 	 */
 	merged_into = null;
 
+	/**
+	 * @type {Map<Effect, number> | null}
+	 */
+	#stale_effects = null;
+
+	/**
+	 * Effects that were executed with stale values. Its wv is written into the map.
+	 * Lazily initialized for performance reasons.
+	 * @type {Map<Effect, number>}
+	 */
+	get stale_effects() {
+		return (this.#stale_effects ??= new Map());
+	}
+
 	/** @type {Batch | null} */
 	prev = null;
 
@@ -956,6 +970,10 @@ export class Batch {
 		for (const [source, current] of this.current) {
 			batch_values.set(source, current.v);
 			wv_values.set(source, current.wv);
+		}
+
+		for (const [effect, wv] of this.#stale_effects ?? []) {
+			wv_values.set(effect, wv);
 		}
 
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
