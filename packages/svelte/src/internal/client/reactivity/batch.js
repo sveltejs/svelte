@@ -933,7 +933,7 @@ export class Batch {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 
-			if (!is_processing && !is_flushing_sync) {
+			if (!is_processing) {
 				queue_micro_task(() => {
 					if (!batch.started) {
 						batch.flush();
