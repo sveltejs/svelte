@@ -8,6 +8,14 @@ declare global {
 		__svelte?: {
 			/** `Warp` values, keyed by the `Warp`'s id */
 			w?: Map<string, Map<WarpKey, unknown>>;
+			/** The number of `Warp` streams that haven't finished yet */
+			s?: number;
+			/**
+			 * The keys that were changed in each `Warp` while values were streaming in, keyed by the `Warp`'s id,
+			 * or `true` if the `Warp` was cleared. Streamed values for these keys are discarded, so they can't
+			 * overwrite the changes
+			 */
+			t?: Map<string, Set<WarpKey> | true>;
 		};
 	}
 }

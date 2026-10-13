@@ -45,6 +45,27 @@ export class Warp {
 	}
 
 	/**
+	 * While values are still streaming in from the server, records that `key` was changed,
+	 * so that a value for it that arrives later doesn't overwrite the change
+	 * @param {K} key
+	 */
+	#touch(key) {
+		if (!is_streaming()) return;
+
+		const touched = get_touched();
+		let keys = touched.get(this.#id);
+
+		if (keys === true) return;
+
+		if (keys === undefined) {
+			keys = new Set();
+			touched.set(this.#id, keys);
+		}
+
+		keys.add(key);
+	}
+
+	/**
 	 * @param {K} key
 	 * @returns {V | undefined}
 	 */
@@ -67,6 +88,7 @@ export class Warp {
 	 */
 	set(key, value) {
 		this.#values().set(key, value);
+		this.#touch(key);
 		return this;
 	}
 
@@ -77,7 +99,9 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsert(key, value) {
-		return get_or_insert(this.#values(), key, value);
+		const values = this.#values();
+		if (!values.has(key)) this.#touch(key);
+		return get_or_insert(values, key, value);
 	}
 
 	/**
@@ -87,7 +111,11 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsertComputed(key, callback) {
-		return get_or_insert_computed(this.#values(), key, callback);
+		return get_or_insert_computed(this.#values(), key, (key) => {
+			const value = callback(key);
+			this.#touch(key);
+			return value;
+		});
 	}
 
 	/**
@@ -95,11 +123,18 @@ export class Warp {
 	 * @returns {boolean}
 	 */
 	delete(key) {
+		// even if the key doesn't exist yet, a value for it may still arrive from the server
+		this.#touch(key);
 		return this.#values().delete(key);
 	}
 
 	clear() {
 		this.#values().clear();
+
+		if (is_streaming()) {
+			// values that arrive later are discarded too
+			get_touched().set(this.#id, true);
+		}
 	}
 
 	/**
@@ -133,4 +168,17 @@ export class Warp {
 	get [Symbol.toStringTag]() {
 		return 'Warp';
 	}
+}
+
+/**
+ * Whether values are still streaming in from the server. Streaming can only happen while the document is
+ * still loading, so if the connection drops before the stream finishes, this still becomes `false` eventually
+ */
+function is_streaming() {
+	return (window.__svelte?.s ?? 0) > 0 && document.readyState === 'loading';
+}
+
+/** The keys that were changed in each `Warp` while values were streaming in */
+function get_touched() {
+	return ((window.__svelte ??= {}).t ??= new Map());
 }
