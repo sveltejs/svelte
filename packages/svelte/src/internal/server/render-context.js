@@ -56,7 +56,10 @@ function create_render_context(rendered, replacer) {
 export async function with_render_context(fn) {
 	const existing = get_render_context_safe();
 
-	if (existing !== null) {
+	// WebContainers don't have AsyncLocalStorage, so `context` stays set while a render is
+	// running and we can't tell a nested call from a concurrent one. If it has already
+	// rendered, assume it belongs to a concurrent render, and queue behind it in `run`
+	if (existing !== null && !(existing.rendered && in_webcontainer())) {
 		if (existing.rendered) {
 			e.warp_context_already_rendered();
 		}
@@ -80,7 +83,8 @@ export async function with_render_context(fn) {
  * @returns {Promise<T>}
  */
 export async function withWarp(fn, options = {}) {
-	if (get_render_context_safe()) {
+	// in WebContainers, `context` may belong to a concurrent render (see above), so we queue instead
+	if (!in_webcontainer() && get_render_context_safe()) {
 		e.warp_context_nested();
 	}
 

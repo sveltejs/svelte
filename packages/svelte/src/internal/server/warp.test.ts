@@ -250,6 +250,45 @@ describe('withWarp', () => {
 		expect([...(revive(b.head)?.get('test') ?? [])]).toEqual([['b', 'b']]);
 	});
 
+	test('queues concurrent renders and contexts in WebContainers', async () => {
+		// eslint-disable-next-line n/prefer-global/process
+		const versions = process.versions as Record<string, string | undefined>;
+		versions.webcontainer = '1';
+
+		try {
+			// `render` is lazy, so start it now
+			const first = Promise.resolve(
+				render((renderer) => {
+					warp.set('a', 'a');
+					renderer.child(() => new Promise((fulfil) => setTimeout(fulfil, 20)));
+				})
+			);
+
+			// make sure the first render is underway before starting the others
+			await new Promise((fulfil) => setTimeout(fulfil));
+
+			const results = await Promise.all([
+				first,
+				render(() => {
+					warp.set('b', 'b');
+				}),
+				withWarp(() =>
+					render(() => {
+						warp.set('c', 'c');
+					})
+				)
+			]);
+
+			expect(results.map(({ head }) => [...(revive(head)?.get('test') ?? [])])).toEqual([
+				[['a', 'a']],
+				[['b', 'b']],
+				[['c', 'c']]
+			]);
+		} finally {
+			delete versions.webcontainer;
+		}
+	});
+
 	test('runs the render replacer before its own', async () => {
 		const { head } = await withWarp(
 			() =>
