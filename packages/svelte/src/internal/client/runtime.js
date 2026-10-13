@@ -492,25 +492,16 @@ export function update_effect(effect) {
 		// Did the effect see the latest value of all its dependencies, or (partly) its batch's view
 		// of them, i.e. did `batch_values` hand it a value that differs from the real one? We only
 		// need to look one level deep: a derived that was itself computed from such a value was not
-		// written to the real world either, so it differs as well.
-		var own_batch = previous_batch ?? current_batch; // can be null inside flush_eager_effects
+		// written to the real world either, so it differs as well. If it saw its batch's view, we
+		// don't update its write version.
 		var is_latest_value =
-			own_batch === null ||
+			(previous_batch === null && current_batch === null) || // e.g. inside flush_eager_effects
 			batch_values === null ||
 			effect.deps === null ||
 			!effect.deps.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v);
 
 		if (is_latest_value) {
 			effect.wv = write_version;
-		} else {
-			// The effect ran with values that are not the latest ones (it saw its own batch's view).
-			// Don't update its write version — instead remember it so that the batch can bring it
-			// up to date on commit, and tell all subsequent batches that it may need to re-run in their view.
-			var own = /** @type {Batch} */ (own_batch);
-			own.stale_effects.set(effect, write_version);
-			for (var batch = own.next; batch !== null; batch = batch.next) {
-				batch.add_dirty_reaction(effect, MAYBE_DIRTY);
-			}
 		}
 
 		// In DEV, increment versions of any sources that were written to during the effect,
