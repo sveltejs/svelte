@@ -114,14 +114,14 @@ export class Batch {
 	/**
 	 * The current values of any signals that are updated in this batch.
 	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
-	 * They keys of this map are identical to `this.#previous`
+	 * The keys of this map are identical to `this.previous`
 	 * @type {Map<Value, [any, boolean]>}
 	 */
 	current = new Map();
 
 	/**
 	 * The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
-	 * They keys of this map are identical to `this.#current`
+	 * The keys of this map are identical to `this.current`
 	 * @type {Map<Value, any>}
 	 */
 	previous = new Map();
@@ -202,7 +202,6 @@ export class Batch {
 	#decrement_queued = false;
 
 	constructor() {
-		// link batch
 		if (last_batch === null) {
 			first_batch = last_batch = this;
 		} else {
@@ -1453,7 +1452,7 @@ export function fork(fn) {
 		},
 		discard: () => {
 			// cause any MAYBE_DIRTY deriveds to update
-			// if they depend on things thath changed
+			// if they depend on things that changed
 			// inside the discarded fork
 			for (var source of batch.current.keys()) {
 				source.wv = increment_write_version();
