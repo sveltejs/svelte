@@ -519,6 +519,66 @@ describe('streaming', () => {
 		expect(destroyed).toBe(true);
 	});
 
+	test('does not abort signals until the tail is done', async () => {
+		let main: AbortSignal | undefined;
+		let background: AbortSignal | undefined;
+
+		const { tail } = await render((renderer) => {
+			main = getAbortSignal();
+			// not awaited here, but by the background work
+			const data = delay('main', 20);
+			warp.set('main', data);
+
+			renderer.background(async (renderer) => {
+				renderer.component(() => {
+					background = getAbortSignal();
+					// not awaited, so the background work settles before it does
+					warp.set('background', delay('background', 50));
+				});
+				await data;
+			});
+		});
+
+		expect(main?.aborted).toBe(false);
+		expect(background?.aborted).toBe(false);
+
+		const iterator = tail[Symbol.asyncIterator]();
+		let result = await iterator.next();
+		let chunks = 0;
+
+		while (!result.done) {
+			chunks += 1;
+
+			// the last chunk is only generated once every streamed promise has settled
+			if (!result.value.includes('window.__svelte.s -= 1')) {
+				expect(main?.aborted).toBe(false);
+				expect(background?.aborted).toBe(false);
+			}
+
+			result = await iterator.next();
+		}
+
+		// the background work settles (after `main` resolves) before the last chunk
+		expect(chunks).toBeGreaterThan(1);
+		expect(main?.aborted).toBe(true);
+		expect(background?.aborted).toBe(true);
+	});
+
+	test('aborts signals right away if there is nothing to stream', async () => {
+		let main: AbortSignal | undefined;
+		let background: AbortSignal | undefined;
+
+		await render((renderer) => {
+			main = getAbortSignal();
+			renderer.background(() => {
+				background = getAbortSignal();
+			});
+		});
+
+		expect(main?.aborted).toBe(true);
+		expect(background?.aborted).toBe(true);
+	});
+
 	test('cannot add values after the background work is done', async () => {
 		let promise: Promise<void> | undefined;
 

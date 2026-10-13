@@ -439,12 +439,11 @@ export class Renderer {
 	}
 
 	/**
-	 * Called once the background work has settled, or is no longer needed
+	 * Called once the background work has settled, or is no longer needed. Doesn't abort it,
+	 * since values that it added may still be streaming to the client
 	 * @param {SSRState} state
 	 */
 	static finish_background(state) {
-		state.abort();
-
 		for (const renderer of state.background_renderers) {
 			renderer.#run_on_destroy(true);
 		}
@@ -819,6 +818,8 @@ export class Renderer {
 		let result;
 		let render_error;
 		let failed = false;
+		// when streaming, promises in the `tail` may still depend on the abort signal, so it's aborted once the `tail` is done
+		let streaming = false;
 
 		try {
 			try {
@@ -838,6 +839,7 @@ export class Renderer {
 				if (warp.head !== null) {
 					content.head = warp.head + content.head;
 				}
+				streaming = warp.streaming;
 				result = { ...Renderer.#close_render(content, renderer), tail: warp.tail };
 			} catch (error) {
 				render_error = error;
@@ -847,6 +849,7 @@ export class Renderer {
 
 				if (renderer.global.background !== null) {
 					context.warp.late = null;
+					renderer.global.background.abort();
 					Renderer.finish_background(renderer.global.background);
 				}
 			}
@@ -859,7 +862,7 @@ export class Renderer {
 			);
 		} finally {
 			set_ssr_context(previous_context);
-			renderer.global.abort();
+			if (!streaming) renderer.global.abort();
 		}
 	}
 
@@ -942,7 +945,7 @@ export class Renderer {
 	 * @param {WarpStore} store
 	 * @param {UnevalReplacer | undefined} replacer
 	 * @param {SSRState | null} background
-	 * @returns {Promise<{ head: string | null, tail: AsyncIterable<string> }>}
+	 * @returns {Promise<{ head: string | null, tail: AsyncIterable<string>, streaming: boolean }>}
 	 */
 	async #collect_warp(store, replacer, background) {
 		if (background !== null && this.global.csp.hash) {
@@ -959,7 +962,7 @@ export class Renderer {
 		}
 
 		if (values.size === 0 && background === null) {
-			return { head: null, tail: empty() };
+			return { head: null, tail: empty(), streaming: false };
 		}
 
 		const late = background === null ? null : stream_late_values(store, background);
@@ -1041,6 +1044,11 @@ export class Renderer {
 
 		const streaming = late !== null && ready.next !== null;
 
+		if (!streaming) {
+			// everything has been serialized into the head
+			background?.abort();
+		}
+
 		const body = `
 			{
 				const w = (window.__svelte ??= {}).w ??= new Map();${
@@ -1083,9 +1091,14 @@ export class Renderer {
 						tail,
 						/** @type {Promise<IteratorResult<string>>} */ (ready.next),
 						csp_attr,
-						late.close
+						late.close,
+						() => {
+							this.global.abort();
+							background?.abort();
+						}
 					)
-				: empty()
+				: empty(),
+			streaming
 		};
 	}
 
@@ -1208,11 +1221,12 @@ function stream_late_values(store, background) {
  * @param {AsyncIterator<string>} tail
  * @param {Promise<IteratorResult<string>>} next The pending result of `tail.next()`
  * @param {string} csp_attr
- * @param {() => void} close
+ * @param {() => void} close Ends the background work
+ * @param {() => void} abort Aborts the signals from `getAbortSignal`, once nothing that's streamed can depend on them
  * @returns {AsyncIterable<string>}
  */
-function stream_scripts(tail, next, csp_attr, close) {
-	const generator = generate_scripts(tail, next, csp_attr);
+function stream_scripts(tail, next, csp_attr, close, abort) {
+	const generator = generate_scripts(tail, next, csp_attr, abort);
 
 	/** @type {AsyncIterableIterator<string>} */
 	const iterator = {
@@ -1221,6 +1235,7 @@ function stream_scripts(tail, next, csp_attr, close) {
 		// done here because `return` doesn't run a generator that hasn't started
 		return: async () => {
 			close();
+			abort();
 			await tail.return?.();
 			return generator.return(undefined);
 		},
@@ -1237,9 +1252,10 @@ function stream_scripts(tail, next, csp_attr, close) {
  * @param {AsyncIterator<string>} tail
  * @param {Promise<IteratorResult<string>>} next
  * @param {string} csp_attr
+ * @param {() => void} abort
  * @returns {AsyncGenerator<string>}
  */
-async function* generate_scripts(tail, next, csp_attr) {
+async function* generate_scripts(tail, next, csp_attr, abort) {
 	let done = false;
 
 	while (!done) {
@@ -1248,6 +1264,9 @@ async function* generate_scripts(tail, next, csp_attr) {
 
 		while (true) {
 			if (result.done) {
+				// every streamed promise has settled
+				abort();
+
 				// tell the client that this stream has finished
 				code += 'window.__svelte.s -= 1;';
 				done = true;
