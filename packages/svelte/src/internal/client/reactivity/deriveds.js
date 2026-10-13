@@ -48,6 +48,7 @@ import {
 	batch_values,
 	current_batch,
 	first_batch,
+	has_pending_batches,
 	own_value,
 	previous_batch,
 	read_batch_local_value
@@ -467,6 +468,13 @@ export function update_derived(derived) {
 		} else if (derived.v !== UNINITIALIZED) {
 			set_signal_status(derived, MAYBE_DIRTY);
 		}
+	} else if (has_pending_batches()) {
+		// Computed from the real values (e.g. in an event handler) while other batches are in flight.
+		// Don't mark it clean: those batches see other values for its dependencies, and unless they
+		// stashed a reaction that reads it, they wouldn't re-validate it and would use whatever value
+		// they hold for it — which can be stale, e.g. if the batch that dirtied it never evaluated it
+		// (see `async-derived-read-keeps-maybe-dirty`)
+		set_signal_status(derived, MAYBE_DIRTY);
 	} else {
 		update_derived_status(derived);
 	}

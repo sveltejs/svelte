@@ -53,6 +53,7 @@ import {
 	current_batch,
 	first_batch,
 	flushSync,
+	has_pending_batches,
 	held_sources,
 	previous_batch,
 	read_batch_local_value,
@@ -188,8 +189,9 @@ export function is_dirty(reaction) {
 			// During time traveling we don't want to reset the status so that
 			// traversal of the graph in the other batches still happens. Effects
 			// can be reset because block/async effects execute right away and others
-			// are deferred and re-dirtied as needed.
-			(batch_values === null || (flags & DERIVED) === 0)
+			// are deferred and re-dirtied as needed. Deriveds also mustn't be reset
+			// outside of a batch's view while other batches are in flight (see `update_derived`)
+			((flags & DERIVED) === 0 || (batch_values === null && !has_pending_batches()))
 		) {
 			set_signal_status(reaction, CLEAN);
 		}

@@ -38,6 +38,7 @@ import {
 	schedule_effect,
 	legacy_updates,
 	current_batch,
+	has_pending_batches,
 	own_value
 } from './batch.js';
 import { proxy } from '../proxy.js';
@@ -208,7 +209,11 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 			// During time traveling we don't want to reset the status so that
 			// traversal of the graph in the other batches still happens
-			if (batch_values === null) {
+			if (
+				batch_values === null &&
+				// could also be "read outside of reactivity", e.g. in an event handler, while other batches are in flight
+				!has_pending_batches()
+			) {
 				update_derived_status(derived);
 			}
 		}

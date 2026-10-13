@@ -132,6 +132,23 @@ export function own_value(signal) {
 		: signal;
 }
 
+/**
+ * Whether some batch's view of the world (may) differ from the real one: there's a batch that is going to be
+ * processed (again) in its own view, and another batch, or it's a fork. The batch that is being committed and
+ * the one that hasn't been processed yet don't count, their view is the real one. Deriveds that are computed
+ * from the real values (e.g. in an event handler) must not be marked clean then, as those batches wouldn't
+ * re-validate them in their view (see `update_derived`)
+ */
+export function has_pending_batches() {
+	for (var batch = first_batch; batch !== null; batch = batch.next) {
+		if (batch !== previous_batch && batch !== current_batch) {
+			return batch.is_fork || /** @type {Batch} */ (first_batch).next !== null;
+		}
+	}
+
+	return false;
+}
+
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
