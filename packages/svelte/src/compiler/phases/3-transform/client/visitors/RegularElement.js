@@ -396,10 +396,7 @@ export function RegularElement(node, context) {
 			trimmed,
 			(is_text) => b.call('$.first_child', fragment_id, is_text && b.true),
 			false,
-			{
-				...context,
-				state: select_state
-			}
+			context.with(select_state)
 		);
 
 		// Transform the template to $.from_html(...) and hoist it (deduplicating identical templates)
@@ -434,10 +431,12 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
-			...context,
-			state: child_state
-		});
+		process_children(
+			trimmed,
+			(is_text) => b.call('$.child', arg, is_text && b.true),
+			true,
+			context.with(child_state)
+		);
 
 		if (needs_reset && !fold_reset_into_child(child_state.init, context.state.node)) {
 			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));

@@ -31,10 +31,7 @@ export function EachBlock(node, context) {
 	};
 
 	const collection = build_expression(
-		{
-			...context,
-			state: parent_scope_state
-		},
+		context.with(parent_scope_state),
 		node.expression,
 		node.metadata.expression
 	);

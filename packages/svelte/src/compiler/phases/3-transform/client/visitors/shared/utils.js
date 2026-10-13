@@ -239,9 +239,10 @@ export function parse_directive_name(name) {
  * Serializes `bind:this` for components and elements.
  * @param {Identifier | MemberExpression | SequenceExpression} expression
  * @param {Expression} value
- * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
+ * @param {import('../../../../../utils/walk.js').Context<AST.SvelteNode, ComponentClientTransformState>} context
  */
-export function build_bind_this(expression, value, { state, visit }) {
+export function build_bind_this(expression, value, context) {
+	const { state } = context;
 	const [getter, setter] =
 		expression.type === 'SequenceExpression' ? expression.expressions : [null, null];
 
@@ -277,7 +278,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 			for (const [owner, scope] of state.scopes) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {
 					ids.push(node);
-					values.push(/** @type {Expression} */ (visit(node)));
+					values.push(/** @type {Expression} */ (context.visit(node)));
 
 					if (transform[node.name]) {
 						transform[node.name] = {
@@ -294,9 +295,9 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 	const child_state = { ...state, transform };
 
-	let get = /** @type {Expression} */ (visit(getter ?? expression, child_state));
+	let get = /** @type {Expression} */ (context.visit(getter ?? expression, child_state));
 	let set = /** @type {Expression} */ (
-		visit(
+		context.visit(
 			setter ??
 				b.assignment(
 					'=',

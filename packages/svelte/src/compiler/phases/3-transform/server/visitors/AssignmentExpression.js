@@ -20,7 +20,7 @@ export function AssignmentExpression(node, context) {
  * @param {AssignmentOperator} operator
  * @param {Pattern} left
  * @param {Expression} right
- * @param {import('zimmerframe').Context<AST.SvelteNode, ServerTransformState>} context
+ * @param {import('../../../../utils/walk.js').Context<AST.SvelteNode, ServerTransformState>} context
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {

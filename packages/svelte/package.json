@@ -179,7 +179,6 @@
     "esm-env": "^1.2.1",
     "esrap": "^2.3.6",
     "locate-character": "^3.0.0",
-    "magic-string": "^0.30.11",
-    "zimmerframe": "^1.1.2"
+    "magic-string": "^0.30.11"
   }
 }

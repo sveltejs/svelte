@@ -98,9 +98,9 @@ function assigned_in(node) {
 		}
 	};
 	walk(node, null, {
-		AssignmentExpression(node, { next }) {
+		AssignmentExpression(node, context) {
 			if (node.operator === '=') collect(node.left);
-			next();
+			context.next();
 		}
 	});
 	return assigned;

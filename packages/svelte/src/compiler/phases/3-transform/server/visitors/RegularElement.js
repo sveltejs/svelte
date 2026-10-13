@@ -56,11 +56,7 @@ export function RegularElement(node, context) {
 	if (!is_special) {
 		// only open the tag in the non-special path
 		state.template.push(b.literal(`<${name}`));
-		body = build_element_attributes(
-			node,
-			{ ...context, state: attribute_state },
-			optimiser.transform
-		);
+		body = build_element_attributes(node, context.with(attribute_state), optimiser.transform);
 		state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 	}
 
@@ -108,7 +104,7 @@ export function RegularElement(node, context) {
 
 	if (is_select_special) {
 		const inner_state = { ...state, template: [], init: [] };
-		process_children(trimmed, { ...context, state: inner_state });
+		process_children(trimmed, context.with(inner_state));
 
 		const fn = b.arrow(
 			[b.id('$$renderer')],
@@ -138,7 +134,7 @@ export function RegularElement(node, context) {
 			);
 		} else {
 			const inner_state = { ...state, template: [], init: [] };
-			process_children(trimmed, { ...context, state: inner_state });
+			process_children(trimmed, context.with(inner_state));
 
 			/** @type {import('estree').Statement[]} */
 			const body_statements = [...state.init, ...build_template(inner_state.template)];
@@ -179,7 +175,7 @@ export function RegularElement(node, context) {
 		// if this is a `<textarea>` value or a contenteditable binding, we only add
 		// the body if the attribute/binding is falsy
 		const inner_state = { ...state, template: [], init: [] };
-		process_children(trimmed, { ...context, state: inner_state });
+		process_children(trimmed, context.with(inner_state));
 
 		let id = /** @type {Expression} */ (body);
 
@@ -198,7 +194,7 @@ export function RegularElement(node, context) {
 		);
 	} else {
 		// For optgroup or select with rich content, add hydration marker at the start
-		process_children(trimmed, { ...context, state });
+		process_children(trimmed, context.with(state));
 		if ((name === 'optgroup' || name === 'select') && is_customizable_select_element(node)) {
 			state.template.push(b.literal('<!>'));
 		}

@@ -1,5 +1,5 @@
 /** @import { BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super, SimpleLiteral, FunctionExpression, ArrowFunctionExpression, Program } from 'estree' */
-/** @import { Context } from 'zimmerframe' */
+/** @import { Context } from '../utils/walk.js' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
@@ -1506,9 +1506,10 @@ export function create_scopes(document, root) {
  * @param {AST.SvelteNode} node
  * @param {Context<AST.SvelteNode, State>} context
  */
-export function set_scope(node, { next, state }) {
+export function set_scope(node, context) {
+	const { state } = context;
 	const scope = state.scopes.get(node);
-	next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+	context.next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
 }
 
 /**

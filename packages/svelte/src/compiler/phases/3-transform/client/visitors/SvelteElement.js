@@ -40,17 +40,14 @@ export function SvelteElement(node, context) {
 	const element_id = b.id(context.state.scope.generate('$$element'));
 
 	/** @type {ComponentContext} */
-	const inner_context = {
-		...context,
-		state: {
-			...context.state,
-			node: element_id,
-			init: [],
-			update: [],
-			after_update: [],
-			memoizer: new Memoizer()
-		}
-	};
+	const inner_context = context.with({
+		...context.state,
+		node: element_id,
+		init: [],
+		update: [],
+		after_update: [],
+		memoizer: new Memoizer()
+	});
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {

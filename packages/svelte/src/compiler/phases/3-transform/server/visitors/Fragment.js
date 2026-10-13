@@ -41,7 +41,7 @@ export function Fragment(node, context) {
 		state.template.push(empty_comment);
 	}
 
-	process_children(trimmed, { ...context, state });
+	process_children(trimmed, context.with(state));
 
 	if (state.async_consts && state.async_consts.thunks.length > 0) {
 		state.init.push(

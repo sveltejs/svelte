@@ -139,7 +139,6 @@ export function server_component(analysis, options) {
 		walk(
 			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{ ...state, scopes: analysis.template.scopes },
-			// @ts-expect-error don't know, don't care
 			{ ...global_visitors, ...template_visitors }
 		)
 	);

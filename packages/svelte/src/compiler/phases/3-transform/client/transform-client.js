@@ -63,13 +63,14 @@ import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const visitors = {
-	_: function set_scope(node, { next, state }) {
+	_: function set_scope(node, context) {
+		const { state } = context;
 		const scope = state.scopes.get(node);
 
 		if (scope && scope !== state.scope) {
-			next({ ...state, transform: get_transform(scope, state), scope });
+			context.next({ ...state, transform: get_transform(scope, state), scope });
 		} else {
-			next();
+			context.next();
 		}
 	},
 	AnimateDirective,
