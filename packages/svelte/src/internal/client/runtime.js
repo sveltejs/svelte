@@ -770,7 +770,9 @@ function get_batch_value(signal, first_time) {
 
 			var reactive =
 				in_derived ||
-				(active_effect !== null && active_reaction === active_effect && (active_effect.f & REACTION_IS_UPDATING) !== 0) ||
+				(active_effect !== null &&
+					active_reaction === active_effect &&
+					(active_effect.f & REACTION_IS_UPDATING) !== 0) ||
 				(active_effect !== null && (active_effect.f & ASYNC) !== 0);
 
 			if (
