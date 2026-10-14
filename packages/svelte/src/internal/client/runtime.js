@@ -802,21 +802,7 @@ function get_batch_value(signal) {
 						: null;
 
 			if (reader !== null) {
-				if (!current.is_eager) {
-					batch.rerun(reader, MAYBE_DIRTY);
-				} else if (reader.deps?.some((dep) => dep.f & EAGER_EFFECT)) {
-					// Reactions of eager effects with at least one non-eager effect (which we know is true here due to the stale_sources
-					// check above) need to rerun once the batch has committed, because they could do something like `$state.eager(count) !== count`.
-					// Other reactions are re-run by `batch` when it resumes, if necessary (see `#process`)
-					if (!batch.stale_readers.has(reader)) {
-						batch.stale_readers.add(reader);
-						batch.oncommit(() => {
-							batch.stale_readers.delete(reader);
-							Batch.ensure();
-							invalidate(reader, DIRTY);
-						});
-					}
-				}
+				batch.rerun(reader, current.is_eager ? DIRTY : MAYBE_DIRTY);
 			}
 		}
 	}
