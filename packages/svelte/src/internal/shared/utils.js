@@ -73,6 +73,23 @@ export function is_promise(value) {
 	return typeof value?.then === 'function';
 }
 
+/**
+ * Whether `value` is a native promise, including one from another realm. This matches what
+ * devalue treats as a promise (rather than a plain object), so that we wait for the same things it does
+ * @param {unknown} value
+ * @returns {value is Promise<unknown>}
+ */
+export function is_native_promise(value) {
+	if (Object.prototype.toString.call(value) !== '[object Promise]') return false;
+
+	try {
+		Promise.prototype.then.call(value, noop, noop);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 /** @param {Function} fn */
 export function run(fn) {
 	return fn();
