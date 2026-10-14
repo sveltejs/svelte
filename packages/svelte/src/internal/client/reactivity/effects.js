@@ -35,7 +35,8 @@ import {
 	CONNECTED,
 	MANAGED_EFFECT,
 	DESTROYING,
-	PAUSED
+	PAUSED,
+	DEFERRED_RUN
 } from '#client/constants';
 import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
@@ -139,6 +140,7 @@ function create_effect(type, fn) {
 	) {
 		// created during traversal — collect and run afterwards,
 		// alongside existing render effects, in tree order
+		effect.f |= DEFERRED_RUN;
 		collected_render_effects.push(effect);
 	} else if (fn !== null) {
 		try {
