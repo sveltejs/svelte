@@ -3,6 +3,9 @@ import { async_mode_flag } from '../flags/index.js';
 import * as e from './errors.js';
 import { get_or_insert, get_or_insert_computed } from '../shared/utils.js';
 
+/** Passed to `#touch` when every key was changed */
+const ALL = Symbol();
+
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
  * during server rendering (or inside `withWarp`) are serialized into the rendered
@@ -45,6 +48,31 @@ export class Warp {
 	}
 
 	/**
+	 * While values are still streaming in from the server, records that `key` was changed,
+	 * so that a value for it that arrives later doesn't overwrite the change
+	 * @param {K | typeof ALL} key
+	 */
+	#touch(key) {
+		const streams = window.__svelte?.r;
+		if (streams === undefined || document.readyState !== 'loading') return;
+
+		for (const id in streams) {
+			const touched = streams[id];
+			const keys = touched.get(this.#id);
+
+			if (keys === true) continue;
+
+			if (key === ALL) {
+				touched.set(this.#id, true);
+			} else if (keys === undefined) {
+				touched.set(this.#id, new Set([key]));
+			} else {
+				keys.add(key);
+			}
+		}
+	}
+
+	/**
 	 * @param {K} key
 	 * @returns {V | undefined}
 	 */
@@ -67,6 +95,7 @@ export class Warp {
 	 */
 	set(key, value) {
 		this.#values().set(key, value);
+		this.#touch(key);
 		return this;
 	}
 
@@ -77,7 +106,9 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsert(key, value) {
-		return get_or_insert(this.#values(), key, value);
+		const values = this.#values();
+		if (!values.has(key)) this.#touch(key);
+		return get_or_insert(values, key, value);
 	}
 
 	/**
@@ -87,7 +118,11 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsertComputed(key, callback) {
-		return get_or_insert_computed(this.#values(), key, callback);
+		return get_or_insert_computed(this.#values(), key, (key) => {
+			const value = callback(key);
+			this.#touch(key);
+			return value;
+		});
 	}
 
 	/**
@@ -95,11 +130,15 @@ export class Warp {
 	 * @returns {boolean}
 	 */
 	delete(key) {
+		// even if the key doesn't exist yet, a value for it may still arrive from the server
+		this.#touch(key);
 		return this.#values().delete(key);
 	}
 
 	clear() {
 		this.#values().clear();
+		// values that arrive later are discarded too
+		this.#touch(ALL);
 	}
 
 	/**

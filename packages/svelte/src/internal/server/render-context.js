@@ -38,11 +38,41 @@ function create_render_context(rendered, replacer) {
 		warp: {
 			values: new Map(),
 			stacks: new Map(),
-			emitted: false
+			background: new Map(),
+			emitted: false,
+			late: null
 		},
 		rendered,
-		replacer
+		replacer,
+		background: false
 	};
+}
+
+/**
+ * Whether work can be run in the background. Without `AsyncLocalStorage` (e.g. in WebContainers),
+ * we can't tell background work apart from the rest of the render once it has `await`ed something
+ */
+export function can_run_in_background() {
+	return als !== null && !in_webcontainer();
+}
+
+/**
+ * Runs `fn` with a copy of the render context that marks everything it does
+ * (including after `await`s) as background work. The `Warp` values are shared
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function run_in_background(fn) {
+	const ctx = { ...get_render_context(), background: true };
+	const previous = context;
+
+	try {
+		context = ctx;
+		return /** @type {AsyncLocalStorage<RenderContext | null>} */ (als).run(ctx, fn);
+	} finally {
+		context = previous;
+	}
 }
 
 /**

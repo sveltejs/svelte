@@ -1,11 +1,11 @@
-/** @import { WarpStore } from '#server' */
+/** @import { RenderContext, WarpStore } from '#server' */
 /** @import { WarpKey } from '#shared' */
 import { DEV } from 'esm-env';
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import { get_user_code_location } from './dev.js';
 import * as e from './errors.js';
-import { get_or_insert_computed } from '../shared/utils.js';
+import { get_or_insert_computed, noop } from '../shared/utils.js';
 
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
@@ -33,7 +33,17 @@ export class Warp {
 
 	/** @returns {Map<K, V>} */
 	#values() {
-		return /** @type {Map<K, V>} */ (get_values(get_store(), this.#id));
+		return /** @type {Map<K, V>} */ (get_values(get_context().warp, this.#id));
+	}
+
+	/**
+	 * Reads all of the values, which means they're needed by the render
+	 * @returns {Map<K, V>}
+	 */
+	#read_all() {
+		const context = get_context();
+		read(context, this.#id);
+		return /** @type {Map<K, V>} */ (get_values(context.warp, this.#id));
 	}
 
 	/**
@@ -41,7 +51,9 @@ export class Warp {
 	 * @returns {V | undefined}
 	 */
 	get(key) {
-		return this.#values().get(key);
+		const context = get_context();
+		read(context, this.#id, key);
+		return /** @type {V | undefined} */ (get_values(context.warp, this.#id).get(key));
 	}
 
 	/**
@@ -58,17 +70,19 @@ export class Warp {
 	 * @returns {this}
 	 */
 	set(key, value) {
-		const store = get_store();
+		const context = get_context();
+		const values = get_values(context.warp, this.#id);
 
-		if (get_values(store, this.#id).has(key)) {
+		if (values.has(key)) {
 			e.warp_key_exists(
 				String(key),
 				this.#id,
-				DEV ? `. It was first set in:\n${get_stack(store, this.#id, key)}` : ''
+				DEV ? `. It was first set in:\n${get_stack(context.warp, this.#id, key)}` : ''
 			);
 		}
 
-		set(store, this.#id, key, value);
+		record(context, this.#id, key, value);
+		values.set(key, value);
 		return this;
 	}
 
@@ -79,11 +93,15 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsert(key, value) {
-		const store = get_store();
-		const values = /** @type {Map<K, V>} */ (get_values(store, this.#id));
+		const context = get_context();
+		const values = /** @type {Map<K, V>} */ (get_values(context.warp, this.#id));
+
+		if (values.has(key)) {
+			read(context, this.#id, key);
+		}
 
 		return get_or_insert_computed(values, key, () => {
-			record(store, this.#id, key, value);
+			record(context, this.#id, key, value);
 			return value;
 		});
 	}
@@ -95,12 +113,16 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsertComputed(key, callback) {
-		const store = get_store();
-		const values = /** @type {Map<K, V>} */ (get_values(store, this.#id));
+		const context = get_context();
+		const values = /** @type {Map<K, V>} */ (get_values(context.warp, this.#id));
+
+		if (values.has(key)) {
+			read(context, this.#id, key);
+		}
 
 		return get_or_insert_computed(values, key, (key) => {
 			const value = callback(key);
-			record(store, this.#id, key, value);
+			record(context, this.#id, key, value);
 			return value;
 		});
 	}
@@ -127,11 +149,11 @@ export class Warp {
 	 * @param {any} [this_arg]
 	 */
 	forEach(callback, this_arg) {
-		this.#values().forEach(callback, this_arg);
+		this.#read_all().forEach(callback, this_arg);
 	}
 
 	entries() {
-		return this.#values().entries();
+		return this.#read_all().entries();
 	}
 
 	keys() {
@@ -139,7 +161,7 @@ export class Warp {
 	}
 
 	values() {
-		return this.#values().values();
+		return this.#read_all().values();
 	}
 
 	get size() {
@@ -147,7 +169,7 @@ export class Warp {
 	}
 
 	[Symbol.iterator]() {
-		return this.#values()[Symbol.iterator]();
+		return this.#read_all()[Symbol.iterator]();
 	}
 
 	get [Symbol.toStringTag]() {
@@ -155,12 +177,12 @@ export class Warp {
 	}
 }
 
-function get_store() {
+function get_context() {
 	if (!async_mode_flag) {
 		e.experimental_async_required('Warp');
 	}
 
-	return get_render_context().warp;
+	return get_render_context();
 }
 
 /**
@@ -179,27 +201,56 @@ function get_values(store, id) {
 }
 
 /**
- * @param {WarpStore} store
+ * Called when a value is read. If it was added by background work, but is read by the rest of the
+ * render before the values have been serialized, it's needed to hydrate, so it goes in the `head`
+ * @param {RenderContext} context
  * @param {string} id
- * @param {WarpKey} key
- * @param {unknown} value
+ * @param {WarpKey} [key] If omitted, all of the values were read
  */
-function set(store, id, key, value) {
-	record(store, id, key, value);
-	get_values(store, id).set(key, value);
+function read(context, id, key) {
+	if (context.background || context.warp.emitted) return;
+
+	const keys = context.warp.background.get(id);
+	if (keys === undefined) return;
+
+	if (key === undefined) {
+		context.warp.background.delete(id);
+	} else {
+		keys.delete(key);
+	}
 }
 
 /**
  * Does everything that needs to happen when a value is added, other than actually adding it.
  * Throws if it can't be added, so that `getOrInsertComputed` doesn't add it either
- * @param {WarpStore} store
+ * @param {RenderContext} context
  * @param {string} id
  * @param {WarpKey} key
  * @param {unknown} value
  */
-function record(store, id, key, value) {
+function record(context, id, key, value) {
+	const store = context.warp;
+
+	if ((store.emitted || context.background) && value instanceof Promise) {
+		// devalue only subscribes to streamed promises once it reaches them, which can be after they reject
+		value.catch(noop);
+	}
+
 	if (store.emitted) {
-		e.warp_set_after_render(String(key), id);
+		if (store.late === null) {
+			e.warp_set_after_render(String(key), id);
+		}
+
+		store.late(id, key, value);
+	} else if (context.background) {
+		let keys = store.background.get(id);
+
+		if (keys === undefined) {
+			keys = new Set();
+			store.background.set(id, keys);
+		}
+
+		keys.add(key);
 	}
 
 	if (DEV) {
