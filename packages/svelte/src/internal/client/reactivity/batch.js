@@ -164,6 +164,13 @@ let is_processing = false;
 export let collected_effects = null;
 
 /**
+ * Like `collected_effects`, but for render (and managed) effects. Only used in async mode,
+ * where these effects run after traversal rather than during it
+ * @type {Effect[] | null}
+ */
+export let collected_render_effects = null;
+
+/**
  * An array of effects that are marked during traversal as a result of a `set`
  * (not `internal_set`) call. These will be added to the next batch and
  * trigger another `batch.process()`
@@ -581,6 +588,10 @@ export class Batch {
 		/** @type {Effect[]} */
 		var render_effects = [];
 
+		if (async_mode_flag) {
+			collected_render_effects = render_effects;
+		}
+
 		/**
 		 * @type {Effect[]}
 		 * @deprecated when we get rid of legacy mode and stores, we can get rid of this
@@ -624,6 +635,7 @@ export class Batch {
 		}
 
 		collected_effects = null;
+		collected_render_effects = null;
 		legacy_updates = null;
 
 		// if the batch has outstanding pending work, stash effects and bail
@@ -662,7 +674,31 @@ export class Batch {
 		this.#commit_callbacks.clear();
 
 		previous_batch = this;
+
+		var length = effects.length;
+
+		// effects created by render effects (e.g. inside newly created branches) are
+		// collected and run alongside the existing effects
+		collected_effects = effects;
 		flush_queued_effects(render_effects);
+		collected_effects = null;
+
+		// if render effects wrote to state, they may have invalidated themselves (or
+		// an ancestor), in which case newly collected effects will be destroyed
+		// and recreated — hand them over to the next batch instead of running them now
+		var next = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
+
+		if (next !== null && effects.length > length) {
+			for (var i = length; i < effects.length; i += 1) {
+				var e = effects[i];
+
+				if (has_dirty_ancestor(e)) {
+					next.schedule(e);
+					e.f |= DESTROYED; // prevent it from running in `flush_queued_effects`
+				}
+			}
+		}
+
 		flush_queued_effects(effects);
 		previous_batch = null;
 
@@ -1075,6 +1111,7 @@ export class Batch {
 			flush_count = 0;
 			last_scheduled_effect = null;
 			collected_effects = null;
+			collected_render_effects = null;
 			legacy_updates = null;
 			is_processing = false;
 
@@ -1606,6 +1643,27 @@ function reset_branch(effect, tracked) {
 		reset_branch(e, tracked);
 		e = e.next;
 	}
+}
+
+/**
+ * Returns `true` if a (non-branch) ancestor of the effect is dirty,
+ * meaning that the effect is likely to be destroyed when it re-runs
+ * @param {Effect} effect
+ */
+function has_dirty_ancestor(effect) {
+	var parent = effect.parent;
+
+	while (parent !== null) {
+		var flags = parent.f;
+
+		if ((flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 && (flags & (DIRTY | MAYBE_DIRTY)) !== 0) {
+			return true;
+		}
+
+		parent = parent.parent;
+	}
+
+	return false;
 }
 
 /**

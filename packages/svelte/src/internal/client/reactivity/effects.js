@@ -43,7 +43,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, current_batch } from './batch.js';
+import { Batch, collected_effects, collected_render_effects, current_batch } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -132,6 +132,14 @@ function create_effect(type, fn) {
 			// schedule for later
 			Batch.ensure().schedule(effect, DIRTY);
 		}
+	} else if (
+		collected_render_effects !== null &&
+		fn !== null &&
+		(type & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0
+	) {
+		// created during traversal — collect and run afterwards,
+		// alongside existing render effects, in tree order
+		collected_render_effects.push(effect);
 	} else if (fn !== null) {
 		try {
 			update_effect(effect);
