@@ -190,7 +190,9 @@ var count_deps = 0;
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals.call(own_value(source), value)) {
+	if (
+		batch_values === null ? !source.equals(value) : !source.equals.call(own_value(source), value)
+	) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
