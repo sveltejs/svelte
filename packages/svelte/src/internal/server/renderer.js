@@ -15,7 +15,7 @@ import { attributes } from './index.js';
 import { can_run_in_background, run_in_background, with_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { deferred, has_own_property, is_array, noop } from '../shared/utils.js';
+import { deferred, has_own_property, is_array, is_native_promise, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -1037,7 +1037,7 @@ export class Renderer {
 					const result = replacer?.(thing, js);
 					if (result) return result;
 
-					if (!head_done && thing instanceof Promise && thing !== late?.first) {
+					if (!head_done && is_native_promise(thing) && thing !== late?.first) {
 						tracker.add(thing);
 					}
 				},
@@ -1231,20 +1231,21 @@ class Tracker {
 
 	/** @param {unknown} promise */
 	add(promise) {
-		this.#add(this.promises, promise);
+		if (is_native_promise(promise)) this.#add(this.promises, promise);
 	}
 
 	/** @param {unknown} result */
 	add_transform(result) {
-		this.#add(this.transforms, result);
+		// devalue only waits for `transformError` results that are `instanceof Promise`
+		if (result instanceof Promise) this.#add(this.transforms, result);
 	}
 
 	/**
 	 * @param {Set<Promise<unknown>>} set
-	 * @param {unknown} value
+	 * @param {Promise<unknown>} value
 	 */
 	#add(set, value) {
-		if (!(value instanceof Promise) || set.has(value)) return;
+		if (set.has(value)) return;
 		set.add(value);
 
 		const settled = () => {
@@ -1253,7 +1254,7 @@ class Tracker {
 			this.#change = null;
 		};
 
-		value.then(settled, settled);
+		Promise.prototype.then.call(value, settled, settled);
 	}
 
 	get idle() {
@@ -1398,12 +1399,12 @@ function stream_late_values(store, background, entries, replacer) {
  * @param {UnevalReplacer | undefined} replacer
  */
 function is_serializable(value, replacer) {
-	if (value instanceof Promise || value === null) return true;
+	if (value === null || is_native_promise(value)) return true;
 	if (typeof value !== 'object' && typeof value !== 'function') return true;
 
 	try {
 		devalue.uneval(value, (thing, js) =>
-			thing instanceof Promise ? js`0` : replacer?.(thing, js)
+			is_native_promise(thing) ? js`0` : replacer?.(thing, js)
 		);
 		return true;
 	} catch (error) {

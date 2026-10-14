@@ -5,7 +5,7 @@ import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import { get_user_code_location } from './dev.js';
 import * as e from './errors.js';
-import { get_or_insert_computed, noop } from '../shared/utils.js';
+import { get_or_insert_computed, is_native_promise, noop } from '../shared/utils.js';
 
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
@@ -231,9 +231,9 @@ function read(context, id, key) {
 function record(context, id, key, value) {
 	const store = context.warp;
 
-	if ((store.emitted || context.background) && value instanceof Promise) {
+	if ((store.emitted || context.background) && is_native_promise(value)) {
 		// devalue only subscribes to streamed promises once it reaches them, which can be after they reject
-		value.catch(noop);
+		Promise.prototype.then.call(value, undefined, noop);
 	}
 
 	if (store.emitted) {

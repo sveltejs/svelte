@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
+import vm from 'node:vm';
 import type { Component } from 'svelte';
 import { Renderer } from './renderer.js';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
@@ -515,6 +516,30 @@ describe('streaming', () => {
 		}
 	});
 
+	test('waits for promises from another realm in the head', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		try {
+			const promise = vm.runInNewContext(
+				'new Promise((fulfil) => setTimeout(() => fulfil("other realm"), 20))',
+				{ setTimeout }
+			);
+
+			const { head, tail } = await render((renderer) => {
+				warp.set('promise', promise);
+				renderer.background(async () => {
+					await delay(null, 50);
+				});
+			});
+
+			expect(promise).not.toBeInstanceOf(Promise);
+			expect(head).toContain('"other realm"');
+			await revive_streamed(head, tail);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
 	test('streams the values added by background work, even if they have already resolved', async () => {
 		const { head, tail } = await render((renderer) => {
 			renderer.background(() => {
@@ -523,7 +548,9 @@ describe('streaming', () => {
 			});
 
 			// give the background promise plenty of time to resolve before the head is serialized
-			renderer.child(() => delay(null, 20));
+			renderer.child(async () => {
+				await delay(null, 20);
+			});
 		});
 
 		expect(head).not.toContain('resolved value');
