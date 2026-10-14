@@ -9,6 +9,7 @@ import {
 	validate_attribute_name,
 	validate_slot_attribute
 } from './attribute.js';
+import { check_global_event_reference } from './utils.js';
 
 const EVENT_MODIFIERS = [
 	'preventDefault',
@@ -64,14 +65,7 @@ export function validate_element(node, context) {
 					e.attribute_invalid_event_handler(attribute);
 				}
 
-				const value = get_attribute_expression(attribute);
-				if (
-					value.type === 'Identifier' &&
-					value.name === attribute.name &&
-					!context.state.scope.get(value.name)
-				) {
-					w.attribute_global_event_reference(attribute, attribute.name);
-				}
+				check_global_event_reference(attribute, context);
 			}
 
 			if (attribute.name === 'slot') {

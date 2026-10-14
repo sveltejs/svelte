@@ -12,14 +12,11 @@ export default function Async_if_chain($$renderer) {
 
 	$$renderer.async_block([$$promises[0]], ($$renderer) => {
 		if (foo) {
-			$$renderer.push('<!--[0-->');
-			$$renderer.push(`foo`);
+			$$renderer.push(`<!--[0-->foo`);
 		} else if (bar) {
-			$$renderer.push('<!--[1-->');
-			$$renderer.push(`bar`);
+			$$renderer.push(`<!--[1-->bar`);
 		} else {
-			$$renderer.push('<!--[-1-->');
-			$$renderer.push(`else`);
+			$$renderer.push(`<!--[-1-->else`);
 		}
 	});
 
@@ -27,21 +24,17 @@ export default function Async_if_chain($$renderer) {
 
 	$$renderer.async_block([$$promises[0]], async ($$renderer) => {
 		if ((await $.save(foo))()) {
-			$$renderer.push('<!--[0-->');
-			$$renderer.push(`foo`);
+			$$renderer.push(`<!--[0-->foo`);
 		} else if (bar) {
-			$$renderer.push('<!--[1-->');
-			$$renderer.push(`bar`);
+			$$renderer.push(`<!--[1-->bar`);
 		} else {
 			$$renderer.push('<!--[-1-->');
 
 			$$renderer.child_block(async ($$renderer) => {
 				if ((await $.save(baz))()) {
-					$$renderer.push('<!--[0-->');
-					$$renderer.push(`baz`);
+					$$renderer.push(`<!--[0-->baz`);
 				} else {
-					$$renderer.push('<!--[-1-->');
-					$$renderer.push(`else`);
+					$$renderer.push(`<!--[-1-->else`);
 				}
 			});
 
@@ -53,21 +46,17 @@ export default function Async_if_chain($$renderer) {
 
 	$$renderer.async_block([$$promises[0]], async ($$renderer) => {
 		if ((await $.save(foo))() > 10) {
-			$$renderer.push('<!--[0-->');
-			$$renderer.push(`foo`);
+			$$renderer.push(`<!--[0-->foo`);
 		} else if (bar) {
-			$$renderer.push('<!--[1-->');
-			$$renderer.push(`bar`);
+			$$renderer.push(`<!--[1-->bar`);
 		} else {
 			$$renderer.push('<!--[-1-->');
 
 			$$renderer.async_block([$$promises[0]], async ($$renderer) => {
 				if ((await $.save(foo))() > 5) {
-					$$renderer.push('<!--[0-->');
-					$$renderer.push(`baz`);
+					$$renderer.push(`<!--[0-->baz`);
 				} else {
-					$$renderer.push('<!--[-1-->');
-					$$renderer.push(`else`);
+					$$renderer.push(`<!--[-1-->else`);
 				}
 			});
 
@@ -78,31 +67,24 @@ export default function Async_if_chain($$renderer) {
 	$$renderer.push(`<!--]--> `);
 
 	if (simple1) {
-		$$renderer.push('<!--[0-->');
-		$$renderer.push(`foo`);
+		$$renderer.push(`<!--[0-->foo`);
 	} else if (simple2 > 10) {
-		$$renderer.push('<!--[1-->');
-		$$renderer.push(`bar`);
+		$$renderer.push(`<!--[1-->bar`);
 	} else if (complex1() * complex2 > 100) {
-		$$renderer.push('<!--[2-->');
-		$$renderer.push(`baz`);
+		$$renderer.push(`<!--[2-->baz`);
 	} else {
-		$$renderer.push('<!--[-1-->');
-		$$renderer.push(`else`);
+		$$renderer.push(`<!--[-1-->else`);
 	}
 
 	$$renderer.push(`<!--]--> `);
 
 	$$renderer.async_block([$$promises[0]], ($$renderer) => {
 		if (blocking() > 10) {
-			$$renderer.push('<!--[0-->');
-			$$renderer.push(`foo`);
+			$$renderer.push(`<!--[0-->foo`);
 		} else if (blocking() > 5) {
-			$$renderer.push('<!--[1-->');
-			$$renderer.push(`bar`);
+			$$renderer.push(`<!--[1-->bar`);
 		} else {
-			$$renderer.push('<!--[-1-->');
-			$$renderer.push(`else`);
+			$$renderer.push(`<!--[-1-->else`);
 		}
 	});
 

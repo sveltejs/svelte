@@ -7,10 +7,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var fragment = root();
 	var main = $.sibling($.first_child(fragment), 2);
 	var h1 = $.child(main);
-	var text = $.child(h1, true);
-
-	$.reset(h1);
-
+	var text = $.only_child(h1, true);
 	var node = $.sibling(h1, 10);
 
 	$.html(node, () => $$props.content);
@@ -40,10 +37,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 
 	option.value = option.__value = 'a';
 	$.reset(select);
-
-	var img = $.sibling(select, 2);
-
-	$.next(2);
+	$.next(4);
 	$.template_effect(() => $.set_text(text, $$props.title));
 	$.append($$anchor, fragment);
 }

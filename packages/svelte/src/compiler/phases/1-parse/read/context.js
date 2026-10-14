@@ -2,7 +2,6 @@
 /** @import { Parser } from '../index.js' */
 import { match_bracket } from '../utils/bracket.js';
 import { parse_expression_at, remove_parens } from '../acorn.js';
-import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
 
 /**
@@ -33,24 +32,10 @@ export default function read_pattern(parser) {
 	i = match_bracket(parser, start);
 	parser.index = i;
 
-	const pattern_string = parser.template.slice(start, i);
-
-	// the length of the `space_with_newline` has to be start - 1
-	// because we added a `(` in front of the pattern_string,
-	// which shifted the entire string to right by 1
-	// so we offset it by removing 1 character in the `space_with_newline`
-	// to achieve that, we remove the 1st space encountered,
-	// so it will not affect the `column` of the node
-	let space_with_newline = parser.template
-		.slice(0, start)
-		.replace(regex_not_newline_characters, ' ');
-	const first_space = space_with_newline.indexOf(' ');
-	space_with_newline =
-		space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
-
+	// acorn never reads before `start`, so the template itself can serve as the prefix
 	/** @type {any} */
 	let expression = remove_parens(
-		parse_expression_at(parser, `${space_with_newline}(${pattern_string} = 1)`, start - 1)
+		parse_expression_at(parser, parser.template.slice(0, i) + ' = 1', start)
 	);
 
 	expression = expression.left;
@@ -80,7 +65,7 @@ function read_type_annotation(parser) {
 	const insert = '_ as ';
 	let a = parser.index - insert.length;
 	const template =
-		parser.template.slice(0, a).replace(/[^\n]/g, ' ') +
+		parser.template.slice(0, a) +
 		insert +
 		// If this is a type annotation for a function parameter, Acorn-TS will treat subsequent
 		// parameters as part of a sequence expression instead, and will then error on optional

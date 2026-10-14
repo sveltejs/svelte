@@ -9,9 +9,9 @@
 		const signal = getAbortSignal();
 
 		signal.addEventListener("abort", () => {
-			try{
+			try {
 				aborted++;
-			}catch(e){
+			} catch(e) {
 				console.error(e);
 			}
 		});
@@ -19,6 +19,6 @@
 	})
 </script>
 
-{der}
+{der}:{aborted}
 
 <button onclick={() => count++}></button>

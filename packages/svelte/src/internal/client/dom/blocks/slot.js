@@ -1,4 +1,6 @@
 import { hydrate_next, hydrating } from '../hydration.js';
+import { create_element, create_text } from '../operations.js';
+import { append } from '../template.js';
 
 /**
  * @param {Comment} anchor
@@ -10,6 +12,23 @@ import { hydrate_next, hydrating } from '../hydration.js';
 export function slot(anchor, $$props, name, slot_props, fallback_fn) {
 	if (hydrating) {
 		hydrate_next();
+	}
+
+	// Custom element slots are native DOM slots.
+	// Use the stored reference because the shadow root may be closed.
+	if ($$props.$$host?.$$shadowRoot) {
+		const element = create_element('slot');
+		if (name !== 'default') element.name = name;
+
+		append(anchor, element);
+
+		if (fallback_fn !== null) {
+			const fallback_anchor = create_text();
+			element.append(fallback_anchor);
+			fallback_fn(fallback_anchor);
+		}
+
+		return;
 	}
 
 	var slot_fn = $$props.$$slots?.[name];

@@ -148,8 +148,7 @@ export default function Select_with_rich_content($$renderer) {
 	$$renderer.push(`<!--]--></select> <select>`);
 
 	if (show) {
-		$$renderer.push('<!--[0-->');
-		$$renderer.push(`<!--[-->`);
+		$$renderer.push(`<!--[0--><!--[-->`);
 
 		const each_array_4 = $.ensure_array_like(items);
 

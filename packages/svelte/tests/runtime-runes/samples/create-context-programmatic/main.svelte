@@ -3,9 +3,11 @@
 	import Child from './Child.svelte';
 
 	/** @type {ReturnType<typeof createContext<string>>} */
-	const [get, set] = createContext();
+	const [get, set, has] = createContext();
+	/** @type {ReturnType<typeof createContext<string>>} */
+	const [, , has_unset] = createContext();
 
-	export { get };
+	export { get, has, has_unset };
 
 	function Wrapper(Component) {
 		return (...args) => {
@@ -15,6 +17,8 @@
 	}
 </script>
 
-<div {@attach (target) => {
-	mount(Wrapper(Child), { target });
-}}></div>
+<div
+	{@attach (target) => {
+		mount(Wrapper(Child), { target });
+	}}
+></div>

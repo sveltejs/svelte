@@ -677,6 +677,12 @@ Cannot use `$$restProps` in runes mode
 `let:` directive at invalid position
 ```
 
+### let_directive_snippet_conflict
+
+```
+Cannot use `let:` directives on a component that has a `children` snippet. Use snippet parameters instead (e.g. `{#snippet children({ %name% })}`)
+```
+
 ### mixed_event_handler_syntaxes
 
 ```
@@ -819,6 +825,18 @@ Cannot use `%rune%` rune in non-runes mode
 
 ```
 Cannot use rune without parentheses
+```
+
+Runes are keywords rather than values — they can't be assigned to a variable or passed to a function, only called. Referencing one without parentheses is therefore an error...
+
+```js
+let count = $state;
+```
+
+...whether it's a rune like `$state` or one reached through a property, like `$derived.by`. Add the parentheses, along with any arguments the rune expects:
+
+```js
+let count = $state(0);
 ```
 
 ### rune_removed

@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "packageManager": "pnpm@10.4.0",
+  "packageManager": "pnpm@10.33.4+sha512.1c67b3b359b2d408119ba1ed289f34b8fc3c6873412bec6fd264fbdc82489e510fcbecb9ce9d22dae7f3b76269d8441046014bdca53b9979cd7a561ad631b800",
   "engines": {
     "pnpm": ">=9.0.0"
   },
@@ -19,6 +19,7 @@
     "lint": "eslint && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
+    "profile:compiler": "node ./benchmarking/profile-compiler.js",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
     "changeset:publish": "changeset publish",
     "bench": "NODE_ENV=production node --allow-natives-syntax ./benchmarking/run.js",
@@ -26,10 +27,10 @@
     "bench:debug": "NODE_ENV=production node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "1.0.0-next.6",
     "@changesets/cli": "^2.29.8",
     "@eslint/js": "^10.0.0",
     "@sveltejs/eslint-config": "^9.0.0",
-    "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
     "@types/picomatch": "^4.0.2",
     "@vitest/coverage-v8": "^4.1.7",
@@ -37,7 +38,7 @@
     "eslint-plugin-lube": "^0.5.1",
     "eslint-plugin-svelte": "^3.15.0",
     "jsdom": "25.0.1",
-    "playwright": "^1.60.0",
+    "playwright": "^1.62.0",
     "prettier": "^3.2.4",
     "prettier-plugin-svelte": "^3.4.0",
     "svelte": "workspace:^",

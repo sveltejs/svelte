@@ -78,8 +78,11 @@ export function create_event(event_name, dom, handler, options = {}) {
 		event_name.startsWith('touch') ||
 		event_name === 'wheel'
 	) {
+		target_handler.__removed = false;
 		queue_micro_task(() => {
-			dom.addEventListener(event_name, target_handler, options);
+			if (!target_handler.__removed) {
+				dom.addEventListener(event_name, target_handler, options);
+			}
 		});
 	} else {
 		dom.addEventListener(event_name, target_handler, options);
@@ -102,6 +105,7 @@ export function on(element, type, handler, options = {}) {
 	var target_handler = create_event(type, element, handler, options);
 
 	return () => {
+		target_handler.__removed = true;
 		element.removeEventListener(type, target_handler, options);
 	};
 }
@@ -128,6 +132,7 @@ export function event(event_name, dom, handler, capture, passive) {
 		dom instanceof HTMLMediaElement
 	) {
 		teardown(() => {
+			target_handler.__removed = true;
 			dom.removeEventListener(event_name, target_handler, options);
 		});
 	}
@@ -159,11 +164,14 @@ export function delegate(events) {
 }
 
 // used to store the reference to the currently propagated event
-// to prevent garbage collection between microtasks in Firefox
+// to prevent garbage collection between microtasks in Firefox (<= 141)
 // If the event object is GCed too early, the expando __root property
 // set on the event object is lost, causing the event delegation
 // to process the event twice
 let last_propagated_event = null;
+
+// whether a task is already queued to clear `last_propagated_event`
+let last_propagated_event_clear_scheduled = false;
 
 /**
  * @this {EventTarget}
@@ -178,6 +186,21 @@ export function handle_event_propagation(event) {
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
 
 	last_propagated_event = event;
+
+	// The reference is only needed while the event can still reach another
+	// delegated root, i.e. during the current (synchronous) dispatch and its
+	// microtask checkpoints. Clearing it in a later task preserves the
+	// Firefox workaround while making sure the slot doesn't retain the last
+	// event forever — through `event.target` it would otherwise keep the
+	// entire detached subtree of whatever the user last clicked in alive
+	// until the next delegated event happens to arrive.
+	if (!last_propagated_event_clear_scheduled) {
+		last_propagated_event_clear_scheduled = true;
+		setTimeout(() => {
+			last_propagated_event_clear_scheduled = false;
+			last_propagated_event = null;
+		});
+	}
 
 	// composedPath contains list of nodes the event has propagated through.
 	// We check `event_symbol` to skip all nodes below it in case this is a

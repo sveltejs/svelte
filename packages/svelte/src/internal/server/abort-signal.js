@@ -1,13 +1,12 @@
-import { STALE_REACTION } from '#client/constants';
-
-/** @type {AbortController | null} */
-let controller = null;
-
-export function abort() {
-	controller?.abort(STALE_REACTION);
-	controller = null;
-}
+import { ssr_context } from './context.js';
 
 export function getAbortSignal() {
-	return (controller ??= new AbortController()).signal;
+	let context = ssr_context;
+
+	while (context !== null) {
+		if (context.r !== null) return context.r.global.get_abort_signal();
+		context = context.p;
+	}
+
+	return new AbortController().signal;
 }

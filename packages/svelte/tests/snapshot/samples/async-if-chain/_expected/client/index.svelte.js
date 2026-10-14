@@ -90,52 +90,78 @@ export default function Async_if_chain($$anchor) {
 
 	var node_3 = $.sibling(node_1, 2);
 
-	$.async(node_3, [$$promises[0]], [async () => (await $.save(foo))() > 10], (node_3, $$condition) => {
-		var consequent_5 = ($$anchor) => {
-			var text_7 = $.text('foo');
+	$.async(
+		node_3,
+		[$$promises[0]],
+		[
+			async () => {
+				try {
+					return (await $.save(foo))() > 10;
+				} finally {
+					$.unsave();
+				}
+			}
+		],
+		(node_3, $$condition) => {
+			var consequent_5 = ($$anchor) => {
+				var text_7 = $.text('foo');
 
-			$.append($$anchor, text_7);
-		};
+				$.append($$anchor, text_7);
+			};
 
-		var consequent_6 = ($$anchor) => {
-			var text_8 = $.text('bar');
+			var consequent_6 = ($$anchor) => {
+				var text_8 = $.text('bar');
 
-			$.append($$anchor, text_8);
-		};
+				$.append($$anchor, text_8);
+			};
 
-		var alternate_4 = ($$anchor) => {
-			var fragment_2 = $.comment();
-			var node_4 = $.first_child(fragment_2);
+			var alternate_4 = ($$anchor) => {
+				var fragment_2 = $.comment();
+				var node_4 = $.first_child(fragment_2);
 
-			$.async(node_4, [$$promises[0]], [async () => (await $.save(foo))() > 5], (node_4, $$condition) => {
-				var consequent_7 = ($$anchor) => {
-					var text_9 = $.text('baz');
-
-					$.append($$anchor, text_9);
-				};
-
-				var alternate_3 = ($$anchor) => {
-					var text_10 = $.text('else');
-
-					$.append($$anchor, text_10);
-				};
-
-				$.if(
+				$.async(
 					node_4,
-					($$render) => {
-						if ($.get($$condition)) $$render(consequent_7); else $$render(alternate_3, -1);
-					},
-					true
+					[$$promises[0]],
+					[
+						async () => {
+							try {
+								return (await $.save(foo))() > 5;
+							} finally {
+								$.unsave();
+							}
+						}
+					],
+					(node_4, $$condition) => {
+						var consequent_7 = ($$anchor) => {
+							var text_9 = $.text('baz');
+
+							$.append($$anchor, text_9);
+						};
+
+						var alternate_3 = ($$anchor) => {
+							var text_10 = $.text('else');
+
+							$.append($$anchor, text_10);
+						};
+
+						$.if(
+							node_4,
+							($$render) => {
+								if ($.get($$condition)) $$render(consequent_7); else $$render(alternate_3, -1);
+							},
+							true
+						);
+					}
 				);
+
+				$.append($$anchor, fragment_2);
+			};
+
+			$.if(node_3, ($$render) => {
+				if ($.get($$condition)) $$render(consequent_5); else if (bar) $$render(consequent_6, 1); else $$render(alternate_4, -1);
 			});
-
-			$.append($$anchor, fragment_2);
-		};
-
-		$.if(node_3, ($$render) => {
-			if ($.get($$condition)) $$render(consequent_5); else if (bar) $$render(consequent_6, 1); else $$render(alternate_4, -1);
-		});
-	});
+		}
+	);
 
 	var node_5 = $.sibling(node_3, 2);
 

@@ -9,7 +9,7 @@ import { validate_assignment } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { binding_properties } from '../../bindings.js';
-import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
+import fuzzymatch from '../../../utils/fuzzymatch.js';
 import { is_content_editable_binding, is_svg } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 

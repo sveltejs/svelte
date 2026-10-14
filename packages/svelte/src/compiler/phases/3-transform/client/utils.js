@@ -2,6 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
+/** @import { ExpressionMetadata } from '../../nodes.js' */
 /** @import { Scope } from '../../scope.js' */
 import * as b from '#compiler/builders';
 import { is_simple_expression, save } from '../../../utils/ast.js';
@@ -127,57 +128,45 @@ export function is_prop_source(binding, state) {
 }
 
 /**
- * @param {Expression} node
- * @param {Scope | null} scope
+ * An async thunk. If an `await` inside restores the reaction context via `$.save`,
+ * the body exits through `$.unsave` so the context cannot leak into foreign microtasks
+ * that run before the returned promise settles
+ * @param {Expression | BlockStatement} body
+ * @param {ExpressionMetadata} metadata
  */
-export function should_proxy(node, scope) {
-	if (
-		!node ||
-		node.type === 'Literal' ||
-		node.type === 'TemplateLiteral' ||
-		node.type === 'ArrowFunctionExpression' ||
-		node.type === 'FunctionExpression' ||
-		node.type === 'UnaryExpression' ||
-		node.type === 'BinaryExpression' ||
-		(node.type === 'Identifier' && node.name === 'undefined')
-	) {
-		return false;
+export function async_thunk(body, metadata) {
+	if (!metadata.has_pickled_await) {
+		return b.arrow([], body, true);
 	}
 
-	if (node.type === 'Identifier' && scope !== null) {
-		const binding = scope.get(node.name);
-		// Let's see if the reference is something that can be proxied
-		if (
-			binding !== null &&
-			!binding.reassigned &&
-			binding.initial !== null &&
-			binding.initial.type !== 'FunctionDeclaration' &&
-			binding.initial.type !== 'ClassDeclaration' &&
-			binding.initial.type !== 'ImportDeclaration' &&
-			binding.initial.type !== 'EachBlock' &&
-			binding.initial.type !== 'SnippetBlock'
-		) {
-			return should_proxy(binding.initial, null);
-		}
-	}
+	const block = body.type === 'BlockStatement' ? body : b.block([b.return(body)]);
 
-	return true;
+	return b.arrow(
+		[],
+		b.block([
+			{
+				type: 'TryStatement',
+				block,
+				handler: null,
+				finalizer: b.block([b.stmt(b.call('$.unsave'))])
+			}
+		]),
+		true
+	);
 }
 
 /**
  * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
  * @param {ComponentClientTransformState} state
  * @param {Expression | BlockStatement} expression
- * @param {boolean} [async]
+ * @param {ExpressionMetadata} [metadata]
  */
-export function create_derived(state, expression, async = false) {
-	const thunk = b.thunk(expression, async);
-
-	if (async) {
-		return save(b.call('$.async_derived', thunk));
-	} else {
-		return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', thunk);
+export function create_derived(state, expression, metadata) {
+	if (metadata?.has_await) {
+		return save(b.call('$.async_derived', async_thunk(expression, metadata)));
 	}
+
+	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', b.thunk(expression));
 }
 
 /**

@@ -115,6 +115,24 @@ test('url.searchParams', () => {
 	cleanup();
 });
 
+test('url.searchParams writes do not create a reactive dependency', () => {
+	const url = new SvelteURL('https://svelte.dev');
+	let runs = 0;
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			runs += 1;
+			url.searchParams.set('foo', 'bar');
+		});
+	});
+
+	flushSync();
+
+	assert.equal(runs, 1);
+
+	cleanup();
+});
+
 test('url.searchParams.set updates url when duplicate values collapse to the same joined string', () => {
 	const url = new SvelteURL('https://svelte.dev?a=ab&a=c');
 	const log: any = [];
@@ -237,6 +255,28 @@ test('url.searchParams.forEach re-runs when the search string changes via the UR
 	});
 
 	assert.deepEqual(log, ['foo=1', 'bar=2']);
+
+	cleanup();
+});
+
+test('url.port is updated when the protocol change clears the port', () => {
+	const url = new SvelteURL('http://example.com:443/');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.port);
+		});
+	});
+
+	flushSync(() => {
+		// 443 is the default port for https, so it gets stripped
+		url.protocol = 'https:';
+	});
+
+	assert.equal(url.port, '');
+	assert.equal(url.href, 'https://example.com/');
+	assert.deepEqual(log, ['443', '']);
 
 	cleanup();
 });

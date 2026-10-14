@@ -24,10 +24,7 @@ import {
 	EAGER_EFFECT,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC,
-	WAS_MARKED,
-	CONNECTED,
-	REACTION_RAN
+	ASYNC
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -50,7 +47,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
-/** @type {Map<Source, any>} */
+/** @type {Map<Value, any>} */
 export const old_values = new Map();
 
 /**
@@ -74,9 +71,9 @@ export function set_eager_effects_deferred() {
  */
 // TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
-	/** @type {Value} */
+	/** @type {Source<V>} */
 	var signal = {
-		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
+		f: 0,
 		v,
 		reactions: null,
 		equals,
@@ -144,7 +141,7 @@ export function mutate(source, value) {
 
 /**
  * @template V
- * @param {Source<V>} source
+ * @param {Value<V>} source
  * @param {V} value
  * @param {boolean} [should_proxy]
  * @returns {V}
@@ -172,15 +169,32 @@ export function set(source, value, should_proxy = false) {
 }
 
 /**
+ * A set of signals we have already seen while traversing in mark_reactions.
+ * Not always set to balance the common case of sources only having a couple
+ * of (transitive) dependencies (where always creating a Set would be bad for perf)
+ * with the edge case of extremely deep or wide dependency arrays with cycles.
+ * @type {Set<any> | null}
+ */
+var seen = null;
+/** Number of transitive dependencies, see {@link seen} for more info */
+var count_deps = 0;
+
+/**
  * @template V
- * @param {Source<V>} source
+ * @param {Value<V>} source
  * @param {V} value
  * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
-		old_values.set(source, is_destroying_effect ? value : source.v);
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else if (!old_values.has(source)) {
+			// only record the value from before the first write in this flush, otherwise a
+			// teardown would see the value from before whichever write happened to be last
+			old_values.set(source, source.v);
+		}
 
 		var batch = Batch.ensure();
 
@@ -323,11 +337,37 @@ export function increment(source) {
  * @returns {void}
  */
 export function mark_reactions(batch, signal, wv, updated_during_traversal) {
+	seen = null;
+	count_deps = 0;
+	mark(batch, signal, wv, updated_during_traversal);
+	seen = null;
+}
+
+/**
+ * @param {Batch} batch
+ * @param {Value} signal
+ * @param {number} wv
+ * @param {Effect[] | null} updated_during_traversal
+ * @returns {void}
+ */
+function mark(batch, signal, wv, updated_during_traversal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
 	var runes = is_runes();
 	var length = reactions.length;
+
+	count_deps += length;
+	// Activate the `seen` Set if we think from the unusually high number of deps that
+	// there might be cycles in the graph, to avoid repeated lookups for reactions
+	// Example: https://github.com/sveltejs/svelte/issues/16658 has a graph with one source
+	// reaching ~10000 distinct deriveds/effects each, resulting in 65 million walks through repeated visits.
+	if (count_deps > 100000 && seen === null) seen = new Set();
+
+	if (seen !== null) {
+		if (seen.has(signal)) return;
+		seen.add(signal);
+	}
 
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
@@ -357,18 +397,7 @@ export function mark_reactions(batch, signal, wv, updated_during_traversal) {
 				batch.current.delete(derived);
 				derived.f &= ~CLEAN;
 
-				if ((flags & WAS_MARKED) === 0) {
-					// Only connected deriveds can be reliably unmarked right away
-					if (
-						flags & CONNECTED &&
-						active_reaction !== null &&
-						(active_reaction.f & REACTION_RAN) !== 0
-					) {
-						reaction.f |= WAS_MARKED;
-					}
-
-					mark_reactions(batch, derived, wv, updated_during_traversal);
-				}
+				mark(batch, derived, wv, updated_during_traversal);
 			}
 		} else {
 			var effect = /** @type {Effect} */ (reaction);

@@ -1,8 +1,18 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
-import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../../../constants.js';
+import {
+	BOUNDARY_EFFECT,
+	DESTROYED,
+	DESTROYING,
+	EFFECT_PRESERVED,
+	EFFECT_TRANSPARENT
+} from '#client/constants';
+import {
+	HYDRATION_ERROR,
+	HYDRATION_START_ELSE,
+	HYDRATION_START_FAILED
+} from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
-import { handle_error, invoke_error_boundary } from '../../error-handling.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 import {
 	block,
 	branch,
@@ -22,6 +32,7 @@ import {
 	hydrate_node,
 	hydrating,
 	next,
+	read_hydration_instruction,
 	skip_nodes,
 	set_hydrate_node
 } from '../hydration.js';
@@ -151,16 +162,18 @@ export class Boundary {
 
 		this.#effect = block(() => {
 			if (hydrating) {
-				const comment = /** @type {Comment} */ (this.#hydrate_open);
+				const comment_data = read_hydration_instruction(
+					/** @type {TemplateNode} */ (this.#hydrate_open)
+				);
 				hydrate_next();
 
-				const server_rendered_pending = comment.data === HYDRATION_START_ELSE;
-				const server_rendered_failed = comment.data.startsWith(HYDRATION_START_FAILED);
+				const server_rendered_pending = comment_data === HYDRATION_START_ELSE;
+				const server_rendered_failed = comment_data.startsWith(HYDRATION_START_FAILED);
 
 				if (server_rendered_failed) {
 					// Server rendered the failed snippet - hydrate it.
 					// The serialized error is embedded in the comment: <!--[?<json>-->
-					const serialized_error = JSON.parse(comment.data.slice(HYDRATION_START_FAILED.length));
+					const serialized_error = JSON.parse(comment_data.slice(HYDRATION_START_FAILED.length));
 					this.#hydrate_failed_content(serialized_error);
 				} else if (server_rendered_pending) {
 					this.#hydrate_pending_content();
@@ -190,15 +203,74 @@ export class Boundary {
 	 */
 	#hydrate_failed_content(error) {
 		const failed = this.#props.failed;
+		const { reset, invoke_onerror } = this.#create_reset(error);
+
+		// `onerror` may mutate state, which is disallowed while hydrating
+		queue_micro_task(invoke_onerror);
+
 		if (!failed) return;
 
 		this.#failed_effect = branch(() => {
 			failed(
 				this.#anchor,
 				() => error,
-				() => () => {}
+				() => reset
 			);
 		});
+	}
+
+	/**
+	 * Creates the `reset` function for a failed boundary, along with a function
+	 * that invokes `onerror` with it (if provided)
+	 * @param {unknown} error
+	 * @returns {{ reset: () => void, invoke_onerror: () => void }}
+	 */
+	#create_reset(error) {
+		var did_reset = false;
+		var calling_on_error = false;
+
+		const reset = () => {
+			if (this.#is_destroyed()) return;
+
+			if (did_reset) {
+				w.svelte_boundary_reset_noop();
+				return;
+			}
+
+			did_reset = true;
+
+			if (calling_on_error) {
+				e.svelte_boundary_reset_onerror();
+			}
+
+			if (this.#failed_effect !== null) {
+				pause_effect(this.#failed_effect, () => {
+					this.#failed_effect = null;
+				});
+			}
+
+			this.#run(() => {
+				this.#render();
+			});
+		};
+
+		const invoke_onerror = () => {
+			if (this.#is_destroyed()) return;
+
+			try {
+				calling_on_error = true;
+				this.#props.onerror?.(error, reset);
+				calling_on_error = false;
+			} catch (err) {
+				invoke_error_boundary(err, this.#effect && this.#effect.parent);
+			}
+		};
+
+		return { reset, invoke_onerror };
+	}
+
+	#is_destroyed() {
+		return (this.#effect.f & (DESTROYED | DESTROYING)) !== 0;
 	}
 
 	#hydrate_pending_content() {
@@ -209,14 +281,34 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
+
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
+			var handled = false;
 
 			fragment.append(anchor);
 
 			this.#main_effect = this.#run(() => {
-				return branch(() => this.#children(anchor));
+				try {
+					return branch(() => this.#children(anchor));
+				} catch (error) {
+					try {
+						this.error(error);
+						handled = true;
+					} catch (error) {
+						invoke_error_boundary(error, this.#effect.parent);
+					}
+
+					return null;
+				}
 			});
+
+			if (this.#main_effect === null) {
+				this.#offscreen_fragment = null;
+				if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
+				return;
+			}
 
 			if (this.#pending_count === 0) {
 				this.#anchor.before(fragment);
@@ -302,9 +394,6 @@ export class Boundary {
 		try {
 			Batch.ensure();
 			return fn();
-		} catch (e) {
-			handle_error(e);
-			return null;
 		} finally {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
@@ -376,6 +465,10 @@ export class Boundary {
 
 	/** @param {unknown} error */
 	error(error) {
+		if (error === HYDRATION_ERROR) {
+			throw error;
+		}
+
 		// If we have nothing to capture the error, or if we hit an error while
 		// rendering the fallback, re-throw for another boundary to handle
 		if (!this.#props.onerror && !this.#props.failed) {
@@ -388,7 +481,7 @@ export class Boundary {
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
 
 			current_batch.oncommit(() => {
-				this.#handle_error(error);
+				if (!this.#is_destroyed()) this.#handle_error(error);
 			});
 		} else {
 			this.#handle_error(error);
@@ -420,45 +513,17 @@ export class Boundary {
 			set_hydrate_node(skip_nodes());
 		}
 
-		var onerror = this.#props.onerror;
 		let failed = this.#props.failed;
-		var did_reset = false;
-		var calling_on_error = false;
-
-		const reset = () => {
-			if (did_reset) {
-				w.svelte_boundary_reset_noop();
-				return;
-			}
-
-			did_reset = true;
-
-			if (calling_on_error) {
-				e.svelte_boundary_reset_onerror();
-			}
-
-			if (this.#failed_effect !== null) {
-				pause_effect(this.#failed_effect, () => {
-					this.#failed_effect = null;
-				});
-			}
-
-			this.#run(() => {
-				this.#render();
-			});
-		};
 
 		/** @param {unknown} transformed_error */
 		const handle_error_result = (transformed_error) => {
-			try {
-				calling_on_error = true;
-				onerror?.(transformed_error, reset);
-				calling_on_error = false;
-			} catch (error) {
-				invoke_error_boundary(error, this.#effect && this.#effect.parent);
-			}
+			if (this.#is_destroyed()) return;
 
-			if (failed) {
+			const { reset, invoke_onerror } = this.#create_reset(transformed_error);
+
+			invoke_onerror();
+
+			if (failed && !this.#is_destroyed()) {
 				this.#failed_effect = this.#run(() => {
 					try {
 						return branch(() => {
@@ -484,6 +549,8 @@ export class Boundary {
 		};
 
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
+
 			// Run the error through the API-level transformError transform (e.g. SvelteKit's handleError)
 			/** @type {unknown} */
 			var result;

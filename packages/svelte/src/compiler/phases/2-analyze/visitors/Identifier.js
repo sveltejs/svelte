@@ -1,12 +1,11 @@
 /** @import { Expression, Identifier } from 'estree' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
-import { should_proxy } from '../../3-transform/client/utils.js';
+import { should_proxy, get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
-import { get_rune } from '../../scope.js';
 import { is_component_node } from '../../nodes.js';
 
 /**

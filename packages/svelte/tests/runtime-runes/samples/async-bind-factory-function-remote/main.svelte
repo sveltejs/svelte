@@ -21,6 +21,8 @@
 		const indirect = () => checkedFactory()();
 		return indirect;
 	}
+
+	const arrow = () => () => checked;
 </script>
 
 <!-- force into separate effects -->
@@ -38,4 +40,7 @@
 {/if}
 {#if true}
 	{indirectChecked2()()}
+{/if}
+{#if true}
+	{arrow()()}
 {/if}

@@ -1,6 +1,6 @@
 /** @import { ComponentContext, Effect } from '#client' */
 import { DESTROYING, STATE_SYMBOL } from '#client/constants';
-import { component_context } from '../../../context.js';
+import { component_context, mark_as_component } from '../../../context.js';
 import { effect, render_effect } from '../../../reactivity/effects.js';
 import { active_effect, untrack } from '../../../runtime.js';
 
@@ -23,7 +23,12 @@ function is_bound_this(bound_value, element_or_component) {
  * 										returns all the parts of the each block context that are used in the expression
  * @returns {void}
  */
-export function bind_this(element_or_component = {}, update, get_value, get_parts) {
+export function bind_this(
+	element_or_component = mark_as_component(),
+	update,
+	get_value,
+	get_parts
+) {
 	var component_effect = /** @type {ComponentContext} */ (component_context).r;
 	var parent = /** @type {Effect} */ (active_effect);
 

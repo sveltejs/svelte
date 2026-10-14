@@ -1,8 +1,8 @@
 /** @import { Expression, Identifier, Literal, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types' */
-import { get_rune } from '../../scope.js';
-import { ensure_no_module_import_conflict, validate_identifier_name } from './shared/utils.js';
+import { get_rune, validate_identifier_name } from '../../scope.js';
+import { ensure_no_module_import_conflict } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { extract_paths } from '../../../utils/ast.js';

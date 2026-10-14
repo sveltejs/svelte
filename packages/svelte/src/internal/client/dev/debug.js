@@ -13,7 +13,6 @@ import {
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	WAS_MARKED,
 	MANAGED_EFFECT
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
@@ -208,7 +207,6 @@ export function log_reactions(signal) {
 
 		if ((flags & CLEAN) !== 0) names.push('CLEAN');
 		if ((flags & CONNECTED) !== 0) names.push('CONNECTED');
-		if ((flags & WAS_MARKED) !== 0) names.push('WAS_MARKED');
 		if ((flags & INERT) !== 0) names.push('INERT');
 		if ((flags & DESTROYED) !== 0) names.push('DESTROYED');
 

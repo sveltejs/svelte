@@ -102,7 +102,7 @@ To implement a chat window that autoscrolls to the bottom when new messages appe
 
 In Svelte 4, we do this with `beforeUpdate`, but this is a flawed approach — it fires before _every_ update, whether it's relevant or not. In the example below, we need to introduce checks like `updatingMessages` to make sure we don't mess with the scroll position when someone toggles dark mode.
 
-With runes, we can use `$effect.pre`, which behaves the same as `$effect` but runs before the DOM is updated. As long as we explicitly reference `messages` inside the effect body, it will run whenever `messages` changes, but _not_ when `theme` changes.
+With runes, we can use `$effect.pre`, which behaves the same as `$effect` but runs before DOM updates scheduled after it (see [$effect.pre]($effect#$effect.pre) for the exact ordering). As long as we explicitly reference `messages` inside the effect body, it will run whenever `messages` changes, but _not_ when `theme` changes.
 
 `beforeUpdate`, and its equally troublesome counterpart `afterUpdate`, are therefore deprecated in Svelte 5.
 
