@@ -684,16 +684,12 @@ export class Batch {
 		collected_effects = null;
 
 		// if render effects wrote to state, they may have invalidated themselves (or
-		// an ancestor), in which case newly collected effects will be destroyed
-		// and recreated — hand them over to the next batch instead of running them now
-		var next = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
-
-		if (next !== null && effects.length > length) {
+		// an ancestor), in which case newly collected effects should not run
+		if (effects.length > length) {
 			for (var i = length; i < effects.length; i += 1) {
 				var e = effects[i];
 
 				if (has_dirty_ancestor(e)) {
-					next.schedule(e);
 					e.f |= DESTROYED; // prevent it from running in `flush_queued_effects`
 				}
 			}
