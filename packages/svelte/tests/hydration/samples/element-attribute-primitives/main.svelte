@@ -1,5 +1,5 @@
 <script>
-	let { values, size = 24, spread, show, n = 1 } = $props();
+	let { values, size = 24, spread, custom, show, n = 1 } = $props();
 </script>
 
 <div
@@ -18,9 +18,11 @@
 	data-null={values['data-null']}
 	data-undefined={values['data-undefined']}
 	data-object={values['data-object']}
+	draggable={values.draggable}
 ></div>
 <svg width={size} height={size} stroke-width={1.5} viewBox="0 0 24 24"><rect x={1} /></svg>
 <button {...spread}>x</button>
+<button {...custom}>y</button>
 {#if show}
 	<section data-n={n} tabindex={-1}></section>
 {/if}
