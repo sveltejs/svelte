@@ -148,6 +148,12 @@ export class Batch {
 	values = null;
 
 	/**
+	 * True if `values` contains values belonging to other batches, i.e. this
+	 * batch's view of the world differs from the real world
+	 */
+	time_travelling = false;
+
+	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Set<(batch: Batch) => void>}
@@ -346,12 +352,7 @@ export class Batch {
 
 		current_batch = this;
 
-		if (this.started) {
-			for (const [source, snapshot] of this.current) {
-				mark_reactions(this, source, snapshot.wv, null);
-			}
-		}
-
+		var started = this.started;
 		this.started = true;
 
 		if (DEV) {
@@ -371,6 +372,14 @@ export class Batch {
 		}
 
 		this.apply();
+
+		// re-mark reactions after applying, so that values belonging to other
+		// batches that are invalidated by this batch's changes are removed
+		if (started) {
+			for (const [source, snapshot] of this.current) {
+				mark_reactions(this, source, snapshot.wv, null);
+			}
+		}
 
 		/** @type {Effect[]} */
 		var effects = (collected_effects = []);
@@ -558,9 +567,10 @@ export class Batch {
 
 		while (batch !== null) {
 			if (!batch.is_fork) {
-				// if the batches are connected, break
+				// if the batches are connected, break. deriveds don't count, since a derived
+				// can be updated in two batches that otherwise touch disjoint sets of sources
 				for (const value of this.current.keys()) {
-					if (batch.current.has(value)) {
+					if ((value.f & DERIVED) === 0 && batch.current.has(value)) {
 						return batch;
 					}
 				}
@@ -973,6 +983,7 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		this.values = new Map(this.current);
+		this.time_travelling = false;
 
 		// ...and undo changes belonging to other batches unless they intersect
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
@@ -995,6 +1006,7 @@ export class Batch {
 				for (const [value, snapshot] of batch.previous) {
 					if (!this.values.has(value)) {
 						this.values.set(value, snapshot);
+						this.time_travelling = true;
 					}
 				}
 			}
@@ -1220,8 +1232,10 @@ function mark_effects(batch, value, sources, marked, checked) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
+				// the batch's value for this derived (and the version it was checked at)
+				// may be outdated now that the other batch has committed
 				batch.current.delete(/** @type {Derived} */ (reaction));
-				batch.cvs.set(/** @type {Derived} */ (reaction), -1);
+				batch.cvs.delete(reaction);
 
 				mark_effects(batch, /** @type {Derived} */ (reaction), sources, marked, checked);
 			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources, checked)) {
@@ -1539,7 +1553,9 @@ export function set_cv(reaction, cv = write_version) {
 	active_batch?.cvs.set(reaction, cv);
 
 	if (!current_batch?.is_fork && !running_eager_effect) {
-		reaction.cv = cv;
+		// a derived computed in a different view of the world is not necessarily
+		// up to date in the real world, so needs to be recomputed outside it
+		reaction.cv = (reaction.f & DERIVED) !== 0 && active_batch?.time_travelling ? -1 : cv;
 	}
 }
 
