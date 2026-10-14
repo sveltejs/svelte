@@ -429,10 +429,9 @@ export class Batch {
 		// an if block that contains the last blocking pending effect falsy,
 		// causing the block to no longer be deferred.
 		for (const [reaction, status] of this.#dirty_reactions) {
-			if ((reaction.f & DERIVED) !== 0) {
-				set_signal_status(reaction, status);
-			} else if (status === DIRTY || (reaction.f & DIRTY) === 0) {
-				set_signal_status(reaction, status);
+			set_signal_status(reaction, status);
+
+			if ((reaction.f & DERIVED) === 0) {
 				this.schedule(/** @type {Effect} */ (reaction));
 			}
 		}
@@ -770,20 +769,15 @@ export class Batch {
 		// A later batch may also own a newer value of the source or one of a derived's dependencies.
 		// The check above isn't sufficient here: a later batch's write is visible through `batch_values`,
 		// so comparing what was read against the real value could not attribute the value to the right
-		// batch, see `async-dont-rebase-new-batch-4`. We only need to look one level deep: `is_dirty`
-		// evaluates the top-most deriveds first, so a dependency derived that was itself not the latest
-		// value was not written to the real world, and differs from our value for it.
-
+		// batch, see `async-dont-rebase-new-batch-4`.
 		for (let batch = this.next; batch !== null && is_latest_value; batch = batch.next) {
 			if (batch.is_fork) continue;
 
 			if (
 				batch.current.has(source) ||
 				((source.f & DERIVED) !== 0 &&
-					/** @type {Derived} */ (source).deps?.some(
-						(d) =>
-							/** @type {Batch} */ (batch).current.has(d) ||
-							(this.current.has(d) && /** @type {{ v: any }} */ (this.current.get(d)).v !== d.v)
+					/** @type {Derived} */ (source).deps?.some((d) =>
+						/** @type {Batch} */ (batch).current.has(d)
 					))
 			) {
 				is_latest_value = false;
@@ -1309,15 +1303,12 @@ export function eager(fn) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
-			var previous_stale_sources = stale_sources;
 
 			try {
 				batch_values = null;
-				stale_sources = null;
 				value = fn();
 			} finally {
 				batch_values = previous_batch_values;
-				stale_sources = previous_stale_sources;
 			}
 
 			return;
