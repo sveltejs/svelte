@@ -232,11 +232,12 @@ export class Batch {
 	}
 
 	/**
-	 * Block/async effects that were created or traversed in this batch. Only tracked
-	 * for forks (`null` otherwise), because only they need it (see `mark`).
-	 * @type {Set<Effect> | null}
+	 * Block/async effects that were created or traversed in this batch (render/user effects it saw end up in
+	 * `#dirty_reactions` instead). Used to discover reactions that came to depend on this batch's writes
+	 * without it knowing, e.g. because a later batch created them (see `mark`).
+	 * @type {Set<Effect> }
 	 */
-	seen_effects = null;
+	seen_effects = new Set();
 
 	/** @type {Batch | null} */
 	prev = null;
@@ -411,12 +412,9 @@ export class Batch {
 		if (this.is_fork) return true;
 		if (this.#blocking_pending === null) return false;
 
-		for (let e of this.#blocking_pending.keys()) {
+		for (var effect of this.#blocking_pending.keys()) {
 			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
-			while (e.parent !== null && !this.#skipped_branches.has(e)) {
-				e = e.parent;
-			}
-			if (e.parent === null) return true;
+			if (!this.#is_skipped(effect)) return true;
 		}
 
 		return false;
@@ -552,8 +550,6 @@ export class Batch {
 	}
 
 	#process() {
-		this.started = true;
-
 		if (DEV) {
 			// track all the values that were updated during this flush,
 			// so that they can be reset afterwards
@@ -561,6 +557,22 @@ export class Batch {
 				source_stacks.add(value);
 			}
 		}
+
+		if (async_mode_flag && this.started) {
+			// Since this batch last ran, reactions may have come to depend on its writes without it knowing — e.g. effects in
+			// branches a later batch created, or that read a derived whose dependencies this batch wrote in a view that hid
+			// those writes. They need to (re)run in this batch's view. Write versions can tell whether a reaction saw a
+			// write, unless this is a fork: its writes never reached the real world, so reactions that ran since did not
+			// see them, despite their newer write versions. (Without async mode, there are no such views to hide writes,
+			// so every reaction of a write is marked when it happens)
+			var status = this.is_fork ? DIRTY : MAYBE_DIRTY;
+
+			for (const [source, info] of this.current) {
+				if (!info.is_derived) this.mark(source, status, true, false);
+			}
+		}
+
+		this.started = true;
 
 		// We always reschedule previously-deferred effects, not just when
 		// #is_deferred() is true, because traversing the tree could make
@@ -749,7 +761,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else {
-					this.seen_effects?.add(effect);
+					this.seen_effects.add(effect);
 					if (is_dirty(effect)) {
 						update_effect(effect);
 					}
@@ -794,8 +806,9 @@ export class Batch {
 	 * @param {Value} value
 	 * @param {number} status
 	 * @param {boolean} not_yet - whether to mark effects that have not yet run, as opposed to those that have already run
+	 * @param {boolean} eager - whether to collect eager effects, which is only necessary if the writes are new to the real world
 	 */
-	mark(value, status, not_yet = false) {
+	mark(value, status, not_yet = false, eager = not_yet) {
 		var reactions = value.reactions;
 		if (reactions === null) return false;
 
@@ -809,7 +822,7 @@ export class Batch {
 
 				// deriveds are traversed regardless of their status and only marked
 				// if something downstream was marked, so that we don't dirty deriveds needlessly
-				if (this.mark(derived, MAYBE_DIRTY, not_yet)) {
+				if (this.mark(derived, MAYBE_DIRTY, not_yet, eager)) {
 					set_signal_status(derived, status);
 					marked = true;
 				}
@@ -819,11 +832,14 @@ export class Batch {
 				if ((flags & EAGER_EFFECT) !== 0) {
 					// Like in `mark_reactions`, these aren't scheduled but run right away (`flush_eager_effects`).
 					// For revalidations, they already did as part of the real world's write that caused it.
-					if (not_yet) eager_effects.add(effect);
+					if (eager) eager_effects.add(effect);
 				} else if (
 					not_yet
-						? !this.seen_effects?.has(effect) && !this.#dirty_reactions.has(effect)
-						: (flags & (ASYNC | BLOCK_EFFECT)) === 0 || this.seen_effects?.has(effect)
+						? !this.seen_effects.has(effect) &&
+							!this.#dirty_reactions.has(effect) &&
+							// branches that this batch skips are going to be destroyed, don't (re)run anything in them
+							!this.#is_skipped(effect)
+						: (flags & (ASYNC | BLOCK_EFFECT)) === 0 || this.seen_effects.has(effect)
 				) {
 					this.schedule(effect, status);
 					marked = true;
@@ -832,6 +848,20 @@ export class Batch {
 		}
 
 		return marked;
+	}
+
+	/**
+	 * Whether `effect` is (inside) a branch that this batch skips
+	 * @param {Effect} effect
+	 */
+	#is_skipped(effect) {
+		if (this.#skipped_branches.size === 0) return false;
+
+		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
+			if (this.#skipped_branches.has(e)) return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -852,6 +882,11 @@ export class Batch {
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
 			if (d) deferred.promise.then(d.resolve).catch(d.reject);
+		}
+
+		// The merged batch saw this batch's writes, so the effects it ran are up to date with the merged view
+		for (const effect of batch.seen_effects) {
+			this.seen_effects.add(effect);
 		}
 
 		for (const b of batch.dependent) {
@@ -1709,7 +1744,6 @@ export function fork(fn) {
 	var committed = false;
 	var batch = Batch.ensure();
 	batch.is_fork = true;
-	batch.seen_effects = new Set();
 
 	batch_values = new Map();
 	wv_values = new Map();
@@ -1758,7 +1792,9 @@ export function fork(fn) {
 				if (source.equals(content.v)) continue;
 
 				batch.capture(source, content.v, content.is_derived);
-				// dirty those effects the fork did not see yet, e.g. because a later batch created new branches
+				// Collect the eager effects that need to run now that the writes reach the real world. This also dirties
+				// the effects the fork did not see yet (e.g. because a later batch created new branches), which `#process`
+				// would do as well (the fork was processed before), but it never collects eager effects
 				if (!content.is_derived) batch.mark(source, MAYBE_DIRTY, true);
 			}
 
