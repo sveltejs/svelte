@@ -454,9 +454,11 @@ export class Batch {
 
 		if (next !== null && effects.length > length) {
 			for (var i = length; i < effects.length; i += 1) {
-				if (has_dirty_ancestor(effects[i])) {
-					next.schedule(effects[i]);
-					effects.splice(i--, 1);
+				var e = effects[i];
+
+				if (has_dirty_ancestor(e)) {
+					next.schedule(e);
+					e.f |= DESTROYED; // prevent it from running in `flush_queued_effects`
 				}
 			}
 		}
