@@ -405,6 +405,7 @@ async function run_test_variant(
 		const target = window.document.querySelector('main') as HTMLElement;
 
 		let snapshot = undefined;
+		let tail: AsyncIterable<string> | undefined;
 
 		if (variant === 'hydrate' || variant === 'ssr' || variant === 'async-ssr') {
 			if (ssr_context !== null) {
@@ -424,6 +425,7 @@ async function run_test_variant(
 					? await render_result
 					: render_result;
 			const { body, head } = rendered;
+			if ('tail' in rendered) tail = rendered.tail;
 
 			const prefix = variant === 'async-ssr' ? 'async_' : '';
 			fs.writeFileSync(`${cwd}/_output/${prefix}rendered.html`, body);
@@ -494,6 +496,16 @@ async function run_test_variant(
 				)?.textContent;
 				if (!script) return;
 				(0, eval)(script);
+
+				// simulate streaming the tail after the rendered HTML
+				if (tail) {
+					const chunks = tail;
+					(async () => {
+						for await (const chunk of chunks) {
+							(0, eval)(chunk.replace(/^<script[^>]*>/, '').replace(/<\/script>$/, ''));
+						}
+					})();
+				}
 			};
 
 			if (runes) {

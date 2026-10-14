@@ -3,6 +3,9 @@ import { install } from 'devalue/uneval-stream/client';
 import { async_mode_flag } from '../flags/index.js';
 import * as e from './errors.js';
 
+/** Passed to `#touch` when every key was changed */
+const ALL = Symbol();
+
 /**
  * Handles the `Warp` values that the server's `<script>`s have pushed onto `svelte.d`, and those
  * they push later, by adding them to `svelte.w`. Does nothing if that's already happening
@@ -76,6 +79,31 @@ export class Warp {
 	}
 
 	/**
+	 * While values are still streaming in from the server, records that `key` was changed,
+	 * so that a value for it that arrives later doesn't overwrite the change
+	 * @param {K | typeof ALL} key
+	 */
+	#touch(key) {
+		const streams = window.__svelte?.r;
+		if (streams === undefined || document.readyState !== 'loading') return;
+
+		for (const id in streams) {
+			const touched = streams[id];
+			const keys = touched.get(this.#id);
+
+			if (keys === true) continue;
+
+			if (key === ALL) {
+				touched.set(this.#id, true);
+			} else if (keys === undefined) {
+				touched.set(this.#id, new Set([key]));
+			} else {
+				keys.add(key);
+			}
+		}
+	}
+
+	/**
 	 * @param {K} key
 	 * @returns {V | undefined}
 	 */
@@ -98,6 +126,7 @@ export class Warp {
 	 */
 	set(key, value) {
 		this.#values().set(key, value);
+		this.#touch(key);
 		return this;
 	}
 
@@ -111,6 +140,7 @@ export class Warp {
 		const values = this.#values();
 		if (values.has(key)) return /** @type {V} */ (values.get(key));
 		values.set(key, value);
+		this.#touch(key);
 		return value;
 	}
 
@@ -125,6 +155,7 @@ export class Warp {
 		if (values.has(key)) return /** @type {V} */ (values.get(key));
 		const value = callback(key);
 		values.set(key, value);
+		this.#touch(key);
 		return value;
 	}
 
@@ -133,11 +164,15 @@ export class Warp {
 	 * @returns {boolean}
 	 */
 	delete(key) {
+		// even if the key doesn't exist yet, a value for it may still arrive from the server
+		this.#touch(key);
 		return this.#values().delete(key);
 	}
 
 	clear() {
 		this.#values().clear();
+		// values that arrive later are discarded too
+		this.#touch(ALL);
 	}
 
 	/**

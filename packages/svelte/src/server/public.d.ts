@@ -14,4 +14,13 @@ export interface SyncRenderOutput {
 	};
 }
 
-export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
+export interface AsyncRenderOutput extends SyncRenderOutput {
+	/**
+	 * `<script>` tags that must be written into the response after the rendered HTML, in order.
+	 * When using `experimental.streaming`, these send the data loaded inside `<svelte:boundary>` elements
+	 * with a `pending` snippet to the client as it becomes available. Otherwise, this is empty.
+	 */
+	tail: AsyncIterable<string>;
+}
+
+export type RenderOutput = SyncRenderOutput & PromiseLike<AsyncRenderOutput>;
