@@ -424,7 +424,9 @@ export function execute_derived(derived) {
  */
 export function update_derived(derived) {
 	var value = execute_derived(derived);
-	if (!derived.equals.call(own_value(derived), value)) {
+	if (
+		batch_values === null ? !derived.equals(value) : !derived.equals.call(own_value(derived), value)
+	) {
 		if (current_batch !== null || previous_batch !== null) {
 			// `capture` decides whether the underlying value is updated (it isn't in a fork,
 			// or if a later batch holds a newer value) and records it in the batch either way.
