@@ -16,23 +16,23 @@ export default test({
 
 		const [up, down, show1, show2, shift_a, shift_t] = target.querySelectorAll('button');
 
-		// batch B: reveals boundary 1 -> commits with pending snippet, stays live
+		// batch A: reveals boundary 1 -> commits with pending snippet, stays live
 		show1.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>loading 1...</p>`);
 
-		// batch C: reveals boundary 2 -> commits with pending snippet, stays live
+		// batch B: reveals boundary 2 -> commits with pending snippet, stays live
 		show2.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>loading 1...</p> <p>loading 2...</p>`);
 
-		// batch A: writes a=1; the async-a effect is owned by C, so A merges with
-		// C and stays pending. B remains separate
+		// batch C: writes a=1; the async-a effect is owned by B, so C merges with
+		// B and stays pending. A remains separate
 		up.click();
 		await tick();
 
-		// B's continuation first-reads `a`, which is overlaid by the pending
-		// merged batch's pre-write value (0). This is noticed so B tells C
+		// A's continuation first-reads `a`, which is overlaid by the pending
+		// merged batch's pre-write value (0). This is noticed so A tells B
 		// to rerun the async effect with the current value.
 		shift_t.click();
 		await tick();

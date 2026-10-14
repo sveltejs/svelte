@@ -3,19 +3,14 @@
 	let a = $state(0);
 	let b = $state(0);
 	let c = $state(0);
-	let calls = [];
 
 	const resolvers = [];
 	function slow(v) {
 		return new Promise((r) => resolvers.push(() => r(v)));
 	}
 
-	export function get_calls() {
-		return calls;
-	}
-
 	function track(...args) {
-		calls.push(args.join('/'));
+		console.log(args.join('/'));
 		return slow(args.join('/'));
 	}
 </script>
