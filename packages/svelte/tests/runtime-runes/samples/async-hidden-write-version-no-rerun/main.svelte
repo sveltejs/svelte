@@ -2,17 +2,13 @@
 	import Child from './Child.svelte';
 	let x = $state(1);
 	let s = $state(0);
-	let logs = [];
 
 	const resolvers = [];
 	function slow(v) {
 		return new Promise((r) => resolvers.push(() => r(v)));
 	}
 	function log(v) {
-		logs.push(v);
-	}
-	export function get_logs() {
-		return logs;
+		console.log(v);
 	}
 </script>
 
