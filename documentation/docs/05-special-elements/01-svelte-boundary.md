@@ -38,7 +38,7 @@ This snippet will be shown when the boundary is first created, and will remain v
 
 The `pending` snippet will _not_ be shown for subsequent async updates — for these, you can use [`$effect.pending()`]($effect#$effect.pending).
 
-> [!NOTE] In the [playground](/playground), your app is rendered inside a boundary with an empty pending snippet, so that you can use `await` without having to create one.
+> [!NOTE] During server-side rendering, a boundary with a `pending` snippet renders that snippet and ignores the rest of its content. See [Server-side rendering](await-expressions#Server-side-rendering).
 
 
 ### `failed`
