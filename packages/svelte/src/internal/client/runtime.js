@@ -833,8 +833,7 @@ function get_batch_value(signal) {
 			active_reaction !== null &&
 			active_reaction === active_effect &&
 			!untracking &&
-			(active_reaction.f & REACTION_IS_UPDATING) !== 0 &&
-			(current_sources === null || !current_sources.has(signal))
+			(active_reaction.f & REACTION_IS_UPDATING) !== 0
 		) {
 			read_batch_local = true;
 		}
