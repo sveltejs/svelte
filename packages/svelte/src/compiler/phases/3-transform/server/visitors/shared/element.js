@@ -274,6 +274,7 @@ export function build_element_attributes(node, context, transform) {
 				can_use_literal &&
 				value.type === 'TemplateLiteral' &&
 				Array.isArray(attribute.value) &&
+				// a lone `{expression}` is the user's own value: `${null}` gives "null" there, not ''
 				attribute.value.length > 1 &&
 				can_inline_template_attribute(name, value)
 			) {
@@ -304,12 +305,7 @@ export function build_element_attributes(node, context, transform) {
 }
 
 /**
- * A template literal built from markup is always a string, so `$.attr`, `$.attr_class` and
- * `$.attr_style` would do nothing but escape it. That does not hold for boolean attributes and
- * the ones whose output depends on the value, nor for `class` and `style` if the string could be
- * empty. The caller also checks that the markup has more than one chunk: a lone `{expression}`
- * that happens to be a template literal is the user's own, and its interpolations coerce
- * differently (`${null}` is `"null"` there, not `''`).
+ * Returns true if `$.attr`, `$.attr_class` or `$.attr_style` would only escape this value.
  * @param {string} name
  * @param {TemplateLiteral} value
  */
@@ -322,9 +318,6 @@ function can_inline_template_attribute(name, value) {
 }
 
 /**
- * Escapes the static parts now and each dynamic part at runtime, which gives the same string as
- * escaping the concatenated value. The attribute then becomes part of the surrounding template,
- * with no intermediate string and no runtime helper call.
  * @param {string} name
  * @param {TemplateLiteral} value
  * @param {string | null} css_hash
