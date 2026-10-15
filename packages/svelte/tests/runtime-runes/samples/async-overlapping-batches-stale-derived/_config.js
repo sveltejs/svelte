@@ -7,29 +7,30 @@ import { test } from '../../test';
 // they still need to re-run, since what they show is the first batch's view.
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
-		for (let i = 0; i < 3; i++) {
-			instance.resolve_all();
-			await tick();
-		}
-		assert.htmlEqual(target.innerHTML, '<p>p0|0</p><em>slow0|key0</em>');
-		assert.deepEqual(instance.log, [0]);
+	async test({ assert, target, logs }) {
+		await tick();
 
-		instance.set_b(1);
+		const [resolve_all, set_1, set_0] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('#output');
+
+		assert.htmlEqual(output.innerHTML, '<p>p0|0</p><em>slow0|key0</em>');
+		assert.deepEqual(logs, [0]);
+
+		set_1.click();
 		flushSync();
-		instance.set_b(0);
+		set_0.click();
 
 		// the first batch resolves and commits, the second one is still pending
-		instance.resolve_all();
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>p0|1</p><em>slow0|key1</em>');
-		assert.deepEqual(instance.log, [0, 1]);
+		assert.htmlEqual(output.innerHTML, '<p>p0|1</p><em>slow0|key1</em>');
+		assert.deepEqual(logs, [0, 1]);
 
 		for (let i = 0; i < 3; i++) {
-			instance.resolve_all();
+			resolve_all.click();
 			await tick();
 		}
-		assert.htmlEqual(target.innerHTML, '<p>p0|0</p><em>slow0|key0</em>');
-		assert.deepEqual(instance.log, [0, 1, 0]);
+		assert.htmlEqual(output.innerHTML, '<p>p0|0</p><em>slow0|key0</em>');
+		assert.deepEqual(logs, [0, 1, 0]);
 	}
 });

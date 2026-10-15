@@ -1,6 +1,10 @@
 <script>
+	import { fork } from 'svelte';
+
+	let input;
 	let a = $state(0);
 	let b = $state(0);
+	let current_fork;
 
 	/** @type {Map<string, Array<() => void>>} */
 	const registry = new Map();
@@ -17,22 +21,31 @@
 		return promise;
 	}
 
-	export function set(values) {
-		if ('a' in values) a = values.a;
-		if ('b' in values) b = values.b;
-	}
-
 	/** resolve the promises created for `tag` and `value` */
-	export function settle(tag, value) {
+	function settle(tag, value) {
 		for (const r of registry.get(tag + value) ?? []) r();
 		registry.delete(tag + value);
 	}
 
-	/** the latest promise created for `tag` */
-	export function latest(tag) {
-		return promises.get(tag);
+	function update_b() {
+		b = +input.value;
+	}
+
+	function update_a_after_b() {
+		const value = +input.value;
+		promises.get('b').then(() => (a = value));
 	}
 </script>
 
-{#await f('a', a)}<i>pending</i>{:then v}<q>{v}</q>{/await}
-{#await f('b', b)}<i>pending</i>{:then v}<s>{v}|{a}</s>{/await}
+<input bind:this={input}>
+<button onclick={() => (a = +input.value)}>set a</button>
+<button onclick={() => (current_fork = fork(update_b))}>set b (fork)</button>
+<button onclick={() => current_fork?.discard()}>discard</button>
+<button onclick={update_a_after_b}>set a after b resolves</button>
+<button onclick={() => settle('a', +input.value)}>resolve a</button>
+<button onclick={() => settle('b', +input.value)}>resolve b</button>
+
+<div id="output">
+	{#await f('a', a)}<i>pending</i>{:then v}<q>{v}</q>{/await}
+	{#await f('b', b)}<i>pending</i>{:then v}<s>{v}|{a}</s>{/await}
+</div>
