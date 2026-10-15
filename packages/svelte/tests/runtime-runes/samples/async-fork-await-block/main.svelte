@@ -1,6 +1,10 @@
 <script>
+	import { fork } from 'svelte';
+
+	let input;
 	let b = $state(0);
-	const registry = [];
+	let current_fork;
+	export const registry = [];
 
 	function f(value) {
 		return new Promise((resolve, reject) =>
@@ -8,17 +12,22 @@
 		);
 	}
 
-	export function set_b(v) {
-		b = v;
-	}
-
-	export function resolve_all() {
+	function resolve_all() {
 		for (const r of registry.splice(0)) r();
 	}
 
-	export function pending() {
-		return registry.length;
+	function update() {
+		b = +input.value;
 	}
 </script>
 
-{#await f(b) then v}<q>{v}</q>{:catch e}<s>{e}</s>{/await}
+<input bind:this={input}>
+<button onclick={update}>set b</button>
+<button onclick={() => (current_fork = fork(update))}>set b (fork)</button>
+<button onclick={resolve_all}>resolve all</button>
+<button onclick={() => current_fork?.discard()}>discard</button>
+<button onclick={() => current_fork?.commit()}>commit</button>
+
+<div id="output">
+	{#await f(b) then v}<q>{v}</q>{:catch e}<s>{e}</s>{/await}
+</div>

@@ -1,4 +1,4 @@
-import { fork, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 // A fork that is committed while it still waits for other async work (here: `<p>`) is a pending real batch:
@@ -7,57 +7,81 @@ import { test } from '../../test';
 // are their own batches again, like for any real update
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
-		instance.settle('p', 0);
+	async test({ assert, target }) {
+		const [input] = target.querySelectorAll('input');
+		const [set_a, fork, commit, resolve_p, resolve_aw] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('#output');
+
+		const set_a_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			set_a.click();
+		};
+
+		const fork_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			fork.click();
+		};
+
+		const resolve_p_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			resolve_p.click();
+		};
+
+		const resolve_aw_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			resolve_aw.click();
+		};
+
+		resolve_p_with(0);
 		await tick();
-		instance.settle('aw', 0);
+		resolve_aw_with(0);
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>0</p><q>0</q>');
+		assert.htmlEqual(output.innerHTML, '<p>0</p><q>0</q>');
 
 		// resolves before the batch is done; the real world's older promise is obsolete once the fork is committed
-		instance.set({ a: 1 });
+		set_a_with(1);
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>0</p><i>pending</i>');
-		let f = fork(() => instance.set({ b: 10 }));
+		assert.htmlEqual(output.innerHTML, '<p>0</p><i>pending</i>');
+		fork_with(10);
 		await tick();
-		f.commit();
+		commit.click();
 		await tick();
-		instance.settle('aw', 11);
+		resolve_aw_with(11);
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>0</p><i>pending</i>');
-		instance.settle('aw', 1);
+		assert.htmlEqual(output.innerHTML, '<p>0</p><i>pending</i>');
+		resolve_aw_with(1);
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>0</p><i>pending</i>');
-		instance.settle('p', 10);
+		assert.htmlEqual(output.innerHTML, '<p>0</p><i>pending</i>');
+		resolve_p_with(10);
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>10</p><q>11</q>');
+		assert.htmlEqual(output.innerHTML, '<p>10</p><q>11</q>');
 
 		// resolves after the batch is done
-		f = fork(() => instance.set({ b: 20 }));
+		fork_with(20);
 		await tick();
-		f.commit();
+		commit.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>10</p><q>11</q>');
-		instance.settle('p', 20);
+		assert.htmlEqual(output.innerHTML, '<p>10</p><q>11</q>');
+		resolve_p_with(20);
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>20</p><i>pending</i>');
-		instance.settle('aw', 21);
+		assert.htmlEqual(output.innerHTML, '<p>20</p><i>pending</i>');
+		resolve_aw_with(21);
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>20</p><q>21</q>');
+		assert.htmlEqual(output.innerHTML, '<p>20</p><q>21</q>');
 
 		// a real update after the commit supersedes the fork's promise
-		f = fork(() => instance.set({ b: 30 }));
+		fork_with(30);
 		await tick();
-		f.commit();
+		commit.click();
 		await tick();
-		instance.set({ a: 2 });
+		set_a_with(2);
 		await tick();
-		instance.settle('aw', 31);
+		resolve_aw_with(31);
 		await tick();
-		instance.settle('aw', 32);
+		resolve_aw_with(32);
 		await tick();
-		instance.settle('p', 30);
+		resolve_p_with(30);
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>30</p><q>32</q>');
+		assert.htmlEqual(output.innerHTML, '<p>30</p><q>32</q>');
 	}
 });
