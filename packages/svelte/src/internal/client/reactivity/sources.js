@@ -35,6 +35,7 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	current_batch,
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates
@@ -187,7 +188,13 @@ var count_deps = 0;
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals(value)) {
+	if (
+		!source.equals(value) ||
+		// inside a fork, writing back the value from before the fork still changes the fork's value
+		(current_batch?.is_fork &&
+			batch_values?.has(source) &&
+			!source.equals(batch_values.get(source)))
+	) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {

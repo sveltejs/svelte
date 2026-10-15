@@ -18,6 +18,7 @@ import { SvelteSet } from '../../src/reactivity/set';
 import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
+import { fork } from '../../src/internal/client/reactivity/batch';
 
 /**
  * @param runes runes mode
@@ -1755,6 +1756,154 @@ describe('signals', () => {
 			destroy();
 			assert.equal(s.reactions, null);
 		};
+	});
+
+	it('state proxies use fork-local values', async () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const object = proxy<Record<string, number>>({});
+		const sparse = proxy<number[]>([]);
+		const truncated = proxy<number[]>([]);
+		const readded = proxy<{ x?: number }>({ x: 1 });
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				void ('x' in object);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			let membership;
+			fork(() => {
+				object.x = 1;
+				membership = ['x' in object, Object.keys(object)];
+			}).discard();
+
+			await fork(() => {
+				sparse[4] = 4;
+				sparse[1] = 1;
+			}).commit();
+			const sparse_length = sparse.length;
+
+			let truncation;
+			fork(() => {
+				truncated.push(1, 2);
+				truncated.length = 0;
+				truncation = [0 in truncated, Object.keys(truncated), truncated.length];
+			}).discard();
+
+			let readded_keys;
+			fork(() => {
+				delete readded.x;
+				readded.x = 2;
+				readded_keys = Object.keys(readded);
+			}).discard();
+
+			assert.deepEqual(
+				{ membership, sparse_length, truncation, readded_keys },
+				{
+					membership: [true, ['x']],
+					sparse_length: 5,
+					truncation: [false, [], 0],
+					readded_keys: ['x']
+				}
+			);
+		} finally {
+			destroy();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('a write restoring the value from before a fork updates chained deriveds', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const x = state(1);
+		const d = derived(() => $.get(x) * 10);
+		const e = derived(() => $.get(d) * 2);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(e);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			let values: number[] = [];
+
+			fork(() => {
+				set(x, 2);
+				$.get(e);
+				set(x, 1);
+				values = [$.get(x), $.get(d), $.get(e)];
+			}).discard();
+
+			assert.deepEqual(values, [1, 10, 20]);
+		} finally {
+			destroy();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('state proxy teardowns inside a fork see the structure from before it', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const object = proxy<Record<string, number>>({ z: 1 });
+		object.y = 1;
+		const log: unknown[] = [];
+
+		const outer = effect_root(() => {
+			render_effect(() => {
+				void ('x' in object);
+			});
+		});
+
+		const inner = effect_root(() => {
+			void object.y;
+
+			return () => {
+				log.push('teardown', 'x' in object, 'y' in object, 'z' in object, Object.keys(object));
+			};
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			fork(() => {
+				object.x = 1;
+				delete object.y;
+				delete object.z;
+				log.push('fork', 'x' in object, 'y' in object, 'z' in object, Object.keys(object));
+				inner();
+			}).discard();
+
+			assert.deepEqual(log, [
+				'fork',
+				true,
+				false,
+				false,
+				['x'],
+				'teardown',
+				false,
+				true,
+				true,
+				['z', 'y']
+			]);
+		} finally {
+			outer();
+			disable_async_mode_flag();
+		}
 	});
 
 	// https://github.com/sveltejs/svelte/issues/16814
