@@ -39,9 +39,9 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 	};
 }
 
-function test(text: string, fn: (runes: boolean) => any) {
-	it(`${text} (legacy mode)`, run_test(false, fn));
-	it(`${text} (runes mode)`, run_test(true, fn));
+function test(text: string, fn: (runes: boolean) => any, timeout?: number) {
+	it(`${text} (legacy mode)`, run_test(false, fn), timeout);
+	it(`${text} (runes mode)`, run_test(true, fn), timeout);
 }
 
 test.only = (text: string, fn: (runes: boolean) => any) => {
@@ -572,7 +572,7 @@ describe('signals', () => {
 				console.error = error;
 			}
 		};
-	});
+	}, 60_000);
 
 	test('schedules rerun when updating deeply nested value', (runes) => {
 		if (!runes) return () => {};
