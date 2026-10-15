@@ -111,6 +111,80 @@ unsubscribe(); // logs 'no more subscribers'
 
 Note that the value of a `writable` is lost when it is destroyed, for example when the page is refreshed. However, you can write your own logic to sync the value to for example the `localStorage`.
 
+#### Updating complex data
+
+When a store contains complex data structures like objects or arrays, you can update nested properties or collection items using either the `update` method or through component assignments using the `$` store prefix.
+
+##### Using `update`
+
+Because `writable` considers objects and functions to never be equal (`safe_not_equal`), both mutating an existing object or array and returning it, or creating a new copy with spread syntax, will notify subscribers:
+
+```js
+/// file: store.js
+import { writable } from 'svelte/store';
+
+export const user = writable({
+	name: 'Alice',
+	settings: {
+		theme: 'dark',
+		notifications: true
+	}
+});
+
+export const todos = writable([
+	{ id: 1, text: 'Buy groceries', done: false }
+]);
+
+// Updating nested properties using spread syntax
+user.update((u) => ({
+	...u,
+	settings: {
+		...u.settings,
+		theme: 'light'
+	}
+}));
+
+// Adding an item to an array
+todos.update((items) => [
+	...items,
+	{ id: 2, text: 'Walk the dog', done: false }
+]);
+
+// Updating an item in an array
+todos.update((items) =>
+	items.map((item) => (item.id === 1 ? { ...item, done: true } : item))
+);
+
+// Removing an item from an array
+todos.update((items) => items.filter((item) => item.id !== 1));
+```
+
+##### Inside components with `$`
+
+Inside Svelte components, you can mutate nested properties directly or reassign array items using the `$` prefix. The compiler automatically calls the store's `set` method:
+
+```svelte
+<!--- file: App.svelte --->
+<script>
+	import { user, todos } from './store.js';
+
+	function toggleTheme() {
+		// Mutating a nested property triggers a store update
+		$user.settings.theme = $user.settings.theme === 'dark' ? 'light' : 'dark';
+	}
+
+	function addTodo(text) {
+		$todos = [...$todos, { id: Date.now(), text, done: false }];
+	}
+</script>
+
+<p>Theme: {$user.settings.theme}</p>
+<button onclick={toggleTheme}>Toggle Theme</button>
+```
+
+> [!NOTE]
+> Updating any nested property on an object or any element in an array within a store triggers reactivity for the **entire** store, notifying all of its subscribers. If you only want components to react when specific properties change, consider splitting them into separate stores, or using Svelte 5 [runes](runes) like [`$state`](runes#$state) which provide fine-grained property-level reactivity.
+
 ### `readable`
 
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
