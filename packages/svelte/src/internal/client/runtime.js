@@ -537,8 +537,8 @@ export function update_effect(effect) {
 			// dirty, since their results are kept per batch, and they run during traversal: marking them dirty
 			// would re-run them (and restart async work) on every process of a pending batch.
 			var own = /** @type {Batch} */ (own_batch);
-			var status = (flags & (BLOCK_EFFECT | ASYNC)) !== 0 ? MAYBE_DIRTY : DIRTY;
 			own.stale_effects.set(effect, write_version);
+			var status = (flags & (BLOCK_EFFECT | ASYNC)) !== 0 ? MAYBE_DIRTY : DIRTY;
 			for (var batch = own.next; batch !== null && effect.deps !== null; batch = batch.next) {
 				batch.add_dirty_reaction(effect, status);
 			}
@@ -783,13 +783,13 @@ export function get(signal) {
 function get_batch_value(signal) {
 	if (current_batch || previous_batch?.is_eager) {
 		const current = /** @type {Batch} */ (current_batch ?? previous_batch);
+		// Reading a value that an earlier batch wrote means that whatever is computed from it includes that batch's
+		// uncommitted state, so this batch must not commit before it.
 		if (!current.is_eager && held_sources?.has(signal)) {
 			current.dependent.add(/** @type {Batch} */ (held_sources.get(signal)));
 		}
 		const batch = stale_sources?.get(signal);
 		if (batch) {
-			if (!current.is_eager) batch.dependent.add(current);
-
 			// The reaction that read the stale value has to re-run in `batch`'s world
 			const reader =
 				active_reaction !== null && (active_reaction.f & DERIVED) !== 0

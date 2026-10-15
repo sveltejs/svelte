@@ -81,14 +81,15 @@ export let batch_values = null;
 export let wv_values = null;
 
 /**
- * Sources which were written to before the current batch. Used to discover dependencies between batches.
+ * Sources which were written to by earlier batches. Used to discover dependencies between batches:
+ * reading one of them (unless the current batch has its own value) makes the current batch depend on the earlier one.
  * @type {Map<Value, Batch> | null}
  */
 export let held_sources = null;
 
 /**
  * Sources where the current batch reads an outdated value of a later batch (or if this is an eager batch, any other batch) not in its own `current` map.
- * Used to discover dependencies between batches.
+ * Used to re-run the reactions that read them in the later batch's view.
  * @type {Map<Value, Batch> | null}
  */
 export let stale_sources = null;
