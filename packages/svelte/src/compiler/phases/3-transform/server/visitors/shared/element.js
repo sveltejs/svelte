@@ -250,7 +250,9 @@ export function build_element_attributes(node, context, transform) {
 
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						b.literal(` ${name}="${literal_value === true ? '' : String(literal_value)}"`)
+						b.literal(
+							` ${name}="${literal_value === true ? '' : escape_html(literal_value, true)}"`
+						)
 					);
 				}
 
@@ -312,8 +314,15 @@ function get_attribute_name(element, attribute) {
  * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective | TransformedAttribute>} attributes
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @param {boolean} [is_selectable] whether this is a `<select>` or `<option>` rendered through `$$renderer`
  */
-export function build_spread_object(element, attributes, context, transform) {
+export function build_spread_object(
+	element,
+	attributes,
+	context,
+	transform,
+	is_selectable = false
+) {
 	const is_select = element.type === 'RegularElement' && element.name === 'select';
 	const object = b.object(
 		attributes.map((attribute) => {
@@ -322,12 +331,22 @@ export function build_spread_object(element, attributes, context, transform) {
 			} else if (attribute.type === 'Attribute') {
 				let name = get_attribute_name(element, attribute);
 				if (is_select && name === 'defaultvalue') name = 'defaultValue';
-				const value = build_attribute_value(
+				let value = build_attribute_value(
 					attribute.value,
 					context,
 					transform,
 					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 				);
+
+				if (
+					is_selectable &&
+					(name === 'value' || name === 'defaultValue') &&
+					is_text_attribute(attribute)
+				) {
+					// static `<select>` and `<option>` values are compared with each other and with the escaped
+					// content of options without a `value`, so they stay escaped until that comparison changes
+					value = b.literal(escape_html(attribute.value[0].data, true));
+				}
 
 				return b.prop('init', b.key(name), value);
 			} else if (attribute.type === 'BindDirective') {
@@ -417,7 +436,8 @@ export function prepare_element_spread_object(element, context, transform) {
 		style_directives,
 		class_directives,
 		context,
-		transform
+		transform,
+		true
 	);
 }
 
@@ -429,6 +449,7 @@ export function prepare_element_spread_object(element, context, transform) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @param {boolean} [is_selectable] whether this is a `<select>` or `<option>` rendered through `$$renderer`
  * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
  */
 export function prepare_element_spread(
@@ -437,7 +458,8 @@ export function prepare_element_spread(
 	style_directives,
 	class_directives,
 	context,
-	transform
+	transform,
+	is_selectable = false
 ) {
 	/** @type {ObjectExpression | undefined} */
 	let classes;
@@ -481,7 +503,7 @@ export function prepare_element_spread(
 		flags |= ELEMENT_IS_INPUT;
 	}
 
-	const object = build_spread_object(element, attributes, context, transform);
+	const object = build_spread_object(element, attributes, context, transform, is_selectable);
 	const css_hash =
 		element.metadata.scoped && context.state.analysis.css.hash
 			? b.literal(context.state.analysis.css.hash)
