@@ -326,9 +326,9 @@ export class Batch {
 	/**
 	 * Effects scheduled outside of a flush, and the status they are to have. Their status is only
 	 * applied when this batch is processed, so that other batches don't run them before that
-	 * @type {Map<Effect, number>}
+	 * @type {Map<Effect, number> | null}
 	 */
-	#unprocessed = new Map();
+	#unprocessed = null;
 
 	/**
 	 * Deferred reactions and their status.
@@ -567,11 +567,13 @@ export class Batch {
 			}
 		}
 
-		for (const [effect, status] of this.#unprocessed) {
-			this.#add(effect, status);
-		}
+		if (this.#unprocessed !== null) {
+			for (const [effect, status] of this.#unprocessed) {
+				this.#add(effect, status);
+			}
 
-		this.#unprocessed.clear();
+			this.#unprocessed = null;
+		}
 
 		this.apply();
 
@@ -1285,8 +1287,8 @@ export class Batch {
 			(!this.is_fork && !(/** @type {Batch} */ (first_batch).next))
 		) {
 			this.#add(effect, status);
-		} else if (status === DIRTY || this.#unprocessed.get(effect) !== DIRTY) {
-			this.#unprocessed.set(effect, status);
+		} else if (status === DIRTY || this.#unprocessed?.get(effect) !== DIRTY) {
+			(this.#unprocessed ??= new Map()).set(effect, status);
 		}
 	}
 
