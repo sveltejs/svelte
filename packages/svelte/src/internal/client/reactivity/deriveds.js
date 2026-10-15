@@ -398,21 +398,15 @@ export function update_derived(derived) {
 
 	if (!derived.equals(value)) {
 		if (active_batch !== null) {
-			if (active_batch.time_travelling) {
-				// the derived was computed in a different view of the world
-				// than the real one, so it only belongs to the active batch
-				active_batch.capture(derived, value, write_version);
-			} else {
-				(current_batch ?? active_batch).capture(derived, value, write_version);
+			(current_batch ?? active_batch).capture(derived, value, write_version);
 
-				// We also write to previous_batch because if it exists, it is a sign that we're
-				// currently in the process of flushing effects. These updates to deriveds may belong
-				// to the previous batch, not the new one (which can already exist if an earlier
-				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
-				// but not adding it to current_batch can, too, so we add it to both.
-				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-				previous_batch?.capture(derived, value, write_version);
-			}
+			// We also write to previous_batch because if it exists, it is a sign that we're
+			// currently in the process of flushing effects. These updates to deriveds may belong
+			// to the previous batch, not the new one (which can already exist if an earlier
+			// effect wrote to a source). This can cause bugs when running batch.#commit() later,
+			// but not adding it to current_batch can, too, so we add it to both.
+			// See https://github.com/sveltejs/svelte/pull/18117 for more details.
+			previous_batch?.capture(derived, value, write_version);
 		} else {
 			derived.v = value;
 			derived.wv = write_version;
