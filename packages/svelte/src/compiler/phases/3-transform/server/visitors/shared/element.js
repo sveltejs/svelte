@@ -1,4 +1,4 @@
-/** @import { ArrayExpression, Expression, Literal, ObjectExpression } from 'estree' */
+/** @import { ArrayExpression, Expression, Literal, ObjectExpression, TemplateLiteral } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
@@ -270,6 +270,17 @@ export function build_element_attributes(node, context, transform) {
 					value.value = (value.value + ' ' + css_hash).trim();
 				}
 				context.state.template.push(b.literal(` ${name}="${escape_html(value.value, true)}"`));
+			} else if (
+				can_use_literal &&
+				value.type === 'TemplateLiteral' &&
+				Array.isArray(attribute.value) &&
+				// a lone `{expression}` is the user's own value: `${null}` gives "null" there, not ''
+				attribute.value.length > 1 &&
+				can_inline_template_attribute(name, value)
+			) {
+				context.state.template.push(
+					build_template_attribute(name, value, name === 'class' ? css_hash : null)
+				);
 			} else if (name === 'class') {
 				context.state.template.push(
 					build_attr_class(class_directives, value, context, css_hash, transform)
@@ -291,6 +302,38 @@ export function build_element_attributes(node, context, transform) {
 	}
 
 	return content;
+}
+
+/**
+ * Returns true if `$.attr`, `$.attr_class` or `$.attr_style` would only escape this value.
+ * @param {string} name
+ * @param {TemplateLiteral} value
+ */
+function can_inline_template_attribute(name, value) {
+	if (name === 'class' || name === 'style') {
+		return value.quasis.some((quasi) => quasi.value.cooked !== '');
+	}
+
+	return name !== 'hidden' && name !== 'translate' && !is_boolean_attribute(name);
+}
+
+/**
+ * @param {string} name
+ * @param {TemplateLiteral} value
+ * @param {string | null} css_hash
+ */
+function build_template_attribute(name, value, css_hash) {
+	const strings = value.quasis.map((quasi) =>
+		escape_html(/** @type {string} */ (quasi.value.cooked), true)
+	);
+
+	strings[0] = ` ${name}="` + strings[0];
+	strings[strings.length - 1] += css_hash ? ` ${css_hash}"` : '"';
+
+	return b.template(
+		strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
+		value.expressions.map((expression) => b.call('$.escape', expression, b.true))
+	);
 }
 
 /**
