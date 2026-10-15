@@ -8,6 +8,7 @@ import {
 	resume_effect
 } from '../../reactivity/effects.js';
 import { HMR_ANCHOR } from '../../constants.js';
+import { EFFECT_OFFSCREEN } from '#client/constants';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { DEV } from 'esm-env';
@@ -107,6 +108,10 @@ export class BranchManager {
 				// ...and append the fragment
 				this.anchor.before(offscreen.fragment);
 				onscreen = offscreen.effect;
+
+				if ((onscreen.f & EFFECT_OFFSCREEN) !== 0) {
+					onscreen.f ^= EFFECT_OFFSCREEN;
+				}
 			}
 		}
 
@@ -194,10 +199,12 @@ export class BranchManager {
 
 				fragment.append(target);
 
-				this.#offscreen.set(key, {
-					effect: branch(() => fn(target)),
-					fragment
-				});
+				var effect = branch(() => fn(target));
+
+				// until it is committed, the branch only exists for the batches that select it
+				effect.f |= EFFECT_OFFSCREEN;
+
+				this.#offscreen.set(key, { effect, fragment });
 			} else {
 				this.#onscreen.set(
 					key,

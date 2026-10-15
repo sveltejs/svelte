@@ -1,5 +1,5 @@
 /** @import { Fork } from 'svelte' */
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { BatchRecord, Derived, Effect, Reaction, Source, Value } from '#client' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -17,15 +17,18 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	DESTROYING
+	DESTROYING,
+	EFFECT_OFFSCREEN
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property, includes } from '../../shared/utils.js';
+import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_reaction,
 	get,
 	increment_write_version,
 	is_dirty,
+	next_local_version,
+	promote_record,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
@@ -36,13 +39,12 @@ import { flush_eager_effects, old_values, set_eager_effects, source, update } fr
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { set_signal_status } from './status.js';
+import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
-import { log_effect_tree } from '../dev/debug.js';
 import { OBSOLETE } from './deriveds.js';
 
 /** @type {Batch | null} */
-let first_batch = null;
+export let first_batch = null;
 
 /** @type {Batch | null} */
 let last_batch = null;
@@ -59,13 +61,32 @@ export let previous_batch = null;
 /**
  * When time travelling (i.e. working in one batch, while other batches
  * still have ongoing work), we ignore the real values of affected
- * signals in favour of their values within the batch
- * @type {Map<Value, any> | null}
+ * signals in favour of their values within the batch — along with their
+ * versions. It also caches deriveds evaluated in this view of the world
+ * (see `view_entry`), in which case `l` tells whether the value is the
+ * latest (real-world) value.
+ * `null` means that the real world (i.e. the latest values) applies
+ * @type {Map<Value, { v: any, wv: number, l?: boolean }> | null}
  */
 export let batch_values = null;
 
+/**
+ * The batch whose view of the world is active (see `apply`). Block and async
+ * effects that run while it is processed, and deriveds evaluated with values
+ * that are not the latest, are recorded in this batch
+ * @type {Batch | null}
+ */
+export let view_batch = null;
+
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
+
+/**
+ * Batches whose view of the world changed because another batch committed, and that
+ * therefore need to be processed again once the current flush is done (see `#commit`)
+ * @type {Set<Batch>}
+ */
+var rebases = new Set();
 
 export let is_flushing_sync = false;
 let is_processing = false;
@@ -112,19 +133,41 @@ export class Batch {
 	async_deriveds = new Map();
 
 	/**
-	 * The current values of any signals that are updated in this batch.
-	 * Tuple format: [value, is_derived] (note: is_derived is false for deriveds, too, if they were overridden via assignment)
+	 * The current values (and their versions) of any sources that are updated in this batch,
+	 * including deriveds that were overridden via assignment.
 	 * The keys of this map are identical to `this.previous`
-	 * @type {Map<Value, [any, boolean]>}
+	 * @type {Map<Value, { v: any, wv: number }>}
 	 */
 	current = new Map();
 
 	/**
-	 * The values of any signals (sources and deriveds) that are updated in this batch _before_ those updates took place.
+	 * The values (and their versions) of any sources that are updated in this batch _before_ those updates took place.
 	 * The keys of this map are identical to `this.current`
-	 * @type {Map<Value, any>}
+	 * @type {Map<Value, { v: any, wv: number }>}
 	 */
 	previous = new Map();
+
+	/**
+	 * Results of reactions that belong to this batch rather than to the real world:
+	 * deriveds evaluated in this batch's view of the world with values that are not the
+	 * latest ones, and block/async effects that ran while this batch was processed.
+	 * Effect records become global state when the batch commits (see `promote_record`)
+	 * @type {Map<Reaction, BatchRecord>}
+	 */
+	records = new Map();
+
+	/**
+	 * True while the batch commits, i.e. while it updates the DOM and runs effects.
+	 * Effects that run then do so for the real world
+	 */
+	committing = false;
+
+	/**
+	 * Earlier batches whose changes are part of this batch's view of the world, because
+	 * they intersect with it (this batch will be merged into them, see `#merge`)
+	 * @type {Batch[]}
+	 */
+	folded = [];
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
@@ -158,6 +201,12 @@ export class Batch {
 	#deferred = null;
 
 	/**
+	 * Effects that were scheduled while this batch wasn't being processed (see `schedule`)
+	 * @type {Set<Effect>}
+	 */
+	#unprocessed = new Set();
+
+	/**
 	 * Effects that were scheduled in this batch but not yet 'resolved' into the
 	 * root effects that need to be flushed. Resolving — the upwards traversal that
 	 * marks the path to each effect on the shared effect tree (see #resolve) — is
@@ -169,12 +218,6 @@ export class Batch {
 	 * @type {Effect[]}
 	 */
 	#scheduled = [];
-
-	/**
-	 * Effects created while this batch was active.
-	 * @type {Effect[]}
-	 */
-	#new_effects = [];
 
 	/**
 	 * Deferred effects (which run after async work has completed) and their status (DIRTY or MAYBE_DIRTY)
@@ -216,19 +259,25 @@ export class Batch {
 		if (this.is_fork) return true;
 
 		for (const effect of this.#blocking_pending.keys()) {
-			var e = effect;
-			var skipped = false;
-
-			while (e.parent !== null) {
-				if (this.#skipped_branches.has(e)) {
-					skipped = true;
-					break;
-				}
-
-				e = e.parent;
+			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
+			if (!this.#is_skipped(effect)) {
+				return true;
 			}
+		}
 
-			if (!skipped) {
+		return false;
+	}
+
+	/**
+	 * Whether `effect` is (inside) a branch that this batch skips, or that only exists offscreen for other batches
+	 * @param {Effect} effect
+	 */
+	#is_skipped(effect) {
+		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
+			if (
+				this.#skipped_branches.has(e) ||
+				((e.f & EFFECT_OFFSCREEN) !== 0 && !this.#unskipped_branches.has(e))
+			) {
 				return true;
 			}
 		}
@@ -251,24 +300,50 @@ export class Batch {
 	 * Remove an effect from the #skipped_branches map and reschedule
 	 * any tracked dirty/maybe_dirty child effects
 	 * @param {Effect} effect
-	 * @param {(e: Effect) => void} callback
+	 * @param {(e: Effect, status: number) => void} callback
 	 */
-	unskip_effect(effect, callback = (e) => this.schedule(e)) {
+	unskip_effect(effect, callback = (e, status) => this.schedule(e, status)) {
 		var tracked = this.#skipped_branches.get(effect);
 		if (tracked) {
 			this.#skipped_branches.delete(effect);
 
 			for (var e of tracked.d) {
-				set_signal_status(e, DIRTY);
-				callback(e);
+				callback(e, DIRTY);
 			}
 
 			for (e of tracked.m) {
-				set_signal_status(e, MAYBE_DIRTY);
-				callback(e);
+				callback(e, MAYBE_DIRTY);
 			}
 		}
+
+		if ((effect.f & EFFECT_OFFSCREEN) !== 0 && !this.#unskipped_branches.has(effect)) {
+			// This batch adopts a branch that so far only existed offscreen (possibly for another
+			// batch, whose view of the world its effects ran in) — re-validate them in this batch's view
+			this.#revalidate_branch(effect, callback);
+		}
+
 		this.#unskipped_branches.add(effect);
+	}
+
+	/**
+	 * @param {Effect} effect
+	 * @param {(e: Effect, status: number) => void} callback
+	 */
+	#revalidate_branch(effect, callback) {
+		for (var e = effect.first; e !== null; e = e.next) {
+			var flags = e.f;
+
+			if ((flags & (DESTROYED | INERT)) !== 0) continue;
+
+			// branches nested inside that exist offscreen for other batches only are not adopted
+			if ((flags & EFFECT_OFFSCREEN) !== 0 && !this.#unskipped_branches.has(e)) continue;
+
+			if ((flags & (BRANCH_EFFECT | ROOT_EFFECT | EAGER_EFFECT)) === 0 && e.fn !== null) {
+				callback(e, MAYBE_DIRTY);
+			}
+
+			this.#revalidate_branch(e, callback);
+		}
 	}
 
 	/**
@@ -320,7 +395,15 @@ export class Batch {
 	}
 
 	#process() {
+		if (async_mode_flag && this.started) {
+			// Since this batch last ran, reactions may have come to depend on its writes without it
+			// knowing (e.g. effects created by other batches), or have run in the view of other batches.
+			// Re-validate them in this batch's view — this only re-runs those that are out of date
+			this.#revalidate(this.current.keys());
+		}
+
 		this.started = true;
+		this.#apply_unprocessed();
 
 		if (DEV) {
 			// track all the values that were updated during this flush,
@@ -336,7 +419,7 @@ export class Batch {
 		// causing the block to no longer be deferred.
 		for (const [e, status] of this.#dirty_reactions) {
 			set_signal_status(e, status);
-			this.schedule(e);
+			this.#add(e);
 		}
 
 		this.apply();
@@ -384,7 +467,8 @@ export class Batch {
 		if (updates.length > 0) {
 			var batch = Batch.ensure();
 			for (const e of updates) {
-				batch.schedule(e);
+				// these were marked during traversal already (see `mark_reactions`), unless they ran since
+				if ((e.f & CLEAN) === 0) batch.schedule(e, (e.f & DIRTY) !== 0 ? DIRTY : MAYBE_DIRTY);
 			}
 		}
 
@@ -421,6 +505,17 @@ export class Batch {
 		// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
 		this.#dirty_reactions.clear();
 
+		// The results of this batch are about to become the real-world state
+		this.committing = true;
+
+		for (const [reaction, record] of this.records) {
+			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
+				promote_record(reaction, record);
+			}
+		}
+
+		this.records.clear();
+
 		// append/remove branches
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
@@ -429,6 +524,8 @@ export class Batch {
 		flush_queued_effects(render_effects);
 		flush_queued_effects(effects);
 		previous_batch = null;
+
+		this.committing = false;
 
 		this.#deferred?.resolve();
 
@@ -470,6 +567,48 @@ export class Batch {
 	}
 
 	/**
+	 * Schedule the reactions that (transitively) depend on `sources` for re-validation in this batch.
+	 * They are marked MAYBE_DIRTY, which means that they are only re-run if the exact versions
+	 * of their dependencies differ from the ones they last saw (in this batch's view of the world)
+	 * @param {Iterable<Value>} sources
+	 */
+	#revalidate(sources) {
+		/** @type {Set<Reaction>} */
+		var seen = new Set();
+
+		for (const source of sources) {
+			this.#mark(source, seen);
+		}
+	}
+
+	/**
+	 * @param {Value} value
+	 * @param {Set<Reaction>} seen
+	 */
+	#mark(value, seen) {
+		var reactions = value.reactions;
+		if (reactions === null) return;
+
+		for (const reaction of reactions) {
+			if (seen.has(reaction)) continue;
+			seen.add(reaction);
+
+			var flags = reaction.f;
+
+			if ((flags & DERIVED) !== 0) {
+				if ((flags & CLEAN) !== 0) set_signal_status(reaction, MAYBE_DIRTY);
+				this.#mark(/** @type {Derived} */ (reaction), seen);
+			} else if (
+				(flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 &&
+				// branches that this batch skips don't exist in its view of the world
+				!this.#is_skipped(/** @type {Effect} */ (reaction))
+			) {
+				this.schedule(/** @type {Effect} */ (reaction), MAYBE_DIRTY);
+			}
+		}
+	}
+
+	/**
 	 * Traverse the effect tree, executing effects or stashing
 	 * them for later execution as appropriate
 	 * @param {Effect} root
@@ -486,7 +625,12 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_branches.has(effect);
+			var skip =
+				is_skippable_branch ||
+				(flags & INERT) !== 0 ||
+				this.#skipped_branches.has(effect) ||
+				// branches that exist offscreen only for other batches
+				((flags & EFFECT_OFFSCREEN) !== 0 && !this.#unskipped_branches.has(effect));
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
@@ -527,8 +671,8 @@ export class Batch {
 		while (batch !== null) {
 			if (!batch.is_fork) {
 				// if the batches are connected, break
-				for (const [value, [, is_derived]] of this.current) {
-					if (batch.current.has(value) && !is_derived) {
+				for (const value of this.current.keys()) {
+					if (batch.current.has(value)) {
 						return batch;
 					}
 				}
@@ -541,12 +685,18 @@ export class Batch {
 	}
 
 	/**
+	 * Take over the writes of a later batch that depends on this one, because it finished first.
+	 * Values it produced (async results, deriveds) remain valid; block effects select their
+	 * branches again for this batch, if needed (their selections are keyed by batch)
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
 		for (const [source, value] of batch.current) {
 			if (!this.previous.has(source) && batch.previous.has(source)) {
-				this.previous.set(source, batch.previous.get(source));
+				this.previous.set(
+					source,
+					/** @type {{ v: any, wv: number }} */ (batch.previous.get(source))
+				);
 			}
 
 			this.current.set(source, value);
@@ -557,55 +707,22 @@ export class Batch {
 			if (d) deferred.promise.then(d.resolve).catch(d.reject);
 		}
 
+		for (const [reaction, record] of batch.records) {
+			if ((reaction.f & BLOCK_EFFECT) === 0) {
+				this.records.set(reaction, record);
+			}
+		}
+
 		// Clear them or else those that are still pending might get rejected on discard (after merged-into batch is done).
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
 		batch.async_deriveds.clear();
 
-		// Mark is not guaranteed not touch these, so we transfer them
 		this.transfer_reactions(batch.#dirty_reactions);
-
-		/**
-		 * mark all effects that depend on `batch.current`, except the
-		 * async effects that we just resolved (TODO unless they depend
-		 * on values in this batch that are NOT in the later batch?).
-		 * Through this we also will populate the correct #skipped_branches,
-		 * oncommit callbacks etc, so we don't need to merge them separately.
-		 * @param {Value} value
-		 */
-		const mark = (value) => {
-			var reactions = value.reactions;
-			if (reactions === null) return;
-			// skip if value is derived and is neither dirty nor maybe dirty. transitive
-			// deriveds (a derived depending on another derived) are only MAYBE_DIRTY, so
-			// we must continue traversing them to reach the effects that depend on them
-			if ((value.f & DERIVED) !== 0 && (value.f & (DIRTY | MAYBE_DIRTY)) === 0) {
-				return;
-			}
-
-			for (const reaction of reactions) {
-				var flags = reaction.f;
-
-				if ((flags & DERIVED) !== 0) {
-					mark(/** @type {Derived} */ (reaction));
-				} else {
-					var effect = /** @type {Effect} */ (reaction);
-
-					if (flags & (ASYNC | BLOCK_EFFECT) && !this.async_deriveds.has(effect)) {
-						this.#dirty_reactions.delete(effect);
-						set_signal_status(effect, DIRTY);
-						this.schedule(effect);
-					}
-				}
-			}
-		};
-
-		for (const source of this.current.keys()) {
-			mark(source);
-		}
 
 		this.oncommit(() => batch.discard());
 		batch.#unlink();
 
+		// processing re-validates everything that depends on the (now merged) writes of this batch
 		current_batch = this;
 		this.#process();
 	}
@@ -621,25 +738,78 @@ export class Batch {
 
 	/**
 	 * Associate a change to a given source with the current
-	 * batch, noting its previous and current values
+	 * batch, noting its previous and current values (and versions).
+	 * The source itself is only updated if this is its latest value, i.e. unless this
+	 * is a fork (whose writes only exist in its own view of the world) or a later batch
+	 * already wrote to it (e.g. because an async expression resolved in an earlier batch).
 	 * @param {Value} source
 	 * @param {any} value
-	 * @param {boolean} [is_derived]
+	 * @returns {boolean} whether the value is the latest one
 	 */
-	capture(source, value, is_derived = false) {
-		if (source.v !== UNINITIALIZED && !this.previous.has(source)) {
-			this.previous.set(source, source.v);
+	capture(source, value) {
+		var latest = !this.is_fork;
+
+		/** @type {Batch | null} */
+		var later = null;
+
+		for (var batch = this.next; batch !== null; batch = batch.next) {
+			if (!batch.is_fork && batch.current.has(source)) {
+				later = batch;
+				latest = false;
+				break;
+			}
 		}
 
-		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
-		if ((source.f & ERROR_VALUE) === 0) {
-			this.current.set(source, [value, is_derived]);
-			batch_values?.set(source, value);
+		if (!this.previous.has(source)) {
+			// the value before this batch's change is the one before the later batch's change, if any
+			var previous = later !== null ? later.previous.get(source) : source;
+
+			if (previous !== undefined && previous.v !== UNINITIALIZED) {
+				this.previous.set(source, { v: previous.v, wv: previous.wv });
+			}
 		}
 
-		if (!this.is_fork) {
+		var is_error = (source.f & ERROR_VALUE) !== 0;
+
+		// errors are never batch-local, or they wouldn't be thrown in `runtime.js#get`
+		if (is_error && !this.is_fork) latest = true;
+
+		// the same value has the same version (it can equal the real value if this
+		// batch sees another one, see `internal_set`) — in which case there's nothing to update
+		var same = !is_error && source.equals(value);
+		if (same) latest = false;
+
+		var entry = {
+			v: value,
+			wv: same ? source.wv : latest ? increment_write_version() : next_local_version()
+		};
+
+		if (!is_error) {
+			this.current.set(source, entry);
+			batch_values?.set(source, entry);
+		}
+
+		if (latest) {
 			source.v = value;
+			source.wv = entry.wv;
 		}
+
+		return latest;
+	}
+
+	/**
+	 * Make the value that `source` has in this batch's view of the world this batch's own
+	 * value, without changing anything. It then takes precedence over the values of other
+	 * batches that this batch's view includes (see `folded`), should those change
+	 * @param {Value} source
+	 */
+	keep(source) {
+		if (this.current.has(source) || (source.f & ERROR_VALUE) !== 0) return;
+
+		var entry = batch_values?.get(source) ?? { v: source.v, wv: source.wv };
+
+		this.previous.set(source, entry);
+		this.current.set(source, entry);
 	}
 
 	activate() {
@@ -649,6 +819,7 @@ export class Batch {
 	deactivate() {
 		current_batch = null;
 		batch_values = null;
+		view_batch = null;
 	}
 
 	flush() {
@@ -661,6 +832,17 @@ export class Batch {
 			current_batch = this;
 
 			this.#process();
+
+			for (const batch of rebases) {
+				rebases.delete(batch);
+
+				// the batch is processed again anyway if a flush is queued
+				if (batch.linked && !batch.#decrement_queued) {
+					old_values.clear();
+					current_batch = batch;
+					batch.#process();
+				}
+			}
 		} finally {
 			flush_count = 0;
 			last_scheduled_effect = null;
@@ -670,6 +852,7 @@ export class Batch {
 
 			current_batch = null;
 			batch_values = null;
+			view_batch = null;
 
 			old_values.clear();
 
@@ -693,31 +876,24 @@ export class Batch {
 		this.#deferred?.resolve();
 	}
 
-	/**
-	 * @param {Effect} effect
-	 */
-	register_created_effect(effect) {
-		this.#new_effects.push(effect);
-	}
-
 	#commit() {
 		// If there are other pending batches, they now need to be 'rebased' —
-		// in other words, we re-run block/async effects with the newly
-		// committed state, unless the batch in question has a more
-		// recent value for a given source
+		// in other words, their view of the world now includes the newly committed
+		// state (unless the batch in question has a more recent value for a given source),
+		// so everything that depends on it needs to be re-validated in their view
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
 			var sources = [];
 
-			for (const [source, [value, is_derived]] of this.current) {
-				if (batch.current.has(source)) {
-					var batch_value = /** @type {[any, boolean]} */ (batch.current.get(source))[0]; // faster than destructuring
+			for (const [source, value] of this.current) {
+				var own = batch.current.get(source);
 
-					if (is_earlier && value !== batch_value) {
+				if (own !== undefined) {
+					if (is_earlier && value.v !== own.v) {
 						// bring the value up to date
-						batch.current.set(source, [value, is_derived]);
+						batch.current.set(source, value);
 					} else {
 						// same value or later batch has more recent value,
 						// no need to re-run these effects
@@ -737,17 +913,19 @@ export class Batch {
 				}
 			}
 
-			var current = [...batch.current.keys()].filter(
-				(source) => !(/** @type {[any, boolean]} */ (batch.current.get(source))[1])
-			);
-
 			// If not started yet or no sources to update (which is e.g. possible for the very first batch) then bail
-			if (!batch.started || current.length === 0) continue;
+			if (!batch.started || batch.current.size === 0) continue;
 
-			// Re-run async/block effects that depend on distinct values changed in both batches (ignoring deriveds)
-			var others = current.filter((source) => !this.current.has(source));
+			var obsolete = true;
 
-			if (others.length === 0) {
+			for (const source of batch.current.keys()) {
+				if (!this.current.has(source)) {
+					obsolete = false;
+					break;
+				}
+			}
+
+			if (obsolete) {
 				if (is_earlier) {
 					// this batch is now obsolete and can be discarded
 					batch.discard();
@@ -762,65 +940,23 @@ export class Batch {
 				// A batch was unskipped in a later batch -> tell prior batches to unskip it, too
 				if (is_earlier) {
 					for (const unskipped of this.#unskipped_branches) {
-						batch.unskip_effect(unskipped, (e) => {
+						batch.unskip_effect(unskipped, (e, status) => {
 							if ((e.f & (BLOCK_EFFECT | ASYNC)) !== 0) {
-								batch.schedule(e);
+								batch.schedule(e, status);
 							} else {
-								batch.#defer_effects([e]);
+								batch.add_dirty_reaction(e, status);
 							}
 						});
 					}
 				}
 
-				batch.activate();
-
-				/** @type {Set<Value>} */
-				var marked = new Set();
-
-				/** @type {Map<Reaction, boolean>} */
-				var checked = new Map();
-
-				for (var source of sources) {
-					mark_effects(source, others, marked, checked);
-				}
-
-				checked = new Map();
-				var current_unequal = [...batch.current]
-					.filter(([c, v1]) => {
-						const v2 = this.current.get(c);
-						if (!v2) return true;
-						// Either their values are different or one is a derived but not the other
-						return v2[0] !== v1[0] || v2[1] !== v1[1];
-					})
-					.map(([c]) => c);
-
-				if (current_unequal.length > 0) {
-					for (const effect of this.#new_effects) {
-						if (
-							(effect.f & (DESTROYED | INERT | EAGER_EFFECT)) === 0 &&
-							depends_on(effect, current_unequal, checked)
-						) {
-							if ((effect.f & (ASYNC | BLOCK_EFFECT)) !== 0) {
-								set_signal_status(effect, DIRTY);
-								batch.schedule(effect);
-							} else {
-								batch.add_dirty_reaction(effect, DIRTY);
-							}
-						}
-					}
-				}
-
-				// Only apply and traverse when we know we triggered async work with marking the effects
-				// and know this won't run anyway right afterwards
-				if (batch.#scheduled.length > 0 && !batch.#decrement_queued) {
-					batch.apply();
-
-					for (var root of batch.#resolve()) {
-						batch.#traverse(root, [], []);
-					}
-				}
-
-				batch.deactivate();
+				// Everything that depends on the committed values needs to be re-validated in the
+				// batch's view. The batch is processed again once the current flush is done (which
+				// also re-validates what depends on its own writes, as the committed batch may have
+				// created reactions that read them), so that block effects select their branches
+				// and async work restarts in the new view right away
+				batch.#revalidate(sources);
+				rebases.add(batch);
 			}
 		}
 	}
@@ -918,18 +1054,27 @@ export class Batch {
 		return current_batch;
 	}
 
+	/**
+	 * Make this batch's view of the world the active one
+	 */
 	apply() {
-		if (!async_mode_flag || (!this.is_fork && this.prev === null && this.next === null)) {
+		if (!async_mode_flag) {
+			batch_values = null;
+			return;
+		}
+
+		view_batch = this;
+		this.folded = [];
+
+		if (!this.is_fork && this.prev === null && this.next === null) {
+			// this batch's view is the real world
 			batch_values = null;
 			return;
 		}
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
-		batch_values = new Map();
-		for (const [source, [value]] of this.current) {
-			batch_values.set(source, value);
-		}
+		batch_values = new Map(this.current);
 
 		// ...and undo changes belonging to other batches unless they intersect
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
@@ -940,11 +1085,7 @@ export class Batch {
 			var intersects = false;
 
 			if (batch.id < this.id) {
-				for (const [source, [, is_derived]] of batch.current) {
-					// Derived values don't partake in the intersection mechanism, because a derived could
-					// be triggered in one batch already but not the other one yet, causing a false-positive
-					if (is_derived) continue;
-
+				for (const source of batch.current.keys()) {
 					if (this.current.has(source)) {
 						intersects = true;
 						break;
@@ -957,9 +1098,12 @@ export class Batch {
 			// effects of the earlier batch in case they are merged.
 			// As a result you can think of batch_values as having the latest values of all intersecting
 			// batches up until this batch.
-			if (!intersects) {
+			if (intersects) {
+				this.folded.push(batch);
+			} else {
 				for (const [source, previous] of batch.previous) {
-					if (!batch_values.has(source)) {
+					// (where the views agree on the value, the real one — and its version — applies)
+					if (!batch_values.has(source) && !source.equals(previous.v)) {
 						batch_values.set(source, previous);
 					}
 				}
@@ -968,12 +1112,68 @@ export class Batch {
 	}
 
 	/**
-	 *
-	 * @param {Effect} effect
+	 * The record of `reaction` in this batch's view of the world, i.e. that of this batch
+	 * or of the (earlier) batches whose changes it includes, if any
+	 * @param {Reaction} reaction
+	 * @returns {BatchRecord | undefined}
 	 */
-	schedule(effect) {
+	record(reaction) {
+		var record = this.records.get(reaction);
+
+		for (var i = this.folded.length - 1; record === undefined && i >= 0; i--) {
+			record = this.folded[i].records.get(reaction);
+		}
+
+		return record;
+	}
+
+	/**
+	 * Schedule `effect` to be (re-)validated when this batch is processed. The status is only
+	 * applied right away if this is the batch that the current flush is processing (or processes
+	 * next, if the write happens while effects run), or if the effect is the one that is
+	 * currently running (i.e. it invalidated itself). Otherwise it remains with
+	 * this batch until it is processed: whether an effect is dirty depends on a batch's view of
+	 * the world, so other batches (which may be processed first) mustn't treat it as dirty.
+	 * The effect is then checked against the exact versions of its dependencies (i.e. it
+	 * becomes MAYBE_DIRTY).
+	 * @param {Effect} effect
+	 * @param {number} status DIRTY or MAYBE_DIRTY
+	 */
+	schedule(effect, status) {
 		last_scheduled_effect = effect;
 
+		if ((is_processing && current_batch === this) || effect === active_reaction) {
+			// don't set a DIRTY effect to MAYBE_DIRTY
+			if ((effect.f & DIRTY) === 0) {
+				set_signal_status(effect, status);
+			}
+
+			this.#add(effect);
+		} else {
+			this.#unprocessed.add(effect);
+		}
+	}
+
+	/**
+	 * Apply the statuses of the effects that were scheduled while this batch wasn't being processed
+	 */
+	#apply_unprocessed() {
+		for (const effect of this.#unprocessed) {
+			// don't set a DIRTY effect to MAYBE_DIRTY
+			if ((effect.f & DIRTY) === 0) {
+				set_signal_status(effect, MAYBE_DIRTY);
+			}
+
+			this.#add(effect);
+		}
+
+		this.#unprocessed.clear();
+	}
+
+	/**
+	 * @param {Effect} effect
+	 */
+	#add(effect) {
 		// defer render effects inside a pending boundary
 		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
 		if (
@@ -1009,6 +1209,7 @@ export class Batch {
 		}
 
 		this.linked = false;
+		this.records.clear();
 	}
 }
 
@@ -1164,37 +1365,6 @@ function flush_queued_effects(effects) {
 }
 
 /**
- * This is similar to `mark_reactions`, but it only marks async/block effects
- * depending on `value` and at least one of the other `sources`, so that
- * these effects can re-run after another batch has been committed
- * @param {Value} value
- * @param {Source[]} sources
- * @param {Set<Value>} marked
- * @param {Map<Reaction, boolean>} checked
- */
-function mark_effects(value, sources, marked, checked) {
-	if (marked.has(value)) return;
-	marked.add(value);
-
-	if (value.reactions !== null) {
-		for (const reaction of value.reactions) {
-			const flags = reaction.f;
-
-			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
-			} else if (
-				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
-				(flags & DIRTY) === 0 &&
-				depends_on(reaction, sources, checked)
-			) {
-				set_signal_status(reaction, DIRTY);
-				schedule_effect(/** @type {Effect} */ (reaction));
-			}
-		}
-	}
-}
-
-/**
  * When committing a fork, we need to trigger eager effects so that
  * any `$state.eager(...)` expressions update immediately. This
  * function allows us to discover them
@@ -1217,38 +1387,12 @@ function mark_eager_effects(value, effects) {
 }
 
 /**
- * @param {Reaction} reaction
- * @param {Source[]} sources
- * @param {Map<Reaction, boolean>} checked
- */
-function depends_on(reaction, sources, checked) {
-	const depends = checked.get(reaction);
-	if (depends !== undefined) return depends;
-
-	if (reaction.deps !== null) {
-		for (const dep of reaction.deps) {
-			if (includes.call(sources, dep)) {
-				return true;
-			}
-
-			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources, checked)) {
-				checked.set(/** @type {Derived} */ (dep), true);
-				return true;
-			}
-		}
-	}
-
-	checked.set(reaction, false);
-
-	return false;
-}
-
-/**
  * @param {Effect} effect
+ * @param {number} status DIRTY or MAYBE_DIRTY
  * @returns {void}
  */
-export function schedule_effect(effect) {
-	/** @type {Batch} */ (current_batch).schedule(effect);
+export function schedule_effect(effect, status) {
+	/** @type {Batch} */ (current_batch).schedule(effect, status);
 }
 
 /** @type {Source<number>[]} */
@@ -1303,6 +1447,7 @@ export function eager(fn) {
 			var previous_batch_values = batch_values;
 
 			try {
+				// evaluate in the real world
 				batch_values = null;
 				value = fn();
 			} finally {
@@ -1402,6 +1547,7 @@ export function fork(fn) {
 	var batch = Batch.ensure();
 	batch.is_fork = true;
 	batch_values = new Map();
+	view_batch = batch;
 
 	var committed = false;
 	var settled = batch.settled();
@@ -1424,10 +1570,18 @@ export function fork(fn) {
 
 			batch.is_fork = false;
 
-			// apply changes and update write versions so deriveds see the change
-			for (var [source, [value]] of batch.current) {
-				source.v = value;
-				source.wv = increment_write_version();
+			// Apply the changes to the real world. They keep the versions they had in the fork,
+			// so that everything the fork computed remains valid (processing the batch
+			// re-validates everything that depends on them, see `#process`)
+			for (var [source, entry] of batch.current) {
+				source.v = entry.v;
+				source.wv = entry.wv;
+
+				if ((source.f & DERIVED) !== 0 && /** @type {BatchRecord} */ (entry).dv !== undefined) {
+					// an assigned derived, which holds its value until its dependencies change
+					promote_record(/** @type {Derived} */ (source), /** @type {BatchRecord} */ (entry));
+					update_derived_status(/** @type {Derived} */ (source));
+				}
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
@@ -1451,13 +1605,6 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
-			// cause any MAYBE_DIRTY deriveds to update
-			// if they depend on things that changed
-			// inside the discarded fork
-			for (var source of batch.current.keys()) {
-				source.wv = increment_write_version();
-			}
-
 			if (!committed && batch.linked) {
 				batch.discard();
 			}
