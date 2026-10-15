@@ -10,7 +10,7 @@ export default test({
 	async test({ assert, target, logs }) {
 		await tick();
 
-		const [resolve_all, set_1, set_0] = target.querySelectorAll('button');
+		const [shift, set_1, set_0] = target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('#output');
 
 		assert.htmlEqual(output.innerHTML, '<p>p0|0</p><em>slow0|key0</em>');
@@ -21,15 +21,13 @@ export default test({
 		set_0.click();
 
 		// the first batch resolves and commits, the second one is still pending
-		resolve_all.click();
+		shift.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>p0|1</p><em>slow0|key1</em>');
 		assert.deepEqual(logs, [0, 1]);
 
-		for (let i = 0; i < 3; i++) {
-			resolve_all.click();
-			await tick();
-		}
+		shift.click();
+		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>p0|0</p><em>slow0|key0</em>');
 		assert.deepEqual(logs, [0, 1, 0]);
 	}
