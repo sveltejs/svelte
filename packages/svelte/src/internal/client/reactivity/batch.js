@@ -79,6 +79,13 @@ let is_processing = false;
 export let collected_effects = null;
 
 /**
+ * Like `collected_effects`, but for render (and managed) effects. Only used in async mode,
+ * where these effects run after traversal rather than during it
+ * @type {Effect[] | null}
+ */
+export let collected_render_effects = null;
+
+/**
  * An array of effects that are marked during traversal as a result of a `set`
  * (not `internal_set`) call. These will be added to the next batch and
  * trigger another `batch.process()`
@@ -272,6 +279,30 @@ export class Batch {
 	}
 
 	/**
+	 * Called when this batch selects a branch that already exists offscreen, i.e. one that
+	 * was created by a batch that hasn't committed yet (possibly a different one, or a fork).
+	 * Effects created inside it during traversal (`$effect`s, and render effects in async mode)
+	 * are deferred until the creating batch commits, so they may not have run yet. Schedule
+	 * them, so that they run in case this batch commits first.
+	 * @param {Effect} effect
+	 */
+	reveal(effect) {
+		var e = effect.first;
+
+		while (e !== null) {
+			var flags = e.f;
+
+			if ((flags & (BRANCH_EFFECT | ROOT_EFFECT | REACTION_RAN)) === 0 && e.fn !== null) {
+				set_signal_status(e, DIRTY);
+				this.schedule(e);
+			}
+
+			this.reveal(e);
+			e = e.next;
+		}
+	}
+
+	/**
 	 * Convert the effects that were scheduled in this batch into the root effects
 	 * that need to be traversed, marking the path to each effect (by clearing the
 	 * `CLEAN` flag on ancestor branches) so that the traversal can find them.
@@ -347,6 +378,10 @@ export class Batch {
 		/** @type {Effect[]} */
 		var render_effects = [];
 
+		if (async_mode_flag) {
+			collected_render_effects = render_effects;
+		}
+
 		/**
 		 * @type {Effect[]}
 		 * @deprecated when we get rid of legacy mode and stores, we can get rid of this
@@ -389,6 +424,7 @@ export class Batch {
 		}
 
 		collected_effects = null;
+		collected_render_effects = null;
 		legacy_updates = null;
 
 		// if the batch has outstanding pending work, stash effects and bail
@@ -426,7 +462,13 @@ export class Batch {
 		this.#commit_callbacks.clear();
 
 		previous_batch = this;
+
+		// effects created by render effects (e.g. inside newly created branches) are
+		// collected and run alongside the existing effects
+		collected_effects = effects;
 		flush_queued_effects(render_effects);
+		collected_effects = null;
+
 		flush_queued_effects(effects);
 		previous_batch = null;
 
@@ -665,6 +707,7 @@ export class Batch {
 			flush_count = 0;
 			last_scheduled_effect = null;
 			collected_effects = null;
+			collected_render_effects = null;
 			legacy_updates = null;
 			is_processing = false;
 

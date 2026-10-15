@@ -186,8 +186,13 @@ export class BranchManager {
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
+		var offscreen = this.#offscreen.get(key);
 
-		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
+		if (offscreen !== undefined) {
+			// the branch may have been created by another batch that hasn't committed yet,
+			// in which case it may contain effects that haven't run yet
+			batch.reveal(offscreen.effect);
+		} else if (fn && !this.#onscreen.has(key)) {
 			if (defer) {
 				var fragment = document.createDocumentFragment();
 				var target = create_text();
