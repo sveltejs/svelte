@@ -102,6 +102,12 @@ export class Batch {
 
 	linked = true;
 
+	/**
+	 * The batch that took ownership of this batch's changes, if it was merged.
+	 * @type {Batch | null}
+	 */
+	merged_into = null;
+
 	/** @type {Batch | null} */
 	prev = null;
 
@@ -604,6 +610,7 @@ export class Batch {
 		}
 
 		this.oncommit(() => batch.discard());
+		batch.merged_into = this;
 		batch.#unlink();
 
 		current_batch = this;
