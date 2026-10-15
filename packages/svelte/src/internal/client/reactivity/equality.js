@@ -5,6 +5,9 @@ import { active_batch } from './batch.js';
 /**
  * Sources are compared against their real value, but deriveds are compared
  * against the value they have in the currently active batch's view of the world
+ * TODO not sure this is totally right — we should treat deriveds as sources
+ * when they're being written rather than recomputed. Probably need to
+ * pass a second argument here
  * @param {Value} value
  */
 function current_value(value) {
