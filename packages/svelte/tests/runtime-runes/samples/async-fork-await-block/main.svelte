@@ -1,6 +1,7 @@
 <script>
 	import { fork } from 'svelte';
 
+	let input;
 	let b = $state(0);
 	let current_fork;
 	export const registry = [];
@@ -14,15 +15,18 @@
 	function resolve_all() {
 		for (const r of registry.splice(0)) r();
 	}
+
+	function update() {
+		b = +input.value;
+	}
 </script>
 
-{#each [2, -1, 3, -2, 5, 6, 7] as value}
-	<button onclick={() => (current_fork = fork(() => (b = value)))}>fork b = {value}</button>
-{/each}
+<input bind:this={input}>
+<button onclick={update}>set b</button>
+<button onclick={() => (current_fork = fork(update))}>set b (fork)</button>
 <button onclick={resolve_all}>resolve all</button>
 <button onclick={() => current_fork?.discard()}>discard</button>
 <button onclick={() => current_fork?.commit()}>commit</button>
-<button onclick={() => (b = 4)}>b = 4</button>
 
 <div id="output">
 	{#await f(b) then v}<q>{v}</q>{:catch e}<s>{e}</s>{/await}

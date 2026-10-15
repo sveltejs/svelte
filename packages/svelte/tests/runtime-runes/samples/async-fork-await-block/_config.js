@@ -6,18 +6,13 @@ import { test } from '../../test';
 export default test({
 	mode: ['client'],
 	async test({ assert, target, instance }) {
+		const [input] = target.querySelectorAll('input');
 		const [
-			fork_2,
-			fork_negative_1,
-			fork_3,
-			fork_negative_2,
-			fork_5,
-			fork_6,
-			fork_7,
+			set,
+			fork,
 			resolve_all,
 			discard,
-			commit,
-			set_b_4
+			commit
 		] = target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('#output');
 
@@ -25,8 +20,18 @@ export default test({
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>0</q>');
 
+		const set_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			set.click();
+		};
+
+		const fork_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			fork.click();
+		};
+
 		// resolved, then discarded
-		fork_2.click();
+		fork_with(2);
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>0</q>');
@@ -36,7 +41,7 @@ export default test({
 		assert.equal(instance.registry.length, 0); // no refetch in the real world
 
 		// rejected, then discarded
-		fork_negative_1.click();
+		fork_with(-1);
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>0</q>');
@@ -45,7 +50,7 @@ export default test({
 		assert.htmlEqual(output.innerHTML, '<q>0</q>');
 
 		// resolved, then committed
-		fork_3.click();
+		fork_with(3);
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>0</q>');
@@ -55,7 +60,7 @@ export default test({
 		assert.equal(instance.registry.length, 0);
 
 		// rejected, then committed
-		fork_negative_2.click();
+		fork_with(-2);
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>3</q>');
@@ -65,7 +70,7 @@ export default test({
 
 		// For comparison, a real update: without a pending snippet, the previous
 		// content is removed (a microtask later), and the result shows once it resolves
-		set_b_4.click();
+		set_with(4);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
 		resolve_all.click();
@@ -74,7 +79,7 @@ export default test({
 
 		// committed while pending (after the pending state was reached in the fork):
 		// the real world is in the same state as after a real update
-		fork_5.click();
+		fork_with(5);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>4</q>');
 		commit.click();
@@ -86,7 +91,7 @@ export default test({
 		assert.equal(instance.registry.length, 0);
 
 		// committed synchronously (`fork` flushes synchronously, which reaches the pending state)
-		fork_6.click();
+		fork_with(6);
 		assert.htmlEqual(output.innerHTML, '<q>5</q>');
 		commit.click();
 		assert.htmlEqual(output.innerHTML, '');
@@ -96,7 +101,7 @@ export default test({
 		assert.equal(instance.registry.length, 0);
 
 		// discarded while pending, resolved afterwards
-		fork_7.click();
+		fork_with(7);
 		await tick();
 		discard.click();
 		resolve_all.click();
