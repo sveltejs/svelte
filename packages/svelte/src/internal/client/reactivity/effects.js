@@ -35,7 +35,8 @@ import {
 	CONNECTED,
 	MANAGED_EFFECT,
 	DESTROYING,
-	PAUSED
+	PAUSED,
+	DEFERRED_RUN
 } from '#client/constants';
 import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
@@ -43,7 +44,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, current_batch } from './batch.js';
+import { Batch, collected_effects, collected_render_effects, current_batch } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -132,6 +133,15 @@ function create_effect(type, fn) {
 			// schedule for later
 			Batch.ensure().schedule(effect, DIRTY);
 		}
+	} else if (
+		collected_render_effects !== null &&
+		fn !== null &&
+		(type & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0
+	) {
+		// created during traversal — collect and run afterwards,
+		// alongside existing render effects, in tree order
+		effect.f |= DEFERRED_RUN;
+		collected_render_effects.push(effect);
 	} else if (fn !== null) {
 		try {
 			update_effect(effect);
@@ -369,7 +379,7 @@ export function legacy_pre_effect_reset() {
  */
 export function async_effect(fn) {
 	const effect = create_effect(ASYNC | EFFECT_PRESERVED, fn);
-	current_batch?.seen_effects?.add(effect);
+	current_batch?.seen_effects.add(effect);
 	return effect;
 }
 
@@ -417,7 +427,7 @@ export function block(fn, flags = 0) {
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
-	current_batch?.seen_effects?.add(effect);
+	current_batch?.seen_effects.add(effect);
 	return effect;
 }
 
