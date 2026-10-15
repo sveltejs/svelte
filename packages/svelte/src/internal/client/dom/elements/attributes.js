@@ -298,6 +298,16 @@ function set_attributes(
 	var is_option_element = element.nodeName === OPTION_TAG;
 	var is_select_element = element.nodeName === SELECT_TAG;
 
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+
+	// Like in `set_custom_element_data`, custom element setters and lifecycle
+	// methods shouldn't be associated with the current reaction or effect
+	if (is_custom_element) {
+		set_active_reaction(null);
+		set_active_effect(null);
+	}
+
 	try {
 		for (var key in prev) {
 			// don't null our internal $$onX listeners
@@ -491,6 +501,10 @@ function set_attributes(
 			}
 		}
 	} finally {
+		if (is_custom_element) {
+			set_active_reaction(previous_reaction);
+			set_active_effect(previous_effect);
+		}
 		if (is_hydrating_custom_element) {
 			set_hydrating(true);
 		}
