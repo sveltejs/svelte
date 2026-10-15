@@ -97,11 +97,37 @@ export function bind_resize_observer(element, type, set) {
  * @param {(size: number) => void} set
  */
 export function bind_element_size(element, type, set) {
-	var unsub = resize_observer_border_box.observe(element, () => set(element[type]));
+	/** @type {ResizeObserverSize | undefined} */
+	var border_size;
+	/** @type {number | undefined} */
+	var size;
+	var unsub = resize_observer_border_box.observe(element, (entry) => {
+		border_size = entry.borderBoxSize[0];
+		set((size = element[type]));
+	});
+	// Scrollbars can change the client size without changing the border box.
+	// Leave border-box changes to the original observer, including its initial notification.
+	var unsub_content =
+		type === 'clientWidth' || type === 'clientHeight'
+			? resize_observer_content_box.observe(element, (entry) => {
+					var border = entry.borderBoxSize[0];
+					if (
+						border_size &&
+						border.inlineSize === border_size.inlineSize &&
+						border.blockSize === border_size.blockSize &&
+						size !== element[type]
+					) {
+						set((size = element[type]));
+					}
+				})
+			: null;
 
 	effect(() => {
 		// The update could contain reads which should be ignored
 		untrack(() => set(element[type]));
-		return unsub;
+		return () => {
+			unsub();
+			unsub_content?.();
+		};
 	});
 }
