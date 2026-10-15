@@ -1,4 +1,4 @@
-/** @import { TemplateNode } from '#client' */
+/** @import { ComponentContext, TemplateNode } from '#client' */
 
 import { COMMENT_NODE } from '#client/constants';
 import {
@@ -19,6 +19,19 @@ export let hydrating = false;
 /** @param {boolean} value */
 export function set_hydrating(value) {
 	hydrating = value;
+}
+
+/**
+ * The component whose code is resuming after an `await`, if that code started while the component
+ * was hydrating. The DOM is no longer being hydrated by then, so `hydrating` stays false, but
+ * `hydratable` called from this component should still read the values the server serialized
+ * @type {ComponentContext | null}
+ */
+export let hydrating_component = null;
+
+/** @param {ComponentContext | null} value */
+export function set_hydrating_component(value) {
+	hydrating_component = value;
 }
 
 /**
