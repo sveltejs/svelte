@@ -14,7 +14,7 @@
 <button onclick={() => page++}>page</button>
 <button onclick={() => (filter = 'b')}>filter</button>
 <button onclick={() => deferred.shift()?.()}>shift</button>
-<button onclick={() => deferred.pop()?.()}>pop</button>
+<button onclick={() => deferred.splice(-2, 1)?.[0]()}>pop eager</button>
 
 <p>page: {page}</p>
 <p>result: {await load(page, $state.eager(filter))}</p>
