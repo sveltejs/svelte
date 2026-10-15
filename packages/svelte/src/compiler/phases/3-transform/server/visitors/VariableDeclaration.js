@@ -20,7 +20,13 @@ export function VariableDeclaration(node, context) {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, context.state.scope);
-			if (!rune || rune === '$effect.tracking' || rune === '$inspect' || rune === '$effect.root') {
+			if (
+				!rune ||
+				rune === '$effect.tracking' ||
+				rune === '$effect.pending' ||
+				rune === '$inspect' ||
+				rune === '$effect.root'
+			) {
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}
