@@ -2,7 +2,7 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 const buttons =
-	'<button>page</button><button>filter</button><button>shift</button><button>pop</button>';
+	'<button>page</button><button>filter</button><button>shift</button><button>pop eager</button>';
 
 // The eager batch that re-runs `load` for the new `$state.eager(filter)` value computes it
 // with the old `page`, because eager batches don't see other batches' changes. Therefore it
@@ -18,7 +18,7 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>page: 1</p><p>result: 1/a</p>`);
 
-		// filter = 'b' -> eager batch re-runs load(1, 'b'), pending
+		// filter = 'b' -> eager batch re-runs load(1, 'b'), other batch is notified and immediately reruns with (2, 'b')
 		filter.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>page: 1</p><p>result: 1/a</p>`);
@@ -28,13 +28,10 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>page: 1</p><p>result: 1/b</p>`);
 
-		// resolve load(2, 'a') -> B1 commits (showing B1's own result is fine, as is
-		// waiting for load(2, 'b'), as long as the result matches the page)
+		// resolve load(2, 'a') -> B1 doesn't commit yet because its own load(2, 'b') is still pending
 		shift.click();
 		await tick();
-		const [p1, p2] = target.querySelectorAll('p');
-		assert.equal(p1.textContent, 'page: 2');
-		assert.match(p2.textContent ?? '', /^result: 2\//);
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>page: 1</p><p>result: 1/b</p>`);
 
 		// load(2, 'b') resolves
 		shift.click();

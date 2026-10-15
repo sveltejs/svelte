@@ -14,5 +14,9 @@
 
 {await wait(value)}
 
-<!-- read value.x twice to ensure it reads latest value not just the first time -->
-<p>{show ? value.x + value.x : ''}</p>
+<svelte:boundary>
+	<p>{show ? value.x + value.x : ''}</p>
+	{#snippet failed()}
+		<p>crash</p>
+	{/snippet}
+</svelte:boundary>

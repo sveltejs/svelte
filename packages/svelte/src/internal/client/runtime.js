@@ -51,7 +51,9 @@ import {
 	Batch,
 	batch_values,
 	current_batch,
+	first_batch,
 	flushSync,
+	has_pending_batches,
 	held_sources,
 	previous_batch,
 	schedule_effect,
@@ -64,7 +66,6 @@ import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
-import { queue_micro_task } from './dom/task.js';
 
 export let is_destroying_effect = false;
 
@@ -132,6 +133,15 @@ export function set_untracked_writes(value) {
 }
 
 /**
+ * Whether `batch_values` handed the effect that is currently being updated a value of one of its
+ * dependencies that differs from the real one, i.e. whether it (partly) ran with its batch's view
+ * rather than the latest values (see `update_effect`). Tracked as the values are read, because
+ * the dependencies afterwards don't tell: they may include ones that it kept without reading them
+ * (see `keep_dependencies`), and it may have read them outside of the batch's view (`$state.eager`)
+ */
+let read_batch_local = false;
+
+/**
  * @type {number} Used by sources and deriveds for handling updates.
  * Version starts from 1 so that unowned deriveds differentiate between a created effect and a run one for tracing
  **/
@@ -187,8 +197,9 @@ export function is_dirty(reaction) {
 			// During time traveling we don't want to reset the status so that
 			// traversal of the graph in the other batches still happens. Effects
 			// can be reset because block/async effects execute right away and others
-			// are deferred and re-dirtied as needed.
-			(batch_values === null || (flags & DERIVED) === 0)
+			// are deferred and re-dirtied as needed. Deriveds also mustn't be reset
+			// outside of a batch's view while other batches are in flight (see `update_derived`)
+			((flags & DERIVED) === 0 || (batch_values === null && !has_pending_batches()))
 		) {
 			set_signal_status(reaction, CLEAN);
 		}
@@ -216,12 +227,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
-			if (root) {
-				set_signal_status(reaction, DIRTY);
-			} else if ((reaction.f & CLEAN) !== 0) {
-				set_signal_status(reaction, MAYBE_DIRTY);
-			}
-			schedule_effect(/** @type {Effect} */ (reaction));
+			schedule_effect(/** @type {Effect} */ (reaction), root ? DIRTY : MAYBE_DIRTY);
 		}
 	}
 }
@@ -341,16 +347,16 @@ export function update_reaction(reaction) {
 function update_dependencies(reaction) {
 	var deps = reaction.deps;
 
-	// Don't remove reactions during fork;
-	// they must remain for when fork is discarded
-	var is_fork = current_batch?.is_fork;
-
 	if (new_deps !== null) {
 		var i;
 
-		if (!is_fork) {
-			remove_reactions(reaction, skipped_deps);
+		if (deps !== null && skipped_deps < deps.length && keep_dependencies(deps)) {
+			for (i = skipped_deps; i < deps.length; i++) {
+				if (!includes.call(new_deps, deps[i])) new_deps.push(deps[i]);
+			}
 		}
+
+		remove_reactions(reaction, skipped_deps);
 
 		if (deps !== null && skipped_deps > 0) {
 			deps.length = skipped_deps + new_deps.length;
@@ -366,12 +372,37 @@ function update_dependencies(reaction) {
 				(deps[i].reactions ??= []).push(reaction);
 			}
 		}
-	} else if (!is_fork && deps !== null && skipped_deps < deps.length) {
+	} else if (deps !== null && skipped_deps < deps.length && !keep_dependencies(deps)) {
 		remove_reactions(reaction, skipped_deps);
 		deps.length = skipped_deps;
 	}
 
 	return deps;
+}
+
+/**
+ * Whether a reaction should keep the dependencies it didn't read this time. While several batches exist (or in
+ * a fork), they're needed if it read a value that some batch changes: other batches (or the real world, once the
+ * fork is discarded) see another value for it, so the reaction may take another path there (e.g. `a || b` with a
+ * different `a`), in which it depends on them
+ * @param {Value[]} deps the previous dependencies, of which the first `skipped_deps` were read again
+ */
+function keep_dependencies(deps) {
+	if (batch_values === null) return false;
+
+	for (var batch = first_batch; batch !== null; batch = batch.next) {
+		for (var i = 0; i < skipped_deps; i++) {
+			if (batch.current.has(deps[i])) return true;
+		}
+
+		if (new_deps !== null) {
+			for (i = 0; i < new_deps.length; i++) {
+				if (batch.current.has(new_deps[i])) return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -467,8 +498,10 @@ export function update_effect(effect) {
 	set_signal_status(effect, CLEAN);
 
 	var previous_effect = active_effect;
+	var previous_read_batch_local = read_batch_local;
 
 	active_effect = effect;
+	read_batch_local = false;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -489,27 +522,25 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		// Did the effect see the latest value of all its dependencies, or (partly) its batch's view
-		// of them, i.e. did `batch_values` hand it a value that differs from the real one? We only
-		// need to look one level deep: a derived that was itself computed from such a value was not
-		// written to the real world either, so it differs as well.
+		// Did the effect see the latest value of all its dependencies, or (partly) its batch's view of them?
 		var own_batch = previous_batch ?? current_batch; // can be null inside flush_eager_effects
-		var is_latest_value =
-			own_batch === null ||
-			batch_values === null ||
-			effect.deps === null ||
-			!effect.deps.some((d) => batch_values?.has(d) && batch_values.get(d) !== d.v);
 
-		if (is_latest_value) {
+		if (own_batch === null || (!own_batch.is_fork && !read_batch_local)) {
 			effect.wv = write_version;
 		} else {
 			// The effect ran with values that are not the latest ones (it saw its own batch's view).
 			// Don't update its write version — instead remember it so that the batch can bring it
 			// up to date on commit, and tell all subsequent batches that it may need to re-run in their view.
+			// Render/user effects have made that view visible (in the DOM, or through side effects), which their
+			// write version can't tell: their dependencies may be back to the values the effect last saw for real
+			// (e.g. a derived whose value didn't change), so they are dirty. Block/async effects are only maybe
+			// dirty, since their results are kept per batch, and they run during traversal: marking them dirty
+			// would re-run them (and restart async work) on every process of a pending batch.
 			var own = /** @type {Batch} */ (own_batch);
+			var status = (flags & (BLOCK_EFFECT | ASYNC)) !== 0 ? MAYBE_DIRTY : DIRTY;
 			own.stale_effects.set(effect, write_version);
-			for (var batch = own.next; batch !== null; batch = batch.next) {
-				batch.add_dirty_reaction(effect, MAYBE_DIRTY);
+			for (var batch = own.next; batch !== null && effect.deps !== null; batch = batch.next) {
+				batch.add_dirty_reaction(effect, status);
 			}
 		}
 
@@ -525,6 +556,7 @@ export function update_effect(effect) {
 		}
 	} finally {
 		active_effect = previous_effect;
+		read_batch_local = previous_read_batch_local;
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);
@@ -573,7 +605,6 @@ export function settled() {
 export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
-	var first_time = false;
 
 	captured_signals?.add(signal);
 
@@ -612,7 +643,6 @@ export function get(signal) {
 				active_reaction.deps ??= [];
 				if (!includes.call(active_reaction.deps, signal)) {
 					active_reaction.deps.push(signal);
-					first_time = true;
 				}
 
 				var reactions = signal.reactions;
@@ -734,8 +764,8 @@ export function get(signal) {
 
 	// Keep batch-local reads and stale-reader tracking out of the common read path.
 	// Function extraction makes it a bit easier for engines to optimize the get function.
-	if (held_sources !== null || stale_sources !== null || batch_values !== null) {
-		return get_batch_value(signal, first_time);
+	if (batch_values !== null) {
+		return get_batch_value(signal);
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
@@ -748,10 +778,9 @@ export function get(signal) {
 /**
  * @template V
  * @param {Value<V>} signal
- * @param {boolean} first_time
  * @returns {V}
  */
-function get_batch_value(signal, first_time) {
+function get_batch_value(signal) {
 	if (current_batch || previous_batch?.is_eager) {
 		const current = /** @type {Batch} */ (current_batch ?? previous_batch);
 		if (!current.is_eager && held_sources?.has(signal)) {
@@ -761,65 +790,41 @@ function get_batch_value(signal, first_time) {
 		if (batch) {
 			if (!current.is_eager) batch.dependent.add(current);
 
-			// The reaction that read the stale value has to re-run in `batch`'s world. If we're inside
-			// a derived, that's the derived (whose reactions get dirtied): `active_effect` is only the
-			// derived's parent then, not the effect on whose behalf the derived is evaluated (which may
-			// even happen in `is_dirty`, i.e. outside of any effect update)
-			const in_derived = active_reaction !== null && (active_reaction.f & DERIVED) !== 0;
-			const reader = in_derived ? active_reaction : active_effect;
+			// The reaction that read the stale value has to re-run in `batch`'s world
+			const reader =
+				active_reaction !== null && (active_reaction.f & DERIVED) !== 0
+					? active_reaction
+					: active_effect !== null &&
+						  ((active_reaction === active_effect &&
+								(active_effect.f & REACTION_IS_UPDATING) !== 0) ||
+								(active_effect.f & ASYNC) !== 0)
+						? active_effect
+						: null;
 
-			var reactive =
-				in_derived ||
-				(active_effect !== null &&
-					active_reaction === active_effect &&
-					(active_effect.f & REACTION_IS_UPDATING) !== 0) ||
-				(active_effect !== null && (active_effect.f & ASYNC) !== 0);
-
-			if (
-				reader !== null &&
-				reactive &&
-				// a reaction can read several stale values in one run — only schedule the re-run once
-				!batch.stale_readers.has(reader)
-			) {
-				batch.stale_readers.add(reader);
-
-				if (current.is_eager) {
-					// Reactions of eager effects with at least one non-eager effect (which we know is true here due to the stale_sources check above)
-					// need to rerun because they could do something like `$state.eager(count) !== count`.
-					if (reader.deps?.some((dep) => dep.f & EAGER_EFFECT)) {
-						batch.oncommit(() => {
-							batch.stale_readers.delete(reader);
-							Batch.ensure();
-							invalidate(reader, DIRTY);
-						});
-					}
-				} else {
-					queue_micro_task(() => {
-						batch.stale_readers.delete(reader);
-						const b = batch.activate();
-						invalidate(reader, MAYBE_DIRTY);
-						b.flush();
-					});
-				}
+			if (reader !== null) {
+				batch.rerun(reader, current.is_eager ? DIRTY : MAYBE_DIRTY);
 			}
 		}
 	}
 
+	// Always show the batch's view, even to reactions that read the signal for the first time
+	// (see test `async-state-read-new-dependency` and its variants). The batches whose newer
+	// values are hidden that way re-run the reaction when they resume (see `Batch#process`).
 	if (batch_values?.has(signal)) {
-		// A reaction that reads a signal for the first time while flushing render effects or
-		// during an eager batch needs to show the latest value, because maybe it would crash
-		// with the old version (see test `async-state-read-new-dependency` and its variants).
-		var see_latest =
-			(previous_batch !== null || current_batch?.is_eager) &&
-			(first_time ||
-				(active_reaction !== null &&
-					!untracking &&
-					(active_reaction.f & REACTION_IS_UPDATING) !== 0 &&
-					(active_reaction.deps === null || !includes.call(active_reaction.deps, signal))));
+		var value = batch_values.get(signal);
 
-		if (!see_latest) {
-			return batch_values.get(signal);
+		if (
+			value !== signal.v &&
+			// only the effect's own dependencies count — deriveds it reads are judged by their value
+			active_reaction !== null &&
+			active_reaction === active_effect &&
+			!untracking &&
+			(active_reaction.f & REACTION_IS_UPDATING) !== 0
+		) {
+			read_batch_local = true;
 		}
+
+		return value;
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {

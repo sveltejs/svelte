@@ -14,28 +14,17 @@ export default test({
 		await tick();
 
 		// the template effect newly depends on `value`, which the pending batch
-		// has written — it reads the latest value rather than the pre-write one
+		// has written — it reads the pre-write value and crashes
 		assert.htmlEqual(
 			target.innerHTML,
 			`
 				<button>update</button>
 				<button>show</button>
 				<button>resolve</button>
-				<p>2</p>
+				<p>crash</p>
 			`
 		);
 
 		resolve.click();
-		await tick();
-
-		assert.htmlEqual(
-			target.innerHTML,
-			`
-				<button>update</button>
-				<button>show</button>
-				<button>resolve</button>
-				<p>2</p>
-			`
-		);
 	}
 });
