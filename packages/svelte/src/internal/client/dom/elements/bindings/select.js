@@ -5,6 +5,7 @@ import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
 import { Batch, current_batch, previous_batch } from '../../../reactivity/batch.js';
 import { async_mode_flag } from '../../../../flags/index.js';
+import { hydrating } from '../../hydration.js';
 
 /**
  * Sets the `selected` attribute on an option so form reset can restore it.
@@ -112,6 +113,59 @@ export function select_option(select, value, mounting = false) {
 }
 
 /**
+ * Whether the DOM selection differs from the server-rendered one, which can only
+ * be a selection the user made before hydration finished (SSR emits `selected`
+ * on the matching option, so a mismatch is theirs).
+ * @param {HTMLSelectElement} select
+ */
+function select_selection_changed(select) {
+	var options = Array.from(select.options);
+	if (select.multiple) {
+		return options.some((option) => option.selected !== option.defaultSelected);
+	}
+	var index = options.reduce((index, option, i) => (option.defaultSelected ? i : index), -1);
+	// A single-row select implicitly selects its first enabled option.
+	if (index === -1 && select.size <= 1) {
+		index = options.findIndex((option) => !option.matches(':disabled'));
+	}
+	return select.selectedIndex !== index;
+}
+
+/**
+ * The selects the user changed before hydration finished, whose selection was
+ * adopted instead of reset. Guards against re-dispatching on the template
+ * effect's re-run after adoption.
+ * @type {WeakSet<HTMLSelectElement>}
+ */
+var hydration_adopted = new WeakSet();
+
+/**
+ * The one-way `<select {value}>` update: normally assigns the DOM value and
+ * re-selects the matching option. While hydrating, a selection the user already
+ * made wins over the server value instead: their `change` went unheard (no
+ * listener was attached yet), so replay it - the app's handler adopts the DOM
+ * selection into state - and leave the DOM alone. After hydration this is
+ * exactly the compiled sequence.
+ * @template V
+ * @param {HTMLSelectElement} select
+ * @param {V} value
+ */
+export function set_select_value_preserving_user_selection(select, value) {
+	if (hydrating && !hydration_adopted.has(select) && select_selection_changed(select)) {
+		hydration_adopted.add(select);
+		// The template effect runs before the app's `change` handler is
+		// registered, so the replay has to wait for init to finish.
+		queueMicrotask(() => {
+			select.dispatchEvent(new Event('change', { bubbles: true }));
+		});
+		return;
+	}
+	// @ts-expect-error the compiler emits the `?? ''` fallback where the value can be undefined
+	select.value = select.__value = value ?? '';
+	select_option(select, value);
+}
+
+/**
  * Sets up a mutation observer to sync the current selection
  * and default to the dom when the options change, for example
  * when they are inside an `#each` block. Called once per `<select>`,
@@ -163,7 +217,8 @@ export function bind_select_value(select, get, set = get) {
 	var batches = new WeakSet();
 	var mounting = true;
 
-	listen_to_event_and_reset_event(select, 'change', (is_reset) => {
+	/** @param {true} [is_reset] */
+	var handler = (is_reset) => {
 		var query = is_reset ? '[selected]' : ':checked';
 		/** @type {unknown} */
 		var value;
@@ -187,7 +242,11 @@ export function bind_select_value(select, get, set = get) {
 		if (current_batch !== null) {
 			batches.add(current_batch);
 		}
-	});
+	};
+
+	listen_to_event_and_reset_event(select, 'change', handler);
+
+	if (hydrating && select_selection_changed(select)) handler();
 
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
 	effect(() => {
