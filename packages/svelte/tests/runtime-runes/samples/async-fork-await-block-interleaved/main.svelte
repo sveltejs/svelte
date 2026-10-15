@@ -1,6 +1,9 @@
 <script>
+	import { fork } from 'svelte';
+
 	let a = $state(0);
 	let b = $state(0);
+	let current_fork;
 
 	/** @type {Map<string, Array<() => void>>} */
 	const registry = new Map();
@@ -17,22 +20,27 @@
 		return promise;
 	}
 
-	export function set(values) {
-		if ('a' in values) a = values.a;
-		if ('b' in values) b = values.b;
-	}
-
 	/** resolve the promises created for `tag` and `value` */
-	export function settle(tag, value) {
+	function settle(tag, value) {
 		for (const r of registry.get(tag + value) ?? []) r();
 		registry.delete(tag + value);
 	}
-
-	/** the latest promise created for `tag` */
-	export function latest(tag) {
-		return promises.get(tag);
-	}
 </script>
 
-{#await f('a', a)}<i>pending</i>{:then v}<q>{v}</q>{/await}
-{#await f('b', b)}<i>pending</i>{:then v}<s>{v}|{a}</s>{/await}
+{#each [1, 2] as value}
+	<button onclick={() => (current_fork = fork(() => (b = value)))}>fork b = {value}</button>
+{/each}
+<button onclick={() => current_fork?.discard()}>discard</button>
+<button onclick={() => (a = 1)}>a = 1</button>
+<button onclick={() => promises.get('b').then(() => (a = 5))}>a = 5 after b resolves</button>
+{#each [0, 1, 5] as value}
+	<button onclick={() => settle('a', value)}>resolve a({value})</button>
+{/each}
+{#each [0, 1, 2] as value}
+	<button onclick={() => settle('b', value)}>resolve b({value})</button>
+{/each}
+
+<div id="output">
+	{#await f('a', a)}<i>pending</i>{:then v}<q>{v}</q>{/await}
+	{#await f('b', b)}<i>pending</i>{:then v}<s>{v}|{a}</s>{/await}
+</div>

@@ -1,4 +1,6 @@
 <script>
+	import Async from './Async.svelte';
+
 	let a = $state(0);
 	let b = $state(0);
 	let c = $state(0);
@@ -11,22 +13,22 @@
 		log.push(sum);
 	});
 
-	let slow = $derived(await f('slow', c));
-
 	function f(tag, value) {
 		return new Promise((resolve) => registry.push(() => resolve(`${tag}${value}`)));
 	}
 
-	export function set_b(v) {
-		b = v;
-	}
-
-	export function resolve_all() {
+	function resolve_all() {
 		for (const r of registry.splice(0)) r();
 	}
 </script>
 
-<p>{await f('p', a)}|{sum}</p>
-{#key c}
-	<em>{slow}|{await f('key', b)}</em>
-{/key}
+<button onclick={resolve_all}>resolve all</button>
+<button onclick={() => (b = 1)}>b = 1</button>
+<button onclick={() => (b = 0)}>b = 0</button>
+
+<div id="output">
+	<svelte:boundary>
+		<Async {a} {b} {c} {sum} {f} />
+		{#snippet pending()}{/snippet}
+	</svelte:boundary>
+</div>

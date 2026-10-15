@@ -1,4 +1,4 @@
-import { fork, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 // A fork's {#await} results (then and catch) must not end up in the real world
@@ -6,84 +6,102 @@ import { test } from '../../test';
 export default test({
 	mode: ['client'],
 	async test({ assert, target, instance }) {
-		instance.resolve_all();
+		const [
+			fork_2,
+			fork_negative_1,
+			fork_3,
+			fork_negative_2,
+			fork_5,
+			fork_6,
+			fork_7,
+			resolve_all,
+			discard,
+			commit,
+			set_b_4
+		] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('#output');
+
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>0</q>');
+		assert.htmlEqual(output.innerHTML, '<q>0</q>');
 
 		// resolved, then discarded
-		let f = fork(() => instance.set_b(2));
-		instance.resolve_all();
+		fork_2.click();
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>0</q>');
-		f.discard();
+		assert.htmlEqual(output.innerHTML, '<q>0</q>');
+		discard.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>0</q>');
-		assert.equal(instance.pending(), 0); // no refetch in the real world
+		assert.htmlEqual(output.innerHTML, '<q>0</q>');
+		assert.equal(instance.registry.length, 0); // no refetch in the real world
 
 		// rejected, then discarded
-		f = fork(() => instance.set_b(-1));
-		instance.resolve_all();
+		fork_negative_1.click();
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>0</q>');
-		f.discard();
+		assert.htmlEqual(output.innerHTML, '<q>0</q>');
+		discard.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>0</q>');
+		assert.htmlEqual(output.innerHTML, '<q>0</q>');
 
 		// resolved, then committed
-		f = fork(() => instance.set_b(3));
-		instance.resolve_all();
+		fork_3.click();
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>0</q>');
-		await f.commit();
-		assert.htmlEqual(target.innerHTML, '<q>3</q>');
-		assert.equal(instance.pending(), 0);
+		assert.htmlEqual(output.innerHTML, '<q>0</q>');
+		commit.click();
+		await tick();
+		assert.htmlEqual(output.innerHTML, '<q>3</q>');
+		assert.equal(instance.registry.length, 0);
 
 		// rejected, then committed
-		f = fork(() => instance.set_b(-2));
-		instance.resolve_all();
+		fork_negative_2.click();
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>3</q>');
-		await f.commit();
-		assert.htmlEqual(target.innerHTML, '<s>-2</s>');
+		assert.htmlEqual(output.innerHTML, '<q>3</q>');
+		commit.click();
+		await tick();
+		assert.htmlEqual(output.innerHTML, '<s>-2</s>');
 
 		// For comparison, a real update: without a pending snippet, the previous
 		// content is removed (a microtask later), and the result shows once it resolves
-		instance.set_b(4);
+		set_b_4.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '');
-		instance.resolve_all();
+		assert.htmlEqual(output.innerHTML, '');
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>4</q>');
+		assert.htmlEqual(output.innerHTML, '<q>4</q>');
 
 		// committed while pending (after the pending state was reached in the fork):
 		// the real world is in the same state as after a real update
-		f = fork(() => instance.set_b(5));
+		fork_5.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>4</q>');
-		await f.commit();
-		assert.htmlEqual(target.innerHTML, '');
-		instance.resolve_all();
+		assert.htmlEqual(output.innerHTML, '<q>4</q>');
+		commit.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>5</q>');
-		assert.equal(instance.pending(), 0);
+		assert.htmlEqual(output.innerHTML, '');
+		resolve_all.click();
+		await tick();
+		assert.htmlEqual(output.innerHTML, '<q>5</q>');
+		assert.equal(instance.registry.length, 0);
 
 		// committed synchronously (`fork` flushes synchronously, which reaches the pending state)
-		f = fork(() => instance.set_b(6));
-		assert.htmlEqual(target.innerHTML, '<q>5</q>');
-		f.commit();
-		assert.htmlEqual(target.innerHTML, '');
-		instance.resolve_all();
+		fork_6.click();
+		assert.htmlEqual(output.innerHTML, '<q>5</q>');
+		commit.click();
+		assert.htmlEqual(output.innerHTML, '');
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>6</q>');
-		assert.equal(instance.pending(), 0);
+		assert.htmlEqual(output.innerHTML, '<q>6</q>');
+		assert.equal(instance.registry.length, 0);
 
 		// discarded while pending, resolved afterwards
-		f = fork(() => instance.set_b(7));
+		fork_7.click();
 		await tick();
-		f.discard();
-		instance.resolve_all();
+		discard.click();
+		resolve_all.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>6</q>');
-		assert.equal(instance.pending(), 0);
+		assert.htmlEqual(output.innerHTML, '<q>6</q>');
+		assert.equal(instance.registry.length, 0);
 	}
 });
