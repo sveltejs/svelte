@@ -14,7 +14,6 @@
     "!src/**/*.test.*",
     "!src/**/*.d.ts",
     "types",
-    "compiler",
     "README.md"
   ],
   "module": "src/index-client.js",
@@ -40,7 +39,6 @@
     },
     "./compiler": {
       "types": "./types/index.d.ts",
-      "require": "./compiler/index.js",
       "default": "./src/compiler/index.js"
     },
     "./easing": {
@@ -138,8 +136,8 @@
     "templating"
   ],
   "scripts": {
-    "build": "rollup -c && pnpm generate && node scripts/check-treeshakeability.js",
-    "dev": "node scripts/process-messages -w & rollup -cw",
+    "build": "pnpm generate:version && pnpm generate && node scripts/check-treeshakeability.js",
+    "dev": "node scripts/process-messages -w",
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:tsgo": "tsgo --project tsconfig.runtime.json --skipLibCheck && tsgo --skipLibCheck",
     "check:watch": "tsc --watch",
@@ -153,9 +151,7 @@
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.25",
     "@playwright/test": "^1.62.0",
-    "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
-    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
@@ -165,6 +161,7 @@
     "esbuild": "^0.28.1",
     "rollup": "^4.59.0",
     "source-map": "^0.7.4",
+    "acorn": "^8.18.0",
     "tinyglobby": "^0.2.12",
     "typescript": "^5.5.4",
     "vitest": "^4.1.7",
@@ -173,16 +170,14 @@
   "dependencies": {
     "@jridgewell/remapping": "^2.3.5",
     "@jridgewell/sourcemap-codec": "^1.6.0",
-    "@sveltejs/acorn-typescript": "^1.0.13",
+    "@teasel/parser": "0.0.21",
     "@types/estree": "^1.0.9",
-    "acorn": "^8.18.0",
     "aria-query": "5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
     "devalue": "^5.9.2",
     "esm-env": "^1.2.1",
     "esrap": "^2.3.6",
-    "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"

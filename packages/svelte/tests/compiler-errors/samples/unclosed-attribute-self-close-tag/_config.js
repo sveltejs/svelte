@@ -4,6 +4,6 @@ export default test({
 	error: {
 		code: 'expected_token',
 		message: 'Expected token }',
-		position: [19, 19]
+		position: [18, 18]
 	}
 });

@@ -1,346 +1,820 @@
 /** @import { AST } from '#compiler' */
-/** @import { Location } from 'locate-character' */
-/** @import * as ESTree from 'estree' */
-// @ts-expect-error acorn type definitions are borked in the release we use
-import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import fragment from './state/fragment.js';
+/** @import { Expression, Identifier, Node, Pattern, Program } from 'estree' */
+/** @import { Parsed, ParseError } from '@teasel/parser' */
+/** @import { Tables } from '../../utils/ast.js' */
+import { Source, css } from '@teasel/parser';
 import * as e from '../../errors.js';
-import { create_fragment, disallow_children } from '../nodes.js';
-import read_options from './read/options.js';
-import { is_reserved } from '../../../utils.js';
+import * as w from '../../warnings.js';
 import * as state from '../../state.js';
-import { is_whitespace } from './utils/whitespace.js';
+import { ExpressionMetadata, disallow_children } from '../nodes.js';
+import {
+	get_attribute_expression,
+	is_expression_attribute,
+	keep_tables,
+	tables_of
+} from '../../utils/ast.js';
+import { grammar } from './grammar.js';
+import { dedent, first_from, sentence, unsupported } from './js.js';
+import read_options from './options.js';
+import { list } from '../../utils/string.js';
+
+const VOID =
+	'area base br col command embed hr img input keygen link meta param source track wbr'.split(' ');
+const SCRIPT_RESERVED = ['server', 'client', 'worker', 'test', 'default'];
+const SCRIPT_ALLOWED = ['context', 'generics', 'lang', 'module'];
+
+/** The nodes of the template language; the JavaScript under them the parser read on its own. */
+const TEMPLATE_TYPES = new Set([
+	'Root',
+	'Fragment',
+	'Text',
+	'Comment',
+	'Script',
+	'StyleSheet',
+	'RegularElement',
+	'SvelteElement',
+	'SvelteComponent',
+	'SvelteSelf',
+	'SvelteWindow',
+	'SvelteDocument',
+	'SvelteBody',
+	'SvelteHead',
+	'SvelteOptions',
+	'SvelteFragment',
+	'SvelteBoundary',
+	'TitleElement',
+	'SlotElement',
+	'Component',
+	'Attribute',
+	'SpreadAttribute',
+	'AttachTag',
+	'BindDirective',
+	'ClassDirective',
+	'StyleDirective',
+	'OnDirective',
+	'UseDirective',
+	'TransitionDirective',
+	'AnimateDirective',
+	'LetDirective',
+	'IfBlock',
+	'EachBlock',
+	'AwaitBlock',
+	'KeyBlock',
+	'SnippetBlock',
+	'HtmlTag',
+	'DebugTag',
+	'ConstTag',
+	'RenderTag',
+	'ExpressionTag',
+	'DeclarationTag'
+]);
+
+/** @param {{ type: string }} node */
+export function is_template_node(node) {
+	return TEMPLATE_TYPES.has(node.type);
+}
+
+const META_TAGS = [
+	'svelte:head',
+	'svelte:options',
+	'svelte:window',
+	'svelte:document',
+	'svelte:body',
+	'svelte:element',
+	'svelte:component',
+	'svelte:self',
+	'svelte:fragment',
+	'svelte:boundary'
+];
 
 const regex_lang_attribute =
 	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
 
-export class Parser {
-	/**
-	 * @readonly
-	 * @type {string}
-	 */
-	template;
+export const regex_valid_component_name =
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers adjusted for our needs
+	// (must start with uppercase letter if no dots, can contain dots)
+	/^(?:\p{Lu}[$‌‍\p{ID_Continue}.]*|\p{ID_Start}[$‌‍\p{ID_Continue}]*(?:\.[$‌‍\p{ID_Continue}]+)+)$/u;
 
-	/**
-	 * Whether or not we're in loose parsing mode, in which
-	 * case we try to continue parsing as much as possible
-	 * @type {boolean}
-	 */
-	loose;
-
-	/** */
-	index = 0;
-
-	/** @type {AST.CSS.CSSComment[]} */
-	css_comments = [];
-
-	/**
-	 * Creates a minimal parser instance for CSS-only parsing.
-	 * Skips Svelte component parsing setup.
-	 * @param {string} source
-	 * @returns {Parser}
-	 */
-	static forCss(source) {
-		const parser = Object.create(Parser.prototype);
-		parser.template = source;
-		parser.index = 0;
-		parser.loose = false;
-		parser.css_comments = [];
-		return parser;
+/**
+ * @param {string} template
+ * @param {boolean} [loose] keep reading past what cannot be read, for editors
+ * @param {boolean} [erase] hand back JavaScript for TypeScript input, as the compiler wants it
+ * @returns {AST.Root}
+ */
+export function parse(template, loose = false, erase = false) {
+	if (typeof template !== 'string') {
+		throw new TypeError('Template must be a string');
 	}
 
-	/** Whether we're parsing in TypeScript mode */
-	ts = false;
+	state.set_source(template);
+	const trimmed = template.trimEnd();
 
-	/** @type {AST.TemplateNode[]} */
-	stack = [];
+	let match_lang;
+	do match_lang = regex_lang_attribute.exec(trimmed);
+	while (match_lang && match_lang[0][1] !== 's'); // ensure it starts with '<s' to match script tags
+	regex_lang_attribute.lastIndex = 0;
+	const ts = match_lang?.[2] === 'ts';
 
-	/** @type {AST.Fragment[]} */
-	fragments = [];
+	// the answer is plain objects that owe the source nothing, so the source is released as soon as
+	// it has parsed: left to the collector it costs more to finalize than a small component to parse
+	const source = new Source(trimmed, {
+		sourceType: 'module',
+		typescript: ts && (erase ? 'erase' : true),
+		comments: true,
+		locations: 'js',
+		scopes: true,
+		errorRecovery: loose,
+		parenthesized: true,
+		// a script may export what the component declares elsewhere
+		allowUndeclaredExports: true
+	});
+	/** @type {Parsed<AST.Root>} */
+	let answer;
+	try {
+		answer = /** @type {Parsed<any>} */ (source.parse(grammar));
+	} catch (error) {
+		if (!(error instanceof SyntaxError)) throw error;
+		throw_error(/** @type {any} */ (error), trimmed);
+	} finally {
+		source[Symbol.dispose]();
+	}
+	unsupported(answer.typescript);
 
-	/** @type {AST.Root} */
-	root;
+	const root = answer.node;
+	root.start = 0;
+	root.end = template.length;
+	root.metadata = { ts };
 
-	/** @type {Record<string, boolean>} */
-	meta_tags = {};
+	const roots = /** @type {import('@teasel/parser').Root[]} */ (answer.roots);
+	for (const piece of roots) keep_tables(piece.node, piece);
+	const finish = new Finish(trimmed, root.comments);
+	finish.root(root);
+	keep_tables(root, {
+		node: /** @type {any} */ (root),
+		scope: /** @type {import('@teasel/parser').Scope[]} */ (answer.scopes)[0],
+		scopes: /** @type {import('@teasel/parser').Scope[]} */ (answer.scopes),
+		bindings: /** @type {import('@teasel/parser').Binding[]} */ (answer.bindings),
+		references: /** @type {import('@teasel/parser').Reference[]} */ (answer.references),
+		names: finish.names
+	});
 
-	/** @type {LastAutoClosedTag | undefined} */
-	last_auto_closed_tag;
+	// a comment between attributes is the template's, kept whole; one in JavaScript loses its line's indentation
+	for (const comment of root.comments) {
+		if (finish.in_tags.has(comment)) comment.loc = loc(comment.start, comment.end);
+		else dedent(comment, trimmed);
+	}
+
+	return root;
+}
+
+/**
+ * A stylesheet on its own: its rules and its comments, as `parseCss` answers them.
+ * @param {string} stylesheet
+ * @returns {{ children: AST.CSS.StyleSheet['children'], comments: AST.CSS.CSSComment[] }}
+ */
+export function parse_css(stylesheet) {
+	const source = new Source(stylesheet);
+	/** @type {Parsed<any>} */
+	let answer;
+	try {
+		answer = source.parse(css);
+	} catch (error) {
+		if (!(error instanceof SyntaxError)) throw error;
+		throw_error(/** @type {any} */ (error), stylesheet);
+	} finally {
+		source[Symbol.dispose]();
+	}
+	const { children, comments } = answer.node;
+	Finish.sheet(children, comments);
+	return { children, comments };
+}
+
+/**
+ * Brings the parser's tree to the compiler's shape: the metadata each node carries, the
+ * location of each name, the options read out of `<svelte:options>`.
+ */
+class Finish {
+	/** @type {Set<AST.JSComment>} */
+	in_tags = new Set();
+
+	/** @type {import('../../utils/ast.js').Named[]} */
+	names = [];
 
 	/**
 	 * @param {string} template
-	 * @param {boolean} loose
+	 * @param {AST.JSComment[]} comments
 	 */
-	constructor(template, loose) {
-		if (typeof template !== 'string') {
-			throw new TypeError('Template must be a string');
-		}
-
-		this.loose = loose;
-		this.template = template.trimEnd();
-
-		let match_lang;
-
-		do match_lang = regex_lang_attribute.exec(template);
-		while (match_lang && match_lang[0][1] !== 's'); // ensure it starts with '<s' to match script tags
-
-		regex_lang_attribute.lastIndex = 0; // reset matched index to pass tests - otherwise declare the regex inside the constructor
-
-		this.ts = match_lang?.[2] === 'ts';
-
-		this.root = {
-			css: null,
-			js: [],
-			// @ts-ignore
-			start: null,
-			// @ts-ignore
-			end: null,
-			type: 'Root',
-			fragment: create_fragment(),
-			options: null,
-			comments: [],
-			metadata: {
-				ts: this.ts
-			}
-		};
-
-		this.stack.push(this.root);
-		this.fragments.push(this.root.fragment);
-
-		/** @type {ParserState} */
-		let state = fragment;
-
-		while (this.index < this.template.length) {
-			state = state(this) || fragment;
-		}
-
-		if (this.stack.length > 1) {
-			const current = this.current();
-
-			if (this.loose) {
-				current.end = this.template.length;
-			} else if (current.type === 'RegularElement') {
-				current.end = current.start + 1;
-				e.element_unclosed(current, current.name);
-			} else {
-				current.end = current.start + 1;
-				e.block_unclosed(current);
-			}
-		}
-
-		if (state !== fragment) {
-			e.unexpected_eof(this.index);
-		}
-
-		this.root.start = 0;
-		this.root.end = template.length;
-
-		const options_index = this.root.fragment.nodes.findIndex(
-			/** @param {any} thing */
-			(thing) => thing.type === 'SvelteOptions'
-		);
-		if (options_index !== -1) {
-			const options = /** @type {AST.SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
-			this.root.fragment.nodes.splice(options_index, 1);
-			this.root.options = read_options(options);
-
-			disallow_children(options);
-
-			// We need this for the old AST format
-			Object.defineProperty(this.root.options, '__raw__', {
-				value: options,
-				enumerable: false
-			});
-		}
+	constructor(template, comments) {
+		this.template = template;
+		this.comments = comments;
 	}
 
-	current() {
-		return this.stack[this.stack.length - 1];
-	}
+	/** @param {AST.Root} root */
+	root(root) {
+		if (root.module) this.script(root.module, root);
+		if (root.instance) this.script(root.instance, root);
+		if (root.css) this.css(root.css, root);
+		this.fragment(root.fragment, false);
 
-	/**
-	 * @param {string} str
-	 * @param {boolean} required
-	 * @param {boolean} required_in_loose
-	 */
-	eat(str, required = false, required_in_loose = true) {
-		if (this.match(str)) {
-			this.index += str.length;
-			return true;
-		}
-
-		if (required && (!this.loose || required_in_loose)) {
-			e.expected_token(this.index, str);
-		}
-
-		return false;
-	}
-
-	/** @param {string} str */
-	match(str) {
-		const length = str.length;
-		if (length === 1) {
-			// more performant than slicing
-			return this.template[this.index] === str;
-		}
-
-		return this.template.startsWith(str, this.index);
-	}
-
-	/**
-	 * Match a regex at the current index
-	 * @param {RegExp} pattern  Should have the sticky (`y`) flag so that it only matches at the current index
-	 */
-	match_regex(pattern) {
-		pattern.lastIndex = this.index;
-		const match = pattern.exec(this.template);
-		if (!match || match.index !== this.index) return null;
-
-		return match[0];
-	}
-
-	allow_whitespace() {
-		while (
-			this.index < this.template.length &&
-			is_whitespace(this.template.charCodeAt(this.index))
-		) {
-			this.index++;
-		}
-	}
-
-	/**
-	 * Search for a regex starting at the current index and return the result if it matches
-	 * @param {RegExp} pattern  Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
-	 */
-	read(pattern) {
-		const result = this.match_regex(pattern);
-		if (result) this.index += result.length;
-		return result;
-	}
-
-	/**
-	 * @returns {ESTree.Identifier & { start: number, end: number, loc: { start: Location, end: Location } }}
-	 */
-	read_identifier() {
-		const start = this.index;
-		let end = start;
-		let name = '';
-
-		const code = /** @type {number} */ (this.template.codePointAt(this.index));
-
-		if (isIdentifierStart(code, true)) {
-			let i = this.index;
-			end += code <= 0xffff ? 1 : 2;
-
-			while (end < this.template.length) {
-				const code = /** @type {number} */ (this.template.codePointAt(end));
-
-				if (!isIdentifierChar(code, true)) break;
-				end += code <= 0xffff ? 1 : 2;
-			}
-
-			name = this.template.slice(start, end);
-			this.index = end;
-
-			if (is_reserved(name)) {
-				e.unexpected_reserved_word(start, name);
-			}
-		}
-
-		return {
-			type: 'Identifier',
-			name,
-			start,
-			end,
-			loc: {
-				start: state.locator(start),
-				end: state.locator(end)
-			}
-		};
-	}
-
-	/** @param {string} delimiter */
-	read_until(delimiter) {
-		if (this.index >= this.template.length) {
-			if (this.loose) return '';
-			e.unexpected_eof(this.template.length);
-		}
-
-		const start = this.index;
-		const index = this.template.indexOf(delimiter, start);
-
+		const index = root.fragment.nodes.findIndex((node) => node.type === 'SvelteOptions');
 		if (index !== -1) {
-			this.index = index;
-			return this.template.slice(start, this.index);
+			const [options] = /** @type {AST.SvelteOptionsRaw[]} */ (
+				root.fragment.nodes.splice(index, 1)
+			);
+			root.options = read_options(options);
+			disallow_children(options);
+			// We need this for the old AST format
+			Object.defineProperty(root.options, '__raw__', { value: options, enumerable: false });
 		}
-
-		this.index = this.template.length;
-		return this.template.slice(start);
 	}
 
-	/** @param {RegExp} pattern */
-	read_until_regex(pattern) {
-		if (this.index >= this.template.length) {
-			if (this.loose) return '';
-			e.unexpected_eof(this.template.length);
+	/**
+	 * @param {AST.Script} script
+	 * @param {AST.Root} root
+	 */
+	script(script, root) {
+		this.attributes(script.attributes);
+		for (const attribute of /** @type {AST.Attribute[]} */ (script.attributes)) {
+			if (SCRIPT_RESERVED.includes(attribute.name))
+				e.script_reserved_attribute(attribute, attribute.name);
+			if (!SCRIPT_ALLOWED.includes(attribute.name)) w.script_unknown_attribute(attribute);
 		}
-
-		const start = this.index;
-		const match = pattern.exec(this.template.slice(start));
-
-		if (match) {
-			this.index = start + match.index;
-			return this.template.slice(start, this.index);
+		const { loc } = script.content;
+		if (loc) {
+			// the legacy AST places the program at the tag, not at its contents
+			({ line: loc.start.line, column: loc.start.column } = state.locator(script.start));
+			({ line: loc.end.line, column: loc.end.column } = state.locator(script.end));
 		}
-
-		this.index = this.template.length;
-		return this.template.slice(start);
+		const comment = comment_before(root.fragment.nodes, script.start);
+		if (comment) {
+			// We take advantage of the fact that the root will never have leadingComments set,
+			// and set the previous comment to it so that the warning mechanism can later
+			// inspect the root and see if there was a html comment before it silencing specific warnings.
+			script.content.leadingComments = [{ type: 'Line', value: comment.data }];
+		}
 	}
 
-	require_whitespace() {
-		if (!is_whitespace(this.template.charCodeAt(this.index))) {
-			e.expected_whitespace(this.index);
-		}
-
-		this.index++;
-		this.allow_whitespace();
+	/**
+	 * @param {AST.CSS.StyleSheet} css
+	 * @param {AST.Root} root
+	 */
+	css(css, root) {
+		this.attributes(css.attributes);
+		css.content.comment = comment_before(root.fragment.nodes, css.start);
+		Finish.sheet(css.children, css.comments);
 	}
 
-	pop() {
-		const fragment = this.fragments.pop();
-		if (fragment?.metadata.transparent && fragment.nodes.some((n) => n.type === 'DeclarationTag')) {
+	/**
+	 * @param {AST.CSS.StyleSheet['children']} children
+	 * @param {AST.CSS.CSSComment[]} comments
+	 */
+	static sheet(children, comments) {
+		const walk = (/** @type {any} */ node) => {
+			if (Array.isArray(node)) return node.forEach(walk);
+			if (!node || typeof node !== 'object') return;
+			// the parser links every node to its parent and scope; a CSS node has no use for either
+			for (const key of Object.getOwnPropertySymbols(node)) delete node[key];
+			switch (node.type) {
+				case 'Rule':
+					node.metadata = {
+						parent_rule: null,
+						has_local_selectors: false,
+						has_global_selectors: false,
+						is_global_block: false
+					};
+					break;
+				case 'ComplexSelector':
+					node.metadata = { rule: null, is_global: false, used: false };
+					break;
+				case 'RelativeSelector':
+					node.metadata = { is_global: false, is_global_like: false, scoped: false };
+					break;
+			}
+			for (const key in node) if (key !== 'metadata') walk(node[key]);
+		};
+		walk(children);
+		walk(comments);
+	}
+
+	/**
+	 * @param {AST.Fragment} fragment
+	 * @param {boolean} transparent
+	 */
+	fragment(fragment, transparent) {
+		fragment.metadata = { transparent, dynamic: false };
+		for (const node of fragment.nodes) this.node(node);
+		if (transparent && fragment.nodes.some((node) => node.type === 'DeclarationTag')) {
 			fragment.metadata.transparent = false;
 		}
-		return this.stack.pop();
 	}
 
 	/**
-	 * @template {AST.Fragment['nodes'][number]} T
-	 * @param {T} node
-	 * @returns {T}
+	 * The comments in a start tag outside its attributes.
+	 * @param {AST.ElementLike} node
 	 */
-	append(node) {
-		this.fragments.at(-1)?.nodes.push(node);
-		return node;
+	tag_comments(node) {
+		const end = node.fragment.nodes[0]?.start ?? node.end;
+		const { comments } = this;
+		for (
+			let i = first_from(comments, node.start);
+			i < comments.length && comments[i].start < end;
+			i += 1
+		) {
+			const comment = comments[i];
+			const inside = node.attributes.some(
+				(attribute) => comment.start >= attribute.start && comment.end <= attribute.end
+			);
+			if (!inside) this.in_tags.add(comment);
+		}
+	}
+
+	/** @param {AST.Fragment | null | undefined} fragment */
+	body(fragment) {
+		if (fragment) this.fragment(fragment, false);
+	}
+
+	/** @param {AST.TemplateNode} node */
+	node(node) {
+		switch (node.type) {
+			case 'Text':
+			case 'Comment':
+				return;
+			case 'RegularElement':
+			case 'SvelteElement':
+			case 'SvelteComponent':
+			case 'SvelteSelf':
+			case 'SvelteWindow':
+			case 'SvelteDocument':
+			case 'SvelteBody':
+			case 'SvelteHead':
+			case 'SvelteOptions':
+			case 'SvelteFragment':
+			case 'SvelteBoundary':
+			case 'TitleElement':
+			case 'SlotElement':
+			case 'Component': {
+				node.name_loc = loc(node.start + 1, node.start + 1 + node.name.length);
+				/** @type {any} */ (node).metadata =
+					node.type === 'RegularElement'
+						? {
+								svg: false,
+								mathml: false,
+								scoped: false,
+								has_spread: false,
+								path: [],
+								synthetic_value_node: null
+							}
+						: /** @type {any} */ ({});
+				if (node.type === 'SvelteElement') {
+					const index = node.attributes.findIndex(
+						(attribute) => attribute.type === 'Attribute' && attribute.name === 'this'
+					);
+					if (index === -1) e.svelte_element_missing_this(node.start);
+					const definition = /** @type {AST.Attribute} */ (node.attributes.splice(index, 1)[0]);
+					if (definition.value === true) e.svelte_element_missing_this(definition);
+					if (is_expression_attribute(definition)) {
+						node.tag = get_attribute_expression(definition);
+					} else {
+						w.svelte_element_invalid_this(definition);
+						// wrong for `this="h{n}"`, which gives `<h>`: the Svelte 4 behaviour, kept until 6.0 makes it an error
+						const chunk = /** @type {Array<AST.ExpressionTag | AST.Text>} */ (definition.value)[0];
+						node.tag =
+							chunk.type === 'Text'
+								? {
+										type: 'Literal',
+										value: chunk.data,
+										raw: `'${chunk.raw}'`,
+										start: chunk.start,
+										end: chunk.end
+									}
+								: chunk.expression;
+					}
+					node.metadata.expression = new ExpressionMetadata();
+				}
+				if (node.type === 'SvelteComponent' || node.type === 'Component') {
+					node.metadata.expression = new ExpressionMetadata();
+				}
+				if (
+					node.type === 'Component' ||
+					node.type === 'SvelteComponent' ||
+					node.type === 'SvelteSelf'
+				) {
+					this.names.push({ component: node });
+				}
+				this.attributes(node.attributes);
+				if (this.comments.length !== 0) this.tag_comments(node);
+				this.fragment(node.fragment, true);
+				if (node.type === 'RegularElement') this.implicitly_closed(node);
+				return;
+			}
+			case 'ExpressionTag':
+			case 'HtmlTag':
+				this.expression(node, node.expression);
+				return;
+			case 'RenderTag': {
+				const call =
+					node.expression.type === 'ChainExpression' ? node.expression.expression : node.expression;
+				if (call.type !== 'CallExpression') e.render_tag_invalid_expression(node.expression);
+				this.expression(node, node.expression);
+				node.metadata = {
+					...node.metadata,
+					dynamic: false,
+					arguments: [],
+					path: [],
+					snippets: new Set()
+				};
+				return;
+			}
+			case 'ConstTag':
+				located(node.declaration.declarations[0].id);
+				this.expression(node, node.declaration);
+				return;
+			case 'DeclarationTag':
+				this.expression(node, node.declaration);
+				return;
+			case 'DebugTag':
+				return;
+			case 'IfBlock':
+				this.expression(node, node.test);
+				this.body(node.consequent);
+				this.body(node.alternate);
+				return;
+			case 'EachBlock': {
+				const index = /** @type {Identifier | string | undefined} */ (node.index);
+				if (index !== undefined && typeof index !== 'string') node.index = index.name;
+				located(node.context);
+				node.metadata = /** @type {any} */ (null); // filled in later
+				this.body(node.body);
+				this.body(node.fallback);
+				return;
+			}
+			case 'AwaitBlock':
+				this.expression(node, node.expression);
+				located(node.value);
+				located(node.error);
+				this.body(node.pending);
+				this.body(node.then);
+				this.body(node.catch);
+				return;
+			case 'KeyBlock':
+				this.expression(node, node.expression);
+				this.body(node.fragment);
+				return;
+			case 'SnippetBlock':
+				node.metadata = { can_hoist: false, sites: new Set() };
+				located(node.expression);
+				this.body(node.body);
+				return;
+		}
+	}
+
+	/**
+	 * @param {AST.ExpressionTag | AST.HtmlTag | AST.RenderTag | AST.ConstTag | AST.DeclarationTag | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SpreadAttribute | AST.AttachTag | AST.Directive} node
+	 * @param {Node | null} expression
+	 */
+	expression(node, expression) {
+		/** @type {any} */ (node).metadata = { expression: new ExpressionMetadata() };
+	}
+
+	/** @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag>} attributes */
+	attributes(attributes) {
+		for (const attribute of attributes) {
+			switch (attribute.type) {
+				case 'Attribute':
+					attribute.metadata = { delegated: false, needs_clsx: false };
+					attribute.name_loc = this.name_loc(attribute);
+					this.value(attribute.value);
+					if (this.template[attribute.start] === '{')
+						located(/** @type {AST.ExpressionTag} */ (attribute.value).expression);
+					break;
+				case 'SpreadAttribute':
+				case 'AttachTag':
+					this.expression(attribute, attribute.expression);
+					break;
+				case 'StyleDirective':
+					this.expression(attribute, null);
+					attribute.name_loc = this.name_loc(attribute);
+					this.value(attribute.value);
+					if (attribute.value === true) this.names.push({ host: attribute, name: attribute.name });
+					break;
+				case 'LetDirective': {
+					this.expression(attribute, null);
+					attribute.name_loc = this.name_loc(attribute);
+					const expression = /** @type {Pattern | null} */ (attribute.expression);
+					if (
+						expression?.type === 'Identifier' &&
+						expression.name === attribute.name &&
+						expression.start === attribute.start + 4
+					) {
+						attribute.expression = null;
+					} else if (expression) {
+						// the pattern's tables move to the expression made of it
+						const converted = to_expression(expression);
+						keep_tables(converted, /** @type {Tables} */ (tables_of(expression)));
+						attribute.expression = /** @type {any} */ (converted);
+					}
+					break;
+				}
+				default:
+					this.expression(attribute, attribute.expression);
+					attribute.name_loc = this.name_loc(attribute);
+					if (
+						attribute.type === 'TransitionDirective' ||
+						attribute.type === 'AnimateDirective' ||
+						attribute.type === 'UseDirective'
+					) {
+						this.names.push({ host: attribute, name: attribute.name.split('.')[0] });
+					} else if (attribute.type === 'BindDirective') {
+						this.names.push({ bind: attribute });
+					}
+			}
+		}
+	}
+
+	/** @param {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} value */
+	value(value) {
+		if (value === true) return;
+		for (const chunk of Array.isArray(value) ? value : [value]) {
+			if (chunk.type === 'ExpressionTag') this.expression(chunk, chunk.expression);
+		}
+	}
+
+	/**
+	 * The location of an attribute's name as the tag was read: up to whitespace, a slash, a
+	 * quote or `=`; a shorthand's is its identifier's.
+	 * @param {AST.Attribute | AST.Directive} attribute
+	 */
+	name_loc(attribute) {
+		const { template } = this;
+		const start = attribute.start;
+		const value = /** @type {AST.Attribute} */ (attribute).value;
+		if (template[start] === '{' && value !== true && !Array.isArray(value)) {
+			const { expression } = value;
+			return loc(/** @type {number} */ (expression.start), /** @type {number} */ (expression.end));
+		}
+		let end = start;
+		while (end < template.length) {
+			const code = template.charCodeAt(end);
+			if (
+				is_whitespace(code) ||
+				code === 47 ||
+				code === 62 ||
+				code === 34 ||
+				code === 39 ||
+				code === 61
+			)
+				break;
+			end += 1;
+		}
+		return loc(start, end);
+	}
+
+	/**
+	 * An element the browser closed, at the tag that closed it: the parent's closing tag, or a
+	 * sibling that cannot sit inside it.
+	 * @param {AST.RegularElement} node
+	 */
+	implicitly_closed(node) {
+		const { template } = this;
+		const { name, end } = node;
+		if (VOID.includes(name) || template.startsWith('/>', end - 2)) return;
+		const closing = template.lastIndexOf('</', end - 1);
+		if (
+			closing !== -1 &&
+			template.startsWith(name, closing + 2) &&
+			/^\s*>$/.test(template.slice(closing + 2 + name.length, end))
+		) {
+			return;
+		}
+		const closer = /^<(\/?)([^\s/>]+)/.exec(template.slice(end, end + 200));
+		if (!closer) return;
+		w.element_implicitly_closed(
+			{ start: node.start, end: node.fragment.nodes[0]?.start ?? end },
+			`<${closer[1]}${closer[2]}>`,
+			`</${name}>`
+		);
 	}
 }
 
 /**
- * @param {string} template
- * @param {boolean} [loose]
- * @returns {AST.Root}
+ * The comment right before a script or style element, whitespace apart.
+ * @param {AST.TemplateNode[]} nodes
+ * @param {number} start
  */
-export function parse(template, loose = false) {
-	state.set_source(template);
-
-	const parser = new Parser(template, loose);
-	return parser.root;
+function comment_before(nodes, start) {
+	let i = nodes.findIndex((node) => /** @type {number} */ (node.start) >= start);
+	if (i === -1) i = nodes.length;
+	if (i === 0 || nodes[i - 1].end !== start) return null;
+	for (i -= 1; i >= 0; i -= 1) {
+		const node = nodes[i];
+		if (node.type === 'Comment') return node;
+		if (node.type !== 'Text' || node.data.trim()) break;
+	}
+	return null;
 }
 
-/** @typedef {(parser: Parser) => ParserState | void} ParserState */
+/** @param {number} cc */
+function is_whitespace(cc) {
+	// fast path for common whitespace
+	if (cc === 32 || (cc <= 13 && cc >= 9)) return true;
+	// rare whitespace — \u00a0, \u1680, \u2000-\u200a, \u2028, \u2029, \u202f, \u205f, \u3000, \ufeff
+	if (cc < 160) return false;
+	return (
+		cc === 160 ||
+		cc === 5760 ||
+		(cc >= 8192 && cc <= 8202) ||
+		cc === 8232 ||
+		cc === 8233 ||
+		cc === 8239 ||
+		cc === 8287 ||
+		cc === 12288 ||
+		cc === 65279
+	);
+}
 
-/** @typedef {Object} LastAutoClosedTag
- * @property {string} tag
- * @property {string} reason
- * @property {number} depth
+/**
+ * @param {number} start
+ * @param {number} end
  */
+function loc(start, end) {
+	return { start: state.locator(start), end: state.locator(end) };
+}
+
+/**
+ * A name the template gives a block, a tag or a shorthand, located with each position's `character` as the
+ * names the compiler read itself were.
+ * @param {Node | null | undefined} node
+ */
+function located(node) {
+	if (node?.type === 'Identifier')
+		node.loc = loc(/** @type {any} */ (node).start, /** @type {any} */ (node).end);
+}
+
+/**
+ * The parser reads a `let:` directive's value as a pattern; the AST holds it as the expression it looks like.
+ * @param {Pattern} node
+ * @returns {Expression}
+ */
+function to_expression(node) {
+	switch (node.type) {
+		case 'ObjectPattern':
+			return {
+				...node,
+				type: 'ObjectExpression',
+				properties: node.properties.map((property) =>
+					property.type === 'Property'
+						? { ...property, value: to_expression(property.value) }
+						: /** @type {any} */ ({
+								...property,
+								type: 'SpreadElement',
+								argument: to_expression(property.argument)
+							})
+				)
+			};
+		case 'ArrayPattern':
+			return {
+				...node,
+				type: 'ArrayExpression',
+				elements: node.elements.map((element) => element && to_expression(element))
+			};
+		case 'AssignmentPattern':
+			return {
+				.../** @type {any} */ (node),
+				type: 'AssignmentExpression',
+				operator: '=',
+				left: to_expression(node.left),
+				right: node.right
+			};
+		case 'RestElement':
+			return /** @type {any} */ ({
+				...node,
+				type: 'SpreadElement',
+				argument: to_expression(node.argument)
+			});
+		default:
+			return /** @type {Expression} */ (node);
+	}
+}
+
+/**
+ * The parser's error as the compiler's: what it expected or found, at the same place.
+ * @param {ParseError} error
+ * @param {string} template
+ * @returns {never}
+ */
+function throw_error(error, template) {
+	const { code, args, pos, end } = error;
+	const range = { start: pos, end };
+	switch (code) {
+		case 'unexpected_eof':
+			e.unexpected_eof(pos);
+		// eslint-disable-next-line no-fallthrough
+		case 'expected': {
+			const what = args[0];
+			if (what === 'whitespace') e.expected_whitespace(pos);
+			if (what === 'an identifier') {
+				let brace = pos;
+				while (brace > 0 && is_whitespace(template.charCodeAt(brace - 1))) brace -= 1;
+				if (template[brace - 1] === '{' && template[pos] === '}')
+					e.attribute_empty_shorthand(brace - 1);
+				e.expected_identifier(pos);
+			}
+			if (what === 'a directive name') {
+				const colon = template.indexOf(':', pos);
+				e.directive_missing_name({ start: pos, end: colon + 1 }, template.slice(pos, colon + 1));
+			}
+			if (what === 'a single declaration') e.const_tag_invalid_expression(range);
+			if (what === '}' && template.lastIndexOf('{@debug', pos) > template.lastIndexOf('}', pos)) {
+				e.debug_tag_invalid_arguments(template.lastIndexOf('{@debug', pos) + '{@debug '.length);
+			}
+			// a branch that fits no open block, reported at its sigil
+			const tag = template.lastIndexOf('{', pos);
+			if (what === '{:else}') e.expected_token(tag + 1, '{:else}');
+			if (what === '{:else if} or {:else}') {
+				if (template.startsWith('{:elseif', tag)) e.block_invalid_elseif(tag + 1);
+				e.expected_token(tag + 1, '{:else} or {:else if}');
+			}
+			if (what === '{:then} or {:catch}') e.expected_token(tag + 1, '{:then ...} or {:catch ...}');
+			if (what.startsWith('{#')) e.expected_block_type(pos);
+			// a close inside a block that wanted its own
+			if (what.startsWith('{/')) e.expected_token(pos, what.slice(2, -1));
+			if (what === 'an attribute value') e.expected_attribute_value(pos);
+			if (what.startsWith('{@')) e.expected_tag(pos);
+			if (what === 'a this attribute') e.svelte_component_missing_this(pos);
+			if (what === 'an expression as this') e.svelte_component_invalid_this(range);
+			if (what === 'an expression, not text' || what === 'a value') e.directive_invalid_value(pos);
+			if (what.startsWith('context to be')) e.script_invalid_context(range);
+			if (what === 'module without a value') e.script_invalid_attribute_value(range, 'module');
+			if (what === 'a valid CSS identifier') e.css_expected_identifier(pos);
+			if (what === 'a selector') e.css_selector_invalid(range);
+			if (what === 'a declaration value') e.css_empty_declaration(range);
+			e.expected_token(pos, what);
+		}
+		// eslint-disable-next-line no-fallthrough
+		case 'unclosed': {
+			const name = args[0];
+			// a script or style open at the end: what was left open, or nothing at all past the tag
+			if (pos === template.length && /<(script|style)[^>]*>$/.test(template)) e.unexpected_eof(pos);
+			if (template[pos] === '{') e.block_unclosed(range);
+			e.element_unclosed(range, name);
+		}
+		// eslint-disable-next-line no-fallthrough
+		case 'unexpected_close': {
+			const [name, reason] = args[0].split(', closed by ');
+			if (template[pos] === '{') e.block_unexpected_close(pos + 1);
+			if (reason) e.element_invalid_closing_tag_autoclosed(pos, name, reason);
+			e.element_invalid_closing_tag(pos, name);
+		}
+		// eslint-disable-next-line no-fallthrough
+		case 'duplicate': {
+			const name = args[0];
+			if (name === 'script') e.script_duplicate(pos);
+			if (name === 'style') e.style_duplicate(pos);
+			if (name.startsWith('svelte:')) e.svelte_meta_duplicate(pos, name);
+			// a branch after {:else} is a second else, whatever keyword it arrived with
+			if (name.startsWith('{:'))
+				e.block_duplicate_clause(pos + 1, name === '{:else if}' ? '{:else}' : name);
+			e.attribute_duplicate(range);
+		}
+		// eslint-disable-next-line no-fallthrough
+		case 'placement': {
+			const what = args[0];
+			if (what === 'A closing tag of a void element') e.void_element_invalid_content(pos);
+			if (what === 'A declaration of that kind') e.declaration_tag_invalid_type(range);
+			if (what === 'A branch outside its block') e.block_invalid_continuation_placement(pos + 1);
+			const misplaced = /^A block or tag in (.+)$/.exec(what);
+			if (misplaced) {
+				const location =
+					misplaced[1] === 'an attribute value' ? 'in attribute value' : `inside ${misplaced[1]}`;
+				const [, sigil, name] = /** @type {RegExpExecArray} */ (
+					/^\{([#@])(\w+)/.exec(template.slice(pos))
+				);
+				if (sigil === '#') e.block_invalid_placement(pos, name, location);
+				e.tag_invalid_placement(pos, name, location);
+			}
+			if (what.startsWith('svelte:')) e.svelte_meta_invalid_placement(pos, what);
+			e.js_parse_error(pos, sentence(error));
+		}
+		// eslint-disable-next-line no-fallthrough
+		case 'redeclaration':
+			e.declaration_duplicate(range, args[0]);
+		// eslint-disable-next-line no-fallthrough
+		case 'invalid_name':
+			if (template.startsWith('svelte:', pos)) e.svelte_meta_invalid_tag(range, list(META_TAGS));
+			e.tag_invalid_name(range);
+		// eslint-disable-next-line no-fallthrough
+		case 'reserved_word':
+			e.unexpected_reserved_word(pos, args[0]);
+		// eslint-disable-next-line no-fallthrough
+		default: {
+			// a keyword where the template wanted a name of its own, an each block's context say
+			if (
+				code === 'unexpected_keyword' &&
+				/(\bas|\bthen|\bcatch|,)\s*$/.test(template.slice(0, pos))
+			) {
+				e.unexpected_reserved_word(pos, args[0]);
+			}
+			e.js_parse_error(pos, sentence(error));
+		}
+	}
+}

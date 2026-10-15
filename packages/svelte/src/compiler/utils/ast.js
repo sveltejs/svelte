@@ -1,6 +1,45 @@
 /** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
-import { walk } from 'zimmerframe';
+import { walk } from './walk.js';
+import { referenceOf } from '@teasel/parser';
+
+/**
+ * @typedef {import('@teasel/parser').Root} Tables
+ * the parser's tables for one piece of JavaScript: the scope it sits in, the scopes opened, the bindings declared and the references made inside it
+ */
+
+/**
+ * @typedef {Tables & { names?: Named[] }} Document
+ * the parser's tables for a whole component or module, and what the template names that the parser does not bind
+ */
+
+/**
+ * @typedef {{ host: any, name: string } | { component: any } | { bind: any }} Named
+ * a name the template reads outside JavaScript (a component's tag, a directive's function, a
+ * `style:` shorthand), a component, whose slots are scopes, or a `bind:`, which writes its expression
+ */
+
+// a symbol on the root: a property load where the walk asks every node, not a map lookup
+const PARSED = Symbol('parsed');
+
+/**
+ * Keeps the parser's tables on the root they belong to, a script's program or a template's
+ * expression, pattern, parameter list or declaration.
+ * @param {object} root
+ * @param {Document} tables
+ */
+export function keep_tables(root, tables) {
+	/** @type {any} */ (root)[PARSED] = tables;
+}
+
+/**
+ * The parser's tables for a root, when it is one.
+ * @param {object} node
+ * @returns {Tables | undefined}
+ */
+export function tables_of(node) {
+	return /** @type {any} */ (node)[PARSED];
+}
 import * as b from '#compiler/builders';
 
 /**
@@ -633,4 +672,36 @@ export function has_await_expression(node) {
  */
 export function save(expression) {
 	return b.call(b.await(b.call('$.save', expression)));
+}
+
+/** @type {WeakSet<ESTree.Identifier>} the identifiers the parser makes itself for names in template syntax */
+export const value_names = new WeakSet();
+
+/**
+ * Whether an identifier names a value. The parser answers for what it parsed and marks what it
+ * made; an identifier the compiler built is judged by where it sits.
+ * @param {ESTree.Identifier} node
+ * @param {ESTree.Node | AST.SvelteNode | null | undefined} parent
+ */
+export function is_reference(node, parent) {
+	if (referenceOf(node) !== undefined || value_names.has(node)) return true;
+	if (!parent) return true;
+	switch (parent.type) {
+		case 'MemberExpression':
+			return parent.computed || node === parent.object;
+		case 'MethodDefinition':
+			return parent.computed;
+		case 'PropertyDefinition':
+		case 'Property':
+			return parent.computed || node === parent.value;
+		case 'ExportSpecifier':
+		case 'ImportSpecifier':
+			return node === parent.local;
+		case 'LabeledStatement':
+		case 'BreakStatement':
+		case 'ContinueStatement':
+			return false;
+		default:
+			return !parent.type.startsWith('TS');
+	}
 }

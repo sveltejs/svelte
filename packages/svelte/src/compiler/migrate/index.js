@@ -4,9 +4,8 @@
 /** @import { Scope } from '../phases/scope.js' */
 /** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
-import { walk } from 'zimmerframe';
-import { parse } from '../phases/1-parse/index.js';
-import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
+import { walk } from '../utils/walk.js';
+import { parse, regex_valid_component_name } from '../phases/1-parse/index.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, UNKNOWN_FILENAME } from '../state.js';
@@ -746,11 +745,12 @@ const instance_script = {
 				// Analyze declaration bindings to see if they're exclusively updated within a single reactive statement
 				const possible_derived = bindings.every((binding) =>
 					binding.references.every((reference) => {
-						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
-						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
-						const update = reference.path.find((el) => el.type === 'UpdateExpression');
+						const path = reference.path;
+						const declaration = path.find((el) => el.type === 'VariableDeclaration');
+						const assignment = path.find((el) => el.type === 'AssignmentExpression');
+						const update = path.find((el) => el.type === 'UpdateExpression');
 						const labeled = /** @type {LabeledStatement | undefined} */ (
-							reference.path.find((el) => el.type === 'LabeledStatement' && el.label.name === '$')
+							path.find((el) => el.type === 'LabeledStatement' && el.label.name === '$')
 						);
 
 						if (
