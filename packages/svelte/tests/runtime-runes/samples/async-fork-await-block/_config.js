@@ -7,13 +7,7 @@ export default test({
 	mode: ['client'],
 	async test({ assert, target, instance }) {
 		const [input] = target.querySelectorAll('input');
-		const [
-			set,
-			fork,
-			resolve_all,
-			discard,
-			commit
-		] = target.querySelectorAll('button');
+		const [set, fork, resolve_all, discard, commit] = target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('#output');
 
 		resolve_all.click();
