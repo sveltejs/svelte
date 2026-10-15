@@ -33,7 +33,8 @@ import {
 	CONNECTED,
 	MANAGED_EFFECT,
 	DESTROYING,
-	PAUSED
+	PAUSED,
+	REACTION_RAN
 } from '#client/constants';
 import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
@@ -154,6 +155,9 @@ function create_effect(type, fn) {
 				e.f |= EFFECT_TRANSPARENT;
 			}
 		}
+	} else {
+		// Prevent `is_dirty` from returning `true` later
+		e.f |= REACTION_RAN;
 	}
 
 	if (e !== null) {
