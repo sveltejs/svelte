@@ -1,5 +1,7 @@
-import { flushSync, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
+
+const buttons = '<button>resolve</button><button>set b to 1</button><button>set b to 0</button>';
 
 // Two overlapping batches write to `b`. The first one commits first, running effects that read
 // `sum` with its own (batch-local) view of `b`. The second one sets `b` back to its original
@@ -9,26 +11,31 @@ export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		await tick();
+		const [resolve, set_1, set_0] = target.querySelectorAll('button');
 
-		const [shift, set_1, set_0] = target.querySelectorAll('button');
-		const [output] = target.querySelectorAll('#output');
-
-		assert.htmlEqual(output.innerHTML, '<p>p0|0</p><em>slow0|key0</em>');
+		resolve.click();
+		await tick();
+		resolve.click();
+		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>p0|0</p><em>key0</em>`);
 		assert.deepEqual(logs, [0]);
 
 		set_1.click();
-		flushSync();
+		await tick();
 		set_0.click();
+		await tick();
 
 		// the first batch resolves and commits, the second one is still pending
-		shift.click();
+		resolve.click();
 		await tick();
-		assert.htmlEqual(output.innerHTML, '<p>p0|1</p><em>slow0|key1</em>');
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>p0|1</p><em>key1</em>`);
 		assert.deepEqual(logs, [0, 1]);
 
-		shift.click();
+		resolve.click();
 		await tick();
-		assert.htmlEqual(output.innerHTML, '<p>p0|0</p><em>slow0|key0</em>');
+		resolve.click();
+		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>p0|0</p><em>key0</em>`);
 		assert.deepEqual(logs, [0, 1, 0]);
 	}
 });

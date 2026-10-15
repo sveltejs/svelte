@@ -44,12 +44,6 @@ export default test({
 			<button>resolve</button>
 			<button>commit</button>
 			<hr>
-			world
-			"world"
-			world
-			world
-			world
-			"world"
 		`
 		);
 
