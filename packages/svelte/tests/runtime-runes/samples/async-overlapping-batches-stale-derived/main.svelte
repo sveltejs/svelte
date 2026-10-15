@@ -1,32 +1,38 @@
 <script>
+	let inited = false;
 	let a = $state(0);
 	let b = $state(0);
 	let c = $state(0);
 	let sum = $derived(a + b);
 	const registry = [];
 
-	export const log = [];
-
-	$effect(() => {
-		log.push(sum);
-	});
-
 	let slow = $derived(await f('slow', c));
 
+	$effect(() => {
+		console.log(sum);
+	});
+
 	function f(tag, value) {
+		if (!inited) return `${tag}${value}`;
 		return new Promise((resolve) => registry.push(() => resolve(`${tag}${value}`)));
 	}
 
-	export function set_b(v) {
-		b = v;
-	}
-
-	export function resolve_all() {
+	function resolve_all() {
 		for (const r of registry.splice(0)) r();
 	}
+
+	$effect(() => {
+		inited = true;
+	});
 </script>
 
-<p>{await f('p', a)}|{sum}</p>
-{#key c}
-	<em>{slow}|{await f('key', b)}</em>
-{/key}
+<button onclick={resolve_all}>resolve all</button>
+<button onclick={() => (b = 1)}>b = 1</button>
+<button onclick={() => (b = 0)}>b = 0</button>
+
+<div id="output">
+	<p>{await f('p', a)}|{sum}</p>
+	{#key c}
+		<em>{slow}|{await f('key', b)}</em>
+	{/key}
+</div>

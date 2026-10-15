@@ -1,23 +1,26 @@
-import { fork, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 // A fork re-running an {#await} block must not make the real world's pending promise obsolete
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
-		await tick();
-		assert.htmlEqual(target.innerHTML, '<i>pending</i>');
+	async test({ assert, target }) {
+		const [fork, resolve_0, discard, resolve_1] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('#output');
 
-		const f = fork(() => instance.set_b(1));
+		await tick();
+		assert.htmlEqual(output.innerHTML, '<i>pending</i>');
+
+		fork.click();
 		await tick();
 
-		instance.settle(0);
+		resolve_0.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>0</q>');
+		assert.htmlEqual(output.innerHTML, '<q>0</q>');
 
-		f.discard();
-		instance.settle(1);
+		discard.click();
+		resolve_1.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<q>0</q>');
+		assert.htmlEqual(output.innerHTML, '<q>0</q>');
 	}
 });
