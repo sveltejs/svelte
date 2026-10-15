@@ -17,8 +17,8 @@
 		return new Promise((resolve) => registry.push(() => resolve(`${tag}${value}`)));
 	}
 
-	function resolve_all() {
-		for (const r of registry.splice(0)) r();
+	function shift() {
+		registry.shift()?.();
 	}
 
 	$effect(() => {
@@ -26,7 +26,7 @@
 	});
 </script>
 
-<button onclick={resolve_all}>resolve all</button>
+<button onclick={shift}>shift</button>
 <button onclick={() => (b = 1)}>b = 1</button>
 <button onclick={() => (b = 0)}>b = 0</button>
 
