@@ -695,18 +695,6 @@ export class Batch {
 		flush_queued_effects(render_effects);
 		collected_effects = null;
 
-		// if render effects wrote to state, they may have invalidated themselves (or
-		// an ancestor), in which case newly collected effects should not run
-		if (effects.length > length) {
-			for (var i = length; i < effects.length; i += 1) {
-				var e = effects[i];
-
-				if (has_dirty_ancestor(e)) {
-					e.f |= DESTROYED; // prevent it from running in `flush_queued_effects`
-				}
-			}
-		}
-
 		flush_queued_effects(effects);
 		previous_batch = null;
 
@@ -1674,27 +1662,6 @@ function reset_branch(effect, tracked) {
 		reset_branch(e, tracked);
 		e = e.next;
 	}
-}
-
-/**
- * Returns `true` if a (non-branch) ancestor of the effect is dirty,
- * meaning that the effect is likely to be destroyed when it re-runs
- * @param {Effect} effect
- */
-function has_dirty_ancestor(effect) {
-	var parent = effect.parent;
-
-	while (parent !== null) {
-		var flags = parent.f;
-
-		if ((flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 && (flags & (DIRTY | MAYBE_DIRTY)) !== 0) {
-			return true;
-		}
-
-		parent = parent.parent;
-	}
-
-	return false;
 }
 
 /**
