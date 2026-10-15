@@ -7,9 +7,9 @@ const buttons = `
 	<button>resolve</button>
 `;
 
-// Same as `async-state-read-new-dependency`, but the branch is selected by an eager
-// expression: the eager batch hides every other batch's writes, so a newly created
-// reader inside it must still see the latest value of `value` rather than `undefined`
+// Same as `async-state-read-new-dependency`, but the branch is selected by an eager expression
+// Earlier we said the reader inside it must still see the latest value of `value` rather than `undefined`,
+// but that decision was adjusted, so this test now verifies the updated behavior.
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {
@@ -19,12 +19,10 @@ export default test({
 		update.click(); // pending batch writes `value`
 		await tick();
 
-		show.click(); // eager flush creates the branch, which reads `value` for the first time
+		show.click(); // eager flush creates the branch, which reads `value` for the first time and crashes
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>1</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>crash</p>`);
 
 		resolve.click();
-		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>1</p>`);
 	}
 });

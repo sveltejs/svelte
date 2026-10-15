@@ -48,6 +48,8 @@ import {
 	batch_values,
 	current_batch,
 	first_batch,
+	has_pending_batches,
+	own_value,
 	previous_batch,
 	read_batch_local_value
 } from './batch.js';
@@ -192,14 +194,16 @@ export function async_derived(fn, label, location) {
 		var batch = /** @type {Batch} */ (current_batch);
 
 		// If an earlier batch has a run of this async effect in flight, the two batches
-		// are related and this one has to wait for (i.e. merge into) the earlier one
-		let prev = batch.prev;
-		while (prev) {
-			if (prev.async_deriveds.has(effect)) {
-				batch.dependent.add(prev);
-				break;
+		// are related and this one has to wait for (i.e. merge into) the earlier one.
+		// Same for forks, though the other way around (the fork has to wait for this batch).
+		for (let other = first_batch; other !== null; other = other.next) {
+			if (other !== batch && other.async_deriveds.has(effect)) {
+				if (other.id < batch.id) {
+					batch.dependent.add(other);
+				} else if (other.is_fork) {
+					other.dependent.add(batch);
+				}
 			}
-			prev = prev.prev;
 		}
 
 		if (should_suspend) {
@@ -239,9 +243,16 @@ export function async_derived(fn, label, location) {
 			decrement_pending?.();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) return;
+			// Discarding a fork rejects its runs that are still in flight, but this one may have resolved just
+			// before, with only this handler pending. Its result must not end up in the discarded fork (which
+			// `commit()` would then reject as discarded, rather than treat as obsolete, see `overtake`).
+			// TODO ideally we also do this to non-fork unlinked batches but there's some cases where that would
+			// fail (e.g. when nothing waited for this result, as in a disconnected `$effect.root`); investigate
+			// and properly fix at some point
+			if (error === OBSOLETE || (batch.is_fork && !batch.linked)) return;
 
 			batch = batch.activate();
+			batch.apply();
 
 			if (error) {
 				signal.f |= ERROR_VALUE;
@@ -282,7 +293,14 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
-			function go() {
+			/** @param {unknown} error */
+			function go(error) {
+				if (p === promise && error === OBSOLETE) {
+					// The latest run was discarded (i.e. its batch which was a fork): wait for the latest run that's
+					// still in flight (if any), as it's the one whose result the (adopted) content will show
+					for (const d of deferreds) promise = d.promise;
+				}
+
 				if (p === promise) {
 					fulfil(signal);
 				} else {
@@ -406,8 +424,9 @@ export function execute_derived(derived) {
  */
 export function update_derived(derived) {
 	var value = execute_derived(derived);
-
-	if (!derived.equals(value)) {
+	if (
+		batch_values === null ? !derived.equals(value) : !derived.equals.call(own_value(derived), value)
+	) {
 		if (current_batch !== null || previous_batch !== null) {
 			// `capture` decides whether the underlying value is updated (it isn't in a fork,
 			// or if a later batch holds a newer value) and records it in the batch either way.
@@ -429,8 +448,6 @@ export function update_derived(derived) {
 			(previous_batch ?? current_batch)?.remove_dirty_reaction(derived);
 			return;
 		}
-	} else if (batch_values?.has(derived) && !derived.equals(batch_values?.get(derived))) {
-		current_batch?.capture(derived, derived.v, true);
 	}
 
 	// don't mark derived clean if we're reading it inside a
@@ -442,11 +459,7 @@ export function update_derived(derived) {
 	// During time travelling, keep stale results batch-local. A result computed
 	// from the latest inputs can be marked globally clean, even if it is unchanged
 	// and its write version therefore remains below its dependencies' versions.
-	if (
-		batch_values !== null ||
-		// "read outside of reactivity", e.g. in an event handler
-		(!current_batch && first_batch?.next)
-	) {
+	if (batch_values !== null) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking() || current_batch?.is_fork) {
@@ -457,6 +470,13 @@ export function update_derived(derived) {
 		} else if (derived.v !== UNINITIALIZED) {
 			set_signal_status(derived, MAYBE_DIRTY);
 		}
+	} else if (has_pending_batches()) {
+		// Computed from the real values (e.g. in an event handler) while other batches are in flight.
+		// Don't mark it clean: those batches see other values for its dependencies, and unless they
+		// stashed a reaction that reads it, they wouldn't re-validate it and would use whatever value
+		// they hold for it — which can be stale, e.g. if the batch that dirtied it never evaluated it
+		// (see `async-derived-read-keeps-maybe-dirty`)
+		set_signal_status(derived, MAYBE_DIRTY);
 	} else {
 		update_derived_status(derived);
 	}

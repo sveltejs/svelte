@@ -8,8 +8,8 @@ const buttons = `
 	<button>shift</button>
 `;
 
-// Reading a value via `$state.eager` sees the latest value and does not connect the batch
-// to the (pending) batch that wrote it, unlike a regular read, which has to wait for it
+// Reading a value via `$state.eager` sees the latest value, unlike a regular read, which
+// sees the value from before the (pending) batch wrote it until that batch commits
 export default test({
 	async test({ assert, target }) {
 		await tick();
@@ -25,7 +25,7 @@ export default test({
 
 		plain.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p><span>1</span>`);
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p><span>1</span><b>0</b>`);
 
 		shift.click();
 		await tick();

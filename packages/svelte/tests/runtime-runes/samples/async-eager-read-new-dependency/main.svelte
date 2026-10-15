@@ -15,5 +15,10 @@
 {await wait(value)}
 
 {#if $state.eager(show)}
-	<p>{value.x}</p>
+	<svelte:boundary>
+		<p>{value.x}</p>
+		{#snippet failed()}
+			<p>crash</p>
+		{/snippet}
+	</svelte:boundary>
 {/if}

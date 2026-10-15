@@ -19,10 +19,9 @@ export default test({
 
 		y.click();
 		await tick();
-		// the new branch reads `upper` — a derived owned by the pending batch — as
-		// a new dependency. The two batches entangle, so the new branch is held
-		// back until the async work completes (rather than rendering with the
-		// derived's pre-write value, 'WORLD')
+		// the new branch reads `upper` — a derived of the source the pending batch
+		// wrote — as a new dependency. It renders with the pre-write value 'WORLD',
+		// as the pending batch's write is hidden from the batch that commits
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -30,12 +29,14 @@ export default test({
 			<button>y++</button>
 			<button>resolve</button>
 			<h1>WORLD</h1>
+			<p>WORLD</p>
 		`
 		);
 
 		resolve.click();
 		await tick();
-		// both branches commit together, fully consistent
+		// the pending batch discovers that the new branch depends on its write
+		// when it resumes, and commits it fully consistent
 		assert.htmlEqual(
 			target.innerHTML,
 			`

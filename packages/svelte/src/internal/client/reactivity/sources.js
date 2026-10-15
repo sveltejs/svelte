@@ -38,7 +38,8 @@ import {
 	schedule_effect,
 	legacy_updates,
 	current_batch,
-	first_batch
+	has_pending_batches,
+	own_value
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -189,7 +190,9 @@ var count_deps = 0;
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals(value)) {
+	if (
+		batch_values === null ? !source.equals(value) : !source.equals.call(own_value(source), value)
+	) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -210,8 +213,8 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			// traversal of the graph in the other batches still happens
 			if (
 				batch_values === null &&
-				// could also be "read outside of reactivity", e.g. in an event handler
-				!first_batch?.next
+				// could also be "read outside of reactivity", e.g. in an event handler, while other batches are in flight
+				!has_pending_batches()
 			) {
 				update_derived_status(derived);
 			}
@@ -277,8 +280,9 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
-	} else if (batch_values?.has(source) && !source.equals(batch_values?.get(source))) {
-		current_batch?.capture(source, source.v);
+	} else if (batch_values !== null && current_batch?.linked && !current_batch.current.has(source)) {
+		// Value is equal to the real world, still save it for correct computation of batch_values etc.
+		current_batch.capture(source, value, false, true);
 	}
 
 	return value;
@@ -358,15 +362,14 @@ export function increment(source) {
  * @param {number} status
  */
 export function invalidate(reaction, status) {
-	set_signal_status(reaction, status);
-
 	if ((reaction.f & DERIVED) !== 0) {
+		set_signal_status(reaction, status);
 		seen = null;
 		count_deps = 0;
 		mark_reactions(/** @type {Derived} */ (reaction), status, null);
 		seen = null;
 	} else {
-		schedule_effect(/** @type {Effect} */ (reaction));
+		schedule_effect(/** @type {Effect} */ (reaction), status);
 	}
 }
 
@@ -404,8 +407,12 @@ function mark_reactions(signal, status, updated_during_traversal) {
 
 		var not_dirty = (flags & DIRTY) === 0;
 
-		// don't set a DIRTY reaction to MAYBE_DIRTY
-		if (not_dirty) {
+		// don't set a DIRTY reaction to MAYBE_DIRTY. Scheduled effects get
+		// their status from the batch they're scheduled in (see `Batch#schedule`)
+		if (
+			not_dirty &&
+			((flags & (EAGER_EFFECT | DERIVED)) !== 0 || updated_during_traversal !== null)
+		) {
 			set_signal_status(reaction, status);
 		}
 
@@ -428,7 +435,7 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			if (updated_during_traversal !== null) {
 				updated_during_traversal.push(effect);
 			} else {
-				schedule_effect(effect);
+				schedule_effect(effect, status);
 			}
 		}
 	}

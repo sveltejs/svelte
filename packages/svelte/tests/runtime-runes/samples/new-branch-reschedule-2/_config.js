@@ -41,6 +41,6 @@ export default test({
 			`
 		);
 
-		assert.deepEqual(logs, ['effect ran']);
+		assert.deepEqual(logs, ['effect ran', 'effect ran']);
 	}
 });
