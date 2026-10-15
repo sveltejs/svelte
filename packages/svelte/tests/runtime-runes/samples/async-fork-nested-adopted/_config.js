@@ -12,7 +12,7 @@ const html = (list, show) =>
 // async expressions. A real batch adopts the item first and the branches later, or both at once.
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
+	async test({ assert, target, logs }) {
 		const [fork_a, list_and_show, list, show, reset, resolve_all, discard, commit] =
 			target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('main');
@@ -27,7 +27,7 @@ export default test({
 
 		await settle();
 		assert.htmlEqual(output.innerHTML, html([0], false));
-		instance.log.length = 0;
+		logs.length = 0;
 
 		for (const together of [false, true]) {
 			for (const finish of ['discard', 'commit']) {
@@ -37,14 +37,14 @@ export default test({
 					fork_a.click();
 					resolve_all.click();
 					await tick();
-					assert.deepEqual(instance.log.splice(0).sort(), ['p0', 'p1', 'x1']);
+					assert.deepEqual(logs.splice(0).sort(), ['p0', 'p1', 'x1']);
 
 					if (!together) {
 						// the item is adopted, the branch inside it stays the fork's
 						list.click();
 						await settle();
 						assert.htmlEqual(output.innerHTML, html([0, 1], false));
-						assert.deepEqual(instance.log.splice(0), ['x1']);
+						assert.deepEqual(logs.splice(0), ['x1']);
 
 						show.click();
 					} else {
@@ -53,21 +53,18 @@ export default test({
 
 					await settle();
 					assert.htmlEqual(output.innerHTML, html([0, 1], true));
-					assert.deepEqual(
-						instance.log.splice(0).sort(),
-						together ? ['p0', 'p1', 'x1'] : ['p0', 'p1']
-					);
+					assert.deepEqual(logs.splice(0).sort(), together ? ['p0', 'p1', 'x1'] : ['p0', 'p1']);
 
 					if (finish === 'discard') discard.click();
 					else commit.click();
 					await settle();
 					assert.htmlEqual(output.innerHTML, html([0, 1], true));
-					assert.deepEqual(instance.log, []);
+					assert.deepEqual(logs, []);
 
 					reset.click();
 					await settle();
 					assert.htmlEqual(output.innerHTML, html([0], false));
-					instance.log.length = 0;
+					logs.length = 0;
 				} catch (e) {
 					/** @type {Error} */ (e).message = `${mode}: ${/** @type {Error} */ (e).message}`;
 					throw e;

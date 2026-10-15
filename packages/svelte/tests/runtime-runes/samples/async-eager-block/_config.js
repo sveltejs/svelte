@@ -10,7 +10,7 @@ export default test({
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
-			'<button>increment</button> <button>resolve</button> 0 <p>loading...</p> <p>0</p>' // <p>1</p> would also be ok here
+			'<button>increment</button> <button>resolve</button> 0 <p>loading...</p> <p>0</p>'
 		);
 
 		resolve.click();

@@ -15,15 +15,6 @@ export default test({
 			target.querySelectorAll('button');
 		const buttons = [...target.querySelectorAll('button')].map((b) => b.outerHTML).join('');
 
-		const settle = async () => {
-			for (let i = 0; i < 10; i++) {
-				await tick();
-				resolve_all.click();
-			}
-			await tick();
-		};
-
-		await settle();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>p0</p><s>0</s><s>1</s><q>aw0</q>`);
 
 		fork_a.click();
@@ -37,8 +28,10 @@ export default test({
 		write_real.click();
 		commit_a.click();
 		commit_b.click();
+		await tick();
 
-		await settle();
+		resolve_all.click();
+		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
 			`${buttons}<p>p1</p><section>s2</section><s>0</s><s>1</s><q>aw2</q>`

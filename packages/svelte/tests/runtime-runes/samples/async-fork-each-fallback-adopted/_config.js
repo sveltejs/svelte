@@ -5,7 +5,7 @@ import { test } from '../../test';
 // fallback's async expression itself, since the fork's result only exists in the fork
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
+	async test({ assert, target, logs }) {
 		const [fork_empty, empty, reset, resolve_all, discard, commit] =
 			target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('main');
@@ -28,17 +28,17 @@ export default test({
 						resolve_all.click();
 						await tick();
 					}
-					assert.deepEqual(instance.log.splice(0), ['empty']);
+					assert.deepEqual(logs.splice(0), ['empty']);
 
 					empty.click();
 					await tick();
-					assert.deepEqual(instance.log.splice(0), ['empty']);
+					assert.deepEqual(logs.splice(0), ['empty']);
 
 					if (finish === 'discard') discard.click();
 					else commit.click();
 					await settle();
 					assert.htmlEqual(output.innerHTML, '<p>empty</p>');
-					assert.deepEqual(instance.log, []);
+					assert.deepEqual(logs, []);
 
 					reset.click();
 					await settle();

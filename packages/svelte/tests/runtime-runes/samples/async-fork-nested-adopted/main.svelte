@@ -3,13 +3,12 @@
 
 	let list = $state([0]);
 	let show = $state(false);
-	export const log = [];
-	const registry = [];
+	const queued = [];
 	let a;
 
 	function f(tag, value) {
-		log.push(`${tag}${value}`);
-		return new Promise((resolve) => registry.push(() => resolve(value)));
+		console.log(`${tag}${value}`);
+		return new Promise((resolve) => queued.push(() => resolve(value)));
 	}
 
 	function set(values) {
@@ -18,7 +17,7 @@
 	}
 
 	function resolve_all() {
-		for (const r of registry.splice(0)) r();
+		for (const r of queued.splice(0)) r();
 	}
 </script>
 

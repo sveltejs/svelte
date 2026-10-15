@@ -5,7 +5,7 @@ import { test } from '../../test';
 // unless the fork is committed
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
+	async test({ assert, target, logs }) {
 		const [input] = target.querySelectorAll('input');
 		const [set, fork, resolve_all, discard, commit] = target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('#output');
@@ -26,13 +26,14 @@ export default test({
 
 		// resolved, then discarded
 		fork_with(2);
+		logs.length = 0;
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>0</q>');
 		discard.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>0</q>');
-		assert.equal(instance.registry.length, 0); // no refetch in the real world
+		assert.equal(logs.length, 0); // no refetch in the real world
 
 		// rejected, then discarded
 		fork_with(-1);
@@ -45,13 +46,14 @@ export default test({
 
 		// resolved, then committed
 		fork_with(3);
+		logs.length = 0;
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>0</q>');
 		commit.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>3</q>');
-		assert.equal(instance.registry.length, 0);
+		assert.equal(logs.length, 0);
 
 		// rejected, then committed
 		fork_with(-2);
@@ -79,28 +81,31 @@ export default test({
 		commit.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
+		logs.length = 0;
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>5</q>');
-		assert.equal(instance.registry.length, 0);
+		assert.equal(logs.length, 0);
 
 		// committed synchronously (`fork` flushes synchronously, which reaches the pending state)
 		fork_with(6);
 		assert.htmlEqual(output.innerHTML, '<q>5</q>');
 		commit.click();
 		assert.htmlEqual(output.innerHTML, '');
+		logs.length = 0;
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>6</q>');
-		assert.equal(instance.registry.length, 0);
+		assert.equal(logs.length, 0);
 
 		// discarded while pending, resolved afterwards
 		fork_with(7);
 		await tick();
 		discard.click();
+		logs.length = 0;
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<q>6</q>');
-		assert.equal(instance.registry.length, 0);
+		assert.equal(logs.length, 0);
 	}
 });

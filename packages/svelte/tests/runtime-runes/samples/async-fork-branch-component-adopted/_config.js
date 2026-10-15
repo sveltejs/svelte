@@ -4,7 +4,7 @@ import { test } from '../../test';
 // A component with a top-level `await` inside a branch that a fork created is revealed by a real batch
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
+	async test({ assert, target, logs }) {
 		const [fork_a, show, reset, resolve_all, discard, commit] = target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('main');
 
@@ -27,18 +27,18 @@ export default test({
 						resolve_all.click();
 						await tick();
 					}
-					assert.deepEqual(instance.log.splice(0), [1]);
+					assert.deepEqual(logs.splice(0), [1]);
 
 					show.click();
 					await tick();
-					assert.deepEqual(instance.log.splice(0), [0]);
+					assert.deepEqual(logs.splice(0), [0]);
 
 					if (finish === 'discard') discard.click();
 					else commit.click();
 					await settle();
 					const n = finish === 'commit' ? 1 : 0;
 					assert.htmlEqual(output.innerHTML, `<p>${n}|${n}</p>`);
-					assert.deepEqual(instance.log, []);
+					assert.deepEqual(logs, []);
 
 					reset.click();
 					await settle();

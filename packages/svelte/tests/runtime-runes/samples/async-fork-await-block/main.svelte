@@ -4,16 +4,17 @@
 	let input;
 	let b = $state(0);
 	let current_fork;
-	export const registry = [];
+	const queued = [];
 
-	function f(value) {
+	function push(value) {
+		console.log(value);
 		return new Promise((resolve, reject) =>
-			registry.push(() => (value < 0 ? reject(value) : resolve(value)))
+			queued.push(() => (value < 0 ? reject(value) : resolve(value)))
 		);
 	}
 
 	function resolve_all() {
-		for (const r of registry.splice(0)) r();
+		for (const r of queued.splice(0)) r();
 	}
 
 	function update() {
@@ -29,5 +30,5 @@
 <button onclick={() => current_fork?.commit()}>commit</button>
 
 <div id="output">
-	{#await f(b) then v}<q>{v}</q>{:catch e}<s>{e}</s>{/await}
+	{#await push(b) then v}<q>{v}</q>{:catch e}<s>{e}</s>{/await}
 </div>

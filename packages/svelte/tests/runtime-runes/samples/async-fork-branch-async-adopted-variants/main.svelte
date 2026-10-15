@@ -3,14 +3,13 @@
 
 	let show = $state(false);
 	let n = $state(0);
-	export const log = [];
-	const registry = [];
+	const queued = [];
 	let a;
 	let b;
 
-	function f(tag, value) {
-		log.push(`${tag}${value}`);
-		return new Promise((resolve) => registry.push(() => resolve(value)));
+	function push(tag, value) {
+		console.log(`${tag}${value}`);
+		return new Promise((resolve) => queued.push(() => resolve(value)));
 	}
 
 	function set(values) {
@@ -19,7 +18,7 @@
 	}
 
 	function resolve_all() {
-		for (const r of registry.splice(0)) r();
+		for (const r of queued.splice(0)) r();
 	}
 
 	function discard_a() {
@@ -48,6 +47,6 @@
 <button onclick={commit_b}>commit b</button>
 
 <main>
-	{#if show}<p>{await f('c', 'c')}</p>{/if}
-	{#if show}<section>{n}|{await f('n', n)}</section>{/if}
+	{#if show}<p>{await push('c', 'c')}</p>{/if}
+	{#if show}<section>{n}|{await push('n', n)}</section>{/if}
 </main>

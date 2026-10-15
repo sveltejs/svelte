@@ -11,12 +11,8 @@
 	// Only evaluated in the fork, with a fresh object on each evaluation.
 	const searchParams = $derived({ value: sharedState });
 
-	export function get_calls() {
-		return calls;
-	}
-
 	function load(value) {
-		calls += 1;
+		console.log(calls += 1);
 		return new Promise((resolve) => resolvers.push(() => resolve(value)));
 	}
 </script>

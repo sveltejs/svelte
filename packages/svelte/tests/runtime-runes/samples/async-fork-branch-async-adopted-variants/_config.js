@@ -11,7 +11,7 @@ const html = (n) => `<p>c</p><section>${n}|${n}</section>`;
 // again), even though the other batch's results come in later.
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
+	async test({ assert, target, logs }) {
 		const [fork_a, show, fork_b, reset, resolve_all, discard_a, commit_a, commit_b] =
 			target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('main');
@@ -35,13 +35,13 @@ export default test({
 							resolve_all.click();
 							await tick();
 						}
-						assert.deepEqual(instance.log.splice(0), ['cc', 'n1']);
+						assert.deepEqual(logs.splice(0), ['cc', 'n1']);
 
 						if (revealer === 'real') show.click();
 						else fork_b.click();
 						await tick();
 						assert.htmlEqual(output.innerHTML, '');
-						assert.deepEqual(instance.log.splice(0), ['cc', 'n0']);
+						assert.deepEqual(logs.splice(0), ['cc', 'n0']);
 
 						if (finish === 'discard') discard_a.click();
 						else commit_a.click();
@@ -54,7 +54,7 @@ export default test({
 						commit_b.click();
 						await settle();
 						assert.htmlEqual(output.innerHTML, html(finish === 'commit' ? 1 : 0));
-						assert.deepEqual(instance.log, []);
+						assert.deepEqual(logs, []);
 
 						reset.click();
 						await settle();

@@ -12,7 +12,7 @@ const html = (list) =>
 // fork is committed, its own results are used: nothing is fetched again.
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
+	async test({ assert, target, logs }) {
 		const [
 			reset_list,
 			fork_list,
@@ -38,22 +38,19 @@ export default test({
 			reset_list.click();
 			await settle();
 			assert.htmlEqual(output.innerHTML, html([0, 1]));
-			instance.log.length = 0;
+			logs.length = 0;
 		};
 
 		await settle();
 		assert.htmlEqual(output.innerHTML, html([0, 1]));
-		instance.log.length = 0;
+		logs.length = 0;
 
 		for (const finish of ['discard', 'commit']) {
 			try {
 				// the fork creates items, the real batch reuses some of them (with equal and different values)
 				fork_list.click();
-				assert.deepEqual(
-					instance.log.sort(),
-					['cc', 'cc', 'k3', 'k2', 'u0', 'u1', 'u2', 'u3'].sort()
-				);
-				instance.log.length = 0;
+				assert.deepEqual(logs.sort(), ['cc', 'cc', 'k3', 'k2', 'u0', 'u1', 'u2', 'u3'].sort());
+				logs.length = 0;
 
 				real_list.click();
 				if (finish === 'discard') discard.click();
@@ -68,48 +65,48 @@ export default test({
 				resolve_all.click();
 				await tick();
 				assert.htmlEqual(output.innerHTML, html([0, 1]));
-				instance.log.length = 0;
+				logs.length = 0;
 
 				append_2.click();
 				await settle();
 				assert.htmlEqual(output.innerHTML, html([0, 1, 2]));
 				// the fork's results only exist in the fork, so the real batch has to fetch them itself
-				assert.deepEqual(instance.log.sort(), ['cc', 'k2', 'u2']);
-				instance.log.length = 0;
+				assert.deepEqual(logs.sort(), ['cc', 'k2', 'u2']);
+				logs.length = 0;
 
 				if (finish === 'discard') discard.click();
 				else commit.click();
 				await settle();
 				assert.htmlEqual(output.innerHTML, html([0, 1, 2]));
-				assert.deepEqual(instance.log, []);
+				assert.deepEqual(logs, []);
 				await reset();
 
 				// the fork is finished while the real batch that adopted its items is still pending
 				fork_append_2.click();
-				instance.log.length = 0;
+				logs.length = 0;
 				append_2.click();
 				await tick();
-				assert.deepEqual(instance.log.sort(), ['cc', 'k2', 'u2']);
-				instance.log.length = 0;
+				assert.deepEqual(logs.sort(), ['cc', 'k2', 'u2']);
+				logs.length = 0;
 
 				if (finish === 'discard') discard.click();
 				else commit.click();
 				await settle();
 				assert.htmlEqual(output.innerHTML, html([0, 1, 2]));
-				assert.deepEqual(instance.log, []);
+				assert.deepEqual(logs, []);
 				await reset();
 
 				// a real batch adopts an item with a different value after the fork's results are in
 				fork_append_2.click();
 				resolve_all.click();
 				await tick();
-				instance.log.length = 0;
+				logs.length = 0;
 
 				append_5.click();
 				await settle();
 				assert.htmlEqual(output.innerHTML, html([0, 1, 5]));
 				// keyed: a new item, unkeyed: the adopted item's input changed (and the fork revalidates it)
-				assert.deepEqual(instance.log.sort(), ['cc', 'k5', 'u5', 'u5']);
+				assert.deepEqual(logs.sort(), ['cc', 'k5', 'u5', 'u5']);
 
 				// the fork's revalidated result for the unkeyed item equals the real one, it must not
 				// commit its outdated result for it

@@ -2,17 +2,16 @@
 	import { fork } from 'svelte';
 
 	let list = $state([0, 1]);
-	export const log = [];
-	const registry = [];
+	const queued = [];
 	let current_fork;
 
-	function f(tag, value) {
-		log.push(`${tag}${value}`);
-		return new Promise((resolve) => registry.push(() => resolve(value)));
+	function push(tag, value) {
+		console.log(`${tag}${value}`);
+		return new Promise((resolve) => queued.push(() => resolve(value)));
 	}
 
 	function resolve_all() {
-		for (const r of registry.splice(0)) r();
+		for (const r of queued.splice(0)) r();
 	}
 </script>
 
@@ -28,8 +27,8 @@
 
 <main>
 	<svelte:boundary>
-		{#each list as x (x)}<b>{x}|{await f('k', x)}|{await f('c', 'c')}</b>{/each}
-		{#each list as x}<s>{x}|{await f('u', x)}</s>{/each}
+		{#each list as x (x)}<b>{x}|{await push('k', x)}|{await push('c', 'c')}</b>{/each}
+		{#each list as x}<s>{x}|{await push('u', x)}</s>{/each}
 		{#snippet pending()}{/snippet}
 	</svelte:boundary>
 </main>

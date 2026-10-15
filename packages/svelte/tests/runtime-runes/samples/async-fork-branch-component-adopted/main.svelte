@@ -4,13 +4,12 @@
 
 	let show = $state(false);
 	let n = $state(0);
-	export const log = [];
-	const registry = [];
+	const queued = [];
 	let a;
 
-	function f(value) {
-		log.push(value);
-		return new Promise((resolve) => registry.push(() => resolve(value)));
+	function push(value) {
+		console.log(value);
+		return new Promise((resolve) => queued.push(() => resolve(value)));
 	}
 
 	function set(values) {
@@ -19,7 +18,7 @@
 	}
 
 	function resolve_all() {
-		for (const r of registry.splice(0)) r();
+		for (const r of queued.splice(0)) r();
 	}
 </script>
 
@@ -30,4 +29,4 @@
 <button onclick={() => a?.discard()}>discard</button>
 <button onclick={() => a?.commit()}>commit</button>
 
-<main>{#if show}<Child {f} {n} />{/if}</main>
+<main>{#if show}<Child f={push} {n} />{/if}</main>
