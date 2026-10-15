@@ -8,75 +8,79 @@ import { test } from '../../test';
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {
-		const [
-			fork_10,
-			fork_20,
-			fork_30,
-			commit,
-			set_a_1,
-			set_a_2,
-			resolve_p_0,
-			resolve_p_10,
-			resolve_p_20,
-			resolve_p_30,
-			resolve_aw_0,
-			resolve_aw_11,
-			resolve_aw_1,
-			resolve_aw_21,
-			resolve_aw_31,
-			resolve_aw_32
-		] = target.querySelectorAll('button');
+		const [input] = target.querySelectorAll('input');
+		const [set_a, fork, commit, resolve_p, resolve_aw] = target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('#output');
 
-		resolve_p_0.click();
+		const set_a_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			set_a.click();
+		};
+
+		const fork_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			fork.click();
+		};
+
+		const resolve_p_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			resolve_p.click();
+		};
+
+		const resolve_aw_with = (/** @type {number} */ n) => {
+			input.value = String(n);
+			resolve_aw.click();
+		};
+
+		resolve_p_with(0);
 		await tick();
-		resolve_aw_0.click();
+		resolve_aw_with(0);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>0</p><q>0</q>');
 
 		// resolves before the batch is done; the real world's older promise is obsolete once the fork is committed
-		set_a_1.click();
+		set_a_with(1);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>0</p><i>pending</i>');
-		fork_10.click();
+		fork_with(10);
 		await tick();
 		commit.click();
 		await tick();
-		resolve_aw_11.click();
+		resolve_aw_with(11);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>0</p><i>pending</i>');
-		resolve_aw_1.click();
+		resolve_aw_with(1);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>0</p><i>pending</i>');
-		resolve_p_10.click();
+		resolve_p_with(10);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>10</p><q>11</q>');
 
 		// resolves after the batch is done
-		fork_20.click();
+		fork_with(20);
 		await tick();
 		commit.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>10</p><q>11</q>');
-		resolve_p_20.click();
+		resolve_p_with(20);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>20</p><i>pending</i>');
-		resolve_aw_21.click();
+		resolve_aw_with(21);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>20</p><q>21</q>');
 
 		// a real update after the commit supersedes the fork's promise
-		fork_30.click();
+		fork_with(30);
 		await tick();
 		commit.click();
 		await tick();
-		set_a_2.click();
+		set_a_with(2);
 		await tick();
-		resolve_aw_31.click();
+		resolve_aw_with(31);
 		await tick();
-		resolve_aw_32.click();
+		resolve_aw_with(32);
 		await tick();
-		resolve_p_30.click();
+		resolve_p_with(30);
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>30</p><q>32</q>');
 	}

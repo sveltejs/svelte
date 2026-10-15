@@ -1,6 +1,7 @@
 <script>
 	import { fork } from 'svelte';
 
+	let input;
 	let a = $state(0);
 	let b = $state(0);
 	let current_fork;
@@ -21,21 +22,18 @@
 		for (const r of registry.get(tag + value) ?? []) r();
 		registry.delete(tag + value);
 	}
+
+	function update_b() {
+		b = +input.value;
+	}
 </script>
 
-{#each [10, 20, 30] as value}
-	<button onclick={() => (current_fork = fork(() => (b = value)))}>fork b = {value}</button>
-{/each}
+<input bind:this={input}>
+<button onclick={() => (a = +input.value)}>set a</button>
+<button onclick={() => (current_fork = fork(update_b))}>set b (fork)</button>
 <button onclick={() => current_fork?.commit()}>commit</button>
-{#each [1, 2] as value}
-	<button onclick={() => (a = value)}>a = {value}</button>
-{/each}
-{#each [0, 10, 20, 30] as value}
-	<button onclick={() => settle('p', value)}>resolve p({value})</button>
-{/each}
-{#each [0, 11, 1, 21, 31, 32] as value}
-	<button onclick={() => settle('aw', value)}>resolve aw({value})</button>
-{/each}
+<button onclick={() => settle('p', +input.value)}>resolve p</button>
+<button onclick={() => settle('aw', +input.value)}>resolve aw</button>
 
 <div id="output">
 	<svelte:boundary>
