@@ -54,6 +54,8 @@ function effect_label(effect, append_effect = false) {
 		label = 'async';
 	} else if ((flags & BRANCH_EFFECT) !== 0) {
 		label = 'branch';
+	} else if (!effect.fn) {
+		label = 'teardown';
 	} else if ((flags & RENDER_EFFECT) !== 0) {
 		label = 'render effect';
 	} else if ((flags & EFFECT) !== 0) {
