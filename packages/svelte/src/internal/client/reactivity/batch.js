@@ -1555,6 +1555,7 @@ export function set_cv(reaction, cv = write_version) {
 	if (!current_batch?.is_fork && !running_eager_effect) {
 		// a derived computed in a different view of the world is not necessarily
 		// up to date in the real world, so needs to be recomputed outside it
+		// TODO this is a belt-and-braces mechanism; it can result in unnecessary recomputation
 		reaction.cv = (reaction.f & DERIVED) !== 0 && active_batch?.time_travelling ? -1 : cv;
 	}
 }
