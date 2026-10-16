@@ -352,9 +352,6 @@ export class Batch {
 
 		current_batch = this;
 
-		var started = this.started;
-		this.started = true;
-
 		if (DEV) {
 			// track all the values that were updated during this flush,
 			// so that they can be reset afterwards
@@ -375,11 +372,13 @@ export class Batch {
 
 		// re-mark reactions after applying, so that values belonging to other
 		// batches that are invalidated by this batch's changes are removed
-		if (started) {
+		if (this.started) {
 			for (const [source, snapshot] of this.current) {
 				mark_reactions(this, source, snapshot.wv, null);
 			}
 		}
+
+		this.started = true;
 
 		/** @type {Effect[]} */
 		var effects = (collected_effects = []);
