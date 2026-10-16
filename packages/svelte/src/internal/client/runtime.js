@@ -352,7 +352,9 @@ function update_dependencies(reaction) {
 	if (new_deps !== null) {
 		var i;
 
-		if (!is_fork) {
+		if (is_fork) {
+			/** @type {Batch} */ (current_batch).rewired.add(reaction);
+		} else {
 			remove_reactions(reaction, skipped_deps);
 		}
 

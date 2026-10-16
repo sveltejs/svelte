@@ -19,14 +19,7 @@ import {
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property, includes } from '../../shared/utils.js';
-import {
-	active_reaction,
-	get,
-	increment_write_version,
-	is_dirty,
-	update_effect,
-	write_version
-} from '../runtime.js';
+import { active_reaction, get, is_dirty, update_effect, write_version } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
@@ -211,6 +204,14 @@ export class Batch {
 
 	/** @type {Map<Reaction, number>} */
 	cvs = new Map();
+
+	/**
+	 * Reactions whose dependencies changed while running inside this batch, while it was a fork.
+	 * Their dependencies reflect the fork's view of the world, so if the fork is
+	 * discarded they need to re-run (or, in the case of deriveds, recompute)
+	 * @type {Set<Reaction>}
+	 */
+	rewired = new Set();
 
 	/**
 	 * A map of branches that still exist, but will be destroyed when this batch
@@ -756,6 +757,13 @@ export class Batch {
 			deferred.reject(OBSOLETE);
 		}
 
+		for (const reaction of this.rewired) {
+			reaction.cv = -1;
+			if ((reaction.f & DERIVED) !== 0) reaction.f &= ~CLEAN;
+		}
+
+		this.rewired.clear();
+
 		this.#unlink();
 		this.#deferred?.resolve();
 	}
@@ -852,7 +860,7 @@ export class Batch {
 				var checked = new Map();
 
 				for (var source of sources) {
-					mark_effects(batch, source, others, marked, checked, true);
+					mark_effects(batch, this, source, others, marked, checked, true);
 				}
 
 				checked = new Map();
@@ -1218,12 +1226,13 @@ function flush_queued_effects(effects) {
  * depending on `value` and at least one of the other `sources`, so that
  * these effects can re-run after another batch has been committed
  * @param {Batch} batch
+ * @param {Batch} committed the batch that was just committed
  * @param {Value} value
  * @param {Source[]} sources
  * @param {Set<Value>} marked
  * @param {Map<Reaction, boolean>} checked
  */
-function mark_effects(batch, value, sources, marked, checked, direct = false) {
+function mark_effects(batch, committed, value, sources, marked, checked, direct = false) {
 	if (marked.has(value)) return;
 	marked.add(value);
 
@@ -1237,10 +1246,18 @@ function mark_effects(batch, value, sources, marked, checked, direct = false) {
 				batch.current.delete(/** @type {Derived} */ (reaction));
 				batch.cvs.delete(reaction);
 
-				mark_effects(batch, /** @type {Derived} */ (reaction), sources, marked, checked);
-			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources, checked)) {
-				batch.schedule(/** @type {Effect} */ (reaction));
-				if (direct) batch.cvs.set(reaction, -1);
+				mark_effects(batch, committed, /** @type {Derived} */ (reaction), sources, marked, checked);
+			} else if (depends_on(reaction, sources, checked)) {
+				if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0) {
+					batch.schedule(/** @type {Effect} */ (reaction));
+					if (direct) batch.cvs.set(reaction, -1);
+				}
+			} else {
+				// the effect doesn't depend on anything that is unique to `batch`, meaning it
+				// sees the same world as `committed` did. If `committed` already ran it, we
+				// can reuse the result rather than re-running it (with the same values)
+				var cv = committed.cvs.get(reaction);
+				if (cv !== undefined) batch.cvs.set(reaction, cv);
 			}
 		}
 	}
@@ -1515,12 +1532,6 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
-			// cause any deriveds to update if they depend on
-			// things that changed inside the discarded fork
-			for (var source of batch.current.keys()) {
-				source.wv = increment_write_version();
-			}
-
 			if (!committed && batch.linked) {
 				batch.eager?.discard();
 				batch.discard();
