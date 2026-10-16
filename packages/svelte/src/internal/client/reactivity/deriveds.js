@@ -39,6 +39,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { current_batch, get_wv, active_batch, set_cv, previous_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, noop } from '../../shared/utils.js';
+import { stringify_derived } from '../dev/debug.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -111,7 +112,7 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = state(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label ?? fn.toString();
+	if (DEV) signal.label = label ?? stringify_derived(fn);
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
@@ -398,6 +399,11 @@ export function update_derived(derived) {
 
 	if (!derived.equals(value)) {
 		if (active_batch !== null) {
+			// TODO this whole bit seems wrong. `previous_batch`, if it exists, has to be
+			// the same as `active_batch`. if `current_batch` exists separately, it's a
+			// batch that was created while flushing effects — the derived should have
+			// been evaluated in that context, _not_ the context of `active_batch`...
+			// Also `previous_batch` is probably redundant now that it equals `active_batch`?
 			(current_batch ?? active_batch).capture(derived, value, write_version);
 
 			// We also write to previous_batch because if it exists, it is a sign that we're
