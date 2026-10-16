@@ -120,13 +120,18 @@ function validate_code(code, is_attribute_value) {
 		return code;
 	}
 
-	// supplementary ideographic plane 0x20000 - 0x2ffff
-	if (code >= 131072 && code <= 196607) {
+	// supplementary and tertiary ideographic planes 0x20000 - 0x3ffff
+	if (code >= 131072 && code <= 262143) {
 		return code;
 	}
 
 	// supplementary special-purpose plane 0xe0000 - 0xe07f and 0xe0100 - 0xe01ef
 	if ((code >= 917504 && code <= 917631) || (code >= 917760 && code <= 917999)) {
+		return code;
+	}
+
+	// supplementary private use area planes 0xf0000 - 0x10ffff
+	if (code >= 983040 && code <= 1114111) {
 		return code;
 	}
 
