@@ -23,8 +23,10 @@
 
 <script>
 	const config = {};
+	const classes = $state({ active: false });
 	let title = $state('a');
 </script>
 
-<spread-context-element {...{ config, label: 'x', title }}></spread-context-element>
+<spread-context-element {...{ config, label: 'x', title, class: classes }}></spread-context-element>
 <button onclick={() => (title += 'a')}>{title}</button>
+<button onclick={() => (classes.active = true)}>active</button>

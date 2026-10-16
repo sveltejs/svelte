@@ -301,13 +301,6 @@ function set_attributes(
 	var previous_reaction = active_reaction;
 	var previous_effect = active_effect;
 
-	// Like in `set_custom_element_data`, custom element setters and lifecycle
-	// methods shouldn't be associated with the current reaction or effect
-	if (is_custom_element) {
-		set_active_reaction(null);
-		set_active_effect(null);
-	}
-
 	try {
 		for (var key in prev) {
 			// don't null our internal $$onX listeners
@@ -324,6 +317,14 @@ function set_attributes(
 
 		if (next[STYLE]) {
 			next.style ??= null; /* force call to set_style() */
+		}
+
+		// Like in `set_custom_element_data`, custom element setters and lifecycle
+		// methods shouldn't be associated with the current reaction or effect.
+		// Clearing them after `clsx` keeps reads of a class object tracked
+		if (is_custom_element) {
+			set_active_reaction(null);
+			set_active_effect(null);
 		}
 
 		var setters = get_setters(element);
