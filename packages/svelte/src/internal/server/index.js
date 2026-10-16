@@ -9,7 +9,8 @@ import {
 	UNINITIALIZED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED,
-	ELEMENT_IS_INPUT
+	ELEMENT_IS_INPUT,
+	ELEMENT_IS_CUSTOM_ELEMENT
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
@@ -146,6 +147,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
 	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
+	const is_custom_element = (flags & ELEMENT_IS_CUSTOM_ELEMENT) !== 0;
 	const names = Object.keys(attrs);
 
 	outer: for (let i = 0; i < names.length; i++) {
@@ -156,6 +158,10 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 		if (name === '' || INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
 		var value = attrs[name];
+
+		// omit objects on custom elements, which the client sets as properties
+		if (is_custom_element && value !== null && typeof value === 'object') continue;
+
 		var lower = name.toLowerCase();
 
 		if (lowercase) name = lower;
@@ -179,6 +185,18 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	}
 
 	return attr_str;
+}
+
+/**
+ * Like `attr`, but omits objects, which the client sets as properties on custom elements
+ * @param {string} name
+ * @param {unknown} value
+ * @param {boolean} [is_boolean]
+ * @returns {string}
+ */
+export function custom_element_attr(name, value, is_boolean) {
+	if (value !== null && typeof value === 'object') return '';
+	return attr(name, value, is_boolean);
 }
 
 /**
