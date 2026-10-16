@@ -199,10 +199,12 @@ export class Batch {
 	#deferred = null;
 
 	/**
-	 * Effects that were scheduled while this batch wasn't being processed (see `schedule`)
-	 * @type {Set<Effect> | null}
+	 * Effects to (re-)validate when this batch is processed next, and their status (DIRTY or MAYBE_DIRTY):
+	 * those that were scheduled while it wasn't being processed (see `schedule`), and those whose run
+	 * was deferred because it has pending work (see `#defer_effects`)
+	 * @type {Map<Effect, number>}
 	 */
-	#unprocessed = null;
+	#unprocessed = new Map();
 
 	/**
 	 * Effects that were scheduled in this batch but not yet 'resolved' into the
@@ -216,12 +218,6 @@ export class Batch {
 	 * @type {Effect[]}
 	 */
 	#scheduled = [];
-
-	/**
-	 * Deferred effects (which run after async work has completed) and their status (DIRTY or MAYBE_DIRTY)
-	 * @type {Map<Effect, number>}
-	 */
-	#dirty_reactions = new Map();
 
 	/**
 	 * Branches that still exist, but will be destroyed when this batch
@@ -389,9 +385,12 @@ export class Batch {
 
 		this.started = true;
 
-		if (this.#unprocessed !== null) {
-			for (const e of this.#unprocessed) this.#add(e, MAYBE_DIRTY);
-			this.#unprocessed = null;
+		// Deferred effects are rescheduled even if the batch still has pending work, because traversing the
+		// tree could make an if block that contains the last blocking pending effect falsy, causing the batch
+		// to no longer be deferred. If it still is, they are deferred again
+		if (this.#unprocessed.size > 0) {
+			for (const [e, status] of this.#unprocessed) this.#add(e, status);
+			this.#unprocessed.clear();
 		}
 
 		if (DEV) {
@@ -400,14 +399,6 @@ export class Batch {
 			for (const value of this.current.keys()) {
 				source_stacks.add(value);
 			}
-		}
-
-		// We always reschedule previously-deferred effects, not just when
-		// #is_deferred() is true, because traversing the tree could make
-		// an if block that contains the last blocking pending effect falsy,
-		// causing the block to no longer be deferred.
-		for (const [e, status] of this.#dirty_reactions) {
-			this.#add(e, status);
 		}
 
 		this.activate();
@@ -490,13 +481,11 @@ export class Batch {
 			return;
 		}
 
-		// clear effects. Those that are still needed will be rescheduled through unskipping the skipped branches.
-		this.#dirty_reactions.clear();
-
 		// The results of this batch are about to become the real-world state
 		this.committing = true;
 
 		if (this.records !== null) {
+			// Make the block/async effects this batch has take effect in the real world
 			for (const [reaction, record] of this.records) {
 				if ((reaction.f & (DERIVED | DESTROYED)) === 0) promote_record(reaction, record);
 			}
@@ -691,7 +680,7 @@ export class Batch {
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
 		batch.async_deriveds.clear();
 
-		this.transfer_reactions(batch.#dirty_reactions);
+		this.transfer_reactions(batch.#unprocessed);
 
 		this.oncommit(() => batch.discard());
 		batch.#unlink();
@@ -706,7 +695,7 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(effects[i], this.#dirty_reactions);
+			defer_effect(effects[i], this.#unprocessed);
 		}
 	}
 
@@ -934,8 +923,8 @@ export class Batch {
 	transfer_reactions(dirty_reactions) {
 		for (const [effect, status] of dirty_reactions) {
 			// (don't downgrade a DIRTY effect to MAYBE_DIRTY)
-			if (status === DIRTY || this.#dirty_reactions.get(effect) !== DIRTY) {
-				this.#dirty_reactions.set(effect, status);
+			if (status === DIRTY || this.#unprocessed.get(effect) !== DIRTY) {
+				this.#unprocessed.set(effect, status);
 			}
 		}
 
@@ -1061,7 +1050,8 @@ export class Batch {
 
 		if ((!is_processing || current_batch !== this) && active_reaction === null) {
 			if (this.prev !== null || this.next !== null || this.is_fork) {
-				(this.#unprocessed ??= new Set()).add(effect);
+				// (don't downgrade a DIRTY effect)
+				if (!this.#unprocessed.has(effect)) this.#unprocessed.set(effect, MAYBE_DIRTY);
 				return;
 			}
 

@@ -631,7 +631,12 @@ export function promote_record(reaction, record) {
 	var i = 0;
 
 	if (read !== null) {
-		// `dv` must line up with the start of `deps`
+		// The record's reads become the global run, so they must be the start of `deps` (which is what `dv`
+		// lines up with). But `deps` can't simply be replaced by them: it's also the list of the graph's edges
+		// (the values that have `reaction` among their `reactions`), which covers the runs that other batches
+		// hold, too (see `update_record`). So the other edges are kept, after the reads. The record's array
+		// is reused for this (only its first `dv.length` entries are ever checked). If the reads already are
+		// the start of `deps` (the common case), nothing changes
 		while (i < read.length && deps[i] === read[i]) i++;
 
 		if (i < read.length) {
