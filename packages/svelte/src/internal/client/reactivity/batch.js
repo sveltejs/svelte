@@ -568,6 +568,7 @@ export class Batch {
 			if (!batch.is_fork) {
 				// if the batches are connected, break. deriveds don't count, since a derived
 				// can be updated in two batches that otherwise touch disjoint sets of sources
+				// TODO written (rather than recomputed) deriveds should be treated as sources
 				for (const value of this.current.keys()) {
 					if ((value.f & DERIVED) === 0 && batch.current.has(value)) {
 						return batch;
