@@ -299,7 +299,7 @@ export function update_reaction(reaction) {
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
 		reaction.f |= REACTION_RAN;
-		var read = update_dependencies(reaction, flags);
+		var read = update_dependencies(reaction, flags, result, false);
 
 		// If we're inside an effect and we have untracked writes, then we need to
 		// ensure that if any of those untracked writes result in re-invalidation
@@ -349,27 +349,20 @@ export function update_reaction(reaction) {
 			}
 		}
 
-		if ((reaction.f & ERROR_VALUE) !== 0) {
-			reaction.f ^= ERROR_VALUE;
-		}
-
 		return result;
 	} catch (error) {
-		// still commit the deps read before the throw, otherwise deriveds connected by this run keep no reader and the reaction never re-runs when they change
-		update_dependencies(reaction, flags);
+		var value = error;
 
 		try {
-			return handle_error(error);
-		} catch (e) {
-			if ((flags & DERIVED) !== 0) {
-				// the error propagates, i.e. the run produced no value: neither the versions it
-				// recorded (globally, or in the active batch) nor the derived's value are valid
-				reaction.dv = null;
-				view_batch?.records?.delete(reaction);
-			}
-
-			throw e;
+			value = handle_error(error);
+		} finally {
+			// Still commit the deps read before the throw, otherwise deriveds connected by this run keep no reader
+			// and the reaction never re-runs when they change. For a derived, the error is the value of the run
+			// (`get` throws it) — unless an error boundary took care of it
+			update_dependencies(reaction, flags, value, value === error);
 		}
+
+		return value;
 	} finally {
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
@@ -384,12 +377,12 @@ export function update_reaction(reaction) {
 }
 
 /**
- * Determine where the result of the current run of `reaction` belongs, record the
- * versions of the values it read accordingly, and update the edges of the graph.
+ * Store the result of the current run of `reaction` where it belongs — the versions of the
+ * values it read and, for a derived, its value — and update the edges of the graph.
  *
- * A run belongs to the real world — and updates the reaction's global state — unless
- * - it is a derived that read values which only exist in the view of the active batch
- *   (it is then cached in that batch, see `view_entry`)
+ * A run belongs to the real world — and becomes the reaction's global state — unless
+ * - it is a derived that read values which aren't the latest ones (it is then stored in the batch
+ *   whose view of the world it ran in, see `view_entry`)
  * - it is an effect run that belongs to a batch (see `update_record`)
  * - it is a derived evaluated in a teardown, in which case its result is discarded
  *
@@ -398,9 +391,11 @@ export function update_reaction(reaction) {
  * the reaction. They are only pruned when a global run happens and no batch holds a record.
  * @param {Reaction} reaction
  * @param {number} flags the flags of the reaction before the run
+ * @param {any} value the value of the run (only relevant for deriveds)
+ * @param {boolean} error whether the value is an error
  * @returns {number} the number of values the run read
  */
-function update_dependencies(reaction, flags) {
+function update_dependencies(reaction, flags, value, error) {
 	var deps = reaction.deps;
 	var length = skipped_deps + (new_deps === null ? 0 : new_deps.length);
 	var dv = reaction.dv;
@@ -423,10 +418,44 @@ function update_dependencies(reaction, flags) {
 		for (var i = 0; i < length; i++) dv[i] = deps[i].wv;
 		if (dv.length !== length) dv.length = length;
 
+		if ((flags & DERIVED) !== 0) set_derived_value(/** @type {Derived} */ (reaction), value, error);
+
 		return length;
 	}
 
-	return update_record(reaction, flags, deps, length);
+	return update_record(reaction, flags, deps, length, value, error);
+}
+
+/**
+ * Make `value` the (real-world) value of `derived` — it keeps its version if it is the same value
+ * @param {Derived} derived
+ * @param {any} value
+ * @param {boolean} error
+ */
+function set_derived_value(derived, value, error) {
+	if (error || (derived.f & ERROR_VALUE) !== 0 || !derived.equals(value)) {
+		derived.v = value;
+		derived.wv = increment_write_version();
+		derived.f = error ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE;
+	}
+
+	update_derived_status(derived);
+}
+
+/**
+ * Whether `holder` — `derived` itself, or a record of it — holds `value` (errors are never the same value)
+ * @param {Derived} derived
+ * @param {Derived | BatchRecord | undefined} holder
+ * @param {any} value
+ */
+function holds(derived, holder, value) {
+	return (
+		holder !== undefined &&
+		!(holder === derived
+			? (derived.f & ERROR_VALUE) !== 0
+			: /** @type {BatchRecord} */ (holder).e) &&
+		derived.equals.call(/** @type {Derived} */ (holder), value)
+	);
 }
 
 /**
@@ -434,8 +463,10 @@ function update_dependencies(reaction, flags) {
  * @param {number} flags
  * @param {Value[] | null} deps
  * @param {number} length
+ * @param {any} value
+ * @param {boolean} error
  */
-function update_record(reaction, flags, deps, length) {
+function update_record(reaction, flags, deps, length, value, error) {
 	// Block and async effects that run while a batch is processed produce a result for that batch (the
 	// branch it selected, the value an async expression resolved to for it), which it keeps until it
 	// commits. The first run of a block effect is the exception — it creates (and commits) its initial branch
@@ -456,11 +487,12 @@ function update_record(reaction, flags, deps, length) {
 				: /** @type {Value[]} */ (new_deps)[i - skipped_deps];
 		dv[i] = version_of(dep);
 
-		// within a batch's view, a derived run belongs to the batch unless everything it read is the latest value
+		// Within a batch's view, a derived's run belongs to the batch unless everything it read is the latest
+		// value: the version it saw is the real-world one, and — for a derived — that one is up to date
 		if (
 			batch_values !== null &&
 			(flags & DERIVED) !== 0 &&
-			!((dep.f & DERIVED) !== 0 ? view_entry(/** @type {Derived} */ (dep)).l : dv[i] === dep.wv)
+			(dv[i] !== dep.wv || (dep.f & (DERIVED | CLEAN)) === DERIVED)
 		) {
 			batch = view_batch;
 		}
@@ -473,13 +505,15 @@ function update_record(reaction, flags, deps, length) {
 	var keep = batch !== null;
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 
+	/** The values this run read, in order (only needed if edges are kept) @type {Value[] | null} */
+	var read = null;
+
 	for (var b = first_batch; !keep && b !== null; b = b.next) {
 		keep = b.records?.has(reaction) === true;
 	}
 
 	if (keep) {
-		/** The values this run read, in order */
-		var read = deps?.slice(0, skipped_deps) ?? [];
+		read = deps?.slice(0, skipped_deps) ?? [];
 		deps ??= [];
 
 		if (new_deps !== null) {
@@ -493,16 +527,11 @@ function update_record(reaction, flags, deps, length) {
 			}
 		}
 
-		if (batch !== null) {
-			reaction.deps = deps;
-			(batch.records ??= new Map()).set(reaction, { deps: read, dv });
-			return length;
-		}
-
-		// the global state corresponds to the start of `deps`
-		reaction.deps = /** @type {Value[]} */ (read).concat(
-			deps.filter((d) => !includes.call(read, d))
-		);
+		// the global state corresponds to the start of `deps` (a record has its own copy of what it read)
+		reaction.deps =
+			batch !== null
+				? deps
+				: read.concat(deps.filter((d) => !includes.call(/** @type {Value[]} */ (read), d)));
 	} else if (new_deps !== null || (deps !== null && skipped_deps < deps.length)) {
 		remove_reactions(reaction, skipped_deps);
 
@@ -524,14 +553,54 @@ function update_record(reaction, flags, deps, length) {
 		}
 	}
 
-	if (dv !== reaction.dv) reaction.dv = dv;
+	if (batch !== null) {
+		(batch.records ??= new Map()).set(
+			reaction,
+			(flags & DERIVED) !== 0
+				? derived_record(
+						/** @type {Derived} */ (reaction),
+						batch,
+						/** @type {Value[]} */ (read),
+						dv,
+						value,
+						error
+					)
+				: { deps: /** @type {Value[]} */ (read), dv }
+		);
+	} else {
+		if (dv !== reaction.dv) reaction.dv = dv;
+		if ((flags & DERIVED) !== 0) set_derived_value(/** @type {Derived} */ (reaction), value, error);
 
-	// a record of the effect in the active batch would now be outdated
-	if ((flags & (BLOCK_EFFECT | ASYNC)) !== 0) {
-		view_batch?.records?.delete(reaction);
+		// a record of the reaction in the active batch would now be outdated
+		if ((flags & (BLOCK_EFFECT | ASYNC | DERIVED)) !== 0) view_batch?.records?.delete(reaction);
 	}
 
 	return length;
+}
+
+/**
+ * The record of a run of `derived` that belongs to `batch`. Its value keeps the version of the same value
+ * in the batch's view (if it held one before), or in the real world, so that reactions which saw it remain valid
+ * @param {Derived} derived
+ * @param {Batch} batch
+ * @param {Value[]} deps
+ * @param {number[]} dv
+ * @param {any} v
+ * @param {boolean} e
+ * @returns {BatchRecord}
+ */
+function derived_record(derived, batch, deps, dv, v, e) {
+	var previous = batch.record(derived);
+
+	var wv = e
+		? increment_write_version()
+		: holds(derived, previous, v)
+			? /** @type {number} */ (/** @type {BatchRecord} */ (previous).wv)
+			: holds(derived, derived, v)
+				? derived.wv
+				: increment_write_version();
+
+	return { deps, dv, v, e, wv };
 }
 
 /**
@@ -880,8 +949,9 @@ export function get(signal) {
 	}
 
 	/**
-	 * The value (and version) as the active view of the world sees it, if it differs from the real world
-	 * @type {{ v: any, wv: number, l?: boolean, e?: boolean } | undefined}
+	 * The value (and version) as the active view of the world sees it, if it differs from the real
+	 * world — for a derived, this is the derived itself if its global state applies (see `view_entry`)
+	 * @type {{ v: any, wv: number, e?: boolean } | undefined}
 	 */
 	var view;
 
@@ -921,8 +991,8 @@ export function get(signal) {
 		record_late_read(late_reader, signal, view === undefined ? signal.wv : view.wv);
 	}
 
-	if (view !== undefined) {
-		// (only deriveds can have an error in a view, see `view_entry`)
+	if (view !== undefined && view !== signal) {
+		// (only records of deriveds can have an error, see `update_record`)
 		if (view.e) throw view.v;
 		return view.v;
 	}

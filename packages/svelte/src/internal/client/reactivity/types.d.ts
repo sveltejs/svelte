@@ -72,8 +72,6 @@ export interface BatchRecord {
 	dv: number[];
 	v?: any;
 	wv?: number;
-	/** Always `false`: the value of a derived record is never the latest (real-world) one */
-	l?: false;
 	/** Whether the value of a derived record is an error */
 	e?: boolean;
 }

@@ -61,11 +61,11 @@ export let previous_batch = null;
  * When time travelling (i.e. working in one batch, while other batches
  * still have ongoing work), we ignore the real values of affected
  * signals in favour of their values within the batch — along with their
- * versions. It also caches deriveds evaluated in this view of the world
- * (see `view_entry`), in which case `l` tells whether the value is the
- * latest (real-world) value, and `e` whether it is an error.
+ * versions. It also caches the values of deriveds in this view of the world
+ * (see `view_entry`): a record of a run (in which case `e` tells whether its
+ * value is an error), or the derived itself if its global state applies.
  * `null` means that the real world (i.e. the latest values) applies
- * @type {Map<Value, { v: any, wv: number, l?: boolean, e?: boolean }> | null}
+ * @type {Map<Value, { v: any, wv: number, e?: boolean }> | null}
  */
 export let batch_values = null;
 
