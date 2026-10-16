@@ -461,27 +461,38 @@ function holds(derived, holder, value) {
 }
 
 /**
+ * The general case of `update_dependencies`, which
+ * 1. decides where the run belongs: to the batch whose view of the world is active (as a record, see
+ *    `Batch#records`), or to the real world (as the reaction's global state)
+ * 2. records the versions of the values the run read (`dv`)
+ * 3. updates the edges of the graph
+ * 4. stores the run where it belongs
  * @param {Reaction} reaction
- * @param {number} flags
- * @param {Value[] | null} deps
- * @param {number} length
- * @param {any} value
- * @param {boolean} error
+ * @param {number} flags the flags of the reaction before the run
+ * @param {Value[] | null} deps `reaction.deps`, the first `skipped_deps` of which the run read again (in the
+ * same order) — what else it read is in `new_deps`
+ * @param {number} length the number of values the run read
+ * @param {any} value the value of the run (only relevant for deriveds)
+ * @param {boolean} error whether the value is an error
  */
 function update_record(reaction, flags, deps, length, value, error) {
 	// Block and async effects that run while a batch is processed produce a result for that batch (the
 	// branch it selected, the value an async expression resolved to for it), which it keeps until it
-	// commits. The first run of a block effect is the exception — it creates (and commits) its initial branch
+	// commits. The first run of a block effect is the exception — it creates (and commits) its initial
+	// branch. (Whether a derived's run belongs to a batch depends on what it read, see below)
 	var batch =
 		((flags & ASYNC) !== 0 ||
 			(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)) &&
 		view_batch?.committing === false
 			? view_batch
 			: null;
+
+	// A global run in the real world updates the versions in place. Anything else needs a new array:
+	// a record must not share it with the global state, and a derived's run can turn out to belong
+	// to the batch halfway through the loop
 	var dv = batch === null && batch_values === null && reaction.dv !== null ? reaction.dv : [];
 	var i, dep;
 
-	// record the versions of what was read
 	for (i = 0; i < length; i++) {
 		dep =
 			i < skipped_deps
@@ -502,8 +513,10 @@ function update_record(reaction, flags, deps, length, value, error) {
 
 	if (dv.length !== length) dv.length = length;
 
-	// The edges of the graph are a superset of the dependencies of every live record (so that changes to
-	// any of them reach the reaction): they are only pruned by a global run if no batch holds a record
+	// The edges — `reaction.deps`, and `reaction` in the `reactions` of each of them — must cover what every
+	// live run of the reaction read (its global run, and the records batches hold of it), so that a change to
+	// any of those values reaches it. So unless this is a global run and no batch holds a record, edges are
+	// only added (and pruned by a later global run). Otherwise they are updated exactly like on `main`
 	var keep = batch !== null;
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 
@@ -515,8 +528,8 @@ function update_record(reaction, flags, deps, length, value, error) {
 	}
 
 	if (keep) {
-		read = deps?.slice(0, skipped_deps) ?? [];
-		deps ??= [];
+		read = deps === null ? [] : deps.slice(0, skipped_deps);
+		reaction.deps = deps ??= [];
 
 		if (new_deps !== null) {
 			for (dep of new_deps) {
@@ -528,13 +541,9 @@ function update_record(reaction, flags, deps, length, value, error) {
 				}
 			}
 		}
-
-		// the global state corresponds to the start of `deps` (a record has its own copy of what it read)
-		reaction.deps =
-			batch !== null
-				? deps
-				: read.concat(deps.filter((d) => !includes.call(/** @type {Value[]} */ (read), d)));
 	} else if (new_deps !== null || (deps !== null && skipped_deps < deps.length)) {
+		// remove the edges to values the run didn't read again, and add those to values it read
+		// for the first time
 		remove_reactions(reaction, skipped_deps);
 
 		if (deps === null || (skipped_deps === 0 && new_deps !== null)) {
@@ -556,6 +565,7 @@ function update_record(reaction, flags, deps, length, value, error) {
 	}
 
 	if (batch !== null) {
+		// (the record has its own copy of what the run read, `deps` are the edges)
 		(batch.records ??= new Map()).set(
 			reaction,
 			(flags & DERIVED) !== 0
@@ -570,11 +580,17 @@ function update_record(reaction, flags, deps, length, value, error) {
 				: { deps: /** @type {Value[]} */ (read), dv }
 		);
 	} else {
-		if (dv !== reaction.dv) reaction.dv = dv;
-		if ((flags & DERIVED) !== 0) set_derived_value(/** @type {Derived} */ (reaction), value, error);
+		// (if edges were kept, `deps` is reordered so that it starts with what the run read)
+		set_global_run(reaction, read, dv);
 
-		// a record of the reaction in the active batch would now be outdated
-		if ((flags & (BLOCK_EFFECT | ASYNC | DERIVED)) !== 0) view_batch?.records?.delete(reaction);
+		if ((flags & DERIVED) !== 0) {
+			set_derived_value(/** @type {Derived} */ (reaction), value, error);
+
+			// A record of the derived in the active batch is outdated now. (Effects never have one at this point:
+			// their runs only become global outside of processing, on their first run, or once the batch commits,
+			// whose records are promoted by then)
+			view_batch?.records?.delete(reaction);
+		}
 	}
 
 	return length;
@@ -620,23 +636,24 @@ function derived_record(derived, batch, deps, dv, v, e) {
 }
 
 /**
- * Make the record a batch holds of `reaction` its global state, e.g. because the batch
- * committed, which makes its results the real-world ones (for a derived, that includes its value)
+ * Make the run that read the values `read` (in this order, `null` if they already are `reaction.deps`)
+ * with the versions `dv` the global run of `reaction`
  * @param {Reaction} reaction
- * @param {BatchRecord} record
+ * @param {Value[] | null} read
+ * @param {number[]} dv
  */
-export function promote_record(reaction, record) {
+function set_global_run(reaction, read, dv) {
 	var deps = /** @type {Value[]} */ (reaction.deps);
-	var read = record.deps;
 	var i = 0;
 
 	if (read !== null) {
-		// The record's reads become the global run, so they must be the start of `deps` (which is what `dv`
-		// lines up with). But `deps` can't simply be replaced by them: it's also the list of the graph's edges
-		// (the values that have `reaction` among their `reactions`), which covers the runs that other batches
-		// hold, too (see `update_record`). So the other edges are kept, after the reads. The record's array
-		// is reused for this (only its first `dv.length` entries are ever checked). If the reads already are
-		// the start of `deps` (the common case), nothing changes
+		// The reads must be the start of `deps` (which is what `dv` lines up with). But `deps` can't simply be
+		// replaced by them: it's also the list of the graph's edges (the values that have `reaction` among their
+		// `reactions`), which covers the runs that batches hold, too (see `update_record`). So the other edges
+		// are kept, after the reads — `read` itself is extended to become the new `deps` (a promoted record can
+		// still be looked at afterwards, e.g. the entry of a derived assigned in a fork, but only its first
+		// `dv.length` entries are checked). If the reads already are the start of `deps` (the common case),
+		// nothing changes
 		while (i < read.length && deps[i] === read[i]) i++;
 
 		if (i < read.length) {
@@ -648,7 +665,17 @@ export function promote_record(reaction, record) {
 		}
 	}
 
-	reaction.dv = record.dv;
+	reaction.dv = dv;
+}
+
+/**
+ * Make the record a batch holds of `reaction` its global state, e.g. because the batch
+ * committed, which makes its results the real-world ones (for a derived, that includes its value)
+ * @param {Reaction} reaction
+ * @param {BatchRecord} record
+ */
+export function promote_record(reaction, record) {
+	set_global_run(reaction, record.deps, record.dv);
 
 	if ((reaction.f & DERIVED) !== 0) {
 		var derived = /** @type {Derived} */ (reaction);
