@@ -399,6 +399,11 @@ export function update_derived(derived) {
 
 	if (!derived.equals(value)) {
 		if (active_batch !== null) {
+			// TODO this whole bit seems wrong. `previous_batch`, if it exists, has to be
+			// the same as `active_batch`. if `current_batch` exists separately, it's a
+			// batch that was created while flushing effects — the derived should have
+			// been evaluated in that context, _not_ the context of `active_batch`...
+			// Also `previous_batch` is probably redundant now that it equals `active_batch`?
 			(current_batch ?? active_batch).capture(derived, value, write_version);
 
 			// We also write to previous_batch because if it exists, it is a sign that we're
