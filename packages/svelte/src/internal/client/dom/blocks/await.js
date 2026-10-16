@@ -17,6 +17,7 @@ import { is_runes } from '../../context.js';
 import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
 import { capture, merge_target, unset_context } from '../../reactivity/async.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 import { DEV } from 'esm-env';
 import { active_effect } from '../../runtime.js';
 
@@ -146,9 +147,10 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 			/**
 			 * @param {(set: (source: Source, value: any) => void) => void} fn
+			 * @returns {boolean} whether `fn` ran
 			 */
 			const resolve = (fn) => {
-				if ((effect.f & DESTROYED) !== 0 || !is_latest(run, batch)) return;
+				if ((effect.f & DESTROYED) !== 0 || !is_latest(run, batch)) return false;
 
 				resolved = true;
 
@@ -166,7 +168,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 						if (previous?.linked) previous.activate();
 					}
 
-					return;
+					return true;
 				}
 
 				// We don't want to restore the previous batch here; {#await} blocks don't follow the async logic
@@ -185,6 +187,9 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 				try {
 					fn(internal_set);
+				} catch (e) {
+					// this runs after the block effect, so we pass errors to the boundary ourselves
+					invoke_error_boundary(e, effect);
 				} finally {
 					unset_context(false);
 
@@ -192,6 +197,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 					// resolves, which is unexpected behaviour (and somewhat irksome to test)
 					if (!is_flushing_sync) flushSync();
 				}
+
+				return true;
 			};
 
 			input.then(
@@ -202,15 +209,16 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 					});
 				},
 				(e) => {
-					resolve((set) => {
+					var ran = resolve((set) => {
 						set(error, e);
 						branches.ensure(CATCH, catch_fn && ((target) => catch_fn(target, error)));
-
-						if (!catch_fn) {
-							// Rethrow the error if no catch block exists
-							throw e;
-						}
 					});
+
+					if (ran && !catch_fn) {
+						// Rethrow the error if no catch block exists. This happens after `resolve`,
+						// so that the error isn't passed to the boundary
+						throw e;
+					}
 				}
 			);
 
