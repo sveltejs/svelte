@@ -38,7 +38,7 @@ import { flush_eager_effects, old_values, set_eager_effects, source, update } fr
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { set_signal_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 
@@ -1538,7 +1538,6 @@ export function fork(fn) {
 				if ((source.f & DERIVED) !== 0 && /** @type {BatchRecord} */ (entry).dv !== undefined) {
 					// an assigned derived, which holds its value until its dependencies change
 					promote_record(/** @type {Derived} */ (source), /** @type {BatchRecord} */ (entry));
-					update_derived_status(/** @type {Derived} */ (source));
 				}
 			}
 

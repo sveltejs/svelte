@@ -418,10 +418,6 @@ function adopt(derived, records) {
 
 	records.delete(derived);
 	promote_record(derived, record);
-	derived.v = record.v;
-	derived.wv = /** @type {number} */ (record.wv);
-	derived.f = record.e ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE;
-	update_derived_status(derived);
 
 	return true;
 }
@@ -437,11 +433,19 @@ function adopt(derived, records) {
  */
 export function view_entry(derived) {
 	var entry = /** @type {Map<Value, any>} */ (batch_values).get(derived);
-
-	// either cached, or the derived was overridden via assignment in this batch
-	if (entry !== undefined) return entry;
-
 	var batch = /** @type {Batch} */ (view_batch);
+
+	// Cached — unless it is a value the derived was assigned in this batch, which holds as long as its
+	// dependencies keep the versions they had then (if the assignment is the latest value, the derived's
+	// global state is that value, see `internal_set`)
+	if (
+		entry !== undefined &&
+		(entry !== batch.current.get(derived) ||
+			(entry.dv !== undefined && is_current(entry.deps, entry.dv)))
+	) {
+		return entry;
+	}
+
 	var record = batch.record(derived);
 
 	if (record !== undefined && is_current(record.deps, record.dv)) {
