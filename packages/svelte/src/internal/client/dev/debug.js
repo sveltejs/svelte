@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Value } from '#client' */
 
 import {
 	BLOCK_EFFECT,
@@ -17,7 +17,7 @@ import {
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
 import { get_cv, get_wv } from '../reactivity/batch.js';
-import { is_dirty, untrack } from '../runtime.js';
+import { untrack } from '../runtime.js';
 
 /**
  *
@@ -29,6 +29,36 @@ export function root(effect) {
 	}
 
 	return effect;
+}
+
+/**
+ * A version of `is_dirty` that doesn't execute deriveds (and
+ * may, as a result, report that effects are dirty even if they
+ * don't end up running)
+ * @param {Reaction} reaction
+*/
+function is_dirty(reaction) {
+	const cv = get_cv(reaction);
+	let wv = -1;
+
+	/**
+	 * @param {Reaction} reaction
+	 */
+	function walk(reaction) {
+		if (!reaction.deps) return;
+
+		for (const dep of reaction.deps) {
+			wv = Math.max(wv, get_wv(dep));
+
+			if ((dep.f & DERIVED) !== 0) {
+				walk(/** @type {Derived} */ (dep));
+			}
+		}
+	}
+
+	walk(reaction);
+
+	return wv > cv;
 }
 
 /**
@@ -77,33 +107,38 @@ export function log_effect_tree(effect, highlighted = [], depth = 0, is_reachabl
 	const flags = effect.f;
 	let label = effect_label(effect);
 
-	let status = 'clean';
-
-	if ((flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0) {
-		if ((flags & CLEAN) === 0) status = 'dirty';
+	if (label === 'boundary') {
+		// eslint-disable-next-line no-console
+		console.group('%cboundary', 'font-weight: normal');
 	} else {
-		if (is_dirty(effect)) {
-			status = 'dirty';
+		let status = 'clean';
+
+		if ((flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0) {
+			if ((flags & CLEAN) === 0) status = 'dirty';
+		} else {
+			if (is_dirty(effect)) {
+				status = 'dirty';
+			}
 		}
+
+		let styles = [`font-weight: ${status === 'clean' ? 'normal' : 'bold'}`];
+
+		if (status !== 'clean' && !is_reachable) {
+			label = `⚠️ ${label}`;
+			styles.push(`color: red`);
+		}
+
+		if ((flags & INERT) !== 0) {
+			styles.push('font-style: italic');
+		}
+
+		if (highlighted.includes(effect)) {
+			styles.push('background-color: yellow');
+		}
+
+		// eslint-disable-next-line no-console
+		console.group(`%c${label} (${status}) cv=${get_cv(effect)}`, styles.join('; '));
 	}
-
-	let styles = [`font-weight: ${status === 'clean' ? 'normal' : 'bold'}`];
-
-	if (status !== 'clean' && !is_reachable) {
-		label = `⚠️ ${label}`;
-		styles.push(`color: red`);
-	}
-
-	if ((flags & INERT) !== 0) {
-		styles.push('font-style: italic');
-	}
-
-	if (highlighted.includes(effect)) {
-		styles.push('background-color: yellow');
-	}
-
-	// eslint-disable-next-line no-console
-	console.group(`%c${label} (${status}) cv=${get_cv(effect)}`, styles.join('; '));
 
 	if (depth === 0) {
 		const callsite = new Error().stack
@@ -518,4 +553,17 @@ export function log_inconsistent_branches(effect) {
 	console.groupEnd();
 
 	return true;
+}
+
+/**
+ * Stringify a derived function, removing `$.track_reactivity_loss` and `$.get` etc
+ * @param {Function} fn
+ */
+export function stringify_derived(fn) {
+	return `{${fn.toString()
+		.replace(/^async \(\) => /, '')
+		.replace(/^\(/, '')
+		.replace(/\$\.get\((.+?)\)/, (_, name) => name)
+		.replace(/\$\.track_reactivity_loss\((.+?)\)\(\)/, (_, name) => name)
+		.replace(/\)$/, '')}}`;
 }
