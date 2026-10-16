@@ -4,6 +4,7 @@ import { snapshot } from '../../shared/clone.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, untrack } from '../runtime.js';
+import { get_cv, get_wv } from '../reactivity/batch.js';
 
 /**
  * @typedef {{
@@ -27,7 +28,7 @@ function log_entry(signal, entry) {
 
 	const type = get_type(signal);
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
-	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
+	const dirty = get_wv(signal) > get_cv(current_reaction);
 	const style = dirty
 		? 'color: CornflowerBlue; font-weight: bold'
 		: 'color: grey; font-weight: normal';
