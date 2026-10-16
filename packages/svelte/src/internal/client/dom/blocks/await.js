@@ -16,6 +16,7 @@ import { is_runes } from '../../context.js';
 import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
 import { capture, unset_context } from '../../reactivity/async.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 import { DEV } from 'esm-env';
 
 const PENDING = 0;
@@ -51,7 +52,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 	var branches = new BranchManager(node);
 
-	block(() => {
+	var effect = block(() => {
 		var batch = /** @type {Batch} */ (current_batch);
 		var input = get_input();
 
@@ -94,6 +95,9 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 				try {
 					fn();
+				} catch (e) {
+					// this runs after the block effect, so we pass errors to the boundary ourselves
+					invoke_error_boundary(e, effect);
 				} finally {
 					unset_context(false);
 
@@ -114,12 +118,13 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 					resolve(() => {
 						internal_set(error, e);
 						branches.ensure(CATCH, catch_fn && ((target) => catch_fn(target, error)));
-
-						if (!catch_fn) {
-							// Rethrow the error if no catch block exists
-							throw error.v;
-						}
 					});
+
+					if (!catch_fn && !destroyed) {
+						// Rethrow the error if no catch block exists. This happens after `resolve`,
+						// so that the error isn't passed to the boundary
+						throw error.v;
+					}
 				}
 			);
 
