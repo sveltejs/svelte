@@ -34,7 +34,8 @@ import {
 	next,
 	read_hydration_instruction,
 	skip_nodes,
-	set_hydrate_node
+	set_hydrate_node,
+	set_hydrating
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
@@ -191,9 +192,13 @@ export class Boundary {
 	}
 
 	#hydrate_resolved_content() {
+		var was_hydrating = hydrating;
+
 		try {
 			this.#main_effect = branch(() => this.#children(this.#anchor));
 		} catch (error) {
+			// a block with a hydration mismatch may have turned hydration off before throwing
+			if (was_hydrating) set_hydrating(true);
 			this.error(error);
 		}
 	}
