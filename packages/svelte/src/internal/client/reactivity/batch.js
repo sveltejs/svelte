@@ -7,7 +7,6 @@ import {
 	DESTROYED,
 	DIRTY,
 	EFFECT,
-	ASYNC,
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
@@ -225,16 +224,15 @@ export class Batch {
 	#dirty_reactions = new Map();
 
 	/**
-	 * A map of branches that still exist, but will be destroyed when this batch
-	 * is committed — we skip over these during `process`.
-	 * The value contains child effects that were dirty/maybe_dirty before being reset,
-	 * so they can be rescheduled if the branch survives.
-	 * @type {Map<Effect, { d: Effect[], m: Effect[] }>}
+	 * Branches that still exist, but will be destroyed when this batch
+	 * is committed — we skip over these during `process`
+	 * @type {Set<Effect>}
 	 */
-	#skipped_branches = new Map();
+	#skipped_branches = new Set();
 
 	/**
-	 * Inverse of #skipped_branches which we need to tell prior batches to unskip them when committing
+	 * Branches that this batch selected (see `unskip_effect`). A branch that is offscreen until
+	 * it is committed (see `EFFECT_OFFSCREEN`) only exists in the views of the batches that selected it
 	 * @type {Set<Effect>}
 	 */
 	#unskipped_branches = new Set();
@@ -291,40 +289,25 @@ export class Batch {
 	}
 
 	/**
-	 * Add an effect to the #skipped_branches map and reset its children
 	 * @param {Effect} effect
 	 */
 	skip_effect(effect) {
-		if (!this.#skipped_branches.has(effect)) {
-			this.#skipped_branches.set(effect, { d: [], m: [] });
-		}
+		this.#skipped_branches.add(effect);
 		this.#unskipped_branches.delete(effect);
 	}
 
 	/**
-	 * Remove an effect from the #skipped_branches map and reschedule
-	 * any tracked dirty/maybe_dirty child effects
 	 * @param {Effect} effect
-	 * @param {(e: Effect, status: number) => void} callback
 	 */
-	unskip_effect(effect, callback = (e, status) => this.schedule(e, status)) {
-		var tracked = this.#skipped_branches.get(effect);
-		if (tracked) {
-			this.#skipped_branches.delete(effect);
-
-			for (var e of tracked.d) {
-				callback(e, DIRTY);
-			}
-
-			for (e of tracked.m) {
-				callback(e, MAYBE_DIRTY);
-			}
-		}
-
-		if ((effect.f & EFFECT_OFFSCREEN) !== 0 && !this.#unskipped_branches.has(effect)) {
-			// This batch adopts a branch that so far only existed offscreen (possibly for another
-			// batch, whose view of the world its effects ran in) — re-validate them in this batch's view
-			this.#revalidate_branch(effect, callback);
+	unskip_effect(effect) {
+		if (
+			this.#skipped_branches.delete(effect) ||
+			((effect.f & EFFECT_OFFSCREEN) !== 0 && !this.#unskipped_branches.has(effect))
+		) {
+			// This batch adopts a branch that it skipped (whose effects may have been reset, see `reset_branch`),
+			// or that so far only existed offscreen (possibly for another batch, whose view of the world its
+			// effects ran in) — re-validate its effects in this batch's view
+			this.#revalidate_branch(effect);
 		}
 
 		this.#unskipped_branches.add(effect);
@@ -332,19 +315,18 @@ export class Batch {
 
 	/**
 	 * @param {Effect} effect
-	 * @param {(e: Effect, status: number) => void} callback
 	 */
-	#revalidate_branch(effect, callback) {
+	#revalidate_branch(effect) {
 		for (var e = effect.first; e !== null; e = e.next) {
 			var flags = e.f;
 
 			// (branches nested inside that exist offscreen for other batches only are not adopted)
 			if ((flags & (DESTROYED | INERT)) === 0 && !this.#skips(e)) {
 				if ((flags & (BRANCH_EFFECT | ROOT_EFFECT | EAGER_EFFECT)) === 0 && e.fn !== null) {
-					callback(e, MAYBE_DIRTY);
+					this.schedule(e, MAYBE_DIRTY);
 				}
 
-				this.#revalidate_branch(e, callback);
+				this.#revalidate_branch(e);
 			}
 		}
 	}
@@ -428,7 +410,7 @@ export class Batch {
 			this.#add(e, status);
 		}
 
-		this.apply();
+		this.activate();
 
 		/** @type {Effect[]} */
 		var effects = (collected_effects = []);
@@ -486,8 +468,8 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
-			for (const [e, t] of this.#skipped_branches) {
-				reset_branch(e, t);
+			for (const e of this.#skipped_branches) {
+				reset_branch(e);
 			}
 
 			if (updates.length > 0) {
@@ -633,7 +615,6 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) this.add_dirty_reaction(effect, MAYBE_DIRTY);
 					update_effect(effect);
 				}
 
@@ -779,10 +760,6 @@ export class Batch {
 		return latest;
 	}
 
-	activate() {
-		current_batch = this;
-	}
-
 	deactivate() {
 		current_batch = null;
 		batch_values = null;
@@ -874,15 +851,6 @@ export class Batch {
 				sources.push(source);
 			}
 
-			if (is_earlier) {
-				// TODO do we need to restart these in some cases, instead of
-				// immediately resolving them? Likely not because of how this.apply() works.
-				for (const [effect, deferred] of this.async_deriveds) {
-					const d = batch.async_deriveds.get(effect);
-					if (d) deferred.promise.then(d.resolve).catch(d.reject);
-				}
-			}
-
 			// If not started yet or no sources to update (which is e.g. possible for the very first batch) then bail
 			if (!batch.started || batch.current.size === 0) continue;
 
@@ -905,19 +873,6 @@ export class Batch {
 				// after this one is finished, so throwing the invariant would be wrong here.
 				if (DEV && !batch.#decrement_queued) {
 					invariant(batch.#scheduled.length === 0, 'Batch has scheduled effects');
-				}
-
-				// A batch was unskipped in a later batch -> tell prior batches to unskip it, too
-				if (is_earlier) {
-					for (const unskipped of this.#unskipped_branches) {
-						batch.unskip_effect(unskipped, (e, status) => {
-							if ((e.f & (BLOCK_EFFECT | ASYNC)) !== 0) {
-								batch.schedule(e, status);
-							} else {
-								batch.add_dirty_reaction(e, status);
-							}
-						});
-					}
 				}
 
 				// Everything that depends on the committed values needs to be re-validated in the
@@ -978,20 +933,13 @@ export class Batch {
 	 */
 	transfer_reactions(dirty_reactions) {
 		for (const [effect, status] of dirty_reactions) {
-			this.add_dirty_reaction(effect, status);
+			// (don't downgrade a DIRTY effect to MAYBE_DIRTY)
+			if (status === DIRTY || this.#dirty_reactions.get(effect) !== DIRTY) {
+				this.#dirty_reactions.set(effect, status);
+			}
 		}
 
 		dirty_reactions.clear();
-	}
-
-	/**
-	 * @param {Effect} effect
-	 * @param {number} status
-	 */
-	add_dirty_reaction(effect, status) {
-		if (status === DIRTY || this.#dirty_reactions.get(effect) !== DIRTY) {
-			this.#dirty_reactions.set(effect, status);
-		}
 	}
 
 	/** @param {(batch: Batch) => void} fn */
@@ -1025,9 +973,11 @@ export class Batch {
 	}
 
 	/**
-	 * Make this batch's view of the world the active one
+	 * Make this the current batch, and its view of the world the active one
 	 */
-	apply() {
+	activate() {
+		current_batch = this;
+
 		if (!async_mode_flag) {
 			batch_values = null;
 			return;
@@ -1102,8 +1052,7 @@ export class Batch {
 	 * away if this is the batch that the current flush processes (next), or if a reaction is running (which
 	 * may have read what changed). Otherwise, whether an effect is dirty depends on this batch's view of the
 	 * world, so other batches (which may be processed first) mustn't see it: it is kept with this batch until
-	 * it is processed, and then checked against the exact versions of its dependencies (i.e. MAYBE_DIRTY).
-	 * Without other batches, that can happen right away
+	 * it is processed, and then checked against the exact versions of its dependencies (i.e. MAYBE_DIRTY)
 	 * @param {Effect} effect
 	 * @param {number} status DIRTY or MAYBE_DIRTY
 	 */
@@ -1431,29 +1380,21 @@ export function eager(fn) {
 }
 
 /**
- * Mark all the effects inside a skipped branch CLEAN, so that
- * they can be correctly rescheduled later. Tracks dirty and maybe_dirty
- * effects so they can be rescheduled if the branch survives.
+ * Mark all the effects inside a skipped branch CLEAN, so that they can be correctly
+ * rescheduled later (if the branch survives, its effects are re-validated, see `unskip_effect`)
  * @param {Effect} effect
- * @param {{ d: Effect[], m: Effect[] }} tracked
  */
-function reset_branch(effect, tracked) {
+function reset_branch(effect) {
 	// clean branch = nothing dirty inside, no need to traverse further
 	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
 		return;
-	}
-
-	if ((effect.f & DIRTY) !== 0) {
-		tracked.d.push(effect);
-	} else if ((effect.f & MAYBE_DIRTY) !== 0) {
-		tracked.m.push(effect);
 	}
 
 	set_signal_status(effect, CLEAN);
 
 	var e = effect.first;
 	while (e !== null) {
-		reset_branch(e, tracked);
+		reset_branch(e);
 		e = e.next;
 	}
 }
@@ -1504,6 +1445,10 @@ export function fork(fn) {
 
 	var batch = Batch.ensure();
 	batch.is_fork = true;
+
+	// `fn` sees the real world — including the writes of other pending batches, so that e.g. `count++`
+	// builds on them, like outside a fork — plus the fork's own writes. (When the fork is processed,
+	// the writes of batches it doesn't share a source with are undone, see `activate`)
 	batch_values = new Map();
 	view_batch = batch;
 

@@ -115,23 +115,8 @@ export class BranchManager {
 			}
 		}
 
-		for (const [b, k] of this.#batches) {
-			this.#batches.delete(b);
-
-			if (b === batch) {
-				// keep values for newer batches
-				break;
-			}
-
-			const offscreen = this.#offscreen.get(k);
-
-			if (offscreen) {
-				// for older batches, destroy offscreen effects
-				// as they will never be committed
-				destroy_effect(offscreen.effect);
-				this.#offscreen.delete(k);
-			}
-		}
+		// other batches can still commit (in any order), so their selections remain
+		this.#discard(batch);
 
 		// outro/destroy all onscreen effects...
 		for (const [k, effect] of this.#onscreen) {
@@ -171,7 +156,10 @@ export class BranchManager {
 	 * @param {Batch} batch
 	 */
 	#discard = (batch) => {
-		this.#batches.delete(batch);
+		for (const b of this.#batches.keys()) {
+			// (batches that were merged into another one don't select anything anymore)
+			if (b === batch || !b.linked) this.#batches.delete(b);
+		}
 
 		const keys = Array.from(this.#batches.values());
 

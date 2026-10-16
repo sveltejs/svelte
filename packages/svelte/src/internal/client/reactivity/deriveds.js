@@ -216,7 +216,6 @@ export function async_derived(fn, label, location) {
 
 			// write the result in the batch's view of the world
 			batch.activate();
-			batch.apply();
 
 			if (error) {
 				signal.f |= ERROR_VALUE;
