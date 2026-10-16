@@ -130,20 +130,12 @@ export function set_untracked_writes(value) {
 }
 
 /**
- * @type {number} Used by sources and deriveds for handling updates. Only incremented for
- * real-world (i.e. latest) values — values that only exist within a batch get a
- * batch-local version instead (see `next_local_version`).
+ * @type {number} Used by sources and deriveds for handling updates: every new value — whether it is
+ * the real-world (i.e. latest) one, or only exists within a batch — gets a new version. Versions
+ * identify values, they are only ever compared for equality (except for `$inspect.trace`).
  * Version starts from 1 so that unowned deriveds differentiate between a created effect and a run one for tracing
  **/
 export let write_version = 1;
-
-/**
- * Versions of values that only exist within a batch (writes that are not the latest
- * value of a source, e.g. in a fork, and deriveds computed in a batch's view of the world).
- * Versions are only ever compared for identity, so these are negative to never collide
- * with real-world versions.
- */
-let local_version = -1;
 
 /** @type {number} Used to version each read of a source of derived to avoid duplicating dependencies inside a reaction */
 let read_version = 0;
@@ -159,65 +151,18 @@ export function increment_write_version() {
 	return ++write_version;
 }
 
-export function next_local_version() {
-	return --local_version;
-}
-
-/**
- * The versions of the values the currently updating reaction read, in the order they
- * were first read (i.e. aligned with `deps.slice(0, skipped_deps).concat(new_deps)`)
- * @type {number[]}
- */
-let read_versions = [];
-
-/**
- * Whether every value the currently updating reaction read so far was its latest (real-world)
- * value, rather than a value that only exists in the view of the active batch
- */
-let read_latest = true;
-
-/**
- * Sources the currently updating reaction wrote to
- * @type {Set<Value> | null}
- */
-let own_writes = null;
-
-/**
- * Called when `source` is written to, so that the reaction that is currently updating
- * (if any) isn't invalidated by its own write
- * @param {Value} source
- */
-export function track_own_write(source) {
-	if (active_reaction !== null && (active_reaction.f & REACTION_IS_UPDATING) !== 0) {
-		(own_writes ??= new Set()).add(source);
-	}
-}
-
-/**
- * Set by `update_reaction` if the run produced a batch-local record rather than updating the
- * reaction's global state, so that the caller can complete it (see `view_entry`)
- * @type {BatchRecord | null}
- */
-export let batch_record = null;
-
-/** @param {BatchRecord | null} value */
-export function set_batch_record(value) {
-	batch_record = value;
-}
-
 /**
  * The version `signal` has in the active view of the world
  * @param {Value} signal
  */
 export function version_of(signal) {
-	if (batch_values === null) return signal.wv;
-
-	if ((signal.f & DERIVED) !== 0) {
-		return view_entry(/** @type {Derived} */ (signal)).wv;
-	}
-
-	var entry = batch_values.get(signal);
-	return entry === undefined ? signal.wv : entry.wv;
+	return (
+		batch_values === null
+			? signal
+			: (signal.f & DERIVED) !== 0
+				? view_entry(/** @type {Derived} */ (signal))
+				: batch_values.get(signal) ?? signal
+	).wv;
 }
 
 /**
@@ -231,17 +176,11 @@ export function is_current(deps, dv) {
 	for (var i = 0; i < dv.length; i++) {
 		var dependency = /** @type {Value[]} */ (deps)[i];
 
-		if (batch_values === null && (dependency.f & DERIVED) !== 0) {
-			var derived = /** @type {Derived} */ (dependency);
-
-			if (is_dirty(derived)) {
-				update_derived(derived);
-			}
+		if (batch_values === null && is_dirty(/** @type {Derived} */ (dependency))) {
+			update_derived(/** @type {Derived} */ (dependency));
 		}
 
-		if (version_of(dependency) !== dv[i]) {
-			return false;
-		}
+		if (version_of(dependency) !== dv[i]) return false;
 	}
 
 	return true;
@@ -252,7 +191,7 @@ export function is_current(deps, dv) {
  * If it is MAYBE_DIRTY, will set the status to CLEAN.
  * Deriveds are only checked like this in the real world — within the view of a batch,
  * see `view_entry`. Effects are checked against their record in the active batch, if
- * they have one (see `record_of`), or else their global state.
+ * they have one (see `update_record`), or else their global state.
  * @param {Reaction} reaction
  * @returns {boolean}
  */
@@ -264,39 +203,37 @@ export function is_dirty(reaction) {
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		var record = (flags & DERIVED) === 0 ? record_of(/** @type {Effect} */ (reaction)) : undefined;
-		var dv = record === undefined ? reaction.dv : record.dv;
+		var deps = reaction.deps;
+		var dv = reaction.dv;
 
-		if (dv === null || !is_current(record === undefined ? reaction.deps : record.deps, dv)) {
+		if ((flags & (BLOCK_EFFECT | ASYNC)) !== 0 && view_batch !== null) {
+			var record = view_batch.record(reaction);
+
+			if (record !== undefined) {
+				deps = record.deps;
+				dv = record.dv;
+			}
+		}
+
+		if (dv === null) return true;
+
+		if (batch_values === null) {
+			for (var i = 0, length = dv.length; i < length; i++) {
+				var dependency = /** @type {Value[]} */ (deps)[i];
+
+				if (is_dirty(/** @type {Derived} */ (dependency))) {
+					update_derived(/** @type {Derived} */ (dependency));
+				}
+
+				if (dependency.wv !== dv[i]) return true;
+			}
+		} else if (!is_current(deps, dv)) {
 			return true;
 		}
 
 		if ((flags & CONNECTED) !== 0) {
 			set_signal_status(reaction, CLEAN);
 		}
-	}
-
-	return false;
-}
-
-/**
- * Block and async effects produce a result per batch (the branch a batch selected, the
- * value an async expression resolved to for a batch), so each batch keeps a record of its own
- * run of them until it commits. Other effects only have a single (global) state.
- * @param {Effect} effect
- */
-function record_of(effect) {
-	if (view_batch === null || (effect.f & (BLOCK_EFFECT | ASYNC)) === 0) return undefined;
-	return view_batch.record(effect);
-}
-
-/**
- * Whether some batch holds a record of `reaction`
- * @param {Reaction} reaction
- */
-function has_record(reaction) {
-	for (var batch = first_batch; batch !== null; batch = batch.next) {
-		if (batch.records.size > 0 && batch.records.has(reaction)) return true;
 	}
 
 	return false;
@@ -336,9 +273,6 @@ export function update_reaction(reaction) {
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
 	var previous_update_version = update_version;
-	var previous_read_versions = read_versions;
-	var previous_read_latest = read_latest;
-	var previous_own_writes = own_writes;
 
 	var flags = reaction.f;
 
@@ -346,9 +280,6 @@ export function update_reaction(reaction) {
 	skipped_deps = 0;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	read_versions = [];
-	read_latest = true;
-	own_writes = null;
 
 	current_sources = null;
 	set_component_context(reaction.ctx);
@@ -368,7 +299,7 @@ export function update_reaction(reaction) {
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
 		reaction.f |= REACTION_RAN;
-		var read_any = update_dependencies(reaction, (flags & REACTION_RAN) === 0);
+		var read = update_dependencies(reaction, flags);
 
 		// If we're inside an effect and we have untracked writes, then we need to
 		// ensure that if any of those untracked writes result in re-invalidation
@@ -377,7 +308,7 @@ export function update_reaction(reaction) {
 			is_runes() &&
 			untracked_writes !== null &&
 			!untracking &&
-			read_any &&
+			read > 0 &&
 			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
 		) {
 			for (var i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
@@ -425,9 +356,20 @@ export function update_reaction(reaction) {
 		return result;
 	} catch (error) {
 		// still commit the deps read before the throw, otherwise deriveds connected by this run keep no reader and the reaction never re-runs when they change
-		update_dependencies(reaction, (flags & REACTION_RAN) === 0);
+		update_dependencies(reaction, flags);
 
-		return handle_error(error);
+		try {
+			return handle_error(error);
+		} catch (e) {
+			if ((flags & DERIVED) !== 0) {
+				// the error propagates, i.e. the run produced no value: neither the versions it
+				// recorded (globally, or in the active batch) nor the derived's value are valid
+				reaction.dv = null;
+				view_batch?.records?.delete(reaction);
+			}
+
+			throw e;
+		}
 	} finally {
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
@@ -438,9 +380,6 @@ export function update_reaction(reaction) {
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 		update_version = previous_update_version;
-		read_versions = previous_read_versions;
-		read_latest = previous_read_latest;
-		own_writes = previous_own_writes;
 	}
 }
 
@@ -451,136 +390,148 @@ export function update_reaction(reaction) {
  * A run belongs to the real world — and updates the reaction's global state — unless
  * - it is a derived that read values which only exist in the view of the active batch
  *   (it is then cached in that batch, see `view_entry`)
- * - it is a block or async effect that ran while the active batch was being processed
- *   (its result belongs to that batch until it commits, see `record_of`). The first run of
- *   a block effect is the exception: it creates and commits its initial branch right away
+ * - it is an effect run that belongs to a batch (see `update_record`)
  * - it is a derived evaluated in a teardown, in which case its result is discarded
  *
  * The edges of the graph (`reaction.deps` and the `reactions` of its dependencies) are a
  * superset of the dependencies of every live record, so that changes to any of them reach
  * the reaction. They are only pruned when a global run happens and no batch holds a record.
  * @param {Reaction} reaction
- * @param {boolean} first_run
- * @returns {boolean} whether the run read anything
+ * @param {number} flags the flags of the reaction before the run
+ * @returns {number} the number of values the run read
  */
-function update_dependencies(reaction, first_run) {
+function update_dependencies(reaction, flags) {
 	var deps = reaction.deps;
 	var length = skipped_deps + (new_deps === null ? 0 : new_deps.length);
+	var dv = reaction.dv;
 
-	batch_record = null;
-
-	if (is_destroying_effect && (reaction.f & DERIVED) !== 0) {
-		return length > 0;
+	// (an effect can be destroyed while it runs, e.g. by an error boundary)
+	if ((reaction.f & DESTROYED) !== 0 || ((flags & DERIVED) !== 0 && is_destroying_effect)) {
+		return length;
 	}
 
-	var dv = read_versions.length === length ? read_versions : read_versions.slice(0, length);
+	// Fast path: the reaction read the same values as before, in the real world
+	if (
+		new_deps === null &&
+		batch_values === null &&
+		dv !== null &&
+		length === deps?.length &&
+		(flags & (BLOCK_EFFECT | ASYNC)) === 0
+	) {
+		// A run saw everything up to its end — writes that happen during the run
+		// mark it dirty (unless it wrote them itself, which doesn't invalidate it)
+		for (var i = 0; i < length; i++) dv[i] = deps[i].wv;
+		if (dv.length !== length) dv.length = length;
 
-	// anything read after this (e.g. while an error is handled) is not part of the run
-	read_versions = [];
-
-	// A reaction isn't invalidated by its own writes (unless it is explicitly marked dirty
-	// because of them, see `schedule_possible_effect_self_invalidation`), so sources it
-	// wrote to count as seen with the version they have at the end of the run
-	if (own_writes !== null) {
-		for (var i = 0; i < length; i++) {
-			var dep =
-				i < skipped_deps
-					? /** @type {Value[]} */ (deps)[i]
-					: /** @type {Value[]} */ (new_deps)[i - skipped_deps];
-
-			if (own_writes.has(dep)) {
-				var entry = batch_values?.get(dep);
-				dv[i] = entry === undefined ? dep.wv : entry.wv;
-			}
-		}
+		return length;
 	}
 
-	/** @type {Batch | null} */
-	var batch = null;
+	return update_record(reaction, flags, deps, length);
+}
 
-	if ((reaction.f & DERIVED) !== 0) {
-		if (batch_values !== null && !read_latest) {
+/**
+ * @param {Reaction} reaction
+ * @param {number} flags
+ * @param {Value[] | null} deps
+ * @param {number} length
+ */
+function update_record(reaction, flags, deps, length) {
+	// Block and async effects that run while a batch is processed produce a result for that batch (the
+	// branch it selected, the value an async expression resolved to for it), which it keeps until it
+	// commits. The first run of a block effect is the exception — it creates (and commits) its initial branch
+	var batch =
+		((flags & ASYNC) !== 0 ||
+			(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)) &&
+		view_batch?.committing === false
+			? view_batch
+			: null;
+	var dv = batch === null && batch_values === null && reaction.dv !== null ? reaction.dv : [];
+	var i, dep;
+
+	// record the versions of what was read
+	for (i = 0; i < length; i++) {
+		dep =
+			i < skipped_deps
+				? /** @type {Value[]} */ (deps)[i]
+				: /** @type {Value[]} */ (new_deps)[i - skipped_deps];
+		dv[i] = version_of(dep);
+
+		// within a batch's view, a derived run belongs to the batch unless everything it read is the latest value
+		if (
+			batch_values !== null &&
+			(flags & DERIVED) !== 0 &&
+			!((dep.f & DERIVED) !== 0 ? view_entry(/** @type {Derived} */ (dep)).l : dv[i] === dep.wv)
+		) {
 			batch = view_batch;
 		}
-	} else if (
-		((reaction.f & ASYNC) !== 0 || ((reaction.f & BLOCK_EFFECT) !== 0 && !first_run)) &&
-		view_batch !== null &&
-		!view_batch.committing
-	) {
-		batch = view_batch;
 	}
 
+	if (dv.length !== length) dv.length = length;
+
+	// The edges of the graph are a superset of the dependencies of every live record (so that changes to
+	// any of them reach the reaction): they are only pruned by a global run if no batch holds a record
+	var keep = batch !== null;
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 
-	if (batch !== null) {
-		/** @type {Value[] | null} */
-		var read = null;
+	for (var b = first_batch; !keep && b !== null; b = b.next) {
+		keep = b.records?.has(reaction) === true;
+	}
 
-		if (length > 0) {
-			read = deps === null ? [] : deps.slice(0, skipped_deps);
+	if (keep) {
+		/** The values this run read, in order */
+		var read = deps?.slice(0, skipped_deps) ?? [];
+		deps ??= [];
 
-			if (new_deps !== null) {
-				for (i = 0; i < new_deps.length; i++) {
-					dep = new_deps[i];
-					read.push(dep);
+		if (new_deps !== null) {
+			for (dep of new_deps) {
+				read.push(dep);
 
-					if (deps === null || !includes.call(deps, dep)) {
-						(reaction.deps ??= []).push(dep);
-						if (tracking) (dep.reactions ??= []).push(reaction);
-					}
+				if (!includes.call(deps, dep)) {
+					deps.push(dep);
+					if (tracking) (dep.reactions ??= []).push(reaction);
 				}
 			}
 		}
 
-		batch.records.set(reaction, (batch_record = { deps: read, dv }));
-
-		return length > 0;
-	}
-
-	// a record of the reaction in the active batch would now be outdated
-	if (view_batch !== null && view_batch.records.size > 0) {
-		view_batch.records.delete(reaction);
-	}
-
-	var keep = deps !== null && skipped_deps < deps.length && has_record(reaction);
-
-	if (new_deps !== null) {
-		if (keep) {
-			// Records in other batches may depend on values this run didn't read — keep those edges,
-			// after the ones that were read, so that `dv` lines up with the start of `deps`
-			for (i = skipped_deps; i < /** @type {Value[]} */ (deps).length; i++) {
-				dep = /** @type {Value[]} */ (deps)[i];
-				if (!includes.call(new_deps, dep)) new_deps.push(dep);
-			}
-		} else {
-			remove_reactions(reaction, skipped_deps);
+		if (batch !== null) {
+			reaction.deps = deps;
+			(batch.records ??= new Map()).set(reaction, { deps: read, dv });
+			return length;
 		}
 
-		if (deps !== null && skipped_deps > 0) {
-			deps.length = skipped_deps + new_deps.length;
+		// the global state corresponds to the start of `deps`
+		reaction.deps = /** @type {Value[]} */ (read).concat(
+			deps.filter((d) => !includes.call(read, d))
+		);
+	} else if (new_deps !== null || (deps !== null && skipped_deps < deps.length)) {
+		remove_reactions(reaction, skipped_deps);
 
-			for (i = 0; i < new_deps.length; i++) {
-				deps[skipped_deps + i] = new_deps[i];
-			}
-		} else {
+		if (deps === null || (skipped_deps === 0 && new_deps !== null)) {
 			reaction.deps = deps = new_deps;
+		} else {
+			deps.length = length;
+
+			for (i = skipped_deps; i < length; i++) {
+				deps[i] = /** @type {Value[]} */ (new_deps)[i - skipped_deps];
+			}
 		}
 
 		if (tracking) {
-			for (i = skipped_deps; i < deps.length; i++) {
-				dep = deps[i];
-				var reactions = (dep.reactions ??= []);
-				if (!keep || !includes.call(reactions, reaction)) reactions.push(reaction);
+			for (i = skipped_deps; i < length; i++) {
+				dep = /** @type {Value[]} */ (deps)[i];
+				(dep.reactions ??= []).push(reaction);
 			}
 		}
-	} else if (deps !== null && skipped_deps < deps.length && !keep) {
-		remove_reactions(reaction, skipped_deps);
-		deps.length = skipped_deps;
 	}
 
-	reaction.dv = dv;
+	if (dv !== reaction.dv) reaction.dv = dv;
 
-	return length > 0;
+	// a record of the effect in the active batch would now be outdated
+	if ((flags & (BLOCK_EFFECT | ASYNC)) !== 0) {
+		view_batch?.records?.delete(reaction);
+	}
+
+	return length;
 }
 
 /**
@@ -590,18 +541,21 @@ function update_dependencies(reaction, first_run) {
  * @param {BatchRecord} record
  */
 export function promote_record(reaction, record) {
-	var deps = reaction.deps;
+	var deps = /** @type {Value[]} */ (reaction.deps);
 	var read = record.deps;
+	var i = 0;
 
-	if (read !== null && deps !== null && deps !== read) {
+	if (read !== null) {
 		// `dv` must line up with the start of `deps`
-		var reordered = read.slice();
+		while (i < read.length && deps[i] === read[i]) i++;
 
-		for (var dep of deps) {
-			if (!includes.call(read, dep)) reordered.push(dep);
+		if (i < read.length) {
+			for (var dep of deps) {
+				if (!includes.call(read, dep)) read.push(dep);
+			}
+
+			reaction.deps = read;
 		}
-
-		reaction.deps = reordered;
 	}
 
 	reaction.dv = record.dv;
@@ -661,6 +615,7 @@ function remove_reaction(signal, dependency) {
 				derived.ac = null;
 				// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
 				set_signal_status(derived, DIRTY);
+				derived.dv = null;
 			});
 		}
 
@@ -789,12 +744,6 @@ export function get(signal) {
 
 	captured_signals?.add(signal);
 
-	/**
-	 * The position of `signal` among the values read by the updating reaction,
-	 * if this is the first time it reads it, so that we can record its version
-	 */
-	var index = -1;
-
 	/** The reaction that reads `signal` after an `await`, if any */
 	var late_reader = null;
 
@@ -817,12 +766,10 @@ export function get(signal) {
 					// order as it did last time, increment `skipped_deps`
 					// rather than updating `new_deps`, which creates GC cost
 					if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-						index = skipped_deps++;
+						skipped_deps++;
 					} else if (new_deps === null) {
-						index = skipped_deps;
 						new_deps = [signal];
 					} else {
-						index = skipped_deps + new_deps.length;
 						new_deps.push(signal);
 					}
 				}
@@ -932,15 +879,9 @@ export function get(signal) {
 		}
 	}
 
-	/** The version of the value we return */
-	var version = signal.wv;
-
-	/** Whether the value we return is the latest (real-world) one */
-	var latest = true;
-
 	/**
 	 * The value (and version) as the active view of the world sees it, if it differs from the real world
-	 * @type {{ v: any, wv: number, l?: boolean } | undefined}
+	 * @type {{ v: any, wv: number, l?: boolean, e?: boolean } | undefined}
 	 */
 	var view;
 
@@ -972,30 +913,17 @@ export function get(signal) {
 			unfreeze_derived_effects(derived);
 			reconnect(derived);
 		}
-
-		if (view !== undefined) {
-			version = view.wv;
-			latest = view.l === true;
-		} else {
-			version = derived.wv;
-		}
 	} else if (batch_values !== null) {
 		view = batch_values.get(signal);
-
-		if (view !== undefined) {
-			version = view.wv;
-			latest = version === signal.wv;
-		}
 	}
 
-	if (index !== -1) {
-		read_versions[index] = version;
-		if (!latest) read_latest = false;
-	} else if (late_reader !== null) {
-		record_late_read(late_reader, signal, version);
+	if (late_reader !== null) {
+		record_late_read(late_reader, signal, view === undefined ? signal.wv : view.wv);
 	}
 
 	if (view !== undefined) {
+		// (only deriveds can have an error in a view, see `view_entry`)
+		if (view.e) throw view.v;
 		return view.v;
 	}
 
@@ -1015,25 +943,14 @@ export function get(signal) {
  */
 function record_late_read(reaction, signal, version) {
 	var record =
-		(reaction.f & DERIVED) === 0 ? record_of(/** @type {Effect} */ (reaction)) : undefined;
+		(reaction.f & (BLOCK_EFFECT | ASYNC)) !== 0 ? view_batch?.record(reaction) : undefined;
+	var deps = record === undefined ? /** @type {Value[]} */ (reaction.deps) : (record.deps ??= []);
+	var dv = record === undefined ? reaction.dv : record.dv;
 
-	if (record !== undefined) {
-		if (record.deps === null) {
-			record.deps = [signal];
-			record.dv.push(version);
-		} else if (!includes.call(record.deps, signal)) {
-			record.deps.push(signal);
-			record.dv.push(version);
-		}
-
-		return;
-	}
-
-	var dv = reaction.dv;
 	if (dv === null) return;
 
-	var deps = /** @type {Value[]} */ (reaction.deps);
 	var i = deps.indexOf(signal);
+	if (i === -1) i = deps.push(signal) - 1;
 
 	if (i >= dv.length) {
 		// move it next to the other values read by the run, so that `dv` lines up with the start of `deps`

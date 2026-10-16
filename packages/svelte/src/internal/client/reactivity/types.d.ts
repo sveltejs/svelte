@@ -65,13 +65,17 @@ export interface Reaction extends Signal {
 /**
  * The result of a run of a reaction that belongs to a batch rather than to the real world:
  * the values it read (in order) and their exact versions at the time — and, for
- * deriveds, the resulting value and its (batch-local) version
+ * deriveds, the resulting value and its version
  */
 export interface BatchRecord {
 	deps: null | Value[];
 	dv: number[];
 	v?: any;
 	wv?: number;
+	/** Always `false`: the value of a derived record is never the latest (real-world) one */
+	l?: false;
+	/** Whether the value of a derived record is an error */
+	e?: boolean;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {

@@ -13,7 +13,6 @@ import {
 	untracking,
 	is_destroying_effect,
 	push_reaction_value,
-	track_own_write,
 	version_of
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
@@ -26,8 +25,7 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC,
-	REACTION_RAN
+	ASYNC
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -187,16 +185,15 @@ var count_deps = 0;
  * @param {V} value
  * @param {Effect[] | null} [updated_during_traversal]
  * @param {boolean} [own_result] Whether this is a result the current batch computed (i.e. an async
- * expression resolved). Such a value belongs to the batch even if it equals what the batch sees, and
- * it is a change if it differs from that (even if it equals the real value)
+ * expression resolved). Such a value belongs to the batch even if nothing changes, and it is a change
+ * if it differs from what the batch sees (even if it equals the real value)
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null, own_result = false) {
-	var current = own_result ? batch_values?.get(source) ?? source : source;
+	var view = own_result ? batch_values?.get(source) : undefined;
+	var same = source.equals(value);
 
-	if (own_result && source.equals.call(/** @type {Value<V>} */ (current), value)) {
-		Batch.ensure().keep(source);
-	} else if (!source.equals.call(/** @type {Value<V>} */ (current), value)) {
+	if (!same || (view !== undefined && !source.equals.call(/** @type {any} */ (view), value))) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -207,14 +204,12 @@ export function internal_set(source, value, updated_during_traversal = null, own
 
 		var batch = Batch.ensure();
 
-		if ((source.f & DERIVED) !== 0 && (source.f & (DIRTY | REACTION_RAN)) !== REACTION_RAN) {
-			// if we are assigning to a derived that is dirty (or was never evaluated)
-			// we eagerly execute it to track its dependencies
+		// if we are assigning to a dirty derived we eagerly execute it to track the dependencies
+		if ((source.f & (DERIVED | DIRTY)) === (DERIVED | DIRTY)) {
 			execute_derived(/** @type {Derived} */ (source));
 		}
 
-		var latest = batch.capture(source, value);
-		track_own_write(source);
+		var latest = batch.capture(source, value, same);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
@@ -249,18 +244,15 @@ export function internal_set(source, value, updated_during_traversal = null, own
 		if ((source.f & DERIVED) !== 0) {
 			const derived = /** @type {Derived} */ (source);
 
-			// The assigned value holds until one of the derived's dependencies changes,
-			// i.e. it is valid for the versions they currently have
-			var dv = derived.deps === null ? [] : derived.deps.map(version_of);
+			// The assigned value holds until one of the derived's dependencies changes, i.e. it is valid
+			// for the versions they currently have — in the real world, or in the batch (e.g. a fork)
+			var record = { deps: derived.deps?.slice() ?? null, dv: derived.deps?.map(version_of) ?? [] };
 
 			if (latest) {
-				derived.dv = dv;
+				derived.dv = record.dv;
 				update_derived_status(derived);
 			} else {
-				// the assignment only exists in this batch (e.g. a fork) until it is committed
-				var entry = /** @type {BatchRecord} */ (batch.current.get(derived));
-				entry.deps = derived.deps === null ? null : derived.deps.slice();
-				entry.dv = dv;
+				Object.assign(/** @type {BatchRecord} */ (batch.current.get(derived)), record);
 			}
 		}
 
@@ -291,6 +283,9 @@ export function internal_set(source, value, updated_during_traversal = null, own
 		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
+	} else if (own_result) {
+		// an async expression resolved to what the batch (and the real world) sees — it still belongs to the batch
+		Batch.ensure().capture(source, value, true);
 	}
 
 	return value;

@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { BatchRecord, Derived, Effect, Reaction, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
 /** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
@@ -20,7 +20,6 @@ import {
 	active_effect,
 	update_reaction,
 	increment_write_version,
-	next_local_version,
 	set_active_effect,
 	push_reaction_value,
 	is_destroying_effect,
@@ -28,8 +27,6 @@ import {
 	remove_reactions,
 	skipped_deps,
 	new_deps,
-	batch_record,
-	set_batch_record,
 	is_current,
 	promote_record
 } from '../runtime.js';
@@ -344,8 +341,6 @@ export function execute_derived(derived) {
 	var prev_active_effect = active_effect;
 	var parent = derived.parent;
 
-	set_batch_record(null);
-
 	if (
 		!is_destroying_effect &&
 		parent !== null &&
@@ -395,16 +390,7 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
-	var record = view_batch?.records.get(derived);
-
-	if (record !== undefined && is_current(record.deps, record.dv)) {
-		// The active batch evaluated the derived in its view of the world, which turns out to
-		// be the real world now (e.g. because the batch is a fork that was committed) — adopt it
-		view_batch?.records.delete(derived);
-		promote_record(derived, record);
-		derived.v = record.v;
-		derived.wv = /** @type {number} */ (record.wv);
-		update_derived_status(derived);
+	if (view_batch !== null && view_batch.records !== null && adopt(derived, view_batch.records)) {
 		return;
 	}
 
@@ -425,6 +411,29 @@ export function update_derived(derived) {
 }
 
 /**
+ * If the active batch evaluated `derived` in its view of the world, and that turns out to be
+ * the real world now (e.g. because the batch is a fork that was committed), adopt the result
+ * @param {Derived} derived
+ * @param {Map<Reaction, BatchRecord>} records
+ */
+function adopt(derived, records) {
+	var record = records.get(derived);
+
+	if (record === undefined || !is_current(record.deps, record.dv)) {
+		return false;
+	}
+
+	records.delete(derived);
+	promote_record(derived, record);
+	derived.v = record.v;
+	derived.wv = /** @type {number} */ (record.wv);
+	derived.f = record.e ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE;
+	update_derived_status(derived);
+
+	return true;
+}
+
+/**
  * The value of `derived` as the view of the world of the active batch sees it, with its
  * version, and whether it is the latest (real-world) value. The derived's global state
  * describes the real world, so it is only used if it is valid within the view (i.e. the
@@ -434,87 +443,80 @@ export function update_derived(derived) {
  * Results are cached for the lifetime of the view (see `Batch#apply`), unless the derived is
  * disconnected, in which case nothing would remove them from the cache when they become stale.
  * @param {Derived} derived
- * @returns {{ v: any, wv: number, l?: boolean }}
+ * @returns {{ v: any, wv: number, l?: boolean, e?: boolean }}
  */
 export function view_entry(derived) {
-	var values = /** @type {Map<Value, { v: any, wv: number, l?: boolean }>} */ (batch_values);
-	var entry = values.get(derived);
+	var entry = /** @type {Map<Value, any>} */ (batch_values).get(derived);
 
-	if (entry !== undefined) {
-		// either cached, or the derived was overridden via assignment in this batch
-		return entry;
-	}
+	// either cached, or the derived was overridden via assignment in this batch
+	if (entry !== undefined) return entry;
 
 	var batch = /** @type {Batch} */ (view_batch);
 	var record = batch.record(derived);
 
 	if (record !== undefined && is_current(record.deps, record.dv)) {
-		entry = { v: record.v, wv: /** @type {number} */ (record.wv), l: false };
-	} else if (
-		(derived.f & REACTION_RAN) !== 0 &&
-		derived.dv !== null &&
-		is_current(derived.deps, derived.dv)
-	) {
-		var latest = is_latest(derived);
-		entry = { v: derived.v, wv: derived.wv, l: latest };
-
-		// valid in the real world, too
-		if (latest && (derived.f & CLEAN) === 0) update_derived_status(derived);
+		entry = record;
+	} else if (derived.dv !== null && is_current(derived.deps, derived.dv)) {
+		// it's the latest value if it's valid in the real world, too
+		entry = {
+			v: derived.v,
+			wv: derived.wv,
+			l: (derived.f & CLEAN) !== 0,
+			e: (derived.f & ERROR_VALUE) !== 0
+		};
 	} else {
-		var value = execute_derived(derived);
+		var own = batch.records?.get(derived);
 
-		if (batch_record === null) {
-			// everything it read is the latest value — this is the real-world value
-			if (!derived.equals(value)) {
-				derived.v = value;
-				derived.wv = increment_write_version();
+		// whether the derived's global value is an error (a run that belongs to the batch mustn't change that)
+		var error_value = derived.f & ERROR_VALUE;
+
+		try {
+			var value = execute_derived(derived);
+			var result = batch.records?.get(derived);
+
+			if (result === undefined || result === own) {
+				// everything it read is the latest value — this is the real-world value
+				if (!derived.equals(value)) {
+					derived.v = value;
+					derived.wv = increment_write_version();
+				}
+
+				update_derived_status(derived);
+				entry = { v: value, wv: derived.wv, l: true, e: (derived.f & ERROR_VALUE) !== 0 };
+			} else {
+				// Reuse the version of an equal value, so that reactions which saw it remain valid
+				entry = result;
+				entry.l = false;
+				entry.e = (derived.f & ERROR_VALUE) !== 0;
+				entry.v = value;
+				entry.wv =
+					record !== undefined && derived.equals.call(/** @type {any} */ (record), value)
+						? record.wv
+						: derived.equals(value)
+							? derived.wv
+							: increment_write_version();
+
+				derived.f = (derived.f & ~ERROR_VALUE) | error_value;
 			}
+		} catch (error) {
+			// The run produced no value (see `update_reaction`). The error is cached (even if the derived is
+			// disconnected), so that whoever else reads the derived in this view sees it, rather than
+			// evaluating it again — e.g. a reaction that read it, when recording the versions of what it read
+			/** @type {Map<Value, any>} */ (batch_values).set(derived, {
+				v: error,
+				wv: increment_write_version(),
+				e: true
+			});
 
-			update_derived_status(derived);
-			entry = { v: derived.v, wv: derived.wv, l: true };
-		} else {
-			// Reuse the version of an equal value, so that reactions which saw it remain valid
-			var wv =
-				record !== undefined && derived.equals.call(/** @type {any} */ (record), value)
-					? /** @type {number} */ (record.wv)
-					: (derived.f & REACTION_RAN) !== 0 && derived.dv !== null && derived.equals(value)
-						? derived.wv
-						: next_local_version();
-
-			batch_record.v = value;
-			batch_record.wv = wv;
-			entry = { v: value, wv, l: false };
+			throw error;
 		}
 	}
 
 	if ((derived.f & CONNECTED) !== 0) {
-		values.set(derived, entry);
+		/** @type {Map<Value, any>} */ (batch_values).set(derived, entry);
 	}
 
 	return entry;
-}
-
-/**
- * Whether the values that the global state of `derived` was computed from — which are
- * known to be what the active view holds — are also the latest values
- * @param {Derived} derived
- */
-function is_latest(derived) {
-	var deps = /** @type {Value[]} */ (derived.deps);
-	var dv = /** @type {number[]} */ (derived.dv);
-	var values = /** @type {Map<Value, { v: any, wv: number, l?: boolean }>} */ (batch_values);
-
-	for (var i = 0; i < dv.length; i++) {
-		var dep = deps[i];
-
-		if ((dep.f & DERIVED) !== 0) {
-			if (values.get(dep)?.l !== true) return false;
-		} else if (dep.wv !== dv[i]) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**
