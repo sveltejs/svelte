@@ -173,6 +173,11 @@ export function RegularElement(node, context) {
 				attribute.type === 'Attribute' &&
 				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
 		);
+
+		if (has_default_value_attribute && has_value_attribute) {
+			context.state.init.push(b.stmt(b.call('$.mark_hydration_form_state', context.state.node)));
+		}
+
 		if (
 			!has_default_value_attribute &&
 			(has_spread ||
