@@ -12,7 +12,8 @@ import {
 	DESTROYED,
 	CLEAN,
 	REACTION_RAN,
-	INERT
+	INERT,
+	CONNECTED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -352,31 +353,57 @@ export function execute_derived(derived) {
 		return derived.v;
 	}
 
+	// Teardown reads use the values from before the current flush. Evaluate them
+	// in isolation so they cannot replace the live derived's dependencies or
+	// destroy its effects and abort controller.
+	var reaction = derived;
+	if (is_destroying_effect) {
+		reaction = {
+			...derived,
+			f: derived.f & ~CONNECTED,
+			deps: null,
+			effects: null,
+			reactions: null,
+			ac: null
+		};
+	}
+
 	set_active_effect(parent);
 
+	var prev_eager_effects = eager_effects;
 	if (DEV) {
-		let prev_eager_effects = eager_effects;
 		set_eager_effects(new Set());
-		try {
+	}
+
+	try {
+		if (DEV) {
 			if (includes.call(stack, derived)) {
 				e.derived_references_self();
 			}
 
 			stack.push(derived);
-
-			destroy_derived_effects(derived);
-			value = update_reaction(derived);
-		} finally {
-			set_active_effect(prev_active_effect);
-			set_eager_effects(prev_eager_effects);
-			stack.pop();
 		}
-	} else {
+
+		destroy_derived_effects(reaction);
+		value = update_reaction(reaction);
+	} finally {
 		try {
-			destroy_derived_effects(derived);
-			value = update_reaction(derived);
+			if (reaction !== derived) {
+				// Historical evaluations have no future run or owner to dispose of
+				// resources created by getAbortSignal or internal effects (e.g. createSubscriber).
+				if (reaction.ac !== null) {
+					without_reactive_context(() => {
+						/** @type {AbortController} */ (reaction.ac).abort(STALE_REACTION);
+					});
+				}
+				destroy_derived_effects(reaction);
+			}
 		} finally {
 			set_active_effect(prev_active_effect);
+			if (DEV) {
+				set_eager_effects(prev_eager_effects);
+				stack.pop();
+			}
 		}
 	}
 
