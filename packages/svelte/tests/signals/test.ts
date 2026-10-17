@@ -1795,4 +1795,24 @@ describe('signals', () => {
 			pop();
 		}
 	});
+	test('destroy_effect clears scheduling and effect state (#18623)', () => {
+		return () => {
+			let s = state(0);
+			let e: Effect | undefined;
+
+			let destroy = effect_root(() => {
+				e = effect(() => {
+					$.get(s);
+				});
+			});
+
+			set(s, 1);
+			flushSync();
+
+			destroy();
+
+			assert.equal(e?.deps, null);
+			assert.equal(e?.fn, null);
+		};
+	});
 });
