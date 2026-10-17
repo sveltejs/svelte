@@ -203,6 +203,10 @@ async function run_test(
 			console[method](message.text());
 		});
 
+		// Lets tests send trusted input: unlike `element.click()`, these events are dispatched with no
+		// script on the stack, so the browser runs microtasks in between event listeners
+		await page.exposeFunction('__trusted_click', (selector: string) => page.click(selector));
+
 		if (build_result_ssr) {
 			const result: any = await page.evaluate(
 				build_result_ssr.outputFiles[0].text + '; test_ssr.default()'

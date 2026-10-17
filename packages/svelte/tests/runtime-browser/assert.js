@@ -156,6 +156,7 @@ function normalize_children(node) {
  *			MouseEvent: typeof MouseEvent;
  *		};
  *		waitUntil: (fn: any, ms?: number) => Promise<void>;
+ *		trustedClick: (selector: string) => Promise<void>;
  *	}) => void;
  *	accessors?: boolean;
  *	immutable?: boolean;

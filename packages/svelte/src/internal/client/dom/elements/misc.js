@@ -43,7 +43,16 @@ export function add_form_reset_listener() {
 			(evt) => {
 				// Needs to happen one tick later or else the dom properties of the form
 				// elements have not updated to their reset values yet
-				Promise.resolve().then(() => {
+				Promise.resolve().then(function reset() {
+					// A reset triggered by user input (e.g. clicking a reset button) is dispatched with
+					// no script on the stack, so the browser runs microtasks in between listeners, and
+					// this one runs before the form's own listeners could call `preventDefault()`.
+					// In that case wait until the event has finished dispatching
+					if (evt.eventPhase !== Event.NONE) {
+						setTimeout(reset);
+						return;
+					}
+
 					if (!evt.defaultPrevented) {
 						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
 							/** @type {any} */ (e)[FORM_RESET_HANDLER]?.();
