@@ -24,7 +24,7 @@ The relevant code lives in
 10. [Statuses are scoped to batches: `schedule`, `#unprocessed`, `#revalidate`, rebases](#10-statuses-are-scoped-to-batches)
 11. [Offscreen branches](#11-offscreen-branches)
 12. [Reads after `await`: `record_late_read`](#12-reads-after-await-record_late_read)
-13. [Teardowns, runs without a value, and destroyed reactions](#13-teardowns-runs-without-a-value-and-destroyed-reactions)
+13. [Teardowns, invalidated runs, and destroyed reactions](#13-teardowns-invalidated-runs-and-destroyed-reactions)
 14. [How it fits together — walkthroughs](#14-how-it-fits-together--walkthroughs)
 15. [Overlaps](#15-overlaps)
 16. [What could be simplified, and at what cost](#16-what-could-be-simplified-and-at-what-cost)
@@ -43,7 +43,7 @@ The relevant code lives in
 - **Version** — every value of a signal has a version (`wv`). Reactions remember the exact versions of what they read.
 - **Run** — the result of running a reaction: the values it read, their versions and, for a derived, the value (possibly an error) and its version. A run is stored either as the reaction's **global state** (the run that is the real world) or as a record in a batch.
 - **Record** (`BatchRecord`) — a run that belongs to a batch rather than to the real world: the values read (`deps`), their versions (`dv`) and, for deriveds, the value, its version and whether it is an error (`v`, `wv`, `e`). Records are stored in `batch.records`.
-- **Latest** — a value is _latest_ if it's the real-world value: its version is the real-world version and, for a derived, that one is up to date (see §7.2).
+- **Latest** — a value is _latest_ if it's the real-world value: its version is the real-world version and, for a derived, that one is up to date (see [§7.2](#72-latest-values)).
 
 ## 2. Why `main`'s approach isn't enough
 
@@ -74,7 +74,7 @@ Every new value gets a new version from `increment_write_version()` (`runtime.js
 - writes that aren't the latest because a later batch already wrote the same source;
 - deriveds evaluated in a view from non-latest inputs.
 
-Versions are **only ever compared for equality**. A version identifies a value; it says nothing about which value is "newer". That's why one counter is enough: batch-only values can't collide with real ones, because every version is handed out once. After a fork commits, its values _keep_ their versions in the real world (§9.3). Those versions can be older than the versions of reactions that ran in the meantime, which is fine, because nothing orders them.
+Versions are **only ever compared for equality**. A version identifies a value; it says nothing about which value is "newer". That's why one counter is enough: batch-only values can't collide with real ones, because every version is handed out once. After a fork commits, its values _keep_ their versions in the real world ([§9.3](#93-fork-commit)). Those versions can be older than the versions of reactions that ran in the meantime, which is fine, because nothing orders them.
 
 The one remaining ordered comparison is dev-only: `$inspect.trace` in `dev/tracing.js` uses `signal.wv > reaction.wv` to highlight what changed since a reaction last ran. That's why `update_effect` still sets `effect.wv = write_version`, which has no other purpose. Since all versions come from the same counter, this check still works. The only exception is the case above: it can fail to highlight values that a committed fork wrote.
 
@@ -82,22 +82,22 @@ The one remaining ordered comparison is dev-only: `$inspect.trace` in `dev/traci
 
 Wherever two views (or two evaluations) agree on a value, the system tries to give it the **same version**. This turns "did the value change?" into "did the version change?", and it's what makes equality cut-offs (an `equals` check stopping propagation) work across views:
 
-| Where                                | Rule                                                                                                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Batch#capture(source, value, same)` | If the value equals the real one (`same`), the entry gets `source.wv` instead of a new version. This is possible for async results, see §9.2.                 |
-| `Batch#activate`                     | Another batch's write is only undone in this view if its previous value differs from the real value. Otherwise the real value, and its real version, applies. |
-| `derived_record`                     | A derived's run that belongs to a batch reuses the version of an equal value: the previous record's version, else the global version, else a new one.         |
-| `set_derived_value`                  | As on `main`, the version of the global state is only incremented if `!derived.equals(value)` (errors always get a new version).                              |
-| `adopt`, fork commit                 | Records and fork values keep their versions when they become the real world.                                                                                  |
+| Where                                | Rule                                                                                                                                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Batch#capture(source, value, same)` | If the value equals the real one (`same`), the entry gets `source.wv` instead of a new version. This is possible for async results, see [§9.2](#92-internal_setsource-value--own_result-sourcesjs192). |
+| `Batch#activate`                     | Another batch's write is only undone in this view if its previous value differs from the real value. Otherwise the real value, and its real version, applies.                                          |
+| `derived_record`                     | A derived's run that belongs to a batch reuses the version of an equal value: the previous record's version, else the global version, else a new one.                                                  |
+| `set_derived_value`                  | As on `main`, the version of the global state is only incremented if `!derived.equals(value)` (errors always get a new version).                                                                       |
+| `adopt`, fork commit                 | Records and fork values keep their versions when they become the real world.                                                                                                                           |
 
-Two consequences. First, reactions that saw a value don't re-run when it's recomputed to something equal in another view, or later. Second, "is this source latest in this view?" becomes `version_of(dep) === dep.wv`, which `update_record` relies on (§8.1).
+Two consequences. First, reactions that saw a value don't re-run when it's recomputed to something equal in another view, or later. Second, "is this source latest in this view?" becomes `version_of(dep) === dep.wv`, which `update_record` relies on ([§8.1](#81-update_record--where-a-run-belongs-runtimejs478)).
 
 ## 4. Exact dependency versions (`dv`)
 
 Every reaction has `reaction.dv: number[] | null`, next to `reaction.deps`:
 
 - `dv[i]` is the version of `deps[i]` that the last **global** run (the run whose result is the reaction's global state) read.
-- `dv` is aligned with the **start** of `deps`. `deps` can be longer (see §8.3), and the entries past `dv.length` are edges only, not dependencies of the global state.
+- `dv` is aligned with the **start** of `deps`. `deps` can be longer (see [§8.3](#83-edges-are-a-superset)), and the entries past `dv.length` are edges only, not dependencies of the global state.
 - `dv === null` means there's no global run yet. `is_dirty` treats that as dirty.
 
 ### 4.1 Recording versions at the end of a run
@@ -118,7 +118,7 @@ if (
 }
 ```
 
-Versions are recorded at the **end** of the run, not when each value is read. That is cheap: `get()` doesn't do any extra work. But it means a write that happens _during_ the run, after the reaction read the value, would be absorbed silently, because the post-write version would be recorded as "seen". This is handled with flags, not versions: such a write goes through `mark_reactions` → `Batch#schedule`, and `schedule` applies the status immediately whenever `active_reaction !== null` (§10.1). The reaction ends up `DIRTY`, and `DIRTY` wins over `dv` in `is_dirty`. If the write reaches it through a derived instead, it ends up `MAYBE_DIRTY`. That's also fine: a derived's version only changes when it's re-evaluated, so the recorded version is the derived's old one, and the next check re-evaluates the derived and sees the difference.
+Versions are recorded at the **end** of the run, not when each value is read. That is cheap: `get()` doesn't do any extra work. But it means a write that happens _during_ the run, after the reaction read the value, would be absorbed silently, because the post-write version would be recorded as "seen". This is handled with flags, not versions: such a write goes through `mark_reactions` → `Batch#schedule`, and `schedule` applies the status immediately whenever `active_reaction !== null` ([§10.1](#101-batchscheduleeffect-status-batchjs1048)). The reaction ends up `DIRTY`, and `DIRTY` wins over `dv` in `is_dirty`. If the write reaches it through a derived instead, it ends up `MAYBE_DIRTY`. That's also fine: a derived's version only changes when it's re-evaluated, so the recorded version is the derived's old one, and the next check re-evaluates the derived and sees the difference.
 
 What remains is a reaction writing a value _before_ reading it (`$effect(() => { x = 1; x; })`). That's handled exactly as on `main`, via `untracked_writes` / `schedule_possible_effect_self_invalidation`.
 
@@ -132,7 +132,7 @@ A version belongs to exactly one value of one signal, so comparing a run's versi
 
 ### 4.3 Why exact versions can't be simplified away
 
-Views can contain older values (§2.1), so any order-based check is wrong in some view. Exact versions are the minimum per-reaction information that is correct in every view. The cost is writing one number per dependency per run, instead of one number per run. We measured about 5–8% on dependency-heavy benchmarks for this alone: a naive version of just this change applied to `main` came out at about 1.08x.
+Views can contain older values ([§2.1](#2-why-mains-approach-isnt-enough)), so any order-based check is wrong in some view. Exact versions are the minimum per-reaction information that is correct in every view. The cost is writing one number per dependency per run, instead of one number per run. We measured about 5–8% on dependency-heavy benchmarks for this alone: a naive version of just this change applied to `main` came out at about 1.08x.
 
 ## 5. Checking: `is_dirty`, `is_current`, `version_of`
 
@@ -144,16 +144,16 @@ Status flags still exist and act as a cheap **push** filter:
 - `MAYBE_DIRTY` — check versions.
 - `DIRTY` — re-run without checking.
 
-Versions are the **pull** truth for `MAYBE_DIRTY`. This is the classic push-pull model. The new part is that both the push side (which reactions get marked, and for which batch, see §10) and the pull side (versions in _which view_, §5.3) are batch-aware.
+Versions are the **pull** truth for `MAYBE_DIRTY`. This is the classic push-pull model. The new part is that both the push side (which reactions get marked, and for which batch, see [§10](#10-statuses-are-scoped-to-batches)) and the pull side (versions in _which view_, [§5.3](#53-is_currentdeps-dv-and-version_ofsignal)) are batch-aware.
 
 ### 5.2 `is_dirty(reaction)` (`runtime.js:208`)
 
 - `DIRTY` → `true`.
 - `MAYBE_DIRTY`:
-  - A reaction is checked against **the run that applies** in the active view (`run_of`): for a block or async effect, its record in the active batch (including folded batches) if there is one; otherwise the reaction itself, whose `deps`/`dv` are its global state. Block/async runs inside a batch are stored as records, not as global state (§8).
+  - A reaction is checked against **the run that applies** in the active view (`run_of`): for a block or async effect, its record in the active batch (including folded batches) if there is one; otherwise the reaction itself, whose `deps`/`dv` are its global state. Block/async runs inside a batch are stored as records, not as global state ([§8](#8-effect-records-and-the-edges-of-the-graph)).
   - In the real world (`batch_values === null`) there's an **inline loop**: for each `i < dv.length`, bring derived dependencies up to date (`is_dirty(dep) → update_derived(dep)`), then compare `dep.wv !== dv[i]`. This duplicates `is_current` on purpose. Recursing `is_dirty → is_dirty` directly, instead of going through `is_current`/`version_of`, was measurably faster (about 3% on kairo benchmarks).
   - In a view: `!is_current(deps, dv)`.
-  - If the reaction is up to date and `CONNECTED`, it's set to `CLEAN`. Unlike `main`, this also happens in views. That's safe because statuses are scoped to batches and other batches re-validate (§10), so a `CLEAN` set in one view doesn't hide a change from another batch.
+  - If the reaction is up to date and `CONNECTED`, it's set to `CLEAN`. Unlike `main`, this also happens in views. That's safe because statuses are scoped to batches and other batches re-validate ([§10](#10-statuses-are-scoped-to-batches)), so a `CLEAN` set in one view doesn't hide a change from another batch.
 
 ### 5.3 `is_current(deps, dv)` and `version_of(signal)`
 
@@ -162,10 +162,10 @@ Versions are the **pull** truth for `MAYBE_DIRTY`. This is the classic push-pull
 `version_of(signal)` is the version the signal has in the active view, evaluating a derived if needed:
 
 - real world → `signal.wv`
-- view, derived → `view_entry(derived).wv` (§7)
+- view, derived → `view_entry(derived).wv` ([§7](#7-runs-of-deriveds-view_entry-latest-values-adopt-errors))
 - view, source → `batch_values.get(signal)?.wv ?? signal.wv`
 
-It's used to **check** runs. Recording the versions a run saw uses `seen_version` instead, which never evaluates anything (§8.1).
+It's used to **check** runs. Recording the versions a run saw uses `seen_version` instead, which never evaluates anything ([§8.1](#81-update_record--where-a-run-belongs-runtimejs478)).
 
 ## 6. Views: `activate`, `batch_values`, `folded`, `record`
 
@@ -176,11 +176,11 @@ Makes the batch the current one (`current_batch`), sets `view_batch = this` and 
 - **Alone** (no other batch, not a fork): `batch_values = null`. The view is the real world. Every check takes the real-world fast path. This is the common case and the one the benchmarks measure.
 - Otherwise `batch_values` starts as a copy of `this.current`, i.e. its own writes. Then, for every other non-fork batch:
   - **Earlier and intersecting** (writes some source this batch also writes): the earlier batch's writes are part of this view. They aren't undone, and the batch is added to `this.folded`. The later batch will be merged into the earlier one if it finishes first, so they're treated as one set of changes.
-  - **Otherwise**: undo its writes by putting its `previous` values in `batch_values`, unless this batch has its own value, or the previous value equals the real one (§3.2).
+  - **Otherwise**: undo its writes by putting its `previous` values in `batch_values`, unless this batch has its own value, or the previous value equals the real one ([§3.2](#32-the-same-value-has-the-same-version)).
 
 Forks always build a map, even when alone: their writes aren't in the real world.
 
-While `fork(fn)` runs `fn`, the fork's view is the real world plus its own writes (it starts with an empty map, not with `activate`). Other pending batches' writes aren't undone there, so that `count++` in `fn` builds on them, like outside a fork. When the fork is processed, they are undone, unless the fork wrote the same source (then they're folded, §6.2).
+While `fork(fn)` runs `fn`, the fork's view is the real world plus its own writes (it starts with an empty map, not with `activate`). Other pending batches' writes aren't undone there, so that `count++` in `fn` builds on them, like outside a fork. When the fork is processed, they are undone, unless the fork wrote the same source (then they're folded, [§6.2](#62-folded-and-batchrecordreaction)).
 
 ### 6.2 `folded` and `Batch#record(reaction)`
 
@@ -194,13 +194,13 @@ While `fork(fn)` runs `fn`, the fork's view is the real world plus its own write
 
 ## 7. Runs of deriveds: `view_entry`, latest values, `adopt`, errors
 
-A derived's global state (`v`, `wv`, `deps`, `dv`, flags) always describes the **real world**. Other runs of it are records in batches. Where a run goes is decided in exactly one place: `update_dependencies`/`update_record` (§8.1) store the whole run, including the value, when it ends.
+A derived's global state (`v`, `wv`, `deps`, `dv`, flags) always describes the **real world**. Other runs of it are records in batches. Where a run goes is decided in exactly one place: `update_dependencies`/`update_record` ([§8.1](#81-update_record--where-a-run-belongs-runtimejs478)) store the whole run, including the value, when it ends.
 
 ### 7.1 `view_entry(derived)` (`deriveds.js:433`)
 
 In a view, deriveds are never checked via their flags. Their value is the run that is current in the view, which `view_entry` finds in this order:
 
-1. **Cached** in `batch_values` → return it. A derived assigned in this batch is also there, because its entry is part of `batch.current`. Such an entry is only returned while the dependencies still have the versions they had at the time of the assignment (§9.2).
+1. **Cached** in `batch_values` → return it. A derived assigned in this batch is also there, because its entry is part of `batch.current`. Such an entry is only returned while the dependencies still have the versions they had at the time of the assignment ([§9.2](#92-internal_setsource-value--own_result-sourcesjs192)).
 2. **A record in this view** (`batch.record(derived)`, including folded batches) that `is_current` → that record.
 3. **The global state is valid in this view** (`is_current(derived.deps, derived.dv)`) → the derived itself.
 4. Otherwise **run it**. The run is stored where it belongs: in the batch, or as the global state, in which case any record of it in the batch is deleted. So the entry is `batch.records.get(derived) ?? derived`.
@@ -209,7 +209,7 @@ In a view, deriveds are never checked via their flags. Their value is the run th
 
 ### 7.2 Latest values
 
-`update_record` must decide whether a derived's run in a view belongs to the real world. It does if **everything it read is latest**. For every value read, that means the version seen is the real-world version (`version_of(dep) === dep.wv`). For a derived dependency, it additionally means its global state is up to date, i.e. it is `CLEAN`. The global state can be valid in the view yet outdated in the real world: that happens when the view undoes exactly the change that made it stale, and it hasn't been re-evaluated in the real world yet. By §3.2, an equal value counts as latest, which is correct.
+`update_record` must decide whether a derived's run in a view belongs to the real world. It does if **everything it read is latest**. For every value read, that means the version seen is the real-world version (`version_of(dep) === dep.wv`). For a derived dependency, it additionally means its global state is up to date, i.e. it is `CLEAN`. The global state can be valid in the view yet outdated in the real world: that happens when the view undoes exactly the change that made it stale, and it hasn't been re-evaluated in the real world yet. By [§3.2](#32-the-same-value-has-the-same-version), an equal value counts as latest, which is correct.
 
 Without this rule, we'd either update global state from non-latest values (wrong), or make every derived evaluated in a view batch-local. That would be correct, but everything would be recomputed in the real world after the commit, and effects that saw the batch's versions would re-run.
 
@@ -224,7 +224,7 @@ The rule is conservative for disconnected deriveds, which are never `CLEAN`: run
 
 Keeping the record's version is what lets block/async effects whose records refer to that version stay valid. Without `adopt`, the derived would be recomputed, get a new version (unless it happens to equal the old _global_ value), and every effect that saw the record would re-run. For forks, that means redoing the preloaded work.
 
-Derived records are **not** promoted on a normal commit (§8.4). They're dropped together with the batch's `records`.
+Derived records are **not** promoted on a normal commit ([§8.4](#84-set_global_runreaction-read-dv-and-promote_recordreaction-record-runtimejs645)). They're dropped together with the batch's `records`.
 
 ### 7.4 Errors
 
@@ -242,23 +242,23 @@ An error is just the value of a run, marked as an error: `e` on a record, the `E
 The non-fast-path part of `update_dependencies` first decides which batch, if any, the run belongs to:
 
 - **Block and async effects** that run while a batch is processed (`view_batch?.committing === false`) belong to that batch. The exception is a block effect's **first** run (no `REACTION_RAN` yet), which creates and commits the initial branch right away. Why these two kinds:
-  - A block effect's result is the **branch it selected**. The new branch stays offscreen until the batch commits (§11), and another batch may select differently.
-  - An async effect's result is the **value its expression resolves to, for this batch** (`internal_set(..., own_result)`, §9.2).
-  - Other effects are always global. In async mode, re-runs of template/render/user effects happen when a batch commits, i.e. in the real world. Their **first** run, however, happens on creation, which can be inside a new branch while a batch's view is active. That first run is recorded as global state with the view's versions. This is fine because the branch is offscreen for every other batch (§11), and a batch that adopts it re-validates its effects in its own view.
+  - A block effect's result is the **branch it selected**. The new branch stays offscreen until the batch commits ([§11](#11-offscreen-branches)), and another batch may select differently.
+  - An async effect's result is the **value its expression resolves to, for this batch** (`internal_set(..., own_result)`, [§9.2](#92-internal_setsource-value--own_result-sourcesjs192)).
+  - Other effects are always global. In async mode, re-runs of template/render/user effects happen when a batch commits, i.e. in the real world. Their **first** run, however, happens on creation, which can be inside a new branch while a batch's view is active. That first run is recorded as global state with the view's versions. This is fine because the branch is offscreen for every other batch ([§11](#11-offscreen-branches)), and a batch that adopts it re-validates its effects in its own view.
 - **Even an alone batch records** block/async runs. Being alone can change before the batch commits: another batch can start and commit while this one waits for async work. `async-state-new-branch-unrelated-update` covers this. The pending batch selected a branch, an unrelated batch then re-runs the block in its own view (where the branch isn't shown) and commits. The pending batch's selection must survive, rather than the branch (and its in-flight request) being recreated.
-- **Deriveds** belong to `view_batch` if any of their inputs isn't latest (§7.2), else to the real world.
+- **Deriveds** belong to `view_batch` if any of their inputs isn't latest ([§7.2](#72-latest-values)), else to the real world.
 
 It then records `dv[i] = seen_version(dep)` for each value read: the version the run saw. In the real world that's `dep.wv`. In a view it's the version of the view's entry for `dep`. If a derived has no entry, it was invalidated by a write during the run, or it can't be cached because it's disconnected. The run then gets `-1`, which never matches, so it doesn't count as having seen the derived's current version. That mirrors the real world, where a derived invalidated during the run only gets a new version once it's evaluated again. **Recording never evaluates anything.** Before, it used `version_of`, which in a view could evaluate a derived invalidated during the run and record its new version. The run would then count as having seen a value it never read.
 
 `update_record` reuses `reaction.dv` in place only for a global run in the real world. Otherwise it uses a fresh array: records must not alias the global `dv`, and a derived's run can turn out to be batch-local halfway through the loop.
 
-For a batch run, it stores a record in `batch.records` **without touching the global state**: `{ deps: read, dv }` for an effect, plus the value, its version and `e` for a derived (`derived_record`). For a global run, it calls `set_global_run` (§8.4) and, for a derived, sets the value (`set_derived_value`) and deletes the active batch's record of it, which is now outdated. Effects never have such a record at this point: their runs only become global outside of processing, on their first run, or once the batch commits, whose records are promoted by then.
+For a batch run, it stores a record in `batch.records` **without touching the global state**: `{ deps: read, dv }` for an effect, plus the value, its version and `e` for a derived (`derived_record`). For a global run, it calls `set_global_run` ([§8.4](#84-set_global_runreaction-read-dv-and-promote_recordreaction-record-runtimejs645)) and, for a derived, sets the value (`set_derived_value`) and deletes the active batch's record of it, which is now outdated. Effects never have such a record at this point: their runs only become global outside of processing, on their first run, or once the batch commits, whose records are promoted by then.
 
 ### 8.2 Record lifecycle
 
 - **Created** by `update_record` (effects and deriveds), and by `internal_set` (assigned deriveds in a non-latest batch, stored on the `batch.current` entry).
 - **Looked up** via `Batch#record`: by `run_of` for block/async effects (used by `is_dirty` and `record_late_read`), and by `view_entry` for deriveds.
-- **Extended** by `record_late_read` (§12).
+- **Extended** by `record_late_read` ([§12](#12-reads-after-await-record_late_read)).
 - **Merged**: when a later batch Y merges into an earlier batch X (`#merge`), Y's non-block records move to X. X's view now includes Y's writes, so Y's async results and derived values are still valid (and are re-checked with `is_current` anyway). Block records are _not_ moved: branch selections are keyed by batch, and X re-selects them when it processes.
 - **Promoted** when the batch commits (`#process`, after `committing = true`): every live effect record becomes global state via `promote_record`. Derived records are dropped.
 - **Dropped** with `batch.records = null` on commit, and in `#unlink` (discard, merge).
@@ -269,7 +269,7 @@ For a batch run, it stores a record in `batch.records` **without touching the gl
 
 `update_record` keeps that invariant:
 
-- **Some batch holds a record of the reaction** (this run's batch, or any other: `keep`): new dependencies are appended to `deps` (deduplicated, with edges added) and nothing is removed. For a batch run, the record gets its own copy of the read order (`read`). For a global run, `deps` is reordered so the values this run read come first, aligned with `dv` (`set_global_run`, §8.4).
+- **Some batch holds a record of the reaction** (this run's batch, or any other: `keep`): new dependencies are appended to `deps` (deduplicated, with edges added) and nothing is removed. For a batch run, the record gets its own copy of the read order (`read`). For a global run, `deps` is reordered so the values this run read come first, aligned with `dv` (`set_global_run`, [§8.4](#84-set_global_runreaction-read-dv-and-promote_recordreaction-record-runtimejs645)).
 - **No batch holds a record**: prune exactly like `main` (`remove_reactions(reaction, skipped_deps)` plus an in-place update).
 
 Edges belonging to records that were dropped without being promoted (on discard) remain until the next global run with no records prunes them. They only cause spurious `MAYBE_DIRTY` checks, not wrong results.
@@ -278,7 +278,7 @@ The `skipped_deps` optimisation in `get()` (reads in the same order as last time
 
 ### 8.4 `set_global_run(reaction, read, dv)` and `promote_record(reaction, record)` (`runtime.js:645`)
 
-`set_global_run` makes a run the global one: `reaction.dv = dv`, and the values the run read (`read`) move to the start of `reaction.deps`, because `dv` must line up with the start of `deps` (§4.2). The rest of `deps` is kept after them: it's also the list of edges, which must cover the runs batches hold (§8.3), so `deps` can't simply be replaced by `read`. If the reads already are a prefix of `deps` (the common case), nothing is allocated. It's used by `update_record` for global runs, and by `promote_record`.
+`set_global_run` makes a run the global one: `reaction.dv = dv`, and the values the run read (`read`) move to the start of `reaction.deps`, because `dv` must line up with the start of `deps` ([§4.2](#42-what-two-runs-read)). The rest of `deps` is kept after them: it's also the list of edges, which must cover the runs batches hold ([§8.3](#83-edges-are-a-superset)), so `deps` can't simply be replaced by `read`. If the reads already are a prefix of `deps` (the common case), nothing is allocated. It's used by `update_record` for global runs, and by `promote_record`.
 
 `promote_record` makes a record the global state: `set_global_run(reaction, record.deps, record.dv)`. For a derived, the record's value, version and error flag become the global ones, too, and its status is updated. It's used for effects on commit, for deriveds in `adopt`, and for assigned deriveds on fork commit.
 
@@ -289,7 +289,7 @@ The `skipped_deps` optimisation in `get()` (reads in the same order as last time
 Records a write in the batch and decides its version:
 
 - `later`: the next non-fork batch after this one that also wrote `source`. If one exists, this write is **not the latest** value. This happens when an async expression resolves in an earlier batch after a later batch wrote the same signal.
-- `previous`: the value before this batch's change. That's the real value or, if a later batch also wrote the source, the later batch's `previous`. It's needed so other views can undo this batch's write (§6.1) correctly even when batches write the same source out of order.
+- `previous`: the value before this batch's change. That's the real value or, if a later batch also wrote the source, the later batch's `previous`. It's needed so other views can undo this batch's write ([§6.1](#61-batchactivate-batchjs967)) correctly even when batches write the same source out of order.
 - Version:
   - `same` (equal to the real value) → `source.wv`;
   - latest → `increment_write_version()`, and `source.v`/`source.wv` are updated;
@@ -310,7 +310,7 @@ Records a write in the batch and decides its version:
 
 ### 9.3 Fork commit
 
-`fork.commit` writes the fork's values **with their versions** into the real world (`source.v = entry.v; source.wv = entry.wv`). Assigned derived entries are promoted. Then the fork is processed as an ordinary, now usually alone, batch. Everything computed in the fork (records of async/block effects, derived records via `adopt`) is still valid, because its versions didn't change. The fork's writes don't go through `mark_reactions`, so `#process` re-validates (§10.3) everything depending on them; anything already computed passes the version check.
+`fork.commit` writes the fork's values **with their versions** into the real world (`source.v = entry.v; source.wv = entry.wv`). Assigned derived entries are promoted. Then the fork is processed as an ordinary, now usually alone, batch. Everything computed in the fork (records of async/block effects, derived records via `adopt`) is still valid, because its versions didn't change. The fork's writes don't go through `mark_reactions`, so `#process` re-validates ([§10.3](#103-revalidatevalues-batchjs553)) everything depending on them; anything already computed passes the version check.
 
 ## 10. Statuses are scoped to batches
 
@@ -320,7 +320,7 @@ Flags are global, but whether a reaction is dirty depends on the view. A batch's
 
 Called by `mark_reactions` (via `schedule_effect`) and others:
 
-- If **this batch is being processed right now** (`is_processing && current_batch === this`) or **a reaction is running** (`active_reaction !== null`) → apply the status now (`#add`). The second case is required by §4.1: the running reaction records its versions at the end, so a write during its run must flag it.
+- If **this batch is being processed right now** (`is_processing && current_batch === this`) or **a reaction is running** (`active_reaction !== null`) → apply the status now (`#add`). The second case is required by [§4.1](#41-recording-versions-at-the-end-of-a-run): the running reaction records its versions at the end, so a write during its run must flag it.
 - Otherwise, if there are other batches (or this is a fork) → add the effect to `#unprocessed`, as `MAYBE_DIRTY` (an entry that is `DIRTY` stays so). Its status is left alone, so another batch processed first won't run it in the wrong view or consume the mark. When this batch is processed, it gets that status and versions decide.
 - If alone → apply it right away, but as `MAYBE_DIRTY`, not the requested status. The view is the real world, so marking is safe, but the write may not change what the effect sees by the time the batch is processed, and `DIRTY` would force a re-run. For an async effect, a re-run means restarting its async work. With `DIRTY` here, `async-stale-derived-2` renders `a: 0` instead of `a: 2`.
 
@@ -332,7 +332,7 @@ Effects inside a pending boundary that haven't run yet are deferred by the bound
 
 ### 10.2 `CLEAN` in views
 
-Because statuses are scoped like this, `is_dirty` can set `CLEAN` in views (§5.2). On `main`, statuses stayed `MAYBE_DIRTY` during time travel, so other batches would still traverse them, which meant more checks and more cross-talk.
+Because statuses are scoped like this, `is_dirty` can set `CLEAN` in views ([§5.2](#52-is_dirtyreaction-runtimejs208)). On `main`, statuses stayed `MAYBE_DIRTY` during time travel, so other batches would still traverse them, which meant more checks and more cross-talk.
 
 ### 10.3 `#revalidate(values)` (`batch.js:553`)
 
@@ -358,7 +358,7 @@ Some of `main`'s code relied on those forced re-runs, and is gone, because with 
 
 - **Handing async results to earlier batches.** When a batch committed, `#commit` resolved the pending runs of its async expressions in every earlier batch with the committed batch's results. That's wrong if the earlier batch's run read different values, e.g. `await (flag ? f(d) : f(x))` where the earlier batch set `flag = false` and the later one set `d`. On `main`, the forced re-run in the earlier batch superseded the handed-over result. Here the earlier batch's run is still valid, and it now keeps its own result (`async-earlier-batch-own-result`). (`#merge` still hands over results: the merged batch's records replace the earlier batch's.)
 - **Re-checking block effects on every process.** Block effects that ran were put into `#dirty_reactions`, so that they were checked again whenever the batch was processed. `#revalidate` reaches them whenever something they read may have changed in the batch's view.
-- **Branch selections of earlier batches**, see §11.
+- **Branch selections of earlier batches**, see [§11](#11-offscreen-branches).
 
 ## 11. Offscreen branches
 
@@ -369,19 +369,19 @@ A branch created by a block effect while a batch is processed (`BranchManager`, 
 - `#revalidate` skips effects inside branches the batch skips; they don't exist in its view.
 - `BranchManager` keeps the selection of every batch that is still linked, until that batch commits or is discarded. Batches can commit in any order. On `main`, a commit destroyed the offscreen branches that older batches had selected, assuming they would never commit, and `#commit` told earlier batches to unskip what the committed batch had selected. Both relied on the earlier batch's block effects being re-run. With exact versions, an earlier batch's block only re-runs if what it read changed in its view, and then it selects its branch again (`async-if-block-unskip`). Otherwise its selection stands (`async-earlier-batch-branch`).
 
-This overlaps with block records (§8): both are needed. The record says which branch the block selected in this batch. The offscreen flag keeps other batches out of that branch.
+This overlaps with block records ([§8](#8-effect-records-and-the-edges-of-the-graph)): both are needed. The record says which branch the block selected in this batch. The offscreen flag keeps other batches out of that branch.
 
 ## 12. Reads after `await`: `record_late_read`
 
 Values read after an `await` inside an async expression are still dependencies: as on `main`, `get()` adds the edge outside the update cycle. With exact versions, an edge alone isn't enough. `is_dirty` only checks the first `dv.length` dependencies, so an unrecorded late read would never make the reaction dirty.
 
-`record_late_read(reaction, signal, version)` adds the version the view saw to the run that applies (`run_of`: the run's record, or the global state), and moves the signal next to the other reads so `dv` stays aligned with the start of `deps` (§4.2). The view is the right one because `save`/`restore` (`async.js`) re-applies the reaction's batch after the `await`. If `dv` is `null` (no global run exists and no record), nothing is recorded. The reaction is going to run anyway.
+`record_late_read(reaction, signal, version)` adds the version the view saw to the run that applies (`run_of`: the run's record, or the global state), and moves the signal next to the other reads so `dv` stays aligned with the start of `deps` ([§4.2](#42-what-two-runs-read)). The view is the right one because `save`/`restore` (`async.js`) re-applies the reaction's batch after the `await`. If `dv` is `null` (no global run exists and no record), nothing is recorded. The reaction is going to run anyway.
 
 ## 13. Teardowns, invalidated runs, and destroyed reactions
 
 - In teardowns (`is_destroying_effect`), `get()` returns values from before the update (`old_values`). Deriveds evaluated there aren't recorded: `update_dependencies` returns early for deriveds, so their value isn't stored either.
 - **A derived's global state can become invalid without any version changing.** This happens when it's aborted on disconnect: `remove_reaction` calls `getAbortSignal`'s `abort`, and the derived must re-run when reconnected. Versions can't express this, and flags only work in the real world, so `dv` is set to `null` ("no valid run"). That's checked everywhere: `is_dirty` treats it as dirty, and `view_entry` skips the global state.
-- Errors are values (§7.4), so a run that throws doesn't need special treatment. Before that, a derived that was only `MAYBE_DIRTY` when it threw (it reads another derived) was treated as up to date by the next check, and returned its old value. `error-boundary-30` covers this case in the real world, `async-derived-error-view` in a view.
+- Errors are values ([§7.4](#74-errors)), so a run that throws doesn't need special treatment. Before that, a derived that was only `MAYBE_DIRTY` when it threw (it reads another derived) was treated as up to date by the next check, and returned its old value. `error-boundary-30` covers this case in the real world, `async-derived-error-view` in a view.
 - A derived that references itself is detected (`derived_references_self`, DEV only) when it's re-evaluated during its own evaluation. `execute_derived` pushes onto its recursion stack in any case, so that its `finally` doesn't remove the outer evaluation from the stack. Before that fix (the bug is also on `main`), the next evaluation of the derived wasn't detected as recursive anymore, which recursed until the stack overflowed.
 - `update_dependencies` also returns early if the reaction was **destroyed during its own run**, e.g. by an error boundary (`error-boundary-28`). `destroy_effect` sets `deps` to `null`, and re-adding edges would leak.
 
@@ -403,22 +403,22 @@ Compared to `main`, the extra work is one `dv` write per dependency per run, plu
 2. B writes `y`. The write is latest, so `y` is updated in the real world, like `x` was by A. `mark_reactions` reaches the effects that read `y`. B isn't alone and isn't being processed, so they go into `B.#unprocessed` and their statuses are left alone.
 3. B is processed. Its unprocessed effects become `MAYBE_DIRTY`. `activate()` builds B's view: `y` from `B.current`, `x` undone using `A.previous` (if A and B don't intersect). The block has no record in B, so it's checked against its global state, which still describes the world before A (A's run is a record in A). In B's view `x` has its old version again, so the block only re-runs if it reads `y`. If it does, the run is recorded in B. Deriveds read in B's view come from cache, record, still-valid global state, or re-evaluation (global if all inputs are latest, else a B record). Branch X is offscreen, so B doesn't process it.
 4. B commits: its effect records are promoted, so if the block re-ran its global state is now B's selection. `#commit` → `A.#revalidate([y])`, and A is added to `rebases`.
-5. A is processed again (rebase, or when its async work resolves). `#revalidate(A.current)` re-flags whatever B's processing cleaned. `is_dirty(block)` checks **A's record** in A's view. Only `y` changed for it, so the block re-runs only if it reads `y`. Otherwise A's selection of branch X stands, also if B selected another branch and committed it (§11). A's async effect record is checked the same way, and isn't restarted unless something it read changed in A's view.
+5. A is processed again (rebase, or when its async work resolves). `#revalidate(A.current)` re-flags whatever B's processing cleaned. `is_dirty(block)` checks **A's record** in A's view. Only `y` changed for it, so the block re-runs only if it reads `y`. Otherwise A's selection of branch X stands, also if B selected another branch and committed it ([§11](#11-offscreen-branches)). A's async effect record is checked the same way, and isn't restarted unless something it read changed in A's view.
 6. A's async result arrives → `internal_set(..., own_result)` in A's view → `capture` (latest unless a later batch wrote it) → A is processed and commits. Its records are promoted, and B's leftover edges are pruned on the next global runs.
 
 ### 14.3 Fork
 
-A fork's writes all get new versions, which only exist in the fork (the sources aren't touched), and its view always has a `batch_values` map. Deriveds evaluated with fork values are fork records, and block/async runs are fork records. On `commit`, values are written to the real world with those versions (§9.3). Processing re-validates their dependents. Effects compare equal versions and don't re-run. Deriveds `adopt` their fork records. Block/async records are promoted on commit. Nothing computed in the fork is redone.
+A fork's writes all get new versions, which only exist in the fork (the sources aren't touched), and its view always has a `batch_values` map. Deriveds evaluated with fork values are fork records, and block/async runs are fork records. On `commit`, values are written to the real world with those versions ([§9.3](#93-fork-commit)). Processing re-validates their dependents. Effects compare equal versions and don't re-run. Deriveds `adopt` their fork records. Block/async records are promoted on commit. Nothing computed in the fork is redone.
 
 ## 15. Overlaps
 
 These are the places where two mechanisms cover the same ground, or one concept is implemented in several places.
 
-1. **Flags vs versions.** `DIRTY` could in principle be derived from versions, but flags are the cheap push filter, and versions can't express "written during my own run" (§4.1). Correctness depends on every reaction whose view changed being reachable by _some_ mark: `mark_reactions`, `#unprocessed`, `#revalidate` (re-processing, rebases, fork commit) or `#revalidate_branch`. Conversely, wherever a flag carries information that versions don't, the view path (which ignores derived flags) must get it some other way: `dv = null` for invalidated runs (§13), `e` for errors (§7.4).
-2. **`#unprocessed` vs `#revalidate`.** For a batch that's processed again, `#revalidate(this.current)` re-flags everything reachable from its writes, which is most of what `#unprocessed` collected. But `#unprocessed` also covers what isn't caused by this batch's writes (§10.1): new effects (`schedule(effect, DIRTY)` from `create_effect`, and deferred ones that never ran), resumed effects, effects re-validated because another batch committed, async errors, and the first processing (where `#revalidate` doesn't run).
+1. **Flags vs versions.** `DIRTY` could in principle be derived from versions, but flags are the cheap push filter, and versions can't express "written during my own run" ([§4.1](#41-recording-versions-at-the-end-of-a-run)). Correctness depends on every reaction whose view changed being reachable by _some_ mark: `mark_reactions`, `#unprocessed`, `#revalidate` (re-processing, rebases, fork commit) or `#revalidate_branch`. Conversely, wherever a flag carries information that versions don't, the view path (which ignores derived flags) must get it some other way: `dv = null` for invalidated runs ([§13](#13-teardowns-invalidated-runs-and-destroyed-reactions)), `e` for errors ([§7.4](#74-errors)).
+2. **`#unprocessed` vs `#revalidate`.** For a batch that's processed again, `#revalidate(this.current)` re-flags everything reachable from its writes, which is most of what `#unprocessed` collected. But `#unprocessed` also covers what isn't caused by this batch's writes ([§10.1](#101-batchscheduleeffect-status-batchjs1048)): new effects (`schedule(effect, DIRTY)` from `create_effect`, and deferred ones that never ran), resumed effects, effects re-validated because another batch committed, async errors, and the first processing (where `#revalidate` doesn't run).
 3. **Record or global state.** A reaction is its own global run: records and reactions have the same `deps`/`dv` shape, and a derived also has `v`/`wv`. "The run that applies" is `run_of` for effects (used by `is_dirty` and `record_late_read`), and `view_entry` for deriveds, where the global state is the derived itself. `promote_record` turns a record into the global state for both.
-4. **"Is this the real-world value?"** has two forms: `latest` in `capture` (for writes), and "the real-world version, and for a derived an up-to-date one" for what a derived's run read (§7.2).
-5. **Version reuse for equal values** is implemented in five places (§3.2).
+4. **"Is this the real-world value?"** has two forms: `latest` in `capture` (for writes), and "the real-world version, and for a derived an up-to-date one" for what a derived's run read ([§7.2](#72-latest-values)).
+5. **Version reuse for equal values** is implemented in five places ([§3.2](#32-the-same-value-has-the-same-version)).
 6. **Fast paths duplicate general logic:**
 
    - the `update_dependencies` fast path vs `update_record`;
@@ -426,7 +426,7 @@ These are the places where two mechanisms cover the same ground, or one concept 
    - the alone shortcut in `activate` vs the full view;
    - the alone shortcut in `schedule` vs `#unprocessed`.
 
-   Each could be removed with no change in behaviour, at a measurable perf cost (routing `schedule` through `#unprocessed` when alone, for example, costs about 10% on `kairo_mux`). This has been checked by running the test suites with all four removed, so that every read during processing goes through a view: everything passes. The run also found the bugs that §7.4 and §13 describe.
+   Each could be removed with no change in behaviour, at a measurable perf cost (routing `schedule` through `#unprocessed` when alone, for example, costs about 10% on `kairo_mux`). This has been checked by running the test suites with all four removed, so that every read during processing goes through a view: everything passes. The run also found the bugs that [§7.4](#74-errors) and [§13](#13-teardowns-invalidated-runs-and-destroyed-reactions) describe.
 
 7. **Edge maintenance** has three paths: none (fast path), keep-and-append (records exist) and prune (as on `main`).
 8. **The derived cache vs derived records.** The cache lives for one view (one `activate`); records live until commit. A cache entry is the current run itself: a record, or the derived.
@@ -443,7 +443,7 @@ These are the places where two mechanisms cover the same ground, or one concept 
 | Alone → `MAYBE_DIRTY` in `schedule`                                        | …async effects tolerated spurious restarts.                                                                                                     | `async-stale-derived-2` fails; more restarted async work.                                                                                                 |
 | Block records when alone                                                   | …we knew before traversal that the batch will commit synchronously (no pending async work in it), or branch selection survived without records. | Today this is a small allocation per block re-run on the hot path. `async-state-new-branch-unrelated-update` shows why we can't just skip it.             |
 | `record_late_read`                                                         | …reads after `await` stopped being dependencies (dev already warns with `await_reactivity_loss`).                                               | Breaking change for code that relies on it.                                                                                                               |
-| Latest rule (§7.2)                                                         | …deriveds' global state were updated eagerly, or every derived evaluation in a view were batch-local.                                           | Eager updates cost on the hot path. Always-local means recomputing in the real world after each commit, and effects that saw the batch's versions re-run. |
+| Latest rule ([§7.2](#72-latest-values))                                    | …deriveds' global state were updated eagerly, or every derived evaluation in a view were batch-local.                                           | Eager updates cost on the hot path. Always-local means recomputing in the real world after each commit, and effects that saw the batch's versions re-run. |
 | Derived records                                                            | …deriveds were simply re-evaluated in every view (cache per `activate` only).                                                                   | Apps with pending async batches recompute deriveds on every process. With `adopt` gone too, forks redo work on commit.                                    |
 | `adopt` / fork commit keeping versions                                     | …committing a fork were allowed to re-run its block/async effects.                                                                              | Restarts async work that was preloaded in the fork, which defeats the point of forks.                                                                     |
 | Superset edges / `keep`                                                    | …we never pruned while any batch exists (simpler code).                                                                                         | More spurious `MAYBE_DIRTY` checks. Fewer branches in `update_record`, but it's off the hot path either way.                                              |
@@ -460,7 +460,7 @@ Vite production build, minified. "App" mounts one component (async mode) that us
 | `batch-views` (now)      | 38,448 / 14,873 / 13,586 (**+2.4 KB / +0.95 KB / +0.81 KB**) | 89,881 / 33,510 (+2.3 KB / +0.92 KB) |
 | `async-another-try-pt-1` | 41,016 / 15,430 / 14,175 (+5.0 KB / +1.50 KB / +1.40 KB)     | 92,616 / 34,252 (+5.1 KB / +1.66 KB) |
 
-Nearly all of `batch-views`' growth is in `runtime.js` (+2.11 KB: `update_record`, `derived_record`, `record_late_read`, `set_global_run`/`promote_record`, `is_current`, `version_of`, `seen_version`, `run_of`), then `deriveds.js` (+0.24 KB: `view_entry`, `adopt`) and `sources.js` (+0.23 KB). `batch.js` is slightly smaller than on `main` (−0.11 KB): the code that is gone (§10.4, §11) outweighs records, views and rebases.
+Nearly all of `batch-views`' growth is in `runtime.js` (+2.11 KB: `update_record`, `derived_record`, `record_late_read`, `set_global_run`/`promote_record`, `is_current`, `version_of`, `seen_version`, `run_of`), then `deriveds.js` (+0.24 KB: `view_entry`, `adopt`) and `sources.js` (+0.23 KB). `batch.js` is slightly smaller than on `main` (−0.11 KB): the code that is gone ([§10.4](#104-why-maybe_dirty-everywhere), [§11](#11-offscreen-branches)) outweighs records, views and rebases.
 
 Speed, as CPU time relative to `main` (pinned to one core, alternating runs):
 
@@ -472,14 +472,14 @@ Speed, as CPU time relative to `main` (pinned to one core, alternating runs):
 | `clean_effects`, `mol` | ~1.0                       |
 | `kairo_deep_block`     | ~0.63 (faster than `main`) |
 
-Roughly 5% of this is the inherent cost of exact versions (§4.3).
+Roughly 5% of this is the inherent cost of exact versions ([§4.3](#43-why-exact-versions-cant-be-simplified-away)).
 
 ## 18. Known bugs and gaps
 
 Bugs noticed while working on this branch but not fixed, with a guess whether they're pre-existing (also on `main`) or new here:
 
 - **Assigning to an errored writable derived** makes reading it throw the assigned value: the assignment replaces the value but leaves the error flag set. Inside a fork it crashes. _Pre-existing_: `main` behaves the same.
-- **Fork commit aliases `dv`.** When a fork commits, `promote_record` makes the entry of an assigned derived its global run, so `derived.dv` _is_ the entry's `dv`. A later global run in the real world updates `reaction.dv` in place (§8.1), and with it the entry, which `batch.current` still holds while the batch processes. Nothing is known to read the entry's `dv` afterwards, so it's probably harmless. _New_ (records and `dv` only exist here), latent.
+- **Fork commit aliases `dv`.** When a fork commits, `promote_record` makes the entry of an assigned derived its global run, so `derived.dv` _is_ the entry's `dv`. A later global run in the real world updates `reaction.dv` in place ([§8.1](#81-update_record--where-a-run-belongs-runtimejs478)), and with it the entry, which `batch.current` still holds while the batch processes. Nothing is known to read the entry's `dv` afterwards, so it's probably harmless. _New_ (records and `dv` only exist here), latent.
 - **`#merge` chains.** Merging bumps versions that don't need to change, so reactions that saw the old versions re-run without need. Writes made to a batch after it was merged (it's unlinked by then) go nowhere. _Pre-existing._
 
 Tests copied from `async-another-try-pt-1` that still fail here are marked `skip: true`, with a `// batch-views:` comment guessing why. They all fail on `main` too, so they are gaps rather than regressions:
@@ -487,6 +487,6 @@ Tests copied from `async-another-try-pt-1` that still fail here are marked `skip
 - `{#await}` blocks aren't fork- or batch-aware (`await.js` is unchanged from `main`): a fork's pending state or result shows in the real world (`async-fork-await-block*`, `async-fork-flush-stolen-effects-render`, `async-fork-obsolete-equal-values`).
 - A real batch taking over branches or each items a fork created, when the fork is discarded or re-processed: tearing (`async-fork-branch-async-adopted-variants`, `async-fork-branch-component-adopted`), a crash on an internal symbol (`async-fork-each-item-adopted*`), or nested branches recreated, which starts their async work again (`async-fork-nested-adopted`, `async-fork-nested-branch`).
 - Forks: a write-back inside a fork (`x = 1; x = 0`) is lost (`async-fork-write-back`). `commit()` throws `fork_discarded` for a fork that a real batch discarded as obsolete (`async-fork-obsolete-multiple-sources`).
-- A late reader's re-run (§12) doesn't hold back the pending batch, which commits while the reader still shows the old value (`async-read-pending-value-stale-reader`).
+- A late reader's re-run ([§12](#12-reads-after-await-record_late_read)) doesn't hold back the pending batch, which commits while the reader still shows the old value (`async-read-pending-value-stale-reader`).
 - Each blocks and branches in overlapping batches: wrong keyed order (`async-each-keyed-order-overlapping`), restarted async work (`async-each-item-skipped-stale`), a branch shown again that isn't re-validated (`async-if-skipped-branch-stale`).
 - In async mode, a render effect created in a new branch runs before the existing ones (`new-render-effect-order`).
