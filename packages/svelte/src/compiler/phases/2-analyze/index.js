@@ -119,13 +119,12 @@ const visitors = {
 			const comments = /** @type {any} */ (node).leadingComments;
 
 			if (comments) {
+				// the only leading comment of a script's root is the HTML comment before `<script>`
+				const prefix = node.type === 'Program' ? '<!--'.length : '//'.length;
+
 				for (const comment of comments) {
 					ignores.push(
-						...extract_svelte_ignore(
-							comment.start + 2 /* '//'.length */,
-							comment.value,
-							state.analysis.runes
-						)
+						...extract_svelte_ignore(comment.start + prefix, comment.value, state.analysis.runes)
 					);
 				}
 			}
