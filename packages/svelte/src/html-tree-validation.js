@@ -10,15 +10,22 @@ const autoclosing_children = {
 	// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dt#technical_summary
 	dt: { descendant: ['dt', 'dd'], reset_by: ['dl'] },
 	dd: { descendant: ['dt', 'dd'], reset_by: ['dl'] },
+	// https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inbody
 	p: {
 		descendant: [
 			'address',
 			'article',
 			'aside',
 			'blockquote',
+			'center',
+			'details',
+			'dialog',
+			'dir',
 			'div',
 			'dl',
 			'fieldset',
+			'figcaption',
+			'figure',
 			'footer',
 			'form',
 			'h1',
@@ -36,7 +43,9 @@ const autoclosing_children = {
 			'ol',
 			'p',
 			'pre',
+			'search',
 			'section',
+			'summary',
 			'table',
 			'ul'
 		]
