@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { BatchRecord, Derived, Effect, Reaction, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
 /** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
@@ -10,43 +10,38 @@ import {
 	STALE_REACTION,
 	ASYNC,
 	DESTROYED,
-	CLEAN,
 	REACTION_RAN,
-	INERT
+	INERT,
+	CONNECTED
 } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
 	update_reaction,
-	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
 	is_destroying_effect,
 	update_effect,
 	remove_reactions,
 	skipped_deps,
-	new_deps
+	new_deps,
+	is_current,
+	promote_record
 } from '../runtime.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import {
-	async_effect,
-	destroy_effect,
-	destroy_effect_children,
-	effect_tracking,
-	teardown
-} from './effects.js';
+import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, previous_batch } from './batch.js';
+import { batch_values, current_batch, view_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { update_derived_status } from './status.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -81,6 +76,7 @@ export function derived(fn) {
 	const signal = {
 		ctx: component_context,
 		deps: null,
+		dv: null,
 		effects: null,
 		equals,
 		f: flags,
@@ -218,13 +214,14 @@ export function async_derived(fn, label, location) {
 
 			if (error === OBSOLETE) return;
 
+			// write the result in the batch's view of the world
 			batch.activate();
 
 			if (error) {
 				signal.f |= ERROR_VALUE;
 
 				// @ts-expect-error the error is the wrong type, but we don't care
-				internal_set(signal, error);
+				internal_set(signal, error, null, true);
 			} else {
 				if ((signal.f & ERROR_VALUE) !== 0) {
 					signal.f ^= ERROR_VALUE;
@@ -241,7 +238,7 @@ export function async_derived(fn, label, location) {
 					});
 				}
 
-				internal_set(signal, value);
+				internal_set(signal, value, null, true);
 			}
 
 			batch.deactivate();
@@ -349,6 +346,9 @@ export function execute_derived(derived) {
 	) {
 		w.derived_inert();
 
+		// (as if it ran — it can't change anymore)
+		update_derived_status(derived);
+
 		return derived.v;
 	}
 
@@ -357,12 +357,16 @@ export function execute_derived(derived) {
 	if (DEV) {
 		let prev_eager_effects = eager_effects;
 		set_eager_effects(new Set());
+
+		var recursive = includes.call(stack, derived);
+
+		// (pushed in any case, so that `finally` doesn't remove the outer evaluation from the stack)
+		stack.push(derived);
+
 		try {
-			if (includes.call(stack, derived)) {
+			if (recursive) {
 				e.derived_references_self();
 			}
-
-			stack.push(derived);
 
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
@@ -384,58 +388,81 @@ export function execute_derived(derived) {
 }
 
 /**
+ * Re-evaluate `derived` in the real world (i.e. with the latest values of everything)
+ * and update its global state
  * @param {Derived} derived
  * @returns {void}
  */
 export function update_derived(derived) {
-	var value = execute_derived(derived);
-
-	if (!derived.equals(value)) {
-		derived.wv = increment_write_version();
-
-		// in a fork, we don't update the underlying value, just `batch_values`.
-		// the underlying value will be updated when the fork is committed.
-		// otherwise, the next time we get here after a 'real world' state
-		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.deps === null) {
-			if (current_batch !== null) {
-				// We also write to previous_batch because if it exists, it is a sign that we're
-				// currently in the process of flushing effects. These updates to deriveds may belong
-				// to the previous batch, not the new one (which can already exist if an earlier
-				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
-				// but not adding it to current_batch can, too, so we add it to both.
-				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-				current_batch.capture(derived, value, true);
-				previous_batch?.capture(derived, value, true);
-			} else {
-				derived.v = value;
-			}
-
-			// deriveds without dependencies should never be recomputed
-			if (derived.deps === null) {
-				set_signal_status(derived, CLEAN);
-				return;
-			}
-		}
-	}
-
-	// don't mark derived clean if we're reading it inside a
-	// cleanup function, or it will cache a stale value
-	if (is_destroying_effect) {
+	if (view_batch !== null && view_batch.records !== null && adopt(derived, view_batch.records)) {
 		return;
 	}
 
-	// During time traveling we don't want to reset the status so that
-	// traversal of the graph in the other batches still happens
-	if (batch_values !== null) {
-		// only cache the value if we're in a tracking context, otherwise we won't
-		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
-		}
-	} else {
-		update_derived_status(derived);
+	// (the result is stored by `update_dependencies`)
+	execute_derived(derived);
+}
+
+/**
+ * If the active batch evaluated `derived` in its view of the world, and that turns out to be
+ * the real world now (e.g. because the batch is a fork that was committed), adopt the result
+ * @param {Derived} derived
+ * @param {Map<Reaction, BatchRecord>} records
+ */
+function adopt(derived, records) {
+	var record = records.get(derived);
+
+	if (record === undefined || !is_current(record.deps, record.dv)) {
+		return false;
 	}
+
+	records.delete(derived);
+	promote_record(derived, record);
+
+	return true;
+}
+
+/**
+ * The value of `derived` as the view of the world of the active batch sees it, with its version:
+ * a run of it whose versions are what the view holds — a record in the batch, or the derived itself
+ * (i.e. its global state) — or else a new run. Results are cached for the lifetime of the view (see
+ * `Batch#apply`), unless the derived is disconnected, in which case nothing would remove them from
+ * the cache when they become stale.
+ * @param {Derived} derived
+ * @returns {{ v: any, wv: number, e?: boolean }}
+ */
+export function view_entry(derived) {
+	var entry = /** @type {Map<Value, any>} */ (batch_values).get(derived);
+	var batch = /** @type {Batch} */ (view_batch);
+
+	// Cached — unless it is a value the derived was assigned in this batch, which holds as long as its
+	// dependencies keep the versions they had then (if the assignment is the latest value, the derived's
+	// global state is that value, see `internal_set`)
+	if (
+		entry !== undefined &&
+		(entry !== batch.current.get(derived) ||
+			(entry.dv !== undefined && is_current(entry.deps, entry.dv)))
+	) {
+		return entry;
+	}
+
+	var record = batch.record(derived);
+
+	if (record !== undefined && is_current(record.deps, record.dv)) {
+		entry = record;
+	} else if (derived.dv !== null && is_current(derived.deps, derived.dv)) {
+		entry = derived;
+	} else {
+		execute_derived(derived);
+
+		// the run is stored in the batch, unless it is the real-world value (see `update_record`)
+		entry = batch.records?.get(derived) ?? derived;
+	}
+
+	if ((derived.f & CONNECTED) !== 0) {
+		/** @type {Map<Value, any>} */ (batch_values).set(derived, entry);
+	}
+
+	return entry;
 }
 
 /**

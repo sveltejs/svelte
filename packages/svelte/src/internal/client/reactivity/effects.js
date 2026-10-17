@@ -43,7 +43,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, current_batch } from './batch.js';
+import { Batch, collected_effects } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -103,6 +103,7 @@ function create_effect(type, fn) {
 	var effect = {
 		ctx: component_context,
 		deps: null,
+		dv: null,
 		nodes: null,
 		f: type | DIRTY | CONNECTED,
 		first: null,
@@ -121,8 +122,6 @@ function create_effect(type, fn) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	current_batch?.register_created_effect(effect);
-
 	/** @type {Effect | null} */
 	var e = effect;
 
@@ -132,7 +131,7 @@ function create_effect(type, fn) {
 			collected_effects.push(effect);
 		} else {
 			// schedule for later
-			Batch.ensure().schedule(effect);
+			Batch.ensure().schedule(effect, DIRTY);
 		}
 	} else if (fn !== null) {
 		try {
@@ -706,8 +705,7 @@ function resume_children(effect, local) {
 	// here because we don't want to eagerly recompute a derived like
 	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
 	if ((effect.f & CLEAN) === 0) {
-		set_signal_status(effect, DIRTY);
-		Batch.ensure().schedule(effect); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
+		Batch.ensure().schedule(effect, DIRTY); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
 	}
 
 	var child = effect.first;

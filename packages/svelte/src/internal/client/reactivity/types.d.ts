@@ -46,10 +46,34 @@ export interface Reaction extends Signal {
 	ctx: null | ComponentContext;
 	/** The reaction function */
 	fn: null | Function;
-	/** Signals that this signal reads from */
+	/**
+	 * Signals that this signal reads from. These are the edges of the graph, and therefore
+	 * a superset of the dependencies of every live record of this reaction (see `dv`)
+	 */
 	deps: null | Value[];
+	/**
+	 * The exact versions of the dependencies read by the last run whose result is
+	 * global (i.e. real-world) state, aligned with the first `dv.length` entries of
+	 * `deps`. The reaction is up to date wherever its dependencies have exactly these
+	 * versions. `null` if no such run exists (or it was invalidated)
+	 */
+	dv: null | number[];
 	/** An AbortController that aborts when the signal is destroyed */
 	ac: null | AbortController;
+}
+
+/**
+ * The result of a run of a reaction that belongs to a batch rather than to the real world:
+ * the values it read (in order) and their exact versions at the time — and, for
+ * deriveds, the resulting value and its version
+ */
+export interface BatchRecord {
+	deps: null | Value[];
+	dv: number[];
+	v?: any;
+	wv?: number;
+	/** Whether the value of a derived record is an error */
+	e?: boolean;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
