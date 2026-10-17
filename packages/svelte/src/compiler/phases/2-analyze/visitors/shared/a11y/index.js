@@ -1,4 +1,5 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, Scope } from '#compiler' */
+/** @import { Expression } from 'estree' */
 /** @import { Context } from '../../../types.js' */
 /** @import { ARIARoleDefinitionKey, ARIARoleRelationConcept, ARIAProperty, ARIAPropertyDefinition, ARIARoleDefinition } from 'aria-query' */
 import {
@@ -42,7 +43,14 @@ import {
 	regex_starts_with_vowel,
 	regex_whitespaces
 } from '../../../../patterns.js';
-import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
+import {
+	get_attribute_chunks,
+	get_attribute_expression,
+	is_event_attribute,
+	is_expression_attribute,
+	is_simple_expression,
+	is_text_attribute
+} from '../../../../../utils/ast.js';
 import { list } from '../../../../../utils/string.js';
 import { walk } from 'zimmerframe';
 import fuzzymatch from '../../../../../utils/fuzzymatch.js';
@@ -314,8 +322,15 @@ export function check_element(node, context) {
 	// no-noninteractive-tabindex
 	if (!is_dynamic_element && !is_interactive && !is_interactive_roles(role_static_value)) {
 		const tab_index = attribute_map.get('tabindex');
-		const tab_index_value = get_static_text_value(tab_index);
-		if (tab_index && (tab_index_value === null || Number(tab_index_value) >= 0)) {
+		if (
+			tab_index &&
+			may_have_noninteractive_tabindex(
+				get_attribute_value(role),
+				get_attribute_value(tab_index),
+				context.state.scope,
+				can_correlate_attributes(node, role, tab_index)
+			)
+		) {
 			w.a11y_no_noninteractive_tabindex(node);
 		}
 	}
@@ -572,6 +587,129 @@ export function check_element(node, context) {
 	) {
 		w.a11y_missing_content(node, node.name);
 	}
+}
+
+/**
+ * @param {AST.Attribute | undefined} attribute
+ * @returns {Expression | string | null}
+ */
+function get_attribute_value(attribute) {
+	return attribute && is_expression_attribute(attribute)
+		? get_attribute_expression(attribute)
+		: get_static_text_value(attribute);
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} node
+ * @param {AST.Attribute | undefined} role
+ * @param {AST.Attribute} tab_index
+ */
+function can_correlate_attributes(node, role, tab_index) {
+	if (!role) return false;
+
+	const start = Math.min(role.start, tab_index.start);
+	const end = Math.max(role.start, tab_index.start);
+
+	// Neither the earlier tabindex nor an intervening attribute may change the test value.
+	// Role branches are checked separately when correlating the conditionals below.
+	return node.attributes.every((attribute) => {
+		if (attribute === role || attribute.start < start || attribute.start >= end) return true;
+
+		return (
+			attribute.type === 'Attribute' &&
+			get_attribute_chunks(attribute.value).every(
+				(chunk) => chunk.type === 'Text' || is_repeatable_expression(chunk.expression)
+			)
+		);
+	});
+}
+
+/**
+ * @param {Expression} expression
+ * @returns {boolean}
+ */
+function is_repeatable_expression(expression) {
+	if (expression.type === 'ConditionalExpression') {
+		return (
+			is_simple_expression(expression.test) &&
+			is_repeatable_expression(expression.consequent) &&
+			is_repeatable_expression(expression.alternate)
+		);
+	}
+
+	return (
+		is_simple_expression(expression) ||
+		(expression.type === 'UnaryExpression' && expression.argument.type === 'Literal')
+	);
+}
+
+/**
+ * @param {Expression | string | null} role
+ * @param {Expression | string | null} tab_index
+ * @param {Scope} scope
+ * @param {boolean} can_correlate
+ * @returns {boolean}
+ */
+function may_have_noninteractive_tabindex(role, tab_index, scope, can_correlate) {
+	if (role !== null && typeof role !== 'string' && role.type === 'ConditionalExpression') {
+		if (
+			can_correlate &&
+			tab_index !== null &&
+			typeof tab_index !== 'string' &&
+			tab_index.type === 'ConditionalExpression' &&
+			role.consequent.type === 'Literal' &&
+			typeof role.consequent.value === 'string' &&
+			role.alternate.type === 'Literal' &&
+			typeof role.alternate.value === 'string' &&
+			role.test.type === 'Identifier' &&
+			tab_index.test.type === 'Identifier' &&
+			role.test.name === tab_index.test.name
+		) {
+			// Only correlate repeatable tests — identical calls or member reads may differ.
+			return (
+				may_have_noninteractive_tabindex(
+					role.consequent,
+					tab_index.consequent,
+					scope,
+					can_correlate
+				) ||
+				may_have_noninteractive_tabindex(role.alternate, tab_index.alternate, scope, can_correlate)
+			);
+		}
+
+		return (
+			may_have_noninteractive_tabindex(role.consequent, tab_index, scope, can_correlate) ||
+			may_have_noninteractive_tabindex(role.alternate, tab_index, scope, can_correlate)
+		);
+	}
+
+	if (
+		tab_index !== null &&
+		typeof tab_index !== 'string' &&
+		tab_index.type === 'ConditionalExpression'
+	) {
+		return (
+			may_have_noninteractive_tabindex(role, tab_index.consequent, scope, can_correlate) ||
+			may_have_noninteractive_tabindex(role, tab_index.alternate, scope, can_correlate)
+		);
+	}
+
+	const role_value = typeof role === 'string' ? role : role?.type === 'Literal' ? role.value : null;
+	if (
+		typeof role_value === 'string' &&
+		is_interactive_roles(/** @type {ARIARoleDefinitionKey} */ (role_value))
+	) {
+		return false;
+	}
+
+	if (tab_index === null) return true; // unknown
+	if (typeof tab_index === 'string') return Number(tab_index) >= 0;
+
+	const evaluated = scope.evaluate(tab_index);
+	if (!evaluated.is_known) return true;
+	if (evaluated.value == null) return false; // the attribute is removed
+
+	return Number(evaluated.value) >= 0;
 }
 
 /**
