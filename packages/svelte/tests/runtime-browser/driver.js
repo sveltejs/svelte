@@ -64,7 +64,10 @@ export default async function (target) {
 				componentCtor: SvelteComponent,
 				target,
 				window,
-				waitUntil: wait_until
+				waitUntil: wait_until,
+				/** @param {string} selector */
+				// @ts-expect-error exposed by test.ts
+				trustedClick: (selector) => window.__trusted_click(selector)
 			});
 
 			component?.$destroy();
