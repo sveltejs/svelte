@@ -152,7 +152,8 @@ export function async_derived(fn, label, location) {
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
-			unset_context();
+			// Don't clear the reaction context before the current update has finished
+			queueMicrotask(unset_context);
 		}
 
 		if (DEV) {
