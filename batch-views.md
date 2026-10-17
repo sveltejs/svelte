@@ -43,6 +43,7 @@ The relevant code lives in
 - **Version** — every value of a signal has a version (`wv`). Reactions remember the exact versions of what they read.
 - **Run** — the result of running a reaction: the values it read, their versions and, for a derived, the value (possibly an error) and its version. A run is stored either as the reaction's **global state** (the run that is the real world) or as a record in a batch.
 - **Record** (`BatchRecord`) — a run that belongs to a batch rather than to the real world: the values read (`deps`), their versions (`dv`) and, for deriveds, the value, its version and whether it is an error (`v`, `wv`, `e`). Records are stored in `batch.records`.
+- **Folded** — an earlier batch is _folded_ into a later batch's view if the two **intersect**, i.e. both wrote at least one of the same sources. Its writes are then kept in the later batch's view instead of being undone, and its records can be reused there. This is because if the later batch finishes first, it doesn't commit on its own: it's merged into the earlier batch (`#merge`). So the two are treated as one set of changes. Forks are never folded. `activate` recomputes `batch.folded` each time it runs (see [§6.1](#61-batchactivate-batchjs967), [§6.2](#62-folded-and-batchrecordreaction)).
 - **Latest** — a value is _latest_ if it's the real-world value: its version is the real-world version and, for a derived, that one is up to date (see [§7.2](#72-latest-values)).
 
 ## 2. Why `main`'s approach isn't enough
