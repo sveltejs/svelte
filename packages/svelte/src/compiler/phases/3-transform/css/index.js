@@ -4,7 +4,7 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
-import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
+import { get_source_name, merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
 import { dev } from '../../../state.js';
 
 /**
@@ -63,6 +63,8 @@ export function render_stylesheet(source, analysis, options) {
 		hasGlobal: analysis.css.has_global
 	};
 
+	// MagicString treats absolute URLs as filesystem paths.
+	css.map.sources[0] = get_source_name(options.filename, options.cssOutputFilename, 'input.svelte');
 	merge_with_preprocessor_map(css, options, css.map.sources[0]);
 
 	if (dev && analysis.inject_styles && css.code) {
