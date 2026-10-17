@@ -144,6 +144,12 @@ export class Renderer {
 	#boundary = null;
 
 	/**
+	 * Replacement content for a failed boundary. Keep the original children for cleanup.
+	 * @type {Renderer | null}
+	 */
+	#failed = null;
+
+	/**
 	 * The type of string content that this renderer is accumulating.
 	 * @type {RendererType}
 	 */
@@ -373,27 +379,28 @@ export class Renderer {
 
 			const result = this.global.transformError(error);
 
-			child.#out.length = 0;
+			const failed_renderer = (child.#failed = new Renderer(child.global, child));
 			child.#boundary = null;
+			this.global.has_failed_boundary = true;
 
 			if (result instanceof Promise) {
 				if (this.global.mode === 'sync') {
 					e.await_invalid();
 				}
 
-				child.promise = child.global.track(
+				failed_renderer.promise = child.global.track(
 					/** @type {Promise<unknown>} */ (result).then((transformed) => {
 						set_ssr_context(parent_context);
-						child.#out.push(Renderer.#serialize_failed_boundary(transformed));
-						failed_snippet(child, transformed, noop);
-						child.#out.push(BLOCK_CLOSE);
+						failed_renderer.#out.push(Renderer.#serialize_failed_boundary(transformed));
+						failed_snippet(failed_renderer, transformed, noop);
+						failed_renderer.#out.push(BLOCK_CLOSE);
 					})
 				);
-				child.promise.catch(noop);
+				failed_renderer.promise.catch(noop);
 			} else {
-				child.#out.push(Renderer.#serialize_failed_boundary(result));
-				failed_snippet(child, result, noop);
-				child.#out.push(BLOCK_CLOSE);
+				failed_renderer.#out.push(Renderer.#serialize_failed_boundary(result));
+				failed_snippet(failed_renderer, result, noop);
+				failed_renderer.#out.push(BLOCK_CLOSE);
 			}
 		}
 	}
@@ -547,7 +554,11 @@ export class Renderer {
 	 * @returns {number[]}
 	 */
 	get_path() {
-		return this.#parent ? [...this.#parent.get_path(), this.#parent.#out.indexOf(this)] : [];
+		if (!this.#parent) return [];
+
+		const index =
+			this.#parent.#failed === this ? this.#parent.#out.length : this.#parent.#out.indexOf(this);
+		return [...this.#parent.get_path(), index];
 	}
 
 	/**
@@ -557,6 +568,7 @@ export class Renderer {
 		const copy = new Renderer(this.global, this.#parent);
 		copy.type = this.type;
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
+		copy.#failed = this.#failed?.copy() ?? null;
 		copy.promise = this.promise;
 		return copy;
 	}
@@ -583,6 +595,11 @@ export class Renderer {
 
 			return item;
 		});
+		if (this.#failed && other.#failed) {
+			this.#failed.subsume(other.#failed);
+		} else {
+			this.#failed = other.#failed;
+		}
 		this.promise = other.promise;
 		this.type = other.type;
 	}
@@ -652,6 +669,9 @@ export class Renderer {
 				yield* child.#traverse_components();
 			}
 		}
+		if (this.#failed) {
+			yield* this.#failed.#traverse_components();
+		}
 		if (this.#is_component_body) {
 			yield this;
 		}
@@ -670,6 +690,9 @@ export class Renderer {
 			if (child instanceof Renderer && !child.#is_component_body) {
 				yield* child.#collect_ondestroy();
 			}
+		}
+		if (this.#failed) {
+			yield* this.#failed.#collect_ondestroy();
 		}
 	}
 
@@ -783,6 +806,12 @@ export class Renderer {
 				await renderer.global.settle();
 			}
 
+			if (!failed && renderer.global.has_failed_boundary) {
+				// Visible content is complete, but discarded children may still be running.
+				renderer.global.abort();
+				await renderer.global.settle();
+			}
+
 			renderer.#run_on_destroy(failed);
 			if (failed) throw render_error;
 
@@ -799,6 +828,8 @@ export class Renderer {
 	 * @returns {AccumulatedContent}
 	 */
 	#collect_content(content = { head: '', body: '' }) {
+		if (this.#failed) return this.#failed.#collect_content(content);
+
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
@@ -816,6 +847,8 @@ export class Renderer {
 	 * @returns {Promise<AccumulatedContent>}
 	 */
 	async #collect_content_async(content = { head: '', body: '' }) {
+		if (this.#failed) return this.#failed.#collect_content_async(content);
+
 		await this.promise;
 
 		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
@@ -846,7 +879,8 @@ export class Renderer {
 						set_ssr_context(context);
 
 						// Render the failed snippet instead of the partial children content
-						const failed_renderer = new Renderer(item.global, item);
+						const failed_renderer = (item.#failed = new Renderer(item.global, item));
+						item.global.has_failed_boundary = true;
 						failed_renderer.type = item.type;
 						failed_renderer.#out.push(Renderer.#serialize_failed_boundary(transformed));
 						failed(failed_renderer, transformed, noop);
@@ -999,6 +1033,9 @@ export class SSRState {
 	#controller = null;
 
 	#aborted = false;
+
+	/** Whether a boundary discarded content that may still have pending work. */
+	has_failed_boundary = false;
 
 	/**
 	 * `transformError` passed to `render`. Called when an error boundary catches an error.
