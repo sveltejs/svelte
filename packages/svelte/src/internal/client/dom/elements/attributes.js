@@ -65,16 +65,17 @@ export function remove_input_defaults(input) {
 		if (already_removed) return;
 		already_removed = true;
 
-		// Remove the attributes but preserve the values
+		// Remove the default attributes without affecting the cached value/checked expressions.
+		// Preserve the live properties, which can change when their attributes are removed.
 		if (input.hasAttribute('value')) {
 			var value = input.value;
-			set_attribute(input, 'value', null);
+			input.removeAttribute('value');
 			input.value = value;
 		}
 
 		if (input.hasAttribute('checked')) {
 			var checked = input.checked;
-			set_attribute(input, 'checked', null);
+			input.removeAttribute('checked');
 			input.checked = checked;
 		}
 	};
