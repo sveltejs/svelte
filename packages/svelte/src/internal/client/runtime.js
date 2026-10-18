@@ -23,7 +23,8 @@ import {
 	ERROR_VALUE,
 	MANAGED_EFFECT,
 	REACTION_RAN,
-	ASYNC
+	ASYNC,
+	ASSIGNED
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -435,12 +436,16 @@ function update_dependencies(reaction, flags, value, error) {
  * @param {boolean} error
  */
 function set_derived_value(derived, value, error) {
-	if (error || (derived.f & ERROR_VALUE) !== 0 || !derived.equals(value)) {
+	// a run replaces a value that was assigned to the derived
+	var flags = derived.f & ~ASSIGNED;
+
+	if (error || (flags & ERROR_VALUE) !== 0 || !derived.equals(value)) {
 		derived.v = value;
 		derived.wv = increment_write_version();
-		derived.f = error ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE;
+		flags = error ? flags | ERROR_VALUE : flags & ~ERROR_VALUE;
 	}
 
+	derived.f = flags;
 	update_derived_status(derived);
 }
 
@@ -486,6 +491,16 @@ function update_record(reaction, flags, deps, length, value, error) {
 		view_batch?.committing === false
 			? view_batch
 			: null;
+
+	// A derived that has another version in the view than in the real world — because the view undoes an
+	// assignment to it, or it was assigned in a fork — never runs for the real world (see `view_entry`)
+	if (batch_values !== null && (flags & DERIVED) !== 0) {
+		var written = batch_values.get(/** @type {Derived} */ (reaction));
+
+		if (written !== undefined && written.wv !== /** @type {Derived} */ (reaction).wv) {
+			batch = view_batch;
+		}
+	}
 
 	// A global run in the real world updates the versions in place. Anything else needs a new array:
 	// a record must not share it with the global state, and a derived's run can turn out to belong
@@ -682,7 +697,7 @@ export function promote_record(reaction, record) {
 
 		derived.v = record.v;
 		derived.wv = /** @type {number} */ (record.wv);
-		derived.f = record.e ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE;
+		derived.f = (record.e ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE) & ~ASSIGNED;
 		update_derived_status(derived);
 	}
 }

@@ -12,7 +12,8 @@ import {
 	DESTROYED,
 	REACTION_RAN,
 	INERT,
-	CONNECTED
+	CONNECTED,
+	ASSIGNED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -26,7 +27,8 @@ import {
 	skipped_deps,
 	new_deps,
 	is_current,
-	promote_record
+	promote_record,
+	version_of
 } from '../runtime.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
@@ -425,7 +427,7 @@ function adopt(derived, records) {
  * The value of `derived` as the view of the world of the active batch sees it, with its version:
  * a run of it whose versions are what the view holds — a record in the batch, or the derived itself
  * (i.e. its global state) — or else a new run. Results are cached for the lifetime of the view (see
- * `Batch#apply`), unless the derived is disconnected, in which case nothing would remove them from
+ * `Batch#activate`), unless the derived is disconnected, in which case nothing would remove them from
  * the cache when they become stale.
  * @param {Derived} derived
  * @returns {{ v: any, wv: number, e?: boolean }}
@@ -433,23 +435,32 @@ function adopt(derived, records) {
 export function view_entry(derived) {
 	var entry = /** @type {Map<Value, any>} */ (batch_values).get(derived);
 	var batch = /** @type {Batch} */ (view_batch);
+	var own = batch.current.get(derived);
 
-	// Cached — unless it is a value the derived was assigned in this batch, which holds as long as its
-	// dependencies keep the versions they had then (if the assignment is the latest value, the derived's
-	// global state is that value, see `internal_set`)
-	if (
-		entry !== undefined &&
-		(entry !== batch.current.get(derived) ||
-			(entry.dv !== undefined && is_current(entry.deps, entry.dv)))
-	) {
+	// a run of the derived (the derived itself, or a record) that was cached
+	if (entry !== undefined && entry !== own && (entry === derived || entry.dv !== undefined)) {
 		return entry;
 	}
 
-	var record = batch.record(derived);
+	// Otherwise, what the view holds for the derived is a write to it — an assignment in this batch, or the
+	// value from before another batch's assignment that this view undoes — or else its global state.
+	// An assigned value holds until one of the derived's dependencies changes (see `unchanged_since`). The
+	// value from before an undone assignment is only used if it was assigned, too: a computed value was
+	// computed in some other view of the world, and may depend on writes that this view undoes
+	var held = entry ?? derived;
+	var assigned = held === derived ? (derived.f & ASSIGNED) !== 0 : held === own || held.assigned;
+	var record;
 
-	if (record !== undefined && is_current(record.deps, record.dv)) {
+	if (assigned && unchanged_since(derived.deps, held.wv)) {
+		entry = held;
+	} else if ((record = batch.record(derived)) !== undefined && is_current(record.deps, record.dv)) {
 		entry = record;
-	} else if (derived.dv !== null && is_current(derived.deps, derived.dv)) {
+	} else if (
+		held === derived &&
+		!assigned &&
+		derived.dv !== null &&
+		is_current(derived.deps, derived.dv)
+	) {
 		entry = derived;
 	} else {
 		execute_derived(derived);
@@ -463,6 +474,26 @@ export function view_entry(derived) {
 	}
 
 	return entry;
+}
+
+/**
+ * Whether none of `deps` has been written since the version `wv` in the active view of the world, which is
+ * how a value assigned to a derived (whose version is `wv`) holds: until one of its dependencies changes.
+ * Comparing the versions with those they had at the time of the assignment, like `is_current` does,
+ * wouldn't work: this view might undo a write the assignment saw, but that write doesn't make the
+ * assignment outdated, as it happened before. (A dependency that is a derived which was evaluated again
+ * in the view, and got a different value, counts as changed, though)
+ * @param {Value[] | null} deps
+ * @param {number} wv
+ */
+function unchanged_since(deps, wv) {
+	if (deps !== null) {
+		for (var dep of deps) {
+			if (version_of(dep) > wv) return false;
+		}
+	}
+
+	return true;
 }
 
 /**

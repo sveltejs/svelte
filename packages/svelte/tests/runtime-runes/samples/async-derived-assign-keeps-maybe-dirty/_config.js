@@ -23,10 +23,13 @@ export default test({
 		d.click();
 		await tick();
 
-		// B sees A's change (but not C's), so `d` is 10 in its world
+		// B doesn't intersect A or C, so it sees neither of their changes: `s` is 0, and so is `d`.
+		// (The value `d` had before C's assignment must not be used: it was computed with A's `s`.)
+		// A and C then evaluate the branch B revealed in their own views
 		resolve_b.click();
 		await tick();
-		assert.equal(logs[0], 'probe 10');
+		assert.deepEqual(logs, ['probe 0', 'probe 10', 'probe 99']);
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p><p>0</p><span>0</span><i>0</i>`);
 
 		resolve_a.click();
 		await tick();

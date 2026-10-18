@@ -25,7 +25,8 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC
+	ASYNC,
+	ASSIGNED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -244,14 +245,16 @@ export function internal_set(source, value, updated_during_traversal = null, own
 		if ((source.f & DERIVED) !== 0) {
 			const derived = /** @type {Derived} */ (source);
 
-			// The assigned value holds until one of the derived's dependencies changes, i.e. it is valid
-			// for the versions they currently have — in the real world, or in the batch (e.g. a fork)
+			// The assigned value holds until one of the derived's dependencies changes — in the real world,
+			// while they keep the versions they have now (in a batch's view, see `view_entry`)
 			var record = { deps: derived.deps?.slice() ?? null, dv: derived.deps?.map(version_of) ?? [] };
 
 			if (latest) {
 				derived.dv = record.dv;
+				derived.f |= ASSIGNED;
 				update_derived_status(derived);
 			} else {
+				// (a fork keeps the record, to make it the global state when it's committed, see `fork`)
 				Object.assign(/** @type {BatchRecord} */ (batch.current.get(derived)), record);
 			}
 		}

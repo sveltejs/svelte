@@ -17,7 +17,8 @@ import {
 	MANAGED_EFFECT,
 	REACTION_RAN,
 	DESTROYING,
-	EFFECT_OFFSCREEN
+	EFFECT_OFFSCREEN,
+	ASSIGNED
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -69,7 +70,7 @@ export let previous_batch = null;
 export let batch_values = null;
 
 /**
- * The batch whose view of the world is active (see `apply`). Block and async
+ * The batch whose view of the world is active (see `activate`). Block and async
  * effects that run while it is processed, and deriveds evaluated with values
  * that are not the latest, are recorded in this batch
  * @type {Batch | null}
@@ -140,8 +141,9 @@ export class Batch {
 
 	/**
 	 * The values (and their versions) of any sources that are updated in this batch _before_ those updates took place.
+	 * For a derived, `assigned` says whether its value before was assigned, too (otherwise it was computed).
 	 * The keys of this map are identical to `this.current`
-	 * @type {Map<Value, { v: any, wv: number }>}
+	 * @type {Map<Value, { v: any, wv: number, assigned?: boolean }>}
 	 */
 	previous = new Map();
 
@@ -682,7 +684,11 @@ export class Batch {
 
 		this.transfer_reactions(batch.#unprocessed);
 
-		this.oncommit(() => batch.discard());
+		// What the merged batch did on its own (e.g. branches it selected) is obsolete once this batch is
+		// done — whether it commits or is discarded (e.g. because of an error)
+		const discard = () => batch.discard();
+		this.oncommit(discard);
+		this.ondiscard(discard);
 		batch.#unlink();
 
 		// processing re-validates everything that depends on the (now merged) writes of this batch
@@ -723,7 +729,14 @@ export class Batch {
 			var previous = later === null ? source : later.previous.get(source);
 
 			if (previous !== undefined && previous.v !== UNINITIALIZED) {
-				this.previous.set(source, { v: previous.v, wv: previous.wv });
+				this.previous.set(source, {
+					v: previous.v,
+					wv: previous.wv,
+					assigned:
+						previous === source
+							? (source.f & ASSIGNED) !== 0
+							: /** @type {{ assigned?: boolean }} */ (previous).assigned
+				});
 			}
 		}
 
@@ -1011,8 +1024,12 @@ export class Batch {
 				this.folded.push(batch);
 			} else {
 				for (const [source, previous] of batch.previous) {
-					// (where the views agree on the value, the real one — and its version — applies)
-					if (!batch_values.has(source) && !source.equals(previous.v)) {
+					// (where the views agree on the value, the real one — and its version — applies. Not for an
+					// assigned derived: its value before may have been computed in another view, see `view_entry`)
+					if (
+						!batch_values.has(source) &&
+						((source.f & DERIVED) !== 0 || !source.equals(previous.v))
+					) {
 						batch_values.set(source, previous);
 					}
 				}
@@ -1473,6 +1490,7 @@ export function fork(fn) {
 				if ((source.f & DERIVED) !== 0 && /** @type {BatchRecord} */ (entry).dv !== undefined) {
 					// an assigned derived, which holds its value until its dependencies change
 					promote_record(/** @type {Derived} */ (source), /** @type {BatchRecord} */ (entry));
+					source.f |= ASSIGNED;
 				}
 			}
 
