@@ -1,6 +1,16 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
-import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../../../constants.js';
+import {
+	BOUNDARY_EFFECT,
+	DESTROYED,
+	DESTROYING,
+	EFFECT_PRESERVED,
+	EFFECT_TRANSPARENT
+} from '#client/constants';
+import {
+	HYDRATION_ERROR,
+	HYDRATION_START_ELSE,
+	HYDRATION_START_FAILED
+} from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { invoke_error_boundary } from '../../error-handling.js';
 import {
@@ -22,6 +32,7 @@ import {
 	hydrate_node,
 	hydrating,
 	next,
+	read_hydration_instruction,
 	skip_nodes,
 	set_hydrate_node
 } from '../hydration.js';
@@ -101,11 +112,8 @@ export class Boundary {
 	#pending_count = 0;
 	#pending_count_update_queued = false;
 
-	/** @type {Set<Effect>} */
-	#dirty_effects = new Set();
-
-	/** @type {Set<Effect>} */
-	#maybe_dirty_effects = new Set();
+	/** @type {Map<Effect, number>} */
+	#dirty_reactions = new Map();
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -154,16 +162,18 @@ export class Boundary {
 
 		this.#effect = block(() => {
 			if (hydrating) {
-				const comment = /** @type {Comment} */ (this.#hydrate_open);
+				const comment_data = read_hydration_instruction(
+					/** @type {TemplateNode} */ (this.#hydrate_open)
+				);
 				hydrate_next();
 
-				const server_rendered_pending = comment.data === HYDRATION_START_ELSE;
-				const server_rendered_failed = comment.data.startsWith(HYDRATION_START_FAILED);
+				const server_rendered_pending = comment_data === HYDRATION_START_ELSE;
+				const server_rendered_failed = comment_data.startsWith(HYDRATION_START_FAILED);
 
 				if (server_rendered_failed) {
 					// Server rendered the failed snippet - hydrate it.
 					// The serialized error is embedded in the comment: <!--[?<json>-->
-					const serialized_error = JSON.parse(comment.data.slice(HYDRATION_START_FAILED.length));
+					const serialized_error = JSON.parse(comment_data.slice(HYDRATION_START_FAILED.length));
 					this.#hydrate_failed_content(serialized_error);
 				} else if (server_rendered_pending) {
 					this.#hydrate_pending_content();
@@ -220,6 +230,8 @@ export class Boundary {
 		var calling_on_error = false;
 
 		const reset = () => {
+			if (this.#is_destroyed()) return;
+
 			if (did_reset) {
 				w.svelte_boundary_reset_noop();
 				return;
@@ -243,6 +255,8 @@ export class Boundary {
 		};
 
 		const invoke_onerror = () => {
+			if (this.#is_destroyed()) return;
+
 			try {
 				calling_on_error = true;
 				this.#props.onerror?.(error, reset);
@@ -255,6 +269,10 @@ export class Boundary {
 		return { reset, invoke_onerror };
 	}
 
+	#is_destroyed() {
+		return (this.#effect.f & (DESTROYED | DESTROYING)) !== 0;
+	}
+
 	#hydrate_pending_content() {
 		const pending = this.#props.pending;
 		if (!pending) return;
@@ -263,6 +281,8 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
+
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
 			var handled = false;
@@ -335,7 +355,7 @@ export class Boundary {
 
 		// any effects that were previously deferred should be transferred
 		// to the batch, which will flush in the next microtask
-		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
+		batch.transfer_reactions(this.#dirty_reactions);
 	}
 
 	/**
@@ -343,7 +363,7 @@ export class Boundary {
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
+		defer_effect(effect, this.#dirty_reactions);
 	}
 
 	/**
@@ -445,6 +465,10 @@ export class Boundary {
 
 	/** @param {unknown} error */
 	error(error) {
+		if (error === HYDRATION_ERROR) {
+			throw error;
+		}
+
 		// If we have nothing to capture the error, or if we hit an error while
 		// rendering the fallback, re-throw for another boundary to handle
 		if (!this.#props.onerror && !this.#props.failed) {
@@ -457,7 +481,7 @@ export class Boundary {
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
 
 			current_batch.oncommit(() => {
-				this.#handle_error(error);
+				if (!this.#is_destroyed()) this.#handle_error(error);
 			});
 		} else {
 			this.#handle_error(error);
@@ -493,11 +517,13 @@ export class Boundary {
 
 		/** @param {unknown} transformed_error */
 		const handle_error_result = (transformed_error) => {
+			if (this.#is_destroyed()) return;
+
 			const { reset, invoke_onerror } = this.#create_reset(transformed_error);
 
 			invoke_onerror();
 
-			if (failed) {
+			if (failed && !this.#is_destroyed()) {
 				this.#failed_effect = this.#run(() => {
 					try {
 						return branch(() => {
@@ -523,6 +549,8 @@ export class Boundary {
 		};
 
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
+
 			// Run the error through the API-level transformError transform (e.g. SvelteKit's handleError)
 			/** @type {unknown} */
 			var result;
