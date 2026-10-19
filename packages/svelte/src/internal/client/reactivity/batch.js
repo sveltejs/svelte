@@ -1319,6 +1319,24 @@ export function schedule_effect(effect, status) {
 	/** @type {Batch} */ (current_batch).schedule(effect, status);
 }
 
+/**
+ * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
+ * views of the world can't undo such a write, as there's no value from before it (see `capture`) — unless they have
+ * their own write of it, like `batch` might. (The writes of forks aren't part of other views at all)
+ * @param {Value} value
+ * @param {Batch | null} batch
+ * @returns {Batch | null}
+ */
+export function uncommitted_first_value(value, batch) {
+	if (batch?.current.has(value)) return null;
+
+	for (let b = first_batch; b !== null; b = b.next) {
+		if (b !== batch && !b.is_fork && b.current.has(value) && !b.previous.has(value)) return b;
+	}
+
+	return null;
+}
+
 /** @type {Source<number>[]} */
 let eager_versions = [];
 

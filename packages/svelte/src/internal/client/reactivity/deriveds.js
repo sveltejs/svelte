@@ -40,8 +40,9 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, view_batch } from './batch.js';
+import { batch_values, current_batch, uncommitted_first_value, view_batch } from './batch.js';
 import { increment_pending, unset_context } from './async.js';
+import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 
@@ -122,6 +123,9 @@ export function async_derived(fn, label, location) {
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
+
+	// The batch the derived is created in. Whoever awaits its first value continues in its view (see `flatten` and `run`)
+	var creator = current_batch;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -265,13 +269,33 @@ export function async_derived(fn, label, location) {
 		/** @param {Promise<V>} p */
 		function next(p) {
 			function go() {
-				if (p === promise) {
-					fulfil(signal);
-				} else {
+				if (p !== promise) {
 					// if the effect re-runs before the initial promise
 					// resolves, delay resolution until we have a value
 					next(promise);
+					return;
 				}
+
+				// While the boundary shows its pending snippet, the latest run supersedes the others, whichever batch
+				// it belongs to (see above). So the first value can be another batch's result, which the creator's view
+				// can't undo. Until that batch commits it, the creator mustn't continue with it — and the boundary keeps
+				// showing its pending snippet. (Elsewhere, the creator's own run provides the first value in its view)
+				var writer =
+					should_suspend && !(/** @type {Effect} */ (parent).b?.is_rendered())
+						? uncommitted_first_value(signal, creator)
+						: null;
+
+				if (writer === null) {
+					fulfil(signal);
+				} else {
+					// (check again once the commit is done)
+					writer.oncommit(resume);
+					writer.ondiscard(resume);
+				}
+			}
+
+			function resume() {
+				queue_micro_task(go);
 			}
 
 			p.then(go, go);

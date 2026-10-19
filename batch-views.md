@@ -5,8 +5,8 @@ This document describes how the `batch-views` branch decides whether a reaction 
 The relevant code lives in
 
 - `packages/svelte/src/internal/client/runtime.js` — `version_of`, `is_current`, `is_dirty`, `update_dependencies`/`update_record`, `keep_global_run`, `set_global_run`/`promote_record`, `get`, `record_late_read`
-- `packages/svelte/src/internal/client/reactivity/batch.js` — `Batch` (`activate`, `record`, `capture`, `schedule`/`#add`, `#process`, `#revalidate`, `unskip_effect`/`#revalidate_branch`, `#commit`, `#merge`), `fork`
-- `packages/svelte/src/internal/client/reactivity/deriveds.js` — `update_derived`, `adopt`, `view_entry`
+- `packages/svelte/src/internal/client/reactivity/batch.js` — `Batch` (`activate`, `record`, `capture`, `schedule`/`#add`, `#process`, `#revalidate`, `unskip_effect`/`#revalidate_branch`, `#commit`, `#merge`), `fork`, `uncommitted_first_value`
+- `packages/svelte/src/internal/client/reactivity/deriveds.js` — `update_derived`, `adopt`, `view_entry`, `async_derived` (its first value)
 - `packages/svelte/src/internal/client/reactivity/sources.js` — `internal_set`, `mark_reactions`
 - `packages/svelte/src/internal/client/dom/blocks/branches.js` — `BranchManager` (the branch each batch selected)
 - `packages/svelte/src/internal/client/dom/blocks/each.js` — each items that only exist offscreen for some batches
@@ -388,6 +388,19 @@ Before, the other batches went on undoing the writes until the batch was done, a
 - A later batch re-ran blocks in a view without them. With `{#if show && a >= 0}`, whose branch has pending async work, a batch that writes `a` selected no branch, because its view undid `show = true`. The branch was destroyed, and created again when the batch that showed it was rebased, which started the async work again. On `main`, it was removed (`async-commit-with-pending-not-undone`).
 - A late read ([§12](#12-reads-after-await-record_late_read)) in a batch that committed saw the value from before a write that another batch committed after it, and the batch committed the reader with that value, next to the newer one (`async-read-pending-value-stale-reader`). The reader then re-ran in the other batch, which fixed it.
 
+### 10.6 First values inside a pending boundary
+
+While a boundary shows its pending snippet, the latest run of an async expression in it supersedes the others, whichever batch they belong to (`async_derived`). The code that awaits the expression's first value continues in the view of the batch that created it: the template effects of the boundary's content (`flatten`), or the rest of a component's script (`run`). Once all work inside the boundary is done, it reveals its content right away, not when some batch commits.
+
+So the first value can be the result of another batch, which the creator's view can't undo: there's no value from before it (`capture` doesn't record `UNINITIALIZED`). Before, the content then showed that result before its batch committed, next to the old values elsewhere (`async-pending-boundary-later-batch-result`, `async-read-pending-value-in-committed-batch`).
+
+Now `async_derived` only hands out its first value once no other batch holds it uncommitted (`uncommitted_first_value`, which relies on committed writes being cleared, [§10.5](#105-committing-with-pending-work)). Otherwise it waits until that batch commits or is discarded, and the boundary keeps showing its pending snippet. It doesn't wait
+
+- if the creator has its own write of the value, which is what its view sees;
+- if the other batch's write isn't the expression's first value (an earlier run's value was written before): other views undo it;
+- for forks, whose writes aren't part of other views at all;
+- outside pending boundaries. There, the creator's own run provides the first value, because a run in another batch doesn't supersede it. And waiting could deadlock: the creator waits for the code that awaits the value, and could be the batch that the other one merges into.
+
 ## 11. Offscreen branches
 
 A branch created by a block effect while a batch is processed (`BranchManager`, `each` items and fallbacks) is flagged `EFFECT_OFFSCREEN` until it's committed. It exists for the batches that select it, and its effects ran (and hold state) in that batch's view.
@@ -538,7 +551,7 @@ Bugs noticed while working on this branch but not fixed, with a guess whether th
 - **Assigning to an errored writable derived** makes reading it throw the assigned value: the assignment replaces the value but leaves the error flag set. Inside a fork it crashes. _Pre-existing_: `main` behaves the same.
 - **Fork commit aliases `dv`.** When a fork commits, `promote_record` makes the entry of an assigned derived its global run, so `derived.dv` _is_ the entry's `dv`. A later global run in the real world updates `reaction.dv` in place ([§8.1](#81-update_record--where-a-run-belongs-runtimejs494)), and with it the entry, which `batch.current` still holds while the batch processes. Nothing is known to read the entry's `dv` afterwards, so it's probably harmless. _New_ (records and `dv` only exist here), latent.
 - **Kept offscreen, but paused** ([§11.1](#111-kept-offscreen-but-paused)). A branch or each item that is kept offscreen for a pending batch after a commit removed it stays paused. The pending batch doesn't update it in its view, and commits it with stale content, which a new batch then updates. _Pre-existing_.
-- **A pending boundary shows a pending batch's result.** A boundary that shows its pending snippet shows its content as soon as all work inside it is done, whichever batch that work belongs to. While it's pending, a new run of an async expression in it supersedes the older ones (`async_derived`), so its content can show a result of a later batch than the one that created it, which renders it (in `flatten`). That batch's view can't undo the later batch's write to the expression's value, because it had no value before (`capture` doesn't record `UNINITIALIZED` as the value before a write). So if the later batch is still pending, its result shows before it commits (`async-read-pending-value-in-committed-batch` asserts this). A fix would make the later batch render the content and reveal it when it commits. _Pre-existing._
+- **A fork's run inside a pending boundary supersedes the real batches' runs** ([§10.6](#106-first-values-inside-a-pending-boundary)). Its result isn't part of the real world, so once it resolves, the real world renders the content without a value: as text, `UNINITIALIZED` throws (`Cannot convert a Symbol value to a string`). A fork's run shouldn't supersede the runs of other batches. _Pre-existing._
 - **`#merge` chains.** Merging bumps versions that don't need to change, so reactions that saw the old versions re-run without need. Writes made to a batch after it was merged (it's unlinked by then) go nowhere. _Pre-existing._
 
 Tests copied from `async-another-try-pt-1` that still fail here are marked `skip: true`, with a `// batch-views:` comment guessing why. They all fail on `main` too, so they are gaps rather than regressions:

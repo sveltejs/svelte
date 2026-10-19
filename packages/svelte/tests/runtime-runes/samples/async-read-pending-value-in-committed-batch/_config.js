@@ -50,12 +50,10 @@ export default test({
 		await tick();
 		shift_a.click();
 		await tick();
-		// batch-views: boundary 2 shows D's result before D commits (a pending boundary resolves as
-		// soon as its work is done, and B, which created it, renders it — see batch-views.md, "Known bugs
-		// and gaps"). It should still show `loading 2...`
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>async a: 0</p>`);
+		// boundary 2 is done, but what it shows is D's result, which D hasn't committed yet
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>loading 2...</p>`);
 
-		// resolve the late reader's re-run -> D commits
+		// resolve the late reader's re-run -> D commits, and boundary 2 shows its result
 		shift_t.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 0</p> <p>async a: 0</p>`);
