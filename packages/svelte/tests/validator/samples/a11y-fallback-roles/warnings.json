@@ -1,0 +1,14 @@
+[
+	{
+		"code": "a11y_role_supports_aria_props",
+		"end": {
+			"column": 43,
+			"line": 12
+		},
+		"message": "The attribute 'aria-checked' is not supported by the role 'button'",
+		"start": {
+			"column": 24,
+			"line": 12
+		}
+	}
+]

@@ -286,7 +286,9 @@ export function check_element(node, context) {
 	}
 
 	const role = attribute_map.get('role');
-	const role_static_value = /** @type {ARIARoleDefinitionKey} */ (get_static_text_value(role));
+	const role_static_value = /** @type {ARIARoleDefinitionKey} */ (
+		get_effective_role(get_static_text_value(role))
+	);
 
 	// click-events-have-key-events
 	if (handlers.has('click')) {
@@ -776,6 +778,17 @@ function is_interactive_roles(role) {
  */
 function is_abstract_role(role) {
 	return abstract_roles.includes(role);
+}
+
+/**
+ * The `role` attribute can list fallback roles, in which case the element
+ * gets the first one that is a known, non-abstract role
+ * @param {string | null} value
+ */
+function get_effective_role(value) {
+	if (value === null) return null;
+	const roles = /** @type {ARIARoleDefinitionKey[]} */ (value.trim().split(regex_whitespaces));
+	return roles.find((role) => aria_roles.includes(role) && !is_abstract_role(role)) ?? roles[0];
 }
 
 /**
