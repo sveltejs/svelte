@@ -133,7 +133,7 @@ export class Batch {
 
 	/**
 	 * The current values (and their versions) of any sources that are updated in this batch,
-	 * including deriveds that were overridden via assignment.
+	 * including deriveds that were overridden via assignment — until it commits them (see `#commit`).
 	 * The keys of this map are identical to `this.previous`
 	 * @type {Map<Value, { v: any, wv: number }>}
 	 */
@@ -515,16 +515,16 @@ export class Batch {
 
 		if (this.#pending === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
 			this.#unlink();
+		}
 
-			// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
-			// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
-			// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
-			// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
-			if (async_mode_flag) {
-				this.#commit();
-				// Rebases can activate other batches or null it out, therefore restore the new one here
-				current_batch = next_batch;
-			}
+		// Order matters here - we need to commit and THEN continue flushing new batches, not the other way around,
+		// else we could start flushing a new batch and then, if it has pending work, rebase it right afterwards, which is wrong.
+		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
+		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
+		if (async_mode_flag) {
+			this.#commit();
+			// Rebases can activate other batches or null it out, therefore restore the new one here
+			current_batch = next_batch;
 		}
 
 		// Edge case: During traversal new branches might create effects that run immediately and set state,
@@ -834,6 +834,8 @@ export class Batch {
 		// state (unless the batch in question has a more recent value for a given source),
 		// so everything that depends on it needs to be re-validated in their view
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
+			if (batch === this) continue;
+
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
@@ -889,6 +891,11 @@ export class Batch {
 				rebases.add(batch);
 			}
 		}
+
+		// The writes are part of the real world now. A batch that is still linked (because of pending work)
+		// only has writes again once that work resolves, which it then commits
+		this.current.clear();
+		this.previous.clear();
 	}
 
 	/**

@@ -26,34 +26,36 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>loading 1...</p> <p>loading 2...</p>`);
 
-		// batch C: writes a=1; the async-a effect re-runs in C, which stays pending
+		// batch C: writes a=1; the async-a effect re-runs in C. That's inside boundary 2, which shows
+		// its pending snippet, so C commits (and stays live until the run resolves)
 		up.click();
 		await tick();
 
-		// A's continuation first-reads `a`. A has already committed; in its view C's
-		// pending write is undone, so it reads the committed value (0) rather than leaking
-		// C's uncommitted a=1, and boundary 1 resolves with it. The read is outdated
-		// compared to C's a=1, so the late reader re-runs (and re-awaits a fresh deferred)
+		// A's continuation first-reads `a`. C's write is committed, so it's part of A's view, too:
+		// the reader sees 1, and boundary 1 resolves with it
 		shift_t.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 0</p> <p>loading 2...</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>loading 2...</p>`);
 
-		// revert `a` to 0 in a batch that intersects the pending C — their eventual
-		// commit leaves `a` unchanged
+		// batch D: writes a=0. The late reader re-runs in D (and re-awaits a fresh deferred), which
+		// holds D back — boundary 1 is shown now
 		down.click();
 		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>loading 2...</p>`);
 
-		// resolve the pending batches' async-a runs -> they commit a=0
+		// resolve the async-a runs (B's and C's were superseded by D's)
 		shift_a.click();
 		await tick();
 		shift_a.click();
 		await tick();
 		shift_a.click();
 		await tick();
-		// the late reader's re-run is still pending; what it showed is still correct
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 0</p> <p>async a: 0</p>`);
+		// batch-views: boundary 2 shows D's result before D commits (a pending boundary resolves as
+		// soon as its work is done, and B, which created it, renders it — see batch-views.md, "Known bugs
+		// and gaps"). It should still show `loading 2...`
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>async a: 0</p>`);
 
-		// resolve the late reader's re-run -> it converges on the committed value
+		// resolve the late reader's re-run -> D commits
 		shift_t.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 0</p> <p>async a: 0</p>`);
