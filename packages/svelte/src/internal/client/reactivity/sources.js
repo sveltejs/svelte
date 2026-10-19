@@ -46,7 +46,7 @@ import { set_signal_status, update_derived_status } from './status.js';
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
-/** @type {Map<Source, any>} */
+/** @type {Map<Value, any>} */
 export const old_values = new Map();
 
 /**
@@ -70,9 +70,9 @@ export function set_eager_effects_deferred() {
  */
 // TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
-	/** @type {Value} */
+	/** @type {Source<V>} */
 	var signal = {
-		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
+		f: 0,
 		v,
 		reactions: null,
 		equals,
@@ -141,7 +141,7 @@ export function mutate(source, value) {
 
 /**
  * @template V
- * @param {Source<V>} source
+ * @param {Value<V>} source
  * @param {V} value
  * @param {boolean} [should_proxy]
  * @returns {V}
@@ -181,7 +181,7 @@ var count_deps = 0;
 
 /**
  * @template V
- * @param {Source<V>} source
+ * @param {Value<V>} source
  * @param {V} value
  * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}

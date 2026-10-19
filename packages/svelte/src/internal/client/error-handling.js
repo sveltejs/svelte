@@ -1,7 +1,7 @@
 /** @import { Derived, Effect } from '#client' */
 /** @import { Boundary } from './dom/blocks/boundary.js' */
 import { DEV } from 'esm-env';
-import { FILENAME } from '../../constants.js';
+import { FILENAME, HYDRATION_ERROR } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
 import {
 	ERROR_VALUE,
@@ -52,6 +52,10 @@ export function handle_error(error) {
  * @param {Effect | null} effect
  */
 export function invoke_error_boundary(error, effect) {
+	if (error === HYDRATION_ERROR) {
+		throw error;
+	}
+
 	if (effect !== null && (effect.f & DESTROYED) !== 0) {
 		return;
 	}
