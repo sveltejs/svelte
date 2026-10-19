@@ -300,11 +300,14 @@ export class Batch {
 	unskip_effect(effect) {
 		if (
 			this.#skipped_branches.delete(effect) ||
-			((effect.f & EFFECT_OFFSCREEN) !== 0 && !this.#unskipped_branches.has(effect))
+			(!this.#unskipped_branches.has(effect) &&
+				((effect.f & EFFECT_OFFSCREEN) !== 0 ||
+					this.folded.some((batch) => batch.#skipped_branches.has(effect))))
 		) {
 			// This batch adopts a branch that it skipped (whose effects may have been reset, see `reset_branch`),
-			// or that so far only existed offscreen (possibly for another batch, whose view of the world its
-			// effects ran in) — re-validate its effects in this batch's view
+			// that so far only existed offscreen (possibly for another batch, whose view of the world its
+			// effects ran in), or that a batch whose writes are part of its view skips (and so didn't run the
+			// effects that its writes affect, or reset them) — re-validate its effects in this batch's view
 			this.#revalidate_branch(effect);
 		}
 

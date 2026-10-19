@@ -408,6 +408,17 @@ function update_dependencies(reaction, flags, value, error) {
 		return length;
 	}
 
+	// A run of a derived in the real world is its new global state. Other batches may still see the current one
+	// (in a view, whether a derived's run is a global one is decided by `update_record`)
+	if (
+		(flags & DERIVED) !== 0 &&
+		batch_values === null &&
+		first_batch !== null &&
+		first_batch.next !== null
+	) {
+		keep_global_run(/** @type {Derived} */ (reaction), flags, value, error);
+	}
+
 	// Fast path: the reaction read the same values as before, in the real world
 	if (
 		new_deps === null &&
@@ -528,6 +539,10 @@ function update_record(reaction, flags, deps, length, value, error) {
 
 	if (dv.length !== length) dv.length = length;
 
+	if (batch === null && batch_values !== null && (flags & DERIVED) !== 0) {
+		keep_global_run(/** @type {Derived} */ (reaction), flags, value, error);
+	}
+
 	// The edges — `reaction.deps`, and `reaction` in the `reactions` of each of them — must cover what every
 	// live run of the reaction read (its global run, and the records batches hold of it), so that a change to
 	// any of those values reaches it. So unless this is a global run and no batch holds a record, edges are
@@ -609,6 +624,48 @@ function update_record(reaction, flags, deps, length, value, error) {
 	}
 
 	return length;
+}
+
+/**
+ * A run of `derived` that becomes its global state replaces the current one, which other batches may still see:
+ * their views differ from the real world, and can undo the writes that made it outdated. It is kept as a record in
+ * each of them that doesn't have one, so that they don't evaluate the derived again — which would give an equal value
+ * a new version, and re-run what saw the current one (restarting async work, for example). (Like any record, it is
+ * only used where it `is_current`)
+ * Note that this is mainly an optimization that avoids needless reruns of async effects, but doesn't affect correctness.
+ * @param {Derived} derived
+ * @param {number} flags the flags of the derived before the run
+ * @param {any} value the value of the run
+ * @param {boolean} error whether the value is an error
+ */
+function keep_global_run(derived, flags, value, error) {
+	var dv = derived.dv;
+
+	if (
+		// no valid run, or one that doesn't depend on anything — which is only run again if it was invalidated
+		dv === null ||
+		dv.length === 0 ||
+		// an assigned value isn't a run, see `view_entry`
+		(flags & ASSIGNED) !== 0 ||
+		// a derived that uses an abort signal aborted the current run when it ran again
+		derived.ac !== null ||
+		// the same value keeps its version
+		(!error && (flags & ERROR_VALUE) === 0 && derived.equals(value))
+	) {
+		return;
+	}
+
+	for (var batch = first_batch; batch !== null; batch = batch.next) {
+		if (batch !== view_batch && !batch.records?.has(derived)) {
+			(batch.records ??= new Map()).set(derived, {
+				deps: /** @type {Value[]} */ (derived.deps).slice(0, dv.length),
+				dv: dv.slice(),
+				v: derived.v,
+				wv: derived.wv,
+				e: (flags & ERROR_VALUE) !== 0
+			});
+		}
+	}
 }
 
 /**
