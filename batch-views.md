@@ -89,7 +89,7 @@ Wherever two views (or two evaluations) agree on a value, the system tries to gi
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Batch#capture(source, value, same)` | If the value equals the real one (`same`), the entry gets `source.wv` instead of a new version. This is possible for async results, see [§9.2](#92-internal_setsource-value--own_result-sourcesjs193). |
 | `Batch#activate`                     | Another batch's write is only undone in this view if its previous value differs from the real value. Otherwise the real value, and its real version, applies.                                          |
-| `derived_record`                     | A derived's run that belongs to a batch reuses the version of an equal value: the previous record's version, else the global version, else a new one.                                                  |
+| `derived_version`                    | A derived's run that belongs to a batch reuses the version of an equal value: the previous record's version, else the global version, else a new one.                                                  |
 | `set_derived_value`                  | As on `main`, the version of the global state is only incremented if `!derived.equals(value)` (errors always get a new version).                                                                       |
 | `adopt`, fork commit                 | Records and fork values keep their versions when they become the real world.                                                                                                                           |
 | `keep_global_run`                    | A derived's global run that a new one replaces is kept for the batches that may still see it, with its version ([§7.5](#75-replaced-global-runs-keep_global_run-runtimejs641)).                        |
@@ -278,7 +278,7 @@ It then records `dv[i] = seen_version(dep)` for each value read: the version the
 
 `update_record` reuses `reaction.dv` in place only for a global run in the real world. Otherwise it uses a fresh array: a record has its own `dv` ([§8.5](#85-sharing-arrays)), and a derived's run can turn out to be batch-local halfway through the loop.
 
-For a batch run, it stores a record in `batch.records` **without touching the global state**: `{ deps: read, dv }` for an effect, plus the value, its version and `e` for a derived (`derived_record`). For a global run, it assigns `reaction.deps = read` and `reaction.dv = dv` and, for a derived, sets the value (`set_derived_value`) and deletes the active batch's record of it, which is now outdated. Effects never have such a record at this point: their runs only become global outside of processing, on their first run, or once the batch commits, whose records are promoted by then.
+For a batch run, it stores a record in `batch.records` **without touching the global state**: `{ deps: read, dv }` for an effect, plus the value, its version (chosen by `derived_version`) and `e` for a derived. For a global run, it assigns `reaction.deps = read` and `reaction.dv = dv` and, for a derived, sets the value (`set_derived_value`) and deletes the active batch's record of it, which is now outdated. Effects never have such a record at this point: their runs only become global outside of processing, on their first run, or once the batch commits, whose records are promoted by then.
 
 ### 8.2 Record lifecycle
 
@@ -287,7 +287,7 @@ For a batch run, it stores a record in `batch.records` **without touching the gl
 - **Extended** by `record_late_read` ([§12](#12-reads-after-await-record_late_read)).
 - **Merged**: when a later batch Y merges into an earlier batch X (`#merge`), Y is discarded when X commits or is discarded (so that, e.g., the branches it selected are cleaned up either way — before, they were only cleaned up if X committed, `async-merge-intersecting`), and Y's non-block records move to X. X's view now includes Y's writes, so Y's async results and derived values are still valid (and are re-checked with `is_current` anyway). Block records are _not_ moved: branch selections are keyed by batch, and X re-selects them when it processes.
 - **Promoted** when the batch commits (`#process`, after `committing = true`): every live effect record becomes global state via `promote_record`, and the effect's edges are pruned (`prune_edges`, [§8.3](#83-edges-are-a-superset)). Derived records are dropped.
-- **Dropped** with `batch.records = null` on commit, and in `#unlink` (discard, merge), which prunes the edges of the effects whose records it drops.
+- **Released** by `#release_records`, shared by commit and `#unlink` (discard, merge). It clears `batch.records` before promoting committed effect runs and pruning their edges, so the retention check sees only the other batches' records.
 
 ### 8.3 Edges are a superset
 

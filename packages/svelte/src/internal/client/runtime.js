@@ -490,22 +490,6 @@ function set_derived_value(derived, value, error) {
 }
 
 /**
- * Whether `holder` — `derived` itself, or a record of it — holds `value` (errors are never the same value)
- * @param {Derived} derived
- * @param {Derived | BatchRecord | undefined} holder
- * @param {any} value
- */
-function holds(derived, holder, value) {
-	return (
-		holder !== undefined &&
-		!(holder === derived
-			? (derived.f & ERROR_VALUE) !== 0
-			: /** @type {BatchRecord} */ (holder).e) &&
-		derived.equals.call(/** @type {Derived} */ (holder), value)
-	);
-}
-
-/**
  * The general case of `update_dependencies`, which
  * 1. decides where the run belongs: to the batch whose view of the world is active (as a record, see
  *    `Batch#records`), or to the real world (as the reaction's global state)
@@ -579,13 +563,9 @@ function update_record(reaction, flags, length, value, error) {
 	// live run of the reaction read (its global run, and the records batches hold of it), so that a change to
 	// any of those values reaches it. So unless this is a global run and no batch holds a record, edges are
 	// only added (and pruned by a later global run). Their order is independent of the run's reads
-	var keep = batch !== null;
+	var keep = batch !== null || has_batch_record(reaction);
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 	var edges = reaction.edges;
-
-	for (var b = first_batch; !keep && b !== null; b = b.next) {
-		keep = b.records?.has(reaction) === true;
-	}
 
 	if (keep && edges !== null) {
 		if (new_deps !== null) {
@@ -628,7 +608,13 @@ function update_record(reaction, flags, length, value, error) {
 		(batch.records ??= new Map()).set(
 			reaction,
 			(flags & DERIVED) !== 0
-				? derived_record(/** @type {Derived} */ (reaction), batch, read, dv, value, error)
+				? {
+						deps: read,
+						dv,
+						v: value,
+						e: error,
+						wv: derived_version(/** @type {Derived} */ (reaction), batch, value, error)
+					}
 				: { deps: read, dv }
 		);
 	} else {
@@ -715,28 +701,24 @@ function seen_version(signal) {
 }
 
 /**
- * The record of a run of `derived` that belongs to `batch`. Its value keeps the version of the same value
- * in the batch's view (if it held one before), or in the real world, so that reactions which saw it remain valid
+ * Reuse the version of an equal value in the batch's previous run, then the global value,
+ * or allocate a new one. Errors always get a new version
  * @param {Derived} derived
  * @param {Batch} batch
- * @param {Value[] | null} deps
- * @param {number[]} dv
- * @param {any} v
- * @param {boolean} e
- * @returns {DerivedRecord}
+ * @param {any} value
+ * @param {boolean} error
  */
-function derived_record(derived, batch, deps, dv, v, e) {
-	var previous = batch.get_record(derived);
+function derived_version(derived, batch, value, error) {
+	if (!error) {
+		var previous = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
+		if (previous !== undefined && !previous.e && derived.equals.call(previous, value)) {
+			return previous.wv;
+		}
 
-	var wv = e
-		? increment_write_version()
-		: holds(derived, previous, v)
-			? /** @type {number} */ (/** @type {BatchRecord} */ (previous).wv)
-			: holds(derived, derived, v)
-				? derived.wv
-				: increment_write_version();
+		if ((derived.f & ERROR_VALUE) === 0 && derived.equals(value)) return derived.wv;
+	}
 
-	return { deps, dv, v, e, wv };
+	return increment_write_version();
 }
 
 /**
@@ -761,6 +743,15 @@ export function promote_record(reaction, record) {
 	}
 }
 
+/** @param {Reaction} reaction */
+function has_batch_record(reaction) {
+	for (var batch = first_batch; batch !== null; batch = batch.next) {
+		if (batch.records?.has(reaction)) return true;
+	}
+
+	return false;
+}
+
 /**
  * Remove the edges of an effect that only runs no batch holds anymore needed (because the batch committed and
  * its record was promoted, or because it was dropped), once no batch holds a record of it, so that its edges are
@@ -774,11 +765,7 @@ export function prune_edges(effect) {
 	var edges = effect.edges;
 	var deps = effect.deps;
 
-	if (edges === deps) return;
-
-	for (var batch = first_batch; batch !== null; batch = batch.next) {
-		if (batch.records?.has(effect)) return;
-	}
+	if (edges === deps || has_batch_record(effect)) return;
 
 	// (the edges are a superset of `deps`, so nothing needs to be connected)
 	for (var dep of /** @type {Value[]} */ (edges)) {
@@ -786,6 +773,16 @@ export function prune_edges(effect) {
 	}
 
 	effect.edges = deps;
+}
+
+/**
+ * Connect a reaction outside its normal dependency update, without duplicating subscriptions
+ * @param {Value} signal
+ * @param {Reaction} reaction
+ */
+function add_reaction(signal, reaction) {
+	var reactions = (signal.reactions ??= []);
+	if (!includes.call(reactions, reaction)) reactions.push(reaction);
 }
 
 /**
@@ -1008,13 +1005,7 @@ export function get(signal) {
 					active_reaction.edges = edges === null ? [signal] : [...edges, signal];
 				}
 
-				var reactions = signal.reactions;
-
-				if (reactions === null) {
-					signal.reactions = [active_reaction];
-				} else if (!includes.call(reactions, active_reaction)) {
-					reactions.push(active_reaction);
-				}
+				add_reaction(signal, active_reaction);
 			}
 		}
 	}
@@ -1184,13 +1175,7 @@ function reconnect(derived) {
 	if (derived.edges === null) return;
 
 	for (const dep of derived.edges) {
-		var reactions = dep.reactions;
-
-		if (reactions === null) {
-			dep.reactions = [derived];
-		} else if (!includes.call(reactions, derived)) {
-			reactions.push(derived);
-		}
+		add_reaction(dep, derived);
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
 			unfreeze_derived_effects(/** @type {Derived} */ (dep));

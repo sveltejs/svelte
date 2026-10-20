@@ -203,10 +203,7 @@ export function internal_set(
 	// errors are never the same value
 	var same = source.equals(value) && !error && (source.f & ERROR_VALUE) === 0;
 
-	if (
-		!same ||
-		(view !== undefined && (view.e || !source.equals.call(/** @type {any} */ (view), value)))
-	) {
+	if (!same || (view !== undefined && (view.e || !source.equals.call(view, value)))) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {

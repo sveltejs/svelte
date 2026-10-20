@@ -498,20 +498,7 @@ export class Batch {
 
 		// The results of this batch are about to become the real-world state
 		this.committing = true;
-
-		if (this.records !== null) {
-			const records = this.records;
-			// (cleared first, so that the edges only this batch's runs needed can be pruned)
-			this.records = null;
-
-			// Make the block/async effects this batch has take effect in the real world
-			for (const [reaction, record] of records) {
-				if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
-					promote_record(reaction, record);
-					prune_edges(reaction);
-				}
-			}
-		}
+		this.#release_records(true);
 
 		// append/remove branches
 		for (const fn of this.#commit_callbacks) fn(this);
@@ -1105,6 +1092,21 @@ export class Batch {
 		this.#scheduled.push(effect);
 	}
 
+	/** @param {boolean} commit whether the effects' runs become global state */
+	#release_records(commit = false) {
+		var records = this.records;
+		if (records === null) return;
+
+		// Release ownership before pruning. Merged runs are retained by the receiving batch
+		this.records = null;
+		for (const [reaction, record] of records) {
+			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
+				if (commit) promote_record(reaction, record);
+				prune_edges(reaction);
+			}
+		}
+	}
+
 	#unlink() {
 		// #merge calls #unlink, discard later on does it again - prevent
 		// running it multiple times to not corrupt the linked list
@@ -1126,17 +1128,7 @@ export class Batch {
 		}
 
 		this.linked = false;
-
-		var records = this.records;
-		this.records = null;
-
-		if (records !== null) {
-			// The runs of effects this batch held are gone (records that were merged into another batch
-			// are held by that one), and so are the edges that only they needed
-			for (const reaction of records.keys()) {
-				if ((reaction.f & DERIVED) === 0) prune_edges(reaction);
-			}
-		}
+		this.#release_records();
 	}
 }
 
