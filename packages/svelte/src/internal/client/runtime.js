@@ -56,7 +56,8 @@ import {
 	flushSync,
 	previous_batch,
 	schedule_effect,
-	view_batch
+	view_batch,
+	view_cache
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
@@ -188,6 +189,33 @@ export function is_current(deps, dv) {
 }
 
 /**
+ * Whether none of `deps` has been written since the version `wv` in the active view of the world, which is
+ * how a value assigned to a derived (whose version is `wv`) holds: until one of its dependencies is written
+ * after it. Comparing versions with those the dependencies had at the time of the assignment, like
+ * `is_current` does, wouldn't work: a view might undo a write the assignment saw, and a committed fork
+ * might apply one it didn't see — but both writes happened before the assignment, so they don't make it
+ * outdated. (A dependency that is a derived which was evaluated again, and got a different value, counts
+ * as changed, though)
+ * @param {Value[] | null} deps
+ * @param {number} wv
+ */
+export function unchanged_since(deps, wv) {
+	if (deps !== null) {
+		for (var i = 0; i < deps.length; i++) {
+			var dependency = deps[i];
+
+			if (batch_values === null && is_dirty(/** @type {Derived} */ (dependency))) {
+				update_derived(/** @type {Derived} */ (dependency));
+			}
+
+			if (version_of(dependency) > wv) return false;
+		}
+	}
+
+	return true;
+}
+
+/**
  * The run of `reaction` that applies in the active view of the world: the record of a block or async
  * effect in the active batch, if it has one (see `update_record`), or else the reaction itself — whose
  * `deps` and `dv` are its global state
@@ -200,7 +228,7 @@ function run_of(reaction) {
 
 /**
  * Determines whether a derived or effect is dirty.
- * If it is MAYBE_DIRTY, will set the status to CLEAN.
+ * If it is MAYBE_DIRTY (or an assigned derived) and isn't, will set the status to CLEAN.
  * Deriveds are only checked like this in the real world — within the view of a batch,
  * see `view_entry`. Effects are checked against the run that applies (see `run_of`).
  * @param {Reaction} reaction
@@ -209,11 +237,17 @@ function run_of(reaction) {
 export function is_dirty(reaction) {
 	var flags = reaction.f;
 
-	if ((flags & DIRTY) !== 0) {
-		return true;
+	if ((flags & (DIRTY | MAYBE_DIRTY)) === 0) {
+		return false;
 	}
 
-	if ((flags & MAYBE_DIRTY) !== 0) {
+	if ((flags & ASSIGNED) !== 0) {
+		// A value assigned to a derived holds until one of its dependencies is written after it, which its flags
+		// can't tell: writes that don't change the real world (e.g. those of a fork) mark the derived, too
+		if (!unchanged_since(/** @type {Derived} */ (reaction).deps, reaction.wv)) return true;
+	} else if ((flags & DIRTY) !== 0) {
+		return true;
+	} else {
 		var run = run_of(reaction);
 		var deps = run.deps;
 		var dv = run.dv;
@@ -233,10 +267,10 @@ export function is_dirty(reaction) {
 		} else if (!is_current(deps, dv)) {
 			return true;
 		}
+	}
 
-		if ((flags & CONNECTED) !== 0) {
-			set_signal_status(reaction, CLEAN);
-		}
+	if ((flags & CONNECTED) !== 0) {
+		set_signal_status(reaction, CLEAN);
 	}
 
 	return false;
@@ -678,8 +712,13 @@ function keep_global_run(derived, flags, value, error) {
 function seen_version(signal) {
 	if (batch_values === null) return signal.wv;
 
-	var entry = batch_values.get(signal);
-	return entry !== undefined ? entry.wv : (signal.f & DERIVED) !== 0 ? -1 : signal.wv;
+	if ((signal.f & DERIVED) !== 0) {
+		return (
+			/** @type {Map<Derived, any>} */ (view_cache).get(/** @type {Derived} */ (signal))?.wv ?? -1
+		);
+	}
+
+	return (batch_values.get(signal) ?? signal).wv;
 }
 
 /**
@@ -722,10 +761,8 @@ function set_global_run(reaction, read, dv) {
 		// The reads must be the start of `deps` (which is what `dv` lines up with). But `deps` can't simply be
 		// replaced by them: it's also the list of the graph's edges (the values that have `reaction` among their
 		// `reactions`), which covers the runs that batches hold, too (see `update_record`). So the other edges
-		// are kept, after the reads — `read` itself is extended to become the new `deps` (a promoted record can
-		// still be looked at afterwards, e.g. the entry of a derived assigned in a fork, but only its first
-		// `dv.length` entries are checked). If the reads already are the start of `deps` (the common case),
-		// nothing changes
+		// are kept, after the reads — `read` itself is extended to become the new `deps`. If the reads already
+		// are the start of `deps` (the common case), nothing changes
 		while (i < read.length && deps[i] === read[i]) i++;
 
 		if (i < read.length) {

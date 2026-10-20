@@ -38,7 +38,7 @@ import { flush_eager_effects, old_values, set_eager_effects, source, update } fr
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { set_signal_status } from './status.js';
+import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 
@@ -61,13 +61,20 @@ export let previous_batch = null;
  * When time travelling (i.e. working in one batch, while other batches
  * still have ongoing work), we ignore the real values of affected
  * signals in favour of their values within the batch — along with their
- * versions. It also caches the values of deriveds in this view of the world
- * (see `view_entry`): a record of a run (in which case `e` tells whether its
- * value is an error), or the derived itself if its global state applies.
+ * versions: the batch's writes, and the values from before the writes of
+ * other batches, which its view of the world undoes (see `activate`).
  * `null` means that the real world (i.e. the latest values) applies
- * @type {Map<Value, { v: any, wv: number, e?: boolean }> | null}
+ * @type {Map<Value, { v: any, wv: number }> | null}
  */
 export let batch_values = null;
+
+/**
+ * The values of deriveds in the active view of the world, for as long as it is active (see `view_entry`):
+ * a record of a run (in which case `e` tells whether its value is an error), the derived itself if its
+ * global state applies, or the write to it that holds (an assignment). Exists whenever `batch_values` does
+ * @type {Map<Derived, Derived | { v: any, wv: number, e?: boolean }> | null}
+ */
+export let view_cache = null;
 
 /**
  * The batch whose view of the world is active (see `activate`). Block and async
@@ -757,6 +764,9 @@ export class Batch {
 			batch_values?.set(source, entry);
 		}
 
+		// an assignment replaces the value of a derived that the active view of the world holds
+		view_cache?.delete(/** @type {Derived} */ (source));
+
 		if (latest) {
 			source.v = value;
 			source.wv = entry.wv;
@@ -767,7 +777,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
-		batch_values = null;
+		batch_values = view_cache = null;
 		view_batch = null;
 	}
 
@@ -803,7 +813,7 @@ export class Batch {
 			is_processing = false;
 
 			current_batch = null;
-			batch_values = null;
+			batch_values = view_cache = null;
 			view_batch = null;
 
 			old_values.clear();
@@ -991,7 +1001,7 @@ export class Batch {
 		current_batch = this;
 
 		if (!async_mode_flag) {
-			batch_values = null;
+			batch_values = view_cache = null;
 			return;
 		}
 
@@ -1000,13 +1010,14 @@ export class Batch {
 
 		if (!this.is_fork && this.prev === null && this.next === null) {
 			// this batch's view is the real world
-			batch_values = null;
+			batch_values = view_cache = null;
 			return;
 		}
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map(this.current);
+		view_cache = new Map();
 
 		// ...and undo changes belonging to other batches unless they intersect
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
@@ -1485,6 +1496,7 @@ export function fork(fn) {
 	// builds on them, like outside a fork — plus the fork's own writes. (When the fork is processed,
 	// the writes of batches it doesn't share a source with are undone, see `activate`)
 	batch_values = new Map();
+	view_cache = new Map();
 	view_batch = batch;
 
 	var committed = false;
@@ -1515,10 +1527,10 @@ export function fork(fn) {
 				source.v = entry.v;
 				source.wv = entry.wv;
 
-				if ((source.f & DERIVED) !== 0 && /** @type {BatchRecord} */ (entry).dv !== undefined) {
-					// an assigned derived, which holds its value until its dependencies change
-					promote_record(/** @type {Derived} */ (source), /** @type {BatchRecord} */ (entry));
-					source.f |= ASSIGNED;
+				if ((source.f & DERIVED) !== 0) {
+					// an assigned derived, which holds its value until one of its dependencies is written after it
+					source.f = (source.f & ~ERROR_VALUE) | ASSIGNED;
+					update_derived_status(/** @type {Derived} */ (source));
 				}
 			}
 

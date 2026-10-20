@@ -28,7 +28,7 @@ import {
 	new_deps,
 	is_current,
 	promote_record,
-	version_of
+	unchanged_since
 } from '../runtime.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
@@ -40,7 +40,13 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, uncommitted_first_value, view_batch } from './batch.js';
+import {
+	batch_values,
+	current_batch,
+	uncommitted_first_value,
+	view_batch,
+	view_cache
+} from './batch.js';
 import { increment_pending, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
@@ -448,31 +454,32 @@ function adopt(derived, records) {
 }
 
 /**
- * The value of `derived` as the view of the world of the active batch sees it, with its version:
- * a run of it whose versions are what the view holds — a record in the batch, or the derived itself
- * (i.e. its global state) — or else a new run. Results are cached for the lifetime of the view (see
- * `Batch#activate`), unless the derived is disconnected, in which case nothing would remove them from
- * the cache when they become stale.
+ * The value of `derived` as the view of the world of the active batch sees it, with its version: an
+ * assigned value that holds, or a run of it whose versions are what the view holds — a record in the
+ * batch, or the derived itself (i.e. its global state) — or else a new run. Results are cached for the
+ * lifetime of the view (see `view_cache`), unless the derived is disconnected, in which case nothing
+ * would remove them from the cache when they become stale.
  * @param {Derived} derived
  * @returns {{ v: any, wv: number, e?: boolean }}
  */
 export function view_entry(derived) {
-	var entry = /** @type {Map<Value, any>} */ (batch_values).get(derived);
+	var cache = /** @type {Map<Derived, any>} */ (view_cache);
+	var entry = cache.get(derived);
+
+	if (entry !== undefined) return entry;
+
 	var batch = /** @type {Batch} */ (view_batch);
-	var own = batch.current.get(derived);
 
-	// a run of the derived (the derived itself, or a record) that was cached
-	if (entry !== undefined && entry !== own && (entry === derived || entry.dv !== undefined)) {
-		return entry;
-	}
-
-	// Otherwise, what the view holds for the derived is a write to it — an assignment in this batch, or the
-	// value from before another batch's assignment that this view undoes — or else its global state.
-	// An assigned value holds until one of the derived's dependencies changes (see `unchanged_since`). The
-	// value from before an undone assignment is only used if it was assigned, too: a computed value was
-	// computed in some other view of the world, and may depend on writes that this view undoes
-	var held = entry ?? derived;
-	var assigned = held === derived ? (derived.f & ASSIGNED) !== 0 : held === own || held.assigned;
+	// What the view holds for the derived is a write to it — an assignment in this batch, or the value from
+	// before another batch's assignment that this view undoes — or else its global state. An assigned value
+	// holds until one of the derived's dependencies is written after it (see `unchanged_since`). The value
+	// from before an undone assignment is only used if it was assigned, too: a computed value was computed
+	// in some other view of the world, and may depend on writes that this view undoes
+	var held = /** @type {Map<Value, any>} */ (batch_values).get(derived) ?? derived;
+	var assigned =
+		held === derived
+			? (derived.f & ASSIGNED) !== 0
+			: held === batch.current.get(derived) || held.assigned;
 	var record;
 
 	if (assigned && unchanged_since(derived.deps, held.wv)) {
@@ -494,30 +501,10 @@ export function view_entry(derived) {
 	}
 
 	if ((derived.f & CONNECTED) !== 0) {
-		/** @type {Map<Value, any>} */ (batch_values).set(derived, entry);
+		cache.set(derived, entry);
 	}
 
 	return entry;
-}
-
-/**
- * Whether none of `deps` has been written since the version `wv` in the active view of the world, which is
- * how a value assigned to a derived (whose version is `wv`) holds: until one of its dependencies changes.
- * Comparing the versions with those they had at the time of the assignment, like `is_current` does,
- * wouldn't work: this view might undo a write the assignment saw, but that write doesn't make the
- * assignment outdated, as it happened before. (A dependency that is a derived which was evaluated again
- * in the view, and got a different value, counts as changed, though)
- * @param {Value[] | null} deps
- * @param {number} wv
- */
-function unchanged_since(deps, wv) {
-	if (deps !== null) {
-		for (var dep of deps) {
-			if (version_of(dep) > wv) return false;
-		}
-	}
-
-	return true;
 }
 
 /**

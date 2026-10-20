@@ -1,4 +1,4 @@
-/** @import { BatchRecord, Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	active_reaction,
@@ -12,8 +12,7 @@ import {
 	is_dirty,
 	untracking,
 	is_destroying_effect,
-	push_reaction_value,
-	version_of
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -36,6 +35,7 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	view_cache,
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates
@@ -205,8 +205,10 @@ export function internal_set(source, value, updated_during_traversal = null, own
 
 		var batch = Batch.ensure();
 
-		// if we are assigning to a dirty derived we eagerly execute it to track the dependencies
-		if ((source.f & (DERIVED | DIRTY)) === (DERIVED | DIRTY)) {
+		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
+		// it's assigned already: it tracks them, and its flags don't tell whether the assignment still holds,
+		// which is what other views see when they undo this one — see `is_dirty`)
+		if ((source.f & (DERIVED | DIRTY | ASSIGNED)) === (DERIVED | DIRTY)) {
 			execute_derived(/** @type {Derived} */ (source));
 		}
 
@@ -242,21 +244,11 @@ export function internal_set(source, value, updated_during_traversal = null, own
 			}
 		}
 
-		if ((source.f & DERIVED) !== 0) {
-			const derived = /** @type {Derived} */ (source);
-
-			// The assigned value holds until one of the derived's dependencies changes — in the real world,
-			// while they keep the versions they have now (in a batch's view, see `view_entry`)
-			var record = { deps: derived.deps?.slice() ?? null, dv: derived.deps?.map(version_of) ?? [] };
-
-			if (latest) {
-				derived.dv = record.dv;
-				derived.f |= ASSIGNED;
-				update_derived_status(derived);
-			} else {
-				// (a fork keeps the record, to make it the global state when it's committed, see `fork`)
-				Object.assign(/** @type {BatchRecord} */ (batch.current.get(derived)), record);
-			}
+		if (latest && (source.f & DERIVED) !== 0) {
+			// The assigned value holds until one of the derived's dependencies is written after it (see `unchanged_since`).
+			// (Other assignments are part of the batch's writes only — a fork's become global when it's committed)
+			source.f |= ASSIGNED;
+			update_derived_status(/** @type {Derived} */ (source));
 		}
 
 		// For debugging, in case you want to know which reactions are being scheduled:
@@ -409,7 +401,7 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			} else {
 				var derived = /** @type {Derived} */ (reaction);
 
-				batch_values?.delete(derived);
+				view_cache?.delete(derived);
 				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 			}
 		} else if (not_dirty) {

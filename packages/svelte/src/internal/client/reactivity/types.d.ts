@@ -70,7 +70,9 @@ export interface Reaction extends Signal {
 export interface BatchRecord {
 	deps: null | Value[];
 	dv: number[];
+	/** Set for deriveds, omitted for effects */
 	v?: any;
+	/** Set for deriveds, omitted for effects */
 	wv?: number;
 	/** Whether the value of a derived record is an error */
 	e?: boolean;
