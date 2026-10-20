@@ -1,0 +1,172 @@
+svelte
+<script lang="ts">
+  import { writable, readable, derived, type Writable, type Readable } from 'svelte/store';
+
+  /* ---------------------------------------------------------------------- */
+  /* Logging — level-aware, scoped, safe to leave enabled in production      */
+  /* ---------------------------------------------------------------------- */
+
+  /** Supported log severities, ordered by increasing importance. */
+  type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+  /** Ordered list used to filter by minimum severity. */
+  const LOG_LEVEL_ORDER: Readonly<Record<LogLevel, number>> = Object.freeze({
+    debug: 10,
+    info: 20,
+    warn: 30,
+    error: 40
+  });
+
+  /**
+   * Minimum level that will actually be emitted.
+   * Override via `import.meta.env.VITE_LOG_LEVEL` in a Vite build if desired.
+   */
+  const MIN_LOG_LEVEL: LogLevel = 'debug';
+
+  /** Minimal structured logger contract. */
+  interface Logger {
+    /** Verbose diagnostics, disabled in production builds. */
+    debug(message: string, ...rest: unknown[]): void;
+    /** Normal lifecycle events. */
+    info(message: string, ...rest: unknown[]): void;
+    /** Recoverable anomalies. */
+    warn(message: string, ...rest: unknown[]): void;
+    /** Non-recoverable or handled failures. */
+    error(message: string, ...rest: unknown[]): void;
+  }
+
+  /**
+   * Creates a namespaced logger that drops records below {@link MIN_LOG_LEVEL}.
+   *
+   * @param scope - Namespace prepended to every message (e.g. `'prices'`).
+   * @returns A frozen, immutable {@link Logger} instance.
+   */
+  function createLogger(scope: string): Logger {
+    const emit = (level: LogLevel, message: string, rest: unknown[]): void => {
+      if (LOG_LEVEL_ORDER[level] < LOG_LEVEL_ORDER[MIN_LOG_LEVEL]) return;
+
+      const line = `[${scope}] ${message}`;
+      switch (level) {
+        case 'debug':
+          console.debug(line, ...rest);
+          break;
+        case 'info':
+          console.info(line, ...rest);
+          break;
+        case 'warn':
+          console.warn(line, ...rest);
+          break;
+        case 'error':
+          console.error(line, ...rest);
+          break;
+      }
+    };
+
+    const logger: Logger = {
+      debug: (message, ...rest) => emit('debug', message, rest),
+      info: (message, ...rest) => emit('info', message, rest),
+      warn: (message, ...rest) => emit('warn', message, rest),
+      error: (message, ...rest) => emit('error', message, rest)
+    };
+
+    return Object.freeze(logger);
+  }
+
+  const log: Logger = createLogger('minimal-async-derived');
+
+  /* ---------------------------------------------------------------------- */
+  /* Input validation / safety guards                                       */
+  /* ---------------------------------------------------------------------- */
+
+  /** Inclusive lower bound accepted for every numeric input in the demo. */
+  const NUMERIC_MIN = 0;
+
+  /** Inclusive upper bound accepted for every numeric input in the demo. */
+  const NUMERIC_MAX = 1_000_000;
+
+  /** Fallback used whenever an async value cannot be produced. */
+  const NUMERIC_FALLBACK = 0;
+
+  /**
+   * Validates an externally supplied value and narrows it to a safe integer.
+   *
+   * Guards against: `NaN`, `Infinity`, floats, negative numbers, numeric
+   * strings, `null`, `undefined` and objects with hostile `valueOf`.
+   *
+   * @param candidate - Untrusted value, typically from a DOM handler.
+   * @param label - Human readable field name used in diagnostics.
+   * @returns The validated integer, or `undefined` when the value is unsafe.
+   */
+  function parseNonNegativeInteger(candidate: unknown, label: string): number | undefined {
+    if (typeof candidate !== 'number' || !Number.isSafeInteger(candidate)) {
+      log.warn(`${label}: rejected — expected a safe integer`, { received: candidate });
+      return undefined;
+    }
+    if (candidate < NUMERIC_MIN || candidate > NUMERIC_MAX) {
+      log.warn(`${label}: rejected — out of range [${NUMERIC_MIN}, ${NUMERIC_MAX}]`, {
+        received: candidate
+      });
+      return undefined;
+    }
+    return candidate;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Controllable promises (the async "network" boundary)                   */
+  /* ---------------------------------------------------------------------- */
+
+  /**
+   * A promise that can be settled exactly once from the outside.
+   * Modelled after a single HTTP request — a second settlement is a bug,
+   * so it is rejected loudly instead of silently corrupting state.
+   *
+   * @typeParam T - Type of the resolved payload.
+   */
+  interface ControlledPromise<T> {
+    /** The underlying promise; safe to await multiple times. */
+    readonly promise: Promise<T>;
+    /** `true` once the promise has been resolved or rejected. */
+    readonly isSettled: () => boolean;
+    /** Last settled value, or `undefined` while pending. */
+    readonly settledValue: () => T | undefined;
+    /**
+     * Settles the promise with `value`.
+     * No-op (with a warning) when already settled.
+     */
+    resolve(value: T): void;
+    /**
+     * Settles the promise with a rejection.
+     * No-op (with a warning) when already settled.
+     */
+    reject(reason?: unknown): void;
+  }
+
+  /**
+   * Creates a {@link ControlledPromise}.
+   *
+   * A no-op rejection handler is attached immediately so that an unconsumed
+   * rejection never surfaces as an `unhandledrejection` event.
+   *
+   * @param label - Diagnostic name used in log records.
+   * @typeParam T - Type of the resolved payload.
+   */
+  function createControlledPromise<T>(label: string): ControlledPromise<T> {
+    let settleResolve!: (value: T) => void;
+    let settleReject!: (reason?: unknown) => void;
+    let settled = false;
+    let value: T | undefined;
+
+    const promise = new Promise<T>((resolve, reject) => {
+      settleResolve = resolve;
+      settleReject = reject;
+    });
+
+    // Prevent "unhandled promise rejection" noise for the eager boundary.
+    promise.catch((reason: unknown) => {
+      log.debug(`${label}: rejection observed by boundary guard`, { reason });
+    });
+
+    return Object.freeze({
+      promise,
+      isSettled: (): boolean => settled,
+      settledValue: (): T | undefined
