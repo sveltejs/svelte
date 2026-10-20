@@ -43,7 +43,7 @@ function log_entry(signal, entry) {
 	);
 
 	if (type === '$derived') {
-		const deps = new Set(/** @type {Derived} */ (signal).deps);
+		const deps = new Set(/** @type {Derived} */ (signal).edges);
 		for (const dep of deps) {
 			log_entry(dep);
 		}

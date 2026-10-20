@@ -84,6 +84,7 @@ export function derived(fn) {
 		ctx: component_context,
 		deps: null,
 		dv: null,
+		edges: null,
 		effects: null,
 		equals,
 		f: flags,
@@ -442,23 +443,21 @@ export function get_view(derived) {
 
 	// What the view holds for the derived is a write to it — an assignment in this batch, or the value from
 	// before another batch's assignment that this view undoes — or else its global state. An assigned value
-	// holds until one of the derived's dependencies is written after it (see `unchanged_since`). The value
-	// from before an undone assignment is only used if it was assigned, too: a computed value was computed
-	// in some other view of the world, and may depend on writes that this view undoes
+	// holds until one of the derived's dependencies — what its run in this view (its record in the batch, if
+	// any, else its global run) read — is written after it (see `unchanged_since`). The value from before an
+	// undone assignment is only used if it was assigned, too: a computed value was computed in some other
+	// view of the world, and may depend on writes that this view undoes
 	var written = /** @type {Map<Value, BatchValue>} */ (batch_values).get(derived);
 	var held = written ?? derived;
 	var assigned =
 		written === undefined
 			? (derived.f & ASSIGNED) !== 0
 			: written === batch.current.get(derived) || written.assigned;
-	var record;
+	var record = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
 
-	if (assigned && unchanged_since(derived.deps, held.wv)) {
+	if (assigned && unchanged_since((record ?? derived).deps, held.wv)) {
 		entry = held;
-	} else if (
-		(record = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived))) !== undefined &&
-		is_current(record.deps, record.dv)
-	) {
+	} else if (record !== undefined && is_current(record.deps, record.dv)) {
 		entry = record;
 	} else if (
 		written === undefined &&
@@ -504,7 +503,7 @@ export function freeze_derived_effects(derived) {
 			// effect runs again during unfreezing (but not for teardown-only effects)
 			if (e.fn !== null) e.teardown = noop;
 
-			remove_reactions(e, 0);
+			remove_reactions(e);
 			destroy_effect_children(e);
 		}
 	}

@@ -104,6 +104,7 @@ function create_effect(type, fn) {
 		ctx: component_context,
 		deps: null,
 		dv: null,
+		edges: null,
 		nodes: null,
 		f: type | DIRTY | CONNECTED,
 		first: null,
@@ -145,7 +146,7 @@ function create_effect(type, fn) {
 		// won't re-run, has no DOM, and has no teardown etc)
 		// then we skip it and go to its child (if any)
 		if (
-			e.deps === null &&
+			e.edges === null &&
 			e.teardown === null &&
 			e.nodes === null &&
 			e.first === e.last && // either `null`, or a singular child
@@ -351,7 +352,7 @@ export function legacy_pre_effect_reset() {
 
 			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
 			// the effects dependencies and correctly ensure each dependency is up-to-date.
-			if ((effect.f & CLEAN) !== 0 && effect.deps !== null) {
+			if ((effect.f & CLEAN) !== 0 && effect.edges !== null) {
 				set_signal_status(effect, MAYBE_DIRTY);
 			}
 
@@ -528,7 +529,7 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	effect.f |= DESTROYING;
 	destroy_effect_children(effect, remove_dom && !removed);
-	remove_reactions(effect, 0);
+	remove_reactions(effect);
 
 	var transitions = effect.nodes && effect.nodes.t;
 
@@ -561,6 +562,8 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.teardown =
 		effect.ctx =
 		effect.deps =
+		effect.dv =
+		effect.edges =
 		effect.fn =
 		effect.nodes =
 		effect.ac =

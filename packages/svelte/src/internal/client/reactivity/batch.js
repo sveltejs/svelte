@@ -1228,7 +1228,7 @@ function flush_queued_effects(effects) {
 			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
 			if (
-				effect.deps === null &&
+				effect.edges === null &&
 				effect.first === null &&
 				effect.nodes === null &&
 				effect.teardown === null &&

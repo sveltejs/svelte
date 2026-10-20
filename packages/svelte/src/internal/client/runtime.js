@@ -188,12 +188,12 @@ export function is_current(deps, dv) {
 
 /**
  * Whether none of `deps` has been written since the version `wv` in the active view of the world, which is
- * how a value assigned to a derived (whose version is `wv`) holds: until one of its dependencies is written
- * after it. Comparing versions with those the dependencies had at the time of the assignment, like
- * `is_current` does, wouldn't work: a view might undo a write the assignment saw, and a committed fork
- * might apply one it didn't see — but both writes happened before the assignment, so they don't make it
- * outdated. (A dependency that is a derived which was evaluated again, and got a different value, counts
- * as changed, though)
+ * how a value assigned to a derived (whose version is `wv`) holds: until one of the values read by the run
+ * that applies in the view (see `get_view`) is written after it. Comparing versions with those the
+ * dependencies had at the time of the assignment, like `is_current` does, wouldn't work: a view might undo
+ * a write the assignment saw, and a committed fork might apply one it didn't see — but both writes happened
+ * before the assignment, so they don't make it outdated. (A dependency that is a derived which was evaluated
+ * again, and got a different value, counts as changed, though)
  * @param {Value[] | null} deps
  * @param {number} wv
  */
@@ -238,7 +238,7 @@ export function is_dirty(reaction) {
 	if ((flags & ASSIGNED) !== 0) {
 		// A value assigned to a derived holds until one of its dependencies is written after it, which its flags
 		// can't tell: writes that don't change the real world (e.g. those of a fork) mark the derived, too
-		if (!unchanged_since(/** @type {Derived} */ (reaction).deps, reaction.wv)) return true;
+		if (!unchanged_since(reaction.deps, reaction.wv)) return true;
 	} else if ((flags & DIRTY) !== 0) {
 		return true;
 	} else {
@@ -417,7 +417,7 @@ export function update_reaction(reaction) {
  * - it is an effect run that belongs to a batch (see {@link update_record})
  * - it is a derived evaluated in a teardown, in which case its result is discarded
  *
- * The edges of the graph (`reaction.deps` and the `reactions` of its dependencies) are a
+ * The edges of the graph (`reaction.edges` and the `reactions` of its dependencies) are a
  * superset of the dependencies of every live record, so that changes to any of them reach
  * the reaction. They are only pruned when a global run happens and no batch holds a record.
  * @param {Reaction} reaction
@@ -447,12 +447,13 @@ function update_dependencies(reaction, flags, value, error) {
 		keep_global_run(/** @type {Derived} */ (reaction), flags, value, error);
 	}
 
-	// Fast path: the reaction read the same values as before, in the real world
+	// Fast path: the reaction read the same values as before, in the real world, and has no other edges
 	if (
 		new_deps === null &&
 		batch_values === null &&
 		dv !== null &&
 		length === deps?.length &&
+		reaction.edges === deps &&
 		(flags & (BLOCK_EFFECT | ASYNC)) === 0
 	) {
 		// The run saw what its dependencies hold now — a write during the run after it read
@@ -465,7 +466,7 @@ function update_dependencies(reaction, flags, value, error) {
 		return length;
 	}
 
-	return update_record(reaction, flags, deps, length, value, error);
+	return update_record(reaction, flags, length, value, error);
 }
 
 /**
@@ -513,13 +514,11 @@ function holds(derived, holder, value) {
  * 4. stores the run where it belongs
  * @param {Reaction} reaction
  * @param {number} flags the flags of the reaction before the run
- * @param {Value[] | null} deps `reaction.deps`, the first `skipped_deps` of which the run read again (in the
- * same order) — what else it read is in `new_deps`
  * @param {number} length the number of values the run read
  * @param {any} value the value of the run (only relevant for deriveds)
  * @param {boolean} error whether the value is an error
  */
-function update_record(reaction, flags, deps, length, value, error) {
+function update_record(reaction, flags, length, value, error) {
 	// Block and async effects that run while a batch is processed produce a result for that batch (the
 	// branch it selected, the value an async expression resolved to for it), which it keeps until it
 	// commits. The first run of a block effect is the exception — it creates (and commits) its initial
@@ -541,16 +540,22 @@ function update_record(reaction, flags, deps, length, value, error) {
 		}
 	}
 
+	var deps = reaction.deps;
+	var read = deps;
+	if (new_deps !== null || skipped_deps !== deps?.length) {
+		read =
+			skipped_deps === 0
+				? new_deps
+				: /** @type {Value[]} */ (deps).slice(0, skipped_deps).concat(new_deps ?? []);
+	}
+
 	// A global run in the real world updates the versions in place. Anything else needs a new array:
 	// a record must not share it with the global state, and a derived's run can turn out to belong
 	// to the batch halfway through the loop
 	var dv = batch === null && batch_values === null && reaction.dv !== null ? reaction.dv : [];
 
 	for (var i = 0; i < length; i++) {
-		var dep =
-			i < skipped_deps
-				? /** @type {Value[]} */ (deps)[i]
-				: /** @type {Value[]} */ (new_deps)[i - skipped_deps];
+		var dep = /** @type {Value[]} */ (read)[i];
 		dv[i] = seen_version(dep);
 
 		// Within a batch's view, a derived's run belongs to the batch unless everything it read is the latest
@@ -570,75 +575,65 @@ function update_record(reaction, flags, deps, length, value, error) {
 		keep_global_run(/** @type {Derived} */ (reaction), flags, value, error);
 	}
 
-	// The edges — `reaction.deps`, and `reaction` in the `reactions` of each of them — must cover what every
+	// The edges — `reaction.edges`, and `reaction` in the `reactions` of each of them — must cover what every
 	// live run of the reaction read (its global run, and the records batches hold of it), so that a change to
 	// any of those values reaches it. So unless this is a global run and no batch holds a record, edges are
-	// only added (and pruned by a later global run). Otherwise they are updated exactly like on `main`
+	// only added (and pruned by a later global run). Their order is independent of the run's reads
 	var keep = batch !== null;
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
-
-	/** The values this run read, in order (only needed if edges are kept) @type {Value[] | null} */
-	var read = null;
+	var edges = reaction.edges;
 
 	for (var b = first_batch; !keep && b !== null; b = b.next) {
 		keep = b.records?.has(reaction) === true;
 	}
 
-	if (keep) {
-		read = deps === null ? [] : deps.slice(0, skipped_deps);
-		reaction.deps = deps ??= [];
-
+	if (keep && edges !== null) {
 		if (new_deps !== null) {
+			// the edges may be a run's `deps` as well, see `update_dependencies`
+			reaction.edges = edges = edges.slice();
 			for (dep of new_deps) {
-				read.push(dep);
-
-				if (!includes.call(deps, dep)) {
-					deps.push(dep);
+				if (!includes.call(edges, dep)) {
+					edges.push(dep);
 					if (tracking) (dep.reactions ??= []).push(reaction);
 				}
 			}
 		}
-	} else if (new_deps !== null || (deps !== null && skipped_deps < deps.length)) {
-		// remove the edges to values the run didn't read again, and add those to values it read
-		// for the first time
-		remove_reactions(reaction, skipped_deps);
+	} else {
+		if (edges === deps) {
+			// The edges are exactly what the previous global run read (if anything), so — as on `main` —
+			// the values this run read again, in the same order, stay connected, and the rest is replaced
+			if (edges !== null) {
+				for (i = skipped_deps; i < edges.length; i++) remove_reaction(reaction, edges[i]);
+			}
 
-		if (deps === null || (skipped_deps === 0 && new_deps !== null)) {
-			reaction.deps = deps = new_deps;
+			if (tracking && new_deps !== null) {
+				for (dep of new_deps) (dep.reactions ??= []).push(reaction);
+			}
 		} else {
-			deps.length = length;
+			// The edges can include some that were retained for runs no batch holds anymore
+			var added = new Set(read);
+			for (dep of /** @type {Value[]} */ (edges)) {
+				if (!added.delete(dep)) remove_reaction(reaction, dep);
+			}
 
-			for (i = skipped_deps; i < length; i++) {
-				deps[i] = /** @type {Value[]} */ (new_deps)[i - skipped_deps];
+			if (tracking) {
+				for (dep of added) (dep.reactions ??= []).push(reaction);
 			}
 		}
 
-		if (tracking) {
-			for (i = skipped_deps; i < length; i++) {
-				dep = /** @type {Value[]} */ (deps)[i];
-				(dep.reactions ??= []).push(reaction);
-			}
-		}
+		reaction.edges = read;
 	}
 
 	if (batch !== null) {
-		// (the record has its own copy of what the run read, `deps` are the edges)
 		(batch.records ??= new Map()).set(
 			reaction,
 			(flags & DERIVED) !== 0
-				? derived_record(
-						/** @type {Derived} */ (reaction),
-						batch,
-						/** @type {Value[]} */ (read),
-						dv,
-						value,
-						error
-					)
-				: { deps: /** @type {Value[]} */ (read), dv }
+				? derived_record(/** @type {Derived} */ (reaction), batch, read, dv, value, error)
+				: { deps: read, dv }
 		);
 	} else {
-		// (if edges were kept, `deps` is reordered so that it starts with what the run read)
-		set_global_run(reaction, read, dv);
+		reaction.deps = read;
+		reaction.dv = dv;
 
 		if ((flags & DERIVED) !== 0) {
 			set_derived_value(/** @type {Derived} */ (reaction), value, error);
@@ -682,15 +677,21 @@ function keep_global_run(derived, flags, value, error) {
 		return;
 	}
 
+	/** @type {DerivedRecord | undefined} */
+	var record;
+
 	for (var batch = first_batch; batch !== null; batch = batch.next) {
 		if (batch !== view_batch && !batch.records?.has(derived)) {
-			(batch.records ??= new Map()).set(derived, {
-				deps: /** @type {Value[]} */ (derived.deps).slice(0, dv.length),
+			// All batches that retain this run share one record. (Its versions are copied: the
+			// derived's next global run in the real world updates its own in place)
+			record ??= {
+				deps: derived.deps,
 				dv: dv.slice(),
 				v: derived.v,
 				wv: derived.wv,
 				e: (flags & ERROR_VALUE) !== 0
-			});
+			};
+			(batch.records ??= new Map()).set(derived, record);
 		}
 	}
 }
@@ -718,7 +719,7 @@ function seen_version(signal) {
  * in the batch's view (if it held one before), or in the real world, so that reactions which saw it remain valid
  * @param {Derived} derived
  * @param {Batch} batch
- * @param {Value[]} deps
+ * @param {Value[] | null} deps
  * @param {number[]} dv
  * @param {any} v
  * @param {boolean} e
@@ -739,44 +740,16 @@ function derived_record(derived, batch, deps, dv, v, e) {
 }
 
 /**
- * Make the run that read the values `read` (in this order, `null` if they already are `reaction.deps`)
- * with the versions `dv` the global run of `reaction`
- * @param {Reaction} reaction
- * @param {Value[] | null} read
- * @param {number[]} dv
- */
-function set_global_run(reaction, read, dv) {
-	var deps = /** @type {Value[]} */ (reaction.deps);
-	var i = 0;
-
-	if (read !== null) {
-		// The reads must be the start of `deps` (which is what `dv` lines up with). But `deps` can't simply be
-		// replaced by them: it's also the list of the graph's edges (the values that have `reaction` among their
-		// `reactions`), which covers the runs that batches hold, too (see `update_record`). So the other edges
-		// are kept, after the reads — `read` itself is extended to become the new `deps`. If the reads already
-		// are the start of `deps` (the common case), nothing changes
-		while (i < read.length && deps[i] === read[i]) i++;
-
-		if (i < read.length) {
-			for (var dep of deps) {
-				if (!includes.call(read, dep)) read.push(dep);
-			}
-
-			reaction.deps = read;
-		}
-	}
-
-	reaction.dv = dv;
-}
-
-/**
  * Make the record a batch holds of `reaction` its global state, e.g. because the batch
  * committed, which makes its results the real-world ones (for a derived, that includes its value)
  * @param {Reaction} reaction
  * @param {BatchRecord} record
  */
 export function promote_record(reaction, record) {
-	set_global_run(reaction, record.deps, record.dv);
+	reaction.deps = record.deps;
+	// The global run updates its versions in place. An effect's record is dropped when it is promoted, but
+	// other batches can still hold a derived's (see `keep_global_run`), so that one keeps its own
+	reaction.dv = (reaction.f & DERIVED) !== 0 ? record.dv.slice() : record.dv;
 
 	if ((reaction.f & DERIVED) !== 0) {
 		var derived = /** @type {Derived} */ (reaction);
@@ -850,20 +823,19 @@ function remove_reaction(signal, dependency) {
 		freeze_derived_effects(derived);
 
 		// Disconnect any reactions owned by this reaction
-		remove_reactions(derived, 0);
+		remove_reactions(derived);
 	}
 }
 
 /**
  * @param {Reaction} signal
- * @param {number} start_index
  * @returns {void}
  */
-export function remove_reactions(signal, start_index) {
-	var dependencies = signal.deps;
+export function remove_reactions(signal) {
+	var dependencies = signal.edges;
 	if (dependencies === null) return;
 
-	for (var i = start_index; i < dependencies.length; i++) {
+	for (var i = 0; i < dependencies.length; i++) {
 		remove_reaction(signal, dependencies[i]);
 	}
 }
@@ -910,8 +882,8 @@ export function update_effect(effect) {
 
 		// In DEV, increment versions of any sources that were written to during the effect,
 		// so that they are correctly marked as dirty when the effect re-runs
-		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && effect.deps !== null) {
-			for (var dep of effect.deps) {
+		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && effect.edges !== null) {
+			for (var dep of effect.edges) {
 				if (dep.set_during_effect) {
 					dep.wv = increment_write_version();
 					dep.set_during_effect = false;
@@ -1003,14 +975,10 @@ export function get(signal) {
 			} else {
 				late_reader = active_reaction;
 
-				// We're adding a dependency outside the init/update cycle (i.e. after an `await`).
-				// We have to deduplicate deps/reactions in this case or remove_reactions could
-				// disconnect deps/reactions that are actually still in use (if skip_deps says
-				// "disconnect all after this index" and some of the signals are also present in
-				// list prior to the cutoff index, i.e. that should be kept).
-				active_reaction.deps ??= [];
-				if (!includes.call(active_reaction.deps, signal)) {
-					active_reaction.deps.push(signal);
+				// Late reads add an edge immediately, even if evaluating the value throws.
+				var edges = active_reaction.edges;
+				if (edges === null || !includes.call(edges, signal)) {
+					active_reaction.edges = edges === null ? [signal] : [...edges, signal];
 				}
 
 				var reactions = signal.reactions;
@@ -1170,19 +1138,11 @@ export function get(signal) {
  */
 function record_late_read(reaction, signal, version) {
 	var run = run_of(reaction);
-	var deps = /** @type {Value[]} */ (run.deps);
-	var dv = run.dv;
+	var deps = run.deps;
 
-	if (dv === null) return;
-
-	var i = deps.indexOf(signal);
-	if (i === -1) i = deps.push(signal) - 1;
-
-	if (i >= dv.length) {
-		// move it next to the other values read by the run, so that `dv` lines up with the start of `deps`
-		deps[i] = deps[dv.length];
-		deps[dv.length] = signal;
-		dv.push(version);
+	if (run.dv !== null && (deps === null || !includes.call(deps, signal))) {
+		run.deps = deps === null ? [signal] : [...deps, signal];
+		run.dv.push(version);
 	}
 }
 
@@ -1194,9 +1154,9 @@ function record_late_read(reaction, signal, version) {
 function reconnect(derived) {
 	derived.f |= CONNECTED;
 
-	if (derived.deps === null) return;
+	if (derived.edges === null) return;
 
-	for (const dep of derived.deps) {
+	for (const dep of derived.edges) {
 		var reactions = dep.reactions;
 
 		if (reactions === null) {
@@ -1215,9 +1175,9 @@ function reconnect(derived) {
 /** @param {Derived} derived */
 function depends_on_old_values(derived) {
 	if (derived.v === UNINITIALIZED) return true; // we don't know, so assume the worst
-	if (derived.deps === null) return false;
+	if (derived.edges === null) return false;
 
-	for (const dep of derived.deps) {
+	for (const dep of derived.edges) {
 		if (old_values.has(dep)) {
 			return true;
 		}
