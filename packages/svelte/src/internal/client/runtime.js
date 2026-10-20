@@ -8,9 +8,6 @@ import {
 	execute_effect_teardown
 } from './reactivity/effects.js';
 import {
-	DIRTY,
-	MAYBE_DIRTY,
-	CLEAN,
 	DERIVED,
 	DESTROYED,
 	BRANCH_EFFECT,
@@ -22,7 +19,9 @@ import {
 	STALE_REACTION,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
-	REACTION_RAN
+	REACTION_RAN,
+	EFFECT_LEGACY,
+	CLEAN
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -31,7 +30,8 @@ import {
 	freeze_derived_effects,
 	recent_async_deriveds,
 	unfreeze_derived_effects,
-	update_derived
+	update_derived,
+	derived_stack
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions } from './dev/tracing.js';
@@ -47,18 +47,20 @@ import {
 } from './context.js';
 import {
 	Batch,
-	batch_values,
 	current_batch,
 	flushSync,
-	previous_batch,
-	schedule_effect
+	get_cv,
+	active_batch,
+	set_cv,
+	get_wv,
+	previous_batch
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
-import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
+import * as e from './errors.js';
 
 export let is_destroying_effect = false;
 
@@ -146,41 +148,56 @@ export function increment_write_version() {
 }
 
 /**
- * Determines whether a derived or effect is dirty.
- * If it is MAYBE_DIRTY, will set the status to CLEAN
+ * Determines whether a reaction is dirty
  * @param {Reaction} reaction
  * @returns {boolean}
  */
 export function is_dirty(reaction) {
 	var flags = reaction.f;
 
-	if ((flags & DIRTY) !== 0) {
+	if ((flags & REACTION_IS_UPDATING) !== 0) {
+		return false;
+	}
+
+	if ((flags & REACTION_RAN) === 0) {
 		return true;
 	}
 
-	if ((flags & MAYBE_DIRTY) !== 0) {
-		var dependencies = /** @type {Value[]} */ (reaction.deps);
-		var length = dependencies.length;
+	if (flags & DERIVED) {
+		if ((flags & CONNECTED) !== 0) {
+			if (active_batch !== null) {
+				if (active_batch.values?.has(/** @type {Derived} */ (reaction))) {
+					return false;
+				}
+			} else {
+				if ((reaction.f & CLEAN) !== 0) {
+					return false;
+				}
+			}
+		}
+	}
 
-		for (var i = 0; i < length; i++) {
-			var dependency = dependencies[i];
+	var dependencies = /** @type {Value[]} */ (reaction.deps);
 
+	if (dependencies === null) {
+		return false;
+	}
+
+	var cv = get_cv(reaction);
+
+	var length = dependencies.length;
+
+	for (var i = 0; i < length; i++) {
+		var dependency = dependencies[i];
+
+		if ((dependency.f & DERIVED) !== 0) {
 			if (is_dirty(/** @type {Derived} */ (dependency))) {
 				update_derived(/** @type {Derived} */ (dependency));
 			}
-
-			if (dependency.wv > reaction.wv) {
-				return true;
-			}
 		}
 
-		if (
-			(flags & CONNECTED) !== 0 &&
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			batch_values === null
-		) {
-			set_signal_status(reaction, CLEAN);
+		if (get_wv(dependency) > cv) {
+			return true;
 		}
 	}
 
@@ -188,15 +205,15 @@ export function is_dirty(reaction) {
 }
 
 /**
+ * @param {Batch} batch
  * @param {Value} signal
  * @param {Effect} effect
- * @param {boolean} [root]
  */
-function schedule_possible_effect_self_invalidation(signal, effect, root = true) {
+function schedule_possible_effect_self_invalidation(batch, signal, effect) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
-	if (!async_mode_flag && current_sources !== null && current_sources.has(signal)) {
+	if (current_sources !== null && current_sources.has(signal)) {
 		return;
 	}
 
@@ -204,14 +221,9 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 		var reaction = reactions[i];
 
 		if ((reaction.f & DERIVED) !== 0) {
-			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
+			schedule_possible_effect_self_invalidation(batch, /** @type {Derived} */ (reaction), effect);
 		} else if (effect === reaction) {
-			if (root) {
-				set_signal_status(reaction, DIRTY);
-			} else if ((reaction.f & CLEAN) !== 0) {
-				set_signal_status(reaction, MAYBE_DIRTY);
-			}
-			schedule_effect(/** @type {Effect} */ (reaction));
+			batch.schedule(/** @type {Effect} */ (reaction));
 		}
 	}
 }
@@ -262,10 +274,12 @@ export function update_reaction(reaction) {
 			untracked_writes !== null &&
 			!untracking &&
 			deps !== null &&
-			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
+			(reaction.f & DERIVED) === 0 &&
+			current_batch !== null
 		) {
 			for (var i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
 				schedule_possible_effect_self_invalidation(
+					current_batch,
 					untracked_writes[i],
 					/** @type {Effect} */ (reaction)
 				);
@@ -338,7 +352,9 @@ function update_dependencies(reaction) {
 	if (new_deps !== null) {
 		var i;
 
-		if (!is_fork) {
+		if (is_fork) {
+			/** @type {Batch} */ (current_batch).rewired.add(reaction);
+		} else {
 			remove_reactions(reaction, skipped_deps);
 		}
 
@@ -402,22 +418,13 @@ function remove_reaction(signal, dependency) {
 			derived.f ^= CONNECTED;
 		}
 
-		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is
-		// never re-executed. This is possible when the derived is only executed once in the context
-		// of a new branch which happens before fork.commit() runs. In this case, the derived still has
-		// UNINITIALIZED as its value, and then when it's losing its reactions we need to ensure it stays
-		// DIRTY so it is reexecuted once someone wants its value again.
-		if (derived.v !== UNINITIALIZED) {
-			update_derived_status(derived);
-		}
-
 		// Call abort controller, noone's listening to this derived anymore
 		if (derived.ac !== null) {
 			without_reactive_context(() => {
 				/** @type {AbortController} */ (derived.ac).abort(STALE_REACTION);
 				derived.ac = null;
 				// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
-				set_signal_status(derived, DIRTY);
+				set_cv(derived, -1);
 			});
 		}
 
@@ -454,8 +461,6 @@ export function update_effect(effect) {
 		return;
 	}
 
-	set_signal_status(effect, CLEAN);
-
 	var previous_effect = active_effect;
 
 	active_effect = effect;
@@ -468,6 +473,10 @@ export function update_effect(effect) {
 		set_dev_stack(effect.dev_stack ?? dev_stack);
 	}
 
+	// get this now, so that any writes during execution cause a re-run,
+	// but don't set it yet so that `$inspect.trace` works
+	const cv = write_version;
+
 	try {
 		if ((flags & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
 			destroy_block_effect_children(effect);
@@ -476,21 +485,19 @@ export function update_effect(effect) {
 		}
 
 		execute_effect_teardown(effect);
+
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-		effect.wv = write_version;
-
-		// In DEV, increment versions of any sources that were written to during the effect,
-		// so that they are correctly marked as dirty when the effect re-runs
-		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && effect.deps !== null) {
-			for (var dep of effect.deps) {
-				if (dep.set_during_effect) {
-					dep.wv = increment_write_version();
-					dep.set_during_effect = false;
-				}
+	} finally {
+		if (effect.deps !== null) {
+			if (is_runes() && (effect.f & EFFECT_LEGACY) === 0) {
+				set_cv(effect, cv);
+			} else {
+				// in legacy mode, prevent the effect re-running immediately
+				set_cv(effect);
 			}
 		}
-	} finally {
+
 		active_effect = previous_effect;
 
 		if (DEV) {
@@ -655,15 +662,16 @@ export function get(signal) {
 	if (is_derived) {
 		var derived = /** @type {Derived} */ (signal);
 
+		if (derived_stack !== null && includes.call(derived_stack, derived)) {
+			e.derived_references_self();
+		}
+
 		if (is_destroying_effect) {
 			var value = derived.v;
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
-			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
-			if (
-				((derived.f & CLEAN) === 0 && derived.reactions !== null) ||
-				depends_on_old_values(derived)
-			) {
+			// (a derived can be dirty due to the effect destroy removing its last reaction)
+			if ((is_dirty(derived) && derived.reactions !== null) || depends_on_old_values(derived)) {
 				value = execute_derived(derived);
 			}
 
@@ -697,9 +705,8 @@ export function get(signal) {
 		}
 	}
 
-	if (batch_values?.has(signal)) {
-		return batch_values.get(signal);
-	}
+	var snapshot = active_batch?.values?.get(signal);
+	if (snapshot) return /** @type {V} */ (snapshot.v);
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
 		throw signal.v;

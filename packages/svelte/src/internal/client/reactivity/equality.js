@@ -1,8 +1,25 @@
-/** @import { Equals } from '#client' */
+/** @import { Equals, Value } from '#client' */
+import { DERIVED } from '#client/constants';
+import { active_batch } from './batch.js';
+
+/**
+ * Sources are compared against their real value, but deriveds are compared
+ * against the value they have in the currently active batch's view of the world
+ * TODO not sure this is totally right — we should treat deriveds as sources
+ * when they're being written rather than recomputed. Probably need to
+ * pass a second argument here
+ * @param {Value} value
+ */
+function current_value(value) {
+	if ((value.f & DERIVED) === 0) return value.v;
+
+	var snapshot = active_batch?.values?.get(value);
+	return snapshot ? snapshot.v : value.v;
+}
 
 /** @type {Equals} */
 export function equals(value) {
-	return value === this.v;
+	return value === current_value(this);
 }
 
 /**
@@ -27,5 +44,5 @@ export function not_equal(a, b) {
 
 /** @type {Equals} */
 export function safe_equals(value) {
-	return !safe_not_equal(value, this.v);
+	return !safe_not_equal(value, current_value(this));
 }

@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Value } from '#client' */
 
 import {
 	BLOCK_EFFECT,
@@ -7,17 +7,16 @@ import {
 	CLEAN,
 	CONNECTED,
 	DERIVED,
-	DIRTY,
 	EFFECT,
 	ASYNC,
 	DESTROYED,
 	INERT,
-	MAYBE_DIRTY,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
 	MANAGED_EFFECT
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
+import { get_cv, get_wv } from '../reactivity/batch.js';
 import { untrack } from '../runtime.js';
 
 /**
@@ -30,6 +29,36 @@ export function root(effect) {
 	}
 
 	return effect;
+}
+
+/**
+ * A version of `is_dirty` that doesn't execute deriveds (and
+ * may, as a result, report that effects are dirty even if they
+ * don't end up running)
+ * @param {Reaction} reaction
+*/
+function is_dirty(reaction) {
+	const cv = get_cv(reaction);
+	let wv = -1;
+
+	/**
+	 * @param {Reaction} reaction
+	 */
+	function walk(reaction) {
+		if (!reaction.deps) return;
+
+		for (const dep of reaction.deps) {
+			wv = Math.max(wv, get_wv(dep));
+
+			if ((dep.f & DERIVED) !== 0) {
+				walk(/** @type {Derived} */ (dep));
+			}
+		}
+	}
+
+	walk(reaction);
+
+	return wv > cv;
 }
 
 /**
@@ -55,6 +84,8 @@ function effect_label(effect, append_effect = false) {
 		label = 'async';
 	} else if ((flags & BRANCH_EFFECT) !== 0) {
 		label = 'branch';
+	} else if (!effect.fn) {
+		label = 'teardown';
 	} else if ((flags & RENDER_EFFECT) !== 0) {
 		label = 'render effect';
 	} else if ((flags & EFFECT) !== 0) {
@@ -76,26 +107,38 @@ export function log_effect_tree(effect, highlighted = [], depth = 0, is_reachabl
 	const flags = effect.f;
 	let label = effect_label(effect);
 
-	let status =
-		(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+	if (label === 'boundary') {
+		// eslint-disable-next-line no-console
+		console.group('%cboundary', 'font-weight: normal');
+	} else {
+		let status = 'clean';
 
-	let styles = [`font-weight: ${status === 'clean' ? 'normal' : 'bold'}`];
+		if ((flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0) {
+			if ((flags & CLEAN) === 0) status = 'dirty';
+		} else {
+			if (is_dirty(effect)) {
+				status = 'dirty';
+			}
+		}
 
-	if (status !== 'clean' && !is_reachable) {
-		label = `⚠️ ${label}`;
-		styles.push(`color: red`);
+		let styles = [`font-weight: ${status === 'clean' ? 'normal' : 'bold'}`];
+
+		if (status !== 'clean' && !is_reachable) {
+			label = `⚠️ ${label}`;
+			styles.push(`color: red`);
+		}
+
+		if ((flags & INERT) !== 0) {
+			styles.push('font-style: italic');
+		}
+
+		if (highlighted.includes(effect)) {
+			styles.push('background-color: yellow');
+		}
+
+		// eslint-disable-next-line no-console
+		console.group(`%c${label} (${status}) cv=${get_cv(effect)}`, styles.join('; '));
 	}
-
-	if ((flags & INERT) !== 0) {
-		styles.push('font-style: italic');
-	}
-
-	if (highlighted.includes(effect)) {
-		styles.push('background-color: yellow');
-	}
-
-	// eslint-disable-next-line no-console
-	console.group(`%c${label} (${status})`, styles.join('; '));
 
 	if (depth === 0) {
 		const callsite = new Error().stack
@@ -157,7 +200,7 @@ function log_dep(dep) {
 
 		// eslint-disable-next-line no-console
 		console.groupCollapsed(
-			`%c$derived %c${dep.label ?? '<unknown>'}`,
+			`%c$derived %c${dep.label ?? '<unknown>'} wv=${get_wv(derived)} cv=${get_cv(derived)}`,
 			'font-weight: bold; color: CornflowerBlue',
 			'font-weight: normal',
 			untrack(() => snapshot(derived.v))
@@ -174,7 +217,7 @@ function log_dep(dep) {
 	} else {
 		// eslint-disable-next-line no-console
 		console.log(
-			`%c$state %c${dep.label ?? '<unknown>'}`,
+			`%c$state %c${dep.label ?? '<unknown>'} wv=${get_wv(dep)}`,
 			'font-weight: bold; color: CornflowerBlue',
 			'font-weight: normal',
 			untrack(() => snapshot(dep.v))
@@ -200,8 +243,6 @@ export function log_reactions(signal) {
 		const names = [];
 
 		if ((flags & CLEAN) !== 0) names.push('CLEAN');
-		if ((flags & DIRTY) !== 0) names.push('DIRTY');
-		if ((flags & MAYBE_DIRTY) !== 0) names.push('MAYBE_DIRTY');
 		if ((flags & CONNECTED) !== 0) names.push('CONNECTED');
 		if ((flags & INERT) !== 0) names.push('INERT');
 		if ((flags & DESTROYED) !== 0) names.push('DESTROYED');
@@ -257,7 +298,7 @@ export function log_reactions(signal) {
 				} else {
 					// It's an effect
 					const label = effect_label(/** @type {Effect} */ (reaction), true);
-					const status = (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+					const status = is_dirty(reaction) ? 'dirty' : 'clean';
 
 					// Collect parent statuses
 					/** @type {string[]} */
@@ -378,8 +419,7 @@ export function log_inconsistent_branches(effect) {
 		const is_branch = (flags & BRANCH_EFFECT) !== 0;
 
 		if (is_branch) {
-			const status =
-				(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
+			const status = (flags & CLEAN) !== 0 ? 'clean' : 'dirty';
 
 			/** @type {BranchInfo[]} */
 			const child_branches = [];
@@ -513,4 +553,17 @@ export function log_inconsistent_branches(effect) {
 	console.groupEnd();
 
 	return true;
+}
+
+/**
+ * Stringify a derived function, removing `$.track_reactivity_loss` and `$.get` etc
+ * @param {Function} fn
+ */
+export function stringify_derived(fn) {
+	return `{${fn.toString()
+		.replace(/^async \(\) => /, '')
+		.replace(/^\(/, '')
+		.replace(/\$\.get\((.+?)\)/, (_, name) => name)
+		.replace(/\$\.track_reactivity_loss\((.+?)\)\(\)/, (_, name) => name)
+		.replace(/\)$/, '')}}`;
 }
