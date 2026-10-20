@@ -1,4 +1,4 @@
-/** @import { BatchRecord, Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Effect, Reaction, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
 import {
@@ -452,10 +452,10 @@ function adopt(derived, records) {
  * lifetime of the view (see `view_cache`), unless the derived is disconnected, in which case nothing
  * would remove them from the cache when they become stale.
  * @param {Derived} derived
- * @returns {{ v: any, wv: number, e?: boolean }}
+ * @returns {Derived | DerivedRecord | BatchValue}
  */
 export function get_view(derived) {
-	var cache = /** @type {Map<Derived, any>} */ (view_cache);
+	var cache = /** @type {Map<Derived, Derived | DerivedRecord | BatchValue>} */ (view_cache);
 	var entry = cache.get(derived);
 
 	if (entry !== undefined) return entry;
@@ -467,22 +467,23 @@ export function get_view(derived) {
 	// holds until one of the derived's dependencies is written after it (see `unchanged_since`). The value
 	// from before an undone assignment is only used if it was assigned, too: a computed value was computed
 	// in some other view of the world, and may depend on writes that this view undoes
-	var held = /** @type {Map<Value, any>} */ (batch_values).get(derived) ?? derived;
+	var written = /** @type {Map<Value, BatchValue>} */ (batch_values).get(derived);
+	var held = written ?? derived;
 	var assigned =
-		held === derived
+		written === undefined
 			? (derived.f & ASSIGNED) !== 0
-			: held === batch.current.get(derived) || held.assigned;
+			: written === batch.current.get(derived) || written.assigned;
 	var record;
 
 	if (assigned && unchanged_since(derived.deps, held.wv)) {
 		entry = held;
 	} else if (
-		(record = batch.get_record(derived)) !== undefined &&
+		(record = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived))) !== undefined &&
 		is_current(record.deps, record.dv)
 	) {
 		entry = record;
 	} else if (
-		held === derived &&
+		written === undefined &&
 		!assigned &&
 		derived.dv !== null &&
 		is_current(derived.deps, derived.dv)
@@ -492,7 +493,7 @@ export function get_view(derived) {
 		execute_derived(derived);
 
 		// the run is stored in the batch, unless it is the real-world value (see `update_record`)
-		entry = batch.records?.get(derived) ?? derived;
+		entry = /** @type {DerivedRecord | undefined} */ (batch.records?.get(derived)) ?? derived;
 	}
 
 	if ((derived.f & CONNECTED) !== 0) {

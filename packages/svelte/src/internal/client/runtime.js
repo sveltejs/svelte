@@ -1,4 +1,4 @@
-/** @import { BatchRecord, Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import { get_descriptors, get_prototype_of, includes, index_of } from '../shared/utils.js';
 import {
@@ -540,7 +540,7 @@ function update_record(reaction, flags, deps, length, value, error) {
 			: null;
 
 	// A derived that has another version in the view than in the real world — because the view undoes an
-	// assignment to it, or it was assigned in a fork — never runs for the real world (see `view_entry`)
+	// assignment to it, or it was assigned in a fork — never runs for the real world (see `get_view`)
 	if (batch_values !== null && (flags & DERIVED) !== 0) {
 		var written = batch_values.get(/** @type {Derived} */ (reaction));
 
@@ -680,7 +680,7 @@ function keep_global_run(derived, flags, value, error) {
 		// no valid run, or one that doesn't depend on anything — which is only run again if it was invalidated
 		dv === null ||
 		dv.length === 0 ||
-		// an assigned value isn't a run, see `view_entry`
+		// an assigned value isn't a run, see `get_view`
 		(flags & ASSIGNED) !== 0 ||
 		// a derived that uses an abort signal aborted the current run when it ran again
 		derived.ac !== null ||
@@ -714,9 +714,8 @@ function seen_version(signal) {
 	if (batch_values === null) return signal.wv;
 
 	if ((signal.f & DERIVED) !== 0) {
-		return (
-			/** @type {Map<Derived, any>} */ (view_cache).get(/** @type {Derived} */ (signal))?.wv ?? -1
-		);
+		var cache = /** @type {Map<Derived, Derived | DerivedRecord | BatchValue>} */ (view_cache);
+		return cache.get(/** @type {Derived} */ (signal))?.wv ?? -1;
 	}
 
 	return (batch_values.get(signal) ?? signal).wv;
@@ -731,7 +730,7 @@ function seen_version(signal) {
  * @param {number[]} dv
  * @param {any} v
  * @param {boolean} e
- * @returns {BatchRecord}
+ * @returns {DerivedRecord}
  */
 function derived_record(derived, batch, deps, dv, v, e) {
 	var previous = batch.get_record(derived);
@@ -1117,7 +1116,7 @@ export function get(signal) {
 
 	/**
 	 * The value (and version) as the active view of the world sees it, if it differs from the real
-	 * world — for a derived, this is the derived itself if its global state applies (see `view_entry`)
+	 * world — for a derived, this is the derived itself if its global state applies (see `get_view`)
 	 * @type {{ v: any, wv: number, e?: boolean } | undefined}
 	 */
 	var view;

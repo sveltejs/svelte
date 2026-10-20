@@ -1,5 +1,5 @@
 /** @import { Fork } from 'svelte' */
-/** @import { BatchRecord, Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Effect, Reaction, Source, Value } from '#client' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -65,7 +65,7 @@ export let previous_batch = null;
  * other batches, which its view of the world undoes (see `activate`).
  * `null` means that the real world (i.e. the latest values) applies.
  * Doesn't contain computed deriveds, these are in {@link view_cache}.
- * @type {Map<Value, { v: any, wv: number, e?: boolean }> | null}
+ * @type {Map<Value, BatchValue> | null}
  */
 export let batch_values = null;
 
@@ -73,7 +73,7 @@ export let batch_values = null;
  * The values of deriveds in the active view of the world, for as long as it is active (see `get_view`):
  * a record of a run (in which case `e` tells whether its value is an error), the derived itself if its
  * global state applies, or the write to it that holds (an assignment). Exists whenever `batch_values` does
- * @type {Map<Derived, Derived | { v: any, wv: number, e?: boolean }> | null}
+ * @type {Map<Derived, Derived | DerivedRecord | BatchValue> | null}
  */
 export let view_cache = null;
 
@@ -143,7 +143,7 @@ export class Batch {
 	 * The current values (and their versions) of any sources that are updated in this batch,
 	 * including deriveds that were overridden via assignment — until it commits them (see `#commit`).
 	 * The keys of this map are identical to `this.previous`. `e` says whether the value is an error
-	 * @type {Map<Value, { v: any, wv: number, e?: boolean, assigned?: boolean }>}
+	 * @type {Map<Value, BatchValue>}
 	 */
 	current = new Map();
 
@@ -151,7 +151,7 @@ export class Batch {
 	 * The values (and their versions) of any sources that are updated in this batch _before_ those updates took place.
 	 * For a derived, `assigned` says whether its value before was assigned, too (otherwise it was computed).
 	 * The keys of this map are identical to `this.current`
-	 * @type {Map<Value, { v: any, wv: number, e?: boolean, assigned?: boolean }>}
+	 * @type {Map<Value, BatchValue>}
 	 */
 	previous = new Map();
 
@@ -669,11 +669,9 @@ export class Batch {
 	 */
 	#merge(batch) {
 		for (const [source, entry] of batch.current) {
-			if (!this.previous.has(source) && batch.previous.has(source)) {
-				this.previous.set(
-					source,
-					/** @type {{ v: any, wv: number }} */ (batch.previous.get(source))
-				);
+			if (!this.previous.has(source)) {
+				const previous = batch.previous.get(source);
+				if (previous) this.previous.set(source, previous);
 			}
 
 			this.current.set(source, entry);
@@ -1046,7 +1044,7 @@ export class Batch {
 			} else {
 				for (const [source, previous] of batch.previous) {
 					// (where the views agree on the value, the real one — and its version — applies. Not for an
-					// assigned derived: its value before may have been computed in another view, see `view_entry`)
+					// assigned derived: its value before may have been computed in another view, see `get_view`)
 					if (
 						!batch_values.has(source) &&
 						((source.f & DERIVED) !== 0 || !source.equals(previous.v))

@@ -63,9 +63,23 @@ export interface Reaction extends Signal {
 }
 
 /**
+ * A value of a signal and its version, as a batch holds it: a write in the batch (`Batch#current`),
+ * the value from before the write (`Batch#previous`), or what a view of the world holds instead
+ * of the real value (`batch_values`)
+ */
+export interface BatchValue {
+	v: any;
+	wv: number;
+	/** Whether the value is an error */
+	e?: boolean;
+	/** Only in `Batch#previous`, for a derived: whether its value before was assigned, too (otherwise it was computed) */
+	assigned?: boolean;
+}
+
+/**
  * The result of a run of a reaction that belongs to a batch rather than to the real world:
  * the values it read (in order) and their exact versions at the time — and, for
- * deriveds, the resulting value and its version
+ * deriveds, the resulting value and its version (see `DerivedRecord`)
  */
 export interface BatchRecord {
 	deps: null | Value[];
@@ -76,6 +90,13 @@ export interface BatchRecord {
 	wv?: number;
 	/** Whether the value of a derived record is an error */
 	e?: boolean;
+}
+
+/** A record of a derived, which — unlike the record of an effect — has a value */
+export interface DerivedRecord extends BatchRecord {
+	v: any;
+	wv: number;
+	e: boolean;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
