@@ -435,14 +435,14 @@ export class Batch {
 		while (this.#scheduled.length > 0) {
 			if (flush_count++ > 1000) {
 				this.#unlink();
-				infinite_loop_guard(); // TODO try to reset_all() here?
+				infinite_loop_guard(); // TODO try to reset the tree here?
 			}
 
 			for (const root of this.#resolve()) {
 				try {
 					this.#traverse(root, effects, render_effects);
 				} catch (e) {
-					reset_all(root);
+					reset_branch(root, true);
 					// If there's no async work left, this branch is now dead and needs
 					// to be discarded to not become a zombie that is never cleaned up.
 					// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
@@ -603,12 +603,7 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var skip =
-				is_skippable_branch ||
-				(flags & INERT) !== 0 ||
-				this.#skipped_branches.has(effect) ||
-				// branches that exist offscreen only for other batches
-				((flags & EFFECT_OFFSCREEN) !== 0 && !this.#unskipped_branches.has(effect));
+			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skips(effect);
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
@@ -643,22 +638,20 @@ export class Batch {
 	}
 
 	#find_earlier_batch() {
-		var batch = this.prev;
-
-		while (batch !== null) {
-			if (!batch.is_fork) {
-				// if the batches are connected, break
-				for (const value of this.current.keys()) {
-					if (batch.current.has(value)) {
-						return batch;
-					}
-				}
-			}
-
-			batch = batch.prev;
+		for (var batch = this.prev; batch !== null; batch = batch.prev) {
+			if (!batch.is_fork && this.#intersects(batch)) return batch;
 		}
 
 		return null;
+	}
+
+	/** @param {Batch} batch */
+	#intersects(batch) {
+		for (const source of this.current.keys()) {
+			if (batch.current.has(source)) return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -810,9 +803,7 @@ export class Batch {
 			legacy_updates = null;
 			is_processing = false;
 
-			current_batch = null;
-			batch_values = view_cache = null;
-			view_batch = null;
+			this.deactivate();
 
 			old_values.clear();
 
@@ -1021,25 +1012,12 @@ export class Batch {
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch === this || batch.is_fork) continue;
 
-			// If two batches intersect, the latter batch will be merged into the earlier batch,
-			// and we should treat them as a single set of changes
-			var intersects = false;
-
-			if (batch.id < this.id) {
-				for (const source of batch.current.keys()) {
-					if (this.current.has(source)) {
-						intersects = true;
-						break;
-					}
-				}
-			}
-
 			// Since the latter batch merges into the earlier (if it resolves before the earlier one),
 			// we treat the earlier values as "already applied". This way we don't need to rerun async
 			// effects of the earlier batch in case they are merged.
 			// As a result you can think of batch_values as having the latest values of all intersecting
 			// batches up until this batch.
-			if (intersects) {
+			if (batch.id < this.id && batch.#intersects(this)) {
 				this.folded.push(batch);
 			} else {
 				for (const [source, previous] of batch.previous) {
@@ -1427,10 +1405,11 @@ export function eager(fn) {
  * Mark all the effects inside a skipped branch CLEAN, so that they can be correctly
  * rescheduled later (if the branch survives, its effects are re-validated, see `unskip_effect`)
  * @param {Effect} effect
+ * @param {boolean} force reset even clean branches following an error
  */
-function reset_branch(effect) {
+function reset_branch(effect, force = false) {
 	// clean branch = nothing dirty inside, no need to traverse further
-	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
+	if (!force && (effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
 		return;
 	}
 
@@ -1438,21 +1417,7 @@ function reset_branch(effect) {
 
 	var e = effect.first;
 	while (e !== null) {
-		reset_branch(e);
-		e = e.next;
-	}
-}
-
-/**
- * Mark an entire effect tree clean following an error
- * @param {Effect} effect
- */
-function reset_all(effect) {
-	set_signal_status(effect, CLEAN);
-
-	var e = effect.first;
-	while (e !== null) {
-		reset_all(e);
+		reset_branch(e, force);
 		e = e.next;
 	}
 }

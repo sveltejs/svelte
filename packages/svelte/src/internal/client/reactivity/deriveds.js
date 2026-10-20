@@ -358,7 +358,6 @@ let stack = [];
  * @returns {T}
  */
 export function execute_derived(derived) {
-	var value;
 	var prev_active_effect = active_effect;
 	var parent = derived.parent;
 
@@ -378,71 +377,50 @@ export function execute_derived(derived) {
 
 	set_active_effect(parent);
 
-	if (DEV) {
-		let prev_eager_effects = eager_effects;
-		set_eager_effects(new Set());
+	var prev_eager_effects = eager_effects;
+	var recursive = DEV && includes.call(stack, derived);
 
-		var recursive = includes.call(stack, derived);
+	if (DEV) {
+		set_eager_effects(new Set());
 
 		// (pushed in any case, so that `finally` doesn't remove the outer evaluation from the stack)
 		stack.push(derived);
+	}
 
-		try {
-			if (recursive) {
-				e.derived_references_self();
-			}
+	try {
+		if (DEV && recursive) {
+			e.derived_references_self();
+		}
 
-			destroy_derived_effects(derived);
-			value = update_reaction(derived);
-		} finally {
-			set_active_effect(prev_active_effect);
+		destroy_derived_effects(derived);
+		return update_reaction(derived);
+	} finally {
+		set_active_effect(prev_active_effect);
+
+		if (DEV) {
 			set_eager_effects(prev_eager_effects);
 			stack.pop();
 		}
-	} else {
-		try {
-			destroy_derived_effects(derived);
-			value = update_reaction(derived);
-		} finally {
-			set_active_effect(prev_active_effect);
-		}
 	}
-
-	return value;
 }
 
 /**
- * Re-evaluate `derived` in the real world (i.e. with the latest values of everything)
- * and update its global state
+ * Update the global state of `derived`, adopting the active batch's run if its view has
+ * become the real world (e.g. because a fork was committed), or re-evaluating it otherwise
  * @param {Derived} derived
  * @returns {void}
  */
 export function update_derived(derived) {
-	if (view_batch !== null && view_batch.records !== null && adopt(derived, view_batch.records)) {
-		return;
+	var records = view_batch?.records;
+	var record = records?.get(derived);
+
+	if (record !== undefined && is_current(record.deps, record.dv)) {
+		/** @type {Map<Reaction, BatchRecord>} */ (records).delete(derived);
+		promote_record(derived, record);
+	} else {
+		// (the result is stored by `update_dependencies`)
+		execute_derived(derived);
 	}
-
-	// (the result is stored by `update_dependencies`)
-	execute_derived(derived);
-}
-
-/**
- * If the active batch evaluated `derived` in its view of the world, and that turns out to be
- * the real world now (e.g. because the batch is a fork that was committed), adopt the result
- * @param {Derived} derived
- * @param {Map<Reaction, BatchRecord>} records
- */
-function adopt(derived, records) {
-	var record = records.get(derived);
-
-	if (record === undefined || !is_current(record.deps, record.dv)) {
-		return false;
-	}
-
-	records.delete(derived);
-	promote_record(derived, record);
-
-	return true;
 }
 
 /**

@@ -154,10 +154,14 @@ export function increment_write_version() {
 }
 
 /**
- * The version `signal` has in the active view of the world
+ * The version `signal` has in the active view of the world, bringing deriveds up to date
  * @param {Value} signal
  */
-export function version_of(signal) {
+function version_of(signal) {
+	if (batch_values === null && is_dirty(/** @type {Derived} */ (signal))) {
+		update_derived(/** @type {Derived} */ (signal));
+	}
+
 	return (
 		batch_values === null
 			? signal
@@ -176,13 +180,7 @@ export function version_of(signal) {
  */
 export function is_current(deps, dv) {
 	for (var i = 0; i < dv.length; i++) {
-		var dependency = /** @type {Value[]} */ (deps)[i];
-
-		if (batch_values === null && is_dirty(/** @type {Derived} */ (dependency))) {
-			update_derived(/** @type {Derived} */ (dependency));
-		}
-
-		if (version_of(dependency) !== dv[i]) return false;
+		if (version_of(/** @type {Value[]} */ (deps)[i]) !== dv[i]) return false;
 	}
 
 	return true;
@@ -202,13 +200,7 @@ export function is_current(deps, dv) {
 export function unchanged_since(deps, wv) {
 	if (deps !== null) {
 		for (var i = 0; i < deps.length; i++) {
-			var dependency = deps[i];
-
-			if (batch_values === null && is_dirty(/** @type {Derived} */ (dependency))) {
-				update_derived(/** @type {Derived} */ (dependency));
-			}
-
-			if (version_of(dependency) > wv) return false;
+			if (version_of(deps[i]) > wv) return false;
 		}
 	}
 
