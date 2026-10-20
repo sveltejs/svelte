@@ -448,21 +448,6 @@ export class Batch {
 			}
 		}
 
-		// Edge case: During traversal new branches might create effects that run immediately and set state,
-		// causing an effect to be scheduled again. We need to traverse the current batch
-		// once more in that case - most of the time this will just clean up dirty branches.
-		if (this.#scheduled.length > 0) {
-			if (next_batch !== null) {
-				for (const e of this.#scheduled) {
-					next_batch.#scheduled.push(e);
-				}
-
-				this.#scheduled = [];
-			} else {
-				next_batch = this;
-			}
-		}
-
 		if (next_batch !== null) {
 			old_values.clear();
 			next_batch.#process();
