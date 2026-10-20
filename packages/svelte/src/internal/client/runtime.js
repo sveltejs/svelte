@@ -34,7 +34,7 @@ import {
 	recent_async_deriveds,
 	unfreeze_derived_effects,
 	update_derived,
-	view_entry
+	get_view
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions } from './dev/tracing.js';
@@ -162,7 +162,7 @@ export function version_of(signal) {
 		batch_values === null
 			? signal
 			: (signal.f & DERIVED) !== 0
-				? view_entry(/** @type {Derived} */ (signal))
+				? get_view(/** @type {Derived} */ (signal))
 				: batch_values.get(signal) ?? signal
 	).wv;
 }
@@ -217,20 +217,22 @@ export function unchanged_since(deps, wv) {
 
 /**
  * The run of `reaction` that applies in the active view of the world: the record of a block or async
- * effect in the active batch, if it has one (see `update_record`), or else the reaction itself — whose
+ * effect in the active batch, if it has one (see {@link update_record}), or else the reaction itself — whose
  * `deps` and `dv` are its global state
  * @param {Reaction} reaction
  * @returns {Reaction | BatchRecord}
  */
 function run_of(reaction) {
-	return ((reaction.f & (BLOCK_EFFECT | ASYNC)) !== 0 && view_batch?.record(reaction)) || reaction;
+	return (
+		((reaction.f & (BLOCK_EFFECT | ASYNC)) !== 0 && view_batch?.get_record(reaction)) || reaction
+	);
 }
 
 /**
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY (or an assigned derived) and isn't, will set the status to CLEAN.
  * Deriveds are only checked like this in the real world — within the view of a batch,
- * see `view_entry`. Effects are checked against the run that applies (see `run_of`).
+ * see {@link get_view}. Effects are checked against the run that applies (see `run_of`).
  * @param {Reaction} reaction
  * @returns {boolean}
  */
@@ -419,8 +421,8 @@ export function update_reaction(reaction) {
  *
  * A run belongs to the real world — and becomes the reaction's global state — unless
  * - it is a derived that read values which aren't the latest ones (it is then stored in the batch
- *   whose view of the world it ran in, see `view_entry`)
- * - it is an effect run that belongs to a batch (see `update_record`)
+ *   whose view of the world it ran in, see {@link get_view})
+ * - it is an effect run that belongs to a batch (see {@link update_record})
  * - it is a derived evaluated in a teardown, in which case its result is discarded
  *
  * The edges of the graph (`reaction.deps` and the `reactions` of its dependencies) are a
@@ -733,7 +735,7 @@ function seen_version(signal) {
  * @returns {BatchRecord}
  */
 function derived_record(derived, batch, deps, dv, v, e) {
-	var previous = batch.record(derived);
+	var previous = batch.get_record(derived);
 
 	var wv = e
 		? increment_write_version()
@@ -1140,7 +1142,7 @@ export function get(signal) {
 		}
 
 		if (batch_values !== null) {
-			view = view_entry(derived);
+			view = get_view(derived);
 		} else if (is_dirty(derived)) {
 			update_derived(derived);
 		}

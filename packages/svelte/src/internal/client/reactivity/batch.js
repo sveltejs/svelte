@@ -165,7 +165,8 @@ export class Batch {
 
 	/**
 	 * True while the batch commits, i.e. while it updates the DOM and runs effects.
-	 * Effects that run then do so for the real world
+	 * Effects that run then do so for the real world (they don't necessarily run
+	 * with the latest values but dependencies/reactions should be pruned accordingly, and dv set, etc)
 	 */
 	committing = false;
 
@@ -209,7 +210,7 @@ export class Batch {
 
 	/**
 	 * Effects to (re-)validate when this batch is processed next, and their status (DIRTY or MAYBE_DIRTY):
-	 * those that were scheduled while it wasn't being processed (see `schedule`), and those whose run
+	 * those that were scheduled while it wasn't being processed (see {@link schedule}), and those whose run
 	 * was deferred because it has pending work (see `#defer_effects`)
 	 * @type {Map<Effect, number>}
 	 */
@@ -230,7 +231,7 @@ export class Batch {
 
 	/**
 	 * Branches that still exist, but will be destroyed when this batch
-	 * is committed — we skip over these during `process`
+	 * is committed — we skip over these during `#process`
 	 * @type {Set<Effect>}
 	 */
 	#skipped_branches = new Set();
@@ -666,7 +667,7 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
-		for (const [source, value] of batch.current) {
+		for (const [source, entry] of batch.current) {
 			if (!this.previous.has(source) && batch.previous.has(source)) {
 				this.previous.set(
 					source,
@@ -674,7 +675,7 @@ export class Batch {
 				);
 			}
 
-			this.current.set(source, value);
+			this.current.set(source, entry);
 		}
 
 		for (const [effect, deferred] of batch.async_deriveds) {
@@ -736,23 +737,22 @@ export class Batch {
 
 		if (!this.previous.has(source)) {
 			// the value before this batch's change is the one before the later batch's change, if any
-			var previous = later === null ? source : later.previous.get(source);
+			var snapshot = later?.previous.get(source);
 
-			if (previous !== undefined && previous.v !== UNINITIALIZED) {
+			if (snapshot) {
+				this.previous.set(source, snapshot);
+			} else if (source.v !== UNINITIALIZED) {
 				this.previous.set(source, {
-					v: previous.v,
-					wv: previous.wv,
-					assigned:
-						previous === source
-							? (source.f & ASSIGNED) !== 0
-							: /** @type {{ assigned?: boolean }} */ (previous).assigned
+					v: source.v,
+					wv: source.wv,
+					assigned: (source.f & ASSIGNED) !== 0
 				});
 			}
 		}
 
 		// errors are never batch-local, or they wouldn't be thrown in `runtime.js#get`
 		var error = (source.f & ERROR_VALUE) !== 0;
-		same &&= !error;
+		if (error) same = false;
 		var latest = !this.is_fork && !same && (later === null || error);
 		var entry = {
 			v: value,
@@ -851,13 +851,13 @@ export class Batch {
 			/** @type {Source[]} */
 			var sources = [];
 
-			for (const [source, value] of this.current) {
+			for (const [source, entry] of this.current) {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && value.v !== own.v) {
+					if (is_earlier && entry.v !== own.v) {
 						// bring the value up to date
-						batch.current.set(source, value);
+						batch.current.set(source, entry);
 					} else {
 						// same value or later batch has more recent value,
 						// no need to re-run these effects
@@ -1064,7 +1064,7 @@ export class Batch {
 	 * @param {Reaction} reaction
 	 * @returns {BatchRecord | undefined}
 	 */
-	record(reaction) {
+	get_record(reaction) {
 		var record = this.records?.get(reaction);
 
 		for (var i = this.folded.length - 1; record === undefined && i >= 0; i--) {

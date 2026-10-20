@@ -462,7 +462,7 @@ function adopt(derived, records) {
  * @param {Derived} derived
  * @returns {{ v: any, wv: number, e?: boolean }}
  */
-export function view_entry(derived) {
+export function get_view(derived) {
 	var cache = /** @type {Map<Derived, any>} */ (view_cache);
 	var entry = cache.get(derived);
 
@@ -484,7 +484,10 @@ export function view_entry(derived) {
 
 	if (assigned && unchanged_since(derived.deps, held.wv)) {
 		entry = held;
-	} else if ((record = batch.record(derived)) !== undefined && is_current(record.deps, record.dv)) {
+	} else if (
+		(record = batch.get_record(derived)) !== undefined &&
+		is_current(record.deps, record.dv)
+	) {
 		entry = record;
 	} else if (
 		held === derived &&

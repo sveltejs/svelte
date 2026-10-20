@@ -108,10 +108,7 @@ export class BranchManager {
 				// ...and append the fragment
 				this.anchor.before(offscreen.fragment);
 				onscreen = offscreen.effect;
-
-				if ((onscreen.f & EFFECT_OFFSCREEN) !== 0) {
-					onscreen.f ^= EFFECT_OFFSCREEN;
-				}
+				onscreen.f &= ~EFFECT_OFFSCREEN;
 			}
 		}
 
