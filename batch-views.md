@@ -286,8 +286,8 @@ For a batch run, it stores a record in `batch.records` **without touching the gl
 - **Looked up** via `Batch#record`: by `run_of` for block/async effects (used by `is_dirty` and `record_late_read`), and by `get_view` for deriveds.
 - **Extended** by `record_late_read` ([§12](#12-reads-after-await-record_late_read)).
 - **Merged**: when a later batch Y merges into an earlier batch X (`#merge`), Y is discarded when X commits or is discarded (so that, e.g., the branches it selected are cleaned up either way — before, they were only cleaned up if X committed, `async-merge-intersecting`), and Y's non-block records move to X. X's view now includes Y's writes, so Y's async results and derived values are still valid (and are re-checked with `is_current` anyway). Block records are _not_ moved: branch selections are keyed by batch, and X re-selects them when it processes.
-- **Promoted** when the batch commits (`#process`, after `committing = true`): every live effect record becomes global state via `promote_record`. Derived records are dropped.
-- **Dropped** with `batch.records = null` on commit, and in `#unlink` (discard, merge).
+- **Promoted** when the batch commits (`#process`, after `committing = true`): every live effect record becomes global state via `promote_record`, and the effect's edges are pruned (`prune_edges`, [§8.3](#83-edges-are-a-superset)). Derived records are dropped.
+- **Dropped** with `batch.records = null` on commit, and in `#unlink` (discard, merge), which prunes the edges of the effects whose records it drops.
 
 ### 8.3 Edges are a superset
 
@@ -300,7 +300,9 @@ For a batch run, it stores a record in `batch.records` **without touching the gl
   - **The edges are the previous global run's reads** (`edges === deps`, which includes having no edges yet): retain the unchanged prefix and replace the suffix, as on `main`.
   - **Otherwise** (they include edges retained for runs that no batch holds anymore): reconcile the edge set with the new read list.
 
-Edges belonging to records that were dropped without being promoted (on discard) remain until the next global run with no records prunes them. They only cause spurious `MAYBE_DIRTY` checks, not wrong results.
+Block and async effects run in batches, so their runs hardly ever take the pruning paths: every re-run during processing appends. A block that reads `items[index]` while `index` changes would otherwise end up as a reaction of every item it ever read, which causes spurious `MAYBE_DIRTY` checks and keeps those items from being garbage collected. So when a batch's records of effects are promoted (on commit) or dropped (in `#unlink`: discard, merge), `prune_edges` removes the edges that no live run needs anymore, once no batch holds a record of the effect: the edges become the global run's `deps` again. As edges are a superset of `deps`, that only removes. `async-block-edges-pruned` covers both cases (it observes the pruning through deriveds that are disconnected, which aborts their signal). Both fail before this, also before `edges` were split from `deps`. `main` prunes on commit, but not after a discarded fork.
+
+Deriveds are left out. Their edges also notify the reactions that read the value of a derived's record that was dropped, which must notice that the record is gone when one of its dependencies changes. They are pruned by the derived's next global run. Until then they only cause spurious `MAYBE_DIRTY` checks, not wrong results. The same holds for the edges of an effect that another batch still has a record of.
 
 The `skipped_deps` optimisation in `get()` still compares reads directly with `reaction.deps`. Disconnection, reconnection, tracing and effect liveness use `reaction.edges` instead. A reaction that only has batch-local runs can have edges even though its global `deps` is `null`.
 
@@ -483,7 +485,7 @@ Compared to `main`, the extra work is one `dv` write per dependency per run, plu
 3. B is processed. Its unprocessed effects become `MAYBE_DIRTY`. `activate()` builds B's view: `y` from `B.current`, `x` undone using `A.previous` (if A and B don't intersect). The block has no record in B, so it's checked against its global state, which still describes the world before A (A's run is a record in A). In B's view `x` has its old version again, so the block only re-runs if it reads `y`. If it does, the run is recorded in B. Deriveds read in B's view come from cache, record, still-valid global state, or re-evaluation (global if all inputs are latest, else a B record). Branch X is offscreen, so B doesn't process it.
 4. B commits: its effect records are promoted, so if the block re-ran its global state is now B's selection. `#commit` → `A.#revalidate([y])`, and A is added to `rebases`.
 5. A is processed again (rebase, or when its async work resolves). `#revalidate(A.current)` re-flags whatever B's processing cleaned. `is_dirty(block)` checks **A's record** in A's view. Only `y` changed for it, so the block re-runs only if it reads `y`. Otherwise A's selection of branch X stands, also if B selected another branch and committed it ([§11](#11-offscreen-branches)). A's async effect record is checked the same way, and isn't restarted unless something it read changed in A's view.
-6. A's async result arrives → `internal_set(..., own_result)` in A's view → `capture` (latest unless a later batch wrote it) → A is processed and commits. Its records are promoted, and B's leftover edges are pruned on the next global runs.
+6. A's async result arrives → `internal_set(..., own_result)` in A's view → `capture` (latest unless a later batch wrote it) → A is processed and commits. Its records are promoted, and the edges of the block that only B's run needed are pruned (B committed already, so no batch holds a record of it anymore).
 
 ### 14.3 Fork
 
@@ -507,7 +509,7 @@ These are the places where two mechanisms cover the same ground, or one concept 
 
    Each could be removed with no change in behaviour, at a measurable perf cost (routing `schedule` through `#unprocessed` when alone, for example, costs about 10% on `kairo_mux`). This has been checked by running the test suites with all four removed, so that every read during processing goes through a view: everything passes. The run also found the bugs that [§7.4](#74-errors) and [§13](#13-teardowns-invalidated-runs-and-destroyed-reactions) describe.
 
-7. **Edge maintenance** has four paths: none (fast path), keep-and-append (records exist), prune the changed suffix (as on `main`, when the edges are the global run's reads) and reconcile (when they include edges retained for runs no batch holds anymore), see [§8.3](#83-edges-are-a-superset).
+7. **Edge maintenance** has four paths in `update_record`: none (fast path), keep-and-append (records exist), prune the changed suffix (as on `main`, when the edges are the global run's reads) and reconcile (when they include edges retained for runs no batch holds anymore). And `prune_edges` removes the edges of an effect when the last batch's record of it is promoted or dropped. See [§8.3](#83-edges-are-a-superset).
 8. **The derived cache vs derived records.** The cache (`view_cache`) lives for one view (one `activate`); records live until commit. A cache entry is what is current in the view: a record, the derived, or an assignment.
 9. **`folded`** is used twice: by `activate` (don't undo intersecting earlier batches) and by `record()` (fall back to their records).
 10. **Reads versus edges** now have separate storage. The global run remains flat (`deps`/`dv`) for cheap reads; graph connectivity lives in `edges`. Promotion and late reads no longer reorder a dependency prefix. Assignments are checked against the reads of the run that applies, not the edges ([§7.1](#71-get_viewderived-derivedsjs435)).

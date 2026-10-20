@@ -762,6 +762,33 @@ export function promote_record(reaction, record) {
 }
 
 /**
+ * Remove the edges of an effect that only runs no batch holds anymore needed (because the batch committed and
+ * its record was promoted, or because it was dropped), once no batch holds a record of it, so that its edges are
+ * what its global run read again. `update_record` only prunes edges in a global run that happens while no batch
+ * holds a record, which block and async effects hardly ever have: they run in batches.
+ * (Not for deriveds: their edges also notify the reactions that read the value of a record that was dropped. They
+ * are pruned by their next global run)
+ * @param {Reaction} effect
+ */
+export function prune_edges(effect) {
+	var edges = effect.edges;
+	var deps = effect.deps;
+
+	if (edges === deps) return;
+
+	for (var batch = first_batch; batch !== null; batch = batch.next) {
+		if (batch.records?.has(effect)) return;
+	}
+
+	// (the edges are a superset of `deps`, so nothing needs to be connected)
+	for (var dep of /** @type {Value[]} */ (edges)) {
+		if (deps === null || !includes.call(deps, dep)) remove_reaction(effect, dep);
+	}
+
+	effect.edges = deps;
+}
+
+/**
  * @template V
  * @param {Reaction} signal
  * @param {Value<V>} dependency

@@ -28,6 +28,7 @@ import {
 	increment_write_version,
 	is_dirty,
 	promote_record,
+	prune_edges,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
@@ -499,12 +500,17 @@ export class Batch {
 		this.committing = true;
 
 		if (this.records !== null) {
-			// Make the block/async effects this batch has take effect in the real world
-			for (const [reaction, record] of this.records) {
-				if ((reaction.f & (DERIVED | DESTROYED)) === 0) promote_record(reaction, record);
-			}
-
+			const records = this.records;
+			// (cleared first, so that the edges only this batch's runs needed can be pruned)
 			this.records = null;
+
+			// Make the block/async effects this batch has take effect in the real world
+			for (const [reaction, record] of records) {
+				if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
+					promote_record(reaction, record);
+					prune_edges(reaction);
+				}
+			}
 		}
 
 		// append/remove branches
@@ -1120,7 +1126,17 @@ export class Batch {
 		}
 
 		this.linked = false;
+
+		var records = this.records;
 		this.records = null;
+
+		if (records !== null) {
+			// The runs of effects this batch held are gone (records that were merged into another batch
+			// are held by that one), and so are the edges that only they needed
+			for (const reaction of records.keys()) {
+				if ((reaction.f & DERIVED) === 0) prune_edges(reaction);
+			}
+		}
 	}
 }
 
