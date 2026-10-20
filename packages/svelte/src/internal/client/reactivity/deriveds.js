@@ -1,9 +1,7 @@
 /** @import { BatchRecord, Derived, Effect, Reaction, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
-/** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
 import {
-	ERROR_VALUE,
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
@@ -230,15 +228,9 @@ export function async_derived(fn, label, location) {
 			batch.activate();
 
 			if (error) {
-				signal.f |= ERROR_VALUE;
-
 				// @ts-expect-error the error is the wrong type, but we don't care
-				internal_set(signal, error, null, true);
+				internal_set(signal, error, null, true, true);
 			} else {
-				if ((signal.f & ERROR_VALUE) !== 0) {
-					signal.f ^= ERROR_VALUE;
-				}
-
 				if (DEV && location !== undefined && !signal.equals(value)) {
 					recent_async_deriveds.add(signal);
 

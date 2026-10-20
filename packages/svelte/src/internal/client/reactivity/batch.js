@@ -63,13 +63,14 @@ export let previous_batch = null;
  * signals in favour of their values within the batch — along with their
  * versions: the batch's writes, and the values from before the writes of
  * other batches, which its view of the world undoes (see `activate`).
- * `null` means that the real world (i.e. the latest values) applies
- * @type {Map<Value, { v: any, wv: number }> | null}
+ * `null` means that the real world (i.e. the latest values) applies.
+ * Doesn't contain computed deriveds, these are in {@link view_cache}.
+ * @type {Map<Value, { v: any, wv: number, e?: boolean }> | null}
  */
 export let batch_values = null;
 
 /**
- * The values of deriveds in the active view of the world, for as long as it is active (see `view_entry`):
+ * The values of deriveds in the active view of the world, for as long as it is active (see `get_view`):
  * a record of a run (in which case `e` tells whether its value is an error), the derived itself if its
  * global state applies, or the write to it that holds (an assignment). Exists whenever `batch_values` does
  * @type {Map<Derived, Derived | { v: any, wv: number, e?: boolean }> | null}
@@ -141,8 +142,8 @@ export class Batch {
 	/**
 	 * The current values (and their versions) of any sources that are updated in this batch,
 	 * including deriveds that were overridden via assignment — until it commits them (see `#commit`).
-	 * The keys of this map are identical to `this.previous`
-	 * @type {Map<Value, { v: any, wv: number }>}
+	 * The keys of this map are identical to `this.previous`. `e` says whether the value is an error
+	 * @type {Map<Value, { v: any, wv: number, e?: boolean, assigned?: boolean }>}
 	 */
 	current = new Map();
 
@@ -150,7 +151,7 @@ export class Batch {
 	 * The values (and their versions) of any sources that are updated in this batch _before_ those updates took place.
 	 * For a derived, `assigned` says whether its value before was assigned, too (otherwise it was computed).
 	 * The keys of this map are identical to `this.current`
-	 * @type {Map<Value, { v: any, wv: number, assigned?: boolean }>}
+	 * @type {Map<Value, { v: any, wv: number, e?: boolean, assigned?: boolean }>}
 	 */
 	previous = new Map();
 
@@ -726,9 +727,10 @@ export class Batch {
 	 * @param {any} value
 	 * @param {boolean} same whether the value equals the real one (it can, if this batch sees another one, see
 	 * `internal_set`) — in which case the source isn't updated, and the value gets the same version
+	 * @param {boolean} [error] whether the value is an error (thrown when read, see `runtime.js#get`)
 	 * @returns {boolean} whether the value is the latest one
 	 */
-	capture(source, value, same) {
+	capture(source, value, same, error = false) {
 		var later = this.next;
 
 		while (later !== null && (later.is_fork || !later.current.has(source))) {
@@ -745,24 +747,21 @@ export class Batch {
 				this.previous.set(source, {
 					v: source.v,
 					wv: source.wv,
+					e: (source.f & ERROR_VALUE) !== 0,
 					assigned: (source.f & ASSIGNED) !== 0
 				});
 			}
 		}
 
-		// errors are never batch-local, or they wouldn't be thrown in `runtime.js#get`
-		var error = (source.f & ERROR_VALUE) !== 0;
-		if (error) same = false;
-		var latest = !this.is_fork && !same && (later === null || error);
+		var latest = !this.is_fork && !same && later === null;
 		var entry = {
 			v: value,
-			wv: same ? source.wv : increment_write_version()
+			wv: same ? source.wv : increment_write_version(),
+			e: error
 		};
 
-		if (!error) {
-			this.current.set(source, entry);
-			batch_values?.set(source, entry);
-		}
+		this.current.set(source, entry);
+		batch_values?.set(source, entry);
 
 		// an assignment replaces the value of a derived that the active view of the world holds
 		view_cache?.delete(/** @type {Derived} */ (source));
@@ -770,6 +769,7 @@ export class Batch {
 		if (latest) {
 			source.v = value;
 			source.wv = entry.wv;
+			source.f = error ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
 		}
 
 		return latest;
@@ -1526,10 +1526,11 @@ export function fork(fn) {
 			for (var [source, entry] of batch.current) {
 				source.v = entry.v;
 				source.wv = entry.wv;
+				source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
 
 				if ((source.f & DERIVED) !== 0) {
 					// an assigned derived, which holds its value until one of its dependencies is written after it
-					source.f = (source.f & ~ERROR_VALUE) | ASSIGNED;
+					source.f |= ASSIGNED;
 					update_derived_status(/** @type {Derived} */ (source));
 				}
 			}

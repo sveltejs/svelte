@@ -553,10 +553,9 @@ function update_record(reaction, flags, deps, length, value, error) {
 	// a record must not share it with the global state, and a derived's run can turn out to belong
 	// to the batch halfway through the loop
 	var dv = batch === null && batch_values === null && reaction.dv !== null ? reaction.dv : [];
-	var i, dep;
 
-	for (i = 0; i < length; i++) {
-		dep =
+	for (var i = 0; i < length; i++) {
+		var dep =
 			i < skipped_deps
 				? /** @type {Value[]} */ (deps)[i]
 				: /** @type {Value[]} */ (new_deps)[i - skipped_deps];
@@ -1160,7 +1159,6 @@ export function get(signal) {
 	}
 
 	if (view !== undefined && view !== signal) {
-		// (only records of deriveds can have an error, see `update_record`)
 		if (view.e) throw view.v;
 		return view.v;
 	}

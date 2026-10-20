@@ -25,7 +25,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	ASYNC,
-	ASSIGNED
+	ASSIGNED,
+	ERROR_VALUE
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -188,13 +189,24 @@ var count_deps = 0;
  * @param {boolean} [own_result] Whether this is a result the current batch computed (i.e. an async
  * expression resolved). Such a value belongs to the batch even if nothing changes, and it is a change
  * if it differs from what the batch sees (even if it equals the real value)
+ * @param {boolean} [error] Whether the value is an error (an async expression rejected), which is thrown when read
  * @returns {V}
  */
-export function internal_set(source, value, updated_during_traversal = null, own_result = false) {
+export function internal_set(
+	source,
+	value,
+	updated_during_traversal = null,
+	own_result = false,
+	error = false
+) {
 	var view = own_result ? batch_values?.get(source) : undefined;
-	var same = source.equals(value);
+	// errors are never the same value
+	var same = source.equals(value) && !error && (source.f & ERROR_VALUE) === 0;
 
-	if (!same || (view !== undefined && !source.equals.call(/** @type {any} */ (view), value))) {
+	if (
+		!same ||
+		(view !== undefined && (view.e || !source.equals.call(/** @type {any} */ (view), value)))
+	) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -212,7 +224,7 @@ export function internal_set(source, value, updated_during_traversal = null, own
 			execute_derived(/** @type {Derived} */ (source));
 		}
 
-		var latest = batch.capture(source, value, same);
+		var latest = batch.capture(source, value, same, error);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
