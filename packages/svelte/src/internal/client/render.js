@@ -168,7 +168,7 @@ const listeners = new Map();
  */
 function _mount(Component, options) {
 	if (options.renderer) {
-		var pop_renderer = push_renderer(options.renderer);
+		var pop_renderer = push_renderer(options.renderer, options.renderer);
 
 		try {
 			return _mount_inner(Component, options);
