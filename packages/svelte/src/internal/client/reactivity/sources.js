@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	active_reaction,
@@ -7,7 +7,6 @@ import {
 	get,
 	set_untracked_writes,
 	untrack,
-	increment_write_version,
 	update_effect,
 	current_sources,
 	is_dirty,
@@ -37,7 +36,10 @@ import {
 	batch_values,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	current_batch,
+	has_pending_batches,
+	own_value
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -70,14 +72,15 @@ export function set_eager_effects_deferred() {
  */
 // TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
-	/** @type {Source<V>} */
+	/** @type {Source} */
 	var signal = {
 		f: 0,
 		v,
 		reactions: null,
 		equals,
 		rv: 0,
-		wv: 0
+		wv: 0,
+		e: null
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -187,13 +190,34 @@ var count_deps = 0;
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals(value)) {
+	if (
+		batch_values === null ? !source.equals(value) : !source.equals.call(own_value(source), value)
+	) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
 			// only record the value from before the first write in this flush, otherwise a
 			// teardown would see the value from before whichever write happened to be last
 			old_values.set(source, source.v);
+		}
+
+		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
+			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
+			if ((source.f & DIRTY) !== 0) {
+				execute_derived(derived);
+			}
+
+			// During time traveling we don't want to reset the status so that
+			// traversal of the graph in the other batches still happens
+			if (
+				batch_values === null &&
+				// could also be "read outside of reactivity", e.g. in an event handler, while other batches are in flight
+				!has_pending_batches()
+			) {
+				update_derived_status(derived);
+			}
 		}
 
 		var batch = Batch.ensure();
@@ -229,23 +253,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		if ((source.f & DERIVED) !== 0) {
-			const derived = /** @type {Derived} */ (source);
-
-			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
-			if ((source.f & DIRTY) !== 0) {
-				execute_derived(derived);
-			}
-
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			if (batch_values === null) {
-				update_derived_status(derived);
-			}
-		}
-
-		source.wv = increment_write_version();
-
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
 		seen = null;
@@ -273,6 +280,9 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
+	} else if (batch_values !== null && current_batch?.linked && !current_batch.current.has(source)) {
+		// Value is equal to the real world, still save it for correct computation of batch_values etc.
+		current_batch.capture(source, value, false, true);
 	}
 
 	return value;
@@ -346,6 +356,24 @@ export function increment(source) {
 }
 
 /**
+ * Make `reaction` re-run in the current batch. For a derived this means dirtying
+ * its reactions, as if the derived's value had changed.
+ * @param {Reaction} reaction
+ * @param {number} status
+ */
+export function invalidate(reaction, status) {
+	if ((reaction.f & DERIVED) !== 0) {
+		set_signal_status(reaction, status);
+		seen = null;
+		count_deps = 0;
+		mark_reactions(/** @type {Derived} */ (reaction), status, null);
+		seen = null;
+	} else {
+		schedule_effect(/** @type {Effect} */ (reaction), status);
+	}
+}
+
+/**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @param {Effect[] | null} updated_during_traversal
@@ -379,8 +407,12 @@ function mark_reactions(signal, status, updated_during_traversal) {
 
 		var not_dirty = (flags & DIRTY) === 0;
 
-		// don't set a DIRTY reaction to MAYBE_DIRTY
-		if (not_dirty) {
+		// don't set a DIRTY reaction to MAYBE_DIRTY. Scheduled effects get
+		// their status from the batch they're scheduled in (see `Batch#schedule`)
+		if (
+			not_dirty &&
+			((flags & (EAGER_EFFECT | DERIVED)) !== 0 || updated_during_traversal !== null)
+		) {
 			set_signal_status(reaction, status);
 		}
 
@@ -392,7 +424,6 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		} else if ((flags & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (reaction);
 
-			batch_values?.delete(derived);
 			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
@@ -404,7 +435,7 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			if (updated_during_traversal !== null) {
 				updated_during_traversal.push(effect);
 			} else {
-				schedule_effect(effect);
+				schedule_effect(effect, status);
 			}
 		}
 	}

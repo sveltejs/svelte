@@ -50,10 +50,18 @@ export const HEAD_EFFECT = 1 << 18;
 export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
 export const EFFECT_OFFSCREEN = 1 << 25;
+/**
+ * Set on render effects that are created during traversal: unlike other render effects, they don't run
+ * right away (i.e. while their parent is being created), but together with the other render effects
+ * once the batch flushes (see `collected_render_effects`)
+ */
+export const DEFERRED_RUN = 1 << 26;
 
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;
+/** Set on branch effects that only exist for fork batches */
+export const FORK_ONLY_BRANCH = 1 << 23;
 
 export const ERROR_VALUE = 1 << 23;
 

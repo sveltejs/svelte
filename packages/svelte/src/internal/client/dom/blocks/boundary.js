@@ -1,4 +1,4 @@
-/** @import { Effect, Source, TemplateNode, } from '#client' */
+/** @import { Effect, Reaction, Source, TemplateNode, } from '#client' */
 import {
 	BOUNDARY_EFFECT,
 	DESTROYED,
@@ -112,7 +112,7 @@ export class Boundary {
 	#pending_count = 0;
 	#pending_count_update_queued = false;
 
-	/** @type {Map<Effect, number>} */
+	/** @type {Map<Reaction, number>} */
 	#dirty_reactions = new Map();
 
 	/**
