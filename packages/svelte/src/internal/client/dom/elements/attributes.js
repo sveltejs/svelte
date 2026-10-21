@@ -178,7 +178,8 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		}
 	}
 
-	if (attributes[attribute] === (attributes[attribute] = value)) return;
+	var previous = attributes[attribute];
+	if (previous === (attributes[attribute] = value)) return;
 
 	if (attribute === 'loading') {
 		// @ts-expect-error
@@ -190,7 +191,14 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	} else if (typeof value !== 'string' && get_setters(element).has(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
-	} else {
+	} else if (
+		// while hydrating, skip a number or boolean whose string the server already rendered
+		!(
+			hydrating &&
+			(typeof value === 'number' || typeof value === 'boolean') &&
+			previous === String(value)
+		)
+	) {
 		element.setAttribute(attribute, value);
 	}
 }
