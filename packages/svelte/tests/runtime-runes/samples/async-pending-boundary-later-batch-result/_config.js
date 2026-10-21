@@ -9,9 +9,10 @@ const buttons = `
 	<button>shift q</button>
 `;
 
-// A boundary that shows its pending snippet can be done with a result of a batch other than the one that
-// created its content (the latest run of an expression supersedes the others there). It only shows that
-// result once that batch commits it — for an `await` in the template (p), and in a component's script (q)
+// A later batch's runs of the expressions inside a boundary that shows its pending snippet don't supersede
+// the runs of the batch that created its content until they're committed. Until then, the boundary shows the
+// creator's results, and the later batch's results only once it commits them — for an `await` in the
+// template (p), and in a component's script (q)
 export default test({
 	async test({ assert, target }) {
 		const [a, show, shift_b, shift_p, shift_q] = target.querySelectorAll('button');
@@ -28,7 +29,7 @@ export default test({
 			`${buttons} <p>b: 0</p> <p>loading p...</p> <p>loading q...</p>`
 		);
 
-		// batch 2: waits for `b: 1`. Its runs of `push('p', a)` and `push('q', a)` supersede 1's
+		// batch 2: waits for `b: 1`. It re-runs `push('p', a)` and `push('q', a)`, too
 		a.click();
 		await tick();
 		assert.htmlEqual(
@@ -36,7 +37,7 @@ export default test({
 			`${buttons} <p>b: 0</p> <p>loading p...</p> <p>loading q...</p>`
 		);
 
-		// 1's runs are obsolete, 2's resolve — but 2 hasn't committed yet because the async deriveds wait for 1's completion
+		// 1's and 2's runs resolve. 2 hasn't committed (it waits for `b: 1`), so the boundaries show 1's results
 		shift_p.click();
 		await tick();
 		shift_p.click();
@@ -45,10 +46,7 @@ export default test({
 		await tick();
 		shift_q.click();
 		await tick();
-		assert.htmlEqual(
-			target.innerHTML,
-			`${buttons} <p>b: 0</p> <p>loading p...</p> <p>loading q...</p>`
-		);
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>b: 0</p> <p>p: 0</p> <p>q: 0</p>`);
 
 		// 2 commits
 		shift_b.click();

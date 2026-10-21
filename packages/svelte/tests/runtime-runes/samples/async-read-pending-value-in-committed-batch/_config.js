@@ -27,7 +27,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>loading 1...</p> <p>loading 2...</p>`);
 
 		// batch C: writes a=1; the async-a effect re-runs in C. That's inside boundary 2, which shows
-		// its pending snippet, so C commits (and stays live until the run resolves)
+		// its pending snippet, so C commits (and stays live until the run resolves). Its run supersedes B's
 		up.click();
 		await tick();
 
@@ -43,15 +43,15 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>loading 2...</p>`);
 
-		// resolve the async-a runs (B's and C's were superseded by D's)
+		// resolve the async-a runs (B's was superseded by C's)
 		shift_a.click();
 		await tick();
 		shift_a.click();
 		await tick();
 		shift_a.click();
 		await tick();
-		// boundary 2 is done, but what it shows is D's result, which D hasn't committed yet
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>loading 2...</p>`);
+		// boundary 2 is done. It shows C's result, which is committed — not D's, which D hasn't committed yet
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>late read: 1</p> <p>async a: 1</p>`);
 
 		// resolve the late reader's re-run -> D commits, and boundary 2 shows its result
 		shift_t.click();

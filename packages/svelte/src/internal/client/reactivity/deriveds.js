@@ -194,19 +194,7 @@ export function async_derived(fn, label, location) {
 				var decrement_pending = increment_pending();
 			}
 
-			if (
-				// boundary can be null if the async derived is inside an $effect.root not connected to the component render tree
-				parent.b?.is_rendered()
-			) {
-				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
-			} else {
-				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
-				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
-				for (const d of deferreds.values()) {
-					d.reject(OBSOLETE);
-				}
-			}
-
+			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			deferreds.add(d);
 			batch.async_deriveds.set(effect, d);
 		}
@@ -275,10 +263,11 @@ export function async_derived(fn, label, location) {
 					return;
 				}
 
-				// While the boundary shows its pending snippet, the latest run supersedes the others, whichever batch
-				// it belongs to (see above). So the first value can be another batch's result, which the creator's view
-				// can't undo. Until that batch commits it, the creator mustn't continue with it — and the boundary keeps
-				// showing its pending snippet. (Elsewhere, the creator's own run provides the first value in its view)
+				// While the boundary shows its pending snippet, batches commit without waiting for their runs, and a
+				// committed run supersedes those of the batches that committed before (see `Batch#release_records`).
+				// So the first value can be another batch's result, which the creator's view can't undo. Until that
+				// batch commits it, the creator mustn't continue with it — and the boundary keeps showing its pending
+				// snippet. (Elsewhere, the creator's own run provides the first value in its view)
 				var writer =
 					should_suspend && !(/** @type {Effect} */ (parent).b?.is_rendered())
 						? uncommitted_first_value(signal, creator)

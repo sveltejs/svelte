@@ -18,7 +18,8 @@ import {
 	REACTION_RAN,
 	DESTROYING,
 	EFFECT_OFFSCREEN,
-	ASSIGNED
+	ASSIGNED,
+	ASYNC
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -1086,7 +1087,23 @@ export class Batch {
 		this.records = null;
 		for (const [reaction, record] of records) {
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
-				if (commit) promote_record(reaction, record);
+				if (commit) {
+					promote_record(reaction, record);
+
+					// The committed run is now what applies in the view of every batch without a run of the async
+					// effect of its own (typically because the batch committed while its run was pending, inside a
+					// pending boundary). Their in-flight runs are superseded: their results would overwrite this one
+					// TODO feels pretty hacky and indication of an X-Y problem: This only works because !b.records?.has(reaction)
+					// means "this would re-use the real world result, i.e. the one we just committed, so we can reject this old run".
+					if ((reaction.f & ASYNC) !== 0) {
+						for (let b = first_batch; b !== null; b = b.next) {
+							if (b !== this && !b.records?.has(reaction)) {
+								b.async_deriveds.get(/** @type {Effect} */ (reaction))?.reject(OBSOLETE);
+							}
+						}
+					}
+				}
+
 				prune_edges(reaction);
 			}
 		}
