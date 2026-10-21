@@ -216,21 +216,22 @@ export class Batch {
 		if (this.is_fork) return true;
 
 		for (const effect of this.#blocking_pending.keys()) {
-			var e = effect;
-			var skipped = false;
-
-			while (e.parent !== null) {
-				if (this.#skipped_branches.has(e)) {
-					skipped = true;
-					break;
-				}
-
-				e = e.parent;
-			}
-
-			if (!skipped) {
+			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
+			if (!this.#is_skipped(effect)) {
 				return true;
 			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether `effect` is inside a branch that this batch skips
+	 * @param {Effect} effect
+	 */
+	#is_skipped(effect) {
+		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
+			if (this.#skipped_branches.has(e)) return true;
 		}
 
 		return false;
