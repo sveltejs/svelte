@@ -1185,9 +1185,9 @@ function reconnect(derived) {
 /** @param {Derived} derived */
 function depends_on_old_values(derived) {
 	if (derived.v === UNINITIALIZED) return true; // we don't know, so assume the worst
-	if (derived.edges === null) return false;
+	if (derived.deps === null) return false;
 
-	for (const dep of derived.edges) {
+	for (const dep of derived.deps) {
 		if (old_values.has(dep)) {
 			return true;
 		}
