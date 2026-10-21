@@ -79,7 +79,7 @@ Every new value gets a new version from `increment_write_version()` (`runtime.js
 
 Versions are **only ever compared for equality**. A version identifies a value; it says nothing about which value is "newer". That's why one counter is enough: batch-only values can't collide with real ones, because every version is handed out once. After a fork commits, its values _keep_ their versions in the real world ([§9.3](#93-fork-commit)). Those versions can be older than the versions of reactions that ran in the meantime, which is fine, because nothing orders them.
 
-The one remaining ordered comparison is dev-only: `$inspect.trace` in `dev/tracing.js` uses `signal.wv > reaction.wv` to highlight what changed since a reaction last ran. That's why `update_effect` still sets `effect.wv = write_version`, which has no other purpose. Since all versions come from the same counter, this check still works. The only exception is the case above: it can fail to highlight values that a committed fork wrote.
+The one remaining ordered comparison is dev-only. `$inspect.trace` in `dev/tracing.js` shows values, versions and the dependencies of deriveds as the active view sees them (`get_view`, `batch_values`, and the run of a derived that applies there). A value it highlights has changed since the reaction last ran. If the reaction's previous run in that view (its record in the batch, else its global run) read the value, the version is compared exactly with the one that run saw. Otherwise (dependencies of deriveds, new reads), it falls back to `version > reaction.wv`. That's why `update_effect` still sets `effect.wv = write_version`, which has no other purpose. All versions come from the same counter, so this mostly works. It can fail to highlight values that a committed fork wrote (see above), or that a view gave an older version again by undoing another batch's write.
 
 ### 3.2 "The same value has the same version"
 
@@ -304,7 +304,7 @@ Block and async effects run in batches, so their runs hardly ever take the pruni
 
 Deriveds are left out. Their edges also notify the reactions that read the value of a derived's record that was dropped, which must notice that the record is gone when one of its dependencies changes. They are pruned by the derived's next global run. Until then they only cause spurious `MAYBE_DIRTY` checks, not wrong results. The same holds for the edges of an effect that another batch still has a record of.
 
-The `skipped_deps` optimisation in `get()` still compares reads directly with `reaction.deps`. Disconnection, reconnection, tracing and effect liveness use `reaction.edges` instead. A reaction that only has batch-local runs can have edges even though its global `deps` is `null`.
+The `skipped_deps` optimisation in `get()` still compares reads directly with `reaction.deps`. Disconnection, reconnection and effect liveness use `reaction.edges` instead. (Tracing shows what the run that applies in the active view read.) A reaction that only has batch-local runs can have edges even though its global `deps` is `null`.
 
 ### 8.4 Promoting a run
 

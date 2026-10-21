@@ -208,13 +208,11 @@ export function unchanged_since(deps, wv) {
 }
 
 /**
- * The run of `reaction` that applies in the active view of the world: the record of a block or async
- * effect in the active batch, if it has one (see {@link update_record}), or else the reaction itself — whose
- * `deps` and `dv` are its global state
+ * For block/async effects returns the record of the {@link view_batch} (if any), else reaction itself.
  * @param {Reaction} reaction
  * @returns {Reaction | BatchRecord}
  */
-function run_of(reaction) {
+export function run_of(reaction) {
 	return (
 		((reaction.f & (BLOCK_EFFECT | ASYNC)) !== 0 && view_batch?.get_record(reaction)) || reaction
 	);

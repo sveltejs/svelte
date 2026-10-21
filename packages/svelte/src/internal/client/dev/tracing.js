@@ -1,9 +1,11 @@
-/** @import { Derived, Reaction, Value } from '#client' */
+/** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Reaction, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
-import { active_reaction, untrack } from '../runtime.js';
+import { batch_values, view_batch } from '../reactivity/batch.js';
+import { get_view } from '../reactivity/deriveds.js';
+import { active_reaction, is_current, run_of, unchanged_since, untrack } from '../runtime.js';
 
 /**
  * @typedef {{
@@ -15,19 +17,67 @@ import { active_reaction, untrack } from '../runtime.js';
 export let tracing_expressions = null;
 
 /**
+ * The value of `signal`, with its version, as the active view of the world sees it (see `get`): for a
+ * derived, the run of it that applies — a record in the batch, or the derived itself — or an assigned value
  * @param {Value} signal
- * @param {TraceEntry} [entry]
+ * @returns {Value | DerivedRecord | BatchValue}
  */
-function log_entry(signal, entry) {
-	const value = signal.v;
+function view_of(signal) {
+	if (batch_values === null) return signal;
+	if ((signal.f & DERIVED) !== 0) return get_view(/** @type {Derived} */ (signal));
+	return batch_values.get(signal) ?? signal;
+}
+
+/**
+ * The run of `reaction` that applies in the active view of the world (see `run_of`), which for a derived
+ * in the view of a batch is its record in the batch if it has one (see `get_view`). While the reaction
+ * runs, that's its previous run
+ * @param {Reaction} reaction
+ * @returns {Reaction | BatchRecord}
+ */
+function run_in_view(reaction) {
+	if ((reaction.f & DERIVED) !== 0 && batch_values !== null) {
+		return view_batch?.get_record(reaction) ?? reaction;
+	}
+
+	return run_of(reaction);
+}
+
+/**
+ * Whether `signal` changed in the active view of the world since the traced reaction last ran. If its previous
+ * run read it, that's whether the version it saw is no longer current. Otherwise (it's a dependency of a derived
+ * the reaction read, or the reaction didn't read it before), whether it was written since `since`: the one place
+ * where versions are compared by order, which is only a heuristic — a view can undo writes, which gives values
+ * older versions again
+ * @param {Value} signal
+ * @param {Reaction | BatchRecord} run the previous run of the traced reaction (see `run_in_view`)
+ * @param {number} since the version of the reaction's previous run (`0` if there's none)
+ */
+function is_changed(signal, run, since) {
+	var i = run.deps?.indexOf(signal) ?? -1;
+	var seen = i === -1 ? undefined : run.dv?.[i];
+
+	if (seen !== undefined) return !is_current([signal], [seen]);
+
+	return since === 0 || !unchanged_since([signal], since);
+}
+
+/**
+ * @param {Value} signal
+ * @param {TraceEntry | undefined} entry
+ * @param {Reaction | BatchRecord} run the previous run of the traced reaction (see `run_in_view`)
+ * @param {number} since the version of the reaction's previous run (`0` if there's none)
+ */
+function log_entry(signal, entry, run, since) {
+	const view = view_of(signal);
+	const value = view.v;
 
 	if (value === UNINITIALIZED) {
 		return;
 	}
 
 	const type = get_type(signal);
-	const current_reaction = /** @type {Reaction} */ (active_reaction);
-	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
+	const dirty = is_changed(signal, run, since);
 	const style = dirty
 		? 'color: CornflowerBlue; font-weight: bold'
 		: 'color: grey; font-weight: normal';
@@ -42,10 +92,13 @@ function log_entry(signal, entry) {
 			: value
 	);
 
-	if (type === '$derived') {
-		const deps = new Set(/** @type {Derived} */ (signal).edges);
+	if ((signal.f & DERIVED) !== 0) {
+		const deps = new Set(
+			('deps' in view ? view : run_in_view(/** @type {Derived} */ (signal))).deps
+		);
+
 		for (const dep of deps) {
-			log_entry(dep);
+			log_entry(dep, undefined, run, since);
 		}
 	}
 
@@ -111,10 +164,13 @@ export function trace(label, fn) {
 			console.group(`${prefix} %c(${time}ms)`, 'color: grey');
 
 			var entries = tracing_expressions.entries;
+			var reaction = /** @type {Reaction} */ (active_reaction);
+			var run = run_in_view(reaction);
+			var since = run.wv ?? reaction.wv;
 
 			untrack(() => {
 				for (const [signal, traces] of entries) {
-					log_entry(signal, traces);
+					log_entry(signal, traces, run, since);
 				}
 			});
 
