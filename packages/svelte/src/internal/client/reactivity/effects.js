@@ -703,12 +703,13 @@ function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
-	// If a dependency of this effect changed while it was paused,
+	// If a dependency of this effect may have changed while it was paused,
 	// schedule the effect to update. we don't use `is_dirty`
 	// here because we don't want to eagerly recompute a derived like
-	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
+	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined`.
 	if ((effect.f & CLEAN) === 0) {
-		Batch.ensure().schedule(effect, DIRTY); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
+		// Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
+		Batch.ensure().schedule(effect, (effect.f & DIRTY) !== 0 ? DIRTY : MAYBE_DIRTY);
 	}
 
 	var child = effect.first;
