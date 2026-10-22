@@ -1245,6 +1245,23 @@ describe('signals', () => {
 		};
 	});
 
+	test('a teardown deletes a proxy property that the same flush assigned', () => {
+		const value = proxy<{ x?: number }>({});
+		void value.x;
+
+		return () => {
+			const destroy = effect_root(() => () => {
+				delete value.x;
+			});
+
+			value.x = 1;
+			destroy();
+			flushSync();
+
+			assert.equal(Object.hasOwn(value, 'x'), false);
+		};
+	});
+
 	test('proxy version state does not trigger self-dependency guard', () => {
 		return () => {
 			const s = proxy({ a: { b: 1 } });
