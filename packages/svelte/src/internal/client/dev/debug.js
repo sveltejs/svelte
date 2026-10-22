@@ -524,7 +524,7 @@ export function stringify_derived(fn) {
 		.toString()
 		.replace(/^async \(\) => /, '')
 		.replace(/^\(/, '')
-		.replace(/\$\.get\((.+?)\)/, (_, name) => name)
-		.replace(/\$\.track_reactivity_loss\((.+?)\)\(\)/, (_, name) => name)
+		.replace(/\$\.get\((.+?)\)/g, (_, name) => name)
+		.replace(/\$\.track_reactivity_loss\((.+?)\)\(\)/g, (_, name) => name)
 		.replace(/\)$/, '')}}`;
 }
