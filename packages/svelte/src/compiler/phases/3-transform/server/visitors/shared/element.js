@@ -28,12 +28,13 @@ const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
 /**
  * Writes the output to the template output. Some elements may have attributes on them that require the
- * their output to be the child content instead. In this case, an object is returned.
+ * their output to be the child content instead. This content is returned alongside the spread flag.
  * @param {AST.RegularElement | AST.SvelteElement} node
  * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentServerTransformState>} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @param {Expression} [tag]
  */
-export function build_element_attributes(node, context, transform) {
+export function build_element_attributes(node, context, transform, tag) {
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute | TransformedAttribute>} */
 	const attributes = [];
 
@@ -46,13 +47,19 @@ export function build_element_attributes(node, context, transform) {
 	/** @type {Expression | null} */
 	let content = null;
 
-	let has_spread = false;
+	let has_spread = node.attributes.some(
+		(attribute) =>
+			attribute.type === 'SpreadAttribute' ||
+			(attribute.type === 'Attribute' &&
+				((node.name === 'textarea' && attribute.name === 'defaultValue') ||
+					(node.type === 'SvelteElement' && attribute.name === 'value')))
+	);
 	let events_to_capture = new Set();
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
 			if (attribute.name === 'value') {
-				if (node.name === 'textarea') {
+				if (node.name === 'textarea' && !has_spread) {
 					if (
 						attribute.value !== true &&
 						Array.isArray(attribute.value) &&
@@ -81,8 +88,9 @@ export function build_element_attributes(node, context, transform) {
 					events_to_capture.add(attribute.name);
 				}
 			} else if (
-				node.type === 'RegularElement' &&
-				node.name === 'input' &&
+				(node.type === 'SvelteElement' ||
+					node.name === 'input' ||
+					(node.name === 'textarea' && attribute.name === 'defaultValue')) &&
 				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
 			) {
 				attributes.push(attribute);
@@ -141,7 +149,7 @@ export function build_element_attributes(node, context, transform) {
 				content = expression;
 			} else if (
 				is_content_editable_binding(attribute.name) ||
-				(attribute.name === 'value' && node.name === 'textarea')
+				(attribute.name === 'value' && node.name === 'textarea' && !has_spread)
 			) {
 				content = b.call('$.escape', expression);
 			} else if (attribute.name === 'group' && attribute.expression.type !== 'SequenceExpression') {
@@ -203,14 +211,16 @@ export function build_element_attributes(node, context, transform) {
 	}
 
 	if (has_spread) {
-		build_element_spread_attributes(
-			node,
-			attributes,
-			style_directives,
-			class_directives,
-			context,
-			transform
-		);
+		content =
+			build_element_spread_attributes(
+				node,
+				attributes,
+				style_directives,
+				class_directives,
+				context,
+				transform,
+				tag
+			) ?? content;
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
 
@@ -290,7 +300,7 @@ export function build_element_attributes(node, context, transform) {
 		}
 	}
 
-	return content;
+	return { content, has_spread };
 }
 
 /**
@@ -326,7 +336,10 @@ export function build_spread_object(element, attributes, context, transform) {
 					attribute.value,
 					context,
 					transform,
-					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
+					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name),
+					// These values may become textarea content, so leave escaping to the runtime.
+					(element.name === 'textarea' || element.type === 'SvelteElement') &&
+						(name === 'value' || name === 'defaultvalue')
 				);
 
 				return b.prop('init', b.key(name), value);
@@ -359,6 +372,7 @@ export function build_spread_object(element, attributes, context, transform) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @param {Expression} [tag]
  */
 function build_element_spread_attributes(
 	element,
@@ -366,9 +380,10 @@ function build_element_spread_attributes(
 	style_directives,
 	class_directives,
 	context,
-	transform
+	transform,
+	tag
 ) {
-	const args = prepare_element_spread(
+	const [object, css_hash, classes, styles, flags] = prepare_element_spread(
 		element,
 		attributes,
 		style_directives,
@@ -377,9 +392,28 @@ function build_element_spread_attributes(
 		transform
 	);
 
-	let call = b.call('$.attributes', ...args);
+	let attrs = /** @type {Expression} */ (object);
+	let content = null;
 
-	context.state.template.push(call);
+	if (element.name === 'textarea' || (tag && !element.metadata.svg && !element.metadata.mathml)) {
+		// Both the attributes and the content need the spread. Evaluate it only once.
+		attrs = b.id(context.state.scope.generate('$$attributes'));
+		content = b.id(context.state.scope.generate('$$content'));
+		const value = b.call('$.textarea_value', attrs, element.fragment.nodes.length > 0 && b.true);
+
+		context.state.template.push(
+			b.const(attrs, object),
+			b.const(
+				content,
+				tag ? b.conditional(b.binary('===', tag, b.literal('textarea')), value, b.null) : value
+			)
+		);
+	}
+
+	context.state.template.push(
+		b.call('$.attributes', attrs, css_hash, classes, styles, flags, content ? tag : undefined)
+	);
+	return content;
 }
 
 /**
