@@ -317,11 +317,6 @@ function get_attribute_name(element, attribute) {
  */
 export function build_spread_object(element, attributes, context, transform) {
 	const is_select = element.type === 'RegularElement' && element.name === 'select';
-	// `$$renderer.select` and `$$renderer.option` render these, going by the name `RegularElement` uses
-	const element_name =
-		context.state.namespace === 'html' ? element.name.toLowerCase() : element.name;
-	const compares_values =
-		element.type === 'RegularElement' && (element_name === 'select' || element_name === 'option');
 	const object = b.object(
 		attributes.map((attribute) => {
 			if (attribute.type === 'transformed') {
@@ -329,22 +324,12 @@ export function build_spread_object(element, attributes, context, transform) {
 			} else if (attribute.type === 'Attribute') {
 				let name = get_attribute_name(element, attribute);
 				if (is_select && name === 'defaultvalue') name = 'defaultValue';
-				let value = build_attribute_value(
+				const value = build_attribute_value(
 					attribute.value,
 					context,
 					transform,
 					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 				);
-
-				if (
-					compares_values &&
-					(name === 'value' || name === 'defaultValue') &&
-					is_text_attribute(attribute)
-				) {
-					// static values are compared with each other and with the escaped content of options
-					// without a `value`, so they stay escaped until that comparison changes
-					value = b.literal(escape_html(attribute.value[0].data, true));
-				}
 
 				return b.prop('init', b.key(name), value);
 			} else if (attribute.type === 'BindDirective') {
@@ -407,7 +392,7 @@ function build_element_spread_attributes(
  * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
  */
 export function prepare_element_spread_object(element, context, transform) {
-	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
+	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective | TransformedAttribute>} */
 	const select_attributes = [];
 	/** @type {AST.ClassDirective[]} */
 	const class_directives = [];
@@ -415,6 +400,19 @@ export function prepare_element_spread_object(element, context, transform) {
 	const style_directives = [];
 
 	for (const attribute of element.attributes) {
+		if (attribute.type === 'Attribute' && is_text_attribute(attribute)) {
+			let name = get_attribute_name(element, attribute);
+			if (element.name === 'select' && name === 'defaultvalue') name = 'defaultValue';
+
+			if (name === 'value' || name === 'defaultValue') {
+				// `$$renderer.select` and `$$renderer.option` compare static values with each other and with
+				// the escaped content of options without a `value`, so they stay escaped until that changes
+				const value = b.literal(escape_html(attribute.value[0].data, true));
+				select_attributes.push({ type: 'transformed', name, expression: value });
+				continue;
+			}
+		}
+
 		if (
 			attribute.type === 'Attribute' ||
 			attribute.type === 'BindDirective' ||
