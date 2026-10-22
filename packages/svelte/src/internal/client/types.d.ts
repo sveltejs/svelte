@@ -20,6 +20,11 @@ declare global {
 			 * A stream's entry is removed once it finishes
 			 */
 			r?: Record<string, Map<string, Set<WarpKey> | true>>;
+			/**
+			 * Adds a value streamed in by the stream with the key `stream`,
+			 * unless the client changed that key since the stream started
+			 */
+			a?: (stream: string, id: string, key: WarpKey, value: unknown) => void;
 		};
 	}
 }

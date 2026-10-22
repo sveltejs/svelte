@@ -998,11 +998,16 @@ export class Renderer {
 				: `${this.global.id_prefix}w${Math.random().toString(36).slice(2, 10)}`;
 		const key_literal = devalue.uneval(key);
 
-		const late =
-			background === null ? null : stream_late_values(store, background, late_entries, replacer);
+		const late = background === null ? null : stream_late_values(store, background, late_entries);
 
 		// every promise devalue has found while serializing the `head`, so that we know when it's done
 		const tracker = new Tracker();
+
+		/**
+		 * The values in the first link, which devalue hasn't written yet
+		 * @type {Set<Entry> | null}
+		 */
+		let first_entries = null;
 		let head_done = false;
 
 		/** @type {unknown} */
@@ -1015,23 +1020,15 @@ export class Renderer {
 			stream = devalue.unevalStream(
 				late === null ? values : [values, late.first],
 				(thing, js) => {
-					if (thing instanceof LateValues) {
-						// add the values to the client's `Warp`s as soon as this is evaluated, rather than
-						// when the promise resolves, so that they're there before anything awaiting the
-						// promises resolved in the same block runs. values for keys that the client has changed
-						// while this stream was in progress are discarded, so that they don't overwrite the changes
-						return js`((e, n) => {
-							const w = window.__svelte.w;
-							const t = window.__svelte.r?.[${key}];
-							for (const [id, k, v] of e) {
-								const c = t?.get(id);
-								if (c === true || c?.has(k)) continue;
-								let m = w.get(id);
-								if (!m) w.set(id, (m = new Map()));
-								m.set(k, v);
-							}
-							return n;
-						})(${thing.entries}, ${thing.next})`;
+					if (thing instanceof Entry) {
+						first_entries?.delete(thing);
+
+						// adds the value to the client's `Warp` as soon as this is evaluated, rather than when the
+						// promise resolves, so that it's there before anything awaiting the promises resolved in the
+						// same `<script>` runs. a value for a key that the client has changed while this stream was in
+						// progress is discarded, so that it doesn't overwrite the change. since each value is its own
+						// promise, one that can't be serialized only fails by itself (and the client doesn't get it)
+						return js`window.__svelte.a(${key}, ${thing.id}, ${thing.key}, ${thing.value})`;
 					}
 
 					const result = replacer?.(thing, js);
@@ -1090,18 +1087,20 @@ export class Renderer {
 
 		if (late !== null) {
 			// everything in the `head` has been serialized, so devalue can move on to the background work
-			late.open();
+			first_entries = new Set(late.open());
 
-			// devalue has nothing else queued, so the next block only resolves the first link: the values that the
-			// background work added before now. the promises among them are pending in that block even if they've
-			// already resolved, since devalue only finds out in a later microtask (i.e. a later block). including it
-			// in the `head` means the client knows about those values (and can wait for them) when it hydrates
-			const result = await /** @type {Promise<IteratorResult<string>>} */ (next);
+			// the next blocks resolve the first link, and then each of the values in it: the values that the
+			// background work added before now. devalue has nothing else queued, and only finds the promises
+			// inside those values as it writes them, so they're still pending even if they've already resolved
+			// (their results are in later blocks). including these blocks in the `head` means the client
+			// knows about those values (and can wait for them) when it hydrates
+			do {
+				const result = await /** @type {Promise<IteratorResult<string>>} */ (next);
+				if (result.done) break;
 
-			if (!result.done) {
 				blocks += `\n\t\t\t\t${result.value}`;
 				next = tail.next();
-			}
+			} while (first_entries.size > 0);
 		}
 
 		const body = `
@@ -1109,7 +1108,18 @@ export class Renderer {
 				const w = (window.__svelte ??= {}).w ??= new Map();${
 					// while this is set, the client records the keys it changes in its `Warp`s,
 					// so that values which are streamed in later don't overwrite the changes
-					late === null ? '' : `\n\t\t\t\t(window.__svelte.r ??= {})[${key_literal}] = new Map();`
+					late === null
+						? ''
+						: `\n\t\t\t\t(window.__svelte.r ??= {})[${key_literal}] = new Map();` +
+							// adds a value streamed in by the stream with key `r`, unless the client changed its key since the stream started
+							`\n\t\t\t\twindow.__svelte.a ??= (r, id, k, v) => {` +
+							`\n\t\t\t\t\tconst c = window.__svelte.r[r]?.get(id);` +
+							`\n\t\t\t\t\tif (c === true || c?.has(k)) return;` +
+							`\n\t\t\t\t\tconst w = window.__svelte.w;` +
+							`\n\t\t\t\t\tlet m = w.get(id);` +
+							`\n\t\t\t\t\tif (!m) w.set(id, (m = new Map()));` +
+							`\n\t\t\t\t\tm.set(k, v);` +
+							`\n\t\t\t\t};`
 				}
 
 				for (const [id, values] of ${late === null ? head : `(${head})[0]`}) {
@@ -1308,36 +1318,42 @@ async function take_head(tail, tracker, gated, warn) {
 	}
 }
 
-/** Values that were added to `Warp` instances by background work, or after the `head` was serialized */
-class LateValues {
+/** A value that was added to a `Warp` instance by background work, or after the `head` was serialized */
+class Entry {
 	/**
-	 * @param {Array<[string, WarpKey, unknown]>} entries
-	 * @param {Promise<LateValues | null> | null} next
+	 * @param {string} id
+	 * @param {WarpKey} key
+	 * @param {unknown} value
 	 */
-	constructor(entries, next) {
-		this.entries = entries;
-		this.next = next;
+	constructor(id, key, value) {
+		this.id = id;
+		this.key = key;
+		this.value = value;
 	}
 }
 
+/** @typedef {{ entries: Array<Promise<Entry>>, next: Promise<Link | null> | null }} Link */
+
 /**
  * Streams the values that are added to `Warp` instances by background work, or after the `head` was serialized,
- * as a chain of promises that each resolve to a batch of values and the next promise. The first one isn't
- * resolved until `open` is called, once the `head` has been serialized. The chain ends once the background work is done.
+ * as a chain of promises that each resolve to a batch of values and the next promise. Each value is a promise
+ * of its own, so that one which can't be serialized doesn't fail the rest of the batch, or the rest of the chain.
+ * The first link isn't resolved until `open` is called, once the `head` has been serialized. The chain ends once
+ * the background work is done.
  * @param {WarpStore} store
  * @param {SSRState} background
- * @param {Array<[string, WarpKey, unknown]>} entries The values the background work added before the `head` was serialized
- * @param {UnevalReplacer | undefined} replacer
+ * @param {Array<[string, WarpKey, unknown]>} initial The values the background work added before the `head` was serialized
  */
-function stream_late_values(store, background, entries, replacer) {
-	let link = /** @type {ReturnType<typeof deferred<LateValues | null>>} */ (deferred());
+function stream_late_values(store, background, initial) {
+	let link = /** @type {ReturnType<typeof deferred<Link | null>>} */ (deferred());
 	let opened = false;
 	let closed = false;
 	let scheduled = false;
 
-	const first = link.promise;
+	/** @type {Entry[]} */
+	let entries = initial.map(([id, key, value]) => new Entry(id, key, value));
 
-	entries = entries.filter(([, , value]) => is_serializable(value, replacer));
+	const first = link.promise;
 
 	function flush() {
 		scheduled = false;
@@ -1345,12 +1361,19 @@ function stream_late_values(store, background, entries, replacer) {
 
 		const current = link;
 		link = deferred();
-		current.resolve(new LateValues(entries, link.promise));
+		current.resolve({
+			entries: entries.map((entry) => Promise.resolve(entry)),
+			next: link.promise
+		});
 		entries = [];
 	}
 
 	function end() {
-		link.resolve(entries.length > 0 ? new LateValues(entries, null) : null);
+		link.resolve(
+			entries.length > 0
+				? { entries: entries.map((entry) => Promise.resolve(entry)), next: null }
+				: null
+		);
 		entries = [];
 	}
 
@@ -1363,9 +1386,7 @@ function stream_late_values(store, background, entries, replacer) {
 	}
 
 	store.late = (id, key, value) => {
-		if (!is_serializable(value, replacer)) return;
-
-		entries.push([id, key, value]);
+		entries.push(new Entry(id, key, value));
 
 		if (opened && !scheduled) {
 			scheduled = true;
@@ -1377,8 +1398,13 @@ function stream_late_values(store, background, entries, replacer) {
 
 	return {
 		first,
+		/**
+		 * Resolves the first link
+		 * @returns {Entry[]} The values in it
+		 */
 		open() {
-			if (opened) return;
+			const values = entries;
+			if (opened) return [];
 			opened = true;
 
 			if (closed) {
@@ -1386,31 +1412,11 @@ function stream_late_values(store, background, entries, replacer) {
 			} else {
 				flush();
 			}
+
+			return values;
 		},
 		close
 	};
-}
-
-/**
- * Checks that a value which is about to be streamed can be serialized, since a value that can't be would
- * fail the whole batch it's in, and with it the rest of the chain. Promises are checked when they resolve,
- * and only fail by themselves
- * @param {unknown} value
- * @param {UnevalReplacer | undefined} replacer
- */
-function is_serializable(value, replacer) {
-	if (value === null || is_native_promise(value)) return true;
-	if (typeof value !== 'object' && typeof value !== 'function') return true;
-
-	try {
-		devalue.uneval(value, (thing, js) =>
-			is_native_promise(thing) ? js`0` : replacer?.(thing, js)
-		);
-		return true;
-	} catch (error) {
-		w.warp_stream_serialization_failed(describe_error(error));
-		return false;
-	}
 }
 
 /**
