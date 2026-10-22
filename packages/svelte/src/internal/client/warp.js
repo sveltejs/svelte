@@ -49,12 +49,14 @@ export class Warp {
 
 	/**
 	 * While values are still streaming in from the server, records that `key` was changed,
-	 * so that a value for it that arrives later doesn't overwrite the change
+	 * so that a value for it that arrives later doesn't overwrite the change. A stream is in
+	 * progress from its first `<script>` until its last one removes its entry, whenever its
+	 * HTML reached the page — e.g. an island inserted after the document has loaded
 	 * @param {K | typeof ALL} key
 	 */
 	#touch(key) {
 		const streams = window.__svelte?.r;
-		if (streams === undefined || document.readyState !== 'loading') return;
+		if (streams === undefined) return;
 
 		for (const id in streams) {
 			const touched = streams[id];
