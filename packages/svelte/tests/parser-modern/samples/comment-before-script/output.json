@@ -128,7 +128,9 @@
 			"leadingComments": [
 				{
 					"type": "Line",
-					"value": "should not error out"
+					"value": "should not error out",
+					"start": 0,
+					"end": 27
 				}
 			]
 		},

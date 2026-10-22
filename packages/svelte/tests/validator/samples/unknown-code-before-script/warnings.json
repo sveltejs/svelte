@@ -1,0 +1,14 @@
+[
+	{
+		"code": "unknown_code",
+		"message": "`not_a_code` is not a recognised code",
+		"start": {
+			"line": 3,
+			"column": 19
+		},
+		"end": {
+			"line": 3,
+			"column": 29
+		}
+	}
+]
