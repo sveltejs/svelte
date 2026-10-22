@@ -395,29 +395,30 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
-		// Eager effects run in the real world, which a fork's writes don't change — leave them
-		// alone (otherwise traversing the fork runs them in its view), they run once it's committed
-		if ((flags & EAGER_EFFECT) !== 0 && current_batch?.is_fork) continue;
-
 		var not_dirty = (flags & DIRTY) === 0;
 
-		if ((flags & (EAGER_EFFECT | DERIVED)) !== 0) {
+		if ((flags & EAGER_EFFECT) !== 0) {
+			if (/** @type {Batch} */ (current_batch).is_fork) {
+				// don't set a DIRTY reaction to MAYBE_DIRTY
+				if (not_dirty) {
+					set_signal_status(reaction, status);
+				}
+
+				// Eager effects need to run immediately:
+				// - for $inspect so that the stack trace makes sense
+				// - for $state.eager because they might be without an effect parent
+				eager_effects.add(/** @type {Effect} */ (reaction));
+			}
+		} else if ((flags & DERIVED) !== 0) {
 			// don't set a DIRTY reaction to MAYBE_DIRTY
 			if (not_dirty) {
 				set_signal_status(reaction, status);
 			}
 
-			if ((flags & EAGER_EFFECT) !== 0) {
-				// Eager effects need to run immediately:
-				// - for $inspect so that the stack trace makes sense
-				// - for $state.eager because they might be without an effect parent
-				eager_effects.add(/** @type {Effect} */ (reaction));
-			} else {
-				var derived = /** @type {Derived} */ (reaction);
+			var derived = /** @type {Derived} */ (reaction);
 
-				view_cache?.delete(derived);
-				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
-			}
+			view_cache?.delete(derived);
+			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
 
