@@ -1228,6 +1228,31 @@ describe('signals', () => {
 		};
 	});
 
+	it('an inherited getter gets the proxy as `this` after an ownership check', () => {
+		const key = Symbol();
+		Object.defineProperty(Object.prototype, key, {
+			configurable: true,
+			get() {
+				return this;
+			}
+		});
+
+		try {
+			const value = proxy({});
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					Object.hasOwn(value, key);
+				});
+			});
+
+			flushSync();
+			assert.equal(Reflect.get(value, key), value);
+			destroy();
+		} finally {
+			Reflect.deleteProperty(Object.prototype, key);
+		}
+	});
+
 	test('deleting an absent proxy property does not retrigger key effects', (runes) => {
 		if (!runes) return () => {};
 
