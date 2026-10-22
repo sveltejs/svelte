@@ -18,6 +18,7 @@ import { SvelteSet } from '../../src/reactivity/set';
 import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
+import { fork } from '../../src/internal/client/reactivity/batch';
 
 /**
  * @param runes runes mode
@@ -1191,6 +1192,101 @@ describe('signals', () => {
 		};
 	});
 
+	test('Object.hasOwn tracks inherited proxy properties in unowned deriveds', () => {
+		const value = proxy({});
+
+		return () => {
+			const owns_to_string = derived(() => Object.hasOwn(value, 'toString'));
+
+			assert.isFalse($.get(owns_to_string));
+
+			Reflect.set(value, 'toString', 'own');
+			assert.isTrue($.get(owns_to_string));
+
+			Reflect.deleteProperty(value, 'toString');
+			assert.isFalse($.get(owns_to_string));
+		};
+	});
+
+	test('Object.hasOwn tracks inherited proxy properties', () => {
+		const value = proxy({});
+		const log: boolean[] = [];
+
+		render_effect(() => {
+			log.push(Object.hasOwn(value, 'toString'));
+		});
+
+		return () => {
+			flushSync(() => {
+				Reflect.set(value, 'toString', 'own');
+			});
+			flushSync(() => {
+				Reflect.deleteProperty(value, 'toString');
+			});
+
+			assert.deepEqual(log, [false, true, false]);
+		};
+	});
+
+	it('an inherited getter gets the proxy as `this` after an ownership check', () => {
+		const key = Symbol();
+		Object.defineProperty(Object.prototype, key, {
+			configurable: true,
+			get() {
+				return this;
+			}
+		});
+
+		try {
+			const value = proxy({});
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					Object.hasOwn(value, key);
+				});
+			});
+
+			flushSync();
+			assert.equal(Reflect.get(value, key), value);
+			destroy();
+		} finally {
+			Reflect.deleteProperty(Object.prototype, key);
+		}
+	});
+
+	test('deleting an absent proxy property does not retrigger key effects', (runes) => {
+		if (!runes) return () => {};
+
+		const value = proxy<{ other?: string }>({ other: 'own' });
+		const log: string[][] = [];
+
+		render_effect(() => {
+			log.push(Object.keys(value));
+			delete value.other;
+		});
+
+		return () => {
+			flushSync();
+			assert.deepEqual(log, [['other'], []]);
+		};
+	});
+
+	test('a teardown deletes a proxy property that the same flush assigned', () => {
+		const value = proxy<{ x?: number }>({});
+		void value.x;
+
+		return () => {
+			const destroy = effect_root(() => () => {
+				delete value.x;
+			});
+
+			value.x = 1;
+			destroy();
+			flushSync();
+
+			assert.equal(Object.hasOwn(value, 'x'), false);
+		};
+	});
+
 	test('proxy version state does not trigger self-dependency guard', () => {
 		return () => {
 			const s = proxy({ a: { b: 1 } });
@@ -1755,6 +1851,121 @@ describe('signals', () => {
 			destroy();
 			assert.equal(s.reactions, null);
 		};
+	});
+
+	it('state proxy membership uses fork-local values', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const object = proxy<{ x?: number }>({});
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				void ('x' in object);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			fork(() => {
+				object.x = 1;
+				assert.equal('x' in object, true);
+				assert.deepEqual(Object.keys(object), ['x']);
+			}).discard();
+		} finally {
+			destroy();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('a write restoring the value from before a fork updates chained deriveds', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const x = state(1);
+		const d = derived(() => $.get(x) * 10);
+		const e = derived(() => $.get(d) * 2);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(e);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			let values: number[] = [];
+
+			fork(() => {
+				set(x, 2);
+				$.get(e);
+				set(x, 1);
+				values = [$.get(x), $.get(d), $.get(e)];
+			}).discard();
+
+			assert.deepEqual(values, [1, 10, 20]);
+		} finally {
+			destroy();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('state proxy teardowns inside a fork see the structure from before it', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const object = proxy<Record<string, number>>({ z: 1 });
+		object.y = 1;
+		const log: unknown[] = [];
+
+		const outer = effect_root(() => {
+			render_effect(() => {
+				void ('x' in object);
+			});
+		});
+
+		const inner = effect_root(() => {
+			void object.y;
+
+			return () => {
+				log.push('teardown', 'x' in object, 'y' in object, 'z' in object, Object.keys(object));
+			};
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			fork(() => {
+				object.x = 1;
+				delete object.y;
+				delete object.z;
+				log.push('fork', 'x' in object, 'y' in object, 'z' in object, Object.keys(object));
+				inner();
+			}).discard();
+
+			assert.deepEqual(log, [
+				'fork',
+				true,
+				false,
+				false,
+				['x'],
+				'teardown',
+				false,
+				true,
+				true,
+				['z', 'y']
+			]);
+		} finally {
+			outer();
+			disable_async_mode_flag();
+		}
 	});
 
 	// https://github.com/sveltejs/svelte/issues/16814
