@@ -28,6 +28,9 @@
 	<oPtion value="a&b<c">label</oPtion>
 </select>
 
+<svg><oPtion {...rest} value="a&b<c">svg</oPtion></svg>
+<math><sElect {...rest} value="a&b<c">math</sElect></math>
+
 <style>
 	b {
 		color: red;
