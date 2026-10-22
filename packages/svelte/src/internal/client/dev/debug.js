@@ -520,7 +520,8 @@ export function log_inconsistent_branches(effect) {
  * @param {Function} fn
  */
 export function stringify_derived(fn) {
-	return `{${fn.toString()
+	return `{${fn
+		.toString()
 		.replace(/^async \(\) => /, '')
 		.replace(/^\(/, '')
 		.replace(/\$\.get\((.+?)\)/, (_, name) => name)
