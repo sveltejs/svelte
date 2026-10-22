@@ -1193,23 +1193,23 @@ describe('signals', () => {
 	});
 
 	test('Object.hasOwn tracks inherited proxy properties in unowned deriveds', () => {
-		const value = proxy<any>({});
+		const value = proxy({});
 
 		return () => {
 			const owns_to_string = derived(() => Object.hasOwn(value, 'toString'));
 
 			assert.isFalse($.get(owns_to_string));
 
-			value.toString = 'own';
+			Reflect.set(value, 'toString', 'own');
 			assert.isTrue($.get(owns_to_string));
 
-			delete value.toString;
+			Reflect.deleteProperty(value, 'toString');
 			assert.isFalse($.get(owns_to_string));
 		};
 	});
 
 	test('Object.hasOwn tracks inherited proxy properties', () => {
-		const value = proxy<any>({});
+		const value = proxy({});
 		const log: boolean[] = [];
 
 		render_effect(() => {
@@ -1218,10 +1218,10 @@ describe('signals', () => {
 
 		return () => {
 			flushSync(() => {
-				value.toString = 'own';
+				Reflect.set(value, 'toString', 'own');
 			});
 			flushSync(() => {
-				delete value.toString;
+				Reflect.deleteProperty(value, 'toString');
 			});
 
 			assert.deepEqual(log, [false, true, false]);

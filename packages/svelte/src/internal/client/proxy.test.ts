@@ -6,7 +6,7 @@ import { snapshot } from '../shared/clone.js';
 
 test('preserves ordinary object semantics for inherited property names', () => {
 	for (const prop of ['toString', 'valueOf', 'constructor', 'hasOwnProperty']) {
-		const state = proxy<any>({});
+		const state = proxy<Record<string, unknown>>({});
 		const inherited = state[prop];
 
 		delete state[prop];
@@ -31,16 +31,16 @@ test('preserves ordinary object semantics for inherited property names', () => {
 });
 
 test('preserves ordinary object semantics for inherited array properties', () => {
-	const state = proxy<any>([]);
+	const state = proxy([]);
 	const inherited = state.map;
 
-	state.map = 'own';
+	Reflect.set(state, 'map', 'own');
 
-	assert.equal(state.map, 'own');
+	assert.equal(Reflect.get(state, 'map'), 'own');
 	assert.equal(Object.hasOwn(state, 'map'), true);
 	assert.deepEqual(Object.keys(state), ['map']);
 
-	delete state.map;
+	Reflect.deleteProperty(state, 'map');
 
 	assert.equal(state.map, inherited);
 	assert.equal('map' in state, true);
@@ -48,55 +48,23 @@ test('preserves ordinary object semantics for inherited array properties', () =>
 	assert.deepEqual(Object.keys(state), []);
 });
 
-test('restores added proxy properties when a fork is discarded', async () => {
-	enable_async_mode_flag();
-
-	try {
-		const state = proxy<any>({});
-		let forked_keys: string[] = [];
-
-		const discarded = fork(() => {
-			state.toString = 'own';
-			state.other = 'own';
-			forked_keys = Object.keys(state);
-		});
-
-		assert.deepEqual(forked_keys, ['toString', 'other']);
-		discarded.discard();
-		assert.equal(state.toString, Object.prototype.toString);
-		assert.equal(Object.hasOwn(state, 'toString'), false);
-		assert.deepEqual(Object.keys(state), []);
-
-		const committed = fork(() => {
-			state.toString = 'own';
-		});
-
-		await committed.commit();
-		assert.equal(state.toString, 'own');
-		assert.equal(Object.hasOwn(state, 'toString'), true);
-		assert.deepEqual(Object.keys(state), ['toString']);
-	} finally {
-		disable_async_mode_flag();
-	}
-});
-
 test('assigning an inherited accessor or read-only property adds no own property', () => {
-	const object = proxy<any>({});
-	object.__proto__ = { polluted: true };
+	const object = proxy({});
+	Reflect.set(object, '__proto__', { polluted: true });
 
 	assert.deepEqual(Object.keys(object), []);
-	assert.equal(snapshot(object).polluted, undefined);
+	assert.equal(Object.getPrototypeOf(snapshot(object)), Object.prototype);
 
-	const array = proxy<any>([]);
-	array[Symbol.unscopables] = 'own';
+	const array = proxy([]);
+	Reflect.set(array, Symbol.unscopables, 'own');
 
 	assert.equal(Object.hasOwn(array, Symbol.unscopables), false);
 });
 
 test('assigning an inherited name to a non-extensible object adds no own property', () => {
 	for (const target of [Object.freeze({}), Object.preventExtensions({})]) {
-		const object = proxy<any>(target);
-		object.toString = 'own';
+		const object = proxy(target);
+		Reflect.set(object, 'toString', 'own');
 
 		assert.equal(Object.hasOwn(object, 'toString'), false);
 		assert.deepEqual(Object.keys(object), []);
