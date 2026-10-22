@@ -133,9 +133,10 @@ export function proxy(value) {
 	 * Reads a key as the target has it. An own value is proxied once, so that it keeps its identity
 	 * @param {object} target
 	 * @param {string | symbol} prop
+	 * @param {unknown} receiver
 	 */
-	var read_original = (target, prop) => {
-		if (get_descriptor(target, prop) === undefined) return Reflect.get(target, prop);
+	var read_original = (target, prop, receiver) => {
+		if (get_descriptor(target, prop) === undefined) return Reflect.get(target, prop, receiver);
 
 		originals ??= new Map();
 		var p = originals.get(prop);
@@ -262,7 +263,7 @@ export function proxy(value) {
 
 			if (s !== undefined) {
 				var v = get(s);
-				if (v === ORIGINAL) return read_original(target, prop);
+				if (v === ORIGINAL) return read_original(target, prop, receiver);
 				return v === UNINITIALIZED ? Reflect.get(inherited, prop, receiver) : v;
 			}
 

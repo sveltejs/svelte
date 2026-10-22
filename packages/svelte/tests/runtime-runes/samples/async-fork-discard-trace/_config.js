@@ -12,7 +12,8 @@ export default test({
 		flushSync(() => discard.click());
 		flushSync(() => show.click());
 
-		// the key reads as before the fork, without the trace logging an internal marker for it
+		// the key reads as before the fork, and the trace doesn't log an internal marker for it
+		assert.htmlEqual(target.querySelector('p')?.innerHTML ?? '', '1');
 		assert.ok(logs.length > 0);
 		assert.ok(!logs.some((log) => typeof log === 'symbol'));
 	}
