@@ -10,13 +10,13 @@ export default test({
 		add.click();
 		await tick();
 
-		// an unrelated batch still sees callable `map` and iterator while the pending batch assigns them
+		// an unrelated batch doesn't see the own `toString` the pending batch assigned
 		increment.click();
 		await tick();
-		assert.htmlEqual(p.innerHTML, '2,3 1,1,2');
+		assert.htmlEqual(p.innerHTML, '1 false');
 
 		resolve.click();
 		await tick();
-		assert.htmlEqual(p.innerHTML, '2,3 1,1,2');
+		assert.htmlEqual(p.innerHTML, '1 true toString');
 	}
 });

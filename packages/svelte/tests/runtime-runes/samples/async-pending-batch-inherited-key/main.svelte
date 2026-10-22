@@ -1,5 +1,5 @@
 <script>
-	let array = $state([1, 2]);
+	let object = $state({});
 	let count = $state(0);
 	let key = $state('');
 	let pending = false;
@@ -13,13 +13,12 @@
 </script>
 
 <p>{await delay(key)}</p>
-<p>{array.map((n) => n + count).join(',')} {[count, ...array].join(',')}</p>
+<p>{count} {Object.hasOwn(object, 'toString')} {Object.keys(object)}</p>
 
 <button
 	onclick={() => {
 		pending = true;
-		array.map = Array.prototype.map;
-		array[Symbol.iterator] = Array.prototype[Symbol.iterator];
+		object.toString = () => 'own';
 		key = 'x';
 	}}>add</button
 >
