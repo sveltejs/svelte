@@ -6,6 +6,9 @@ export default test({
 		dev: true
 	},
 
+	// `fork` needs async mode
+	skip_no_async: true,
+
 	test({ assert, target, logs }) {
 		const [discard, show] = target.querySelectorAll('button');
 
