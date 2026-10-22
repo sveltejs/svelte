@@ -753,8 +753,11 @@ function throw_error(error, template) {
 		// eslint-disable-next-line no-fallthrough
 		case 'unclosed': {
 			const name = args[0];
+			// a regex over the whole template is quadratic in the `<style`s an unclosed script holds
+			const tail = template.slice(template.lastIndexOf('>', template.length - 2) + 1);
 			// a script or style open at the end: what was left open, or nothing at all past the tag
-			if (pos === template.length && /<(script|style)[^>]*>$/.test(template)) e.unexpected_eof(pos);
+			if (pos === template.length && tail.endsWith('>') && /<(script|style)/.test(tail))
+				e.unexpected_eof(pos);
 			if (template[pos] === '{') e.block_unclosed(range);
 			e.element_unclosed(range, name);
 		}
