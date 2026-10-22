@@ -701,6 +701,36 @@ describe('streaming', () => {
 		}
 	});
 
+	test('skips values added by background work before the head that cannot be serialized', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		try {
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async () => {
+					warp.set('before', 'before');
+					warp.set('bad', { fn: () => {} });
+					warp.set('after', 'after');
+					await delay(null, 10);
+					warp.set('later', 'later');
+				});
+			});
+
+			// the client knows about the other values when it hydrates
+			const window: FakeWindow = {};
+			run(window, head);
+			expect([...(window.__svelte?.w?.get('test')?.keys() ?? [])]).toEqual(['before', 'after']);
+
+			for await (const chunk of tail) run(window, chunk);
+			expect(window.__svelte?.w?.get('test')?.get('later')).toBe('later');
+			expect(window.__svelte?.w?.get('test')?.has('bad')).toBe(false);
+
+			expect(warn).toHaveBeenCalledOnce();
+			expect(warn.mock.calls[0][0]).toContain('warp_stream_serialization_failed');
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
 	test('rejects streamed promises that resolve to something that cannot be serialized', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
