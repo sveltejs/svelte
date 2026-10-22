@@ -6,9 +6,10 @@ on:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
-env:
-  # We only install Chromium manually
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+# cancel superseded pull request runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   Tests:
@@ -33,12 +34,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          persist-credentials: false
+      - uses: $/.github/actions/setup
         with:
           node-version: ${{ matrix.node-version }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
       - run: pnpm playwright install chromium
       - run: pnpm test
         env:
@@ -49,12 +49,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          persist-credentials: false
+      - uses: $/.github/actions/setup
         with:
           node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
       - run: pnpm playwright install chromium
       - run: pnpm test runtime-runes
         env:
@@ -66,13 +65,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: 24
-          cache: pnpm
-      - name: install
-        run: pnpm install --frozen-lockfile
+          persist-credentials: false
+      - uses: $/.github/actions/setup
       - name: install tsgo
         run: cd packages/svelte && pnpm i -D @typescript/native-preview
       - name: type check
@@ -83,35 +78,29 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: 24
-          cache: pnpm
-      - name: install
-        run: pnpm install --frozen-lockfile
-      - name: type check
-        run: pnpm check
-      - name: lint
-        if: (${{ success() }} || ${{ failure() }}) # ensures this step runs even if previous steps fail (avoids multiple runs uncovering different issues at different steps)
-        run: pnpm lint
+          persist-credentials: false
+      - uses: $/.github/actions/setup
       - name: build and check generated types
-        if: (${{ success() }} || ${{ failure() }}) # ensures this step runs even if previous steps fail
-        run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally with `cd packages/svelte && pnpm generate:types` and commit the changes after you have reviewed them"; git diff; exit 1); }
+        run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally with \`cd packages/svelte && pnpm generate:types\` and commit the changes after you have reviewed them"; git diff; exit 1); }
       - name: check browser-support docs page is up to date
+        if: ${{ !cancelled() }}
         run: '{ [ "`git status --porcelain=v1 documentation/docs/07-misc/.generated/`" == "" ] || (echo "The browser-support docs page is out of date — please regenerate it locally with \`cd packages/svelte && pnpm generate:browser-support\` and commit the changes"; git diff documentation/docs/07-misc/.generated/; exit 1); }'
+      - name: type check
+        if: ${{ !cancelled() }}
+        run: pnpm -r check
+      - name: lint
+        if: ${{ !cancelled() }}
+        run: pnpm lint
   Benchmarks:
     permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+          persist-credentials: false
+      - uses: $/.github/actions/setup
       - run: pnpm bench
         env:
           CI: true

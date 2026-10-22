@@ -1,8 +1,8 @@
 import { proxy } from './proxy';
+import { assert, test } from 'vitest';
+import { disable_async_mode_flag, enable_async_mode_flag } from '../flags';
 import { fork } from './reactivity/batch';
 import { snapshot } from '../shared/clone.js';
-import { disable_async_mode_flag, enable_async_mode_flag } from '../flags';
-import { assert, test } from 'vitest';
 
 test('preserves ordinary object semantics for inherited property names', () => {
 	for (const prop of ['toString', 'valueOf', 'constructor', 'hasOwnProperty']) {
@@ -75,93 +75,6 @@ test('restores added proxy properties when a fork is discarded', async () => {
 		assert.equal(state.toString, 'own');
 		assert.equal(Object.hasOwn(state, 'toString'), true);
 		assert.deepEqual(Object.keys(state), ['toString']);
-	} finally {
-		disable_async_mode_flag();
-	}
-});
-
-test('restores deleted proxy properties when a fork is discarded', async () => {
-	enable_async_mode_flag();
-
-	try {
-		const state = proxy<{ value?: string }>({ value: 'original' });
-		let forked_keys: string[] = [];
-
-		const discarded = fork(() => {
-			delete state.value;
-			forked_keys = Object.keys(state);
-		});
-
-		assert.deepEqual(forked_keys, []);
-		discarded.discard();
-		assert.equal(state.value, 'original');
-		assert.deepEqual(Object.keys(state), ['value']);
-
-		let count = 0;
-		const accessor = proxy<any>({
-			get value() {
-				return ++count;
-			},
-			set value(value) {
-				count = value;
-			}
-		});
-		const discarded_accessor = fork(() => {
-			delete accessor.value;
-		});
-
-		discarded_accessor.discard();
-		assert.equal(accessor.value, 1);
-		assert.equal(accessor.value, 2);
-		accessor.value = 10;
-		assert.equal(accessor.value, 11);
-
-		const committed = fork(() => {
-			delete state.value;
-		});
-
-		await committed.commit();
-		assert.equal(state.value, undefined);
-		assert.deepEqual(Object.keys(state), []);
-	} finally {
-		disable_async_mode_flag();
-	}
-});
-
-test('restores a deleted object as state when a fork is discarded', () => {
-	enable_async_mode_flag();
-
-	try {
-		const original = { nested: { value: 1 } };
-		const state = proxy<any>(original);
-
-		fork(() => {
-			delete state.nested;
-		}).discard();
-
-		state.nested.value = 2;
-
-		assert.equal(state.nested.value, 2);
-		assert.equal(Object.getOwnPropertyDescriptor(state, 'nested')?.value, state.nested);
-		assert.equal(original.nested.value, 1);
-	} finally {
-		disable_async_mode_flag();
-	}
-});
-
-test('keeps a property that a committed fork deletes and assigns again', async () => {
-	enable_async_mode_flag();
-
-	try {
-		const state = proxy<any>({ value: 1 });
-
-		await fork(() => {
-			delete state.value;
-			state.value = 1;
-		}).commit();
-
-		assert.equal(state.value, 1);
-		assert.deepEqual(Object.keys(state), ['value']);
 	} finally {
 		disable_async_mode_flag();
 	}
@@ -319,4 +232,114 @@ test('handles array length mutation', () => {
 	assert.deepEqual(state.length, 0);
 	assert.deepEqual(state, []);
 	assert.deepEqual(state[0], undefined);
+});
+
+test('deleting, truncating or overwriting a key does not read its value', () => {
+	// `proxy` checks whether a value is state already
+	const unread = new Proxy({}, { has: () => assert.fail('read') });
+	const getter = { get: () => assert.fail('read'), configurable: true, enumerable: true };
+
+	const object = proxy({ deleted: unread, overwritten: unread });
+	Reflect.deleteProperty(object, 'deleted');
+	object.overwritten = {};
+	assert.deepEqual(Object.keys(object), ['overwritten']);
+
+	const array = proxy([unread]);
+	array.length = 0;
+	assert.equal(array.length, 0);
+
+	const accessor = proxy(Object.defineProperty({}, 'value', getter));
+	Reflect.deleteProperty(accessor, 'value');
+	assert.deepEqual(Object.keys(accessor), []);
+
+	const items = proxy(Object.defineProperty([0], 0, getter));
+	items.length = 0;
+	assert.equal(items.length, 0);
+});
+
+test('discards fork-local proxy changes', () => {
+	enable_async_mode_flag();
+
+	try {
+		const added = proxy<{ x?: number }>({});
+		fork(() => {
+			added.x = 1;
+		}).discard();
+
+		assert.equal('x' in added, false);
+		assert.deepEqual(Object.keys(added), []);
+
+		const updated = proxy({ x: 1 });
+		fork(() => {
+			updated.x = 2;
+		}).discard();
+
+		assert.equal(updated.x, 1);
+		assert.deepEqual(Object.keys(updated), ['x']);
+
+		const populated = proxy([1, 2]);
+		fork(() => {
+			populated.length = 0;
+		}).discard();
+
+		assert.deepEqual(populated, [1, 2]);
+
+		const truncated = proxy<number[]>([]);
+		void truncated[0];
+		void truncated[1];
+
+		fork(() => {
+			truncated.push(1, 2);
+			truncated.length = 0;
+			assert.equal(0 in truncated, false);
+			assert.deepEqual(Object.keys(truncated), []);
+			assert.equal(truncated.length, 0);
+		}).discard();
+
+		assert.deepEqual(truncated, []);
+
+		const original = { x: { value: 1 } };
+		const deleted = proxy(original);
+		fork(() => {
+			Reflect.deleteProperty(deleted, 'x');
+		}).discard();
+
+		// the restored value is state, not the original object
+		deleted.x.value = 2;
+		assert.equal(deleted.x.value, 2);
+		assert.equal(Object.getOwnPropertyDescriptor(deleted, 'x')?.value, deleted.x);
+		assert.equal(original.x.value, 1);
+		assert.deepEqual(Object.keys(deleted), ['x']);
+	} finally {
+		disable_async_mode_flag();
+	}
+});
+
+test('keeps fork-local proxy changes when a fork is committed', async () => {
+	enable_async_mode_flag();
+
+	try {
+		const readded = proxy<{ x?: number }>({ x: 1 });
+		const array = proxy([1]);
+
+		await fork(() => {
+			delete readded.x;
+			readded.x = 1;
+			assert.deepEqual(Object.keys(readded), ['x']);
+
+			array.length = 0;
+			array[0] = 0;
+			assert.equal(array.length, 1);
+
+			array[4] = 4;
+			array[1] = 1;
+			assert.equal(array.length, 5);
+		}).commit();
+
+		assert.equal(readded.x, 1);
+		assert.deepEqual(Object.keys(readded), ['x']);
+		assert.equal(array.length, 5);
+	} finally {
+		disable_async_mode_flag();
+	}
 });
