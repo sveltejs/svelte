@@ -10,5 +10,7 @@
 	});
 </script>
 
+<p>{show ? object.x : ''}</p>
+
 <button onclick={() => fork(() => delete object.x).discard()}>discard</button>
 <button onclick={() => (show = true)}>show</button>
