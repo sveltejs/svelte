@@ -70,9 +70,9 @@ export function set_eager_effects_deferred() {
  */
 // TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
-	/** @type {Value} */
+	/** @type {Source<V>} */
 	var signal = {
-		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
+		f: 0,
 		v,
 		reactions: null,
 		equals,
