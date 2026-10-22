@@ -36,7 +36,7 @@ test('preserves ordinary object semantics for inherited array properties', () =>
 
 	Reflect.set(state, 'map', 'own');
 
-	assert.equal(Reflect.get(state, 'map'), 'own');
+	assert.equal<unknown>(Reflect.get(state, 'map'), 'own');
 	assert.equal(Object.hasOwn(state, 'map'), true);
 	assert.deepEqual(Object.keys(state), ['map']);
 
