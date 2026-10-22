@@ -463,7 +463,7 @@ export class Batch {
 			var batch = Batch.ensure();
 			for (const e of updates) {
 				// these were marked during traversal already (see `mark_reactions`), unless they ran since
-				if ((e.f & CLEAN) === 0) batch.schedule(e, (e.f & DIRTY) !== 0 ? DIRTY : MAYBE_DIRTY);
+				if ((e.f & CLEAN) === 0) batch.schedule(e, MAYBE_DIRTY);
 			}
 		}
 

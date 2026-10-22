@@ -709,7 +709,7 @@ function resume_children(effect, local) {
 	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined`.
 	if ((effect.f & CLEAN) === 0) {
 		// Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
-		Batch.ensure().schedule(effect, (effect.f & DIRTY) !== 0 ? DIRTY : MAYBE_DIRTY);
+		Batch.ensure().schedule(effect, MAYBE_DIRTY);
 	}
 
 	var child = effect.first;
