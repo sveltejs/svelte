@@ -707,20 +707,13 @@ export class Batch {
 			later = later.next;
 		}
 
-		if (!this.previous.has(source)) {
-			// the value before this batch's change is the one before the later batch's change, if any
-			var snapshot = later?.previous.get(source);
-
-			if (snapshot) {
-				this.previous.set(source, snapshot);
-			} else if (source.v !== UNINITIALIZED) {
-				this.previous.set(source, {
-					v: source.v,
-					wv: source.wv,
-					e: (source.f & ERROR_VALUE) !== 0,
-					assigned: (source.f & ASSIGNED) !== 0
-				});
-			}
+		if (source.v !== UNINITIALIZED && !this.previous.has(source) && !later?.previous.has(source)) {
+			this.previous.set(source, {
+				v: source.v,
+				wv: source.wv,
+				e: (source.f & ERROR_VALUE) !== 0,
+				assigned: (source.f & ASSIGNED) !== 0
+			});
 		}
 
 		var latest = !this.is_fork && !same && later === null;
