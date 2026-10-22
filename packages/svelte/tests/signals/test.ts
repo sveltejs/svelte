@@ -1266,6 +1266,68 @@ describe('signals', () => {
 		};
 	});
 
+	for (const connected of [false, true]) {
+		for (const chained of [false, true]) {
+			test(`stale-equal derived override (connected: ${connected}, chained: ${chained})`, () => {
+				const source = state(1);
+				const dependency = chained ? derived(() => $.get(source)) : source;
+				const value = derived(() => $.get(dependency));
+				const log: number[] = [];
+
+				if (connected) {
+					render_effect(() => {
+						log.push($.get(value));
+					});
+				}
+
+				return () => {
+					assert.equal($.get(value), 1);
+					const version = value.wv;
+					set(value, 1);
+					assert.equal(value.wv, version);
+
+					set(source, 2);
+					set(value, 1);
+					assert.equal($.get(value), 1);
+					flushSync();
+					assert.equal($.get(value), 1);
+
+					set(source, 3);
+					assert.equal($.get(value), 3);
+					flushSync();
+					if (connected) assert.deepEqual(log, [1, 1, 3]);
+				};
+			});
+		}
+	}
+
+	test('equal derived assignments with unchanged upstream values remain no-ops', () => {
+		const source = state(1);
+		const dependency = derived(() => Math.floor($.get(source)));
+		const connected = derived(() => $.get(dependency));
+		const disconnected = derived(() => $.get(dependency));
+		const log: number[] = [];
+
+		render_effect(() => {
+			log.push($.get(connected));
+		});
+
+		return () => {
+			assert.equal($.get(disconnected), 1);
+			const connected_version = connected.wv;
+			const disconnected_version = disconnected.wv;
+
+			set(source, 1.5);
+			set(connected, 1);
+			set(disconnected, 1);
+
+			assert.equal(connected.wv, connected_version);
+			assert.equal(disconnected.wv, disconnected_version);
+			flushSync();
+			assert.deepEqual(log, [1]);
+		};
+	});
+
 	test("deriveds set after they are DIRTY doesn't get updated on get", () => {
 		return () => {
 			const a = state(0);
