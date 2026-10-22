@@ -397,7 +397,7 @@ export class Batch {
 			// knowing (e.g. effects created by other batches), or have run in the view of other batches.
 			// Re-validate them in this batch's view — this only re-runs those that are out of date
 			const seen = new Set();
-			for (const value of this.current.keys()) this.#revalidate(value, seen)
+			for (const value of this.current.keys()) this.#revalidate(value, seen);
 		}
 
 		this.started = true;
