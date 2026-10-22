@@ -40,6 +40,9 @@ export function get_current_url() {
  * ```
  */
 export class SvelteURL extends URL {
+	// `search` and `hash` read as '' both when the query or fragment is absent and when it is
+	// present but empty, while `href` differs ('?' or '#' is kept), so track the serialization too
+	#href = state(super.href);
 	#protocol = state(super.protocol);
 	#username = state(super.username);
 	#password = state(super.password);
@@ -59,6 +62,7 @@ export class SvelteURL extends URL {
 		super(url);
 
 		if (DEV) {
+			tag(this.#href, 'SvelteURL.href');
 			tag(this.#protocol, 'SvelteURL.protocol');
 			tag(this.#username, 'SvelteURL.username');
 			tag(this.#password, 'SvelteURL.password');
@@ -81,6 +85,7 @@ export class SvelteURL extends URL {
 	set hash(value) {
 		super.hash = value;
 		set(this.#hash, super.hash);
+		set(this.#href, super.href);
 	}
 
 	get host() {
@@ -113,6 +118,7 @@ export class SvelteURL extends URL {
 		get(this.#pathname);
 		get(this.#hash);
 		get(this.#search);
+		get(this.#href);
 		return super.href;
 	}
 
@@ -126,6 +132,7 @@ export class SvelteURL extends URL {
 		set(this.#pathname, super.pathname);
 		set(this.#hash, super.hash);
 		set(this.#search, super.search);
+		set(this.#href, super.href);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 
@@ -174,6 +181,7 @@ export class SvelteURL extends URL {
 	set search(value) {
 		super.search = value;
 		set(this.#search, super.search);
+		set(this.#href, super.href);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 
