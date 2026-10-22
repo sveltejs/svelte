@@ -19,8 +19,10 @@ export function add_dirty_reaction(dirty_reactions, effect, status) {
  * @param {Map<Effect, number>} dirty_reactions
  */
 export function defer_effect(effect, dirty_reactions) {
-	if ((effect.f & (DIRTY | MAYBE_DIRTY)) !== 0) {
-		add_dirty_reaction(dirty_reactions, effect, (effect.f & DIRTY) !== 0 ? DIRTY : MAYBE_DIRTY);
+	var status = effect.f & (DIRTY | MAYBE_DIRTY);
+
+	if (status !== 0) {
+		add_dirty_reaction(dirty_reactions, effect, status);
 	}
 
 	// mark as clean so they get scheduled if they depend on pending async state
