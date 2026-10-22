@@ -36,6 +36,7 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	current_batch,
 	view_cache,
 	eager_block_effects,
 	schedule_effect,
@@ -393,6 +394,10 @@ function mark_reactions(signal, status, updated_during_traversal) {
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
+
+		// Eager effects run in the real world, which a fork's writes don't change — leave them
+		// alone (otherwise traversing the fork runs them in its view), they run once it's committed
+		if ((flags & EAGER_EFFECT) !== 0 && current_batch?.is_fork) continue;
 
 		var not_dirty = (flags & DIRTY) === 0;
 
