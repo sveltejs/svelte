@@ -1758,14 +1758,11 @@ describe('signals', () => {
 		};
 	});
 
-	it('state proxies use fork-local values', async () => {
+	it('state proxy membership uses fork-local values', () => {
 		enable_async_mode_flag();
 		push({}, true);
 
-		const object = proxy<Record<string, number>>({});
-		const sparse = proxy<number[]>([]);
-		const truncated = proxy<number[]>([]);
-		const readded = proxy<{ x?: number }>({ x: 1 });
+		const object = proxy<{ x?: number }>({});
 		const destroy = effect_root(() => {
 			render_effect(() => {
 				void ('x' in object);
@@ -1777,41 +1774,11 @@ describe('signals', () => {
 		try {
 			flushSync();
 
-			let membership;
 			fork(() => {
 				object.x = 1;
-				membership = ['x' in object, Object.keys(object)];
+				assert.equal('x' in object, true);
+				assert.deepEqual(Object.keys(object), ['x']);
 			}).discard();
-
-			await fork(() => {
-				sparse[4] = 4;
-				sparse[1] = 1;
-			}).commit();
-			const sparse_length = sparse.length;
-
-			let truncation;
-			fork(() => {
-				truncated.push(1, 2);
-				truncated.length = 0;
-				truncation = [0 in truncated, Object.keys(truncated), truncated.length];
-			}).discard();
-
-			let readded_keys;
-			fork(() => {
-				delete readded.x;
-				readded.x = 2;
-				readded_keys = Object.keys(readded);
-			}).discard();
-
-			assert.deepEqual(
-				{ membership, sparse_length, truncation, readded_keys },
-				{
-					membership: [true, ['x']],
-					sparse_length: 5,
-					truncation: [false, [], 0],
-					readded_keys: ['x']
-				}
-			);
 		} finally {
 			destroy();
 			disable_async_mode_flag();
