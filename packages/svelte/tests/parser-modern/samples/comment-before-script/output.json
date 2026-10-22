@@ -1,27 +1,9 @@
 {
-	"css": null,
-	"js": [],
+	"type": "Root",
 	"start": 0,
 	"end": 76,
-	"type": "Root",
-	"fragment": {
-		"type": "Fragment",
-		"nodes": [
-			{
-				"type": "Comment",
-				"start": 0,
-				"end": 27,
-				"data": "should not error out"
-			},
-			{
-				"type": "Text",
-				"start": 27,
-				"end": 28,
-				"raw": "\n",
-				"data": "\n"
-			}
-		]
-	},
+	"css": null,
+	"js": [],
 	"options": null,
 	"instance": {
 		"type": "Script",
@@ -57,6 +39,7 @@
 							"column": 19
 						}
 					},
+					"declare": false,
 					"declarations": [
 						{
 							"type": "VariableDeclarator",
@@ -72,6 +55,7 @@
 									"column": 18
 								}
 							},
+							"definite": false,
 							"id": {
 								"type": "Identifier",
 								"start": 52,
@@ -86,7 +70,6 @@
 										"column": 18
 									}
 								},
-								"name": "count",
 								"typeAnnotation": {
 									"type": "TSTypeAnnotation",
 									"start": 57,
@@ -116,7 +99,10 @@
 											}
 										}
 									}
-								}
+								},
+								"decorators": [],
+								"optional": false,
+								"name": "count"
 							},
 							"init": null
 						}
@@ -138,6 +124,15 @@
 				"start": 36,
 				"end": 45,
 				"name": "lang",
+				"value": [
+					{
+						"type": "Text",
+						"start": 42,
+						"end": 44,
+						"raw": "ts",
+						"data": "ts"
+					}
+				],
 				"name_loc": {
 					"start": {
 						"line": 2,
@@ -149,16 +144,25 @@
 						"column": 12,
 						"character": 40
 					}
-				},
-				"value": [
-					{
-						"start": 42,
-						"end": 44,
-						"type": "Text",
-						"raw": "ts",
-						"data": "ts"
-					}
-				]
+				}
+			}
+		]
+	},
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "Comment",
+				"start": 0,
+				"end": 27,
+				"data": "should not error out"
+			},
+			{
+				"type": "Text",
+				"start": 27,
+				"end": 28,
+				"raw": "\n",
+				"data": "\n"
 			}
 		]
 	}

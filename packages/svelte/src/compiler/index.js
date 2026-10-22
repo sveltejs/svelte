@@ -1,11 +1,9 @@
 /** @import { LegacyRoot } from './types/legacy-nodes.js' */
 /** @import { CompileOptions, CompileResult, ValidatedCompileOptions, ModuleCompileOptions } from '#compiler' */
 /** @import { AST } from './public.js' */
-import { walk as zimmerframe_walk } from 'zimmerframe';
+import { walk as walk_ast } from './utils/walk.js';
 import { convert } from './legacy.js';
-import { parse as _parse, Parser } from './phases/1-parse/index.js';
-import { remove_typescript_nodes } from './phases/1-parse/remove_typescript_nodes.js';
-import { parse_stylesheet } from './phases/1-parse/read/style.js';
+import { parse as _parse, parse_css } from './phases/1-parse/index.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
 import { transform_component, transform_module } from './phases/3-transform/index.js';
 import { validate_component_options, validate_module_options } from './validate-options.js';
@@ -26,7 +24,7 @@ export function compile(source, options) {
 
 	const validated = validate_component_options(options, '');
 
-	let parsed = _parse(source);
+	const parsed = _parse(source, false, true);
 
 	const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
@@ -38,20 +36,6 @@ export function compile(source, options) {
 		css: 'css' in parsed_options ? () => parsed_options.css ?? 'external' : validated.css,
 		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes
 	};
-
-	if (parsed.metadata.ts) {
-		parsed = {
-			...parsed,
-			fragment: parsed.fragment && remove_typescript_nodes(parsed.fragment),
-			instance: parsed.instance && remove_typescript_nodes(parsed.instance),
-			module: parsed.module && remove_typescript_nodes(parsed.module)
-		};
-		if (combined_options.customElementOptions?.extend) {
-			combined_options.customElementOptions.extend = remove_typescript_nodes(
-				combined_options.customElementOptions?.extend
-			);
-		}
-	}
 
 	const analysis = analyze_component(parsed, source, combined_options);
 	const result = transform_component(analysis, source, combined_options);
@@ -134,16 +118,7 @@ export function parseCss(source) {
 
 	state.set_source(source);
 
-	const parser = Parser.forCss(source);
-	const children = parse_stylesheet(parser);
-
-	return {
-		type: 'StyleSheetFile',
-		start: 0,
-		end: source.length,
-		children,
-		comments: parser.css_comments
-	};
+	return { type: 'StyleSheetFile', start: 0, end: source.length, ...parse_css(source) };
 }
 
 /**
@@ -155,6 +130,7 @@ function to_public_ast(source, ast, modern) {
 	if (modern) {
 		const clean = (/** @type {any} */ node) => {
 			delete node.metadata;
+			delete node.parenthesized;
 		};
 
 		ast.options?.attributes.forEach((attribute) => {
@@ -166,7 +142,7 @@ function to_public_ast(source, ast, modern) {
 		});
 
 		// remove things that we don't want to treat as public API
-		return zimmerframe_walk(ast, null, {
+		return walk_ast(ast, null, {
 			_(node, { next }) {
 				clean(node);
 				next();

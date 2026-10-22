@@ -1,0 +1,234 @@
+import * as g from '@teasel/parser/grammar';
+
+const value = { value: g.bind(g.js.pattern) };
+const error = { error: g.bind(g.js.pattern) };
+const transition = { expression: g.value.expression };
+
+/** The template language, as the parser reads it: its elements and their fields, its directives, its blocks and tags. */
+export const grammar = g.grammar('svelte', {
+	document: {
+		node: 'Root',
+		form: [
+			{
+				css: g.doc.style,
+				js: g.literal([]),
+				options: g.literal(null),
+				comments: g.doc.comments,
+				module: g.optional(g.doc.module)
+			},
+			g.scope({ instance: g.optional(g.doc.script) }, g.scope({ fragment: g.content }))
+		]
+	},
+	fragment: { node: 'Fragment', form: [g.scope({ nodes: g.nodes })] },
+	text: { node: 'Text', form: [{ data: g.text.data, raw: g.text.raw }] },
+	comment: { node: 'Comment', form: [{ data: g.text.data }] },
+	attributes: { shorthand: ['{', '}'] },
+	autoclose: true,
+	trim: true,
+	void: [
+		'area',
+		'base',
+		'br',
+		'col',
+		'command',
+		'embed',
+		'hr',
+		'img',
+		'input',
+		'keygen',
+		'link',
+		'meta',
+		'param',
+		'source',
+		'track',
+		'wbr'
+	],
+
+	elements: {
+		fields: { name: g.element.tag, attributes: g.element.attributes, fragment: g.content },
+		rules: {
+			// `this` stays an attribute: a value mixing text and expressions warns where it is promoted
+			'svelte:element': { node: 'SvelteElement' },
+			'svelte:component': { node: 'SvelteComponent', form: [{ expression: g.element.this }] },
+			'svelte:self': { node: 'SvelteSelf' },
+			'svelte:window': { node: 'SvelteWindow', root: true, once: true },
+			'svelte:document': { node: 'SvelteDocument', root: true, once: true },
+			'svelte:body': { node: 'SvelteBody', root: true, once: true },
+			'svelte:head': { node: 'SvelteHead', root: true, once: true },
+			'svelte:options': { node: 'SvelteOptions', root: true, once: true },
+			'svelte:fragment': { node: 'SvelteFragment' },
+			'svelte:boundary': { node: 'SvelteBoundary' },
+			title: { node: 'TitleElement', inside: 'svelte:head' },
+			slot: { node: 'SlotElement', outside: 'shadowrootmode' },
+			textarea: { node: 'RegularElement', content: 'rcdata' },
+			script: { node: 'RegularElement', content: 'raw' },
+			style: { node: 'RegularElement', content: 'raw' }
+		},
+		component: { node: 'Component' },
+		other: { node: 'RegularElement' }
+	},
+
+	script: {
+		element: 'script',
+		module: [['context', 'module'], ['module']],
+		typescript: [['lang', 'ts']]
+	},
+	style: 'style',
+
+	directives: {
+		arg: ':',
+		modifier: '|',
+		fields: { name: g.directive.arg, modifiers: g.directive.modifiers },
+		rules: {
+			bind: {
+				node: 'BindDirective',
+				form: [{ expression: g.orArg(g.value.expression) }],
+				unique: 'attributes'
+			},
+			on: { node: 'OnDirective', form: [g.opt({ expression: g.value.expression })] },
+			use: { node: 'UseDirective', form: [g.opt({ expression: g.value.expression })] },
+			class: {
+				node: 'ClassDirective',
+				form: [{ expression: g.orArg(g.value.expression) }],
+				unique: 'kind'
+			},
+			style: { node: 'StyleDirective', form: [{ value: g.value.raw }], unique: 'kind' },
+			transition: {
+				node: 'TransitionDirective',
+				form: [
+					g.opt(transition),
+					{
+						intro: g.literal(true),
+						outro: g.literal(true)
+					}
+				]
+			},
+			in: {
+				node: 'TransitionDirective',
+				form: [
+					g.opt(transition),
+					{
+						intro: g.literal(true),
+						outro: g.literal(false)
+					}
+				]
+			},
+			out: {
+				node: 'TransitionDirective',
+				form: [
+					g.opt(transition),
+					{
+						intro: g.literal(false),
+						outro: g.literal(true)
+					}
+				]
+			},
+			animate: { node: 'AnimateDirective', form: [g.opt({ expression: g.value.expression })] },
+			let: { node: 'LetDirective', form: [{ expression: g.bind(g.orArg(g.value.pattern)) }] }
+		}
+	},
+
+	constructs: {
+		IfBlock: {
+			open: {
+				marker: ['{', '#if'],
+				space: true,
+				form: [{ test: g.js.expression }, '}', { consequent: g.content }]
+			},
+			branches: [
+				{
+					marker: ['{', ':else', 'if'],
+					space: true,
+					form: [{ test: g.js.expression }, '}', { consequent: g.content }],
+					reopen: ['alternate', 'elseif']
+				},
+				{ marker: ['{', ':else'], form: ['}', { alternate: g.content }] }
+			],
+			close: { marker: ['{', '/if'], form: ['}'] }
+		},
+		EachBlock: {
+			open: {
+				marker: ['{', '#each'],
+				space: true,
+				form: [
+					{ expression: g.js.expression },
+					g.opt('as', { context: g.bind(g.js.pattern) }),
+					g.opt(',', { index: g.optional(g.bind(g.js.identifier)) }),
+					g.opt('(', { key: g.optional(g.js.expression) }, ')'),
+					'}',
+					{ body: g.content }
+				]
+			},
+			branches: [{ marker: ['{', ':else'], form: ['}', { fallback: g.optional(g.content) }] }],
+			close: { marker: ['{', '/each'], form: ['}'] }
+		},
+		AwaitBlock: {
+			open: {
+				marker: ['{', '#await'],
+				space: true,
+				form: [
+					{ expression: g.js.expression },
+					g.oneOf(
+						['then', g.opt(value), '}', { then: g.content }],
+						['catch', g.opt(error), '}', { catch: g.content }],
+						['}', { pending: g.content }]
+					)
+				]
+			},
+			branches: [
+				{ marker: ['{', ':then'], form: [g.opt(value), '}', { then: g.content }] },
+				{ marker: ['{', ':catch'], form: [g.opt(error), '}', { catch: g.content }] }
+			],
+			close: { marker: ['{', '/await'], form: ['}'] }
+		},
+		KeyBlock: {
+			open: {
+				marker: ['{', '#key'],
+				space: true,
+				form: [{ expression: g.js.expression }, '}', { fragment: g.content }]
+			},
+			close: { marker: ['{', '/key'], form: ['}'] }
+		},
+		SnippetBlock: {
+			open: {
+				marker: ['{', '#snippet'],
+				space: true,
+				form: [
+					{ expression: g.bind.outside(g.js.identifier) },
+					g.opt({ typeParams: g.optional(g.js.typeParameters) }),
+					{ parameters: g.bind(g.js.params) },
+					'}',
+					{ body: g.content }
+				]
+			},
+			close: { marker: ['{', '/snippet'], form: ['}'] }
+		},
+		HtmlTag: {
+			open: { marker: ['{', '@html'], space: true, form: [{ expression: g.js.expression }, '}'] }
+		},
+		DebugTag: {
+			open: { marker: ['{', '@debug'], form: [{ identifiers: g.js.identifiers }, '}'] }
+		},
+		ConstTag: {
+			open: { marker: ['{', '@const'], space: true, form: [{ declaration: g.js.const }, '}'] }
+		},
+		RenderTag: {
+			open: { marker: ['{', '@render'], space: true, form: [{ expression: g.js.expression }, '}'] }
+		},
+		AttachTag: {
+			in: ['attributes'],
+			open: { marker: ['{', '@attach'], space: true, form: [{ expression: g.js.expression }, '}'] }
+		},
+		SpreadAttribute: {
+			in: ['attributes'],
+			open: { marker: ['{', '...'], form: [{ expression: g.js.expression }, '}'] }
+		},
+		DeclarationTag: {
+			open: { marker: ['{'], form: [{ declaration: g.js.statement }, '}'] }
+		},
+		ExpressionTag: {
+			in: ['content', 'value', 'rcdata'],
+			open: { marker: ['{'], form: [{ expression: g.js.expression }, '}'] }
+		}
+	}
+});
