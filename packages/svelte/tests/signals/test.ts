@@ -18,6 +18,7 @@ import { SvelteSet } from '../../src/reactivity/set';
 import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
+import { fork } from '../../src/internal/client/reactivity/batch';
 
 /**
  * @param runes runes mode
@@ -1755,6 +1756,121 @@ describe('signals', () => {
 			destroy();
 			assert.equal(s.reactions, null);
 		};
+	});
+
+	it('state proxy membership uses fork-local values', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const object = proxy<{ x?: number }>({});
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				void ('x' in object);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			fork(() => {
+				object.x = 1;
+				assert.equal('x' in object, true);
+				assert.deepEqual(Object.keys(object), ['x']);
+			}).discard();
+		} finally {
+			destroy();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('a write restoring the value from before a fork updates chained deriveds', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const x = state(1);
+		const d = derived(() => $.get(x) * 10);
+		const e = derived(() => $.get(d) * 2);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(e);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			let values: number[] = [];
+
+			fork(() => {
+				set(x, 2);
+				$.get(e);
+				set(x, 1);
+				values = [$.get(x), $.get(d), $.get(e)];
+			}).discard();
+
+			assert.deepEqual(values, [1, 10, 20]);
+		} finally {
+			destroy();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('state proxy teardowns inside a fork see the structure from before it', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const object = proxy<Record<string, number>>({ z: 1 });
+		object.y = 1;
+		const log: unknown[] = [];
+
+		const outer = effect_root(() => {
+			render_effect(() => {
+				void ('x' in object);
+			});
+		});
+
+		const inner = effect_root(() => {
+			void object.y;
+
+			return () => {
+				log.push('teardown', 'x' in object, 'y' in object, 'z' in object, Object.keys(object));
+			};
+		});
+
+		pop();
+
+		try {
+			flushSync();
+
+			fork(() => {
+				object.x = 1;
+				delete object.y;
+				delete object.z;
+				log.push('fork', 'x' in object, 'y' in object, 'z' in object, Object.keys(object));
+				inner();
+			}).discard();
+
+			assert.deepEqual(log, [
+				'fork',
+				true,
+				false,
+				false,
+				['x'],
+				'teardown',
+				false,
+				true,
+				true,
+				['z', 'y']
+			]);
+		} finally {
+			outer();
+			disable_async_mode_flag();
+		}
 	});
 
 	// https://github.com/sveltejs/svelte/issues/16814
