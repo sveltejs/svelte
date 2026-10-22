@@ -582,7 +582,9 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skips(effect);
+			// (eager effects run in the real world, see `flush_eager_effects`, not in the view of the batch)
+			var skip =
+				is_skippable_branch || (flags & (INERT | EAGER_EFFECT)) !== 0 || this.#skips(effect);
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
