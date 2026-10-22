@@ -250,7 +250,9 @@ export function build_element_attributes(node, context, transform) {
 
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						b.literal(` ${name}="${literal_value === true ? '' : String(literal_value)}"`)
+						b.literal(
+							` ${name}="${literal_value === true ? '' : escape_html(literal_value, true)}"`
+						)
 					);
 				}
 
@@ -390,7 +392,7 @@ function build_element_spread_attributes(
  * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
  */
 export function prepare_element_spread_object(element, context, transform) {
-	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
+	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective | TransformedAttribute>} */
 	const select_attributes = [];
 	/** @type {AST.ClassDirective[]} */
 	const class_directives = [];
@@ -398,6 +400,19 @@ export function prepare_element_spread_object(element, context, transform) {
 	const style_directives = [];
 
 	for (const attribute of element.attributes) {
+		if (attribute.type === 'Attribute' && is_text_attribute(attribute)) {
+			let name = get_attribute_name(element, attribute);
+			if (element.name === 'select' && name === 'defaultvalue') name = 'defaultValue';
+
+			if (name === 'value' || name === 'defaultValue') {
+				// `$$renderer.select` and `$$renderer.option` compare static values with each other and with
+				// the escaped content of options without a `value`, so they stay escaped until that changes
+				const value = b.literal(escape_html(attribute.value[0].data, true));
+				select_attributes.push({ type: 'transformed', name, expression: value });
+				continue;
+			}
+		}
+
 		if (
 			attribute.type === 'Attribute' ||
 			attribute.type === 'BindDirective' ||
