@@ -18,6 +18,16 @@
 	<option>a&amp;b&lt;c</option>
 </select>
 
+<sElect value="a&b<c">
+	<option value="other">other</option>
+	<option>a&amp;b&lt;c</option>
+</sElect>
+
+<select value="a&b<c">
+	<option value="other">other</option>
+	<oPtion value="a&b<c">label</oPtion>
+</select>
+
 <style>
 	b {
 		color: red;

@@ -317,7 +317,11 @@ function get_attribute_name(element, attribute) {
  */
 export function build_spread_object(element, attributes, context, transform) {
 	const is_select = element.type === 'RegularElement' && element.name === 'select';
-	const is_option = element.type === 'RegularElement' && element.name === 'option';
+	// `$$renderer.select` and `$$renderer.option` render these, going by the name `RegularElement` uses
+	const element_name =
+		context.state.namespace === 'html' ? element.name.toLowerCase() : element.name;
+	const compares_values =
+		element.type === 'RegularElement' && (element_name === 'select' || element_name === 'option');
 	const object = b.object(
 		attributes.map((attribute) => {
 			if (attribute.type === 'transformed') {
@@ -333,12 +337,12 @@ export function build_spread_object(element, attributes, context, transform) {
 				);
 
 				if (
-					(is_select || is_option) &&
+					compares_values &&
 					(name === 'value' || name === 'defaultValue') &&
 					is_text_attribute(attribute)
 				) {
-					// `$$renderer.select` and `$$renderer.option` compare static values with each other and with
-					// the escaped content of options without a `value`, so these stay escaped until that changes
+					// static values are compared with each other and with the escaped content of options
+					// without a `value`, so they stay escaped until that comparison changes
 					value = b.literal(escape_html(attribute.value[0].data, true));
 				}
 
