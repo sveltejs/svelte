@@ -987,7 +987,6 @@ describe('streaming', () => {
 		) {
 			const window: FakeWindow = {};
 			vi.stubGlobal('window', window);
-			vi.stubGlobal('document', { readyState: 'loading' });
 
 			run(window, head);
 			change();
@@ -1127,20 +1126,50 @@ describe('streaming', () => {
 			expect(window.__svelte?.r).toEqual({});
 		});
 
-		test('are not recorded once the document has loaded', async () => {
-			const { head } = await render((renderer) => {
-				renderer.background(() => new Promise(() => {}));
+		test('are respected by streams inserted after the document has loaded', async () => {
+			// e.g. an island whose HTML is fetched and inserted once the page has loaded
+			vi.stubGlobal('document', { readyState: 'complete' });
+
+			await stream_to_client(
+				await render((renderer) => {
+					renderer.background(async () => {
+						await delay(null, 10);
+						warp.set('a', 'server');
+					});
+				}),
+				() => {
+					client.set('a', 'client');
+				}
+			);
+
+			expect(client.get('a')).toBe('client');
+		});
+
+		test('leave the promises of a stream that never finishes pending', async () => {
+			const { head, tail } = await render((renderer) => {
+				renderer.background(() => {
+					warp.set('a', delay('a', 10));
+				});
 			});
 
 			const window: FakeWindow = {};
 			vi.stubGlobal('window', window);
-			vi.stubGlobal('document', { readyState: 'interactive' });
 			run(window, head);
 
-			// e.g. the connection dropped before the last chunk
-			client.set('a', 'client');
+			// e.g. the connection dropped before the tail was sent
+			await tail[Symbol.asyncIterator]().return?.();
+
+			let settled = false;
+			(window.__svelte?.w?.get('test')?.get('a') as Promise<unknown>).finally(
+				() => (settled = true)
+			);
+			await delay(null, 20);
+			expect(settled).toBe(false);
+
+			// the stream is still considered in progress, so client changes are still recorded
+			client.set('b', 'client');
 			const [touched] = Object.values(window.__svelte?.r ?? {}) as Array<Map<string, unknown>>;
-			expect(touched.size).toBe(0);
+			expect(touched.get('test')).toEqual(new Set(['b']));
 		});
 	});
 });
