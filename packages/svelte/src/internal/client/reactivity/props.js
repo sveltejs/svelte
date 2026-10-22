@@ -7,7 +7,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
-import { get_descriptor, is_function } from '../../shared/utils.js';
+import { get_descriptor, is_function, object_prototype } from '../../shared/utils.js';
 import { set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import {
@@ -179,6 +179,17 @@ export function legacy_rest_props(props, exclude) {
 }
 
 /**
+ * Like `key in p`, but ignores properties inherited from `Object.prototype` (such as `toString`),
+ * so that they don't shadow a prop of the same name that was passed before them
+ * @param {Record<string | symbol, unknown>} p
+ * @param {string | symbol} key
+ */
+function has_prop(p, key) {
+	// @ts-expect-error
+	return key in p && (!(key in object_prototype) || p[key] !== object_prototype[key]);
+}
+
+/**
  * The proxy handler for spread props. Handles the incoming array of props
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
@@ -190,8 +201,10 @@ const spread_props_handler = {
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return p[key];
+			if (typeof p === 'object' && p !== null && has_prop(p, key)) return p[key];
 		}
+		// @ts-expect-error
+		return object_prototype[key];
 	},
 	set(target, key, value) {
 		let i = target.props.length;
@@ -211,7 +224,7 @@ const spread_props_handler = {
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) {
+			if (typeof p === 'object' && p !== null && has_prop(p, key)) {
 				const descriptor = get_descriptor(p, key);
 				if (descriptor && !descriptor.configurable) {
 					// Prevent a "Non-configurability Report Error": The target is an array, it does
