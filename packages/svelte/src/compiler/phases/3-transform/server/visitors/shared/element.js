@@ -314,16 +314,10 @@ function get_attribute_name(element, attribute) {
  * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective | TransformedAttribute>} attributes
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @param {boolean} [is_selectable] whether this is a `<select>` or `<option>` rendered through `$$renderer`
  */
-export function build_spread_object(
-	element,
-	attributes,
-	context,
-	transform,
-	is_selectable = false
-) {
+export function build_spread_object(element, attributes, context, transform) {
 	const is_select = element.type === 'RegularElement' && element.name === 'select';
+	const is_option = element.type === 'RegularElement' && element.name === 'option';
 	const object = b.object(
 		attributes.map((attribute) => {
 			if (attribute.type === 'transformed') {
@@ -339,12 +333,12 @@ export function build_spread_object(
 				);
 
 				if (
-					is_selectable &&
+					(is_select || is_option) &&
 					(name === 'value' || name === 'defaultValue') &&
 					is_text_attribute(attribute)
 				) {
-					// static `<select>` and `<option>` values are compared with each other and with the escaped
-					// content of options without a `value`, so they stay escaped until that comparison changes
+					// `$$renderer.select` and `$$renderer.option` compare static values with each other and with
+					// the escaped content of options without a `value`, so these stay escaped until that changes
 					value = b.literal(escape_html(attribute.value[0].data, true));
 				}
 
@@ -436,8 +430,7 @@ export function prepare_element_spread_object(element, context, transform) {
 		style_directives,
 		class_directives,
 		context,
-		transform,
-		true
+		transform
 	);
 }
 
@@ -449,7 +442,6 @@ export function prepare_element_spread_object(element, context, transform) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @param {boolean} [is_selectable] whether this is a `<select>` or `<option>` rendered through `$$renderer`
  * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
  */
 export function prepare_element_spread(
@@ -458,8 +450,7 @@ export function prepare_element_spread(
 	style_directives,
 	class_directives,
 	context,
-	transform,
-	is_selectable = false
+	transform
 ) {
 	/** @type {ObjectExpression | undefined} */
 	let classes;
@@ -503,7 +494,7 @@ export function prepare_element_spread(
 		flags |= ELEMENT_IS_INPUT;
 	}
 
-	const object = build_spread_object(element, attributes, context, transform, is_selectable);
+	const object = build_spread_object(element, attributes, context, transform);
 	const css_hash =
 		element.metadata.scoped && context.state.analysis.css.hash
 			? b.literal(context.state.analysis.css.hash)
