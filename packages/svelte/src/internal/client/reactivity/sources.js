@@ -188,13 +188,12 @@ var count_deps = 0;
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	if (
-		!source.equals(value) ||
-		// inside a fork, writing back the value from before the fork still changes the fork's value
-		(current_batch?.is_fork &&
-			batch_values?.has(source) &&
-			!source.equals(batch_values.get(source)))
-	) {
+	// a fork keeps its values out of `source.v`, so writing back the value from before the fork
+	// still changes the fork's value
+	var restores_fork_value =
+		current_batch?.is_fork && batch_values?.has(source) && !source.equals(batch_values.get(source));
+
+	if (!source.equals(value) || restores_fork_value) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {

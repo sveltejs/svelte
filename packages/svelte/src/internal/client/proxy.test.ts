@@ -134,29 +134,27 @@ test('handles array length mutation', () => {
 	assert.deepEqual(state[0], undefined);
 });
 
-test('deleting or truncating does not call accessors', () => {
-	const original = {
-		count: 0,
-		get value() {
-			this.count += 1;
-			return 1;
-		}
-	};
-	const object = proxy<any>(original);
-	delete object.value;
-	assert.equal(original.count, 0);
+test('deleting, truncating or overwriting a key does not read its value', () => {
+	// `proxy` checks whether a value is state already
+	const unread = new Proxy({}, { has: () => assert.fail('read') });
+	const getter = { get: () => assert.fail('read'), configurable: true, enumerable: true };
 
-	const items = [1];
-	Object.defineProperty(items, 0, {
-		get() {
-			throw new Error('called');
-		},
-		configurable: true,
-		enumerable: true
-	});
-	const array = proxy<any>(items);
+	const object = proxy({ deleted: unread, overwritten: unread });
+	Reflect.deleteProperty(object, 'deleted');
+	object.overwritten = {};
+	assert.deepEqual(Object.keys(object), ['overwritten']);
+
+	const array = proxy([unread]);
 	array.length = 0;
 	assert.equal(array.length, 0);
+
+	const accessor = proxy(Object.defineProperty({}, 'value', getter));
+	Reflect.deleteProperty(accessor, 'value');
+	assert.deepEqual(Object.keys(accessor), []);
+
+	const items = proxy(Object.defineProperty([0], 0, getter));
+	items.length = 0;
+	assert.equal(items.length, 0);
 });
 
 test('discards fork-local proxy changes', () => {
@@ -179,14 +177,6 @@ test('discards fork-local proxy changes', () => {
 		assert.equal(updated.x, 1);
 		assert.deepEqual(Object.keys(updated), ['x']);
 
-		const deleted = proxy<{ x?: number }>({ x: 1 });
-		fork(() => {
-			delete deleted.x;
-		}).discard();
-
-		assert.equal(deleted.x, 1);
-		assert.deepEqual(Object.keys(deleted), ['x']);
-
 		const populated = proxy([1, 2]);
 		fork(() => {
 			populated.length = 0;
@@ -198,15 +188,57 @@ test('discards fork-local proxy changes', () => {
 		void truncated[0];
 		void truncated[1];
 
-		let fork_value;
 		fork(() => {
 			truncated.push(1, 2);
 			truncated.length = 0;
-			fork_value = [0 in truncated, Object.keys(truncated), truncated.length];
+			assert.equal(0 in truncated, false);
+			assert.deepEqual(Object.keys(truncated), []);
+			assert.equal(truncated.length, 0);
 		}).discard();
 
-		assert.deepEqual(fork_value, [false, [], 0]);
 		assert.deepEqual(truncated, []);
+
+		const original = { x: { value: 1 } };
+		const deleted = proxy(original);
+		fork(() => {
+			Reflect.deleteProperty(deleted, 'x');
+		}).discard();
+
+		// the restored value is state, not the original object
+		deleted.x.value = 2;
+		assert.equal(deleted.x.value, 2);
+		assert.equal(Object.getOwnPropertyDescriptor(deleted, 'x')?.value, deleted.x);
+		assert.equal(original.x.value, 1);
+		assert.deepEqual(Object.keys(deleted), ['x']);
+	} finally {
+		disable_async_mode_flag();
+	}
+});
+
+test('keeps fork-local proxy changes when a fork is committed', async () => {
+	enable_async_mode_flag();
+
+	try {
+		const readded = proxy<{ x?: number }>({ x: 1 });
+		const array = proxy([1]);
+
+		await fork(() => {
+			delete readded.x;
+			readded.x = 1;
+			assert.deepEqual(Object.keys(readded), ['x']);
+
+			array.length = 0;
+			array[0] = 0;
+			assert.equal(array.length, 1);
+
+			array[4] = 4;
+			array[1] = 1;
+			assert.equal(array.length, 5);
+		}).commit();
+
+		assert.equal(readded.x, 1);
+		assert.deepEqual(Object.keys(readded), ['x']);
+		assert.equal(array.length, 5);
 	} finally {
 		disable_async_mode_flag();
 	}

@@ -35,19 +35,52 @@ import { batch_values, current_batch } from './reactivity/batch.js';
 // TODO move all regexes into shared module?
 const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 
-/** @param {Source<any>} source */
-function get_source_value(source) {
+/**
+ * What a source starts from when a write creates it for a key whose value on the target no one has
+ * read. That value is proxied only when it's read, so deleting the key doesn't read it, but a
+ * discarded fork or another batch still sees it
+ */
+const ORIGINAL = Symbol();
+
+/**
+ * The value a write compares against: the current batch's, which inside a fork isn't `source.v`
+ * @template T
+ * @param {Source<T>} source
+ * @returns {T}
+ */
+function batch_value(source) {
 	return batch_values?.has(source) ? batch_values.get(source) : source.v;
 }
 
 /**
  * What `get(source)` returns, without tracking it: a teardown sees the value from before the flush
- * @param {Source<any>} source
+ * @template T
+ * @param {Source<T>} source
+ * @returns {T}
  */
-function read_source_value(source) {
+function observed_value(source) {
 	return is_destroying_effect && old_values.has(source)
 		? old_values.get(source)
-		: get_source_value(source);
+		: batch_value(source);
+}
+
+/**
+ * The value before a write that adds a key the target doesn't have. Inside a fork the key is absent,
+ * so that discarding the fork removes it. Elsewhere it's `undefined`: `Batch#capture` keeps no
+ * previous value for `UNINITIALIZED`, so time travel would show other batches this batch's value
+ */
+function value_before_add() {
+	return current_batch?.is_fork ? UNINITIALIZED : undefined;
+}
+
+/**
+ * The value before a write that deletes a key the target owns, when the key has no source yet.
+ * An accessor isn't called, so it stays deleted even if the fork that deleted it is discarded
+ * @param {object} target
+ * @param {string | symbol} prop
+ */
+function value_before_delete(target, prop) {
+	return get_descriptor(target, prop)?.writable ? ORIGINAL : UNINITIALIZED;
 }
 
 /**
@@ -76,6 +109,10 @@ export function proxy(value) {
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
 	var version = source(0);
+	/** @type {Source<number> | null} */
+	var length_source = null;
+	/** @type {Map<string | symbol, unknown> | null} the target's values read through `ORIGINAL` */
+	var originals = null;
 
 	var stack = DEV && tracing_mode_flag ? get_error('created at') : null;
 	var parent_version = update_version;
@@ -106,10 +143,28 @@ export function proxy(value) {
 		return result;
 	};
 
+	/**
+	 * Proxies the target's value once, so that it keeps its identity
+	 * @param {object} target
+	 * @param {string | symbol} prop
+	 */
+	var read_original = (target, prop) => {
+		originals ??= new Map();
+		var p = originals.get(prop);
+
+		if (p === undefined) {
+			p = with_parent(() => proxy(Reflect.get(target, prop)));
+			originals.set(prop, p);
+		}
+
+		return p;
+	};
+
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
-		sources.set('length', source(/** @type {any[]} */ (value).length, stack));
+		length_source = source(/** @type {any[]} */ (value).length, stack);
+		sources.set('length', length_source);
 		if (DEV) {
 			value = /** @type {any} */ (inspectable_array(/** @type {any[]} */ (value)));
 		}
@@ -169,11 +224,7 @@ export function proxy(value) {
 
 			if (s === undefined) {
 				if (prop in target) {
-					// start from the value a read sees, so that discarding a fork that deletes the key
-					// restores it; an accessor is not called
-					var descriptor = get_descriptor(target, prop);
-					var initial = descriptor?.writable ? descriptor.value : UNINITIALIZED;
-					const s = with_parent(() => source(proxy(initial), stack));
+					const s = with_parent(() => source(value_before_delete(target, prop), stack));
 					sources.set(prop, s);
 					set(s, UNINITIALIZED);
 					increment(version);
@@ -220,6 +271,7 @@ export function proxy(value) {
 
 			if (s !== undefined) {
 				var v = get(s);
+				if (v === ORIGINAL) return read_original(target, prop);
 				return v === UNINITIALIZED ? undefined : v;
 			}
 
@@ -237,6 +289,10 @@ export function proxy(value) {
 
 				if (value === UNINITIALIZED) {
 					return undefined;
+				}
+
+				if (value === ORIGINAL) {
+					value = read_original(target, prop);
 				}
 
 				if (descriptor && 'value' in descriptor) {
@@ -260,8 +316,7 @@ export function proxy(value) {
 			}
 
 			var s = sources.get(prop);
-			var has =
-				(s !== undefined && read_source_value(s) !== UNINITIALIZED) || Reflect.has(target, prop);
+			var has = Reflect.has(target, prop);
 
 			if (
 				s !== undefined ||
@@ -283,10 +338,7 @@ export function proxy(value) {
 					sources.set(prop, s);
 				}
 
-				var value = get(s);
-				if (value === UNINITIALIZED) {
-					return false;
-				}
+				return get(s) !== UNINITIALIZED;
 			}
 
 			return has;
@@ -297,19 +349,16 @@ export function proxy(value) {
 			var has = prop in target;
 
 			// variable.length = value -> clear all signals with index >= value
-			if (is_proxied_array && prop === 'length') {
-				for (var i = value; i < get_source_value(/** @type {Source<number>} */ (s)); i += 1) {
+			if (length_source !== null && prop === 'length') {
+				for (var i = value; i < batch_value(length_source); i += 1) {
 					var other_s = sources.get(i + '');
 					if (other_s !== undefined) {
 						set(other_s, UNINITIALIZED);
 					} else if (i in target) {
-						// If the item exists in the original, create a source with that value before
-						// marking it uninitialized. This prevents a discarded fork from hiding the
-						// original item, while ensuring later reads don't recreate it after truncation.
-						// An accessor is not called.
-						var item = get_descriptor(target, i);
-						var item_value = item?.writable ? item.value : UNINITIALIZED;
-						other_s = with_parent(() => source(proxy(item_value), stack));
+						// If the item exists in the original, we need to create a source for it,
+						// else a later read of the property would result in a source being created with
+						// the value of the original item at that index.
+						other_s = with_parent(() => source(value_before_delete(target, i), stack));
 						sources.set(i + '', other_s);
 						set(other_s, UNINITIALIZED);
 
@@ -326,11 +375,8 @@ export function proxy(value) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					// a new key starts out absent inside a fork, so that discarding the fork removes it.
-					// Elsewhere it starts as `undefined`: `Batch#capture` keeps no previous value for
-					// `UNINITIALIZED`, so time travel would show other batches this batch's value
-					var initial = has ? target[prop] : current_batch?.is_fork ? UNINITIALIZED : undefined;
-					s = with_parent(() => source(proxy(initial), stack));
+					// start from the value before this write, which a discarded fork restores
+					s = with_parent(() => source(has ? ORIGINAL : value_before_add(), stack));
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
@@ -340,7 +386,7 @@ export function proxy(value) {
 					sources.set(prop, s);
 				}
 			} else {
-				has = get_source_value(s) !== UNINITIALIZED;
+				has = batch_value(s) !== UNINITIALIZED;
 
 				var p = with_parent(() => proxy(value));
 				set(s, p);
@@ -358,12 +404,11 @@ export function proxy(value) {
 				// signal that length has also changed. Do it before updating metadata
 				// to ensure that iterating over the array as a result of a metadata update
 				// will not cause the length to be out of sync.
-				if (is_proxied_array && typeof prop === 'string') {
-					var ls = /** @type {Source<number>} */ (sources.get('length'));
+				if (length_source !== null && typeof prop === 'string') {
 					var n = Number(prop);
 
-					if (Number.isInteger(n) && n >= get_source_value(ls)) {
-						set(ls, n + 1);
+					if (Number.isInteger(n) && n >= batch_value(length_source)) {
+						set(length_source, n + 1);
 					}
 				}
 
@@ -378,11 +423,11 @@ export function proxy(value) {
 
 			var own_keys = Reflect.ownKeys(target).filter((key) => {
 				var source = sources.get(key);
-				return source === undefined || read_source_value(source) !== UNINITIALIZED;
+				return source === undefined || observed_value(source) !== UNINITIALIZED;
 			});
 
 			for (var [key, source] of sources) {
-				if (read_source_value(source) !== UNINITIALIZED && !(key in target)) {
+				if (observed_value(source) !== UNINITIALIZED && !(key in target)) {
 					own_keys.push(key);
 				}
 			}
