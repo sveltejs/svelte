@@ -38,7 +38,7 @@ import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
-import { defer_effect } from './utils.js';
+import { add_dirty_reaction, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
@@ -923,10 +923,7 @@ export class Batch {
 	 */
 	transfer_reactions(dirty_reactions) {
 		for (const [effect, status] of dirty_reactions) {
-			// (don't downgrade a DIRTY effect to MAYBE_DIRTY)
-			if (status === DIRTY || this.#unprocessed.get(effect) !== DIRTY) {
-				this.#unprocessed.set(effect, status);
-			}
+			add_dirty_reaction(this.#unprocessed, effect, status);
 		}
 
 		dirty_reactions.clear();
@@ -1043,8 +1040,7 @@ export class Batch {
 
 		if ((!is_processing || current_batch !== this) && active_reaction === null) {
 			if (this.prev !== null || this.next !== null || this.is_fork) {
-				// (don't downgrade a DIRTY effect)
-				if (!this.#unprocessed.has(effect)) this.#unprocessed.set(effect, MAYBE_DIRTY);
+				add_dirty_reaction(this.#unprocessed, effect, MAYBE_DIRTY);
 				return;
 			}
 
