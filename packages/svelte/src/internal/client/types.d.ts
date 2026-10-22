@@ -17,7 +17,8 @@ declare global {
 			 * For each `Warp` stream that's in progress, keyed by the stream's key: the keys that the client has
 			 * changed in each `Warp` since the stream started, keyed by the `Warp`'s id, or `true` if the `Warp`
 			 * was cleared. Values streamed in for these keys are discarded, so they can't overwrite the changes.
-			 * A stream's entry is removed once it finishes
+			 * A stream's entry is removed once it finishes. If it never finishes (e.g. the connection dropped),
+			 * the entry stays, and its promises stay pending
 			 */
 			r?: Record<string, Map<string, Set<WarpKey> | true>>;
 			/**

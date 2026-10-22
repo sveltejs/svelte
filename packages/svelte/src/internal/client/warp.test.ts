@@ -9,7 +9,6 @@ let window: {
 		r?: Record<string, Map<string, Set<WarpKey> | true>>;
 	};
 };
-let document: { readyState: string };
 
 /** the values the stream writes to */
 function base() {
@@ -31,9 +30,7 @@ beforeEach(() => {
 			])
 		}
 	};
-	document = { readyState: 'loading' };
 	vi.stubGlobal('window', window);
-	vi.stubGlobal('document', document);
 });
 
 afterEach(() => {
@@ -131,12 +128,13 @@ describe('while streaming', () => {
 		expect(second.get('test')).toEqual(new Set(['a', 'b']));
 	});
 
-	test('does not record changes once the document has loaded, even if the stream did not finish', () => {
-		document.readyState = 'interactive';
+	test('records changes regardless of whether the document has loaded', () => {
+		// e.g. an island whose HTML was inserted after the page loaded
+		vi.stubGlobal('document', { readyState: 'complete' });
 
 		const warp = new Warp('test');
 		warp.set('a', 10);
 
-		expect(first.size).toBe(0);
+		expect(first.get('test')).toEqual(new Set(['a']));
 	});
 });
