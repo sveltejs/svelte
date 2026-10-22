@@ -514,3 +514,16 @@ export function log_inconsistent_branches(effect) {
 
 	return true;
 }
+
+/**
+ * Stringify a derived function, removing `$.track_reactivity_loss` and `$.get` etc
+ * @param {Function} fn
+ */
+export function stringify_derived(fn) {
+	return `{${fn.toString()
+		.replace(/^async \(\) => /, '')
+		.replace(/^\(/, '')
+		.replace(/\$\.get\((.+?)\)/, (_, name) => name)
+		.replace(/\$\.track_reactivity_loss\((.+?)\)\(\)/, (_, name) => name)
+		.replace(/\)$/, '')}}`;
+}
