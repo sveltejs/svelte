@@ -88,6 +88,8 @@
 							"character": 43
 						}
 					},
+					"decorators": [],
+					"optional": false,
 					"name": "foo"
 				},
 				"typeParams": "T extends () => void, U = Array<string>",
@@ -148,10 +150,14 @@
 											"column": 59
 										}
 									},
+									"decorators": [],
+									"optional": false,
 									"name": "T"
 								}
 							}
 						},
+						"decorators": [],
+						"optional": false,
 						"name": "x"
 					},
 					{
@@ -210,10 +216,14 @@
 											"column": 65
 										}
 									},
+									"decorators": [],
+									"optional": false,
 									"name": "U"
 								}
 							}
 						},
+						"decorators": [],
+						"optional": false,
 						"name": "y"
 					}
 				],
@@ -245,6 +255,8 @@
 										"column": 3
 									}
 								},
+								"decorators": [],
+								"optional": false,
 								"name": "x"
 							}
 						},
