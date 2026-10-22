@@ -398,7 +398,7 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		var not_dirty = (flags & DIRTY) === 0;
 
 		if ((flags & EAGER_EFFECT) !== 0) {
-			if (/** @type {Batch} */ (current_batch).is_fork) {
+			if (!/** @type {Batch} */ (current_batch).is_fork) {
 				// don't set a DIRTY reaction to MAYBE_DIRTY
 				if (not_dirty) {
 					set_signal_status(reaction, status);
