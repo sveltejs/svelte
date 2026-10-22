@@ -13,7 +13,7 @@
 </script>
 
 <p>{await delay(key)}</p>
-<p>{count} {JSON.stringify(object)}</p>
+<p>{count} {JSON.stringify(Object.keys(object))}</p>
 
 <button
 	onclick={() => {

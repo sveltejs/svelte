@@ -25,23 +25,16 @@ import {
 	old_values,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
-import { COMPONENT_SYMBOL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { COMPONENT_SYMBOL, ORIGINAL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { tag } from './dev/tracing.js';
 import { get_error } from '../shared/dev.js';
 import { tracing_mode_flag } from '../flags/index.js';
-import { batch_values, current_batch } from './reactivity/batch.js';
+import { batch_values } from './reactivity/batch.js';
 
 // TODO move all regexes into shared module?
 const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
-
-/**
- * What a source starts from when a write creates it for a key whose value on the target no one has
- * read. That value is proxied only when it's read, so deleting the key doesn't read it, but a
- * discarded fork or another batch still sees it
- */
-const ORIGINAL = Symbol();
 
 /**
  * The value a write compares against: the current batch's, which inside a fork isn't `source.v`
@@ -63,19 +56,6 @@ function observed_value(source) {
 	return is_destroying_effect && old_values.has(source)
 		? old_values.get(source)
 		: batch_value(source);
-}
-
-/**
- * The value before a write that adds a key the target doesn't own. Inside a fork the key is absent,
- * so that discarding the fork removes it. So is a name the target inherits, because an own
- * `undefined` would hide the inherited member from other batches. Elsewhere it's `undefined`:
- * `Batch#capture` keeps no previous value for `UNINITIALIZED`, so time travel would show other
- * batches this batch's value
- * @param {object} target
- * @param {string | symbol} prop
- */
-function value_before_add(target, prop) {
-	return current_batch?.is_fork || prop in target ? UNINITIALIZED : undefined;
 }
 
 /**
@@ -112,11 +92,10 @@ export function proxy(value) {
 
 	/** @type {Map<any, Source<any>>} */
 	var sources = new Map();
-	var is_proxied_array = is_array(value);
 	var version = source(0);
 	/** @type {Source<number> | null} */
 	var length_source = null;
-	/** @type {Map<string | symbol, unknown> | null} the target's values read through `ORIGINAL` */
+	/** @type {Map<string | symbol, unknown> | null} the target's own values read through `ORIGINAL` */
 	var originals = null;
 	// where a key with no own value is looked up
 	var inherited = prototype;
@@ -151,11 +130,13 @@ export function proxy(value) {
 	};
 
 	/**
-	 * Proxies the target's value once, so that it keeps its identity
+	 * Reads a key as the target has it. An own value is proxied once, so that it keeps its identity
 	 * @param {object} target
 	 * @param {string | symbol} prop
 	 */
 	var read_original = (target, prop) => {
+		if (get_descriptor(target, prop) === undefined) return Reflect.get(target, prop);
+
 		originals ??= new Map();
 		var p = originals.get(prop);
 
@@ -167,10 +148,10 @@ export function proxy(value) {
 		return p;
 	};
 
-	if (is_proxied_array) {
+	if (is_array(value)) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
-		length_source = source(/** @type {any[]} */ (value).length, stack);
+		length_source = source(value.length, stack);
 		sources.set('length', length_source);
 		if (DEV) {
 			value = /** @type {any} */ (inspectable_array(/** @type {any[]} */ (value)));
@@ -243,7 +224,7 @@ export function proxy(value) {
 						tag(s, get_label(path, prop));
 					}
 				}
-			} else if (batch_value(s) !== UNINITIALIZED) {
+			} else if (is_own(batch_value(s), target, prop)) {
 				set(s, UNINITIALIZED);
 				increment(version);
 			}
@@ -297,7 +278,7 @@ export function proxy(value) {
 			// an inherited name gets a source too, so that `Object.hasOwn` sees an own key shadow it;
 			// only a reaction can track it
 			if (s === undefined && descriptor === undefined && active_reaction !== null) {
-				s = with_parent(() => source(UNINITIALIZED, stack));
+				s = with_parent(() => source(ORIGINAL, stack));
 				sources.set(prop, s);
 
 				if (DEV) {
@@ -313,7 +294,9 @@ export function proxy(value) {
 				}
 
 				if (value === ORIGINAL) {
-					value = read_original(target, prop);
+					// as on the target, where a value no one has read isn't proxied yet
+					if (descriptor && originals?.has(prop)) descriptor.value = originals.get(prop);
+					return descriptor;
 				}
 
 				if (descriptor && 'value' in descriptor) {
@@ -337,7 +320,9 @@ export function proxy(value) {
 			}
 
 			var s = sources.get(prop);
-			var has = Reflect.has(target, prop);
+			// without a source, the key is as the target has it
+			var current = s === undefined ? ORIGINAL : observed_value(s);
+			var has = current === ORIGINAL ? Reflect.has(target, prop) : current !== UNINITIALIZED;
 
 			if (
 				s !== undefined ||
@@ -359,7 +344,10 @@ export function proxy(value) {
 					sources.set(prop, s);
 				}
 
-				return get(s) !== UNINITIALIZED || Reflect.has(prototype, prop);
+				var value = get(s);
+				if (value === UNINITIALIZED) {
+					return Reflect.has(prototype, prop);
+				}
 			}
 
 			return has;
@@ -368,7 +356,7 @@ export function proxy(value) {
 		set(target, prop, value, receiver) {
 			var s = sources.get(prop);
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
-			var has = s === undefined ? descriptor !== undefined : batch_value(s) !== UNINITIALIZED;
+			var has = is_own(s === undefined ? ORIGINAL : batch_value(s), target, prop);
 
 			if (!has && descriptor === undefined && prop in target && !is_shadowable(target, prop)) {
 				// as on a plain object, assigning an inherited accessor (`__proto__`) or read-only
@@ -403,8 +391,7 @@ export function proxy(value) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || descriptor?.writable) {
-					// start from the value before this write, which a discarded fork restores
-					s = with_parent(() => source(has ? ORIGINAL : value_before_add(target, prop), stack));
+					s = with_parent(() => source(ORIGINAL, stack));
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
@@ -451,7 +438,14 @@ export function proxy(value) {
 			});
 
 			for (var [key, source] of sources) {
-				if (observed_value(source) !== UNINITIALIZED && get_descriptor(target, key) === undefined) {
+				var current = observed_value(source);
+
+				// a key that is as the target has it is in its keys already, or absent
+				if (
+					current !== UNINITIALIZED &&
+					current !== ORIGINAL &&
+					get_descriptor(target, key) === undefined
+				) {
 					own_keys.push(key);
 				}
 			}
@@ -473,6 +467,17 @@ function get_label(path, prop) {
 	if (typeof prop === 'symbol') return `${path}[Symbol(${prop.description ?? ''})]`;
 	if (regex_is_valid_identifier.test(prop)) return `${path}.${prop}`;
 	return /^\d+$/.test(prop) ? `${path}[${prop}]` : `${path}['${prop}']`;
+}
+
+/**
+ * Whether the target owns a key, given the value of the key's source, where `ORIGINAL` leaves the
+ * key as the target has it
+ * @param {unknown} value
+ * @param {object} target
+ * @param {string | symbol} prop
+ */
+function is_own(value, target, prop) {
+	return value === ORIGINAL ? get_descriptor(target, prop) !== undefined : value !== UNINITIALIZED;
 }
 
 /**

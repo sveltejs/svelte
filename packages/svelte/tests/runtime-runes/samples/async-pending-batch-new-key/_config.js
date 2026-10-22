@@ -10,13 +10,13 @@ export default test({
 		add.click();
 		await tick();
 
-		// an unrelated batch doesn't see the value the pending batch added
+		// an unrelated batch doesn't see the key the pending batch added
 		increment.click();
 		await tick();
-		assert.htmlEqual(p.innerHTML, '1 {}');
+		assert.htmlEqual(p.innerHTML, '1 []');
 
 		resolve.click();
 		await tick();
-		assert.htmlEqual(p.innerHTML, '1 {"x":1}');
+		assert.htmlEqual(p.innerHTML, '1 ["x"]');
 	}
 });
