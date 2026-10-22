@@ -1330,6 +1330,28 @@ export function uncommitted_first_value(value, batch) {
 	return null;
 }
 
+/**
+ * Run `fn` in the real world, i.e. outside the view of the world of any batch
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function in_real_world(fn) {
+	var previous_batch_values = batch_values;
+	var previous_view_cache = view_cache;
+	var previous_view_batch = view_batch;
+
+	batch_values = view_cache = view_batch = null;
+
+	try {
+		return fn();
+	} finally {
+		batch_values = previous_batch_values;
+		view_cache = previous_view_cache;
+		view_batch = previous_view_batch;
+	}
+}
+
 /** @type {Source<number>[]} */
 let eager_versions = [];
 
@@ -1379,16 +1401,7 @@ export function eager(fn) {
 		if (initial) {
 			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
-			var previous_batch_values = batch_values;
-
-			try {
-				// evaluate in the real world
-				batch_values = null;
-				value = fn();
-			} finally {
-				batch_values = previous_batch_values;
-			}
-
+			value = fn();
 			return;
 		}
 

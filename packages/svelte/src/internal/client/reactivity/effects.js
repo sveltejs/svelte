@@ -43,7 +43,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects } from './batch.js';
+import { Batch, collected_effects, in_real_world } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -254,7 +254,8 @@ export function user_pre_effect(fn) {
 
 /** @param {() => void | (() => void)} fn */
 export function eager_effect(fn) {
-	return create_effect(EAGER_EFFECT, fn);
+	// eager effects observe the real world — when they're created, and when they run again (see `flush_eager_effects`)
+	return in_real_world(() => create_effect(EAGER_EFFECT, fn));
 }
 
 /**
