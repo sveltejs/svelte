@@ -285,7 +285,7 @@ export function internal_set(
 			}
 		}
 
-		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+		if (eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
 	} else if (own_result) {
