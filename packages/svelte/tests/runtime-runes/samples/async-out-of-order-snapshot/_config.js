@@ -7,6 +7,8 @@ import { test } from '../../test';
 // independent batches see that value instead of the committed one
 export default test({
 	async test({ assert, target }) {
+		await tick();
+
 		const buttons = Array.from(target.querySelectorAll('button'));
 
 		/** @param {string} text */
@@ -17,7 +19,6 @@ export default test({
 
 		const html = buttons.map((b) => b.outerHTML).join('');
 
-		await tick();
 		assert.htmlEqual(target.innerHTML, `${html}<p>0 0 0</p><p>y: 0, d: 0</p>`);
 
 		// batches A, B and C
