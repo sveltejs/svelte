@@ -1,4 +1,4 @@
-/** @import { Blocker, Effect, Source, Value } from '#client' */
+/** @import { Blocker, Collector, Effect, Source, Value } from '#client' */
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -24,6 +24,7 @@ import {
 	set_reactivity_loss_tracker
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import { deferred } from '../../shared/utils.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -57,6 +58,10 @@ export function flatten(blockers, sync, async, fn) {
 	}
 
 	var parent = /** @type {Effect} */ (active_effect);
+	var creator = current_batch;
+
+	// Inside a boundary that shows its pending snippet, batches don't wait for content
+	var collector = parent.b?.is_rendered() ? collector_for(pending) : null;
 
 	var restore = capture();
 	var blocker_promise =
@@ -67,22 +72,25 @@ export function flatten(blockers, sync, async, fn) {
 				: null;
 
 	/**
+	 * Create the content in the view of the first batch that has the results (if batches wait for it)
 	 * @param {Source[]} async
 	 */
 	function finish(async) {
-		if ((parent.f & DESTROYED) !== 0) {
-			return;
-		}
+		return when_ready(collector, creator, parent, (batch) => {
+			if ((parent.f & DESTROYED) === 0) {
+				restore(true, batch);
 
-		restore();
+				try {
+					fn([...deriveds, ...async]);
+				} catch (error) {
+					invoke_error_boundary(error, parent);
+				}
 
-		try {
-			fn([...deriveds, ...async]);
-		} catch (error) {
-			invoke_error_boundary(error, parent);
-		}
+				unset_context();
+			}
 
-		unset_context();
+			done(collector);
+		});
 	}
 
 	var decrement_pending = increment_pending();
@@ -95,23 +103,27 @@ export function flatten(blockers, sync, async, fn) {
 
 	// Full path: has async expressions
 	function run() {
-		Promise.all(async.map((expression) => async_derived(expression)))
+		Promise.all(collect(collector, () => async.map((expression) => async_derived(expression))))
 			.then(finish)
 			.catch((error) => invoke_error_boundary(error, parent))
 			.finally(decrement_pending);
 	}
 
 	if (blocker_promise) {
-		blocker_promise.then(() => {
-			if ((parent.f & DESTROYED) !== 0) {
-				decrement_pending();
-				return;
-			}
+		blocker_promise.then(() =>
+			// (the async expressions run in the view of the batch that has the results of the script's)
+			when_ready(collector, creator, parent, (batch) => {
+				if ((parent.f & DESTROYED) !== 0) {
+					done(collector);
+					decrement_pending();
+					return;
+				}
 
-			restore();
-			run();
-			unset_context();
-		});
+				restore(true, batch);
+				run();
+				unset_context();
+			})
+		);
 	} else {
 		run();
 	}
@@ -140,7 +152,11 @@ export function capture() {
 		var previous_dev_stack = dev_stack;
 	}
 
-	return function restore(activate_batch = true) {
+	/**
+	 * @param {boolean} [activate_batch]
+	 * @param {Batch | null} [batch] the batch to continue in, if not the one that was active before
+	 */
+	return function restore(activate_batch = true, batch = previous_batch) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
@@ -148,7 +164,7 @@ export function capture() {
 		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
 			// TODO we only need optional chaining here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
-			previous_batch?.activate();
+			batch?.activate();
 		}
 
 		if (DEV) {
@@ -314,6 +330,43 @@ export function run(thunks) {
 
 	var active = /** @type {Effect} */ (active_effect);
 
+	// (inside a boundary that shows its pending snippet, batches don't wait for content)
+	var collector = active.b?.is_rendered() ? collector_for() : null;
+
+	/**
+	 * The batch the code continues in
+	 * @type {Batch | null}
+	 */
+	var batch = current_batch;
+
+	/**
+	 * Continue with `fn` — in the first batch that has the results of everything awaited so far, if batches
+	 * wait for the content — collecting the async deriveds that it creates. Without `fn`, just wait
+	 * @param {() => any} [fn]
+	 */
+	function step(fn) {
+		var runs = collector && new Set(collector.runs);
+
+		return when_ready(collector, batch, active, (b) => {
+			batch = b;
+			restore(true, batch);
+
+			try {
+				if (fn) {
+					if (errored) throw errored.error;
+					if (aborted(active)) throw STALE_REACTION;
+					var result = collect(collector, fn);
+				}
+			} finally {
+				// Unset context before awaiting the result, which may itself restore it
+				unset_context();
+			}
+
+			if (runs !== null) watch(runs, batch, active);
+			return result;
+		});
+	}
+
 	/** @type {null | { error: any }} */
 	var errored = null;
 
@@ -326,57 +379,176 @@ export function run(thunks) {
 		}
 	};
 
-	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+	var promise = Promise.resolve(collect(collector, thunks[0])).catch(handle_error);
 
-	/** @type {Blocker} */
-	var blocker = { promise, settled: false };
-	var blockers = [blocker];
+	var blockers = thunks.map((fn, i) => {
+		if (i > 0) {
+			promise = promise.then(() => step(fn)).catch(handle_error);
+		}
 
-	promise.finally(() => {
-		blocker.settled = true;
-		unset_context();
-	});
-
-	for (const fn of thunks.slice(1)) {
-		promise = promise
-			.then(() => {
-				restore();
-
-				try {
-					if (errored) {
-						throw errored.error;
-					}
-
-					if (aborted(active)) {
-						throw STALE_REACTION;
-					}
-
-					return fn();
-				} finally {
-					// We gotta unset context directly in case the function returns a promise, in which case
-					// unset_context in .finally() would be too late ...
-					unset_context();
-				}
-			})
-			.catch(handle_error);
-
-		const blocker = { promise, settled: false };
-		blockers.push(blocker);
+		const blocker = { promise, settled: false, collector };
 
 		promise.finally(() => {
 			blocker.settled = true;
-			// ... but we also need it after such a promise has resolved in case it restores our context
+			// We also need to unset after a promise has resolved in case it restores our context
 			unset_context();
 		});
-	}
+
+		return blocker;
+	});
+
+	// (wait until a batch has all the results)
+	if (collector !== null) promise = promise.then(() => step());
 
 	promise
 		// wait one more tick, so that template effects are
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
-		.finally(decrement_pending);
+		.finally(() => {
+			done(collector);
+			decrement_pending();
+		});
 
 	return blockers;
+}
+
+/**
+ * The async deriveds that the executing code creates, which the content it creates awaits (see `run`, `flatten`).
+ * For each of their async effects, the batches that ran it and whether their run is done. Content is created
+ * in the view of the first batch whose runs of all of them are done, whichever batch that is (see `when_ready`), and
+ * until it exists, the batches that ran them can't commit, as they can't know whether they will be the one
+ * (see `async_derived`). Afterwards, the others re-validate it in their own views (see `watch`)
+ * @type {Collector | null}
+ */
+export let async_collected = null;
+
+/**
+ * @param {Blocker[]} [blockers] the content also awaits what the code of a component's script that they belong to awaited
+ * @returns {Collector}
+ */
+function collector_for(blockers = []) {
+	var runs = new Set();
+
+	for (const blocker of blockers) {
+		for (const map of blocker.collector?.runs ?? []) runs.add(map);
+	}
+
+	return { runs, done: false };
+}
+
+/**
+ * Call `fn`, collecting the async deriveds that it creates in `collector`
+ * @template T
+ * @param {Collector | null} collector
+ * @param {() => T} fn
+ * @returns {T}
+ */
+function collect(collector, fn) {
+	var previous = async_collected;
+	async_collected = collector;
+
+	try {
+		return fn();
+	} finally {
+		async_collected = previous;
+	}
+}
+
+/**
+ * The content was created (or destroyed)
+ * @param {Collector | null} collector
+ */
+function done(collector) {
+	if (collector === null) return;
+
+	collector.done = true;
+	notify();
+}
+
+var woken = deferred();
+
+/**
+ * Something that content may be waiting for happened: a run of an async derived is done or obsolete, or content
+ * was created. With `resolve = false`, whatever waits so far is forgotten (see `clear` in batch.js)
+ */
+export function notify(resolve = true) {
+	var d = woken;
+	woken = deferred();
+	if (resolve) d.resolve();
+}
+
+/**
+ * @template T
+ * @param {() => T | undefined} fn
+ * @returns {Promise<T>} the first result of `fn` that isn't `undefined`, checked whenever something was notified
+ */
+export async function until(fn) {
+	for (var result; (result = fn()) === undefined; ) await woken.promise;
+	return result;
+}
+
+/**
+ * Whether `batch`'s runs of all the async expressions are done
+ * @param {Set<Map<Batch, boolean>>} runs
+ * @param {Batch} batch
+ */
+export function has_all(runs, batch) {
+	if (!batch.linked) return false;
+
+	for (const map of runs) {
+		if (!map.get(batch)) return false;
+	}
+
+	return true;
+}
+
+/**
+ * Call `fn` with the first batch that has all the results, preferably `batch`, or `null` if the content
+ * was destroyed. Without a collector, continue in `batch` immediately, preserving pending-boundary timing
+ * @template T
+ * @param {Collector | null} collector
+ * @param {Batch | null} batch
+ * @param {Effect} effect
+ * @param {(batch: Batch | null) => T} fn
+ * @returns {T | Promise<T>}
+ */
+function when_ready(collector, batch, effect, fn) {
+	if (collector === null) return fn(batch);
+
+	var runs = collector.runs;
+
+	return until(() => {
+		if ((effect.f & DESTROYED) !== 0) return null;
+		if (runs.size === 0 || (batch !== null && has_all(runs, batch))) return batch;
+
+		for (const b of batches(runs)) if (has_all(runs, b)) return b;
+	}).then(fn);
+}
+
+/**
+ * The batches that ran the first async expression — the only ones that can have run all of them
+ * @param {Set<Map<Batch, boolean>>} runs
+ */
+function batches(runs) {
+	return runs.values().next().value?.keys() ?? [];
+}
+
+/**
+ * The other batches that ran the async expressions re-validate what `batch` created inside `effect` in its view
+ * of the world, in their own views — once they have the results (until then, they wait for them anyway).
+ * That includes running the async expressions that it contains
+ * @param {Set<Map<Batch, boolean>>} runs
+ * @param {Batch | null} batch
+ * @param {Effect} effect
+ */
+function watch(runs, batch, effect) {
+	for (const b of batches(runs)) {
+		if (b === batch) continue;
+
+		until(() => !b.linked || has_all(runs, b) || undefined).then(() => {
+			if (b.linked) b.revalidate(effect);
+		});
+	}
 }
 
 /**
@@ -387,13 +559,14 @@ export function wait(blockers) {
 }
 
 /**
+ * @param {boolean} [count] whether the work counts towards the pending work inside the boundary (see `$effect.pending()`)
  * @returns {(skip?: boolean) => void}
  */
-export function increment_pending() {
+export function increment_pending(count = true) {
 	var effect = /** @type {Effect} */ (active_effect);
-	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
+	var blocking = !!effect.b?.is_rendered();
+	var boundary = count ? effect.b : null; // undefined if called outside the render tree, e.g. a standalone $effect.root
 	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = !!boundary?.is_rendered();
 
 	boundary?.update_pending_count(1, batch);
 	batch.increment(blocking, effect);

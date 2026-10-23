@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -148,7 +149,19 @@ export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
 
+/**
+ * The async deriveds that content awaits (see `async_collected`)
+ */
+export interface Collector {
+	/** For each of their async effects, the batches that ran it and whether their run is done */
+	runs: Set<Map<Batch, boolean>>;
+	/** Whether the content was created */
+	done: boolean;
+}
+
 export interface Blocker {
 	promise: Promise<any>;
 	settled: boolean;
+	/** The async deriveds that the code of the component's script awaited, see `run` */
+	collector?: Collector | null;
 }

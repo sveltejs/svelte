@@ -45,7 +45,14 @@ import {
 	view_batch,
 	view_cache
 } from './batch.js';
-import { increment_pending, unset_context } from './async.js';
+import {
+	async_collected,
+	has_all,
+	increment_pending,
+	notify,
+	until,
+	unset_context
+} from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -115,11 +122,22 @@ export const OBSOLETE = Symbol('obsolete');
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	let parent = /** @type {Effect | null} */ (active_effect);
+	const parent = active_effect;
 
 	if (parent === null) {
 		e.async_derived_orphan();
 	}
+
+	// Content that awaits the first value is created in the view of the first batch that has all the results it
+	// awaits, whichever batch that is (see `async_collected`). Not inside a boundary that shows its pending
+	// snippet, where batches don't wait for content
+	var collector = active_reaction === null && parent.b?.is_rendered() ? async_collected : null;
+
+	/**
+	 * The batches that ran the async expression, and whether their run is done
+	 * @type {Map<Batch, boolean>}
+	 */
+	var runs = new Map();
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
@@ -187,17 +205,26 @@ export function async_derived(fn, label, location) {
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
-			// we only increment the batch's pending state for updates, not creation, otherwise
-			// we will decrement to zero before the work that depends on this promise (e.g. a
-			// template effect) has initialized, causing the batch to resolve prematurely
-			if ((effect.f & REACTION_RAN) !== 0) {
-				var decrement_pending = increment_pending();
+			// We only increment the batch's pending state for updates, not creation, otherwise we will decrement
+			// to zero before the work that depends on this promise (e.g. a template effect) has initialized,
+			// causing the batch to resolve prematurely. Unless content awaits it: then the decrement waits
+			// for that (see below), and the batch must not commit before it has its own result.
+			// (The boundary counts the first run through the content)
+			if ((effect.f & REACTION_RAN) !== 0 || collector !== null) {
+				var decrement_pending = increment_pending((effect.f & REACTION_RAN) !== 0);
 			}
 
 			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			deferreds.add(d);
 			batch.async_deriveds.set(effect, d);
+
+			if (collector !== null) {
+				collector.runs.add(runs);
+				runs.set(batch, false);
+			}
 		}
+
+		const waiting = collector?.done === false ? collector : null;
 
 		/**
 		 * @param {any} value
@@ -208,13 +235,36 @@ export function async_derived(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
-			decrement_pending?.();
 			deferreds.delete(d);
+
+			// A batch that was merged into another one continues as that one
+			var target = batch;
+			while (target.merged !== null) target = target.merged;
+
+			if (collector !== null && (batch.async_deriveds.get(effect) === d || batch.merged !== null)) {
+				runs.delete(batch);
+				if (error !== OBSOLETE && runs.get(target) !== false) runs.set(target, true);
+				notify();
+			}
+
+			if (waiting !== null && error !== OBSOLETE) {
+				// A batch whose run is done isn't done with it until the content that awaits it exists and it has
+				// all the results that it awaits, since the content may be created by another batch. Then it
+				// re-validates the content in its own view (before it can commit it, i.e. in the same go)
+				until(
+					() => (waiting.done && has_all(waiting.runs, target)) || !target.linked || undefined
+				).then(() => {
+					target.revalidate(parent);
+					decrement_pending?.();
+				});
+			} else {
+				decrement_pending?.();
+			}
 
 			if (error === OBSOLETE) return;
 
 			// write the result in the batch's view of the world
-			batch.activate();
+			target.activate();
 
 			if (error) {
 				// @ts-expect-error the error is the wrong type, but we don't care
@@ -234,7 +284,7 @@ export function async_derived(fn, label, location) {
 				internal_set(signal, value, null, true);
 			}
 
-			batch.deactivate();
+			target.deactivate();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -250,6 +300,13 @@ export function async_derived(fn, label, location) {
 		// add a flag that lets this be printed as a derived
 		// when using `$inspect.trace()`
 		signal.f |= ASYNC;
+	}
+
+	// The first batch that has its result wins, see `async_collected`
+	if (collector !== null) {
+		return until(() =>
+			includes.call([...runs.values()], true) || (parent.f & DESTROYED) !== 0 ? signal : undefined
+		);
 	}
 
 	return new Promise((fulfil) => {

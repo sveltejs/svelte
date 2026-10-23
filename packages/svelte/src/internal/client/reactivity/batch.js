@@ -43,6 +43,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
+import { notify } from './async.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
@@ -247,6 +248,13 @@ export class Batch {
 	#unskipped_branches = new Set();
 
 	is_fork = false;
+
+	/**
+	 * The batch that this one was merged into, if any (see `#merge`). Its async work that is still in flight
+	 * continues as part of that one
+	 * @type {Batch | null}
+	 */
+	merged = null;
 
 	#decrement_queued = false;
 
@@ -673,6 +681,7 @@ export class Batch {
 		const discard = () => batch.discard();
 		this.oncommit(discard);
 		this.ondiscard(discard);
+		batch.merged = this;
 		batch.#unlink();
 
 		// processing re-validates everything that depends on the (now merged) writes of this batch
@@ -908,6 +917,10 @@ export class Batch {
 			}
 		}
 
+		this.#queue_flush();
+	}
+
+	#queue_flush() {
 		if (this.#decrement_queued) return;
 		this.#decrement_queued = true;
 
@@ -918,6 +931,18 @@ export class Batch {
 				this.flush();
 			}
 		});
+	}
+
+	/**
+	 * Re-validate everything inside `effect` in this batch's view of the world (e.g. because another batch
+	 * created it in its own view), and process the batch again soon
+	 * @param {Effect} effect
+	 */
+	revalidate(effect) {
+		if ((effect.f & (DESTROYED | INERT)) === 0 && !this.#is_skipped(effect)) {
+			this.#revalidate_branch(effect);
+			this.#queue_flush();
+		}
 	}
 
 	/**
@@ -1539,4 +1564,5 @@ export function fork(fn) {
  */
 export function clear() {
 	first_batch = last_batch = null;
+	notify(false);
 }

@@ -1,0 +1,33 @@
+import { tick } from 'svelte';
+import { test } from '../../test';
+
+const buttons = `
+	<button>a</button>
+	<button>b</button>
+	<button>shift</button>
+	<button>pop</button>
+`;
+
+// Batch A creates a branch with `{await ...}` in it, batch B (which doesn't share a source with A) reveals it,
+// too. B's run is done first, so B creates the content in its view, and commits it. Before, B committed the
+// branch without the content, as it didn't wait for it — only A did
+export default test({
+	mode: ['client'],
+	async test({ assert, target }) {
+		const [a, b, shift, pop] = target.querySelectorAll('button');
+
+		a.click();
+		await tick();
+		b.click();
+		await tick();
+		assert.htmlEqual(target.innerHTML, buttons);
+
+		pop.click();
+		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>0 0</p>`);
+
+		shift.click();
+		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
+	}
+});
