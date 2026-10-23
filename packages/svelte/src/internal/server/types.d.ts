@@ -45,4 +45,11 @@ export interface RenderContext {
 	replacer: UnevalReplacer | undefined;
 	/** Whether this is the context for background work, i.e. work inside a pending boundary */
 	background: boolean;
+	/**
+	 * In WebContainers, which don't have `AsyncLocalStorage`, background work waits here until the `head`
+	 * has been serialized (see `run_in_background`). `null` once it has started, or been dropped
+	 */
+	queue: Array<{ start: () => void; drop: () => void }> | null;
+	/** In WebContainers, resolves once the background work is done, so that the next render can start */
+	held: Promise<void> | null;
 }

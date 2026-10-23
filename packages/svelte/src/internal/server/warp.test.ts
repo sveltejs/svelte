@@ -1139,4 +1139,118 @@ describe('streaming', () => {
 			expect(touched.get('test')).toEqual(new Set(['b']));
 		});
 	});
+
+	describe('in WebContainers', () => {
+		// eslint-disable-next-line n/prefer-global/process
+		const versions = process.versions as Record<string, string | undefined>;
+
+		beforeAll(() => {
+			versions.webcontainer = '1';
+		});
+
+		afterAll(() => {
+			delete versions.webcontainer;
+		});
+
+		test('starts the background work once the head has been serialized, and streams its values', async () => {
+			const events: string[] = [];
+
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async () => {
+					events.push('background');
+					expect(warp.get('main')).toBe('main');
+
+					warp.set('sync', 'sync');
+					warp.set('promise', Promise.resolve('promise'));
+					await delay(null, 10);
+					warp.set('later', 'later');
+				});
+
+				warp.set('main', 'main');
+				warp.set('resolved', delay('resolved', 10));
+				events.push('main');
+			});
+
+			expect(events).toEqual(['main', 'background']);
+
+			const window: FakeWindow = {};
+			run(window, head);
+
+			const values = window.__svelte?.w?.get('test');
+			expect(values?.get('main')).toBe('main');
+			// the render's promises are resolved in the head, the background work's in the tail
+			const pending = delay('pending', 5);
+			expect(await Promise.race([values?.get('resolved'), pending])).toBe('resolved');
+			expect(await Promise.race([values?.get('promise'), pending])).toBe('pending');
+			// the values added synchronously are known when the client hydrates
+			expect(values?.get('sync')).toBe('sync');
+			expect(values?.has('later')).toBe(false);
+
+			for await (const chunk of tail) run(window, chunk);
+
+			expect(await values?.get('promise')).toBe('promise');
+			expect(values?.get('later')).toBe('later');
+			expect(window.__svelte?.r).toEqual({});
+		});
+
+		test('runs nested background work straight away', async () => {
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async (renderer) => {
+					await delay(null);
+					renderer.background(async () => {
+						await delay(null);
+						warp.set('nested', 'nested');
+					});
+				});
+			});
+
+			const { values } = await revive_streamed(head, tail);
+			expect(values?.get('test')?.get('nested')).toBe('nested');
+		});
+
+		test('queues the next render until the background work is done', async () => {
+			const events: string[] = [];
+
+			const first = await render((renderer) => {
+				renderer.background(async () => {
+					await delay(null, 20);
+					warp.set('a', 'first');
+					events.push('first background');
+				});
+			});
+
+			const second = await render(() => {
+				events.push('second');
+				warp.set('a', 'second');
+			});
+
+			expect(events).toEqual(['first background', 'second']);
+
+			const { values } = await revive_streamed(first.head, first.tail);
+			expect(values?.get('test')?.get('a')).toBe('first');
+			expect(revive(second.head)?.get('test')?.get('a')).toBe('second');
+		});
+
+		test('does not start the background work if the render fails', async () => {
+			let started = false;
+
+			await expect(
+				render((renderer) => {
+					renderer.background(() => {
+						started = true;
+					});
+
+					warp.set('bad', () => {});
+				})
+			).rejects.toThrow('warp_serialization_failed');
+
+			// the next render isn't stuck behind the dropped work
+			const { head } = await render(() => {
+				warp.set('a', 'a');
+			});
+
+			expect(started).toBe(false);
+			expect(revive(head)?.get('test')?.get('a')).toBe('a');
+		});
+	});
 });
