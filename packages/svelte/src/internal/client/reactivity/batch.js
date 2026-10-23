@@ -700,7 +700,6 @@ export class Batch {
 	 * @param {boolean} same whether the value equals the real one (it can, if this batch sees another one, see
 	 * `internal_set`) — in which case the source isn't updated, and the value gets the same version
 	 * @param {boolean} [error] whether the value is an error (thrown when read, see `runtime.js#get`)
-	 * @returns {boolean} whether the value is the latest one
 	 */
 	capture(source, value, same, error = false) {
 		var later = this.next;
@@ -725,7 +724,6 @@ export class Batch {
 			}
 		}
 
-		var latest = !this.is_fork && !same && later === null;
 		var entry = {
 			v: value,
 			wv: same ? source.wv : increment_write_version(),
@@ -738,13 +736,9 @@ export class Batch {
 		// an assignment replaces the value of a derived that the active view of the world holds
 		view_cache?.delete(/** @type {Derived} */ (source));
 
-		if (latest) {
-			source.v = value;
-			source.wv = entry.wv;
-			source.f = error ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
+		if (!this.is_fork && !same && later === null) {
+			apply(source, entry);
 		}
-
-		return latest;
 	}
 
 	deactivate() {
@@ -1284,6 +1278,23 @@ function flush_queued_effects(effects) {
 }
 
 /**
+ * Make a write the real-world value of `source`. A write to a derived is an assignment, whose
+ * value holds until one of the derived's dependencies is written after it (see `unchanged_since`)
+ * @param {Value} source
+ * @param {BatchValue} entry
+ */
+function apply(source, entry) {
+	source.v = entry.v;
+	source.wv = entry.wv;
+	source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
+
+	if ((source.f & DERIVED) !== 0) {
+		source.f |= ASSIGNED;
+		update_derived_status(/** @type {Derived} */ (source));
+	}
+}
+
+/**
  * When committing a fork, we need to trigger eager effects so that
  * any `$state.eager(...)` expressions update immediately. This
  * function allows us to discover them
@@ -1495,15 +1506,7 @@ export function fork(fn) {
 			// so that everything the fork computed remains valid (processing the batch
 			// re-validates everything that depends on them, see `#process`)
 			for (var [source, entry] of batch.current) {
-				source.v = entry.v;
-				source.wv = entry.wv;
-				source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
-
-				if ((source.f & DERIVED) !== 0) {
-					// an assigned derived, which holds its value until one of its dependencies is written after it
-					source.f |= ASSIGNED;
-					update_derived_status(/** @type {Derived} */ (source));
-				}
+				apply(source, entry);
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.

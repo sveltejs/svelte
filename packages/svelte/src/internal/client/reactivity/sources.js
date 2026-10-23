@@ -43,7 +43,7 @@ import {
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { set_signal_status } from './status.js';
 
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
@@ -221,7 +221,7 @@ export function internal_set(
 			execute_derived(/** @type {Derived} */ (source));
 		}
 
-		var latest = batch.capture(source, value, same, error);
+		batch.capture(source, value, same, error);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
@@ -251,13 +251,6 @@ export function internal_set(
 			if (active_effect !== null) {
 				source.set_during_effect = true;
 			}
-		}
-
-		if (latest && (source.f & DERIVED) !== 0) {
-			// The assigned value holds until one of the derived's dependencies is written after it (see `unchanged_since`).
-			// (Other assignments are part of the batch's writes only — a fork's become global when it's committed)
-			source.f |= ASSIGNED;
-			update_derived_status(/** @type {Derived} */ (source));
 		}
 
 		// For debugging, in case you want to know which reactions are being scheduled:
