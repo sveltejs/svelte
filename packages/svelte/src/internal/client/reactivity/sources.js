@@ -36,6 +36,7 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	in_real_world,
 	view_cache,
 	eager_block_effects,
 	schedule_effect,
@@ -264,7 +265,7 @@ export function internal_set(
 		// log_reactions(source);
 		seen = null;
 		count_deps = 0;
-		mark_reactions(source, DIRTY, updated_during_traversal);
+		mark_reactions(source, DIRTY, updated_during_traversal, latest);
 		seen = null;
 
 		// It's possible that the current reaction might not have up-to-date dependencies
@@ -284,7 +285,7 @@ export function internal_set(
 			}
 		}
 
-		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+		if (eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
 	} else if (own_result) {
@@ -297,7 +298,10 @@ export function internal_set(
 
 export function flush_eager_effects() {
 	eager_effects_deferred = false;
+	in_real_world(run_eager_effects);
+}
 
+function run_eager_effects() {
 	for (const effect of eager_effects) {
 		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
 		// instead of just updating the effects - this way we avoid overfiring.
@@ -366,9 +370,11 @@ export function increment(source) {
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @param {Effect[] | null} updated_during_traversal
+ * @param {boolean} real whether the write changed the real world, which is what eager effects observe
+ * (a fork's writes don't, for example, nor do those that a later batch already overwrote)
  * @returns {void}
  */
-function mark_reactions(signal, status, updated_during_traversal) {
+function mark_reactions(signal, status, updated_during_traversal, real) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -396,23 +402,28 @@ function mark_reactions(signal, status, updated_during_traversal) {
 
 		var not_dirty = (flags & DIRTY) === 0;
 
-		if ((flags & (EAGER_EFFECT | DERIVED)) !== 0) {
+		if ((flags & EAGER_EFFECT) !== 0) {
+			if (real) {
+				// don't set a DIRTY reaction to MAYBE_DIRTY
+				if (not_dirty) {
+					set_signal_status(reaction, status);
+				}
+
+				// Eager effects need to run immediately:
+				// - for $inspect so that the stack trace makes sense
+				// - for $state.eager because they might be without an effect parent
+				eager_effects.add(/** @type {Effect} */ (reaction));
+			}
+		} else if ((flags & DERIVED) !== 0) {
 			// don't set a DIRTY reaction to MAYBE_DIRTY
 			if (not_dirty) {
 				set_signal_status(reaction, status);
 			}
 
-			if ((flags & EAGER_EFFECT) !== 0) {
-				// Eager effects need to run immediately:
-				// - for $inspect so that the stack trace makes sense
-				// - for $state.eager because they might be without an effect parent
-				eager_effects.add(/** @type {Effect} */ (reaction));
-			} else {
-				var derived = /** @type {Derived} */ (reaction);
+			var derived = /** @type {Derived} */ (reaction);
 
-				view_cache?.delete(derived);
-				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
-			}
+			view_cache?.delete(derived);
+			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal, real);
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
 
