@@ -9,8 +9,9 @@ const buttons = `
 `;
 
 // Batch A creates a branch with `{await ...}` in it, batch B (which doesn't share a source with A) reveals it,
-// too. B's run is done first, so B creates the content in its view, and commits it. Before, B committed the
-// branch without the content, as it didn't wait for it — only A did
+// too. The content is created with A's result, in A's view, even though B's run is done first: B waits for
+// that, and then re-validates the content in its own view. Before, B committed the branch without the content,
+// as it didn't wait for it — only A did
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {
@@ -22,9 +23,10 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
 
+		// B's run
 		pop.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>0 0</p>`);
+		assert.htmlEqual(target.innerHTML, buttons);
 
 		shift.click();
 		await tick();

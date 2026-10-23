@@ -153,15 +153,15 @@ export type MaybeSource<T = unknown> = T | Source<T>;
  * The async deriveds that content awaits (see `async_collected`)
  */
 export interface Collector {
-	/** For each of their async effects, the batches that ran it and whether their run is done */
-	runs: Set<Map<Batch, boolean>>;
-	/** Whether the content was created */
-	done: boolean;
+	/** The batch the code continues in: the one whose results the async deriveds it awaited resolved with */
+	batch: Batch | null;
+	/** Resolves once the content was created (or destroyed), `null` from then on */
+	created: { promise: Promise<void>; resolve: () => void } | null;
 }
 
 export interface Blocker {
 	promise: Promise<any>;
 	settled: boolean;
-	/** The async deriveds that the code of the component's script awaited, see `run` */
+	/** The code of the component's script that it belongs to, and the batch that code continued in, see `run` */
 	collector?: Collector | null;
 }

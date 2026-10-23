@@ -12,10 +12,10 @@ const buttons = `
 	<button>reset</button>
 `;
 
-// Batch B shows a branch with `{#if await ...}` in it, then A (a real batch, or a fork) shows it, too. A has its
-// result first, and creates the block in its view, where `x` is 1. B selects the same branch, but has to
-// re-validate what A created in its own view, where `x` is 0, rather than committing A's `x` — next to its own
-// `x` elsewhere, until A commits (`y` keeps a real A from committing before), or for good if A is a fork
+// Batch A shows a branch with `{#if await ...}` in it, then B (a real batch, or a fork) shows it, too. B has its
+// result first, but A creates the block once it has its own, in its view, where `x` is 0. B selects the same
+// branch, and has to re-validate what A created in its own view, where `x` is 1, rather than committing A's `x`
+// — next to its own `x` elsewhere (`y` keeps a real B from committing before A)
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {
@@ -30,7 +30,7 @@ export default test({
 					assert.htmlEqual(target.innerHTML, `${buttons}<i>0</i><b>0</b>`);
 				}
 
-				// B's result
+				// A's result
 				x0.click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, `${buttons}<i>0</i><b>0</b><p>x is 0</p>`);

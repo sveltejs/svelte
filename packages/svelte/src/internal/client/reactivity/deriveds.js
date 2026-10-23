@@ -38,22 +38,8 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import {
-	batch_values,
-	current_batch,
-	uncommitted_first_value,
-	view_batch,
-	view_cache
-} from './batch.js';
-import {
-	async_collected,
-	has_all,
-	increment_pending,
-	notify,
-	until,
-	unset_context
-} from './async.js';
-import { queue_micro_task } from '../dom/task.js';
+import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
+import { async_collected, increment_pending, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 
@@ -128,16 +114,17 @@ export function async_derived(fn, label, location) {
 		e.async_derived_orphan();
 	}
 
-	// Content that awaits the first value is created in the view of the first batch that has all the results it
-	// awaits, whichever batch that is (see `async_collected`). Not inside a boundary that shows its pending
-	// snippet, where batches don't wait for content
-	var collector = active_reaction === null && parent.b?.is_rendered() ? async_collected : null;
+	// The content that awaits the first value (see `async_collected`)
+	var collector = active_reaction === null ? async_collected : null;
 
 	/**
-	 * The batches that ran the async expression, and whether their run is done
+	 * The batches that ran the async expression (and whose run isn't obsolete), and whether their run is done
 	 * @type {Map<Batch, boolean>}
 	 */
 	var runs = new Map();
+
+	/** Checks whether the run that the first value comes from is done, whenever a run settles (see below) */
+	var check = noop;
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
@@ -147,8 +134,13 @@ export function async_derived(fn, label, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	// The batch the derived is created in. Whoever awaits its first value continues in its view (see `flatten` and `run`)
-	var creator = current_batch;
+	/**
+	 * The batch whose run the first value comes from, and whose view the code that awaits it continues in:
+	 * the batch the derived is created in, unless its run becomes obsolete, or it's a fork and a real batch
+	 * ran the expression, too (see `follow`)
+	 * @type {Batch | null}
+	 */
+	var followed = current_batch;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -173,6 +165,7 @@ export function async_derived(fn, label, location) {
 					// if the promise was rejected by the user, via `getAbortSignal`, then
 					// wait for a subsequent resolution instead of flushing the batch
 					if (e !== STALE_REACTION) d.reject(e);
+					else runs.delete(batch);
 				})
 				.finally(unset_context);
 		} catch (error) {
@@ -217,14 +210,10 @@ export function async_derived(fn, label, location) {
 			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			deferreds.add(d);
 			batch.async_deriveds.set(effect, d);
-
-			if (collector !== null) {
-				collector.runs.add(runs);
-				runs.set(batch, false);
-			}
+			runs.set(batch, false);
 		}
 
-		const waiting = collector?.done === false ? collector : null;
+		const waiting = collector?.created?.promise ?? null;
 
 		/**
 		 * @param {any} value
@@ -241,27 +230,30 @@ export function async_derived(fn, label, location) {
 			var target = batch;
 			while (target.merged !== null) target = target.merged;
 
-			if (collector !== null && (batch.async_deriveds.get(effect) === d || batch.merged !== null)) {
+			if (should_suspend && (batch.async_deriveds.get(effect) === d || batch.merged !== null)) {
 				runs.delete(batch);
+
 				if (error !== OBSOLETE && runs.get(target) !== false) runs.set(target, true);
-				notify();
 			}
 
-			if (waiting !== null && error !== OBSOLETE) {
-				// A batch whose run is done isn't done with it until the content that awaits it exists and it has
-				// all the results that it awaits, since the content may be created by another batch. Then it
-				// re-validates the content in its own view (before it can commit it, i.e. in the same go)
-				until(
-					() => (waiting.done && has_all(waiting.runs, target)) || !target.linked || undefined
-				).then(() => {
-					target.revalidate(parent);
+			if (waiting !== null && error !== OBSOLETE && !target.merges_into(follow() ?? target)) {
+				// A batch whose run is done isn't done with it until the content that awaits it exists, since the
+				// content is created by the batch whose run the first value comes from. Then it re-validates the
+				// content in its own view (before it can commit it, i.e. in the same go). Unless it's merged into
+				// that batch once it's done: then it hands its results over to that batch's runs (see
+				// `Batch#merge`), and must not wait for them
+				waiting.then(() => {
+					if (target.linked) target.revalidate(parent);
 					decrement_pending?.();
 				});
 			} else {
 				decrement_pending?.();
 			}
 
-			if (error === OBSOLETE) return;
+			if (error === OBSOLETE) {
+				check();
+				return;
+			}
 
 			// write the result in the batch's view of the world
 			target.activate();
@@ -285,6 +277,7 @@ export function async_derived(fn, label, location) {
 			}
 
 			target.deactivate();
+			check();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -302,51 +295,71 @@ export function async_derived(fn, label, location) {
 		signal.f |= ASYNC;
 	}
 
-	// The first batch that has its result wins, see `async_collected`
-	if (collector !== null) {
-		return until(() =>
-			includes.call([...runs.values()], true) || (parent.f & DESTROYED) !== 0 ? signal : undefined
-		);
+	if (!should_suspend) {
+		return new Promise((fulfil) => {
+			/** @param {Promise<V>} p */
+			function next(p) {
+				function go() {
+					if (p !== promise) {
+						// if the effect re-runs before the initial promise
+						// resolves, delay resolution until we have a value
+						next(promise);
+						return;
+					}
+
+					fulfil(signal);
+				}
+
+				p.then(go, go);
+			}
+
+			next(promise);
+		});
+	}
+
+	/**
+	 * The batch whose run the first value comes from (see `followed`). While it has a run, that one — unless it's
+	 * a fork, and a real batch has a run, too: the fork's result isn't part of the real world, and it would show
+	 * up there when a boundary that shows its pending snippet reveals the content, or when the real batch
+	 * commits it. Otherwise a batch that committed, whose view is the real world (its run superseded the
+	 * followed one's, see `Batch#release_records`), else the first real batch, else the first fork
+	 */
+	function follow() {
+		while (followed !== null && !runs.has(followed) && followed.merged !== null) {
+			followed = followed.merged;
+		}
+
+		/** @type {Batch | null} */
+		var real = null;
+		/** @type {Batch | null} */
+		var committed = null;
+
+		for (const b of runs.keys()) {
+			if (b.is_fork) continue;
+			real ??= b;
+			if (b.committed) committed ??= b;
+		}
+
+		if (followed !== null && runs.has(followed) && (!followed.is_fork || real === null)) {
+			return followed;
+		}
+
+		return (followed = committed ?? real ?? runs.keys().next().value ?? null);
 	}
 
 	return new Promise((fulfil) => {
-		/** @param {Promise<V>} p */
-		function next(p) {
-			function go() {
-				if (p !== promise) {
-					// if the effect re-runs before the initial promise
-					// resolves, delay resolution until we have a value
-					next(promise);
-					return;
-				}
+		check = () => {
+			if ((parent.f & DESTROYED) === 0) {
+				var batch = follow();
+				if (batch === null || !runs.get(batch)) return;
 
-				// While the boundary shows its pending snippet, batches commit without waiting for their runs, and a
-				// committed run supersedes those of the batches that committed before (see `Batch#release_records`).
-				// So the first value can be another batch's result, which the creator's view can't undo. Until that
-				// batch commits it, the creator mustn't continue with it — and the boundary keeps showing its pending
-				// snippet. (Elsewhere, the creator's own run provides the first value in its view)
-				var writer =
-					should_suspend && !(/** @type {Effect} */ (parent).b?.is_rendered())
-						? uncommitted_first_value(signal, creator)
-						: null;
-
-				if (writer === null) {
-					fulfil(signal);
-				} else {
-					// (check again once the commit is done)
-					writer.oncommit(resume);
-					writer.ondiscard(resume);
-				}
+				// The code that awaits the value continues in that batch's view, see `flatten` and `run`
+				if (collector !== null) collector.batch = batch;
 			}
 
-			function resume() {
-				queue_micro_task(go);
-			}
-
-			p.then(go, go);
-		}
-
-		next(promise);
+			check = noop;
+			fulfil(signal);
+		};
 	});
 }
 

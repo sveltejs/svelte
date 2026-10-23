@@ -11,8 +11,9 @@ const buttons = `
 `;
 
 // A fork creates a branch with `{await ...}` in it, and a real batch reveals it before either of their runs
-// is done. Whichever batch has its result first creates the content, in its own view of the world. The real
-// batch commits it with its own result, regardless of who created it — and the fork, once committed, with its own
+// is done. The real batch creates the content, in its own view of the world, once it has its result — even if
+// the fork's is there first, as that isn't part of the real world. The real batch commits it with its own
+// result — and the fork, once committed, with its own
 export default test({
 	// TODO when the real batch commits first in "fork first" mode, the fork takes over its result in `#commit`,
 	// and then commits it next to its own writes (see "An earlier batch takes over another batch's async result"

@@ -12,9 +12,9 @@ const buttons = `
 `;
 
 // A fork creates a component with two `await`s in its script, and a real batch reveals it. The fork's first
-// result comes first, so the script continues in its view and runs the second `await` there. Then the real
-// batch's first result comes, and the fork is discarded — before its second result is in. The real batch must
-// run the second `await` itself and continue with it, rather than the script continuing without a value
+// result comes first, but the script continues in the view of the real batch, once its first result comes,
+// and runs the second `await` there (the fork runs it in its own view, too). Then the fork is discarded, before
+// its second result is in, which must not keep the real batch from continuing with its own
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {

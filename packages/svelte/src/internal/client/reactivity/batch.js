@@ -43,7 +43,6 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
-import { notify } from './async.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
@@ -248,6 +247,12 @@ export class Batch {
 	#unskipped_branches = new Set();
 
 	is_fork = false;
+
+	/**
+	 * True once the batch committed: its view of the world is the real one from then on, plus the results
+	 * of its async work that was still pending (see `#commit`)
+	 */
+	committed = false;
 
 	/**
 	 * The batch that this one was merged into, if any (see `#merge`). Its async work that is still in flight
@@ -506,7 +511,7 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
-		this.committing = true;
+		this.committing = this.committed = true;
 		this.#release_records(true);
 
 		// append/remove branches
@@ -632,6 +637,15 @@ export class Batch {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Whether this batch is merged into `batch` (or a batch in between) once it's done, rather than committed
+	 * on its own (see `#find_earlier_batch`)
+	 * @param {Batch} batch
+	 */
+	merges_into(batch) {
+		return batch.id < this.id && !batch.is_fork && batch.linked && this.#intersects(batch);
 	}
 
 	/** @param {Batch} batch */
@@ -1339,24 +1353,6 @@ export function schedule_effect(effect, status) {
 	/** @type {Batch} */ (current_batch).schedule(effect, status);
 }
 
-/**
- * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
- * views of the world can't undo such a write, as there's no value from before it (see `capture`) — unless they have
- * their own write of it, like `batch` might. (The writes of forks aren't part of other views at all)
- * @param {Value} value
- * @param {Batch | null} batch
- * @returns {Batch | null}
- */
-export function uncommitted_first_value(value, batch) {
-	if (batch?.current.has(value)) return null;
-
-	for (let b = first_batch; b !== null; b = b.next) {
-		if (b !== batch && !b.is_fork && b.current.has(value) && !b.previous.has(value)) return b;
-	}
-
-	return null;
-}
-
 /** @type {Source<number>[]} */
 let eager_versions = [];
 
@@ -1564,5 +1560,4 @@ export function fork(fn) {
  */
 export function clear() {
 	first_batch = last_batch = null;
-	notify(false);
 }

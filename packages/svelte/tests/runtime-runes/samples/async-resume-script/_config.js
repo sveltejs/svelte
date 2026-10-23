@@ -11,7 +11,7 @@ const buttons = `
 `;
 
 // Like `async-resume-template-expression`, with a top-level `await` in a component's script: the script
-// continues in the view of whichever batch has the result first. What it computes imperatively is that
+// continues in the view of the real batch, once it has its result. What it computes imperatively is that
 // batch's (it only runs once), what's reactive is up to date in every batch's view
 export default test({
 	// TODO when the real batch commits first in "fork first" mode, the fork takes over its result in `#commit`,
@@ -34,11 +34,12 @@ export default test({
 				(first === 'real' ? pop : shift).click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, first === 'real' ? `${buttons}<p>0 0</p>` : buttons);
-				assert.deepEqual(logs.splice(0), [`continued with ${first === 'real' ? 0 : 1}`]);
+				assert.deepEqual(logs.splice(0), first === 'real' ? ['continued with 0'] : []);
 
 				(first === 'real' ? shift : pop).click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, `${buttons}<p>0 0</p>`);
+				assert.deepEqual(logs.splice(0), first === 'real' ? [] : ['continued with 0']);
 
 				commit.click();
 				await tick();

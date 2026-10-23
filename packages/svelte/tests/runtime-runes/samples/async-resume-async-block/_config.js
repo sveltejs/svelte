@@ -11,8 +11,8 @@ const buttons = `
 `;
 
 // Like `async-resume-template-expression`, with a block that awaits its expression: the block is created
-// by whichever batch has its result first, in that batch's view. Before, the real batch committed the branch
-// without the block, which was then created in the fork's view — showing the fork's values (`yes 1`)
+// by the real batch, in its view. Before, the real batch committed the branch without the block, which was
+// then created in the fork's view — showing the fork's values (`yes 1`)
 export default test({
 	// TODO when the real batch commits first in "fork first" mode, the fork takes over its result in `#commit`,
 	// and then commits it next to its own writes (see "An earlier batch takes over another batch's async result"
