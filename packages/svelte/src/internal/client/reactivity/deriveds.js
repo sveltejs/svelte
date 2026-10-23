@@ -216,26 +216,19 @@ export function async_derived(fn, label, location) {
 
 			// write the result in the batch's view of the world
 			batch.activate();
-
-			if (error) {
-				// @ts-expect-error the error is the wrong type, but we don't care
-				internal_set(signal, error, null, true, true);
-			} else {
-				if (DEV && location !== undefined && !signal.equals(value)) {
-					recent_async_deriveds.add(signal);
-
-					setTimeout(() => {
-						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
-							w.await_waterfall(/** @type {string} */ (signal.label), location);
-							recent_async_deriveds.delete(signal);
-						}
-					});
-				}
-
-				internal_set(signal, value, null, true);
-			}
-
+			internal_set(signal, error ?? value, null, true, !!error);
 			batch.deactivate();
+
+			if (DEV && location !== undefined && !signal.equals(value)) {
+				recent_async_deriveds.add(signal);
+
+				setTimeout(() => {
+					if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
+						w.await_waterfall(/** @type {string} */ (signal.label), location);
+						recent_async_deriveds.delete(signal);
+					}
+				});
+			}
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
