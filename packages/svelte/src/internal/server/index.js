@@ -196,6 +196,8 @@ export function spread_props(props) {
 		for (key of Object.keys(obj)) {
 			const desc = Object.getOwnPropertyDescriptor(obj, key);
 			if (desc) {
+				// Later props must be able to override this property.
+				desc.configurable = true;
 				Object.defineProperty(merged_props, key, desc);
 			} else {
 				merged_props[key] = obj[key];
