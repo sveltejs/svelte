@@ -726,6 +726,8 @@ export class Batch {
 		}
 
 		var latest = !this.is_fork && !same && later === null;
+
+		/** @type {BatchValue} */
 		var entry = {
 			v: value,
 			wv: same ? source.wv : increment_write_version(),
