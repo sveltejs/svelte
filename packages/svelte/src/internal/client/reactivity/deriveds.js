@@ -49,6 +49,7 @@ import { increment_pending, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
+import { stringify_derived } from '../dev/debug.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -124,7 +125,7 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label ?? fn.toString();
+	if (DEV) signal.label = label ?? stringify_derived(fn);
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
