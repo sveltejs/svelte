@@ -128,6 +128,8 @@ export function async_derived(fn, label, location) {
 
 	/** Checks whether the run that the first value comes from is done, whenever a run settles (see below) */
 	var check = noop;
+	/** True once promise that is returned has fulfilled */
+	var initialized = false;
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
@@ -216,7 +218,7 @@ export function async_derived(fn, label, location) {
 			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			deferreds.add(d);
 			batch.async_deriveds.set(effect, d);
-			runs.set(d, batch);
+			if (!initialized) runs.set(d, batch);
 		}
 
 		const waiting = collector?.created?.promise ?? null;
@@ -350,6 +352,8 @@ export function async_derived(fn, label, location) {
 
 			check = noop;
 			fulfil(signal);
+			runs.clear();
+			initialized = true;
 		};
 	});
 }
