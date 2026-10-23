@@ -40,8 +40,7 @@ import {
 	view_cache,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates,
-	current_batch
+	legacy_updates
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
