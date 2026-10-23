@@ -187,24 +187,14 @@ var count_deps = 0;
  * @param {Value<V>} source
  * @param {V} value
  * @param {Effect[] | null} [updated_during_traversal]
- * @param {boolean} [own_result] Whether this is a result the current batch computed (i.e. an async
- * expression resolved). Such a value belongs to the batch even if nothing changes, and it is a change
- * if it differs from what the batch sees (even if it equals the real value)
- * @param {boolean} [error] Whether the value is an error (an async expression rejected), which is thrown when read
  * @returns {V}
  */
 export function internal_set(
 	source,
 	value,
-	updated_during_traversal = null,
-	own_result = false,
-	error = false
+	updated_during_traversal = null
 ) {
-	var view = own_result ? batch_values?.get(source) : undefined;
-	// errors are never the same value
-	var same = source.equals(value) && !error && (source.f & ERROR_VALUE) === 0;
-
-	if (!same || (view !== undefined && (view.e || !source.equals.call(view, value)))) {
+	if (!source.equals(value)) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -222,7 +212,7 @@ export function internal_set(
 			execute_derived(/** @type {Derived} */ (source));
 		}
 
-		var latest = batch.capture(source, value, same, error);
+		var latest = batch.capture(source, value, false, false);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
@@ -288,9 +278,6 @@ export function internal_set(
 		if (eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
-	} else if (own_result) {
-		// an async expression resolved to what the batch (and the real world) sees — it still belongs to the batch
-		Batch.ensure().capture(source, value, true);
 	}
 
 	return value;
