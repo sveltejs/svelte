@@ -454,13 +454,23 @@ export function increment_pending(count = true) {
 	var effect = /** @type {Effect} */ (active_effect);
 	var blocking = !!effect.b?.is_rendered();
 	var boundary = count ? effect.b : null; // undefined if called outside the render tree, e.g. a standalone $effect.root
-	var batch = /** @type {Batch} */ (current_batch);
+	var batch = merge_target(/** @type {Batch} */ (current_batch));
 
 	boundary?.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
 	return () => {
+		batch = merge_target(batch);
 		boundary?.update_pending_count(-1, batch);
 		batch.decrement(blocking, effect);
 	};
+}
+
+/**
+ * The batch that `batch` was merged into, if any (transitively), else `batch` itself
+ * @param {Batch} batch
+ */
+export function merge_target(batch) {
+	while (batch.merged !== null) batch = batch.merged;
+	return batch;
 }

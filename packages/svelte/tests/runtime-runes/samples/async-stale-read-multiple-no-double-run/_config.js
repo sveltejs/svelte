@@ -29,25 +29,30 @@ export default test({
 		await tick();
 		assert.deepEqual(logs, ['0/0/0', '0/1/1']);
 
-		// resolve `sa` in B1: `track` re-runs in B1 (reading B1's view of b/c, without B2's
-		// writes). Batches are independent: B2 doesn't see B1's `sa`, so nothing re-runs in B2
+		// resolve `sa` in B1: `track` re-runs in B1 (reading B1's view of b/c, without B2's writes).
+		// B2 re-runs `track`, too, so it intersects with B1 now (see `Batch#intersects`)
 		resolve.click();
 		await tick();
 		assert.deepEqual(logs, ['0/0/0', '0/1/1', '1/0/0']);
 
-		// resolve `slow(b + c)` in B2: B2 is still waiting for its `track`
-		resolve.click();
-		await tick();
-		assert.deepEqual(logs, ['0/0/0', '0/1/1', '1/0/0']);
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p><p>0</p><p>0/0/0</p>`);
-
-		// resolve `track` in B2: B2 commits on its own (a = 0, b = c = 1). B1's `track` run
-		// read two values that B2 now committed newer versions of, so it re-runs in B1 exactly once
+		// resolve `slow(b + c)` in B2: B2's view includes B1's writes now. Its `track` run read two
+		// values that B1 holds newer versions of, so it re-runs exactly once
 		resolve.click();
 		await tick();
 		assert.deepEqual(logs, ['0/0/0', '0/1/1', '1/0/0', '1/1/1']);
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p><p>2</p><p>0/1/1</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p><p>0</p><p>0/0/0</p>`);
 
+		// resolve B2's obsolete `track` run
+		resolve.click();
+		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p><p>0</p><p>0/0/0</p>`);
+
+		// resolve `track` in B1: B1 commits on its own (a = 1, b = c = 0)
+		resolve.click();
+		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>1</p><p>0</p><p>1/0/0</p>`);
+
+		// resolve `track` in B2: B2 commits, and nothing re-runs
 		for (let i = 0; i < 6; i++) {
 			resolve.click();
 			await tick();

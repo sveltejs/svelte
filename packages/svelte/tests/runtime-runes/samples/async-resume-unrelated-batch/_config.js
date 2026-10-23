@@ -23,11 +23,14 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
 
-		// B's run
+		// B's run - at this point it realizes through the async derived that it is overlapping with A
 		pop.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
 
+		// ... which results in another rerun with `x=1`, hence two shifts until everything settled
+		shift.click();
+		await tick();
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
