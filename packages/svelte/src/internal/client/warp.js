@@ -6,6 +6,9 @@ import { get_or_insert, get_or_insert_computed } from '../shared/utils.js';
 /** Passed to `#touch` when every key was changed */
 const ALL = Symbol();
 
+// (a `typedef`, since TypeScript considers `typeof ALL` circular in `#touch`'s parameter)
+/** @typedef {typeof ALL} All */
+
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
  * during server rendering (or inside `withWarp`) are serialized into the rendered
@@ -49,28 +52,25 @@ export class Warp {
 
 	/**
 	 * While values are still streaming in from the server, records that `key` was changed,
-	 * so that a value for it that arrives later doesn't overwrite the change. A stream is in
-	 * progress from its first `<script>` until its last one removes its entry, whenever its
-	 * HTML reached the page — e.g. an island inserted after the document has loaded
-	 * @param {K | typeof ALL} key
+	 * so that a value for it that arrives later (from any stream) doesn't overwrite the change.
+	 * Changes are recorded from the first stream's first `<script>` until no streams are in
+	 * progress, wherever their HTML came from — e.g. an island inserted after the document
+	 * has loaded
+	 * @param {K | All} key
 	 */
 	#touch(key) {
-		const streams = window.__svelte?.r;
-		if (streams === undefined) return;
+		const changed = window.__svelte?.r?.c;
+		if (changed === undefined) return;
 
-		for (const id in streams) {
-			const touched = streams[id];
-			const keys = touched.get(this.#id);
+		const keys = changed.get(this.#id);
+		if (keys === true) return;
 
-			if (keys === true) continue;
-
-			if (key === ALL) {
-				touched.set(this.#id, true);
-			} else if (keys === undefined) {
-				touched.set(this.#id, new Set([key]));
-			} else {
-				keys.add(key);
-			}
+		if (key === ALL) {
+			changed.set(this.#id, true);
+		} else if (keys === undefined) {
+			changed.set(this.#id, new Set([key]));
+		} else {
+			keys.add(key);
 		}
 	}
 

@@ -9,18 +9,21 @@ declare global {
 			/** `Warp` values, keyed by the `Warp`'s id */
 			w?: Map<string, Map<WarpKey, unknown>>;
 			/**
-			 * For each `Warp` stream that's in progress, keyed by the stream's key: the keys that the client has
-			 * changed in each `Warp` since the stream started, keyed by the `Warp`'s id, or `true` if the `Warp`
-			 * was cleared. Values streamed in for these keys are discarded, so they can't overwrite the changes.
-			 * A stream's entry is removed once it finishes. If it never finishes (e.g. the connection dropped),
-			 * the entry stays, and its promises stay pending
+			 * Only exists while `Warp` values are streaming in. If a stream never finishes
+			 * (e.g. the connection dropped), it stays, and that stream's promises stay pending
 			 */
-			r?: Record<string, Map<string, Set<WarpKey> | true>>;
-			/**
-			 * Adds a value streamed in by the stream with the key `stream`,
-			 * unless the client changed that key since the stream started
-			 */
-			a?: (stream: string, id: string, key: WarpKey, value: unknown) => void;
+			r?: {
+				/** The keys of the streams that are in progress */
+				s: Set<string>;
+				/**
+				 * The keys that the client has changed in each `Warp` while values were streaming in, keyed by
+				 * the `Warp`'s id, or `true` if the `Warp` was cleared. Values streamed in for these keys (by
+				 * any stream) are discarded, so they can't overwrite the changes
+				 */
+				c: Map<string, Set<WarpKey> | true>;
+			};
+			/** Adds a streamed value, unless the client changed its key while values were streaming in */
+			a?: (id: string, key: WarpKey, value: unknown) => void;
 		};
 	}
 }
