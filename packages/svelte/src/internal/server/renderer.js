@@ -1043,10 +1043,10 @@ export class Renderer {
 
 						// adds the value to the client's `Warp` as soon as this is evaluated, rather than when the
 						// promise resolves, so that it's there before anything awaiting the promises resolved in the
-						// same `<script>` runs. a value for a key that the client has changed while this stream was in
-						// progress is discarded, so that it doesn't overwrite the change. since each value is its own
+						// same `<script>` runs. a value for a key that the client has changed while values were streaming
+						// in (from any stream) is discarded, so that it doesn't overwrite the change. since each value is its own
 						// promise, one that can't be serialized only fails by itself (and the client doesn't get it)
-						return js`window.__svelte.a(${key}, ${thing.id}, ${thing.key}, ${thing.value})`;
+						return js`window.__svelte.a(${thing.id}, ${thing.key}, ${thing.value})`;
 					}
 
 					const result = replacer?.(thing, js);
@@ -1127,14 +1127,14 @@ export class Renderer {
 		const body = `
 			{
 				const w = (window.__svelte ??= {}).w ??= new Map();${
-					// while this is set, the client records the keys it changes in its `Warp`s,
-					// so that values which are streamed in later don't overwrite the changes
+					// while any stream is in progress, the client records the keys it changes in its `Warp`s,
+					// so that values which are streamed in later (by any stream) don't overwrite the changes
 					late === null
 						? ''
-						: `\n\t\t\t\t(window.__svelte.r ??= {})[${key_literal}] = new Map();` +
-							// adds a value streamed in by the stream with key `r`, unless the client changed its key since the stream started
-							`\n\t\t\t\twindow.__svelte.a ??= (r, id, k, v) => {` +
-							`\n\t\t\t\t\tconst c = window.__svelte.r[r]?.get(id);` +
+						: `\n\t\t\t\t(window.__svelte.r ??= { s: new Set(), c: new Map() }).s.add(${key_literal});` +
+							// adds a streamed value, unless the client changed its key while values were streaming in
+							`\n\t\t\t\twindow.__svelte.a ??= (id, k, v) => {` +
+							`\n\t\t\t\t\tconst c = window.__svelte.r?.c.get(id);` +
 							`\n\t\t\t\t\tif (c === true || c?.has(k)) return;` +
 							`\n\t\t\t\t\tconst w = window.__svelte.w;` +
 							`\n\t\t\t\t\tlet m = w.get(id);` +
@@ -1492,8 +1492,10 @@ async function* generate_scripts(tail, next, csp_attr, key, done) {
 				// every streamed promise has settled
 				done();
 
-				// tell the client that this stream has finished, so it can stop recording its changes
-				code += `delete window.__svelte.r[${key}];`;
+				// tell the client that this stream has finished. once no streams are in progress, it
+				// forgets the changes it recorded, and stops recording them
+				code += `window.__svelte.r.s.delete(${key});`;
+				code += `if (window.__svelte.r.s.size === 0) delete window.__svelte.r;`;
 				finished = true;
 				break;
 			}

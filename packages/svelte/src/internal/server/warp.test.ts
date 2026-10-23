@@ -431,7 +431,7 @@ describe('streaming', () => {
 	type FakeWindow = {
 		__svelte?: {
 			w?: Map<string, Map<unknown, unknown>>;
-			r?: Record<string, unknown>;
+			r?: { s: Set<string>; c: Map<string, unknown> };
 			d?: Record<string, unknown>;
 		};
 	};
@@ -448,7 +448,7 @@ describe('streaming', () => {
 		run(window, head);
 
 		// the stream registers itself until it's done
-		expect(Object.keys(window.__svelte?.r ?? {})).toHaveLength(1);
+		expect(window.__svelte?.r?.s.size).toBe(1);
 
 		const chunks: string[] = [];
 		for await (const chunk of tail) {
@@ -456,7 +456,7 @@ describe('streaming', () => {
 			run(window, chunk);
 		}
 
-		expect(window.__svelte?.r).toEqual({});
+		expect(window.__svelte?.r).toBeUndefined();
 		// nothing is left in devalue's table once the stream is done
 		expect(Object.keys(window.__svelte?.d ?? {})).toEqual([]);
 
@@ -895,7 +895,7 @@ describe('streaming', () => {
 			chunks += 1;
 
 			// the last chunk is only generated once every streamed promise has settled
-			if (!result.value.includes('delete window.__svelte.r')) {
+			if (!result.value.includes('window.__svelte.r.s.delete')) {
 				expect(main?.aborted).toBe(false);
 				expect(background?.aborted).toBe(false);
 			}
@@ -933,7 +933,7 @@ describe('streaming', () => {
 		const window: FakeWindow = {};
 		run(window, a.head);
 		run(window, b.head);
-		expect(Object.keys(window.__svelte?.r ?? {})).toHaveLength(2);
+		expect(window.__svelte?.r?.s.size).toBe(2);
 
 		const drain = async (tail: AsyncIterable<string>) => {
 			for await (const chunk of tail) run(window, chunk);
@@ -943,7 +943,7 @@ describe('streaming', () => {
 
 		expect(await window.__svelte?.w?.get('test')?.get('a')).toBe('a');
 		expect(await window.__svelte?.w?.get('test')?.get('b')).toBe('b');
-		expect(window.__svelte?.r).toEqual({});
+		expect(window.__svelte?.r).toBeUndefined();
 	});
 
 	test('cannot be used with csp.hash', async () => {
@@ -993,7 +993,7 @@ describe('streaming', () => {
 
 			for await (const chunk of tail) run(window, chunk);
 
-			expect(window.__svelte?.r).toEqual({});
+			expect(window.__svelte?.r).toBeUndefined();
 			expect(Object.keys(window.__svelte?.d ?? {})).toEqual([]);
 		}
 
@@ -1123,7 +1123,7 @@ describe('streaming', () => {
 			);
 
 			client.set('after', 'client');
-			expect(window.__svelte?.r).toEqual({});
+			expect(window.__svelte?.r).toBeUndefined();
 		});
 
 		test('are respected by streams inserted after the document has loaded', async () => {
@@ -1168,8 +1168,44 @@ describe('streaming', () => {
 
 			// the stream is still considered in progress, so client changes are still recorded
 			client.set('b', 'client');
-			const [touched] = Object.values(window.__svelte?.r ?? {}) as Array<Map<string, unknown>>;
-			expect(touched.get('test')).toEqual(new Set(['b']));
+			expect(window.__svelte?.r?.c.get('test')).toEqual(new Set(['b']));
+		});
+
+		test('apply to every stream until none are in progress', async () => {
+			const stream = (value: string, ms: number) =>
+				render((renderer) => {
+					renderer.background(async () => {
+						await delay(null, ms);
+						warp.set('a', value);
+						warp.set(value, value);
+					});
+				});
+
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+
+			const first = await stream('first', 10);
+			run(window, first.head);
+			client.set('a', 'client');
+
+			// starts after the change, but while the first stream is still in progress
+			const second = await stream('second', 30);
+			run(window, second.head);
+
+			for await (const chunk of first.tail) run(window, chunk);
+			expect(client.get('first')).toBe('first');
+			expect(window.__svelte?.r?.s.size).toBe(1);
+
+			for await (const chunk of second.tail) run(window, chunk);
+			expect(client.get('second')).toBe('second');
+			expect(client.get('a')).toBe('client');
+			expect(window.__svelte?.r).toBeUndefined();
+
+			// nothing is streaming, so the change is forgotten
+			const third = await stream('third', 0);
+			run(window, third.head);
+			for await (const chunk of third.tail) run(window, chunk);
+			expect(client.get('a')).toBe('third');
 		});
 	});
 
@@ -1223,7 +1259,7 @@ describe('streaming', () => {
 
 			expect(await values?.get('promise')).toBe('promise');
 			expect(values?.get('later')).toBe('later');
-			expect(window.__svelte?.r).toEqual({});
+			expect(window.__svelte?.r).toBeUndefined();
 		});
 
 		test('runs nested background work straight away', async () => {
