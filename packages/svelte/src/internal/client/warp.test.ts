@@ -6,7 +6,7 @@ import type { WarpKey } from '#shared';
 let window: {
 	__svelte?: {
 		w?: Map<string, Map<unknown, unknown>>;
-		r?: Record<string, Map<string, Set<WarpKey> | true>>;
+		r?: { s: Set<string>; c: Map<string, Set<WarpKey> | true> };
 	};
 };
 
@@ -53,14 +53,12 @@ describe('when not streaming', () => {
 });
 
 describe('while streaming', () => {
-	/** the changes recorded for each stream */
-	let first: Map<string, Set<WarpKey> | true>;
-	let second: Map<string, Set<WarpKey> | true>;
+	/** the changes recorded while streaming */
+	let changed: Map<string, Set<WarpKey> | true>;
 
 	beforeEach(() => {
-		first = new Map();
-		second = new Map();
-		window.__svelte!.r = { first, second };
+		changed = new Map();
+		window.__svelte!.r = { s: new Set(['first', 'second']), c: changed };
 	});
 
 	test('changes the values directly, like a Map', () => {
@@ -76,7 +74,7 @@ describe('while streaming', () => {
 		]);
 	});
 
-	test('records the keys that were changed, for every stream', () => {
+	test('records the keys that were changed', () => {
 		const warp = new Warp('test');
 		warp.set('a', 10);
 		warp.delete('missing');
@@ -89,8 +87,7 @@ describe('while streaming', () => {
 		warp.get('x');
 		warp.has('y');
 
-		expect(first.get('test')).toEqual(new Set(['a', 'missing', 'c', 'd']));
-		expect(second.get('test')).toEqual(new Set(['a', 'missing', 'c', 'd']));
+		expect(changed.get('test')).toEqual(new Set(['a', 'missing', 'c', 'd']));
 	});
 
 	test('does not record the key if getOrInsertComputed throws', () => {
@@ -102,7 +99,7 @@ describe('while streaming', () => {
 			})
 		).toThrow('nope');
 
-		expect(first.get('test')).toBeUndefined();
+		expect(changed.get('test')).toBeUndefined();
 	});
 
 	test('records that a Warp was cleared', () => {
@@ -111,21 +108,8 @@ describe('while streaming', () => {
 		warp.clear();
 		warp.set('b', 20);
 
-		expect(first.get('test')).toBe(true);
-		expect(second.get('test')).toBe(true);
+		expect(changed.get('test')).toBe(true);
 		expect([...base()]).toEqual([['b', 20]]);
-	});
-
-	test('only records changes for the streams that are still in progress', () => {
-		const warp = new Warp('test');
-		warp.set('a', 10);
-
-		// the first stream finished
-		delete window.__svelte!.r!.first;
-		warp.set('b', 20);
-
-		expect(first.get('test')).toEqual(new Set(['a']));
-		expect(second.get('test')).toEqual(new Set(['a', 'b']));
 	});
 
 	test('records changes regardless of whether the document has loaded', () => {
@@ -135,6 +119,6 @@ describe('while streaming', () => {
 		const warp = new Warp('test');
 		warp.set('a', 10);
 
-		expect(first.get('test')).toEqual(new Set(['a']));
+		expect(changed.get('test')).toEqual(new Set(['a']));
 	});
 });
