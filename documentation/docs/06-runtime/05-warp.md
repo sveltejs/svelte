@@ -138,7 +138,7 @@ export default {
 };
 ```
 
-Values added to a `Warp` outside of pending boundaries are included in the `head`, as usual, and the response waits for any promises among them to resolve. Values added inside pending boundaries are streamed instead, via the `tail` of the render result — even if they have already resolved by the time the HTML is rendered, so that they never delay the response. The exception is values added inside a pending boundary that are read outside of one, since they're needed to hydrate the page: those are included in the `head`.
+Values added to a `Warp` outside of pending boundaries are included in the `head`, as usual, and the response waits for any promises among them to resolve. Values only used inside pending boundaries are streamed instead, via the `tail` of the render result — even if they have already resolved by the time the HTML is rendered, so that they never delay the response.
 
 The `tail` contains `<script>` tags that you **must** write into the response after the HTML — otherwise, promises on the client that are waiting for data from the server will never settle:
 
@@ -163,7 +163,7 @@ If you stop iterating over `tail` early, the background work is stopped. Signals
 
 The contents of pending boundaries run on the server at the same time as the rest of the page, and share its context and its `Warp` values. Keep this in mind if they change shared objects, and use `getOrInsert` or `getOrInsertComputed` for keys that might be added both inside and outside of a pending boundary — if the boundary's contents call `warp.set` with a key first, a later `warp.set` with the same key in the rest of the page will fail.
 
-Streaming relies on [`AsyncLocalStorage`](https://nodejs.org/api/async_context.html#class-asynclocalstorage) to tell the work inside pending boundaries apart from the rest of the render. WebContainers don't have it, so there the contents of pending boundaries only start running once the HTML has been rendered, and every value they add is streamed. Renders in a WebContainer already run one at a time, and the next one waits until this work is done.
+Streaming relies on [`AsyncLocalStorage`](https://nodejs.org/api/async_context.html#class-asynclocalstorage) to tell the work inside pending boundaries apart from the rest of the render.
 
 You can still change a `Warp` on the client while values are streaming in. Your changes take precedence over the values from the server, including ones that arrive later — for example, after `warp.clear()`, values streamed in afterwards won't be visible. This means that a component which is still waiting for data from the server will load it again on the client instead.
 
