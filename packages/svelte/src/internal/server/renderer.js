@@ -12,7 +12,12 @@ import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
-import { can_run_in_background, run_in_background, with_render_context } from './render-context.js';
+import {
+	hold_render_context,
+	run_in_background,
+	start_background,
+	with_render_context
+} from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { deferred, has_own_property, is_array, is_native_promise, noop } from '../shared/utils.js';
@@ -408,34 +413,46 @@ export class Renderer {
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
 	 */
 	background(fn) {
-		if (this.global.mode === 'sync' || !can_run_in_background()) return;
+		if (this.global.mode === 'sync') return;
 
 		const state = this.global.get_background();
 		const renderer = new Renderer(state, this);
 		state.background_renderers.push(renderer);
 
-		const parent = ssr_context;
-
-		set_ssr_context({
+		/** @type {SSRContext} */
+		const context = {
 			...ssr_context,
-			p: parent,
+			p: ssr_context,
 			c: null,
 			r: renderer,
 			i: ssr_context?.i ?? false
-		});
+		};
 
 		try {
-			const result = run_in_background(() => fn(renderer));
+			// this may run later, in WebContainers (see `run_in_background`)
+			const result = run_in_background(() => {
+				const previous = ssr_context;
+				set_ssr_context(context);
+
+				try {
+					const result = fn(renderer);
+
+					if (result instanceof Promise) {
+						result.finally(() => set_ssr_context(null)).catch(noop);
+					}
+
+					return result;
+				} finally {
+					set_ssr_context(previous);
+				}
+			});
 
 			if (result instanceof Promise) {
 				result.catch(noop);
-				result.finally(() => set_ssr_context(null)).catch(noop);
 				renderer.promise = state.track(result);
 			}
 		} catch {
 			// the client will render the children itself, and handle the error then
-		} finally {
-			set_ssr_context(parent);
 		}
 	}
 
@@ -831,7 +848,7 @@ export class Renderer {
 				const background = renderer.global.background;
 
 				if (background !== null) {
-					Renderer.#finish_background(background);
+					hold_render_context(Renderer.#finish_background(background));
 				}
 
 				const warp = await renderer.#collect_warp(
@@ -855,8 +872,9 @@ export class Renderer {
 				const background = renderer.global.background;
 
 				if (background !== null) {
+					start_background(false);
 					background.abort();
-					Renderer.#finish_background(background);
+					hold_render_context(Renderer.#finish_background(background));
 				}
 			}
 
@@ -1087,6 +1105,9 @@ export class Renderer {
 
 		if (late !== null) {
 			// everything in the `head` has been serialized, so devalue can move on to the background work
+			// in WebContainers, the background work only starts now (see `run_in_background`).
+			// the values it adds synchronously are in the first link, as they would be elsewhere
+			start_background(true);
 			first_entries = new Set(late.open());
 
 			// the next blocks resolve the first link, and then each of the values in it: the values that the
