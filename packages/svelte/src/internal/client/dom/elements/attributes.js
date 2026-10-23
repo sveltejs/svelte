@@ -432,7 +432,11 @@ function set_attributes(
 				set_attribute(element, key, value);
 			} else if (key === 'autofocus') {
 				autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-			} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
+			} else if (
+				(key === '__value' || (key === 'value' && value != null)) &&
+				// customized built-ins like `<option is="...">` still need this
+				!element.nodeName.includes('-')
+			) {
 				// @ts-ignore We're not running this for custom elements because __value is actually
 				// how Lit stores the current value on the element, and messing with that would break things.
 				element.__value = value;
@@ -605,7 +609,7 @@ export function attribute_effect(
 function get_attributes(element) {
 	return /** @type {Record<string | symbol, unknown>} **/ (
 		/** @type {any} */ (element)[ATTRIBUTES_CACHE] ??= {
-			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-'),
+			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-') || element.hasAttribute('is'),
 			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
 		}
 	);
