@@ -12,28 +12,24 @@ export default test({
 
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>a</p><p>a</p><p>aa</p><p>1</p>`);
 
-		// start two independent batches, both blocked on their awaited expression
+		// start two batches, both blocked on their awaited expression
 		a.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>a</p><p>a</p><p>aa</p><p>1</p>`);
 
+		// the `b` batch re-runs the expression that the `a` batch ran, so it intersects with it: its
+		// view includes `a = 'b'`
 		b.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>a</p><p>a</p><p>aa</p><p>1</p>`);
 
-		// resolve the newer (b) batch first. Committing it must not commit the
-		// still-pending `a` batch, whose async work has not completed — `a` must
-		// still read 'a', and the unrelated `c` update must not be blocked
+		// resolve the newer (b) batch first. It merges into the `a` batch, whose run of the expression
+		// it supersedes, so both commit — and the `c` update, which runs in the commit, isn't blocked
 		pop.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>a</p><p>b</p><p>ab</p><p>2</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>b</p><p>b</p><p>bb</p><p>2</p>`);
 
-		// stale promise from the `a` batch's first run — resolving it does nothing
-		shift.click();
-		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>a</p><p>b</p><p>ab</p><p>2</p>`);
-
-		// the `a` batch's re-run await ('bb') resolves — everything is committed
+		// stale promise from the `a` batch's run — resolving it does nothing
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>b</p><p>b</p><p>bb</p><p>2</p>`);

@@ -428,6 +428,13 @@ function mark_reactions(signal, status, updated_during_traversal) {
 				eager_block_effects.add(effect);
 			}
 
+			// note that the batch (likely) re-runs the async expression (see `Batch#intersects`). Not if it has a
+			// run of it already: the next run must supersede that one (see `async_derived`)
+			if ((flags & ASYNC) !== 0 && current_batch !== null) {
+				var runs = current_batch.async_deriveds;
+				if (!runs.has(effect)) runs.set(effect, null);
+			}
+
 			if (updated_during_traversal !== null) {
 				set_signal_status(effect, status);
 				updated_during_traversal.push(effect);

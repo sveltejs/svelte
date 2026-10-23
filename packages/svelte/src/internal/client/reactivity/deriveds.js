@@ -38,15 +38,8 @@ import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import {
-	batch_values,
-	current_batch,
-	uncommitted_first_value,
-	view_batch,
-	view_cache
-} from './batch.js';
-import { increment_pending, unset_context } from './async.js';
-import { queue_micro_task } from '../dom/task.js';
+import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
+import { async_collected, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -116,11 +109,27 @@ export const OBSOLETE = Symbol('obsolete');
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	let parent = /** @type {Effect | null} */ (active_effect);
+	const parent = active_effect;
 
 	if (parent === null) {
 		e.async_derived_orphan();
 	}
+
+	// The content that awaits the first value (see `async_collected`)
+	var collector = active_reaction === null ? async_collected : null;
+
+	/**
+	 * The runs of the async expression that aren't obsolete (pending or done), and the batch each one started in.
+	 * A run belongs to the batch that holds it as its latest run (see `follow`), which is a different one if that
+	 * batch was merged into another one (see `Batch#merge`)
+	 * @type {Map<ReturnType<typeof deferred<V>>, Batch>}
+	 */
+	var runs = new Map();
+
+	/** Checks whether the run that the first value comes from is done, whenever a run settles (see below) */
+	var check = noop;
+	/** True once promise that is returned has fulfilled */
+	var initialized = false;
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
@@ -130,14 +139,22 @@ export function async_derived(fn, label, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	// The batch the derived is created in. Whoever awaits its first value continues in its view (see `flatten` and `run`)
-	var creator = current_batch;
+	/**
+	 * The batch whose run the first value comes from, and whose view the code that awaits it continues in:
+	 * the batch the derived is created in, unless its run becomes obsolete, or it's a fork and a real batch
+	 * ran the expression, too (see `follow`)
+	 * @type {Batch | null}
+	 */
+	var followed = current_batch;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
 
+	/** @type {Effect} */
+	var effect;
+
 	async_effect(() => {
-		var effect = /** @type {Effect} */ (active_effect);
+		effect = /** @type {Effect} */ (active_effect);
 
 		if (DEV) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
@@ -156,6 +173,7 @@ export function async_derived(fn, label, location) {
 					// if the promise was rejected by the user, via `getAbortSignal`, then
 					// wait for a subsequent resolution instead of flushing the batch
 					if (e !== STALE_REACTION) d.reject(e);
+					else runs.delete(d);
 				})
 				.finally(unset_context);
 		} catch (error) {
@@ -185,20 +203,25 @@ export function async_derived(fn, label, location) {
 			reactivity_loss_tracker = null;
 		}
 
-		var batch = /** @type {Batch} */ (current_batch);
+		var batch = merge_target(/** @type {Batch} */ (current_batch));
 
 		if (should_suspend) {
-			// we only increment the batch's pending state for updates, not creation, otherwise
-			// we will decrement to zero before the work that depends on this promise (e.g. a
-			// template effect) has initialized, causing the batch to resolve prematurely
-			if ((effect.f & REACTION_RAN) !== 0) {
-				var decrement_pending = increment_pending();
+			// We only increment the batch's pending state for updates, not creation, otherwise we will decrement
+			// to zero before the work that depends on this promise (e.g. a template effect) has initialized,
+			// causing the batch to resolve prematurely. Unless content awaits it: then the decrement waits
+			// for that (see below), and the batch must not commit before it has its own result.
+			// (The boundary counts the first run through the content)
+			if ((effect.f & REACTION_RAN) !== 0 || collector !== null) {
+				var decrement_pending = increment_pending((effect.f & REACTION_RAN) !== 0);
 			}
 
 			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			deferreds.add(d);
 			batch.async_deriveds.set(effect, d);
+			if (!initialized) runs.set(d, batch);
 		}
+
+		const waiting = collector?.created?.promise ?? null;
 
 		/**
 		 * @param {any} value
@@ -209,17 +232,37 @@ export function async_derived(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
-			decrement_pending?.();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) return;
+			var target = merge_target(batch);
+
+			// A superseded run may have settled before the rejection in `Batch#merge` or by a rerun arrives in the microtask after
+			if (should_suspend && target.async_deriveds.get(effect) !== d) error = OBSOLETE;
+			if (error === OBSOLETE) runs.delete(d);
+
+			if (waiting !== null && error !== OBSOLETE && !target.merges_into(follow() ?? target)) {
+				// A batch whose run is done isn't done with it until the content that awaits it exists, since the
+				// content is created by the batch whose run the first value comes from. Then it re-validates the
+				// content in its own view (before it can commit it, i.e. in the same go). Unless it's merged into
+				// that batch once it's done: then its runs become that batch's (see `Batch#merge`), and it must
+				// not wait for them
+				waiting.then(() => {
+					if (target.linked) target.revalidate(parent);
+					decrement_pending?.();
+				});
+			} else {
+				decrement_pending?.();
+			}
+
+			if (error === OBSOLETE) {
+				check();
+				return;
+			}
 
 			// write the result in the batch's view of the world
-			batch.activate();
-			internal_set(signal, error ?? value, null, true, !!error);
-			batch.deactivate();
+			target.activate();
 
-			if (DEV && location !== undefined && !signal.equals(value)) {
+			if (DEV && !error && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
 
 				setTimeout(() => {
@@ -229,6 +272,10 @@ export function async_derived(fn, label, location) {
 					}
 				});
 			}
+
+			internal_set(signal, error || value, null, true, !!error);
+			target.deactivate();
+			check();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -246,44 +293,68 @@ export function async_derived(fn, label, location) {
 		signal.f |= ASYNC;
 	}
 
-	return new Promise((fulfil) => {
-		/** @param {Promise<V>} p */
-		function next(p) {
-			function go() {
-				if (p !== promise) {
+	if (!should_suspend) {
+		return new Promise((fulfil) => {
+			/** @param {Promise<V>} p */
+			function next(p) {
+				function go() {
 					// if the effect re-runs before the initial promise
 					// resolves, delay resolution until we have a value
-					next(promise);
-					return;
+					if (p === promise) fulfil(signal);
+					else next(promise);
 				}
 
-				// While the boundary shows its pending snippet, batches commit without waiting for their runs, and a
-				// committed run supersedes those of the batches that committed before (see `Batch#release_records`).
-				// So the first value can be another batch's result, which the creator's view can't undo. Until that
-				// batch commits it, the creator mustn't continue with it — and the boundary keeps showing its pending
-				// snippet. (Elsewhere, the creator's own run provides the first value in its view)
-				var writer =
-					should_suspend && !(/** @type {Effect} */ (parent).b?.is_rendered())
-						? uncommitted_first_value(signal, creator)
-						: null;
-
-				if (writer === null) {
-					fulfil(signal);
-				} else {
-					// (check again once the commit is done)
-					writer.oncommit(resume);
-					writer.ondiscard(resume);
-				}
+				p.then(go, go);
 			}
 
-			function resume() {
-				queue_micro_task(go);
-			}
+			next(promise);
+		});
+	}
 
-			p.then(go, go);
+	/**
+	 * The batch whose run the first value comes from (see `followed`). While it has a run, that one — unless it's
+	 * a fork, and a real batch has a run, too: the fork's result isn't part of the real world, and it would show
+	 * up there when a boundary that shows its pending snippet reveals the content, or when the real batch
+	 * commits it. Otherwise a batch that committed, whose view is the real world (its run superseded the
+	 * followed one's, see `Batch#release_records`), else the first real batch, else the first fork
+	 * @returns {Batch | null}
+	 */
+	function follow() {
+		/** @type {Batch[]} */
+		var batches = [];
+
+		for (const [d, b] of runs) {
+			var holder = merge_target(b);
+			if (holder.async_deriveds.get(effect) === d) batches.push(holder);
 		}
 
-		next(promise);
+		if (followed !== null) followed = merge_target(followed);
+		var real = batches.find((b) => !b.is_fork);
+
+		if (followed !== null && batches.includes(followed) && (!followed.is_fork || !real)) {
+			return followed;
+		}
+
+		return (followed =
+			batches.find((b) => !b.is_fork && b.committed) ?? real ?? batches[0] ?? null);
+	}
+
+	return new Promise((fulfil) => {
+		check = () => {
+			if ((parent.f & DESTROYED) === 0) {
+				var batch = follow();
+				var run = batch?.async_deriveds.get(effect);
+				if (!run || deferreds.has(run)) return;
+
+				// The code that awaits the value continues in that batch's view, see `flatten` and `run`
+				if (collector !== null) collector.batch = batch;
+			}
+
+			check = noop;
+			fulfil(signal);
+			runs.clear();
+			initialized = true;
+		};
 	});
 }
 
