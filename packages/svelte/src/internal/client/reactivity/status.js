@@ -17,7 +17,7 @@ export function set_signal_status(signal, status) {
  */
 export function update_derived_status(derived) {
 	// Only mark as MAYBE_DIRTY if disconnected and has dependencies.
-	if ((derived.f & CONNECTED) !== 0 || derived.deps === null) {
+	if ((derived.f & CONNECTED) !== 0 || derived.edges === null) {
 		set_signal_status(derived, CLEAN);
 	} else {
 		set_signal_status(derived, MAYBE_DIRTY);

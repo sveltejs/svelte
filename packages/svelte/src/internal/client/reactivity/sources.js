@@ -7,7 +7,6 @@ import {
 	get,
 	set_untracked_writes,
 	untrack,
-	increment_write_version,
 	update_effect,
 	current_sources,
 	is_dirty,
@@ -25,7 +24,9 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC
+	ASYNC,
+	ASSIGNED,
+	ERROR_VALUE
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -35,6 +36,8 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	current_batch,
+	view_cache,
 	eager_block_effects,
 	schedule_effect,
 	legacy_updates
@@ -184,10 +187,24 @@ var count_deps = 0;
  * @param {Value<V>} source
  * @param {V} value
  * @param {Effect[] | null} [updated_during_traversal]
+ * @param {boolean} [own_result] Whether this is a result the current batch computed (i.e. an async
+ * expression resolved). Such a value belongs to the batch even if nothing changes, and it is a change
+ * if it differs from what the batch sees (even if it equals the real value)
+ * @param {boolean} [error] Whether the value is an error (an async expression rejected), which is thrown when read
  * @returns {V}
  */
-export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals(value)) {
+export function internal_set(
+	source,
+	value,
+	updated_during_traversal = null,
+	own_result = false,
+	error = false
+) {
+	var view = own_result ? batch_values?.get(source) : undefined;
+	// errors are never the same value
+	var same = source.equals(value) && !error && (source.f & ERROR_VALUE) === 0;
+
+	if (!same || (view !== undefined && (view.e || !source.equals.call(view, value)))) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -197,7 +214,15 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		}
 
 		var batch = Batch.ensure();
-		batch.capture(source, value);
+
+		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
+		// it's assigned already: it tracks them, and its flags don't tell whether the assignment still holds,
+		// which is what other views see when they undo this one — see `is_dirty`)
+		if ((source.f & (DERIVED | DIRTY | ASSIGNED)) === (DERIVED | DIRTY)) {
+			execute_derived(/** @type {Derived} */ (source));
+		}
+
+		var latest = batch.capture(source, value, same, error);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
@@ -229,22 +254,12 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		if ((source.f & DERIVED) !== 0) {
-			const derived = /** @type {Derived} */ (source);
-
-			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
-			if ((source.f & DIRTY) !== 0) {
-				execute_derived(derived);
-			}
-
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			if (batch_values === null) {
-				update_derived_status(derived);
-			}
+		if (latest && (source.f & DERIVED) !== 0) {
+			// The assigned value holds until one of the derived's dependencies is written after it (see `unchanged_since`).
+			// (Other assignments are part of the batch's writes only — a fork's become global when it's committed)
+			source.f |= ASSIGNED;
+			update_derived_status(/** @type {Derived} */ (source));
 		}
-
-		source.wv = increment_write_version();
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
@@ -270,9 +285,12 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+		if (eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
+	} else if (own_result) {
+		// an async expression resolved to what the batch (and the real world) sees — it still belongs to the batch
+		Batch.ensure().capture(source, value, true);
 	}
 
 	return value;
@@ -379,32 +397,43 @@ function mark_reactions(signal, status, updated_during_traversal) {
 
 		var not_dirty = (flags & DIRTY) === 0;
 
-		// don't set a DIRTY reaction to MAYBE_DIRTY
-		if (not_dirty) {
-			set_signal_status(reaction, status);
-		}
-
 		if ((flags & EAGER_EFFECT) !== 0) {
-			// Eager effects need to run immediately:
-			// - for $inspect so that the stack trace makes sense
-			// - for $state.eager because they might be without an effect parent
-			eager_effects.add(/** @type {Effect} */ (reaction));
+			if (!(/** @type {Batch} */ (current_batch).is_fork)) {
+				// don't set a DIRTY reaction to MAYBE_DIRTY
+				if (not_dirty) {
+					set_signal_status(reaction, status);
+				}
+
+				// Eager effects need to run immediately:
+				// - for $inspect so that the stack trace makes sense
+				// - for $state.eager because they might be without an effect parent
+				eager_effects.add(/** @type {Effect} */ (reaction));
+			}
 		} else if ((flags & DERIVED) !== 0) {
+			// don't set a DIRTY reaction to MAYBE_DIRTY
+			if (not_dirty) {
+				set_signal_status(reaction, status);
+			}
+
 			var derived = /** @type {Derived} */ (reaction);
 
-			batch_values?.delete(derived);
+			view_cache?.delete(derived);
 			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
 
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
+				// these run right away (see `flush_queued_effects`)
+				set_signal_status(effect, status);
 				eager_block_effects.add(effect);
 			}
 
 			if (updated_during_traversal !== null) {
+				set_signal_status(effect, status);
 				updated_during_traversal.push(effect);
 			} else {
-				schedule_effect(effect);
+				// the status is applied when the batch is processed (see `Batch#schedule`)
+				schedule_effect(effect, status);
 			}
 		}
 	}

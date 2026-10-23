@@ -1,8 +1,9 @@
 import { describe, assert, it } from 'vitest';
-import { flushSync } from '../../src/index-client';
+import { flushSync, fork } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
+	block,
 	effect,
 	effect_root,
 	render_effect,
@@ -1793,6 +1794,71 @@ describe('signals', () => {
 		} finally {
 			destroy();
 			pop();
+		}
+	});
+
+	it('prunes the edges of a block effect once the batches that ran it commit', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1), state(2), state(3)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+			for (let i = 1; i < items.length; i++) flushSync(() => set(index, i));
+
+			assert.deepEqual(
+				items.map((item) => item.reactions !== null),
+				[false, false, false, true]
+			);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('prunes the edges of a block effect that only a discarded batch needed', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+		flushSync();
+
+		const pending = fork(() => set(index, 1));
+
+		try {
+			// the fork's run of the block read `items[1]`
+			assert.notEqual(items[1].reactions, null);
+
+			pending.discard();
+			assert.equal(items[1].reactions, null);
+			assert.notEqual(items[0].reactions, null);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			pending.discard();
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
 		}
 	});
 });

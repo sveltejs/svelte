@@ -8,6 +8,7 @@ import {
 	resume_effect
 } from '../../reactivity/effects.js';
 import { HMR_ANCHOR } from '../../constants.js';
+import { EFFECT_OFFSCREEN } from '#client/constants';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { DEV } from 'esm-env';
@@ -107,26 +108,12 @@ export class BranchManager {
 				// ...and append the fragment
 				this.anchor.before(offscreen.fragment);
 				onscreen = offscreen.effect;
+				onscreen.f &= ~EFFECT_OFFSCREEN;
 			}
 		}
 
-		for (const [b, k] of this.#batches) {
-			this.#batches.delete(b);
-
-			if (b === batch) {
-				// keep values for newer batches
-				break;
-			}
-
-			const offscreen = this.#offscreen.get(k);
-
-			if (offscreen) {
-				// for older batches, destroy offscreen effects
-				// as they will never be committed
-				destroy_effect(offscreen.effect);
-				this.#offscreen.delete(k);
-			}
-		}
+		// other batches can still commit (in any order), so their selections remain
+		this.#discard(batch);
 
 		// outro/destroy all onscreen effects...
 		for (const [k, effect] of this.#onscreen) {
@@ -166,7 +153,10 @@ export class BranchManager {
 	 * @param {Batch} batch
 	 */
 	#discard = (batch) => {
-		this.#batches.delete(batch);
+		for (const b of this.#batches.keys()) {
+			// (batches that were merged into another one don't select anything anymore)
+			if (b === batch || !b.linked) this.#batches.delete(b);
+		}
 
 		const keys = Array.from(this.#batches.values());
 
@@ -194,10 +184,12 @@ export class BranchManager {
 
 				fragment.append(target);
 
-				this.#offscreen.set(key, {
-					effect: branch(() => fn(target)),
-					fragment
-				});
+				var effect = branch(() => fn(target));
+
+				// until it is committed, the branch only exists for the batches that select it
+				effect.f |= EFFECT_OFFSCREEN;
+
+				this.#offscreen.set(key, { effect, fragment });
 			} else {
 				this.#onscreen.set(
 					key,

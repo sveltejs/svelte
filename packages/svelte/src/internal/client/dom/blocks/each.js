@@ -159,6 +159,13 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 
 			const fragment = document.createDocumentFragment();
 			move_effect(e, fragment);
+
+			// `reconcile` expects offscreen items to come after all onscreen items
+			if (e !== state.effect.last) {
+				link(state, e.prev, e.next);
+				link(state, state.effect.last, e);
+				link(state, e, null);
+			}
 		} else {
 			destroy_effect(to_destroy[i], remove_dom);
 		}
@@ -336,7 +343,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				);
 
 				if (!first_run) {
+					// until it is committed, the item only exists for the batches that select it
 					item.e.f |= EFFECT_OFFSCREEN;
+					if (defer) batch.unskip_effect(item.e);
 				}
 
 				items.set(key, item);
@@ -350,7 +359,16 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn(anchor));
 			} else {
 				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
+				// until it is committed, the fallback only exists for the batches that select it
 				fallback.f |= EFFECT_OFFSCREEN;
+			}
+		}
+
+		if (defer && fallback !== null && (fallback.f & EFFECT_OFFSCREEN) !== 0) {
+			if (length === 0) {
+				batch.unskip_effect(fallback);
+			} else {
+				batch.skip_effect(fallback);
 			}
 		}
 
