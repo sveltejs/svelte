@@ -5,7 +5,7 @@ import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constan
 import { effect_tracking } from '../reactivity/effects.js';
 import { batch_values, view_batch } from '../reactivity/batch.js';
 import { get_view } from '../reactivity/deriveds.js';
-import { active_reaction, is_current, run_of, unchanged_since, untrack } from '../runtime.js';
+import { active_reaction, run_of, untrack, version_of } from '../runtime.js';
 
 /**
  * @typedef {{
@@ -57,9 +57,9 @@ function is_changed(signal, run, since) {
 	var i = run.deps?.indexOf(signal) ?? -1;
 	var seen = i === -1 ? undefined : run.dv?.[i];
 
-	if (seen !== undefined) return !is_current([signal], [seen]);
+	if (seen !== undefined) return version_of(signal) !== seen;
 
-	return since === 0 || !unchanged_since([signal], since);
+	return since === 0 || version_of(signal) > since;
 }
 
 /**
