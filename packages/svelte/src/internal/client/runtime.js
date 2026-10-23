@@ -179,8 +179,10 @@ function version_of(signal) {
  * @param {number[]} dv
  */
 export function is_current(deps, dv) {
-	for (var i = 0; i < dv.length; i++) {
-		if (version_of(/** @type {Value[]} */ (deps)[i]) !== dv[i]) return false;
+	if (deps !== null) {
+		for (var i = 0; i < dv.length; i++) {
+			if (version_of(deps[i]) !== dv[i]) return false;
+		}
 	}
 
 	return true;
