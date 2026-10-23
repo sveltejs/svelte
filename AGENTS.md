@@ -6,6 +6,10 @@ This guide is for AI coding agents working in the Svelte monorepo.
 
 When submitting a PR, you **MUST** read [`PULL_REQUEST_TEMPLATE.md`](./.github/PULL_REQUEST_TEMPLATE.md) and fill it out correctly. **DO NOT** submit a PR without running the full test suite.
 
+## Security Policy
+
+See https://github.com/sveltejs/svelte/security/policy.
+
 ## Quick Reference
 
 If asked to do a performance investigation, use the `performance-investigation` skill.

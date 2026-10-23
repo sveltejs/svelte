@@ -42,6 +42,7 @@ import { batch_values, current_batch, view_batch, view_cache } from './batch.js'
 import { async_collected, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
+import { stringify_derived } from '../dev/debug.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -131,7 +132,7 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label ?? fn.toString();
+	if (DEV) signal.label = label ?? stringify_derived(fn);
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;

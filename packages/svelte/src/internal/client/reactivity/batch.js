@@ -780,6 +780,8 @@ export class Batch {
 		}
 
 		var latest = !this.is_fork && !same && later === null;
+
+		/** @type {BatchValue} */
 		var entry = {
 			v: value,
 			wv: same ? source.wv : increment_write_version(),
@@ -1090,8 +1092,9 @@ export class Batch {
 	 */
 	get_record(reaction) {
 		var record = this.records?.get(reaction);
+		var i = this.folded.length;
 
-		for (var i = this.folded.length - 1; record === undefined && i >= 0; i--) {
+		while (record === undefined && i--) {
 			record = this.folded[i].records?.get(reaction);
 		}
 
