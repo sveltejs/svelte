@@ -1161,6 +1161,8 @@ function calculate_blockers(instance, analysis) {
 					analysis.instance_body.sync.push(
 						node.declarations.length === 1 ? node : b.declaration(node.kind, [declarator])
 					);
+					// can still read async bindings through functions, so it needs a blocker too
+					functions.push(declarator);
 				} else {
 					/** @type {Set<Binding>} */
 					const reads = new Set(); // TODO we're not actually using this yet
@@ -1190,6 +1192,8 @@ function calculate_blockers(instance, analysis) {
 						analysis.instance_body.async.push({ nodes: [declarator], has_await: true });
 					} else {
 						sync_group.push(declarator);
+						// same as above, it can read an async binding that is declared further down
+						functions.push(declarator);
 					}
 				}
 			}
@@ -1250,22 +1254,29 @@ function calculate_blockers(instance, analysis) {
 		}
 	}
 
+	// Early declarators are traced like functions. `touch` already follows assignments transitively,
+	// so the order in which they are processed doesn't matter
 	for (const fn of functions) {
 		/** @type {Set<Binding>} */
 		const reads_writes = new Set();
-		const init =
-			fn.type === 'VariableDeclarator'
-				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init)
-				: fn;
+		const init = fn.type === 'VariableDeclarator' ? fn.init : fn;
 
-		const fn_scope = /** @type {Scope} */ (instance.scopes.get(init));
+		if (
+			init?.type === 'FunctionDeclaration' ||
+			init?.type === 'ArrowFunctionExpression' ||
+			init?.type === 'FunctionExpression'
+		) {
+			const fn_scope = /** @type {Scope} */ (instance.scopes.get(init));
 
-		if (init.body.type === 'BlockStatement') {
-			trace_references(init.body, reads_writes, reads_writes, fn_scope);
+			if (init.body.type === 'BlockStatement') {
+				trace_references(init.body, reads_writes, reads_writes, fn_scope);
+			} else {
+				// A concise arrow body is an implicit return, so treat it like the
+				// `ReturnStatement` visitor in `trace_references` would.
+				touch(init.body, fn_scope, reads_writes, new Set());
+			}
 		} else {
-			// A concise arrow body is an implicit return, so treat it like the
-			// `ReturnStatement` visitor in `trace_references` would.
-			touch(init.body, fn_scope, reads_writes, new Set());
+			trace_references(fn, reads_writes, reads_writes, instance.scope);
 		}
 
 		const max = [...reads_writes].reduce((max, binding) => {
@@ -1282,14 +1293,19 @@ function calculate_blockers(instance, analysis) {
 
 		if (max === -1) continue;
 
+		const ids = fn.type === 'FunctionDeclaration' ? [fn.id] : extract_identifiers(fn.id);
 		const blocker = b.member(promises, b.literal(max), true);
-		const binding = /** @type {Binding} */ (
-			fn.type === 'FunctionDeclaration'
-				? instance.scope.get(fn.id.name)
-				: instance.scope.get(/** @type {ESTree.Identifier} */ (fn.id).name)
-		);
 
-		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
+		for (const id of ids) {
+			const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+			const current = /** @type {(ESTree.SimpleLiteral & { value: number }) | undefined} */ (
+				binding.blocker?.property
+			);
+
+			if (current && current.value >= max) continue;
+
+			binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
+		}
 	}
 }
 
