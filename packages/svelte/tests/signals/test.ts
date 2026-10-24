@@ -683,6 +683,81 @@ describe('signals', () => {
 		};
 	});
 
+	// https://github.com/sveltejs/svelte/issues/18966
+	test('derived teardown reads preserve dependencies on replaced nested state', () => {
+		return () => {
+			for (const teardown_reads of [false, true]) {
+				const value = proxy<{ items: { done: boolean }[] }>({ items: [] });
+				const done = derived(() => value.items.map((item) => item.done));
+				const log: string[] = [];
+				const destroy = effect_root(() => {
+					effect(() => {
+						log.push($.get(done).join(','));
+					});
+					effect(() => {
+						if ($.get(done).length === 0) {
+							effect(() => () => {
+								if (teardown_reads) assert.equal($.get(done).length, 0);
+							});
+						}
+					});
+				});
+
+				try {
+					flushSync();
+					value.items = [{ done: false }];
+					flushSync();
+					value.items[0].done = true;
+					flushSync();
+					assert.deepEqual(log, ['', 'false', 'true']);
+				} finally {
+					destroy();
+				}
+			}
+		};
+	});
+
+	test('teardown reads leave a live derived chain connected to its current dependencies', () => {
+		const select = state(false);
+		const a = state(0);
+		const b = state(1);
+		const trigger = state(0);
+		const current = derived(() => ($.get(select) ? $.get(b) : $.get(a)));
+		const double = derived(() => $.get(current) * 2);
+		const log: number[] = [];
+		const cleanup: number[] = [];
+
+		effect(() => {
+			log.push($.get(double));
+		});
+		effect(() => {
+			$.get(trigger);
+			return () => {
+				cleanup.push($.get(double));
+			};
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => {
+				set(select, true);
+				set(trigger, 1);
+			});
+
+			assert.deepEqual(log, [0, 2]);
+			assert.deepEqual(cleanup, [0]);
+			assert.deepEqual(current.deps, [select, b]);
+			assert.deepEqual(double.deps, [current]);
+			assert.equal(a.reactions, null);
+			assert.deepEqual(b.reactions, [current]);
+
+			flushSync(() => set(b, 2));
+			assert.deepEqual(log, [0, 2, 4]);
+			flushSync(() => set(a, 3));
+			assert.deepEqual(log, [0, 2, 4]);
+		};
+	});
+
 	test('creating effects within a derived correctly handles ownership', () => {
 		const log: Array<number | string> = [];
 		let a: Value<unknown>;
