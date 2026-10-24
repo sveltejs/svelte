@@ -17,6 +17,8 @@ import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactiv
 import { BranchManager } from './branches.js';
 import { capture, unset_context } from '../../reactivity/async.js';
 import { DEV } from 'esm-env';
+import { active_effect } from '../../runtime.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -94,6 +96,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 				try {
 					fn();
+				} catch (error) {
+					invoke_error_boundary(error, active_effect);
 				} finally {
 					unset_context(false);
 
