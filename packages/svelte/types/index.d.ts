@@ -2783,8 +2783,45 @@ declare module 'svelte/store' {
 		 */
 		update(this: void, updater: Updater<T>): void;
 	}
+	/**
+	 * Create a store from a function that returns state, and (to make a writable store), an
+	 * optional second function that sets state.
+	 *
+	 * ```ts
+	 * import { toStore } from 'svelte/store';
+	 *
+	 * let count = $state(0);
+	 *
+	 * const store = toStore(() => count, (v) => (count = v));
+	 * ```
+	 *
+	 * The store updates when state that `get` reads changes. If `get` returns a `$state` object
+	 * without reading its properties, such as `() => state`, then changing a property with
+	 * `state.nested = value` does not update the store, because `get` still returns the same object.
+	 * To update the store when a nested property changes, read that property in `get`, for example
+	 * with `toStore(() => $state.snapshot(state))`.
+	 *
+	 * */
 	export function toStore<V>(get: () => V, set: (v: V) => void): Writable<V>;
-
+	/**
+	 * Create a store from a function that returns state, and (to make a writable store), an
+	 * optional second function that sets state.
+	 *
+	 * ```ts
+	 * import { toStore } from 'svelte/store';
+	 *
+	 * let count = $state(0);
+	 *
+	 * const store = toStore(() => count, (v) => (count = v));
+	 * ```
+	 *
+	 * The store updates when state that `get` reads changes. If `get` returns a `$state` object
+	 * without reading its properties, such as `() => state`, then changing a property with
+	 * `state.nested = value` does not update the store, because `get` still returns the same object.
+	 * To update the store when a nested property changes, read that property in `get`, for example
+	 * with `toStore(() => $state.snapshot(state))`.
+	 *
+	 * */
 	export function toStore<V>(get: () => V): Readable<V>;
 
 	export function fromStore<V>(store: Writable<V>): {
