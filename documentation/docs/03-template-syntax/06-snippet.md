@@ -385,7 +385,30 @@ Snippets declared at the top level of a `.svelte` file can be exported from a `<
 
 ## Programmatic snippets
 
-Snippets can be created programmatically with the [`createRawSnippet`](svelte#createRawSnippet) API. This is intended for advanced use cases.
+Snippets can also be created programmatically with the [`createRawSnippet`](svelte#createRawSnippet) API. This is intended for advanced use cases, such as integrating Svelte with APIs or libraries that need to create and manage DOM elements directly.
+
+`createRawSnippet` takes a function that receives any parameters as getters and returns an object with a `render` function and, optionally, a `setup` function:
+
+```svelte
+<script>
+	import { createRawSnippet } from 'svelte';
+
+	const greeting = createRawSnippet((getName) => ({
+		render: () => `<p>Hello, ${getName()}!</p>`,
+		setup: (element) => {
+			element.classList.add('greeting');
+		}
+	}));
+</script>
+
+{@render greeting(() => 'world')}
+```
+
+The `render` function must return HTML for a single element. The resulting element is passed to `setup`, which can use the DOM API or Svelte client APIs to interact with it. If `setup` returns a function, that function is called when the snippet is destroyed.
+
+Parameters passed to the snippet are represented as getters. Call the getter to access the current value.
+
+`createRawSnippet` is generally not needed for regular Svelte components. For most use cases, regular snippets are simpler and should be preferred.
 
 ## Snippets and slots
 
