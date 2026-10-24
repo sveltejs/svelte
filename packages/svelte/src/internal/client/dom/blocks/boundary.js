@@ -34,7 +34,8 @@ import {
 	next,
 	read_hydration_instruction,
 	skip_nodes,
-	set_hydrate_node
+	set_hydrate_node,
+	set_hydrating
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
@@ -191,9 +192,15 @@ export class Boundary {
 	}
 
 	#hydrate_resolved_content() {
+		let was_hydrating = hydrating;
+
 		try {
 			this.#main_effect = branch(() => this.#children(this.#anchor));
 		} catch (error) {
+			// A divergent block may have disabled hydration before throwing.
+			// Restore it so error recovery removes the boundary's SSR content
+			// and hydration can continue with the following siblings.
+			if (was_hydrating) set_hydrating(true);
 			this.error(error);
 		}
 	}
