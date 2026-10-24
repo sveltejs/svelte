@@ -1,4 +1,4 @@
-/** @import { Visitors } from 'zimmerframe' */
+/** @import { Visitors } from '../../../utils/walk.js' */
 /** @import { AST } from '#compiler' */
 import { walk } from '../../../utils/walk.js';
 import * as w from '../../../warnings.js';

@@ -1,4 +1,4 @@
-/** @import { Visitors } from 'zimmerframe' */
+/** @import { Visitors } from '../../../utils/walk.js' */
 /** @import { AST, ValidatedCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis } from '../../types.js' */
 import MagicString from 'magic-string';
@@ -79,7 +79,8 @@ const visitors = {
 		context.state.code.addSourcemapLocation(node.end);
 		context.next();
 	},
-	Atrule(node, { state, next, path }) {
+	Atrule(node, context) {
+		const { state, path } = context;
 		if (is_keyframes_node(node)) {
 			let start = node.start + node.name.length + 1;
 			while (state.code.original[start] === ' ') start += 1;
@@ -95,7 +96,7 @@ const visitors = {
 			return; // don't transform anything within
 		}
 
-		next();
+		context.next();
 	},
 	Declaration(node, { state }) {
 		const property = node.property && remove_css_prefix(node.property.toLowerCase());
@@ -135,7 +136,8 @@ const visitors = {
 			}
 		}
 	},
-	Rule(node, { state, next, visit, path }) {
+	Rule(node, context) {
+		const { state, path } = context;
 		if (state.minify) {
 			remove_preceding_whitespace(node.start, state);
 			remove_preceding_whitespace(node.block.end - 1, state);
@@ -188,14 +190,15 @@ const visitors = {
 				}
 
 				// don't recurse into selectors but visit the body
-				visit(node.block);
+				context.visit(node.block);
 				return;
 			}
 		}
 
-		next();
+		context.next();
 	},
-	SelectorList(node, { state, next, path }) {
+	SelectorList(node, context) {
+		const { state, path } = context;
 		const parent = path.at(-1);
 
 		// Only add comments if we're not inside a complex selector that itself is unused or a global block
@@ -278,7 +281,7 @@ const visitors = {
 			}
 		}
 
-		next({ ...state, specificity });
+		context.next({ ...state, specificity });
 	},
 	ComplexSelector(node, context) {
 		const before_bumped = context.state.specificity.bumped;

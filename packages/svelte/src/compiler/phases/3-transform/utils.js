@@ -42,7 +42,6 @@ function sort_const_tags(nodes, state) {
 			const deps = new Set();
 
 			walk(declaration.init, state, {
-				// @ts-expect-error don't know, don't care
 				_: set_scope,
 				Identifier(node, context) {
 					if (is_reference(node, context.path.at(-1))) {
@@ -368,10 +367,10 @@ function check_nodes_for_namespace(nodes, namespace) {
 	 * @param {AST.SvelteElement | AST.RegularElement} node}
 	 * @param {{stop: () => void}} context
 	 */
-	const RegularElement = (node, { stop }) => {
+	const RegularElement = (node, context) => {
 		if (!node.metadata.svg && !node.metadata.mathml) {
 			namespace = 'html';
-			stop();
+			context.stop();
 		} else if (namespace === 'keep') {
 			namespace = node.metadata.svg ? 'svg' : 'mathml';
 		}
@@ -382,7 +381,7 @@ function check_nodes_for_namespace(nodes, namespace) {
 			node,
 			{},
 			{
-				_(node, { next }) {
+				_(node, context) {
 					if (
 						node.type === 'EachBlock' ||
 						node.type === 'IfBlock' ||
@@ -393,7 +392,7 @@ function check_nodes_for_namespace(nodes, namespace) {
 						node.type === 'SvelteElement' ||
 						node.type === 'Text'
 					) {
-						next();
+						context.next();
 					}
 				},
 				SvelteElement: RegularElement,
@@ -433,17 +432,19 @@ export function determine_namespace_for_children(node, namespace) {
 /**
  * @param {'$inspect' | '$inspect().with'} rune
  * @param {CallExpression} node
- * @param {(node: AST.SvelteNode) => AST.SvelteNode} visit
+ * @param {{ visit: (node: AST.SvelteNode) => AST.SvelteNode }} context
  */
-export function get_inspect_args(rune, node, visit) {
+export function get_inspect_args(rune, node, context) {
 	const call =
 		rune === '$inspect'
 			? node
 			: /** @type {CallExpression} */ (/** @type {MemberExpression} */ (node.callee).object);
 
 	return {
-		args: call.arguments.map((arg) => /** @type {Expression} */ (visit(arg))),
+		args: call.arguments.map((arg) => /** @type {Expression} */ (context.visit(arg))),
 		inspector:
-			rune === '$inspect' ? 'console.log' : /** @type {Expression} */ (visit(node.arguments[0]))
+			rune === '$inspect'
+				? 'console.log'
+				: /** @type {Expression} */ (context.visit(node.arguments[0]))
 	};
 }

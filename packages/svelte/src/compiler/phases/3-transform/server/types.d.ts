@@ -35,14 +35,20 @@ export interface ComponentServerTransformState extends ServerTransformState {
 	};
 }
 
-export type Context = import('zimmerframe').Context<AST.SvelteNode, ServerTransformState>;
-export type Visitors = import('zimmerframe').Visitors<AST.SvelteNode, ServerTransformState>;
+export type Context = import('../../../utils/walk.js').Context<
+	AST.SvelteNode,
+	ServerTransformState
+>;
+export type Visitors = import('../../../utils/walk.js').Visitors<
+	AST.SvelteNode,
+	ServerTransformState
+>;
 
-export type ComponentContext = import('zimmerframe').Context<
+export type ComponentContext = import('../../../utils/walk.js').Context<
 	AST.SvelteNode,
 	ComponentServerTransformState
 >;
-export type ComponentVisitors = import('zimmerframe').Visitors<
+export type ComponentVisitors = import('../../../utils/walk.js').Visitors<
 	AST.SvelteNode,
 	ComponentServerTransformState
 >;

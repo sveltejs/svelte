@@ -104,9 +104,6 @@ importers:
       magic-string:
         specifier: ^0.30.11
         version: 0.30.21
-      zimmerframe:
-        specifier: ^1.1.2
-        version: 1.1.2
     devDependencies:
       '@jridgewell/trace-mapping':
         specifier: ^0.3.25
@@ -2452,9 +2449,6 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zimmerframe@1.1.2:
-    resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
-
 snapshots:
 
   '@aashutoshrathi/word-wrap@1.2.6': {}
@@ -4544,5 +4538,3 @@ snapshots:
   yaml@1.10.2: {}
 
   yocto-queue@0.1.0: {}
-
-  zimmerframe@1.1.2: {}

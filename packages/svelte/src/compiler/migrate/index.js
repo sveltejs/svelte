@@ -1,5 +1,5 @@
 /** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
-/** @import { Visitors } from 'zimmerframe' */
+/** @import { Visitors } from '../utils/walk.js' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope } from '../phases/scope.js' */
 /** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
@@ -484,7 +484,8 @@ export function migrate(source, { filename, use_ts } = {}) {
 
 /** @type {Visitors<AST.SvelteNode, State>} */
 const instance_script = {
-	_(node, { state, next }) {
+	_(node, context) {
+		const { state } = context;
 		// @ts-expect-error
 		const comments = node.leadingComments;
 		if (comments) {
@@ -497,7 +498,7 @@ const instance_script = {
 				}
 			}
 		}
-		next();
+		context.next();
 	},
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -540,9 +541,10 @@ const instance_script = {
 			}
 		}
 	},
-	ExportNamedDeclaration(node, { state, next }) {
+	ExportNamedDeclaration(node, context) {
+		const { state } = context;
 		if (node.declaration) {
-			next();
+			context.next();
 			return;
 		}
 
@@ -563,7 +565,8 @@ const instance_script = {
 			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 		}
 	},
-	VariableDeclaration(node, { state, path, visit, next }) {
+	VariableDeclaration(node, context) {
+		const { state, path } = context;
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
@@ -585,14 +588,14 @@ const instance_script = {
 				bindings = state.scope.get_bindings(declarator);
 			} catch (e) {
 				// no bindings, so we can skip this
-				next();
+				context.next();
 				continue;
 			}
 			const has_state = bindings.some((binding) => binding.kind === 'state');
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
-				next();
+				context.next();
 				continue;
 			}
 
@@ -609,7 +612,7 @@ const instance_script = {
 					// const tmp = b.id(state.scope.generate('tmp'));
 					// const paths = extract_paths(declarator.id, tmp);
 					// state.props_pre.push(
-					// 	b.declaration('const', tmp, visit(declarator.init!) as Expression)
+					// 	b.declaration('const', tmp, context.visit(declarator.init!) as Expression)
 					// );
 					// for (const path of paths) {
 					// 	const name = (path.node as Identifier).name;
@@ -639,7 +642,7 @@ const instance_script = {
 
 				const prop = state.props.find((prop) => prop.exported === (binding.prop_alias || name));
 				if (prop) {
-					next();
+					context.next();
 					// $$Props type was used
 					prop.init = declarator.init
 						? state.str
@@ -653,7 +656,7 @@ const instance_script = {
 					prop.exported = binding.prop_alias || name;
 					prop.type_only = false;
 				} else {
-					next();
+					context.next();
 					state.props.push({
 						local: name,
 						exported: binding.prop_alias ? binding.prop_alias : name,
@@ -832,7 +835,7 @@ const instance_script = {
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
 						' = $derived('
 					);
-					visit(assignment_in_labeled.right);
+					context.visit(assignment_in_labeled.right);
 					state.str.appendRight(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
 						state.str
@@ -926,13 +929,14 @@ const instance_script = {
 			'return;'
 		);
 	},
-	LabeledStatement(node, { path, state, next }) {
+	LabeledStatement(node, context) {
+		const { path, state } = context;
 		if (state.analysis.runes) return;
 		if (path.length > 1) return;
 		if (node.label.name !== '$') return;
 		if (state.derived_labeled_statements.has(node)) return;
 
-		next();
+		context.next();
 
 		/**
 		 * @param {"state"|"derived"} rune
@@ -1070,7 +1074,8 @@ const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
 	},
-	RegularElement(node, { state, path, next }) {
+	RegularElement(node, context) {
+		const { state, path } = context;
 		// Strip off any namespace from the beginning of the node name.
 		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
 
@@ -1084,9 +1089,10 @@ const template = {
 		migrate_slot_usage(node, path, state);
 		handle_events(node, state);
 
-		next();
+		context.next();
 	},
-	SvelteSelf(node, { state, next }) {
+	SvelteSelf(node, context) {
+		const { state } = context;
 		const source = state.str.original.substring(node.start, node.end);
 		if (!state.filename) {
 			const indent = guess_indent(source);
@@ -1095,7 +1101,7 @@ const template = {
 				node.start,
 				`<!-- @migration-task: svelte:self is deprecated, import this Svelte file into itself instead -->\n${indent}`
 			);
-			next();
+			context.next();
 			return;
 		}
 		// overwrite the open tag
@@ -1121,9 +1127,10 @@ const template = {
 			);
 		}
 		state.has_svelte_self = true;
-		next();
+		context.next();
 	},
-	SvelteElement(node, { state, path, next }) {
+	SvelteElement(node, context) {
+		const { state, path } = context;
 		migrate_slot_usage(node, path, state);
 		if (node.tag.type === 'Literal') {
 			let is_static = true;
@@ -1146,14 +1153,16 @@ const template = {
 		}
 
 		handle_events(node, state);
-		next();
+		context.next();
 	},
-	Component(node, { state, path, next }) {
-		next();
+	Component(node, context) {
+		const { state, path } = context;
+		context.next();
 		migrate_slot_usage(node, path, state);
 	},
-	SvelteComponent(node, { state, next, path }) {
-		next();
+	SvelteComponent(node, context) {
+		const { state, path } = context;
+		context.next();
 
 		migrate_slot_usage(node, path, state);
 
@@ -1222,23 +1231,28 @@ const template = {
 		const end_pos = state.str.original.indexOf('}', node.expression.end) + 1;
 		state.str.remove(this_pos, end_pos);
 	},
-	SvelteFragment(node, { state, path, next }) {
+	SvelteFragment(node, context) {
+		const { state, path } = context;
 		migrate_slot_usage(node, path, state);
-		next();
+		context.next();
 	},
-	SvelteWindow(node, { state, next }) {
+	SvelteWindow(node, context) {
+		const { state } = context;
 		handle_events(node, state);
-		next();
+		context.next();
 	},
-	SvelteBody(node, { state, next }) {
+	SvelteBody(node, context) {
+		const { state } = context;
 		handle_events(node, state);
-		next();
+		context.next();
 	},
-	SvelteDocument(node, { state, next }) {
+	SvelteDocument(node, context) {
+		const { state } = context;
 		handle_events(node, state);
-		next();
+		context.next();
 	},
-	SlotElement(node, { state, path, next, visit }) {
+	SlotElement(node, context) {
+		const { state, path } = context;
 		migrate_slot_usage(node, path, state);
 
 		if (state.analysis.custom_element) return;
@@ -1296,7 +1310,7 @@ const template = {
 						const first = attr_value[0];
 						const last = attr_value[attr_value.length - 1];
 						for (const attr of attr_value) {
-							visit(attr);
+							context.visit(attr);
 						}
 						value = state.str
 							.snip(
@@ -1362,7 +1376,7 @@ const template = {
 		name = aliased_slot_name ?? name;
 
 		if (node.fragment.nodes.length > 0) {
-			next();
+			context.next();
 			state.str.update(
 				node.start,
 				node.fragment.nodes[0].start,
@@ -1383,21 +1397,25 @@ const template = {
 			state.str.overwrite(node.start + '<!--'.length, node.end - '-->'.length, migrated);
 		}
 	},
-	HtmlTag(node, { state, next }) {
+	HtmlTag(node, context) {
+		const { state } = context;
 		trim_block(state, node.start, node.end);
-		next();
+		context.next();
 	},
-	ConstTag(node, { state, next }) {
+	ConstTag(node, context) {
+		const { state } = context;
 		trim_block(state, node.start, node.end);
-		next();
+		context.next();
 	},
-	IfBlock(node, { state, next }) {
+	IfBlock(node, context) {
+		const { state } = context;
 		const start = node.start;
 		const end = state.str.original.indexOf('}', node.test.end) + 1;
 		trim_block(state, start, end);
-		next();
+		context.next();
 	},
-	AwaitBlock(node, { state, next }) {
+	AwaitBlock(node, context) {
+		const { state } = context;
 		const start = node.start;
 		const end =
 			state.str.original.indexOf(
@@ -1415,13 +1433,14 @@ const template = {
 			const end = state.str.original.indexOf('}', node.error?.end) + 1;
 			trim_block(state, start, end);
 		}
-		next();
+		context.next();
 	},
-	KeyBlock(node, { state, next }) {
+	KeyBlock(node, context) {
+		const { state } = context;
 		const start = node.start;
 		const end = state.str.original.indexOf('}', node.expression.end) + 1;
 		trim_block(state, start, end);
-		next();
+		context.next();
 	}
 };
 

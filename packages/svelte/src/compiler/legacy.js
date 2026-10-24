@@ -44,15 +44,15 @@ export function convert(source, ast) {
 
 	return /** @type {Legacy.LegacyRoot} */ (
 		walk(root, null, {
-			_(node, { next }) {
+			_(node, context) {
 				// @ts-ignore
 				delete node.metadata;
 				// @ts-ignore
 				delete node.parenthesized;
-				next();
+				context.next();
 			},
 			// @ts-ignore
-			Root(node, { visit }) {
+			Root(node, context) {
 				const { instance, module, options } = node;
 
 				// Insert svelte:options back into the root nodes
@@ -99,11 +99,11 @@ export function convert(source, ast) {
 						type: 'Fragment',
 						start,
 						end,
-						children: node.fragment.nodes.map((child) => visit(child))
+						children: node.fragment.nodes.map((child) => context.visit(child))
 					},
 					instance,
 					module,
-					css: ast.css ? visit(ast.css) : undefined,
+					css: ast.css ? context.visit(ast.css) : undefined,
 					// put it on _comments not comments because the latter is checked by prettier and then fails
 					// if we don't adjust stuff accordingly in our prettier plugin, and so it would be kind of an
 					// indirect breaking change for people updating their Svelte version but not their prettier plugin version.
@@ -115,14 +115,14 @@ export function convert(source, ast) {
 				return { ...node, type: 'Animation' };
 			},
 			// @ts-ignore
-			AwaitBlock(node, { visit }) {
+			AwaitBlock(node, context) {
 				let pendingblock = {
 					type: 'PendingBlock',
 					/** @type {number | null} */
 					start: null,
 					/** @type {number | null} */
 					end: null,
-					children: node.pending?.nodes.map((child) => visit(child)) ?? [],
+					children: node.pending?.nodes.map((child) => context.visit(child)) ?? [],
 					skip: true
 				};
 
@@ -132,7 +132,7 @@ export function convert(source, ast) {
 					start: null,
 					/** @type {number | null} */
 					end: null,
-					children: node.then?.nodes.map((child) => visit(child)) ?? [],
+					children: node.then?.nodes.map((child) => context.visit(child)) ?? [],
 					skip: true
 				};
 
@@ -142,7 +142,7 @@ export function convert(source, ast) {
 					start: null,
 					/** @type {number | null} */
 					end: null,
-					children: node.catch?.nodes.map((child) => visit(child)) ?? [],
+					children: node.catch?.nodes.map((child) => context.visit(child)) ?? [],
 					skip: true
 				};
 
@@ -205,8 +205,8 @@ export function convert(source, ast) {
 					ignores: extract_svelte_ignore(node.start, node.data, false)
 				};
 			},
-			ComplexSelector(node, { next }) {
-				next(); // delete inner metadata/parent properties
+			ComplexSelector(node, context) {
+				context.next(); // delete inner metadata/parent properties
 
 				const children = [];
 
@@ -225,17 +225,17 @@ export function convert(source, ast) {
 					children
 				};
 			},
-			Component(node, { visit }) {
+			Component(node, context) {
 				return {
 					type: 'InlineComponent',
 					start: node.start,
 					end: node.end,
 					name: node.name,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
@@ -268,7 +268,7 @@ export function convert(source, ast) {
 				return node;
 			},
 			// @ts-ignore
-			KeyBlock(node, { visit }) {
+			KeyBlock(node, context) {
 				remove_surrounding_whitespace_nodes(node.fragment.nodes);
 				return {
 					type: 'KeyBlock',
@@ -276,12 +276,12 @@ export function convert(source, ast) {
 					end: node.end,
 					expression: node.expression,
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
 			// @ts-ignore
-			EachBlock(node, { visit }) {
+			EachBlock(node, context) {
 				let elseblock = undefined;
 
 				if (node.fallback) {
@@ -295,7 +295,7 @@ export function convert(source, ast) {
 						type: 'ElseBlock',
 						start,
 						end,
-						children: node.fallback.nodes.map((child) => visit(child))
+						children: node.fallback.nodes.map((child) => context.visit(child))
 					};
 				}
 
@@ -305,7 +305,7 @@ export function convert(source, ast) {
 					type: 'EachBlock',
 					start: node.start,
 					end: node.end,
-					children: node.body.nodes.map((child) => visit(child)),
+					children: node.body.nodes.map((child) => context.visit(child)),
 					context: node.context,
 					expression: node.expression,
 					index: node.index,
@@ -337,7 +337,7 @@ export function convert(source, ast) {
 				return { ...node, type: 'RawMustacheTag' };
 			},
 			// @ts-ignore
-			IfBlock(node, { visit }) {
+			IfBlock(node, context) {
 				let elseblock = undefined;
 				if (node.alternate) {
 					let nodes = node.alternate.nodes;
@@ -355,7 +355,7 @@ export function convert(source, ast) {
 						start,
 						end: end,
 						children: node.alternate.nodes.map(
-							(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+							(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 						)
 					};
 				}
@@ -373,7 +373,7 @@ export function convert(source, ast) {
 					end: node.end,
 					expression: node.test,
 					children: node.consequent.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					),
 					else: elseblock,
 					elseif: node.elseif ? true : undefined
@@ -383,7 +383,7 @@ export function convert(source, ast) {
 				return { ...node, type: 'EventHandler' };
 			},
 			// @ts-expect-error
-			SnippetBlock(node, { visit }) {
+			SnippetBlock(node, context) {
 				remove_surrounding_whitespace_nodes(node.body.nodes);
 				return {
 					type: 'SnippetBlock',
@@ -391,12 +391,12 @@ export function convert(source, ast) {
 					end: node.end,
 					expression: node.expression,
 					parameters: node.parameters,
-					children: node.body.nodes.map((child) => visit(child)),
+					children: node.body.nodes.map((child) => context.visit(child)),
 					typeParams: node.typeParams
 				};
 			},
 			// @ts-expect-error
-			SvelteBoundary(node, { visit }) {
+			SvelteBoundary(node, context) {
 				remove_surrounding_whitespace_nodes(node.fragment.nodes);
 				return {
 					type: 'SvelteBoundary',
@@ -404,39 +404,42 @@ export function convert(source, ast) {
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
-					children: node.fragment.nodes.map((child) => visit(child))
+					children: node.fragment.nodes.map((child) => context.visit(child))
 				};
 			},
-			RegularElement(node, { visit }) {
+			RegularElement(node, context) {
 				return {
 					type: 'Element',
 					start: node.start,
 					end: node.end,
 					name: node.name,
-					attributes: node.attributes.map((child) => visit(child)),
-					children: node.fragment.nodes.map((child) => visit(child))
+					attributes: node.attributes.map((child) => context.visit(child)),
+					children: node.fragment.nodes.map((child) => context.visit(child))
 				};
 			},
-			SlotElement(node, { visit }) {
+			SlotElement(node, context) {
 				return {
 					type: 'Slot',
 					start: node.start,
 					end: node.end,
 					name: node.name,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
-			Attribute(node, { visit, next, path }) {
+			Attribute(node, context) {
+				const { path } = context;
 				if (node.value !== true && !Array.isArray(node.value)) {
 					path.push(node);
-					const value = /** @type {Legacy.LegacyAttribute['value']} */ ([visit(node.value)]);
+					const value = /** @type {Legacy.LegacyAttribute['value']} */ ([
+						context.visit(node.value)
+					]);
 					path.pop();
 
 					return {
@@ -444,13 +447,16 @@ export function convert(source, ast) {
 						value
 					};
 				} else {
-					return next();
+					return context.next();
 				}
 			},
-			StyleDirective(node, { visit, next, path }) {
+			StyleDirective(node, context) {
+				const { path } = context;
 				if (node.value !== true && !Array.isArray(node.value)) {
 					path.push(node);
-					const value = /** @type {Legacy.LegacyStyleDirective['value']} */ ([visit(node.value)]);
+					const value = /** @type {Legacy.LegacyStyleDirective['value']} */ ([
+						context.visit(node.value)
+					]);
 					path.pop();
 
 					return {
@@ -458,7 +464,7 @@ export function convert(source, ast) {
 						value
 					};
 				} else {
-					return next();
+					return context.next();
 				}
 			},
 			SpreadAttribute(node) {
@@ -472,21 +478,21 @@ export function convert(source, ast) {
 					type: 'Style'
 				};
 			},
-			SvelteBody(node, { visit }) {
+			SvelteBody(node, context) {
 				return {
 					type: 'Body',
 					name: 'svelte:body',
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
-			SvelteComponent(node, { visit }) {
+			SvelteComponent(node, context) {
 				return {
 					type: 'InlineComponent',
 					name: 'svelte:component',
@@ -494,28 +500,28 @@ export function convert(source, ast) {
 					end: node.end,
 					expression: node.expression,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
-			SvelteDocument(node, { visit }) {
+			SvelteDocument(node, context) {
 				return {
 					type: 'Document',
 					name: 'svelte:document',
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
-			SvelteElement(node, { visit }) {
+			SvelteElement(node, context) {
 				/** @type {Expression | string} */
 				let tag = node.tag;
 				if (
@@ -532,74 +538,74 @@ export function convert(source, ast) {
 					start: node.start,
 					end: node.end,
 					tag,
-					attributes: node.attributes.map((child) => visit(child)),
-					children: node.fragment.nodes.map((child) => visit(child))
+					attributes: node.attributes.map((child) => context.visit(child)),
+					children: node.fragment.nodes.map((child) => context.visit(child))
 				};
 			},
-			SvelteFragment(node, { visit }) {
+			SvelteFragment(node, context) {
 				return {
 					type: 'SlotTemplate',
 					name: 'svelte:fragment',
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(a) => /** @type {Legacy.LegacyAttributeLike} */ (visit(a))
+						(a) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(a))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
-			SvelteHead(node, { visit }) {
+			SvelteHead(node, context) {
 				return {
 					type: 'Head',
 					name: 'svelte:head',
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
-			SvelteOptions(node, { visit }) {
+			SvelteOptions(node, context) {
 				return {
 					type: 'Options',
 					name: 'svelte:options',
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					)
 				};
 			},
-			SvelteSelf(node, { visit }) {
+			SvelteSelf(node, context) {
 				return {
 					type: 'InlineComponent',
 					name: 'svelte:self',
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
-			SvelteWindow(node, { visit }) {
+			SvelteWindow(node, context) {
 				return {
 					type: 'Window',
 					name: 'svelte:window',
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},
@@ -615,17 +621,17 @@ export function convert(source, ast) {
 					});
 				}
 			},
-			TitleElement(node, { visit }) {
+			TitleElement(node, context) {
 				return {
 					type: 'Title',
 					name: 'title',
 					start: node.start,
 					end: node.end,
 					attributes: node.attributes.map(
-						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (context.visit(child))
 					),
 					children: node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
+						(child) => /** @type {Legacy.LegacyElementLike} */ (context.visit(child))
 					)
 				};
 			},

@@ -97,7 +97,8 @@ import * as state from '../../state.js';
  * @type {Visitors}
  */
 const visitors = {
-	_(node, { state, next, path }) {
+	_(node, context) {
+		const { state, path } = context;
 		/** @type {string[]} */
 		const ignores = [];
 
@@ -147,7 +148,7 @@ const visitors = {
 		}
 
 		const scope = state.scopes.get(node);
-		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+		context.next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
 
 		if (ignores.length > 0) {
 			pop_ignore();
@@ -620,7 +621,6 @@ export function analyze_component(root, source, options) {
 						const state = { scope: /** @type {Scope} */ (scope.parent), scopes: template.scopes };
 
 						walk(node.expression, state, {
-							// @ts-expect-error
 							_: set_scope,
 							Identifier(node, context) {
 								if (is_reference(node, context.path.at(-1))) {

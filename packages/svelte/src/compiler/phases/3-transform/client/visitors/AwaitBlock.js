@@ -24,10 +24,10 @@ export function AwaitBlock(node, context) {
 	let catch_block;
 
 	if (node.then) {
-		const then_context = {
-			...context,
-			state: { ...context.state, transform: { ...context.state.transform } }
-		};
+		const then_context = context.with({
+			...context.state,
+			transform: { ...context.state.transform }
+		});
 		const argument = node.value && create_derived_block_argument(node.value, then_context);
 
 		/** @type {Pattern[]} */
@@ -41,7 +41,7 @@ export function AwaitBlock(node, context) {
 	}
 
 	if (node.catch) {
-		const catch_context = { ...context, state: { ...context.state } };
+		const catch_context = context.with({ ...context.state });
 		const argument = node.error && create_derived_block_argument(node.error, catch_context);
 
 		/** @type {Pattern[]} */
@@ -90,7 +90,7 @@ export function AwaitBlock(node, context) {
 
 /**
  * @param {Pattern} node
- * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
+ * @param {import('../../../../utils/walk.js').Context<AST.SvelteNode, ComponentClientTransformState>} context
  * @returns {{ id: Pattern, declarations: null | Statement[] }}
  */
 function create_derived_block_argument(node, context) {

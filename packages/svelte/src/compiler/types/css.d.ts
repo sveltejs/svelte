@@ -196,7 +196,7 @@ export namespace _CSS {
 		value: string;
 	}
 
-	// for zimmerframe
+	// for the walker
 	export type Node =
 		| StyleSheet
 		| Rule

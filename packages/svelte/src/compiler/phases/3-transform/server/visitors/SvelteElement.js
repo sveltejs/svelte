@@ -41,7 +41,7 @@ export function SvelteElement(node, context) {
 	/** @type {Statement[]} */
 	let statements = [];
 
-	build_element_attributes(node, { ...context, state }, optimiser.transform);
+	build_element_attributes(node, context.with(state), optimiser.transform);
 
 	if (dev) {
 		const location = locator(node.start);

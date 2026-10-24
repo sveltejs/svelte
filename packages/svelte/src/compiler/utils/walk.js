@@ -1,4 +1,3 @@
-/** @import { Context, Visitor, Visitors } from 'zimmerframe' */
 import { js } from '@teasel/parser';
 import { grammar } from '../phases/1-parse/grammar.js';
 
@@ -41,22 +40,116 @@ function fields(node) {
 }
 
 /**
- * zimmerframe's `walk`, reading a node's children off the fields its type holds them in.
- * @template {{ type: string }} T
- * @template {Record<string, any> | null} U
- * @param {T} node
- * @param {U} state
- * @param {Visitors<T, U>} visitors
- * @returns {T}
+ * @template {string} T
+ * @template X
+ * @typedef {X extends { type: T } ? X : never} NodeOf
  */
-export function walk(node, state, visitors) {
-	const universal = visitors._;
 
-	let stopped = false;
+/**
+ * @template T
+ * @template U
+ * @template {{ type: string }} V
+ * @typedef {(node: T, context: Context<V, U>) => V | void} Visitor
+ */
 
-	const stop = () => {
-		stopped = true;
-	};
+/**
+ * A visitor per node type under its name, and `_` for every node, which runs first and hands on
+ * with its `next`.
+ * @template {{ type: string }} T
+ * @template U
+ * @typedef {T['type'] extends '_' ? never : { [K in T['type']]?: Visitor<NodeOf<K, T>, U, T> } & { _?: Visitor<T, U, T> }} Visitors
+ */
+
+/**
+ * What a visitor is handed: the node's place and state, and the walk to continue. One object per
+ * visit, its methods shared: a literal and three closures per visit were a sixth of all allocation.
+ * @template {{ type: string }} T
+ * @template U
+ */
+export class Context {
+	/** @type {T[]} */
+	path;
+	/** @type {U} */
+	state;
+	/** @type {T | void} */
+	result = undefined;
+	/**
+	 * @param {Walker<T, U>} walker
+	 * @param {T} node
+	 * @param {T[]} path
+	 * @param {U} state
+	 */
+	constructor(walker, node, path, state) {
+		this.walker = walker;
+		this.node = node;
+		this.path = path;
+		this.state = state;
+	}
+	/**
+	 * @param {U} [state]
+	 * @returns {T | void}
+	 */
+	next(state = this.state) {
+		return (this.result = this.walker.visit_children(this.node, this.path, state));
+	}
+	/**
+	 * @param {T} node
+	 * @param {U} [state]
+	 */
+	visit(node, state = this.state) {
+		const path = this.path;
+		path.push(this.node);
+		const result = this.walker.visit(node, path, state) ?? node;
+		path.pop();
+		return result;
+	}
+	stop() {
+		this.walker.stopped = true;
+	}
+	/**
+	 * This context with another state, for the visits made from here.
+	 * @param {U} state
+	 */
+	with(state) {
+		return new Context(this.walker, this.node, this.path, state);
+	}
+}
+
+/**
+ * The universal visitor's context: its `next` runs the node's own visitor with the state it passes on.
+ * @template {{ type: string }} T
+ * @template U
+ * @extends {Context<T, U>}
+ */
+class Universal extends Context {
+	/** @type {Context<T, U> | undefined} */
+	inner = undefined;
+	/**
+	 * @param {U} [state]
+	 * @returns {T | void}
+	 */
+	next(state = this.state) {
+		const inner = (this.inner = new Context(this.walker, this.node, this.path, state));
+		const visitor = /** @type {Visitor<T, U, T> | undefined} */ (
+			this.walker.visitors[/** @type {T['type']} */ (this.node.type)]
+		);
+		return (this.result = visitor ? visitor(this.node, inner) : inner.next(state));
+	}
+}
+
+/**
+ * @template {{ type: string }} T
+ * @template U
+ */
+class Walker {
+	stopped = false;
+	/**
+	 * @param {Visitors<T, U>} visitors
+	 */
+	constructor(visitors) {
+		this.visitors = visitors;
+		this.universal = visitors._;
+	}
 
 	/**
 	 * @param {T} node
@@ -64,7 +157,7 @@ export function walk(node, state, visitors) {
 	 * @param {U} state
 	 * @returns {T | undefined}
 	 */
-	function visit_children(node, path, state) {
+	visit_children(node, path, state) {
 		/** @type {T | undefined} */
 		let clone;
 
@@ -83,7 +176,7 @@ export function walk(node, state, visitors) {
 					for (let i = 0; i < len; i++) {
 						const node = child_node[i];
 						if (node && typeof node === 'object') {
-							const result = visit(node, path, state);
+							const result = this.visit(node, path, state);
 							if (result) {
 								(mutated_array ??= child_node.slice())[i] = result;
 							}
@@ -94,7 +187,7 @@ export function walk(node, state, visitors) {
 						/** @type {any} */ (clone ??= { ...node })[key] = mutated_array;
 					}
 				} else {
-					const result = visit(child_node, path, state);
+					const result = this.visit(child_node, path, state);
 					if (result) {
 						/** @type {any} */ (clone ??= { ...node })[key] = result;
 					}
@@ -112,86 +205,55 @@ export function walk(node, state, visitors) {
 	 * @param {U} state
 	 * @returns {T | undefined}
 	 */
-	function visit(node, path, state) {
+	visit(node, path, state) {
 		// a node returned unchanged would read as a transformation
-		if (stopped) return;
-		if (!node.type) return;
+		if (this.stopped) return;
+		if (!(/** @type {any} */ (node).type)) return;
 
+		const universal = this.universal;
 		const visitor = /** @type {Visitor<T, U, T> | undefined} */ (
-			visitors[/** @type {T['type']} */ (node.type)]
+			this.visitors[/** @type {T['type']} */ (node.type)]
 		);
 
 		if (!universal && !visitor) {
-			return visit_children(node, path, state);
+			return this.visit_children(node, path, state);
 		}
 
+		/** @type {Context<T, U>} */
+		let context;
 		/** @type {T | void} */
 		let result;
-
-		/** @type {T | undefined} */
-		let next_result;
-
-		/** @type {Context<T, U>['next']} */
-		const next = (next_state = state) => (next_result = visit_children(node, path, next_state));
-
-		/** @type {Context<T, U>['visit']} */
-		const visit_node = (next_node, next_state = state) => {
-			path.push(node);
-			const result = visit(next_node, path, next_state) ?? next_node;
-			path.pop();
-			return result;
-		};
-
 		if (universal) {
-			/** @type {T | void} */
-			let inner_result;
-
-			result = universal(node, {
-				path,
-				state,
-				/** @param {U} next_state */
-				next: (next_state = state) => {
-					// the specialised visitor sees the state the universal one passed on
-					state = next_state;
-
-					inner_result = visitor
-						? visitor(node, {
-								path,
-								state: next_state,
-								next,
-								stop,
-								visit: visit_node
-							})
-						: next(next_state);
-
-					return inner_result;
-				},
-				stop,
-				visit: visit_node
-			});
-
-			// @ts-expect-error `context.next(...)` runs before the universal visitor returns
-			if (!result && inner_result) {
-				result = inner_result;
-			}
+			const outer = new Universal(this, node, path, state);
+			result = universal(node, outer);
+			// the node's own visitor ran inside the universal's `next`: what it returned stands
+			// before the clone its children made
+			if (!result && outer.result) result = outer.result;
+			context = outer.inner ?? outer;
 		} else {
-			result = /** @type {Visitor<T, U, T>} */ (visitor)(node, {
-				path,
-				state,
-				next,
-				stop,
-				visit: visit_node
-			});
+			context = new Context(this, node, path, state);
+			result = /** @type {Visitor<T, U, T>} */ (visitor)(node, context);
 		}
 
-		if (!result && next_result) {
-			result = next_result;
+		if (!result && context.result) {
+			result = context.result;
 		}
 
 		if (result) {
 			return result;
 		}
 	}
+}
 
-	return visit(node, [], state) ?? node;
+/**
+ * zimmerframe's `walk`, reading a node's children off the fields its type holds them in.
+ * @template {{ type: string }} T
+ * @template {Record<string, any> | null} U
+ * @param {T} node
+ * @param {U} state
+ * @param {Visitors<T, U>} visitors
+ * @returns {T}
+ */
+export function walk(node, state, visitors) {
+	return new Walker(visitors).visit(node, [], state) ?? node;
 }

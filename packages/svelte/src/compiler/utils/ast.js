@@ -213,9 +213,9 @@ export function extract_all_identifiers_from_expression(expr) {
 					keypath.push(value);
 				}
 			},
-			ThisExpression(_, { next }) {
+			ThisExpression(_, context) {
 				keypath.push('this');
-				next();
+				context.next();
 			}
 		}
 	);

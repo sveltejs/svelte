@@ -124,7 +124,7 @@ export function CallExpression(node, context) {
 function transform_inspect_rune(rune, node, context) {
 	if (!dev) return b.empty;
 
-	const { args, inspector } = get_inspect_args(rune, node, context.visit);
+	const { args, inspector } = get_inspect_args(rune, node, context);
 
 	// by passing an arrow function, the log appears to come from the `$inspect` callsite
 	// rather than the `inspect.js` file containing the utility
