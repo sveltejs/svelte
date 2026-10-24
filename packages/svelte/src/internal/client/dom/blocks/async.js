@@ -22,9 +22,13 @@ export function async(node, blockers = [], expressions = [], fn) {
 	var end = null;
 
 	if (was_hydrating) {
+		var start = hydrate_node;
 		hydrate_next();
 		end = skip_nodes(false);
-		assign_nodes(node, end); // Necessary if this wraps the sole child of a block, else end marker can be wrong
+
+		// Necessary if this wraps the sole child of a block, else end marker can be wrong.
+		// Use our own opening marker, not `node`, which may belong to the enclosing block.
+		assign_nodes(start, end);
 	}
 
 	if (expressions.length === 0 && blockers.every((b) => b.settled)) {
