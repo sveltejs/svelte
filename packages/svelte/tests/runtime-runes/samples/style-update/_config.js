@@ -40,11 +40,11 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-			<div style=""></div>
-			<div style=""></div>
+			<div></div>
+			<div></div>
 
-			<custom-element style=""></custom-element>
-			<custom-element style=""></custom-element>
+			<custom-element></custom-element>
+			<custom-element></custom-element>
 			`
 		);
 
