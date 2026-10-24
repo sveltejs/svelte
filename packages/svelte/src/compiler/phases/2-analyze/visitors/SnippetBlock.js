@@ -23,7 +23,12 @@ export function SnippetBlock(node, context) {
 		}
 	}
 
-	context.next({ ...context.state, parent_element: null });
+	context.next({
+		...context.state,
+		parent_element: null,
+		function_depth: Math.max(context.state.scope.function_depth, context.state.function_depth) + 1,
+		outer_function_depth: undefined
+	});
 
 	const is_top_level = context.path.length === 1 && context.path[0].type === 'Fragment';
 
