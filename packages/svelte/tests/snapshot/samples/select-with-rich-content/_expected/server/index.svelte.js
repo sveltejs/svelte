@@ -76,7 +76,7 @@ export default function Select_with_rich_content($$renderer) {
 
 	$$renderer.push(`<!----></select>  <select>`);
 	opt($$renderer);
-	$$renderer.push(`<!----><!></select> <select><!--[-->`);
+	$$renderer.push(`<!----><!----></select> <select><!--[-->`);
 
 	const each_array_1 = $.ensure_array_like(items);
 
@@ -193,13 +193,13 @@ export default function Select_with_rich_content($$renderer) {
 	$$renderer.push(`<!--]-->`);
 	$$renderer.push(`</select> <select>`);
 	Option($$renderer, {});
-	$$renderer.push(`<!----><!></select>  <select>`);
+	$$renderer.push(`<!----><!----></select>  <select>`);
 	option_snippet($$renderer);
-	$$renderer.push(`<!----><!></select> <select>${$.html(html)}<!></select> <select><optgroup label="Group">`);
+	$$renderer.push(`<!----><!----></select> <select>${$.html(html)}<!----></select> <select><optgroup label="Group">`);
 	Option($$renderer, {});
-	$$renderer.push(`<!----><!></optgroup></select>  <select><optgroup label="Group">`);
+	$$renderer.push(`<!----><!----></optgroup></select>  <select><optgroup label="Group">`);
 	option_snippet2($$renderer);
-	$$renderer.push(`<!----><!></optgroup></select> <select>`);
+	$$renderer.push(`<!----><!----></optgroup></select> <select>`);
 
 	$$renderer.option(
 		{},
@@ -223,7 +223,7 @@ export default function Select_with_rich_content($$renderer) {
 		Option($$renderer, {});
 	}
 
-	$$renderer.push(`<!--]--><!></select>  <select>`);
+	$$renderer.push(`<!--]--><!----></select>  <select>`);
 
 	if (show) {
 		$$renderer.push('<!--[0-->');
@@ -232,5 +232,5 @@ export default function Select_with_rich_content($$renderer) {
 		$$renderer.push('<!--[-1-->');
 	}
 
-	$$renderer.push(`<!--]--><!></select>`);
+	$$renderer.push(`<!--]--><!----></select>`);
 }
