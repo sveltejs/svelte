@@ -1256,6 +1256,9 @@ function flush_queued_effects(effects) {
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.size > 0) {
+				var previous_committing_batch = committing_batch;
+				committing_batch = current_batch;
+
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
@@ -1281,6 +1284,7 @@ function flush_queued_effects(effects) {
 				}
 
 				eager_block_effects.clear();
+				committing_batch = previous_committing_batch;
 			}
 		}
 	}
