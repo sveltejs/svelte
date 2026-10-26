@@ -115,6 +115,24 @@ test('url.searchParams', () => {
 	cleanup();
 });
 
+test('url.searchParams writes do not create a reactive dependency', () => {
+	const url = new SvelteURL('https://svelte.dev');
+	let runs = 0;
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			runs += 1;
+			url.searchParams.set('foo', 'bar');
+		});
+	});
+
+	flushSync();
+
+	assert.equal(runs, 1);
+
+	cleanup();
+});
+
 test('url.searchParams.set updates url when duplicate values collapse to the same joined string', () => {
 	const url = new SvelteURL('https://svelte.dev?a=ab&a=c');
 	const log: any = [];

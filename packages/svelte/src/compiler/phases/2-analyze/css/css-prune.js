@@ -146,16 +146,9 @@ export function prune(stylesheet, elements) {
 		ComplexSelector(node) {
 			const selectors = get_relative_selectors(node);
 			const rule = /** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule);
-			const first = selectors[0]?.selectors[0];
-			const is_icss_export =
-				selectors.length === 1 &&
-				selectors[0].selectors.length === 1 &&
-				first?.type === 'PseudoClassSelector' &&
-				first.name === 'export' &&
-				first.args === null;
 
 			// Global and ICSS export rules do not depend on an element in this component
-			if (every_is_global(selectors, 0, selectors.length, rule) || is_icss_export) {
+			if (every_is_global(selectors, 0, selectors.length, rule)) {
 				node.metadata.used = true;
 			}
 

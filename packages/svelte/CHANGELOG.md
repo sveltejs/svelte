@@ -1,5 +1,87 @@
 # svelte
 
+## 5.57.2
+
+### Patch Changes
+
+- fix: don't create async deriveds for a component destroyed while waiting for its top-level `await` ([#18931](https://github.com/sveltejs/svelte/pull/18931))
+
+- fix: prevent untracked derived reads from retaining disconnected dependencies ([#18829](https://github.com/sveltejs/svelte/pull/18829))
+
+- fix: error if `{:else}` is followed by another `{:else}` or `{:else if ...}` ([#18900](https://github.com/sveltejs/svelte/pull/18900))
+
+- fix: avoid tracking SvelteURLSearchParams during URL updates ([#18791](https://github.com/sveltejs/svelte/pull/18791))
+
+- fix: restore hydration state when custom element attribute updates throw ([#18467](https://github.com/sveltejs/svelte/pull/18467))
+
+- fix: attach event handlers that are assigned after a top-level `await` in production ([#18933](https://github.com/sveltejs/svelte/pull/18933))
+
+- fix: flush anything pending before invoking flushSync callback function ([#18878](https://github.com/sveltejs/svelte/pull/18878))
+
+- fix: preserve location information for `await` wrappers ([#18859](https://github.com/sveltejs/svelte/pull/18859))
+
+- fix: keep a reactive assignment with no dependencies when `migrate` cannot turn it into a declaration ([#18817](https://github.com/sveltejs/svelte/pull/18817))
+
+- fix: don't hang `migrate` on a declaration that shares a line with its script tag ([#18816](https://github.com/sveltejs/svelte/pull/18816))
+
+- fix: prevent duplicate subscriptions when reconnecting deriveds ([#18899](https://github.com/sveltejs/svelte/pull/18899))
+
+- fix: recover when an unexpected node replaces a nested boundary comment during hydration ([#18925](https://github.com/sveltejs/svelte/pull/18925))
+
+- fix: print `{#await}` blocks that only have a pending branch ([#18908](https://github.com/sveltejs/svelte/pull/18908))
+
+- fix: don't warn about a redundant `link` role on `<area>` elements without an `href` ([#18872](https://github.com/sveltejs/svelte/pull/18872))
+
+- fix: don't throw `state_unsafe_mutation` when the focused element is removed while `bind:activeElement` is used ([#18921](https://github.com/sveltejs/svelte/pull/18921))
+
+- fix: don't overwrite an unchanged spread `value`, preserving incomplete number input ([#18864](https://github.com/sveltejs/svelte/pull/18864))
+
+- fix: read batch-local array on each-block commit ([#18879](https://github.com/sveltejs/svelte/pull/18879))
+
+- fix: error at compile time when a declaration in a snippet redeclares one of its parameters ([#18842](https://github.com/sveltejs/svelte/pull/18842))
+
+- fix: error when using `let:` directives on a component with a `children` snippet ([#18873](https://github.com/sveltejs/svelte/pull/18873))
+
+- fix: ignore stale boundary reset callbacks ([#18886](https://github.com/sveltejs/svelte/pull/18886))
+
+- fix: handle deferred transitions aborted before initialization ([#18776](https://github.com/sveltejs/svelte/pull/18776))
+
+- fix: prevent hydration mismatch recovery from being intercepted by error boundaries ([#18841](https://github.com/sveltejs/svelte/pull/18841))
+
+- fix: preserve dynamic element connections during hydration ([#18855](https://github.com/sveltejs/svelte/pull/18855))
+
+## 5.57.1
+
+### Patch Changes
+
+- fix: cancel deferred event listeners during cleanup ([#18749](https://github.com/sveltejs/svelte/pull/18749))
+
+- fix: preserve global CSS in components without scopable elements ([#18793](https://github.com/sveltejs/svelte/pull/18793))
+
+- fix: reduce SSR render result garbage collection ([#18798](https://github.com/sveltejs/svelte/pull/18798))
+
+- fix: resolve the fallback of an each block in the enclosing scope ([#18803](https://github.com/sveltejs/svelte/pull/18803))
+
+- perf: speed up parser interactions with Acorn or avoid them where possible ([#18740](https://github.com/sveltejs/svelte/pull/18740))
+
+- fix: prevent effect tree of batches from interfering with each other ([#18508](https://github.com/sveltejs/svelte/pull/18508))
+
+- fix: serialize input default values during server rendering ([#18733](https://github.com/sveltejs/svelte/pull/18733))
+
+- fix: remove `WAS_MARKED` flag in favor of `Set` ([#18127](https://github.com/sveltejs/svelte/pull/18127))
+
+- fix: throw `set_context_after_init` when `setContext` is called after an `await` during SSR ([#18739](https://github.com/sveltejs/svelte/pull/18739))
+
+- fix: make Object.hasOwn reactive for state proxy ownership changes ([#18838](https://github.com/sveltejs/svelte/pull/18838))
+
+- fix: keep `$state.eager` when used as a variable initializer ([#18809](https://github.com/sveltejs/svelte/pull/18809))
+
+- perf: avoid regex matching in parser where possible ([#18736](https://github.com/sveltejs/svelte/pull/18736))
+
+- fix: in non-async mode, only push variable to current_sources when active_reaction is updating ([#18550](https://github.com/sveltejs/svelte/pull/18550))
+
+- fix: recognise `aria-braillelabel` and `aria-brailleroledescription` as known ARIA attributes ([#18765](https://github.com/sveltejs/svelte/pull/18765))
+
 ## 5.57.0
 
 ### Minor Changes

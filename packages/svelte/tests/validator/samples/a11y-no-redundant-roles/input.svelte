@@ -43,6 +43,11 @@
 <header role="banner"></header>
 <footer role="contentinfo"></footer>
 
+<!-- area with href has an implicit role of link -->
+<area href="/" role="link" alt="foo" />
+
 <!-- Allowed -->
 <!-- menu has same interactive role exceptions as ul/ol -->
 <menu role="menu"></menu>
+<!-- area without href doesn't have a role of link, same as a without href -->
+<area role="link" aria-label="foo" />
