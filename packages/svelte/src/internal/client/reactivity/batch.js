@@ -216,21 +216,22 @@ export class Batch {
 		if (this.is_fork) return true;
 
 		for (const effect of this.#blocking_pending.keys()) {
-			var e = effect;
-			var skipped = false;
-
-			while (e.parent !== null) {
-				if (this.#skipped_branches.has(e)) {
-					skipped = true;
-					break;
-				}
-
-				e = e.parent;
-			}
-
-			if (!skipped) {
+			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
+			if (!this.#is_skipped(effect)) {
 				return true;
 			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether `effect` is inside a branch that this batch skips
+	 * @param {Effect} effect
+	 */
+	#is_skipped(effect) {
+		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
+			if (this.#skipped_branches.has(e)) return true;
 		}
 
 		return false;
@@ -448,21 +449,6 @@ export class Batch {
 			}
 		}
 
-		// Edge case: During traversal new branches might create effects that run immediately and set state,
-		// causing an effect to be scheduled again. We need to traverse the current batch
-		// once more in that case - most of the time this will just clean up dirty branches.
-		if (this.#scheduled.length > 0) {
-			if (next_batch !== null) {
-				for (const e of this.#scheduled) {
-					next_batch.#scheduled.push(e);
-				}
-
-				this.#scheduled = [];
-			} else {
-				next_batch = this;
-			}
-		}
-
 		if (next_batch !== null) {
 			old_values.clear();
 			next_batch.#process();
@@ -522,22 +508,21 @@ export class Batch {
 	}
 
 	#find_earlier_batch() {
-		var batch = this.prev;
-
-		while (batch !== null) {
-			if (!batch.is_fork) {
-				// if the batches are connected, break
-				for (const [value, [, is_derived]] of this.current) {
-					if (batch.current.has(value) && !is_derived) {
-						return batch;
-					}
-				}
-			}
-
-			batch = batch.prev;
+		for (var batch = this.prev; batch !== null; batch = batch.prev) {
+			if (!batch.is_fork && this.#intersects(batch)) return batch;
 		}
 
 		return null;
+	}
+
+	/** @param {Batch} batch */
+	#intersects(batch) {
+		for (const [source, [, is_derived]] of this.current) {
+			if (is_derived) continue;
+			if (batch.current.has(source)) return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -935,29 +920,12 @@ export class Batch {
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch === this || batch.is_fork) continue;
 
-			// If two batches intersect, the latter batch will be merged into the earlier batch,
-			// and we should treat them as a single set of changes
-			var intersects = false;
-
-			if (batch.id < this.id) {
-				for (const [source, [, is_derived]] of batch.current) {
-					// Derived values don't partake in the intersection mechanism, because a derived could
-					// be triggered in one batch already but not the other one yet, causing a false-positive
-					if (is_derived) continue;
-
-					if (this.current.has(source)) {
-						intersects = true;
-						break;
-					}
-				}
-			}
-
 			// Since the latter batch merges into the earlier (if it resolves before the earlier one),
 			// we treat the earlier values as "already applied". This way we don't need to rerun async
 			// effects of the earlier batch in case they are merged.
 			// As a result you can think of batch_values as having the latest values of all intersecting
 			// batches up until this batch.
-			if (!intersects) {
+			if (batch.id >= this.id || !batch.#intersects(this)) {
 				for (const [source, previous] of batch.previous) {
 					if (!batch_values.has(source)) {
 						batch_values.set(source, previous);
