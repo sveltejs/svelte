@@ -11,7 +11,7 @@ import {
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
-import { build_attribute_value } from './utils.js';
+import { build_attribute_value, build_getter } from './utils.js';
 import {
 	is_boolean_attribute,
 	is_content_editable_binding,
@@ -449,12 +449,10 @@ export function prepare_element_spread(
 		const properties = class_directives.map((directive) =>
 			b.init(
 				directive.name,
-				directive.expression.type === 'Identifier' && directive.expression.name === directive.name
-					? b.id(directive.name)
-					: transform(
-							/** @type {Expression} */ (context.visit(directive.expression)),
-							directive.metadata.expression
-						)
+				transform(
+					/** @type {Expression} */ (context.visit(directive.expression)),
+					directive.metadata.expression
+				)
 			)
 		);
 
@@ -466,7 +464,10 @@ export function prepare_element_spread(
 			b.init(
 				directive.name,
 				directive.value === true
-					? b.id(directive.name)
+					? transform(
+							build_getter(b.id(directive.name), context.state),
+							directive.metadata.expression
+						)
 					: build_attribute_value(directive.value, context, transform, true)
 			)
 		);
@@ -548,7 +549,10 @@ function build_attr_style(style_directives, expression, context, transform) {
 		for (const directive of style_directives) {
 			const expression =
 				directive.value === true
-					? b.id(directive.name)
+					? transform(
+							build_getter(b.id(directive.name), context.state),
+							directive.metadata.expression
+						)
 					: build_attribute_value(directive.value, context, transform, true);
 
 			let name = directive.name;
