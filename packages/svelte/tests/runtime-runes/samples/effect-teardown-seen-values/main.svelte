@@ -9,7 +9,10 @@
 	});
 
 	$effect(() => {
-		if (go) x = 1;
+		if (go) {
+			console.log('x=1');
+			x = 1;
+		}
 	});
 
 	$effect(() => {
@@ -18,7 +21,10 @@
 	});
 
 	$effect(() => {
-		if (go) z = 1;
+		if (go) {
+			console.log('z=1');
+			z = 1;
+		}
 	});
 </script>
 

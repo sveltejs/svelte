@@ -1257,7 +1257,7 @@ function flush_queued_effects(effects) {
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.size > 0) {
 				var previous_committing_batch = committing_batch;
-				committing_batch = current_batch;
+				committing_batch = null;
 
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
