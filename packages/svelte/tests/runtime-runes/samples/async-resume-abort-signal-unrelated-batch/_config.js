@@ -5,32 +5,25 @@ const buttons = `
 	<button>a</button>
 	<button>b</button>
 	<button>shift</button>
-	<button>pop</button>
 `;
 
-// Like `async-resume-unrelated-batch`, with `getAbortSignal`: B's run of the expression must not keep A's
-// from settling, as the content is created with A's result, and B waits for that
+// Like `async-resume-unrelated-batch`, with `getAbortSignal`: B doesn't run the expression, so it doesn't abort
+// A's run, whose result the content is created with.
 export default test({
 	mode: ['client'],
-	async test({ assert, target }) {
-		const [a, b, shift, pop] = target.querySelectorAll('button');
+	async test({ assert, target, logs }) {
+		const [a, b, shift] = target.querySelectorAll('button');
 
 		a.click();
 		await tick();
 		b.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
+		assert.deepEqual(logs, ['load 1']);
 
-		// B's run
-		pop.click();
-		await tick();
-		assert.htmlEqual(target.innerHTML, buttons);
-
-		// A's (re)run
-		shift.click();
-		await tick();
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
+		assert.deepEqual(logs, ['load 1']);
 	}
 });

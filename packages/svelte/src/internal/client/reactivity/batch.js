@@ -612,7 +612,10 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					update_effect(effect);
+					// (an async expression is checked again if the view now folds a batch that ran it, see `#fold`)
+					if ((flags & ASYNC) === 0 || !this.#fold(effect) || is_dirty(effect)) {
+						update_effect(effect);
+					}
 				}
 
 				var child = effect.first;
@@ -669,6 +672,31 @@ export class Batch {
 			// For `batch`, it must be a run (non-null), as an expression that was marked but didn't re-run there
 			// would otherwise entangle the batches for nothing
 			if (batch.async_deriveds.get(effect)) return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Called before this batch re-runs the async expression `effect`. If an earlier batch ran it, too, but this
+	 * batch's view doesn't fold that batch — because no write of this batch marked the expression (see
+	 * `mark_reactions`) when the view was activated, e.g. as the batch adopts a branch whose content only the
+	 * other batch ran so far (see `unskip_effect`) — the run would make the batches intersect (see `#intersects`).
+	 * The other batch's writes would be part of this batch's view from then on, and the run outdated right away.
+	 * Instead, fold the other batch into the view first: then the run sees its writes, or isn't needed at all,
+	 * because the other batch's run applies. Returns whether the view changed
+	 * @param {Effect} effect
+	 */
+	#fold(effect) {
+		if (this.committed) return false;
+
+		for (let batch = this.prev; batch !== null; batch = batch.prev) {
+			if (!batch.is_fork && batch.async_deriveds.get(effect) && !this.folded.includes(batch)) {
+				// the batches intersect from now on (a run that follows replaces the mark)
+				if (!this.async_deriveds.has(effect)) this.async_deriveds.set(effect, null);
+				this.activate();
+				return true;
+			}
 		}
 
 		return false;
