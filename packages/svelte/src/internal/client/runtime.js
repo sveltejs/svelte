@@ -26,7 +26,6 @@ import {
 	ASYNC,
 	ASSIGNED
 } from './constants.js';
-import { old_values } from './reactivity/sources.js';
 import {
 	reactivity_loss_tracker,
 	execute_derived,
@@ -51,6 +50,7 @@ import {
 import {
 	Batch,
 	batch_values,
+	committing_batch,
 	current_batch,
 	first_batch,
 	flushSync,
@@ -1068,9 +1068,10 @@ export function get(signal) {
 	}
 
 	if (is_destroying_effect) {
-		// teardowns see the values from before the update; nothing read here is recorded
-		if (old_values.has(signal)) {
-			return old_values.get(signal);
+		const snapshot = committing_batch?.previous.get(signal);
+
+		if (snapshot) {
+			return snapshot.v;
 		}
 
 		if (is_derived) {
@@ -1085,8 +1086,6 @@ export function get(signal) {
 			) {
 				value = execute_derived(derived);
 			}
-
-			old_values.set(derived, value);
 
 			return value;
 		}
@@ -1190,7 +1189,7 @@ function depends_on_old_values(derived) {
 	if (derived.deps === null) return false;
 
 	for (const dep of derived.deps) {
-		if (old_values.has(dep)) {
+		if (previous_batch?.previous.has(dep)) {
 			return true;
 		}
 

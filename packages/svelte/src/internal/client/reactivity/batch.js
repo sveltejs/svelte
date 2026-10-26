@@ -36,7 +36,7 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
+import { flush_eager_effects, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { add_dirty_effect, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
@@ -58,6 +58,12 @@ export let current_batch = null;
  * @type {Batch | null}
  */
 export let previous_batch = null;
+
+/**
+ * This is needed to avoid overwriting inputs
+ * @type {Batch | null}
+ */
+export let committing_batch = null;
 
 /**
  * When time travelling (i.e. working in one batch, while other batches
@@ -502,6 +508,7 @@ export class Batch {
 		this.#release_records(true);
 
 		// append/remove branches
+		committing_batch ??= this;
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
 
@@ -531,7 +538,6 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
-			old_values.clear();
 			next_batch.#process();
 		}
 	}
@@ -773,7 +779,6 @@ export class Batch {
 
 					// the batch is processed again anyway if a flush is queued
 					if (batch.linked && !batch.#decrement_queued) {
-						old_values.clear();
 						current_batch = batch;
 						batch.#process();
 					}
@@ -786,9 +791,8 @@ export class Batch {
 			legacy_updates = null;
 			is_processing = false;
 
+			committing_batch = null;
 			this.deactivate();
-
-			old_values.clear();
 
 			if (DEV) {
 				for (const source of source_stacks) {
@@ -1252,8 +1256,6 @@ function flush_queued_effects(effects) {
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.size > 0) {
-				old_values.clear();
-
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;

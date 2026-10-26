@@ -49,9 +49,6 @@ import { set_signal_status, update_derived_status } from './status.js';
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
 
-/** @type {Map<Value, any>} */
-export const old_values = new Map();
-
 /**
  * @param {Set<any>} v
  */
@@ -205,14 +202,6 @@ export function internal_set(
 	var same = source.equals(value) && !error && (source.f & ERROR_VALUE) === 0;
 
 	if (!same || (view !== undefined && (view.e || !source.equals.call(view, value)))) {
-		if (is_destroying_effect) {
-			old_values.set(source, value);
-		} else if (!old_values.has(source)) {
-			// only record the value from before the first write in this flush, otherwise a
-			// teardown would see the value from before whichever write happened to be last
-			old_values.set(source, source.v);
-		}
-
 		var batch = Batch.ensure();
 
 		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
