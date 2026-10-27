@@ -261,15 +261,12 @@ function get_comment_handlers(source, comments, index = 0) {
 							if (is_last_in_body) {
 								// Special case: There can be multiple trailing comments after the last node in a block,
 								// and they can be separated by newlines
-								let end = node.end;
-
 								while (comments.length) {
 									const comment = comments[0];
 									if (parent && comment.start >= parent.end) break;
 
 									(node.trailingComments ||= []).push(comment);
 									comments.shift();
-									end = comment.end;
 								}
 							} else if (node.end <= comments[0].start && /^[,) \t]*$/.test(slice)) {
 								node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];

@@ -22,7 +22,6 @@ import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
-import { effect, render_effect } from './effects.js';
 
 /**
  * @param {((value?: number) => number)} fn
