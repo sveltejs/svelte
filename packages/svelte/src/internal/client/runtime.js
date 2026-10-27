@@ -1094,6 +1094,10 @@ export function get(signal) {
 				depends_on_old_values(derived)
 			) {
 				value = execute_derived(derived);
+				reverted_values?.set(signal, {
+					v: value,
+					wv: write_version
+				});
 			}
 
 			return value;
