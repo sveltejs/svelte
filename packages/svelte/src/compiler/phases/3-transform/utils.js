@@ -6,12 +6,45 @@ import {
 	regex_not_whitespace,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
+import { decode_character_references } from '../1-parse/utils/html.js';
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';
 import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
+
+/**
+ * Replace whitespace at the start or end of a raw text node while accounting
+ * for character references that decode to whitespace.
+ * @param {string} raw
+ * @param {string} data
+ * @param {RegExp} pattern
+ * @param {string} replacement
+ * @param {boolean} from_start
+ */
+function replace_raw_whitespace(raw, data, pattern, replacement, from_start) {
+	const match = data.match(pattern);
+	if (!match) return raw;
+
+	const whitespace = match[0];
+	if (from_start) {
+		for (let i = 0; i <= raw.length; i++) {
+			const end = raw[i] === ';' ? i + 1 : i;
+			if (decode_character_references(raw.slice(0, end), false) === whitespace) {
+				return replacement + raw.slice(end);
+			}
+		}
+	} else {
+		for (let i = raw.length; i >= 0; i--) {
+			if (decode_character_references(raw.slice(i), false) === whitespace) {
+				return raw.slice(0, i) + replacement;
+			}
+		}
+	}
+
+	return raw.replace(pattern, replacement);
+}
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
@@ -184,7 +217,13 @@ export function clean_nodes(
 		}
 
 		if (first?.type === 'Text') {
-			first.raw = first.raw.replace(regex_starts_with_whitespaces, '');
+			first.raw = replace_raw_whitespace(
+				first.raw,
+				first.data,
+				regex_starts_with_whitespaces,
+				'',
+				true
+			);
 			first.data = first.data.replace(regex_starts_with_whitespaces, '');
 		}
 
@@ -197,7 +236,13 @@ export function clean_nodes(
 		}
 
 		if (last?.type === 'Text') {
-			last.raw = last.raw.replace(regex_ends_with_whitespaces, '');
+			last.raw = replace_raw_whitespace(
+				last.raw,
+				last.data,
+				regex_ends_with_whitespaces,
+				'',
+				false
+			);
 			last.data = last.data.replace(regex_ends_with_whitespaces, '');
 		}
 
@@ -229,18 +274,25 @@ export function clean_nodes(
 				if (prev?.type !== 'ExpressionTag') {
 					const prev_is_text_ending_with_whitespace =
 						prev?.type === 'Text' && regex_ends_with_whitespaces.test(prev.data);
-					node.data = node.data.replace(
+					const replacement = prev_is_text_ending_with_whitespace ? '' : ' ';
+					node.raw = replace_raw_whitespace(
+						node.raw,
+						node.data,
 						regex_starts_with_whitespaces,
-						prev_is_text_ending_with_whitespace ? '' : ' '
+						replacement,
+						true
 					);
-					node.raw = node.raw.replace(
-						regex_starts_with_whitespaces,
-						prev_is_text_ending_with_whitespace ? '' : ' '
-					);
+					node.data = node.data.replace(regex_starts_with_whitespaces, replacement);
 				}
 				if (next?.type !== 'ExpressionTag') {
+					node.raw = replace_raw_whitespace(
+						node.raw,
+						node.data,
+						regex_ends_with_whitespaces,
+						' ',
+						false
+					);
 					node.data = node.data.replace(regex_ends_with_whitespaces, ' ');
-					node.raw = node.raw.replace(regex_ends_with_whitespaces, ' ');
 				}
 				if (node.data && (node.data !== ' ' || !can_remove_entirely)) {
 					trimmed.push(node);
