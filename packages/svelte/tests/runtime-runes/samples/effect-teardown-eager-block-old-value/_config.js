@@ -11,6 +11,6 @@ export default test({
 		flushSync(() => target.querySelector('button')?.click());
 
 		assert.htmlEqual(target.innerHTML, '<button>increment</button>');
-		assert.deepEqual(logs, ['setup', 'teardown: count=1 show=true']);
+		assert.deepEqual(logs, ['setup', 'teardown: count=0 show=true']);
 	}
 });

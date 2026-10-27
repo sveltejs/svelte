@@ -1272,6 +1272,9 @@ function flush_queued_effects(effects) {
 
 	var i = 0;
 
+	/** @type {Map<Value, BatchValue> | null} */
+	var new_writes = null;
+
 	while (i < length) {
 		var effect = effects[i++];
 
@@ -1302,7 +1305,22 @@ function flush_queued_effects(effects) {
 			if (eager_block_effects?.size > 0) {
 				// these run because of the writes of the effect, so their teardowns revert those
 				var previous_reverted_values = reverted_values;
-				reverted_values = values_before_writes_since(version);
+				reverted_values = new Map(reverted_values);
+
+				if (new_writes) {
+					for (const [value, write] of new_writes) {
+						reverted_values.set(value, write);
+					}
+				}
+
+				if (current_batch) {
+					new_writes ??= new Map();
+					for (const [value, write] of current_batch.current) {
+						if (write.wv > version) {
+							new_writes.set(value, write);
+						}
+					}
+				}
 
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
@@ -1335,25 +1353,6 @@ function flush_queued_effects(effects) {
 	}
 
 	eager_block_effects = null;
-}
-
-/**
- * The values from before the writes to the current batch since `version`
- * @param {number} version
- * @returns {Map<Value, BatchValue>}
- */
-function values_before_writes_since(version) {
-	/** @type {Map<Value, BatchValue>} */
-	var values = new Map();
-
-	if (current_batch !== null) {
-		for (const [source, write] of current_batch.current) {
-			var previous = write.wv > version ? current_batch.previous.get(source) : undefined;
-			if (previous !== undefined) values.set(source, previous);
-		}
-	}
-
-	return values;
 }
 
 /**
