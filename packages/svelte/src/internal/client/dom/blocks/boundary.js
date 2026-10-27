@@ -1,11 +1,5 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import {
-	BOUNDARY_EFFECT,
-	DESTROYED,
-	DESTROYING,
-	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT
-} from '#client/constants';
+import { BOUNDARY_EFFECT, DESTROYED, DESTROYING, EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	HYDRATION_ERROR,
 	HYDRATION_START_ELSE,
@@ -46,6 +40,9 @@ import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
 import { defer_effect } from '../../reactivity/utils.js';
+import { BranchManager } from './branches.js';
+import { assign_nodes } from '../template.js';
+import { get_descriptor } from '../../../shared/utils.js';
 
 /**
  * @typedef {{
@@ -55,8 +52,6 @@ import { defer_effect } from '../../reactivity/utils.js';
  * }} BoundaryProps
  */
 
-var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED;
-
 /**
  * @param {TemplateNode} node
  * @param {BoundaryProps} props
@@ -65,7 +60,38 @@ var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED;
  * @returns {void}
  */
 export function boundary(node, props, children, transform_error) {
-	new Boundary(node, props, children, transform_error);
+	// Static snippets need no branch management, just an owner for reset/error callbacks.
+	if (!get_descriptor(props, 'pending')?.get) {
+		branch(() => {
+			new Boundary(node, props, props.pending, children, transform_error);
+		});
+		return;
+	}
+
+	var branches = new BranchManager(node);
+
+	block(() => {
+		// A block can be revisited while rebasing a pending batch. Reuse the
+		// boundary for this snippet rather than remounting its effects each time.
+		const pending = props.pending ?? null;
+		branches.ensure(pending, (anchor) => {
+			// The pending and main content share a stable range, independent of
+			// the temporary anchor used for offscreen branches by BranchManager.
+			var start = hydrating ? hydrate_node : create_text();
+			var end = create_text();
+
+			if (!hydrating) {
+				anchor.before(start, end);
+				assign_nodes(start, end);
+			}
+
+			new Boundary(end, props, pending, children, transform_error);
+
+			// If hydration throws, leave the markers intact for an ancestor
+			// boundary to recover, rather than claiming an unfinished range.
+			assign_nodes(start, end);
+		});
+	}, EFFECT_TRANSPARENT);
 }
 
 export class Boundary {
@@ -89,6 +115,9 @@ export class Boundary {
 
 	/** @type {BoundaryProps} */
 	#props;
+
+	/** @type {BoundaryProps['pending']} */
+	#pending;
 
 	/** @type {((anchor: Node) => void)} */
 	#children;
@@ -139,12 +168,14 @@ export class Boundary {
 	/**
 	 * @param {TemplateNode} node
 	 * @param {BoundaryProps} props
+	 * @param {BoundaryProps['pending']} pending
 	 * @param {((anchor: Node) => void)} children
 	 * @param {((error: unknown) => unknown) | undefined} [transform_error]
 	 */
-	constructor(node, props, children, transform_error) {
-		this.#anchor = node;
+	constructor(node, props, pending, children, transform_error) {
+		this.#anchor = hydrating ? hydrate_node : node;
 		this.#props = props;
+		this.#pending = pending;
 
 		this.#children = (anchor) => {
 			var effect = /** @type {Effect} */ (active_effect);
@@ -160,39 +191,58 @@ export class Boundary {
 		// Inherit transform_error from parent boundary, or use the provided one, or default to identity
 		this.transform_error = transform_error ?? this.parent?.transform_error ?? ((e) => e);
 
-		this.#effect = block(() => {
-			if (hydrating) {
-				const comment_data = read_hydration_instruction(
-					/** @type {TemplateNode} */ (this.#hydrate_open)
-				);
-				hydrate_next();
-
-				const server_rendered_pending = comment_data === HYDRATION_START_ELSE;
-				const server_rendered_failed = comment_data.startsWith(HYDRATION_START_FAILED);
-
-				if (server_rendered_failed) {
-					// Server rendered the failed snippet - hydrate it.
-					// The serialized error is embedded in the comment: <!--[?<json>-->
-					const serialized_error = JSON.parse(comment_data.slice(HYDRATION_START_FAILED.length));
-					this.#hydrate_failed_content(serialized_error);
-				} else if (server_rendered_pending) {
-					this.#hydrate_pending_content();
-				} else {
-					this.#hydrate_resolved_content();
-				}
-			} else {
-				this.#render();
-			}
-		}, flags);
+		this.#effect = /** @type {Effect} */ (active_effect);
+		this.#effect.f |= EFFECT_TRANSPARENT;
 
 		if (hydrating) {
-			this.#anchor = hydrate_node;
+			const comment_data = read_hydration_instruction(
+				/** @type {TemplateNode} */ (this.#hydrate_open)
+			);
+			hydrate_next();
+
+			const server_rendered_pending = comment_data === HYDRATION_START_ELSE;
+			const server_rendered_failed = comment_data.startsWith(HYDRATION_START_FAILED);
+
+			if (server_rendered_failed) {
+				// Server rendered the failed snippet - hydrate it.
+				// The serialized error is embedded in the comment: <!--[?<json>-->
+				const serialized_error = JSON.parse(comment_data.slice(HYDRATION_START_FAILED.length));
+				this.#hydrate_failed_content(serialized_error);
+			} else if (server_rendered_pending) {
+				this.#hydrate_pending_content();
+			} else {
+				this.#hydrate_resolved_content();
+			}
+		} else {
+			this.#render();
 		}
+
+		if (hydrating) {
+			if (node === this.#hydrate_open) {
+				this.#anchor = hydrate_node;
+			} else {
+				// Leave the closing hydration marker outside the managed branch's
+				// range, as it becomes the anchor for subsequent replacements.
+				hydrate_node.before(node);
+				this.#anchor = node;
+			}
+		}
+	}
+
+	/** @param {() => void} fn */
+	#branch(fn) {
+		return branch(() => {
+			// Unlike a block owner, the instance's branch owner doesn't implicitly
+			// pass local transitions through its child branches.
+			var effect = /** @type {Effect} */ (active_effect);
+			effect.f |= EFFECT_TRANSPARENT;
+			fn();
+		});
 	}
 
 	#hydrate_resolved_content() {
 		try {
-			this.#main_effect = branch(() => this.#children(this.#anchor));
+			this.#main_effect = this.#branch(() => this.#children(this.#anchor));
 		} catch (error) {
 			this.error(error);
 		}
@@ -210,7 +260,7 @@ export class Boundary {
 
 		if (!failed) return;
 
-		this.#failed_effect = branch(() => {
+		this.#failed_effect = this.#branch(() => {
 			failed(
 				this.#anchor,
 				() => error,
@@ -274,11 +324,11 @@ export class Boundary {
 	}
 
 	#hydrate_pending_content() {
-		const pending = this.#props.pending;
+		const pending = this.#pending;
 		if (!pending) return;
 
 		this.is_pending = true;
-		this.#pending_effect = branch(() => pending(this.#anchor));
+		this.#pending_effect = this.#branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
 			if (this.#is_destroyed()) return;
@@ -291,7 +341,7 @@ export class Boundary {
 
 			this.#main_effect = this.#run(() => {
 				try {
-					return branch(() => this.#children(anchor));
+					return this.#branch(() => this.#children(anchor));
 				} catch (error) {
 					try {
 						this.error(error);
@@ -329,7 +379,7 @@ export class Boundary {
 			this.#pending_count = 0;
 			this.#local_pending_count = 0;
 
-			this.#main_effect = branch(() => {
+			this.#main_effect = this.#branch(() => {
 				this.#children(this.#anchor);
 			});
 
@@ -337,8 +387,8 @@ export class Boundary {
 				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 				move_effect(this.#main_effect, fragment);
 
-				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
-				this.#pending_effect = branch(() => pending(this.#anchor));
+				const pending = /** @type {(anchor: Node) => void} */ (this.#pending);
+				this.#pending_effect = this.#branch(() => pending(this.#anchor));
 			} else {
 				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
@@ -375,7 +425,7 @@ export class Boundary {
 	}
 
 	has_pending_snippet() {
-		return !!this.#props.pending;
+		return !!this.#pending;
 	}
 
 	/**
@@ -388,7 +438,7 @@ export class Boundary {
 		var previous_ctx = component_context;
 
 		set_active_effect(this.#effect);
-		set_active_reaction(this.#effect);
+		set_active_reaction(null);
 		set_component_context(this.#effect.ctx);
 
 		try {
@@ -526,7 +576,7 @@ export class Boundary {
 			if (failed && !this.#is_destroyed()) {
 				this.#failed_effect = this.#run(() => {
 					try {
-						return branch(() => {
+						return this.#branch(() => {
 							// errors in `failed` snippets cause the boundary to error again
 							// TODO Svelte 6: revisit this decision, most likely better to go to parent boundary instead
 							var effect = /** @type {Effect} */ (active_effect);
