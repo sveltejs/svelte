@@ -1,7 +1,36 @@
 /** @import { WarpKey } from '#shared' */
+import { install } from 'devalue/uneval-stream/client';
 import { async_mode_flag } from '../flags/index.js';
 import * as e from './errors.js';
 import { get_or_insert, get_or_insert_computed } from '../shared/utils.js';
+
+/**
+ * Handles the `Warp` values that the server's `<script>`s have pushed onto `svelte.d`, and those
+ * they push later, by adding them to `svelte.w`. Does nothing if that's already happening
+ * (e.g. because of another copy of Svelte on the page)
+ * @param {NonNullable<Window['__svelte']>} svelte
+ */
+export function receive_warp_values(svelte) {
+	if (svelte.d !== undefined && !Array.isArray(svelte.d)) return;
+
+	install({
+		target: svelte,
+		key: 'd',
+		receive(_, value) {
+			const store = (svelte.w ??= new Map());
+
+			for (const [id, values] of /** @type {Map<string, Map<WarpKey, unknown>>} */ (value)) {
+				const existing = store.get(id);
+
+				if (existing) {
+					for (const [k, v] of values) existing.set(k, v);
+				} else {
+					store.set(id, values);
+				}
+			}
+		}
+	});
+}
 
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
@@ -33,7 +62,10 @@ export class Warp {
 			e.experimental_async_required('Warp');
 		}
 
-		const store = ((window.__svelte ??= {}).w ??= new Map());
+		const svelte = (window.__svelte ??= {});
+		receive_warp_values(svelte);
+
+		const store = (svelte.w ??= new Map());
 		let values = store.get(this.#id);
 
 		if (values === undefined) {

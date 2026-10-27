@@ -924,7 +924,7 @@ export class Renderer {
 			let result = await /** @type {Promise<IteratorResult<string>>} */ (ready.next);
 
 			while (!result.done) {
-				blocks += `\n\t\t\t\t${result.value}`;
+				blocks += `\n\t\t\t${result.value}`;
 				result = await tail.next();
 			}
 		}
@@ -933,20 +933,10 @@ export class Renderer {
 			serialization_failed(serialization_error);
 		}
 
+		// the messages wait in `window.__svelte.d` until the client's `Warp` handles them (see `receive_warp_values`)
 		const body = `
-			{
-				const w = (window.__svelte ??= {}).w ??= new Map();
-
-				for (const [id, values] of ${head}) {
-					const existing = w.get(id);
-
-					if (existing) {
-						for (const [k, v] of values) existing.set(k, v);
-					} else {
-						w.set(id, values);
-					}
-				}${blocks}
-			}
+			window.__svelte ??= {};
+			${head}${blocks}
 		`;
 
 		let csp_attr = '';
@@ -1035,7 +1025,7 @@ async function take_ready(tail) {
 		const { done, value } = /** @type {IteratorResult<string>} */ (result);
 		if (done) return { blocks, done: true };
 
-		blocks += `\n\t\t\t\t${value}`;
+		blocks += `\n\t\t\t${value}`;
 	}
 }
 
