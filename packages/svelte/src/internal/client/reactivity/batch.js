@@ -30,7 +30,8 @@ import {
 	is_dirty,
 	promote_record,
 	prune_edges,
-	update_effect
+	update_effect,
+	write_version
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
@@ -60,10 +61,12 @@ export let current_batch = null;
 export let previous_batch = null;
 
 /**
- * This is needed to avoid overwriting inputs
- * @type {Batch | null}
+ * Effect teardowns revert the writes that caused them (see `runtime.js#get`). These are the values from
+ * before those writes: while a batch is processed, its `previous` values; while block effects run eagerly
+ * (see `flush_queued_effects`), those from before the writes of the effect that made them run
+ * @type {Map<Value, BatchValue> | null}
  */
-export let committing_batch = null;
+export let reverted_values = null;
 
 /**
  * When time travelling (i.e. working in one batch, while other batches
@@ -424,6 +427,7 @@ export class Batch {
 		}
 
 		this.activate();
+		reverted_values = this.previous;
 
 		/** @type {Effect[]} */
 		var effects = (collected_effects = []);
@@ -508,7 +512,6 @@ export class Batch {
 		this.#release_records(true);
 
 		// append/remove branches
-		committing_batch ??= this;
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
 
@@ -762,6 +765,9 @@ export class Batch {
 	}
 
 	flush() {
+		// (flushes can be nested, e.g. if an effect calls `flushSync`)
+		var previous_reverted_values = reverted_values;
+
 		try {
 			if (DEV) {
 				source_stacks.clear();
@@ -791,7 +797,7 @@ export class Batch {
 			legacy_updates = null;
 			is_processing = false;
 
-			committing_batch = null;
+			reverted_values = previous_reverted_values;
 			this.deactivate();
 
 			if (DEV) {
@@ -1235,6 +1241,7 @@ function flush_queued_effects(effects) {
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
 			eager_block_effects = new Set();
 
+			var version = write_version;
 			update_effect(effect);
 
 			// Effects with no dependencies or teardown do not get added to the effect tree.
@@ -1256,8 +1263,9 @@ function flush_queued_effects(effects) {
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.size > 0) {
-				var previous_committing_batch = committing_batch;
-				committing_batch = null;
+				// these run because of the writes of the effect, so their teardowns revert those
+				var previous_reverted_values = reverted_values;
+				reverted_values = values_before_writes_since(version);
 
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
@@ -1284,12 +1292,31 @@ function flush_queued_effects(effects) {
 				}
 
 				eager_block_effects.clear();
-				committing_batch = previous_committing_batch;
+				reverted_values = previous_reverted_values;
 			}
 		}
 	}
 
 	eager_block_effects = null;
+}
+
+/**
+ * The values from before the writes to the current batch since `version`
+ * @param {number} version
+ * @returns {Map<Value, BatchValue>}
+ */
+function values_before_writes_since(version) {
+	/** @type {Map<Value, BatchValue>} */
+	var values = new Map();
+
+	if (current_batch !== null) {
+		for (const [source, write] of current_batch.current) {
+			var previous = write.wv > version ? current_batch.previous.get(source) : undefined;
+			if (previous !== undefined) values.set(source, previous);
+		}
+	}
+
+	return values;
 }
 
 /**

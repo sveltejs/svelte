@@ -50,11 +50,11 @@ import {
 import {
 	Batch,
 	batch_values,
-	committing_batch,
 	current_batch,
 	first_batch,
 	flushSync,
 	previous_batch,
+	reverted_values,
 	schedule_effect,
 	view_batch,
 	view_cache
@@ -68,9 +68,16 @@ import * as w from './warnings.js';
 
 export let is_destroying_effect = false;
 
-/** @param {boolean} value */
-export function set_is_destroying_effect(value) {
+/** The write version when the running teardown started — later writes happened in it, and aren't reverted */
+export let teardown_version = 0;
+
+/**
+ * @param {boolean} value
+ * @param {number} [version]
+ */
+export function set_is_destroying_effect(value, version = write_version) {
 	is_destroying_effect = value;
+	teardown_version = version;
 }
 
 /** @type {null | Reaction} */
@@ -1068,10 +1075,12 @@ export function get(signal) {
 	}
 
 	if (is_destroying_effect) {
-		const snapshot = committing_batch?.previous.get(signal);
+		// teardowns revert the writes that caused them (see `reverted_values`); nothing read here is recorded
+		var reverted = signal.wv > teardown_version ? undefined : reverted_values?.get(signal);
 
-		if (snapshot) {
-			return snapshot.v;
+		if (reverted !== undefined) {
+			if (reverted.e) throw reverted.v;
+			return reverted.v;
 		}
 
 		if (is_derived) {
@@ -1189,7 +1198,7 @@ function depends_on_old_values(derived) {
 	if (derived.deps === null) return false;
 
 	for (const dep of derived.deps) {
-		if (previous_batch?.previous.has(dep)) {
+		if (dep.wv > teardown_version || reverted_values?.has(dep)) {
 			return true;
 		}
 
