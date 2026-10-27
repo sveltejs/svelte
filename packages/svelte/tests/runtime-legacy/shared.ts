@@ -502,7 +502,7 @@ async function run_test_variant(
 					const chunks = tail;
 					(async () => {
 						for await (const chunk of chunks) {
-							(0, eval)(chunk.replace(/^<script[^>]*>/, '').replace(/<\/script>$/, ''));
+							(0, eval)(chunk.replace(/^<script[^>]*>/i, '').replace(/<\/script>$/i, ''));
 						}
 					})();
 				}
