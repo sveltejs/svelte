@@ -93,8 +93,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       devalue:
-        specifier: https://pkg.svelte.dev/devalue/c/7e38de619f957ea23f1bcfb115b04dd0c2c0482f
-        version: https://pkg.svelte.dev/devalue/c/7e38de619f957ea23f1bcfb115b04dd0c2c0482f
+        specifier: https://pkg.svelte.dev/devalue/c/580ee6c2264d08f2f96f23a7a6e61194b6b8a076
+        version: https://pkg.svelte.dev/devalue/c/580ee6c2264d08f2f96f23a7a6e61194b6b8a076
       esm-env:
         specifier: ^1.2.1
         version: 1.2.1
@@ -1282,10 +1282,10 @@ packages:
     engines: {node: '>=0.10'}
     hasBin: true
 
-  devalue@https://pkg.svelte.dev/devalue/c/7e38de619f957ea23f1bcfb115b04dd0c2c0482f:
-    resolution: {integrity: sha512-nx+dAVm+IeO2iWbskpJXZu7NjTzppUYLXgPFRgzyqtmHArlkaWWhND2XihYjHVqyBgrPjJBN8/USrefrEhRXTQ==, tarball: https://pkg.svelte.dev/devalue/c/7e38de619f957ea23f1bcfb115b04dd0c2c0482f}
-    version: 6.0.2
-    engines: {node: '>=22.17'}
+  devalue@https://pkg.svelte.dev/devalue/c/580ee6c2264d08f2f96f23a7a6e61194b6b8a076:
+    resolution: {integrity: sha512-W2fJ5+DT6ihRC/iDZw7gGtinJ3NbZg68iatVKVja8bwaYu/11qccu1BOaTdoVcmnEG4diDNi6GNaFUroDv6BJQ==, tarball: https://pkg.svelte.dev/devalue/c/580ee6c2264d08f2f96f23a7a6e61194b6b8a076}
+    version: 6.0.3
+    engines: {node: '>=18'}
 
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -3435,7 +3435,7 @@ snapshots:
   detect-libc@1.0.3:
     optional: true
 
-  devalue@https://pkg.svelte.dev/devalue/c/7e38de619f957ea23f1bcfb115b04dd0c2c0482f: {}
+  devalue@https://pkg.svelte.dev/devalue/c/580ee6c2264d08f2f96f23a7a6e61194b6b8a076: {}
 
   dir-glob@3.0.1:
     dependencies:

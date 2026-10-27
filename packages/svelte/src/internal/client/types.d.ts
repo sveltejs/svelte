@@ -8,6 +8,11 @@ declare global {
 		__svelte?: {
 			/** `Warp` values, keyed by the `Warp`'s id */
 			w?: Map<string, Map<WarpKey, unknown>>;
+			/**
+			 * The queue that the server's `<script>`s push `Warp` values onto: an array until
+			 * the client handles it, and devalue's queue after that
+			 */
+			d?: unknown;
 		};
 	}
 }

@@ -5,6 +5,7 @@ import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.
 import { withWarp } from './render-context.js';
 import { Warp } from './warp.js';
 import { hydratable } from './hydratable.js';
+import { Warp as ClientWarp, receive_warp_values } from '../client/warp.js';
 
 beforeAll(() => {
 	enable_async_mode_flag();
@@ -26,12 +27,13 @@ function render(fn: (renderer: Renderer) => void, options?: Parameters<typeof Re
 
 /** Runs the warp `<script>`s in `head` against a fake `window`, and returns the revived values */
 function revive(head: string) {
-	const window: { __svelte?: { w?: Map<string, Map<unknown, unknown>> } } = {};
+	const window: Pick<Window, '__svelte'> = {};
 
 	for (const [, script] of head.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
 		new Function('window', script)(window);
 	}
 
+	if (window.__svelte) receive_warp_values(window.__svelte);
 	return window.__svelte?.w;
 }
 
@@ -45,6 +47,31 @@ describe('Warp', () => {
 		const values = revive(head)?.get('test');
 		expect(values?.get('a')).toBe(1);
 		expect(values?.get('b')).toEqual({ nested: [new Date(0)] });
+	});
+
+	test('hands values to the client whether its `Warp` reads them before or after the script runs', async () => {
+		const client = new ClientWarp<string, any>('test');
+		const window: Pick<Window, '__svelte'> = {};
+		vi.stubGlobal('window', window);
+
+		try {
+			const run = (head: string) => {
+				const script = head.match(/<script>([\s\S]*)<\/script>/)?.[1];
+				new Function('window', script ?? '')(window);
+			};
+
+			// the script runs first, so its values wait for the client
+			run((await render(() => warp.set('a', Promise.resolve(1)))).head);
+			expect(window.__svelte?.w).toBeUndefined();
+			expect(await client.get('a')).toBe(1);
+
+			// the client is already running (e.g. the HTML was inserted later), so the values are added right away
+			run((await render(() => warp.set('b', 2))).head);
+			expect(window.__svelte?.w?.get('test')?.get('b')).toBe(2);
+			expect(client.get('a')).toBeInstanceOf(Promise);
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 
 	test('omits the script when there are no values', async () => {
