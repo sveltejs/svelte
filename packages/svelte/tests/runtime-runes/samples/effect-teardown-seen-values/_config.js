@@ -5,9 +5,6 @@ import { async_mode } from '../../../helpers.js';
 // `x` and `z` are written in effects while the batch with the `go` write is committed, so they belong
 // to the next batch and are reverted together
 export default test({
-	// this doesn't work as we'd like, because effects that get scheduled during commit typically
-	// run immediately — in this case, that's the `after` effect, which runs before `z=1`
-
 	test({ assert, target, logs }) {
 		assert.deepEqual(logs, ['before: x=0', 'after: x=0 z=0']);
 
