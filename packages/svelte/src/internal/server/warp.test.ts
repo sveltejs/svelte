@@ -29,7 +29,7 @@ function render(fn: (renderer: Renderer) => void, options?: Parameters<typeof Re
 function revive(head: string) {
 	const window: Pick<Window, '__svelte'> = {};
 
-	for (const [, script] of head.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+	for (const [, script] of head.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)) {
 		new Function('window', script)(window);
 	}
 
@@ -56,7 +56,7 @@ describe('Warp', () => {
 
 		try {
 			const run = (head: string) => {
-				const script = head.match(/<script>([\s\S]*)<\/script>/)?.[1];
+				const script = head.match(/<script>([\s\S]*)<\/script>/i)?.[1];
 				new Function('window', script ?? '')(window);
 			};
 
