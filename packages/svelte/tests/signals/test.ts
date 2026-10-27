@@ -1,4 +1,7 @@
 import { describe, assert, it } from 'vitest';
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
+import { eager } from '../../src/internal/client/reactivity/batch';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
@@ -55,6 +58,79 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	it.each(['effect', 'derived'])('collects eager %s after destruction', async (kind) => {
+		setFlagsFromString('--expose-gc');
+		const gc = runInNewContext('gc') as () => void;
+		setFlagsFromString('--no-expose-gc');
+
+		function create() {
+			const payload = { value: 1 };
+			const ref = new WeakRef(payload);
+			const destroy = effect_root(() => {
+				const fn = () => eager(() => payload.value);
+				if (kind === 'derived') {
+					const d = derived(fn);
+					render_effect(() => {
+						$.get(d);
+					});
+				} else {
+					render_effect(() => {
+						fn();
+					});
+				}
+			});
+			destroy();
+			return ref;
+		}
+
+		const ref = create();
+		// Release dev-mode debugging references to the previous batch.
+		flushSync(() => effect_root(noop)());
+		// WeakRef targets are kept alive until the end of the current job.
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		gc();
+		assert.equal(ref.deref(), undefined);
+	});
+
+	test('multiple eager reads survive derived reevaluation and stop on destruction', () => {
+		const a = state(0);
+		const b = state(10);
+		const trigger = state(0);
+		const log: number[] = [];
+		let sum!: Derived<number>;
+
+		const destroy = effect_root(() => {
+			sum = derived(() => {
+				$.get(trigger);
+				return eager(() => $.get(a)) + eager(() => $.get(b));
+			});
+			render_effect(() => {
+				log.push($.get(sum));
+			});
+		});
+
+		return () => {
+			assert.deepEqual(log, [10]);
+
+			flushSync(() => {
+				set(a, 1);
+				set(trigger, 1);
+			});
+			flushSync(() => set(b, 20));
+			assert.equal($.get(sum), 21);
+			assert.deepEqual(log, [10, 11, 21]);
+
+			// Destroy while an eager version update is still queued.
+			set(a, 2);
+			destroy();
+			flushSync();
+			assert.deepEqual(log, [10, 11, 21]);
+			assert.equal(sum.v, 21);
+			assert.equal(a.reactions, null);
+			assert.equal(b.reactions, null);
+		};
+	});
+
 	test('effect with state and derived in it', () => {
 		const log: string[] = [];
 
