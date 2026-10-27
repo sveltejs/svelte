@@ -27,6 +27,7 @@ import {
 	active_reaction,
 	get,
 	increment_write_version,
+	is_destroying_effect,
 	is_dirty,
 	promote_record,
 	prune_edges,
@@ -746,7 +747,9 @@ export class Batch {
 			}
 		}
 
-		if (previous !== undefined) {
+		if (is_destroying_effect) {
+			reverted_values?.delete(source);
+		} else if (previous !== undefined) {
 			reverted_values?.set(source, previous);
 		}
 
