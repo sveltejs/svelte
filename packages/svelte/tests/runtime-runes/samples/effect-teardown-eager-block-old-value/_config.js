@@ -8,7 +8,6 @@ export default test({
 	// This fails because the block effect runs eagerly during flush (see `eager_block_effects`
 	// in `batch.js`), which nulls out `committing_batch` rather than setting it to `current_batch`,
 	// which would cause a separate failure in `onmount-prop-access`
-	skip: true,
 
 	html: '<button>increment</button><p>child</p>',
 

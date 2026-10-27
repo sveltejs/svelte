@@ -1053,6 +1053,18 @@ export class Batch {
 	schedule(effect, status) {
 		last_scheduled_effect = effect;
 
+		// While another batch is committed, `$effect`s that this batch's writes affect (other than the one
+		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit
+		if (
+			previous_batch !== null &&
+			previous_batch !== this &&
+			(effect.f & EFFECT) !== 0 &&
+			effect !== active_reaction
+		) {
+			add_dirty_effect(this.#unprocessed, effect, status);
+			return;
+		}
+
 		if ((!is_processing || current_batch !== this) && active_reaction === null) {
 			if (this.prev !== null || this.next !== null || this.is_fork) {
 				add_dirty_effect(this.#unprocessed, effect, MAYBE_DIRTY);

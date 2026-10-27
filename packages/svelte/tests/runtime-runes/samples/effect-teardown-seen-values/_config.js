@@ -6,7 +6,6 @@ import { test } from '../../test';
 export default test({
 	// this doesn't work as we'd like, because effects that get scheduled during commit typically
 	// run immediately — in this case, that's the `after` effect, which runs before `z=1`
-	skip: true,
 
 	test({ assert, target, logs }) {
 		assert.deepEqual(logs, ['before: x=0', 'after: x=0 z=0']);
