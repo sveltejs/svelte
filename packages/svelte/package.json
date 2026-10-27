@@ -179,7 +179,7 @@
     "aria-query": "5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
-    "devalue": "https://pkg.svelte.dev/devalue/c/580ee6c2264d08f2f96f23a7a6e61194b6b8a076",
+    "devalue": "https://pkg.svelte.dev/devalue/c/2e582bba8f521ae7e803f1c26850f1157136711f",
     "esm-env": "^1.2.1",
     "esrap": "^2.3.6",
     "is-reference": "^3.0.3",
