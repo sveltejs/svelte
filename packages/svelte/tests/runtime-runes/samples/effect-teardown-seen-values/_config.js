@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
+import { async_mode } from '../../../helpers.js';
 
 // `x` and `z` are written in effects while the batch with the `go` write is committed, so they belong
 // to the next batch and are reverted together
@@ -12,15 +13,33 @@ export default test({
 
 		flushSync(() => target.querySelector('button')?.click());
 
-		assert.deepEqual(logs, [
-			'before: x=0',
-			'after: x=0 z=0',
-			'x=1',
-			'z=1',
-			'before cleanup: x=0',
-			'before: x=1',
-			'after cleanup: x=0 z=0',
-			'after: x=1 z=1'
-		]);
+		assert.deepEqual(
+			logs,
+			async_mode
+				? [
+						'before: x=0',
+						'after: x=0 z=0',
+						'x=1',
+						'z=1',
+						'before cleanup: x=0',
+						'before: x=1',
+						'after cleanup: x=0 z=0',
+						'after: x=1 z=1'
+					]
+				: [
+						'before: x=0',
+						'after: x=0 z=0',
+						'x=1',
+						'after cleanup: x=1 z=0',
+						'after: x=1 z=0',
+						'z=1',
+						'before cleanup: x=0',
+						'before: x=1',
+						'after cleanup: x=0 z=0',
+						'after: x=1 z=1',
+						'before cleanup: x=1',
+						'after cleanup: x=1 z=1'
+					]
+		);
 	}
 });

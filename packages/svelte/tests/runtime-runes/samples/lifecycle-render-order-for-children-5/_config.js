@@ -13,9 +13,11 @@ export default test({
 		logs.length = 0;
 		flushSync(() => (component.n += 1));
 
-		assert.deepEqual(logs, async_mode
-			? ['$effect.pre 1', 'render n1', 'render i2', 'another $effect.pre 2']
-			: ['$effect.pre 1', 'another $effect.pre 2', 'render n1', 'render i2']
+		assert.deepEqual(
+			logs,
+			async_mode
+				? ['$effect.pre 1', 'render n1', 'render i2', 'another $effect.pre 2']
+				: ['$effect.pre 1', 'another $effect.pre 2', 'render n1', 'render i2']
 		);
 	}
 });
