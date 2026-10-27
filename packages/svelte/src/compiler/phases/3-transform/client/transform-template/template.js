@@ -137,7 +137,7 @@ function objectify(item) {
 		attributes.properties.push(
 			b.prop(
 				'init',
-				b.key(fix_attribute_casing(key)),
+				b.key(item.is_html ? fix_attribute_casing(key) : key),
 				value === undefined ? b.void0 : b.literal(value)
 			)
 		);
