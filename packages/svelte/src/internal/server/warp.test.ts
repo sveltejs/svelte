@@ -432,7 +432,7 @@ describe('streaming', () => {
 
 	/** Runs the `<script>`s in `html`, and has the client handle the values they push */
 	function run(window: FakeWindow, html: string) {
-		for (const [, script] of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+		for (const [, script] of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)) {
 			new Function('window', script)(window);
 		}
 
