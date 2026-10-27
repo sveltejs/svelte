@@ -1056,7 +1056,7 @@ export class Batch {
 		// While another batch is committed, effects that this batch's writes affect (other than the one
 		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit
 		if (
-			async_mode_flag &&
+			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
 			previous_batch !== null &&
 			previous_batch !== this &&
 			effect !== active_reaction
