@@ -1,6 +1,5 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
-import { async_mode } from '../../../helpers.js';
 
 // `x` and `z` are written in effects while the batch with the `go` write is committed, so they belong
 // to the next batch and are reverted together

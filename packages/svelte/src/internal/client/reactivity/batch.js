@@ -427,7 +427,6 @@ export class Batch {
 		}
 
 		this.activate();
-		reverted_values = this.previous;
 
 		/** @type {Effect[]} */
 		var effects = (collected_effects = []);
@@ -541,6 +540,15 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
+			if (reverted_values !== null) {
+				for (const [source, snapshot] of reverted_values) {
+					const theirs = next_batch.previous.get(source);
+					if (theirs === undefined || theirs.wv !== snapshot.wv) {
+						reverted_values.delete(source);
+					}
+				}
+			}
+
 			next_batch.#process();
 		}
 	}
@@ -712,26 +720,34 @@ export class Batch {
 	 * @returns {boolean} whether the value is the latest one
 	 */
 	capture(source, value, same, error = false) {
+		var previous = this.previous.get(source);
+
 		var later = this.next;
 
 		while (later !== null && (later.is_fork || !later.current.has(source))) {
 			later = later.next;
 		}
 
-		if (!this.previous.has(source)) {
+		if (previous === undefined) {
 			// the value before this batch's change is the one before the later batch's change, if any
-			var snapshot = later?.previous.get(source);
+			previous = later?.previous.get(source);
 
-			if (snapshot) {
-				this.previous.set(source, snapshot);
+			if (previous) {
+				this.previous.set(source, previous);
 			} else if (source.v !== UNINITIALIZED) {
-				this.previous.set(source, {
+				previous = {
 					v: source.v,
 					wv: source.wv,
 					e: (source.f & ERROR_VALUE) !== 0,
 					assigned: (source.f & ASSIGNED) !== 0
-				});
+				};
+
+				this.previous.set(source, previous);
 			}
+		}
+
+		if (previous !== undefined) {
+			reverted_values?.set(source, previous);
 		}
 
 		var latest = !this.is_fork && !same && later === null;
@@ -767,6 +783,12 @@ export class Batch {
 	flush() {
 		// (flushes can be nested, e.g. if an effect calls `flushSync`)
 		var previous_reverted_values = reverted_values;
+
+		reverted_values ??= new Map();
+
+		for (const [source, snapshot] of this.previous) {
+			reverted_values.set(source, snapshot);
+		}
 
 		try {
 			if (DEV) {
