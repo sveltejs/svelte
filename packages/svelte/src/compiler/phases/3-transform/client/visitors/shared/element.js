@@ -1,7 +1,6 @@
 /** @import { Expression, Identifier, ObjectExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import { escape_html } from '../../../../../../escaping.js';
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
@@ -194,7 +193,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 		if (value.type === 'Literal' && (value.value === '' || value.value === null)) {
 			value = b.literal(context.state.analysis.css.hash);
 		} else if (value.type === 'Literal' && typeof value.value === 'string') {
-			value = b.literal(escape_html(value.value, true) + ' ' + context.state.analysis.css.hash);
+			value = b.literal(value.value + ' ' + context.state.analysis.css.hash);
 		} else {
 			css_hash = b.literal(context.state.analysis.css.hash);
 		}
