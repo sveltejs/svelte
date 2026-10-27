@@ -1083,7 +1083,7 @@ export function get(signal) {
 			return reverted.v;
 		}
 
-		if (is_derived) {
+		if (is_derived && (flags & ASSIGNED) === 0) {
 			var derived = /** @type {Derived} */ (signal);
 			var value = derived.v;
 
