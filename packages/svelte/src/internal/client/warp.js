@@ -17,23 +17,50 @@ const ALL = Symbol();
  * @param {NonNullable<Window['__svelte']>} svelte
  */
 export function receive_warp_values(svelte) {
+	// adds a streamed value, unless the client changed its key while values were streaming in.
+	// called by the code that the server streams, so that the value is there before anything
+	// awaiting the promises resolved in the same `<script>` runs
+	svelte.a ??= (id, k, v) => {
+		const c = svelte.r?.c.get(id);
+		if (c === true || c?.has(k)) return;
+
+		get_or_insert_computed((svelte.w ??= new Map()), id, () => new Map()).set(k, v);
+	};
+
 	if (svelte.d !== undefined && !Array.isArray(svelte.d)) return;
 
 	install({
 		target: svelte,
 		key: 'd',
-		receive(_, value) {
+		receive(key, value) {
+			/** @type {Map<string, Map<WarpKey, unknown>>} */
+			let values;
+
+			if (Array.isArray(value)) {
+				// a stream, which sends `[values, the values that are streamed in later]`. while any stream is in
+				// progress, the client records the keys it changes, so that values which are streamed in later
+				// (by any stream) don't overwrite the changes
+				(svelte.r ??= { s: new Set(), c: new Map() }).s.add(key);
+				values = value[0];
+			} else {
+				values = /** @type {Map<string, Map<WarpKey, unknown>>} */ (value);
+			}
+
 			const store = (svelte.w ??= new Map());
 
-			for (const [id, values] of /** @type {Map<string, Map<WarpKey, unknown>>} */ (value)) {
+			for (const [id, entries] of values) {
 				const existing = store.get(id);
 
 				if (existing) {
-					for (const [k, v] of values) existing.set(k, v);
+					for (const [k, v] of entries) existing.set(k, v);
 				} else {
-					store.set(id, values);
+					store.set(id, entries);
 				}
 			}
+		},
+		done(key) {
+			// once no streams are in progress, the client forgets the changes it recorded, and stops recording them
+			if (svelte.r?.s.delete(key) && svelte.r.s.size === 0) delete svelte.r;
 		}
 	});
 }

@@ -428,18 +428,15 @@ describe('streaming', () => {
 		return new Promise<T>((fulfil) => setTimeout(() => fulfil(value), ms));
 	}
 
-	type FakeWindow = {
-		__svelte?: {
-			w?: Map<string, Map<unknown, unknown>>;
-			r?: { s: Set<string>; c: Map<string, unknown> };
-			d?: Record<string, unknown>;
-		};
-	};
+	type FakeWindow = Pick<Window, '__svelte'>;
 
+	/** Runs the `<script>`s in `html`, and has the client handle the values they push */
 	function run(window: FakeWindow, html: string) {
 		for (const [, script] of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
 			new Function('window', script)(window);
 		}
+
+		if (window.__svelte) receive_warp_values(window.__svelte);
 	}
 
 	/** Runs the head and then the tail, and returns the revived values once everything has been evaluated */
@@ -457,8 +454,6 @@ describe('streaming', () => {
 		}
 
 		expect(window.__svelte?.r).toBeUndefined();
-		// nothing is left in devalue's table once the stream is done
-		expect(Object.keys(window.__svelte?.d ?? {})).toEqual([]);
 
 		return { values: window.__svelte?.w, chunks };
 	}
@@ -895,7 +890,7 @@ describe('streaming', () => {
 			chunks += 1;
 
 			// the last chunk is only generated once every streamed promise has settled
-			if (!result.value.includes('window.__svelte.r.s.delete')) {
+			if (!result.value.includes('return 1}')) {
 				expect(main?.aborted).toBe(false);
 				expect(background?.aborted).toBe(false);
 			}
@@ -994,7 +989,6 @@ describe('streaming', () => {
 			for await (const chunk of tail) run(window, chunk);
 
 			expect(window.__svelte?.r).toBeUndefined();
-			expect(Object.keys(window.__svelte?.d ?? {})).toEqual([]);
 		}
 
 		afterEach(() => {

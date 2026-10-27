@@ -1014,7 +1014,6 @@ export class Renderer {
 			background === null
 				? `${this.global.id_prefix}w`
 				: `${this.global.id_prefix}w${Math.random().toString(36).slice(2, 10)}`;
-		const key_literal = devalue.uneval(key);
 
 		const late = background === null ? null : stream_late_values(store, background, late_entries);
 
@@ -1119,40 +1118,15 @@ export class Renderer {
 				const result = await /** @type {Promise<IteratorResult<string>>} */ (next);
 				if (result.done) break;
 
-				blocks += `\n\t\t\t\t${result.value}`;
+				blocks += `\n\t\t\t${result.value}`;
 				next = tail.next();
 			} while (first_entries.size > 0);
 		}
 
+		// the messages wait in `window.__svelte.d` until the client's `Warp` handles them (see `receive_warp_values`)
 		const body = `
-			{
-				const w = (window.__svelte ??= {}).w ??= new Map();${
-					// while any stream is in progress, the client records the keys it changes in its `Warp`s,
-					// so that values which are streamed in later (by any stream) don't overwrite the changes
-					late === null
-						? ''
-						: `\n\t\t\t\t(window.__svelte.r ??= { s: new Set(), c: new Map() }).s.add(${key_literal});` +
-							// adds a streamed value, unless the client changed its key while values were streaming in
-							`\n\t\t\t\twindow.__svelte.a ??= (id, k, v) => {` +
-							`\n\t\t\t\t\tconst c = window.__svelte.r?.c.get(id);` +
-							`\n\t\t\t\t\tif (c === true || c?.has(k)) return;` +
-							`\n\t\t\t\t\tconst w = window.__svelte.w;` +
-							`\n\t\t\t\t\tlet m = w.get(id);` +
-							`\n\t\t\t\t\tif (!m) w.set(id, (m = new Map()));` +
-							`\n\t\t\t\t\tm.set(k, v);` +
-							`\n\t\t\t\t};`
-				}
-
-				for (const [id, values] of ${late === null ? head : `(${head})[0]`}) {
-					const existing = w.get(id);
-
-					if (existing) {
-						for (const [k, v] of values) existing.set(k, v);
-					} else {
-						w.set(id, values);
-					}
-				}${blocks}
-			}
+			window.__svelte ??= {};
+			${head}${blocks}
 		`;
 
 		let csp_attr = '';
@@ -1174,7 +1148,6 @@ export class Renderer {
 							tail,
 							/** @type {Promise<IteratorResult<string>>} */ (next),
 							csp_attr,
-							key_literal,
 							() => {
 								this.global.abort();
 								background?.abort();
@@ -1322,7 +1295,7 @@ async function take_head(tail, tracker, gated, warn) {
 			const { done, value } = /** @type {IteratorResult<string>} */ (result);
 			if (done) return { blocks, next: null };
 
-			blocks += `\n\t\t\t\t${value}`;
+			blocks += `\n\t\t\t${value}`;
 			next = tail.next();
 			continue;
 		}
@@ -1444,13 +1417,12 @@ function stream_late_values(store, background, initial) {
  * @param {AsyncIterator<string>} tail
  * @param {Promise<IteratorResult<string>>} next The pending result of `tail.next()`
  * @param {string} csp_attr
- * @param {string} key The stream's key, as a string literal
  * @param {() => void} done Aborts the signals from `getAbortSignal`, once nothing that's streamed can depend on them
  * @param {() => void} stop Stops the background work
  * @returns {AsyncIterable<string>}
  */
-function stream_scripts(tail, next, csp_attr, key, done, stop) {
-	const generator = generate_scripts(tail, next, csp_attr, key, done);
+function stream_scripts(tail, next, csp_attr, done, stop) {
+	const generator = generate_scripts(tail, next, csp_attr, done);
 
 	/** @type {AsyncIterableIterator<string>} */
 	const iterator = {
@@ -1476,11 +1448,10 @@ function stream_scripts(tail, next, csp_attr, key, done, stop) {
  * @param {AsyncIterator<string>} tail
  * @param {Promise<IteratorResult<string>>} next
  * @param {string} csp_attr
- * @param {string} key
  * @param {() => void} done
  * @returns {AsyncGenerator<string>}
  */
-async function* generate_scripts(tail, next, csp_attr, key, done) {
+async function* generate_scripts(tail, next, csp_attr, done) {
 	let finished = false;
 
 	while (!finished) {
@@ -1489,13 +1460,9 @@ async function* generate_scripts(tail, next, csp_attr, key, done) {
 
 		while (true) {
 			if (result.done) {
-				// every streamed promise has settled
+				// every streamed promise has settled. devalue's last block (which is already
+				// in this `<script>` or an earlier one) tells the client the stream has finished
 				done();
-
-				// tell the client that this stream has finished. once no streams are in progress, it
-				// forgets the changes it recorded, and stops recording them
-				code += `window.__svelte.r.s.delete(${key});`;
-				code += `if (window.__svelte.r.s.size === 0) delete window.__svelte.r;`;
 				finished = true;
 				break;
 			}
@@ -1509,7 +1476,7 @@ async function* generate_scripts(tail, next, csp_attr, key, done) {
 			result = /** @type {IteratorResult<string>} */ (more);
 		}
 
-		yield `<script${csp_attr}>${code}</script>`;
+		if (code !== '') yield `<script${csp_attr}>${code}</script>`;
 	}
 }
 
