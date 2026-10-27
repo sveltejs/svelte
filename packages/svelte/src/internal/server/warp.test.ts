@@ -25,11 +25,19 @@ function render(fn: (renderer: Renderer) => void, options?: Parameters<typeof Re
 	return Renderer.render(as_component(fn), options);
 }
 
+/** The contents of the `<script>`s that Svelte rendered into `html` */
+function scripts(html: string) {
+	return html
+		.split('</script>')
+		.slice(0, -1)
+		.map((part) => part.slice(part.indexOf('>', part.indexOf('<script')) + 1));
+}
+
 /** Runs the warp `<script>`s in `head` against a fake `window`, and returns the revived values */
 function revive(head: string) {
 	const window: Pick<Window, '__svelte'> = {};
 
-	for (const [, script] of head.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)) {
+	for (const script of scripts(head)) {
 		new Function('window', script)(window);
 	}
 
@@ -56,8 +64,7 @@ describe('Warp', () => {
 
 		try {
 			const run = (head: string) => {
-				const script = head.match(/<script>([\s\S]*)<\/script>/i)?.[1];
-				new Function('window', script ?? '')(window);
+				for (const script of scripts(head)) new Function('window', script)(window);
 			};
 
 			// the script runs first, so its values wait for the client
