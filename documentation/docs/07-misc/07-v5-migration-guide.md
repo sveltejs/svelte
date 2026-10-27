@@ -851,6 +851,26 @@ Svelte 5 is more strict about the HTML structure and will throw a compiler error
 
 Assignments to destructured parts of a `@const` declaration are no longer allowed. It was an oversight that this was ever allowed.
 
+### Reassigning a value no longer forces an update
+
+In Svelte 4, assigning a variable `null` and then immediately assigning it back invalidated it twice, so the DOM was updated even if the final value was the same as before. In Svelte 5, updates are batched and the second assignment is compared against the value that was last flushed, so nothing happens:
+
+```js
+value = null;
+value = valueToSet; // no update if `value` was already `valueToSet`
+```
+
+If you need the intermediate value to be applied, wrap the first assignment in `flushSync` (import from `'svelte'`):
+
+```js
+import { flushSync } from 'svelte';
+
+flushSync(() => {
+	value = null;
+});
+value = valueToSet;
+```
+
 ### :is(...), :has(...), and :where(...) are scoped
 
 Previously, Svelte did not analyse selectors inside `:is(...)`, `:has(...)`, and `:where(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. Some selectors may now therefore be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:has(...)/:where(...)` selectors.
