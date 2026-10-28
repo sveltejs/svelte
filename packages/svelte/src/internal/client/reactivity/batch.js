@@ -24,6 +24,7 @@ import {
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
+	active_effect,
 	active_reaction,
 	get,
 	increment_write_version,
@@ -38,13 +39,20 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { flush_eager_effects, set_eager_effects, source, update } from './sources.js';
+import {
+	eager_effects,
+	eager_effects_deferred,
+	flush_eager_effects,
+	source,
+	update
+} from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { add_dirty_effect, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
+import { is_runes } from '../context.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
@@ -168,6 +176,17 @@ var flush_count = 0;
 
 /** Sources whose DEV update counts and stack traces need resetting after the flush. @type {Set<Value>} */
 export const source_stacks = new Set();
+
+/**
+ * A set of signals we have already seen while traversing in `batch.mark`.
+ * Not always set to balance the common case of sources only having a couple
+ * of (transitive) dependencies (where always creating a Set would be bad for perf)
+ * with the edge case of extremely deep or wide dependency arrays with cycles.
+ * @type {Set<any> | null}
+ */
+var seen = null;
+/** Number of transitive dependencies, see {@link seen} for more info */
+var count_deps = 0;
 
 let uid = 1;
 
@@ -598,7 +617,7 @@ export class Batch {
 	 * They are marked MAYBE_DIRTY, which means that they are only re-run if the exact versions
 	 * of their dependencies differ from the ones they last saw (in this batch's view of the world)
 	 * @param {Iterable<Value>} values
-	 * @param {Set<Reaction>} seen
+	 * @param {Set<Reaction>} [seen]
 	 */
 	#revalidate(values, seen = new Set()) {
 		for (const value of values) {
@@ -757,9 +776,9 @@ export class Batch {
 	 * @param {boolean} same whether the value equals the real one (it can, if this batch sees another one, see
 	 * `internal_set`) — in which case the source isn't updated, and the value gets the same version
 	 * @param {boolean} [error] whether the value is an error (thrown when read, see `runtime.js#get`)
-	 * @returns {boolean} whether the value is the latest one
+	 * @param {Effect[] | null} [updated_during_traversal]
 	 */
-	capture(source, value, same, error = false) {
+	capture(source, value, same, error = false, updated_during_traversal = null) {
 		var previous = this.previous.get(source);
 
 		var later = this.next;
@@ -810,9 +829,27 @@ export class Batch {
 			source.v = value;
 			source.wv = entry.wv;
 			source.f = error ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
+
+			if ((source.f & DERIVED) !== 0) {
+				// The assigned value holds until one of the derived's dependencies is written after it (see `unchanged_since`).
+				// (Other assignments are part of the batch's writes only — a fork's become global when it's committed)
+				source.f |= ASSIGNED;
+				update_derived_status(/** @type {Derived} */ (source));
+			}
 		}
 
-		return latest;
+		// A value that equals the real one, with the same version, changes nothing that reactions
+		// could read outside this batch's view — which is revalidated when the batch is processed
+		if (!same) {
+			seen = null;
+			count_deps = 0;
+			this.mark(source, DIRTY, updated_during_traversal);
+			seen = null;
+
+			if (eager_effects.size > 0 && !eager_effects_deferred) {
+				flush_eager_effects();
+			}
+		}
 	}
 
 	deactivate() {
@@ -1094,6 +1131,82 @@ export class Batch {
 		}
 
 		return record;
+	}
+
+	/**
+	 * @param {Value} signal
+	 * @param {number} status should be DIRTY or MAYBE_DIRTY
+	 * @param {Effect[] | null} [updated_during_traversal]
+	 * @returns {void}
+	 */
+	mark(signal, status, updated_during_traversal = null) {
+		var reactions = signal.reactions;
+		if (reactions === null) return;
+
+		var runes = is_runes();
+		var length = reactions.length;
+
+		count_deps += length;
+		// Activate the `seen` Set if we think from the unusually high number of deps that
+		// there might be cycles in the graph, to avoid repeated lookups for reactions
+		// Example: https://github.com/sveltejs/svelte/issues/16658 has a graph with one source
+		// reaching ~10000 distinct deriveds/effects each, resulting in 65 million walks through repeated visits.
+		if (count_deps > 100000 && seen === null) seen = new Set();
+
+		if (seen !== null) {
+			if (seen.has(signal)) return;
+			seen.add(signal);
+		}
+
+		for (var i = 0; i < length; i++) {
+			var reaction = reactions[i];
+			var flags = reaction.f;
+
+			// In legacy mode, skip the current effect to prevent infinite loops
+			if (!runes && reaction === active_effect) continue;
+
+			var not_dirty = (flags & DIRTY) === 0;
+
+			if ((flags & EAGER_EFFECT) !== 0) {
+				if (!this.is_fork) {
+					// don't set a DIRTY reaction to MAYBE_DIRTY
+					if (not_dirty) {
+						set_signal_status(reaction, status);
+					}
+
+					// Eager effects need to run immediately:
+					// - for $inspect so that the stack trace makes sense
+					// - for $state.eager because they might be without an effect parent
+					eager_effects.add(/** @type {Effect} */ (reaction));
+				}
+			} else if ((flags & DERIVED) !== 0) {
+				// don't set a DIRTY reaction to MAYBE_DIRTY
+				if (not_dirty) {
+					set_signal_status(reaction, status);
+				}
+
+				var derived = /** @type {Derived} */ (reaction);
+
+				view_cache?.delete(derived);
+				this.mark(derived, MAYBE_DIRTY, updated_during_traversal);
+			} else if (not_dirty) {
+				var effect = /** @type {Effect} */ (reaction);
+
+				if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
+					// these run right away (see `flush_queued_effects`)
+					set_signal_status(effect, status);
+					eager_block_effects.add(effect);
+				}
+
+				if (updated_during_traversal !== null) {
+					set_signal_status(effect, status);
+					updated_during_traversal.push(effect);
+				} else {
+					// the status is applied when the batch is processed
+					this.schedule(effect, status);
+				}
+			}
+		}
 	}
 
 	/**
@@ -1385,37 +1498,6 @@ function flush_queued_effects(effects, earlier_writes = null) {
 }
 
 /**
- * When committing a fork, we need to trigger eager effects so that
- * any `$state.eager(...)` expressions update immediately. This
- * function allows us to discover them
- * @param {Value} value
- * @param {Set<Effect>} effects
- */
-function mark_eager_effects(value, effects) {
-	if (value.reactions === null) return;
-
-	for (const reaction of value.reactions) {
-		const flags = reaction.f;
-
-		if ((flags & DERIVED) !== 0) {
-			mark_eager_effects(/** @type {Derived} */ (reaction), effects);
-		} else if ((flags & EAGER_EFFECT) !== 0) {
-			set_signal_status(reaction, DIRTY);
-			effects.add(/** @type {Effect} */ (reaction));
-		}
-	}
-}
-
-/**
- * @param {Effect} effect
- * @param {number} status DIRTY or MAYBE_DIRTY
- * @returns {void}
- */
-export function schedule_effect(effect, status) {
-	/** @type {Batch} */ (current_batch).schedule(effect, status);
-}
-
-/**
  * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
  * views of the world can't undo such a write, as there's no value from before it (see `capture`) — unless they have
  * their own write of it, like `batch` might. (The writes of forks aren't part of other views at all)
@@ -1478,36 +1560,46 @@ export function eager(fn) {
 
 	get(version);
 
-	eager_effect(() => {
-		if (initial) {
-			// the first time this runs, we create an eager effect
-			// that will run eagerly whenever the expression changes
-			var previous_batch_values = batch_values;
-
-			try {
-				// evaluate in the real world
-				batch_values = null;
+	// evaluate in the real world — including recording the versions of the dependencies,
+	// so that the eager effect is dirty-checked correctly later (see `flush_eager_effects`)
+	in_real_world(() => {
+		eager_effect(() => {
+			if (initial) {
+				// the first time this runs, we create an eager effect
+				// that will run eagerly whenever the expression changes
 				value = fn();
-			} finally {
-				batch_values = previous_batch_values;
+				return;
 			}
 
-			return;
-		}
+			// the second time this effect runs, it's to schedule a
+			// `version` update. since this will recreate the effect,
+			// we don't need to evaluate the expression here
+			if (eager_versions.length === 0) {
+				queue_micro_task(eager_flush);
+			}
 
-		// the second time this effect runs, it's to schedule a
-		// `version` update. since this will recreate the effect,
-		// we don't need to evaluate the expression here
-		if (eager_versions.length === 0) {
-			queue_micro_task(eager_flush);
-		}
-
-		eager_versions.push(version);
+			eager_versions.push(version);
+		});
 	});
 
 	initial = false;
 
 	return value;
+}
+
+/**
+ * Run `fn` with the real world (i.e. the latest values) as the active view, regardless of which batch is active
+ * @param {() => void} fn
+ */
+export function in_real_world(fn) {
+	var previous_batch_values = batch_values;
+	batch_values = null;
+
+	try {
+		fn();
+	} finally {
+		batch_values = previous_batch_values;
+	}
 }
 
 /**
@@ -1596,6 +1688,8 @@ export function fork(fn) {
 			// so that everything the fork computed remains valid (processing the batch
 			// re-validates everything that depends on them, see `#process`)
 			for (var [source, entry] of batch.current) {
+				batch.mark(source, MAYBE_DIRTY);
+
 				source.v = entry.v;
 				source.wv = entry.wv;
 				source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
@@ -1607,22 +1701,9 @@ export function fork(fn) {
 				}
 			}
 
-			// trigger any `$state.eager(...)` expressions with the new state.
-			// eager effects don't get scheduled like other effects, so we
-			// can't just encounter them during traversal, we need to
-			// proactively flush them
-			// TODO maybe there's a better implementation?
-			flushSync(() => {
-				/** @type {Set<Effect>} */
-				var eager_effects = new Set();
-
-				for (var source of batch.current.keys()) {
-					mark_eager_effects(source, eager_effects);
-				}
-
-				set_eager_effects(eager_effects);
+			if (eager_effects.size > 0) {
 				flush_eager_effects();
-			});
+			}
 
 			batch.flush();
 			await settled;
