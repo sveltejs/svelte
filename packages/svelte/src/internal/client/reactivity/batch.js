@@ -1394,15 +1394,6 @@ function flush_queued_effects(effects) {
 }
 
 /**
- * @param {Effect} effect
- * @param {number} status DIRTY or MAYBE_DIRTY
- * @returns {void}
- */
-export function schedule_effect(effect, status) {
-	/** @type {Batch} */ (current_batch).schedule(effect, status);
-}
-
-/**
  * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
  * views of the world can't undo such a write, as there's no value from before it (see `capture`) — unless they have
  * their own write of it, like `batch` might. (The writes of forks aren't part of other views at all)
