@@ -11,7 +11,8 @@ import {
 	REACTION_RAN,
 	INERT,
 	CONNECTED,
-	ASSIGNED
+	ASSIGNED,
+	ERROR_VALUE
 } from '#client/constants';
 import {
 	active_reaction,
@@ -26,14 +27,15 @@ import {
 	new_deps,
 	is_current,
 	promote_record,
-	unchanged_since
+	unchanged_since,
+	is_dirty
 } from '../runtime.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
-import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
+import { eager_effects, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
@@ -49,6 +51,7 @@ import { increment_pending, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
+import { stringify_derived } from '../dev/debug.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -124,7 +127,7 @@ export function async_derived(fn, label, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	if (DEV) signal.label = label ?? fn.toString();
+	if (DEV) signal.label = label ?? stringify_derived(fn);
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
@@ -213,28 +216,19 @@ export function async_derived(fn, label, location) {
 
 			if (error === OBSOLETE) return;
 
-			// write the result in the batch's view of the world
-			batch.activate();
+			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
+			batch.capture(signal, error ?? value, same, !!error);
 
-			if (error) {
-				// @ts-expect-error the error is the wrong type, but we don't care
-				internal_set(signal, error, null, true, true);
-			} else {
-				if (DEV && location !== undefined && !signal.equals(value)) {
-					recent_async_deriveds.add(signal);
+			if (DEV && location !== undefined && !signal.equals(value)) {
+				recent_async_deriveds.add(signal);
 
-					setTimeout(() => {
-						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
-							w.await_waterfall(/** @type {string} */ (signal.label), location);
-							recent_async_deriveds.delete(signal);
-						}
-					});
-				}
-
-				internal_set(signal, value, null, true);
+				setTimeout(() => {
+					if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
+						w.await_waterfall(/** @type {string} */ (signal.label), location);
+						recent_async_deriveds.delete(signal);
+					}
+				});
 			}
-
-			batch.deactivate();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -401,6 +395,8 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
+	if (!is_dirty(derived)) return;
+
 	var records = view_batch?.records;
 	var record = records?.get(derived);
 
