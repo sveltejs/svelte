@@ -748,7 +748,16 @@ export class Batch {
 		}
 
 		if (is_destroying_effect) {
-			reverted_values?.delete(source);
+			if (reverted_values !== null) {
+				reverted_values.delete(source);
+
+				// the deriveds that teardowns evaluated (see `runtime.js#get`) may depend on the written value
+				for (const value of reverted_values.keys()) {
+					if ((value.f & (DERIVED | ASSIGNED)) === DERIVED) {
+						reverted_values.delete(value);
+					}
+				}
+			}
 		} else if (previous !== undefined) {
 			reverted_values?.set(source, previous);
 		}
