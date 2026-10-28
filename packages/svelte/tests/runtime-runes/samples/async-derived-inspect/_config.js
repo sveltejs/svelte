@@ -9,6 +9,19 @@ export default test({
 		button.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<button>4</button>');
-		assert.deepEqual(logs, ['v', 'init', 2, 'doubled', 'init', 4, 'v', 'update', 4, 'doubled', 'update', 8]);
+		assert.deepEqual(logs, [
+			'v',
+			'init',
+			2,
+			'doubled',
+			'init',
+			4,
+			'v',
+			'update',
+			4,
+			'doubled',
+			'update',
+			8
+		]);
 	}
 });
