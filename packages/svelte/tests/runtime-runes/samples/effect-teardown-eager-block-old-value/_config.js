@@ -1,9 +1,10 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
 
-// The `{#if}` block runs because `count++` causes the effect in the parent component
-// to run, which sets `show = false` in a new batch. The teardown in the child sees
-// the latest `count`, but the reverted `show` because that change caused the teardown
+// The parent effect writes `show = false` into the next batch, but the
+// `{#if}` runs eagerly while the `count` batch is still committing.
+// The child's teardown therefore sees both reverted values:
+// `count = 0` and `show = true`.
 export default test({
 	html: '<button>increment</button><p>child</p>',
 

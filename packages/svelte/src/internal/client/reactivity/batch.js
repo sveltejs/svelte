@@ -793,7 +793,7 @@ export class Batch {
 	}
 
 	flush() {
-		// (flushes can be nested, e.g. if an effect calls `flushSync`)
+		// flushes can be nested, e.g. if an effect calls `flushSync`
 		var previous_reverted_values = reverted_values;
 
 		reverted_values ??= new Map();
@@ -1354,7 +1354,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 				reverted_values = previous_reverted_values;
 			}
 
-			// (if the effect — or the block effects — wrote anything)
+			// if the effect — or the block effects — wrote anything
 			if (write_version !== version && current_batch !== null) {
 				for (const [value, write] of current_batch.current) {
 					if (write.wv > version) {
