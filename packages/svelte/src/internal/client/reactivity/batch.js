@@ -37,7 +37,14 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { eager_effects, eager_effects_deferred, flush_eager_effects, old_values, source, update } from './sources.js';
+import {
+	eager_effects,
+	eager_effects_deferred,
+	flush_eager_effects,
+	old_values,
+	source,
+	update
+} from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { add_dirty_effect, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';

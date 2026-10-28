@@ -236,8 +236,6 @@ export function internal_set(source, value, updated_during_traversal = null) {
 				untracked_writes.push(source);
 			}
 		}
-
-
 	}
 
 	return value;

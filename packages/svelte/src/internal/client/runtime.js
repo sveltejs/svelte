@@ -288,7 +288,10 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
-			/** @type {Batch} */ (current_batch).schedule(/** @type {Effect} */ (reaction), root ? DIRTY : MAYBE_DIRTY);
+			/** @type {Batch} */ (current_batch).schedule(
+				/** @type {Effect} */ (reaction),
+				root ? DIRTY : MAYBE_DIRTY
+			);
 		}
 	}
 }
