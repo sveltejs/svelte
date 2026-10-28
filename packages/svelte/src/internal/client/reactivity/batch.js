@@ -62,12 +62,26 @@ export let current_batch = null;
 export let previous_batch = null;
 
 /**
- * Effect teardowns revert the writes that caused them (see `runtime.js#get`). These are the values from
- * before those writes: while a batch is processed, its `previous` values; while block effects run eagerly
- * (see `flush_queued_effects`), those from before the writes of the effect that made them run
- * @type {Map<Value, BatchValue> | null}
+ * @typedef {Object} TeardownContext
+ * @property {Map<Value, BatchValue>} reverted_values The writes to revert in this view
+ * @property {Map<Derived, any>} derived_cache Deriveds evaluated with this view's values
+ * @property {TeardownContext | null} parent The context to restore after a nested flush or eager block
  */
-export let reverted_values = null;
+
+/**
+ * Effect teardowns revert the writes that caused them (see `runtime.js#get`). Their computed deriveds
+ * are cached separately from those snapshots, for the lifetime of the view they were evaluated in.
+ * @type {TeardownContext | null}
+ */
+export let teardown_context = null;
+
+function push_teardown_context() {
+	return (teardown_context = {
+		reverted_values: new Map(teardown_context?.reverted_values),
+		derived_cache: new Map(),
+		parent: teardown_context
+	});
+}
 
 /**
  * When time travelling (i.e. working in one batch, while other batches
@@ -402,6 +416,9 @@ export class Batch {
 	}
 
 	#process() {
+		// A different batch view may apply, even when processing continues within the same flush.
+		teardown_context?.derived_cache.clear();
+
 		if (async_mode_flag && this.started) {
 			// Since this batch last ran, reactions may have come to depend on its writes without it
 			// knowing (e.g. effects created by other batches), or have run in the view of other batches.
@@ -541,11 +558,11 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
-			if (reverted_values !== null) {
-				for (const [source, snapshot] of reverted_values) {
+			if (teardown_context !== null) {
+				for (const [source, snapshot] of teardown_context.reverted_values) {
 					const theirs = next_batch.previous.get(source);
 					if (theirs === undefined || theirs.wv !== snapshot.wv) {
-						reverted_values.delete(source);
+						teardown_context.reverted_values.delete(source);
 					}
 				}
 			}
@@ -748,18 +765,14 @@ export class Batch {
 		}
 
 		if (is_destroying_effect) {
-			if (reverted_values !== null) {
-				reverted_values.delete(source);
-
-				// the deriveds that teardowns evaluated (see `runtime.js#get`) may depend on the written value
-				for (const value of reverted_values.keys()) {
-					if ((value.f & (DERIVED | ASSIGNED)) === DERIVED) {
-						reverted_values.delete(value);
-					}
-				}
+			// Cleanup writes must remain visible after returning to an enclosing teardown view.
+			for (var context = teardown_context; context !== null; context = context.parent) {
+				context.reverted_values.delete(source);
+				// the deriveds that teardowns evaluated may depend on the written value
+				context.derived_cache.clear();
 			}
 		} else if (previous !== undefined) {
-			reverted_values?.set(source, previous);
+			teardown_context?.reverted_values.set(source, previous);
 		}
 
 		var latest = !this.is_fork && !same && later === null;
@@ -794,12 +807,10 @@ export class Batch {
 
 	flush() {
 		// flushes can be nested, e.g. if an effect calls `flushSync`
-		var previous_reverted_values = reverted_values;
-
-		reverted_values ??= new Map();
+		var context = push_teardown_context();
 
 		for (const [source, snapshot] of this.previous) {
-			reverted_values.set(source, snapshot);
+			context.reverted_values.set(source, snapshot);
 		}
 
 		try {
@@ -831,7 +842,7 @@ export class Batch {
 			legacy_updates = null;
 			is_processing = false;
 
-			reverted_values = previous_reverted_values;
+			teardown_context = context.parent;
 			this.deactivate();
 
 			if (DEV) {
@@ -1313,16 +1324,16 @@ function flush_queued_effects(effects, earlier_writes = null) {
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.size > 0) {
 				// these run because of the writes of the effect, so their teardowns revert those
-				var previous_reverted_values = reverted_values;
+				var previous_teardown_context = teardown_context;
 
 				// if state was written by an effect before the one that caused the eager
-				// block rerun, we need to include it in the `reverted_values` seen
-				// by teardowns that happen as a result of the eager block rerun
+				// block rerun, its writes apply in this view. Deriveds must be evaluated
+				// afresh rather than reusing results cached before those writes.
 				if (earlier_writes !== null) {
-					reverted_values = new Map(reverted_values);
+					var context = push_teardown_context();
 
 					for (const [value, write] of earlier_writes) {
-						reverted_values.set(value, write);
+						context.reverted_values.set(value, write);
 					}
 				}
 
@@ -1351,7 +1362,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 				}
 
 				eager_block_effects.clear();
-				reverted_values = previous_reverted_values;
+				teardown_context = previous_teardown_context;
 			}
 
 			// if the effect — or the block effects — wrote anything

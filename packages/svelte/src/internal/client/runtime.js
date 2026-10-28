@@ -54,7 +54,7 @@ import {
 	first_batch,
 	flushSync,
 	previous_batch,
-	reverted_values,
+	teardown_context,
 	schedule_effect,
 	view_batch,
 	view_cache
@@ -1075,8 +1075,9 @@ export function get(signal) {
 	}
 
 	if (is_destroying_effect) {
-		// teardowns revert the writes that caused them (see `reverted_values`); nothing read here is recorded
-		var reverted = signal.wv > teardown_version ? undefined : reverted_values?.get(signal);
+		// teardowns revert the writes that caused them; nothing read here is recorded
+		var reverted =
+			signal.wv > teardown_version ? undefined : teardown_context?.reverted_values.get(signal);
 
 		if (reverted !== undefined) {
 			if (reverted.e) throw reverted.v;
@@ -1085,19 +1086,20 @@ export function get(signal) {
 
 		if (is_derived && (flags & ASSIGNED) === 0) {
 			var derived = /** @type {Derived} */ (signal);
+			var cache = teardown_context?.derived_cache;
+
+			if (cache?.has(derived)) return cache.get(derived);
+
 			var value = derived.v;
 
-			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
+			// The global value may not apply to the teardown's view, including when another batch has pending writes.
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
 			if (
 				((derived.f & CLEAN) === 0 && derived.reactions !== null) ||
-				depends_on_old_values(derived)
+				depends_on_teardown_values(derived)
 			) {
 				value = execute_derived(derived);
-				reverted_values?.set(signal, {
-					v: value,
-					wv: write_version
-				});
+				cache?.set(derived, value);
 			}
 
 			return value;
@@ -1197,16 +1199,22 @@ function reconnect(derived) {
 }
 
 /** @param {Derived} derived */
-function depends_on_old_values(derived) {
+function depends_on_teardown_values(derived) {
 	if (derived.v === UNINITIALIZED) return true; // we don't know, so assume the worst
 	if (derived.deps === null) return false;
 
 	for (const dep of derived.deps) {
-		if (dep.wv > teardown_version || reverted_values?.has(dep)) {
+		var view = batch_values?.get(dep);
+
+		if (
+			dep.wv > teardown_version ||
+			teardown_context?.reverted_values.has(dep) ||
+			(view !== undefined && view.wv !== dep.wv)
+		) {
 			return true;
 		}
 
-		if ((dep.f & DERIVED) !== 0 && depends_on_old_values(/** @type {Derived} */ (dep))) {
+		if ((dep.f & DERIVED) !== 0 && depends_on_teardown_values(/** @type {Derived} */ (dep))) {
 			return true;
 		}
 	}
