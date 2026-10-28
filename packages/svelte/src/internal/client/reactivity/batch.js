@@ -37,7 +37,7 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { eager_effects, flush_eager_effects, old_values, source, update } from './sources.js';
+import { eager_effects, eager_effects_deferred, flush_eager_effects, old_values, source, update } from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { add_dirty_effect, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
@@ -556,10 +556,7 @@ export class Batch {
 	 * @param {Iterable<Value>} values
 	 * @param {Set<Reaction>} [seen]
 	 */
-	#revalidate(values, seen) {
-		var root = seen === undefined;
-		seen ??= new Set();
-
+	#revalidate(values, seen = new Set()) {
 		for (const value of values) {
 			for (const reaction of value.reactions ?? []) {
 				var flags = reaction.f;
@@ -570,22 +567,14 @@ export class Batch {
 				if ((flags & DERIVED) !== 0) {
 					if ((flags & CLEAN) !== 0) set_signal_status(reaction, MAYBE_DIRTY);
 					this.#revalidate([/** @type {Derived} */ (reaction)], seen);
-				} else if ((flags & EAGER_EFFECT) !== 0) {
-					if (!this.is_fork) {
-						eager_effects.add(/** @type {Effect} */ (reaction));
-					}
 				} else if (
-					(flags & (INERT | DESTROYED)) === 0 &&
+					(flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 &&
 					// branches that this batch skips don't exist in its view of the world
 					!this.#is_skipped(/** @type {Effect} */ (reaction))
 				) {
 					this.schedule(/** @type {Effect} */ (reaction), MAYBE_DIRTY);
 				}
 			}
-		}
-
-		if (root && eager_effects.size > 0) {
-			flush_eager_effects();
 		}
 	}
 
@@ -784,6 +773,10 @@ export class Batch {
 			count_deps = 0;
 			this.mark(source, DIRTY, updated_during_traversal);
 			seen = null;
+
+			if (eager_effects.size > 0 && !eager_effects_deferred) {
+				flush_eager_effects();
+			}
 		}
 	}
 
@@ -1072,10 +1065,10 @@ export class Batch {
 	/**
 	 * @param {Value} signal
 	 * @param {number} status should be DIRTY or MAYBE_DIRTY
-	 * @param {Effect[] | null} updated_during_traversal
+	 * @param {Effect[] | null} [updated_during_traversal]
 	 * @returns {void}
 	 */
-	mark(signal, status, updated_during_traversal) {
+	mark(signal, status, updated_during_traversal = null) {
 		var reactions = signal.reactions;
 		if (reactions === null) return;
 
@@ -1600,6 +1593,8 @@ export function fork(fn) {
 			// so that everything the fork computed remains valid (processing the batch
 			// re-validates everything that depends on them, see `#process`)
 			for (var [source, entry] of batch.current) {
+				batch.mark(source, DIRTY);
+
 				source.v = entry.v;
 				source.wv = entry.wv;
 				source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
@@ -1609,6 +1604,10 @@ export function fork(fn) {
 					source.f |= ASSIGNED;
 					update_derived_status(/** @type {Derived} */ (source));
 				}
+			}
+
+			if (eager_effects.size > 0) {
+				flush_eager_effects();
 			}
 
 			batch.flush();

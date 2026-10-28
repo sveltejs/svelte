@@ -50,7 +50,7 @@ export function set_eager_effects(v) {
 	eager_effects = v;
 }
 
-let eager_effects_deferred = false;
+export let eager_effects_deferred = false;
 
 export function set_eager_effects_deferred() {
 	eager_effects_deferred = true;
@@ -237,9 +237,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		if (eager_effects.size > 0 && !eager_effects_deferred) {
-			flush_eager_effects();
-		}
+
 	}
 
 	return value;
