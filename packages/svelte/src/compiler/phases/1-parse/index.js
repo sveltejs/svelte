@@ -229,7 +229,6 @@ export class Parser {
 		const code = /** @type {number} */ (this.template.codePointAt(this.index));
 
 		if (isIdentifierStart(code, true)) {
-			let i = this.index;
 			end += code <= 0xffff ? 1 : 2;
 
 			while (end < this.template.length) {

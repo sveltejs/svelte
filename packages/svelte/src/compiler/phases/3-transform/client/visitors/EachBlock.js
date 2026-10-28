@@ -10,7 +10,7 @@ import {
 	EACH_ITEM_REACTIVE
 } from '../../../../../constants.js';
 import { dev } from '../../../../state.js';
-import { extract_paths, object } from '../../../../utils/ast.js';
+import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { async_thunk } from '../utils.js';
 import { get_value } from './shared/declarations.js';

@@ -4,7 +4,6 @@ import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydra
 import {
 	create_text,
 	get_first_child,
-	get_next_sibling,
 	is_firefox,
 	create_element,
 	create_fragment,
