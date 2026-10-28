@@ -11,7 +11,8 @@ import {
 	current_sources,
 	is_dirty,
 	untracking,
-	push_reaction_value
+	push_reaction_value,
+	is_destroying_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -39,7 +40,8 @@ import {
 	view_cache,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	teardown_write
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -279,6 +281,9 @@ export function internal_set(
 	} else if (own_result) {
 		// an async expression resolved to what the batch (and the real world) sees — it still belongs to the batch
 		Batch.ensure().capture(source, value, true);
+	} else if (is_destroying_effect) {
+		// not a change, but the teardown no longer sees a reverted value
+		teardown_write(source);
 	}
 
 	return value;
