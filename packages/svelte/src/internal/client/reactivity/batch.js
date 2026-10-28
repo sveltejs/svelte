@@ -1273,13 +1273,12 @@ function flush_queued_effects(effects) {
 	var i = 0;
 
 	/**
-	 * When flushing block effects after state changes in an `$effect`, we need
-	 * to revert those changes while running any teardown functions, but we _don't_
-	 * want to revert all the way prior to `flush_queued_effects` in the case where
-	 * sibling effects write to the same source multiple times
+	 * The writes of the effects that already ran (to the current batch). When an effect's writes cause block
+	 * effects to run eagerly, their teardowns revert those writes but not these — including the values that
+	 * the effect overwrote
 	 * @type {Map<Value, BatchValue> | null}
 	 */
-	var accumulated_writes = null;
+	var earlier_writes = null;
 
 	while (i < length) {
 		var effect = effects[i++];
@@ -1289,17 +1288,6 @@ function flush_queued_effects(effects) {
 
 			var version = write_version;
 			update_effect(effect);
-
-			/** @type {Map<Value, BatchValue> | null} */
-			var new_writes = null;
-
-			if (current_batch) {
-				for (const [value, write] of current_batch.current) {
-					if (write.wv > version) {
-						(new_writes ??= new Map()).set(value, write);
-					}
-				}
-			}
 
 			// Effects with no dependencies or teardown do not get added to the effect tree.
 			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
@@ -1322,10 +1310,14 @@ function flush_queued_effects(effects) {
 			if (eager_block_effects?.size > 0) {
 				// these run because of the writes of the effect, so their teardowns revert those
 				var previous_reverted_values = reverted_values;
-				reverted_values = new Map(reverted_values);
 
-				if (accumulated_writes) {
-					for (const [value, write] of accumulated_writes) {
+				// if state was written by an effect before the one that caused the eager
+				// block rerun, we need to include it in the `reverted_values` seen
+				// by teardowns that happen as a result of the eager block rerun
+				if (earlier_writes !== null) {
+					reverted_values = new Map(reverted_values);
+
+					for (const [value, write] of earlier_writes) {
 						reverted_values.set(value, write);
 					}
 				}
@@ -1358,11 +1350,12 @@ function flush_queued_effects(effects) {
 				reverted_values = previous_reverted_values;
 			}
 
-			if (new_writes) {
-				accumulated_writes ??= new Map();
-
-				for (const [value, write] of new_writes) {
-					accumulated_writes.set(value, write);
+			// (if the effect — or the block effects — wrote anything)
+			if (write_version !== version && current_batch !== null) {
+				for (const [value, write] of current_batch.current) {
+					if (write.wv > version) {
+						(earlier_writes ??= new Map()).set(value, write);
+					}
 				}
 			}
 		}
