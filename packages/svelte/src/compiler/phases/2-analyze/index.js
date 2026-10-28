@@ -2,13 +2,14 @@
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
-import { walk } from 'zimmerframe';
-import { parse } from '../1-parse/acorn.js';
+import { walk } from '../../utils/walk.js';
+import { parse } from '../1-parse/js.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import {
 	extract_identifiers,
 	has_await_expression,
+	is_reference,
 	object,
 	unwrap_pattern
 } from '../../utils/ast.js';
@@ -21,7 +22,13 @@ import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { ignore_map, get_ignore_snapshot, pop_ignore, push_ignore } from '../../state.js';
+import {
+	ignorable,
+	ignore_map,
+	get_ignore_snapshot,
+	pop_ignore,
+	push_ignore
+} from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -83,7 +90,6 @@ import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
-import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
 import * as state from '../../state.js';
 
@@ -92,50 +98,53 @@ import * as state from '../../state.js';
  */
 const visitors = {
 	_(node, { state, next, path }) {
-		const parent = path.at(-1);
-
 		/** @type {string[]} */
 		const ignores = [];
 
-		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
-			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
+		// every node's snapshot would be empty, as is the stack a warning falls back to
+		if (ignorable) {
+			const parent = path.at(-1);
 
-			for (let i = idx - 1; i >= 0; i--) {
-				const prev = parent.nodes[i];
+			if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
+				const idx = parent.nodes.indexOf(/** @type {any} */ (node));
 
-				if (prev.type === 'Comment') {
-					ignores.push(
-						...extract_svelte_ignore(
-							prev.start + 4 /* '<!--'.length */,
-							prev.data,
-							state.analysis.runes
-						)
-					);
-				} else if (prev.type !== 'Text') {
-					break;
+				for (let i = idx - 1; i >= 0; i--) {
+					const prev = parent.nodes[i];
+
+					if (prev.type === 'Comment') {
+						ignores.push(
+							...extract_svelte_ignore(
+								prev.start + 4 /* '<!--'.length */,
+								prev.data,
+								state.analysis.runes
+							)
+						);
+					} else if (prev.type !== 'Text') {
+						break;
+					}
+				}
+			} else {
+				const comments = /** @type {any} */ (node).leadingComments;
+
+				if (comments) {
+					for (const comment of comments) {
+						ignores.push(
+							...extract_svelte_ignore(
+								comment.start + 2 /* '//'.length */,
+								comment.value,
+								state.analysis.runes
+							)
+						);
+					}
 				}
 			}
-		} else {
-			const comments = /** @type {any} */ (node).leadingComments;
 
-			if (comments) {
-				for (const comment of comments) {
-					ignores.push(
-						...extract_svelte_ignore(
-							comment.start + 2 /* '//'.length */,
-							comment.value,
-							state.analysis.runes
-						)
-					);
-				}
+			if (ignores.length > 0) {
+				push_ignore(ignores);
 			}
-		}
 
-		if (ignores.length > 0) {
-			push_ignore(ignores);
+			ignore_map.set(node, get_ignore_snapshot());
 		}
-
-		ignore_map.set(node, get_ignore_snapshot());
 
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
@@ -208,33 +217,6 @@ const visitors = {
 };
 
 /**
- * @param {AST.Script | null} script
- * @param {ScopeRoot} root
- * @param {boolean} allow_reactive_declarations
- * @param {Scope | null} parent
- * @returns {Js}
- */
-function js(script, root, allow_reactive_declarations, parent) {
-	/** @type {ESTree.Program} */
-	const ast = script?.content ?? {
-		type: 'Program',
-		sourceType: 'module',
-		start: -1,
-		end: -1,
-		body: []
-	};
-
-	const { scope, scopes, has_await } = create_scopes(
-		ast,
-		root,
-		allow_reactive_declarations,
-		parent
-	);
-
-	return { ast, scope, scopes, has_await };
-}
-
-/**
  * @param {string} filename
  */
 function get_component_name(filename) {
@@ -260,9 +242,9 @@ export function analyze_module(source, options) {
 	const comments = [];
 
 	state.set_source(source);
-	const ast = parse(source, comments, false, false);
+	const ast = parse(source, comments, false);
 
-	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
+	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot()).module;
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -333,15 +315,8 @@ export function analyze_module(source, options) {
 export function analyze_component(root, source, options) {
 	const scope_root = new ScopeRoot();
 
-	const module = js(root.module, scope_root, false, null);
-	const instance = js(root.instance, scope_root, true, module.scope);
-
-	const { scope, scopes, has_await } = create_scopes(
-		root.fragment,
-		scope_root,
-		false,
-		instance.scope
-	);
+	const { module, instance, template: built } = create_scopes(root, scope_root);
+	const { scope, scopes, has_await } = built;
 
 	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };
@@ -379,20 +354,11 @@ export function analyze_component(root, source, options) {
 				))
 		) {
 			let is_nested_store_subscription_node = undefined;
-			search: for (const reference of references) {
-				for (let i = reference.path.length - 1; i >= 0; i--) {
-					const scope =
-						scopes.get(reference.path[i]) ||
-						module.scopes.get(reference.path[i]) ||
-						instance.scopes.get(reference.path[i]);
-					if (scope) {
-						const owner = scope?.owner(store_name);
-						if (!!owner && owner !== module.scope && owner !== instance.scope) {
-							is_nested_store_subscription_node = reference.node;
-							break search;
-						}
-						break;
-					}
+			for (const reference of references) {
+				const owner = reference.scope.owner(store_name);
+				if (!!owner && owner !== module.scope && owner !== instance.scope) {
+					is_nested_store_subscription_node = reference.node;
+					break;
 				}
 			}
 
@@ -635,7 +601,7 @@ export function analyze_component(root, source, options) {
 					if (
 						path[path.length - 1].type === 'StyleDirective' ||
 						path.some((node) => node.type === 'Fragment') ||
-						(path[1].type === 'LabeledStatement' && path[1].label.name === '$')
+						(path[1]?.type === 'LabeledStatement' && path[1].label.name === '$')
 					) {
 						binding.kind = 'state';
 					}
@@ -657,9 +623,7 @@ export function analyze_component(root, source, options) {
 							// @ts-expect-error
 							_: set_scope,
 							Identifier(node, context) {
-								const parent = /** @type {ESTree.Expression} */ (context.path.at(-1));
-
-								if (is_reference(node, parent)) {
+								if (is_reference(node, context.path.at(-1))) {
 									const binding = context.state.scope.get(node.name);
 
 									if (
@@ -981,8 +945,7 @@ function calculate_blockers(instance, analysis) {
 				},
 				ImportDeclaration(node) {},
 				Identifier(node, context) {
-					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-					if (is_reference(node, parent)) {
+					if (is_reference(node, context.path.at(-1))) {
 						const binding = context.state.scope.get(node.name);
 						if (binding) {
 							touched.add(binding);
@@ -1059,8 +1022,7 @@ function calculate_blockers(instance, analysis) {
 					touch(node, context.state.scope, writes, writes_seen);
 				},
 				Identifier(node, context) {
-					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-					if (is_reference(node, parent)) {
+					if (is_reference(node, context.path.at(-1))) {
 						const binding = context.state.scope.get(node.name);
 						if (binding) {
 							reads.add(binding);

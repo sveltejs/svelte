@@ -1,7 +1,7 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import * as Legacy from './types/legacy-nodes.js' */
-import { walk } from 'zimmerframe';
+import { walk } from './utils/walk.js';
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
@@ -47,6 +47,8 @@ export function convert(source, ast) {
 			_(node, { next }) {
 				// @ts-ignore
 				delete node.metadata;
+				// @ts-ignore
+				delete node.parenthesized;
 				next();
 			},
 			// @ts-ignore
