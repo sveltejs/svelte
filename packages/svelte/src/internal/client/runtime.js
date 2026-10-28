@@ -172,7 +172,7 @@ export function increment_write_version() {
  * @param {Value} signal
  */
 export function version_of(signal) {
-	if (batch_values === null && is_dirty(/** @type {Derived} */ (signal))) {
+	if (batch_values === null) {
 		update_derived(/** @type {Derived} */ (signal));
 	}
 
@@ -266,9 +266,7 @@ export function is_dirty(reaction) {
 			for (var i = 0, length = dv.length; i < length; i++) {
 				var dependency = /** @type {Value[]} */ (deps)[i];
 
-				if (is_dirty(/** @type {Derived} */ (dependency))) {
-					update_derived(/** @type {Derived} */ (dependency));
-				}
+				update_derived(/** @type {Derived} */ (dependency));
 
 				if (dependency.wv !== dv[i]) return true;
 			}
@@ -1134,7 +1132,7 @@ export function get(signal) {
 
 		if (batch_values !== null) {
 			view = get_view(derived);
-		} else if (is_dirty(derived)) {
+		} else {
 			update_derived(derived);
 		}
 

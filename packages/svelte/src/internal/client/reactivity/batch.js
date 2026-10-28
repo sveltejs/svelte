@@ -166,8 +166,8 @@ export let legacy_updates = null;
 
 var flush_count = 0;
 
-/** @type {Set<Value>} */
-var source_stacks = new Set();
+/** Sources whose DEV update counts and stack traces need resetting after the flush. @type {Set<Value>} */
+export const source_stacks = new Set();
 
 let uid = 1;
 
@@ -826,10 +826,6 @@ export class Batch {
 		var context = push_teardown_context(this.previous);
 
 		try {
-			if (DEV) {
-				source_stacks.clear();
-			}
-
 			is_processing = true;
 			current_batch = this;
 
@@ -861,6 +857,8 @@ export class Batch {
 				for (const source of source_stacks) {
 					source.updated = null;
 				}
+
+				source_stacks.clear();
 			}
 		}
 	}
