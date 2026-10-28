@@ -36,7 +36,7 @@ import { component_context, is_runes } from '../context.js';
 import { Batch, legacy_updates, in_real_world, teardown_write, source_stacks } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { set_signal_status } from './status.js';
 
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();

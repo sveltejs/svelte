@@ -810,8 +810,6 @@ export class Batch {
 			teardown_context?.derived_cache.clear();
 		}
 
-		var latest = !this.is_fork && !same && later === null;
-
 		/** @type {BatchValue} */
 		var entry = {
 			v: value,
@@ -825,17 +823,8 @@ export class Batch {
 		// an assignment replaces the value of a derived that the active view of the world holds
 		view_cache?.delete(/** @type {Derived} */ (source));
 
-		if (latest) {
-			source.v = value;
-			source.wv = entry.wv;
-			source.f = error ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
-
-			if ((source.f & DERIVED) !== 0) {
-				// The assigned value holds until one of the derived's dependencies is written after it (see `unchanged_since`).
-				// (Other assignments are part of the batch's writes only — a fork's become global when it's committed)
-				source.f |= ASSIGNED;
-				update_derived_status(/** @type {Derived} */ (source));
-			}
+		if (!this.is_fork && !same && later === null) {
+			apply(source, entry);
 		}
 
 		// A value that equals the real one, with the same version, changes nothing that reactions
@@ -1498,6 +1487,23 @@ function flush_queued_effects(effects, earlier_writes = null) {
 }
 
 /**
+ * Make a write the real-world value of `source`. A write to a derived is an assignment, whose
+ * value holds until one of the derived's dependencies is written after it (see `unchanged_since`)
+ * @param {Value} source
+ * @param {BatchValue} entry
+ */
+function apply(source, entry) {
+	source.v = entry.v;
+	source.wv = entry.wv;
+	source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
+
+	if ((source.f & DERIVED) !== 0) {
+		source.f |= ASSIGNED;
+		update_derived_status(/** @type {Derived} */ (source));
+	}
+}
+
+/**
  * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
  * views of the world can't undo such a write, as there's no value from before it (see `capture`) — unless they have
  * their own write of it, like `batch` might. (The writes of forks aren't part of other views at all)
@@ -1690,15 +1696,7 @@ export function fork(fn) {
 			for (var [source, entry] of batch.current) {
 				batch.mark(source, MAYBE_DIRTY);
 
-				source.v = entry.v;
-				source.wv = entry.wv;
-				source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
-
-				if ((source.f & DERIVED) !== 0) {
-					// an assigned derived, which holds its value until one of its dependencies is written after it
-					source.f |= ASSIGNED;
-					update_derived_status(/** @type {Derived} */ (source));
-				}
+				apply(source, entry);
 			}
 
 			if (eager_effects.size > 0) {
