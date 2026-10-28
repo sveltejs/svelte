@@ -193,7 +193,7 @@ export function internal_set(
 	value,
 	updated_during_traversal = null
 ) {
-	if (!source.equals(value)) {
+	if (!source.equals(value) || (source.f & ERROR_VALUE) !== 0) {
 		var batch = Batch.ensure();
 
 		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
