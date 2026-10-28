@@ -1272,8 +1272,14 @@ function flush_queued_effects(effects) {
 
 	var i = 0;
 
-	/** @type {Map<Value, BatchValue> | null} */
-	var new_writes = null;
+	/**
+	 * When flushing block effects after state changes in an `$effect`, we need
+	 * to revert those changes while running any teardown functions, but we _don't_
+	 * want to revert all the way prior to `flush_queued_effects` in the case where
+	 * sibling effects write to the same source multiple times
+	 * @type {Map<Value, BatchValue> | null}
+	 */
+	var accumulated_writes = null;
 
 	while (i < length) {
 		var effect = effects[i++];
@@ -1283,6 +1289,17 @@ function flush_queued_effects(effects) {
 
 			var version = write_version;
 			update_effect(effect);
+
+			/** @type {Map<Value, BatchValue> | null} */
+			var new_writes = null;
+
+			if (current_batch) {
+				for (const [value, write] of current_batch.current) {
+					if (write.wv > version) {
+						(new_writes ??= new Map()).set(value, write);
+					}
+				}
+			}
 
 			// Effects with no dependencies or teardown do not get added to the effect tree.
 			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
@@ -1307,18 +1324,9 @@ function flush_queued_effects(effects) {
 				var previous_reverted_values = reverted_values;
 				reverted_values = new Map(reverted_values);
 
-				if (new_writes) {
-					for (const [value, write] of new_writes) {
+				if (accumulated_writes) {
+					for (const [value, write] of accumulated_writes) {
 						reverted_values.set(value, write);
-					}
-				}
-
-				if (current_batch) {
-					new_writes ??= new Map();
-					for (const [value, write] of current_batch.current) {
-						if (write.wv > version) {
-							new_writes.set(value, write);
-						}
 					}
 				}
 
@@ -1348,6 +1356,14 @@ function flush_queued_effects(effects) {
 
 				eager_block_effects.clear();
 				reverted_values = previous_reverted_values;
+			}
+
+			if (new_writes) {
+				accumulated_writes ??= new Map();
+
+				for (const [value, write] of new_writes) {
+					accumulated_writes.set(value, write);
+				}
 			}
 		}
 	}
