@@ -26,7 +26,6 @@ import {
 	ASYNC,
 	ASSIGNED
 } from './constants.js';
-import { old_values } from './reactivity/sources.js';
 import {
 	reactivity_loss_tracker,
 	execute_derived,
@@ -55,6 +54,8 @@ import {
 	first_batch,
 	flushSync,
 	previous_batch,
+	push_teardown_context,
+	teardown_context,
 	schedule_effect,
 	view_batch,
 	view_cache
@@ -68,10 +69,23 @@ import * as w from './warnings.js';
 
 export let is_destroying_effect = false;
 
-/** @param {boolean} value */
-export function set_is_destroying_effect(value) {
+/** The write version when the running teardown started — later writes happened in it, and aren't reverted */
+export let teardown_version = 0;
+
+/**
+ * @param {boolean} value
+ * @param {number} [version]
+ */
+export function set_is_destroying_effect(value, version = write_version) {
 	is_destroying_effect = value;
+	teardown_version = version;
 }
+
+/**
+ * The result of the latest run of a derived in a teardown (see `teardown_view`)
+ * @type {BatchValue}
+ */
+let teardown_run = { v: undefined, wv: 0 };
 
 /** @type {null | Reaction} */
 export let active_reaction = null;
@@ -158,7 +172,7 @@ export function increment_write_version() {
  * @param {Value} signal
  */
 export function version_of(signal) {
-	if (batch_values === null && is_dirty(/** @type {Derived} */ (signal))) {
+	if (batch_values === null) {
 		update_derived(/** @type {Derived} */ (signal));
 	}
 
@@ -252,9 +266,7 @@ export function is_dirty(reaction) {
 			for (var i = 0, length = dv.length; i < length; i++) {
 				var dependency = /** @type {Value[]} */ (deps)[i];
 
-				if (is_dirty(/** @type {Derived} */ (dependency))) {
-					update_derived(/** @type {Derived} */ (dependency));
-				}
+				update_derived(/** @type {Derived} */ (dependency));
 
 				if (dependency.wv !== dv[i]) return true;
 			}
@@ -415,7 +427,7 @@ export function update_reaction(reaction) {
  * - it is a derived that read values which aren't the latest ones (it is then stored in the batch
  *   whose view of the world it ran in, see {@link get_view})
  * - it is an effect run that belongs to a batch (see {@link update_record})
- * - it is a derived evaluated in a teardown, in which case its result is discarded
+ * - it is a derived evaluated in a teardown, in which case only the teardown sees it (see `teardown_view`)
  *
  * The edges of the graph (`reaction.edges` and the `reactions` of its dependencies) are a
  * superset of the dependencies of every live record, so that changes to any of them reach
@@ -432,7 +444,23 @@ function update_dependencies(reaction, flags, value, error) {
 	var dv = reaction.dv;
 
 	// (an effect can be destroyed while it runs, e.g. by an error boundary)
-	if ((reaction.f & DESTROYED) !== 0 || ((flags & DERIVED) !== 0 && is_destroying_effect)) {
+	if ((reaction.f & DESTROYED) !== 0) return length;
+
+	if ((flags & DERIVED) !== 0 && is_destroying_effect) {
+		// The run belongs to the teardown's view of the world (see `teardown_view`).
+		// Its value can't be more recent than what it read
+		var wv = 0;
+
+		for (var j = 0; j < length; j++) {
+			var dep =
+				j < skipped_deps
+					? /** @type {Value[]} */ (deps)[j]
+					: /** @type {Value[]} */ (new_deps)[j - skipped_deps];
+
+			wv = Math.max(wv, teardown_version_of(dep));
+		}
+
+		teardown_run = { v: value, wv, e: error };
 		return length;
 	}
 
@@ -1068,27 +1096,12 @@ export function get(signal) {
 	}
 
 	if (is_destroying_effect) {
-		// teardowns see the values from before the update; nothing read here is recorded
-		if (old_values.has(signal)) {
-			return old_values.get(signal);
-		}
+		// teardowns have their own view of the world; nothing read here is recorded
+		var held = teardown_view(signal);
 
-		if (is_derived) {
-			var derived = /** @type {Derived} */ (signal);
-			var value = derived.v;
-
-			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
-			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
-			if (
-				((derived.f & CLEAN) === 0 && derived.reactions !== null) ||
-				depends_on_old_values(derived)
-			) {
-				value = execute_derived(derived);
-			}
-
-			old_values.set(derived, value);
-
-			return value;
+		if (held !== undefined) {
+			if (held.e) throw held.v;
+			return held.v;
 		}
 	}
 
@@ -1100,7 +1113,7 @@ export function get(signal) {
 	var view;
 
 	if (is_derived) {
-		derived = /** @type {Derived} */ (signal);
+		var derived = /** @type {Derived} */ (signal);
 
 		// connect disconnected deriveds when reading them inside a connected reaction
 		var should_connect =
@@ -1119,7 +1132,7 @@ export function get(signal) {
 
 		if (batch_values !== null) {
 			view = get_view(derived);
-		} else if (is_dirty(derived)) {
+		} else {
 			update_derived(derived);
 		}
 
@@ -1184,22 +1197,67 @@ function reconnect(derived) {
 	}
 }
 
-/** @param {Derived} derived */
-function depends_on_old_values(derived) {
-	if (derived.v === UNINITIALIZED) return true; // we don't know, so assume the worst
-	if (derived.deps === null) return false;
+/**
+ * The value of `signal` in the view of the world of the running teardown, if it differs from the active one:
+ * teardowns revert the writes that caused them, apart from their own (see `TeardownContext`). Deriveds always
+ * get one, since their runs in a teardown only belong to it, and it is cached until the view changes:
+ * - a value written to the derived, while none of its dependencies is written after it (like in `get_view`)
+ * - its global run, if its dependencies still have the versions that run read
+ * - otherwise a new run (see `update_dependencies`), which keeps the version of the value it replaces if equal
+ * @param {Value} signal
+ * @returns {BatchValue | undefined}
+ */
+function teardown_view(signal) {
+	var written =
+		signal.wv > teardown_version ? undefined : teardown_context?.reverted_values.get(signal);
 
-	for (const dep of derived.deps) {
-		if (old_values.has(dep)) {
-			return true;
-		}
+	if ((signal.f & DERIVED) === 0) return written;
 
-		if ((dep.f & DERIVED) !== 0 && depends_on_old_values(/** @type {Derived} */ (dep))) {
-			return true;
+	var derived = /** @type {Derived} */ (signal);
+	var cache = (teardown_context ?? push_teardown_context()).derived_cache;
+	var record = cache.get(derived);
+
+	if (record !== undefined) return record;
+
+	var held = written ?? batch_values?.get(derived);
+	var assigned =
+		held === undefined
+			? (derived.f & ASSIGNED) !== 0
+			: written !== undefined || held.assigned !== false;
+	// (the versions its global run read, if that can apply)
+	var dv = held === undefined && !assigned ? derived.dv : null;
+	var deps = derived.deps ?? [];
+	var holds = assigned || dv !== null;
+	var length = dv?.length ?? deps.length;
+
+	held ??= { v: derived.v, wv: derived.wv, e: (derived.f & ERROR_VALUE) !== 0 };
+
+	for (var i = 0; holds && i < length; i++) {
+		var version = teardown_version_of(deps[i]);
+		holds = dv === null ? version <= held.wv : version === dv[i];
+	}
+
+	if (holds) {
+		record = held;
+	} else {
+		execute_derived(derived);
+		record = teardown_run;
+
+		if (held.wv < record.wv && !held.e && !record.e && derived.equals.call(held, record.v)) {
+			record.wv = held.wv;
 		}
 	}
 
-	return false;
+	cache.set(derived, record);
+	return record;
+}
+
+/**
+ * The version of `signal` in the view of the world of the running teardown
+ * @param {Value} signal
+ */
+function teardown_version_of(signal) {
+	return (teardown_view(signal) ?? batch_values?.get(signal) ?? signal).wv;
 }
 
 /**

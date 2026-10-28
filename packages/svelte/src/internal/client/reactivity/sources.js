@@ -11,8 +11,8 @@ import {
 	current_sources,
 	is_dirty,
 	untracking,
-	is_destroying_effect,
-	push_reaction_value
+	push_reaction_value,
+	is_destroying_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -40,7 +40,9 @@ import {
 	view_cache,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	teardown_write,
+	source_stacks
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -48,9 +50,6 @@ import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
-
-/** @type {Map<Value, any>} */
-export const old_values = new Map();
 
 /**
  * @param {Set<any>} v
@@ -195,14 +194,6 @@ export function internal_set(
 	updated_during_traversal = null
 ) {
 	if (!source.equals(value)) {
-		if (is_destroying_effect) {
-			old_values.set(source, value);
-		} else if (!old_values.has(source)) {
-			// only record the value from before the first write in this flush, otherwise a
-			// teardown would see the value from before whichever write happened to be last
-			old_values.set(source, source.v);
-		}
-
 		var batch = Batch.ensure();
 
 		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
@@ -217,6 +208,7 @@ export function internal_set(
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
 				source.updated ??= new Map();
+				source_stacks.add(source);
 
 				// For performance reasons, when not using $inspect.trace, we only start collecting stack traces
 				// after the same source has been updated more than 5 times in the same flush cycle.
@@ -278,6 +270,9 @@ export function internal_set(
 		if (eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
+	} else if (is_destroying_effect) {
+		// not a change, but the teardown no longer sees a reverted value
+		teardown_write(source);
 	}
 
 	return value;

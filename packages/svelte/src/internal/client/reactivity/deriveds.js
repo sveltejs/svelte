@@ -29,7 +29,8 @@ import {
 	new_deps,
 	is_current,
 	promote_record,
-	unchanged_since
+	unchanged_since,
+	is_dirty
 } from '../runtime.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
@@ -427,6 +428,8 @@ export function execute_derived(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
+	if (!is_dirty(derived)) return;
+
 	var records = view_batch?.records;
 	var record = records?.get(derived);
 
