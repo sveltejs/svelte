@@ -167,11 +167,7 @@ export function set(source, value, should_proxy = false) {
  * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}
  */
-export function internal_set(
-	source,
-	value,
-	updated_during_traversal = null
-) {
+export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value) || (source.f & ERROR_VALUE) !== 0) {
 		var batch = Batch.ensure();
 
