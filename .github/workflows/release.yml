@@ -27,15 +27,12 @@ jobs:
         with:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
-          node-version: 24.x
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
+          runtime: node@24
+          # don't cache pnpm for releases to circumvent cache poisoning
+          cache: false
 
       - name: Build
         run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally with \`cd packages/svelte && pnpm generate:types\` and commit the changes after you have reviewed them"; git diff; exit 1); }
