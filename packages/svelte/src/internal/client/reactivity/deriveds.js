@@ -34,7 +34,7 @@ import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
-import { eager_effects, internal_set, old_values, set_eager_effects, source } from './sources.js';
+import { eager_effects, old_values, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
