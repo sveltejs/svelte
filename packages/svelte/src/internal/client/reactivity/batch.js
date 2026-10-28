@@ -516,8 +516,8 @@ export class Batch {
 		this.#commit_callbacks.clear();
 
 		previous_batch = this;
-		flush_queued_effects(render_effects);
-		flush_queued_effects(effects);
+		var earlier_writes = flush_queued_effects(render_effects);
+		flush_queued_effects(effects, earlier_writes);
 		previous_batch = null;
 
 		this.committing = false;
@@ -1272,22 +1272,17 @@ function infinite_loop_guard() {
 export let eager_block_effects = null;
 
 /**
+ * `earlier_writes` includes writes from the pre-effect phase. Eager block teardowns
+ * revert the running effect's writes, but not these earlier writes.
  * @param {Array<Effect>} effects
- * @returns {void}
+ * @param {Map<Value, BatchValue> | null} [earlier_writes]
+ * @returns {Map<Value, BatchValue> | null}
  */
-function flush_queued_effects(effects) {
+function flush_queued_effects(effects, earlier_writes = null) {
 	var length = effects.length;
-	if (length === 0) return;
+	if (length === 0) return earlier_writes;
 
 	var i = 0;
-
-	/**
-	 * The writes of the effects that already ran (to the current batch). When an effect's writes cause block
-	 * effects to run eagerly, their teardowns revert those writes but not these — including the values that
-	 * the effect overwrote
-	 * @type {Map<Value, BatchValue> | null}
-	 */
-	var earlier_writes = null;
 
 	while (i < length) {
 		var effect = effects[i++];
@@ -1371,6 +1366,7 @@ function flush_queued_effects(effects) {
 	}
 
 	eager_block_effects = null;
+	return earlier_writes;
 }
 
 /**
