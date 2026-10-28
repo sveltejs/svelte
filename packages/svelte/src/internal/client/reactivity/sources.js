@@ -40,7 +40,8 @@ import {
 	view_cache,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	source_stacks
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -227,6 +228,7 @@ export function internal_set(
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
 				source.updated ??= new Map();
+				source_stacks.add(source);
 
 				// For performance reasons, when not using $inspect.trace, we only start collecting stack traces
 				// after the same source has been updated more than 5 times in the same flush cycle.
