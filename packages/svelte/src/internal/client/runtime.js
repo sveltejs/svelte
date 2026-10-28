@@ -56,7 +56,6 @@ import {
 	previous_batch,
 	push_teardown_context,
 	teardown_context,
-	schedule_effect,
 	view_batch,
 	view_cache
 } from './reactivity/batch.js';
@@ -301,7 +300,10 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
-			schedule_effect(/** @type {Effect} */ (reaction), root ? DIRTY : MAYBE_DIRTY);
+			/** @type {Batch} */ (current_batch).schedule(
+				/** @type {Effect} */ (reaction),
+				root ? DIRTY : MAYBE_DIRTY
+			);
 		}
 	}
 }
