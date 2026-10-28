@@ -157,7 +157,7 @@ export function increment_write_version() {
  * The version `signal` has in the active view of the world, bringing deriveds up to date
  * @param {Value} signal
  */
-function version_of(signal) {
+export function version_of(signal) {
 	if (batch_values === null && is_dirty(/** @type {Derived} */ (signal))) {
 		update_derived(/** @type {Derived} */ (signal));
 	}
@@ -179,8 +179,10 @@ function version_of(signal) {
  * @param {number[]} dv
  */
 export function is_current(deps, dv) {
-	for (var i = 0; i < dv.length; i++) {
-		if (version_of(/** @type {Value[]} */ (deps)[i]) !== dv[i]) return false;
+	if (deps !== null) {
+		for (var i = 0; i < dv.length; i++) {
+			if (version_of(deps[i]) !== dv[i]) return false;
+		}
 	}
 
 	return true;

@@ -36,6 +36,7 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	current_batch,
 	view_cache,
 	eager_block_effects,
 	schedule_effect,
@@ -277,7 +278,7 @@ export function internal_set(
 			}
 		}
 
-		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+		if (eager_effects.size > 0 && !eager_effects_deferred) {
 			flush_eager_effects();
 		}
 	} else if (own_result) {
@@ -389,23 +390,28 @@ function mark_reactions(signal, status, updated_during_traversal) {
 
 		var not_dirty = (flags & DIRTY) === 0;
 
-		if ((flags & (EAGER_EFFECT | DERIVED)) !== 0) {
+		if ((flags & EAGER_EFFECT) !== 0) {
+			if (!(/** @type {Batch} */ (current_batch).is_fork)) {
+				// don't set a DIRTY reaction to MAYBE_DIRTY
+				if (not_dirty) {
+					set_signal_status(reaction, status);
+				}
+
+				// Eager effects need to run immediately:
+				// - for $inspect so that the stack trace makes sense
+				// - for $state.eager because they might be without an effect parent
+				eager_effects.add(/** @type {Effect} */ (reaction));
+			}
+		} else if ((flags & DERIVED) !== 0) {
 			// don't set a DIRTY reaction to MAYBE_DIRTY
 			if (not_dirty) {
 				set_signal_status(reaction, status);
 			}
 
-			if ((flags & EAGER_EFFECT) !== 0) {
-				// Eager effects need to run immediately:
-				// - for $inspect so that the stack trace makes sense
-				// - for $state.eager because they might be without an effect parent
-				eager_effects.add(/** @type {Effect} */ (reaction));
-			} else {
-				var derived = /** @type {Derived} */ (reaction);
+			var derived = /** @type {Derived} */ (reaction);
 
-				view_cache?.delete(derived);
-				mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
-			}
+			view_cache?.delete(derived);
+			mark_reactions(derived, MAYBE_DIRTY, updated_during_traversal);
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
 

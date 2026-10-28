@@ -38,7 +38,7 @@ import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
-import { defer_effect } from './utils.js';
+import { add_dirty_effect, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
@@ -463,7 +463,7 @@ export class Batch {
 			var batch = Batch.ensure();
 			for (const e of updates) {
 				// these were marked during traversal already (see `mark_reactions`), unless they ran since
-				if ((e.f & CLEAN) === 0) batch.schedule(e, (e.f & DIRTY) !== 0 ? DIRTY : MAYBE_DIRTY);
+				if ((e.f & CLEAN) === 0) batch.schedule(e, MAYBE_DIRTY);
 			}
 		}
 
@@ -582,7 +582,9 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skips(effect);
+			// (eager effects run in the real world, see `flush_eager_effects`, not in the view of the batch)
+			var skip =
+				is_skippable_branch || (flags & (INERT | EAGER_EFFECT)) !== 0 || this.#skips(effect);
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
@@ -664,7 +666,7 @@ export class Batch {
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
 		batch.async_deriveds.clear();
 
-		this.transfer_reactions(batch.#unprocessed);
+		this.transfer_effects(batch.#unprocessed);
 
 		// What the merged batch did on its own (e.g. branches it selected) is obsolete once this batch is
 		// done — whether it commits or is discarded (e.g. because of an error)
@@ -722,6 +724,7 @@ export class Batch {
 			}
 		}
 
+		/** @type {BatchValue} */
 		var entry = {
 			v: value,
 			wv: same ? source.wv : increment_write_version(),
@@ -913,17 +916,14 @@ export class Batch {
 	}
 
 	/**
-	 * @param {Map<Effect, number>} dirty_reactions
+	 * @param {Map<Effect, number>} dirty_effects
 	 */
-	transfer_reactions(dirty_reactions) {
-		for (const [effect, status] of dirty_reactions) {
-			// (don't downgrade a DIRTY effect to MAYBE_DIRTY)
-			if (status === DIRTY || this.#unprocessed.get(effect) !== DIRTY) {
-				this.#unprocessed.set(effect, status);
-			}
+	transfer_effects(dirty_effects) {
+		for (const [effect, status] of dirty_effects) {
+			add_dirty_effect(this.#unprocessed, effect, status);
 		}
 
-		dirty_reactions.clear();
+		dirty_effects.clear();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
@@ -1015,8 +1015,9 @@ export class Batch {
 	 */
 	get_record(reaction) {
 		var record = this.records?.get(reaction);
+		var i = this.folded.length;
 
-		for (var i = this.folded.length - 1; record === undefined && i >= 0; i--) {
+		while (record === undefined && i--) {
 			record = this.folded[i].records?.get(reaction);
 		}
 
@@ -1037,8 +1038,7 @@ export class Batch {
 
 		if ((!is_processing || current_batch !== this) && active_reaction === null) {
 			if (this.prev !== null || this.next !== null || this.is_fork) {
-				// (don't downgrade a DIRTY effect)
-				if (!this.#unprocessed.has(effect)) this.#unprocessed.set(effect, MAYBE_DIRTY);
+				add_dirty_effect(this.#unprocessed, effect, MAYBE_DIRTY);
 				return;
 			}
 
