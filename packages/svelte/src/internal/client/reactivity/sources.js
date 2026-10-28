@@ -11,7 +11,6 @@ import {
 	current_sources,
 	is_dirty,
 	untracking,
-	is_destroying_effect,
 	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';

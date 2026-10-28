@@ -1209,12 +1209,9 @@ function depends_on_teardown_values(derived) {
 		if (
 			dep.wv > teardown_version ||
 			teardown_context?.reverted_values.has(dep) ||
-			(view !== undefined && view.wv !== dep.wv)
+			(view !== undefined && view.wv !== dep.wv) ||
+			((dep.f & DERIVED) !== 0 && depends_on_teardown_values(/** @type {Derived} */ (dep)))
 		) {
-			return true;
-		}
-
-		if ((dep.f & DERIVED) !== 0 && depends_on_teardown_values(/** @type {Derived} */ (dep))) {
 			return true;
 		}
 	}

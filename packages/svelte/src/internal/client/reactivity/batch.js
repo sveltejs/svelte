@@ -75,12 +75,17 @@ export let previous_batch = null;
  */
 export let teardown_context = null;
 
-function push_teardown_context() {
-	return (teardown_context = {
+/** @param {Map<Value, BatchValue>} values */
+function push_teardown_context(values) {
+	var context = (teardown_context = {
 		reverted_values: new Map(teardown_context?.reverted_values),
 		derived_cache: new Map(),
 		parent: teardown_context
 	});
+
+	for (const [source, value] of values) context.reverted_values.set(source, value);
+
+	return context;
 }
 
 /**
@@ -560,8 +565,7 @@ export class Batch {
 		if (next_batch !== null) {
 			if (teardown_context !== null) {
 				for (const [source, snapshot] of teardown_context.reverted_values) {
-					const theirs = next_batch.previous.get(source);
-					if (theirs === undefined || theirs.wv !== snapshot.wv) {
+					if (next_batch.previous.get(source)?.wv !== snapshot.wv) {
 						teardown_context.reverted_values.delete(source);
 					}
 				}
@@ -750,18 +754,16 @@ export class Batch {
 			// the value before this batch's change is the one before the later batch's change, if any
 			previous = later?.previous.get(source);
 
-			if (previous) {
-				this.previous.set(source, previous);
-			} else if (source.v !== UNINITIALIZED) {
+			if (previous === undefined && source.v !== UNINITIALIZED) {
 				previous = {
 					v: source.v,
 					wv: source.wv,
 					e: (source.f & ERROR_VALUE) !== 0,
 					assigned: (source.f & ASSIGNED) !== 0
 				};
-
-				this.previous.set(source, previous);
 			}
+
+			if (previous !== undefined) this.previous.set(source, previous);
 		}
 
 		if (is_destroying_effect) {
@@ -807,11 +809,7 @@ export class Batch {
 
 	flush() {
 		// flushes can be nested, e.g. if an effect calls `flushSync`
-		var context = push_teardown_context();
-
-		for (const [source, snapshot] of this.previous) {
-			context.reverted_values.set(source, snapshot);
-		}
+		var context = push_teardown_context(this.previous);
 
 		try {
 			if (DEV) {
@@ -1329,13 +1327,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 				// if state was written by an effect before the one that caused the eager
 				// block rerun, its writes apply in this view. Deriveds must be evaluated
 				// afresh rather than reusing results cached before those writes.
-				if (earlier_writes !== null) {
-					var context = push_teardown_context();
-
-					for (const [value, write] of earlier_writes) {
-						context.reverted_values.set(value, write);
-					}
-				}
+				if (earlier_writes !== null) push_teardown_context(earlier_writes);
 
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
