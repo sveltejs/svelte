@@ -541,9 +541,12 @@ export class Batch {
 	 * They are marked MAYBE_DIRTY, which means that they are only re-run if the exact versions
 	 * of their dependencies differ from the ones they last saw (in this batch's view of the world)
 	 * @param {Iterable<Value>} values
-	 * @param {Set<Reaction>} seen
+	 * @param {Set<Reaction>} [seen]
 	 */
-	#revalidate(values, seen = new Set()) {
+	#revalidate(values, seen) {
+		var root = seen === undefined;
+		seen ??= new Set();
+
 		for (const value of values) {
 			for (const reaction of value.reactions ?? []) {
 				var flags = reaction.f;
@@ -568,7 +571,7 @@ export class Batch {
 			}
 		}
 
-		if (eager_effects.size > 0) {
+		if (root && eager_effects.size > 0) {
 			flush_eager_effects();
 		}
 	}
