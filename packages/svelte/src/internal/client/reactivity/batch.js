@@ -1584,7 +1584,7 @@ export function fork(fn) {
 			// so that everything the fork computed remains valid (processing the batch
 			// re-validates everything that depends on them, see `#process`)
 			for (var [source, entry] of batch.current) {
-				batch.mark(source, DIRTY);
+				batch.mark(source, MAYBE_DIRTY);
 
 				source.v = entry.v;
 				source.wv = entry.wv;
