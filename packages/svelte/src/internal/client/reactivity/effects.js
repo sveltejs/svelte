@@ -9,6 +9,7 @@ import {
 	remove_reactions,
 	set_active_reaction,
 	set_is_destroying_effect,
+	teardown_version,
 	untrack,
 	untracking,
 	set_active_effect
