@@ -1,6 +1,7 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
+/** @import { Batch } from './internal/client/reactivity/batch.js' */
 import { active_reaction, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
@@ -72,7 +73,9 @@ export function getAbortSignal() {
 		e.get_abort_signal_outside_reaction();
 	}
 
-	var controllers = (active_reaction.ac ??= new Map());
+	var controllers = (active_reaction.ac ??= /** @type {Map<Batch|null, AbortController>} */ (
+		new Map()
+	));
 	var controller = controllers.get(current_batch);
 
 	if (controller === undefined) {
