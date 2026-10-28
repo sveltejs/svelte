@@ -24,6 +24,7 @@ import {
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
+	active_effect,
 	active_reaction,
 	get,
 	increment_write_version,
@@ -43,6 +44,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
+import { is_runes } from '../context.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
@@ -121,6 +123,17 @@ var flush_count = 0;
 
 /** @type {Set<Value>} */
 var source_stacks = new Set();
+
+/**
+ * A set of signals we have already seen while traversing in `batch.mark`.
+ * Not always set to balance the common case of sources only having a couple
+ * of (transitive) dependencies (where always creating a Set would be bad for perf)
+ * with the edge case of extremely deep or wide dependency arrays with cycles.
+ * @type {Set<any> | null}
+ */
+var seen = null;
+/** Number of transitive dependencies, see {@link seen} for more info */
+var count_deps = 0;
 
 let uid = 1;
 
@@ -711,9 +724,9 @@ export class Batch {
 	 * @param {boolean} same whether the value equals the real one (it can, if this batch sees another one, see
 	 * `internal_set`) — in which case the source isn't updated, and the value gets the same version
 	 * @param {boolean} [error] whether the value is an error (thrown when read, see `runtime.js#get`)
-	 * @returns {boolean} whether the value is the latest one
+	 * @param {Effect[] | null} [updated_during_traversal]
 	 */
-	capture(source, value, same, error = false) {
+	capture(source, value, same, error = false, updated_during_traversal = null) {
 		var later = this.next;
 
 		while (later !== null && (later.is_fork || !later.current.has(source))) {
@@ -755,9 +768,19 @@ export class Batch {
 			source.v = value;
 			source.wv = entry.wv;
 			source.f = error ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
+
+			if ((source.f & DERIVED) !== 0) {
+				// The assigned value holds until one of the derived's dependencies is written after it (see `unchanged_since`).
+				// (Other assignments are part of the batch's writes only — a fork's become global when it's committed)
+				source.f |= ASSIGNED;
+				update_derived_status(/** @type {Derived} */ (source));
+			}
 		}
 
-		return latest;
+		seen = null;
+		count_deps = 0;
+		this.mark(source, DIRTY, updated_during_traversal);
+		seen = null;
 	}
 
 	deactivate() {
@@ -1040,6 +1063,82 @@ export class Batch {
 		}
 
 		return record;
+	}
+
+	/**
+	 * @param {Value} signal
+	 * @param {number} status should be DIRTY or MAYBE_DIRTY
+	 * @param {Effect[] | null} updated_during_traversal
+	 * @returns {void}
+	 */
+	mark(signal, status, updated_during_traversal) {
+		var reactions = signal.reactions;
+		if (reactions === null) return;
+
+		var runes = is_runes();
+		var length = reactions.length;
+
+		count_deps += length;
+		// Activate the `seen` Set if we think from the unusually high number of deps that
+		// there might be cycles in the graph, to avoid repeated lookups for reactions
+		// Example: https://github.com/sveltejs/svelte/issues/16658 has a graph with one source
+		// reaching ~10000 distinct deriveds/effects each, resulting in 65 million walks through repeated visits.
+		if (count_deps > 100000 && seen === null) seen = new Set();
+
+		if (seen !== null) {
+			if (seen.has(signal)) return;
+			seen.add(signal);
+		}
+
+		for (var i = 0; i < length; i++) {
+			var reaction = reactions[i];
+			var flags = reaction.f;
+
+			// In legacy mode, skip the current effect to prevent infinite loops
+			if (!runes && reaction === active_effect) continue;
+
+			var not_dirty = (flags & DIRTY) === 0;
+
+			if ((flags & EAGER_EFFECT) !== 0) {
+				if (!this.is_fork) {
+					// don't set a DIRTY reaction to MAYBE_DIRTY
+					if (not_dirty) {
+						set_signal_status(reaction, status);
+					}
+
+					// Eager effects need to run immediately:
+					// - for $inspect so that the stack trace makes sense
+					// - for $state.eager because they might be without an effect parent
+					eager_effects.add(/** @type {Effect} */ (reaction));
+				}
+			} else if ((flags & DERIVED) !== 0) {
+				// don't set a DIRTY reaction to MAYBE_DIRTY
+				if (not_dirty) {
+					set_signal_status(reaction, status);
+				}
+
+				var derived = /** @type {Derived} */ (reaction);
+
+				view_cache?.delete(derived);
+				this.mark(derived, MAYBE_DIRTY, updated_during_traversal);
+			} else if (not_dirty) {
+				var effect = /** @type {Effect} */ (reaction);
+
+				if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
+					// these run right away (see `flush_queued_effects`)
+					set_signal_status(effect, status);
+					eager_block_effects.add(effect);
+				}
+
+				if (updated_during_traversal !== null) {
+					set_signal_status(effect, status);
+					updated_during_traversal.push(effect);
+				} else {
+					// the status is applied when the batch is processed
+					this.schedule(effect, status);
+				}
+			}
+		}
 	}
 
 	/**
