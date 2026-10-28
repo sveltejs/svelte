@@ -8,14 +8,9 @@ const buttons = `
 	<button>pop</button>
 `;
 
-// Like `async-resume-abort-signal-earlier-batch`, but the expression asks for its abort signal after an `await`
-// (`load('x', await ..., getAbortSignal())`). The signal can't be attributed to the run then: it's the effect's,
-// which the next run of any batch aborts (see "A signal requested after an `await`" in batch-views.md). So B's
-// run aborts A's, which never settles, and A never commits. (On `main`, B doesn't run the expression at all,
-// but commits the branch without its content)
+// Test that different worlds don't interfere with respects to their abort signals (variant where there's chained awaits)
+// (`load('x', await ..., getAbortSignal())`).
 export default test({
-	// TODO see above
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		await tick();
@@ -29,7 +24,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, buttons);
 		assert.deepEqual(logs.splice(0), ['c 1', 'x 1']);
 
-		// B's `c` result: B reveals the branch, and runs the expression — which mustn't abort A's run
+		// B's `c` result: B reveals the branch, and runs the expression in its own view
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
@@ -41,7 +36,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, buttons);
 		assert.deepEqual(logs.splice(0), []);
 
-		// A's run
+		// A's run: the content is created, B commits it in its view, then A in its own
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);

@@ -56,8 +56,11 @@ export interface Reaction extends Signal {
 	dv: null | number[];
 	/** Graph edges: a superset of the dependencies of every live run. Never modified in place, like `deps` */
 	edges: null | Value[];
-	/** An AbortController that aborts when the signal is destroyed */
-	ac: null | AbortController;
+	/**
+	 * The AbortControllers of the runs that asked for a signal (see `getAbortSignal`), per batch that they ran in
+	 * (`null` for runs outside of a batch). They abort once a run replaces them, or the reaction is destroyed
+	 */
+	ac: null | Map<Batch | null, AbortController>;
 }
 
 /**

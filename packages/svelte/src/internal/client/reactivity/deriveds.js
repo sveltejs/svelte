@@ -28,9 +28,9 @@ import {
 	is_current,
 	promote_record,
 	unchanged_since,
-	is_dirty
+	is_dirty,
+	abort_all
 } from '../runtime.js';
-import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
@@ -547,12 +547,7 @@ export function freeze_derived_effects(derived) {
 		// if the effect has a teardown function or abort signal, call it
 		if (e.teardown || e.ac) {
 			e.teardown?.();
-			if (e.ac !== null) {
-				without_reactive_context(() => {
-					/** @type {AbortController} */ (e.ac).abort(STALE_REACTION);
-					e.ac = null;
-				});
-			}
+			abort_all(e);
 
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence

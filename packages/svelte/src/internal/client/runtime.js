@@ -308,6 +308,53 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	}
 }
 
+/**
+ * Abort the signals (see `getAbortSignal`) of the runs of `reaction` that a new run in `batch` replaces.
+ * The abort is batch-aware, which can result in false-negatives in a few edge cases but will otherwise
+ * ensure that things never end up hanging. If everything would share one abort signal, forks could abort
+ * real-world runs, runs in earlier batches that are outdated could abort later batches' current runs, etc.
+ * @param {Reaction} reaction
+ * @param {Batch | null} batch
+ */
+function abort_replaced(reaction, batch) {
+	var controllers = /** @type {Map<Batch | null, AbortController>} */ (reaction.ac);
+	// only abort reruns of other batches if this is a real-world run
+	var replaces = batch === null || (!batch.is_fork && !batch.committed);
+
+	for (const [b, controller] of controllers) {
+		if (
+			// always abort rerun in own batch
+			b === batch ||
+			(replaces &&
+				(b === null ||
+					b.committed ||
+					(!b.linked && b.merged === null) ||
+					// forks stay independent, only abort runs of earlier batches
+					(batch !== null && !b.is_fork && b.id < batch.id)))
+		) {
+			controllers.delete(b);
+			without_reactive_context(() => controller.abort(STALE_REACTION));
+		}
+	}
+
+	if (controllers.size === 0) reaction.ac = null;
+}
+
+/**
+ * Abort all signals of `reaction` (see `getAbortSignal`), e.g. because it's destroyed
+ * @param {Reaction} reaction
+ */
+export function abort_all(reaction) {
+	const controllers = reaction.ac;
+	if (controllers === null) return;
+
+	reaction.ac = null;
+
+	without_reactive_context(() => {
+		for (const controller of controllers.values()) controller.abort(STALE_REACTION);
+	});
+}
+
 /** @param {Reaction} reaction */
 export function update_reaction(reaction) {
 	var previous_deps = new_deps;
@@ -332,11 +379,7 @@ export function update_reaction(reaction) {
 	update_version = ++read_version;
 
 	if (reaction.ac !== null) {
-		without_reactive_context(() => {
-			/** @type {AbortController} */ (reaction.ac).abort(STALE_REACTION);
-		});
-
-		reaction.ac = null;
+		abort_replaced(reaction, current_batch);
 	}
 
 	try {
@@ -864,13 +907,10 @@ function remove_reaction(signal, dependency) {
 
 		// Call abort controller, noone's listening to this derived anymore
 		if (derived.ac !== null) {
-			without_reactive_context(() => {
-				/** @type {AbortController} */ (derived.ac).abort(STALE_REACTION);
-				derived.ac = null;
-				// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
-				set_signal_status(derived, DIRTY);
-				derived.dv = null;
-			});
+			abort_all(derived);
+			// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
+			set_signal_status(derived, DIRTY);
+			derived.dv = null;
 		}
 
 		// freeze any effects inside this derived

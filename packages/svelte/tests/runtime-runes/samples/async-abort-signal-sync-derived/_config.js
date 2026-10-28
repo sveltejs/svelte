@@ -14,7 +14,7 @@ const buttons = `
 // settles, so A never commits. (On `main`, B doesn't evaluate it again, and commits A's promise's value next to
 // its own `x`, for good: `<i>1 0</i>`)
 export default test({
-	// TODO see "Sync deriveds with an abort signal" in batch-views.md
+	// TODO see step 4 in getAbortSignalFixes.md
 	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
