@@ -1079,13 +1079,22 @@ export function get(signal) {
 		var reverted =
 			signal.wv > teardown_version ? undefined : teardown_context?.reverted_values.get(signal);
 
-		if (reverted !== undefined) {
+		if (reverted !== undefined && !is_derived) {
 			if (reverted.e) throw reverted.v;
 			return reverted.v;
 		}
 
-		if (is_derived && (flags & ASSIGNED) === 0) {
+		if (is_derived) {
 			var derived = /** @type {Derived} */ (signal);
+			var written = reverted ?? batch_values?.get(derived);
+			var held = written ?? derived;
+			var assigned = written === undefined ? (flags & ASSIGNED) !== 0 : written.assigned !== false;
+
+			if ((reverted !== undefined || assigned) && teardown_unchanged_since(derived, held.wv)) {
+				if (written?.e) throw written.v;
+				return held.v;
+			}
+
 			var cache = teardown_context?.derived_cache;
 
 			if (cache?.has(derived)) return cache.get(derived);
@@ -1095,6 +1104,8 @@ export function get(signal) {
 			// The global value may not apply to the teardown's view, including when another batch has pending writes.
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
 			if (
+				written !== undefined ||
+				assigned ||
 				((derived.f & CLEAN) === 0 && derived.reactions !== null) ||
 				depends_on_teardown_values(derived)
 			) {
@@ -1196,6 +1207,66 @@ function reconnect(derived) {
 			reconnect(/** @type {Derived} */ (dep));
 		}
 	}
+}
+
+/**
+ * A restored derived value expires when a dependency is written after it, just like an assignment
+ * in the normal view. Use the reverted versions too: writes undone by this teardown don't count.
+ * @param {Derived} derived
+ * @param {number} version
+ */
+function teardown_unchanged_since(derived, version) {
+	var context = teardown_context;
+	var cached = context?.validation_cache?.get(derived);
+
+	if (cached?.version === version && cached.wv === write_version && cached.rv === read_version) {
+		return cached.unchanged;
+	}
+
+	// Record the versions before checking: evaluating a dependency can itself cause a computation or write.
+	var wv = write_version;
+	var rv = read_version;
+	var unchanged = check_teardown_dependencies(derived, version);
+
+	if (context !== null) {
+		(context.validation_cache ??= new Map()).set(derived, { version, wv, rv, unchanged });
+	}
+
+	return unchanged;
+}
+
+/**
+ * @param {Derived} derived
+ * @param {number} version
+ */
+function check_teardown_dependencies(derived, version) {
+	for (const dep of derived.deps ?? []) {
+		var written = teardown_context?.reverted_values.get(dep) ?? batch_values?.get(dep);
+		var value = written ?? dep;
+
+		if ((dep.f & DERIVED) !== 0) {
+			var dependency = /** @type {Derived} */ (dep);
+			var assigned = written === undefined ? (dep.f & ASSIGNED) !== 0 : written.assigned !== false;
+
+			if (assigned && value.wv > version) return false;
+
+			// A computed dependency's global version may belong to the update we're undoing.
+			// Follow its inputs instead, retaining an older version if its value hasn't changed.
+			if (
+				!teardown_unchanged_since(dependency, version) &&
+				// The "not equals" is necessary because of lazily computed deriveds: The old value
+				// could not have been computed before the teardown, and so we would compare wrong versions.
+				// effect-teardown-assigned-derived-lazy-dependency would fail without this check.
+				(value.wv > version || !dependency.equals.call(value, get(dependency)))
+			) {
+				return false;
+			}
+		} else if (value.wv > version) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /** @param {Derived} derived */

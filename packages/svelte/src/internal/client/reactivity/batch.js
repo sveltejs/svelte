@@ -65,6 +65,7 @@ export let previous_batch = null;
  * @typedef {Object} TeardownContext
  * @property {Map<Value, BatchValue>} reverted_values The writes to revert in this view
  * @property {Map<Derived, any>} derived_cache Deriveds evaluated with this view's values
+ * @property {Map<Derived, { version: number, wv: number, rv: number, unchanged: boolean }> | null} validation_cache Checks cached until another write or computation
  * @property {TeardownContext | null} parent The context to restore after a nested flush or eager block
  */
 
@@ -80,6 +81,7 @@ function push_teardown_context(values) {
 	var context = (teardown_context = {
 		reverted_values: new Map(teardown_context?.reverted_values),
 		derived_cache: new Map(),
+		validation_cache: null,
 		parent: teardown_context
 	});
 
@@ -423,6 +425,7 @@ export class Batch {
 	#process() {
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
+		teardown_context?.validation_cache?.clear();
 
 		if (async_mode_flag && this.started) {
 			// Since this batch last ran, reactions may have come to depend on its writes without it
@@ -772,9 +775,11 @@ export class Batch {
 				context.reverted_values.delete(source);
 				// the deriveds that teardowns evaluated may depend on the written value
 				context.derived_cache.clear();
+				context.validation_cache?.clear();
 			}
 		} else if (previous !== undefined) {
 			teardown_context?.reverted_values.set(source, previous);
+			teardown_context?.validation_cache?.clear();
 		}
 
 		var latest = !this.is_fork && !same && later === null;
