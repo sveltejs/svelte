@@ -12,9 +12,7 @@ import {
 	INERT,
 	CONNECTED,
 	ASSIGNED,
-	ERROR_VALUE,
-	MAYBE_DIRTY,
-	EAGER_EFFECT
+	ERROR_VALUE
 } from '#client/constants';
 import {
 	active_reaction,
@@ -36,7 +34,7 @@ import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
-import { eager_effects, flush_eager_effects, internal_set, old_values, set_eager_effects, source } from './sources.js';
+import { eager_effects, internal_set, old_values, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
@@ -51,7 +49,7 @@ import {
 import { increment_pending, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
 
 /**
@@ -224,11 +222,6 @@ export function async_derived(fn, label, location) {
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			batch.capture(signal, error ?? value, same, !!error);
 
-			if (!batch.is_fork) {
-				mark_eager_effects(signal);
-				if (eager_effects.size > 0) flush_eager_effects();
-			}
-
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
 
@@ -295,28 +288,6 @@ export function async_derived(fn, label, location) {
 
 		next(promise);
 	});
-}
-
-/**
- * @param {Value} signal
- */
-function mark_eager_effects(signal) {
-	if (signal.reactions === null) return;
-
-	for (const reaction of signal.reactions) {
-		var flags = reaction.f;
-
-		if ((flags & DIRTY) === 0) {
-			set_signal_status(reaction, MAYBE_DIRTY);
-		}
-
-		if ((flags & DERIVED) !== 0) {
-			view_cache?.delete(/** @type {Derived} */ (reaction));
-			mark_eager_effects(/** @type {Derived} */ (reaction));
-		} else if ((flags & EAGER_EFFECT) !== 0) {
-			eager_effects.add(/** @type {Effect} */ (reaction));
-		}
-	}
 }
 
 /**

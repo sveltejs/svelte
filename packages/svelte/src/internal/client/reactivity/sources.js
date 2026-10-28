@@ -40,7 +40,8 @@ import {
 	view_cache,
 	eager_block_effects,
 	schedule_effect,
-	legacy_updates
+	legacy_updates,
+	in_real_world
 } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -189,11 +190,7 @@ var count_deps = 0;
  * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}
  */
-export function internal_set(
-	source,
-	value,
-	updated_during_traversal = null
-) {
+export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
 		if (is_destroying_effect) {
 			old_values.set(source, value);
@@ -286,6 +283,11 @@ export function internal_set(
 export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
+	// eager effects run in the real world, not in the view of a batch
+	in_real_world(run_eager_effects);
+}
+
+function run_eager_effects() {
 	for (const effect of eager_effects) {
 		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
 		// instead of just updating the effects - this way we avoid overfiring.

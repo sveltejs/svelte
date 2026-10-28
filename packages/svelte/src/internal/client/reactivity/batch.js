@@ -36,7 +36,7 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
+import { eager_effects, flush_eager_effects, old_values, source, update } from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { add_dirty_effect, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
@@ -554,14 +554,22 @@ export class Batch {
 				if ((flags & DERIVED) !== 0) {
 					if ((flags & CLEAN) !== 0) set_signal_status(reaction, MAYBE_DIRTY);
 					this.#revalidate([/** @type {Derived} */ (reaction)], seen);
+				} else if ((flags & EAGER_EFFECT) !== 0) {
+					if (!this.is_fork) {
+						eager_effects.add(/** @type {Effect} */ (reaction));
+					}
 				} else if (
-					(flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 &&
+					(flags & (INERT | DESTROYED)) === 0 &&
 					// branches that this batch skips don't exist in its view of the world
 					!this.#is_skipped(/** @type {Effect} */ (reaction))
 				) {
 					this.schedule(/** @type {Effect} */ (reaction), MAYBE_DIRTY);
 				}
 			}
+		}
+
+		if (eager_effects.size > 0) {
+			flush_eager_effects();
 		}
 	}
 
@@ -1287,28 +1295,6 @@ function flush_queued_effects(effects) {
 }
 
 /**
- * When committing a fork, we need to trigger eager effects so that
- * any `$state.eager(...)` expressions update immediately. This
- * function allows us to discover them
- * @param {Value} value
- * @param {Set<Effect>} effects
- */
-function mark_eager_effects(value, effects) {
-	if (value.reactions === null) return;
-
-	for (const reaction of value.reactions) {
-		const flags = reaction.f;
-
-		if ((flags & DERIVED) !== 0) {
-			mark_eager_effects(/** @type {Derived} */ (reaction), effects);
-		} else if ((flags & EAGER_EFFECT) !== 0) {
-			set_signal_status(reaction, DIRTY);
-			effects.add(/** @type {Effect} */ (reaction));
-		}
-	}
-}
-
-/**
  * @param {Effect} effect
  * @param {number} status DIRTY or MAYBE_DIRTY
  * @returns {void}
@@ -1380,36 +1366,46 @@ export function eager(fn) {
 
 	get(version);
 
-	eager_effect(() => {
-		if (initial) {
-			// the first time this runs, we create an eager effect
-			// that will run eagerly whenever the expression changes
-			var previous_batch_values = batch_values;
-
-			try {
-				// evaluate in the real world
-				batch_values = null;
+	// evaluate in the real world — including recording the versions of the dependencies,
+	// so that the eager effect is dirty-checked correctly later (see `flush_eager_effects`)
+	in_real_world(() => {
+		eager_effect(() => {
+			if (initial) {
+				// the first time this runs, we create an eager effect
+				// that will run eagerly whenever the expression changes
 				value = fn();
-			} finally {
-				batch_values = previous_batch_values;
+				return;
 			}
 
-			return;
-		}
+			// the second time this effect runs, it's to schedule a
+			// `version` update. since this will recreate the effect,
+			// we don't need to evaluate the expression here
+			if (eager_versions.length === 0) {
+				queue_micro_task(eager_flush);
+			}
 
-		// the second time this effect runs, it's to schedule a
-		// `version` update. since this will recreate the effect,
-		// we don't need to evaluate the expression here
-		if (eager_versions.length === 0) {
-			queue_micro_task(eager_flush);
-		}
-
-		eager_versions.push(version);
+			eager_versions.push(version);
+		});
 	});
 
 	initial = false;
 
 	return value;
+}
+
+/**
+ * Run `fn` with the real world (i.e. the latest values) as the active view, regardless of which batch is active
+ * @param {() => void} fn
+ */
+export function in_real_world(fn) {
+	var previous_batch_values = batch_values;
+	batch_values = null;
+
+	try {
+		fn();
+	} finally {
+		batch_values = previous_batch_values;
+	}
 }
 
 /**
@@ -1508,23 +1504,6 @@ export function fork(fn) {
 					update_derived_status(/** @type {Derived} */ (source));
 				}
 			}
-
-			// trigger any `$state.eager(...)` expressions with the new state.
-			// eager effects don't get scheduled like other effects, so we
-			// can't just encounter them during traversal, we need to
-			// proactively flush them
-			// TODO maybe there's a better implementation?
-			flushSync(() => {
-				/** @type {Set<Effect>} */
-				var eager_effects = new Set();
-
-				for (var source of batch.current.keys()) {
-					mark_eager_effects(source, eager_effects);
-				}
-
-				set_eager_effects(eager_effects);
-				flush_eager_effects();
-			});
 
 			batch.flush();
 			await settled;
