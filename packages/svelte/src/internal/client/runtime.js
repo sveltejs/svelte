@@ -69,16 +69,9 @@ import * as w from './warnings.js';
 
 export let is_destroying_effect = false;
 
-/** The write version when the running teardown started — later writes happened in it, and aren't reverted */
-export let teardown_version = 0;
-
-/**
- * @param {boolean} value
- * @param {number} [version]
- */
-export function set_is_destroying_effect(value, version = write_version) {
+/** @param {boolean} value */
+export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
-	teardown_version = version;
 }
 
 /**
@@ -1208,8 +1201,7 @@ function reconnect(derived) {
  * @returns {BatchValue | undefined}
  */
 function teardown_view(signal) {
-	var written =
-		signal.wv > teardown_version ? undefined : teardown_context?.reverted_values.get(signal);
+	var written = teardown_context?.reverted_values.get(signal);
 
 	if ((signal.f & DERIVED) === 0) return written;
 
