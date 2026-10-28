@@ -777,10 +777,14 @@ export class Batch {
 			}
 		}
 
-		seen = null;
-		count_deps = 0;
-		this.mark(source, DIRTY, updated_during_traversal);
-		seen = null;
+		// A value that equals the real one, with the same version, changes nothing that reactions
+		// could read outside this batch's view — which is revalidated when the batch is processed
+		if (!same) {
+			seen = null;
+			count_deps = 0;
+			this.mark(source, DIRTY, updated_during_traversal);
+			seen = null;
+		}
 	}
 
 	deactivate() {
