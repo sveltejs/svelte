@@ -28,10 +28,12 @@ import {
 	active_reaction,
 	get,
 	increment_write_version,
+	is_destroying_effect,
 	is_dirty,
 	promote_record,
 	prune_edges,
-	update_effect
+	update_effect,
+	write_version
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
@@ -41,7 +43,6 @@ import {
 	eager_effects,
 	eager_effects_deferred,
 	flush_eager_effects,
-	old_values,
 	source,
 	update
 } from './sources.js';
@@ -67,6 +68,51 @@ export let current_batch = null;
  * @type {Batch | null}
  */
 export let previous_batch = null;
+
+/**
+ * @typedef {Object} TeardownContext
+ * @property {Map<Value, BatchValue>} reverted_values The writes to revert in this view
+ * @property {Map<Derived, BatchValue>} derived_cache The values of deriveds in this view (see `runtime.js#teardown_view`),
+ * until it changes
+ * @property {TeardownContext | null} parent The context to restore after a nested flush or eager block
+ */
+
+/**
+ * Effect teardowns revert the writes that caused them (see `runtime.js#teardown_view`).
+ * (A teardown outside of a flush reverts nothing, but gets a context to cache its deriveds in)
+ * @type {TeardownContext | null}
+ */
+export let teardown_context = null;
+
+/** @param {TeardownContext | null} context */
+export function set_teardown_context(context) {
+	teardown_context = context;
+}
+
+/** @param {Map<Value, BatchValue>} [values] */
+export function push_teardown_context(values) {
+	var context = (teardown_context = {
+		reverted_values: new Map(teardown_context?.reverted_values),
+		derived_cache: new Map(),
+		parent: teardown_context
+	});
+
+	for (const [source, value] of values ?? []) context.reverted_values.set(source, value);
+
+	return context;
+}
+
+/**
+ * A write in a teardown remains visible after returning to an enclosing teardown view,
+ * and the deriveds that teardowns evaluated may depend on it
+ * @param {Value} source
+ */
+export function teardown_write(source) {
+	for (var context = teardown_context; context !== null; context = context.parent) {
+		context.reverted_values.delete(source);
+		context.derived_cache.clear();
+	}
+}
 
 /**
  * When time travelling (i.e. working in one batch, while other batches
@@ -128,8 +174,8 @@ export let legacy_updates = null;
 
 var flush_count = 0;
 
-/** @type {Set<Value>} */
-var source_stacks = new Set();
+/** Sources whose DEV update counts and stack traces need resetting after the flush. @type {Set<Value>} */
+export const source_stacks = new Set();
 
 /**
  * A set of signals we have already seen while traversing in `batch.mark`.
@@ -412,6 +458,9 @@ export class Batch {
 	}
 
 	#process() {
+		// A different batch view may apply, even when processing continues within the same flush.
+		teardown_context?.derived_cache.clear();
+
 		if (async_mode_flag && this.started) {
 			// Since this batch last ran, reactions may have come to depend on its writes without it
 			// knowing (e.g. effects created by other batches), or have run in the view of other batches.
@@ -526,8 +575,8 @@ export class Batch {
 		this.#commit_callbacks.clear();
 
 		previous_batch = this;
-		flush_queued_effects(render_effects);
-		flush_queued_effects(effects);
+		var earlier_writes = flush_queued_effects(render_effects);
+		flush_queued_effects(effects, earlier_writes);
 		previous_batch = null;
 
 		this.committing = false;
@@ -551,7 +600,14 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
-			old_values.clear();
+			if (teardown_context !== null) {
+				for (const [source, snapshot] of teardown_context.reverted_values) {
+					if (next_batch.previous.get(source)?.wv !== snapshot.wv) {
+						teardown_context.reverted_values.delete(source);
+					}
+				}
+			}
+
 			next_batch.#process();
 		}
 	}
@@ -723,26 +779,35 @@ export class Batch {
 	 * @param {Effect[] | null} [updated_during_traversal]
 	 */
 	capture(source, value, same, error = false, updated_during_traversal = null) {
+		var previous = this.previous.get(source);
+
 		var later = this.next;
 
 		while (later !== null && (later.is_fork || !later.current.has(source))) {
 			later = later.next;
 		}
 
-		if (!this.previous.has(source)) {
+		if (previous === undefined) {
 			// the value before this batch's change is the one before the later batch's change, if any
-			var snapshot = later?.previous.get(source);
+			previous = later?.previous.get(source);
 
-			if (snapshot) {
-				this.previous.set(source, snapshot);
-			} else if (source.v !== UNINITIALIZED) {
-				this.previous.set(source, {
+			if (previous === undefined && source.v !== UNINITIALIZED) {
+				previous = {
 					v: source.v,
 					wv: source.wv,
 					e: (source.f & ERROR_VALUE) !== 0,
 					assigned: (source.f & ASSIGNED) !== 0
-				});
+				};
 			}
+
+			if (previous !== undefined) this.previous.set(source, previous);
+		}
+
+		if (is_destroying_effect) {
+			teardown_write(source);
+		} else if (previous !== undefined) {
+			teardown_context?.reverted_values.set(source, previous);
+			teardown_context?.derived_cache.clear();
 		}
 
 		var latest = !this.is_fork && !same && later === null;
@@ -794,11 +859,10 @@ export class Batch {
 	}
 
 	flush() {
-		try {
-			if (DEV) {
-				source_stacks.clear();
-			}
+		// flushes can be nested, e.g. if an effect calls `flushSync`
+		var context = push_teardown_context(this.previous);
 
+		try {
 			is_processing = true;
 			current_batch = this;
 
@@ -811,7 +875,6 @@ export class Batch {
 
 					// the batch is processed again anyway if a flush is queued
 					if (batch.linked && !batch.#decrement_queued) {
-						old_values.clear();
 						current_batch = batch;
 						batch.#process();
 					}
@@ -824,14 +887,15 @@ export class Batch {
 			legacy_updates = null;
 			is_processing = false;
 
+			teardown_context = context.parent;
 			this.deactivate();
-
-			old_values.clear();
 
 			if (DEV) {
 				for (const source of source_stacks) {
 					source.updated = null;
 				}
+
+				source_stacks.clear();
 			}
 		}
 	}
@@ -1157,6 +1221,18 @@ export class Batch {
 	schedule(effect, status) {
 		last_scheduled_effect = effect;
 
+		// While another batch is committed, effects that this batch's writes affect (other than the one
+		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit
+		if (
+			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
+			previous_batch !== null &&
+			previous_batch !== this &&
+			effect !== active_reaction
+		) {
+			add_dirty_effect(this.#unprocessed, effect, status);
+			return;
+		}
+
 		if ((!is_processing || current_batch !== this) && active_reaction === null) {
 			if (this.prev !== null || this.next !== null || this.is_fork) {
 				add_dirty_effect(this.#unprocessed, effect, MAYBE_DIRTY);
@@ -1330,12 +1406,15 @@ function infinite_loop_guard() {
 export let eager_block_effects = null;
 
 /**
+ * `earlier_writes` includes writes from the pre-effect phase. Eager block teardowns
+ * revert the running effect's writes, but not these earlier writes.
  * @param {Array<Effect>} effects
- * @returns {void}
+ * @param {Map<Value, BatchValue> | null} [earlier_writes]
+ * @returns {Map<Value, BatchValue> | null}
  */
-function flush_queued_effects(effects) {
+function flush_queued_effects(effects, earlier_writes = null) {
 	var length = effects.length;
-	if (length === 0) return;
+	if (length === 0) return earlier_writes;
 
 	var i = 0;
 
@@ -1345,6 +1424,7 @@ function flush_queued_effects(effects) {
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
 			eager_block_effects = new Set();
 
+			var version = write_version;
 			update_effect(effect);
 
 			// Effects with no dependencies or teardown do not get added to the effect tree.
@@ -1366,7 +1446,13 @@ function flush_queued_effects(effects) {
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.size > 0) {
-				old_values.clear();
+				// these run because of the writes of the effect, so their teardowns revert those
+				var previous_teardown_context = teardown_context;
+
+				// if state was written by an effect before the one that caused the eager
+				// block rerun, its writes apply in this view. Deriveds must be evaluated
+				// afresh rather than reusing results cached before those writes.
+				if (earlier_writes !== null) push_teardown_context(earlier_writes);
 
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
@@ -1393,11 +1479,22 @@ function flush_queued_effects(effects) {
 				}
 
 				eager_block_effects.clear();
+				teardown_context = previous_teardown_context;
+			}
+
+			// if the effect — or the block effects — wrote anything
+			if (write_version !== version && current_batch !== null) {
+				for (const [value, write] of current_batch.current) {
+					if (write.wv > version) {
+						(earlier_writes ??= new Map()).set(value, write);
+					}
+				}
 			}
 		}
 	}
 
 	eager_block_effects = null;
+	return earlier_writes;
 }
 
 /**

@@ -11,8 +11,8 @@ import {
 	current_sources,
 	is_dirty,
 	untracking,
-	is_destroying_effect,
-	push_reaction_value
+	push_reaction_value,
+	is_destroying_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -25,23 +25,21 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	ASYNC,
-	ASSIGNED
+	ASSIGNED,
+	ERROR_VALUE
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, legacy_updates, in_real_world } from './batch.js';
+import { Batch, legacy_updates, in_real_world, teardown_write, source_stacks } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
-
-/** @type {Map<Value, any>} */
-export const old_values = new Map();
 
 /**
  * @param {Set<any>} v
@@ -169,16 +167,12 @@ export function set(source, value, should_proxy = false) {
  * @param {Effect[] | null} [updated_during_traversal]
  * @returns {V}
  */
-export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals(value)) {
-		if (is_destroying_effect) {
-			old_values.set(source, value);
-		} else if (!old_values.has(source)) {
-			// only record the value from before the first write in this flush, otherwise a
-			// teardown would see the value from before whichever write happened to be last
-			old_values.set(source, source.v);
-		}
-
+export function internal_set(
+	source,
+	value,
+	updated_during_traversal = null
+) {
+	if (!source.equals(value) || (source.f & ERROR_VALUE) !== 0) {
 		var batch = Batch.ensure();
 
 		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
@@ -193,6 +187,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
 				source.updated ??= new Map();
+				source_stacks.add(source);
 
 				// For performance reasons, when not using $inspect.trace, we only start collecting stack traces
 				// after the same source has been updated more than 5 times in the same flush cycle.
@@ -236,6 +231,9 @@ export function internal_set(source, value, updated_during_traversal = null) {
 				untracked_writes.push(source);
 			}
 		}
+	} else if (is_destroying_effect) {
+		// not a change, but the teardown no longer sees a reverted value
+		teardown_write(source);
 	}
 
 	return value;
