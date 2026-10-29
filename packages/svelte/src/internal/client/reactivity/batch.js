@@ -809,8 +809,7 @@ export class Batch {
 				previous = {
 					v: source.v,
 					wv: source.wv,
-					e: (source.f & ERROR_VALUE) !== 0,
-					assigned: (source.f & ASSIGNED) !== 0
+					f: source.f & (ERROR_VALUE | ASSIGNED)
 				};
 			}
 
@@ -828,7 +827,7 @@ export class Batch {
 		var entry = {
 			v: value,
 			wv: same ? source.wv : increment_write_version(),
-			e: error
+			f: error ? ERROR_VALUE : 0
 		};
 
 		this.current.set(source, entry);
@@ -1509,7 +1508,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 function apply(source, entry) {
 	source.v = entry.v;
 	source.wv = entry.wv;
-	source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
+	source.f = (entry.f & ERROR_VALUE) !== 0 ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
 
 	if ((source.f & DERIVED) !== 0) {
 		source.f |= ASSIGNED;
