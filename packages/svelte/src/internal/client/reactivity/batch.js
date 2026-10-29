@@ -1614,8 +1614,7 @@ export function in_real_world(fn) {
 	var previous_view_batch = view_batch;
 
 	// the real world doesn't belong to a batch, so what runs in it doesn't touch the active batch's records
-	batch_values = view_cache = null;
-	view_batch = null;
+	batch_values = view_cache = view_batch = null;
 
 	try {
 		fn();
