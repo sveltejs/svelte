@@ -920,8 +920,6 @@ export class Batch {
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch === this) continue;
 
-			// (an earlier batch that wrote any of the same sources is always a fork:
-			// a real one would have taken over this batch's writes instead, see `#merge`)
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
