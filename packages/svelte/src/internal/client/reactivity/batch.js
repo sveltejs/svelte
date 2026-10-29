@@ -1062,13 +1062,13 @@ export class Batch {
 	 */
 	activate() {
 		current_batch = this;
+		view_batch = this;
 
 		if (!async_mode_flag) {
 			batch_values = view_cache = null;
 			return;
 		}
 
-		view_batch = this;
 		this.folded = [];
 
 		if (!this.is_fork && this.prev === null && this.next === null) {
