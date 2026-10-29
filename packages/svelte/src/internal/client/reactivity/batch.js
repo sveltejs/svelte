@@ -1664,27 +1664,27 @@ export function fork(fn) {
 		e.experimental_async_required('fork');
 	}
 
-	if (current_batch !== null) {
+	if (active_effect !== null) {
 		e.fork_timing();
 	}
 
-	flushSync();
+	var batch = flushSync(() => {
+		var batch = Batch.ensure();
+		batch.is_fork = true;
 
-	var batch = Batch.ensure();
-	batch.is_fork = true;
+		in_real_world(() => {
+			batch_values = new Map();
+			view_cache = new Map();
+			view_batch = batch;
 
-	// `fn` sees the real world — including the writes of other pending batches, so that e.g. `count++`
-	// builds on them, like outside a fork — plus the fork's own writes. (When the fork is processed,
-	// the writes of batches it doesn't share a source with are undone, see `activate`)
-	batch_values = new Map();
-	view_cache = new Map();
-	view_batch = batch;
+			fn();
+		});
 
-	var committed = false;
+		return batch;
+	});
+
 	var settled = batch.settled();
-
-	fn();
-	flushSync();
+	var committed = false;
 
 	return {
 		commit: async () => {
