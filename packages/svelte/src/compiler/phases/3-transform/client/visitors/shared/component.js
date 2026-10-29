@@ -256,9 +256,11 @@ export function build_component(node, component_name, loc, context) {
 				if (attribute.name === 'this') {
 					bind_this = attribute.expression;
 				} else {
+					// `bind:foo={$store}` and `bind:foo={$store.a.b}` are both store bindings
+					const root = object(/** @type {Identifier | MemberExpression} */ (attribute.expression));
+
 					const is_store_sub =
-						attribute.expression.type === 'Identifier' &&
-						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
+						root !== null && context.state.scope.get(root.name)?.kind === 'store_sub';
 
 					const get = is_store_sub
 						? b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
