@@ -190,6 +190,8 @@ var count_deps = 0;
 
 let uid = 1;
 
+let last_processed = 0;
+
 export class Batch {
 	id = uid++;
 
@@ -472,7 +474,7 @@ export class Batch {
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
 
-		if (async_mode_flag && this.started) {
+		if (async_mode_flag && this.started && last_processed !== this.id) {
 			// Since this batch last ran, reactions may have come to depend on its writes without it
 			// knowing (e.g. effects created by other batches), or have run in the view of other batches.
 			// Re-validate them in this batch's view — this only re-runs those that are out of date
@@ -480,6 +482,7 @@ export class Batch {
 		}
 
 		this.started = true;
+		last_processed = this.id;
 
 		// Deferred effects are rescheduled even if the batch still has pending work, because traversing the
 		// tree could make an if block that contains the last blocking pending effect falsy, causing the batch
@@ -1610,12 +1613,18 @@ export function eager(fn) {
  */
 export function in_real_world(fn) {
 	var previous_batch_values = batch_values;
-	batch_values = null;
+	var previous_view_cache = view_cache;
+	var previous_view_batch = view_batch;
+
+	// the real world doesn't belong to a batch, so what runs in it doesn't touch the active batch's records
+	batch_values = view_cache = view_batch = null;
 
 	try {
 		fn();
 	} finally {
 		batch_values = previous_batch_values;
+		view_cache = previous_view_cache;
+		view_batch = previous_view_batch;
 	}
 }
 
@@ -1691,6 +1700,7 @@ export function fork(fn) {
 
 	var settled = batch.settled();
 	var committed = false;
+	var discarded = false;
 
 	return {
 		commit: async () => {
@@ -1699,8 +1709,14 @@ export function fork(fn) {
 				return;
 			}
 
-			if (!batch.linked) {
+			if (discarded) {
 				e.fork_discarded();
+			}
+
+			if (!batch.linked) {
+				// batch was made obsolete by later changes
+				committed = true;
+				return;
 			}
 
 			committed = true;
@@ -1727,6 +1743,8 @@ export function fork(fn) {
 			if (!committed && batch.linked) {
 				batch.discard();
 			}
+
+			discarded = true;
 		}
 	};
 }
