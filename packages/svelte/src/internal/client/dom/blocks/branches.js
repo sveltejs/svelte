@@ -188,6 +188,7 @@ export class BranchManager {
 
 				// until it is committed, the branch only exists for the batches that select it
 				effect.f |= EFFECT_OFFSCREEN;
+				batch.unskip_new_effect(effect);
 
 				this.#offscreen.set(key, { effect, fragment });
 			} else {
