@@ -957,11 +957,9 @@ export class Batch {
 				}
 			}
 
-			if (obsolete) {
-				if (is_earlier) {
-					// this batch is now obsolete and can be discarded
-					batch.discard();
-				}
+			if (obsolete && is_earlier) {
+				// this batch is now obsolete and can be discarded
+				batch.discard();
 			} else if (sources.length > 0) {
 				// The microtask queue can contain the batch already scheduled to run right
 				// after this one is finished, so throwing the invariant would be wrong here.
