@@ -164,18 +164,23 @@ Enforce img alt attribute does not contain the word image, picture, or photo. Sc
 The value of '%attribute%' must be a %type%
 ```
 
-Enforce that only the correct type of value is used for aria attributes. For example, `aria-hidden`
-should only receive a boolean.
+Enforce that only the correct type of value is used for aria attributes. For example, `aria-valuenow`
+should only receive a number.
 
 ```svelte
-<!-- A11y: The value of 'aria-hidden' must be exactly one of true or false -->
-<div aria-hidden="yes"></div>
+<!-- A11y: The value of 'aria-valuenow' must be a number -->
+<div aria-valuenow="high"></div>
 ```
 
 ### a11y_incorrect_aria_attribute_type_boolean
 
 ```
 The value of '%attribute%' must be either 'true' or 'false'. It cannot be empty
+```
+
+```svelte
+<!-- A11y: The value of 'aria-hidden' must be either 'true' or 'false' -->
+<div aria-hidden="yes"></div>
 ```
 
 ### a11y_incorrect_aria_attribute_type_id
@@ -270,18 +275,18 @@ There are two supported ways to associate a label with a control:
 
 Providing captions for media is essential for deaf users to follow along. Captions should be a transcription or translation of the dialogue, sound effects, relevant musical cues, and other relevant audio information. Not only is this important for accessibility, but can also be useful for all users in the case that the media is unavailable (similar to `alt` text on an image when an image is unable to load).
 
-The captions should contain all important and relevant information to understand the corresponding media. This may mean that the captions are not a 1:1 mapping of the dialogue in the media content. However, captions are not necessary for video components with the `muted` attribute.
+The captions should contain all important and relevant information to understand the corresponding media. This may mean that the captions are not a 1:1 mapping of the dialogue in the media content. However, captions are not necessary for video components with the `muted` attribute, or for `<video>` elements without a `src` attribute (which could, for example, be playing a `MediaStream`).
 
 ```svelte
-<video><track kind="captions" /></video>
+<video src="video.mp4"><track kind="captions" /></video>
 
 <audio muted></audio>
 
-<!-- A11y: Media elements must have a <track kind=\"captions\"> -->
-<video></video>
+<!-- A11y: <video> elements must have a <track kind="captions"> -->
+<video src="video.mp4"></video>
 
-<!-- A11y: Media elements must have a <track kind=\"captions\"> -->
-<video><track /></video>
+<!-- A11y: <video> elements must have a <track kind="captions"> -->
+<video src="video.mp4"><track /></video>
 ```
 
 ### a11y_misplaced_role
@@ -344,12 +349,9 @@ Enforce that attributes required for accessibility are present on an element. Th
 `<%name%>` element should contain text
 ```
 
-Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and that the content is accessible to screen readers
+Enforce that heading elements (`h1`, `h2`, etc.) have content and that the content is accessible to screen readers. Empty `<a>` and `<button>` elements are covered by [`a11y_consider_explicit_label`](#a11y_consider_explicit_label) instead.
 
 ```svelte
-<!-- A11y: <a> element should have child content -->
-<a href="/foo"></a>
-
 <!-- A11y: <h1> element should have child content -->
 <h1></h1>
 ```
@@ -499,10 +501,7 @@ Elements with explicit or implicit roles defined contain only `aria-*` propertie
 
 ```svelte
 <!-- A11y: The attribute 'aria-multiline' is not supported by the role 'link'. -->
-<div role="link" aria-multiline></div>
-
-<!-- A11y: The attribute 'aria-required' is not supported by the role 'listitem'. This role is implicit on the element <li>. -->
-<li aria-required></li>
+<div role="link" aria-multiline="true"></div>
 ```
 
 ### a11y_role_supports_aria_props_implicit
@@ -514,11 +513,8 @@ The attribute '%attribute%' is not supported by the role '%role%'. This role is 
 Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
 
 ```svelte
-<!-- A11y: The attribute 'aria-multiline' is not supported by the role 'link'. -->
-<div role="link" aria-multiline></div>
-
 <!-- A11y: The attribute 'aria-required' is not supported by the role 'listitem'. This role is implicit on the element <li>. -->
-<li aria-required></li>
+<li aria-required="true"></li>
 ```
 
 ### a11y_unknown_aria_attribute
