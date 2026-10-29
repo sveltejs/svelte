@@ -190,8 +190,7 @@ var count_deps = 0;
 
 let uid = 1;
 
-/** @type {Batch | null} */
-let last_processed = null;
+let last_processed = 0;
 
 export class Batch {
 	id = uid++;
@@ -464,7 +463,7 @@ export class Batch {
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
 
-		if (async_mode_flag && this.started && last_processed !== this) {
+		if (async_mode_flag && this.started && last_processed !== this.id) {
 			// Since this batch last ran, reactions may have come to depend on its writes without it
 			// knowing (e.g. effects created by other batches), or have run in the view of other batches.
 			// Re-validate them in this batch's view — this only re-runs those that are out of date
@@ -472,7 +471,7 @@ export class Batch {
 		}
 
 		this.started = true;
-		last_processed = this;
+		last_processed = this.id;
 
 		// Deferred effects are rescheduled even if the batch still has pending work, because traversing the
 		// tree could make an if block that contains the last blocking pending effect falsy, causing the batch
