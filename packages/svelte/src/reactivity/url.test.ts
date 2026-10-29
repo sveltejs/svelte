@@ -280,3 +280,80 @@ test('url.port is updated when the protocol change clears the port', () => {
 
 	cleanup();
 });
+
+test('url.href is updated when the fragment becomes empty but present', () => {
+	const url = new SvelteURL('https://svelte.dev/a');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.href);
+		});
+	});
+
+	flushSync(() => {
+		// `hash` is '' both before and after, but the serialized URL gains a trailing '#'
+		url.hash = '#';
+	});
+
+	assert.equal(url.hash, '');
+	assert.deepEqual(log, ['https://svelte.dev/a', 'https://svelte.dev/a#']);
+
+	flushSync(() => {
+		url.hash = '';
+	});
+
+	assert.deepEqual(log, ['https://svelte.dev/a', 'https://svelte.dev/a#', 'https://svelte.dev/a']);
+
+	cleanup();
+});
+
+test('url.href is updated when the query becomes empty but present', () => {
+	const url = new SvelteURL('https://svelte.dev/a');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.href);
+		});
+	});
+
+	flushSync(() => {
+		// `search` is '' both before and after, but the serialized URL gains a trailing '?'
+		url.search = '?';
+	});
+
+	assert.equal(url.search, '');
+	assert.deepEqual(log, ['https://svelte.dev/a', 'https://svelte.dev/a?']);
+
+	flushSync(() => {
+		// re-serializing the (empty) params drops the dangling '?'
+		url.searchParams.sort();
+	});
+
+	assert.equal(url.href, 'https://svelte.dev/a');
+	assert.deepEqual(log, ['https://svelte.dev/a', 'https://svelte.dev/a?', 'https://svelte.dev/a']);
+
+	cleanup();
+});
+
+test('url.href is updated when assigning an href that only differs by an empty query or fragment', () => {
+	const url = new SvelteURL('https://svelte.dev/a');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.toString());
+		});
+	});
+
+	flushSync(() => {
+		url.href = 'https://svelte.dev/a?#';
+	});
+
+	assert.equal(url.search, '');
+	assert.equal(url.hash, '');
+	assert.deepEqual(log, ['https://svelte.dev/a', 'https://svelte.dev/a?#']);
+
+	cleanup();
+});
