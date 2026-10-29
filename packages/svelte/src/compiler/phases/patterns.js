@@ -4,6 +4,16 @@ export const regex_starts_with_whitespace = /^\s/;
 export const regex_starts_with_whitespaces = /^[ \t\r\n]+/;
 export const regex_ends_with_whitespace = /\s$/;
 export const regex_ends_with_whitespaces = /[ \t\r\n]+$/;
+/**
+ * The same whitespace in text as written (a text node's `raw`), where it can also be a character
+ * reference like `&#32;`, so that trimming `raw` keeps it in step with the decoded `data`.
+ * The lookaheads keep longer references like `&#325;` from matching.
+ */
+const whitespace_as_written =
+	/[ \t\r\n]|&#(?:0*(?:9|10|13|32)(?!\d)|[xX]0*(?:9|[aAdD]|20)(?![\da-fA-F]));?|&Tab;|&NewLine;/
+		.source;
+export const regex_raw_starts_with_whitespaces = new RegExp(`^(?:${whitespace_as_written})+`);
+export const regex_raw_ends_with_whitespaces = new RegExp(`(?:${whitespace_as_written})+$`);
 /** Not \S because that also removes explicit whitespace defined through things like `&nbsp;` */
 export const regex_not_whitespace = /[^ \t\r\n]/;
 /** Not \s+ because that also includes explicit whitespace defined through things like `&nbsp;` */
