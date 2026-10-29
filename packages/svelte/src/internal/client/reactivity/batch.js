@@ -1613,12 +1613,18 @@ export function eager(fn) {
  */
 export function in_real_world(fn) {
 	var previous_batch_values = batch_values;
-	batch_values = null;
+	var previous_view_cache = view_cache;
+	var previous_view_batch = view_batch;
+
+	// the real world doesn't belong to a batch, so what runs in it doesn't touch the active batch's records
+	batch_values = view_cache = view_batch = null;
 
 	try {
 		fn();
 	} finally {
 		batch_values = previous_batch_values;
+		view_cache = previous_view_cache;
+		view_batch = previous_view_batch;
 	}
 }
 
