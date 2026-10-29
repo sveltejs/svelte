@@ -1672,13 +1672,19 @@ export function fork(fn) {
 		var batch = Batch.ensure();
 		batch.is_fork = true;
 
-		in_real_world(() => {
-			batch_values = new Map();
-			view_cache = new Map();
-			view_batch = batch;
+		try {
+			in_real_world(() => {
+				batch_values = new Map();
+				view_cache = new Map();
+				view_batch = batch;
 
-			fn();
-		});
+				fn();
+			});
+		} catch (error) {
+			batch.discard();
+			batch.deactivate();
+			throw error;
+		}
 
 		return batch;
 	});
