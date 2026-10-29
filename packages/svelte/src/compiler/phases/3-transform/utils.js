@@ -6,7 +6,7 @@ import {
 	regex_not_whitespace,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
-import { decode_character_references } from '../1-parse/utils/html.js';
+import { find_raw_character_reference_boundary } from '../1-parse/utils/html.js';
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';
@@ -27,23 +27,10 @@ function replace_raw_whitespace(raw, data, pattern, replacement, from_start) {
 	const match = data.match(pattern);
 	if (!match) return raw;
 
-	const whitespace = match[0];
-	if (from_start) {
-		for (let i = 0; i <= raw.length; i++) {
-			const end = raw[i] === ';' ? i + 1 : i;
-			if (decode_character_references(raw.slice(0, end), false) === whitespace) {
-				return replacement + raw.slice(end);
-			}
-		}
-	} else {
-		for (let i = raw.length; i >= 0; i--) {
-			if (decode_character_references(raw.slice(i), false) === whitespace) {
-				return raw.slice(0, i) + replacement;
-			}
-		}
-	}
+	const boundary = find_raw_character_reference_boundary(raw, match[0], false, from_start);
+	if (boundary === null) return raw.replace(pattern, replacement);
 
-	return raw.replace(pattern, replacement);
+	return from_start ? replacement + raw.slice(boundary) : raw.slice(0, boundary) + replacement;
 }
 
 /**
