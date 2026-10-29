@@ -583,7 +583,7 @@ Tests copied from `async-another-try-pt-1` that still fail here are marked `skip
 
 - `{#await}` blocks aren't fork- or batch-aware (`await.js` is unchanged from `main`): a fork's pending state or result shows in the real world (`async-fork-await-block*`, `async-fork-flush-stolen-effects-render`, `async-fork-obsolete-equal-values`).
 - A real batch taking over branches or each items a fork created, when the fork is discarded or re-processed: tearing (`async-fork-branch-async-adopted-variants`, `async-fork-branch-component-adopted`), a crash on an internal symbol (`async-fork-each-item-adopted*`), or nested branches recreated, which starts their async work again (`async-fork-nested-adopted`, `async-fork-nested-branch`).
-- Forks: a write-back inside a fork (`x = 1; x = 0`) is lost (`async-fork-write-back`). `commit()` throws `fork_discarded` for a fork that a real batch discarded as obsolete (`async-fork-obsolete-multiple-sources`).
+- Forks: a write-back inside a fork (`x = 1; x = 0`) is lost (`async-fork-write-back`).
 - In async mode, a render effect created in a new branch runs before the existing ones (`new-render-effect-order`).
 
 ## 19. Potentially superfluous tests

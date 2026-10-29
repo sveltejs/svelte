@@ -1690,6 +1690,7 @@ export function fork(fn) {
 	view_batch = batch;
 
 	var committed = false;
+	var discarded = false;
 	var settled = batch.settled();
 
 	fn();
@@ -1702,8 +1703,14 @@ export function fork(fn) {
 				return;
 			}
 
-			if (!batch.linked) {
+			if (discarded) {
 				e.fork_discarded();
+			}
+
+			if (!batch.linked) {
+				// batch was made obsolete by later changes
+				committed = true;
+				return;
 			}
 
 			committed = true;
@@ -1730,6 +1737,8 @@ export function fork(fn) {
 			if (!committed && batch.linked) {
 				batch.discard();
 			}
+
+			discarded = true;
 		}
 	};
 }
