@@ -394,6 +394,8 @@ export class Batch {
 	/**
 	 * Like `unskip_effect`, for a branch that was just created offscreen while this batch is processed.
 	 * Its effects ran in this batch's view of the world when they were created, so there's nothing to re-validate
+	 * TODO can we skip revalidation in `unskip_effect` in more cases, by detecting whether things changed
+	 * inside a branch while it was skipped?
 	 * @param {Effect} effect
 	 */
 	unskip_new_effect(effect) {
