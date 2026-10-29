@@ -175,7 +175,7 @@ export function version_of(signal) {
 		update_derived(/** @type {Derived} */ (signal));
 		return signal.wv;
 	}
-	
+
 	if ((signal.f & DERIVED) !== 0) {
 		return get_view(/** @type {Derived} */ (signal)).wv;
 	}
