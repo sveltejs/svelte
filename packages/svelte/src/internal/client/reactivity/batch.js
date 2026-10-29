@@ -471,6 +471,8 @@ export class Batch {
 	}
 
 	#process() {
+		current_batch = this;
+
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
 
@@ -609,8 +611,6 @@ export class Batch {
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
 			this.#commit();
-			// Rebases can activate other batches or null it out, therefore restore the new one here
-			current_batch = next_batch;
 		}
 
 		if (next_batch !== null) {
@@ -766,7 +766,6 @@ export class Batch {
 		batch.#unlink();
 
 		// processing re-validates everything that depends on the (now merged) writes of this batch
-		current_batch = this;
 		this.#process();
 	}
 
@@ -867,7 +866,6 @@ export class Batch {
 
 		try {
 			is_processing = true;
-			current_batch = this;
 
 			this.#process();
 
@@ -878,7 +876,6 @@ export class Batch {
 
 					// the batch is processed again anyway if a flush is queued
 					if (batch.linked && !batch.#decrement_queued) {
-						current_batch = batch;
 						batch.#process();
 					}
 				}
