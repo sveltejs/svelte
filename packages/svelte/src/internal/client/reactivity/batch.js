@@ -920,6 +920,8 @@ export class Batch {
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
 			if (batch === this) continue;
 
+			// (an earlier batch that wrote any of the same sources is always a fork:
+			// a real one would have taken over this batch's writes instead, see `#merge`)
 			var is_earlier = batch.id < this.id;
 
 			/** @type {Source[]} */
@@ -1681,6 +1683,7 @@ export function fork(fn) {
 	view_batch = batch;
 
 	var committed = false;
+	var discarded = false;
 	var settled = batch.settled();
 
 	fn();
@@ -1693,8 +1696,14 @@ export function fork(fn) {
 				return;
 			}
 
-			if (!batch.linked) {
+			if (discarded) {
 				e.fork_discarded();
+			}
+
+			if (!batch.linked) {
+				// batch was made obsolete by later changes
+				committed = true;
+				return;
 			}
 
 			committed = true;
@@ -1721,6 +1730,8 @@ export function fork(fn) {
 			if (!committed && batch.linked) {
 				batch.discard();
 			}
+
+			discarded = true;
 		}
 	};
 }
