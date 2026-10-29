@@ -20,35 +20,6 @@ The value passed to the `this` prop of `<svelte:element>` must be a valid HTML e
 
 > The `html` property of server render results has been deprecated. Use `body` instead.
 
-## hydratable_clobbering
-
-> Attempted to set `hydratable` with key `%key%` twice with different values.
->
-> %stack%
-
-This error occurs when using `hydratable` multiple times with the same key. To avoid this, you can:
-- Ensure all invocations with the same key result in the same value
-- Update the keys to make both instances unique
-
-```svelte
-<script>
-  import { hydratable } from 'svelte';
-
-  // which one should "win" and be serialized in the rendered response?
-  const one = hydratable('not-unique', () => 1);
-  const two = hydratable('not-unique', () => 2);
-</script>
-```
-
-## hydratable_serialization_failed
-
-> Failed to serialize `hydratable` data for key `%key%`.
->
-> `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/devalue) can, plus Promises.
->
-> Cause:
-> %stack%
-
 ## invalid_csp
 
 > `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
@@ -67,4 +38,41 @@ Certain methods such as `mount` cannot be invoked while running in a server cont
 
 > Could not resolve `render` context.
 
-Certain functions such as `hydratable` cannot be invoked outside of a `render(...)` call, such as at the top level of a module.
+Certain functions such as `Warp` methods cannot be invoked outside of a `render(...)` or `withWarp(...)` call, such as at the top level of a module.
+
+## warp_context_already_rendered
+
+> `render(...)` was called more than once inside the same `withWarp(...)` call
+
+Each `withWarp` call can only contain one `render`, since all the values added to `Warp` instances inside it are serialized into that render's output. If you need to render more than once, use a separate `withWarp` call for each render.
+
+## warp_context_nested
+
+> `withWarp(...)` cannot be called inside another `withWarp(...)` or `render(...)` call
+
+## warp_key_exists
+
+> Key `%key%` has already been set in `Warp` `%id%`%stack%
+
+On the server, each key in a `Warp` can only be set once. Something may already have read the first value during the render, so replacing it would mean the client hydrates with different data than the server rendered with. Use `getOrInsert` or `getOrInsertComputed` if the value might already exist.
+
+## warp_method_unsupported
+
+> `warp.%method%(...)` is not supported on the server
+
+Values added to a `Warp` on the server may already be in use (or on their way to the client), so they cannot be removed.
+
+## warp_serialization_failed
+
+> Failed to serialize data added to a `Warp`.
+>
+> `Warp` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/devalue) can, including promises. To serialize other values, pass a `replacer` to `render` or `withWarp`.
+>
+> Cause:
+> %stack%
+
+## warp_set_after_render
+
+> Cannot set key `%key%` in `Warp` `%id%` after its values have been serialized
+
+Values can be added to a `Warp` until the rendered HTML has been generated, after which they can no longer be sent to the client.
