@@ -221,7 +221,7 @@ export function RegularElement(node, context) {
 	} else {
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
-				visit_event_attribute(attribute, context);
+				visit_event_attribute(attribute, { ...context, state: element_state });
 				continue;
 			}
 
