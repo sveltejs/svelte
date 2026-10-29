@@ -1673,28 +1673,34 @@ export function fork(fn) {
 		e.experimental_async_required('fork');
 	}
 
-	if (current_batch !== null) {
+	if (active_effect !== null || current_batch?.is_fork) {
 		e.fork_timing();
 	}
 
-	flushSync();
+	var batch = flushSync(() => {
+		var batch = Batch.ensure();
+		batch.is_fork = true;
 
-	var batch = Batch.ensure();
-	batch.is_fork = true;
+		try {
+			in_real_world(() => {
+				batch_values = new Map();
+				view_cache = new Map();
+				view_batch = batch;
 
-	// `fn` sees the real world — including the writes of other pending batches, so that e.g. `count++`
-	// builds on them, like outside a fork — plus the fork's own writes. (When the fork is processed,
-	// the writes of batches it doesn't share a source with are undone, see `activate`)
-	batch_values = new Map();
-	view_cache = new Map();
-	view_batch = batch;
+				fn();
+			});
+		} catch (error) {
+			batch.discard();
+			batch.deactivate();
+			throw error;
+		}
 
+		return batch;
+	});
+
+	var settled = batch.settled();
 	var committed = false;
 	var discarded = false;
-	var settled = batch.settled();
-
-	fn();
-	flushSync();
 
 	return {
 		commit: async () => {
