@@ -64,12 +64,6 @@ let last_batch = null;
 export let current_batch = null;
 
 /**
- * This is needed to avoid overwriting inputs
- * @type {Batch | null}
- */
-export let previous_batch = null;
-
-/**
  * @typedef {Object} TeardownContext
  * @property {Map<Value, BatchValue>} reverted_values The writes to revert in this view
  * @property {Map<Derived, BatchValue>} derived_cache The values of deriveds in this view (see `runtime.js#teardown_view`),
@@ -590,10 +584,8 @@ export class Batch {
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
 
-		previous_batch = this;
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
-		previous_batch = null;
 
 		this.committing = false;
 
@@ -1225,8 +1217,8 @@ export class Batch {
 		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit
 		if (
 			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
-			previous_batch !== null &&
-			previous_batch !== this &&
+			view_batch !== null &&
+			view_batch !== this &&
 			effect !== active_reaction
 		) {
 			add_dirty_effect(this.#unprocessed, effect, status);
@@ -1335,8 +1327,6 @@ export class Batch {
  */
 export function flushSync(fn) {
 	var was_flushing_sync = is_flushing_sync;
-	var prev_previous_batch = previous_batch;
-	previous_batch = null;
 	is_flushing_sync = true;
 
 	try {
@@ -1359,7 +1349,6 @@ export function flushSync(fn) {
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
-		previous_batch = prev_previous_batch;
 	}
 }
 
