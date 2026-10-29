@@ -832,6 +832,10 @@ export class Batch {
 		};
 
 		this.current.set(source, entry);
+
+		// The active view of the world sees writes made while it's active, even if they don't belong to the batch whose
+		// view it is — e.g. those of effects that run while a batch commits, which go to a new batch. (Async results
+		// are only captured while no view is active, see `async_derived`)
 		batch_values?.set(source, entry);
 
 		// an assignment replaces the value of a derived that the active view of the world holds
