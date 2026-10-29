@@ -111,7 +111,7 @@ export const OBSOLETE = Symbol('obsolete');
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	const parent = active_effect;
+	const parent = /** @type {Effect} */ (active_effect);
 
 	if (parent === null) {
 		e.async_derived_orphan();
@@ -121,33 +121,35 @@ export function async_derived(fn, label, location) {
 	var collector = active_reaction === null ? async_collected : null;
 
 	/**
-	 * The runs of the async expression that aren't obsolete (pending or done), and the batch each one started in.
-	 * A run belongs to the batch that holds it as its latest run (see `follow`), which is a different one if that
-	 * batch was merged into another one (see `Batch#merge`)
+	 * The runs of the async expression that aren't obsolete (pending or done) until the first value is there, and the
+	 * batch each one started in. A run belongs to the batch that holds it as its latest run (see `next`), which is a
+	 * different one if that batch was merged into another one (see `Batch#merge`)
 	 * @type {Map<ReturnType<typeof deferred<V>>, Batch>}
 	 */
 	var runs = new Map();
 
-	/** Checks whether the run that the first value comes from is done, whenever a run settles (see below) */
-	var check = noop;
-	/** True once promise that is returned has fulfilled */
+	/**
+	 * The run that the first value comes from, and in whose batch's view the code that awaits it continues (see
+	 * `flatten` and `run`): the first run, unless it becomes obsolete (see `next`), or it's a fork's and a real batch
+	 * runs the expression, too — the fork's result isn't part of the real world, and it would show up there when a
+	 * boundary that shows its pending snippet reveals the content, or when the real batch commits it.
+	 * Without suspending, the latest run
+	 * @type {ReturnType<typeof deferred<V>> | null}
+	 */
+	var run = null;
+
+	/** True once the first value is there */
 	var initialized = false;
 
-	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
+	/** @type {ReturnType<typeof deferred<Source<V>>>} */
+	var first = deferred();
+
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
-
-	/**
-	 * The batch whose run the first value comes from, and whose view the code that awaits it continues in:
-	 * the batch the derived is created in, unless its run becomes obsolete, or it's a fork and a real batch
-	 * ran the expression, too (see `follow`)
-	 * @type {Batch | null}
-	 */
-	var followed = current_batch;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -164,7 +166,6 @@ export function async_derived(fn, label, location) {
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
-		promise = d.promise;
 
 		try {
 			// If this code is changed at some point, make sure to still access the then property
@@ -175,7 +176,6 @@ export function async_derived(fn, label, location) {
 					// if the promise was rejected by the user, via `getAbortSignal`, then
 					// wait for a subsequent resolution instead of flushing the batch
 					if (e !== STALE_REACTION) d.reject(e);
-					else runs.delete(d);
 				})
 				.finally(unset_context);
 		} catch (error) {
@@ -220,8 +220,9 @@ export function async_derived(fn, label, location) {
 			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			deferreds.add(d);
 			batch.async_deriveds.set(effect, d);
-			if (!initialized) runs.set(d, batch);
 		}
+
+		if (!initialized) runs.set(d, batch);
 
 		const waiting = collector?.created?.promise ?? null;
 
@@ -240,9 +241,21 @@ export function async_derived(fn, label, location) {
 
 			// A superseded run may have settled before the rejection in `Batch#merge` or by a rerun arrives in the microtask after
 			if (should_suspend && target.async_deriveds.get(effect) !== d) error = OBSOLETE;
-			if (error === OBSOLETE) runs.delete(d);
 
-			if (waiting !== null && error !== OBSOLETE && !target.merges_into(follow() ?? target)) {
+			if (error === OBSOLETE) {
+				decrement_pending?.();
+				runs.delete(d);
+				if (d === run) follow(next(batch));
+				return;
+			}
+
+			// If the batch that should resolve async_derived return-promise is a fork, check
+			// if another real batch meanwhile started rerunning the derived an if yes switch
+			// to waiting for that instead.
+			var run_batch = get_run_batch();
+			if (run_batch?.is_fork) follow(next(run_batch));
+
+			if (waiting !== null && !target.merges_into(get_run_batch() ?? target)) {
 				// A batch whose run is done isn't done with it until the content that awaits it exists, since the
 				// content is created by the batch whose run the first value comes from. Then it re-validates the
 				// content in its own view (before it can commit it, i.e. in the same go). Unless it's merged into
@@ -254,11 +267,6 @@ export function async_derived(fn, label, location) {
 				});
 			} else {
 				decrement_pending?.();
-			}
-
-			if (error === OBSOLETE) {
-				check();
-				return;
 			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
@@ -276,10 +284,12 @@ export function async_derived(fn, label, location) {
 
 			// write the result in the batch's view of the world
 			target.capture(signal, error ?? value, same, !!error);
-			check();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
+
+		// Down here so the promise that `follow` attaches is invoked after `handler`
+		if (!initialized && (run === null || !should_suspend)) follow(d);
 	});
 
 	teardown(() => {
@@ -294,69 +304,68 @@ export function async_derived(fn, label, location) {
 		signal.f |= ASYNC;
 	}
 
-	if (!should_suspend) {
-		return new Promise((fulfil) => {
-			/** @param {Promise<V>} p */
-			function next(p) {
-				function go() {
-					// if the effect re-runs before the initial promise
-					// resolves, delay resolution until we have a value
-					if (p === promise) fulfil(signal);
-					else next(promise);
-				}
+	/**
+	 * Make `r` the run that the first value comes from (see `run`), and provide the value once that run is
+	 * done — unless it isn't that run anymore by then
+	 * @param {ReturnType<typeof deferred<V>> | null} r
+	 */
+	function follow(r) {
+		if (r === run) return;
+		run = r;
 
-				p.then(go, go);
+		const done = () => {
+			if ((parent.f & DESTROYED) === 0) {
+				if (r !== run) return; // someone else is the run to wait for now
+
+				// The code that awaits the value continues in that batch's view, see `flatten` and `run`
+				if (collector !== null) collector.batch = get_run_batch();
 			}
 
-			next(promise);
-		});
+			run = null;
+			runs.clear();
+			initialized = true;
+			first.resolve(signal);
+		};
+
+		run?.promise.then(done, done);
 	}
 
 	/**
-	 * The batch whose run the first value comes from (see `followed`). While it has a run, that one — unless it's
-	 * a fork, and a real batch has a run, too: the fork's result isn't part of the real world, and it would show
-	 * up there when a boundary that shows its pending snippet reveals the content, or when the real batch
-	 * commits it. Otherwise a batch that committed, whose view is the real world (its run superseded the
-	 * followed one's, see `Batch#release_records`), else the first real batch, else the first fork
+	 * The batch that holds the run that the first value comes from (see `run`), if any
 	 * @returns {Batch | null}
 	 */
-	function follow() {
-		/** @type {Batch[]} */
-		var batches = [];
-
-		for (const [d, b] of runs) {
-			var holder = merge_target(b);
-			if (holder.async_deriveds.get(effect) === d) batches.push(holder);
-		}
-
-		if (followed !== null) followed = merge_target(followed);
-		var real = batches.find((b) => !b.is_fork);
-
-		if (followed !== null && batches.includes(followed) && (!followed.is_fork || !real)) {
-			return followed;
-		}
-
-		return (followed =
-			batches.find((b) => !b.is_fork && b.committed) ?? real ?? batches[0] ?? null);
+	function get_run_batch() {
+		var batch = run && runs.get(run);
+		return batch ? merge_target(batch) : null;
 	}
 
-	return new Promise((fulfil) => {
-		check = () => {
-			if ((parent.f & DESTROYED) === 0) {
-				var batch = follow();
-				var run = batch?.async_deriveds.get(effect);
-				if (!run || deferreds.has(run)) return;
+	/**
+	 * Find the next run to wait for (or the current one is still the correct one):
+	 * - current one is ok if still in `runs` and either not a fork or no other real batches exist
+	 * - else find first real committed, else first real, else just next one
+	 * @param {Batch} batch
+	 */
+	function next(batch) {
+		/** @type {Array<[ReturnType<typeof deferred<V>>, Batch]>} */
+		var live = [];
 
-				// The code that awaits the value continues in that batch's view, see `flatten` and `run`
-				if (collector !== null) collector.batch = batch;
-			}
+		for (let [r, b] of runs) {
+			b = merge_target(b);
+			if (b.async_deriveds.get(effect) === r) live.push([r, b]);
+		}
 
-			check = noop;
-			fulfil(signal);
-			runs.clear();
-			initialized = true;
-		};
-	});
+		var real = live.filter(([, b]) => !b.is_fork);
+		var target = merge_target(batch);
+
+		return (
+			(live.find(([, b]) => b === target && (!b.is_fork || real.length === 0)) ??
+				real.find(([, b]) => b.committed) ??
+				real[0] ??
+				live[0])?.[0] ?? null
+		);
+	}
+
+	return first.promise;
 }
 
 /**
