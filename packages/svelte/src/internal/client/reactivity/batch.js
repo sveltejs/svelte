@@ -1664,7 +1664,7 @@ export function fork(fn) {
 		e.experimental_async_required('fork');
 	}
 
-	if (active_effect !== null) {
+	if (active_effect !== null || current_batch?.is_fork) {
 		e.fork_timing();
 	}
 
