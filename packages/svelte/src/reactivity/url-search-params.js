@@ -92,8 +92,8 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	delete(name, value) {
 		var has_value = super.has(name, value);
 		super.delete(name, value);
+		this.#update_url();
 		if (has_value) {
-			this.#update_url();
 			increment(this.#version);
 		}
 	}
@@ -152,8 +152,9 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		// can't use has(name, value), because for something like https://svelte.dev?foo=1&bar=2&foo=3
 		// if you set `foo` to 1, then foo=3 gets deleted whilst `has("foo", "1")` returns true
 		var current = super.getAll(name);
+		// Even an unchanged list must synchronize the URL's query serialization.
+		this.#update_url();
 		if (previous.length !== current.length || previous.some((value, i) => value !== current[i])) {
-			this.#update_url();
 			increment(this.#version);
 		}
 	}
