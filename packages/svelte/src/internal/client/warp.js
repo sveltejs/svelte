@@ -4,6 +4,12 @@ import { async_mode_flag } from '../flags/index.js';
 import * as e from './errors.js';
 import { get_or_insert, get_or_insert_computed } from '../shared/utils.js';
 
+/** Passed to `#touch` when every key was changed */
+const ALL = Symbol();
+
+// (a `typedef`, since TypeScript considers `typeof ALL` circular in `#touch`'s parameter)
+/** @typedef {typeof ALL} All */
+
 /**
  * Handles the `Warp` values that the server's `<script>`s have pushed onto `svelte.d`, and those
  * they push later, by adding them to `svelte.w`. Does nothing if that's already happening
@@ -11,23 +17,50 @@ import { get_or_insert, get_or_insert_computed } from '../shared/utils.js';
  * @param {NonNullable<Window['__svelte']>} svelte
  */
 export function receive_warp_values(svelte) {
+	// adds a streamed value, unless the client changed its key while values were streaming in.
+	// called by the code that the server streams, so that the value is there before anything
+	// awaiting the promises resolved in the same `<script>` runs
+	svelte.a ??= (id, k, v) => {
+		const c = svelte.r?.c.get(id);
+		if (c === true || c?.has(k)) return;
+
+		get_or_insert_computed((svelte.w ??= new Map()), id, () => new Map()).set(k, v);
+	};
+
 	if (svelte.d !== undefined && !Array.isArray(svelte.d)) return;
 
 	install({
 		target: svelte,
 		key: 'd',
-		receive(_, value) {
+		receive(key, value) {
+			/** @type {Map<string, Map<WarpKey, unknown>>} */
+			let values;
+
+			if (Array.isArray(value)) {
+				// a stream, which sends `[values, the values that are streamed in later]`. while any stream is in
+				// progress, the client records the keys it changes, so that values which are streamed in later
+				// (by any stream) don't overwrite the changes
+				(svelte.r ??= { s: new Set(), c: new Map() }).s.add(key);
+				values = value[0];
+			} else {
+				values = /** @type {Map<string, Map<WarpKey, unknown>>} */ (value);
+			}
+
 			const store = (svelte.w ??= new Map());
 
-			for (const [id, values] of /** @type {Map<string, Map<WarpKey, unknown>>} */ (value)) {
+			for (const [id, entries] of values) {
 				const existing = store.get(id);
 
 				if (existing) {
-					for (const [k, v] of values) existing.set(k, v);
+					for (const [k, v] of entries) existing.set(k, v);
 				} else {
-					store.set(id, values);
+					store.set(id, entries);
 				}
 			}
+		},
+		done(key) {
+			// once no streams are in progress, the client forgets the changes it recorded, and stops recording them
+			if (svelte.r?.s.delete(key) && svelte.r.s.size === 0) delete svelte.r;
 		}
 	});
 }
@@ -77,6 +110,30 @@ export class Warp {
 	}
 
 	/**
+	 * While values are still streaming in from the server, records that `key` was changed,
+	 * so that a value for it that arrives later (from any stream) doesn't overwrite the change.
+	 * Changes are recorded from the first stream's first `<script>` until no streams are in
+	 * progress, wherever their HTML came from — e.g. an island inserted after the document
+	 * has loaded
+	 * @param {K | All} key
+	 */
+	#touch(key) {
+		const changed = window.__svelte?.r?.c;
+		if (changed === undefined) return;
+
+		const keys = changed.get(this.#id);
+		if (keys === true) return;
+
+		if (key === ALL) {
+			changed.set(this.#id, true);
+		} else if (keys === undefined) {
+			changed.set(this.#id, new Set([key]));
+		} else {
+			keys.add(key);
+		}
+	}
+
+	/**
 	 * @param {K} key
 	 * @returns {V | undefined}
 	 */
@@ -99,6 +156,7 @@ export class Warp {
 	 */
 	set(key, value) {
 		this.#values().set(key, value);
+		this.#touch(key);
 		return this;
 	}
 
@@ -109,7 +167,9 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsert(key, value) {
-		return get_or_insert(this.#values(), key, value);
+		const values = this.#values();
+		if (!values.has(key)) this.#touch(key);
+		return get_or_insert(values, key, value);
 	}
 
 	/**
@@ -119,7 +179,11 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsertComputed(key, callback) {
-		return get_or_insert_computed(this.#values(), key, callback);
+		return get_or_insert_computed(this.#values(), key, (key) => {
+			const value = callback(key);
+			this.#touch(key);
+			return value;
+		});
 	}
 
 	/**
@@ -127,11 +191,15 @@ export class Warp {
 	 * @returns {boolean}
 	 */
 	delete(key) {
+		// even if the key doesn't exist yet, a value for it may still arrive from the server
+		this.#touch(key);
 		return this.#values().delete(key);
 	}
 
 	clear() {
 		this.#values().clear();
+		// values that arrive later are discarded too
+		this.#touch(ALL);
 	}
 
 	/**

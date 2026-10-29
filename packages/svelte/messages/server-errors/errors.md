@@ -24,6 +24,10 @@ The value passed to the `this` prop of `<svelte:element>` must be a valid HTML e
 
 > `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
 
+## invalid_csp_streaming
+
+> `csp.hash` cannot be used with `experimental.streaming`, since the streamed `<script>` tags cannot be known in advance. Use `csp.nonce` instead.
+
 ## invalid_id_prefix
 
 > The `idPrefix` option cannot include `--`.
@@ -75,4 +79,4 @@ Values added to a `Warp` on the server may already be in use (or on their way to
 
 > Cannot set key `%key%` in `Warp` `%id%` after its values have been serialized
 
-Values can be added to a `Warp` until the rendered HTML has been generated, after which they can no longer be sent to the client.
+Values can be added to a `Warp` until the rendered HTML has been generated, after which they can no longer be sent to the client. With `experimental.streaming`, they can be added until the work inside pending boundaries has finished, since they are streamed to the client until then.
