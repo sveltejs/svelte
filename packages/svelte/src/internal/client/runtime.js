@@ -206,15 +206,45 @@ export function is_current(deps, dv) {
  * that applies in the view (see `get_view`) is written after it. Comparing versions with those the
  * dependencies had at the time of the assignment, like `is_current` does, wouldn't work: a view might undo
  * a write the assignment saw, and a committed fork might apply one it didn't see — but both writes happened
- * before the assignment, so they don't make it outdated. (A dependency that is a derived which was evaluated
- * again, and got a different value, counts as changed, though)
+ * before the assignment, so they don't make it outdated.
+ *
+ * This (and its counterpart in `teardown_view`) is where versions are compared by order across views. That only works for versions of writes
+ * (including assignments), which are allocated when the write happens. A derived's version is allocated when it is
+ * evaluated, which can be after the assignment even if everything it read was written before it (e.g. because it is
+ * evaluated lazily, or again in another view). So a derived only counts as changed if, in addition, one of the
+ * values its run in the view read was written after the assignment
  * @param {Value[] | null} deps
  * @param {number} wv
  */
 export function unchanged_since(deps, wv) {
 	if (deps !== null) {
 		for (var i = 0; i < deps.length; i++) {
-			if (version_of(deps[i]) > wv) return false;
+			var dep = deps[i];
+
+			if ((dep.f & DERIVED) === 0) {
+				if (version_of(dep) > wv) return false;
+				continue;
+			}
+
+			// the run of the derived that applies in the view, brought up to date — or a value assigned to it
+			/** @type {Derived | DerivedRecord | BatchValue} */
+			var run = dep;
+
+			if (batch_values === null) {
+				update_derived(/** @type {Derived} */ (dep));
+			} else {
+				run = get_view(/** @type {Derived} */ (dep));
+			}
+
+			var assigned = run === dep ? (dep.f & ASSIGNED) !== 0 : !('dv' in run);
+
+			// (an equal value keeps its version, so a derived whose value didn't change since doesn't count either)
+			if (
+				run.wv > wv &&
+				(assigned || !unchanged_since(/** @type {DerivedRecord} */ (run).deps, wv))
+			) {
+				return false;
+			}
 		}
 	}
 
