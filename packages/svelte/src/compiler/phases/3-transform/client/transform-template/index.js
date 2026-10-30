@@ -3,13 +3,13 @@
 /** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Node } from './types.js' */
 import { TEMPLATE_USE_MATHML, TEMPLATE_USE_SVG } from '../../../../../constants.js';
-import { dev, locator } from '../../../../state.js';
+import { locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
  * @param {Node[]} nodes
  */
-function build_locations(nodes) {
+export function build_locations(nodes) {
 	const array = b.array([]);
 
 	for (const node of nodes) {
@@ -47,14 +47,13 @@ export function transform_template(state, name, flags = 0) {
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
 
-	const key =
-		tree || dev
-			? null
-			: get_template_key(
-					/** @type {TemplateLiteral} */ (expression),
-					state.metadata.namespace,
-					flags
-				);
+	const key = tree
+		? null
+		: get_template_key(
+				/** @type {TemplateLiteral} */ (expression),
+				state.metadata.namespace,
+				flags
+			);
 
 	if (key !== null) {
 		const existing = state.templates.get(key);
@@ -76,15 +75,6 @@ export function transform_template(state, name, flags = 0) {
 		call = b.call(`$.with_script`, call);
 	}
 
-	if (dev) {
-		call = b.call(
-			'$.add_locations',
-			call,
-			b.member(b.id(state.analysis.name), '$.FILENAME', true),
-			build_locations(state.template.nodes)
-		);
-	}
-
 	const id = state.scope.root.unique(name);
 	state.hoisted.push(b.var(id, call));
 
@@ -98,8 +88,7 @@ export function transform_template(state, name, flags = 0) {
 /**
  * Returns a stable key for templates that are safe to deduplicate - plain
  * `$.from_html`/`from_svg`/`from_mathml` factories with literal arguments - or `null`
- * for anything else. Dev-mode templates are wrapped in `$.add_locations(...)`, which
- * embeds per-call-site locations, so they never produce a key and are never shared.
+ * for anything else.
  * @param {TemplateLiteral} template
  * @param {Namespace} namespace
  * @param {number} flags

@@ -7,7 +7,7 @@ import {
 	is_dom_property,
 	is_load_error_element
 } from '../../../../../utils.js';
-import { is_ignored } from '../../../../state.js';
+import { dev, is_ignored, locator } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import {
@@ -28,7 +28,7 @@ import { process_children, is_static_element } from './shared/fragment.js';
 import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 import { Template } from '../transform-template/template.js';
-import { transform_template } from '../transform-template/index.js';
+import { build_locations, transform_template } from '../transform-template/index.js';
 import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 
 /**
@@ -38,7 +38,23 @@ import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 export function RegularElement(node, context) {
 	const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
 	const name = is_html ? node.name.toLowerCase() : node.name;
-	context.state.template.push_element(name, node.start, is_html);
+	const template_node = context.state.template.push_element(name, node.start, is_html);
+
+	const location = dev && locator(node.start);
+	const locations = location && b.array([b.literal(location.line), b.literal(location.column)]);
+
+	if (locations) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.assign_location',
+					context.state.node,
+					b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
+					locations
+				)
+			)
+		);
+	}
 
 	if (name === 'noscript') {
 		context.state.template.pop_element();
@@ -544,6 +560,13 @@ export function RegularElement(node, context) {
 		if (default_value || dynamic_value || bindings.has('value')) {
 			context.state.init.push(b.stmt(b.call('$.init_select', node_id)));
 		}
+	}
+
+	if (locations && !node.fragment.metadata.dynamic) {
+		// Static subtrees contain no component or block output, so their locations can be
+		// assigned together without creating references to every descendant.
+		const children = build_locations(template_node.children);
+		if (children.elements.length > 0) locations.elements.push(children);
 	}
 
 	context.state.template.pop_element();
