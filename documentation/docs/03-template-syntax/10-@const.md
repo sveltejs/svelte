@@ -14,3 +14,12 @@ The `{@const ...}` tag defines a local constant.
 ```
 
 `{@const}` is only allowed as an immediate child of a block — `{#if ...}`, `{#each ...}`, `{#snippet ...}` and so on — a `<Component />` or a `<svelte:boundary>`.
+
+`{@const}` declarations are hoisted to the top of their block, so they can be referenced before the line on which they are declared:
+
+```svelte
+{#each boxes as box}
+	<p>{box.width} * {box.height} = {area}</p>
+	{@const area = box.width * box.height}
+{/each}
+```
