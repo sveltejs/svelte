@@ -1,0 +1,20 @@
+
+	div.svelte-xyz /* comment */ p:where(.svelte-xyz) {
+		color: red;
+	}
+
+	div.svelte-xyz > /* comment */ .b:where(.svelte-xyz) {
+		color: green;
+	}
+
+	div.svelte-xyz /* comment */ > p:where(.svelte-xyz) {
+		color: blue;
+	}
+
+	div/* comment */.a.svelte-xyz {
+		color: yellow;
+	}
+
+	:is(div.svelte-xyz /* comment */ .b:where(.svelte-xyz)) {
+		color: purple;
+	}
