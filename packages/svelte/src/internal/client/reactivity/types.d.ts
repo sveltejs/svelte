@@ -46,10 +46,54 @@ export interface Reaction extends Signal {
 	ctx: null | ComponentContext;
 	/** The reaction function */
 	fn: null | Function;
-	/** Signals that this signal reads from */
+	/** The ordered dependencies of the global run. Never modified in place: it can be shared with records and `edges` */
 	deps: null | Value[];
+	/**
+	 * The exact versions read by the global run, aligned with `deps`.
+	 * `null` if no such run exists or it was invalidated. Owned by the global run, which updates it in place
+	 */
+	dv: null | number[];
+	/** Graph edges: a superset of the dependencies of every live run. Never modified in place, like `deps` */
+	edges: null | Value[];
 	/** An AbortController that aborts when the signal is destroyed */
 	ac: null | AbortController;
+}
+
+/**
+ * A value of a signal and its version, as a batch holds it: a write in the batch (`Batch#current`),
+ * the value from before the write (`Batch#previous`), or what a view of the world holds instead
+ * of the real value (`batch_values`)
+ */
+export interface BatchValue {
+	v: any;
+	wv: number;
+	/** Whether the value is an error */
+	e?: boolean;
+	/** Only in `Batch#previous`, for a derived: whether its value before was assigned, too (otherwise it was computed) */
+	assigned?: boolean;
+}
+
+/**
+ * The result of a run of a reaction retained by a batch:
+ * the values it read (in order) and their exact versions at the time — and, for
+ * deriveds, the resulting value and its version (see `DerivedRecord`)
+ */
+export interface BatchRecord {
+	deps: null | Value[];
+	dv: number[];
+	/** Set for deriveds, omitted for effects */
+	v?: any;
+	/** Set for deriveds, omitted for effects */
+	wv?: number;
+	/** Whether the value of a derived record is an error */
+	e?: boolean;
+}
+
+/** A record of a derived, which — unlike the record of an effect — has a value */
+export interface DerivedRecord extends BatchRecord {
+	v: any;
+	wv: number;
+	e: boolean;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
