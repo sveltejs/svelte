@@ -33,6 +33,7 @@ import {
 	is_dirty,
 	promote_record,
 	prune_edges,
+	set_is_destroying_effect,
 	update_effect,
 	write_version
 } from '../runtime.js';
@@ -870,6 +871,11 @@ export class Batch {
 		// flushes can be nested, e.g. if an effect calls `flushSync`
 		var context = push_teardown_context(this.previous);
 
+		// effects that run in a flush inside a teardown (e.g. one that calls `flushSync`) aren't part of it
+		var was_destroying_effect = is_destroying_effect;
+		var version = write_version;
+		set_is_destroying_effect(false);
+
 		try {
 			is_processing = true;
 			current_batch = this;
@@ -896,6 +902,15 @@ export class Batch {
 			is_processing = false;
 
 			teardown_context = context.parent;
+			set_is_destroying_effect(was_destroying_effect);
+
+			if (was_destroying_effect && teardown_context !== null) {
+				// writes during the flush happened in the teardown, so it doesn't revert them
+				for (const source of teardown_context.reverted_values.keys()) {
+					if (source.wv > version) teardown_write(source);
+				}
+			}
+
 			this.deactivate();
 
 			if (DEV) {

@@ -1209,8 +1209,7 @@ function reconnect(derived) {
  * @returns {BatchValue | undefined}
  */
 function teardown_view(signal) {
-	var written =
-		signal.wv > teardown_version ? undefined : teardown_context?.reverted_values.get(signal);
+	var written = teardown_context?.reverted_values.get(signal);
 
 	if ((signal.f & DERIVED) === 0) return written;
 
