@@ -493,6 +493,34 @@ describe('async', () => {
 		expect(destroyed).toEqual(['a']);
 	});
 
+	test('on_destroy callbacks run for passes discarded by the legacy bindings loop', () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => destroyed.push('parent'));
+
+				// what the compiler emits for legacy component bindings: render again until settled
+				let settled: boolean;
+				let pass = 0;
+				let inner: Renderer;
+				do {
+					settled = true;
+					inner = renderer.copy();
+					const current = ++pass;
+					inner.component((renderer) => {
+						renderer.on_destroy(() => destroyed.push(`child (pass ${current})`));
+					});
+					if (current === 1) settled = false;
+				} while (!settled);
+				renderer.subsume(inner);
+			});
+		};
+
+		const { body } = Renderer.render(component as unknown as Component);
+		expect(body).toBe('<!--[--><!--]-->');
+		expect(destroyed).toEqual(['child (pass 1)', 'child (pass 2)', 'parent']);
+	});
+
 	test('on_destroy callbacks run when an async render rejects', async () => {
 		const destroyed: string[] = [];
 		const component = (renderer: Renderer) => {
