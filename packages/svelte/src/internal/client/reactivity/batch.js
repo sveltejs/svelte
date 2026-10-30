@@ -1327,8 +1327,8 @@ export class Batch {
  */
 export function flushSync(fn) {
 	var was_flushing_sync = is_flushing_sync;
-	// flushSync during effect flushing phase - we gotta restore the view_batch afterwards in that case
-	var previous_view_batch = view_batch?.committing ? view_batch : null;
+	// e.g. flushSync during effect flushing phase - we gotta restore the view_batch afterwards in that case
+	var previous_view_batch = view_batch !== current_batch ? view_batch : null;
 	is_flushing_sync = true;
 
 	try {
@@ -1351,6 +1351,7 @@ export function flushSync(fn) {
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
+		debugger;
 		view_batch = previous_view_batch;
 	}
 }
