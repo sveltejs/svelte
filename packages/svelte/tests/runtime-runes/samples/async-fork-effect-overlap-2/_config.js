@@ -15,15 +15,16 @@ export default test({
 
 		x.click();
 		await tick();
-		// the fork's view doesn't include the pending (independent) y = 1 batch...
-		assert.deepEqual(logs, ['called with 1,0']);
+		// the fork re-runs the expression that the pending y = 1 batch ran, so its view includes y = 1
+		// (see `Batch#intersects`)...
+		assert.deepEqual(logs, ['called with 1,1']);
 		assert.htmlEqual(p.innerHTML, '0');
 		logs.length = 0;
 
 		shift.click();
 		await tick();
-		// ...until it commits, then the fork re-runs with it
-		assert.deepEqual(logs, ['called with 1,1']);
+		// ...and once that batch commits, its run is still current
+		assert.deepEqual(logs, []);
 		assert.htmlEqual(p.innerHTML, '1');
 		logs.length = 0;
 

@@ -207,7 +207,11 @@ export class Batch {
 	/** @type {Batch | null} */
 	next = null;
 
-	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
+	/**
+	 * The latest run of each async expression in this batch, or `null` if a write of this batch only marked
+	 * it for re-running (see `mark`) — this determines which batches intersect (see `#intersects`), and which run writes its result (see `async_derived`)
+	 * @type {Map<Effect, ReturnType<typeof deferred<any>> | null>}
+	 */
 	async_deriveds = new Map();
 
 	/**
@@ -316,6 +320,19 @@ export class Batch {
 	#unskipped_branches = new Set();
 
 	is_fork = false;
+
+	/**
+	 * True once the batch committed: its view of the world is the real one from then on, plus the results
+	 * of its async work that was still pending (see `#commit`)
+	 */
+	committed = false;
+
+	/**
+	 * The batch that this one was merged into, if any (see `#merge`). Its async work that is still in flight
+	 * continues as part of that one
+	 * @type {Batch | null}
+	 */
+	merged = null;
 
 	#decrement_queued = false;
 
@@ -570,19 +587,20 @@ export class Batch {
 			return;
 		}
 
-		const earlier_batch = this.#find_earlier_batch();
-
-		if (earlier_batch) {
-			// If this batch collected deferred effects during traversal, they still need
-			// to run after being merged into the earlier batch.
-			this.#defer_effects(render_effects);
-			this.#defer_effects(effects);
-			earlier_batch.#merge(this);
-			return;
+		// Find potential earlier batch
+		for (let batch = this.prev; batch !== null; batch = batch.prev) {
+			if (!batch.is_fork && this.#intersects(batch)) {
+				// If this batch collected deferred effects during traversal, they still need
+				// to run after being merged into the earlier batch.
+				this.#defer_effects(render_effects);
+				this.#defer_effects(effects);
+				batch.#merge(this);
+				return;
+			}
 		}
 
 		// The results of this batch are about to become the real-world state
-		this.committing = true;
+		this.committing = this.committed = true;
 		this.#release_records(true);
 
 		// append/remove branches
@@ -685,7 +703,10 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					update_effect(effect);
+					// (an async expression is checked again if the view now folds a batch that ran it, see `#fold`)
+					if ((flags & ASYNC) === 0 || !this.#fold(effect) || is_dirty(effect)) {
+						update_effect(effect);
+					}
 				}
 
 				var child = effect.first;
@@ -709,18 +730,64 @@ export class Batch {
 		}
 	}
 
-	#find_earlier_batch() {
-		for (var batch = this.prev; batch !== null; batch = batch.prev) {
-			if (!batch.is_fork && this.#intersects(batch)) return batch;
-		}
-
-		return null;
+	/**
+	 * Whether this batch is merged into `batch` (or a batch in between) once it's done,
+	 * rather than committed on its own.
+	 * @param {Batch} batch
+	 */
+	merges_into(batch) {
+		return batch.id < this.id && !batch.is_fork && batch.linked && this.#intersects(batch);
 	}
 
-	/** @param {Batch} batch */
+	/**
+	 * Whether this batch depends on the earlier `batch`: they wrote the same source, or this batch
+	 * (likely) re-runs an async expression that `batch` ran. Either way, its view includes the writes of
+	 * `batch` (see `activate`), and it merges into `batch` if it finishes first (see `#process`)
+	 * @param {Batch} batch
+	 */
 	#intersects(batch) {
 		for (const source of this.current.keys()) {
 			if (batch.current.has(source)) return true;
+		}
+
+		// A batch that committed (and is still linked because of pending work inside a pending boundary) didn't
+		// intersect with `batch` when it committed, else it would have been merged into it. So its runs didn't see
+		// the writes of `batch`, and its view must stay the real world's (see `#commit`). Its runs that `batch` ran,
+		// too, are superseded once `batch` commits (see `#release_records`), and mustn't supersede those of `batch`
+		if (this.committed) return false;
+
+		for (const effect of this.async_deriveds.keys()) {
+			// For this batch, the entry can also be a write's mark (`null`, see `mark`): this is checked
+			// in `activate`, before traversal determines whether the expression actually re-runs (it may not, e.g.
+			// because a derived along the way has an equal value — which makes the intersection a false positive).
+			// For `batch`, it must be a run (non-null), as an expression that was marked but didn't re-run there
+			// would otherwise entangle the batches for nothing
+			if (batch.async_deriveds.get(effect)) return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Called before this batch re-runs the async expression `effect`. If an earlier batch ran it, too, but this
+	 * batch's view doesn't fold that batch — because no write of this batch marked the expression (see
+	 * `mark`) when the view was activated, e.g. as the batch adopts a branch whose content only the
+	 * other batch ran so far (see `unskip_effect`) — the run would make the batches intersect (see `#intersects`).
+	 * The other batch's writes would be part of this batch's view from then on, and the run outdated right away.
+	 * Instead, fold the other batch into the view first: then the run sees its writes, or isn't needed at all,
+	 * because the other batch's run applies. Returns whether the view changed
+	 * @param {Effect} effect
+	 */
+	#fold(effect) {
+		if (this.committed) return false;
+
+		for (let batch = this.prev; batch !== null; batch = batch.prev) {
+			if (!batch.is_fork && batch.async_deriveds.get(effect) && !this.folded.includes(batch)) {
+				// the batches intersect from now on (a run that follows replaces the mark)
+				if (!this.async_deriveds.has(effect)) this.async_deriveds.set(effect, null);
+				this.activate();
+				return true;
+			}
 		}
 
 		return false;
@@ -742,20 +809,34 @@ export class Batch {
 			this.current.set(source, entry);
 		}
 
-		for (const [effect, deferred] of batch.async_deriveds) {
-			const d = this.async_deriveds.get(effect);
-			if (d) deferred.promise.then(d.resolve).catch(d.reject);
+		for (const [effect, run] of batch.async_deriveds) {
+			if (run === null) continue;
+
+			// The merged batch's run saw this batch's writes, and its own. It's this batch's run from now on, and
+			// supersedes the one this batch had (which can still be pending, inside a pending boundary): only a
+			// batch's latest run of an expression writes its result (see `async_derived`)
+			this.async_deriveds.get(effect)?.reject(OBSOLETE);
+			this.async_deriveds.set(effect, run);
 		}
+
+		// (else a discard of the merged batch would reject the runs that this batch holds now)
+		batch.async_deriveds.clear();
+
+		// async_deriveds was transferred, therefore pending counts must, too
+		this.#pending += batch.#pending;
+		batch.#pending = 0;
+
+		for (const [effect, count] of batch.#blocking_pending) {
+			this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
+		}
+
+		batch.#blocking_pending.clear();
 
 		for (const [reaction, record] of batch.records ?? []) {
 			if ((reaction.f & BLOCK_EFFECT) === 0) {
 				(this.records ??= new Map()).set(reaction, record);
 			}
 		}
-
-		// Clear them or else those that are still pending might get rejected on discard (after merged-into batch is done).
-		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
-		batch.async_deriveds.clear();
 
 		this.transfer_effects(batch.#unprocessed);
 
@@ -764,6 +845,7 @@ export class Batch {
 		const discard = () => batch.discard();
 		this.oncommit(discard);
 		this.ondiscard(discard);
+		batch.merged = this;
 		batch.#unlink();
 
 		// processing re-validates everything that depends on the (now merged) writes of this batch
@@ -913,7 +995,7 @@ export class Batch {
 		this.#discard_callbacks.clear();
 
 		for (const deferred of this.async_deriveds.values()) {
-			deferred.reject(OBSOLETE);
+			deferred?.reject(OBSOLETE);
 		}
 
 		this.#unlink();
@@ -1018,6 +1100,10 @@ export class Batch {
 			}
 		}
 
+		this.#queue_flush();
+	}
+
+	#queue_flush() {
 		if (this.#decrement_queued) return;
 		this.#decrement_queued = true;
 
@@ -1028,6 +1114,18 @@ export class Batch {
 				this.flush();
 			}
 		});
+	}
+
+	/**
+	 * Re-validate everything inside `effect` in this batch's view of the world (e.g. because another batch
+	 * created it in its own view), and process the batch again soon
+	 * @param {Effect} effect
+	 */
+	revalidate(effect) {
+		if ((effect.f & (DESTROYED | INERT)) === 0 && !this.#is_skipped(effect)) {
+			this.#revalidate_branch(effect);
+			this.#queue_flush();
+		}
 	}
 
 	/**
@@ -1105,7 +1203,7 @@ export class Batch {
 			// effects of the earlier batch in case they are merged.
 			// As a result you can think of batch_values as having the latest values of all intersecting
 			// batches up until this batch.
-			if (batch.id < this.id && batch.#intersects(this)) {
+			if (batch.id < this.id && this.#intersects(batch)) {
 				this.folded.push(batch);
 			} else {
 				for (const [source, previous] of batch.previous) {
@@ -1202,6 +1300,13 @@ export class Batch {
 					// these run right away (see `flush_queued_effects`)
 					set_signal_status(effect, status);
 					eager_block_effects.add(effect);
+				}
+
+				// note that the batch (likely) re-runs the async expression (see `Batch#intersects`). Not if it has a
+				// run of it already: the next run must supersede that one (see `async_derived`)
+				if ((flags & ASYNC) !== 0) {
+					var runs = this.async_deriveds;
+					if (!runs.has(effect)) runs.set(effect, null);
 				}
 
 				if (updated_during_traversal !== null) {
@@ -1524,24 +1629,6 @@ function apply(source, entry) {
 		source.f |= ASSIGNED;
 		update_derived_status(/** @type {Derived} */ (source));
 	}
-}
-
-/**
- * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
- * views of the world can't undo such a write, as there's no value from before it (see `capture`) — unless they have
- * their own write of it, like `batch` might. (The writes of forks aren't part of other views at all)
- * @param {Value} value
- * @param {Batch | null} batch
- * @returns {Batch | null}
- */
-export function uncommitted_first_value(value, batch) {
-	if (batch?.current.has(value)) return null;
-
-	for (let b = first_batch; b !== null; b = b.next) {
-		if (b !== batch && !b.is_fork && b.current.has(value) && !b.previous.has(value)) return b;
-	}
-
-	return null;
 }
 
 /** @type {Source<number>[]} */

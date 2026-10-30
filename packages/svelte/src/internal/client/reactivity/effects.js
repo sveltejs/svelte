@@ -12,7 +12,8 @@ import {
 	teardown_version,
 	untrack,
 	untracking,
-	set_active_effect
+	set_active_effect,
+	abort_all
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -30,7 +31,6 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
-	STALE_REACTION,
 	USER_EFFECT,
 	ASYNC,
 	CONNECTED,
@@ -46,7 +46,6 @@ import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
 import { flatten } from './async.js';
-import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
 
 /**
@@ -477,13 +476,7 @@ export function destroy_effect_children(signal, remove_dom = false) {
 	signal.first = signal.last = null;
 
 	while (effect !== null) {
-		const controller = effect.ac;
-
-		if (controller !== null) {
-			without_reactive_context(() => {
-				controller.abort(STALE_REACTION);
-			});
-		}
+		abort_all(effect);
 
 		var next = effect.next;
 

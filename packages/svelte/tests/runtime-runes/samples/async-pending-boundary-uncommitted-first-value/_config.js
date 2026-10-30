@@ -11,8 +11,9 @@ const buttons = `
 `;
 
 // A boundary that shows its pending snippet can be done with a result of a batch other than the one that
-// created its content, when the creator's run was superseded. It only shows that result once that batch
-// commits it
+// created its content, when the creator's run was superseded. Then the content waits for the result of the
+// batch whose committed run superseded it — not for that of a batch that hasn't committed, even if it's
+// there first: the boundary reveals the content right away, not when that batch commits
 export default test({
 	async test({ assert, target }) {
 		const [a, c, show, shift_b, shift_p, pop_p] = target.querySelectorAll('button');
@@ -37,15 +38,17 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>b: 0</p> <p>loading p...</p>`);
 
-		// 3's run resolves first, then 1's (obsolete) and 2's. So 3's result is the first value,
-		// which 3 hasn't committed yet
+		// 3's run resolves first, then 1's (obsolete)
 		pop_p.click();
 		await tick();
 		shift_p.click();
 		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>b: 0</p> <p>loading p...</p>`);
+
+		// 2's run: a + c in the real world
 		shift_p.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>b: 0</p> <p>loading p...</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>b: 0</p> <p>p: 1</p>`);
 
 		// 3 commits
 		shift_b.click();

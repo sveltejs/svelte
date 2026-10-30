@@ -13,12 +13,15 @@ export default test({
 		assert.htmlEqual(p.innerHTML, '1 + 2 = 3');
 
 		flushSync(() => a.click());
+		// the second batch re-runs the expression that the first one ran, so its view includes a = 2
+		// (see `Batch#intersects`)
 		flushSync(() => b.click());
 
+		// it merges into the first batch, and its run supersedes the first batch's
 		pop.click();
 		await tick();
 
-		assert.htmlEqual(p.innerHTML, '1 + 3 = 4');
+		assert.htmlEqual(p.innerHTML, '2 + 3 = 5');
 
 		pop.click();
 		await tick();
