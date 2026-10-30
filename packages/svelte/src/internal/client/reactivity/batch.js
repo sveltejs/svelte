@@ -19,7 +19,8 @@ import {
 	DESTROYING,
 	EFFECT_OFFSCREEN,
 	ASSIGNED,
-	ASYNC
+	ASYNC,
+	REACTION_IS_UPDATING
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -1229,14 +1230,20 @@ export class Batch {
 		last_scheduled_effect = effect;
 
 		// While another batch is committed, effects that this batch's writes affect (other than the one
-		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit
+		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit.
+		// They may still run as part of it (for that batch's reasons) and see the write, so versions decide — unless
+		// the effect is running, in which case it would record the version it didn't see (see `update_dependencies`)
 		if (
 			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
 			previous_batch !== null &&
 			previous_batch !== this &&
 			effect !== active_reaction
 		) {
-			add_dirty_effect(this.#unprocessed, effect, status);
+			add_dirty_effect(
+				this.#unprocessed,
+				effect,
+				(effect.f & REACTION_IS_UPDATING) !== 0 ? status : MAYBE_DIRTY
+			);
 			return;
 		}
 
