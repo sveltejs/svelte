@@ -1351,7 +1351,6 @@ export function flushSync(fn) {
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
-		debugger;
 		view_batch = previous_view_batch;
 	}
 }
