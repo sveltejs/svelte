@@ -53,7 +53,6 @@ import {
 	current_batch,
 	first_batch,
 	flushSync,
-	previous_batch,
 	push_teardown_context,
 	teardown_context,
 	view_batch,
@@ -1042,12 +1041,11 @@ export function get(signal) {
 	if (DEV) {
 		if (
 			!untracking &&
-			reactivity_loss_tracker &&
-			// By checking that current/previous batch are null we filter out false positives.
+			// By checking that no batch is active we filter out false positives.
 			// reactivity_loss_tracker is only reset after a microtask, so if a flush happens
 			// before that, we get warnings for things we shouldn't warn on.
-			current_batch === null &&
-			previous_batch === null &&
+			view_batch === null &&
+			reactivity_loss_tracker &&
 			!reactivity_loss_tracker.warned &&
 			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0 &&
 			!reactivity_loss_tracker.effect_deps.has(signal)
