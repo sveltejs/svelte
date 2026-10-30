@@ -777,6 +777,114 @@ describe('signals', () => {
 		};
 	});
 
+	for (const async of [false, true]) {
+		test(`self-invalidation walks shared deriveds once (async: ${async})`, () => {
+			if (async) enable_async_mode_flag();
+
+			const value = state(0);
+			const trigger = state(0);
+			const log: number[] = [];
+			let level: Value<number> = value;
+
+			for (let i = 0; i < 6; i++) {
+				const below = level;
+				const a = derived(() => $.get(below) + 1);
+				const b = derived(() => $.get(below) + 2);
+				level = derived(() => $.get(a) + $.get(b));
+			}
+
+			let visits = 0;
+			let reactions = level.reactions;
+			Object.defineProperty(level, 'reactions', {
+				get() {
+					visits++;
+					return reactions;
+				},
+				set(value) {
+					reactions = value;
+				}
+			});
+
+			effect(() => {
+				log.push($.get(level));
+			});
+
+			effect(() => {
+				set(value, $.get(trigger));
+				// Count the self-invalidation walk, not the initial marking of reactions.
+				visits = 0;
+			});
+
+			return () => {
+				try {
+					flushSync();
+					for (let i = 1; i <= 3; i++) {
+						flushSync(() => set(trigger, i));
+						assert.equal(visits, 1);
+					}
+					assert.deepEqual(log, [189, 253, 317, 381]);
+				} finally {
+					disable_async_mode_flag();
+				}
+			};
+		});
+
+		test(`a direct derived write still self-invalidates after an indirect write (async: ${async})`, () => {
+			if (async) enable_async_mode_flag();
+
+			const value = state(0);
+			const shared = derived(() => $.get(value) % 2);
+			const a = derived(() => $.get(shared));
+			const b = derived(() => $.get(shared));
+			const total = derived(() => $.get(a) + $.get(b));
+			const log: number[] = [];
+
+			effect(() => {
+				log.push($.get(total));
+				set(value, 2);
+				// The first walk reaches total indirectly. The second must still mark
+				// the effect DIRTY, even though the upstream derived value is unchanged.
+				set(total, 10);
+			});
+
+			return () => {
+				try {
+					flushSync();
+					assert.deepEqual(log, [0, 10]);
+				} finally {
+					disable_async_mode_flag();
+				}
+			};
+		});
+
+		for (const next of [1, 2]) {
+			test(`self-invalidation through shared deriveds respects equality (async: ${async}, next: ${next})`, () => {
+				if (async) enable_async_mode_flag();
+
+				const value = state(0);
+				const shared = derived(() => $.get(value) % 2);
+				const a = derived(() => $.get(shared));
+				const b = derived(() => $.get(shared));
+				const total = derived(() => $.get(a) + $.get(b));
+				const log: number[] = [];
+
+				effect(() => {
+					log.push($.get(total));
+					set(value, next);
+				});
+
+				return () => {
+					try {
+						flushSync();
+						assert.deepEqual(log, next === 1 ? [0, 2] : [0]);
+					} finally {
+						disable_async_mode_flag();
+					}
+				};
+			});
+		}
+	}
+
 	test('effect teardown is removed on re-run', () => {
 		const count = state(0);
 		let first = true;
