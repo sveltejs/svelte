@@ -29,13 +29,7 @@ export function SlotElement(node, context) {
 			let expression = /** @type {Expression} */ (context.visit(attribute));
 			spreads.push(optimiser.transform(expression, attribute.metadata.expression));
 		} else if (attribute.type === 'Attribute') {
-			const value = build_attribute_value(
-				attribute.value,
-				context,
-				optimiser.transform,
-				false,
-				true
-			);
+			const value = build_attribute_value(attribute.value, context, optimiser.transform);
 
 			if (attribute.name === 'name') {
 				name = /** @type {Literal} */ (value);
