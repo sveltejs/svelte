@@ -9,7 +9,8 @@ import {
 	UNINITIALIZED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED,
-	ELEMENT_IS_INPUT
+	ELEMENT_IS_INPUT,
+	ELEMENT_IS_CUSTOM
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
@@ -33,7 +34,7 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
 /**
  * @param {Renderer} renderer
  * @param {string} tag
- * @param {() => void} attributes_fn
+ * @param {(tag: string) => void} attributes_fn
  * @param {() => void} children_fn
  * @returns {void}
  */
@@ -45,7 +46,7 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
 			e.dynamic_element_invalid_tag(tag);
 		}
 		renderer.push(`<${tag}`);
-		attributes_fn();
+		attributes_fn(tag);
 		renderer.push(`>`);
 
 		if (!is_void(tag)) {
@@ -146,6 +147,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
 	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
+	const is_custom_element = (flags & ELEMENT_IS_CUSTOM) !== 0;
 	const names = Object.keys(attrs);
 
 	outer: for (let i = 0; i < names.length; i++) {
@@ -175,7 +177,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 			}
 		}
 
-		attr_str += attr(name, value, is_html && is_boolean_attribute(name));
+		attr_str += attr(name, value, is_html && is_boolean_attribute(name), is_custom_element);
 	}
 
 	return attr_str;
