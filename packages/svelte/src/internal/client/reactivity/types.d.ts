@@ -67,10 +67,7 @@ export interface Reaction extends Signal {
 export interface BatchValue {
 	v: any;
 	wv: number;
-	/** Whether the value is an error */
-	e?: boolean;
-	/** Only in `Batch#previous`, for a derived: whether its value before was assigned, too (otherwise it was computed) */
-	assigned?: boolean;
+	f: number;
 }
 
 /**
@@ -81,19 +78,17 @@ export interface BatchValue {
 export interface BatchRecord {
 	deps: null | Value[];
 	dv: number[];
+	f: number;
 	/** Set for deriveds, omitted for effects */
 	v?: any;
 	/** Set for deriveds, omitted for effects */
 	wv?: number;
-	/** Whether the value of a derived record is an error */
-	e?: boolean;
 }
 
 /** A record of a derived, which — unlike the record of an effect — has a value */
 export interface DerivedRecord extends BatchRecord {
 	v: any;
 	wv: number;
-	e: boolean;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
