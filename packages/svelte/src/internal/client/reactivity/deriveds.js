@@ -348,9 +348,13 @@ export function execute_derived(derived) {
 		derived.v !== UNINITIALIZED && // if it was never evaluated before, it's guaranteed to fail downstream, so we try to execute instead
 		(parent.f & (DESTROYED | INERT)) !== 0
 	) {
-		w.derived_inert();
+		if (derived.rv === 0) {
+			w.derived_inert();
 
-		return derived.v;
+			return derived.v;
+		}
+
+		parent = null;
 	}
 
 	set_active_effect(parent);
