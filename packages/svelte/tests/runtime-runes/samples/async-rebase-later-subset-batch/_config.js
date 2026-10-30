@@ -2,7 +2,7 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 const buttons =
-	'<button>B</button><button>L</button><button>resolve B</button><button>resolve L</button>';
+	'<button>start A</button><button>start B</button><button>resolve A</button><button>resolve B</button>';
 
 // L's writes (`x`) are all among those of B (`x`, `y`), which commits first. B's async results arrive after L
 // created a branch in its view, so L must be rebased when B commits — otherwise it only notices the new `v` when
