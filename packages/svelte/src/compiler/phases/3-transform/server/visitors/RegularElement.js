@@ -53,14 +53,15 @@ export function RegularElement(node, context) {
 	const is_special = is_select_special || is_option_special;
 
 	let body = /** @type {Expression | null} */ (null);
+	let has_spread = false;
 	if (!is_special) {
 		// only open the tag in the non-special path
 		state.template.push(b.literal(`<${name}`));
-		body = build_element_attributes(
+		({ content: body, has_spread } = build_element_attributes(
 			node,
 			{ ...context, state: attribute_state },
 			optimiser.transform
-		);
+		));
 		state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 	}
 
@@ -188,10 +189,11 @@ export function RegularElement(node, context) {
 			state.template.push(b.const(id, body));
 		}
 
-		// Use the body expression as the body if it's truthy, otherwise use the inner template
+		// An empty spread textarea value still overrides its children. Other content
+		// bindings retain the existing truthy fallback to the inner template.
 		state.template.push(
 			b.if(
-				id,
+				name === 'textarea' && has_spread ? b.binary('!=', id, b.null) : id,
 				b.block(build_template([id])),
 				b.block([...inner_state.init, ...build_template(inner_state.template)])
 			)
