@@ -23,9 +23,8 @@ export function StyleDirective(node, context) {
 			if (binding.kind !== 'normal') {
 				node.metadata.expression.has_state = true;
 			}
-			if (binding.blocker) {
-				node.metadata.expression.dependencies.add(binding);
-			}
+			node.metadata.expression.dependencies.add(binding);
+			node.metadata.expression.references.add(binding);
 		}
 	} else {
 		context.next();
