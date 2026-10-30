@@ -1,4 +1,5 @@
 /** @import { Blocker, Collector, Effect, Source, Value } from '#client' */
+/** @import { Batch } from './batch.js' */
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -15,7 +16,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { Batch, current_batch } from './batch.js';
+import { current_batch } from './batch.js';
 import {
 	async_derived,
 	reactivity_loss_tracker,

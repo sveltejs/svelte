@@ -19,7 +19,8 @@ import {
 	DESTROYING,
 	EFFECT_OFFSCREEN,
 	ASSIGNED,
-	ASYNC
+	ASYNC,
+	REACTION_IS_UPDATING
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -189,6 +190,8 @@ var seen = null;
 var count_deps = 0;
 
 let uid = 1;
+
+let last_processed = 0;
 
 export class Batch {
 	id = uid++;
@@ -409,6 +412,17 @@ export class Batch {
 	}
 
 	/**
+	 * Like `unskip_effect`, for a branch that was just created offscreen while this batch is processed.
+	 * Its effects ran in this batch's view of the world when they were created, so there's nothing to re-validate
+	 * TODO can we skip revalidation in `unskip_effect` in more cases, by detecting whether things changed
+	 * inside a branch while it was skipped?
+	 * @param {Effect} effect
+	 */
+	unskip_new_effect(effect) {
+		this.#unskipped_branches.add(effect);
+	}
+
+	/**
 	 * @param {Effect} effect
 	 */
 	#revalidate_branch(effect) {
@@ -478,7 +492,7 @@ export class Batch {
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
 
-		if (async_mode_flag && this.started) {
+		if (async_mode_flag && this.started && last_processed !== this.id) {
 			// Since this batch last ran, reactions may have come to depend on its writes without it
 			// knowing (e.g. effects created by other batches), or have run in the view of other batches.
 			// Re-validate them in this batch's view — this only re-runs those that are out of date
@@ -486,6 +500,7 @@ export class Batch {
 		}
 
 		this.started = true;
+		last_processed = this.id;
 
 		// Deferred effects are rescheduled even if the batch still has pending work, because traversing the
 		// tree could make an if block that contains the last blocking pending effect falsy, causing the batch
@@ -900,6 +915,10 @@ export class Batch {
 		};
 
 		this.current.set(source, entry);
+
+		// The active view of the world sees writes made while it's active, even if they don't belong to the batch whose
+		// view it is — e.g. those of effects that run while a batch commits, which go to a new batch. (Async results
+		// are only captured while no view is active, see `async_derived`)
 		batch_values?.set(source, entry);
 
 		// an assignment replaces the value of a derived that the active view of the world holds
@@ -1025,11 +1044,9 @@ export class Batch {
 				}
 			}
 
-			if (obsolete) {
-				if (is_earlier) {
-					// this batch is now obsolete and can be discarded
-					batch.discard();
-				}
+			if (obsolete && is_earlier) {
+				// this batch is now obsolete and can be discarded
+				batch.discard();
 			} else if (sources.length > 0) {
 				// The microtask queue can contain the batch already scheduled to run right
 				// after this one is finished, so throwing the invariant would be wrong here.
@@ -1316,14 +1333,20 @@ export class Batch {
 		last_scheduled_effect = effect;
 
 		// While another batch is committed, effects that this batch's writes affect (other than the one
-		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit
+		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit.
+		// They may still run as part of it (for that batch's reasons) and see the write, so versions decide — unless
+		// the effect is running, in which case it would record the version it didn't see (see `update_dependencies`)
 		if (
 			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
 			previous_batch !== null &&
 			previous_batch !== this &&
 			effect !== active_reaction
 		) {
-			add_dirty_effect(this.#unprocessed, effect, status);
+			add_dirty_effect(
+				this.#unprocessed,
+				effect,
+				(effect.f & REACTION_IS_UPDATING) !== 0 ? status : MAYBE_DIRTY
+			);
 			return;
 		}
 
@@ -1686,12 +1709,18 @@ export function eager(fn) {
  */
 export function in_real_world(fn) {
 	var previous_batch_values = batch_values;
-	batch_values = null;
+	var previous_view_cache = view_cache;
+	var previous_view_batch = view_batch;
+
+	// the real world doesn't belong to a batch, so what runs in it doesn't touch the active batch's records
+	batch_values = view_cache = view_batch = null;
 
 	try {
 		fn();
 	} finally {
 		batch_values = previous_batch_values;
+		view_cache = previous_view_cache;
+		view_batch = previous_view_batch;
 	}
 }
 
@@ -1740,27 +1769,34 @@ export function fork(fn) {
 		e.experimental_async_required('fork');
 	}
 
-	if (current_batch !== null) {
+	if (active_effect !== null || current_batch?.is_fork) {
 		e.fork_timing();
 	}
 
-	flushSync();
+	var batch = flushSync(() => {
+		var batch = Batch.ensure();
+		batch.is_fork = true;
 
-	var batch = Batch.ensure();
-	batch.is_fork = true;
+		try {
+			in_real_world(() => {
+				batch_values = new Map();
+				view_cache = new Map();
+				view_batch = batch;
 
-	// `fn` sees the real world — including the writes of other pending batches, so that e.g. `count++`
-	// builds on them, like outside a fork — plus the fork's own writes. (When the fork is processed,
-	// the writes of batches it doesn't share a source with are undone, see `activate`)
-	batch_values = new Map();
-	view_cache = new Map();
-	view_batch = batch;
+				fn();
+			});
+		} catch (error) {
+			batch.discard();
+			batch.deactivate();
+			throw error;
+		}
 
-	var committed = false;
+		return batch;
+	});
+
 	var settled = batch.settled();
-
-	fn();
-	flushSync();
+	var committed = false;
+	var discarded = false;
 
 	return {
 		commit: async () => {
@@ -1769,8 +1805,14 @@ export function fork(fn) {
 				return;
 			}
 
-			if (!batch.linked) {
+			if (discarded) {
 				e.fork_discarded();
+			}
+
+			if (!batch.linked) {
+				// batch was made obsolete by later changes
+				committed = true;
+				return;
 			}
 
 			committed = true;
@@ -1797,6 +1839,8 @@ export function fork(fn) {
 			if (!committed && batch.linked) {
 				batch.discard();
 			}
+
+			discarded = true;
 		}
 	};
 }

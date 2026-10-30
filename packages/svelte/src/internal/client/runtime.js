@@ -173,15 +173,14 @@ export function increment_write_version() {
 export function version_of(signal) {
 	if (batch_values === null) {
 		update_derived(/** @type {Derived} */ (signal));
+		return signal.wv;
 	}
 
-	return (
-		batch_values === null
-			? signal
-			: (signal.f & DERIVED) !== 0
-				? get_view(/** @type {Derived} */ (signal))
-				: batch_values.get(signal) ?? signal
-	).wv;
+	if ((signal.f & DERIVED) !== 0) {
+		return get_view(/** @type {Derived} */ (signal)).wv;
+	}
+
+	return (batch_values.get(signal) ?? signal).wv;
 }
 
 /**
