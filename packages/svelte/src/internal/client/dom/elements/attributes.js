@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { create_event, delegate, delegated, event, event_symbol } from './events.js';
+import { create_event, delegate, delegated } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import {

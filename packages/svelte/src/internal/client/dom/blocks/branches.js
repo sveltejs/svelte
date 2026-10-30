@@ -1,5 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { Batch, current_batch } from '../../reactivity/batch.js';
+/** @import { Batch } from '../../reactivity/batch.js' */
+import { current_batch } from '../../reactivity/batch.js';
 import {
 	branch,
 	destroy_effect,
