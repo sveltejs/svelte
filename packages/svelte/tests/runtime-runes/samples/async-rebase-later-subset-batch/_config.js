@@ -11,25 +11,25 @@ export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		await tick();
-		const [b, l, resolve_b, resolve_l] = target.querySelectorAll('button');
+		const [a, b, resolve_a, resolve_b] = target.querySelectorAll('button');
 
 		assert.htmlEqual(target.innerHTML, `${buttons}<span>x: 0</span>`);
 		logs.length = 0;
 
+		a.click();
+		await tick();
 		b.click();
 		await tick();
-		l.click();
-		await tick();
-		assert.deepEqual(logs, ['g 1', 'x 1', 'x 2']);
+		assert.deepEqual(logs, ['y 1', 'x 1', 'x 2']);
 
-		// B commits, and L starts the async work for the new `v` right away
-		resolve_b.click();
+		// A commits, and L starts the async work for the new `z` right away
+		resolve_a.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<span>x: 1</span>`);
-		assert.deepEqual(logs, ['g 1', 'x 1', 'x 2', 'v 1']);
+		assert.deepEqual(logs, ['y 1', 'x 1', 'x 2', 'z 1']);
 
-		resolve_l.click();
+		resolve_b.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<span>x: 2</span><p>v: 1</p><p>v: 1</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons}<span>x: 2</span><p>z: 1</p><p>z: 1</p>`);
 	}
 });
