@@ -13,7 +13,8 @@ import {
 	is_dirty,
 	untracking,
 	is_destroying_effect,
-	push_reaction_value
+	push_reaction_value,
+	set_active_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -25,7 +26,8 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC
+	ASYNC,
+	STATE_SYMBOL
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -40,7 +42,7 @@ import {
 	legacy_updates,
 	source_stacks
 } from './batch.js';
-import { proxy } from '../proxy.js';
+import { proxy, remove_onchange } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
@@ -57,10 +59,19 @@ export function set_eager_effects(v) {
 	eager_effects = v;
 }
 
-let eager_effects_deferred = false;
+// a depth, so a mutating array method called from inside another keeps the outer one deferred
+let eager_effects_deferred = 0;
 
 export function set_eager_effects_deferred() {
-	eager_effects_deferred = true;
+	eager_effects_deferred += 1;
+}
+
+export function unset_eager_effects_deferred() {
+	eager_effects_deferred -= 1;
+
+	if (eager_effects_deferred === 0 && eager_effects.size > 0) {
+		flush_eager_effects();
+	}
 }
 
 /**
@@ -189,6 +200,14 @@ var count_deps = 0;
  */
 export function internal_set(source, value, updated_during_traversal = null) {
 	if (!source.equals(value)) {
+		var callback = source.o;
+
+		if (callback !== undefined) {
+			// the old tree stops reporting to this source's callback, the new one starts
+			remove_onchange(source.v, callback);
+			attach_onchange(value, callback, /** @type {Effect | null} */ (source.oe));
+		}
+
 		if (is_destroying_effect) {
 			old_values.set(source, value);
 		} else if (!old_values.has(source)) {
@@ -272,18 +291,70 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			}
 		}
 
-		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+		if (!batch.is_fork && eager_effects.size > 0 && eager_effects_deferred === 0) {
 			flush_eager_effects();
 		}
+
+		if (callback !== undefined) callback();
 	}
 
 	return value;
 }
 
-export function flush_eager_effects() {
-	eager_effects_deferred = false;
+/**
+ * Registers `onchange` on a state source: it fires when the source is reassigned, and
+ * every proxy tree the source holds reports its mutations to it
+ * @template {Source} S
+ * @param {S} source
+ * @param {(() => void) | undefined} callback
+ * @returns {S}
+ */
+export function onchange(source, callback) {
+	if (callback === undefined) return source;
 
+	var running = false;
+
+	// one guard per declaration, shared by the reassignment path and every proxy tree
+	// the source holds, so a callback that writes its own state runs once
+	source.o = () => {
+		if (running) return;
+		running = true;
+
+		try {
+			callback();
+		} finally {
+			running = false;
+		}
+	};
+
+	source.oe = active_effect;
+	attach_onchange(source.v, source.o, active_effect);
+	return source;
+}
+
+/**
+ * @param {unknown} value
+ * @param {() => void} callback
+ * @param {Effect | null} owner the effect that registered `callback`, which owns its effect in every tree
+ */
+function attach_onchange(value, callback, owner) {
+	if (typeof value === 'object' && value !== null && STATE_SYMBOL in value) {
+		var previous_effect = active_effect;
+		set_active_effect(owner);
+
+		try {
+			proxy(value, callback);
+		} finally {
+			set_active_effect(previous_effect);
+		}
+	}
+}
+
+export function flush_eager_effects() {
 	for (const effect of eager_effects) {
+		// an effect that throws must not stay queued, or the next unrelated write would rethrow it
+		eager_effects.delete(effect);
+
 		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
 		// instead of just updating the effects - this way we avoid overfiring.
 		if ((effect.f & CLEAN) !== 0) {
@@ -305,8 +376,6 @@ export function flush_eager_effects() {
 			update_effect(effect);
 		}
 	}
-
-	eager_effects.clear();
 }
 
 /**
