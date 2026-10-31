@@ -596,27 +596,8 @@ export function build_style_directives_object(
 }
 
 /**
- * Serializes an assignment to an element property by adding relevant statements to either only
- * the init or the init and update arrays, depending on whether or not the value is dynamic.
- * Resulting code for static looks something like this:
- * ```js
- * element.property = value;
- * // or
- * $.set_attribute(element, property, value);
- * });
- * ```
- * Resulting code for dynamic looks something like this:
- * ```js
- * let value;
- * $.template_effect(() => {
- * 	if (value !== (value = 'new value')) {
- * 		element.property = value;
- * 		// or
- * 		$.set_attribute(element, property, value);
- * 	}
- * });
- * ```
- * Returns true if attribute is deemed reactive, false otherwise.
+ * Builds an attribute or property update, using cached setters so that unrelated
+ * updates in the same template effect do not overwrite changes made by the user.
  * @param {AST.RegularElement} element
  * @param {Identifier} node_id
  * @param {string} name
@@ -624,11 +605,6 @@ export function build_style_directives_object(
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  */
 function build_element_attribute_update(element, node_id, name, value, attributes) {
-	if (name === 'muted') {
-		// Special case for Firefox who needs it set as a property in order to work
-		return b.assignment('=', b.member(node_id, b.id('muted')), value);
-	}
-
 	if (name === 'value') {
 		return b.call('$.set_value', node_id, value);
 	}
@@ -666,7 +642,7 @@ function build_element_attribute_update(element, node_id, name, value, attribute
 	}
 
 	if (is_dom_property(name)) {
-		return b.assignment('=', b.member(node_id, name), value);
+		return b.call('$.set_property', node_id, b.literal(name), value);
 	}
 
 	return b.call(
