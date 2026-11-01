@@ -153,14 +153,14 @@ export class Renderer {
 	#parent;
 
 	/**
-	 * Set by {@link copy} in sync mode: the renderer this copy continues, and which
-	 * {@link subsume} appends the copy's content back into.
+	 * Set by {@link copy}: the renderer that {@link subsume} merges this copy back into.
+	 * A copy is not in the `#out` of its parent, so {@link get_path} reads the position here.
 	 * @type {Renderer | null}
 	 */
-	#appends_to = null;
+	#copy_of = null;
 
 	/**
-	 * Where in {@link #appends_to} this copy's content will land, so that
+	 * Where in {@link #copy_of} this copy's content will land in sync mode, so that
 	 * {@link get_path} reports the same position it will have after `subsume`.
 	 */
 	#offset = 0;
@@ -560,7 +560,7 @@ export class Renderer {
 	 * @returns {number[]}
 	 */
 	get_path() {
-		if (this.#appends_to !== null) return this.#appends_to.get_path();
+		if (this.#copy_of !== null) return this.#copy_of.get_path();
 
 		const parent = this.#parent;
 		return parent ? [...parent.get_path(), parent.#offset + parent.#out.indexOf(this)] : [];
@@ -571,13 +571,13 @@ export class Renderer {
 	 */
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
+		copy.#copy_of = this;
 		copy.type = this.type;
 		copy.local = { select_value: this.local.select_value, multiple: this.local.multiple };
 
 		if (this.global.mode === 'sync') {
 			// the retry loop is the only writer here, so what was rendered before it can
 			// stay in place and the copy starts empty. Copying it would be O(page) per retry
-			copy.#appends_to = this;
 			copy.#offset = this.#offset + this.#out.length;
 			return copy;
 		}
@@ -600,7 +600,7 @@ export class Renderer {
 
 		this.local = other.local;
 
-		if (other.#appends_to === this) {
+		if (this.global.mode === 'sync') {
 			for (const item of other.#out) this.#out.push(item);
 		} else {
 			this.#out = other.#out.map((item, i) => {
