@@ -1225,7 +1225,7 @@ function teardown_view(signal) {
 	// A value written to the derived — reverted, or the active view's — holds if it was assigned, like in `get_view`:
 	// the value from before an assignment may have been computed, with values that the teardown reverts
 	var held = written ?? batch_values?.get(derived);
-	var assigned = held === undefined ? (derived.f & ASSIGNED) !== 0 : held.assigned !== false;
+	var assigned = held === undefined ? (derived.f & ASSIGNED) !== 0 : held.assigned === true;
 	// (the versions its global run read, if that can apply)
 	var dv = held === undefined && !assigned ? derived.dv : null;
 	var deps = derived.deps ?? [];
