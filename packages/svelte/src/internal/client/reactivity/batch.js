@@ -65,12 +65,6 @@ let last_batch = null;
 export let current_batch = null;
 
 /**
- * This is needed to avoid overwriting inputs
- * @type {Batch | null}
- */
-export let previous_batch = null;
-
-/**
  * @typedef {Object} TeardownContext
  * @property {Map<Value, BatchValue>} reverted_values What teardowns see instead of the values sources hold: the values
  * from before the writes that caused the teardowns (the `previous` of the batch being processed, see `flush`). For
@@ -476,6 +470,8 @@ export class Batch {
 	}
 
 	#process() {
+		current_batch = this;
+
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
 
@@ -603,10 +599,8 @@ export class Batch {
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
 
-		previous_batch = this;
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
-		previous_batch = null;
 
 		this.committing = false;
 
@@ -624,8 +618,6 @@ export class Batch {
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
 			this.#commit();
-			// Rebases can activate other batches or null it out, therefore restore the new one here
-			current_batch = next_batch;
 		}
 
 		if (next_batch !== null) {
@@ -785,7 +777,6 @@ export class Batch {
 		batch.#unlink();
 
 		// processing re-validates everything that depends on the (now merged) writes of this batch
-		current_batch = this;
 		this.#process();
 	}
 
@@ -890,7 +881,6 @@ export class Batch {
 
 		try {
 			is_processing = true;
-			current_batch = this;
 
 			this.#process();
 
@@ -901,7 +891,6 @@ export class Batch {
 
 					// the batch is processed again anyway if a flush is queued
 					if (batch.linked && !batch.#decrement_queued) {
-						current_batch = batch;
 						batch.#process();
 					}
 				}
@@ -1094,13 +1083,13 @@ export class Batch {
 	 */
 	activate() {
 		current_batch = this;
+		view_batch = this;
 
 		if (!async_mode_flag) {
 			batch_values = view_cache = null;
 			return;
 		}
 
-		view_batch = this;
 		this.folded = [];
 
 		if (!this.is_fork && this.prev === null && this.next === null) {
@@ -1251,8 +1240,8 @@ export class Batch {
 		// the effect is running, in which case it would record the version it didn't see (see `update_dependencies`)
 		if (
 			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
-			previous_batch !== null &&
-			previous_batch !== this &&
+			view_batch !== null &&
+			view_batch !== this &&
 			effect !== active_reaction
 		) {
 			add_dirty_effect(
@@ -1365,8 +1354,8 @@ export class Batch {
  */
 export function flushSync(fn) {
 	var was_flushing_sync = is_flushing_sync;
-	var prev_previous_batch = previous_batch;
-	previous_batch = null;
+	// e.g. flushSync during effect flushing phase - we gotta restore the view_batch afterwards in that case
+	var previous_view_batch = view_batch !== current_batch ? view_batch : null;
 	is_flushing_sync = true;
 
 	try {
@@ -1389,7 +1378,7 @@ export function flushSync(fn) {
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
-		previous_batch = prev_previous_batch;
+		view_batch = previous_view_batch;
 	}
 }
 
