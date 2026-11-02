@@ -439,7 +439,7 @@ export function get_view(derived) {
 	var assigned =
 		written === undefined
 			? (derived.f & ASSIGNED) !== 0
-			: written === batch.current.get(derived) || written.assigned;
+			: written === batch.current.get(derived) || (written.f & ASSIGNED) !== 0;
 	var record = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
 
 	if (assigned && unchanged_since((record ?? derived).deps, held.wv)) {
