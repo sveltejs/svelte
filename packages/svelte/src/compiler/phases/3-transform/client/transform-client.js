@@ -512,6 +512,7 @@ export function client_component(analysis, options) {
 	if (options.hmr) {
 		const id = b.id(analysis.name);
 
+		/** @type {ESTree.Statement[]} */
 		const accept_fn_body = [
 			b.stmt(b.call(b.member(b.member(id, b.id('$.HMR'), true), 'update'), b.id('module.default')))
 		];
