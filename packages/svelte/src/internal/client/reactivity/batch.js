@@ -1244,12 +1244,7 @@ export class Batch {
 		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit.
 		// They may still run as part of it (for that batch's reasons) and see the write, so versions decide — unless
 		// the effect is running, in which case it would record the version it didn't see (see `update_dependencies`)
-		if (
-			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
-			view_batch !== null &&
-			view_batch !== this &&
-			effect !== active_reaction
-		) {
+		if (view_batch !== null && view_batch !== this && effect !== active_reaction) {
 			add_dirty_effect(
 				this.#unprocessed,
 				effect,
