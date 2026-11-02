@@ -38,7 +38,6 @@ import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
-import { log_effect_tree } from '../dev/debug.js';
 import { OBSOLETE } from './deriveds.js';
 
 /** @type {Batch | null} */
@@ -89,8 +88,8 @@ export let legacy_updates = null;
 
 var flush_count = 0;
 
-/** @type {Set<Value>} */
-var source_stacks = new Set();
+/** Sources whose DEV update counts and stack traces need resetting after the flush. @type {Set<Value>} */
+export const source_stacks = new Set();
 
 let uid = 1;
 
@@ -322,14 +321,6 @@ export class Batch {
 
 	#process() {
 		this.started = true;
-
-		if (DEV) {
-			// track all the values that were updated during this flush,
-			// so that they can be reset afterwards
-			for (const value of this.current.keys()) {
-				source_stacks.add(value);
-			}
-		}
 
 		// We always reschedule previously-deferred effects, not just when
 		// #is_deferred() is true, because traversing the tree could make
@@ -638,10 +629,6 @@ export class Batch {
 
 	flush() {
 		try {
-			if (DEV) {
-				source_stacks.clear();
-			}
-
 			is_processing = true;
 			current_batch = this;
 
@@ -662,6 +649,8 @@ export class Batch {
 				for (const source of source_stacks) {
 					source.updated = null;
 				}
+
+				source_stacks.clear();
 			}
 		}
 	}

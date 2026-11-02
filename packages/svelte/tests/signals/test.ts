@@ -1,18 +1,27 @@
 import { describe, assert, it } from 'vitest';
-import { flushSync } from '../../src/index-client';
+import { flushSync, tick } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
+	block,
 	effect,
 	effect_root,
 	render_effect,
 	user_effect,
 	user_pre_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
+import {
+	internal_set,
+	source,
+	state,
+	set,
+	update,
+	update_pre
+} from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
@@ -546,6 +555,113 @@ describe('signals', () => {
 
 			assert(some_state.reactions === null);
 		};
+	});
+
+	it.each([false, true])(
+		'resets update counts for writes during traversal (tick: %s)',
+		async (use_tick) => {
+			const trigger = state(0);
+			const item = source(0);
+			const counts: number[] = [];
+
+			const destroy = effect_root(() => {
+				block(() => {
+					// Like each block item sources, this is first written during traversal,
+					// after the batch has already started processing.
+					internal_set(item, $.get(trigger));
+					counts.push(item.updated?.get('')?.count ?? 0);
+				});
+			});
+
+			try {
+				for (let i = 1; i <= 12; i++) {
+					set(trigger, i);
+					if (use_tick) {
+						await tick();
+					} else {
+						flushSync();
+					}
+
+					assert.equal(item.v, i);
+					assert.isNull(item.updated);
+				}
+				assert.deepEqual(counts, [0, ...Array(12).fill(1)]);
+			} finally {
+				destroy();
+			}
+		}
+	);
+
+	it('cleans up update stacks recorded before flushing', () => {
+		const value = source(0);
+		const destroy = effect_root(() => {
+			block(() => {
+				for (let i = 1; i <= 6; i++) {
+					internal_set(value, i);
+					assert.equal(value.updated?.get('')?.count, i);
+					assert.equal(value.updated?.size, i <= 5 ? 1 : 2);
+				}
+			});
+		});
+
+		try {
+			assert.equal(value.updated?.size, 2);
+			flushSync();
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+		}
+	});
+
+	it('retains update counts across batches within a flush', () => {
+		push({}, true);
+		const trigger = state(0);
+		const value = source(0);
+		const counts: number[] = [];
+		const stacks: number[] = [];
+		const destroy = effect_root(() => {
+			user_effect(() => {
+				const n = $.get(trigger) + 1;
+				internal_set(value, n);
+				counts.push(value.updated?.get('')?.count ?? 0);
+				stacks.push(value.updated?.size ?? 0);
+				if (n < 7) set(trigger, n);
+			});
+		});
+
+		try {
+			flushSync();
+			assert.deepEqual(counts, [1, 2, 3, 4, 5, 6, 7]);
+			assert.deepEqual(stacks, [1, 1, 1, 1, 1, 2, 2]);
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+			pop();
+		}
+	});
+
+	it('cleans up traversal update counts when an effect throws', () => {
+		const trigger = state(false);
+		const value = source(0);
+		const destroy = effect_root(() => {
+			block(() => {
+				if ($.get(trigger)) {
+					internal_set(value, 1);
+					throw new Error('boom');
+				}
+			});
+		});
+
+		try {
+			set(trigger, true);
+			assert.throws(() => flushSync(), 'boom');
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+		}
 	});
 
 	test('schedules rerun when writing to signal before reading it', (runes) => {

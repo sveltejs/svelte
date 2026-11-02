@@ -7,8 +7,7 @@ import {
 	hydrating,
 	skip_nodes,
 	set_hydrate_node,
-	set_hydrating,
-	hydrate_node
+	set_hydrating
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';

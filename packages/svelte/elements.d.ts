@@ -752,6 +752,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	// Standard HTML Attributes
 	accesskey?: string | undefined | null;
 	autocapitalize?: 'characters' | 'off' | 'on' | 'none' | 'sentences' | 'words' | undefined | null;
+	autocorrect?: 'on' | 'off' | '' | undefined | null;
 	autofocus?: boolean | undefined | null;
 	class?: ClassValue | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | 'plaintext-only' | undefined | null;
@@ -1077,8 +1078,6 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	accept?: string | undefined | null;
 	alt?: string | undefined | null;
 	autocomplete?: FullAutoFill | undefined | null;
-	// Safari only https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#autocorrect
-	autocorrect?: 'on' | 'off' | '' | undefined | null;
 	capture?: boolean | 'user' | 'environment' | undefined | null; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
 	checked?: boolean | undefined | null;
 	dirname?: string | undefined | null;

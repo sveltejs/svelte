@@ -118,7 +118,7 @@ If you need to style something that Svelte can't identify at compile time, you w
 
 New features aren't being added to it, and bugs will probably only be fixed if they are extremely nasty or present some sort of security vulnerability.
 
-The documentation is still available [here](https://v2.svelte.dev/guide).
+The documentation is still available [here](https://github.com/sveltejs/v2.svelte.dev/tree/master/content).
 
 ## How do I do hot module reloading?
 

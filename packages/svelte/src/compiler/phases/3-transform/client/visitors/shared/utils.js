@@ -1,6 +1,7 @@
 /** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
+/** @import { ExpressionMetadata } from '../../../../nodes.js' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -9,7 +10,6 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { async_thunk, build_getter, is_state_source } from '../../utils.js';
-import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
