@@ -56,7 +56,7 @@ If a `failed` snippet is provided, it will be rendered when an error is thrown i
 ```
 
 > [!NOTE]
-> As with [snippets passed to components](snippet#Passing-snippets-to-components), the `failed` snippet can be passed explicitly as a property...
+> As with [snippets passed to components](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html#Passing-snippets-to-components), the `failed` snippet can be passed explicitly as a property...
 >
 > ```svelte
 > <svelte:boundary {failed}>...</svelte:boundary>

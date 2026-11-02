@@ -57,7 +57,7 @@ export const [getUserContext, setUserContext] = createContext<User>();
 
 > [!NOTE] `createContext` was added in version 5.40. If you are using an earlier version of Svelte, you must use `setContext` and `getContext` instead.
 
-This is particularly useful when `Parent.svelte` is not directly aware of `Child.svelte`, but instead renders it as part of a `children` [snippet](snippet) as shown above.
+This is particularly useful when `Parent.svelte` is not directly aware of `Child.svelte`, but instead renders it as part of a `children` [snippet](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html) as shown above.
 
 ## `setContext` and `getContext`
 
@@ -89,7 +89,7 @@ The key (`'my-context'`, in the example above) and the context itself can be any
 
 > [!NOTE] `createContext` is preferred since it provides better type safety and makes it unnecessary to use keys.
 
-In addition to [`setContext`](svelte#setContext) and [`getContext`](svelte#getContext), Svelte exposes [`hasContext`](svelte#hasContext) and [`getAllContexts`](svelte#getAllContexts) functions.
+In addition to [`setContext`](../../../packages/svelte/README.md#setContext) and [`getContext`](../../../packages/svelte/README.md#getContext), Svelte exposes [`hasContext`](../../../packages/svelte/README.md#hasContext) and [`getAllContexts`](../../../packages/svelte/README.md#getAllContexts) functions.
 
 ## Using context with state
 
@@ -163,7 +163,7 @@ export const [getCounter, setCounter] = createContext<Counter>();
 
 Svelte will warn you if you get it wrong.
 
-Similarly, to pass primitive values through context, use functions as described in [Passing state into functions]($state#Passing-state-into-functions).
+Similarly, to pass primitive values through context, use functions as described in [Passing state into functions](../../../packages/svelte/tests/runtime-runes/samples/wrapped-$state/_config.js#Passing-state-into-functions).
 
 ## Mounting components with context
 

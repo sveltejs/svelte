@@ -2,7 +2,7 @@
 title: Overview
 ---
 
-Svelte 5 introduced some significant changes to Svelte's API, including [runes](what-are-runes), [snippets](snippet) and event attributes. As a result, some Svelte 3/4 features are deprecated (though supported for now, unless otherwise specified) and will eventually be removed. We recommend that you incrementally [migrate your existing code](v5-migration-guide).
+Svelte 5 introduced some significant changes to Svelte's API, including [runes](what-are-runes), [snippets](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html) and event attributes. As a result, some Svelte 3/4 features are deprecated (though supported for now, unless otherwise specified) and will eventually be removed. We recommend that you incrementally [migrate your existing code](v5-migration-guide).
 
 The following pages document these features for
 

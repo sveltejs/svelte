@@ -2,7 +2,7 @@
 title: $$slots
 ---
 
-In runes mode, we know which [snippets](snippet) were provided to a component, as they're just normal props.
+In runes mode, we know which [snippets](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html) were provided to a component, as they're just normal props.
 
 In legacy mode, the way to know if content was provided for a given slot is with the `$$slots` object, whose keys are the names of the slots passed into the component by the parent.
 

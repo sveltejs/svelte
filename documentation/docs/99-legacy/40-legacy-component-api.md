@@ -58,7 +58,7 @@ const app = new App({
 ```
 
 > [!NOTE]
-> In Svelte 5+, use [`mount`](svelte#mount) instead
+> In Svelte 5+, use [`mount`](../../../packages/svelte/README.md#mount) instead
 
 ## `$set`
 
@@ -120,7 +120,7 @@ component.$destroy();
 Removes a component from the DOM and triggers any `onDestroy` handlers.
 
 > [!NOTE]
-> In Svelte 5+, use [`unmount`](svelte#unmount) instead
+> In Svelte 5+, use [`unmount`](../../../packages/svelte/README.md#unmount) instead
 
 ## Component props
 

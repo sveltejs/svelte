@@ -14,7 +14,7 @@ Some platforms require configuration flags to enable this API. Consult your plat
 Encountered asynchronous work while rendering synchronously.
 ```
 
-You (or the framework you're using) called [`render(...)`](svelte-server#render) with a component containing an `await` expression. Either `await` the result of `render` or wrap the `await` (or the component containing it) in a [`<svelte:boundary>`](svelte-boundary) with a `pending` snippet.
+You (or the framework you're using) called [`render(...)`](svelte-server#render) with a component containing an `await` expression. Either `await` the result of `render` or wrap the `await` (or the component containing it) in a [`<svelte:boundary>`](../../../../packages/svelte/tests/server-side-rendering/samples/async-svelte-boundary/_expected.html) with a `pending` snippet.
 
 ### dynamic_element_invalid_tag
 

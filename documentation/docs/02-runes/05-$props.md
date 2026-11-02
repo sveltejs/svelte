@@ -214,9 +214,9 @@ You can, of course, separate the type declaration from the annotation:
 </script>
 ```
 
-> [!NOTE] Interfaces for native DOM elements are provided in the `svelte/elements` module (see [Typing wrapper components](typescript#Typing-wrapper-components))
+> [!NOTE] Interfaces for native DOM elements are provided in the `svelte/elements` module (see [Typing wrapper components](../../../packages/svelte/tests/runtime-runes/samples/typescript/types.ts#Typing-wrapper-components))
 
-If your component exposes [snippet](snippet) props like `children`, these should be typed using the `Snippet` interface imported from `'svelte'` — see [Typing snippets](snippet#Typing-snippets) for examples.
+If your component exposes [snippet](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html) props like `children`, these should be typed using the `Snippet` interface imported from `'svelte'` — see [Typing snippets](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html#Typing-snippets) for examples.
 
 Adding types is recommended, as it ensures that people using your component can easily discover which props they should provide.
 

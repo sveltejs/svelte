@@ -45,7 +45,7 @@ If the derived expression is an object or array, it will be returned as-is — i
 Effects are an escape hatch and should mostly be avoided. In particular, avoid updating state inside effects.
 
 - If you need to sync state to an external library such as D3, it is often neater to use [`{@attach ...}`](@attach)
-- If you need to run some code in response to user interaction, put the code directly in an event handler or use a [function binding](bind#Function-bindings) as appropriate
+- If you need to run some code in response to user interaction, put the code directly in an event handler or use a [function binding](../../../packages/svelte/tests/server-side-rendering/samples/text-area-bind/_config.js#Function-bindings) as appropriate
 - If you need to log values for debugging purposes, use [`$inspect`]($inspect)
 - If you need to observe something external to Svelte, use [`createSubscriber`](svelte-reactivity#createSubscriber)
 
@@ -99,7 +99,7 @@ Avoid using `onMount` or `$effect` for this.
 
 ## Snippets
 
-[Snippets](snippet) are a way to define reusable chunks of markup that can be instantiated with the [`{@render ...}`](@render) tag, or passed to components as props. They must be declared within the template.
+[Snippets](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html) are a way to define reusable chunks of markup that can be instantiated with the [`{@render ...}`](@render) tag, or passed to components as props. They must be declared within the template.
 
 ```svelte
 {#snippet greeting(name)}
@@ -113,7 +113,7 @@ Avoid using `onMount` or `$effect` for this.
 
 ## Each blocks
 
-Prefer to use [keyed each blocks](each#Keyed-each-blocks) — this improves performance by allowing Svelte to surgically insert or remove items rather than updating the DOM belonging to existing items.
+Prefer to use [keyed each blocks](../../../packages/svelte/tests/runtime-runes/samples/props-array-each/_config.js#Keyed-each-blocks) — this improves performance by allowing Svelte to surgically insert or remove items rather than updating the DOM belonging to existing items.
 
 > [!NOTE] The key _must_ uniquely identify the object. Do not use the index as a key.
 
@@ -171,7 +171,7 @@ Use `createContext` rather than `setContext` and `getContext`, as it provides ty
 
 ## Async Svelte
 
-If using version 5.36 or higher, you can use [await expressions](await-expressions) and [hydratable](hydratable) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in the plugin options in `vite.config.js` or in the `svelte.config.js` as they are not yet considered fully stable.
+If using version 5.36 or higher, you can use [await expressions](await-expressions) and [hydratable](../../../packages/svelte/tests/runtime-runes/samples/hydratable/_config.js) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in the plugin options in `vite.config.js` or in the `svelte.config.js` as they are not yet considered fully stable.
 
 ## Avoid legacy features
 

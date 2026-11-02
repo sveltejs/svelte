@@ -89,11 +89,11 @@ let b = $derived(await two(y));
 
 ## Indicating loading states
 
-To render placeholder UI, you can wrap content in a `<svelte:boundary>` with a [`pending`](svelte-boundary#Properties-pending) snippet. This will be shown when the boundary is first created, but not for subsequent updates, which are globally coordinated.
+To render placeholder UI, you can wrap content in a `<svelte:boundary>` with a [`pending`](../../../packages/svelte/tests/server-side-rendering/samples/async-svelte-boundary/_expected.html#Properties-pending) snippet. This will be shown when the boundary is first created, but not for subsequent updates, which are globally coordinated.
 
 After the contents of a boundary have resolved for the first time and have replaced the `pending` snippet, you can detect subsequent async work with [`$effect.pending()`]($effect#$effect.pending). This is what you would use to display a "we're asynchronously validating your input" spinner next to a form field, for example.
 
-You can also use [`settled()`](svelte#settled) to get a promise that resolves when the current update is complete:
+You can also use [`settled()`](../../../packages/svelte/README.md#settled) to get a promise that resolves when the current update is complete:
 
 ```js
 let color = 'red';
@@ -123,7 +123,7 @@ async function onclick() {
 
 ## Error handling
 
-Errors in `await` expressions will bubble to the nearest [error boundary](svelte-boundary).
+Errors in `await` expressions will bubble to the nearest [error boundary](../../../packages/svelte/tests/server-side-rendering/samples/async-svelte-boundary/_expected.html).
 
 ## Server-side rendering
 
@@ -145,7 +145,7 @@ If a `<svelte:boundary>` with a `pending` snippet is encountered during SSR, tha
 
 ## Forking
 
-The [`fork(...)`](svelte#fork) API, added in 5.42, makes it possible to run `await` expressions that you _expect_ to happen in the near future. This is mainly intended for frameworks like SvelteKit to implement preloading when (for example) users signal an intent to navigate.
+The [`fork(...)`](../../../packages/svelte/README.md#fork) API, added in 5.42, makes it possible to run `await` expressions that you _expect_ to happen in the near future. This is mainly intended for frameworks like SvelteKit to implement preloading when (for example) users signal an intent to navigate.
 
 ```svelte
 <script>

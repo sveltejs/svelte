@@ -35,7 +35,7 @@ Note that unlike calling `new App(...)` in Svelte 4, things like effects (includ
 
 Unmounts a component that was previously created with [`mount`](#mount) or [`hydrate`](#hydrate).
 
-If `options.outro` is `true`, [transitions](transition) will play before the component is removed from the DOM:
+If `options.outro` is `true`, [transitions](../../../packages/svelte/src/transition/public.d.ts) will play before the component is removed from the DOM:
 
 ```js
 import { mount, unmount } from 'svelte';

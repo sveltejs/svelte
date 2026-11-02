@@ -2,7 +2,7 @@
 title: <slot>
 ---
 
-In Svelte 5, content can be passed to components in the form of [snippets](snippet) and rendered using [render tags](@render).
+In Svelte 5, content can be passed to components in the form of [snippets](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html) and rendered using [render tags](@render).
 
 In legacy mode, content inside component tags is considered _slotted content_, which can be rendered by the component using a `<slot>` element:
 

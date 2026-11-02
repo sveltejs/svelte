@@ -6,7 +6,7 @@ title: <svelte:body>
 <svelte:body onevent={handler} />
 ```
 
-Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](use) on the `<body>` element.
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](../../../packages/svelte/tests/runtime-runes/samples/state-reuse/_config.js) on the `<body>` element.
 
 As with `<svelte:window>` and `<svelte:document>`, this element may only appear at the top level of your component and must never be inside a block or element.
 

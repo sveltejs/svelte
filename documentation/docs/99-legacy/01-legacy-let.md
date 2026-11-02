@@ -2,7 +2,7 @@
 title: Reactive let/var declarations
 ---
 
-In runes mode, reactive state is explicitly declared with the [`$state` rune]($state).
+In runes mode, reactive state is explicitly declared with the [`$state` rune](../../../packages/svelte/tests/runtime-runes/samples/wrapped-$state/_config.js).
 
 In legacy mode, variables declared at the top level of a component are automatically considered _reactive_. Reassigning or mutating these variables (`count += 1` or `object.x = y`) will cause the UI to update.
 

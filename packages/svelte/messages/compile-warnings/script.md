@@ -124,7 +124,7 @@ To fix this, reference the variable such that it is lazily evaluated. For the ab
 <p>The count is {+++count()+++}</p>
 ```
 
-For more info, see [Passing state into functions]($state#Passing-state-into-functions).
+For more info, see [Passing state into functions](../../tests/runtime-runes/samples/wrapped-$state/_config.js#Passing-state-into-functions).
 
 ## store_rune_conflict
 

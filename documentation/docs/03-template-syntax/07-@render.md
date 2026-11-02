@@ -2,7 +2,7 @@
 title: {@render ...}
 ---
 
-To render a [snippet](snippet), use a `{@render ...}` tag.
+To render a [snippet](../../../packages/svelte/tests/server-side-rendering/samples/async-snippet/_expected.html), use a `{@render ...}` tag.
 
 ```svelte
 {#snippet sum(a, b)}
@@ -28,7 +28,7 @@ If the snippet is potentially undefined — for example, because it's an incomin
 {@render children?.()}
 ```
 
-Alternatively, use an [`{#if ...}`](if) block with an `:else` clause to render fallback content:
+Alternatively, use an [`{#if ...}`](../../../packages/svelte/tests/runtime-runes/samples/async-derived-in-if/_config.js) block with an `:else` clause to render fallback content:
 
 ```svelte
 {#if children}

@@ -29,7 +29,7 @@ You can create an effect with the `$effect` rune ([demo](/playground/untitled#H4
 <canvas bind:this={canvas} width="100" height="100"></canvas>
 ```
 
-When Svelte runs an effect function, it tracks which pieces of state (and derived state) are accessed (unless accessed inside [`untrack`](svelte#untrack)), and re-runs the function when that state later changes.
+When Svelte runs an effect function, it tracks which pieces of state (and derived state) are accessed (unless accessed inside [`untrack`](../../../packages/svelte/README.md#untrack)), and re-runs the function when that state later changes.
 
 > [!NOTE] If you're having difficulty understanding why your `$effect` is rerunning or is not running see [understanding dependencies](#Understanding-dependencies). Effects are triggered differently than the `$:` blocks you may be used to if coming from Svelte 4.
 
@@ -232,7 +232,7 @@ It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svel
 
 ## `$effect.pending`
 
-When using [`await`](await-expressions) in components, the `$effect.pending()` rune tells you how many promises are pending in the current [boundary](svelte-boundary), not including child boundaries:
+When using [`await`](await-expressions) in components, the `$effect.pending()` rune tells you how many promises are pending in the current [boundary](../../../packages/svelte/tests/server-side-rendering/samples/async-svelte-boundary/_expected.html), not including child boundaries:
 
 <!-- codeblock:start {"title":"$effect.pending"} -->
 ```svelte
@@ -344,7 +344,7 @@ You might be tempted to do something convoluted with effects to link one value t
 ```
 <!-- codeblock:end -->
 
-...use `oninput` callbacks or — better still — [function bindings](bind#Function-bindings) where possible:
+...use `oninput` callbacks or — better still — [function bindings](../../../packages/svelte/tests/server-side-rendering/samples/text-area-bind/_config.js#Function-bindings) where possible:
 
 <!-- codeblock:start {"title":"Setting state with function bindings"} -->
 ```svelte
@@ -378,4 +378,4 @@ You might be tempted to do something convoluted with effects to link one value t
 ```
 <!-- codeblock:end -->
 
-If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](svelte#untrack).
+If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](../../../packages/svelte/README.md#untrack).

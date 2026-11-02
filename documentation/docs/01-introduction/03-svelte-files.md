@@ -29,7 +29,7 @@ All three sections — script, styles and markup — are optional.
 
 A `<script>` block contains JavaScript (or TypeScript, when adding the `lang="ts"` attribute) that runs when a component instance is created. Variables declared (or imported) at the top level can be referenced in the component's markup.
 
-In addition to normal JavaScript, you can use _runes_ to declare [component props]($props) and add reactivity to your component. Runes are covered in the next section.
+In addition to normal JavaScript, you can use _runes_ to declare [component props](../../../packages/svelte/tests/runtime-runes/samples/legacy-runes-ambiguous-export-$$props/_config.js) and add reactivity to your component. Runes are covered in the next section.
 
 <!-- TODO describe behaviour of `export` -->
 

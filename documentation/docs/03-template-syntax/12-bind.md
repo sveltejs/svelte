@@ -313,7 +313,7 @@ Since 5.57.0, if a `<select>` has a `defaultValue` and is part of a form, it wil
 
 ## `window` and `document`
 
-To bind to properties of `window` and `document`, see [`<svelte:window>`](svelte-window) and [`<svelte:document>`](svelte-document).
+To bind to properties of `window` and `document`, see [`<svelte:window>`](../../../packages/svelte/tests/print/samples/svelte-window/input.svelte) and [`<svelte:document>`](../../../packages/svelte/tests/print/samples/svelte-document/input.svelte).
 
 ## Contenteditable bindings
 

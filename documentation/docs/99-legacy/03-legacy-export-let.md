@@ -2,7 +2,7 @@
 title: export let
 ---
 
-In runes mode, [component props](basic-markup#Component-props) are declared with the [`$props`]($props) rune, allowing parent components to pass in data.
+In runes mode, [component props](basic-markup#Component-props) are declared with the [`$props`](../../../packages/svelte/tests/runtime-runes/samples/legacy-runes-ambiguous-export-$$props/_config.js) rune, allowing parent components to pass in data.
 
 In legacy mode, props are marked with the `export` keyword, and can have a default value:
 

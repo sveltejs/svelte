@@ -2,7 +2,7 @@
 title: $$props and $$restProps
 ---
 
-In runes mode, getting an object containing all the props that were passed in is easy, using the [`$props`]($props) rune.
+In runes mode, getting an object containing all the props that were passed in is easy, using the [`$props`](../../../packages/svelte/tests/runtime-runes/samples/legacy-runes-ambiguous-export-$$props/_config.js) rune.
 
 In legacy mode, we use `$$props` and `$$restProps`:
 

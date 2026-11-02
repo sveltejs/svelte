@@ -48,7 +48,7 @@ An attribute value cannot be a comma-separated sequence of expressions — in o
 <div class={size, color}>...</div>
 ```
 
-Instead, make sure that the attribute value contains a single expression. In the example above it's likely that this was intended (see the [class documentation](class) for more details):
+Instead, make sure that the attribute value contains a single expression. In the example above it's likely that this was intended (see the [class documentation](../../tests/server-side-rendering/samples/option-scoped-class/_expected.html) for more details):
 
 ```svelte
 <div class={[size, color]}>...</div>

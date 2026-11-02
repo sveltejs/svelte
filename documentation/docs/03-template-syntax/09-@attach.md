@@ -3,7 +3,7 @@ title: {@attach ...}
 tags: attachments
 ---
 
-Attachments are functions that run in an [effect]($effect) when an element is mounted to the DOM or when [state]($state) read inside the function updates.
+Attachments are functions that run in an [effect]($effect) when an element is mounted to the DOM or when [state](../../../packages/svelte/tests/runtime-runes/samples/wrapped-$state/_config.js) read inside the function updates.
 
 Optionally, they can return a function that is called before the attachment re-runs, or after the element is later removed from the DOM.
 
@@ -139,7 +139,7 @@ This allows you to create _wrapper components_ that augment elements ([demo](/pl
 
 ## Controlling when attachments re-run
 
-Attachments, unlike [actions](use), are fully reactive: `{@attach foo(bar)}` will re-run on changes to `foo` _or_ `bar` (or any state read inside `foo`):
+Attachments, unlike [actions](../../../packages/svelte/tests/runtime-runes/samples/state-reuse/_config.js), are fully reactive: `{@attach foo(bar)}` will re-run on changes to `foo` _or_ `bar` (or any state read inside `foo`):
 
 ```js
 // @errors: 7006 2304 2552
