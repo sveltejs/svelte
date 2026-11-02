@@ -172,7 +172,7 @@ export function increment_write_version() {
  */
 export function version_of(signal) {
 	if (batch_values === null) {
-		update_derived(/** @type {Derived} */ (signal));
+		update_derived(signal);
 		return signal.wv;
 	}
 
@@ -264,7 +264,7 @@ export function is_dirty(reaction) {
 			for (var i = 0, length = dv.length; i < length; i++) {
 				var dependency = /** @type {Value[]} */ (deps)[i];
 
-				update_derived(/** @type {Derived} */ (dependency));
+				update_derived(dependency);
 
 				if (dependency.wv !== dv[i]) return true;
 			}
