@@ -72,7 +72,10 @@ export let previous_batch = null;
 
 /**
  * @typedef {Object} TeardownContext
- * @property {Map<Value, BatchValue>} reverted_values The writes to revert in this view
+ * @property {Map<Value, BatchValue>} reverted_values What teardowns see instead of the values sources hold: the values
+ * from before the writes that caused the teardowns (the `previous` of the batch being processed, see `flush`). For
+ * block effects that re-run right away because of a user effect's writes, also the writes of the effects that ran
+ * before it in the same commit, which apply (see `flush_queued_effects`)
  * @property {Map<Derived, BatchValue>} derived_cache The values of deriveds in this view (see `runtime.js#teardown_view`),
  * until it changes
  * @property {TeardownContext | null} parent The context to restore after a nested flush or eager block
@@ -80,7 +83,8 @@ export let previous_batch = null;
 
 /**
  * Effect teardowns revert the writes that caused them (see `runtime.js#teardown_view`).
- * (A teardown outside of a flush reverts nothing, but gets a context to cache its deriveds in)
+ * (A teardown outside of a flush reverts nothing, but gets a context to cache its deriveds in, for as long as it
+ * runs — see `execute_effect_teardown`)
  * @type {TeardownContext | null}
  */
 export let teardown_context = null;
@@ -625,6 +629,10 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
+			// The next batch holds the writes made while this one committed, which cause the teardowns that run
+			// when it's processed. So teardowns now revert those, and no longer this batch's: of the reverted
+			// values, keep those that are the next batch's values from before its writes. (Writes made in teardowns
+			// aren't among them, see `teardown_write`, so they stay visible)
 			if (teardown_context !== null) {
 				for (const [source, snapshot] of teardown_context.reverted_values) {
 					if (next_batch.previous.get(source)?.wv !== snapshot.wv) {
