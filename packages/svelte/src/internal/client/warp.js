@@ -2,7 +2,6 @@
 import { install } from 'devalue/uneval-stream/client';
 import { async_mode_flag } from '../flags/index.js';
 import * as e from './errors.js';
-import { get_or_insert, get_or_insert_computed } from '../shared/utils.js';
 
 /**
  * Handles the `Warp` values that the server's `<script>`s have pushed onto `svelte.d`, and those
@@ -109,7 +108,10 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsert(key, value) {
-		return get_or_insert(this.#values(), key, value);
+		const values = this.#values();
+		if (values.has(key)) return /** @type {V} */ (values.get(key));
+		values.set(key, value);
+		return value;
 	}
 
 	/**
@@ -119,7 +121,11 @@ export class Warp {
 	 * @returns {V}
 	 */
 	getOrInsertComputed(key, callback) {
-		return get_or_insert_computed(this.#values(), key, callback);
+		const values = this.#values();
+		if (values.has(key)) return /** @type {V} */ (values.get(key));
+		const value = callback(key);
+		values.set(key, value);
+		return value;
 	}
 
 	/**

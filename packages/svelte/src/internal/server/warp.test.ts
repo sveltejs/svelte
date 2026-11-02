@@ -291,6 +291,30 @@ describe('withWarp', () => {
 		).rejects.toThrow('warp_context_already_rendered');
 	});
 
+	// https://github.com/sveltejs/svelte/issues/17345
+	test('only creates one AsyncLocalStorage when contexts start before it has loaded', async () => {
+		vi.resetModules();
+		const fresh = await import('./render-context.js');
+
+		const starts = Array.from({ length: 20 }, (_, i) => i);
+
+		// stagger the starts by microtasks, so that some contexts are created
+		// while others are still waiting for `node:async_hooks` to load
+		const results = await Promise.all(
+			starts.map(async (i) => {
+				for (let tick = 0; tick < i; tick += 1) await Promise.resolve();
+
+				return fresh.withWarp(async () => {
+					const context = fresh.get_render_context();
+					await new Promise((fulfil) => setTimeout(fulfil));
+					return fresh.get_render_context() === context ? i : -1;
+				});
+			})
+		);
+
+		expect(results).toEqual(starts);
+	});
+
 	test('cannot be nested', async () => {
 		await expect(withWarp(() => withWarp(() => {}))).rejects.toThrow('warp_context_nested');
 	});
@@ -349,31 +373,31 @@ describe('withWarp', () => {
 		}
 	});
 
-	test('runs the render replacer before its own', async () => {
+	test('uses its replacer for the render inside it', async () => {
 		const { head } = await withWarp(
-			() =>
-				render(
-					() => {
-						warp.set('a', new URL('https://svelte.dev'));
-						warp.set('b', new Error('b'));
-					},
-					{
-						replacer: (value, js) => {
-							if (value instanceof URL) return js`"render"`;
-						}
-					}
-				),
+			async () => {
+				warp.set('before', new URL('https://svelte.dev'));
+				await Promise.resolve();
+				return render(() => {
+					warp.set('during', new URL('https://svelte.dev'));
+				});
+			},
 			{
 				replacer: (value, js) => {
 					if (value instanceof URL) return js`"withWarp"`;
-					if (value instanceof Error) return js`"withWarp"`;
 				}
 			}
 		);
 
 		const values = revive(head)?.get('test');
-		expect(values?.get('a')).toBe('render');
-		expect(values?.get('b')).toBe('withWarp');
+		expect(values?.get('before')).toBe('withWarp');
+		expect(values?.get('during')).toBe('withWarp');
+	});
+
+	test('does not allow the render inside it to have a replacer', async () => {
+		await expect(withWarp(() => render(() => {}, { replacer: () => undefined }))).rejects.toThrow(
+			'warp_context_replacer'
+		);
 	});
 
 	test('throws when a key is set twice', async () => {
@@ -383,6 +407,39 @@ describe('withWarp', () => {
 				warp.set('a', 2);
 			})
 		).rejects.toThrow('warp_key_exists');
+	});
+
+	test('reads do not add an entry to the store', async () => {
+		const { head } = await render(() => {
+			expect(warp.get('a')).toBeUndefined();
+			expect(warp.has('a')).toBe(false);
+			expect(warp.size).toBe(0);
+			expect([...warp]).toEqual([]);
+		});
+
+		expect(head).toBe('');
+	});
+
+	test('forEach passes the Warp rather than the underlying map', async () => {
+		await render(() => {
+			warp.set('a', 1);
+			warp.forEach((value, key, map) => {
+				expect([key, value]).toEqual(['a', 1]);
+				expect(map).toBe(warp);
+			});
+		});
+	});
+
+	test('a throwing getOrInsertComputed callback does not add an entry to the store', async () => {
+		const { head } = await render(() => {
+			expect(() =>
+				warp.getOrInsertComputed('a', () => {
+					throw new Error('oops');
+				})
+			).toThrow('oops');
+		});
+
+		expect(head).toBe('');
 	});
 
 	test('getOrInsert does not throw when the key exists', async () => {

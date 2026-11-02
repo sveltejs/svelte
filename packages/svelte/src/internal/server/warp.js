@@ -5,7 +5,6 @@ import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import { get_user_code_location } from './dev.js';
 import * as e from './errors.js';
-import { get_or_insert_computed } from '../shared/utils.js';
 
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
@@ -31,9 +30,9 @@ export class Warp {
 		this.#id = id;
 	}
 
-	/** @returns {Map<K, V>} */
+	/** @returns {Map<K, V> | undefined} */
 	#values() {
-		return /** @type {Map<K, V>} */ (get_values(get_store(), this.#id));
+		return /** @type {Map<K, V> | undefined} */ (get_store().values.get(this.#id));
 	}
 
 	/**
@@ -41,7 +40,7 @@ export class Warp {
 	 * @returns {V | undefined}
 	 */
 	get(key) {
-		return this.#values().get(key);
+		return this.#values()?.get(key);
 	}
 
 	/**
@@ -49,7 +48,7 @@ export class Warp {
 	 * @returns {boolean}
 	 */
 	has(key) {
-		return this.#values().has(key);
+		return this.#values()?.has(key) ?? false;
 	}
 
 	/**
@@ -60,7 +59,7 @@ export class Warp {
 	set(key, value) {
 		const store = get_store();
 
-		if (get_values(store, this.#id).has(key)) {
+		if (store.values.get(this.#id)?.has(key)) {
 			e.warp_key_exists(
 				String(key),
 				this.#id,
@@ -80,12 +79,12 @@ export class Warp {
 	 */
 	getOrInsert(key, value) {
 		const store = get_store();
-		const values = /** @type {Map<K, V>} */ (get_values(store, this.#id));
+		const values = store.values.get(this.#id);
 
-		return get_or_insert_computed(values, key, () => {
-			record(store, this.#id, key, value);
-			return value;
-		});
+		if (values?.has(key)) return /** @type {V} */ (values.get(key));
+
+		set(store, this.#id, key, value);
+		return value;
 	}
 
 	/**
@@ -96,13 +95,13 @@ export class Warp {
 	 */
 	getOrInsertComputed(key, callback) {
 		const store = get_store();
-		const values = /** @type {Map<K, V>} */ (get_values(store, this.#id));
+		const values = store.values.get(this.#id);
 
-		return get_or_insert_computed(values, key, (key) => {
-			const value = callback(key);
-			record(store, this.#id, key, value);
-			return value;
-		});
+		if (values?.has(key)) return /** @type {V} */ (values.get(key));
+
+		const value = callback(key);
+		set(store, this.#id, key, value);
+		return value;
 	}
 
 	/**
@@ -127,27 +126,28 @@ export class Warp {
 	 * @param {any} [this_arg]
 	 */
 	forEach(callback, this_arg) {
-		this.#values().forEach(callback, this_arg);
+		// pass the `Warp` rather than the underlying map, so that `callback` can't modify it directly
+		this.#values()?.forEach((value, key) => callback.call(this_arg, value, key, this));
 	}
 
 	entries() {
-		return this.#values().entries();
+		return (this.#values() ?? new Map()).entries();
 	}
 
 	keys() {
-		return this.#values().keys();
+		return (this.#values() ?? new Map()).keys();
 	}
 
 	values() {
-		return this.#values().values();
+		return (this.#values() ?? new Map()).values();
 	}
 
 	get size() {
-		return this.#values().size;
+		return this.#values()?.size ?? 0;
 	}
 
 	[Symbol.iterator]() {
-		return this.#values()[Symbol.iterator]();
+		return (this.#values() ?? new Map())[Symbol.iterator]();
 	}
 
 	get [Symbol.toStringTag]() {
@@ -166,27 +166,15 @@ function get_store() {
 /**
  * @param {WarpStore} store
  * @param {string} id
- */
-function get_values(store, id) {
-	let values = store.values.get(id);
-
-	if (values === undefined) {
-		values = new Map();
-		store.values.set(id, values);
-	}
-
-	return values;
-}
-
-/**
- * @param {WarpStore} store
- * @param {string} id
  * @param {WarpKey} key
  * @param {unknown} value
  */
 function set(store, id, key, value) {
-	record(store, id, key, value);
-	get_values(store, id).set(key, value);
+	record(store, id, key);
+
+	let values = store.values.get(id);
+	if (values === undefined) store.values.set(id, (values = new Map()));
+	values.set(key, value);
 }
 
 /**
@@ -195,9 +183,8 @@ function set(store, id, key, value) {
  * @param {WarpStore} store
  * @param {string} id
  * @param {WarpKey} key
- * @param {unknown} value
  */
-function record(store, id, key, value) {
+function record(store, id, key) {
 	if (store.emitted) {
 		e.warp_set_after_render(String(key), id);
 	}

@@ -1,5 +1,5 @@
 import type { UnevalReplacer } from 'devalue';
-import type { MaybePromise, WarpKey } from '#shared';
+import type { WarpKey } from '#shared';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -31,6 +31,6 @@ export interface RenderContext {
 	warp: WarpStore;
 	/** Whether a `render` has claimed this context. Each context can only be rendered once */
 	rendered: boolean;
-	/** The `replacer` passed to `withWarp` */
+	/** The `replacer` passed to `withWarp`, or to `render` if it isn't inside one */
 	replacer: UnevalReplacer | undefined;
 }

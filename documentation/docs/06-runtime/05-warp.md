@@ -118,7 +118,7 @@ const { head, body } = await withWarp(async () => {
 });
 ```
 
-`withWarp` also accepts a `replacer`, which is used for any values the `replacer` passed to `render` doesn't handle. Each `withWarp` can only contain one `render`.
+Each `withWarp` can only contain one `render`. If you need a `replacer`, pass it to `withWarp` rather than `render`, since it applies to everything added inside `withWarp`, including values added before the render started.
 
 ## CSP
 

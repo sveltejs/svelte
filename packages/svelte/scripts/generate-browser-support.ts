@@ -124,12 +124,11 @@ const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-
  *     every Safari for over a decade).
  *   - Svelte feature-detects the API at runtime with `?.` and degrades
  *     gracefully when it's unavailable. Example: `trusted-types` in
- *     `src/internal/client/dom/reconciler.js`, or `getorinsert` in
- *     `src/internal/shared/utils.js`.
+ *     `src/internal/client/dom/reconciler.js`.
  *
  * These are exempt from the staleness check.
  */
-const SAFE_TO_IGNORE = new Set(['devicepixelratio', 'trusted-types', 'getorinsert']);
+const SAFE_TO_IGNORE = new Set(['devicepixelratio', 'trusted-types']);
 
 /**
  * Suppressions for features that DO live in the runtime but are reached

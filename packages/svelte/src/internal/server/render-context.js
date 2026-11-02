@@ -29,18 +29,17 @@ function get_render_context_safe() {
 }
 
 /**
- * @param {boolean} rendered
  * @param {UnevalReplacer | undefined} replacer
  * @returns {RenderContext}
  */
-function create_render_context(rendered, replacer) {
+function create_render_context(replacer) {
 	return {
 		warp: {
 			values: new Map(),
 			stacks: new Map(),
 			emitted: false
 		},
-		rendered,
+		rendered: false,
 		replacer
 	};
 }
@@ -49,10 +48,11 @@ function create_render_context(rendered, replacer) {
  * Runs `fn` with a render context. If `fn` is running inside `withWarp`,
  * that context is used — but only for one render.
  * @template T
+ * @param {UnevalReplacer | undefined} replacer
  * @param {(context: RenderContext) => Promise<T>} fn
  * @returns {Promise<T>}
  */
-export async function with_render_context(fn) {
+export async function with_render_context(replacer, fn) {
 	const existing = get_render_context_safe();
 
 	// WebContainers don't have AsyncLocalStorage, so `context` stays set while a render is
@@ -63,12 +63,22 @@ export async function with_render_context(fn) {
 			e.warp_context_already_rendered();
 		}
 
+		if (replacer !== undefined) {
+			e.warp_context_replacer();
+		}
+
 		existing.rendered = true;
 		return fn(existing);
 	}
 
-	await init_render_context();
-	return run(create_render_context(true, undefined), fn);
+	return withWarp(
+		() => {
+			const context = get_render_context();
+			context.rendered = true;
+			return fn(context);
+		},
+		{ replacer }
+	);
 }
 
 /**
@@ -88,7 +98,7 @@ export async function withWarp(fn, options = {}) {
 	}
 
 	await init_render_context();
-	return run(create_render_context(false, options.replacer), async () => fn());
+	return run(create_render_context(options.replacer), async () => fn());
 }
 
 /**

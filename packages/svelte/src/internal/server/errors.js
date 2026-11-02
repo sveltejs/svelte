@@ -125,6 +125,18 @@ export function warp_context_nested() {
 }
 
 /**
+ * `render(...)` cannot be passed a `replacer` when it is called inside `withWarp(...)`
+ * @returns {never}
+ */
+export function warp_context_replacer() {
+	const error = new Error(`warp_context_replacer\n\`render(...)\` cannot be passed a \`replacer\` when it is called inside \`withWarp(...)\`\nhttps://svelte.dev/e/warp_context_replacer`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * Key `%key%` has already been set in `Warp` `%id%`%stack%
  * @param {string} key
  * @param {string} id

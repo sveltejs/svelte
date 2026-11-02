@@ -2752,7 +2752,7 @@ declare module 'svelte/server' {
 						transformError?: (error: unknown) => unknown | Promise<unknown>;
 						/**
 						 * Customizes how values added to `Warp` instances are serialized. See [`devalue`](https://github.com/sveltejs/devalue#custom-types) for details.
-						 * If the render happens inside `withWarp`, this replacer runs before the one passed to `withWarp`.
+						 * Cannot be used when the render happens inside `withWarp` — pass the replacer to `withWarp` instead.
 						 */
 						replacer?: UnevalReplacer;
 					}
@@ -2767,7 +2767,7 @@ declare module 'svelte/server' {
 						transformError?: (error: unknown) => unknown | Promise<unknown>;
 						/**
 						 * Customizes how values added to `Warp` instances are serialized. See [`devalue`](https://github.com/sveltejs/devalue#custom-types) for details.
-						 * If the render happens inside `withWarp`, this replacer runs before the one passed to `withWarp`.
+						 * Cannot be used when the render happens inside `withWarp` — pass the replacer to `withWarp` instead.
 						 */
 						replacer?: UnevalReplacer;
 					}

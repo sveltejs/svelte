@@ -72,6 +72,14 @@ Each `withWarp` call can only contain one `render`, since all the values added t
 `withWarp(...)` cannot be called inside another `withWarp(...)` or `render(...)` call
 ```
 
+### warp_context_replacer
+
+```
+`render(...)` cannot be passed a `replacer` when it is called inside `withWarp(...)`
+```
+
+The values serialized by a `render` inside `withWarp` include ones added before the render started, so the `replacer` has to be passed to `withWarp` instead.
+
 ### warp_key_exists
 
 ```

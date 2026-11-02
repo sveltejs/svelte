@@ -1,7 +1,6 @@
 /** @import { Component } from 'svelte' */
 /** @import { UnevalReplacer } from 'devalue' */
 /** @import { RenderContext, SSRContext, WarpStore } from './types.js' */
-/** @import { WarpKey } from '#shared' */
 /** @import { Csp, RenderOutput, SyncRenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
@@ -622,7 +621,9 @@ export class Renderer {
 				new RenderResult(
 					() => Renderer.#render(component, options),
 					() =>
-						with_render_context((context) => Renderer.#render_async(component, options, context))
+						with_render_context(options.replacer, (context) =>
+							Renderer.#render_async(component, options, context)
+						)
 				)
 			)
 		);
@@ -772,10 +773,7 @@ export class Renderer {
 			try {
 				Renderer.#open_render(renderer, component, options);
 				const content = await renderer.#collect_content_async();
-				const warp = await renderer.#collect_warp(
-					context.warp,
-					compose_replacers(options.replacer, context.replacer)
-				);
+				const warp = await renderer.#collect_warp(context.warp, context.replacer);
 				if (warp !== null) {
 					content.head = warp + content.head;
 				}
@@ -876,14 +874,7 @@ export class Renderer {
 	async #collect_warp(store, replacer) {
 		store.emitted = true;
 
-		/** @type {Map<string, Map<WarpKey, unknown>>} */
-		const payload = new Map();
-
-		for (const [id, values] of store.values) {
-			if (values.size > 0) payload.set(id, values);
-		}
-
-		if (payload.size === 0) {
+		if (store.values.size === 0) {
 			return null;
 		}
 
@@ -894,7 +885,7 @@ export class Renderer {
 		let stream;
 
 		try {
-			stream = devalue.unevalStream(payload, replacer, {
+			stream = devalue.unevalStream(store.values, replacer, {
 				id: `${this.global.id_prefix}w`,
 				scope: 'window.__svelte.d',
 				transformError: (error) => {
@@ -1010,22 +1001,29 @@ const MACROTASK = Symbol('macrotask');
 async function take_ready(tail) {
 	let blocks = '';
 
-	while (true) {
-		const next = tail.next();
-		const result = await Promise.race([
-			next,
-			new Promise((fulfil) => setTimeout(() => fulfil(MACROTASK), 0))
-		]);
+	/** @type {ReturnType<typeof setTimeout> | undefined} */
+	let timeout;
+	const deadline = new Promise((fulfil) => {
+		timeout = setTimeout(() => fulfil(MACROTASK), 0);
+	});
 
-		if (result === MACROTASK) {
-			// the block this resolves to is the next one, so it must not be dropped
-			return { blocks, done: false, next };
+	try {
+		while (true) {
+			const next = tail.next();
+			const result = await Promise.race([next, deadline]);
+
+			if (result === MACROTASK) {
+				// the block this resolves to is the next one, so it must not be dropped
+				return { blocks, done: false, next };
+			}
+
+			const { done, value } = /** @type {IteratorResult<string>} */ (result);
+			if (done) return { blocks, done: true };
+
+			blocks += `\n\t\t\t${value}`;
 		}
-
-		const { done, value } = /** @type {IteratorResult<string>} */ (result);
-		if (done) return { blocks, done: true };
-
-		blocks += `\n\t\t\t${value}`;
+	} finally {
+		clearTimeout(timeout);
 	}
 }
 
@@ -1036,16 +1034,6 @@ async function take_ready(tail) {
 function serialization_failed(error) {
 	const { stack, path } = /** @type {any} */ (error) ?? {};
 	e.warp_serialization_failed((stack ?? String(error)) + (path ? `\n(at \`${path}\`)` : ''));
-}
-
-/**
- * @param {UnevalReplacer | undefined} a
- * @param {UnevalReplacer | undefined} b
- * @returns {UnevalReplacer | undefined}
- */
-function compose_replacers(a, b) {
-	if (!a || !b) return a ?? b;
-	return (value, js) => a(value, js) || b(value, js);
 }
 
 export class SSRState {
