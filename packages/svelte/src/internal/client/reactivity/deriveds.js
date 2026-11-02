@@ -472,12 +472,16 @@ export function execute_derived(derived) {
 }
 
 /**
- * Update the global state of `derived`, adopting the active batch's run if its view has
- * become the real world (e.g. because a fork was committed), or re-evaluating it otherwise
- * @param {Derived} derived
+ * Update the global state of a derived, adopting the active batch's run if its view has
+ * become the real world (e.g. because a fork was committed), or re-evaluating it otherwise.
+ * `signal` can be a source, too, which is cheaper than checking first (this is called for every dependency that
+ * is checked): only reactions ever get a dirty status, so `is_dirty` returns `false` for a source right away
+ * @param {Value} signal
  * @returns {void}
  */
-export function update_derived(derived) {
+export function update_derived(signal) {
+	var derived = /** @type {Derived} */ (signal);
+
 	if (!is_dirty(derived)) return;
 
 	var records = view_batch?.records;
