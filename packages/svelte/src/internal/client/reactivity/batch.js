@@ -19,7 +19,8 @@ import {
 	DESTROYING,
 	EFFECT_OFFSCREEN,
 	ASSIGNED,
-	ASYNC
+	ASYNC,
+	REACTION_IS_UPDATING
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -65,7 +66,10 @@ export let current_batch = null;
 
 /**
  * @typedef {Object} TeardownContext
- * @property {Map<Value, BatchValue>} reverted_values The writes to revert in this view
+ * @property {Map<Value, BatchValue>} reverted_values What teardowns see instead of the values sources hold: the values
+ * from before the writes that caused the teardowns (the `previous` of the batch being processed, see `flush`). For
+ * block effects that re-run right away because of a user effect's writes, also the writes of the effects that ran
+ * before it in the same commit, which apply (see `flush_queued_effects`)
  * @property {Map<Derived, BatchValue>} derived_cache The values of deriveds in this view (see `runtime.js#teardown_view`),
  * until it changes
  * @property {TeardownContext | null} parent The context to restore after a nested flush or eager block
@@ -73,7 +77,8 @@ export let current_batch = null;
 
 /**
  * Effect teardowns revert the writes that caused them (see `runtime.js#teardown_view`).
- * (A teardown outside of a flush reverts nothing, but gets a context to cache its deriveds in)
+ * (A teardown outside of a flush reverts nothing, but gets a context to cache its deriveds in, for as long as it
+ * runs — see `execute_effect_teardown`)
  * @type {TeardownContext | null}
  */
 export let teardown_context = null;
@@ -533,6 +538,16 @@ export class Batch {
 					throw e;
 				}
 			}
+
+			if (this.#scheduled.length > 0) {
+				// A later traversal may discover effects before ones we already collected.
+				// Recollect them together so they are flushed in tree order, rather than
+				// appending earlier effects after their later siblings.
+				for (const effect of render_effects) this.#scheduled.push(effect);
+				for (const effect of effects) this.#scheduled.push(effect);
+				render_effects.length = 0;
+				effects.length = 0;
+			}
 		}
 
 		// any writes should take effect in a subsequent batch
@@ -606,6 +621,10 @@ export class Batch {
 		}
 
 		if (next_batch !== null) {
+			// The next batch holds the writes made while this one committed, which cause the teardowns that run
+			// when it's processed. So teardowns now revert those, and no longer this batch's: of the reverted
+			// values, keep those that are the next batch's values from before its writes. (Writes made in teardowns
+			// aren't among them, see `teardown_write`, so they stay visible)
 			if (teardown_context !== null) {
 				for (const [source, snapshot] of teardown_context.reverted_values) {
 					if (next_batch.previous.get(source)?.wv !== snapshot.wv) {
@@ -823,6 +842,10 @@ export class Batch {
 		};
 
 		this.current.set(source, entry);
+
+		// The active view of the world sees writes made while it's active, even if they don't belong to the batch whose
+		// view it is — e.g. those of effects that run while a batch commits, which go to a new batch. (Async results
+		// are only captured while no view is active, see `async_derived`)
 		batch_values?.set(source, entry);
 
 		// an assignment replaces the value of a derived that the active view of the world holds
@@ -946,11 +969,9 @@ export class Batch {
 				}
 			}
 
-			if (obsolete) {
-				if (is_earlier) {
-					// this batch is now obsolete and can be discarded
-					batch.discard();
-				}
+			if (obsolete && is_earlier) {
+				// this batch is now obsolete and can be discarded
+				batch.discard();
 			} else if (sources.length > 0) {
 				// The microtask queue can contain the batch already scheduled to run right
 				// after this one is finished, so throwing the invariant would be wrong here.
@@ -1214,14 +1235,20 @@ export class Batch {
 		last_scheduled_effect = effect;
 
 		// While another batch is committed, effects that this batch's writes affect (other than the one
-		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit
+		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit.
+		// They may still run as part of it (for that batch's reasons) and see the write, so versions decide — unless
+		// the effect is running, in which case it would record the version it didn't see (see `update_dependencies`)
 		if (
 			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
 			view_batch !== null &&
 			view_batch !== this &&
 			effect !== active_reaction
 		) {
-			add_dirty_effect(this.#unprocessed, effect, status);
+			add_dirty_effect(
+				this.#unprocessed,
+				effect,
+				(effect.f & REACTION_IS_UPDATING) !== 0 ? status : MAYBE_DIRTY
+			);
 			return;
 		}
 

@@ -1,4 +1,4 @@
-import { get, tick, untrack } from '../internal/client/runtime.js';
+import { get, untrack } from '../internal/client/runtime.js';
 import { effect_tracking, render_effect } from '../internal/client/reactivity/effects.js';
 import { source, increment } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';

@@ -80,7 +80,9 @@ export function set_is_destroying_effect(value, version = write_version) {
 }
 
 /**
- * The result of the latest run of a derived in a teardown (see `teardown_view`)
+ * The result of the latest run of a derived in a teardown, which only the teardown sees: `update_dependencies` sets
+ * it — that's where the run's dependencies, which determine its version, are known — instead of storing the run, and
+ * `teardown_view` takes it right after `execute_derived`
  * @type {BatchValue}
  */
 let teardown_run = { v: undefined, wv: 0 };
@@ -171,7 +173,7 @@ export function increment_write_version() {
  */
 export function version_of(signal) {
 	if (batch_values === null) {
-		update_derived(/** @type {Derived} */ (signal));
+		update_derived(signal);
 		return signal.wv;
 	}
 
@@ -263,7 +265,7 @@ export function is_dirty(reaction) {
 			for (var i = 0, length = dv.length; i < length; i++) {
 				var dependency = /** @type {Value[]} */ (deps)[i];
 
-				update_derived(/** @type {Derived} */ (dependency));
+				update_derived(dependency);
 
 				if (dependency.wv !== dv[i]) return true;
 			}
@@ -1218,11 +1220,10 @@ function teardown_view(signal) {
 
 	if (record !== undefined) return record;
 
+	// A value written to the derived — reverted, or the active view's — holds if it was assigned, like in `get_view`:
+	// the value from before an assignment may have been computed, with values that the teardown reverts
 	var held = written ?? batch_values?.get(derived);
-	var assigned =
-		held === undefined
-			? (derived.f & ASSIGNED) !== 0
-			: written !== undefined || held.assigned !== false;
+	var assigned = held === undefined ? (derived.f & ASSIGNED) !== 0 : held.assigned !== false;
 	// (the versions its global run read, if that can apply)
 	var dv = held === undefined && !assigned ? derived.dv : null;
 	var deps = derived.deps ?? [];

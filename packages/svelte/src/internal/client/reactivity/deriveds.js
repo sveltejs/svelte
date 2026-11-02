@@ -36,7 +36,7 @@ import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, set_eager_effects, source } from './sources.js';
-import { get_error } from '../../shared/dev.js';
+import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
@@ -208,6 +208,8 @@ export function async_derived(fn, label, location) {
 		 */
 		const handler = (value, error = undefined) => {
 			if (DEV) {
+				invariant(view_batch === null, 'Batch is currently active');
+
 				reactivity_loss_tracker = null;
 			}
 
@@ -389,12 +391,16 @@ export function execute_derived(derived) {
 }
 
 /**
- * Update the global state of `derived`, adopting the active batch's run if its view has
- * become the real world (e.g. because a fork was committed), or re-evaluating it otherwise
- * @param {Derived} derived
+ * Update the global state of a derived, adopting the active batch's run if its view has
+ * become the real world (e.g. because a fork was committed), or re-evaluating it otherwise.
+ * `signal` can be a source, too, which is cheaper than checking first (this is called for every dependency that
+ * is checked): only reactions ever get a dirty status, so `is_dirty` returns `false` for a source right away
+ * @param {Value} signal
  * @returns {void}
  */
-export function update_derived(derived) {
+export function update_derived(signal) {
+	var derived = /** @type {Derived} */ (signal);
+
 	if (!is_dirty(derived)) return;
 
 	var records = view_batch?.records;

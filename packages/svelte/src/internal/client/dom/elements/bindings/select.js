@@ -1,9 +1,10 @@
+/** @import { Batch } from '../../../reactivity/batch.js' */
 import { effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
-import { Batch, current_batch, view_batch } from '../../../reactivity/batch.js';
+import { current_batch, view_batch } from '../../../reactivity/batch.js';
 
 /**
  * Sets the `selected` attribute on an option so form reset can restore it.
