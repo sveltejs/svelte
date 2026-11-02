@@ -1,7 +1,8 @@
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Renderer } from '../../custom-renderer/types.js' */
 /** @import { Batch } from '../../reactivity/batch.js' */
-import { current_batch } from '../../reactivity/batch.js';import {
+import { current_batch } from '../../reactivity/batch.js';
+import {
 	branch,
 	destroy_effect,
 	move_effect,
