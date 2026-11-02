@@ -211,7 +211,8 @@ export class Batch {
 	/**
 	 * The current values (and their versions) of any sources that are updated in this batch,
 	 * including deriveds that were overridden via assignment — until it commits them (see `#commit`).
-	 * The keys of this map are identical to `this.previous`. `e` says whether the value is an error
+	 * Its keys are those of `this.previous`, plus the sources this batch gave their first value. `e` says whether
+	 * the value is an error
 	 * @type {Map<Value, BatchValue>}
 	 */
 	current = new Map();
@@ -219,7 +220,9 @@ export class Batch {
 	/**
 	 * The values (and their versions) of any sources that are updated in this batch _before_ those updates took place.
 	 * For a derived, `assigned` says whether its value before was assigned, too (otherwise it was computed).
-	 * The keys of this map are identical to `this.current`
+	 * A source that this batch gave its first value (e.g. an async expression that resolved for the first time) has
+	 * no entry: there's no value from before it, so other views can't undo the write, and teardowns don't revert it.
+	 * `uncommitted_first_value` relies on this
 	 * @type {Map<Value, BatchValue>}
 	 */
 	previous = new Map();
@@ -815,6 +818,9 @@ export class Batch {
 			// the value before this batch's change is the one before the later batch's change, if any
 			previous = later?.previous.get(source);
 
+			// (A first value has no value from before it, see `previous`. If the later batch's write is the first value,
+			// the value before this batch's write is taken to be that one: in the views of other batches and in
+			// teardowns, undoing this write then gives the real value, just like not undoing it would)
 			if (previous === undefined && source.v !== UNINITIALIZED) {
 				previous = {
 					v: source.v,
@@ -1535,8 +1541,9 @@ function apply(source, entry) {
 
 /**
  * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
- * views of the world can't undo such a write, as there's no value from before it (see `capture`) — unless they have
- * their own write of it, like `batch` might. (The writes of forks aren't part of other views at all)
+ * views of the world can't undo such a write, as there's no value from before it — which is why there's an entry for
+ * `value` in the batch's `current`, but none in its `previous` (see `Batch#previous`) — unless they have their own
+ * write of it, like `batch` might. (The writes of forks aren't part of other views at all)
  * @param {Value} value
  * @param {Batch | null} batch
  * @returns {Batch | null}
