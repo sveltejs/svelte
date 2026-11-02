@@ -85,7 +85,7 @@ export function set_is_destroying_effect(value, version = write_version) {
  * `teardown_view` takes it right after `execute_derived`
  * @type {BatchValue}
  */
-let teardown_run = { v: undefined, wv: 0, assigned: false };
+let teardown_run = { v: undefined, wv: 0, e: false, assigned: false };
 
 /** @type {null | Reaction} */
 export let active_reaction = null;

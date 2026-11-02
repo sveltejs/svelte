@@ -68,7 +68,7 @@ export interface BatchValue {
 	v: any;
 	wv: number;
 	/** Whether the value is an error */
-	e?: boolean;
+	e: boolean;
 	/**
 	 * For a derived: whether the value was assigned to it. Always the case for a write (`Batch#current`); the value
 	 * from before a write (`Batch#previous`) may have been computed instead
