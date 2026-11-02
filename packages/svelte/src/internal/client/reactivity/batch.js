@@ -65,12 +65,6 @@ let last_batch = null;
 export let current_batch = null;
 
 /**
- * This is needed to avoid overwriting inputs
- * @type {Batch | null}
- */
-export let previous_batch = null;
-
-/**
  * @typedef {Object} TeardownContext
  * @property {Map<Value, BatchValue>} reverted_values What teardowns see instead of the values sources hold: the values
  * from before the writes that caused the teardowns (the `previous` of the batch being processed, see `flush`). For
@@ -217,7 +211,8 @@ export class Batch {
 	/**
 	 * The current values (and their versions) of any sources that are updated in this batch,
 	 * including deriveds that were overridden via assignment — until it commits them (see `#commit`).
-	 * The keys of this map are identical to `this.previous`. `e` says whether the value is an error
+	 * Its keys are those of `this.previous`, plus the sources this batch gave their first value. `e` says whether
+	 * the value is an error
 	 * @type {Map<Value, BatchValue>}
 	 */
 	current = new Map();
@@ -225,7 +220,9 @@ export class Batch {
 	/**
 	 * The values (and their versions) of any sources that are updated in this batch _before_ those updates took place.
 	 * For a derived, `assigned` says whether its value before was assigned, too (otherwise it was computed).
-	 * The keys of this map are identical to `this.current`
+	 * A source that this batch gave its first value (e.g. an async expression that resolved for the first time) has
+	 * no entry: there's no value from before it, so other views can't undo the write, and teardowns don't revert it.
+	 * `uncommitted_first_value` relies on this
 	 * @type {Map<Value, BatchValue>}
 	 */
 	previous = new Map();
@@ -476,6 +473,8 @@ export class Batch {
 	}
 
 	#process() {
+		current_batch = this;
+
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
 
@@ -603,10 +602,8 @@ export class Batch {
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
 
-		previous_batch = this;
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
-		previous_batch = null;
 
 		this.committing = false;
 
@@ -624,8 +621,6 @@ export class Batch {
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
 			this.#commit();
-			// Rebases can activate other batches or null it out, therefore restore the new one here
-			current_batch = next_batch;
 		}
 
 		if (next_batch !== null) {
@@ -785,7 +780,6 @@ export class Batch {
 		batch.#unlink();
 
 		// processing re-validates everything that depends on the (now merged) writes of this batch
-		current_batch = this;
 		this.#process();
 	}
 
@@ -824,6 +818,9 @@ export class Batch {
 			// the value before this batch's change is the one before the later batch's change, if any
 			previous = later?.previous.get(source);
 
+			// (A first value has no value from before it, see `previous`. If the later batch's write is the first value,
+			// the value before this batch's write is taken to be that one: in the views of other batches and in
+			// teardowns, undoing this write then gives the real value, just like not undoing it would)
 			if (previous === undefined && source.v !== UNINITIALIZED) {
 				previous = {
 					v: source.v,
@@ -892,7 +889,6 @@ export class Batch {
 
 		try {
 			is_processing = true;
-			current_batch = this;
 
 			this.#process();
 
@@ -903,7 +899,6 @@ export class Batch {
 
 					// the batch is processed again anyway if a flush is queued
 					if (batch.linked && !batch.#decrement_queued) {
-						current_batch = batch;
 						batch.#process();
 					}
 				}
@@ -1096,13 +1091,13 @@ export class Batch {
 	 */
 	activate() {
 		current_batch = this;
+		view_batch = this;
 
 		if (!async_mode_flag) {
 			batch_values = view_cache = null;
 			return;
 		}
 
-		view_batch = this;
 		this.folded = [];
 
 		if (!this.is_fork && this.prev === null && this.next === null) {
@@ -1251,12 +1246,7 @@ export class Batch {
 		// that is running, i.e. writing) wait for it to be processed, rather than running as part of that commit.
 		// They may still run as part of it (for that batch's reasons) and see the write, so versions decide — unless
 		// the effect is running, in which case it would record the version it didn't see (see `update_dependencies`)
-		if (
-			(async_mode_flag || (effect.f & EFFECT) !== 0) &&
-			previous_batch !== null &&
-			previous_batch !== this &&
-			effect !== active_reaction
-		) {
+		if (view_batch !== null && view_batch !== this && effect !== active_reaction) {
 			add_dirty_effect(
 				this.#unprocessed,
 				effect,
@@ -1367,8 +1357,8 @@ export class Batch {
  */
 export function flushSync(fn) {
 	var was_flushing_sync = is_flushing_sync;
-	var prev_previous_batch = previous_batch;
-	previous_batch = null;
+	// e.g. flushSync during effect flushing phase - we gotta restore the view_batch afterwards in that case
+	var previous_view_batch = view_batch !== current_batch ? view_batch : null;
 	is_flushing_sync = true;
 
 	try {
@@ -1391,7 +1381,7 @@ export function flushSync(fn) {
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
-		previous_batch = prev_previous_batch;
+		view_batch = previous_view_batch;
 	}
 }
 
@@ -1548,8 +1538,9 @@ function apply(source, entry) {
 
 /**
  * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
- * views of the world can't undo such a write, as there's no value from before it (see `capture`) — unless they have
- * their own write of it, like `batch` might. (The writes of forks aren't part of other views at all)
+ * views of the world can't undo such a write, as there's no value from before it — which is why there's an entry for
+ * `value` in the batch's `current`, but none in its `previous` (see `Batch#previous`) — unless they have their own
+ * write of it, like `batch` might. (The writes of forks aren't part of other views at all)
  * @param {Value} value
  * @param {Batch | null} batch
  * @returns {Batch | null}
