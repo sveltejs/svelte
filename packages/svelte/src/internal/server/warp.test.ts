@@ -559,7 +559,7 @@ describe('streaming', () => {
 			expect(warn).not.toHaveBeenCalled();
 
 			const { values } = await revive_streamed(head, tail);
-			const nested = await values?.get('test')?.get('nested');
+			const nested = (await values?.get('test')?.get('nested')) as any;
 			expect(await nested.inner).toBe('inner value');
 			expect(await values?.get('test')?.get('unawaited')).toBe('unawaited value');
 		} finally {

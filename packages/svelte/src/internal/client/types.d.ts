@@ -27,8 +27,6 @@ declare global {
 				 */
 				c: Map<string, Set<WarpKey> | true>;
 			};
-			/** Adds a streamed value, unless the client changed its key while values were streaming in */
-			a?: (id: string, key: WarpKey, value: unknown) => void;
 		};
 	}
 }

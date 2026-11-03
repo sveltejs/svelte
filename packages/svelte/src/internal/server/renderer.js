@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { UnevalReplacer } from 'devalue' */
+/** @import { Session, UnevalReplacer } from 'devalue' */
 /** @import { RenderContext, SSRContext, WarpStore } from './types.js' */
 /** @import { WarpKey } from '#shared' */
 /** @import { AsyncRenderOutput, Csp, RenderOutput, Sha256Source } from '../../server/public.js' */
@@ -947,8 +947,7 @@ export class Renderer {
 	 * Without background work (inside pending boundaries), this waits for every promise among the values
 	 * to settle, and resolves them inside the `<script>`. Otherwise, it only resolves the promises that have
 	 * already settled — which includes everything the render awaited, and so everything it needs to hydrate
-	 * — and the rest are streamed via the `tail`. So are values added after this, which are behind a promise,
-	 * the first link of a chain (see `stream_late_values`) that's only resolved once the `head` is done
+	 * — and the rest are streamed via the `tail`, along with the values added after this
 	 * @param {WarpStore} store
 	 * @param {UnevalReplacer | undefined} replacer
 	 * @param {SSRState | null} background
@@ -961,99 +960,69 @@ export class Renderer {
 
 		store.emitted = true;
 
-		const values = store.values;
-
-		if (values.size === 0 && background === null) {
+		if (store.values.size === 0 && background === null) {
 			return { head: null, tail: null };
 		}
 
-		// streams need a unique key, since they can overlap with other streams on the same page
-		const key =
-			background === null
-				? `${this.global.id_prefix}w`
-				: `${this.global.id_prefix}w${Math.random().toString(36).slice(2, 10)}`;
+		/** Asynchronous `transformError` calls that haven't finished yet */
+		let transforms = 0;
 
-		const late = background === null ? null : stream_late_values(store, background);
+		const session = new devalue.Session({
+			// streams need a unique key, since they can overlap with other streams on the same page
+			id:
+				background === null
+					? `${this.global.id_prefix}w`
+					: `${this.global.id_prefix}w${Math.random().toString(36).slice(2, 10)}`,
+			scope: 'window.__svelte.d',
+			replacer,
+			transformError: (error) => {
+				// a promise resolved to something that can't be serialized, which `flush` reports
+				if (error instanceof devalue.DevalueError) return;
 
-		// every promise devalue has found while serializing the `head`, so that we know when it's done
-		const tracker = new Tracker();
+				// rejected promises reject on the client too, with whatever `transformError` returns
+				const result = this.global.transformError(error);
 
-		let head_done = false;
+				// devalue only waits for `transformError` results that are `instanceof Promise`
+				if (result instanceof Promise) {
+					transforms += 1;
+					const done = () => (transforms -= 1);
+					result.then(done, done);
+				}
 
-		/** @type {unknown} */
-		let serialization_error = null;
+				return result;
+			}
+		});
 
-		/** @type {ReturnType<typeof devalue.unevalStream>} */
-		let stream;
+		const late = background === null ? null : stream_late_values(store, session, background);
+
+		let head;
+		let blocks;
 
 		try {
-			stream = devalue.unevalStream(
-				late === null ? values : [values, late.first],
-				(thing, js) => {
-					if (thing instanceof Entry) {
-						// adds the value to the client's `Warp` as soon as this is evaluated, rather than when the
-						// promise resolves, so that it's there before anything awaiting the promises resolved in the
-						// same `<script>` runs. a value for a key that the client has changed while values were streaming
-						// in (from any stream) is discarded, so that it doesn't overwrite the change. since each value is its own
-						// promise, one that can't be serialized only fails by itself (and the client doesn't get it)
-						return js`window.__svelte.a(${thing.id}, ${thing.key}, ${thing.value})`;
-					}
+			head = session.uneval(store.values);
 
-					const result = replacer?.(thing, js);
-					if (result) return result;
+			const pending = background === null ? watch_pending(store.values) : null;
 
-					if (!head_done && is_native_promise(thing) && thing !== late?.first) {
-						tracker.add(thing);
-					}
-				},
-				{
-					id: key,
-					scope: 'window.__svelte.d',
-					transformError: (error) => {
-						// a promise resolved to something that can't be serialized
-						if (error instanceof devalue.DevalueError) {
-							if (head_done) {
-								// too late to fail the render, so the promise rejects on the client with a generic error
-								w.warp_stream_serialization_failed(describe_error(error));
-							} else {
-								serialization_error ??= error;
-							}
-
-							return;
-						}
-
-						// rejected promises reject on the client too, with whatever `transformError` returns
-						const result = this.global.transformError(error);
-						if (!head_done) tracker.add_transform(result);
-						return result;
-					}
-				}
+			blocks = await take_head(
+				session,
+				() => transforms,
+				pending &&
+					(() => {
+						// this is a problem -- it means we've finished the render but we're still waiting on a promise
+						// to resolve so we can serialize it, so we're blocking the response on useless content.
+						w.unresolved_warp(describe_pending(pending));
+					})
 			);
 		} catch (error) {
 			late?.close();
 			serialization_failed(error);
 		}
 
-		const { head, tail } = stream;
-
-		const ready = await take_head(tail, tracker, late !== null, () => {
-			// this is a problem -- it means we've finished the render but we're still waiting on a promise
-			// to resolve so we can serialize it, so we're blocking the response on useless content.
-			w.unresolved_warp(describe_pending(values, tracker));
-		});
-
-		head_done = true;
-
-		if (serialization_error !== null) {
-			late?.close();
-			tail.return?.();
-			serialization_failed(serialization_error);
+		if (late === null) {
+			blocks += `\n\t\t\t${session.end()}`;
+		} else {
+			late.open();
 		}
-
-		const { blocks, next } = ready;
-
-		// everything else is streamed
-		late?.open();
 
 		// the messages wait in `window.__svelte.d` until the client's `Warp` handles them (see `receive_warp_values`)
 		const body = `
@@ -1077,8 +1046,7 @@ export class Renderer {
 				late === null
 					? null
 					: stream_scripts(
-							tail,
-							/** @type {Promise<IteratorResult<string>>} */ (next),
+							late,
 							csp_attr,
 							() => {
 								this.global.abort();
@@ -1148,203 +1116,133 @@ function macrotask() {
 /** @returns {AsyncIterable<string>} */
 async function* empty() {}
 
-/** Keeps track of what devalue is waiting for before it can emit the blocks that settle the promises in the `head` */
-class Tracker {
-	/**
-	 * Promises in the values being serialized that haven't settled yet
-	 * @type {Set<Promise<unknown>>}
-	 */
-	promises = new Set();
-
-	/**
-	 * Asynchronous `transformError` calls that haven't finished yet
-	 * @type {Set<Promise<unknown>>}
-	 */
-	transforms = new Set();
-
-	/** @type {ReturnType<typeof deferred<void>> | null} */
-	#change = null;
-
-	/** @param {unknown} promise */
-	add(promise) {
-		if (is_native_promise(promise)) this.#add(this.promises, promise);
-	}
-
-	/** @param {unknown} result */
-	add_transform(result) {
-		// devalue only waits for `transformError` results that are `instanceof Promise`
-		if (result instanceof Promise) this.#add(this.transforms, result);
-	}
-
-	/**
-	 * @param {Set<Promise<unknown>>} set
-	 * @param {Promise<unknown>} value
-	 */
-	#add(set, value) {
-		if (set.has(value)) return;
-		set.add(value);
-
-		const settled = () => {
-			set.delete(value);
-			this.#change?.resolve();
-			this.#change = null;
-		};
-
-		Promise.prototype.then.call(value, settled, settled);
-	}
-
-	/** Resolves the next time something settles */
-	change() {
-		return (this.#change ??= deferred()).promise;
-	}
-}
-
 /**
- * Takes the blocks from `tail` that settle the promises in the `head`. Without background work, that's all
- * of them, so this waits for `tail` to finish. Otherwise, it only takes the blocks for the promises that
- * have already settled, which devalue emits within a few microtasks — so once no more blocks arrive before
- * the next macrotask (and no `transformError` calls are still running), the rest go in the `tail`. Values
- * added after the `head` are behind a promise that isn't resolved until it's done (`streaming`), so `tail`
- * can't finish first
- * @param {AsyncIterator<string>} tail
- * @param {Tracker} tracker
- * @param {boolean} streaming
- * @param {() => void} warn Called if the `head` is waiting on promises that hadn't settled when the render finished
- * @returns {Promise<{ blocks: string, next: Promise<IteratorResult<string>> | null }>}
+ * Takes the statements that settle the promises in the `head`. Without background work (when `warn` is
+ * passed), that's all of them. Otherwise, it's the ones that have already settled, which devalue hears
+ * about within a few microtasks — so once nothing has settled for a macrotask (and no `transformError`
+ * calls are still running), the rest are left for the `tail`. Throws if a value can't be serialized
+ * @param {Session} session
+ * @param {() => number} transforms The number of asynchronous `transformError` calls that haven't finished
+ * @param {(() => void) | null} warn Called if the `head` is waiting on promises that hadn't settled when the render finished
+ * @returns {Promise<string>}
  */
-async function take_head(tail, tracker, streaming, warn) {
+async function take_head(session, transforms, warn) {
 	let blocks = '';
-	let next = tail.next();
 	let warned = false;
 
 	while (true) {
-		const result = await Promise.race([next, macrotask()]);
+		const { code, errors } = session.flush();
+		if (errors.length > 0) throw errors[0].error;
+		if (code !== '') blocks += `\n\t\t\t${code}`;
+		if (session.pending === 0) return blocks;
 
-		if (result !== MACROTASK) {
-			const { done, value } = /** @type {IteratorResult<string>} */ (result);
-			if (done) return { blocks, next: null };
-
-			blocks += `\n\t\t\t${value}`;
-			next = tail.next();
+		if (warned) {
+			await session.changed();
 			continue;
 		}
 
-		if (streaming) {
-			// the block this resolves to is the first one in the `tail`, so it must not be dropped
-			if (tracker.transforms.size === 0) return { blocks, next };
-		} else if (!warned && tracker.promises.size > 0) {
+		if ((await Promise.race([session.changed(), macrotask()])) !== MACROTASK) continue;
+
+		if (warn === null) {
+			if (transforms() === 0) return blocks;
+		} else if (session.pending > transforms()) {
+			// promises (rather than just `transformError` calls) are still pending
 			warned = true;
 			warn();
 		}
 
-		await Promise.race([next, tracker.change()]);
+		await session.changed();
 	}
 }
 
-/** A value that was added to a `Warp` instance after the `head` was serialized */
-class Entry {
+/**
+ * Streams the values that are added to `Warp` instances after the `head` was serialized. Until `open`
+ * is called (once the `head` is done), they're held rather than serialized, since the rest of the `head`
+ * could otherwise refer to objects that only the `tail` introduces. Each value is serialized by itself,
+ * so one that can't be serialized doesn't affect the others. No more can be added once the background
+ * work is done
+ * @param {WarpStore} store
+ * @param {Session} session
+ * @param {SSRState} background
+ */
+function stream_late_values(store, session, background) {
+	/** @type {Array<[string, WarpKey, unknown]> | null} */
+	let held = [];
+	let code = '';
+	let closed = false;
+	let change = deferred();
+
 	/**
 	 * @param {string} id
 	 * @param {WarpKey} key
 	 * @param {unknown} value
 	 */
-	constructor(id, key, value) {
-		this.id = id;
-		this.key = key;
-		this.value = value;
-	}
-}
-
-/** @typedef {{ entries: Array<Promise<Entry>>, next: Promise<Link | null> | null }} Link */
-
-/**
- * Streams the values that are added to `Warp` instances after the `head` was serialized, as a chain of
- * promises that each resolve to a batch of values and the next promise. Each value is a promise of its
- * own, so that one which can't be serialized doesn't fail the rest of the batch, or the rest of the chain.
- * The first link isn't resolved until `open` is called, once the `head` is done. The chain ends once
- * the background work is done.
- * @param {WarpStore} store
- * @param {SSRState} background
- */
-function stream_late_values(store, background) {
-	let link = /** @type {ReturnType<typeof deferred<Link | null>>} */ (deferred());
-	let opened = false;
-	let closed = false;
-	let scheduled = false;
-
-	/** @type {Entry[]} */
-	let entries = [];
-
-	const first = link.promise;
-
-	function flush() {
-		scheduled = false;
-		if (closed) return;
-
-		const current = link;
-		link = deferred();
-		current.resolve({
-			entries: entries.map((entry) => Promise.resolve(entry)),
-			next: link.promise
-		});
-		entries = [];
+	function add(id, key, value) {
+		try {
+			code += session.uneval([id, key, value]);
+		} catch (error) {
+			// the client doesn't get the value, so it will need to load it itself
+			w.warp_stream_serialization_failed(describe_error(error));
+		}
 	}
 
-	function end() {
-		link.resolve(
-			entries.length > 0
-				? { entries: entries.map((entry) => Promise.resolve(entry)), next: null }
-				: null
-		);
-		entries = [];
+	function notify() {
+		const current = change;
+		change = deferred();
+		current.resolve();
 	}
 
 	function close() {
 		if (closed) return;
 		closed = true;
-
 		store.late = null;
-		if (opened) end();
+		notify();
 	}
 
 	store.late = (id, key, value) => {
-		entries.push(new Entry(id, key, value));
-
-		if (opened && !scheduled) {
-			scheduled = true;
-			queueMicrotask(flush);
+		if (held === null) {
+			add(id, key, value);
+			notify();
+		} else {
+			held.push([id, key, value]);
 		}
 	};
 
 	background.settle().then(close);
 
 	return {
-		first,
-		/** Resolves the first link */
+		session,
+		get closed() {
+			return closed;
+		},
 		open() {
-			if (opened) return;
-			opened = true;
-
-			if (closed) {
-				end();
-			} else {
-				flush();
-			}
+			const entries = held ?? [];
+			held = null;
+			for (const [id, key, value] of entries) add(id, key, value);
+		},
+		/** Returns the statements that add the values added since the last call */
+		take() {
+			const result = code;
+			code = '';
+			return result;
+		},
+		/** Resolves the next time a value is added, or once no more can be */
+		changed() {
+			return change.promise;
 		},
 		close
 	};
 }
 
 /**
- * @param {AsyncIterator<string>} tail
- * @param {Promise<IteratorResult<string>>} next The pending result of `tail.next()`
+ * @param {ReturnType<typeof stream_late_values>} late
  * @param {string} csp_attr
  * @param {() => void} done Aborts the signals from `getAbortSignal`, once nothing that's streamed can depend on them
  * @param {() => void} stop Stops the background work
  * @returns {AsyncIterable<string>}
  */
-function stream_scripts(tail, next, csp_attr, done, stop) {
-	const generator = generate_scripts(tail, next, csp_attr, done);
+function stream_scripts(late, csp_attr, done, stop) {
+	const generator = generate_scripts(late, csp_attr, done);
 
 	/** @type {AsyncIterableIterator<string>} */
 	const iterator = {
@@ -1354,7 +1252,6 @@ function stream_scripts(tail, next, csp_attr, done, stop) {
 		return: async () => {
 			stop();
 			done();
-			await tail.return?.();
 			return generator.return(undefined);
 		},
 		[Symbol.asyncIterator]: () => iterator
@@ -1364,60 +1261,69 @@ function stream_scripts(tail, next, csp_attr, done, stop) {
 }
 
 /**
- * Turns the blocks from `unevalStream` into `<script>` tags. Blocks that arrive at around the same time are
- * combined, so that server-side work which was waiting on a promise that just resolved has a chance to add
- * the values that depend on it — otherwise, the client might not receive them before it needs them.
- * @param {AsyncIterator<string>} tail
- * @param {Promise<IteratorResult<string>>} next
+ * Turns the values added after the `head`, and the settlements of the promises sent so far, into `<script>`
+ * tags. After something happens, this waits for a macrotask before sending it, so that server-side work which
+ * was waiting on a promise that just resolved has a chance to add the values that depend on it — otherwise,
+ * the client might not receive them before it needs them.
+ * @param {ReturnType<typeof stream_late_values>} late
  * @param {string} csp_attr
  * @param {() => void} done
  * @returns {AsyncGenerator<string>}
  */
-async function* generate_scripts(tail, next, csp_attr, done) {
-	let finished = false;
+async function* generate_scripts(late, csp_attr, done) {
+	const { session } = late;
 
-	while (!finished) {
-		let code = '';
-		let result = await next;
+	while (true) {
+		let code = late.take();
 
-		while (true) {
-			if (result.done) {
-				// every streamed promise has settled. devalue's last block (which is already
-				// in this `<script>` or an earlier one) tells the client the stream has finished
-				done();
-				finished = true;
-				break;
-			}
+		if (code === '') {
+			if (late.closed && session.pending === 0) break;
 
-			code += result.value;
-			next = tail.next();
-
-			const more = await Promise.race([next, macrotask()]);
-			if (more === MACROTASK) break;
-
-			result = /** @type {IteratorResult<string>} */ (more);
+			await Promise.race(late.closed ? [session.changed()] : [session.changed(), late.changed()]);
+			await macrotask();
 		}
 
+		const flushed = session.flush();
+
+		for (const { error } of flushed.errors) {
+			// too late to fail the render, so the promise rejects on the client with a generic error
+			w.warp_stream_serialization_failed(describe_error(error));
+		}
+
+		// the values come first, since they were serialized before the settlements
+		code += late.take() + flushed.code;
 		if (code !== '') yield `<script${csp_attr}>${code}</script>`;
 	}
+
+	// every streamed promise has settled, and nothing more can be added
+	done();
+	yield `<script${csp_attr}>${session.end()}</script>`;
 }
 
 /**
+ * Keeps track of which values are promises that haven't settled yet, for `unresolved_warp`
  * @param {Map<string, Map<WarpKey, unknown>>} values
- * @param {Tracker} tracker
  */
-function describe_pending(values, tracker) {
-	const pending = [];
+function watch_pending(values) {
+	/** @type {Map<Promise<unknown>, string>} */
+	const pending = new Map();
 
 	for (const [id, v] of values) {
 		for (const [key, value] of v) {
-			if (tracker.promises.has(/** @type {Promise<unknown>} */ (value))) {
-				pending.push(`\`${String(key)}\` in \`${id}\``);
-			}
+			if (!is_native_promise(value)) continue;
+
+			pending.set(value, `\`${String(key)}\` in \`${id}\``);
+			const settled = () => pending.delete(value);
+			Promise.prototype.then.call(value, settled, settled);
 		}
 	}
 
-	return pending.length > 0 ? ` (${pending.join(', ')}).` : '.';
+	return pending;
+}
+
+/** @param {Map<Promise<unknown>, string>} pending */
+function describe_pending(pending) {
+	return pending.size > 0 ? ` (${[...pending.values()].join(', ')}).` : '.';
 }
 
 /** @param {unknown} error */

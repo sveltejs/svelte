@@ -16,41 +16,34 @@ const ALL = Symbol();
  * @param {NonNullable<Window['__svelte']>} svelte
  */
 export function receive_warp_values(svelte) {
-	// adds a streamed value, unless the client changed its key while values were streaming in.
-	// called by the code that the server streams, so that the value is there before anything
-	// awaiting the promises resolved in the same `<script>` runs
-	svelte.a ??= (id, k, v) => {
-		const c = svelte.r?.c.get(id);
-		if (c === true || c?.has(k)) return;
-
-		const store = (svelte.w ??= new Map());
-		let values = store.get(id);
-		if (values === undefined) store.set(id, (values = new Map()));
-		values.set(k, v);
-	};
-
 	if (svelte.d !== undefined && !Array.isArray(svelte.d)) return;
 
 	install({
 		target: svelte,
 		key: 'd',
 		receive(key, value) {
-			/** @type {Map<string, Map<WarpKey, unknown>>} */
-			let values;
-
-			if (Array.isArray(value)) {
-				// a stream, which sends `[values, the values that are streamed in later]`. while any stream is in
-				// progress, the client records the keys it changes, so that values which are streamed in later
-				// (by any stream) don't overwrite the changes
-				(svelte.r ??= { s: new Set(), c: new Map() }).s.add(key);
-				values = value[0];
-			} else {
-				values = /** @type {Map<string, Map<WarpKey, unknown>>} */ (value);
-			}
+			// while any stream is in progress, the client records the keys it changes, so that values which
+			// are streamed in later (by any stream) don't overwrite the changes
+			const r = (svelte.r ??= { s: new Set(), c: new Map() });
+			r.s.add(key);
 
 			const store = (svelte.w ??= new Map());
 
-			for (const [id, entries] of values) {
+			if (Array.isArray(value)) {
+				// a value added after the `head`, which is discarded if the client changed its key while values
+				// were streaming in. it's added as soon as its message is handled, before anything awaiting the
+				// promises settled in the same `<script>` runs
+				const [id, k, v] = /** @type {[string, WarpKey, unknown]} */ (value);
+				const c = r.c.get(id);
+				if (c === true || c?.has(k)) return;
+
+				let values = store.get(id);
+				if (values === undefined) store.set(id, (values = new Map()));
+				values.set(k, v);
+				return;
+			}
+
+			for (const [id, entries] of /** @type {Map<string, Map<WarpKey, unknown>>} */ (value)) {
 				const existing = store.get(id);
 
 				if (existing) {
