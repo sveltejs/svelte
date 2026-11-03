@@ -1,4 +1,4 @@
-/** @import { Source, TemplateNode } from '#client' */
+/** @import { Effect, Source, TemplateNode } from '#client' */
 import { is_promise } from '../../../shared/utils.js';
 import { block } from '../../reactivity/effects.js';
 import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
@@ -18,6 +18,7 @@ import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactiv
 import { BranchManager } from './branches.js';
 import { capture, merge_target, unset_context } from '../../reactivity/async.js';
 import { DEV } from 'esm-env';
+import { active_effect } from '../../runtime.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -96,7 +97,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		return forks.has(batch) && target.linked && !target.committed ? target : null;
 	};
 
-	var effect = block(() => {
+	block(() => {
+		var effect = /** @type {Effect} */ (active_effect);
 		var batch = /** @type {Batch} */ (current_batch);
 		var input = get_input();
 		var run = {};
