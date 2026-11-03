@@ -11,9 +11,6 @@ const html = (list) =>
 // value, `'c'` is a constant) — whether the fork is discarded or committed afterwards. When the
 // fork is committed, its own results are used: nothing is fetched again.
 export default test({
-	// batch-views: `fork.commit` applies the fork's list over the later, still pending, real batch's list, so the
-	// fork's list wins in the "commit" iteration (see `async-fork-commit-overtaken`)
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		const [
