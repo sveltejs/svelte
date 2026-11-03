@@ -37,86 +37,13 @@ function create_render_context(replacer) {
 		warp: {
 			values: new Map(),
 			stacks: new Map(),
-			background: new Map(),
 			emitted: false,
 			late: null
 		},
 		rendered: false,
 		replacer,
-		background: false,
-		queue: [],
 		held: null
 	};
-}
-
-/**
- * Runs `fn` with a copy of the render context that marks everything it does
- * (including after `await`s) as background work. The `Warp` values are shared.
- *
- * WebContainers don't have `AsyncLocalStorage`, so the only way to tell background work apart from the
- * rest of the render is to not run them at the same time. There, `fn` is queued until the `head` has been
- * serialized (see `start_background`), and the result is a promise
- * @template T
- * @param {() => T} fn
- * @returns {T | Promise<Awaited<T> | undefined>}
- */
-export function run_in_background(fn) {
-	const current = get_render_context();
-
-	if (in_webcontainer() && current.queue !== null) {
-		const { promise, resolve, reject } =
-			/** @type {ReturnType<typeof deferred<Awaited<T> | undefined>>} */ (deferred());
-
-		current.queue.push({
-			start: () => {
-				try {
-					resolve(/** @type {Awaited<T>} */ (fn()));
-				} catch (error) {
-					reject(error);
-				}
-			},
-			drop: () => resolve(undefined)
-		});
-
-		return promise;
-	}
-
-	if (in_webcontainer()) {
-		// the background work has started, so `context` is already the background context (see `start_background`)
-		return fn();
-	}
-
-	const ctx = { ...current, background: true };
-	const previous = context;
-
-	try {
-		context = ctx;
-		return /** @type {AsyncLocalStorage<RenderContext | null>} */ (als).run(ctx, fn);
-	} finally {
-		context = previous;
-	}
-}
-
-/**
- * In WebContainers, starts the background work that was queued by `run_in_background`, now that the
- * `head` has been serialized. From now on, the render context belongs to the background work, until
- * the next render starts — the rest of the render can no longer add values to the `head` anyway.
- * Elsewhere, the background work has already started, so this does nothing
- * @param {boolean} start Whether to start the queued work, or drop it (e.g. because the render failed)
- */
-export function start_background(start) {
-	const current = get_render_context_safe();
-	const queue = current?.queue;
-	if (!current || !queue) return;
-
-	current.queue = null;
-
-	if (start && in_webcontainer()) {
-		context = { ...current, background: true };
-		for (const work of queue) work.start();
-	} else {
-		for (const work of queue) work.drop();
-	}
 }
 
 /**

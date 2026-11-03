@@ -37,23 +37,11 @@ export class Warp {
 	}
 
 	/**
-	 * Reads all of the values, which means they're needed by the render
-	 * @returns {Map<K, V> | undefined}
-	 */
-	#read_all() {
-		const context = get_context();
-		read(context, this.#id);
-		return /** @type {Map<K, V> | undefined} */ (context.warp.values.get(this.#id));
-	}
-
-	/**
 	 * @param {K} key
 	 * @returns {V | undefined}
 	 */
 	get(key) {
-		const context = get_context();
-		read(context, this.#id, key);
-		return /** @type {V | undefined} */ (context.warp.values.get(this.#id)?.get(key));
+		return this.#values()?.get(key);
 	}
 
 	/**
@@ -95,7 +83,6 @@ export class Warp {
 		const values = context.warp.values.get(this.#id);
 
 		if (values?.has(key)) {
-			read(context, this.#id, key);
 			return /** @type {V} */ (values.get(key));
 		}
 
@@ -114,7 +101,6 @@ export class Warp {
 		const values = context.warp.values.get(this.#id);
 
 		if (values?.has(key)) {
-			read(context, this.#id, key);
 			return /** @type {V} */ (values.get(key));
 		}
 
@@ -146,11 +132,11 @@ export class Warp {
 	 */
 	forEach(callback, this_arg) {
 		// pass the `Warp` rather than the underlying map, so that `callback` can't modify it directly
-		this.#read_all()?.forEach((value, key) => callback.call(this_arg, value, key, this));
+		this.#values()?.forEach((value, key) => callback.call(this_arg, value, key, this));
 	}
 
 	entries() {
-		return (this.#read_all() ?? new Map()).entries();
+		return (this.#values() ?? new Map()).entries();
 	}
 
 	keys() {
@@ -158,7 +144,7 @@ export class Warp {
 	}
 
 	values() {
-		return (this.#read_all() ?? new Map()).values();
+		return (this.#values() ?? new Map()).values();
 	}
 
 	get size() {
@@ -166,7 +152,7 @@ export class Warp {
 	}
 
 	[Symbol.iterator]() {
-		return (this.#read_all() ?? new Map())[Symbol.iterator]();
+		return (this.#values() ?? new Map())[Symbol.iterator]();
 	}
 
 	get [Symbol.toStringTag]() {
@@ -180,26 +166,6 @@ function get_context() {
 	}
 
 	return get_render_context();
-}
-
-/**
- * Called when a value is read. If it was added by background work, but is read by the rest of the
- * render before the values have been serialized, it's needed to hydrate, so it goes in the `head`
- * @param {RenderContext} context
- * @param {string} id
- * @param {WarpKey} [key] If omitted, all of the values were read
- */
-function read(context, id, key) {
-	if (context.background || context.warp.emitted) return;
-
-	const keys = context.warp.background.get(id);
-	if (keys === undefined) return;
-
-	if (key === undefined) {
-		context.warp.background.delete(id);
-	} else {
-		keys.delete(key);
-	}
 }
 
 /**
@@ -227,8 +193,9 @@ function set(context, id, key, value) {
 function record(context, id, key, value) {
 	const store = context.warp;
 
-	if ((store.emitted || context.background) && is_native_promise(value)) {
-		// devalue only subscribes to streamed promises once it reaches them, which can be after they reject
+	if (is_native_promise(value)) {
+		// the rejection is sent to the client, but devalue only subscribes once it reaches the
+		// promise, which can be after it rejects (e.g. if it was added by work in a pending boundary)
 		Promise.prototype.then.call(value, undefined, noop);
 	}
 
@@ -238,15 +205,6 @@ function record(context, id, key, value) {
 		}
 
 		store.late(id, key, value);
-	} else if (context.background) {
-		let keys = store.background.get(id);
-
-		if (keys === undefined) {
-			keys = new Set();
-			store.background.set(id, keys);
-		}
-
-		keys.add(key);
 	}
 
 	if (DEV) {

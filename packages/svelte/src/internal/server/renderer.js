@@ -12,12 +12,7 @@ import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
-import {
-	hold_render_context,
-	run_in_background,
-	start_background,
-	with_render_context
-} from './render-context.js';
+import { hold_render_context, with_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { deferred, has_own_property, is_array, is_native_promise, noop } from '../shared/utils.js';
@@ -408,8 +403,9 @@ export class Renderer {
 
 	/**
 	 * Runs the children of a pending boundary in the background, discarding their output, so that the
-	 * data they need starts loading on the server. Values they add to `Warp` instances are streamed to
-	 * the client, rather than included in the `head`. Only used with `experimental.streaming`.
+	 * data they need starts loading on the server. Values they add to `Warp` instances are sent to the
+	 * client like any others, but the `head` doesn't wait for them (see `#collect_warp`). Only used with
+	 * `experimental.streaming`.
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
 	 */
 	background(fn) {
@@ -428,31 +424,20 @@ export class Renderer {
 			i: ssr_context?.i ?? false
 		};
 
+		const previous = ssr_context;
+		set_ssr_context(context);
+
 		try {
-			// this may run later, in WebContainers (see `run_in_background`)
-			const result = run_in_background(() => {
-				const previous = ssr_context;
-				set_ssr_context(context);
-
-				try {
-					const result = fn(renderer);
-
-					if (result instanceof Promise) {
-						result.finally(() => set_ssr_context(null)).catch(noop);
-					}
-
-					return result;
-				} finally {
-					set_ssr_context(previous);
-				}
-			});
+			const result = fn(renderer);
 
 			if (result instanceof Promise) {
-				result.catch(noop);
+				result.finally(() => set_ssr_context(null)).catch(noop);
 				renderer.promise = state.track(result);
 			}
 		} catch {
 			// the client will render the children itself, and handle the error then
+		} finally {
+			set_ssr_context(previous);
 		}
 	}
 
@@ -870,7 +855,6 @@ export class Renderer {
 				const background = renderer.global.background;
 
 				if (background !== null) {
-					start_background(false);
 					background.abort();
 					hold_render_context(Renderer.#finish_background(background));
 				}
@@ -960,12 +944,11 @@ export class Renderer {
 	/**
 	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them on the client.
 	 *
-	 * The values added by the render are resolved inside the `<script>`, so this waits for any promises
-	 * inside them to settle first. When there's background work (inside pending boundaries), the values it
-	 * adds are streamed to the client via the `tail` instead, even if they've already resolved. They're
-	 * behind a promise, the first link of a chain (see `stream_late_values`), which is only resolved once
-	 * the rest has been serialized, so devalue can't reach them until then. Values that the background work
-	 * added but the rest of the render read are needed to hydrate, so they're treated like the render's own
+	 * Without background work (inside pending boundaries), this waits for every promise among the values
+	 * to settle, and resolves them inside the `<script>`. Otherwise, it only resolves the promises that have
+	 * already settled — which includes everything the render awaited, and so everything it needs to hydrate
+	 * — and the rest are streamed via the `tail`. So are values added after this, which are behind a promise,
+	 * the first link of a chain (see `stream_late_values`) that's only resolved once the `head` is done
 	 * @param {WarpStore} store
 	 * @param {UnevalReplacer | undefined} replacer
 	 * @param {SSRState | null} background
@@ -978,30 +961,7 @@ export class Renderer {
 
 		store.emitted = true;
 
-		/** @type {Map<string, Map<WarpKey, unknown>>} */
-		const values = new Map();
-
-		/** @type {Array<[string, WarpKey, unknown]>} */
-		const late_entries = [];
-
-		for (const [id, v] of store.values) {
-			const keys = store.background.get(id);
-			let own = v;
-
-			if (keys !== undefined && keys.size > 0) {
-				own = new Map();
-
-				for (const [key, value] of v) {
-					if (keys.has(key)) {
-						late_entries.push([id, key, value]);
-					} else {
-						own.set(key, value);
-					}
-				}
-			}
-
-			if (own.size > 0) values.set(id, own);
-		}
+		const values = store.values;
 
 		if (values.size === 0 && background === null) {
 			return { head: null, tail: null };
@@ -1013,16 +973,11 @@ export class Renderer {
 				? `${this.global.id_prefix}w`
 				: `${this.global.id_prefix}w${Math.random().toString(36).slice(2, 10)}`;
 
-		const late = background === null ? null : stream_late_values(store, background, late_entries);
+		const late = background === null ? null : stream_late_values(store, background);
 
 		// every promise devalue has found while serializing the `head`, so that we know when it's done
 		const tracker = new Tracker();
 
-		/**
-		 * The values in the first link, which devalue hasn't written yet
-		 * @type {Set<Entry> | null}
-		 */
-		let first_entries = null;
 		let head_done = false;
 
 		/** @type {unknown} */
@@ -1036,8 +991,6 @@ export class Renderer {
 				late === null ? values : [values, late.first],
 				(thing, js) => {
 					if (thing instanceof Entry) {
-						first_entries?.delete(thing);
-
 						// adds the value to the client's `Warp` as soon as this is evaluated, rather than when the
 						// promise resolves, so that it's there before anything awaiting the promises resolved in the
 						// same `<script>` runs. a value for a key that the client has changed while values were streaming
@@ -1097,29 +1050,10 @@ export class Renderer {
 			serialization_failed(serialization_error);
 		}
 
-		let blocks = ready.blocks;
-		let next = ready.next;
+		const { blocks, next } = ready;
 
-		if (late !== null) {
-			// everything in the `head` has been serialized, so devalue can move on to the background work
-			// in WebContainers, the background work only starts now (see `run_in_background`).
-			// the values it adds synchronously are in the first link, as they would be elsewhere
-			start_background(true);
-			first_entries = new Set(late.open());
-
-			// the next blocks resolve the first link, and then each of the values in it: the values that the
-			// background work added before now. devalue has nothing else queued, and only finds the promises
-			// inside those values as it writes them, so they're still pending even if they've already resolved
-			// (their results are in later blocks). including these blocks in the `head` means the client
-			// knows about those values (and can wait for them) when it hydrates
-			do {
-				const result = await /** @type {Promise<IteratorResult<string>>} */ (next);
-				if (result.done) break;
-
-				blocks += `\n\t\t\t${result.value}`;
-				next = tail.next();
-			} while (first_entries.size > 0);
-		}
+		// everything else is streamed
+		late?.open();
 
 		// the messages wait in `window.__svelte.d` until the client's `Warp` handles them (see `receive_warp_values`)
 		const body = `
@@ -1259,10 +1193,6 @@ class Tracker {
 		Promise.prototype.then.call(value, settled, settled);
 	}
 
-	get idle() {
-		return this.promises.size === 0 && this.transforms.size === 0;
-	}
-
 	/** Resolves the next time something settles */
 	change() {
 		return (this.#change ??= deferred()).promise;
@@ -1271,17 +1201,18 @@ class Tracker {
 
 /**
  * Takes the blocks from `tail` that settle the promises in the `head`. Without background work, that's all
- * of them, so this waits for `tail` to finish. Otherwise, the background work's values are behind a promise
- * that isn't resolved until the `head` is done (`gated`), so `tail` can't finish. Instead, this waits until
- * everything devalue has found has settled, at which point it emits the blocks for them within a few
- * microtasks — so if no more blocks arrive before the next macrotask, it's done with the `head`
+ * of them, so this waits for `tail` to finish. Otherwise, it only takes the blocks for the promises that
+ * have already settled, which devalue emits within a few microtasks — so once no more blocks arrive before
+ * the next macrotask (and no `transformError` calls are still running), the rest go in the `tail`. Values
+ * added after the `head` are behind a promise that isn't resolved until it's done (`streaming`), so `tail`
+ * can't finish first
  * @param {AsyncIterator<string>} tail
  * @param {Tracker} tracker
- * @param {boolean} gated
+ * @param {boolean} streaming
  * @param {() => void} warn Called if the `head` is waiting on promises that hadn't settled when the render finished
  * @returns {Promise<{ blocks: string, next: Promise<IteratorResult<string>> | null }>}
  */
-async function take_head(tail, tracker, gated, warn) {
+async function take_head(tail, tracker, streaming, warn) {
 	let blocks = '';
 	let next = tail.next();
 	let warned = false;
@@ -1298,9 +1229,9 @@ async function take_head(tail, tracker, gated, warn) {
 			continue;
 		}
 
-		if (tracker.idle) {
+		if (streaming) {
 			// the block this resolves to is the first one in the `tail`, so it must not be dropped
-			if (gated) return { blocks, next };
+			if (tracker.transforms.size === 0) return { blocks, next };
 		} else if (!warned && tracker.promises.size > 0) {
 			warned = true;
 			warn();
@@ -1310,7 +1241,7 @@ async function take_head(tail, tracker, gated, warn) {
 	}
 }
 
-/** A value that was added to a `Warp` instance by background work, or after the `head` was serialized */
+/** A value that was added to a `Warp` instance after the `head` was serialized */
 class Entry {
 	/**
 	 * @param {string} id
@@ -1327,23 +1258,22 @@ class Entry {
 /** @typedef {{ entries: Array<Promise<Entry>>, next: Promise<Link | null> | null }} Link */
 
 /**
- * Streams the values that are added to `Warp` instances by background work, or after the `head` was serialized,
- * as a chain of promises that each resolve to a batch of values and the next promise. Each value is a promise
- * of its own, so that one which can't be serialized doesn't fail the rest of the batch, or the rest of the chain.
- * The first link isn't resolved until `open` is called, once the `head` has been serialized. The chain ends once
+ * Streams the values that are added to `Warp` instances after the `head` was serialized, as a chain of
+ * promises that each resolve to a batch of values and the next promise. Each value is a promise of its
+ * own, so that one which can't be serialized doesn't fail the rest of the batch, or the rest of the chain.
+ * The first link isn't resolved until `open` is called, once the `head` is done. The chain ends once
  * the background work is done.
  * @param {WarpStore} store
  * @param {SSRState} background
- * @param {Array<[string, WarpKey, unknown]>} initial The values the background work added before the `head` was serialized
  */
-function stream_late_values(store, background, initial) {
+function stream_late_values(store, background) {
 	let link = /** @type {ReturnType<typeof deferred<Link | null>>} */ (deferred());
 	let opened = false;
 	let closed = false;
 	let scheduled = false;
 
 	/** @type {Entry[]} */
-	let entries = initial.map(([id, key, value]) => new Entry(id, key, value));
+	let entries = [];
 
 	const first = link.promise;
 
@@ -1390,13 +1320,9 @@ function stream_late_values(store, background, initial) {
 
 	return {
 		first,
-		/**
-		 * Resolves the first link
-		 * @returns {Entry[]} The values in it
-		 */
+		/** Resolves the first link */
 		open() {
-			const values = entries;
-			if (opened) return [];
+			if (opened) return;
 			opened = true;
 
 			if (closed) {
@@ -1404,8 +1330,6 @@ function stream_late_values(store, background, initial) {
 			} else {
 				flush();
 			}
-
-			return values;
 		},
 		close
 	};
