@@ -4,7 +4,7 @@
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 /** @import { Scope } from '../scope.js' */
 import { walk } from 'zimmerframe';
-import { parse } from '../1-parse/acorn.js';
+import { parse } from '../1-parse/js.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import {
@@ -261,7 +261,7 @@ export function analyze_module(source, options) {
 	const comments = [];
 
 	state.set_source(source);
-	const ast = parse(source, comments, false, false);
+	const ast = parse(source, comments, false);
 
 	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
 

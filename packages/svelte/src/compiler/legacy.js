@@ -47,6 +47,8 @@ export function convert(source, ast) {
 			_(node, { next }) {
 				// @ts-ignore
 				delete node.metadata;
+				// @ts-ignore
+				delete node.parenthesized;
 				next();
 			},
 			// @ts-ignore

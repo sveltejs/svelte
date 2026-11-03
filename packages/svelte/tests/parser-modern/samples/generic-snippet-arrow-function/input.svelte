@@ -5,6 +5,6 @@
 	{val}
 {/snippet}
 
-{#snippet generic<T extends Array<() => void>>(val: T)}
+{#snippet generic_array<T extends Array<() => void>>(val: T)}
 	{val}
 {/snippet}

@@ -663,7 +663,9 @@ declare module 'estree' {
 		start?: number;
 		/** Added by the Svelte parser */
 		end?: number;
-		/** Added by acorn-typescript */
+		/** Added by the TypeScript parse */
 		typeAnnotation?: any;
+		/** The source wraps the node in parens, from the parser; absent otherwise */
+		parenthesized?: true;
 	}
 }

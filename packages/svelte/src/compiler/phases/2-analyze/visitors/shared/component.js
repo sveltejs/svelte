@@ -93,10 +93,7 @@ export function visit_component(node, context) {
 				validate_attribute(attribute, node);
 
 				if (is_expression_attribute(attribute)) {
-					disallow_unparenthesized_sequences(
-						get_attribute_expression(attribute),
-						context.state.analysis.source
-					);
+					disallow_unparenthesized_sequences(get_attribute_expression(attribute));
 				}
 			}
 
@@ -112,7 +109,7 @@ export function visit_component(node, context) {
 		}
 
 		if (attribute.type === 'AttachTag') {
-			disallow_unparenthesized_sequences(attribute.expression, context.state.analysis.source);
+			disallow_unparenthesized_sequences(attribute.expression);
 		}
 	}
 
@@ -163,15 +160,9 @@ export function visit_component(node, context) {
 
 /**
  * @param {Expression} expression
- * @param {string} source
  */
-function disallow_unparenthesized_sequences(expression, source) {
-	if (expression.type === 'SequenceExpression') {
-		let i = /** @type {number} */ (expression.start);
-		while (--i > 0) {
-			const char = source[i];
-			if (char === '(') break; // parenthesized sequence expressions are ok
-			if (char === '{') e.attribute_invalid_sequence_expression(expression);
-		}
+function disallow_unparenthesized_sequences(expression) {
+	if (expression.type === 'SequenceExpression' && !expression.parenthesized) {
+		e.attribute_invalid_sequence_expression(expression);
 	}
 }
