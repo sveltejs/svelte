@@ -1,8 +1,9 @@
 /** @import { Program } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { Code, Comment, Kept, Recovered } from '@teasel/parser' */
+/** @import { Binding, Code, Comment, Kept, Recovered, Reference, Scope } from '@teasel/parser' */
 import { parse as read } from '@teasel/parser';
 import * as e from '../../errors.js';
+import { keep_tables } from '../../utils/ast.js';
 
 /**
  * A standalone module, as `analyze_module` reads one.
@@ -30,6 +31,16 @@ export function parse(source, comments, typescript) {
 		dedent(comment, source);
 		comments.push(/** @type {AST.JSComment} */ (comment));
 	}
+
+	// a module read on its own is one piece: its program, in its own scope
+	const scopes = /** @type {Scope[]} */ (answer.scopes);
+	keep_tables(answer.node, {
+		node: answer.node,
+		scope: scopes[0],
+		scopes: scopes.slice(1),
+		bindings: /** @type {Binding[]} */ (answer.bindings),
+		references: /** @type {Reference[]} */ (answer.references)
+	});
 
 	return answer.node;
 }

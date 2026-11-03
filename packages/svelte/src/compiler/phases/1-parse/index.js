@@ -1,12 +1,13 @@
 /** @import { AST } from '#compiler' */
 /** @import { Expression, Identifier, Pattern } from 'estree' */
-/** @import { Comment, Parsed, Recovered } from '@teasel/parser' */
+/** @import { Binding, Comment, Parsed, Recovered, Reference, Scope } from '@teasel/parser' */
+/** @import { Named } from '../../utils/ast.js' */
 import { parse as read, css, parentOf } from '@teasel/parser';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import * as state from '../../state.js';
 import { ExpressionMetadata, disallow_children } from '../nodes.js';
-import { get_attribute_expression, is_expression_attribute } from '../../utils/ast.js';
+import { get_attribute_expression, is_expression_attribute, keep_tables } from '../../utils/ast.js';
 import { grammar } from './grammar.js';
 import { dedent, sentence, unsupported } from './js.js';
 import read_options from './options.js';
@@ -149,7 +150,17 @@ export function parse(template, loose = false, erase = false) {
 	root.end = template.length;
 	root.metadata = { ts };
 
-	new Finish(trimmed).root(root);
+	const finish = new Finish(trimmed);
+	finish.root(root);
+	const scopes = /** @type {Scope[]} */ (answer.scopes);
+	keep_tables(root, {
+		node: /** @type {any} */ (root),
+		scope: scopes[0],
+		scopes,
+		bindings: /** @type {Binding[]} */ (answer.bindings),
+		references: /** @type {Reference[]} */ (answer.references),
+		names: finish.names
+	});
 
 	return root;
 }
@@ -216,6 +227,9 @@ function sheet(children) {
  * location of each name, the else-if chain nested, the options read out of `<svelte:options>`.
  */
 class Finish {
+	/** @type {Named[]} the names the template reads outside JavaScript, which the parser does not bind */
+	names = [];
+
 	/** @param {string} template */
 	constructor(template) {
 		this.template = template;
@@ -414,17 +428,13 @@ class Finish {
 
 		let last = node;
 		for (const branch of branches) {
-			/** @type {AST.IfBlock} */
-			const child = {
-				type: 'IfBlock',
-				start: branch.start,
-				end: node.end,
-				elseif: true,
-				test: branch.test,
-				consequent: branch.consequent,
-				alternate: null,
-				metadata: { expression: new ExpressionMetadata() }
-			};
+			// the branch node becomes the nested block, so the parser's links to it hold
+			const child = /** @type {AST.IfBlock} */ (/** @type {unknown} */ (branch));
+			child.type = 'IfBlock';
+			child.end = node.end;
+			child.elseif = true;
+			child.alternate = null;
+			child.metadata = { expression: new ExpressionMetadata() };
 			this.body(child.consequent);
 			last.alternate = {
 				type: 'Fragment',
@@ -484,6 +494,13 @@ class Finish {
 		) {
 			node.metadata.expression = new ExpressionMetadata();
 		}
+		if (
+			node.type === 'Component' ||
+			node.type === 'SvelteComponent' ||
+			node.type === 'SvelteSelf'
+		) {
+			this.names.push({ component: node });
+		}
 
 		this.attributes(node.attributes);
 		this.fragment(node.fragment, true);
@@ -518,6 +535,7 @@ class Finish {
 					this.expression(attribute);
 					attribute.name_loc = this.name_loc(attribute);
 					this.value(attribute.value);
+					if (attribute.value === true) this.names.push({ host: attribute, name: attribute.name });
 					break;
 				case 'LetDirective': {
 					this.expression(attribute);
@@ -537,6 +555,15 @@ class Finish {
 				default:
 					this.expression(attribute);
 					attribute.name_loc = this.name_loc(attribute);
+					if (
+						attribute.type === 'TransitionDirective' ||
+						attribute.type === 'AnimateDirective' ||
+						attribute.type === 'UseDirective'
+					) {
+						this.names.push({ host: attribute, name: attribute.name.split('.')[0] });
+					} else if (attribute.type === 'BindDirective') {
+						this.names.push({ bind: attribute });
+					}
 			}
 		}
 	}

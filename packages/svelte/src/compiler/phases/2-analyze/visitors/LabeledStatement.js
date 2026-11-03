@@ -1,6 +1,7 @@
 /** @import { Expression, LabeledStatement } from 'estree' */
 /** @import { AST, ReactiveStatement } from '#compiler' */
 /** @import { Context } from '../types' */
+import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { extract_identifiers, object } from '../../../utils/ast.js';
 import * as w from '../../../warnings.js';
@@ -36,28 +37,13 @@ export function LabeledStatement(node, context) {
 
 			// Every referenced binding becomes a dependency, unless it's on
 			// the left-hand side of an `=` assignment
+			const assigned = assigned_in(node.body);
 			for (const [name, nodes] of context.state.scope.references) {
 				const binding = context.state.scope.get(name);
 				if (binding === null) continue;
 
-				for (const { node, path } of nodes) {
-					/** @type {Expression} */
-					let left = node;
-
-					let i = path.length - 1;
-					let parent = /** @type {Expression} */ (path.at(i));
-					while (parent.type === 'MemberExpression') {
-						left = parent;
-						parent = /** @type {Expression} */ (path.at(--i));
-					}
-
-					if (
-						parent.type === 'AssignmentExpression' &&
-						parent.operator === '=' &&
-						parent.left === left
-					) {
-						continue;
-					}
+				for (const { node } of nodes) {
+					if (assigned.has(node)) continue;
 
 					reactive_statement.dependencies.push(binding);
 					break;
@@ -92,4 +78,30 @@ export function LabeledStatement(node, context) {
 	}
 
 	context.next();
+}
+
+/**
+ * The identifiers on the left-hand side of the `=` assignments in a statement, the members of
+ * the target included: `a[b].c = 1` assigns through `a` and `b`.
+ * @param {import('estree').Node} node
+ * @returns {Set<import('estree').Node>}
+ */
+function assigned_in(node) {
+	/** @type {Set<import('estree').Node>} */
+	const assigned = new Set();
+	/** @param {import('estree').Node} target */
+	const collect = (target) => {
+		if (target.type === 'Identifier') assigned.add(target);
+		else if (target.type === 'MemberExpression') {
+			collect(target.object);
+			collect(target.property);
+		}
+	};
+	walk(node, null, {
+		AssignmentExpression(node, { next }) {
+			if (node.operator === '=') collect(node.left);
+			next();
+		}
+	});
+	return assigned;
 }
