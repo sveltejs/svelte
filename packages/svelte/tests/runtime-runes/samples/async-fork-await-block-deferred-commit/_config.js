@@ -6,9 +6,6 @@ import { test } from '../../test';
 // the promise's states land along with the rest of the fork's state. Once the batch is done, they
 // are their own batches again, like for any real update
 export default test({
-	// batch-views: {#await} blocks aren't fork- or batch-aware (await.js is unchanged from main), so a fork's
-	// pending state and result show up in the real world (see batch-views.md, "Known bugs and gaps")
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target }) {
 		const [input] = target.querySelectorAll('input');

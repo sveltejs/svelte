@@ -3,9 +3,6 @@ import { test } from '../../test';
 
 // A fork re-running an {#await} block must not make the real world's pending promise obsolete
 export default test({
-	// batch-views: {#await} blocks aren't fork- or batch-aware (await.js is unchanged from main), so a fork's
-	// pending state and result show up in the real world (see batch-views.md, "Known bugs and gaps")
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target }) {
 		const [fork, resolve_0, discard, resolve_1] = target.querySelectorAll('button');

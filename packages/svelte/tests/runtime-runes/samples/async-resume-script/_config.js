@@ -14,10 +14,6 @@ const buttons = `
 // continues in the view of the real batch, once it has its result. What it computes imperatively is that
 // batch's (it only runs once), what's reactive is up to date in every batch's view
 export default test({
-	// TODO when the real batch commits first in "fork first" mode, the fork takes over its result in `#commit`,
-	// and then commits it next to its own writes (see "An earlier batch takes over another batch's async result"
-	// in batch-views.md)
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		const [fork, show, shift, pop, commit, reset] = target.querySelectorAll('button');

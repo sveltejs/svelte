@@ -15,10 +15,6 @@ const buttons = `
 // the fork's is there first, as that isn't part of the real world. The real batch commits it with its own
 // result — and the fork, once committed, with its own
 export default test({
-	// TODO when the real batch commits first in "fork first" mode, the fork takes over its result in `#commit`,
-	// and then commits it next to its own writes (see "An earlier batch takes over another batch's async result"
-	// in batch-views.md)
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target }) {
 		const [fork, show, shift, pop, commit, reset] = target.querySelectorAll('button');

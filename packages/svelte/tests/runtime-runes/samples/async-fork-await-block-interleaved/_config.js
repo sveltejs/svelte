@@ -3,9 +3,6 @@ import { test } from '../../test';
 
 // Resolving a fork's {#await} promise must not interfere with real work happening at the same time
 export default test({
-	// batch-views: {#await} blocks aren't fork- or batch-aware (await.js is unchanged from main), so a fork's
-	// pending state and result show up in the real world (see batch-views.md, "Known bugs and gaps")
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target }) {
 		const [input] = target.querySelectorAll('input');

@@ -5,9 +5,6 @@ import { test } from '../../test';
 // the fork is committed. Real updates must keep working while a fork is alive, and a promise of the real
 // world must still resolve in the real world when a fork re-runs the block
 export default test({
-	// batch-views: {#await} blocks aren't fork- or batch-aware (await.js is unchanged from main), so a fork's
-	// pending state and result show up in the real world (see batch-views.md, "Known bugs and gaps")
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target }) {
 		const [input] = target.querySelectorAll('input');

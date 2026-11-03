@@ -75,6 +75,12 @@ export interface BatchValue {
 	e?: boolean;
 	/** Only in `Batch#previous`, for a derived: whether its value before was assigned, too (otherwise it was computed) */
 	assigned?: boolean;
+	/**
+	 * Whether the value is the result of the batch's own run of an async expression or `{#await}` block (see
+	 * `Batch#capture_result`). Another batch's write doesn't overwrite it (see `Batch#commit`): the run is
+	 * re-validated in the batch's view instead
+	 */
+	result?: boolean;
 }
 
 /**
