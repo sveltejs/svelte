@@ -6,7 +6,7 @@
 import process from 'node:process';
 import fs from 'node:fs';
 import * as acorn from 'acorn';
-import { walk } from 'zimmerframe';
+import { walk } from '../../src/compiler/utils/walk.js';
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
 

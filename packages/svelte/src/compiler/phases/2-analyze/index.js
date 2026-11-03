@@ -3,7 +3,7 @@
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 /** @import { Scope } from '../scope.js' */
-import { walk } from 'zimmerframe';
+import { walk } from '../../utils/walk.js';
 import { parse } from '../1-parse/js.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';

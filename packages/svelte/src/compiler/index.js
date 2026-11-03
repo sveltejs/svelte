@@ -1,7 +1,7 @@
 /** @import { LegacyRoot } from './types/legacy-nodes.js' */
 /** @import { CompileOptions, CompileResult, ValidatedCompileOptions, ModuleCompileOptions } from '#compiler' */
 /** @import { AST } from './public.js' */
-import { walk as zimmerframe_walk } from 'zimmerframe';
+import { walk as zimmerframe_walk } from './utils/walk.js';
 import { convert } from './legacy.js';
 import { parse as _parse, parse_css } from './phases/1-parse/index.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';

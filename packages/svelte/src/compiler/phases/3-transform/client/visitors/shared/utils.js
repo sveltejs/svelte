@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 /** @import { ExpressionMetadata } from '../../../../nodes.js' */
-import { walk } from 'zimmerframe';
+import { walk } from '../../../../../utils/walk.js';
 import { is_reference, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';

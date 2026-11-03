@@ -2,7 +2,7 @@
 /** @import { AST, ValidatedCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis } from '../../types.js' */
 import MagicString from 'magic-string';
-import { walk } from 'zimmerframe';
+import { walk } from '../../../utils/walk.js';
 import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
 import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
 import { dev } from '../../../state.js';

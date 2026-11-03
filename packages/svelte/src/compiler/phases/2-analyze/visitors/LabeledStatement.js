@@ -1,7 +1,7 @@
 /** @import { Expression, LabeledStatement } from 'estree' */
 /** @import { AST, ReactiveStatement } from '#compiler' */
 /** @import { Context } from '../types' */
-import { walk } from 'zimmerframe';
+import { walk } from '../../../utils/walk.js';
 import * as e from '../../../errors.js';
 import { extract_identifiers, object } from '../../../utils/ast.js';
 import * as w from '../../../warnings.js';
