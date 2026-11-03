@@ -638,6 +638,7 @@ export class Batch {
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
 			this.#commit();
+			if (this.linked && this.prev !== null) this.#move_to_front();
 		}
 
 		if (next_batch !== null) {
@@ -762,12 +763,6 @@ export class Batch {
 			if (batch.current.has(source)) return true;
 		}
 
-		// A batch that committed (and is still linked because of pending work inside a pending boundary) didn't
-		// intersect with `batch` when it committed, else it would have been merged into it. So its runs didn't see
-		// the writes of `batch`, and its view must stay the real world's (see `#commit`). Its runs that `batch` ran,
-		// too, are superseded once `batch` commits (see `#release_records`), and mustn't supersede those of `batch`
-		if (this.committed) return false;
-
 		for (const effect of this.async_deriveds.keys()) {
 			// For this batch, the entry can also be a write's mark (`null`, see `mark`): this is checked
 			// in `activate`, before traversal determines whether the expression actually re-runs (it may not, e.g.
@@ -791,8 +786,6 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	#fold(effect) {
-		if (this.committed) return false;
-
 		for (let batch = this.prev; batch !== null; batch = batch.prev) {
 			if (!batch.is_fork && batch.async_deriveds.get(effect) && !this.folded.includes(batch)) {
 				// the batches intersect from now on (a run that follows replaces the mark)
@@ -942,6 +935,9 @@ export class Batch {
 			apply(source, entry);
 		}
 
+		// in order, this batch's change comes before that of the later batch, which replaces it
+		if (!this.is_fork && later !== null) later.previous.set(source, entry);
+
 		// A value that equals the real one, with the same version, changes nothing that reactions
 		// could read outside this batch's view — which is revalidated when the batch is processed
 		if (!same) {
@@ -1049,7 +1045,7 @@ export class Batch {
 						batch.current.set(source, entry);
 					} else {
 						// same value, later batch has more recent value, or the batch's own result
-						// of an async expression (see `capture_result`) — no need to re-run these effects
+						// of an async expression — no need to re-run these effects
 						continue;
 					}
 				}
@@ -1415,26 +1411,32 @@ export class Batch {
 		this.records = null;
 		for (const [reaction, record] of records) {
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
-				if (commit) {
-					promote_record(reaction, record);
-
-					// The committed run is now what applies in the view of every batch without a run of the async
-					// effect of its own (typically because the batch committed while its run was pending, inside a
-					// pending boundary). Their in-flight runs are superseded: their results would overwrite this one
-					// TODO feels pretty hacky and indication of an X-Y problem: This only works because !b.records?.has(reaction)
-					// means "this would re-use the real world result, i.e. the one we just committed, so we can reject this old run".
-					if ((reaction.f & ASYNC) !== 0) {
-						for (let b = first_batch; b !== null; b = b.next) {
-							if (b !== this && !b.records?.has(reaction)) {
-								b.async_deriveds.get(/** @type {Effect} */ (reaction))?.reject(OBSOLETE);
-							}
-						}
-					}
-				}
+				if (commit) promote_record(reaction, record);
 
 				prune_edges(reaction);
 			}
 		}
+	}
+
+	/**
+	 * A batch that committed while work inside a pending boundary was in flight stays linked, so that the results
+	 * arrive in it. Its writes are the real world now, part of every other batch's view, so it comes first from now
+	 * on. Its runs didn't see the writes of the batches that haven't committed — the runs of those batches see its
+	 * writes, though. So, like for any earlier batch, a later batch that re-runs one of its expressions intersects
+	 * with it, and its run supersedes the batch's once it's merged into it (see `#intersects`, `#merge`)
+	 */
+	#move_to_front() {
+		var prev = /** @type {Batch} */ (this.prev);
+		var first = /** @type {Batch} */ (first_batch);
+
+		prev.next = this.next;
+		if (this.next === null) last_batch = prev;
+		else this.next.prev = prev;
+
+		this.prev = null;
+		this.next = first;
+		first.prev = first_batch = this;
+		this.id = first.id - 1;
 	}
 
 	#unlink() {
