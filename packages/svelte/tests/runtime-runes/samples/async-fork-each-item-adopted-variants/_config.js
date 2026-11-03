@@ -11,10 +11,8 @@ const html = (list) =>
 // value, `'c'` is a constant) — whether the fork is discarded or committed afterwards. When the
 // fork is committed, its own results are used: nothing is fetched again.
 export default test({
-	// batch-views: two bugs. `fork.commit` applies the fork's list over the later, still pending, real batch's list,
-	// so the fork's list wins (see `async-fork-commit-overtaken`). And an each item that a commit kept offscreen for a
-	// fork isn't destroyed when the fork is discarded (`discard` in each.js only forgets the fork's keys), so a later
-	// fork reuses it (no `k2`/`cc` in the second iteration)
+	// batch-views: `fork.commit` applies the fork's list over the later, still pending, real batch's list, so the
+	// fork's list wins in the "commit" iteration (see `async-fork-commit-overtaken`)
 	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
