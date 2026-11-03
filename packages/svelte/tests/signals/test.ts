@@ -21,7 +21,7 @@ import {
 } from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
-import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { derived, user_derived } from '../../src/internal/client/reactivity/deriveds';
 import { source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
@@ -1131,6 +1131,206 @@ describe('signals', () => {
 			assert.deepEqual(log, ['init', 'update', 'update']);
 		};
 	});
+
+	for (const create of [render_effect, user_effect, user_pre_effect]) {
+		test(`shared deriveds run once when reconnecting (${create.name})`, () => {
+			const value = state(0);
+			let runs = 0;
+			let a = derived(() => $.get(value));
+			let b = derived(() => $.get(value) + 1);
+
+			for (let i = 0; i < 8; i++) {
+				const [x, y] = [a, b];
+				a = derived(() => (runs++, $.get(x) + $.get(y)));
+				b = derived(() => (runs++, $.get(x) - $.get(y)));
+			}
+
+			return () => {
+				let seen = -1;
+				const read = () =>
+					effect_root(() => {
+						create(() => {
+							seen = $.get(a);
+						});
+					});
+				let destroy = read();
+				flushSync();
+				assert.equal(runs, 15);
+				assert.equal(seen, 0);
+
+				// Reconnecting without a source change should reuse the cached values.
+				destroy();
+				flushSync();
+				assert.equal(value.reactions, null);
+				runs = 0;
+				destroy = read();
+				flushSync();
+				assert.equal(runs, 0);
+
+				for (let i = 1; i <= 2; i++) {
+					destroy();
+					flushSync();
+					assert.equal(value.reactions, null);
+					set(value, i);
+					runs = 0;
+					destroy = read();
+					flushSync();
+					assert.equal(runs, 15);
+					assert.equal(seen, i * 16);
+					assert.equal(value.reactions?.length, 2);
+				}
+
+				// A mounted update remains reactive and linear too.
+				runs = 0;
+				flushSync(() => set(value, 3));
+				assert.isAtMost(runs, 15);
+				assert.equal(seen, 48);
+				destroy();
+				assert.equal(value.reactions, null);
+			};
+		});
+	}
+
+	for (const create of [render_effect, user_effect, user_pre_effect]) {
+		test(`reconnecting does not unfreeze discarded dependencies (${create.name})`, () => {
+			enable_async_mode_flag();
+			const stable = state(0);
+			const value = state(0);
+			const log: string[] = [];
+			let instance = 0;
+			const outer = user_derived(() => {
+				const id = ++instance;
+				const inner = user_derived(() => {
+					$.get(stable);
+					create(() => {
+						log.push(`start ${id}`);
+						return () => {
+							log.push(`stop ${id}`);
+						};
+					});
+					return id;
+				});
+				return [$.get(inner), $.get(value)];
+			});
+
+			return () => {
+				const read = () =>
+					effect_root(() => {
+						render_effect(() => {
+							$.get(outer);
+						});
+					});
+				let destroy = read();
+				try {
+					flushSync();
+					destroy();
+					flushSync();
+					assert.deepEqual(log, ['start 1', 'stop 1']);
+					log.length = 0;
+					flushSync(() => set(value, 1));
+					destroy = read();
+					flushSync();
+					assert.deepEqual(log, ['start 2']);
+				} finally {
+					destroy();
+					disable_async_mode_flag();
+				}
+				assert.equal(stable.reactions, null);
+				assert.equal(value.reactions, null);
+			};
+		});
+	}
+
+	test('reconnecting recovers after a dependency throws during dirty checking', () => {
+		const value = state(0);
+		const trigger = state(0);
+		const log: (number | string)[] = [];
+		const inner = user_derived(() => {
+			const n = $.get(value);
+			if (n === 1) throw new Error('boom');
+			return n;
+		});
+		const outer = user_derived(() => $.get(inner));
+
+		return () => {
+			const read = () =>
+				effect_root(() => {
+					render_effect(() => {
+						$.get(trigger);
+						try {
+							log.push($.get(outer));
+						} catch {
+							log.push('error');
+						}
+					});
+				});
+			let destroy = read();
+			destroy();
+			flushSync(() => set(value, 1));
+			destroy = read();
+			try {
+				flushSync();
+				assert.deepEqual(log, [0, 'error']);
+				flushSync(() => {
+					set(value, 2);
+					set(trigger, 1);
+				});
+				assert.deepEqual(log, [0, 'error', 2]);
+				assert.equal(value.reactions?.length, 1);
+				flushSync(() => set(value, 3));
+				assert.deepEqual(log, [0, 'error', 2, 3]);
+			} finally {
+				destroy();
+			}
+			assert.equal(value.reactions, null);
+		};
+	});
+
+	for (const during of [false, true]) {
+		test(`writes ${during ? 'during' : 'between'} derived checks invalidate memoized results`, () => {
+			const value = state(0);
+			const trigger = state(0);
+			let mutate = false;
+			let written = false;
+			const inner = derived(() => {
+				const n = $.get(value);
+				if (during && mutate && !written) {
+					written = true;
+					$.untrack(() => set(value, 2));
+					// Keep the old result, so a subsequent read must validate again.
+					return 0;
+				}
+				return n;
+			});
+			const outer = derived(() => {
+				const before = $.untrack(() => $.get(inner));
+				if (!during && mutate) $.untrack(() => set(value, 2));
+				return [before, $.untrack(() => $.get(inner)), $.get(trigger)];
+			});
+
+			return () => {
+				let seen: number[] = [];
+				const read = () =>
+					effect_root(() => {
+						render_effect(() => {
+							seen = $.get(outer);
+						});
+					});
+				let destroy = read();
+				destroy();
+				mutate = true;
+				set(value, 1);
+				set(trigger, 1);
+				destroy = read();
+				assert.deepEqual(seen, [during ? 0 : 1, 2, 1]);
+				destroy();
+				assert.equal(value.reactions, null);
+				assert.equal(trigger.reactions, null);
+				set(value, 3);
+				assert.equal($.get(inner), 3);
+			};
+		});
+	}
 
 	test('unowned deriveds are not added as reactions', () => {
 		var count = state(0);
