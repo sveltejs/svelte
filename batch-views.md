@@ -528,11 +528,31 @@ Values read after an `await` inside an async expression are still dependencies: 
 
 ## 13. Teardowns, invalidated runs, and destroyed reactions
 
-- In teardowns (`is_destroying_effect`), `get()` sees the values from before the writes that caused the teardown, apart from the teardown's own (`teardown_view`). Deriveds evaluated there only belong to the teardown: `update_dependencies` returns early for them, so neither their dependencies nor their value is stored.
+- In teardowns (`is_destroying_effect`), `get()` sees the values from before the writes that caused the teardown, apart from the teardown's own. Deriveds evaluated there only belong to the teardown. See [§13.1](#131-teardowns).
 - **A derived's global state can become invalid without any version changing.** This happens when it's aborted on disconnect: `remove_reaction` calls `getAbortSignal`'s `abort`, and the derived must re-run when reconnected. Versions can't express this, and flags only work in the real world, so `dv` is set to `null` ("no valid run"). That's checked everywhere: `is_dirty` treats it as dirty, and `get_view` skips the global state.
 - Errors are values ([§7.4](#74-errors)), so a run that throws doesn't need special treatment. Before that, a derived that was only `MAYBE_DIRTY` when it threw (it reads another derived) was treated as up to date by the next check, and returned its old value. `error-boundary-30` covers this case in the real world, `async-derived-error-view` in a view.
 - A derived that references itself is detected (`derived_references_self`, DEV only) when it's re-evaluated during its own evaluation. `execute_derived` pushes onto its recursion stack in any case, so that its `finally` doesn't remove the outer evaluation from the stack. Before that fix (the bug is also on `main`), the next evaluation of the derived wasn't detected as recursive anymore, which recursed until the stack overflowed.
 - `update_dependencies` also returns early if the reaction was **destroyed during its own run**, e.g. by an error boundary (`error-boundary-28`). `destroy_effect` clears `deps`, `dv` and `edges`, and re-adding edges would leak.
+
+### 13.1 Teardowns
+
+When an effect re-runs or is destroyed, its teardown sees the values from before the writes that caused that. The `down` log of `$effect(() => { console.log('up', count); return () => console.log('down', count); })` matches the preceding `up`, and the teardown of an `{@attach}` inside `{#if object}` can still read the `object` whose removal destroyed it. The values a teardown sees form a view of its own, which `get()` consults first (`teardown_view` in `runtime.js`).
+
+**What's reverted.** A _teardown context_ (`TeardownContext` in `batch.js`) holds `reverted_values`: what teardowns see instead of the values the sources hold.
+
+- `flush` pushes a context with the batch's `previous`, the values from before its writes. While the batch commits, effects write, too. Those writes go to a new batch, and `capture` adds the values from before them, so the teardowns of the effects they re-run revert them.
+- After a batch commits, the batch with the writes made during the commit is processed next, in the same flush (`next_batch` in `#process`). Its writes cause the teardowns that run then, so the reverted values are narrowed to them: those that are its values from before its writes.
+- Block effects that re-run right away during a commit, because a user effect wrote what they read (`eager_block_effects`), revert that effect's writes. The writes of the effects that ran before it in the same commit apply in their view: `flush_queued_effects` pushes them as a context of their own (`earlier_writes`).
+- Flushes can be nested, e.g. when an effect calls `flushSync`. A nested context starts with the reverted values of the enclosing one, and the enclosing one is restored afterwards.
+- A teardown outside of a flush (e.g. when an `$effect.root` is destroyed) reverts nothing. It gets a context only to cache deriveds in, for as long as it runs (`execute_effect_teardown` restores the previous context).
+
+**Writes in a teardown aren't reverted.** When a teardown starts, `set_is_destroying_effect` records the write version (`teardown_version`). A value with a newer version was written during the teardown, and is seen as it is — one of the ordered comparisons that detect writes made in a window. In addition, `teardown_write` (called for every write in a teardown, also one that doesn't change the value) removes the source from the reverted values of every enclosing context, so the write stays visible when a nested teardown or flush returns to an enclosing one.
+
+**Deriveds.** `teardown_view(derived)` gives every derived a value in the teardown's view, cached in the context's `derived_cache` until the view changes (a write, `teardown_write`, or another batch being processed). In this order:
+
+1. A value written to the derived — reverted, or held by the active view — if it was assigned (`previous.assigned`, like in `get_view`) and none of its dependencies has a newer version in the teardown's view. The value from before an assignment may have been computed with values that the teardown reverts, in which case it doesn't apply (`effect-teardown-assigned-derived-computed-previous`: `s = 1; d = 99` with `d = $derived(s * 10)` — the teardown sees `s = 0`, so it must see `d = 0`, not the `10` from before the assignment).
+2. Its global run, if its dependencies still have the versions that run read, in the teardown's view.
+3. Otherwise a new run. It only belongs to the teardown: `update_dependencies` returns early, without storing its dependencies, edges or value, and passes its result to `teardown_view` in `teardown_run` instead. Its version is the newest version of the values it read in the teardown's view (its value can't be more recent than those); if the value equals the one it replaces, it keeps that one's version.
 
 ## 14. How it fits together — walkthroughs
 
