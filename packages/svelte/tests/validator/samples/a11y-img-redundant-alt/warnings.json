@@ -34,5 +34,17 @@
 			"column": 0,
 			"line": 5
 		}
+	},
+	{
+		"code": "a11y_img_redundant_alt",
+		"message": "Screenreaders already announce `<img>` elements as an image",
+		"end": {
+			"column": 60,
+			"line": 10
+		},
+		"start": {
+			"column": 0,
+			"line": 10
+		}
 	}
 ]

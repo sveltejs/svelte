@@ -458,7 +458,7 @@ export function check_element(node, context) {
 		case 'img': {
 			const alt_attribute = get_static_text_value(attribute_map.get('alt'));
 			const aria_hidden = get_static_value(attribute_map.get('aria-hidden'));
-			if (alt_attribute && !aria_hidden && !has_spread) {
+			if (alt_attribute && aria_hidden !== true && aria_hidden !== 'true' && !has_spread) {
 				if (regex_redundant_img_alt.test(alt_attribute)) {
 					w.a11y_img_redundant_alt(node);
 				}
