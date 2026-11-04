@@ -138,7 +138,9 @@ export default {
 };
 ```
 
-Values added to a `Warp` are included in the `head`, as usual, but the response doesn't wait for their promises to resolve. Promises that have already resolved by the time the HTML is rendered (including everything the page awaited) are resolved in the `head`, and the rest are streamed via the `tail` of the render result, along with any values added after that.
+Values added to a `Warp` inside a pending boundary are streamed via the `tail` of the render result, along with any values added after the HTML has been rendered. The `head` only contains the values that were added elsewhere — or used elsewhere, for example if the rest of the page reads a value that a boundary added with `getOrInsertComputed` — and, as usual, waits for their promises to resolve.
+
+When hydrating, a pending boundary keeps showing its `pending` snippet until the values its contents add synchronously have arrived, so that they can read them straight away (for example with `warp.get(key)`). If the stream never finishes, for example because the connection dropped, the boundary stays pending.
 
 The `tail` contains `<script>` tags that you **must** write into the response after the HTML — otherwise, promises on the client that are waiting for data from the server will never settle:
 

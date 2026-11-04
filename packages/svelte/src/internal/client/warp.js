@@ -27,6 +27,21 @@ export function receive_warp_values(svelte) {
 			const r = (svelte.r ??= { s: new Set(), c: new Map() });
 			r.s.add(key);
 
+			if (typeof value === 'string') {
+				// a pending boundary, whose children can be rendered now that the values they read synchronously are here
+				const boundaries = (svelte.b ??= new Map());
+				const render = boundaries.get(value);
+
+				if (render === undefined) {
+					boundaries.set(value, true);
+				} else if (render !== true) {
+					boundaries.delete(value);
+					render();
+				}
+
+				return;
+			}
+
 			const store = (svelte.w ??= new Map());
 
 			if (Array.isArray(value)) {
@@ -55,9 +70,45 @@ export function receive_warp_values(svelte) {
 		},
 		done(key) {
 			// once no streams are in progress, the client forgets the changes it recorded, and stops recording them
-			if (svelte.r?.s.delete(key) && svelte.r.s.size === 0) delete svelte.r;
+			if (svelte.r?.s.delete(key) && svelte.r.s.size === 0) {
+				delete svelte.r;
+
+				// nothing else is coming, so boundaries that are still waiting render their children anyway
+				const boundaries = svelte.b;
+				delete svelte.b;
+
+				for (const render of boundaries?.values() ?? []) {
+					if (render !== true) render();
+				}
+			}
 		}
 	});
+}
+
+/**
+ * Calls `render` once the server has sent the values that the children of the pending boundary with
+ * the given `id` read synchronously — straight away, if they're already here, or if nothing is streaming
+ * in. If the stream never finishes (e.g. the connection dropped), `render` isn't called
+ * @param {string} id
+ * @param {() => void} render
+ */
+export function wait_for_boundary(id, render) {
+	const svelte = window.__svelte;
+
+	if (svelte !== undefined) {
+		// handle the messages that have arrived so far, if nothing has yet
+		receive_warp_values(svelte);
+	}
+
+	const boundaries = svelte?.b;
+
+	if (svelte?.r === undefined || boundaries?.get(id) === true) {
+		boundaries?.delete(id);
+		render();
+		return;
+	}
+
+	(svelte.b ??= new Map()).set(id, render);
 }
 
 /**

@@ -18,7 +18,7 @@ export function unresolved_warp(details) {
 }
 
 /**
- * Failed to serialize data added to a `Warp` after the rendered HTML was generated, so the client will need to load it itself.
+ * Failed to serialize data added to a `Warp` inside a pending boundary or after the rendered HTML was generated, so the client will need to load it itself.
  * 
  * Cause:
  * %stack%
@@ -27,7 +27,7 @@ export function unresolved_warp(details) {
 export function warp_stream_serialization_failed(stack) {
 	if (DEV) {
 		console.warn(
-			`%c[svelte] warp_stream_serialization_failed\n%cFailed to serialize data added to a \`Warp\` after the rendered HTML was generated, so the client will need to load it itself.
+			`%c[svelte] warp_stream_serialization_failed\n%cFailed to serialize data added to a \`Warp\` inside a pending boundary or after the rendered HTML was generated, so the client will need to load it itself.
 
 Cause:
 ${stack}\nhttps://svelte.dev/e/warp_stream_serialization_failed`,

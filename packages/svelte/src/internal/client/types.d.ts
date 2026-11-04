@@ -27,6 +27,11 @@ declare global {
 				 */
 				c: Map<string, Set<WarpKey> | true>;
 			};
+			/**
+			 * Only exists while `Warp` values are streaming in. The pending boundaries that the server has said can
+			 * render their children (`true`), and the boundaries that are waiting to (their callback), keyed by id
+			 */
+			b?: Map<string, true | (() => void)>;
 		};
 	}
 }

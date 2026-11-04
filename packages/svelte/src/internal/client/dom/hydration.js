@@ -97,7 +97,8 @@ export function skip_nodes(remove = true) {
 				depth -= 1;
 			} else if (
 				data === HYDRATION_START ||
-				data === HYDRATION_START_ELSE ||
+				// "[!" or, for a pending boundary with an id, "[!b0", etc.
+				data.startsWith(HYDRATION_START_ELSE) ||
 				// "[1", "[2", etc. for if blocks
 				(data[0] === '[' && !isNaN(Number(data.slice(1))))
 			) {

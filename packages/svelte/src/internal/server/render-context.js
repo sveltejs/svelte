@@ -1,7 +1,7 @@
 // @ts-ignore -- we don't include node types in the production build
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
 /** @import { UnevalReplacer } from 'devalue' */
-/** @import { RenderContext } from '#server' */
+/** @import { PendingBoundary, RenderContext } from '#server' */
 
 import { deferred, noop } from '../shared/utils.js';
 import * as e from './errors.js';
@@ -38,8 +38,11 @@ function create_render_context(replacer) {
 			values: new Map(),
 			stacks: new Map(),
 			emitted: false,
+			owned: new Map(),
+			queue: [],
 			late: null
 		},
+		boundary: null,
 		rendered: false,
 		replacer,
 		held: null
@@ -54,6 +57,29 @@ function create_render_context(replacer) {
 export function hold_render_context(promise) {
 	const current = get_render_context_safe();
 	if (current) current.held = promise;
+}
+
+/**
+ * Runs `fn` with a render context that attributes the values it adds to `Warp`s to `boundary`,
+ * including those it adds after an `await`. In WebContainers, which don't have `AsyncLocalStorage`,
+ * only the values added synchronously are attributed
+ * @template T
+ * @param {PendingBoundary} boundary
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function with_boundary(boundary, fn) {
+	const previous = context;
+	const ctx = { ...get_render_context(), boundary };
+
+	// `context` takes precedence over `als` (see `get_render_context_safe`), so it's set too
+	context = ctx;
+
+	try {
+		return als === null || in_webcontainer() ? fn() : als.run(ctx, fn);
+	} finally {
+		context = previous;
+	}
 }
 
 /**

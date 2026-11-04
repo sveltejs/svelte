@@ -1,6 +1,6 @@
 /** @import { Component } from 'svelte' */
 /** @import { Session, UnevalReplacer } from 'devalue' */
-/** @import { RenderContext, SSRContext, WarpStore } from './types.js' */
+/** @import { PendingBoundary, RenderContext, SSRContext, WarpStore } from './types.js' */
 /** @import { WarpKey } from '#shared' */
 /** @import { AsyncRenderOutput, Csp, RenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
@@ -9,10 +9,15 @@ import { STALE_REACTION } from '../client/constants.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
-import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
-import { HYDRATION_START_FAILED } from '../../constants.js';
+import { BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
+import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
-import { hold_render_context, with_render_context } from './render-context.js';
+import {
+	get_render_context,
+	hold_render_context,
+	with_boundary,
+	with_render_context
+} from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
 import { deferred, has_own_property, is_array, is_native_promise, noop } from '../shared/utils.js';
@@ -145,6 +150,13 @@ export class Renderer {
 	 * } | null}
 	 */
 	#boundary = null;
+
+	/**
+	 * If set, this renderer stands in for the comment that opens a pending boundary, which
+	 * contains the boundary's id, once the id has been assigned
+	 * @type {PendingBoundary | null}
+	 */
+	#boundary_marker = null;
 
 	/**
 	 * The type of string content that this renderer is accumulating.
@@ -402,14 +414,34 @@ export class Renderer {
 	}
 
 	/**
-	 * Runs the children of a pending boundary in the background, discarding their output, so that the
-	 * data they need starts loading on the server. Values they add to `Warp` instances are sent to the
-	 * client like any others, but the `head` doesn't wait for them (see `#collect_warp`). Only used with
+	 * Opens a pending boundary, and runs its children in the background, discarding their output, so that
+	 * the data they need starts loading on the server. Values they add to `Warp` instances are streamed
+	 * via the `tail` (see `#collect_warp`), followed by a message that tells the client it can render
+	 * the boundary's children, once the synchronous part of the work is done. Only used with
 	 * `experimental.streaming`.
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
 	 */
 	background(fn) {
-		if (this.global.mode === 'sync') return;
+		if (this.global.mode === 'sync') {
+			this.#out.push(BLOCK_OPEN_ELSE);
+			return;
+		}
+
+		// boundaries inside background work aren't in the HTML, so they don't need an id. their
+		// values are attributed to the outermost boundary, which they're already running inside
+		const nested = this.global.background === this.global;
+
+		/** @type {PendingBoundary | null} */
+		let boundary = null;
+
+		if (nested) {
+			this.#out.push(BLOCK_OPEN_ELSE);
+		} else {
+			boundary = { id: null };
+			const marker = new Renderer(this.global, this);
+			marker.#boundary_marker = boundary;
+			this.#out.push(marker);
+		}
 
 		const state = this.global.get_background();
 		const renderer = new Renderer(state, this);
@@ -428,7 +460,7 @@ export class Renderer {
 		set_ssr_context(context);
 
 		try {
-			const result = fn(renderer);
+			const result = boundary === null ? fn(renderer) : with_boundary(boundary, () => fn(renderer));
 
 			if (result instanceof Promise) {
 				result.finally(() => set_ssr_context(null)).catch(noop);
@@ -438,6 +470,13 @@ export class Renderer {
 			// the client will render the children itself, and handle the error then
 		} finally {
 			set_ssr_context(previous);
+
+			if (boundary !== null) {
+				// the values that the children read synchronously have been added by now
+				const store = get_render_context().warp;
+				store.queue.push(boundary);
+				store.late?.();
+			}
 		}
 	}
 
@@ -613,6 +652,7 @@ export class Renderer {
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
 		copy.type = this.type;
+		copy.#boundary_marker = this.#boundary_marker;
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promise = this.promise;
 		return copy;
@@ -630,6 +670,7 @@ export class Renderer {
 		}
 
 		this.local = other.local;
+		this.#boundary_marker = other.#boundary_marker;
 		this.#out = other.#out.map((item, i) => {
 			const current = this.#out[i];
 
@@ -878,6 +919,11 @@ export class Renderer {
 	 * @returns {AccumulatedContent}
 	 */
 	#collect_content(content = { head: '', body: '' }) {
+		if (this.#boundary_marker !== null) {
+			content[this.type] += this.#open_pending_boundary(this.#boundary_marker);
+			return content;
+		}
+
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
@@ -896,6 +942,11 @@ export class Renderer {
 	 */
 	async #collect_content_async(content = { head: '', body: '' }) {
 		await this.promise;
+
+		if (this.#boundary_marker !== null) {
+			content[this.type] += this.#open_pending_boundary(this.#boundary_marker);
+			return content;
+		}
 
 		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
 		for (const item of this.#out) {
@@ -942,12 +993,23 @@ export class Renderer {
 	}
 
 	/**
+	 * Assigns the boundary's id, in the order the HTML is put together (which, unlike the order in which
+	 * boundaries are reached, doesn't depend on timing), and returns the comment that opens it
+	 * @param {PendingBoundary} boundary
+	 */
+	#open_pending_boundary(boundary) {
+		boundary.id ??= `${this.global.id_prefix}b${this.global.boundaries++}`;
+		return `<!--${HYDRATION_START_ELSE}${boundary.id}-->`;
+	}
+
+	/**
 	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them on the client.
 	 *
-	 * Without background work (inside pending boundaries), this waits for every promise among the values
-	 * to settle, and resolves them inside the `<script>`. Otherwise, it only resolves the promises that have
-	 * already settled — which includes everything the render awaited, and so everything it needs to hydrate
-	 * — and the rest are streamed via the `tail`, along with the values added after this
+	 * The `<script>` only contains the values that were added outside pending boundaries (or used outside
+	 * them), and waits for every promise among them to settle, so that it doesn't depend on timing. When
+	 * there's background work (inside pending boundaries), the values it adds are streamed via the `tail`,
+	 * along with the values added after this, and a message for each boundary once the values that its
+	 * children read synchronously have been sent
 	 * @param {WarpStore} store
 	 * @param {UnevalReplacer | undefined} replacer
 	 * @param {SSRState | null} background
@@ -960,7 +1022,15 @@ export class Renderer {
 
 		store.emitted = true;
 
-		if (store.values.size === 0 && background === null) {
+		// values from pending boundaries that the rest of the render has used are in the `head` instead
+		store.queue = store.queue.filter(
+			(message) => !Array.isArray(message) || store.owned.get(message[0])?.has(message[1])
+		);
+
+		const values = without(store.values, store.owned);
+		store.owned.clear();
+
+		if (values.size === 0 && background === null) {
 			return { head: null, tail: null };
 		}
 
@@ -999,19 +1069,18 @@ export class Renderer {
 		let blocks;
 
 		try {
-			head = session.uneval(store.values);
+			head = session.uneval(values);
 
-			const pending = background === null ? watch_pending(store.values) : null;
+			const pending = watch_pending(values);
 
 			blocks = await take_head(
 				session,
 				() => transforms,
-				pending &&
-					(() => {
-						// this is a problem -- it means we've finished the render but we're still waiting on a promise
-						// to resolve so we can serialize it, so we're blocking the response on useless content.
-						w.unresolved_warp(describe_pending(pending));
-					})
+				() => {
+					// this is a problem -- it means we've finished the render but we're still waiting on a promise
+					// to resolve so we can serialize it, so we're blocking the response on useless content.
+					w.unresolved_warp(describe_pending(pending));
+				}
 			);
 		} catch (error) {
 			late?.close();
@@ -1117,13 +1186,11 @@ function macrotask() {
 async function* empty() {}
 
 /**
- * Takes the statements that settle the promises in the `head`. Without background work (when `warn` is
- * passed), that's all of them. Otherwise, it's the ones that have already settled, which devalue hears
- * about within a few microtasks — so once nothing has settled for a macrotask (and no `transformError`
- * calls are still running), the rest are left for the `tail`. Throws if a value can't be serialized
+ * Takes the statements that settle the promises in the `head`, once they've all settled. Throws if a
+ * value can't be serialized
  * @param {Session} session
  * @param {() => number} transforms The number of asynchronous `transformError` calls that haven't finished
- * @param {(() => void) | null} warn Called if the `head` is waiting on promises that hadn't settled when the render finished
+ * @param {() => void} warn Called if the `head` is waiting on promises that hadn't settled when the render finished
  * @returns {Promise<string>}
  */
 async function take_head(session, transforms, warn) {
@@ -1136,19 +1203,14 @@ async function take_head(session, transforms, warn) {
 		if (code !== '') blocks += `\n\t\t\t${code}`;
 		if (session.pending === 0) return blocks;
 
-		if (warned) {
-			await session.changed();
-			continue;
-		}
-
-		if ((await Promise.race([session.changed(), macrotask()])) !== MACROTASK) continue;
-
-		if (warn === null) {
-			if (transforms() === 0) return blocks;
-		} else if (session.pending > transforms()) {
-			// promises (rather than just `transformError` calls) are still pending
-			warned = true;
-			warn();
+		// devalue hears about promises that have already settled within a few microtasks, so if nothing
+		// has settled for a macrotask, and promises (rather than just `transformError` calls) are still
+		// pending, the render didn't wait for them
+		if (!warned && (await Promise.race([session.changed(), macrotask()])) === MACROTASK) {
+			if (session.pending > transforms()) {
+				warned = true;
+				warn();
+			}
 		}
 
 		await session.changed();
@@ -1156,8 +1218,9 @@ async function take_head(session, transforms, warn) {
 }
 
 /**
- * Streams the values that are added to `Warp` instances after the `head` was serialized. Until `open`
- * is called (once the `head` is done), they're held rather than serialized, since the rest of the `head`
+ * Streams the messages in `store.queue`: the values that were added inside pending boundaries, or after
+ * the `head` was serialized, and the boundaries whose synchronous work has finished. Until `open` is
+ * called (once the `head` is done), they're held rather than serialized, since the rest of the `head`
  * could otherwise refer to objects that only the `tail` introduces. Each value is serialized by itself,
  * so one that can't be serialized doesn't affect the others. No more can be added once the background
  * work is done
@@ -1166,24 +1229,28 @@ async function take_head(session, transforms, warn) {
  * @param {SSRState} background
  */
 function stream_late_values(store, session, background) {
-	/** @type {Array<[string, WarpKey, unknown]> | null} */
-	let held = [];
+	let open = false;
 	let code = '';
 	let closed = false;
 	let change = deferred();
 
-	/**
-	 * @param {string} id
-	 * @param {WarpKey} key
-	 * @param {unknown} value
-	 */
-	function add(id, key, value) {
-		try {
-			code += session.uneval([id, key, value]);
-		} catch (error) {
-			// the client doesn't get the value, so it will need to load it itself
-			w.warp_stream_serialization_failed(describe_error(error));
+	function drain() {
+		for (const message of store.queue) {
+			if (!Array.isArray(message)) {
+				// the boundary's id is assigned when the HTML is put together. if it hasn't been, it isn't in the HTML
+				if (message.id !== null) code += session.uneval(message.id);
+				continue;
+			}
+
+			try {
+				code += session.uneval(message);
+			} catch (error) {
+				// the client doesn't get the value, so it will need to load it itself
+				w.warp_stream_serialization_failed(describe_error(error));
+			}
 		}
+
+		store.queue.length = 0;
 	}
 
 	function notify() {
@@ -1199,13 +1266,10 @@ function stream_late_values(store, session, background) {
 		notify();
 	}
 
-	store.late = (id, key, value) => {
-		if (held === null) {
-			add(id, key, value);
-			notify();
-		} else {
-			held.push([id, key, value]);
-		}
+	store.late = () => {
+		if (!open) return;
+		drain();
+		notify();
 	};
 
 	background.settle().then(close);
@@ -1216,17 +1280,16 @@ function stream_late_values(store, session, background) {
 			return closed;
 		},
 		open() {
-			const entries = held ?? [];
-			held = null;
-			for (const [id, key, value] of entries) add(id, key, value);
+			open = true;
+			drain();
 		},
-		/** Returns the statements that add the values added since the last call */
+		/** Returns the statements for the messages added since the last call */
 		take() {
 			const result = code;
 			code = '';
 			return result;
 		},
-		/** Resolves the next time a value is added, or once no more can be */
+		/** Resolves the next time a message is added, or once no more can be */
 		changed() {
 			return change.promise;
 		},
@@ -1301,6 +1364,36 @@ async function* generate_scripts(late, csp_attr, done) {
 }
 
 /**
+ * Returns `values` without the keys in `omit`
+ * @param {Map<string, Map<WarpKey, unknown>>} values
+ * @param {Map<string, Set<WarpKey>>} omit
+ */
+function without(values, omit) {
+	if (omit.size === 0) return values;
+
+	/** @type {Map<string, Map<WarpKey, unknown>>} */
+	const result = new Map();
+
+	for (const [id, entries] of values) {
+		const keys = omit.get(id);
+
+		if (keys === undefined || keys.size === 0) {
+			result.set(id, entries);
+			continue;
+		}
+
+		const kept = new Map();
+		for (const [key, value] of entries) {
+			if (!keys.has(key)) kept.set(key, value);
+		}
+
+		if (kept.size > 0) result.set(id, kept);
+	}
+
+	return result;
+}
+
+/**
  * Keeps track of which values are promises that haven't settled yet, for `unresolved_warp`
  * @param {Map<string, Map<WarpKey, unknown>>} values
  */
@@ -1367,6 +1460,9 @@ export class SSRState {
 
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
+
+	/** The number of pending boundaries that have been given an id */
+	boundaries = 0;
 
 	/** @type {Set<Promise<unknown>>} */
 	#pending = new Set();

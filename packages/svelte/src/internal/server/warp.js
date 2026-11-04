@@ -31,9 +31,14 @@ export class Warp {
 		this.#id = id;
 	}
 
-	/** @returns {Map<K, V> | undefined} */
-	#values() {
-		return /** @type {Map<K, V> | undefined} */ (get_context().warp.values.get(this.#id));
+	/**
+	 * @param {K | All} key The key that's being read, or `ALL` if every key is
+	 * @returns {Map<K, V> | undefined}
+	 */
+	#values(key) {
+		const context = get_context();
+		use(context, this.#id, key);
+		return /** @type {Map<K, V> | undefined} */ (context.warp.values.get(this.#id));
 	}
 
 	/**
@@ -41,7 +46,7 @@ export class Warp {
 	 * @returns {V | undefined}
 	 */
 	get(key) {
-		return this.#values()?.get(key);
+		return this.#values(key)?.get(key);
 	}
 
 	/**
@@ -49,7 +54,7 @@ export class Warp {
 	 * @returns {boolean}
 	 */
 	has(key) {
-		return this.#values()?.has(key) ?? false;
+		return this.#values(key)?.has(key) ?? false;
 	}
 
 	/**
@@ -83,6 +88,7 @@ export class Warp {
 		const values = context.warp.values.get(this.#id);
 
 		if (values?.has(key)) {
+			use(context, this.#id, key);
 			return /** @type {V} */ (values.get(key));
 		}
 
@@ -101,6 +107,7 @@ export class Warp {
 		const values = context.warp.values.get(this.#id);
 
 		if (values?.has(key)) {
+			use(context, this.#id, key);
 			return /** @type {V} */ (values.get(key));
 		}
 
@@ -132,33 +139,39 @@ export class Warp {
 	 */
 	forEach(callback, this_arg) {
 		// pass the `Warp` rather than the underlying map, so that `callback` can't modify it directly
-		this.#values()?.forEach((value, key) => callback.call(this_arg, value, key, this));
+		this.#values(ALL)?.forEach((value, key) => callback.call(this_arg, value, key, this));
 	}
 
 	entries() {
-		return (this.#values() ?? new Map()).entries();
+		return (this.#values(ALL) ?? new Map()).entries();
 	}
 
 	keys() {
-		return (this.#values() ?? new Map()).keys();
+		return (this.#values(ALL) ?? new Map()).keys();
 	}
 
 	values() {
-		return (this.#values() ?? new Map()).values();
+		return (this.#values(ALL) ?? new Map()).values();
 	}
 
 	get size() {
-		return this.#values()?.size ?? 0;
+		return this.#values(ALL)?.size ?? 0;
 	}
 
 	[Symbol.iterator]() {
-		return (this.#values() ?? new Map())[Symbol.iterator]();
+		return (this.#values(ALL) ?? new Map())[Symbol.iterator]();
 	}
 
 	get [Symbol.toStringTag]() {
 		return 'Warp';
 	}
 }
+
+/** Passed to `use` when every key is being read */
+const ALL = Symbol();
+
+// (a `typedef`, since TypeScript considers `typeof ALL` circular in `#values`'s parameter)
+/** @typedef {typeof ALL} All */
 
 function get_context() {
 	if (!async_mode_flag) {
@@ -199,12 +212,21 @@ function record(context, id, key, value) {
 		Promise.prototype.then.call(value, undefined, noop);
 	}
 
-	if (store.emitted) {
-		if (store.late === null) {
-			e.warp_set_after_render(String(key), id);
+	if (store.emitted && store.late === null) {
+		e.warp_set_after_render(String(key), id);
+	}
+
+	// values added inside pending boundaries go in the `tail`, so that the `head` only contains what
+	// the rest of the render added (and used). so do values added after the `head` was serialized
+	if (context.boundary !== null || store.emitted) {
+		if (context.boundary !== null && !store.emitted) {
+			let keys = store.owned.get(id);
+			if (keys === undefined) store.owned.set(id, (keys = new Set()));
+			keys.add(key);
 		}
 
-		store.late(id, key, value);
+		store.queue.push([id, key, value]);
+		store.late?.();
 	}
 
 	if (DEV) {
@@ -216,6 +238,24 @@ function record(context, id, key, value) {
 		}
 
 		stacks.set(key, get_user_code_location());
+	}
+}
+
+/**
+ * Called when a key is read. If the work inside a pending boundary added it, but it's read outside
+ * one before the `head` is serialized, it moves to the `head`, since the rest of the render depends on it
+ * @param {RenderContext} context
+ * @param {string} id
+ * @param {WarpKey | All} key
+ */
+function use(context, id, key) {
+	const store = context.warp;
+	if (context.boundary !== null || store.emitted) return;
+
+	if (key === ALL) {
+		store.owned.delete(id);
+	} else {
+		store.owned.get(id)?.delete(key);
 	}
 }
 
