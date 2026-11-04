@@ -1,5 +1,21 @@
 # svelte
 
+## 5.57.4
+
+### Patch Changes
+
+- fix: allow `autocorrect` on all elements ([#19105](https://github.com/sveltejs/svelte/pull/19105))
+
+- fix: parse snippet type parameters containing arrow function types ([#19141](https://github.com/sveltejs/svelte/pull/19141))
+
+- fix: remove all of the server-rendered content when hydrating a different branch that contains a failed boundary ([#19166](https://github.com/sveltejs/svelte/pull/19166))
+
+- fix: preserve effect tree order across batch traversal passes ([#19132](https://github.com/sveltejs/svelte/pull/19132))
+
+- fix: reset dev update counters for sources written during batch traversal ([#19092](https://github.com/sveltejs/svelte/pull/19092))
+
+- fix: don't leak reactive context past nested awaits in production ([#19134](https://github.com/sveltejs/svelte/pull/19134))
+
 ## 5.57.3
 
 ### Patch Changes
