@@ -67,6 +67,108 @@ export function decode_character_references(html, is_attribute_value) {
 	);
 }
 
+/**
+ * @param {string} html
+ * @param {boolean} is_attribute_value
+ */
+function* character_reference_segments(html, is_attribute_value) {
+	let raw_index = 0;
+
+	const entity_pattern = is_attribute_value ? entity_pattern_attr_value : entity_pattern_content;
+	for (const match of html.matchAll(entity_pattern)) {
+		const raw_start = match.index;
+		if (raw_start > raw_index) {
+			yield {
+				raw_start: raw_index,
+				raw_end: raw_start,
+				decoded: html.slice(raw_index, raw_start),
+				is_reference: false
+			};
+		}
+
+		const raw_end = raw_start + match[0].length;
+		yield {
+			raw_start,
+			raw_end,
+			decoded: decode_character_references(match[0], is_attribute_value),
+			is_reference: true
+		};
+		raw_index = raw_end;
+	}
+
+	if (raw_index < html.length) {
+		yield {
+			raw_start: raw_index,
+			raw_end: html.length,
+			decoded: html.slice(raw_index),
+			is_reference: false
+		};
+	}
+}
+
+/**
+ * Find the raw offset corresponding to a decoded whitespace prefix or suffix.
+ * @param {string} html
+ * @param {string} decoded_boundary
+ * @param {boolean} is_attribute_value
+ * @param {boolean} from_start
+ * @returns {number | null}
+ */
+export function find_raw_character_reference_boundary(
+	html,
+	decoded_boundary,
+	is_attribute_value,
+	from_start
+) {
+	const segments = character_reference_segments(html, is_attribute_value);
+
+	if (from_start) {
+		let decoded_index = 0;
+		for (const segment of segments) {
+			const remaining = decoded_boundary.length - decoded_index;
+			const consumed = Math.min(segment.decoded.length, remaining);
+			if (
+				segment.decoded.slice(0, consumed) !==
+				decoded_boundary.slice(decoded_index, decoded_index + consumed)
+			) {
+				return null;
+			}
+
+			if (consumed === remaining) {
+				if (consumed < segment.decoded.length) {
+					return segment.is_reference ? null : segment.raw_start + consumed;
+				}
+				return segment.raw_end;
+			}
+
+			decoded_index += consumed;
+		}
+	} else {
+		const reversed_segments = Array.from(segments).reverse();
+		let decoded_index = decoded_boundary.length;
+		for (const segment of reversed_segments) {
+			const consumed = Math.min(segment.decoded.length, decoded_index);
+			if (
+				segment.decoded.slice(segment.decoded.length - consumed) !==
+				decoded_boundary.slice(decoded_index - consumed, decoded_index)
+			) {
+				return null;
+			}
+
+			if (consumed === decoded_index) {
+				if (consumed < segment.decoded.length) {
+					return segment.is_reference ? null : segment.raw_end - consumed;
+				}
+				return segment.raw_start;
+			}
+
+			decoded_index -= consumed;
+		}
+	}
+
+	return null;
+}
+
 const NUL = 0;
 
 // some code points are verboten. If we were inserting HTML, the browser would replace the illegal
