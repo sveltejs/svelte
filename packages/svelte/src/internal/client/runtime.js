@@ -59,6 +59,7 @@ import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 import * as w from './warnings.js';
+import { push_renderer } from './custom-renderer/state.js';
 
 export let is_destroying_effect = false;
 
@@ -460,6 +461,8 @@ export function update_effect(effect) {
 
 	active_effect = effect;
 
+	var pop_renderer = push_renderer(effect.r);
+
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
 		set_dev_current_component_function(effect.component_function);
@@ -492,6 +495,8 @@ export function update_effect(effect) {
 		}
 	} finally {
 		active_effect = previous_effect;
+
+		pop_renderer?.();
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);
