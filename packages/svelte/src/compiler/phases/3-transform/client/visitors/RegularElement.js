@@ -322,7 +322,8 @@ export function RegularElement(node, context) {
 		context.path,
 		state.metadata.namespace,
 		state,
-		name === 'script' || state.preserve_whitespace,
+		// the parser leaves the text of a `<style>` undecoded, and checks the name as written
+		name === 'script' || node.name === 'style' || state.preserve_whitespace,
 		state.options.preserveComments
 	);
 
