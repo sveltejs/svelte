@@ -232,7 +232,7 @@ export function changed_since(deps, wv, unchanged = null) {
 
 			// the run of the derived that applies in the view, brought up to date — or a value assigned to it
 			/** @type {Derived | DerivedRecord | BatchValue} */
-			var run = dep;
+			var run = /** @type {Derived} */ (dep);
 
 			if (batch_values === null) {
 				update_derived(/** @type {Derived} */ (dep));
