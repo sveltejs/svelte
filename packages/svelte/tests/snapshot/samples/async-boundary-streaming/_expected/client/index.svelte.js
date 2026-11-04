@@ -1,5 +1,6 @@
 import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/async';
+import 'svelte/internal/flags/streaming';
 import * as $ from 'svelte/internal/client';
 import { Warp } from 'svelte';
 

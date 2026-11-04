@@ -540,6 +540,10 @@ export function client_component(analysis, options) {
 		);
 	}
 
+	if (options.experimental.streaming) {
+		body.unshift(b.imports([], 'svelte/internal/flags/streaming'));
+	}
+
 	if (options.experimental.async) {
 		body.unshift(b.imports([], 'svelte/internal/flags/async'));
 	}

@@ -46,7 +46,6 @@ import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
 import { defer_effect } from '../../reactivity/utils.js';
-import { wait_for_boundary } from '../../warp.js';
 
 /**
  * @typedef {{
@@ -57,6 +56,20 @@ import { wait_for_boundary } from '../../warp.js';
  */
 
 var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED;
+
+/**
+ * Set by `svelte/internal/flags/streaming`, so that apps that don't use `experimental.streaming`
+ * don't include the code that receives streamed `Warp` values
+ * @type {((id: string, render: () => void) => void) | null}
+ */
+let wait_for_boundary = null;
+
+/**
+ * @param {(id: string, render: () => void) => void} fn
+ */
+export function set_wait_for_boundary(fn) {
+	wait_for_boundary = fn;
+}
 
 /**
  * @param {TemplateNode} node
@@ -327,7 +340,7 @@ export class Boundary {
 			}
 		};
 
-		if (id === '') {
+		if (id === '' || wait_for_boundary === null) {
 			queue_micro_task(render);
 		} else {
 			// the children might read values that are still streaming in, so wait until the server says they're here
