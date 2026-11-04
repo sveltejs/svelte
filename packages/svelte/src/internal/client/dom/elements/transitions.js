@@ -417,6 +417,11 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 		animation.onfinish = () => {
 			// remove dummy animation from the stack to prevent conflict with main animation
 			animation.cancel();
+			// `abort()` only reaches the main animation, so release the dummy here. WebKit keeps
+			// a cancelled animation alive along with its event handlers, and this handler closes
+			// over `element`, which would otherwise never be garbage collected
+			animation.effect = null;
+			animation.onfinish = null;
 
 			on_begin();
 

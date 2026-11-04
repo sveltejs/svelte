@@ -141,9 +141,20 @@ class Animation {
 		raf.animations.delete(this);
 	}
 
-	/** @param {() => {}} fn */
+	/** @type {(() => {}) | null} */
+	#onfinish_handler = null;
+
+	get onfinish() {
+		return this.#onfinish_handler;
+	}
+
+	/** @param {(() => {}) | null} fn */
 	set onfinish(fn) {
-		if (this.#duration === 0) {
+		this.#onfinish_handler = fn;
+
+		if (fn === null) {
+			this.#onfinish = () => {};
+		} else if (this.#duration === 0) {
 			queue_micro_task(fn);
 		} else {
 			this.#onfinish = () => {
