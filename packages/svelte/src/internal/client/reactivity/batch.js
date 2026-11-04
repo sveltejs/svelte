@@ -930,6 +930,15 @@ export class Batch {
 						batch_values.set(source, previous);
 					}
 				}
+
+				// A derived that was first evaluated in the other batch has no previous value
+				// to fall back on, so its value only reflects the other batch. Mark it dirty
+				// so that it is re-evaluated with this batch's values when read.
+				for (const [source, [, is_derived]] of batch.current) {
+					if (is_derived && !batch.previous.has(source) && !batch_values.has(source)) {
+						set_signal_status(source, DIRTY);
+					}
+				}
 			}
 		}
 	}
