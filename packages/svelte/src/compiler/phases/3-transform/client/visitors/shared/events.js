@@ -1,10 +1,10 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
+/** @import { ExpressionMetadata } from '../../../../nodes.js' */
 import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { dev, locator } from '../../../../../state.js';
 import * as b from '#compiler/builders';
-import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
  * @param {AST.Attribute} node

@@ -9,6 +9,7 @@ import {
 	remove_reactions,
 	set_active_reaction,
 	set_is_destroying_effect,
+	teardown_version,
 	untrack,
 	untracking,
 	set_active_effect
@@ -43,7 +44,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects } from './batch.js';
+import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -446,6 +447,8 @@ export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
 	if (teardown !== null) {
 		const previously_destroying_effect = is_destroying_effect;
+		const previous_teardown_version = teardown_version;
+		const previous_teardown_context = teardown_context;
 		const previous_reaction = active_reaction;
 		set_is_destroying_effect(true);
 		set_active_reaction(null);
@@ -457,7 +460,8 @@ export function execute_effect_teardown(effect) {
 			// themselves mid-teardown are skipped by invoke_error_boundary.
 			invoke_error_boundary(error, effect.parent);
 		} finally {
-			set_is_destroying_effect(previously_destroying_effect);
+			set_is_destroying_effect(previously_destroying_effect, previous_teardown_version);
+			set_teardown_context(previous_teardown_context);
 			set_active_reaction(previous_reaction);
 		}
 	}
@@ -709,7 +713,7 @@ function resume_children(effect, local) {
 	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined`.
 	if ((effect.f & CLEAN) === 0) {
 		// Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
-		Batch.ensure().schedule(effect, (effect.f & DIRTY) !== 0 ? DIRTY : MAYBE_DIRTY);
+		Batch.ensure().schedule(effect, MAYBE_DIRTY);
 	}
 
 	var child = effect.first;

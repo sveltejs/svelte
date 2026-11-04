@@ -1,5 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { Batch, current_batch } from '../../reactivity/batch.js';
+/** @import { Batch } from '../../reactivity/batch.js' */
+import { current_batch } from '../../reactivity/batch.js';
 import {
 	branch,
 	destroy_effect,
@@ -188,6 +189,7 @@ export class BranchManager {
 
 				// until it is committed, the branch only exists for the batches that select it
 				effect.f |= EFFECT_OFFSCREEN;
+				batch.unskip_new_effect(effect);
 
 				this.#offscreen.set(key, { effect, fragment });
 			} else {

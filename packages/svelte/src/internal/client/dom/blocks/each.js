@@ -172,6 +172,21 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 	}
 }
 
+/**
+ * Whether the item is outroing, i.e. `pause_effects` destroys it (or keeps it offscreen) once its outro is done
+ * @param {EachState} state
+ * @param {Effect} effect
+ */
+function is_outroing(state, effect) {
+	if (state.outrogroups !== null) {
+		for (const group of state.outrogroups) {
+			if (group.pending.has(effect) || group.done.has(effect)) return true;
+		}
+	}
+
+	return false;
+}
+
 /** @type {TemplateNode} */
 var offscreen_anchor;
 
@@ -263,6 +278,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				});
 			}
 		}
+
+		destroy_unselected();
 	}
 
 	/**
@@ -270,6 +287,50 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	 */
 	function discard(batch) {
 		state.pending.delete(batch);
+
+		if ((state.effect.f & DESTROYED) === 0) {
+			destroy_unselected();
+		}
+	}
+
+	/**
+	 * Destroys the offscreen items that no pending batch selects anymore. Offscreen items only exist
+	 * for the batches that select them: they were created in their view, or kept for them when a
+	 * commit removed them (see `destroy_effects`). A batch stops selecting an item when it's discarded,
+	 * or when its block runs again without it. `reconcile` doesn't destroy such an item if it was kept,
+	 * as kept items are paused, and it leaves paused items alone (taking them to be outroing)
+	 */
+	function destroy_unselected() {
+		/** @type {Set<Effect> | undefined} */
+		var selected;
+		var effect = state.effect.last;
+
+		// offscreen items come after all onscreen items (see `destroy_effects`)
+		while (effect !== null) {
+			var prev = effect.prev;
+
+			// (an offscreen fallback isn't paused, so the next commit shows it or destroys it, see above)
+			if ((effect.f & BRANCH_EFFECT) !== 0 && effect !== fallback) {
+				if ((effect.f & EFFECT_OFFSCREEN) === 0) break;
+
+				// create lazily to save work in the common case
+				if (selected === undefined) {
+					selected = new Set();
+
+					for (const keys of pending.values()) {
+						for (const key of keys) {
+							selected.add(/** @type {EachItem} */ (items.get(key)).e);
+						}
+					}
+				}
+
+				if (!selected.has(effect) && !is_outroing(state, effect)) {
+					destroy_effect(effect);
+				}
+			}
+
+			effect = prev;
+		}
 	}
 
 	var effect = block(() => {
@@ -345,7 +406,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				if (!first_run) {
 					// until it is committed, the item only exists for the batches that select it
 					item.e.f |= EFFECT_OFFSCREEN;
-					if (defer) batch.unskip_effect(item.e);
+					if (defer) batch.unskip_new_effect(item.e);
 				}
 
 				items.set(key, item);
@@ -361,6 +422,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
 				// until it is committed, the fallback only exists for the batches that select it
 				fallback.f |= EFFECT_OFFSCREEN;
+				if (defer) batch.unskip_new_effect(fallback);
 			}
 		}
 

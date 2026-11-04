@@ -1,5 +1,21 @@
 # svelte
 
+## 5.57.3
+
+### Patch Changes
+
+- fix: use the first valid fallback role in `role` for a11y checks ([#19045](https://github.com/sveltejs/svelte/pull/19045))
+
+- chore: remove obsolete code ([#19051](https://github.com/sveltejs/svelte/pull/19051))
+
+- fix: keep creating state sources for property checks during component init ([#18949](https://github.com/sveltejs/svelte/pull/18949))
+
+- fix: skip redundant attribute writes during hydration ([#18869](https://github.com/sveltejs/svelte/pull/18869))
+
+- fix: track missing state property checks in unowned deriveds ([#18944](https://github.com/sveltejs/svelte/pull/18944))
+
+- fix: `devalue` link in `hydratable_serialization_failed` error ([#18999](https://github.com/sveltejs/svelte/pull/18999))
+
 ## 5.57.2
 
 ### Patch Changes
