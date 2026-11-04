@@ -153,6 +153,19 @@ export class Renderer {
 	#parent;
 
 	/**
+	 * Set by {@link copy}: the renderer that {@link subsume} merges this copy back into.
+	 * A copy is not in the `#out` of its parent, so {@link get_path} reads the position here.
+	 * @type {Renderer | null}
+	 */
+	#copy_of = null;
+
+	/**
+	 * Where in {@link #copy_of} this copy's content will land in sync mode, so that
+	 * {@link get_path} reports the same position it will have after `subsume`.
+	 */
+	#offset = 0;
+
+	/**
 	 * Asynchronous work associated with this renderer
 	 * @type {Promise<void> | undefined}
 	 */
@@ -547,7 +560,10 @@ export class Renderer {
 	 * @returns {number[]}
 	 */
 	get_path() {
-		return this.#parent ? [...this.#parent.get_path(), this.#parent.#out.indexOf(this)] : [];
+		if (this.#copy_of !== null) return this.#copy_of.get_path();
+
+		const parent = this.#parent;
+		return parent ? [...parent.get_path(), parent.#offset + parent.#out.indexOf(this)] : [];
 	}
 
 	/**
@@ -555,7 +571,17 @@ export class Renderer {
 	 */
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
+		copy.#copy_of = this;
 		copy.type = this.type;
+		copy.local = { select_value: this.local.select_value, multiple: this.local.multiple };
+
+		if (this.global.mode === 'sync') {
+			// the retry loop is the only writer here, so what was rendered before it can
+			// stay in place and the copy starts empty. Copying it would be O(page) per retry
+			copy.#offset = this.#offset + this.#out.length;
+			return copy;
+		}
+
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promise = this.promise;
 		return copy;
@@ -573,16 +599,22 @@ export class Renderer {
 		}
 
 		this.local = other.local;
-		this.#out = other.#out.map((item, i) => {
-			const current = this.#out[i];
 
-			if (current instanceof Renderer && item instanceof Renderer) {
-				current.subsume(item);
-				return current;
-			}
+		if (this.global.mode === 'sync') {
+			for (const item of other.#out) this.#out.push(item);
+		} else {
+			this.#out = other.#out.map((item, i) => {
+				const current = this.#out[i];
 
-			return item;
-		});
+				if (current instanceof Renderer && item instanceof Renderer) {
+					current.subsume(item);
+					return current;
+				}
+
+				return item;
+			});
+		}
+
 		this.promise = other.promise;
 		this.type = other.type;
 	}
