@@ -207,19 +207,62 @@ export function is_current(deps, dv) {
  * that applies in the view (see `get_view`) is written after it. Comparing versions with those the
  * dependencies had at the time of the assignment, like `is_current` does, wouldn't work: a view might undo
  * a write the assignment saw, and a committed fork might apply one it didn't see — but both writes happened
- * before the assignment, so they don't make it outdated. (A dependency that is a derived which was evaluated
- * again, and got a different value, counts as changed, though)
+ * before the assignment, so they don't make it outdated.
+ *
+ * This (and its counterpart in `teardown_view`) is where versions are compared by order across views. That only works for versions of writes
+ * (including assignments), which are allocated when the write happens. A derived's version is allocated when it is
+ * evaluated, which can be after the assignment even if everything it read was written before it (e.g. because it is
+ * evaluated lazily, or again in another view). So a derived only counts as changed if, in addition, one of the
+ * values its run in the view read was written after the assignment
  * @param {Value[] | null} deps
  * @param {number} wv
+ * @param {Set<Derived | DerivedRecord | BatchValue> | null} [unchanged] runs that this walk found unchanged,
+ * to avoid walking a derived that is reachable by more than one path (e.g. a diamond) once per path. Only valid
+ * within one top-level call: `wv` and the view are fixed, and the walk itself doesn't write anything
  */
-export function unchanged_since(deps, wv) {
+export function changed_since(deps, wv, unchanged = null) {
 	if (deps !== null) {
 		for (var i = 0; i < deps.length; i++) {
-			if (version_of(deps[i]) > wv) return false;
+			var dep = deps[i];
+
+			if ((dep.f & DERIVED) === 0) {
+				if (version_of(dep) > wv) return true;
+				continue;
+			}
+
+			// the run of the derived that applies in the view, brought up to date — or a value assigned to it
+			/** @type {Derived | DerivedRecord | BatchValue} */
+			var run = /** @type {Derived} */ (dep);
+
+			if (batch_values === null) {
+				update_derived(/** @type {Derived} */ (dep));
+			} else {
+				run = get_view(/** @type {Derived} */ (dep));
+			}
+
+			// (an equal value keeps its version, so a derived whose value didn't change since doesn't count either)
+			if (run.wv > wv) {
+				var assigned = run === dep ? (dep.f & ASSIGNED) !== 0 : !('dv' in run);
+
+				if (assigned) return true;
+
+				// this run was already found to have no writes after `wv` below it
+				if (unchanged === null) {
+					unchanged = new Set();
+				} else if (unchanged.has(run)) {
+					continue;
+				}
+
+				if (changed_since(/** @type {DerivedRecord} */ (run).deps, wv, unchanged)) {
+					return true;
+				}
+
+				unchanged.add(run);
+			}
 		}
 	}
 
-	return true;
+	return false;
 }
 
 /**
@@ -251,7 +294,7 @@ export function is_dirty(reaction) {
 	if ((flags & ASSIGNED) !== 0) {
 		// A value assigned to a derived holds until one of its dependencies is written after it, which its flags
 		// can't tell: writes that don't change the real world (e.g. those of a fork) mark the derived, too
-		if (!unchanged_since(reaction.deps, reaction.wv)) return true;
+		if (changed_since(reaction.deps, reaction.wv)) return true;
 	} else if ((flags & DIRTY) !== 0) {
 		return true;
 	} else {
