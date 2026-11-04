@@ -9,6 +9,8 @@ minimumReleaseAgeExclude:
   - svelte-check
   - esm-env
 blockExoticSubdeps: true
+allowBuilds:
+  esbuild: true
 
 packages:
   - 'packages/*'
