@@ -44,7 +44,6 @@ const LINK_TAG = IS_XHTML ? 'link' : 'LINK';
 const INPUT_TAG = IS_XHTML ? 'input' : 'INPUT';
 const OPTION_TAG = IS_XHTML ? 'option' : 'OPTION';
 const SELECT_TAG = IS_XHTML ? 'select' : 'SELECT';
-const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -96,9 +95,9 @@ export function set_value(element, value) {
 			(attributes.value =
 				// treat null and undefined the same for the initial value
 				value ?? undefined) ||
+		// Don't skip numeric values: getters like `progress.value` are clamped.
 		// @ts-expect-error
-		// `progress` elements always need their value set when it's `0`
-		(element.value === value && (value !== 0 || element.nodeName !== PROGRESS_TAG))
+		(typeof value === 'string' && element.value === value)
 	) {
 		return;
 	}
@@ -443,9 +442,10 @@ function set_attributes(
 				// 4. updating input.value would thus, clear the user value
 				if (
 					prev_value == null ||
+					// Don't skip numeric values: getters like `progress.value` are clamped.
+					typeof value !== 'string' ||
 					// @ts-ignore
-					element.value !== value ||
-					(value === 0 && element.nodeName === PROGRESS_TAG)
+					element.value !== value
 				) {
 					// @ts-ignore
 					element.value = value;
