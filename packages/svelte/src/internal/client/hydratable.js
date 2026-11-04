@@ -1,10 +1,15 @@
 import { async_mode_flag } from '../flags/index.js';
 import { hydrating } from './dom/hydration.js';
+import { Warp } from './warp.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { DEV } from 'esm-env';
 
+/** @type {Warp<string, any>} */
+const warp = new Warp('svelte:hydratable');
+
 /**
+ * @deprecated Use [`Warp`](https://svelte.dev/docs/svelte/warp) instead
  * @template T
  * @param {string} key
  * @param {() => T} fn
@@ -16,10 +21,8 @@ export function hydratable(key, fn) {
 	}
 
 	if (hydrating) {
-		const store = window.__svelte?.h;
-
-		if (store?.has(key)) {
-			return /** @type {T} */ (store.get(key));
+		if (warp.has(key)) {
+			return warp.get(key);
 		}
 
 		if (DEV) {
