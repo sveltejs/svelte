@@ -53,7 +53,6 @@ import {
 	current_batch,
 	first_batch,
 	flushSync,
-	previous_batch,
 	push_teardown_context,
 	teardown_context,
 	view_batch,
@@ -81,10 +80,12 @@ export function set_is_destroying_effect(value, version = write_version) {
 }
 
 /**
- * The result of the latest run of a derived in a teardown (see `teardown_view`)
+ * The result of the latest run of a derived in a teardown, which only the teardown sees: `update_dependencies` sets
+ * it — that's where the run's dependencies, which determine its version, are known — instead of storing the run, and
+ * `teardown_view` takes it right after `execute_derived`
  * @type {BatchValue}
  */
-let teardown_run = { v: undefined, wv: 0 };
+let teardown_run = { v: undefined, wv: 0, e: false, assigned: false };
 
 /** @type {null | Reaction} */
 export let active_reaction = null;
@@ -172,7 +173,7 @@ export function increment_write_version() {
  */
 export function version_of(signal) {
 	if (batch_values === null) {
-		update_derived(/** @type {Derived} */ (signal));
+		update_derived(signal);
 		return signal.wv;
 	}
 
@@ -307,7 +308,7 @@ export function is_dirty(reaction) {
 			for (var i = 0, length = dv.length; i < length; i++) {
 				var dependency = /** @type {Value[]} */ (deps)[i];
 
-				update_derived(/** @type {Derived} */ (dependency));
+				update_derived(dependency);
 
 				if (dependency.wv !== dv[i]) return true;
 			}
@@ -504,7 +505,7 @@ function update_dependencies(reaction, flags, value, error) {
 			wv = Math.max(wv, teardown_version_of(dep));
 		}
 
-		teardown_run = { v: value, wv, e: error };
+		teardown_run = { v: value, wv, e: error, assigned: (flags & ASSIGNED) !== 0 };
 		return length;
 	}
 
@@ -1085,12 +1086,11 @@ export function get(signal) {
 	if (DEV) {
 		if (
 			!untracking &&
-			reactivity_loss_tracker &&
-			// By checking that current/previous batch are null we filter out false positives.
+			// By checking that no batch is active we filter out false positives.
 			// reactivity_loss_tracker is only reset after a microtask, so if a flush happens
 			// before that, we get warnings for things we shouldn't warn on.
-			current_batch === null &&
-			previous_batch === null &&
+			view_batch === null &&
+			reactivity_loss_tracker &&
 			!reactivity_loss_tracker.warned &&
 			(reactivity_loss_tracker.effect.f & REACTION_IS_UPDATING) === 0 &&
 			!reactivity_loss_tracker.effect_deps.has(signal)
@@ -1263,18 +1263,22 @@ function teardown_view(signal) {
 
 	if (record !== undefined) return record;
 
+	// A value written to the derived — reverted, or the active view's — holds if it was assigned, like in `get_view`:
+	// the value from before an assignment may have been computed, with values that the teardown reverts
 	var held = written ?? batch_values?.get(derived);
-	var assigned =
-		held === undefined
-			? (derived.f & ASSIGNED) !== 0
-			: written !== undefined || held.assigned !== false;
+	var assigned = held === undefined ? (derived.f & ASSIGNED) !== 0 : held.assigned;
 	// (the versions its global run read, if that can apply)
 	var dv = held === undefined && !assigned ? derived.dv : null;
 	var deps = derived.deps ?? [];
 	var holds = assigned || dv !== null;
 	var length = dv?.length ?? deps.length;
 
-	held ??= { v: derived.v, wv: derived.wv, e: (derived.f & ERROR_VALUE) !== 0 };
+	held ??= {
+		v: derived.v,
+		wv: derived.wv,
+		e: (derived.f & ERROR_VALUE) !== 0,
+		assigned: (derived.f & ASSIGNED) !== 0
+	};
 
 	for (var i = 0; holds && i < length; i++) {
 		var version = teardown_version_of(deps[i]);

@@ -2,6 +2,7 @@
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
+/** @import { Scope } from '../scope.js' */
 import { walk } from 'zimmerframe';
 import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
@@ -13,7 +14,7 @@ import {
 	unwrap_pattern
 } from '../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
+import { ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import { create_attribute, is_custom_element_node } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
