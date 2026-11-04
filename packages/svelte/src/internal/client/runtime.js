@@ -215,8 +215,11 @@ export function is_current(deps, dv) {
  * values its run in the view read was written after the assignment
  * @param {Value[] | null} deps
  * @param {number} wv
+ * @param {Set<Derived | DerivedRecord | BatchValue> | null} [unchanged] runs that this walk found unchanged,
+ * to avoid walking a derived that is reachable by more than one path (e.g. a diamond) once per path. Only valid
+ * within one top-level call: `wv` and the view are fixed, and the walk itself doesn't write anything
  */
-export function unchanged_since(deps, wv) {
+export function unchanged_since(deps, wv, unchanged = null) {
 	if (deps !== null) {
 		for (var i = 0; i < deps.length; i++) {
 			var dep = deps[i];
@@ -236,14 +239,24 @@ export function unchanged_since(deps, wv) {
 				run = get_view(/** @type {Derived} */ (dep));
 			}
 
-			var assigned = run === dep ? (dep.f & ASSIGNED) !== 0 : !('dv' in run);
-
 			// (an equal value keeps its version, so a derived whose value didn't change since doesn't count either)
-			if (
-				run.wv > wv &&
-				(assigned || !unchanged_since(/** @type {DerivedRecord} */ (run).deps, wv))
-			) {
-				return false;
+			if (run.wv > wv) {
+				var assigned = run === dep ? (dep.f & ASSIGNED) !== 0 : !('dv' in run);
+
+				if (assigned) return false;
+
+				// this run was already found to have no writes after `wv` below it
+				if (unchanged === null) {
+					unchanged = new Set();
+				} else if (unchanged.has(run)) {
+					continue;
+				}
+
+				if (!unchanged_since(/** @type {DerivedRecord} */ (run).deps, wv, unchanged)) {
+					return false;
+				}
+
+				unchanged.add(run);
 			}
 		}
 	}
