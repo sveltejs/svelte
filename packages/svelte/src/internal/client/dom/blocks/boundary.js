@@ -58,6 +58,20 @@ import { defer_effect } from '../../reactivity/utils.js';
 var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED;
 
 /**
+ * Set by `svelte/internal/flags/streaming`, so that apps that don't use `experimental.streaming`
+ * don't include the code that receives streamed `Warp` values
+ * @type {((id: string, render: () => void) => void) | null}
+ */
+let wait_for_boundary = null;
+
+/**
+ * @param {(id: string, render: () => void) => void} fn
+ */
+export function set_wait_for_boundary(fn) {
+	wait_for_boundary = fn;
+}
+
+/**
  * @param {TemplateNode} node
  * @param {BoundaryProps} props
  * @param {((anchor: Node) => void)} children
@@ -167,7 +181,7 @@ export class Boundary {
 				);
 				hydrate_next();
 
-				const server_rendered_pending = comment_data === HYDRATION_START_ELSE;
+				const server_rendered_pending = comment_data.startsWith(HYDRATION_START_ELSE);
 				const server_rendered_failed = comment_data.startsWith(HYDRATION_START_FAILED);
 
 				if (server_rendered_failed) {
@@ -176,7 +190,8 @@ export class Boundary {
 					const serialized_error = JSON.parse(comment_data.slice(HYDRATION_START_FAILED.length));
 					this.#hydrate_failed_content(serialized_error);
 				} else if (server_rendered_pending) {
-					this.#hydrate_pending_content();
+					// with `experimental.streaming`, the comment contains the boundary's id
+					this.#hydrate_pending_content(comment_data.slice(HYDRATION_START_ELSE.length));
 				} else {
 					this.#hydrate_resolved_content();
 				}
@@ -273,14 +288,17 @@ export class Boundary {
 		return (this.#effect.f & (DESTROYED | DESTROYING)) !== 0;
 	}
 
-	#hydrate_pending_content() {
+	/**
+	 * @param {string} id
+	 */
+	#hydrate_pending_content(id) {
 		const pending = this.#props.pending;
 		if (!pending) return;
 
 		this.is_pending = true;
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
-		queue_micro_task(() => {
+		const render = () => {
 			if (this.#is_destroyed()) return;
 
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
@@ -320,7 +338,14 @@ export class Boundary {
 
 				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
-		});
+		};
+
+		if (id === '' || wait_for_boundary === null) {
+			queue_micro_task(render);
+		} else {
+			// the children might read values that are still streaming in, so wait until the server says they're here
+			wait_for_boundary(id, () => queue_micro_task(render));
+		}
 	}
 
 	#render() {

@@ -1,7 +1,7 @@
 // @ts-ignore -- we don't include node types in the production build
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
 /** @import { UnevalReplacer } from 'devalue' */
-/** @import { RenderContext } from '#server' */
+/** @import { PendingBoundary, RenderContext } from '#server' */
 
 import { deferred, noop } from '../shared/utils.js';
 import * as e from './errors.js';
@@ -37,11 +37,49 @@ function create_render_context(replacer) {
 		warp: {
 			values: new Map(),
 			stacks: new Map(),
-			emitted: false
+			emitted: false,
+			owned: new Map(),
+			queue: [],
+			late: null
 		},
+		boundary: null,
 		rendered: false,
-		replacer
+		replacer,
+		held: null
 	};
+}
+
+/**
+ * In WebContainers, keeps the next render queued until `promise` has settled,
+ * so that it can't take over the render context while background work is running
+ * @param {Promise<void>} promise
+ */
+export function hold_render_context(promise) {
+	const current = get_render_context_safe();
+	if (current) current.held = promise;
+}
+
+/**
+ * Runs `fn` with a render context that attributes the values it adds to `Warp`s to `boundary`,
+ * including those it adds after an `await`. In WebContainers, which don't have `AsyncLocalStorage`,
+ * only the values added synchronously are attributed
+ * @template T
+ * @param {PendingBoundary} boundary
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function with_boundary(boundary, fn) {
+	const previous = context;
+	const ctx = { ...get_render_context(), boundary };
+
+	// `context` takes precedence over `als` (see `get_render_context_safe`), so it's set too
+	context = ctx;
+
+	try {
+		return als === null || in_webcontainer() ? fn() : als.run(ctx, fn);
+	} finally {
+		context = previous;
+	}
 }
 
 /**
@@ -115,8 +153,11 @@ async function run(ctx, fn) {
 		await previous_render;
 		context = ctx;
 		return fn(ctx).finally(() => {
-			context = null;
-			resolve();
+			// not returned, so that the render's result isn't delayed by the background work
+			Promise.resolve(ctx.held).finally(() => {
+				context = null;
+				resolve();
+			});
 		});
 	}
 

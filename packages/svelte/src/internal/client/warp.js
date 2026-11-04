@@ -3,6 +3,12 @@ import { install } from 'devalue/uneval-stream/client';
 import { async_mode_flag } from '../flags/index.js';
 import * as e from './errors.js';
 
+/** Passed to `#touch` when every key was changed */
+const ALL = Symbol();
+
+// (a `typedef`, since TypeScript considers `typeof ALL` circular in `#touch`'s parameter)
+/** @typedef {typeof ALL} All */
+
 /**
  * Handles the `Warp` values that the server's `<script>`s have pushed onto `svelte.d`, and those
  * they push later, by adding them to `svelte.w`. Does nothing if that's already happening
@@ -15,20 +21,94 @@ export function receive_warp_values(svelte) {
 	install({
 		target: svelte,
 		key: 'd',
-		receive(_, value) {
+		receive(key, value) {
+			// while any stream is in progress, the client records the keys it changes, so that values which
+			// are streamed in later (by any stream) don't overwrite the changes
+			const r = (svelte.r ??= { s: new Set(), c: new Map() });
+			r.s.add(key);
+
+			if (typeof value === 'string') {
+				// a pending boundary, whose children can be rendered now that the values they read synchronously are here
+				const boundaries = (svelte.b ??= new Map());
+				const render = boundaries.get(value);
+
+				if (render === undefined) {
+					boundaries.set(value, true);
+				} else if (render !== true) {
+					boundaries.delete(value);
+					render();
+				}
+
+				return;
+			}
+
 			const store = (svelte.w ??= new Map());
 
-			for (const [id, values] of /** @type {Map<string, Map<WarpKey, unknown>>} */ (value)) {
+			if (Array.isArray(value)) {
+				// a value added after the `head`, which is discarded if the client changed its key while values
+				// were streaming in. it's added as soon as its message is handled, before anything awaiting the
+				// promises settled in the same `<script>` runs
+				const [id, k, v] = /** @type {[string, WarpKey, unknown]} */ (value);
+				const c = r.c.get(id);
+				if (c === true || c?.has(k)) return;
+
+				let values = store.get(id);
+				if (values === undefined) store.set(id, (values = new Map()));
+				values.set(k, v);
+				return;
+			}
+
+			for (const [id, entries] of /** @type {Map<string, Map<WarpKey, unknown>>} */ (value)) {
 				const existing = store.get(id);
 
 				if (existing) {
-					for (const [k, v] of values) existing.set(k, v);
+					for (const [k, v] of entries) existing.set(k, v);
 				} else {
-					store.set(id, values);
+					store.set(id, entries);
+				}
+			}
+		},
+		done(key) {
+			// once no streams are in progress, the client forgets the changes it recorded, and stops recording them
+			if (svelte.r?.s.delete(key) && svelte.r.s.size === 0) {
+				delete svelte.r;
+
+				// nothing else is coming, so boundaries that are still waiting render their children anyway
+				const boundaries = svelte.b;
+				delete svelte.b;
+
+				for (const render of boundaries?.values() ?? []) {
+					if (render !== true) render();
 				}
 			}
 		}
 	});
+}
+
+/**
+ * Calls `render` once the server has sent the values that the children of the pending boundary with
+ * the given `id` read synchronously — straight away, if they're already here, or if nothing is streaming
+ * in. If the stream never finishes (e.g. the connection dropped), `render` isn't called
+ * @param {string} id
+ * @param {() => void} render
+ */
+export function wait_for_boundary(id, render) {
+	const svelte = window.__svelte;
+
+	if (svelte !== undefined) {
+		// handle the messages that have arrived so far, if nothing has yet
+		receive_warp_values(svelte);
+	}
+
+	const boundaries = svelte?.b;
+
+	if (svelte?.r === undefined || boundaries?.get(id) === true) {
+		boundaries?.delete(id);
+		render();
+		return;
+	}
+
+	(svelte.b ??= new Map()).set(id, render);
 }
 
 /**
@@ -76,6 +156,30 @@ export class Warp {
 	}
 
 	/**
+	 * While values are still streaming in from the server, records that `key` was changed,
+	 * so that a value for it that arrives later (from any stream) doesn't overwrite the change.
+	 * Changes are recorded from the first stream's first `<script>` until no streams are in
+	 * progress, wherever their HTML came from — e.g. an island inserted after the document
+	 * has loaded
+	 * @param {K | All} key
+	 */
+	#touch(key) {
+		const changed = window.__svelte?.r?.c;
+		if (changed === undefined) return;
+
+		const keys = changed.get(this.#id);
+		if (keys === true) return;
+
+		if (key === ALL) {
+			changed.set(this.#id, true);
+		} else if (keys === undefined) {
+			changed.set(this.#id, new Set([key]));
+		} else {
+			keys.add(key);
+		}
+	}
+
+	/**
 	 * @param {K} key
 	 * @returns {V | undefined}
 	 */
@@ -98,6 +202,7 @@ export class Warp {
 	 */
 	set(key, value) {
 		this.#values().set(key, value);
+		this.#touch(key);
 		return this;
 	}
 
@@ -111,6 +216,7 @@ export class Warp {
 		const values = this.#values();
 		if (values.has(key)) return /** @type {V} */ (values.get(key));
 		values.set(key, value);
+		this.#touch(key);
 		return value;
 	}
 
@@ -125,6 +231,7 @@ export class Warp {
 		if (values.has(key)) return /** @type {V} */ (values.get(key));
 		const value = callback(key);
 		values.set(key, value);
+		this.#touch(key);
 		return value;
 	}
 
@@ -133,11 +240,15 @@ export class Warp {
 	 * @returns {boolean}
 	 */
 	delete(key) {
+		// even if the key doesn't exist yet, a value for it may still arrive from the server
+		this.#touch(key);
 		return this.#values().delete(key);
 	}
 
 	clear() {
 		this.#values().clear();
+		// values that arrive later are discarded too
+		this.#touch(ALL);
 	}
 
 	/**

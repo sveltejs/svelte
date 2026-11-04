@@ -1,20 +1,26 @@
 /** @import { Component } from 'svelte' */
-/** @import { UnevalReplacer } from 'devalue' */
-/** @import { RenderContext, SSRContext, WarpStore } from './types.js' */
-/** @import { Csp, RenderOutput, SyncRenderOutput, Sha256Source } from '../../server/public.js' */
+/** @import { Session, UnevalReplacer } from 'devalue' */
+/** @import { PendingBoundary, RenderContext, SSRContext, WarpStore } from './types.js' */
+/** @import { WarpKey } from '#shared' */
+/** @import { AsyncRenderOutput, Csp, RenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { STALE_REACTION } from '../client/constants.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
-import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
-import { HYDRATION_START_FAILED } from '../../constants.js';
+import { BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
+import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
-import { with_render_context } from './render-context.js';
+import {
+	get_render_context,
+	hold_render_context,
+	with_boundary,
+	with_render_context
+} from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { has_own_property, is_array, noop } from '../shared/utils.js';
+import { deferred, has_own_property, is_array, is_native_promise, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -28,7 +34,7 @@ class RenderResult {
 	/** @type {() => AccumulatedContent} */
 	#render;
 
-	/** @type {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>} */
+	/** @type {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } } & { tail: AsyncIterable<string> }>} */
 	#render_async;
 
 	/** @type {AccumulatedContent | undefined} */
@@ -37,12 +43,12 @@ class RenderResult {
 	/** @type {{ script: '' }} */
 	#hashes = { script: '' };
 
-	/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
+	/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } } & { tail: AsyncIterable<string> }> | undefined} */
 	#promise;
 
 	/**
 	 * @param {() => AccumulatedContent} render
-	 * @param {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>} render_async
+	 * @param {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } } & { tail: AsyncIterable<string> }>} render_async
 	 */
 	constructor(render, render_async) {
 		this.#render = render;
@@ -74,7 +80,7 @@ class RenderResult {
 	 *
 	 * @template TResult1
 	 * @template [TResult2=never]
-	 * @param {(value: SyncRenderOutput) => TResult1} onfulfilled
+	 * @param {(value: AsyncRenderOutput) => TResult1} onfulfilled
 	 * @param {(reason: unknown) => TResult2} onrejected
 	 */
 	then(onfulfilled, onrejected) {
@@ -84,7 +90,8 @@ class RenderResult {
 				head: result.head,
 				body: result.body,
 				html: result.body,
-				hashes: { script: [] }
+				hashes: { script: [] },
+				tail: empty()
 			});
 			return Promise.resolve(user_result);
 		}
@@ -99,7 +106,7 @@ class RenderResult {
 			return result;
 		});
 		return this.#promise.then(
-			(result) => onfulfilled(/** @type {SyncRenderOutput} */ (result)),
+			(result) => onfulfilled(/** @type {AsyncRenderOutput} */ (result)),
 			onrejected
 		);
 	}
@@ -143,6 +150,13 @@ export class Renderer {
 	 * } | null}
 	 */
 	#boundary = null;
+
+	/**
+	 * If set, this renderer stands in for the comment that opens a pending boundary, which
+	 * contains the boundary's id, once the id has been assigned
+	 * @type {PendingBoundary | null}
+	 */
+	#boundary_marker = null;
 
 	/**
 	 * The type of string content that this renderer is accumulating.
@@ -400,6 +414,87 @@ export class Renderer {
 	}
 
 	/**
+	 * Opens a pending boundary, and runs its children in the background, discarding their output, so that
+	 * the data they need starts loading on the server. Values they add to `Warp` instances are streamed
+	 * via the `tail` (see `#collect_warp`), followed by a message that tells the client it can render
+	 * the boundary's children, once the synchronous part of the work is done. Only used with
+	 * `experimental.streaming`.
+	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
+	 */
+	background(fn) {
+		if (this.global.mode === 'sync') {
+			this.#out.push(BLOCK_OPEN_ELSE);
+			return;
+		}
+
+		// boundaries inside background work aren't in the HTML, so they don't need an id. their
+		// values are attributed to the outermost boundary, which they're already running inside
+		const nested = this.global.background === this.global;
+
+		/** @type {PendingBoundary | null} */
+		let boundary = null;
+
+		if (nested) {
+			this.#out.push(BLOCK_OPEN_ELSE);
+		} else {
+			boundary = { id: null };
+			const marker = new Renderer(this.global, this);
+			marker.#boundary_marker = boundary;
+			this.#out.push(marker);
+		}
+
+		const state = this.global.get_background();
+		const renderer = new Renderer(state, this);
+		state.background_renderers.push(renderer);
+
+		/** @type {SSRContext} */
+		const context = {
+			...ssr_context,
+			p: ssr_context,
+			c: null,
+			r: renderer,
+			i: ssr_context?.i ?? false
+		};
+
+		const previous = ssr_context;
+		set_ssr_context(context);
+
+		try {
+			const result = boundary === null ? fn(renderer) : with_boundary(boundary, () => fn(renderer));
+
+			if (result instanceof Promise) {
+				result.finally(() => set_ssr_context(null)).catch(noop);
+				renderer.promise = state.track(result);
+			}
+		} catch {
+			// the client will render the children itself, and handle the error then
+		} finally {
+			set_ssr_context(previous);
+
+			if (boundary !== null) {
+				// the values that the children read synchronously have been added by now
+				const store = get_render_context().warp;
+				store.queue.push(boundary);
+				store.late?.();
+			}
+		}
+	}
+
+	/**
+	 * Runs the `onDestroy` callbacks of the background work, once it has settled
+	 * @param {SSRState} state
+	 */
+	static async #finish_background(state) {
+		await state.settle();
+
+		for (const renderer of state.background_renderers) {
+			renderer.#run_on_destroy(true);
+		}
+
+		state.background_renderers.length = 0;
+	}
+
+	/**
 	 * Create a component renderer. The component renderer inherits the state from the parent,
 	 * but has its own content. It is treated as an ordering boundary for ondestroy callbacks.
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
@@ -557,6 +652,7 @@ export class Renderer {
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
 		copy.type = this.type;
+		copy.#boundary_marker = this.#boundary_marker;
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promise = this.promise;
 		return copy;
@@ -574,6 +670,7 @@ export class Renderer {
 		}
 
 		this.local = other.local;
+		this.#boundary_marker = other.#boundary_marker;
 		this.#out = other.#out.map((item, i) => {
 			const current = this.#out[i];
 
@@ -759,39 +856,60 @@ export class Renderer {
 	 * @param {Component<Props>} component
 	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; replacer?: UnevalReplacer }} options
 	 * @param {RenderContext} context
-	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
+	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } } & { tail: AsyncIterable<string> }>}
 	 */
 	static async #render_async(component, options, context) {
 		const previous_context = ssr_context;
 		const renderer = Renderer.#create('async', options);
-		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] } }) | undefined} */
+		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] } } & { tail: AsyncIterable<string> }) | undefined} */
 		let result;
 		let render_error;
 		let failed = false;
+		// when streaming, the work behind the streamed values may still depend on the abort signals,
+		// so they're aborted once the `tail` is done instead
+		let streaming = false;
 
 		try {
 			try {
 				Renderer.#open_render(renderer, component, options);
 				const content = await renderer.#collect_content_async();
-				const warp = await renderer.#collect_warp(context.warp, context.replacer);
-				if (warp !== null) {
-					content.head = warp + content.head;
+				const background = renderer.global.background;
+
+				if (background !== null) {
+					hold_render_context(Renderer.#finish_background(background));
 				}
-				result = Renderer.#close_render(content, renderer);
+
+				const warp = await renderer.#collect_warp(context.warp, context.replacer, background);
+
+				if (warp.head !== null) {
+					content.head = warp.head + content.head;
+				}
+
+				streaming = warp.tail !== null;
+				result = { ...Renderer.#close_render(content, renderer), tail: warp.tail ?? empty() };
 			} catch (error) {
 				render_error = error;
 				failed = true;
 				renderer.global.abort();
 				await renderer.global.settle();
+
+				const background = renderer.global.background;
+
+				if (background !== null) {
+					background.abort();
+					hold_render_context(Renderer.#finish_background(background));
+				}
 			}
 
 			renderer.#run_on_destroy(failed);
 			if (failed) throw render_error;
 
-			return /** @type {AccumulatedContent & { hashes: { script: Sha256Source[] } }} */ (result);
+			return /** @type {AccumulatedContent & { hashes: { script: Sha256Source[] } } & { tail: AsyncIterable<string> }} */ (
+				result
+			);
 		} finally {
 			set_ssr_context(previous_context);
-			renderer.global.abort();
+			if (!streaming) renderer.global.abort();
 		}
 	}
 
@@ -801,6 +919,11 @@ export class Renderer {
 	 * @returns {AccumulatedContent}
 	 */
 	#collect_content(content = { head: '', body: '' }) {
+		if (this.#boundary_marker !== null) {
+			content[this.type] += this.#open_pending_boundary(this.#boundary_marker);
+			return content;
+		}
+
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
@@ -819,6 +942,11 @@ export class Renderer {
 	 */
 	async #collect_content_async(content = { head: '', body: '' }) {
 		await this.promise;
+
+		if (this.#boundary_marker !== null) {
+			content[this.type] += this.#open_pending_boundary(this.#boundary_marker);
+			return content;
+		}
 
 		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
 		for (const item of this.#out) {
@@ -865,63 +993,104 @@ export class Renderer {
 	}
 
 	/**
-	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them
-	 * on the client, waiting for any promises inside them to settle first.
+	 * Assigns the boundary's id, in the order the HTML is put together (which, unlike the order in which
+	 * boundaries are reached, doesn't depend on timing), and returns the comment that opens it
+	 * @param {PendingBoundary} boundary
+	 */
+	#open_pending_boundary(boundary) {
+		boundary.id ??= `${this.global.id_prefix}b${this.global.boundaries++}`;
+		return `<!--${HYDRATION_START_ELSE}${boundary.id}-->`;
+	}
+
+	/**
+	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them on the client.
+	 *
+	 * The `<script>` only contains the values that were added outside pending boundaries (or used outside
+	 * them), and waits for every promise among them to settle, so that it doesn't depend on timing. When
+	 * there's background work (inside pending boundaries), the values it adds are streamed via the `tail`,
+	 * along with the values added after this, and a message for each boundary once the values that its
+	 * children read synchronously have been sent
 	 * @param {WarpStore} store
 	 * @param {UnevalReplacer | undefined} replacer
-	 * @returns {Promise<string | null>}
+	 * @param {SSRState | null} background
+	 * @returns {Promise<{ head: string | null, tail: AsyncIterable<string> | null }>}
 	 */
-	async #collect_warp(store, replacer) {
-		store.emitted = true;
-
-		if (store.values.size === 0) {
-			return null;
+	async #collect_warp(store, replacer, background) {
+		if (background !== null && this.global.csp.hash) {
+			e.invalid_csp_streaming();
 		}
 
-		/** @type {unknown} */
-		let serialization_error = null;
+		store.emitted = true;
 
-		/** @type {ReturnType<typeof devalue.unevalStream>} */
-		let stream;
+		// values from pending boundaries that the rest of the render has used are in the `head` instead
+		store.queue = store.queue.filter(
+			(message) => !Array.isArray(message) || store.owned.get(message[0])?.has(message[1])
+		);
+
+		const values = without(store.values, store.owned);
+		store.owned.clear();
+
+		if (values.size === 0 && background === null) {
+			return { head: null, tail: null };
+		}
+
+		/** Asynchronous `transformError` calls that haven't finished yet */
+		let transforms = 0;
+
+		const session = new devalue.Session({
+			// streams need a unique key, since they can overlap with other streams on the same page
+			id:
+				background === null
+					? `${this.global.id_prefix}w`
+					: `${this.global.id_prefix}w${Math.random().toString(36).slice(2, 10)}`,
+			scope: 'window.__svelte.d',
+			replacer,
+			transformError: (error) => {
+				// a promise resolved to something that can't be serialized, which `flush` reports
+				if (error instanceof devalue.DevalueError) return;
+
+				// rejected promises reject on the client too, with whatever `transformError` returns
+				const result = this.global.transformError(error);
+
+				// devalue only waits for `transformError` results that are `instanceof Promise`
+				if (result instanceof Promise) {
+					transforms += 1;
+					const done = () => (transforms -= 1);
+					result.then(done, done);
+				}
+
+				return result;
+			}
+		});
+
+		const late = background === null ? null : stream_late_values(store, session, background);
+
+		let head;
+		let blocks;
 
 		try {
-			stream = devalue.unevalStream(store.values, replacer, {
-				id: `${this.global.id_prefix}w`,
-				scope: 'window.__svelte.d',
-				transformError: (error) => {
-					// a promise resolved to something that can't be serialized
-					if (error instanceof devalue.DevalueError) {
-						serialization_error ??= error;
-						return;
-					}
+			head = session.uneval(values);
 
-					// rejected promises reject on the client too, with whatever `transformError` returns
-					return this.global.transformError(error);
+			const pending = watch_pending(values);
+
+			blocks = await take_head(
+				session,
+				() => transforms,
+				() => {
+					// this is a problem -- it means we've finished the render but we're still waiting on a promise
+					// to resolve so we can serialize it, so we're blocking the response on useless content.
+					w.unresolved_warp(describe_pending(pending));
 				}
-			});
+			);
 		} catch (error) {
+			late?.close();
 			serialization_failed(error);
 		}
 
-		const { head, tail } = stream;
-		const ready = await take_ready(tail);
-		let blocks = ready.blocks;
-
-		if (!ready.done) {
-			// this is a problem -- it means we've finished the render but we're still waiting on a promise
-			// to resolve so we can serialize it, so we're blocking the response on useless content.
-			w.unresolved_warp();
-
-			let result = await /** @type {Promise<IteratorResult<string>>} */ (ready.next);
-
-			while (!result.done) {
-				blocks += `\n\t\t\t${result.value}`;
-				result = await tail.next();
-			}
-		}
-
-		if (serialization_error !== null) {
-			serialization_failed(serialization_error);
+		if (late === null) {
+			blocks += `\n\t\t\t${session.end()}`;
+		} else {
+			late.open();
 		}
 
 		// the messages wait in `window.__svelte.d` until the client's `Warp` handles them (see `receive_warp_values`)
@@ -940,7 +1109,24 @@ export class Renderer {
 			this.global.csp.script_hashes.push(`sha256-${hash}`);
 		}
 
-		return `\n\t\t<script${csp_attr}>${body}</script>`;
+		return {
+			head: `\n\t\t<script${csp_attr}>${body}</script>`,
+			tail:
+				late === null
+					? null
+					: stream_scripts(
+							late,
+							csp_attr,
+							() => {
+								this.global.abort();
+								background?.abort();
+							},
+							() => {
+								background?.abort();
+								late.close();
+							}
+						)
+		};
 	}
 
 	/**
@@ -992,39 +1178,251 @@ export class Renderer {
 
 const MACROTASK = Symbol('macrotask');
 
+function macrotask() {
+	return new Promise((fulfil) => setTimeout(() => fulfil(MACROTASK), 0));
+}
+
+/** @returns {AsyncIterable<string>} */
+async function* empty() {}
+
 /**
- * Takes the blocks from `tail` that are ready now — i.e. the ones for promises that have already
- * settled, which `unevalStream` emits within a few microtasks — without waiting for the rest
- * @param {AsyncIterator<string>} tail
- * @returns {Promise<{ blocks: string, done: boolean, next?: Promise<IteratorResult<string>> }>}
+ * Takes the statements that settle the promises in the `head`, once they've all settled. Throws if a
+ * value can't be serialized
+ * @param {Session} session
+ * @param {() => number} transforms The number of asynchronous `transformError` calls that haven't finished
+ * @param {() => void} warn Called if the `head` is waiting on promises that hadn't settled when the render finished
+ * @returns {Promise<string>}
  */
-async function take_ready(tail) {
+async function take_head(session, transforms, warn) {
 	let blocks = '';
+	let warned = false;
 
-	/** @type {ReturnType<typeof setTimeout> | undefined} */
-	let timeout;
-	const deadline = new Promise((fulfil) => {
-		timeout = setTimeout(() => fulfil(MACROTASK), 0);
-	});
+	while (true) {
+		const { code, errors } = session.flush();
+		if (errors.length > 0) throw errors[0].error;
+		if (code !== '') blocks += `\n\t\t\t${code}`;
+		if (session.pending === 0) return blocks;
 
-	try {
-		while (true) {
-			const next = tail.next();
-			const result = await Promise.race([next, deadline]);
+		// devalue hears about promises that have already settled within a few microtasks, so if nothing
+		// has settled for a macrotask, and promises (rather than just `transformError` calls) are still
+		// pending, the render didn't wait for them
+		if (!warned && (await Promise.race([session.changed(), macrotask()])) === MACROTASK) {
+			if (session.pending > transforms()) {
+				warned = true;
+				warn();
+			}
+		}
 
-			if (result === MACROTASK) {
-				// the block this resolves to is the next one, so it must not be dropped
-				return { blocks, done: false, next };
+		await session.changed();
+	}
+}
+
+/**
+ * Streams the messages in `store.queue`: the values that were added inside pending boundaries, or after
+ * the `head` was serialized, and the boundaries whose synchronous work has finished. Until `open` is
+ * called (once the `head` is done), they're held rather than serialized, since the rest of the `head`
+ * could otherwise refer to objects that only the `tail` introduces. Each value is serialized by itself,
+ * so one that can't be serialized doesn't affect the others. No more can be added once the background
+ * work is done
+ * @param {WarpStore} store
+ * @param {Session} session
+ * @param {SSRState} background
+ */
+function stream_late_values(store, session, background) {
+	let open = false;
+	let code = '';
+	let closed = false;
+	let change = deferred();
+
+	function drain() {
+		for (const message of store.queue) {
+			if (!Array.isArray(message)) {
+				// the boundary's id is assigned when the HTML is put together. if it hasn't been, it isn't in the HTML
+				if (message.id !== null) code += session.uneval(message.id);
+				continue;
 			}
 
-			const { done, value } = /** @type {IteratorResult<string>} */ (result);
-			if (done) return { blocks, done: true };
-
-			blocks += `\n\t\t\t${value}`;
+			try {
+				code += session.uneval(message);
+			} catch (error) {
+				// the client doesn't get the value, so it will need to load it itself
+				w.warp_stream_serialization_failed(describe_error(error));
+			}
 		}
-	} finally {
-		clearTimeout(timeout);
+
+		store.queue.length = 0;
 	}
+
+	function notify() {
+		const current = change;
+		change = deferred();
+		current.resolve();
+	}
+
+	function close() {
+		if (closed) return;
+		closed = true;
+		store.late = null;
+		notify();
+	}
+
+	store.late = () => {
+		if (!open) return;
+		drain();
+		notify();
+	};
+
+	background.settle().then(close);
+
+	return {
+		session,
+		get closed() {
+			return closed;
+		},
+		open() {
+			open = true;
+			drain();
+		},
+		/** Returns the statements for the messages added since the last call */
+		take() {
+			const result = code;
+			code = '';
+			return result;
+		},
+		/** Resolves the next time a message is added, or once no more can be */
+		changed() {
+			return change.promise;
+		},
+		close
+	};
+}
+
+/**
+ * @param {ReturnType<typeof stream_late_values>} late
+ * @param {string} csp_attr
+ * @param {() => void} done Aborts the signals from `getAbortSignal`, once nothing that's streamed can depend on them
+ * @param {() => void} stop Stops the background work
+ * @returns {AsyncIterable<string>}
+ */
+function stream_scripts(late, csp_attr, done, stop) {
+	const generator = generate_scripts(late, csp_attr, done);
+
+	/** @type {AsyncIterableIterator<string>} */
+	const iterator = {
+		next: () => generator.next(),
+		// if the consumer stops early, stop the background work. this is
+		// done here because `return` doesn't run a generator that hasn't started
+		return: async () => {
+			stop();
+			done();
+			return generator.return(undefined);
+		},
+		[Symbol.asyncIterator]: () => iterator
+	};
+
+	return iterator;
+}
+
+/**
+ * Turns the values added after the `head`, and the settlements of the promises sent so far, into `<script>`
+ * tags. After something happens, this waits for a macrotask before sending it, so that server-side work which
+ * was waiting on a promise that just resolved has a chance to add the values that depend on it — otherwise,
+ * the client might not receive them before it needs them.
+ * @param {ReturnType<typeof stream_late_values>} late
+ * @param {string} csp_attr
+ * @param {() => void} done
+ * @returns {AsyncGenerator<string>}
+ */
+async function* generate_scripts(late, csp_attr, done) {
+	const { session } = late;
+
+	while (true) {
+		let code = late.take();
+
+		if (code === '') {
+			if (late.closed && session.pending === 0) break;
+
+			await Promise.race(late.closed ? [session.changed()] : [session.changed(), late.changed()]);
+			await macrotask();
+		}
+
+		const flushed = session.flush();
+
+		for (const { error } of flushed.errors) {
+			// too late to fail the render, so the promise rejects on the client with a generic error
+			w.warp_stream_serialization_failed(describe_error(error));
+		}
+
+		// the values come first, since they were serialized before the settlements
+		code += late.take() + flushed.code;
+		if (code !== '') yield `<script${csp_attr}>${code}</script>`;
+	}
+
+	// every streamed promise has settled, and nothing more can be added
+	done();
+	yield `<script${csp_attr}>${session.end()}</script>`;
+}
+
+/**
+ * Returns `values` without the keys in `omit`
+ * @param {Map<string, Map<WarpKey, unknown>>} values
+ * @param {Map<string, Set<WarpKey>>} omit
+ */
+function without(values, omit) {
+	if (omit.size === 0) return values;
+
+	/** @type {Map<string, Map<WarpKey, unknown>>} */
+	const result = new Map();
+
+	for (const [id, entries] of values) {
+		const keys = omit.get(id);
+
+		if (keys === undefined || keys.size === 0) {
+			result.set(id, entries);
+			continue;
+		}
+
+		const kept = new Map();
+		for (const [key, value] of entries) {
+			if (!keys.has(key)) kept.set(key, value);
+		}
+
+		if (kept.size > 0) result.set(id, kept);
+	}
+
+	return result;
+}
+
+/**
+ * Keeps track of which values are promises that haven't settled yet, for `unresolved_warp`
+ * @param {Map<string, Map<WarpKey, unknown>>} values
+ */
+function watch_pending(values) {
+	/** @type {Map<Promise<unknown>, string>} */
+	const pending = new Map();
+
+	for (const [id, v] of values) {
+		for (const [key, value] of v) {
+			if (!is_native_promise(value)) continue;
+
+			pending.set(value, `\`${String(key)}\` in \`${id}\``);
+			const settled = () => pending.delete(value);
+			Promise.prototype.then.call(value, settled, settled);
+		}
+	}
+
+	return pending;
+}
+
+/** @param {Map<Promise<unknown>, string>} pending */
+function describe_pending(pending) {
+	return pending.size > 0 ? ` (${[...pending.values()].join(', ')}).` : '.';
+}
+
+/** @param {unknown} error */
+function describe_error(error) {
+	const { stack, path } = /** @type {any} */ (error) ?? {};
+	return (stack ?? String(error)) + (path ? `\n(at \`${path}\`)` : '');
 }
 
 /**
@@ -1032,8 +1430,7 @@ async function take_ready(tail) {
  * @returns {never}
  */
 function serialization_failed(error) {
-	const { stack, path } = /** @type {any} */ (error) ?? {};
-	e.warp_serialization_failed((stack ?? String(error)) + (path ? `\n(at \`${path}\`)` : ''));
+	e.warp_serialization_failed(describe_error(error));
 }
 
 export class SSRState {
@@ -1049,8 +1446,23 @@ export class SSRState {
 	/** @readonly @type {string} */
 	id_prefix;
 
+	/**
+	 * The state for work started in the background by pending boundaries, if there is any
+	 * @type {SSRState | null}
+	 */
+	background = null;
+
+	/**
+	 * The renderers for work started in the background, if this is the state for that work
+	 * @type {Renderer[]}
+	 */
+	background_renderers = [];
+
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
+
+	/** The number of pending boundaries that have been given an id */
+	boundaries = 0;
 
 	/** @type {Set<Promise<unknown>>} */
 	#pending = new Set();
@@ -1139,6 +1551,23 @@ export class SSRState {
 		const controller = (this.#controller ??= new AbortController());
 		if (this.#aborted) controller.abort(STALE_REACTION);
 		return controller.signal;
+	}
+
+	/** @returns {SSRState} */
+	get_background() {
+		if (this.background === null) {
+			// background work gets its own state, so that it can't affect the rendered output,
+			// and its own id prefix, so that its ids can't clash with the rendered output's
+			this.background = new SSRState(
+				this.mode,
+				this.id_prefix + 'b',
+				this.csp,
+				this.transformError
+			);
+			this.background.background = this.background;
+		}
+
+		return this.background;
 	}
 
 	get_title() {

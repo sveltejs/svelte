@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
@@ -57,8 +57,19 @@ export function SvelteBoundary(node, context) {
 	let children_body;
 
 	if (pending_attribute || pending_snippet) {
+		// with `experimental.streaming`, the children are rendered in the background (and their output
+		// discarded), so that any data they need starts loading on the server and can be streamed to the
+		// client. `$$renderer.background` also writes the comment that opens the boundary, which has an id
+		const open = context.state.options.experimental.streaming
+			? b.stmt(b.call('$$renderer.background', b.arrow([b.id('$$renderer')], children_block)))
+			: block_open_else;
+
 		if (pending_attribute && is_pending_attr_nullish && !pending_snippet) {
-			const { callee, pending_block } = build_pending_attribute_block(pending_attribute, context);
+			const { callee, pending_block } = build_pending_attribute_block(
+				pending_attribute,
+				context,
+				open
+			);
 
 			children_body = b.block([
 				b.if(
@@ -69,8 +80,12 @@ export function SvelteBoundary(node, context) {
 			]);
 		} else {
 			children_body = pending_attribute
-				? build_pending_attribute_block(pending_attribute, context).pending_block
-				: build_pending_snippet_block(/** @type {AST.SnippetBlock} */ (pending_snippet), context);
+				? build_pending_attribute_block(pending_attribute, context, open).pending_block
+				: build_pending_snippet_block(
+						/** @type {AST.SnippetBlock} */ (pending_snippet),
+						context,
+						open
+					);
 		}
 	} else {
 		children_body = b.block(build_template([block_open, children_block, block_close]));
@@ -112,8 +127,9 @@ export function SvelteBoundary(node, context) {
 /**
  * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
+ * @param {Expression | Statement} open
  */
-function build_pending_attribute_block(attribute, context) {
+function build_pending_attribute_block(attribute, context, open) {
 	const callee = build_attribute_value(
 		attribute.value,
 		context,
@@ -125,20 +141,17 @@ function build_pending_attribute_block(attribute, context) {
 
 	return {
 		callee,
-		pending_block: b.block(build_template([block_open_else, b.stmt(pending), block_close]))
+		pending_block: b.block(build_template([open, b.stmt(pending), block_close]))
 	};
 }
 
 /**
  * @param {AST.SnippetBlock} snippet
  * @param {ComponentContext} context
+ * @param {Expression | Statement} open
  */
-function build_pending_snippet_block(snippet, context) {
+function build_pending_snippet_block(snippet, context, open) {
 	return b.block(
-		build_template([
-			block_open_else,
-			/** @type {BlockStatement} */ (context.visit(snippet.body)),
-			block_close
-		])
+		build_template([open, /** @type {BlockStatement} */ (context.visit(snippet.body)), block_close])
 	);
 }

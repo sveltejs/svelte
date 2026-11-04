@@ -1,11 +1,13 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
+import vm from 'node:vm';
 import type { Component } from 'svelte';
 import { Renderer } from './renderer.js';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
 import { withWarp } from './render-context.js';
 import { Warp } from './warp.js';
 import { hydratable } from './hydratable.js';
-import { Warp as ClientWarp, receive_warp_values } from '../client/warp.js';
+import { getAbortSignal } from './abort-signal.js';
+import { Warp as ClientWarp, receive_warp_values, wait_for_boundary } from '../client/warp.js';
 
 beforeAll(() => {
 	enable_async_mode_flag();
@@ -475,5 +477,1092 @@ describe('hydratable', () => {
 
 		expect(second).not.toHaveBeenCalled();
 		expect(revive(head)?.get('svelte:hydratable')?.get('a')).toBe(1);
+	});
+});
+
+describe('streaming', () => {
+	function delay<T>(value: T, ms = 0) {
+		return new Promise<T>((fulfil) => setTimeout(() => fulfil(value), ms));
+	}
+
+	type FakeWindow = Pick<Window, '__svelte'>;
+
+	/** Runs the `<script>`s in `html`, and has the client handle the values they push */
+	function run(window: FakeWindow, html: string) {
+		for (const script of scripts(html)) {
+			new Function('window', script)(window);
+		}
+
+		if (window.__svelte) receive_warp_values(window.__svelte);
+	}
+
+	/** Runs the head and then the tail, and returns the revived values once everything has been evaluated */
+	async function revive_streamed(head: string, tail: AsyncIterable<string>) {
+		const window: FakeWindow = {};
+		run(window, head);
+
+		// the stream registers itself until it's done
+		expect(window.__svelte?.r?.s.size).toBe(1);
+
+		const chunks: string[] = [];
+		for await (const chunk of tail) {
+			chunks.push(chunk);
+			run(window, chunk);
+		}
+
+		expect(window.__svelte?.r).toBeUndefined();
+
+		return { values: window.__svelte?.w, chunks };
+	}
+
+	test('has an empty tail without background work', async () => {
+		const { tail } = await render(() => {
+			warp.set('a', Promise.resolve(1));
+		});
+
+		const chunks = [];
+		for await (const chunk of tail) chunks.push(chunk);
+		expect(chunks).toEqual([]);
+	});
+
+	test('discards the output of background work', async () => {
+		const { body, head } = await render((renderer) => {
+			renderer.push('<p>loading</p>');
+			renderer.background(async (renderer) => {
+				await delay(null);
+				renderer.push('<p>loaded</p>');
+				renderer.title((renderer) => renderer.push('<title>nope</title>'));
+			});
+		});
+
+		expect(body).toBe('<!--[--><p>loading</p><!--[!b0--><!--]-->');
+		expect(head).not.toContain('nope');
+	});
+
+	test('waits for every promise in the head, even with background work', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		try {
+			const { head, tail } = await render((renderer) => {
+				warp.set('awaited', Promise.resolve('awaited value'));
+				warp.set('nested', Promise.resolve({ inner: delay('inner value', 10) }));
+				warp.set('unawaited', delay('unawaited value', 20));
+
+				renderer.background(async () => {
+					await delay(null, 50);
+				});
+			});
+
+			expect(head).toContain('awaited value');
+			expect(head).toContain('inner value');
+			expect(head).toContain('unawaited value');
+
+			// the render didn't wait for some of them, which held up the response
+			expect(warn).toHaveBeenCalledOnce();
+			expect(warn.mock.calls[0][0]).toContain('unresolved_warp');
+
+			await revive_streamed(head, tail);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	test('resolves awaited promises from another realm in the head', async () => {
+		const promise = vm.runInNewContext(
+			'new Promise((fulfil) => setTimeout(() => fulfil("other realm"), 20))',
+			{ setTimeout }
+		);
+
+		const { head, tail } = await render((renderer) => {
+			warp.set('promise', promise);
+			renderer.child(async () => {
+				await promise;
+			});
+			renderer.background(async () => {
+				await delay(null, 50);
+			});
+		});
+
+		expect(promise).not.toBeInstanceOf(Promise);
+		expect(head).toContain('"other realm"');
+		await revive_streamed(head, tail);
+	});
+
+	test('streams the values added by background work, however long the render takes', async () => {
+		const { head, tail } = await render((renderer) => {
+			renderer.background(async () => {
+				warp.set('resolved', Promise.resolve('resolved value'));
+				warp.set('pending', delay('pending value', 50));
+				warp.set('sync', 'sync');
+				await delay(null);
+				warp.set('after await', 'after await');
+			});
+
+			renderer.child(async () => {
+				await delay(null, 20);
+			});
+		});
+
+		expect(head).not.toContain('resolved value');
+		expect(head).not.toContain('"sync"');
+		expect(head).not.toContain('after await');
+
+		const { values } = await revive_streamed(head, tail);
+		expect(await values?.get('test')?.get('resolved')).toBe('resolved value');
+		expect(await values?.get('test')?.get('pending')).toBe('pending value');
+		expect(values?.get('test')?.get('sync')).toBe('sync');
+		expect(values?.get('test')?.get('after await')).toBe('after await');
+	});
+
+	test('puts values added by background work in the head if the render uses them', async () => {
+		const other = new Warp<string, any>('other');
+
+		const { head, tail } = await render((renderer) => {
+			renderer.background(() => {
+				warp.set('get', 'get');
+				warp.set('has', 'has');
+				warp.set('insert', 'insert');
+				warp.set('unused', 'unused');
+				other.set('iterated', 'iterated');
+			});
+
+			warp.get('get');
+			warp.has('has');
+			warp.getOrInsert('insert', 'main');
+			warp.has('missing');
+			other.forEach(() => {});
+		});
+
+		const window: FakeWindow = {};
+		run(window, head);
+		const values = window.__svelte?.w;
+		expect(values?.get('test')?.get('get')).toBe('get');
+		expect(values?.get('test')?.get('has')).toBe('has');
+		expect(values?.get('test')?.get('insert')).toBe('insert');
+		expect(values?.get('test')?.has('unused')).toBe(false);
+		expect(values?.get('other')?.get('iterated')).toBe('iterated');
+
+		for await (const chunk of tail) run(window, chunk);
+		expect(values?.get('test')?.get('unused')).toBe('unused');
+	});
+
+	test('does not move values to the head when background work uses them', async () => {
+		const { head, tail } = await render((renderer) => {
+			renderer.background(() => {
+				warp.set('a', 'a');
+			});
+
+			renderer.background(() => {
+				warp.get('a');
+			});
+		});
+
+		expect(head).not.toContain('"a"');
+		const { values } = await revive_streamed(head, tail);
+		expect(values?.get('test')?.get('a')).toBe('a');
+	});
+
+	test('resolves values added by background work in the head if the render awaits them', async () => {
+		const { head, tail } = await render((renderer) => {
+			renderer.background(() => {
+				warp.set('read', delay('read value', 10));
+				warp.set('created', delay('created value', 10));
+				warp.set('unread', delay('unread value', 50));
+			});
+
+			renderer.child(async (renderer) => {
+				renderer.push(await warp.get('read'));
+				// the render gets the background work's value, rather than creating its own
+				renderer.push(await warp.getOrInsertComputed('created', () => delay('main')));
+			});
+		});
+
+		expect(head).toContain('read value');
+		expect(head).toContain('created value');
+		expect(head).not.toContain('"main"');
+		expect(head).not.toContain('unread value');
+
+		const { values } = await revive_streamed(head, tail);
+		expect(await values?.get('test')?.get('unread')).toBe('unread value');
+	});
+
+	test('streams values added by background work after awaits in helper functions', async () => {
+		async function get_user() {
+			await delay(null);
+			return warp.getOrInsertComputed('user', () => delay({ id: 1 }, 10));
+		}
+
+		const { head, tail } = await render((renderer) => {
+			renderer.background(async () => {
+				const user = await get_user();
+				warp.set(`posts:${user.id}`, delay(['a', 'b'], 10));
+			});
+		});
+
+		expect(head).not.toContain('posts');
+
+		const { values } = await revive_streamed(head, tail);
+		expect(await values?.get('test')?.get('user')).toEqual({ id: 1 });
+		expect(await values?.get('test')?.get('posts:1')).toEqual(['a', 'b']);
+	});
+
+	test('keeps references between values in the head and values in the tail', async () => {
+		const shared = { value: 1 };
+		const promise = delay(shared, 10);
+
+		const { head, tail } = await render((renderer) => {
+			warp.set('main', shared);
+			warp.set('main:promise', promise);
+
+			renderer.background(async () => {
+				await delay(null, 20);
+				warp.set('background', { shared, promise });
+			});
+		});
+
+		const { values } = await revive_streamed(head, tail);
+		const background = values?.get('test')?.get('background') as any;
+		expect(background.shared).toBe(values?.get('test')?.get('main'));
+		expect(background.promise).toBe(values?.get('test')?.get('main:promise'));
+	});
+
+	test('adds values that depend on a promise in the same chunk that resolves it', async () => {
+		const { head, tail } = await render((renderer) => {
+			renderer.background(async () => {
+				const user = await warp.getOrInsertComputed('user', () => delay({ id: 1 }, 10));
+				warp.set(`name:${user.id}`, 'Rich');
+			});
+		});
+
+		const window: FakeWindow = {};
+		run(window, head);
+
+		let user: Promise<unknown> | undefined;
+		let found: unknown;
+
+		for await (const chunk of tail) {
+			run(window, chunk);
+
+			if (user === undefined) {
+				user = window.__svelte?.w?.get('test')?.get('user') as Promise<unknown>;
+				user.then(() => (found = window.__svelte?.w?.get('test')?.get('name:1')));
+			}
+		}
+
+		await user;
+		expect(found).toBe('Rich');
+	});
+
+	test('streams values the render adds after the head while the tail is open', async () => {
+		let promise: Promise<void> | undefined;
+
+		const { head, tail } = await render((renderer) => {
+			promise = delay(null, 10).then(() => {
+				warp.set('late', 'late');
+			});
+
+			renderer.background(async () => {
+				await delay(null, 30);
+			});
+		});
+
+		const { values } = await revive_streamed(head, tail);
+		await promise;
+		expect(values?.get('test')?.get('late')).toBe('late');
+	});
+
+	test('cannot add values after the background work is done', async () => {
+		let promise: Promise<void> | undefined;
+
+		const { tail } = await render((renderer) => {
+			renderer.background(async () => {
+				await delay(null);
+			});
+
+			promise = delay(null, 20).then(() => {
+				warp.set('a', 1);
+			});
+		});
+
+		for await (const _ of tail);
+
+		await expect(promise).rejects.toThrow('warp_set_after_render');
+	});
+
+	test('skips streamed values that cannot be serialized, without breaking the rest of the stream', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		try {
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async () => {
+					await delay(null, 10);
+					warp.set('before', 'before');
+					warp.set('bad', { fn: () => {} });
+					warp.set('same-batch', 'same-batch');
+
+					await delay(null, 10);
+					warp.set('later', 'later');
+				});
+			});
+
+			const { values } = await revive_streamed(head, tail);
+			expect(values?.get('test')?.has('bad')).toBe(false);
+			expect(values?.get('test')?.get('before')).toBe('before');
+			expect(values?.get('test')?.get('same-batch')).toBe('same-batch');
+			expect(values?.get('test')?.get('later')).toBe('later');
+
+			expect(warn).toHaveBeenCalledOnce();
+			expect(warn.mock.calls[0][0]).toContain('warp_stream_serialization_failed');
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	test('skips values added by background work before the head that cannot be serialized', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		try {
+			const { head, tail } = await render((renderer) => {
+				renderer.background(() => {
+					warp.set('bad', { fn: () => {} });
+					warp.set('good', 'good');
+				});
+			});
+
+			const { values } = await revive_streamed(head, tail);
+			expect(values?.get('test')?.has('bad')).toBe(false);
+			expect(values?.get('test')?.get('good')).toBe('good');
+			expect(warn.mock.calls[0][0]).toContain('warp_stream_serialization_failed');
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	test('rejects streamed promises that resolve to something that cannot be serialized', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		try {
+			const { head, tail } = await render((renderer) => {
+				renderer.background(() => {
+					warp.set('bad', delay({ fn: () => {} }, 10));
+					warp.set('good', delay('good', 20));
+				});
+			});
+
+			const { values } = await revive_streamed(head, tail);
+			await expect(values?.get('test')?.get('bad')).rejects.toThrow();
+			expect(await values?.get('test')?.get('good')).toBe('good');
+			expect(warn.mock.calls[0][0]).toContain('warp_stream_serialization_failed');
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	test('fails the render if a value in the head cannot be serialized', async () => {
+		await expect(
+			render((renderer) => {
+				warp.set('bad', delay({ fn: () => {} }));
+				renderer.background(() => {});
+			})
+		).rejects.toThrow('warp_serialization_failed');
+	});
+
+	test('rejects promises with the result of transformError, in the head and in the tail', async () => {
+		const { head, tail } = await render(
+			(renderer) => {
+				const main = Promise.reject(new Error('main'));
+				main.catch(() => {});
+				warp.set('main', main);
+
+				renderer.background(() => {
+					warp.set(
+						'background',
+						delay(null, 50).then(() => {
+							throw new Error('background');
+						})
+					);
+				});
+			},
+			{
+				transformError: async (error) => {
+					await delay(null, 10);
+					return { message: (error as Error).message.toUpperCase() };
+				}
+			}
+		);
+
+		expect(head).toContain('"MAIN"');
+		expect(head).not.toContain('"BACKGROUND"');
+
+		const { values } = await revive_streamed(head, tail);
+		await expect(values?.get('test')?.get('main')).rejects.toEqual({ message: 'MAIN' });
+		await expect(values?.get('test')?.get('background')).rejects.toEqual({ message: 'BACKGROUND' });
+	});
+
+	test('gives background work its own ids', async () => {
+		let ids: string[] = [];
+
+		await render((renderer) => {
+			ids.push(renderer.global.uid());
+			renderer.background((renderer) => {
+				ids.push(renderer.global.uid());
+			});
+		});
+
+		expect(ids[0]).not.toBe(ids[1]);
+	});
+
+	test('stops background work if the tail is abandoned', async () => {
+		let signal: AbortSignal | undefined;
+		let destroyed = false;
+		let finish = () => {};
+
+		const { tail } = await render((renderer) => {
+			renderer.background((renderer) => {
+				renderer.component((renderer) => {
+					signal = getAbortSignal();
+					renderer.on_destroy(() => (destroyed = true));
+					warp.set('never', new Promise(() => {}));
+					return new Promise<void>((fulfil) => (finish = fulfil));
+				});
+			});
+		});
+
+		const iterator = tail[Symbol.asyncIterator]();
+		expect(signal?.aborted).toBe(false);
+		await iterator.return?.();
+		expect(signal?.aborted).toBe(true);
+
+		// `onDestroy` waits until the background work has settled
+		await delay(null);
+		expect(destroyed).toBe(false);
+		finish();
+		await delay(null);
+		expect(destroyed).toBe(true);
+	});
+
+	test('does not abort signals until the tail is done', async () => {
+		let main: AbortSignal | undefined;
+		let background: AbortSignal | undefined;
+
+		const { tail } = await render((renderer) => {
+			main = getAbortSignal();
+
+			renderer.background(async (renderer) => {
+				renderer.component(() => {
+					background = getAbortSignal();
+					// not awaited, so the background work settles before it does
+					warp.set('background', delay('background', 50));
+				});
+				await delay(null, 20);
+			});
+		});
+
+		expect(main?.aborted).toBe(false);
+		expect(background?.aborted).toBe(false);
+
+		const iterator = tail[Symbol.asyncIterator]();
+		let result = await iterator.next();
+		let chunks = 0;
+
+		while (!result.done) {
+			chunks += 1;
+
+			// the last chunk is only generated once every streamed promise has settled
+			if (!result.value.includes('return 1}')) {
+				expect(main?.aborted).toBe(false);
+				expect(background?.aborted).toBe(false);
+			}
+
+			result = await iterator.next();
+		}
+
+		expect(chunks).toBeGreaterThan(0);
+		expect(main?.aborted).toBe(true);
+		expect(background?.aborted).toBe(true);
+	});
+
+	test('aborts signals right away without background work', async () => {
+		let main: AbortSignal | undefined;
+
+		await render(() => {
+			main = getAbortSignal();
+		});
+
+		expect(main?.aborted).toBe(true);
+	});
+
+	test('does not mix up the client state of concurrent streams', async () => {
+		const render_one = (value: string) =>
+			render((renderer) => {
+				renderer.background(async () => {
+					await delay(null, 10);
+					warp.set(value, delay(value, 10));
+				});
+			});
+
+		// same (default) `idPrefix`, evaluated on the same page while both are streaming
+		const [a, b] = await Promise.all([render_one('a'), render_one('b')]);
+
+		const window: FakeWindow = {};
+		run(window, a.head);
+		run(window, b.head);
+		expect(window.__svelte?.r?.s.size).toBe(2);
+
+		const drain = async (tail: AsyncIterable<string>) => {
+			for await (const chunk of tail) run(window, chunk);
+		};
+
+		await Promise.all([drain(a.tail), drain(b.tail)]);
+
+		expect(await window.__svelte?.w?.get('test')?.get('a')).toBe('a');
+		expect(await window.__svelte?.w?.get('test')?.get('b')).toBe('b');
+		expect(window.__svelte?.r).toBeUndefined();
+	});
+
+	test('cannot be used with csp.hash', async () => {
+		await expect(
+			render(
+				(renderer) => {
+					renderer.background(() => {});
+				},
+				{ csp: { hash: true } }
+			)
+		).rejects.toThrow('invalid_csp_streaming');
+	});
+
+	test('adds the nonce to streamed scripts', async () => {
+		const { tail } = await render(
+			(renderer) => {
+				renderer.background(() => {
+					warp.set('a', delay(1));
+				});
+			},
+			{ csp: { nonce: 'xyz' } }
+		);
+
+		for await (const chunk of tail) {
+			expect(chunk.startsWith('<script nonce="xyz">')).toBe(true);
+		}
+	});
+
+	describe('pending boundaries', () => {
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		test('get ids in document order, whatever order they are reached in', async () => {
+			const { body } = await render((renderer) => {
+				renderer.child(async (renderer) => {
+					await delay(null, 20);
+					renderer.push('<p>first</p>');
+					renderer.background(() => {});
+				});
+
+				renderer.child(async (renderer) => {
+					await delay(null);
+					renderer.push('<p>second</p>');
+					renderer.background(() => {});
+				});
+			});
+
+			expect(body).toBe('<!--[--><p>first</p><!--[!b0--><p>second</p><!--[!b1--><!--]-->');
+		});
+
+		test('include the id prefix in their ids', async () => {
+			const { body } = await render((renderer) => renderer.background(() => {}), {
+				idPrefix: 'app'
+			});
+
+			expect(body).toContain('<!--[!app-b0-->');
+		});
+
+		test('do not get ids in a synchronous render', () => {
+			const { body } = Renderer.render(
+				as_component((renderer) => {
+					renderer.background(() => {
+						throw new Error('should not run');
+					});
+				})
+			);
+
+			expect(body).toBe('<!--[--><!--[!--><!--]-->');
+		});
+
+		test('are ready once the values their children read synchronously have arrived', async () => {
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+
+			const { head, tail } = await render((renderer) => {
+				renderer.child(async (renderer) => {
+					await delay(null, 20);
+					renderer.background(() => {
+						warp.set('first', 'first');
+					});
+				});
+
+				renderer.background(async (renderer) => {
+					warp.set('second', 'second');
+
+					// nested boundaries don't get their own ids, and their values belong to the outer boundary
+					renderer.background(() => {
+						warp.set('nested', 'nested');
+					});
+
+					await delay(null, 10);
+					warp.set('after await', 'after await');
+				});
+			});
+
+			run(window, head);
+
+			const seen: Record<string, unknown[]> = {};
+			for (const id of ['b0', 'b1']) {
+				wait_for_boundary(id, () => {
+					seen[id] = [...(window.__svelte?.w?.get('test')?.keys() ?? [])];
+				});
+			}
+
+			for await (const chunk of tail) run(window, chunk);
+
+			// `b0` is first in the document, but its work is reached later
+			expect(seen).toEqual({
+				b0: ['second', 'nested', 'after await', 'first'],
+				b1: ['second', 'nested']
+			});
+		});
+
+		test('are ready straight away if their message arrived before they hydrated', async () => {
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async () => {
+					await delay(null, 10);
+				});
+			});
+
+			run(window, head);
+			const iterator = tail[Symbol.asyncIterator]();
+			run(window, (await iterator.next()).value);
+			expect(window.__svelte?.r).toBeDefined();
+
+			let ready = false;
+			wait_for_boundary('b0', () => (ready = true));
+			expect(ready).toBe(true);
+			expect(window.__svelte?.b?.has('b0')).toBe(false);
+
+			await iterator.return?.();
+		});
+
+		test('are ready straight away if nothing is streaming in', async () => {
+			let ready = false;
+
+			vi.stubGlobal('window', {});
+			wait_for_boundary('b0', () => (ready = true));
+			expect(ready).toBe(true);
+
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+			run(window, (await render(() => warp.set('a', 1))).head);
+
+			ready = false;
+			wait_for_boundary('b0', () => (ready = true));
+			expect(ready).toBe(true);
+		});
+
+		test('are released when no streams are in progress, even without their message', async () => {
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async () => {
+					await delay(null, 10);
+				});
+			});
+
+			run(window, head);
+
+			let released = false;
+			wait_for_boundary('unknown', () => (released = true));
+			expect(released).toBe(false);
+
+			for await (const chunk of tail) run(window, chunk);
+			expect(released).toBe(true);
+			expect(window.__svelte?.b).toBeUndefined();
+		});
+
+		test('stay pending if the stream never finishes', async () => {
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async () => {
+					await delay(null, 10);
+				});
+			});
+
+			run(window, head);
+
+			let ready = false;
+			wait_for_boundary('b0', () => (ready = true));
+
+			// e.g. the connection dropped before the tail was sent
+			await tail[Symbol.asyncIterator]().return?.();
+			await delay(null, 20);
+			expect(ready).toBe(false);
+		});
+	});
+
+	describe('client changes', () => {
+		const client = new ClientWarp<string, any>('test');
+		const other_client = new ClientWarp<string, any>('other');
+		const other = new Warp<string, any>('other');
+
+		/**
+		 * Runs the head and the tail against a shared fake `window`, which the client `Warp`s also use,
+		 * calling `change` after the head (i.e. while values are still streaming in)
+		 */
+		async function stream_to_client(
+			{ head, tail }: { head: string; tail: AsyncIterable<string> },
+			change: () => void
+		) {
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+
+			run(window, head);
+			change();
+
+			for await (const chunk of tail) run(window, chunk);
+
+			expect(window.__svelte?.r).toBeUndefined();
+		}
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		test('are not overwritten by values streamed in later', async () => {
+			let a: unknown;
+
+			await stream_to_client(
+				await render((renderer) => {
+					warp.set('a', 1);
+					renderer.background(async () => {
+						await delay(null, 10);
+						warp.set('a2', 'server');
+						warp.set('b', 'server');
+						warp.set('c', 'server');
+						warp.set('d', 'server');
+					});
+				}),
+				() => {
+					client.set('b', 'client');
+					client.delete('c');
+					a = client.getOrInsertComputed('d', () => 'client');
+				}
+			);
+
+			expect(a).toBe('client');
+			expect([...client]).toEqual([
+				['a', 1],
+				['b', 'client'],
+				['d', 'client'],
+				['a2', 'server']
+			]);
+		});
+
+		test('are not overwritten for keys that devalue encodes differently', async () => {
+			// long strings are deduplicated into devalue's table
+			const long = 'x'.repeat(300);
+			const keys = [long, 10n, -0, NaN, true];
+			const mixed = new ClientWarp<any, any>('mixed');
+			const server = new Warp<any, any>('mixed');
+
+			await stream_to_client(
+				await render((renderer) => {
+					server.set(long + '!', long);
+					renderer.background(async () => {
+						await delay(null, 10);
+						for (const key of keys) server.set(key, 'server');
+					});
+				}),
+				() => {
+					for (const key of keys) mixed.set(key, 'client');
+				}
+			);
+
+			for (const key of keys) expect(mixed.get(key)).toBe('client');
+			expect(mixed.get(0)).toBe('client');
+			expect(mixed.size).toBe(keys.length + 1);
+		});
+
+		test('hide everything streamed in after a clear', async () => {
+			await stream_to_client(
+				await render((renderer) => {
+					warp.set('a', 1);
+					other.set('a', 1);
+					renderer.background(async () => {
+						await delay(null, 10);
+						warp.set('b', 'server');
+						other.set('b', 'server');
+					});
+				}),
+				() => {
+					client.clear();
+					client.set('c', 'client');
+				}
+			);
+
+			expect([...client]).toEqual([['c', 'client']]);
+			expect([...other_client]).toEqual([
+				['a', 1],
+				['b', 'server']
+			]);
+		});
+
+		test('do not break references to streamed values that were discarded', async () => {
+			const shared = { child: { value: 1 } };
+			const discarded = { value: 'discarded' };
+
+			await stream_to_client(
+				await render((renderer) => {
+					renderer.background(async () => {
+						await delay(null, 10);
+						// discarded on the client, because it changed these keys
+						warp.set('touched', shared);
+						other.set('cleared', discarded);
+						// in the same batch
+						warp.set('same-batch', shared.child);
+
+						await delay(null, 20);
+						// in a later batch
+						warp.set('later', [shared, discarded]);
+					});
+				}),
+				() => {
+					client.set('touched', 'client');
+					other_client.clear();
+				}
+			);
+
+			expect(client.get('touched')).toBe('client');
+			expect(other_client.has('cleared')).toBe(false);
+
+			const [s, d] = client.get('later');
+			expect(s).toEqual(shared);
+			expect(d).toEqual(discarded);
+			expect(client.get('same-batch')).toBe(s.child);
+		});
+
+		test('are not recorded once the stream has finished', async () => {
+			await stream_to_client(
+				await render((renderer) => {
+					renderer.background(() => {});
+				}),
+				() => {}
+			);
+
+			client.set('after', 'client');
+			expect(window.__svelte?.r).toBeUndefined();
+		});
+
+		test('are respected by streams inserted after the document has loaded', async () => {
+			// e.g. an island whose HTML is fetched and inserted once the page has loaded
+			vi.stubGlobal('document', { readyState: 'complete' });
+
+			await stream_to_client(
+				await render((renderer) => {
+					renderer.background(async () => {
+						await delay(null, 10);
+						warp.set('a', 'server');
+					});
+				}),
+				() => {
+					client.set('a', 'client');
+				}
+			);
+
+			expect(client.get('a')).toBe('client');
+		});
+
+		test('leave the promises of a stream that never finishes pending', async () => {
+			const { head, tail } = await render((renderer) => {
+				renderer.background(() => {
+					warp.set('a', delay('a', 10));
+				});
+			});
+
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+			run(window, head);
+
+			// e.g. the connection dropped after the first chunk
+			const iterator = tail[Symbol.asyncIterator]();
+			run(window, (await iterator.next()).value);
+			await iterator.return?.();
+
+			let settled = false;
+			(window.__svelte?.w?.get('test')?.get('a') as Promise<unknown>).finally(
+				() => (settled = true)
+			);
+			await delay(null, 20);
+			expect(settled).toBe(false);
+
+			// the stream is still considered in progress, so client changes are still recorded
+			client.set('b', 'client');
+			expect(window.__svelte?.r?.c.get('test')).toEqual(new Set(['b']));
+		});
+
+		test('apply to every stream until none are in progress', async () => {
+			const stream = (value: string, ms: number) =>
+				render((renderer) => {
+					renderer.background(async () => {
+						await delay(null, ms);
+						warp.set('a', value);
+						warp.set(value, value);
+					});
+				});
+
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+
+			const first = await stream('first', 10);
+			run(window, first.head);
+			client.set('a', 'client');
+
+			// starts after the change, but while the first stream is still in progress
+			const second = await stream('second', 30);
+			run(window, second.head);
+
+			for await (const chunk of first.tail) run(window, chunk);
+			expect(client.get('first')).toBe('first');
+			expect(window.__svelte?.r?.s.size).toBe(1);
+
+			for await (const chunk of second.tail) run(window, chunk);
+			expect(client.get('second')).toBe('second');
+			expect(client.get('a')).toBe('client');
+			expect(window.__svelte?.r).toBeUndefined();
+
+			// nothing is streaming, so the change is forgotten
+			const third = await stream('third', 0);
+			run(window, third.head);
+			for await (const chunk of third.tail) run(window, chunk);
+			expect(client.get('a')).toBe('third');
+		});
+	});
+
+	describe('in WebContainers', () => {
+		// eslint-disable-next-line n/prefer-global/process
+		const versions = process.versions as Record<string, string | undefined>;
+
+		beforeAll(() => {
+			versions.webcontainer = '1';
+		});
+
+		afterAll(() => {
+			delete versions.webcontainer;
+		});
+
+		test('runs the background work alongside the render, and streams its later values', async () => {
+			const events: string[] = [];
+
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async () => {
+					events.push('background');
+
+					warp.set('sync', 'sync');
+					await delay(null, 10);
+					warp.set('during', 'during');
+					await delay(null, 30);
+					warp.set('later', 'later');
+				});
+
+				events.push('main');
+				renderer.child(async () => {
+					await delay(null, 20);
+					warp.set('main', 'main');
+				});
+			});
+
+			expect(events).toEqual(['background', 'main']);
+
+			const window: FakeWindow = {};
+			run(window, head);
+
+			// without `AsyncLocalStorage`, only the values that the background work adds synchronously
+			// are known to come from it, so the others are in the head if they're added in time
+			const values = window.__svelte?.w?.get('test');
+			expect(values?.get('main')).toBe('main');
+			expect(values?.has('sync')).toBe(false);
+			expect(values?.get('during')).toBe('during');
+			expect(values?.has('later')).toBe(false);
+
+			for await (const chunk of tail) run(window, chunk);
+
+			expect(values?.get('sync')).toBe('sync');
+			expect(values?.get('later')).toBe('later');
+			expect(window.__svelte?.r).toBeUndefined();
+		});
+
+		test('runs nested background work straight away', async () => {
+			const { head, tail } = await render((renderer) => {
+				renderer.background(async (renderer) => {
+					await delay(null);
+					renderer.background(async () => {
+						await delay(null);
+						warp.set('nested', 'nested');
+					});
+				});
+			});
+
+			const { values } = await revive_streamed(head, tail);
+			expect(values?.get('test')?.get('nested')).toBe('nested');
+		});
+
+		test('queues the next render until the background work is done', async () => {
+			const events: string[] = [];
+
+			const first = await render((renderer) => {
+				renderer.background(async () => {
+					await delay(null, 20);
+					warp.set('a', 'first');
+					events.push('first background');
+				});
+			});
+
+			const second = await render(() => {
+				events.push('second');
+				warp.set('a', 'second');
+			});
+
+			expect(events).toEqual(['first background', 'second']);
+
+			const { values } = await revive_streamed(first.head, first.tail);
+			expect(values?.get('test')?.get('a')).toBe('first');
+			expect(revive(second.head)?.get('test')?.get('a')).toBe('second');
+		});
+
+		test('does not hold up the next render if the render fails', async () => {
+			let signal: AbortSignal | undefined;
+
+			await expect(
+				render((renderer) => {
+					renderer.background(async () => {
+						signal = getAbortSignal();
+						await delay(null, 10);
+					});
+
+					warp.set('bad', () => {});
+				})
+			).rejects.toThrow('warp_serialization_failed');
+
+			const { head } = await render(() => {
+				warp.set('a', 'a');
+			});
+
+			expect(signal?.aborted).toBe(true);
+			expect(revive(head)?.get('test')?.get('a')).toBe('a');
+		});
 	});
 });

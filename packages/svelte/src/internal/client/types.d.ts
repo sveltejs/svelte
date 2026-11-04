@@ -13,6 +13,25 @@ declare global {
 			 * the client handles it, and devalue's queue after that
 			 */
 			d?: unknown;
+			/**
+			 * Only exists while `Warp` values are streaming in. If a stream never finishes
+			 * (e.g. the connection dropped), it stays, and that stream's promises stay pending
+			 */
+			r?: {
+				/** The keys of the streams that are in progress */
+				s: Set<string>;
+				/**
+				 * The keys that the client has changed in each `Warp` while values were streaming in, keyed by
+				 * the `Warp`'s id, or `true` if the `Warp` was cleared. Values streamed in for these keys (by
+				 * any stream) are discarded, so they can't overwrite the changes
+				 */
+				c: Map<string, Set<WarpKey> | true>;
+			};
+			/**
+			 * Only exists while `Warp` values are streaming in. The pending boundaries that the server has said can
+			 * render their children (`true`), and the boundaries that are waiting to (their callback), keyed by id
+			 */
+			b?: Map<string, true | (() => void)>;
 		};
 	}
 }
