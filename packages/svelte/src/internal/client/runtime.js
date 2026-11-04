@@ -1230,7 +1230,12 @@ function teardown_view(signal) {
 	var holds = assigned || dv !== null;
 	var length = dv?.length ?? deps.length;
 
-	held ??= { v: derived.v, wv: derived.wv, e: (derived.f & ERROR_VALUE) !== 0, assigned: (derived.f & ASSIGNED) !== 0 };
+	held ??= {
+		v: derived.v,
+		wv: derived.wv,
+		e: (derived.f & ERROR_VALUE) !== 0,
+		assigned: (derived.f & ASSIGNED) !== 0
+	};
 
 	for (var i = 0; holds && i < length; i++) {
 		var version = teardown_version_of(deps[i]);
