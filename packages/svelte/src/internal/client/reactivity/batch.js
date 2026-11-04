@@ -638,6 +638,7 @@ export class Batch {
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
 			this.#commit();
+			if (this.linked && this.prev !== null) this.#move_to_front();
 		}
 
 		if (next_batch !== null) {
@@ -762,12 +763,6 @@ export class Batch {
 			if (batch.current.has(source)) return true;
 		}
 
-		// A batch that committed (and is still linked because of pending work inside a pending boundary) didn't
-		// intersect with `batch` when it committed, else it would have been merged into it. So its runs didn't see
-		// the writes of `batch`, and its view must stay the real world's (see `#commit`). Its runs that `batch` ran,
-		// too, are superseded once `batch` commits (see `#release_records`), and mustn't supersede those of `batch`
-		if (this.committed) return false;
-
 		for (const effect of this.async_deriveds.keys()) {
 			// For this batch, the entry can also be a write's mark (`null`, see `mark`): this is checked
 			// in `activate`, before traversal determines whether the expression actually re-runs (it may not, e.g.
@@ -791,8 +786,6 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	#fold(effect) {
-		if (this.committed) return false;
-
 		for (let batch = this.prev; batch !== null; batch = batch.prev) {
 			if (!batch.is_fork && batch.async_deriveds.get(effect) && !this.folded.includes(batch)) {
 				// the batches intersect from now on (a run that follows replaces the mark)
@@ -888,12 +881,7 @@ export class Batch {
 	 */
 	capture(source, value, same, error = false, updated_during_traversal = null) {
 		var previous = this.previous.get(source);
-
-		var later = this.next;
-
-		while (later !== null && (later.is_fork || !later.current.has(source))) {
-			later = later.next;
-		}
+		var later = later_writer(this, source);
 
 		if (previous === undefined) {
 			// the value before this batch's change is the one before the later batch's change, if any
@@ -944,6 +932,9 @@ export class Batch {
 			apply(source, entry);
 		}
 
+		// in order, this batch's change comes before that of the later batch, which replaces it
+		if (!this.is_fork && later !== null) later.previous.set(source, entry);
+
 		// A value that equals the real one, with the same version, changes nothing that reactions
 		// could read outside this batch's view — which is revalidated when the batch is processed
 		if (!same) {
@@ -956,6 +947,19 @@ export class Batch {
 				flush_eager_effects();
 			}
 		}
+	}
+
+	/**
+	 * Write the result of this batch's own run of an async expression or `{#await}` block. A later batch's
+	 * write doesn't overwrite it (see `#commit`): the run is re-validated in this batch's view instead
+	 * @param {Source} source
+	 * @param {any} value
+	 * @param {boolean} [error]
+	 */
+	capture_result(source, value, error = false) {
+		var same = !error && source.equals(value) && (source.f & ERROR_VALUE) === 0;
+		this.capture(source, value, same, error);
+		/** @type {BatchValue} */ (this.current.get(source)).result = true;
 	}
 
 	deactivate() {
@@ -1033,12 +1037,12 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v) {
+					if (is_earlier && entry.v !== own.v && !own.result) {
 						// bring the value up to date
 						batch.current.set(source, entry);
 					} else {
-						// same value or later batch has more recent value,
-						// no need to re-run these effects
+						// same value, later batch has more recent value, or the batch's own result
+						// of an async expression — no need to re-run these effects
 						continue;
 					}
 				}
@@ -1404,26 +1408,32 @@ export class Batch {
 		this.records = null;
 		for (const [reaction, record] of records) {
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
-				if (commit) {
-					promote_record(reaction, record);
-
-					// The committed run is now what applies in the view of every batch without a run of the async
-					// effect of its own (typically because the batch committed while its run was pending, inside a
-					// pending boundary). Their in-flight runs are superseded: their results would overwrite this one
-					// TODO feels pretty hacky and indication of an X-Y problem: This only works because !b.records?.has(reaction)
-					// means "this would re-use the real world result, i.e. the one we just committed, so we can reject this old run".
-					if ((reaction.f & ASYNC) !== 0) {
-						for (let b = first_batch; b !== null; b = b.next) {
-							if (b !== this && !b.records?.has(reaction)) {
-								b.async_deriveds.get(/** @type {Effect} */ (reaction))?.reject(OBSOLETE);
-							}
-						}
-					}
-				}
+				if (commit) promote_record(reaction, record);
 
 				prune_edges(reaction);
 			}
 		}
+	}
+
+	/**
+	 * A batch that committed while work inside a pending boundary was in flight stays linked, so that the results
+	 * arrive in it. Its writes are the real world now, part of every other batch's view, so it comes first from now
+	 * on. Its runs didn't see the writes of the batches that haven't committed — the runs of those batches see its
+	 * writes, though. So, like for any earlier batch, a later batch that re-runs one of its expressions intersects
+	 * with it, and its run supersedes the batch's once it's merged into it (see `#intersects`, `#merge`)
+	 */
+	#move_to_front() {
+		var prev = /** @type {Batch} */ (this.prev);
+		var first = /** @type {Batch} */ (first_batch);
+
+		prev.next = this.next;
+		if (this.next === null) last_batch = prev;
+		else this.next.prev = prev;
+
+		this.prev = null;
+		this.next = first;
+		first.prev = first_batch = this;
+		this.id = first.id - 1;
 	}
 
 	#unlink() {
@@ -1621,6 +1631,22 @@ function flush_queued_effects(effects, earlier_writes = null) {
 
 	eager_block_effects = null;
 	return earlier_writes;
+}
+
+/**
+ * The next batch after `batch` that wrote `source`, if any. Its write comes after one of `batch` in order, so
+ * that one isn't the real-world value. Forks are skipped: their writes only exist in their own view of the world
+ * @param {Batch} batch
+ * @param {Value} source
+ */
+function later_writer(batch, source) {
+	var later = batch.next;
+
+	while (later !== null && (later.is_fork || !later.current.has(source))) {
+		later = later.next;
+	}
+
+	return later;
 }
 
 /**
@@ -1825,16 +1851,21 @@ export function fork(fn) {
 			}
 
 			committed = true;
-
 			batch.is_fork = false;
 
 			// Apply the changes to the real world. They keep the versions they had in the fork,
 			// so that everything the fork computed remains valid (processing the batch
 			// re-validates everything that depends on them, see `#process`)
-			for (var [source, entry] of batch.current) {
-				batch.mark(source, MAYBE_DIRTY);
+			for (const [source, entry] of batch.current) {
+				const later = later_writer(batch, source);
 
-				apply(source, entry);
+				if (later !== null) {
+					// in order, the fork's write comes before the later batch's, which replaces it
+					later.previous.set(source, entry);
+				} else {
+					batch.mark(source, MAYBE_DIRTY);
+					apply(source, entry);
+				}
 			}
 
 			if (eager_effects.size > 0) {

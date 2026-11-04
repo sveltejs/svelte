@@ -362,7 +362,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 function abort_replaced(reaction, batch) {
 	var controllers = /** @type {Map<Batch | null, AbortController>} */ (reaction.ac);
 	// only abort reruns of other batches if this is a real-world run
-	var replaces = batch === null || (!batch.is_fork && !batch.committed);
+	var replaces = batch === null || !batch.is_fork;
 
 	for (const [b, controller] of controllers) {
 		if (
@@ -370,7 +370,6 @@ function abort_replaced(reaction, batch) {
 			b === batch ||
 			(replaces &&
 				(b === null ||
-					b.committed ||
 					(!b.linked && b.merged === null) ||
 					// forks stay independent, only abort runs of earlier batches
 					(batch !== null && !b.is_fork && b.id < batch.id)))

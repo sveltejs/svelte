@@ -11,8 +11,7 @@ import {
 	REACTION_RAN,
 	INERT,
 	CONNECTED,
-	ASSIGNED,
-	ERROR_VALUE
+	ASSIGNED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -271,8 +270,6 @@ export function async_derived(fn, label, location) {
 				decrement_pending?.();
 			}
 
-			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-
 			if (DEV && !error && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
 
@@ -285,7 +282,7 @@ export function async_derived(fn, label, location) {
 			}
 
 			// write the result in the batch's view of the world
-			target.capture(signal, error ?? value, same, !!error);
+			target.capture_result(signal, error ?? value, !!error);
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));

@@ -4,9 +4,10 @@ import { test } from '../../test';
 const buttons =
 	'<button>fork</button><button>a = 2, b = 1</button><button>p = F</button><button>p = A</button><button>resolve b</button><button>commit</button>';
 
-// Committing a fork writes its values to the real world, even where a later batch has its own entry. When
-// that batch then re-runs the async expression and it resolves to the batch's own (now outdated) value
-// again, the result must still be applied, rather than being dropped as unchanged
+// A later batch writes `a` after the fork did, and its run of the expression resolves (to A) before the
+// fork is committed. The later batch's write and result come after the fork's, so they stay the real-world
+// values: the fork commits its own view (`a = 1`, F), and the later batch keeps its own `a = 2` and result,
+// and commits them once it's done
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {
@@ -35,14 +36,9 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>F</p><i>b0</i><span>1|0</span>`);
 
-		// the later batch re-runs the expression...
+		// the later batch is done
 		rb.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>F</p><i>b0</i><span>1|0</span>`);
-
-		// ...which resolves to A again
-		pA.click();
-		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>A</p><i>b1</i><span>1|1</span>`);
+		assert.htmlEqual(target.innerHTML, `${buttons}<p>A</p><i>b1</i><span>2|1</span>`);
 	}
 });
