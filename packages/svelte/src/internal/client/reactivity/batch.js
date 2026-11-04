@@ -1625,7 +1625,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 
 /**
  * Make a write the real-world value of `source`. A write to a derived is an assignment, whose
- * value holds until one of the derived's dependencies is written after it (see `unchanged_since`)
+ * value holds until one of the derived's dependencies is written after it (see `changed_since`)
  * @param {Value} source
  * @param {BatchValue} entry
  */
