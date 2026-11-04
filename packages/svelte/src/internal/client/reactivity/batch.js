@@ -925,7 +925,9 @@ export class Batch {
 		var entry = {
 			v: value,
 			wv: same ? source.wv : increment_write_version(),
-			e: error
+			e: error,
+			// a write to a derived is an assignment
+			assigned: (source.f & DERIVED) !== 0
 		};
 
 		this.current.set(source, entry);

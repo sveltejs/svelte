@@ -85,7 +85,7 @@ export function set_is_destroying_effect(value, version = write_version) {
  * `teardown_view` takes it right after `execute_derived`
  * @type {BatchValue}
  */
-let teardown_run = { v: undefined, wv: 0 };
+let teardown_run = { v: undefined, wv: 0, e: false, assigned: false };
 
 /** @type {null | Reaction} */
 export let active_reaction = null;
@@ -505,7 +505,7 @@ function update_dependencies(reaction, flags, value, error) {
 			wv = Math.max(wv, teardown_version_of(dep));
 		}
 
-		teardown_run = { v: value, wv, e: error };
+		teardown_run = { v: value, wv, e: error, assigned: (flags & ASSIGNED) !== 0 };
 		return length;
 	}
 
@@ -1263,14 +1263,19 @@ function teardown_view(signal) {
 	// A value written to the derived — reverted, or the active view's — holds if it was assigned, like in `get_view`:
 	// the value from before an assignment may have been computed, with values that the teardown reverts
 	var held = written ?? batch_values?.get(derived);
-	var assigned = held === undefined ? (derived.f & ASSIGNED) !== 0 : held.assigned !== false;
+	var assigned = held === undefined ? (derived.f & ASSIGNED) !== 0 : held.assigned;
 	// (the versions its global run read, if that can apply)
 	var dv = held === undefined && !assigned ? derived.dv : null;
 	var deps = derived.deps ?? [];
 	var holds = assigned || dv !== null;
 	var length = dv?.length ?? deps.length;
 
-	held ??= { v: derived.v, wv: derived.wv, e: (derived.f & ERROR_VALUE) !== 0 };
+	held ??= {
+		v: derived.v,
+		wv: derived.wv,
+		e: (derived.f & ERROR_VALUE) !== 0,
+		assigned: (derived.f & ASSIGNED) !== 0
+	};
 
 	for (var i = 0; holds && i < length; i++) {
 		var version = teardown_version_of(deps[i]);
