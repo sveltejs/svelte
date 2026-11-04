@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: preserve enclosing DOM boundaries when hydrating async components
+fix: preserve enclosing DOM boundaries when hydrating async components, including keyed each items
