@@ -219,13 +219,13 @@ export function is_current(deps, dv) {
  * to avoid walking a derived that is reachable by more than one path (e.g. a diamond) once per path. Only valid
  * within one top-level call: `wv` and the view are fixed, and the walk itself doesn't write anything
  */
-export function unchanged_since(deps, wv, unchanged = null) {
+export function changed_since(deps, wv, unchanged = null) {
 	if (deps !== null) {
 		for (var i = 0; i < deps.length; i++) {
 			var dep = deps[i];
 
 			if ((dep.f & DERIVED) === 0) {
-				if (version_of(dep) > wv) return false;
+				if (version_of(dep) > wv) return true;
 				continue;
 			}
 
@@ -243,7 +243,7 @@ export function unchanged_since(deps, wv, unchanged = null) {
 			if (run.wv > wv) {
 				var assigned = run === dep ? (dep.f & ASSIGNED) !== 0 : !('dv' in run);
 
-				if (assigned) return false;
+				if (assigned) return true;
 
 				// this run was already found to have no writes after `wv` below it
 				if (unchanged === null) {
@@ -252,8 +252,8 @@ export function unchanged_since(deps, wv, unchanged = null) {
 					continue;
 				}
 
-				if (!unchanged_since(/** @type {DerivedRecord} */ (run).deps, wv, unchanged)) {
-					return false;
+				if (changed_since(/** @type {DerivedRecord} */ (run).deps, wv, unchanged)) {
+					return true;
 				}
 
 				unchanged.add(run);
@@ -261,7 +261,7 @@ export function unchanged_since(deps, wv, unchanged = null) {
 		}
 	}
 
-	return true;
+	return false;
 }
 
 /**
@@ -293,7 +293,7 @@ export function is_dirty(reaction) {
 	if ((flags & ASSIGNED) !== 0) {
 		// A value assigned to a derived holds until one of its dependencies is written after it, which its flags
 		// can't tell: writes that don't change the real world (e.g. those of a fork) mark the derived, too
-		if (!unchanged_since(reaction.deps, reaction.wv)) return true;
+		if (changed_since(reaction.deps, reaction.wv)) return true;
 	} else if ((flags & DIRTY) !== 0) {
 		return true;
 	} else {

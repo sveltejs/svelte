@@ -27,7 +27,7 @@ import {
 	new_deps,
 	is_current,
 	promote_record,
-	unchanged_since,
+	changed_since,
 	is_dirty
 } from '../runtime.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
@@ -429,7 +429,7 @@ export function get_view(derived) {
 	// What the view holds for the derived is a write to it — an assignment in this batch, or the value from
 	// before another batch's assignment that this view undoes — or else its global state. An assigned value
 	// holds until one of the derived's dependencies — what its run in this view (its record in the batch, if
-	// any, else its global run) read — is written after it (see `unchanged_since`). The value from before an
+	// any, else its global run) read — is written after it (see `changed_since`). The value from before an
 	// undone assignment is only used if it was assigned, too: a computed value was computed in some other
 	// view of the world, and may depend on writes that this view undoes
 	var written = /** @type {Map<Value, BatchValue>} */ (batch_values).get(derived);
@@ -440,7 +440,7 @@ export function get_view(derived) {
 			: written === batch.current.get(derived) || written.assigned;
 	var record = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
 
-	if (assigned && unchanged_since((record ?? derived).deps, held.wv)) {
+	if (assigned && !changed_since((record ?? derived).deps, held.wv)) {
 		entry = held;
 	} else if (record !== undefined && is_current(record.deps, record.dv)) {
 		entry = record;
