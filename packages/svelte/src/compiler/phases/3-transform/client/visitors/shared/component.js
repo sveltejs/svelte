@@ -445,7 +445,12 @@ export function build_component(node, component_name, loc, context) {
 		// line up the `Foo` in `Foo(...)` and `<Foo>` for usable stack traces
 		callee.loc = loc;
 
-		return b.call(callee, node_id, props_expression);
+		return b.call(
+			callee,
+			node_id,
+			props_expression,
+			context.state.options.hmr && context.state.is_standalone ? b.true : undefined
+		);
 	};
 
 	if (bind_this !== null) {
