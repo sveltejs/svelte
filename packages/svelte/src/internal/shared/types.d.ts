@@ -10,3 +10,5 @@ export type Getters<T> = {
 export type Snapshot<T> = ReturnType<typeof $state.snapshot<T>>;
 
 export type MaybePromise<T> = T | Promise<T>;
+
+export type WarpKey = string | number | boolean | bigint;

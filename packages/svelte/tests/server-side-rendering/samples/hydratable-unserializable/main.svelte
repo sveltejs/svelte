@@ -1,5 +1,5 @@
 <script lang="ts">
     import { hydratable } from 'svelte';
 
-    hydratable('key', () => new Promise(() => { throw new Error('nope') }));
+    hydratable('key', () => Promise.resolve(() => {}));
 </script>
