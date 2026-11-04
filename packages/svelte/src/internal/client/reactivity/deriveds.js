@@ -440,7 +440,7 @@ export function get_view(derived) {
 	// view of the world, and may depend on writes that this view undoes
 	var written = /** @type {Map<Value, BatchValue>} */ (batch_values).get(derived);
 	var held = written ?? derived;
-	var assigned = written === undefined ? (derived.f & ASSIGNED) !== 0 : written.assigned === true;
+	var assigned = written === undefined ? (derived.f & ASSIGNED) !== 0 : written.assigned;
 	var record = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
 
 	if (assigned && unchanged_since((record ?? derived).deps, held.wv)) {
