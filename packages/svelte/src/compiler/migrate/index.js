@@ -157,7 +157,16 @@ export function migrate(source, { filename, use_ts } = {}) {
 		const analysis = analyze_component(parsed, source, combined_options);
 		const indent = guess_indent(source);
 
-		str.replaceAll(/(<svelte:options\s.*?\s?)accessors\s?/g, (_, $1) => $1);
+		const accessors = parsed.options?.attributes.find(
+			(attribute) => attribute.type === 'Attribute' && attribute.name === 'accessors'
+		);
+
+		if (accessors) {
+			// remove the whole attribute, including a value like `accessors={true}`
+			let start = accessors.start;
+			while (start > 0 && /\s/.test(source[start - 1])) start--;
+			str.remove(start, accessors.end);
+		}
 
 		for (const content of style_contents) {
 			str.overwrite(content[0], content[0] + style_placeholder.length, content[1]);
