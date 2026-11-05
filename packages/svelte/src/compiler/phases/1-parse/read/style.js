@@ -387,14 +387,14 @@ function read_selector(parser, inside_pseudo_class = false) {
  */
 function read_combinator(parser) {
 	const start = parser.index;
-	parser.allow_whitespace();
+	const has_whitespace = allow_selector_whitespace(parser);
 
 	const index = parser.index;
 	const name = parser.read(REGEX_COMBINATOR);
 
 	if (name) {
 		const end = parser.index;
-		parser.allow_whitespace();
+		allow_selector_whitespace(parser);
 
 		return {
 			type: 'Combinator',
@@ -404,7 +404,8 @@ function read_combinator(parser) {
 		};
 	}
 
-	if (parser.index !== start) {
+	// a comment on its own is not whitespace: `a/**/.b` is the same as `a.b`
+	if (has_whitespace) {
 		return {
 			type: 'Combinator',
 			name: ' ',
@@ -414,6 +415,24 @@ function read_combinator(parser) {
 	}
 
 	return null;
+}
+
+/**
+ * Skips whitespace and comments between the parts of a selector
+ * @param {Parser} parser
+ * @returns {boolean} whether any whitespace was skipped
+ */
+function allow_selector_whitespace(parser) {
+	let has_whitespace = false;
+
+	while (true) {
+		const start = parser.index;
+		parser.allow_whitespace();
+		if (parser.index !== start) has_whitespace = true;
+
+		if (!parser.match('/*')) return has_whitespace;
+		read_comment(parser);
+	}
 }
 
 /**
