@@ -1,6 +1,6 @@
 ---
 title: class
-tags: template-style
+tags: template-class
 ---
 
 There are two ways to set classes on elements: the `class` attribute, and the `class:` directive.
