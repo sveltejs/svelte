@@ -352,6 +352,17 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 }
 
 /**
+ * Abort `controller`, the signal (see `getAbortSignal`) of a run of `reaction` in `batch`
+ * @param {Reaction} reaction
+ * @param {Batch | null} batch
+ * @param {AbortController} controller
+ */
+function abort_run(reaction, batch, controller) {
+	batch?.controllers.delete(reaction);
+	without_reactive_context(() => controller.abort(STALE_REACTION));
+}
+
+/**
  * Abort the signals (see `getAbortSignal`) of the runs of `reaction` that a new run in `batch` replaces.
  * The abort is batch-aware, which can result in false-negatives in a few edge cases but will otherwise
  * ensure that things never end up hanging. If everything would share one abort signal, forks could abort
@@ -377,11 +388,62 @@ function abort_replaced(reaction, batch) {
 					(batch !== null && !b.is_fork && b.id < batch.id)))
 		) {
 			controllers.delete(b);
-			without_reactive_context(() => controller.abort(STALE_REACTION));
+			abort_run(reaction, b, controller);
 		}
 	}
 
 	if (controllers.size === 0) reaction.ac = null;
+}
+
+/**
+ * Abort the signals (see `getAbortSignal`) of the runs of `reaction` that its committed run in
+ * `batch` replaces. Batches that hold their own record of `reaction` keep their run, because their
+ * view doesn't use the committed one
+ * @param {Reaction} reaction
+ * @param {Batch} batch
+ */
+export function abort_superseded(reaction, batch) {
+	var controllers = /** @type {Map<Batch | null, AbortController>} */ (reaction.ac);
+	if (controllers === null) return;
+
+	for (const [b, controller] of controllers) {
+		// forks stay independent until they are committed or discarded (see `abort_batch_runs`)
+		if (b !== null && b.is_fork && b.linked && !b.committed) continue;
+
+		if (
+			b !== batch &&
+			(b === null ||
+				b.committed ||
+				// an unlinked batch was discarded, or merged into another one
+				!b.linked ||
+				// an earlier batch that holds a run of its own keeps it, because its view uses that run
+				(!b.is_fork && b.id < batch.id && !b.records?.has(reaction)))
+		) {
+			controllers.delete(b);
+			abort_run(reaction, b, controller);
+		}
+	}
+
+	if (controllers.size === 0) reaction.ac = null;
+}
+
+/**
+ * Abort the signals (see `getAbortSignal`) of all runs in `batch`, e.g. because it was discarded
+ * @param {Batch} batch
+ */
+export function abort_batch_runs(batch) {
+	for (const [reaction, controller] of batch.controllers) {
+		var controllers = /** @type {Map<Batch | null, AbortController>} */ (reaction.ac);
+
+		if (controllers?.get(batch) === controller) {
+			controllers.delete(batch);
+			if (controllers.size === 0) reaction.ac = null;
+		}
+
+		without_reactive_context(() => controller.abort(STALE_REACTION));
+	}
+
+	batch.controllers.clear();
 }
 
 /**
@@ -395,7 +457,10 @@ export function abort_all(reaction) {
 	reaction.ac = null;
 
 	without_reactive_context(() => {
-		for (const controller of controllers.values()) controller.abort(STALE_REACTION);
+		for (const [batch, controller] of controllers) {
+			batch?.controllers.delete(reaction);
+			controller.abort(STALE_REACTION);
+		}
 	});
 }
 

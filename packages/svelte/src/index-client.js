@@ -80,6 +80,7 @@ export function getAbortSignal() {
 
 	if (controller === undefined) {
 		controllers.set(current_batch, (controller = new AbortController()));
+		current_batch?.controllers.set(active_reaction, controller);
 	}
 
 	return controller.signal;

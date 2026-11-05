@@ -34,7 +34,9 @@ import {
 	promote_record,
 	prune_edges,
 	update_effect,
-	write_version
+	write_version,
+	abort_batch_runs,
+	abort_superseded
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
@@ -319,6 +321,13 @@ export class Batch {
 	 */
 	committed = false;
 
+	/**
+	 * The abort controllers of the runs in this batch's view (see `getAbortSignal`), so that they can be
+	 * aborted when the batch is discarded
+	 * @type {Map<Reaction, AbortController>}
+	 */
+	controllers = new Map();
+
 	#decrement_queued = false;
 
 	constructor() {
@@ -598,6 +607,12 @@ export class Batch {
 		// The results of this batch are about to become the real-world state
 		this.committed = true;
 		this.#release_records(true);
+
+		// the runs in this batch are what applies from now on, so the signals of the runs they
+		// replaced in other batches abort
+		for (const reaction of [...this.controllers.keys()]) {
+			abort_superseded(reaction, this);
+		}
 
 		// append/remove branches
 		for (const fn of this.#commit_callbacks) fn(this);
@@ -938,6 +953,10 @@ export class Batch {
 	discard() {
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
+
+		// the runs in this batch's view are obsolete, so their signals abort — e.g. the
+		// in-flight requests a discarded fork started
+		abort_batch_runs(this);
 
 		for (const deferred of this.async_deriveds.values()) {
 			deferred.reject(OBSOLETE);

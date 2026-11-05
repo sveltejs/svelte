@@ -28,7 +28,7 @@ export default test({
 		discard.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p>`);
-		assert.deepEqual(logs.splice(0), []);
+		assert.deepEqual(logs.splice(0), ['aborted 1']);
 
 		// (the discarded fork's run is resolved first, see `async-fork-discard-await-inside`)
 		shift.click();
@@ -37,6 +37,6 @@ export default test({
 		toggle.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
-		assert.deepEqual(logs.splice(0), ['aborted 0', 'aborted 1']);
+		assert.deepEqual(logs.splice(0), ['aborted 0']);
 	}
 });

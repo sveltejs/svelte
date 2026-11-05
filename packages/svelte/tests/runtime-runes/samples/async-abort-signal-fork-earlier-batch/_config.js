@@ -48,6 +48,6 @@ export default test({
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
-		assert.deepEqual(logs.splice(0), ['commit c=1 a=true x=1']);
+		assert.deepEqual(logs.splice(0), ['aborted x 1', 'commit c=1 a=true x=1']);
 	}
 });
