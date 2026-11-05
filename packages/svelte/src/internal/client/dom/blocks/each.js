@@ -323,6 +323,12 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				if (defer) {
 					batch.unskip_effect(item.e);
 				}
+
+				if ((item.e.f & EFFECT_OFFSCREEN) !== 0) {
+					// the item may have been created by another batch that hasn't committed yet,
+					// in which case it may contain effects that haven't run yet
+					batch.reveal(item.e);
+				}
 			} else {
 				item = create_item(
 					items,
@@ -352,6 +358,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
 				fallback.f |= EFFECT_OFFSCREEN;
 			}
+		} else if (length === 0 && fallback !== null && (fallback.f & EFFECT_OFFSCREEN) !== 0) {
+			batch.reveal(fallback);
 		}
 
 		if (length > keys.size) {
