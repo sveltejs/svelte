@@ -29,7 +29,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var div_1 = $.sibling(div, 2);
 	var source = $.child(div_1);
 
-	source.muted = true;
+	$.set_property(source, 'muted', true);
 	$.reset(div_1);
 
 	var select = $.sibling(div_1, 2);
