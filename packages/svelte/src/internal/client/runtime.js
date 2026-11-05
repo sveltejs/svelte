@@ -381,21 +381,27 @@ function abort_runs(reaction, superseded) {
  * @param {Batch | null} batch
  */
 function abort_replaced(reaction, batch) {
-	// only abort reruns of other batches if this is a real-world run
-	var replaces = batch === null || (!batch.is_fork && !batch.committed);
+	// always abort rerun in own batch
+	abort_runs(reaction, (b) => b === batch || supersedes(batch, b));
+}
 
-	abort_runs(
-		reaction,
-		(b) =>
-			// always abort rerun in own batch
-			b === batch ||
-			(replaces &&
-				(b === null ||
-					b.committed ||
-					// an unlinked batch was discarded, or merged into another one
-					!b.linked ||
-					// forks stay independent, only abort runs of earlier batches
-					(batch !== null && !b.is_fork && b.id < batch.id)))
+/**
+ * Whether a run in `batch` supersedes the runs in batch `other` (`null` for runs outside a batch), so that their
+ * signals abort (see `abort_replaced`).
+ * @param {Batch | null} batch
+ * @param {Batch | null} other
+ */
+function supersedes(batch, other) {
+	// only abort reruns of other batches if this is a real-world run
+	if (batch !== null && (batch.is_fork || batch.committed)) return false;
+
+	return (
+		other === null ||
+		other.committed ||
+		// an unlinked batch was discarded, or merged into another one
+		!other.linked ||
+		// forks stay independent, only abort runs of earlier batches
+		(batch !== null && !other.is_fork && other.id < batch.id)
 	);
 }
 
@@ -605,7 +611,7 @@ function update_dependencies(reaction, flags, value, error) {
 		first_batch !== null &&
 		first_batch.next !== null
 	) {
-		keep_global_run(/** @type {Derived} */ (reaction), flags, value, error);
+		keep_global_run(/** @type {Derived} */ (reaction), flags);
 	}
 
 	// Fast path: the reaction read the same values as before, in the real world, and has no other edges
@@ -717,7 +723,7 @@ function update_record(reaction, flags, length, value, error) {
 	if (dv.length !== length) dv.length = length;
 
 	if (batch === null && batch_values !== null && (flags & DERIVED) !== 0) {
-		keep_global_run(/** @type {Derived} */ (reaction), flags, value, error);
+		keep_global_run(/** @type {Derived} */ (reaction), flags);
 	}
 
 	// The edges — `reaction.edges`, and `reaction` in the `reactions` of each of them — must cover what every
@@ -799,15 +805,17 @@ function update_record(reaction, flags, length, value, error) {
  * A run of `derived` that becomes its global state replaces the current one, which other batches may still see:
  * their views differ from the real world, and can undo the writes that made it outdated. It is kept as a record in
  * each of them that doesn't have one, so that they don't evaluate the derived again — which would give an equal value
- * a new version, and re-run what saw the current one (restarting async work, for example). (Like any record, it is
- * only used where it `is_current`)
- * Note that this is mainly an optimization that avoids needless reruns of async effects, but doesn't affect correctness.
+ * a new version, and re-run what saw the current one (restarting async work, for example). That's also the case if
+ * the new value is equal, and so keeps its version: the derived itself would still run again, with whatever side
+ * effects it has (like asking for a new abort signal). (Like any record, it is only used where it `is_current`)
+ *
+ * If the derived uses an abort signal, the kept run's may have been aborted when the derived ran again. Only the batches
+ * that the new run supersedes (see `supersedes`) keep it regardless — it stays aborted for them until something it read
+ * changes in their view. The others (forks, later batches) evaluate the derived again
  * @param {Derived} derived
  * @param {number} flags the flags of the derived before the run
- * @param {any} value the value of the run
- * @param {boolean} error whether the value is an error
  */
-function keep_global_run(derived, flags, value, error) {
+function keep_global_run(derived, flags) {
 	var dv = derived.dv;
 
 	if (
@@ -815,11 +823,7 @@ function keep_global_run(derived, flags, value, error) {
 		dv === null ||
 		dv.length === 0 ||
 		// an assigned value isn't a run, see `get_view`
-		(flags & ASSIGNED) !== 0 ||
-		// a derived that uses an abort signal aborted the current run when it ran again
-		derived.ac !== null ||
-		// the same value keeps its version
-		(!error && (flags & ERROR_VALUE) === 0 && derived.equals(value))
+		(flags & ASSIGNED) !== 0
 	) {
 		return;
 	}
@@ -828,7 +832,12 @@ function keep_global_run(derived, flags, value, error) {
 	var record;
 
 	for (var batch = first_batch; batch !== null; batch = batch.next) {
-		if (batch !== view_batch && !batch.records?.has(derived)) {
+		if (
+			batch !== view_batch &&
+			!batch.records?.has(derived) &&
+			// the run's signal may have been aborted when the derived ran again
+			(derived.ac === null || supersedes(current_batch, batch))
+		) {
 			// All batches that retain this run share one record. (Its versions are copied: the
 			// derived's next global run in the real world updates its own in place)
 			record ??= {
