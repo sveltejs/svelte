@@ -207,7 +207,8 @@ export function unsave(value) {
  * @returns {Promise<() => T>}
  */
 export async function track_reactivity_loss(promise) {
-	unsave();
+	// This may run inside an async helper called by a restored expression.
+	// Only that expression's own `save` or `unsave` should clear its context.
 	var previous_reactivity_loss_tracker = reactivity_loss_tracker;
 	// Ensure that unrelated reads after an async operation is kicked off don't cause false positives
 	queueMicrotask(() => {
