@@ -18,3 +18,7 @@
 	:is(div.svelte-xyz /* comment */ .b:where(.svelte-xyz)) {
 		color: purple;
 	}
+
+	div.svelte-xyz.c {
+		color: orange;
+	}

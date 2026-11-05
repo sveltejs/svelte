@@ -22,4 +22,8 @@
 	:is(div /* comment */ .b) {
 		color: purple;
 	}
+
+	div /* comment */ :global.c {
+		color: orange;
+	}
 </style>
