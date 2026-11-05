@@ -133,6 +133,19 @@ export class Renderer {
 	#is_component_body = false;
 
 	/**
+	 * Copies made by {@link copy} for the legacy component bindings loop, until one is subsumed.
+	 * @type {Renderer[] | undefined}
+	 */
+	#copies = undefined;
+
+	/**
+	 * Copies that were rendered into but not subsumed, because the legacy component bindings loop
+	 * rendered again. Kept so that `onDestroy` callbacks registered during those passes still run.
+	 * @type {Renderer[] | undefined}
+	 */
+	#discarded = undefined;
+
+	/**
 	 * If set, this renderer is an error boundary. When async collection
 	 * of the children fails, the failed snippet is rendered instead.
 	 * @type {{
@@ -554,9 +567,18 @@ export class Renderer {
 	 * @deprecated this is needed for legacy component bindings
 	 */
 	copy() {
+		const copy = this.#copy();
+		(this.#copies ??= []).push(copy);
+		return copy;
+	}
+
+	/**
+	 * @returns {Renderer}
+	 */
+	#copy() {
 		const copy = new Renderer(this.global, this.#parent);
 		copy.type = this.type;
-		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
+		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.#copy() : item));
 		copy.promise = this.promise;
 		return copy;
 	}
@@ -570,6 +592,13 @@ export class Renderer {
 			throw new Error(
 				"invariant: A renderer cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
 			);
+		}
+
+		if (this.#copies) {
+			for (const copy of this.#copies) {
+				if (copy !== other) (this.#discarded ??= []).push(copy);
+			}
+			this.#copies = undefined;
 		}
 
 		this.local = other.local;
@@ -647,6 +676,11 @@ export class Renderer {
 	 * @returns {Iterable<Renderer>}
 	 */
 	*#traverse_components() {
+		if (this.#discarded) {
+			for (const discarded of this.#discarded) {
+				yield* discarded.#traverse_components();
+			}
+		}
 		for (const child of this.#out) {
 			if (typeof child !== 'string') {
 				yield* child.#traverse_components();
