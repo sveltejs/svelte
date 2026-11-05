@@ -1,7 +1,9 @@
 import type { UnevalReplacer } from 'devalue';
 import type { WarpKey } from '#shared';
 import type { Element } from './dev';
-import type { Renderer } from './renderer';
+import type { PendingBoundary, Renderer } from './renderer';
+
+export type { PendingBoundary };
 
 export interface SSRContext {
 	/** parent */
@@ -18,18 +20,22 @@ export interface SSRContext {
 	element?: Element;
 }
 
-/** A first-layer pending boundary whose contents are rendered in the background */
-export interface PendingBoundary {
-	/** Assigned when the HTML is put together, in document order, so that it's stable between renders */
-	id: string | null;
-}
-
 /**
  * A message for the `tail`: a value that was added to a `Warp`, as `[id, key, value]`, or a
  * boundary whose synchronous work has finished, so its contents can be rendered on the client
  */
 export type TailMessage = [id: string, key: WarpKey, value: unknown] | PendingBoundary;
 
+/**
+ * Every value added to a `Warp` is sent to the client exactly once, either in the `head` (serialized
+ * once the HTML is put together) or in the `tail` (streamed afterwards). Until the `head` is serialized:
+ * - every `[id, key, value]` in `queue` was added inside a pending boundary
+ * - every key in `tail_keys` has exactly one `[id, key, value]` in `queue` (keys are write-once)
+ *
+ * When the `head` is serialized (see `split_head_and_tail`), the values whose keys are still in
+ * `tail_keys` stay in `queue` for the `tail`, and the rest go in the `head`. After that, every value
+ * that's added goes straight into `queue`
+ */
 export interface WarpStore {
 	/** The values stored in each `Warp`, keyed by the `Warp`'s id */
 	values: Map<string, Map<WarpKey, unknown>>;
@@ -38,16 +44,19 @@ export interface WarpStore {
 	/** Whether the values have been serialized into the `head` */
 	emitted: boolean;
 	/**
-	 * The keys added to each `Warp` by work inside pending boundaries, which go in the `tail` rather
-	 * than the `head` — unless the rest of the render uses them before the `head` is serialized
+	 * The keys, for each `Warp`'s id, that were added by work inside pending boundaries and haven't been
+	 * read outside one. They go in the `tail`. Reading one outside a boundary removes it, so it goes in the
+	 * `head` instead, since the rest of the render depends on it. Empty once the `head` is serialized
 	 */
-	owned: Map<string, Set<WarpKey>>;
+	tail_keys: Map<string, Set<WarpKey>>;
 	/** Messages for the `tail`, in the order they happened, until the `tail` takes them */
 	queue: TailMessage[];
 	/**
-	 * When streaming, called when a message is added to `queue`, so it can be sent. If `null` once
-	 * the values have been serialized, no more can be added
+	 * Whether a `tail` is streaming and can still send values. Once the `head` is serialized, values
+	 * can only be added while this is `true`
 	 */
+	streaming: boolean;
+	/** While `streaming`, called when a message is added to `queue`, so it can be sent */
 	late: (() => void) | null;
 }
 

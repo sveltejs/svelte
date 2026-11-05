@@ -42,4 +42,4 @@ Cause:
 %stack%
 ```
 
-With `experimental.streaming`, values added to a `Warp` inside a pending boundary are sent to the client after the rendered HTML, even if they were added before it was generated. At that point it's too late to fail the render, so values that can't be serialized are skipped (or, if they're promises, rejected on the client) instead. To serialize other values, pass a `replacer` to `render` or `withWarp`.
+With `experimental.streaming`, values added to a `Warp` inside a pending boundary are sent to the client after the rendered HTML. At that point it's too late to fail the render, so values that can't be serialized are skipped (or, if they're promises, rejected on the client) instead. To serialize other values, pass a `replacer` to `render` or `withWarp`.

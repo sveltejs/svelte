@@ -212,7 +212,7 @@ function record(context, id, key, value) {
 		Promise.prototype.then.call(value, undefined, noop);
 	}
 
-	if (store.emitted && store.late === null) {
+	if (store.emitted && !store.streaming) {
 		e.warp_set_after_render(String(key), id);
 	}
 
@@ -220,8 +220,8 @@ function record(context, id, key, value) {
 	// the rest of the render added (and used). so do values added after the `head` was serialized
 	if (context.boundary !== null || store.emitted) {
 		if (context.boundary !== null && !store.emitted) {
-			let keys = store.owned.get(id);
-			if (keys === undefined) store.owned.set(id, (keys = new Set()));
+			let keys = store.tail_keys.get(id);
+			if (keys === undefined) store.tail_keys.set(id, (keys = new Set()));
 			keys.add(key);
 		}
 
@@ -253,9 +253,9 @@ function use(context, id, key) {
 	if (context.boundary !== null || store.emitted) return;
 
 	if (key === ALL) {
-		store.owned.delete(id);
+		store.tail_keys.delete(id);
 	} else {
-		store.owned.get(id)?.delete(key);
+		store.tail_keys.get(id)?.delete(key);
 	}
 }
 

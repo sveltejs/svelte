@@ -1,6 +1,6 @@
 /** @import { Component } from 'svelte' */
 /** @import { Session, UnevalReplacer } from 'devalue' */
-/** @import { PendingBoundary, RenderContext, SSRContext, WarpStore } from './types.js' */
+/** @import { RenderContext, SSRContext, WarpStore } from './types.js' */
 /** @import { WarpKey } from '#shared' */
 /** @import { AsyncRenderOutput, Csp, RenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
@@ -27,8 +27,20 @@ import { escape_html } from '../../escaping.js';
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
 
 /**
- * @typedef {string | Renderer} RendererItem
+ * @typedef {string | Renderer | PendingBoundary} RendererItem
  */
+
+/**
+ * A first-layer pending boundary whose contents are rendered in the background. It sits in the
+ * `#out` array of the renderer that opened it, in place of the comment that opens it
+ */
+export class PendingBoundary {
+	/**
+	 * Assigned when the HTML is put together, in document order, so that it's stable between renders
+	 * @type {string | null}
+	 */
+	id = null;
+}
 
 class RenderResult {
 	/** @type {() => AccumulatedContent} */
@@ -150,13 +162,6 @@ export class Renderer {
 	 * } | null}
 	 */
 	#boundary = null;
-
-	/**
-	 * If set, this renderer stands in for the comment that opens a pending boundary, which
-	 * contains the boundary's id, once the id has been assigned
-	 * @type {PendingBoundary | null}
-	 */
-	#boundary_marker = null;
 
 	/**
 	 * The type of string content that this renderer is accumulating.
@@ -429,7 +434,7 @@ export class Renderer {
 
 		// boundaries inside background work aren't in the HTML, so they don't need an id. their
 		// values are attributed to the outermost boundary, which they're already running inside
-		const nested = this.global.background === this.global;
+		const nested = this.global.is_background;
 
 		/** @type {PendingBoundary | null} */
 		let boundary = null;
@@ -437,10 +442,8 @@ export class Renderer {
 		if (nested) {
 			this.#out.push(BLOCK_OPEN_ELSE);
 		} else {
-			boundary = { id: null };
-			const marker = new Renderer(this.global, this);
-			marker.#boundary_marker = boundary;
-			this.#out.push(marker);
+			boundary = new PendingBoundary();
+			this.#out.push(boundary);
 		}
 
 		const state = this.global.get_background();
@@ -652,7 +655,6 @@ export class Renderer {
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
 		copy.type = this.type;
-		copy.#boundary_marker = this.#boundary_marker;
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promise = this.promise;
 		return copy;
@@ -670,7 +672,6 @@ export class Renderer {
 		}
 
 		this.local = other.local;
-		this.#boundary_marker = other.#boundary_marker;
 		this.#out = other.#out.map((item, i) => {
 			const current = this.#out[i];
 
@@ -746,7 +747,7 @@ export class Renderer {
 	 */
 	*#traverse_components() {
 		for (const child of this.#out) {
-			if (typeof child !== 'string') {
+			if (child instanceof Renderer) {
 				yield* child.#traverse_components();
 			}
 		}
@@ -919,16 +920,13 @@ export class Renderer {
 	 * @returns {AccumulatedContent}
 	 */
 	#collect_content(content = { head: '', body: '' }) {
-		if (this.#boundary_marker !== null) {
-			content[this.type] += this.#open_pending_boundary(this.#boundary_marker);
-			return content;
-		}
-
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
 			} else if (item instanceof Renderer) {
 				item.#collect_content(content);
+			} else {
+				content[this.type] += this.#open_pending_boundary(item);
 			}
 		}
 
@@ -942,11 +940,6 @@ export class Renderer {
 	 */
 	async #collect_content_async(content = { head: '', body: '' }) {
 		await this.promise;
-
-		if (this.#boundary_marker !== null) {
-			content[this.type] += this.#open_pending_boundary(this.#boundary_marker);
-			return content;
-		}
 
 		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
 		for (const item of this.#out) {
@@ -986,6 +979,8 @@ export class Renderer {
 				} else {
 					await item.#collect_content_async(content);
 				}
+			} else {
+				content[this.type] += this.#open_pending_boundary(item);
 			}
 		}
 
@@ -1022,13 +1017,7 @@ export class Renderer {
 
 		store.emitted = true;
 
-		// values from pending boundaries that the rest of the render has used are in the `head` instead
-		store.queue = store.queue.filter(
-			(message) => !Array.isArray(message) || store.owned.get(message[0])?.has(message[1])
-		);
-
-		const values = without(store.values, store.owned);
-		store.owned.clear();
+		const values = split_head_and_tail(store);
 
 		if (values.size === 0 && background === null) {
 			return { head: null, tail: null };
@@ -1262,10 +1251,12 @@ function stream_late_values(store, session, background) {
 	function close() {
 		if (closed) return;
 		closed = true;
+		store.streaming = false;
 		store.late = null;
 		notify();
 	}
 
+	store.streaming = true;
 	store.late = () => {
 		if (!open) return;
 		drain();
@@ -1364,6 +1355,29 @@ async function* generate_scripts(late, csp_attr, done) {
 }
 
 /**
+ * Decides, once the `head` is about to be serialized, which values go in the `head` and which in the
+ * `tail` (see `WarpStore`). The values added inside pending boundaries that nothing outside one has read
+ * stay in `store.queue`, along with every boundary message, and the rest are returned for the `head`
+ * @param {WarpStore} store
+ * @returns {Map<string, Map<WarpKey, unknown>>}
+ */
+function split_head_and_tail(store) {
+	const { tail_keys } = store;
+
+	// values from pending boundaries that the rest of the render has read go in the `head` instead
+	store.queue = store.queue.filter((message) => {
+		if (!Array.isArray(message)) return true;
+		const [id, key] = message;
+		return tail_keys.get(id)?.has(key) ?? false;
+	});
+
+	const head = without(store.values, tail_keys);
+	tail_keys.clear();
+
+	return head;
+}
+
+/**
  * Returns `values` without the keys in `omit`
  * @param {Map<string, Map<WarpKey, unknown>>} values
  * @param {Map<string, Set<WarpKey>>} omit
@@ -1451,6 +1465,9 @@ export class SSRState {
 	 * @type {SSRState | null}
 	 */
 	background = null;
+
+	/** Whether this is the state for work started in the background by pending boundaries */
+	is_background = false;
 
 	/**
 	 * The renderers for work started in the background, if this is the state for that work
@@ -1555,6 +1572,9 @@ export class SSRState {
 
 	/** @returns {SSRState} */
 	get_background() {
+		// boundaries inside background work run in the same state
+		if (this.is_background) return this;
+
 		if (this.background === null) {
 			// background work gets its own state, so that it can't affect the rendered output,
 			// and its own id prefix, so that its ids can't clash with the rendered output's
@@ -1564,7 +1584,7 @@ export class SSRState {
 				this.csp,
 				this.transformError
 			);
-			this.background.background = this.background;
+			this.background.is_background = true;
 		}
 
 		return this.background;

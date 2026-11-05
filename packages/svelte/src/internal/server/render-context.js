@@ -38,8 +38,9 @@ function create_render_context(replacer) {
 			values: new Map(),
 			stacks: new Map(),
 			emitted: false,
-			owned: new Map(),
+			tail_keys: new Map(),
 			queue: [],
+			streaming: false,
 			late: null
 		},
 		boundary: null,
