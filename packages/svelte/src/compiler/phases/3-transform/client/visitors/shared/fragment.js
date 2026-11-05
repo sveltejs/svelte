@@ -73,9 +73,10 @@ export function process_children(nodes, initial, is_element, context) {
 
 		const { has_state, value } = build_template_chunk(sequence, context);
 
-		// if this is a standalone `{expression}`, make sure we handle the case where
-		// no text node was created because the expression was empty during SSR
-		const is_text = sequence.length === 1;
+		// if this is a standalone `{expression}` or a run of adjacent expressions like
+		// `{a}{b}`, make sure we handle the case where no text node was created
+		// because the expressions were all empty during SSR
+		const is_text = sequence.every((node) => node.type === 'ExpressionTag');
 		const id = flush_node(is_text, 'text');
 
 		const update = b.stmt(b.call('$.set_text', id, value));
