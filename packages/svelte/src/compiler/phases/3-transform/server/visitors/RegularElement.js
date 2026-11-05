@@ -7,7 +7,12 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes, prepare_element_spread_object } from './shared/element.js';
-import { process_children, build_template, PromiseOptimiser } from './shared/utils.js';
+import {
+	process_children,
+	build_template,
+	PromiseOptimiser,
+	empty_comment
+} from './shared/utils.js';
 import { is_customizable_select_element } from '../../../nodes.js';
 
 /**
@@ -197,10 +202,10 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
-		// For optgroup or select with rich content, add hydration marker at the start
+		// For optgroup or select with rich content, add a hydration marker at the end
 		process_children(trimmed, { ...context, state });
 		if ((name === 'optgroup' || name === 'select') && is_customizable_select_element(node)) {
-			state.template.push(b.literal('<!>'));
+			state.template.push(empty_comment);
 		}
 	}
 
