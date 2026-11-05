@@ -641,29 +641,42 @@ export class Batch {
 	}
 
 	/**
-	 * Schedule the reactions that (transitively) depend on `values` for re-validation in this batch.
+	 * Schedule the reactions that (transitively) depend on `sources` for re-validation in this batch.
 	 * They are marked MAYBE_DIRTY, which means that they are only re-run if the exact versions
 	 * of their dependencies differ from the ones they last saw (in this batch's view of the world)
-	 * @param {Iterable<Value>} values
-	 * @param {Set<Reaction>} [seen]
+	 * @param {Iterable<Source>} sources
 	 */
-	#revalidate(values, seen = new Set()) {
-		for (const value of values) {
-			for (const reaction of value.reactions ?? []) {
-				var flags = reaction.f;
+	#revalidate(sources) {
+		// deriveds added during iteration are visited too, so this doubles as a worklist
+		/** @type {Set<Value>} */
+		var values = new Set(sources);
 
-				if (seen.has(reaction)) continue;
-				seen.add(reaction);
+		/** @type {Set<Effect>} */
+		var effects = new Set();
+
+		for (const value of values) {
+			var reactions = value.reactions;
+			if (reactions === null) continue;
+
+			for (const reaction of reactions) {
+				var flags = reaction.f;
 
 				if ((flags & DERIVED) !== 0) {
 					if ((flags & CLEAN) !== 0) set_signal_status(reaction, MAYBE_DIRTY);
-					this.#revalidate([/** @type {Derived} */ (reaction)], seen);
-				} else if (
+					values.add(/** @type {Derived} */ (reaction));
+					continue;
+				}
+
+				var effect = /** @type {Effect} */ (reaction);
+				if (effects.has(effect)) continue;
+				effects.add(effect);
+
+				if (
 					(flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 &&
 					// branches that this batch skips don't exist in its view of the world
-					!this.#is_skipped(/** @type {Effect} */ (reaction))
+					!this.#is_skipped(effect)
 				) {
-					this.schedule(/** @type {Effect} */ (reaction), MAYBE_DIRTY);
+					this.schedule(effect, MAYBE_DIRTY);
 				}
 			}
 		}
