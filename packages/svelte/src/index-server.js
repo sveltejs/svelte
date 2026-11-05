@@ -12,6 +12,7 @@ export function onDestroy(fn) {
 export {
 	noop as beforeUpdate,
 	noop as afterUpdate,
+	noop as onAnimationFrame,
 	noop as onMount,
 	noop as flushSync,
 	run as untrack
