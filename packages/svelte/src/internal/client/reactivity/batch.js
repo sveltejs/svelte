@@ -322,11 +322,11 @@ export class Batch {
 	committed = false;
 
 	/**
-	 * The abort controllers of the runs in this batch's view (see `getAbortSignal`), so that they can be
-	 * aborted when the batch is discarded
-	 * @type {Map<Reaction, AbortController>}
+	 * The reactions that have a run in this batch's view and asked for an abort signal (see
+	 * `getAbortSignal`), so that those signals can be aborted when the batch is discarded
+	 * @type {Set<Reaction>}
 	 */
-	controllers = new Map();
+	controllers = new Set();
 
 	#decrement_queued = false;
 
@@ -610,9 +610,7 @@ export class Batch {
 
 		// the runs in this batch are what applies from now on, so the signals of the runs they
 		// replaced in other batches abort
-		for (const reaction of [...this.controllers.keys()]) {
-			abort_superseded(reaction, this);
-		}
+		abort_superseded(this);
 
 		// append/remove branches
 		for (const fn of this.#commit_callbacks) fn(this);

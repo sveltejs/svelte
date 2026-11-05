@@ -352,18 +352,28 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 }
 
 /**
- * Abort `controller`, the signal (see `getAbortSignal`) of a run of `reaction` in `batch`
+ * Abort the runs of `reaction` (see `getAbortSignal`) for which `superseded` returns true
  * @param {Reaction} reaction
- * @param {Batch | null} batch
- * @param {AbortController} controller
+ * @param {(batch: Batch | null) => boolean} superseded
  */
-function abort_run(reaction, batch, controller) {
-	batch?.controllers.delete(reaction);
-	without_reactive_context(() => controller.abort(STALE_REACTION));
+function abort_runs(reaction, superseded) {
+	var controllers = reaction.ac;
+	if (controllers === null) return;
+
+	for (const [batch, controller] of controllers) {
+		if (superseded(batch)) {
+			controllers.delete(batch);
+			batch?.controllers.delete(reaction);
+
+			without_reactive_context(() => controller.abort(STALE_REACTION));
+		}
+	}
+
+	if (controllers.size === 0) reaction.ac = null;
 }
 
 /**
- * Abort the signals (see `getAbortSignal`) of the runs of `reaction` that a new run in `batch` replaces.
+ * Abort the signals of the runs of `reaction` that a new run in `batch` replaces.
  * The abort is batch-aware, which can result in false-negatives in a few edge cases but will otherwise
  * ensure that things never end up hanging. If everything would share one abort signal, forks could abort
  * real-world runs, runs in earlier batches that are outdated could abort later batches' current runs, etc.
@@ -371,12 +381,12 @@ function abort_run(reaction, batch, controller) {
  * @param {Batch | null} batch
  */
 function abort_replaced(reaction, batch) {
-	var controllers = /** @type {Map<Batch | null, AbortController>} */ (reaction.ac);
 	// only abort reruns of other batches if this is a real-world run
 	var replaces = batch === null || (!batch.is_fork && !batch.committed);
 
-	for (const [b, controller] of controllers) {
-		if (
+	abort_runs(
+		reaction,
+		(b) =>
 			// always abort rerun in own batch
 			b === batch ||
 			(replaces &&
@@ -386,61 +396,40 @@ function abort_replaced(reaction, batch) {
 					!b.linked ||
 					// forks stay independent, only abort runs of earlier batches
 					(batch !== null && !b.is_fork && b.id < batch.id)))
-		) {
-			controllers.delete(b);
-			abort_run(reaction, b, controller);
-		}
-	}
-
-	if (controllers.size === 0) reaction.ac = null;
+	);
 }
 
 /**
- * Abort the signals (see `getAbortSignal`) of the runs of `reaction` that its committed run in
- * `batch` replaces. Batches that hold their own record of `reaction` keep their run, because their
- * view doesn't use the committed one
- * @param {Reaction} reaction
+ * Abort the signals of the runs in `batch` that its own runs replace, e.g. of the real world's run
+ * when a fork commits. Batches that hold their own record of a reaction keep their run, because
+ * their view doesn't use the committed one
  * @param {Batch} batch
  */
-export function abort_superseded(reaction, batch) {
-	var controllers = /** @type {Map<Batch | null, AbortController>} */ (reaction.ac);
-	if (controllers === null) return;
-
-	for (const [b, controller] of controllers) {
-		// forks stay independent until they are committed or discarded (see `abort_batch_runs`)
-		if (b !== null && b.is_fork && b.linked && !b.committed) continue;
-
-		if (
-			b !== batch &&
-			(b === null ||
-				b.committed ||
-				// an unlinked batch was discarded, or merged into another one
-				!b.linked ||
-				// an earlier batch that holds a run of its own keeps it, because its view uses that run
-				(!b.is_fork && b.id < batch.id && !b.records?.has(reaction)))
-		) {
-			controllers.delete(b);
-			abort_run(reaction, b, controller);
-		}
+export function abort_superseded(batch) {
+	for (const reaction of batch.controllers) {
+		abort_runs(
+			reaction,
+			(b) =>
+				b !== batch &&
+				// forks stay independent until they are committed or discarded (see `abort_batch_runs`)
+				!(b !== null && b.is_fork && b.linked && !b.committed) &&
+				(b === null ||
+					b.committed ||
+					// an unlinked batch was discarded, or merged into another one
+					!b.linked ||
+					// an earlier batch that holds a run of its own keeps it, because its view uses that run
+					(!b.is_fork && b.id < batch.id && !b.records?.has(reaction)))
+		);
 	}
-
-	if (controllers.size === 0) reaction.ac = null;
 }
 
 /**
- * Abort the signals (see `getAbortSignal`) of all runs in `batch`, e.g. because it was discarded
+ * Abort the signals of all runs in `batch`, e.g. because it was discarded
  * @param {Batch} batch
  */
 export function abort_batch_runs(batch) {
-	for (const [reaction, controller] of batch.controllers) {
-		var controllers = /** @type {Map<Batch | null, AbortController>} */ (reaction.ac);
-
-		if (controllers?.get(batch) === controller) {
-			controllers.delete(batch);
-			if (controllers.size === 0) reaction.ac = null;
-		}
-
-		without_reactive_context(() => controller.abort(STALE_REACTION));
+	for (const reaction of batch.controllers) {
+		abort_runs(reaction, (b) => b === batch);
 	}
 
 	batch.controllers.clear();
@@ -451,17 +440,7 @@ export function abort_batch_runs(batch) {
  * @param {Reaction} reaction
  */
 export function abort_all(reaction) {
-	const controllers = reaction.ac;
-	if (controllers === null) return;
-
-	reaction.ac = null;
-
-	without_reactive_context(() => {
-		for (const [batch, controller] of controllers) {
-			batch?.controllers.delete(reaction);
-			controller.abort(STALE_REACTION);
-		}
-	});
+	abort_runs(reaction, () => true);
 }
 
 /** @param {Reaction} reaction */
