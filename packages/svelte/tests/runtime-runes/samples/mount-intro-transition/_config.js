@@ -9,13 +9,16 @@ export default test({
 
 		btn1.click();
 		flushSync();
-		assert.htmlEqual(div.innerHTML, `<div style="opacity: 0;">DIV</div>`);
+		assert.htmlEqual(
+			div.innerHTML,
+			`<div style="opacity: 0;">DIV</div><div style="opacity: 0;">DIV</div>`
+		);
 
 		raf.tick(100);
-		assert.htmlEqual(div.innerHTML, `<div style="">DIV</div>`);
+		assert.htmlEqual(div.innerHTML, `<div style="">DIV</div><div style="">DIV</div>`);
 
 		btn2.click();
 		flushSync();
-		assert.htmlEqual(div.innerHTML, `<div>DIV</div>`);
+		assert.htmlEqual(div.innerHTML, `<div>DIV</div><div>DIV</div>`);
 	}
 });
