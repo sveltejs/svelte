@@ -1,5 +1,6 @@
 import { async_mode_flag } from '../flags/index.js';
-import { hydrating } from './dom/hydration.js';
+import { hydrating, hydrating_component } from './dom/hydration.js';
+import { component_context } from './context.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { DEV } from 'esm-env';
@@ -15,7 +16,7 @@ export function hydratable(key, fn) {
 		e.experimental_async_required('hydratable');
 	}
 
-	if (hydrating) {
+	if (hydrating || (hydrating_component !== null && hydrating_component === component_context)) {
 		const store = window.__svelte?.h;
 
 		if (store?.has(key)) {
