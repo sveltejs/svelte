@@ -15,13 +15,8 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.querySelector('p')?.innerHTML ?? '', 'd is 1');
 
-		// batches are independent: B started out with `a + b === 1` in its view (A's change undone).
-		// A's commit changed B's view, so B re-ran `push(a + b)` with 2. The promise resolved here is
-		// B's obsolete one, so nothing changes yet
-		resolve.click();
-		await tick();
-		assert.htmlEqual(target.querySelector('p')?.innerHTML ?? '', 'd is 1');
-
+		// B re-runs `push(a + b)`, which A ran, so its view includes A's change (see `Batch#intersects`):
+		// it ran `push(a + b)` with 2, which is still current once A committed
 		resolve.click();
 		await tick();
 		assert.equal(target.querySelector('p'), null);

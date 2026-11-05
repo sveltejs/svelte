@@ -27,7 +27,7 @@
 <button onclick={() => (a += 1)}>a</button>
 <button onclick={() => (b += 10)}>b</button>
 
-{#each ['d:0', 'e:0', 'd:1', 'd:10', 'e:10'] as key}
+{#each ['d:0', 'e:0', 'd:1', 'd:11', 'e:10'] as key}
 	<button onclick={() => resolve(key)}>{key}</button>
 {/each}
 

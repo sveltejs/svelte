@@ -19,23 +19,21 @@ export default test({
 		await tick();
 		assert.deepEqual(logs, ['x 1,0', 'y 1']);
 
-		// batch B, which reads `d` in the real world right away
+		// batch B, which reads `d` in the real world right away. It re-runs `x`, which A ran, so its
+		// view includes A's write (see `Batch#intersects`)
 		b.click();
 		await tick();
-		assert.deepEqual(logs, ['x 1,0', 'y 1', 'd = 2', 'x 0,2']);
+		assert.deepEqual(logs, ['x 1,0', 'y 1', 'd = 2', 'x 1,2']);
 
-		// A is processed again, `x` is still current in its view
+		// A is processed again. Its view undoes B's write, and `x` is still current there
 		resolve_y.click();
 		await tick();
-		assert.deepEqual(logs, ['x 1,0', 'y 1', 'd = 2', 'x 0,2']);
+		assert.deepEqual(logs, ['x 1,0', 'y 1', 'd = 2', 'x 1,2']);
 
-		resolve_all.click();
-		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>0,2</p><p>0</p>`);
-		assert.deepEqual(logs, ['x 1,0', 'y 1', 'd = 2', 'x 0,2', 'x 1,2']);
-
+		// B is done, and merges into A: B's run of `x` supersedes A's
 		resolve_all.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>1,2</p><p>1</p>`);
+		assert.deepEqual(logs, ['x 1,0', 'y 1', 'd = 2', 'x 1,2']);
 	}
 });
