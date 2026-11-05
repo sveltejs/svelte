@@ -521,6 +521,33 @@ describe('async', () => {
 		expect(destroyed).toEqual(['c', 'e', 'a', 'b', 'b*', 'd']);
 	});
 
+	test('on_destroy runs nested components first, wherever they are', async () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.child((renderer) => {
+					renderer.on_destroy(() => destroyed.push('a'));
+					renderer.component((renderer) => {
+						renderer.child((renderer) => {
+							renderer.component((renderer) => {
+								renderer.on_destroy(() => destroyed.push('b'));
+							});
+							renderer.on_destroy(() => destroyed.push('c'));
+						});
+						renderer.on_destroy(() => destroyed.push('d'));
+					});
+					renderer.child((renderer) => {
+						renderer.on_destroy(() => destroyed.push('e'));
+					});
+				});
+				renderer.on_destroy(() => destroyed.push('f'));
+			});
+		};
+
+		await Renderer.render(component as unknown as Component);
+		expect(destroyed).toEqual(['b', 'd', 'c', 'f', 'a', 'e']);
+	});
+
 	test('on_destroy callbacks run when a sync render throws', () => {
 		const destroyed: string[] = [];
 		const component = (renderer: Renderer) => {
