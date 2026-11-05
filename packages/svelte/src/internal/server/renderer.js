@@ -22,6 +22,10 @@ import { escape_html } from '../../escaping.js';
  * title is the last title in document order
  * @typedef {AccumulatedContent & { title: string }} CollectedContent
  */
+/**
+ * @template T
+ * @typedef {{ ok: true; value: T } | { ok: false; error: unknown }} Outcome
+ */
 
 /**
  * @typedef {string | Renderer} RendererItem
@@ -657,6 +661,18 @@ export class Renderer {
 	}
 
 	/**
+	 * runs the onDestroy callbacks then returns the result or rethrows the error
+	 * @template T
+	 * @param {Outcome<T>} outcome
+	 * @returns {T}
+	 */
+	#finish(outcome) {
+		this.#run_on_destroy(!outcome.ok);
+		if (!outcome.ok) throw outcome.error;
+		return outcome.value;
+	}
+
+	/**
 	 * @param {'sync' | 'async'} mode
 	 * @param {{ idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} options
 	 * @returns {Renderer}
@@ -687,24 +703,14 @@ export class Renderer {
 	static #render(component, options) {
 		var previous_context = ssr_context;
 		const renderer = Renderer.#create('sync', options);
-		/** @type {AccumulatedContent | undefined} */
-		let result;
-		let render_error;
-		let failed = false;
 
 		try {
-			try {
+			const outcome = attempt(() => {
 				Renderer.#open_render(renderer, component, options);
-				result = Renderer.#close_render(renderer.#collect_content(), renderer);
-			} catch (error) {
-				render_error = error;
-				failed = true;
-			}
+				return Renderer.#close_render(renderer.#collect_content(), renderer);
+			});
 
-			renderer.#run_on_destroy(failed);
-			if (failed) throw render_error;
-
-			return /** @type {AccumulatedContent} */ (result);
+			return renderer.#finish(outcome);
 		} finally {
 			renderer.global.abort();
 			set_ssr_context(previous_context);
@@ -722,31 +728,25 @@ export class Renderer {
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
 		const renderer = Renderer.#create('async', options);
-		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] } }) | undefined} */
-		let result;
-		let render_error;
-		let failed = false;
 
 		try {
-			try {
+			const outcome = await attempt_async(async () => {
 				Renderer.#open_render(renderer, component, options);
 				const content = await renderer.#collect_content_async();
 				const hydratables = await renderer.#collect_hydratables();
 				if (hydratables !== null) {
 					content.head = hydratables + content.head;
 				}
-				result = Renderer.#close_render(content, renderer);
-			} catch (error) {
-				render_error = error;
-				failed = true;
+				return Renderer.#close_render(content, renderer);
+			});
+
+			if (!outcome.ok) {
+				// wait for in flight work so its onDestroy callbacks run too
 				renderer.global.abort();
 				await renderer.global.settle();
 			}
 
-			renderer.#run_on_destroy(failed);
-			if (failed) throw render_error;
-
-			return /** @type {AccumulatedContent & { hashes: { script: Sha256Source[] } }} */ (result);
+			return renderer.#finish(outcome);
 		} finally {
 			set_ssr_context(previous_context);
 			renderer.global.abort();
@@ -941,6 +941,32 @@ export class Renderer {
 		}
 
 		return `\n\t\t<script${csp_attr}>${body}</script>`;
+	}
+}
+
+/**
+ * @template T
+ * @param {() => T} fn
+ * @returns {Outcome<T>}
+ */
+function attempt(fn) {
+	try {
+		return { ok: true, value: fn() };
+	} catch (error) {
+		return { ok: false, error };
+	}
+}
+
+/**
+ * @template T
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<Outcome<T>>}
+ */
+async function attempt_async(fn) {
+	try {
+		return { ok: true, value: await fn() };
+	} catch (error) {
+		return { ok: false, error };
 	}
 }
 
