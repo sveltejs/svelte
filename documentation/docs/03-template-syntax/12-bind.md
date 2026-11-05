@@ -311,6 +311,17 @@ Since 5.57.0, if a `<select>` has a `defaultValue` and is part of a form, it wil
 </details>
 ```
 
+## `<dialog bind:open>`
+
+`<dialog>` elements also support binding to the `open` property. Setting it to `true` opens the dialog with [`show()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/show), which opens it non-modally like the `open` attribute does, and setting it to `false` closes it with [`close()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/close). The bound value is also updated when the dialog is opened or closed in other ways, for example with `showModal()`, the <kbd>Esc</kbd> key or a `<form method="dialog">`.
+
+```svelte
+<dialog bind:open={isOpen}>
+	<p>Hello!</p>
+	<button onclick={() => (isOpen = false)}>Close</button>
+</dialog>
+```
+
 ## `window` and `document`
 
 To bind to properties of `window` and `document`, see [`<svelte:window>`](svelte-window) and [`<svelte:document>`](svelte-document).
