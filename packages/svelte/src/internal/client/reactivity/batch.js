@@ -318,6 +318,12 @@ export class Batch {
 
 	is_fork = false;
 
+	/**
+	 * True once the batch committed: its view of the world is the real one from then on, plus the results
+	 * of its async work that was still pending (see `#commit`)
+	 */
+	committed = false;
+
 	#decrement_queued = false;
 
 	constructor() {
@@ -595,7 +601,7 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
-		this.committing = true;
+		this.committing = this.committed = true;
 		this.#release_records(true);
 
 		// append/remove branches

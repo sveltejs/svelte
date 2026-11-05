@@ -1,6 +1,7 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
+/** @import { Batch } from './internal/client/reactivity/batch.js' */
 import { active_reaction, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
@@ -8,6 +9,7 @@ import * as e from './internal/client/errors.js';
 import { legacy_mode_flag } from './internal/flags/index.js';
 import { component_context } from './internal/client/context.js';
 import { DEV } from 'esm-env';
+import { current_batch } from './internal/client/reactivity/batch.js';
 
 if (DEV) {
 	/**
@@ -71,7 +73,16 @@ export function getAbortSignal() {
 		e.get_abort_signal_outside_reaction();
 	}
 
-	return (active_reaction.ac ??= new AbortController()).signal;
+	var controllers = (active_reaction.ac ??= /** @type {Map<Batch|null, AbortController>} */ (
+		new Map()
+	));
+	var controller = controllers.get(current_batch);
+
+	if (controller === undefined) {
+		controllers.set(current_batch, (controller = new AbortController()));
+	}
+
+	return controller.signal;
 }
 
 /**
