@@ -396,8 +396,7 @@ export function update_reaction(reaction) {
 			is_runes() &&
 			untracked_writes !== null &&
 			!untracking &&
-			// `new_deps`/`skipped_deps` still describe this run, which can only be
-			// subscribed to what it wrote if it read anything at all
+			// bail out if the effect didn't read anything
 			(new_deps !== null || skipped_deps > 0) &&
 			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
 		) {
