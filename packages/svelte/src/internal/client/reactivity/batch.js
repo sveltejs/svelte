@@ -200,6 +200,13 @@ export class Batch {
 
 	#decrement_queued = false;
 
+	/**
+	 * Continuations captured before a merge still refer to this batch. Their work
+	 * belongs to the receiving batch, which stays alive until they finish.
+	 * @type {Batch | null}
+	 */
+	#merged_into = null;
+
 	constructor() {
 		if (last_batch === null) {
 			first_batch = last_batch = this;
@@ -589,6 +596,9 @@ export class Batch {
 			mark(source);
 		}
 
+		this.#pending += batch.#pending;
+		batch.#merged_into = this;
+
 		this.oncommit(() => batch.discard());
 		batch.#unlink();
 
@@ -629,6 +639,11 @@ export class Batch {
 	}
 
 	activate() {
+		if (this.#merged_into !== null) {
+			this.#merged_into.activate();
+			return;
+		}
+
 		current_batch = this;
 	}
 
@@ -839,6 +854,12 @@ export class Batch {
 			}
 		}
 
+		if (this.#merged_into !== null) {
+			// Only nonblocking (or skipped) work remains when a batch is merged.
+			this.#merged_into.decrement(false, effect);
+			return;
+		}
+
 		if (this.#decrement_queued) return;
 		this.#decrement_queued = true;
 
@@ -855,6 +876,11 @@ export class Batch {
 	 * @param {Map<Effect, number>} dirty_reactions
 	 */
 	transfer_reactions(dirty_reactions) {
+		if (this.#merged_into !== null) {
+			this.#merged_into.transfer_reactions(dirty_reactions);
+			return;
+		}
+
 		for (const [effect, status] of dirty_reactions) {
 			this.add_dirty_reaction(effect, status);
 		}
@@ -903,6 +929,11 @@ export class Batch {
 	}
 
 	apply() {
+		if (this.#merged_into !== null) {
+			this.#merged_into.apply();
+			return;
+		}
+
 		if (!async_mode_flag || (!this.is_fork && this.prev === null && this.next === null)) {
 			batch_values = null;
 			return;
