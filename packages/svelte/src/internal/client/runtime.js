@@ -627,7 +627,7 @@ function update_record(reaction, flags, length, value, error) {
 	var batch =
 		((flags & ASYNC) !== 0 ||
 			(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)) &&
-		view_batch?.committing === false
+		view_batch?.committed === false
 			? view_batch
 			: null;
 

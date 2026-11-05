@@ -237,13 +237,6 @@ export class Batch {
 	records = null;
 
 	/**
-	 * True while the batch commits, i.e. while it updates the DOM and runs effects.
-	 * Effects that run then do so for the real world (they don't necessarily run
-	 * with the latest values but dependencies/reactions should be pruned accordingly, and dv set, etc)
-	 */
-	committing = false;
-
-	/**
 	 * Earlier batches whose changes are part of this batch's view of the world, because
 	 * they intersect with it (this batch will be merged into them, see `#merge`)
 	 * @type {Batch[]}
@@ -320,7 +313,9 @@ export class Batch {
 
 	/**
 	 * True once the batch committed: its view of the world is the real one from then on, plus the results
-	 * of its async work that was still pending (see `#commit`)
+	 * of its async work that was still pending (see `#commit`). Block and async effects that run from then
+	 * on do so for the real world (they don't necessarily run with the latest values but dependencies/
+	 * reactions should be pruned accordingly, and dv set, etc)
 	 */
 	committed = false;
 
@@ -601,7 +596,7 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
-		this.committing = this.committed = true;
+		this.committed = true;
 		this.#release_records(true);
 
 		// append/remove branches
@@ -610,8 +605,6 @@ export class Batch {
 
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
-
-		this.committing = false;
 
 		this.#deferred?.resolve();
 
