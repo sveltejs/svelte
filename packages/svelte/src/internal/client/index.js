@@ -65,6 +65,7 @@ export {
 	bind_select_value,
 	init_select,
 	select_option,
+	set_select_value_preserving_user_selection,
 	set_selected,
 	set_default_select_value
 } from './dom/elements/bindings/select.js';
