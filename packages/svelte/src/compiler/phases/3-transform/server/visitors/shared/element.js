@@ -8,6 +8,7 @@ import { is_custom_element_node } from '../../../../nodes.js';
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '#compiler/builders';
 import {
+	ELEMENT_IS_CUSTOM,
 	ELEMENT_IS_INPUT,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
@@ -33,8 +34,10 @@ const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
  * @param {AST.RegularElement | AST.SvelteElement} node
  * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentServerTransformState>} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @param {Expression} [tag]
  */
-export function build_element_attributes(node, context, transform) {
+export function build_element_attributes(node, context, transform, tag) {
+	const is_custom_element = build_is_custom_element(node, tag);
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute | TransformedAttribute>} */
 	const attributes = [];
 
@@ -210,7 +213,8 @@ export function build_element_attributes(node, context, transform) {
 			style_directives,
 			class_directives,
 			context,
-			transform
+			transform,
+			tag
 		);
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
@@ -224,7 +228,8 @@ export function build_element_attributes(node, context, transform) {
 						'$.attr',
 						b.literal(attribute.name),
 						attribute.expression,
-						is_boolean_attribute(attribute.name) && b.true
+						is_boolean_attribute(attribute.name) && b.true,
+						is_custom_element
 					)
 				);
 				continue;
@@ -279,7 +284,13 @@ export function build_element_attributes(node, context, transform) {
 				context.state.template.push(build_attr_style(style_directives, value, context, transform));
 			} else {
 				context.state.template.push(
-					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+					b.call(
+						'$.attr',
+						b.literal(name),
+						value,
+						is_boolean_attribute(name) && b.true,
+						is_custom_element
+					)
 				);
 			}
 		}
@@ -292,6 +303,24 @@ export function build_element_attributes(node, context, transform) {
 	}
 
 	return content;
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {Expression} [tag]
+ * @returns {Expression | undefined}
+ */
+function build_is_custom_element(element, tag) {
+	if (element.metadata.svg || element.metadata.mathml) return;
+	if (
+		is_custom_element_node(element) ||
+		element.attributes.some(
+			(attribute) => attribute.type === 'Attribute' && attribute.name === 'is'
+		)
+	) {
+		return b.true;
+	}
+	return tag && b.call(b.member(tag, 'includes'), b.literal('-'));
 }
 
 /**
@@ -360,6 +389,7 @@ export function build_spread_object(element, attributes, context, transform) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @param {Expression} [tag]
  */
 function build_element_spread_attributes(
 	element,
@@ -367,7 +397,8 @@ function build_element_spread_attributes(
 	style_directives,
 	class_directives,
 	context,
-	transform
+	transform,
+	tag
 ) {
 	const args = prepare_element_spread(
 		element,
@@ -375,7 +406,8 @@ function build_element_spread_attributes(
 		style_directives,
 		class_directives,
 		context,
-		transform
+		transform,
+		tag
 	);
 
 	let call = b.call('$.attributes', ...args);
@@ -388,7 +420,7 @@ function build_element_spread_attributes(
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
+ * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Expression | undefined]}
  */
 export function prepare_element_spread_object(element, context, transform) {
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
@@ -430,7 +462,8 @@ export function prepare_element_spread_object(element, context, transform) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
+ * @param {Expression} [tag]
+ * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Expression | undefined]}
  */
 export function prepare_element_spread(
 	element,
@@ -438,7 +471,8 @@ export function prepare_element_spread(
 	style_directives,
 	class_directives,
 	context,
-	transform
+	transform,
+	tag
 ) {
 	/** @type {ObjectExpression | undefined} */
 	let classes;
@@ -488,7 +522,16 @@ export function prepare_element_spread(
 			? b.literal(context.state.analysis.css.hash)
 			: undefined;
 
-	return [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
+	const is_custom_element = build_is_custom_element(element, tag);
+	const flags_expression = is_custom_element
+		? is_custom_element === b.true
+			? b.literal(flags | ELEMENT_IS_CUSTOM)
+			: b.conditional(is_custom_element, b.literal(flags | ELEMENT_IS_CUSTOM), b.literal(flags))
+		: flags
+			? b.literal(flags)
+			: undefined;
+
+	return [object, css_hash, classes, styles, flags_expression];
 }
 
 /**
