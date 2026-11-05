@@ -381,8 +381,58 @@ function abort_runs(reaction, superseded) {
  * @param {Batch | null} batch
  */
 function abort_replaced(reaction, batch) {
+	// A derived's global run (keyed by `null`, see `own_global_signal`) is replaced by a run in a view only if that
+	// run becomes the global state, which is decided once it's done (it may belong to the batch instead, see
+	// `update_record`). Unless the global run is outdated in the real world anyway, its signal is aborted then
+	var undecided =
+		(reaction.f & DERIVED) !== 0 &&
+		batch_values !== null &&
+		!is_destroying_effect &&
+		!is_outdated(reaction);
+
 	// always abort rerun in own batch
-	abort_runs(reaction, (b) => b === batch || supersedes(batch, b));
+	abort_runs(reaction, (b) => b === batch || (supersedes(batch, b) && !(undecided && b === null)));
+}
+
+/**
+ * Whether the global run of `reaction` is outdated in the real world for sure: it's invalid, or a value it read
+ * has another version there now. (This doesn't evaluate anything, so a derived it read may be outdated, too)
+ * @param {Reaction} reaction
+ */
+function is_outdated(reaction) {
+	var dv = reaction.dv;
+	if (dv === null) return true;
+
+	var deps = /** @type {Value[]} */ (reaction.deps);
+
+	for (var i = 0; i < dv.length; i++) {
+		if (deps[i].wv !== dv[i]) return true;
+	}
+
+	return false;
+}
+
+/**
+ * `getAbortSignal` keys the signal of a run by the batch it happens in. A derived's run that becomes its global
+ * state there (or a record of it that is adopted) is keyed by `null` instead, so that only a run that replaces the
+ * global state aborts it — not the batch's next run of its own, or the batch committing, being merged or discarded.
+ * The global run it replaces aborts, unless the batch doesn't supersede the real world's runs (see `supersedes`).
+ * (The derived stays in the batch's `controllers`, so that its commit still aborts what it supersedes)
+ * @param {Derived} derived
+ * @param {Batch | null} batch the batch the signal is keyed by
+ */
+function own_global_signal(derived, batch) {
+	// (a run outside a batch is keyed by `null` already, and aborted the global run it replaces before it started)
+	if (batch === null) return;
+
+	if (supersedes(batch, null)) abort_runs(derived, (b) => b === null);
+
+	var controllers = derived.ac;
+	var controller = controllers?.get(batch);
+	if (controllers === null || controller === undefined) return;
+
+	controllers.delete(batch);
+	controllers.set(null, controller);
 }
 
 /**
@@ -419,6 +469,9 @@ export function abort_superseded(batch) {
 				b !== batch &&
 				// forks stay independent until they are committed or discarded (see `abort_batch_runs`)
 				!(b !== null && b.is_fork && b.linked && !b.committed) &&
+				// a batch's runs of a derived don't become its global state when it commits (its records are dropped,
+				// see `#release_records`). One that is adopted later replaces the global run then (see `own_global_signal`)
+				!(b === null && (reaction.f & DERIVED) !== 0) &&
 				(b === null ||
 					b.committed ||
 					// an unlinked batch was discarded, or merged into another one
@@ -654,6 +707,8 @@ function set_derived_value(derived, value, error) {
 
 	derived.f = flags;
 	update_derived_status(derived);
+
+	if (derived.ac !== null) own_global_signal(derived, current_batch);
 }
 
 /**
@@ -910,6 +965,9 @@ export function promote_record(reaction, record) {
 		derived.wv = /** @type {number} */ (record.wv);
 		derived.f = (record.e ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE) & ~ASSIGNED;
 		update_derived_status(derived);
+
+		// (a derived's record is only promoted when the active batch's is adopted, see `update_derived`)
+		if (derived.ac !== null) own_global_signal(derived, view_batch);
 	}
 }
 
