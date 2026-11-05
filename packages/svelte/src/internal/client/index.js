@@ -72,6 +72,7 @@ export { bind_element_size, bind_resize_observer } from './dom/elements/bindings
 export { bind_this } from './dom/elements/bindings/this.js';
 export {
 	bind_content_editable,
+	bind_dialog_open,
 	bind_property,
 	bind_focused
 } from './dom/elements/bindings/universal.js';

@@ -966,6 +966,8 @@ export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
 export interface HTMLDialogAttributes extends HTMLAttributes<HTMLDialogElement> {
 	open?: boolean | undefined | null;
 	closedby?: 'any' | 'closerequest' | 'none' | undefined | null;
+
+	'bind:open'?: boolean | undefined | null;
 }
 
 export interface HTMLEmbedAttributes extends HTMLAttributes<HTMLEmbedElement> {
