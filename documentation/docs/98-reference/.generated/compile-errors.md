@@ -1239,6 +1239,12 @@ Cannot use `%type%:` alongside existing `%existing%:` directive
 Cannot use multiple `%type%:` directives on a single element
 ```
 
+### transition_invalid_modifier
+
+```
+Valid transition modifiers are `local` and `global`
+```
+
 ### typescript_invalid_feature
 
 ```

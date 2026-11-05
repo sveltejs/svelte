@@ -503,6 +503,10 @@ See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-ele
 
 > Cannot use multiple `%type%:` directives on a single element
 
+## transition_invalid_modifier
+
+> Valid transition modifiers are `local` and `global`
+
 ## unexpected_eof
 
 > Unexpected end of input

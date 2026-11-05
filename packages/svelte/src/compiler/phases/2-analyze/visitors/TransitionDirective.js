@@ -9,6 +9,10 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  * @param {Context} context
  */
 export function TransitionDirective(node, context) {
+	if (node.modifiers.some((modifier) => modifier !== 'local' && modifier !== 'global')) {
+		e.transition_invalid_modifier(node);
+	}
+
 	mark_subtree_dynamic(context.path);
 
 	context.next({ ...context.state, expression: node.metadata.expression });
