@@ -1,6 +1,6 @@
 /** @import { Batch } from '../../../reactivity/batch.js' */
 import { DEV } from 'esm-env';
-import { render_effect, teardown } from '../../../reactivity/effects.js';
+import { effect, render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
@@ -12,11 +12,38 @@ import { async_mode_flag } from '../../../../flags/index.js';
 
 /**
  * @param {HTMLInputElement} input
+ * @param {'value' | 'checked' | 'files'} property
+ * @param {(hydration_mismatch: boolean) => void} fn
+ */
+export function defer_input_binding(input, property, fn) {
+	// Capture this before deferring: hydration and default-attribute cleanup may finish first.
+	var hydration_mismatch =
+		hydrating &&
+		(property === 'files' ||
+			(property === 'value'
+				? input.defaultValue !== input.value
+				: input.defaultChecked !== input.checked));
+
+	effect(() => {
+		fn(hydration_mismatch);
+		// If binding expressions change, subsequent setups are no longer hydrating.
+		hydration_mismatch = false;
+	});
+}
+
+/**
+ * @param {HTMLInputElement} input
  * @param {() => unknown} get
  * @param {(value: unknown) => void} set
+ * @param {boolean} [hydration_mismatch]
  * @returns {void}
  */
-export function bind_value(input, get, set = get) {
+export function bind_value(
+	input,
+	get,
+	set = get,
+	hydration_mismatch = hydrating && input.defaultValue !== input.value
+) {
 	var batches = new WeakSet();
 
 	listen_to_event_and_reset_event(input, 'input', async (is_reset) => {
@@ -66,7 +93,7 @@ export function bind_value(input, get, set = get) {
 	if (
 		// If we are hydrating and the value has since changed,
 		// then use the updated value from the input instead.
-		(hydrating && input.defaultValue !== input.value) ||
+		hydration_mismatch ||
 		// If defaultValue is set, then value == defaultValue
 		// TODO Svelte 6: remove input.value check and set to empty string?
 		(untrack(get) == null && input.value)
@@ -130,14 +157,19 @@ const pending = new Set();
  * @param {HTMLInputElement} input
  * @param {() => unknown} get
  * @param {(value: unknown) => void} set
+ * @param {boolean} [hydration_mismatch]
  * @returns {void}
  */
-export function bind_group(inputs, group_index, input, get, set = get) {
+export function bind_group(
+	inputs,
+	group_index,
+	input,
+	get,
+	set = get,
+	hydration_mismatch = hydrating && input.defaultChecked !== input.checked
+) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
 	var binding_group = inputs;
-
-	// needs to be let or related code isn't treeshaken out if it's always false
-	let hydration_mismatch = false;
 
 	if (group_index !== null) {
 		for (var index of group_index) {
@@ -170,8 +202,7 @@ export function bind_group(inputs, group_index, input, get, set = get) {
 
 		// If we are hydrating and the value has since changed, then use the update value
 		// from the input instead.
-		if (hydrating && input.defaultChecked !== input.checked) {
-			hydration_mismatch = true;
+		if (hydration_mismatch) {
 			return;
 		}
 
@@ -205,6 +236,7 @@ export function bind_group(inputs, group_index, input, get, set = get) {
 
 	queue_micro_task(() => {
 		if (hydration_mismatch) {
+			hydration_mismatch = false;
 			var value;
 
 			if (is_checkbox) {
@@ -224,9 +256,15 @@ export function bind_group(inputs, group_index, input, get, set = get) {
  * @param {HTMLInputElement} input
  * @param {() => unknown} get
  * @param {(value: unknown) => void} set
+ * @param {boolean} [hydration_mismatch]
  * @returns {void}
  */
-export function bind_checked(input, get, set = get) {
+export function bind_checked(
+	input,
+	get,
+	set = get,
+	hydration_mismatch = hydrating && input.defaultChecked !== input.checked
+) {
 	listen_to_event_and_reset_event(input, 'change', (is_reset) => {
 		var value = is_reset ? input.defaultChecked : input.checked;
 		set(value);
@@ -235,7 +273,7 @@ export function bind_checked(input, get, set = get) {
 	if (
 		// If we are hydrating and the value has since changed,
 		// then use the update value from the input instead.
-		(hydrating && input.defaultChecked !== input.checked) ||
+		hydration_mismatch ||
 		// If defaultChecked is set, then checked == defaultChecked
 		untrack(get) == null
 	) {
@@ -292,8 +330,9 @@ function to_number(value) {
  * @param {HTMLInputElement} input
  * @param {() => FileList | null} get
  * @param {(value: FileList | null) => void} set
+ * @param {boolean} [was_hydrating]
  */
-export function bind_files(input, get, set = get) {
+export function bind_files(input, get, set = get, was_hydrating = hydrating) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		set(input.files);
 	});
@@ -301,7 +340,7 @@ export function bind_files(input, get, set = get) {
 	if (
 		// If we are hydrating and the value has since changed,
 		// then use the updated value from the input instead.
-		hydrating &&
+		was_hydrating &&
 		input.files
 	) {
 		set(input.files);
