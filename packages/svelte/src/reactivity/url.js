@@ -81,6 +81,8 @@ export class SvelteURL extends URL {
 	set hash(value) {
 		super.hash = value;
 		set(this.#hash, super.hash);
+		// Clearing the hash can strip trailing spaces from an opaque path.
+		set(this.#pathname, super.pathname);
 	}
 
 	get host() {
@@ -174,6 +176,8 @@ export class SvelteURL extends URL {
 	set search(value) {
 		super.search = value;
 		set(this.#search, super.search);
+		// Clearing the query can strip trailing spaces from an opaque path.
+		set(this.#pathname, super.pathname);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 
