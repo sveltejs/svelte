@@ -594,7 +594,8 @@ export class Batch {
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
 
-		// This batch's records are now the real-world state
+		// This batch's records are now the real-world state. This happens after
+		// `flush_queued_effects` so that eager block effect records are released
 		this.#release_records(true);
 
 		this.#deferred?.resolve();
