@@ -387,7 +387,7 @@ export function update_reaction(reaction) {
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
 		reaction.f |= REACTION_RAN;
-		var read = update_dependencies(reaction, flags, result, false);
+		update_dependencies(reaction, flags, result, false);
 
 		// If we're inside an effect and we have untracked writes, then we need to
 		// ensure that if any of those untracked writes result in re-invalidation
@@ -396,7 +396,8 @@ export function update_reaction(reaction) {
 			is_runes() &&
 			untracked_writes !== null &&
 			!untracking &&
-			read > 0 &&
+			// bail out if the effect didn't read anything
+			(new_deps !== null || skipped_deps > 0) &&
 			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
 		) {
 			for (var i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
@@ -481,7 +482,6 @@ export function update_reaction(reaction) {
  * @param {number} flags the flags of the reaction before the run
  * @param {any} value the value of the run (only relevant for deriveds)
  * @param {boolean} error whether the value is an error
- * @returns {number} the number of values the run read
  */
 function update_dependencies(reaction, flags, value, error) {
 	var deps = reaction.deps;
@@ -489,7 +489,7 @@ function update_dependencies(reaction, flags, value, error) {
 	var dv = reaction.dv;
 
 	// (an effect can be destroyed while it runs, e.g. by an error boundary)
-	if ((reaction.f & DESTROYED) !== 0) return length;
+	if ((reaction.f & DESTROYED) !== 0) return;
 
 	if ((flags & DERIVED) !== 0 && is_destroying_effect) {
 		// The run belongs to the teardown's view of the world (see `teardown_view`).
@@ -506,7 +506,7 @@ function update_dependencies(reaction, flags, value, error) {
 		}
 
 		teardown_run = { v: value, wv, e: error, assigned: (flags & ASSIGNED) !== 0 };
-		return length;
+		return;
 	}
 
 	// A run of a derived in the real world is its new global state. Other batches may still see the current one
@@ -536,10 +536,10 @@ function update_dependencies(reaction, flags, value, error) {
 
 		if ((flags & DERIVED) !== 0) set_derived_value(/** @type {Derived} */ (reaction), value, error);
 
-		return length;
+		return;
 	}
 
-	return update_record(reaction, flags, length, value, error);
+	update_record(reaction, flags, length, value, error);
 }
 
 /**
@@ -703,8 +703,6 @@ function update_record(reaction, flags, length, value, error) {
 			view_batch?.records?.delete(reaction);
 		}
 	}
-
-	return length;
 }
 
 /**
