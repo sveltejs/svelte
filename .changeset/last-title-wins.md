@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: render the last `<title>` in document order during SSR and ignore titles inside failed boundaries
+fix: render the same `<title>` on the server as on the client and ignore titles inside failed boundaries
