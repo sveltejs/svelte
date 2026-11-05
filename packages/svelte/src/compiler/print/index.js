@@ -3,6 +3,11 @@
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
 import { is_void } from '../../utils.js';
+import {
+	regex_ends_with_whitespaces,
+	regex_starts_with_whitespaces,
+	regex_whitespaces_strict
+} from '../phases/patterns.js';
 
 /** Threshold for when content should be formatted on separate lines */
 const LINE_BREAK_THRESHOLD = 50;
@@ -583,9 +588,9 @@ const svelte_visitors = (comments, state) => ({
 		const last = node.nodes.at(-1);
 		const has_surrounding_whitespace =
 			first?.type === 'Text' &&
-			/^\s/.test(first.data) &&
+			regex_starts_with_whitespaces.test(first.data) &&
 			last?.type === 'Text' &&
-			/\s$/.test(last.data);
+			regex_ends_with_whitespaces.test(last.data);
 
 		/** @type {{ nodes: AST.SvelteNode[]; leading_whitespace: boolean }[]} */
 		const items = [];
@@ -611,15 +616,16 @@ const svelte_visitors = (comments, state) => ({
 			if (child_node.type === 'Text') {
 				child_node = { ...child_node }; // always clone, so we can safely mutate
 
-				child_node.data = child_node.data.replace(/[^\S]+/g, ' ');
+				// only collapse HTML whitespace: a non-breaking space (`&nbsp;`) is content
+				child_node.data = child_node.data.replace(regex_whitespaces_strict, ' ');
 
 				// trim fragment
 				if (i === 0) {
-					child_node.data = child_node.data.trimStart();
+					child_node.data = child_node.data.replace(regex_starts_with_whitespaces, '');
 				}
 
 				if (i === node.nodes.length - 1) {
-					child_node.data = child_node.data.trimEnd();
+					child_node.data = child_node.data.replace(regex_ends_with_whitespaces, '');
 				}
 
 				if (child_node.data === '') {
@@ -629,7 +635,7 @@ const svelte_visitors = (comments, state) => ({
 				if (child_node.data.startsWith(' ') && prev && prev.type !== 'ExpressionTag') {
 					flush();
 					leading_whitespace = true;
-					child_node.data = child_node.data.trimStart();
+					child_node.data = child_node.data.replace(regex_starts_with_whitespaces, '');
 				}
 
 				if (child_node.data !== '') {
@@ -637,7 +643,7 @@ const svelte_visitors = (comments, state) => ({
 
 					if (child_node.data.endsWith(' ') && next && next.type !== 'ExpressionTag') {
 						flush();
-						child_node.data = child_node.data.trimStart();
+						child_node.data = child_node.data.replace(regex_starts_with_whitespaces, '');
 					}
 				}
 			} else {
