@@ -348,6 +348,234 @@ describe('boundary hydration comment escaping', () => {
 	});
 });
 
+describe('boundary cleanup', () => {
+	beforeAll(() => enable_async_mode_flag());
+	afterAll(() => disable_async_mode_flag());
+
+	test.each([
+		{ mode: 'sync', async_error: false, async_transform: false },
+		{ mode: 'async', async_error: false, async_transform: false },
+		{ mode: 'async', async_error: false, async_transform: true },
+		{ mode: 'async', async_error: true, async_transform: false },
+		{ mode: 'async', async_error: true, async_transform: true }
+	])(
+		'retains cleanup for $mode, async error: $async_error, async transform: $async_transform',
+		async ({ mode, async_error, async_transform }) => {
+			for (const fallback_throws of [false, true]) {
+				const events: string[] = [];
+				const component = (renderer: Renderer) => {
+					renderer.component((renderer) => {
+						renderer.on_destroy(() => events.push('root'));
+						renderer.boundary(
+							{
+								failed: (renderer) => {
+									renderer.component((renderer) => {
+										renderer.on_destroy(() => events.push('fallback'));
+										if (fallback_throws) throw new Error('fallback error');
+										renderer.push('<p>failed</p>');
+									});
+								}
+							},
+							(renderer) => {
+								renderer.on_destroy(() => events.push('boundary'));
+								renderer.head((renderer) => renderer.push('<meta name="discarded"/>'));
+								renderer.component((renderer) => {
+									renderer.on_destroy(() => events.push('sibling'));
+									renderer.child((renderer) => renderer.on_destroy(() => events.push('porous')));
+								});
+								renderer.component((renderer) => {
+									renderer.on_destroy(() => events.push('thrower'));
+									const fail = () => {
+										throw new Error('boom');
+									};
+									if (async_error)
+										renderer.child(async () => {
+											await Promise.resolve();
+											fail();
+										});
+									else fail();
+								});
+							}
+						);
+						renderer.component((renderer) => {
+							renderer.on_destroy(() => events.push('outside'));
+							renderer.push('<p>outside</p>');
+						});
+					});
+				};
+				const result = Renderer.render(
+					component as unknown as Component,
+					{
+						transformError: () => (async_transform ? Promise.resolve('transformed') : 'transformed')
+					} as any
+				);
+
+				if (fallback_throws) {
+					if (mode === 'sync') expect(() => result.body).toThrow('fallback error');
+					else await expect(result).rejects.toThrow('fallback error');
+				} else {
+					const { head, body } = mode === 'sync' ? result : await result;
+					expect(head).toBe('');
+					expect(body).toBe(
+						'<!--[--><!--[?"transformed"--><p>failed</p><!--]--><p>outside</p><!--]-->'
+					);
+				}
+
+				expect(events).toEqual([
+					'sibling',
+					'porous',
+					'thrower',
+					'fallback',
+					...(fallback_throws && !async_error && !async_transform ? [] : ['outside']),
+					'root',
+					'boundary'
+				]);
+			}
+		}
+	);
+
+	test.each([false, true])(
+		'nested failed boundaries retain both branches, async error: %s',
+		async (async_error) => {
+			const events: string[] = [];
+			const component = (renderer: Renderer) => {
+				renderer.component((renderer) => {
+					renderer.boundary(
+						{
+							failed: (renderer) => {
+								renderer.component((renderer) => {
+									renderer.on_destroy(() => events.push('outer fallback'));
+									renderer.push('outer fallback');
+								});
+							}
+						},
+						(renderer) => {
+							renderer.boundary(
+								{
+									failed: (renderer) => {
+										renderer.component((renderer) => {
+											renderer.on_destroy(() => events.push('inner fallback'));
+											throw new Error('fallback error');
+										});
+									}
+								},
+								(renderer) => {
+									renderer.component((renderer) => {
+										renderer.on_destroy(() => events.push('original'));
+										if (async_error) return Promise.reject(new Error('boom'));
+										throw new Error('boom');
+									});
+								}
+							);
+						}
+					);
+				});
+			};
+			const { body } = await Renderer.render(
+				component as unknown as Component,
+				{ transformError: () => 'error' } as any
+			);
+			expect(body).toBe('<!--[--><!--[?"error"-->outer fallback<!--]--><!--]-->');
+			expect(events).toEqual(['original', 'inner fallback', 'outer fallback']);
+		}
+	);
+
+	test('replacement titles follow the discarded content in document order', () => {
+		const component = (renderer: Renderer) => {
+			renderer.boundary(
+				{
+					failed: (renderer) => {
+						renderer.title((renderer) =>
+							renderer.head((renderer) => renderer.push('fallback title'))
+						);
+					}
+				},
+				(renderer) => {
+					renderer.title((renderer) =>
+						renderer.head((renderer) => renderer.push('discarded title'))
+					);
+					throw new Error('boom');
+				}
+			);
+		};
+		const { head } = Renderer.render(
+			component as unknown as Component,
+			{ transformError: () => 'error' } as any
+		);
+		expect(head).toBe('fallback title');
+	});
+
+	test('copy and subsume retain replacement content without duplicating cleanup', () => {
+		const events: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.boundary(
+					{
+						failed: (renderer) => {
+							renderer.component((renderer) => {
+								renderer.on_destroy(() => events.push('fallback'));
+								renderer.push('fallback');
+							});
+						}
+					},
+					(renderer) => {
+						renderer.component((renderer) => {
+							renderer.on_destroy(() => events.push('original'));
+							throw new Error('boom');
+						});
+					}
+				);
+				renderer.subsume(renderer.copy());
+			});
+		};
+		const { body } = Renderer.render(
+			component as unknown as Component,
+			{ transformError: () => 'error' } as any
+		);
+		expect(body).toBe('<!--[--><!--[?"error"-->fallback<!--]--><!--]-->');
+		expect(events).toEqual(['original', 'fallback']);
+	});
+
+	test.each([false, true])(
+		'settles discarded work after visible content, async error: %s',
+		async (async_error) => {
+			const events: string[] = [];
+			const component = (renderer: Renderer) => {
+				renderer.component((renderer) => {
+					renderer.boundary({ failed: (renderer) => renderer.push('fallback') }, (renderer) => {
+						renderer.component((renderer) => {
+							renderer.child(async (renderer) => {
+								const signal = getAbortSignal();
+								await new Promise<void>((resolve) =>
+									signal.addEventListener('abort', () => resolve(), { once: true })
+								);
+								renderer.on_destroy(() => events.push('late cleanup'));
+							});
+						});
+						const fail = () => {
+							throw new Error('boom');
+						};
+						if (async_error) return Promise.reject(new Error('boom'));
+						fail();
+					});
+					renderer.child(async (renderer) => {
+						await Promise.resolve();
+						expect(getAbortSignal().aborted).toBe(false);
+						events.push('outside rendered');
+						renderer.push('outside');
+					});
+				});
+			};
+			const { body } = await Renderer.render(
+				component as unknown as Component,
+				{ transformError: () => 'error' } as any
+			);
+			expect(body).toBe('<!--[--><!--[?"error"-->fallback<!--]-->outside<!--]-->');
+			expect(events).toEqual(['outside rendered', 'late cleanup']);
+		}
+	);
+});
+
 describe('async', () => {
 	beforeAll(() => {
 		enable_async_mode_flag();
