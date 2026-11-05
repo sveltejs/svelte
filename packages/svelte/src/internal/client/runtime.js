@@ -581,9 +581,8 @@ function update_record(reaction, flags, length, value, error) {
 	// commits. The first run of a block effect is the exception — it creates (and commits) its initial
 	// branch. (Whether a derived's run belongs to a batch depends on what it read, see below)
 	var batch =
-		((flags & ASYNC) !== 0 ||
-			(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)) &&
-		view_batch?.committing === false
+		(flags & ASYNC) !== 0 ||
+		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)
 			? view_batch
 			: null;
 

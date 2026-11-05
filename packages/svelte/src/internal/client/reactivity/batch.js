@@ -237,13 +237,6 @@ export class Batch {
 	records = null;
 
 	/**
-	 * True while the batch commits, i.e. while it updates the DOM and runs effects.
-	 * Effects that run then do so for the real world (they don't necessarily run
-	 * with the latest values but dependencies/reactions should be pruned accordingly, and dv set, etc)
-	 */
-	committing = false;
-
-	/**
 	 * Earlier batches whose changes are part of this batch's view of the world, because
 	 * they intersect with it (this batch will be merged into them, see `#merge`)
 	 * @type {Batch[]}
@@ -594,10 +587,6 @@ export class Batch {
 			return;
 		}
 
-		// The results of this batch are about to become the real-world state
-		this.committing = true;
-		this.#release_records(true);
-
 		// append/remove branches
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
@@ -605,7 +594,8 @@ export class Batch {
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
 
-		this.committing = false;
+		// This batch's records are now the real-world state
+		this.#release_records(true);
 
 		this.#deferred?.resolve();
 
