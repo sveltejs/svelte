@@ -41,7 +41,16 @@ export function SvelteElement(node, context) {
 	/** @type {Statement[]} */
 	let statements = [];
 
-	build_element_attributes(node, { ...context, state }, optimiser.transform);
+	const tag_parameter = b.id(context.state.scope.generate('$$tag'));
+	const { content, has_spread } = build_element_attributes(
+		node,
+		{ ...context, state },
+		optimiser.transform,
+		tag_parameter
+	);
+	// Only return the runtime-selected textarea content, not contenteditable
+	// binding expressions, which dynamic elements have not previously rendered.
+	const has_textarea_content = has_spread && !node.metadata.svg && !node.metadata.mathml;
 
 	if (dev) {
 		const location = locator(node.start);
@@ -59,6 +68,7 @@ export function SvelteElement(node, context) {
 	}
 
 	const attributes = b.block([...state.init, ...build_template(state.template)]);
+	if (has_textarea_content) attributes.body.push(b.return(content));
 	const children = /** @type {BlockStatement} */ (context.visit(node.fragment, state));
 
 	statements.push(
@@ -68,7 +78,8 @@ export function SvelteElement(node, context) {
 					'$.element',
 					b.id('$$renderer'),
 					tag,
-					attributes.body.length > 0 && b.thunk(attributes),
+					attributes.body.length > 0 &&
+						b.arrow(has_textarea_content ? [tag_parameter] : [], attributes),
 					children.body.length > 0 && b.thunk(children)
 				)
 			)
