@@ -1,4 +1,4 @@
-/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, TemplateNode, TransitionManager } from '#client' */
+/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, TemplateNode } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -64,13 +64,12 @@ export function index(_, i) {
  * @param {null | Node} controlled_anchor
  */
 function pause_effects(state, to_destroy, controlled_anchor) {
-	/** @type {TransitionManager[]} */
-	var transitions = [];
+	/** @type {Effect[]} */
+	var done = [];
 	var length = to_destroy.length;
 
 	/** @type {EachOutroGroup} */
 	var group;
-	var remaining = to_destroy.length;
 
 	for (var i = 0; i < length; i++) {
 		let effect = to_destroy[i];
@@ -93,22 +92,21 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 						}
 					}
 				} else {
-					remaining -= 1;
+					done.push(effect);
 				}
 			},
 			false
 		);
 	}
 
-	if (remaining === 0) {
+	if (done.length === length) {
 		// If we're in a controlled each block (i.e. the block is the only child of an
-		// element), and we are removing all items, _and_ there are no out transitions,
+		// element), and we are removing all items, _and_ all outros finished synchronously,
 		// we can use the fast path — emptying the element and replacing the anchor.
 		// Skip the fast path when another batch is still pending on this each block:
 		// that batch's keys still reference EachItems in `state.items`, which
 		// `destroy_effects` needs to preserve offscreen (see #18610).
-		var fast_path =
-			transitions.length === 0 && controlled_anchor !== null && state.pending.size === 0;
+		var fast_path = controlled_anchor !== null && state.pending.size === 0;
 
 		if (fast_path) {
 			var anchor = /** @type {Element} */ (controlled_anchor);
@@ -124,8 +122,13 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	} else {
 		group = {
 			pending: new Set(to_destroy),
-			done: new Set()
+			done: new Set(done)
 		};
+
+		// Synchronous outros finished before the group existed.
+		for (const effect of done) {
+			group.pending.delete(effect);
+		}
 
 		(state.outrogroups ??= new Set()).add(group);
 	}
