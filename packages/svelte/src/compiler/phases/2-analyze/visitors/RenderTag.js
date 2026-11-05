@@ -46,6 +46,7 @@ export function RenderTag(node, context) {
 
 	if (
 		callee.type === 'MemberExpression' &&
+		!callee.computed &&
 		callee.property.type === 'Identifier' &&
 		['bind', 'apply', 'call'].includes(callee.property.name)
 	) {
