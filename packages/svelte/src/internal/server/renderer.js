@@ -18,10 +18,6 @@ import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
-/**
- * title is the last title in document order
- * @typedef {AccumulatedContent & { title: string }} CollectedContent
- */
 
 /**
  * @typedef {string | Renderer} RendererItem
@@ -783,15 +779,15 @@ export class Renderer {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string, or a promise resolving to a string.
-	 * @param {CollectedContent} content
-	 * @returns {CollectedContent}
+	 * @param {AccumulatedContent} content
+	 * @returns {AccumulatedContent}
 	 */
-	#collect_content(content = { head: '', body: '', title: '' }) {
+	#collect_content(content = { head: '', body: '' }) {
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
 			} else if (item.#is_title) {
-				content.title = item.#collect_content().head;
+				this.global.title = item.#collect_content().head;
 			} else {
 				item.#collect_content(content);
 			}
@@ -802,10 +798,10 @@ export class Renderer {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @param {CollectedContent} content
-	 * @returns {Promise<CollectedContent>}
+	 * @param {AccumulatedContent} content
+	 * @returns {Promise<AccumulatedContent>}
 	 */
-	async #collect_content_async(content = { head: '', body: '', title: '' }) {
+	async #collect_content_async(content = { head: '', body: '' }) {
 		await this.promise;
 
 		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
@@ -813,21 +809,24 @@ export class Renderer {
 			if (typeof item === 'string') {
 				content[this.type] += item;
 			} else if (item.#is_title) {
-				content.title = (await item.#collect_content_async()).head;
+				this.global.title = (await item.#collect_content_async()).head;
 			} else {
 				if (item.#boundary) {
 					// This renderer is an error boundary - collect into a separate
 					// accumulator so we can discard partial content on error
-					/** @type {CollectedContent} */
-					const boundary_content = { head: '', body: '', title: content.title };
+					/** @type {AccumulatedContent} */
+					const boundary_content = { head: '', body: '' };
+					const title = this.global.title;
 
 					try {
 						await item.#collect_content_async(boundary_content);
 						// Success - merge into the main content
 						content.head += boundary_content.head;
 						content.body += boundary_content.body;
-						content.title = boundary_content.title;
 					} catch (error) {
+						// a failed boundary does not render its title
+						this.global.title = title;
+
 						const { context, failed, transformError } = item.#boundary;
 
 						set_ssr_context(context);
@@ -897,12 +896,12 @@ export class Renderer {
 	}
 
 	/**
-	 * @param {CollectedContent} content
+	 * @param {AccumulatedContent} content
 	 * @param {Renderer} renderer
 	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
-		let head = content.head + content.title;
+		let head = content.head + renderer.global.title;
 		let body = content.body;
 
 		for (const { hash, code } of renderer.global.css) {
@@ -984,6 +983,9 @@ export class SSRState {
 
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
+
+	/** set while collecting so the last title in document order wins */
+	title = '';
 
 	/** @type {Set<Promise<unknown>>} */
 	#pending = new Set();

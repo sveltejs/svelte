@@ -370,6 +370,30 @@ describe('async', () => {
 		expect(() => result.html).toThrow('html_deprecated');
 	});
 
+	test('does not render a title from inside a boundary that fails asynchronously', async () => {
+		const component = (renderer: Renderer) => {
+			renderer.head(($$renderer) => {
+				$$renderer.title(($$renderer) => $$renderer.push('<title>outside</title>'));
+			});
+			renderer.boundary({ failed: (renderer) => renderer.push('failed') }, (renderer) => {
+				renderer.head(($$renderer) => {
+					$$renderer.title(($$renderer) => $$renderer.push('<title>inside</title>'));
+				});
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('oops');
+				});
+			});
+		};
+
+		const { head, body } = await Renderer.render(
+			component as unknown as Component,
+			{ transformError: () => 'transformed' } as any
+		);
+		expect(body).toContain('failed');
+		expect(head).toBe('<title>outside</title>');
+	});
+
 	test('renders the last title in document order, regardless of when it resolves', async () => {
 		const component = (renderer: Renderer) => {
 			renderer.head(($$renderer) => {
