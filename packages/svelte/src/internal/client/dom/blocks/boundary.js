@@ -280,45 +280,69 @@ export class Boundary {
 		this.is_pending = true;
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
+		var batch = /** @type {Batch} */ (current_batch);
+
 		queue_micro_task(() => {
 			if (this.#is_destroyed()) return;
 
-			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
-			var anchor = create_text();
-			var handled = false;
+			// A merge transfers the hydration state to an earlier batch without committing it.
+			while (batch.merged_into !== null) batch = batch.merged_into;
 
-			fragment.append(anchor);
-
-			this.#main_effect = this.#run(() => {
-				try {
-					return branch(() => this.#children(anchor));
-				} catch (error) {
-					try {
-						this.error(error);
-						handled = true;
-					} catch (error) {
-						invoke_error_boundary(error, this.#effect.parent);
-					}
-
-					return null;
-				}
-			});
-
-			if (this.#main_effect === null) {
-				this.#offscreen_fragment = null;
-				if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
-				return;
+			// Deferred child creation must see the same state as the rest of hydration.
+			// If that batch already committed, #run will ensure a new one instead.
+			if (batch.linked) {
+				batch.activate();
+				batch.apply();
 			}
 
-			if (this.#pending_count === 0) {
-				this.#anchor.before(fragment);
-				this.#offscreen_fragment = null;
+			try {
+				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+				var anchor = create_text();
+				var handled = false;
 
-				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
-					this.#pending_effect = null;
+				fragment.append(anchor);
+
+				this.#main_effect = this.#run(() => {
+					try {
+						return branch(() => this.#children(anchor));
+					} catch (error) {
+						try {
+							this.error(error);
+							handled = true;
+						} catch (error) {
+							invoke_error_boundary(error, this.#effect.parent);
+						}
+
+						return null;
+					}
 				});
 
-				this.#resolve(/** @type {Batch} */ (current_batch));
+				if (this.#main_effect === null) {
+					this.#offscreen_fragment = null;
+					if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
+					return;
+				}
+
+				if (this.#pending_count === 0) {
+					this.#anchor.before(fragment);
+					this.#offscreen_fragment = null;
+
+					pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
+						this.#pending_effect = null;
+					});
+
+					this.#resolve(/** @type {Batch} */ (current_batch));
+				}
+			} finally {
+				if (batch.linked) {
+					batch.deactivate();
+
+					// A started batch may have only non-blocking work left. Do not rely on
+					// that work resolving to flush the newly-created effects.
+					queue_micro_task(() => {
+						if (batch.linked) batch.flush();
+					});
+				}
 			}
 		});
 	}
