@@ -1,7 +1,7 @@
 /** @import { Derived, Reaction, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
-import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { DERIVED, ASYNC, ORIGINAL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, untrack } from '../runtime.js';
 
@@ -21,7 +21,8 @@ export let tracing_expressions = null;
 function log_entry(signal, entry) {
 	const value = signal.v;
 
-	if (value === UNINITIALIZED) {
+	// a state proxy key that is absent, or still as the object has it, has no value to show here
+	if (value === UNINITIALIZED || value === ORIGINAL) {
 		return;
 	}
 

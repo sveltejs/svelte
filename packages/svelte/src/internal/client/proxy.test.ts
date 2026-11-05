@@ -1,5 +1,75 @@
 import { proxy } from './proxy';
 import { assert, test } from 'vitest';
+import { disable_async_mode_flag, enable_async_mode_flag } from '../flags';
+import { fork } from './reactivity/batch';
+import { snapshot } from '../shared/clone.js';
+
+test('preserves ordinary object semantics for inherited property names', () => {
+	for (const prop of ['toString', 'valueOf', 'constructor', 'hasOwnProperty']) {
+		const state = proxy<Record<string, unknown>>({});
+		const inherited = state[prop];
+
+		delete state[prop];
+		assert.equal(state[prop], inherited);
+		assert.equal(prop in state, true);
+
+		state[prop] = 'own';
+		state.other = 'own';
+
+		assert.equal(state[prop], 'own');
+		assert.equal(Object.hasOwn(state, prop), true);
+		assert.deepEqual(Object.keys(state), [prop, 'other']);
+		assert.deepEqual({ ...state }, { [prop]: 'own', other: 'own' });
+
+		delete state[prop];
+
+		assert.equal(state[prop], inherited);
+		assert.equal(prop in state, true);
+		assert.equal(Object.hasOwn(state, prop), false);
+		assert.deepEqual(Object.keys(state), ['other']);
+	}
+});
+
+test('preserves ordinary object semantics for inherited array properties', () => {
+	const state = proxy([]);
+	const inherited = state.map;
+
+	Reflect.set(state, 'map', 'own');
+
+	assert.equal<unknown>(Reflect.get(state, 'map'), 'own');
+	assert.equal(Object.hasOwn(state, 'map'), true);
+	assert.deepEqual(Object.keys(state), ['map']);
+
+	Reflect.deleteProperty(state, 'map');
+
+	assert.equal(state.map, inherited);
+	assert.equal('map' in state, true);
+	assert.equal(Object.hasOwn(state, 'map'), false);
+	assert.deepEqual(Object.keys(state), []);
+});
+
+test('assigning an inherited accessor or read-only property adds no own property', () => {
+	const object = proxy({});
+	Reflect.set(object, '__proto__', { polluted: true });
+
+	assert.deepEqual(Object.keys(object), []);
+	assert.equal(Object.getPrototypeOf(snapshot(object)), Object.prototype);
+
+	const array = proxy([]);
+	Reflect.set(array, Symbol.unscopables, 'own');
+
+	assert.equal(Object.hasOwn(array, Symbol.unscopables), false);
+});
+
+test('assigning an inherited name to a non-extensible object adds no own property', () => {
+	for (const target of [Object.freeze({}), Object.preventExtensions({})]) {
+		const object = proxy(target);
+		Reflect.set(object, 'toString', 'own');
+
+		assert.equal(Object.hasOwn(object, 'toString'), false);
+		assert.deepEqual(Object.keys(object), []);
+	}
+});
 
 test('does not mutate the original object', () => {
 	const original = { x: 1 };
@@ -130,4 +200,114 @@ test('handles array length mutation', () => {
 	assert.deepEqual(state.length, 0);
 	assert.deepEqual(state, []);
 	assert.deepEqual(state[0], undefined);
+});
+
+test('deleting, truncating or overwriting a key does not read its value', () => {
+	// `proxy` checks whether a value is state already
+	const unread = new Proxy({}, { has: () => assert.fail('read') });
+	const getter = { get: () => assert.fail('read'), configurable: true, enumerable: true };
+
+	const object = proxy({ deleted: unread, overwritten: unread });
+	Reflect.deleteProperty(object, 'deleted');
+	object.overwritten = {};
+	assert.deepEqual(Object.keys(object), ['overwritten']);
+
+	const array = proxy([unread]);
+	array.length = 0;
+	assert.equal(array.length, 0);
+
+	const accessor = proxy(Object.defineProperty({}, 'value', getter));
+	Reflect.deleteProperty(accessor, 'value');
+	assert.deepEqual(Object.keys(accessor), []);
+
+	const items = proxy(Object.defineProperty([0], 0, getter));
+	items.length = 0;
+	assert.equal(items.length, 0);
+});
+
+test('discards fork-local proxy changes', () => {
+	enable_async_mode_flag();
+
+	try {
+		const added = proxy<{ x?: number }>({});
+		fork(() => {
+			added.x = 1;
+		}).discard();
+
+		assert.equal('x' in added, false);
+		assert.deepEqual(Object.keys(added), []);
+
+		const updated = proxy({ x: 1 });
+		fork(() => {
+			updated.x = 2;
+		}).discard();
+
+		assert.equal(updated.x, 1);
+		assert.deepEqual(Object.keys(updated), ['x']);
+
+		const populated = proxy([1, 2]);
+		fork(() => {
+			populated.length = 0;
+		}).discard();
+
+		assert.deepEqual(populated, [1, 2]);
+
+		const truncated = proxy<number[]>([]);
+		void truncated[0];
+		void truncated[1];
+
+		fork(() => {
+			truncated.push(1, 2);
+			truncated.length = 0;
+			assert.equal(0 in truncated, false);
+			assert.deepEqual(Object.keys(truncated), []);
+			assert.equal(truncated.length, 0);
+		}).discard();
+
+		assert.deepEqual(truncated, []);
+
+		const original = { x: { value: 1 } };
+		const deleted = proxy(original);
+		fork(() => {
+			Reflect.deleteProperty(deleted, 'x');
+		}).discard();
+
+		// the restored value is state, not the original object
+		deleted.x.value = 2;
+		assert.equal(deleted.x.value, 2);
+		assert.equal(Object.getOwnPropertyDescriptor(deleted, 'x')?.value, deleted.x);
+		assert.equal(original.x.value, 1);
+		assert.deepEqual(Object.keys(deleted), ['x']);
+	} finally {
+		disable_async_mode_flag();
+	}
+});
+
+test('keeps fork-local proxy changes when a fork is committed', async () => {
+	enable_async_mode_flag();
+
+	try {
+		const readded = proxy<{ x?: number }>({ x: 1 });
+		const array = proxy([1]);
+
+		await fork(() => {
+			delete readded.x;
+			readded.x = 1;
+			assert.deepEqual(Object.keys(readded), ['x']);
+
+			array.length = 0;
+			array[0] = 0;
+			assert.equal(array.length, 1);
+
+			array[4] = 4;
+			array[1] = 1;
+			assert.equal(array.length, 5);
+		}).commit();
+
+		assert.equal(readded.x, 1);
+		assert.deepEqual(Object.keys(readded), ['x']);
+		assert.equal(array.length, 5);
+	} finally {
+		disable_async_mode_flag();
+	}
 });

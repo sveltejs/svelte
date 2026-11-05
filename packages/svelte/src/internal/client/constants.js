@@ -63,6 +63,12 @@ export const COMPONENT_SYMBOL = Symbol('component');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+/**
+ * A state proxy source's value while its key is as the proxied object has it. A source that a write
+ * creates starts from it, so that a discarded fork, another batch or a teardown sees the key as it
+ * was, without the write reading the object's value
+ */
+export const ORIGINAL = Symbol('original');
 export const ATTRIBUTES_CACHE = Symbol('attributes');
 export const CLASS_CACHE = Symbol('class');
 export const STYLE_CACHE = Symbol('style');
