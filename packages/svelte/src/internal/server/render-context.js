@@ -62,8 +62,9 @@ export function hold_render_context(promise) {
 
 /**
  * Runs `fn` with a render context that attributes the values it adds to `Warp`s to `boundary`,
- * including those it adds after an `await`. In WebContainers, which don't have `AsyncLocalStorage`,
- * only the values added synchronously are attributed
+ * including those it adds after an `await`. Requires `AsyncLocalStorage`, so it isn't used in
+ * WebContainers, where background work doesn't start until the `head` has been serialized instead
+ * (see `Renderer.background`)
  * @template T
  * @param {PendingBoundary} boundary
  * @param {() => T} fn
@@ -77,7 +78,7 @@ export function with_boundary(boundary, fn) {
 	context = ctx;
 
 	try {
-		return als === null || in_webcontainer() ? fn() : als.run(ctx, fn);
+		return als === null ? fn() : als.run(ctx, fn);
 	} finally {
 		context = previous;
 	}
@@ -199,7 +200,7 @@ export function init_render_context() {
 }
 
 // this has to be a function because rollup won't treeshake it if it's a constant
-function in_webcontainer() {
+export function in_webcontainer() {
 	// @ts-ignore -- this will fail when we run typecheck because we exclude node types
 	// eslint-disable-next-line n/prefer-global/process
 	return !!globalThis.process?.versions?.webcontainer;

@@ -15,6 +15,7 @@ import { attributes } from './index.js';
 import {
 	get_render_context,
 	hold_render_context,
+	in_webcontainer,
 	with_boundary,
 	with_render_context
 } from './render-context.js';
@@ -424,6 +425,11 @@ export class Renderer {
 	 * via the `tail` (see `#collect_warp`), followed by a message that tells the client it can render
 	 * the boundary's children, once the synchronous part of the work is done. Only used with
 	 * `experimental.streaming`.
+	 *
+	 * In WebContainers, which don't have `AsyncLocalStorage`, the work can't be told apart from the
+	 * rest of the render after an `await`, so it doesn't start until the `head` has been serialized
+	 * (see `SSRState.gate`). After that, every value goes in the `tail` anyway, so the client receives
+	 * the same values as it would elsewhere
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
 	 */
 	background(fn) {
@@ -458,6 +464,36 @@ export class Renderer {
 			r: renderer,
 			i: ssr_context?.i ?? false
 		};
+
+		if (boundary !== null && state.gate !== null) {
+			const pending = boundary;
+			const store = get_render_context().warp;
+
+			const result = state.gate.promise.then((run) => {
+				// the render failed, so the work never starts
+				if (!run) return;
+
+				const previous = ssr_context;
+				set_ssr_context(context);
+
+				try {
+					const result = fn(renderer);
+					if (result instanceof Promise) result.finally(() => set_ssr_context(null)).catch(noop);
+					return result;
+				} catch {
+					// the client will render the children itself, and handle the error then
+				} finally {
+					set_ssr_context(previous);
+
+					// the values that the children read synchronously have been added by now
+					store.queue.push(pending);
+					store.late?.();
+				}
+			});
+
+			renderer.promise = state.track(result);
+			return;
+		}
 
 		const previous = ssr_context;
 		set_ssr_context(context);
@@ -874,13 +910,11 @@ export class Renderer {
 			try {
 				Renderer.#open_render(renderer, component, options);
 				const content = await renderer.#collect_content_async();
-				const background = renderer.global.background;
-
-				if (background !== null) {
-					hold_render_context(Renderer.#finish_background(background));
-				}
-
-				const warp = await renderer.#collect_warp(context.warp, context.replacer, background);
+				const warp = await renderer.#collect_warp(
+					context.warp,
+					context.replacer,
+					renderer.global.background
+				);
 
 				if (warp.head !== null) {
 					content.head = warp.head + content.head;
@@ -893,13 +927,18 @@ export class Renderer {
 				failed = true;
 				renderer.global.abort();
 				await renderer.global.settle();
+			}
 
-				const background = renderer.global.background;
+			// read after the render has settled, since work that was still running could have started background work
+			const background = renderer.global.background;
 
-				if (background !== null) {
+			if (background !== null) {
+				if (failed) {
 					background.abort();
-					hold_render_context(Renderer.#finish_background(background));
+					background.gate?.resolve(false);
 				}
+
+				hold_render_context(Renderer.#finish_background(background));
 			}
 
 			renderer.#run_on_destroy(failed);
@@ -1059,6 +1098,10 @@ export class Renderer {
 
 		try {
 			head = session.uneval(values);
+
+			// everything that's added from now on goes in the `tail`, so background work that was waiting for
+			// that can start. it waits until the `head` has been serialized, so that it doesn't start if that fails
+			background?.gate?.resolve(true);
 
 			const pending = watch_pending(values);
 
@@ -1475,6 +1518,14 @@ export class SSRState {
 	 */
 	background_renderers = [];
 
+	/**
+	 * In WebContainers, if this is the state for background work, the work started by pending boundaries
+	 * waits for this, which resolves once the `head` has been serialized — or with `false` if the render
+	 * failed, in which case the work doesn't start (see `Renderer.background`)
+	 * @type {ReturnType<typeof deferred<boolean>> | null}
+	 */
+	gate = null;
+
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
 
@@ -1585,6 +1636,10 @@ export class SSRState {
 				this.transformError
 			);
 			this.background.is_background = true;
+
+			if (in_webcontainer()) {
+				this.background.gate = deferred();
+			}
 		}
 
 		return this.background;

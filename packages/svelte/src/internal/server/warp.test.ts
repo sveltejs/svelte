@@ -1464,7 +1464,7 @@ describe('streaming', () => {
 			delete versions.webcontainer;
 		});
 
-		test('runs the background work alongside the render, and streams its later values', async () => {
+		test('starts the background work once the head has been serialized, and streams all of its values', async () => {
 			const events: string[] = [];
 
 			const { head, tail } = await render((renderer) => {
@@ -1485,24 +1485,87 @@ describe('streaming', () => {
 				});
 			});
 
-			expect(events).toEqual(['background', 'main']);
+			expect(events).toEqual(['main', 'background']);
 
 			const window: FakeWindow = {};
 			run(window, head);
 
-			// without `AsyncLocalStorage`, only the values that the background work adds synchronously
-			// are known to come from it, so the others are in the head if they're added in time
+			// the background work only starts once the head is done, so all of its values are in the tail,
+			// including the ones it adds after an `await`, just like with `AsyncLocalStorage`
 			const values = window.__svelte?.w?.get('test');
 			expect(values?.get('main')).toBe('main');
 			expect(values?.has('sync')).toBe(false);
-			expect(values?.get('during')).toBe('during');
+			expect(values?.has('during')).toBe(false);
 			expect(values?.has('later')).toBe(false);
 
 			for await (const chunk of tail) run(window, chunk);
 
 			expect(values?.get('sync')).toBe('sync');
+			expect(values?.get('during')).toBe('during');
 			expect(values?.get('later')).toBe('later');
 			expect(window.__svelte?.r).toBeUndefined();
+		});
+
+		test('puts the values that the render reads in the head, even if background work adds them too', async () => {
+			let seen: unknown;
+
+			const { head, tail } = await render((renderer) => {
+				renderer.background(() => {
+					seen = warp.getOrInsert('shared', 'background');
+				});
+
+				renderer.child(async () => {
+					await delay(null);
+					warp.getOrInsert('shared', 'main');
+				});
+			});
+
+			expect(revive(head)?.get('test')?.get('shared')).toBe('main');
+			const { values } = await revive_streamed(head, tail);
+			expect(seen).toBe('main');
+			expect(values?.get('test')?.get('shared')).toBe('main');
+		});
+
+		test('releases boundaries once the values their children read synchronously have arrived', async () => {
+			const window: FakeWindow = {};
+			vi.stubGlobal('window', window);
+
+			const { head, tail } = await render((renderer) => {
+				renderer.child(async (renderer) => {
+					await delay(null, 20);
+					renderer.background(() => {
+						warp.set('first', 'first');
+					});
+				});
+
+				renderer.background(async (renderer) => {
+					warp.set('second', 'second');
+
+					renderer.background(() => {
+						warp.set('nested', 'nested');
+					});
+
+					await delay(null, 10);
+					warp.set('after await', 'after await');
+				});
+			});
+
+			run(window, head);
+
+			const seen: Record<string, unknown[]> = {};
+			for (const id of ['b0', 'b1']) {
+				wait_for_boundary(id, () => {
+					seen[id] = [...(window.__svelte?.w?.get('test')?.keys() ?? [])];
+				});
+			}
+
+			for await (const chunk of tail) run(window, chunk);
+
+			// the work starts in the order the boundaries were reached, once the head is done
+			expect(seen).toEqual({
+				b0: ['second', 'nested', 'first'],
+				b1: ['second', 'nested']
+			});
 		});
 
 		test('runs nested background work straight away', async () => {
@@ -1543,13 +1606,13 @@ describe('streaming', () => {
 			expect(revive(second.head)?.get('test')?.get('a')).toBe('second');
 		});
 
-		test('does not hold up the next render if the render fails', async () => {
-			let signal: AbortSignal | undefined;
+		test('does not start the background work, or hold up the next render, if the render fails', async () => {
+			let started = false;
 
 			await expect(
 				render((renderer) => {
 					renderer.background(async () => {
-						signal = getAbortSignal();
+						started = true;
 						await delay(null, 10);
 					});
 
@@ -1561,8 +1624,29 @@ describe('streaming', () => {
 				warp.set('a', 'a');
 			});
 
-			expect(signal?.aborted).toBe(true);
+			expect(started).toBe(false);
 			expect(revive(head)?.get('test')?.get('a')).toBe('a');
+		});
+
+		test('aborts the background work if the render fails after it started', async () => {
+			let signal: AbortSignal | undefined;
+
+			await expect(
+				render((renderer) => {
+					renderer.background(async () => {
+						signal = getAbortSignal();
+						await delay(null, 10);
+					});
+
+					// rejects after the head has been serialized, once the background work has started
+					warp.set(
+						'bad',
+						delay(null, 5).then(() => () => {})
+					);
+				})
+			).rejects.toThrow('warp_serialization_failed');
+
+			expect(signal?.aborted).toBe(true);
 		});
 	});
 });
