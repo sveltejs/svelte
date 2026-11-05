@@ -329,6 +329,18 @@ Runs share arrays where they can, which avoids copying on the hot path:
 - A `dv` array is **owned by one run**. The global run updates its own in place (on the real-world fast path, and in `update_record`), so a record never shares it: `keep_global_run` copies it, and so does `promote_record` for a derived, whose record other batches may still hold. An effect's record is dropped when it is promoted, so its `dv` becomes the global run's as it is. `record_late_read` extends the `dv` of the run that applies in place.
 - One record can be held by several batches: `keep_global_run` creates one for all batches that keep the replaced run.
 
+### 8.6 When a run's signal aborts
+
+`getAbortSignal` hands out one `AbortController` per run. A reaction keeps them in `ac`, keyed by the batch the run belongs to (`null` for runs outside a batch), so that a rerun can abort the run it replaces without touching other batches' runs. A batch keeps the set of reactions that asked for a signal, so that it can reach them when it is discarded. A run's signal aborts when:
+
+- **its reaction runs again in the same batch** — the run is gone either way;
+- **a run elsewhere replaces it**: a real-world run replaces older ones, a run in a batch that was discarded or merged is superseded by the run that made it obsolete, and a fork's committed run replaces the real world's. Forks stay independent otherwise: their runs only abort when the fork commits or is discarded;
+- **its batch commits** — for the runs in other batches that the committed runs replace, e.g. the real world's run when a fork commits;
+- **its batch is discarded** — for all runs in its view, e.g. the requests a discarded fork started;
+- **the reaction is destroyed** (`abort_all`, [§13](#13-teardowns-invalidated-runs-and-destroyed-reactions)).
+
+All four cases share `abort_runs(reaction, superseded)`; the policy lives in the caller: `abort_replaced` (rerun), `abort_superseded` (commit), `abort_batch_runs` (discard), `abort_all` (destroy). Being batch-aware means the abort can miss a run in an edge case, which is a false negative rather than a hang: the signal is a courtesy, and a run that isn't aborted still produces a result its batch may use. `async-abort-signal-*` cover the cases.
+
 ## 9. Writes: `internal_set`, `capture`
 
 ### 9.1 `Batch#capture(source, value, same, error)`
