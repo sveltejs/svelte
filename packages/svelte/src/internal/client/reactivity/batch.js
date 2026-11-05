@@ -595,7 +595,9 @@ export class Batch {
 		flush_queued_effects(effects, earlier_writes);
 
 		// This batch's records are now the real-world state. This happens after
-		// `flush_queued_effects` so that eager block effect records are released
+		// `flush_queued_effects` so that eager block effect records are released;
+		// anything recorded during the commit — including derived records, which are
+		// dropped rather than promoted (see `#release_records`) — is released here too
 		this.#release_records(true);
 
 		this.#deferred?.resolve();
@@ -1303,6 +1305,11 @@ export class Batch {
 		// Release ownership before pruning. Merged runs are retained by the receiving batch
 		this.records = null;
 		for (const [reaction, record] of records) {
+			// A derived's record is a run in this batch's view: it is only the real-world value if its
+			// dependencies still hold what it read, which is checked where a record is promoted on read
+			// (see `update_derived`) and cannot be checked here. So it is dropped rather than promoted,
+			// and its edges are left for its next global run to prune (see `prune_edges`). A destroyed
+			// reaction has nothing left to update either
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
 				if (commit) {
 					promote_record(reaction, record);
