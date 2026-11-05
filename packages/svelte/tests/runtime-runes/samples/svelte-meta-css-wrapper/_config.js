@@ -17,6 +17,7 @@ export default test({
 		const h1 = target.querySelector('h1');
 		const h2 = target.querySelector('h2');
 		const p = target.querySelector('p');
+		const wrapper = target.querySelector('svelte-css-wrapper');
 
 		// @ts-expect-error
 		assert.deepEqual(h1.__svelte_meta.loc, {
@@ -29,6 +30,13 @@ export default test({
 		assert.deepEqual(h2.__svelte_meta.loc, {
 			file: 'Component.svelte',
 			line: 1,
+			column: 0
+		});
+
+		// @ts-expect-error
+		assert.deepEqual(wrapper.__svelte_meta.loc, {
+			file: 'main.svelte',
+			line: 6,
 			column: 0
 		});
 
