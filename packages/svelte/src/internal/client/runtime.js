@@ -357,7 +357,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
  * done, it's stored with the run: on the reaction for its global run, or on the record a batch holds of it
  * @type {AbortController | null}
  */
-let run_controller = null;
+let abort_controller = null;
 
 /**
  * The signal of the run of `reaction` that is in progress — or, after an `await` in it, of the run that applies in the
@@ -368,7 +368,7 @@ export function get_abort_signal(reaction) {
 	reaction.f |= HAS_SIGNAL;
 
 	if ((reaction.f & REACTION_IS_UPDATING) !== 0) {
-		return (run_controller ??= new AbortController()).signal;
+		return (abort_controller ??= new AbortController()).signal;
 	}
 
 	return (run_of(reaction).ac ??= new AbortController()).signal;
@@ -433,7 +433,7 @@ function abort_replaced(reaction, flags) {
  */
 function set_global_signal(reaction) {
 	if (!current_batch?.is_fork) abort_signal(reaction.ac);
-	reaction.ac = run_controller;
+	reaction.ac = abort_controller;
 }
 
 /**
@@ -508,8 +508,8 @@ export function update_reaction(reaction) {
 	untracking = false;
 	update_version = ++read_version;
 
-	var previous_run_controller = run_controller;
-	run_controller = null;
+	var previous_run_controller = abort_controller;
+	abort_controller = null;
 
 	if ((flags & HAS_SIGNAL) !== 0) {
 		abort_replaced(reaction, flags);
@@ -594,7 +594,7 @@ export function update_reaction(reaction) {
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 		update_version = previous_update_version;
-		run_controller = previous_run_controller;
+		abort_controller = previous_run_controller;
 	}
 }
 
@@ -624,7 +624,7 @@ function update_dependencies(reaction, flags, value, error) {
 
 	// (an effect can be destroyed while it runs, e.g. by an error boundary)
 	if ((reaction.f & DESTROYED) !== 0) {
-		abort_signal(run_controller);
+		abort_signal(abort_controller);
 		return length;
 	}
 
@@ -674,7 +674,7 @@ function update_dependencies(reaction, flags, value, error) {
 		if (dv.length !== length) dv.length = length;
 
 		if ((flags & DERIVED) !== 0) set_derived_value(/** @type {Derived} */ (reaction), value, error);
-		if (reaction.ac || run_controller) set_global_signal(reaction);
+		if (reaction.ac || abort_controller) set_global_signal(reaction);
 
 		return length;
 	}
@@ -822,14 +822,14 @@ function update_record(reaction, flags, length, value, error) {
 						v: value,
 						e: error,
 						wv: derived_version(/** @type {Derived} */ (reaction), batch, value, error),
-						ac: run_controller
+						ac: abort_controller
 					}
-				: { deps: read, dv, ac: run_controller }
+				: { deps: read, dv, ac: abort_controller }
 		);
 	} else {
 		reaction.deps = read;
 		reaction.dv = dv;
-		if (reaction.ac || run_controller) set_global_signal(reaction);
+		if (reaction.ac || abort_controller) set_global_signal(reaction);
 
 		if ((flags & DERIVED) !== 0) {
 			set_derived_value(/** @type {Derived} */ (reaction), value, error);
