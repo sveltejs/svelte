@@ -57,6 +57,10 @@ export const ASYNC = 1 << 22;
 
 export const ERROR_VALUE = 1 << 23;
 
+// Flags exclusive to deriveds
+/** The global state of the derived is a value that was assigned to it, rather than a run of it */
+export const ASSIGNED = 1 << 26;
+
 export const STATE_SYMBOL = Symbol('$state');
 /** Marks component export objects, so that `proxy(...)` leaves them untouched */
 export const COMPONENT_SYMBOL = Symbol('component');

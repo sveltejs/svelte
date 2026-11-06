@@ -9,6 +9,7 @@ import {
 	remove_reactions,
 	set_active_reaction,
 	set_is_destroying_effect,
+	teardown_version,
 	untrack,
 	untracking,
 	set_active_effect
@@ -43,7 +44,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, current_batch } from './batch.js';
+import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
@@ -103,6 +104,8 @@ function create_effect(type, fn) {
 	var effect = {
 		ctx: component_context,
 		deps: null,
+		dv: null,
+		edges: null,
 		nodes: null,
 		f: type | DIRTY | CONNECTED,
 		first: null,
@@ -121,8 +124,6 @@ function create_effect(type, fn) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	current_batch?.register_created_effect(effect);
-
 	/** @type {Effect | null} */
 	var e = effect;
 
@@ -132,7 +133,7 @@ function create_effect(type, fn) {
 			collected_effects.push(effect);
 		} else {
 			// schedule for later
-			Batch.ensure().schedule(effect);
+			Batch.ensure().schedule(effect, DIRTY);
 		}
 	} else if (fn !== null) {
 		try {
@@ -146,7 +147,7 @@ function create_effect(type, fn) {
 		// won't re-run, has no DOM, and has no teardown etc)
 		// then we skip it and go to its child (if any)
 		if (
-			e.deps === null &&
+			e.edges === null &&
 			e.teardown === null &&
 			e.nodes === null &&
 			e.first === e.last && // either `null`, or a singular child
@@ -352,7 +353,7 @@ export function legacy_pre_effect_reset() {
 
 			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
 			// the effects dependencies and correctly ensure each dependency is up-to-date.
-			if ((effect.f & CLEAN) !== 0 && effect.deps !== null) {
+			if ((effect.f & CLEAN) !== 0 && effect.edges !== null) {
 				set_signal_status(effect, MAYBE_DIRTY);
 			}
 
@@ -446,6 +447,8 @@ export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
 	if (teardown !== null) {
 		const previously_destroying_effect = is_destroying_effect;
+		const previous_teardown_version = teardown_version;
+		const previous_teardown_context = teardown_context;
 		const previous_reaction = active_reaction;
 		set_is_destroying_effect(true);
 		set_active_reaction(null);
@@ -457,7 +460,8 @@ export function execute_effect_teardown(effect) {
 			// themselves mid-teardown are skipped by invoke_error_boundary.
 			invoke_error_boundary(error, effect.parent);
 		} finally {
-			set_is_destroying_effect(previously_destroying_effect);
+			set_is_destroying_effect(previously_destroying_effect, previous_teardown_version);
+			set_teardown_context(previous_teardown_context);
 			set_active_reaction(previous_reaction);
 		}
 	}
@@ -529,7 +533,7 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	effect.f |= DESTROYING;
 	destroy_effect_children(effect, remove_dom && !removed);
-	remove_reactions(effect, 0);
+	remove_reactions(effect);
 
 	var transitions = effect.nodes && effect.nodes.t;
 
@@ -562,6 +566,8 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.teardown =
 		effect.ctx =
 		effect.deps =
+		effect.dv =
+		effect.edges =
 		effect.fn =
 		effect.nodes =
 		effect.ac =
@@ -701,13 +707,13 @@ function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
-	// If a dependency of this effect changed while it was paused,
+	// If a dependency of this effect may have changed while it was paused,
 	// schedule the effect to update. we don't use `is_dirty`
 	// here because we don't want to eagerly recompute a derived like
-	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
+	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined`.
 	if ((effect.f & CLEAN) === 0) {
-		set_signal_status(effect, DIRTY);
-		Batch.ensure().schedule(effect); // Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
+		// Assumption: This happens during the commit phase of the batch, causing another flush, but it's safe
+		Batch.ensure().schedule(effect, MAYBE_DIRTY);
 	}
 
 	var child = effect.first;
