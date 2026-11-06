@@ -1,0 +1,11 @@
+<div></div>
+
+<style>
+	div {
+		background-image: URL(data:image/svg+xml;base64,AAAA);
+		mask-image: Url(data:image/svg+xml,<svg>{fill:red}</svg>);
+		cursor: uRl(data:image/svg+xml;base64,BBBB), auto;
+		background: url(image.png);
+		color: red;
+	}
+</style>
