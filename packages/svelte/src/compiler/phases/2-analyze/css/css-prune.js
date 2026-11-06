@@ -724,8 +724,10 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 function attribute_matches(node, name, expected_value, operator, case_insensitive) {
 	const name_lower = name.toLowerCase();
 
+	// a spread attribute can set any attribute, including one that is also given statically
+	if (node.attributes.some((attribute) => attribute.type === 'SpreadAttribute')) return true;
+
 	for (const attribute of node.attributes) {
-		if (attribute.type === 'SpreadAttribute') return true;
 		if (attribute.type === 'BindDirective' && attribute.name === name) return true;
 		// match attributes against the corresponding directive but bail out on exact matching
 		if (attribute.type === 'StyleDirective' && name_lower === 'style') return true;
