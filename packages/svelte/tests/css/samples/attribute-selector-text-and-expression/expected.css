@@ -1,0 +1,31 @@
+	button[aria-label='Close menu'].svelte-xyz {
+		color: red;
+	}
+
+	input[placeholder^='Email h'].svelte-xyz {
+		color: red;
+	}
+
+	input[placeholder$='e here'].svelte-xyz {
+		color: red;
+	}
+
+	input[placeholder*='l he'].svelte-xyz {
+		color: red;
+	}
+
+	p[title='b and c'].svelte-xyz {
+		color: red;
+	}
+
+	/* (unused) button[aria-label='Close door'] {
+		color: blue;
+	}*/
+
+	/* (unused) p[title='a and e'] {
+		color: blue;
+	}*/
+
+	/* (unused) a[href='/docs/c/intro'] {
+		color: blue;
+	}*/
