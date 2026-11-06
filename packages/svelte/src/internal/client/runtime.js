@@ -413,7 +413,7 @@ function abort_replaced(reaction, flags) {
 	if (
 		is_derived
 			? batch_values === null || (real && is_outdated(reaction))
-			: real || effect_batch(flags) === null
+			: real || !is_recorded_effect(flags)
 	) {
 		// (the controller stays referenced until the new run is stored, see `keep_global_run`)
 		abort_signal(reaction.ac);
@@ -473,16 +473,17 @@ export function abort_all(reaction) {
 }
 
 /**
- * The batch that a run of an effect belongs to: block and async effects that run while a batch is processed produce a
- * result for that batch (see `update_record`)
+ * Whether or not we should unconditionally record a reaction run within a batch, as opposed
+ * to updating the signal directly. True for async effects, and previously-initialized
+ * block effects (as long as they run during traversal, rather than on commit)
  * @param {number} flags
  */
-function effect_batch(flags) {
-	return ((flags & ASYNC) !== 0 ||
-		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)) &&
-		view_batch?.committed === false
-		? view_batch
-		: null;
+function is_recorded_effect(flags) {
+	if ((flags & ASYNC) === 0 && (flags & (BLOCK_EFFECT | REACTION_RAN)) !== (BLOCK_EFFECT | REACTION_RAN)) {
+		return false;
+	}
+
+	return view_batch !== null && view_batch === current_batch;
 }
 
 /** @param {Reaction} reaction */
@@ -720,12 +721,7 @@ function update_record(reaction, flags, length, value, error) {
 	// branch it selected, the value an async expression resolved to for it), which it keeps until it
 	// commits. The first run of a block effect is the exception — it creates (and commits) its initial
 	// branch. (Whether a derived's run belongs to a batch depends on what it read, see below)
-	var should_record =
-		(flags & ASYNC) !== 0 ||
-		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN);
-
-	// `view_batch` and `current_batch` are the same during traversal, but not after commit
-	should_record &&= view_batch !== null && view_batch === current_batch;
+	var should_record = is_recorded_effect(flags);
 
 	// A derived that has another version in the view than in the real world — because the view undoes an
 	// assignment to it, or it was assigned in a fork — never runs for the real world (see `get_view`)
