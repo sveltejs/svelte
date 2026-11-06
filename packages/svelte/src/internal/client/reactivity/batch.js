@@ -587,18 +587,15 @@ export class Batch {
 			return;
 		}
 
+		// The results of this batch are about to become the real-world state
+		this.#release_records(true);
+
 		// append/remove branches
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
 
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
-
-		// This batch's records are now the real-world state. This happens after
-		// `flush_queued_effects` so that eager block effect records are released;
-		// anything recorded during the commit — including derived records, which are
-		// dropped rather than promoted (see `#release_records`) — is released here too
-		this.#release_records(true);
 
 		this.#deferred?.resolve();
 

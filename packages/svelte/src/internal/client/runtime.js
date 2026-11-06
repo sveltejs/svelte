@@ -580,11 +580,12 @@ function update_record(reaction, flags, length, value, error) {
 	// branch it selected, the value an async expression resolved to for it), which it keeps until it
 	// commits. The first run of a block effect is the exception — it creates (and commits) its initial
 	// branch. (Whether a derived's run belongs to a batch depends on what it read, see below)
-	var batch =
+	var should_record =
 		(flags & ASYNC) !== 0 ||
-		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)
-			? view_batch
-			: null;
+		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN);
+
+	// `view_batch` and `current_batch` are the same during traversal, but not after commit
+	var batch = should_record && view_batch === current_batch ? view_batch : null;
 
 	// A derived that has another version in the view than in the real world — because the view undoes an
 	// assignment to it, or it was assigned in a fork — never runs for the real world (see `get_view`)
