@@ -72,6 +72,9 @@ When the attribute name and value match (`name={name}`), they can be replaced wi
 -->
 ```
 
+> [!NOTE]
+> Svelte treats `defaultValue` and `defaultChecked` as real attributes on form controls — they map to the DOM [`defaultValue`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/defaultValue) and [`defaultChecked`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/defaultChecked) properties, rather than being ignored the way they would be in plain HTML. They work with [`bind:value`](bind#input-bindvalue) / [`bind:checked`](bind#input-bindchecked) and nullish `value` assignments, and matter when a form is [reset](bind#input-bindvalue). See [bind](bind) for the form-reset behaviour (including `<select>` `defaultValue`).
+
 ## Component props
 
 By convention, values passed to components are referred to as _properties_ or _props_ rather than _attributes_, which are a feature of the DOM.
