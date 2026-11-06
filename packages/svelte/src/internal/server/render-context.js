@@ -1,10 +1,11 @@
 // @ts-ignore -- we don't include node types in the production build
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
 /** @import { UnevalReplacer } from 'devalue' */
-/** @import { PendingBoundary, RenderContext } from '#server' */
+/** @import { RenderContext } from '#server' */
 
 import { deferred, noop } from '../shared/utils.js';
 import * as e from './errors.js';
+import { WarpStore } from './warp-store.js';
 
 /** @type {Promise<void> | null} */
 let current_render = null;
@@ -34,16 +35,8 @@ function get_render_context_safe() {
  */
 function create_render_context(replacer) {
 	return {
-		warp: {
-			values: new Map(),
-			stacks: new Map(),
-			emitted: false,
-			tail_keys: new Map(),
-			queue: [],
-			streaming: false,
-			late: null
-		},
-		boundary: null,
+		warp: new WarpStore(),
+		in_boundary: false,
 		rendered: false,
 		replacer,
 		held: null
@@ -61,18 +54,17 @@ export function hold_render_context(promise) {
 }
 
 /**
- * Runs `fn` with a render context that attributes the values it adds to `Warp`s to `boundary`,
- * including those it adds after an `await`. Requires `AsyncLocalStorage`, so it isn't used in
+ * Runs `fn` with a render context that attributes the values it adds to `Warp`s, and the values it reads,
+ * to a pending boundary, including after an `await`. Requires `AsyncLocalStorage`, so it isn't used in
  * WebContainers, where background work doesn't start until the `head` has been serialized instead
  * (see `Renderer.background`)
  * @template T
- * @param {PendingBoundary} boundary
  * @param {() => T} fn
  * @returns {T}
  */
-export function with_boundary(boundary, fn) {
+export function in_boundary(fn) {
 	const previous = context;
-	const ctx = { ...get_render_context(), boundary };
+	const ctx = { ...get_render_context(), in_boundary: true };
 
 	// `context` takes precedence over `als` (see `get_render_context_safe`), so it's set too
 	context = ctx;

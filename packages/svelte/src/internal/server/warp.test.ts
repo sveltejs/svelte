@@ -753,6 +753,65 @@ describe('streaming', () => {
 		expect(found).toBe('Rich');
 	});
 
+	test('adds values that depend on a promise in the same chunk that resolves it, if other messages are waiting', async () => {
+		let resolve_user!: (user: { id: number }) => void;
+		const user_promise = new Promise<{ id: number }>((fulfil) => (resolve_user = fulfil));
+
+		let resolve_other!: () => void;
+		const other = new Promise<void>((fulfil) => (resolve_other = fulfil));
+
+		const { head, tail } = await render((renderer) => {
+			renderer.background(async () => {
+				warp.set('user', user_promise);
+
+				await other;
+				warp.set('other', 'other');
+
+				const user = await user_promise;
+				// a few ticks later than the settlement, as if `await`ed through helper functions
+				for (let i = 0; i < 10; i += 1) await Promise.resolve();
+				warp.set(`name:${user.id}`, 'Rich');
+			});
+		});
+
+		const window: FakeWindow = {};
+		run(window, head);
+
+		const iterator = tail[Symbol.asyncIterator]();
+		const chunks: string[] = [];
+
+		/** Takes the next chunk, and runs it on the client */
+		const next = async () => {
+			const result = await iterator.next();
+			if (result.done) return false;
+			chunks.push(result.value);
+			run(window, result.value);
+			return true;
+		};
+
+		// the chunk that sends the (pending) user promise
+		await next();
+		const user = window.__svelte?.w?.get('test')?.get('user') as Promise<{ id: number }>;
+		let found: unknown;
+		user.then(() => (found = window.__svelte?.w?.get('test')?.get('name:1')));
+
+		// a message is waiting while the consumer is busy (e.g. writing the previous chunk)...
+		resolve_other();
+		await delay(null);
+
+		// ...and the consumer asks for the next chunk right after the user promise settles,
+		// before the work that was waiting for it has added the value that depends on it
+		resolve_user({ id: 1 });
+		await user_promise;
+		await Promise.resolve();
+
+		while (await next());
+
+		await user;
+		expect(chunks.length).toBeGreaterThan(1);
+		expect(found).toBe('Rich');
+	});
+
 	test('streams values the render adds after the head while the tail is open', async () => {
 		let promise: Promise<void> | undefined;
 
@@ -994,14 +1053,17 @@ describe('streaming', () => {
 
 	test('does not mix up the client state of concurrent streams', async () => {
 		const render_one = (value: string) =>
-			render((renderer) => {
-				renderer.background(async () => {
-					await delay(null, 10);
-					warp.set(value, delay(value, 10));
-				});
-			});
+			render(
+				(renderer) => {
+					renderer.background(async () => {
+						await delay(null, 10);
+						warp.set(value, delay(value, 10));
+					});
+				},
+				{ idPrefix: value }
+			);
 
-		// same (default) `idPrefix`, evaluated on the same page while both are streaming
+		// different `idPrefix`es, evaluated on the same page while both are streaming
 		const [a, b] = await Promise.all([render_one('a'), render_one('b')]);
 
 		const window: FakeWindow = {};
@@ -1415,14 +1477,18 @@ describe('streaming', () => {
 		});
 
 		test('apply to every stream until none are in progress', async () => {
+			// overlapping streams on the same page need different `idPrefix`es
 			const stream = (value: string, ms: number) =>
-				render((renderer) => {
-					renderer.background(async () => {
-						await delay(null, ms);
-						warp.set('a', value);
-						warp.set(value, value);
-					});
-				});
+				render(
+					(renderer) => {
+						renderer.background(async () => {
+							await delay(null, ms);
+							warp.set('a', value);
+							warp.set(value, value);
+						});
+					},
+					{ idPrefix: value }
+				);
 
 			const window: FakeWindow = {};
 			vi.stubGlobal('window', window);

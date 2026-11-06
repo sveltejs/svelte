@@ -1,14 +1,12 @@
 /** @import { Component } from 'svelte' */
-/** @import { Session, UnevalReplacer } from 'devalue' */
-/** @import { RenderContext, SSRContext, WarpStore } from './types.js' */
-/** @import { WarpKey } from '#shared' */
+/** @import { UnevalReplacer } from 'devalue' */
+/** @import { RenderContext, SSRContext } from './types.js' */
 /** @import { AsyncRenderOutput, Csp, RenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { STALE_REACTION } from '../client/constants.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
-import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
@@ -16,12 +14,11 @@ import {
 	get_render_context,
 	hold_render_context,
 	in_webcontainer,
-	with_boundary,
+	in_boundary,
 	with_render_context
 } from './render-context.js';
-import { sha256 } from './crypto.js';
-import * as devalue from 'devalue';
-import { deferred, has_own_property, is_array, is_native_promise, noop } from '../shared/utils.js';
+import { serialize_warp } from './warp-stream.js';
+import { deferred, has_own_property, is_array, noop } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -422,14 +419,12 @@ export class Renderer {
 	/**
 	 * Opens a pending boundary, and runs its children in the background, discarding their output, so that
 	 * the data they need starts loading on the server. Values they add to `Warp` instances are streamed
-	 * via the `tail` (see `#collect_warp`), followed by a message that tells the client it can render
+	 * via the `tail` (see `serialize_warp`), followed by a message that tells the client it can render
 	 * the boundary's children, once the synchronous part of the work is done. Only used with
 	 * `experimental.streaming`.
 	 *
-	 * In WebContainers, which don't have `AsyncLocalStorage`, the work can't be told apart from the
-	 * rest of the render after an `await`, so it doesn't start until the `head` has been serialized
-	 * (see `SSRState.gate`). After that, every value goes in the `tail` anyway, so the client receives
-	 * the same values as it would elsewhere
+	 * In WebContainers, the work of the outermost boundaries doesn't start until the `head` has been
+	 * serialized (see `BackgroundWork`)
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
 	 */
 	background(fn) {
@@ -440,21 +435,11 @@ export class Renderer {
 
 		// boundaries inside background work aren't in the HTML, so they don't need an id. their
 		// values are attributed to the outermost boundary, which they're already running inside
-		const nested = this.global.is_background;
+		const boundary = this.global.is_background ? null : new PendingBoundary();
+		this.#out.push(boundary ?? BLOCK_OPEN_ELSE);
 
-		/** @type {PendingBoundary | null} */
-		let boundary = null;
-
-		if (nested) {
-			this.#out.push(BLOCK_OPEN_ELSE);
-		} else {
-			boundary = new PendingBoundary();
-			this.#out.push(boundary);
-		}
-
-		const state = this.global.get_background();
-		const renderer = new Renderer(state, this);
-		state.background_renderers.push(renderer);
+		const work = this.global.get_background();
+		const renderer = new Renderer(work.state, this);
 
 		/** @type {SSRContext} */
 		const context = {
@@ -465,72 +450,37 @@ export class Renderer {
 			i: ssr_context?.i ?? false
 		};
 
-		if (boundary !== null && state.gate !== null) {
-			const pending = boundary;
-			const store = get_render_context().warp;
+		const defer = boundary !== null && work.deferred;
 
-			const result = state.gate.promise.then((run) => {
-				// the render failed, so the work never starts
-				if (!run) return;
+		/**
+		 * Runs the work, and returns its promise if it's asynchronous
+		 * @returns {Promise<void> | undefined}
+		 */
+		const start = () => {
+			const previous = ssr_context;
+			set_ssr_context(context);
 
-				const previous = ssr_context;
-				set_ssr_context(context);
+			try {
+				// deferred work only starts once every value goes in the `tail`, so there's no need to attribute them
+				const result = boundary === null || defer ? fn(renderer) : in_boundary(() => fn(renderer));
 
-				try {
-					const result = fn(renderer);
-					if (result instanceof Promise) result.finally(() => set_ssr_context(null)).catch(noop);
+				if (result instanceof Promise) {
+					result.finally(() => set_ssr_context(null)).catch(noop);
 					return result;
-				} catch {
-					// the client will render the children itself, and handle the error then
-				} finally {
-					set_ssr_context(previous);
-
-					// the values that the children read synchronously have been added by now
-					store.queue.push(pending);
-					store.late?.();
 				}
-			});
+			} catch {
+				// the client will render the children itself, and handle the error then
+			} finally {
+				set_ssr_context(previous);
 
-			renderer.promise = state.track(result);
-			return;
-		}
-
-		const previous = ssr_context;
-		set_ssr_context(context);
-
-		try {
-			const result = boundary === null ? fn(renderer) : with_boundary(boundary, () => fn(renderer));
-
-			if (result instanceof Promise) {
-				result.finally(() => set_ssr_context(null)).catch(noop);
-				renderer.promise = state.track(result);
+				if (boundary !== null) {
+					// the values that the children read synchronously have been added by now
+					get_render_context().warp.release(boundary);
+				}
 			}
-		} catch {
-			// the client will render the children itself, and handle the error then
-		} finally {
-			set_ssr_context(previous);
+		};
 
-			if (boundary !== null) {
-				// the values that the children read synchronously have been added by now
-				const store = get_render_context().warp;
-				store.queue.push(boundary);
-				store.late?.();
-			}
-		}
-	}
-
-	/**
-	 * Runs the `onDestroy` callbacks of the background work, once it has settled
-	 * @param {SSRState} state
-	 */
-	static async #finish_background(state) {
-		await state.settle();
-
-		for (const renderer of state.background_renderers) {
-			renderer.#run_on_destroy(true);
-		}
-
-		state.background_renderers.length = 0;
+		renderer.promise = work.run(start, defer, () => renderer.#run_on_destroy(true));
 	}
 
 	/**
@@ -910,11 +860,14 @@ export class Renderer {
 			try {
 				Renderer.#open_render(renderer, component, options);
 				const content = await renderer.#collect_content_async();
-				const warp = await renderer.#collect_warp(
-					context.warp,
-					context.replacer,
-					renderer.global.background
-				);
+				const warp = await serialize_warp(context.warp, {
+					id_prefix: renderer.global.id_prefix,
+					replacer: context.replacer,
+					csp: renderer.global.csp,
+					transformError: renderer.global.transformError,
+					background: renderer.global.background,
+					abort: () => renderer.global.abort()
+				});
 
 				if (warp.head !== null) {
 					content.head = warp.head + content.head;
@@ -933,12 +886,7 @@ export class Renderer {
 			const background = renderer.global.background;
 
 			if (background !== null) {
-				if (failed) {
-					background.abort();
-					background.gate?.resolve(false);
-				}
-
-				hold_render_context(Renderer.#finish_background(background));
+				hold_render_context(background.finish(failed));
 			}
 
 			renderer.#run_on_destroy(failed);
@@ -1037,131 +985,6 @@ export class Renderer {
 	}
 
 	/**
-	 * Serializes the values added to `Warp` instances into a `<script>` that recreates them on the client.
-	 *
-	 * The `<script>` only contains the values that were added outside pending boundaries (or used outside
-	 * them), and waits for every promise among them to settle, so that it doesn't depend on timing. When
-	 * there's background work (inside pending boundaries), the values it adds are streamed via the `tail`,
-	 * along with the values added after this, and a message for each boundary once the values that its
-	 * children read synchronously have been sent
-	 * @param {WarpStore} store
-	 * @param {UnevalReplacer | undefined} replacer
-	 * @param {SSRState | null} background
-	 * @returns {Promise<{ head: string | null, tail: AsyncIterable<string> | null }>}
-	 */
-	async #collect_warp(store, replacer, background) {
-		if (background !== null && this.global.csp.hash) {
-			e.invalid_csp_streaming();
-		}
-
-		store.emitted = true;
-
-		const values = split_head_and_tail(store);
-
-		if (values.size === 0 && background === null) {
-			return { head: null, tail: null };
-		}
-
-		/** Asynchronous `transformError` calls that haven't finished yet */
-		let transforms = 0;
-
-		const session = new devalue.Session({
-			// streams need a unique key, since they can overlap with other streams on the same page
-			id:
-				background === null
-					? `${this.global.id_prefix}w`
-					: `${this.global.id_prefix}w${Math.random().toString(36).slice(2, 10)}`,
-			scope: 'window.__svelte.d',
-			replacer,
-			transformError: (error) => {
-				// a promise resolved to something that can't be serialized, which `flush` reports
-				if (error instanceof devalue.DevalueError) return;
-
-				// rejected promises reject on the client too, with whatever `transformError` returns
-				const result = this.global.transformError(error);
-
-				// devalue only waits for `transformError` results that are `instanceof Promise`
-				if (result instanceof Promise) {
-					transforms += 1;
-					const done = () => (transforms -= 1);
-					result.then(done, done);
-				}
-
-				return result;
-			}
-		});
-
-		const late = background === null ? null : stream_late_values(store, session, background);
-
-		let head;
-		let blocks;
-
-		try {
-			head = session.uneval(values);
-
-			// everything that's added from now on goes in the `tail`, so background work that was waiting for
-			// that can start. it waits until the `head` has been serialized, so that it doesn't start if that fails
-			background?.gate?.resolve(true);
-
-			const pending = watch_pending(values);
-
-			blocks = await take_head(
-				session,
-				() => transforms,
-				() => {
-					// this is a problem -- it means we've finished the render but we're still waiting on a promise
-					// to resolve so we can serialize it, so we're blocking the response on useless content.
-					w.unresolved_warp(describe_pending(pending));
-				}
-			);
-		} catch (error) {
-			late?.close();
-			serialization_failed(error);
-		}
-
-		if (late === null) {
-			blocks += `\n\t\t\t${session.end()}`;
-		} else {
-			late.open();
-		}
-
-		// the messages wait in `window.__svelte.d` until the client's `Warp` handles them (see `receive_warp_values`)
-		const body = `
-			window.__svelte ??= {};
-			${head}${blocks}
-		`;
-
-		let csp_attr = '';
-		if (this.global.csp.nonce) {
-			csp_attr = ` nonce="${this.global.csp.nonce}"`;
-		} else if (this.global.csp.hash) {
-			// note to future selves: this doesn't need to be optimized with a Map<body, hash>
-			// because the it's impossible for identical data to occur multiple times in a single render
-			const hash = await sha256(body);
-			this.global.csp.script_hashes.push(`sha256-${hash}`);
-		}
-
-		return {
-			head: `\n\t\t<script${csp_attr}>${body}</script>`,
-			tail:
-				late === null
-					? null
-					: stream_scripts(
-							late,
-							csp_attr,
-							() => {
-								this.global.abort();
-								background?.abort();
-							},
-							() => {
-								background?.abort();
-								late.close();
-							}
-						)
-		};
-	}
-
-	/**
 	 * @template {Record<string, any>} Props
 	 * @param {Renderer} renderer
 	 * @param {import('svelte').Component<Props>} component
@@ -1208,286 +1031,99 @@ export class Renderer {
 	}
 }
 
-const MACROTASK = Symbol('macrotask');
-
-function macrotask() {
-	return new Promise((fulfil) => setTimeout(() => fulfil(MACROTASK), 0));
-}
-
 /** @returns {AsyncIterable<string>} */
 async function* empty() {}
 
 /**
- * Takes the statements that settle the promises in the `head`, once they've all settled. Throws if a
- * value can't be serialized
- * @param {Session} session
- * @param {() => number} transforms The number of asynchronous `transformError` calls that haven't finished
- * @param {() => void} warn Called if the `head` is waiting on promises that hadn't settled when the render finished
- * @returns {Promise<string>}
+ * The work that pending boundaries start in the background (see `Renderer.background`). It renders
+ * with its own state, so that it can't affect the rendered output, and its own id prefix, so that its
+ * ids can't clash with the rendered output's. Boundaries inside background work run in the same state
  */
-async function take_head(session, transforms, warn) {
-	let blocks = '';
-	let warned = false;
+export class BackgroundWork {
+	/** @readonly @type {SSRState} */
+	state;
 
-	while (true) {
-		const { code, errors } = session.flush();
-		if (errors.length > 0) throw errors[0].error;
-		if (code !== '') blocks += `\n\t\t\t${code}`;
-		if (session.pending === 0) return blocks;
+	/**
+	 * Runs the `onDestroy` callbacks of each renderer that the work uses, once it has settled
+	 * @type {Array<() => void>}
+	 */
+	#destroy = [];
 
-		// devalue hears about promises that have already settled within a few microtasks, so if nothing
-		// has settled for a macrotask, and promises (rather than just `transformError` calls) are still
-		// pending, the render didn't wait for them
-		if (!warned && (await Promise.race([session.changed(), macrotask()])) === MACROTASK) {
-			if (session.pending > transforms()) {
-				warned = true;
-				warn();
-			}
-		}
+	/**
+	 * In WebContainers, which don't have `AsyncLocalStorage`, the work can't be told apart from the rest of
+	 * the render after an `await`, so the work of the outermost boundaries waits for this, which resolves once
+	 * the `head` has been serialized. After that, every value goes in the `tail` anyway, so the client receives
+	 * the same values as it would elsewhere. It resolves with `false` if the render failed, in which case the
+	 * work doesn't start
+	 * @type {ReturnType<typeof deferred<boolean>> | null}
+	 */
+	#gate = in_webcontainer() ? deferred() : null;
 
-		await session.changed();
-	}
-}
+	/** @param {SSRState} parent The state of the render */
+	constructor(parent) {
+		this.state = new SSRState(
+			parent.mode,
+			parent.id_prefix + 'b',
+			parent.csp,
+			parent.transformError
+		);
 
-/**
- * Streams the messages in `store.queue`: the values that were added inside pending boundaries, or after
- * the `head` was serialized, and the boundaries whose synchronous work has finished. Until `open` is
- * called (once the `head` is done), they're held rather than serialized, since the rest of the `head`
- * could otherwise refer to objects that only the `tail` introduces. Each value is serialized by itself,
- * so one that can't be serialized doesn't affect the others. No more can be added once the background
- * work is done
- * @param {WarpStore} store
- * @param {Session} session
- * @param {SSRState} background
- */
-function stream_late_values(store, session, background) {
-	let open = false;
-	let code = '';
-	let closed = false;
-	let change = deferred();
-
-	function drain() {
-		for (const message of store.queue) {
-			if (!Array.isArray(message)) {
-				// the boundary's id is assigned when the HTML is put together. if it hasn't been, it isn't in the HTML
-				if (message.id !== null) code += session.uneval(message.id);
-				continue;
-			}
-
-			try {
-				code += session.uneval(message);
-			} catch (error) {
-				// the client doesn't get the value, so it will need to load it itself
-				w.warp_stream_serialization_failed(describe_error(error));
-			}
-		}
-
-		store.queue.length = 0;
+		this.state.background = this;
 	}
 
-	function notify() {
-		const current = change;
-		change = deferred();
-		current.resolve();
+	/** Whether the work of the outermost boundaries waits until the `head` has been serialized */
+	get deferred() {
+		return this.#gate !== null;
 	}
 
-	function close() {
-		if (closed) return;
-		closed = true;
-		store.streaming = false;
-		store.late = null;
-		notify();
+	/**
+	 * Runs `start`, or schedules it to run once the `head` has been serialized if `defer` is `true` and
+	 * the work is `deferred`, and tracks the result, so that it's waited for
+	 * @param {() => Promise<void> | undefined} start Starts the work, returning its promise if it's asynchronous
+	 * @param {boolean} defer
+	 * @param {() => void} destroy Runs the `onDestroy` callbacks of the renderer that the work uses
+	 * @returns {Promise<void> | undefined}
+	 */
+	run(start, defer, destroy) {
+		this.#destroy.push(destroy);
+
+		const result =
+			defer && this.#gate !== null
+				? this.#gate.promise.then((open) => (open ? start() : undefined))
+				: start();
+
+		return result === undefined ? undefined : this.state.track(result);
 	}
 
-	store.streaming = true;
-	store.late = () => {
-		if (!open) return;
-		drain();
-		notify();
-	};
-
-	background.settle().then(close);
-
-	return {
-		session,
-		get closed() {
-			return closed;
-		},
-		open() {
-			open = true;
-			drain();
-		},
-		/** Returns the statements for the messages added since the last call */
-		take() {
-			const result = code;
-			code = '';
-			return result;
-		},
-		/** Resolves the next time a message is added, or once no more can be */
-		changed() {
-			return change.promise;
-		},
-		close
-	};
-}
-
-/**
- * @param {ReturnType<typeof stream_late_values>} late
- * @param {string} csp_attr
- * @param {() => void} done Aborts the signals from `getAbortSignal`, once nothing that's streamed can depend on them
- * @param {() => void} stop Stops the background work
- * @returns {AsyncIterable<string>}
- */
-function stream_scripts(late, csp_attr, done, stop) {
-	const generator = generate_scripts(late, csp_attr, done);
-
-	/** @type {AsyncIterableIterator<string>} */
-	const iterator = {
-		next: () => generator.next(),
-		// if the consumer stops early, stop the background work. this is
-		// done here because `return` doesn't run a generator that hasn't started
-		return: async () => {
-			stop();
-			done();
-			return generator.return(undefined);
-		},
-		[Symbol.asyncIterator]: () => iterator
-	};
-
-	return iterator;
-}
-
-/**
- * Turns the values added after the `head`, and the settlements of the promises sent so far, into `<script>`
- * tags. After something happens, this waits for a macrotask before sending it, so that server-side work which
- * was waiting on a promise that just resolved has a chance to add the values that depend on it — otherwise,
- * the client might not receive them before it needs them.
- * @param {ReturnType<typeof stream_late_values>} late
- * @param {string} csp_attr
- * @param {() => void} done
- * @returns {AsyncGenerator<string>}
- */
-async function* generate_scripts(late, csp_attr, done) {
-	const { session } = late;
-
-	while (true) {
-		let code = late.take();
-
-		if (code === '') {
-			if (late.closed && session.pending === 0) break;
-
-			await Promise.race(late.closed ? [session.changed()] : [session.changed(), late.changed()]);
-			await macrotask();
-		}
-
-		const flushed = session.flush();
-
-		for (const { error } of flushed.errors) {
-			// too late to fail the render, so the promise rejects on the client with a generic error
-			w.warp_stream_serialization_failed(describe_error(error));
-		}
-
-		// the values come first, since they were serialized before the settlements
-		code += late.take() + flushed.code;
-		if (code !== '') yield `<script${csp_attr}>${code}</script>`;
+	/** Called once the `head` has been serialized, so that work that was waiting for it can start */
+	open() {
+		this.#gate?.resolve(true);
 	}
 
-	// every streamed promise has settled, and nothing more can be added
-	done();
-	yield `<script${csp_attr}>${session.end()}</script>`;
-}
-
-/**
- * Decides, once the `head` is about to be serialized, which values go in the `head` and which in the
- * `tail` (see `WarpStore`). The values added inside pending boundaries that nothing outside one has read
- * stay in `store.queue`, along with every boundary message, and the rest are returned for the `head`
- * @param {WarpStore} store
- * @returns {Map<string, Map<WarpKey, unknown>>}
- */
-function split_head_and_tail(store) {
-	const { tail_keys } = store;
-
-	// values from pending boundaries that the rest of the render has read go in the `head` instead
-	store.queue = store.queue.filter((message) => {
-		if (!Array.isArray(message)) return true;
-		const [id, key] = message;
-		return tail_keys.get(id)?.has(key) ?? false;
-	});
-
-	const head = without(store.values, tail_keys);
-	tail_keys.clear();
-
-	return head;
-}
-
-/**
- * Returns `values` without the keys in `omit`
- * @param {Map<string, Map<WarpKey, unknown>>} values
- * @param {Map<string, Set<WarpKey>>} omit
- */
-function without(values, omit) {
-	if (omit.size === 0) return values;
-
-	/** @type {Map<string, Map<WarpKey, unknown>>} */
-	const result = new Map();
-
-	for (const [id, entries] of values) {
-		const keys = omit.get(id);
-
-		if (keys === undefined || keys.size === 0) {
-			result.set(id, entries);
-			continue;
-		}
-
-		const kept = new Map();
-		for (const [key, value] of entries) {
-			if (!keys.has(key)) kept.set(key, value);
-		}
-
-		if (kept.size > 0) result.set(id, kept);
+	abort() {
+		this.state.abort();
 	}
 
-	return result;
-}
-
-/**
- * Keeps track of which values are promises that haven't settled yet, for `unresolved_warp`
- * @param {Map<string, Map<WarpKey, unknown>>} values
- */
-function watch_pending(values) {
-	/** @type {Map<Promise<unknown>, string>} */
-	const pending = new Map();
-
-	for (const [id, v] of values) {
-		for (const [key, value] of v) {
-			if (!is_native_promise(value)) continue;
-
-			pending.set(value, `\`${String(key)}\` in \`${id}\``);
-			const settled = () => pending.delete(value);
-			Promise.prototype.then.call(value, settled, settled);
-		}
+	settle() {
+		return this.state.settle();
 	}
 
-	return pending;
-}
+	/**
+	 * Runs the `onDestroy` callbacks once the work has settled. If the render failed, the work is
+	 * aborted first, and work that was waiting for the `head` doesn't start
+	 * @param {boolean} failed
+	 */
+	async finish(failed) {
+		if (failed) {
+			this.state.abort();
+			this.#gate?.resolve(false);
+		}
 
-/** @param {Map<Promise<unknown>, string>} pending */
-function describe_pending(pending) {
-	return pending.size > 0 ? ` (${[...pending.values()].join(', ')}).` : '.';
-}
+		await this.state.settle();
 
-/** @param {unknown} error */
-function describe_error(error) {
-	const { stack, path } = /** @type {any} */ (error) ?? {};
-	return (stack ?? String(error)) + (path ? `\n(at \`${path}\`)` : '');
-}
-
-/**
- * @param {unknown} error
- * @returns {never}
- */
-function serialization_failed(error) {
-	e.warp_serialization_failed(describe_error(error));
+		for (const destroy of this.#destroy) destroy();
+		this.#destroy.length = 0;
+	}
 }
 
 export class SSRState {
@@ -1504,27 +1140,11 @@ export class SSRState {
 	id_prefix;
 
 	/**
-	 * The state for work started in the background by pending boundaries, if there is any
-	 * @type {SSRState | null}
+	 * For the state of a render, the work started in the background by its pending boundaries, if there
+	 * is any. For the state of that work, the work itself
+	 * @type {BackgroundWork | null}
 	 */
 	background = null;
-
-	/** Whether this is the state for work started in the background by pending boundaries */
-	is_background = false;
-
-	/**
-	 * The renderers for work started in the background, if this is the state for that work
-	 * @type {Renderer[]}
-	 */
-	background_renderers = [];
-
-	/**
-	 * In WebContainers, if this is the state for background work, the work started by pending boundaries
-	 * waits for this, which resolves once the `head` has been serialized — or with `false` if the render
-	 * failed, in which case the work doesn't start (see `Renderer.background`)
-	 * @type {ReturnType<typeof deferred<boolean>> | null}
-	 */
-	gate = null;
 
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
@@ -1621,28 +1241,18 @@ export class SSRState {
 		return controller.signal;
 	}
 
-	/** @returns {SSRState} */
+	/** Whether this is the state of work started in the background by pending boundaries */
+	get is_background() {
+		return this.background?.state === this;
+	}
+
+	/**
+	 * The work started in the background by pending boundaries, which starts it if there isn't any yet.
+	 * Boundaries inside background work get the work they're already part of
+	 * @returns {BackgroundWork}
+	 */
 	get_background() {
-		// boundaries inside background work run in the same state
-		if (this.is_background) return this;
-
-		if (this.background === null) {
-			// background work gets its own state, so that it can't affect the rendered output,
-			// and its own id prefix, so that its ids can't clash with the rendered output's
-			this.background = new SSRState(
-				this.mode,
-				this.id_prefix + 'b',
-				this.csp,
-				this.transformError
-			);
-			this.background.is_background = true;
-
-			if (in_webcontainer()) {
-				this.background.gate = deferred();
-			}
-		}
-
-		return this.background;
+		return (this.background ??= new BackgroundWork(this));
 	}
 
 	get_title() {

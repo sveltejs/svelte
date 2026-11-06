@@ -1,11 +1,10 @@
-/** @import { RenderContext, WarpStore } from '#server' */
 /** @import { WarpKey } from '#shared' */
+/** @import { All } from './warp-store.js' */
 import { DEV } from 'esm-env';
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
-import { get_user_code_location } from './dev.js';
 import * as e from './errors.js';
-import { is_native_promise, noop } from '../shared/utils.js';
+import { ALL } from './warp-store.js';
 
 /**
  * A `Map` whose contents are sent from the server to the client. Values added to it
@@ -37,8 +36,9 @@ export class Warp {
 	 */
 	#values(key) {
 		const context = get_context();
-		use(context, this.#id, key);
-		return /** @type {Map<K, V> | undefined} */ (context.warp.values.get(this.#id));
+		return /** @type {Map<K, V> | undefined} */ (
+			context.warp.read(this.#id, key, context.in_boundary)
+		);
 	}
 
 	/**
@@ -65,15 +65,15 @@ export class Warp {
 	set(key, value) {
 		const context = get_context();
 
-		if (context.warp.values.get(this.#id)?.has(key)) {
+		if (context.warp.values(this.#id)?.has(key)) {
 			e.warp_key_exists(
 				String(key),
 				this.#id,
-				DEV ? `. It was first set in:\n${get_stack(context.warp, this.#id, key)}` : ''
+				DEV ? `. It was first set in:\n${context.warp.stack(this.#id, key)}` : ''
 			);
 		}
 
-		set(context, this.#id, key, value);
+		context.warp.add(this.#id, key, value, context.in_boundary);
 		return this;
 	}
 
@@ -85,14 +85,12 @@ export class Warp {
 	 */
 	getOrInsert(key, value) {
 		const context = get_context();
-		const values = context.warp.values.get(this.#id);
 
-		if (values?.has(key)) {
-			use(context, this.#id, key);
-			return /** @type {V} */ (values.get(key));
+		if (context.warp.values(this.#id)?.has(key)) {
+			return /** @type {V} */ (context.warp.read(this.#id, key, context.in_boundary)?.get(key));
 		}
 
-		set(context, this.#id, key, value);
+		context.warp.add(this.#id, key, value, context.in_boundary);
 		return value;
 	}
 
@@ -104,15 +102,13 @@ export class Warp {
 	 */
 	getOrInsertComputed(key, callback) {
 		const context = get_context();
-		const values = context.warp.values.get(this.#id);
 
-		if (values?.has(key)) {
-			use(context, this.#id, key);
-			return /** @type {V} */ (values.get(key));
+		if (context.warp.values(this.#id)?.has(key)) {
+			return /** @type {V} */ (context.warp.read(this.#id, key, context.in_boundary)?.get(key));
 		}
 
 		const value = callback(key);
-		set(context, this.#id, key, value);
+		context.warp.add(this.#id, key, value, context.in_boundary);
 		return value;
 	}
 
@@ -167,104 +163,10 @@ export class Warp {
 	}
 }
 
-/** Passed to `use` when every key is being read */
-const ALL = Symbol();
-
-// (a `typedef`, since TypeScript considers `typeof ALL` circular in `#values`'s parameter)
-/** @typedef {typeof ALL} All */
-
 function get_context() {
 	if (!async_mode_flag) {
 		e.experimental_async_required('Warp');
 	}
 
 	return get_render_context();
-}
-
-/**
- * @param {RenderContext} context
- * @param {string} id
- * @param {WarpKey} key
- * @param {unknown} value
- */
-function set(context, id, key, value) {
-	record(context, id, key, value);
-
-	let values = context.warp.values.get(id);
-	if (values === undefined) context.warp.values.set(id, (values = new Map()));
-	values.set(key, value);
-}
-
-/**
- * Does everything that needs to happen when a value is added, other than actually adding it.
- * Throws if it can't be added, so that it isn't added
- * @param {RenderContext} context
- * @param {string} id
- * @param {WarpKey} key
- * @param {unknown} value
- */
-function record(context, id, key, value) {
-	const store = context.warp;
-
-	if (is_native_promise(value)) {
-		// the rejection is sent to the client, but devalue only subscribes once it reaches the
-		// promise, which can be after it rejects (e.g. if it was added by work in a pending boundary)
-		Promise.prototype.then.call(value, undefined, noop);
-	}
-
-	if (store.emitted && !store.streaming) {
-		e.warp_set_after_render(String(key), id);
-	}
-
-	// values added inside pending boundaries go in the `tail`, so that the `head` only contains what
-	// the rest of the render added (and used). so do values added after the `head` was serialized
-	if (context.boundary !== null || store.emitted) {
-		if (context.boundary !== null && !store.emitted) {
-			let keys = store.tail_keys.get(id);
-			if (keys === undefined) store.tail_keys.set(id, (keys = new Set()));
-			keys.add(key);
-		}
-
-		store.queue.push([id, key, value]);
-		store.late?.();
-	}
-
-	if (DEV) {
-		let stacks = store.stacks.get(id);
-
-		if (stacks === undefined) {
-			stacks = new Map();
-			store.stacks.set(id, stacks);
-		}
-
-		stacks.set(key, get_user_code_location());
-	}
-}
-
-/**
- * Called when a key is read. If the work inside a pending boundary added it, but it's read outside
- * one before the `head` is serialized, it moves to the `head`, since the rest of the render depends on it
- * @param {RenderContext} context
- * @param {string} id
- * @param {WarpKey | All} key
- */
-function use(context, id, key) {
-	const store = context.warp;
-	if (context.boundary !== null || store.emitted) return;
-
-	if (key === ALL) {
-		store.tail_keys.delete(id);
-	} else {
-		store.tail_keys.get(id)?.delete(key);
-	}
-}
-
-/**
- * dev-only: the location at which a value was set
- * @param {WarpStore} store
- * @param {string} id
- * @param {WarpKey} key
- */
-function get_stack(store, id, key) {
-	return store.stacks.get(id)?.get(key) ?? '<missing stack trace>';
 }
