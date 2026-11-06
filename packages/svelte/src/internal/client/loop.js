@@ -1,5 +1,6 @@
 /** @import { TaskCallback, Task, TaskEntry } from '#client' */
 import { raf } from './timing.js';
+import { noop } from '../shared/utils.js';
 
 // TODO move this into timing.js where it probably belongs
 
@@ -30,6 +31,10 @@ function run_tasks() {
  * @returns {Task}
  */
 export function loop(callback) {
+	if (raf.tick === noop) {
+		return { promise: new Promise(noop), abort: noop };
+	}
+
 	/** @type {TaskEntry} */
 	let task;
 
