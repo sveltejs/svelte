@@ -758,6 +758,10 @@ function attribute_matches(node, name, expected_value, operator, case_insensitiv
 		const chunks = get_attribute_chunks(attribute.value);
 
 		if (operator !== '~=') {
+			// a style value is rewritten by the browser when it is set (`color:red ` becomes
+			// `color: red;`), so we can't know what the attribute will look like
+			if (name_lower === 'style') return true;
+
 			// unlike `~=`, which looks at the words in the value, the other operators look at the
 			// value as a whole, so we need every combination of what its chunks can be
 			/** @type {string[]} */

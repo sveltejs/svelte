@@ -29,3 +29,7 @@
 	/* (unused) a[href='/docs/c/intro'] {
 		color: blue;
 	}*/
+
+	div[style='color: red;'].svelte-xyz {
+		color: red;
+	}

@@ -6,6 +6,7 @@
 <input placeholder="{open ? 'Name' : 'Email'} here">
 <p title="{open ? 'a' : 'b'} and {open ? 'c' : 'd'}"></p>
 <a href="/docs/{open ? 'a' : 'b'}/intro">docs</a>
+<div style="color: {open ? 'red' : 'blue'}; "></div>
 
 <style>
 	button[aria-label='Close menu'] {
@@ -38,5 +39,9 @@
 
 	a[href='/docs/c/intro'] {
 		color: blue;
+	}
+
+	div[style='color: red;'] {
+		color: red;
 	}
 </style>
