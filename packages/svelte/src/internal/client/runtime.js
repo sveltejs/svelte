@@ -406,7 +406,7 @@ function abort_replaced(reaction, flags) {
 	// a teardown's run of a derived doesn't replace anything (see `teardown_view`)
 	if (is_derived && is_destroying_effect) return;
 
-	var real = batch === null || (!batch.is_fork && !batch.committed);
+	var real = batch === null || !batch.is_fork;
 
 	abort_record(view_batch?.records?.get(reaction));
 
@@ -452,8 +452,8 @@ function is_outdated({ deps, dv }) {
  * @param {Batch} other
  */
 function supersedes(batch, other) {
-	if (batch !== null && (batch.is_fork || batch.committed)) return false;
-	return other.committed || (batch !== null && !other.is_fork && other.id < batch.id);
+	if (batch !== null && (batch.is_fork)) return false;
+	return  batch !== null && !other.is_fork && other.id < batch.id;
 }
 
 /**

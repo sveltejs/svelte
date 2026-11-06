@@ -312,14 +312,6 @@ export class Batch {
 
 	is_fork = false;
 
-	/**
-	 * True once the batch committed: its view of the world is the real one from then on, plus the results
-	 * of its async work that was still pending (see `#commit`). Block and async effects that run from then
-	 * on do so for the real world (they don't necessarily run with the latest values but dependencies/
-	 * reactions should be pruned accordingly, and dv set, etc)
-	 */
-	committed = false;
-
 	#decrement_queued = false;
 
 	constructor() {
