@@ -401,17 +401,17 @@ export function abort_record(record) {
  */
 function abort_replaced(reaction, flags) {
 	var batch = current_batch;
-	var derived = (flags & DERIVED) !== 0;
+	var is_derived = (flags & DERIVED) !== 0;
 
 	// a teardown's run of a derived doesn't replace anything (see `teardown_view`)
-	if (derived && is_destroying_effect) return;
+	if (is_derived && is_destroying_effect) return;
 
 	var real = batch === null || (!batch.is_fork && !batch.committed);
 
 	abort_record(view_batch?.records?.get(reaction));
 
 	if (
-		derived
+		is_derived
 			? batch_values === null || (real && is_outdated(reaction))
 			: real || effect_batch(flags) === null
 	) {
