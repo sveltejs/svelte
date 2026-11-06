@@ -100,9 +100,9 @@ export function spring(value, opts = {}) {
 			inv_mass_recovery_rate = 1 / (rate * 60);
 			inv_mass = 0; // infinite mass, unaffected by spring forces
 		}
+		cancel_task = false;
 		if (!task) {
 			last_time = raf.now();
-			cancel_task = false;
 			task = loop((now) => {
 				if (cancel_task) {
 					cancel_task = false;
