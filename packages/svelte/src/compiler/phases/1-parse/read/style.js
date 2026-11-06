@@ -9,9 +9,10 @@ const REGEX_COMBINATOR = /(\+|~|>|\|\|)/y;
 const REGEX_PERCENTAGE = /\d+(\.\d+)?%/y;
 // `of` must be preceded by whitespace, otherwise it would be part of the `<an+b>` token
 // (`2nof` is a single dimension token). It does not need to be followed by whitespace,
-// because a `.`, `#`, `[`, `*`, `:` or `&` already ends the `of` identifier — minifiers rely on that
+// because a `.`, `#`, `[`, `*`, `:` or `&` already ends the `of` identifier — minifiers rely on that.
+// The sign of `a` (or of a lone `<integer>`) may be `+` or `-`, and the `n` is case-insensitive
 const REGEX_NTH_OF =
-	/(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of(\s+|(?=[.#[*:&])))/y;
+	/(even|odd|[+-]?(\d+|\d*[nN](\s*[+-]\s*\d+)?))((?=\s*[,)])|\s+of(\s+|(?=[.#[*:&])))/y;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/y;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
