@@ -556,11 +556,11 @@ export function options_deprecated_immutable(node) {
 }
 
 /**
- * The `customElement` option is used when generating a custom element. Did you forget the `customElement: true` compile option?
+ * The `customElement` option is used when generating a custom element, but `customElement: true` (or `css: 'injected'`) is not set in compiler options. If child components are rendered inside a ShadowRoot, their styles will be extracted externally and will not be visible inside the shadow tree. Set `compilerOptions.customElement: true` (or `css: 'injected'`) in `svelte.config.js`
  * @param {null | NodeLike} node
  */
 export function options_missing_custom_element(node) {
-	w(node, 'options_missing_custom_element', `The \`customElement\` option is used when generating a custom element. Did you forget the \`customElement: true\` compile option?\nhttps://svelte.dev/e/options_missing_custom_element`);
+	w(node, 'options_missing_custom_element', `The \`customElement\` option is used when generating a custom element, but \`customElement: true\` (or \`css: 'injected'\`) is not set in compiler options. If child components are rendered inside a ShadowRoot, their styles will be extracted externally and will not be visible inside the shadow tree. Set \`compilerOptions.customElement: true\` (or \`css: 'injected'\`) in \`svelte.config.js\`\nhttps://svelte.dev/e/options_missing_custom_element`);
 }
 
 /**
