@@ -585,7 +585,7 @@ function update_record(reaction, flags, length, value, error) {
 		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN);
 
 	// `view_batch` and `current_batch` are the same during traversal, but not after commit
-	should_record &&= view_batch === current_batch;
+	should_record &&= view_batch !== null && view_batch === current_batch;
 
 	// A derived that has another version in the view than in the real world — because the view undoes an
 	// assignment to it, or it was assigned in a fork — never runs for the real world (see `get_view`)
