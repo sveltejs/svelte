@@ -260,7 +260,12 @@ function print_element(node, context, comments, state) {
 	const name = node.name.toLowerCase();
 	const preserve =
 		(node.type === 'RegularElement' || node.type === 'TitleElement') &&
-		(name === 'pre' || name === 'textarea' || name === 'title');
+		(name === 'pre' ||
+			name === 'textarea' ||
+			name === 'title' ||
+			// the contents of a nested `<script>` or `<style>` are code, not markup
+			name === 'script' ||
+			name === 'style');
 
 	if (preserve) state.preserve_whitespace += 1;
 	base_element(node, context, comments, state);
