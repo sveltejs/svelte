@@ -13,6 +13,7 @@ import {
 	PROPS_IS_UPDATED,
 	PROPS_IS_BINDABLE
 } from '../../../../constants.js';
+import { get_rune } from '../../scope.js';
 
 /**
  * @param {Binding} binding
@@ -42,6 +43,185 @@ export function build_getter(node, state) {
 	}
 
 	return node;
+}
+
+/**
+ * @param {Binding} binding
+ * @param {Identifier} node
+ * @param {ClientTransformState} state
+ */
+export function prop_read_may_be_in_teardown(binding, node, state) {
+	const reference = binding.references.find((reference) => reference.node === node);
+	if (reference === undefined) return false;
+
+	return reference_may_be_in_teardown(reference, state, new Set());
+}
+
+/**
+ * @param {Binding['references'][number]} reference
+ * @param {ClientTransformState} state
+ * @param {Set<Binding>} checked
+ */
+function reference_may_be_in_teardown(reference, state, checked) {
+	const { path } = reference;
+
+	for (let i = path.length - 1; i >= 0; i -= 1) {
+		const fn = path[i];
+
+		if (
+			fn.type !== 'ArrowFunctionExpression' &&
+			fn.type !== 'FunctionExpression' &&
+			fn.type !== 'FunctionDeclaration'
+		) {
+			continue;
+		}
+
+		const parent = path[i - 1];
+
+		if (parent?.type === 'CallExpression') {
+			// An IIFE executes in the same context as the function containing it.
+			if (parent.callee === fn) continue;
+
+			if (parent.arguments.includes(/** @type {Expression} */ (fn))) {
+				const rune = get_rune(parent, get_scope(path, i - 1, state));
+
+				if (is_effect_rune(rune)) return false;
+				if (rune === '$derived.by') {
+					return derived_may_be_read_in_teardown(parent, path, i - 1, state, checked);
+				}
+			}
+		}
+
+		const function_binding = get_function_binding(fn, path, i, state);
+		return function_binding === null
+			? true
+			: function_may_be_called_in_teardown(function_binding, state, checked);
+	}
+
+	for (let i = path.length - 1; i >= 0; i -= 1) {
+		const node = path[i];
+		if (node.type !== 'CallExpression') continue;
+
+		const rune = get_rune(node, get_scope(path, i, state));
+		if (rune === '$derived' || rune === '$derived.by') {
+			return derived_may_be_read_in_teardown(node, path, i, state, checked);
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @param {Binding} binding
+ * @param {ClientTransformState} state
+ * @param {Set<Binding>} checked
+ */
+function function_may_be_called_in_teardown(binding, state, checked) {
+	if (checked.has(binding)) return false;
+	checked.add(binding);
+
+	for (const reference of binding.references) {
+		if (reference.node === binding.node) continue;
+
+		const parent = reference.path.at(-1);
+
+		if (parent?.type !== 'CallExpression') return true;
+
+		if (parent.callee === reference.node) {
+			if (reference_may_be_in_teardown(reference, state, checked)) return true;
+			continue;
+		}
+
+		if (!parent.arguments.includes(reference.node)) return true;
+
+		const rune = get_rune(parent, get_scope(reference.path, reference.path.length - 1, state));
+
+		if (is_effect_rune(rune)) continue;
+		if (
+			rune === '$derived.by' &&
+			!derived_may_be_read_in_teardown(
+				parent,
+				reference.path,
+				reference.path.length - 1,
+				state,
+				checked
+			)
+		) {
+			continue;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * @param {import('estree').CallExpression} call
+ * @param {import('#compiler').AST.SvelteNode[]} path
+ * @param {number} index
+ * @param {ClientTransformState} state
+ * @param {Set<Binding>} checked
+ */
+function derived_may_be_read_in_teardown(call, path, index, state, checked) {
+	const parent = path[index - 1];
+	if (parent?.type !== 'VariableDeclarator' || parent.init !== call) return true;
+	if (parent.id.type !== 'Identifier') return true;
+
+	const binding = get_scope(path, index - 1, state).get(parent.id.name);
+	if (binding === null || checked.has(binding)) return false;
+
+	checked.add(binding);
+
+	for (const reference of binding.references) {
+		if (reference.node === binding.node) continue;
+		if (reference_may_be_in_teardown(reference, state, checked)) return true;
+	}
+
+	return false;
+}
+
+/**
+ * @param {import('estree').FunctionDeclaration | import('estree').FunctionExpression | import('estree').ArrowFunctionExpression} fn
+ * @param {import('#compiler').AST.SvelteNode[]} path
+ * @param {number} index
+ * @param {ClientTransformState} state
+ * @returns {Binding | null}
+ */
+function get_function_binding(fn, path, index, state) {
+	if (fn.type === 'FunctionDeclaration' && fn.id !== null) {
+		return get_scope(path, index - 1, state).get(fn.id.name);
+	}
+
+	const parent = path[index - 1];
+	if (
+		parent?.type === 'VariableDeclarator' &&
+		parent.init === fn &&
+		parent.id.type === 'Identifier'
+	) {
+		return get_scope(path, index - 1, state).get(parent.id.name);
+	}
+
+	return null;
+}
+
+/**
+ * @param {import('#compiler').AST.SvelteNode[]} path
+ * @param {number} index
+ * @param {ClientTransformState} state
+ */
+function get_scope(path, index, state) {
+	for (let i = index; i >= 0; i -= 1) {
+		const scope = state.scopes.get(path[i]);
+		if (scope !== undefined) return scope;
+	}
+
+	return state.scope;
+}
+
+/** @param {string | null} rune */
+function is_effect_rune(rune) {
+	return rune === '$effect' || rune === '$effect.pre' || rune === '$effect.root';
 }
 
 /**
