@@ -429,7 +429,10 @@ export function merge_with_preprocessor_map(result, options, source_name) {
 		// relative to the input file again in case the output code is in a different directory.
 		if (file_basename !== source_name) {
 			result.map.sources = result.map.sources.map(
-				/** @param {string} source */ (source) => get_relative_path(source_name, source)
+				/** @param {string} source */ (source) =>
+					source_name.startsWith('file://')
+						? new URL(source, source_name).href
+						: get_relative_path(source_name, source)
 			);
 		}
 	}
@@ -440,6 +443,8 @@ export function merge_with_preprocessor_map(result, options, source_name) {
  * @param {string} to
  */
 function get_relative_path(from, to) {
+	if (to.startsWith('file://')) return to;
+
 	// Don't use node's utils here to ensure the compiler is usable in a browser environment
 	const from_parts = from.split(/[/\\]/);
 	const to_parts = to.split(/[/\\]/);
@@ -469,5 +474,7 @@ export function get_basename(filename) {
  * @param {string} fallback
  */
 export function get_source_name(filename, output_filename, fallback) {
+	if (filename.startsWith('file://')) return filename;
+
 	return output_filename ? get_relative_path(output_filename, filename) : get_basename(filename);
 }
