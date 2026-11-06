@@ -35,12 +35,24 @@ function scripts(html: string) {
 		.map((part) => part.slice(part.indexOf('>', part.indexOf('<script')) + 1));
 }
 
+/**
+ * Runs the contents of a `<script>` against a fake `window` (and `document`, whose `currentScript` the
+ * script removes itself through)
+ */
+function execute(
+	script: string,
+	window: Pick<Window, '__svelte'>,
+	document: { currentScript: { remove(): void } | null } = { currentScript: null }
+) {
+	new Function('window', 'document', script)(window, document);
+}
+
 /** Runs the warp `<script>`s in `head` against a fake `window`, and returns the revived values */
 function revive(head: string) {
 	const window: Pick<Window, '__svelte'> = {};
 
 	for (const script of scripts(head)) {
-		new Function('window', script)(window);
+		execute(script, window);
 	}
 
 	if (window.__svelte) receive_warp_values(window.__svelte);
@@ -66,7 +78,7 @@ describe('Warp', () => {
 
 		try {
 			const run = (head: string) => {
-				for (const script of scripts(head)) new Function('window', script)(window);
+				for (const script of scripts(head)) execute(script, window);
 			};
 
 			// the script runs first, so its values wait for the client
@@ -488,9 +500,9 @@ describe('streaming', () => {
 	type FakeWindow = Pick<Window, '__svelte'>;
 
 	/** Runs the `<script>`s in `html`, and has the client handle the values they push */
-	function run(window: FakeWindow, html: string) {
+	function run(window: FakeWindow, html: string, on_remove?: () => void) {
 		for (const script of scripts(html)) {
-			new Function('window', script)(window);
+			execute(script, window, { currentScript: on_remove ? { remove: on_remove } : null });
 		}
 
 		if (window.__svelte) receive_warp_values(window.__svelte);
@@ -514,6 +526,34 @@ describe('streaming', () => {
 
 		return { values: window.__svelte?.w, chunks };
 	}
+
+	test('removes each script from the document once it has run', async () => {
+		const { head, tail } = await render((renderer) => {
+			warp.set('a', 1);
+
+			renderer.background(async () => {
+				await delay(null);
+				warp.set('b', delay(2, 10));
+			});
+		});
+
+		const window: FakeWindow = {};
+		let sent = scripts(head).length;
+		let removed = 0;
+		const on_remove = () => (removed += 1);
+
+		run(window, head, on_remove);
+
+		for await (const chunk of tail) {
+			sent += scripts(chunk).length;
+			run(window, chunk, on_remove);
+		}
+
+		// the head, at least one chunk with `b`, and the one that ends the stream
+		expect(sent).toBeGreaterThanOrEqual(3);
+		expect(removed).toBe(sent);
+		expect(await window.__svelte?.w?.get('test')?.get('b')).toBe(2);
+	});
 
 	test('has an empty tail without background work', async () => {
 		const { tail } = await render(() => {

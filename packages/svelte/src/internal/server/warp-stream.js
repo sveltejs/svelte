@@ -111,6 +111,7 @@ export async function serialize_warp(store, options) {
 
 	// the messages wait in `window.__svelte.d` until the client's `Warp` handles them (see `receive_warp_values`)
 	const body = `
+			${REMOVE_SCRIPT}
 			window.__svelte ??= {};
 			${head}${blocks}
 		`;
@@ -124,6 +125,15 @@ export async function serialize_warp(store, options) {
 
 	return { head: `\n\t\t<script${csp_attr}>${body}</script>`, tail };
 }
+
+/**
+ * Starts each `<script>`, so that it removes itself from the document once it has run, rather than
+ * staying there for no reason. It comes first, so that a script that throws is removed too, and it
+ * doesn't rely on a final message, which never arrives if the stream is cut off. (`currentScript` is
+ * `null` if the script's contents are run some other way, e.g. with `eval`.) What was sent can still be
+ * seen in the network panel, and what the client received in `window.__svelte`
+ */
+const REMOVE_SCRIPT = 'document.currentScript?.remove();';
 
 const MACROTASK = Symbol('macrotask');
 
@@ -268,12 +278,12 @@ class Tail {
 		while (!this.#done) {
 			await this.#wait();
 			const code = this.#take();
-			if (code !== '') yield `<script${this.#csp_attr}>${code}</script>`;
+			if (code !== '') yield `<script${this.#csp_attr}>${REMOVE_SCRIPT}${code}</script>`;
 		}
 
 		// every streamed promise has settled, and nothing more can be added
 		this.#finish();
-		yield `<script${this.#csp_attr}>${this.#session.end()}</script>`;
+		yield `<script${this.#csp_attr}>${REMOVE_SCRIPT}${this.#session.end()}</script>`;
 	}
 
 	/** Whether everything has been sent: no more messages can be added, and every promise that was sent has settled */
