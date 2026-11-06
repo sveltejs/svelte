@@ -59,10 +59,16 @@ export function receive_warp_values(svelte) {
 			}
 
 			for (const [id, entries] of /** @type {Map<string, Map<WarpKey, unknown>>} */ (value)) {
+				// a later stream's `head` (e.g. an island inserted after the page loaded) is discarded for any
+				// key the client changed while values were streaming in, just like the values added after a `head`
+				const c = r.c.get(id);
 				const existing = store.get(id);
 
 				if (existing) {
-					for (const [k, v] of entries) existing.set(k, v);
+					for (const [k, v] of entries) {
+						if (c === true || c?.has(k)) continue;
+						existing.set(k, v);
+					}
 				} else {
 					store.set(id, entries);
 				}
