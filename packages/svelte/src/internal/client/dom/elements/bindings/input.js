@@ -66,10 +66,13 @@ export function bind_value(input, get, set = get) {
 	if (
 		// If we are hydrating and the value has since changed,
 		// then use the updated value from the input instead.
-		(hydrating && input.defaultValue !== input.value) ||
-		// If defaultValue is set, then value == defaultValue
+		(hydrating &&
+			input.defaultValue !== input.value &&
+			sanitize_value(input, input.defaultValue) !== input.value) ||
+		// If defaultValue is set, then value == defaultValue. Some input types (e.g. color and range)
+		// have a value even when empty, which we don't want to treat as a default value
 		// TODO Svelte 6: remove input.value check and set to empty string?
-		(untrack(get) == null && input.value)
+		(untrack(get) == null && input.value && input.value !== sanitize_value(input, ''))
 	) {
 		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
 
@@ -271,6 +274,25 @@ function get_binding_group_value(group, __value, checked) {
 	}
 
 	return Array.from(value);
+}
+
+/**
+ * Returns the value an unedited input of the same type would have with the given default value.
+ * Some input types sanitize it, e.g. an empty color becomes `#000000` and an empty range
+ * becomes the middle of the range
+ * @param {HTMLInputElement} input
+ * @param {string} default_value
+ */
+function sanitize_value(input, default_value) {
+	var untouched = document.createElement('input');
+
+	for (var name of ['type', 'min', 'max', 'step']) {
+		var value = input.getAttribute(name);
+		if (value !== null) untouched.setAttribute(name, value);
+	}
+
+	untouched.defaultValue = default_value;
+	return untouched.value;
 }
 
 /**
