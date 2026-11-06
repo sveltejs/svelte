@@ -8,6 +8,7 @@ import * as assert from '../../../../utils/assert.js';
 import { get_rune, should_proxy } from '../../../scope.js';
 import { async_thunk, get_prop_source, is_prop_source, is_state_source } from '../utils.js';
 import { get_value } from './shared/declarations.js';
+import { get_onchange, with_onchange } from './shared/state.js';
 
 /**
  * @param {VariableDeclaration} node
@@ -125,6 +126,7 @@ export function VariableDeclaration(node, context) {
 
 			const args = /** @type {CallExpression} */ (init).arguments;
 			const value = /** @type {Expression} */ (args[0]) ?? b.void0; // TODO do we need the void 0? can we just omit it altogether?
+			const onchange = get_onchange(/** @type {Expression | undefined} */ (args[1]), context);
 
 			if (rune === '$state' || rune === '$state.raw') {
 				/**
@@ -139,7 +141,8 @@ export function VariableDeclaration(node, context) {
 					const is_proxy = should_proxy(value, context.state.scope);
 
 					if (rune === '$state' && is_proxy) {
-						value = b.call('$.proxy', value);
+						// a proxy that is never reassigned has no source, so the callback attaches to the proxy itself
+						value = is_state ? b.call('$.proxy', value) : b.call('$.proxy', value, onchange);
 
 						if (dev && !is_state) {
 							value = b.call('$.tag_proxy', value, b.literal(id.name));
@@ -153,6 +156,8 @@ export function VariableDeclaration(node, context) {
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));
 						}
+
+						value = with_onchange(value, onchange);
 					}
 
 					return value;

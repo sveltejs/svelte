@@ -150,6 +150,20 @@ This can improve performance with large arrays and objects that you weren't plan
 
 As with `$state`, you can declare class fields using `$state.raw`.
 
+## State options
+
+`$state` and `$state.raw` accept an options object as their second argument. Its `onchange` function is called synchronously whenever the value is reassigned or, for `$state`, when any of its deeply reactive contents are mutated, before any effects run. Use it to persist state as it changes, or to constrain it:
+
+```js
+let count = $state(0, {
+	onchange() {
+		count = Math.min(count, 10);
+	}
+});
+```
+
+Reads inside `onchange` are not tracked, and a mutation it makes to its own state does not call it again.
+
 ## `$state.snapshot`
 
 To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
