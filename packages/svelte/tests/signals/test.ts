@@ -65,6 +65,30 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	test('nested commit retains latest block dependencies', () => {
+		const trigger = state(0);
+		const mode = state(0);
+		const a = state(0);
+		const b = state(0);
+		const log: number[] = [];
+
+		block(() => {
+			$.get(trigger);
+			log.push($.get(mode) === 2 ? $.get(b) : $.get(a));
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) flushSync(() => set(mode, 2));
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			flushSync(() => set(b, 1));
+			assert.equal(log.at(-1), 1);
+		};
+	});
+
 	for (const render of [false, true]) {
 		test(`${render ? 'render' : 'user'} effects scheduled during traversal retain tree order`, () => {
 			if (render) enable_async_mode_flag();

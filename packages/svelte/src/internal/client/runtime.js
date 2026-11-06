@@ -520,7 +520,7 @@ export function update_reaction(reaction) {
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
 		reaction.f |= REACTION_RAN;
-		var read = update_dependencies(reaction, flags, result, false);
+		update_dependencies(reaction, flags, result, false);
 
 		// If we're inside an effect and we have untracked writes, then we need to
 		// ensure that if any of those untracked writes result in re-invalidation
@@ -529,7 +529,8 @@ export function update_reaction(reaction) {
 			is_runes() &&
 			untracked_writes !== null &&
 			!untracking &&
-			read > 0 &&
+			// bail out if the effect didn't read anything
+			(new_deps !== null || skipped_deps > 0) &&
 			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
 		) {
 			for (var i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
@@ -615,7 +616,6 @@ export function update_reaction(reaction) {
  * @param {number} flags the flags of the reaction before the run
  * @param {any} value the value of the run (only relevant for deriveds)
  * @param {boolean} error whether the value is an error
- * @returns {number} the number of values the run read
  */
 function update_dependencies(reaction, flags, value, error) {
 	var deps = reaction.deps;
@@ -625,7 +625,7 @@ function update_dependencies(reaction, flags, value, error) {
 	// (an effect can be destroyed while it runs, e.g. by an error boundary)
 	if ((reaction.f & DESTROYED) !== 0) {
 		abort_signal(abort_controller);
-		return length;
+		return;
 	}
 
 	if ((flags & DERIVED) !== 0 && is_destroying_effect) {
@@ -645,7 +645,7 @@ function update_dependencies(reaction, flags, value, error) {
 		// TODO: the run's signal (if any) is never aborted — should we abort when the teardown's view of the
 		// world is done with the run?
 		teardown_run = { v: value, wv, e: error, assigned: (flags & ASSIGNED) !== 0 };
-		return length;
+		return;
 	}
 
 	// A run of a derived in the real world is its new global state. Other batches may still see the current one
@@ -676,10 +676,10 @@ function update_dependencies(reaction, flags, value, error) {
 		if ((flags & DERIVED) !== 0) set_derived_value(/** @type {Derived} */ (reaction), value, error);
 		if (reaction.ac || abort_controller) set_global_signal(reaction);
 
-		return length;
+		return;
 	}
 
-	return update_record(reaction, flags, length, value, error);
+	update_record(reaction, flags, length, value, error);
 }
 
 /**
@@ -720,7 +720,12 @@ function update_record(reaction, flags, length, value, error) {
 	// branch it selected, the value an async expression resolved to for it), which it keeps until it
 	// commits. The first run of a block effect is the exception — it creates (and commits) its initial
 	// branch. (Whether a derived's run belongs to a batch depends on what it read, see below)
-	var batch = effect_batch(flags);
+	var should_record =
+		(flags & ASYNC) !== 0 ||
+		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN);
+
+	// `view_batch` and `current_batch` are the same during traversal, but not after commit
+	should_record &&= view_batch !== null && view_batch === current_batch;
 
 	// A derived that has another version in the view than in the real world — because the view undoes an
 	// assignment to it, or it was assigned in a fork — never runs for the real world (see `get_view`)
@@ -728,7 +733,7 @@ function update_record(reaction, flags, length, value, error) {
 		var written = batch_values.get(/** @type {Derived} */ (reaction));
 
 		if (written !== undefined && written.wv !== /** @type {Derived} */ (reaction).wv) {
-			batch = view_batch;
+			should_record = true;
 		}
 	}
 
@@ -744,7 +749,7 @@ function update_record(reaction, flags, length, value, error) {
 	// A global run in the real world updates the versions in place. Anything else needs a new array:
 	// a record must not share it with the global state, and a derived's run can turn out to belong
 	// to the batch halfway through the loop
-	var dv = batch === null && batch_values === null && reaction.dv !== null ? reaction.dv : [];
+	var dv = !should_record && batch_values === null && reaction.dv !== null ? reaction.dv : [];
 
 	for (var i = 0; i < length; i++) {
 		var dep = /** @type {Value[]} */ (read)[i];
@@ -757,13 +762,13 @@ function update_record(reaction, flags, length, value, error) {
 			(flags & DERIVED) !== 0 &&
 			(dv[i] !== dep.wv || (dep.f & (DERIVED | CLEAN)) === DERIVED)
 		) {
-			batch = view_batch;
+			should_record = true;
 		}
 	}
 
 	if (dv.length !== length) dv.length = length;
 
-	if (batch === null && batch_values !== null && (flags & DERIVED) !== 0) {
+	if (!should_record && batch_values !== null && (flags & DERIVED) !== 0) {
 		keep_global_run(/** @type {Derived} */ (reaction), flags);
 	}
 
@@ -771,7 +776,7 @@ function update_record(reaction, flags, length, value, error) {
 	// live run of the reaction read (its global run, and the records batches hold of it), so that a change to
 	// any of those values reaches it. So unless this is a global run and no batch holds a record, edges are
 	// only added (and pruned by a later global run). Their order is independent of the run's reads
-	var keep = batch !== null || has_batch_record(reaction);
+	var keep = should_record || has_batch_record(reaction);
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 	var edges = reaction.edges;
 
@@ -812,7 +817,9 @@ function update_record(reaction, flags, length, value, error) {
 		reaction.edges = read;
 	}
 
-	if (batch !== null) {
+	if (should_record) {
+		var batch = /** @type {Batch} */ (view_batch);
+
 		(batch.records ??= new Map()).set(
 			reaction,
 			(flags & DERIVED) !== 0
@@ -840,8 +847,6 @@ function update_record(reaction, flags, length, value, error) {
 			view_batch?.records?.delete(reaction);
 		}
 	}
-
-	return length;
 }
 
 /**

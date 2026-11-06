@@ -597,7 +597,6 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
-		this.committed = true;
 		this.#release_records(true);
 
 		// append/remove branches
@@ -1315,6 +1314,11 @@ export class Batch {
 		// Release ownership before pruning. Merged runs are retained by the receiving batch
 		this.records = null;
 		for (const [reaction, record] of records) {
+			// A derived's record is a run in this batch's view: it is only the real-world value if its
+			// dependencies still hold what it read, which is checked where a record is promoted on read
+			// (see `update_derived`) and cannot be checked here. So it is dropped rather than promoted,
+			// and its edges are left for its next global run to prune (see `prune_edges`). A destroyed
+			// reaction has nothing left to update either
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
 				if (commit) {
 					promote_record(reaction, record);
