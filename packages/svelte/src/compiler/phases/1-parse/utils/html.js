@@ -67,6 +67,19 @@ export function decode_character_references(html, is_attribute_value) {
 	);
 }
 
+/**
+ * Escape every `&` that `decode_character_references` would read as the start of a
+ * character reference, so that decoding the result gives back `text`
+ * @param {string} text
+ * @param {boolean} is_attribute_value
+ */
+export function escape_character_references(text, is_attribute_value) {
+	if (text.indexOf('&') === -1) return text; // fast path
+
+	const entity_pattern = is_attribute_value ? entity_pattern_attr_value : entity_pattern_content;
+	return text.replace(entity_pattern, (match) => '&amp;' + match.slice(1));
+}
+
 const NUL = 0;
 
 // some code points are verboten. If we were inserting HTML, the browser would replace the illegal
