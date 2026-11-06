@@ -297,7 +297,11 @@ function _extract_paths(paths, inserts, param, expression, update_expression, ha
 						}
 					}
 
-					const rest_expression = b.call('$.exclude_from_object', expression, b.array(props));
+					const rest_expression = b.call(
+						'$.exclude_from_object',
+						expression,
+						b.new('Set', b.array(props))
+					);
 
 					if (prop.argument.type === 'Identifier') {
 						paths.push({
