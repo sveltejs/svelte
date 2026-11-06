@@ -756,6 +756,41 @@ function attribute_matches(node, name, expected_value, operator, case_insensitiv
 		}
 
 		const chunks = get_attribute_chunks(attribute.value);
+
+		if (operator !== '~=') {
+			// a style value is rewritten by the browser when it is set (`color:red ` becomes
+			// `color: red;`), so we can't know what the attribute will look like
+			if (name_lower === 'style') return true;
+
+			// unlike `~=`, which looks at the words in the value, the other operators look at the
+			// value as a whole, so we need every combination of what its chunks can be
+			/** @type {string[]} */
+			let values = [''];
+
+			for (const chunk of chunks) {
+				// not a class, because the entries of a class array or object are joined by clsx
+				const chunk_values = get_possible_values(chunk, false);
+
+				// impossible to find out all combinations
+				if (!chunk_values) return true;
+
+				values = values.flatMap((start) => chunk_values.map((end) => start + end));
+
+				if (values.length > 20) {
+					// might grow exponentially, bail out
+					return true;
+				}
+			}
+
+			if (
+				values.some((value) => test_attribute(operator, expected_value, case_insensitive, value))
+			) {
+				return true;
+			}
+
+			continue;
+		}
+
 		const possible_values = new Set();
 
 		/** @type {string[]} */
