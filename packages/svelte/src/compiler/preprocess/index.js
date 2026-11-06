@@ -250,10 +250,12 @@ function stringify_tag_attributes(attributes) {
 	return value;
 }
 
+// comments and the other kind of tag are matched without capturing groups, so that they are skipped over
+// and e.g. a `<style>` inside a `<script>` comment or string is not mistaken for the start of a style tag
 const regex_style_tags =
-	/<!--[^]*?-->|<style((?:\s+[^=>'"/\s]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/\s]+)*\s*)(?:\/>|>([\S\s]*?)<\/style>)/g;
+	/<!--[^]*?-->|<script(?:\s+[^=>'"/\s]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/\s]+)*\s*(?:\/>|>[\S\s]*?<\/script>)|<style((?:\s+[^=>'"/\s]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/\s]+)*\s*)(?:\/>|>([\S\s]*?)<\/style>)/g;
 const regex_script_tags =
-	/<!--[^]*?-->|<script((?:\s+[^=>'"/\s]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/\s]+)*\s*)(?:\/>|>([\S\s]*?)<\/script>)/g;
+	/<!--[^]*?-->|<style(?:\s+[^=>'"/\s]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/\s]+)*\s*(?:\/>|>[\S\s]*?<\/style>)|<script((?:\s+[^=>'"/\s]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/\s]+)*\s*)(?:\/>|>([\S\s]*?)<\/script>)/g;
 
 /**
  * Calculate the updates required to process all instances of the specified tag.
