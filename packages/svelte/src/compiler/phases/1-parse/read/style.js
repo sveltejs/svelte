@@ -536,7 +536,7 @@ function read_value(parser, capture_comments = true) {
 			in_url = false;
 		} else if (quote_mark === null && (char === '"' || char === "'")) {
 			quote_mark = char;
-		} else if (char === '(' && value.slice(-3) === 'url') {
+		} else if (char === '(' && value.slice(-3).toLowerCase() === 'url') {
 			in_url = true;
 		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
 			const leading_whitespace = value.length - value.trimStart().length;
