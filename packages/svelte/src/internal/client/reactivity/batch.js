@@ -776,7 +776,7 @@ export class Batch {
 			if ((reaction.f & BLOCK_EFFECT) === 0) {
 				(this.records ??= new Map()).set(reaction, record);
 
-				// the run moves to this batch, along with its signal (see `#release_records`)
+				// the run moves to this batch
 				batch.records?.delete(reaction);
 			}
 		}
