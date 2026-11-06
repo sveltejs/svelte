@@ -452,8 +452,7 @@ function is_outdated({ deps, dv }) {
  * @param {Batch} other
  */
 function supersedes(batch, other) {
-	if (batch !== null && (batch.is_fork)) return false;
-	return  batch !== null && !other.is_fork && other.id < batch.id;
+	return batch !== null && !batch.is_fork && !other.is_fork && other.id < batch.id;
 }
 
 /**
