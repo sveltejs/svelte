@@ -1,7 +1,7 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { active_reaction, untrack } from './internal/client/runtime.js';
+import { active_reaction, get_abort_signal, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
@@ -71,7 +71,7 @@ export function getAbortSignal() {
 		e.get_abort_signal_outside_reaction();
 	}
 
-	return (active_reaction.ac ??= new AbortController()).signal;
+	return get_abort_signal(active_reaction);
 }
 
 /**
