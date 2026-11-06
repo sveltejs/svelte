@@ -585,7 +585,7 @@ function update_record(reaction, flags, length, value, error) {
 		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN);
 
 	// `view_batch` and `current_batch` are the same during traversal, but not after commit
-	var batch = should_record && view_batch === current_batch ? view_batch : null;
+	should_record &&= view_batch !== null && view_batch === current_batch;
 
 	// A derived that has another version in the view than in the real world — because the view undoes an
 	// assignment to it, or it was assigned in a fork — never runs for the real world (see `get_view`)
@@ -593,7 +593,7 @@ function update_record(reaction, flags, length, value, error) {
 		var written = batch_values.get(/** @type {Derived} */ (reaction));
 
 		if (written !== undefined && written.wv !== /** @type {Derived} */ (reaction).wv) {
-			batch = view_batch;
+			should_record = true;
 		}
 	}
 
@@ -609,7 +609,7 @@ function update_record(reaction, flags, length, value, error) {
 	// A global run in the real world updates the versions in place. Anything else needs a new array:
 	// a record must not share it with the global state, and a derived's run can turn out to belong
 	// to the batch halfway through the loop
-	var dv = batch === null && batch_values === null && reaction.dv !== null ? reaction.dv : [];
+	var dv = !should_record && batch_values === null && reaction.dv !== null ? reaction.dv : [];
 
 	for (var i = 0; i < length; i++) {
 		var dep = /** @type {Value[]} */ (read)[i];
@@ -622,13 +622,13 @@ function update_record(reaction, flags, length, value, error) {
 			(flags & DERIVED) !== 0 &&
 			(dv[i] !== dep.wv || (dep.f & (DERIVED | CLEAN)) === DERIVED)
 		) {
-			batch = view_batch;
+			should_record = true;
 		}
 	}
 
 	if (dv.length !== length) dv.length = length;
 
-	if (batch === null && batch_values !== null && (flags & DERIVED) !== 0) {
+	if (!should_record && batch_values !== null && (flags & DERIVED) !== 0) {
 		keep_global_run(/** @type {Derived} */ (reaction), flags, value, error);
 	}
 
@@ -636,7 +636,7 @@ function update_record(reaction, flags, length, value, error) {
 	// live run of the reaction read (its global run, and the records batches hold of it), so that a change to
 	// any of those values reaches it. So unless this is a global run and no batch holds a record, edges are
 	// only added (and pruned by a later global run). Their order is independent of the run's reads
-	var keep = batch !== null || has_batch_record(reaction);
+	var keep = should_record || has_batch_record(reaction);
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 	var edges = reaction.edges;
 
@@ -677,7 +677,9 @@ function update_record(reaction, flags, length, value, error) {
 		reaction.edges = read;
 	}
 
-	if (batch !== null) {
+	if (should_record) {
+		var batch = /** @type {Batch} */ (view_batch);
+
 		(batch.records ??= new Map()).set(
 			reaction,
 			(flags & DERIVED) !== 0
