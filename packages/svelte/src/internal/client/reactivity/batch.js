@@ -237,13 +237,6 @@ export class Batch {
 	records = null;
 
 	/**
-	 * True while the batch commits, i.e. while it updates the DOM and runs effects.
-	 * Effects that run then do so for the real world (they don't necessarily run
-	 * with the latest values but dependencies/reactions should be pruned accordingly, and dv set, etc)
-	 */
-	committing = false;
-
-	/**
 	 * Earlier batches whose changes are part of this batch's view of the world, because
 	 * they intersect with it (this batch will be merged into them, see `#merge`)
 	 * @type {Batch[]}
@@ -595,7 +588,6 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
-		this.committing = true;
 		this.#release_records(true);
 
 		// append/remove branches
@@ -604,8 +596,6 @@ export class Batch {
 
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
-
-		this.committing = false;
 
 		this.#deferred?.resolve();
 
@@ -1312,6 +1302,11 @@ export class Batch {
 		// Release ownership before pruning. Merged runs are retained by the receiving batch
 		this.records = null;
 		for (const [reaction, record] of records) {
+			// A derived's record is a run in this batch's view: it is only the real-world value if its
+			// dependencies still hold what it read, which is checked where a record is promoted on read
+			// (see `update_derived`) and cannot be checked here. So it is dropped rather than promoted,
+			// and its edges are left for its next global run to prune (see `prune_edges`). A destroyed
+			// reaction has nothing left to update either
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
 				if (commit) {
 					promote_record(reaction, record);
