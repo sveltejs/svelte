@@ -516,7 +516,7 @@ Values read after an `await` inside an async expression are still dependencies: 
 ## 13. Teardowns, invalidated runs, and destroyed reactions
 
 - In teardowns (`is_destroying_effect`), `get()` sees the values from before the writes that caused the teardown, apart from the teardown's own. Deriveds evaluated there only belong to the teardown. See [§13.1](#131-teardowns).
-- **A derived's global state can become invalid without any version changing.** This happens when it's aborted on disconnect: `remove_reaction` calls `getAbortSignal`'s `abort`, and the derived must re-run when reconnected. Versions can't express this, and flags only work in the real world, so `dv` is set to `null` ("no valid run"). That's checked everywhere: `is_dirty` treats it as dirty, and `get_view` skips the global state.
+- **A derived's global state can become invalid without any version changing.** This happens when it's aborted on disconnect: `remove_reaction` calls `getAbortSignal`'s `abort`, and the derived must re-run when reconnected. Versions can't express this, and flags only work in the real world, so `dv` is set to `null` ("no valid run"). That's checked everywhere: `is_dirty` treats it as dirty, and `get_view` skips the global state. The runs of the derived that batches hold as records are aborted, too (nothing reads the derived in any batch either, as edges cover every live run).
 - Errors are values ([§7.4](#74-errors)), so a run that throws doesn't need special treatment. Before that, a derived that was only `MAYBE_DIRTY` when it threw (it reads another derived) was treated as up to date by the next check, and returned its old value. `error-boundary-30` covers this case in the real world, `async-derived-error-view` in a view.
 - A derived that references itself is detected (`derived_references_self`, DEV only) when it's re-evaluated during its own evaluation. `execute_derived` pushes onto its recursion stack in any case, so that its `finally` doesn't remove the outer evaluation from the stack. Before that fix (the bug is also on `main`), the next evaluation of the derived wasn't detected as recursive anymore, which recursed until the stack overflowed.
 - `update_dependencies` also returns early if the reaction was **destroyed during its own run**, e.g. by an error boundary (`error-boundary-28`). `destroy_effect` clears `deps`, `dv` and `edges`, and re-adding edges would leak.
@@ -670,3 +670,7 @@ These tests were copied from `async-another-try-pt-1` and pass here, but guard m
 | `async-derived-read-keeps-maybe-dirty-direct` | The `DIRTY`-vs-`MAYBE_DIRTY` path in pt-1's `is_dirty`                                  |
 
 `async-merge-discard-after-error` and `async-merge-no-unnecessary-rerun` could instead be rewritten so that both batches write the same value (e.g. Y also writes `a`). Then this branch's merge would run, and the tests would cover something relevant, including the merge chains listed in [§18](#18-known-bugs-and-gaps).
+
+## 20. Other issues to look at
+
+https://github.com/sveltejs/svelte/issues/18997

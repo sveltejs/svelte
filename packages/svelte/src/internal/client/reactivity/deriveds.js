@@ -12,7 +12,8 @@ import {
 	INERT,
 	CONNECTED,
 	ASSIGNED,
-	ERROR_VALUE
+	ERROR_VALUE,
+	HAS_SIGNAL
 } from '#client/constants';
 import {
 	active_reaction,
@@ -476,7 +477,7 @@ export function freeze_derived_effects(derived) {
 
 	for (const e of derived.effects) {
 		// if the effect has a teardown function or abort signal, call it
-		if (e.teardown || e.ac) {
+		if (e.teardown || (e.f & HAS_SIGNAL) !== 0) {
 			e.teardown?.();
 			abort_all(e);
 

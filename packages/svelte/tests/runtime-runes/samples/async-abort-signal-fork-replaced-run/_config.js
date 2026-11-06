@@ -42,10 +42,12 @@ export default test({
 		// the fork reads `p`, and evaluates it again
 		await step(shift, '<i>0</i>', ['load 0']);
 		await step(load, '<i>0</i>', []);
-		await step(commit, '<p>s:p0</p><i>0</i>', []);
+
+		// committing the fork drops its run of `p`, so that one's signal aborts
+		await step(commit, '<p>s:p0</p><i>0</i>', ['aborted 0']);
 
 		// the real batch re-runs the branch in its view, which now includes the fork's writes
 		await step(shift, '<p>s:p0</p><i>0</i>', []);
-		await step(shift, '<p>s:p1</p><i>1</i>', ['aborted 0']);
+		await step(shift, '<p>s:p1</p><i>1</i>', []);
 	}
 });

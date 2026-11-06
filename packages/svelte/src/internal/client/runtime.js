@@ -21,6 +21,7 @@ import {
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
+	HAS_SIGNAL,
 	MANAGED_EFFECT,
 	REACTION_RAN,
 	ASYNC,
@@ -352,46 +353,87 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 }
 
 /**
- * Abort the runs of `reaction` (see `getAbortSignal`) for which `superseded` returns true
- * @param {Reaction} reaction
- * @param {(batch: Batch | null) => boolean} superseded
+ * The controller of the signal of the run in progress, if it asked for one (see `get_abort_signal`). Once the run is
+ * done, it's stored with the run: on the reaction for its global run, or on the record a batch holds of it
+ * @type {AbortController | null}
  */
-function abort_runs(reaction, superseded) {
-	var controllers = reaction.ac;
-	if (controllers === null) return;
+let run_controller = null;
 
-	for (const [batch, controller] of controllers) {
-		if (superseded(batch)) {
-			controllers.delete(batch);
-			batch?.controllers.delete(reaction);
+/**
+ * The signal of the run of `reaction` that is in progress — or, after an `await` in it, of the run that applies in the
+ * active batch's view (`run_of`), which is where its reads after the `await` go, too (see `record_late_read`)
+ * @param {Reaction} reaction
+ */
+export function get_abort_signal(reaction) {
+	reaction.f |= HAS_SIGNAL;
 
-			without_reactive_context(() => controller.abort(STALE_REACTION));
-		}
+	if ((reaction.f & REACTION_IS_UPDATING) !== 0) {
+		return (run_controller ??= new AbortController()).signal;
 	}
 
-	if (controllers.size === 0) reaction.ac = null;
+	return (run_of(reaction).ac ??= new AbortController()).signal;
+}
+
+/** @param {AbortController | null | undefined} controller */
+function abort_signal(controller) {
+	if (controller) without_reactive_context(() => controller.abort(STALE_REACTION));
 }
 
 /**
- * Abort the signals of the runs of `reaction` that a new run in `batch` replaces.
- * The abort is batch-aware, which can result in false-negatives in a few edge cases but will otherwise
- * ensure that things never end up hanging. If everything would share one abort signal, forks could abort
- * real-world runs, runs in earlier batches that are outdated could abort later batches' current runs, etc.
- * @param {Reaction} reaction
- * @param {Batch | null} batch
+ * Abort the signal of a record that is replaced or dropped
+ * @param {BatchRecord | undefined} record
  */
-function abort_replaced(reaction, batch) {
-	// A derived's global run (keyed by `null`, see `own_global_signal`) is replaced by a run in a view only if that
-	// run becomes the global state, which is decided once it's done (it may belong to the batch instead, see
-	// `update_record`). Unless the global run is outdated in the real world anyway, its signal is aborted then
-	var undecided =
-		(reaction.f & DERIVED) !== 0 &&
-		batch_values !== null &&
-		!is_destroying_effect &&
-		!is_outdated(reaction);
+export function abort_record(record) {
+	if (record?.ac) {
+		abort_signal(record.ac);
+		record.ac = null;
+	}
+}
 
-	// always abort rerun in own batch
-	abort_runs(reaction, (b) => b === batch || (supersedes(batch, b) && !(undecided && b === null)));
+/**
+ * Before `reaction` runs again, abort the signals of the runs it replaces: its run in the active batch (which the
+ * new run replaces either way, see `update_record`), its global run if the new run is going to replace that one,
+ * and the runs of earlier batches, which a run in a real batch supersedes. (Forks stay independent until they're
+ * committed or discarded.) Whether a derived's run in a view replaces the global run is only known once it's done
+ * (see `set_global_signal`) — unless the global run is outdated in the real world anyway
+ * @param {Reaction} reaction
+ * @param {number} flags
+ */
+function abort_replaced(reaction, flags) {
+	var batch = current_batch;
+	var derived = (flags & DERIVED) !== 0;
+
+	// a teardown's run of a derived doesn't replace anything (see `teardown_view`)
+	if (derived && is_destroying_effect) return;
+
+	var real = batch === null || (!batch.is_fork && !batch.committed);
+
+	abort_record(view_batch?.records?.get(reaction));
+
+	if (
+		derived
+			? batch_values === null || (real && is_outdated(reaction))
+			: real || effect_batch(flags) === null
+	) {
+		// (the controller stays referenced until the new run is stored, see `keep_global_run`)
+		abort_signal(reaction.ac);
+	}
+
+	if (real && batch !== null) {
+		for (var b = first_batch; b !== null; b = b.next) {
+			if (!b.is_fork && b.id < batch.id) abort_record(b.records?.get(reaction));
+		}
+	}
+}
+
+/**
+ * The run that just ended is the global state of `reaction`: its signal replaces the global run's, which aborts —
+ * unless a fork's view ran it (a derived that only read latest values there), because forks stay independent
+ * @param {Reaction} reaction
+ */
+function set_global_signal(reaction) {
+	if (!current_batch?.is_fork) abort_signal(reaction.ac);
+	reaction.ac = run_controller;
 }
 
 /**
@@ -399,107 +441,48 @@ function abort_replaced(reaction, batch) {
  * has another version there now. (This doesn't evaluate anything, so a derived it read may be outdated, too)
  * @param {Reaction} reaction
  */
-function is_outdated(reaction) {
-	var dv = reaction.dv;
-	if (dv === null) return true;
-
-	var deps = /** @type {Value[]} */ (reaction.deps);
-
-	for (var i = 0; i < dv.length; i++) {
-		if (deps[i].wv !== dv[i]) return true;
-	}
-
-	return false;
+function is_outdated({ deps, dv }) {
+	return dv === null || dv.some((version, i) => /** @type {Value[]} */ (deps)[i].wv !== version);
 }
 
 /**
- * `getAbortSignal` keys the signal of a run by the batch it happens in. A derived's run that becomes its global
- * state there (or a record of it that is adopted) is keyed by `null` instead, so that only a run that replaces the
- * global state aborts it — not the batch's next run of its own, or the batch committing, being merged or discarded.
- * The global run it replaces aborts, unless the batch doesn't supersede the real world's runs (see `supersedes`).
- * (The derived stays in the batch's `controllers`, so that its commit still aborts what it supersedes)
- * @param {Derived} derived
- * @param {Batch | null} batch the batch the signal is keyed by
- */
-function own_global_signal(derived, batch) {
-	// (a run outside a batch is keyed by `null` already, and aborted the global run it replaces before it started)
-	if (batch === null) return;
-
-	if (supersedes(batch, null)) abort_runs(derived, (b) => b === null);
-
-	var controllers = derived.ac;
-	var controller = controllers?.get(batch);
-	if (controllers === null || controller === undefined) return;
-
-	controllers.delete(batch);
-	controllers.set(null, controller);
-}
-
-/**
- * Whether a run in `batch` supersedes the runs in batch `other` (`null` for runs outside a batch), so that their
- * signals abort (see `abort_replaced`).
+ * Whether a run in `batch` supersedes the runs of batch `other`, so that their signals abort (see `abort_replaced`):
+ * a run in a real batch supersedes those of earlier batches. Forks stay independent until they're committed or discarded
  * @param {Batch | null} batch
- * @param {Batch | null} other
+ * @param {Batch} other
  */
 function supersedes(batch, other) {
-	// only abort reruns of other batches if this is a real-world run
 	if (batch !== null && (batch.is_fork || batch.committed)) return false;
-
-	return (
-		other === null ||
-		other.committed ||
-		// an unlinked batch was discarded, or merged into another one
-		!other.linked ||
-		// forks stay independent, only abort runs of earlier batches
-		(batch !== null && !other.is_fork && other.id < batch.id)
-	);
+	return other.committed || (batch !== null && !other.is_fork && other.id < batch.id);
 }
 
 /**
- * Abort the signals of the runs in `batch` that its own runs replace, e.g. of the real world's run
- * when a fork commits. Batches that hold their own record of a reaction keep their run, because
- * their view doesn't use the committed one
- * @param {Batch} batch
- */
-export function abort_superseded(batch) {
-	for (const reaction of batch.controllers) {
-		abort_runs(
-			reaction,
-			(b) =>
-				b !== batch &&
-				// forks stay independent until they are committed or discarded (see `abort_batch_runs`)
-				!(b !== null && b.is_fork && b.linked && !b.committed) &&
-				// a batch's runs of a derived don't become its global state when it commits (its records are dropped,
-				// see `#release_records`). One that is adopted later replaces the global run then (see `own_global_signal`)
-				!(b === null && (reaction.f & DERIVED) !== 0) &&
-				(b === null ||
-					b.committed ||
-					// an unlinked batch was discarded, or merged into another one
-					!b.linked ||
-					// an earlier batch that holds a run of its own keeps it, because its view uses that run
-					(!b.is_fork && b.id < batch.id && !b.records?.has(reaction)))
-		);
-	}
-}
-
-/**
- * Abort the signals of all runs in `batch`, e.g. because it was discarded
- * @param {Batch} batch
- */
-export function abort_batch_runs(batch) {
-	for (const reaction of batch.controllers) {
-		abort_runs(reaction, (b) => b === batch);
-	}
-
-	batch.controllers.clear();
-}
-
-/**
- * Abort all signals of `reaction` (see `getAbortSignal`), e.g. because it's destroyed
+ * Abort all signals of `reaction` (see `getAbortSignal`), e.g. because it's destroyed.
+ * Returns whether a run had requested a signal, even if it was already aborted
  * @param {Reaction} reaction
  */
 export function abort_all(reaction) {
-	abort_runs(reaction, () => true);
+	if ((reaction.f & HAS_SIGNAL) === 0) return false;
+	reaction.f ^= HAS_SIGNAL;
+
+	abort_signal(reaction.ac);
+	reaction.ac = null;
+
+	for (var b = first_batch; b !== null; b = b.next) abort_record(b.records?.get(reaction));
+	return true;
+}
+
+/**
+ * The batch that a run of an effect belongs to: block and async effects that run while a batch is processed produce a
+ * result for that batch (see `update_record`)
+ * @param {number} flags
+ */
+function effect_batch(flags) {
+	return ((flags & ASYNC) !== 0 ||
+		(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)) &&
+		view_batch?.committed === false
+		? view_batch
+		: null;
 }
 
 /** @param {Reaction} reaction */
@@ -525,8 +508,11 @@ export function update_reaction(reaction) {
 	untracking = false;
 	update_version = ++read_version;
 
-	if (reaction.ac !== null) {
-		abort_replaced(reaction, current_batch);
+	var previous_run_controller = run_controller;
+	run_controller = null;
+
+	if ((flags & HAS_SIGNAL) !== 0) {
+		abort_replaced(reaction, flags);
 	}
 
 	try {
@@ -608,6 +594,7 @@ export function update_reaction(reaction) {
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 		update_version = previous_update_version;
+		run_controller = previous_run_controller;
 	}
 }
 
@@ -636,7 +623,10 @@ function update_dependencies(reaction, flags, value, error) {
 	var dv = reaction.dv;
 
 	// (an effect can be destroyed while it runs, e.g. by an error boundary)
-	if ((reaction.f & DESTROYED) !== 0) return length;
+	if ((reaction.f & DESTROYED) !== 0) {
+		abort_signal(run_controller);
+		return length;
+	}
 
 	if ((flags & DERIVED) !== 0 && is_destroying_effect) {
 		// The run belongs to the teardown's view of the world (see `teardown_view`).
@@ -652,6 +642,8 @@ function update_dependencies(reaction, flags, value, error) {
 			wv = Math.max(wv, teardown_version_of(dep));
 		}
 
+		// TODO: the run's signal (if any) is never aborted — should we abort when the teardown's view of the
+		// world is done with the run?
 		teardown_run = { v: value, wv, e: error, assigned: (flags & ASSIGNED) !== 0 };
 		return length;
 	}
@@ -682,6 +674,7 @@ function update_dependencies(reaction, flags, value, error) {
 		if (dv.length !== length) dv.length = length;
 
 		if ((flags & DERIVED) !== 0) set_derived_value(/** @type {Derived} */ (reaction), value, error);
+		if (reaction.ac || run_controller) set_global_signal(reaction);
 
 		return length;
 	}
@@ -707,8 +700,6 @@ function set_derived_value(derived, value, error) {
 
 	derived.f = flags;
 	update_derived_status(derived);
-
-	if (derived.ac !== null) own_global_signal(derived, current_batch);
 }
 
 /**
@@ -729,12 +720,7 @@ function update_record(reaction, flags, length, value, error) {
 	// branch it selected, the value an async expression resolved to for it), which it keeps until it
 	// commits. The first run of a block effect is the exception — it creates (and commits) its initial
 	// branch. (Whether a derived's run belongs to a batch depends on what it read, see below)
-	var batch =
-		((flags & ASYNC) !== 0 ||
-			(flags & (BLOCK_EFFECT | REACTION_RAN)) === (BLOCK_EFFECT | REACTION_RAN)) &&
-		view_batch?.committed === false
-			? view_batch
-			: null;
+	var batch = effect_batch(flags);
 
 	// A derived that has another version in the view than in the real world — because the view undoes an
 	// assignment to it, or it was assigned in a fork — never runs for the real world (see `get_view`)
@@ -835,13 +821,15 @@ function update_record(reaction, flags, length, value, error) {
 						dv,
 						v: value,
 						e: error,
-						wv: derived_version(/** @type {Derived} */ (reaction), batch, value, error)
+						wv: derived_version(/** @type {Derived} */ (reaction), batch, value, error),
+						ac: run_controller
 					}
-				: { deps: read, dv }
+				: { deps: read, dv, ac: run_controller }
 		);
 	} else {
 		reaction.deps = read;
 		reaction.dv = dv;
+		if (reaction.ac || run_controller) set_global_signal(reaction);
 
 		if ((flags & DERIVED) !== 0) {
 			set_derived_value(/** @type {Derived} */ (reaction), value, error);
@@ -965,10 +953,12 @@ export function promote_record(reaction, record) {
 		derived.wv = /** @type {number} */ (record.wv);
 		derived.f = (record.e ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE) & ~ASSIGNED;
 		update_derived_status(derived);
-
-		// (a derived's record is only promoted when the active batch's is adopted, see `update_derived`)
-		if (derived.ac !== null) own_global_signal(derived, view_batch);
 	}
+
+	// the run's signal replaces the global run's (so that dropping the record doesn't abort it, see `Batch#release_records`)
+	abort_signal(reaction.ac);
+	reaction.ac = record.ac ?? null;
+	record.ac = null;
 }
 
 /** @param {Reaction} reaction */
@@ -1060,12 +1050,15 @@ function remove_reaction(signal, dependency) {
 			update_derived_status(derived);
 		}
 
-		// Call abort controller, noone's listening to this derived anymore
-		if (derived.ac !== null) {
-			abort_all(derived);
-			// ensure it reruns right away next time instead of potentially returning a rejected promise as its value
+		// Call abort controller, noone's listening to this derived anymore: no live run of any reaction, in any batch,
+		// read it (the edges cover them all, see `Reaction#edges`). That includes the runs of it that batches hold
+		if (abort_all(derived)) {
+			// ensure it reruns right away next time instead of potentially returning a rejected promise as its value —
+			// in the real world, and in every batch's view (which would otherwise reuse its record of the derived)
 			set_signal_status(derived, DIRTY);
 			derived.dv = null;
+			for (var b = first_batch; b !== null; b = b.next) b.records?.delete(derived);
+			view_cache?.delete(derived);
 		}
 
 		// freeze any effects inside this derived

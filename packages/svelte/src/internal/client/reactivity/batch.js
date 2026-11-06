@@ -35,8 +35,7 @@ import {
 	prune_edges,
 	update_effect,
 	write_version,
-	abort_batch_runs,
-	abort_superseded
+	abort_record
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
@@ -321,13 +320,6 @@ export class Batch {
 	 */
 	committed = false;
 
-	/**
-	 * The reactions that have a run in this batch's view and asked for an abort signal (see
-	 * `getAbortSignal`), so that those signals can be aborted when the batch is discarded
-	 * @type {Set<Reaction>}
-	 */
-	controllers = new Set();
-
 	#decrement_queued = false;
 
 	constructor() {
@@ -608,10 +600,6 @@ export class Batch {
 		this.committed = true;
 		this.#release_records(true);
 
-		// the runs in this batch are what applies from now on, so the signals of the runs they
-		// replaced in other batches abort
-		abort_superseded(this);
-
 		// append/remove branches
 		for (const fn of this.#commit_callbacks) fn(this);
 		this.#commit_callbacks.clear();
@@ -788,6 +776,9 @@ export class Batch {
 		for (const [reaction, record] of batch.records ?? []) {
 			if ((reaction.f & BLOCK_EFFECT) === 0) {
 				(this.records ??= new Map()).set(reaction, record);
+
+				// the run moves to this batch, along with its signal (see `#release_records`)
+				batch.records?.delete(reaction);
 			}
 		}
 
@@ -951,10 +942,6 @@ export class Batch {
 	discard() {
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
-
-		// the runs in this batch's view are obsolete, so their signals abort — e.g. the
-		// in-flight requests a discarded fork started
-		abort_batch_runs(this);
 
 		for (const deferred of this.async_deriveds.values()) {
 			deferred.reject(OBSOLETE);
@@ -1348,6 +1335,9 @@ export class Batch {
 
 				prune_edges(reaction);
 			}
+
+			// abort this run - if it was promoted to global, this is a noop
+			abort_record(record);
 		}
 	}
 

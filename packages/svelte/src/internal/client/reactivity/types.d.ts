@@ -7,7 +7,6 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
-import type { Batch } from './batch';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -57,10 +56,10 @@ export interface Reaction extends Signal {
 	/** Graph edges: a superset of the dependencies of every live run. Never modified in place, like `deps` */
 	edges: null | Value[];
 	/**
-	 * The AbortControllers of the runs that asked for a signal (see `getAbortSignal`), per batch that they ran in
-	 * (`null` for runs outside of a batch). They abort once a run replaces them, or the reaction is destroyed
+	 * The AbortController of the signal of the global run, if any (see `getAbortSignal`). A record has its
+	 * own (`BatchRecord#ac`). It aborts once the run is replaced or dropped, or the reaction is destroyed
 	 */
-	ac: null | Map<Batch | null, AbortController>;
+	ac: null | AbortController;
 }
 
 /**
@@ -94,6 +93,8 @@ export interface BatchRecord {
 	wv?: number;
 	/** Whether the value of a derived record is an error */
 	e?: boolean;
+	/** The AbortController of the run's signal, if any (see `getAbortSignal`) */
+	ac?: null | AbortController;
 }
 
 /** A record of a derived, which — unlike the record of an effect — has a value */
