@@ -479,7 +479,10 @@ export function abort_all(reaction) {
  * @param {number} flags
  */
 function is_recorded_effect(flags) {
-	if ((flags & ASYNC) === 0 && (flags & (BLOCK_EFFECT | REACTION_RAN)) !== (BLOCK_EFFECT | REACTION_RAN)) {
+	if (
+		(flags & ASYNC) === 0 &&
+		(flags & (BLOCK_EFFECT | REACTION_RAN)) !== (BLOCK_EFFECT | REACTION_RAN)
+	) {
 		return false;
 	}
 
