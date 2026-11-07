@@ -101,6 +101,52 @@ export function parse_expression_at(parser, source, index) {
 }
 
 /**
+ * Parses `source` as if it started at `index` in the template, without copying the template before it.
+ * Returns `null` where the result could differ from `parse_expression_at(parser, parser.template.slice(0, index) + source, index)`
+ * @param {Parser} parser
+ * @param {string} source
+ * @param {number} index
+ * @returns {acorn.Expression | null}
+ */
+export function try_parse_expression_from(parser, source, index) {
+	const location = start_location(parser, index);
+	if (!location) return null;
+
+	// comments are attached by position, leave them to `parse_expression_at`
+	for (const comment of parser.root.comments) {
+		if (comment.start >= index) return null;
+	}
+
+	const acorn = parser.ts ? TSParser : JSParser;
+	let has_comments = false;
+
+	try {
+		const ast = acorn.parseExpressionAt(source, 0, {
+			onComment: () => (has_comments = true),
+			sourceType: 'module',
+			ecmaVersion: 16,
+			locations: true,
+			preserveParens: true,
+			startLocation: location
+		});
+
+		if (has_comments) return null;
+
+		walk(/** @type {acorn.Node} */ (ast), null, {
+			_(node, { next }) {
+				node.start += index;
+				node.end += index;
+				next();
+			}
+		});
+
+		return ast;
+	} catch {
+		return null;
+	}
+}
+
+/**
  * @param {Parser} parser
  * @param {string} source
  * @param {number} index
