@@ -635,13 +635,12 @@ class Finish {
 		const { template } = this;
 		const { name, end } = node;
 		if (VOID.includes(name) || template.startsWith('/>', end - 2)) return;
-		const closing = template.lastIndexOf('</', end - 1);
-		if (
-			closing !== -1 &&
-			template.startsWith(name, closing + 2) &&
-			/^\s*>$/.test(template.slice(closing + 2 + name.length, end))
-		) {
-			return;
+		// its own closing tag ends it: `</name`, whitespace and `>`
+		if (template.charCodeAt(end - 1) === 62) {
+			let at = end - 1;
+			while (is_whitespace(template.charCodeAt(at - 1))) at -= 1;
+			const open = at - name.length - 2;
+			if (open >= 0 && template.startsWith('</' + name, open)) return;
 		}
 		const closer = /^<(\/?)([^\s/>]+)/.exec(template.slice(end, end + 200));
 		if (!closer) return;
