@@ -85,7 +85,7 @@ function advance_spring(ctx, state, target, elapsed) {
 		state.last = state.current;
 		state.current = next;
 
-		// A soft retarget must finish the old step with its original mass, then
+		// A soft or momentum retarget must finish the old step with its original mass, then
 		// start recovery before the next step (including within a two-step frame).
 		if (state.pending_recovery_rate !== undefined) {
 			ctx.inv_mass = 0;
@@ -417,7 +417,11 @@ export class Spring {
 		if (this.#task) this.#advance(raf.now());
 
 		if (options?.preserveMomentum) {
-			this.#inverse_mass = 0;
+			if (this.#task && this.#spring_state?.time) {
+				this.#spring_state.pending_recovery_rate = this.#recovery_rate;
+			} else {
+				this.#inverse_mass = 0;
+			}
 			this.#momentum = options.preserveMomentum;
 		}
 

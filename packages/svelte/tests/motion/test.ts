@@ -86,6 +86,58 @@ describe('motion', () => {
 			}
 		});
 
+		it('Spring preserves an unfinished recovery step when retargeting with momentum', () => {
+			for (const target of [100, -1000]) {
+				raf.reset();
+				const motion = new Spring(0);
+				motion.set(100, { preserveMomentum: 200 });
+				raf.tick(25);
+				const before = motion.current;
+				motion.set(target, { preserveMomentum: 200 });
+				raf.tick(25);
+				assert.closeTo(motion.current, before, 1e-10);
+				raf.tick(25.000001);
+				assert.isAbove(motion.current, before);
+				raf.tick(1000 / 30);
+				assert.closeTo(motion.current, 4.802083333333333, 1e-10);
+			}
+		});
+
+		it('Spring applies deferred momentum at the boundary across frame schedules', () => {
+			for (const [initial_momentum, input_time] of [
+				[undefined, 25],
+				[200, 25],
+				[200, 225]
+			] as const) {
+				for (const preserveMomentum of [200, 400]) {
+					const trajectories: number[][] = [];
+					const boundary = ((Math.floor((input_time * 60) / 1000) + 1) * 1000) / 60;
+					for (const intervals of [schedules['60 Hz'], [1000 / 30], ...Object.values(schedules)]) {
+						raf.reset();
+						const motion = new Spring(0);
+						motion.set(100, { preserveMomentum: initial_momentum });
+						// Compare fractional retargets with the same reset at the old step's boundary.
+						advance(0, trajectories.length === 0 ? boundary : input_time, intervals);
+						const before = motion.current;
+						motion.set(-1000, { preserveMomentum });
+						raf.tick(raf.time);
+						assert.closeTo(motion.current, before, 1e-10);
+						const samples = [];
+						for (const time of [boundary + 1000 / 120, boundary + 1000 / 30, 500, 1500]) {
+							advance(raf.time, time, intervals);
+							samples.push(motion.current);
+						}
+						trajectories.push(samples);
+					}
+					for (const samples of trajectories.slice(1)) {
+						for (let i = 0; i < samples.length; i++) {
+							assert.closeTo(samples[i], trajectories[0][i], 1e-8);
+						}
+					}
+				}
+			}
+		});
+
 		for (const api of ['spring', 'Spring'] as const) {
 			function create<T>(value: T, options?: SpringOptions) {
 				if (api === 'Spring') {
