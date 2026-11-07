@@ -33,6 +33,59 @@ describe('motion', () => {
 			}
 		}
 
+		it('spring preserves an unfinished step when retargeting with soft recovery', () => {
+			raf.reset();
+			const motion = spring(0);
+			motion.set(100);
+			raf.tick(1000 / 120);
+			assert.closeTo(get(motion), 7.5, 1e-10);
+			motion.set(-1000, { soft: true });
+			raf.tick(1000 / 120);
+			assert.closeTo(get(motion), 7.5, 1e-10);
+			raf.tick(1000 / 60);
+			assert.closeTo(get(motion), 15, 1e-10);
+			raf.tick(1000 / 40);
+			assert.closeTo(get(motion), 19.7625, 1e-10);
+			raf.tick(1000 / 30);
+			assert.closeTo(get(motion), 24.525, 1e-10);
+		});
+
+		it('spring applies deferred soft recovery at the boundary across frame schedules', () => {
+			for (const initial_soft of [undefined, 0.2]) {
+				for (const soft of [true, 0.2]) {
+					const trajectories = [];
+					for (const intervals of [schedules['60 Hz'], [1000 / 30], ...Object.values(schedules)]) {
+						raf.reset();
+						const motion = spring(0);
+						motion.set(100, { soft: initial_soft });
+						// Use a public-API boundary retarget as the reference. Other runs
+						// retarget halfway through its old step, including during recovery.
+						raf.tick(trajectories.length === 0 ? 1000 / 60 : 1000 / 120);
+						const before = get(motion);
+						motion.set(-1000, { soft });
+						raf.tick(raf.time);
+						assert.closeTo(get(motion), before, 1e-10);
+						const samples = [];
+						// The first 30 Hz frame crosses two boundaries with a remainder.
+						for (const time of [1000 / 120 + 1000 / 30, 250, 500, 1500]) {
+							advance(raf.time, time, intervals);
+							samples.push(get(motion));
+						}
+						trajectories.push(samples);
+					}
+					if (initial_soft === undefined && soft === true) {
+						assert.closeTo(trajectories[0][0], 23.910875, 1e-10);
+					}
+					assert.equal(trajectories[0][3], -1000);
+					for (const samples of trajectories.slice(1)) {
+						for (let i = 0; i < samples.length; i++) {
+							assert.closeTo(samples[i], trajectories[0][i], 1e-8);
+						}
+					}
+				}
+			}
+		});
+
 		for (const api of ['spring', 'Spring'] as const) {
 			function create<T>(value: T, options?: SpringOptions) {
 				if (api === 'Spring') {
@@ -98,6 +151,28 @@ describe('motion', () => {
 				assert.closeTo(motion.read(), (15 + 30.75) / 2, 1e-10);
 				raf.tick(1000 / 30);
 				assert.closeTo(motion.read(), 30.75, 1e-10);
+			});
+
+			it(`${api} preserves input-time progress when another spring retargets it during a shared frame`, () => {
+				raf.reset();
+				const driver = spring(0);
+				driver.set(100);
+				const motion = create(0);
+				motion.set(100);
+				let retargeted = false;
+				const unsubscribe = driver.subscribe((value) => {
+					if (value === 0 || retargeted) return;
+					retargeted = true;
+					// Input during the earlier task is newer than the batch timestamp.
+					raf.time = 16.7;
+					motion.set(-1000);
+				});
+				raf.tick(16.6);
+				assert.isTrue(retargeted);
+				assert.closeTo(motion.read(), 15.0315, 1e-10);
+				raf.tick(1000 / 30);
+				assert.closeTo(motion.read(), 30.75, 1e-10);
+				unsubscribe();
 			});
 
 			it(`${api} applies a fractional-frame retarget at the next simulation boundary`, () => {

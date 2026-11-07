@@ -1,5 +1,6 @@
 export interface TickContext {
 	inv_mass: number;
+	recovery_rate: number;
 	dt: number;
 	opts: {
 		stiffness: number;
@@ -14,4 +15,5 @@ export interface SpringState<T> {
 	current: T;
 	target: T;
 	time: number;
+	pending_recovery_rate?: number;
 }

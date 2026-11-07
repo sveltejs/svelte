@@ -68,9 +68,8 @@ function tick_spring(ctx, last_value, current_value, target_value) {
  * @param {SpringState<T>} state
  * @param {T} target
  * @param {number} elapsed Time in 60 Hz frames, clamped by the caller
- * @param {number} recovery_rate
  */
-function advance_spring(ctx, state, target, elapsed, recovery_rate) {
+function advance_spring(ctx, state, target, elapsed) {
 	state.time += elapsed;
 	const steps = Math.floor(state.time + 1e-9);
 	// Round away floating-point error at simulation boundaries.
@@ -79,12 +78,20 @@ function advance_spring(ctx, state, target, elapsed, recovery_rate) {
 	ctx.settled = false;
 
 	for (let i = 0; i < steps; i++) {
-		ctx.inv_mass = Math.min(ctx.inv_mass + recovery_rate, 1);
+		ctx.inv_mass = Math.min(ctx.inv_mass + ctx.recovery_rate, 1);
 		ctx.dt = 1;
 		ctx.settled = true;
 		const next = tick_spring(ctx, state.last, state.current, state.target);
 		state.last = state.current;
 		state.current = next;
+
+		// A soft retarget must finish the old step with its original mass, then
+		// start recovery before the next step (including within a two-step frame).
+		if (state.pending_recovery_rate !== undefined) {
+			ctx.inv_mass = 0;
+			ctx.recovery_rate = state.pending_recovery_rate;
+			state.pending_recovery_rate = undefined;
+		}
 
 		const settled = ctx.settled && state.target === target;
 		// Keep the target fixed throughout an unfinished simulation step.
@@ -98,7 +105,7 @@ function advance_spring(ctx, state, target, elapsed, recovery_rate) {
 
 	if (state.time > 0) {
 		const inv_mass = ctx.inv_mass;
-		ctx.inv_mass = Math.min(inv_mass + recovery_rate, 1);
+		ctx.inv_mass = Math.min(inv_mass + ctx.recovery_rate, 1);
 		ctx.dt = state.time;
 		const next = tick_spring(ctx, state.last, state.current, state.target);
 		ctx.inv_mass = inv_mass;
@@ -143,6 +150,8 @@ export function spring(value, opts = {}) {
 	let cancel_task = false;
 	/** @param {number} now */
 	function advance(now) {
+		// An earlier task in the same frame may have sampled a newer input time.
+		now = Math.max(now, last_time);
 		// clamp elapsed time to 1/30th of a second, so that longer pauses
 		// (blocked thread or inactive tab) don't cause the spring to go haywire
 		const elapsed = Math.min(now - last_time, 1000 / 30);
@@ -150,6 +159,7 @@ export function spring(value, opts = {}) {
 		/** @type {TickContext} */
 		const ctx = {
 			inv_mass,
+			recovery_rate: inv_mass_recovery_rate,
 			opts: spring,
 			settled: true,
 			dt: 1
@@ -158,10 +168,10 @@ export function spring(value, opts = {}) {
 			ctx,
 			spring_state,
 			/** @type {T} */ (target_value),
-			(elapsed * 60) / 1000,
-			inv_mass_recovery_rate
+			(elapsed * 60) / 1000
 		);
 		inv_mass = ctx.inv_mass;
+		inv_mass_recovery_rate = ctx.recovery_rate;
 		last_time = now;
 		return { next, settled: ctx.settled };
 	}
@@ -185,8 +195,13 @@ export function spring(value, opts = {}) {
 			return Promise.resolve();
 		} else if (opts.soft) {
 			const rate = opts.soft === true ? 0.5 : +opts.soft;
-			inv_mass_recovery_rate = 1 / (rate * 60);
-			inv_mass = 0; // infinite mass, unaffected by spring forces
+			const recovery_rate = 1 / (rate * 60);
+			if (spring_state.time > 0) {
+				spring_state.pending_recovery_rate = recovery_rate;
+			} else {
+				inv_mass_recovery_rate = recovery_rate;
+				inv_mass = 0; // infinite mass, unaffected by spring forces
+			}
 		}
 		if (!task) {
 			last_time = raf.now();
@@ -314,6 +329,8 @@ export class Spring {
 
 	/** @param {number} now */
 	#advance(now) {
+		// An earlier task in the same frame may have sampled a newer input time.
+		now = Math.max(now, this.#last_time);
 		// clamp elapsed time to 1/30th of a second, so that longer pauses
 		// (blocked thread or inactive tab) don't cause the spring to go haywire
 		const elapsed = Math.min(now - this.#last_time, 1000 / 30);
@@ -321,6 +338,7 @@ export class Spring {
 		/** @type {import('./private').TickContext} */
 		const ctx = {
 			inv_mass: this.#inverse_mass,
+			recovery_rate: this.#recovery_rate,
 			opts: {
 				stiffness: this.#stiffness.v,
 				damping: this.#damping.v,
@@ -334,8 +352,7 @@ export class Spring {
 			ctx,
 			/** @type {SpringState<T>} */ (this.#spring_state),
 			this.#target.v,
-			(elapsed * 60) / 1000,
-			this.#recovery_rate
+			(elapsed * 60) / 1000
 		);
 		this.#inverse_mass = ctx.inv_mass;
 		this.#last_time = now;
