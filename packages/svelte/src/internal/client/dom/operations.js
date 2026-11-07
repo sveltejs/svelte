@@ -13,7 +13,6 @@ import {
 	TEXT_CACHE,
 	TEXT_NODE
 } from '#client/constants';
-import { eager_block_effects } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
@@ -246,7 +245,6 @@ export function clear_text_content(node) {
  */
 export function should_defer_append() {
 	if (!async_mode_flag) return false;
-	if (eager_block_effects !== null) return false;
 
 	var flags = /** @type {Effect} */ (active_effect).f;
 	return (flags & REACTION_RAN) !== 0;

@@ -35,12 +35,12 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { BRANCH_EFFECT, COMMENT_NODE, DESTROYED, EFFECT_OFFSCREEN, INERT } from '#client/constants';
+import { BRANCH_EFFECT, COMMENT_NODE, DESTROYED, DIRTY, EFFECT_OFFSCREEN, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
-import { get } from '../../runtime.js';
+import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
-import { current_batch } from '../../reactivity/batch.js';
+import { current_batch, eager_block_effects } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
 import { tag } from '../../dev/tracing.js';
 
@@ -337,6 +337,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
+		var batch = /** @type {Batch} */ (current_batch);
+
+		if (eager_block_effects !== null) {
+			// we came here from `flush_queued_effects` — come back when the newly-created batch is processed
+			batch.schedule(/** @type {Effect} */ (active_effect), DIRTY);
+			return;
+		}
+
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
@@ -354,7 +362,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		var keys = new Set();
-		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
 
 		for (var index = 0; index < length; index += 1) {

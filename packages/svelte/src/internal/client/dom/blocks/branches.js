@@ -1,6 +1,7 @@
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js' */
-import { current_batch } from '../../reactivity/batch.js';
+import { current_batch, eager_block_effects, view_batch } from '../../reactivity/batch.js';
+import { active_effect } from '../../runtime.js';
 import {
 	branch,
 	destroy_effect,
@@ -8,7 +9,7 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { HMR_ANCHOR } from '../../constants.js';
+import { DIRTY, HMR_ANCHOR } from '../../constants.js';
 import { EFFECT_OFFSCREEN } from '#client/constants';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
@@ -179,7 +180,11 @@ export class BranchManager {
 		var defer = should_defer_append();
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
-			if (defer) {
+			if (eager_block_effects !== null) {
+				// we came here from `flush_queued_effects` — don't create the branch yet,
+				// but come back here when the newly-created batch is processed
+				batch.schedule(/** @type {Effect} */ (active_effect), DIRTY);
+			} else if (defer) {
 				var fragment = document.createDocumentFragment();
 				var target = create_text();
 
