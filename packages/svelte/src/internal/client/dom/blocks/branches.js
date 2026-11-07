@@ -20,6 +20,28 @@ import { DEV } from 'esm-env';
  */
 
 /**
+ * Run `fn` with `context` as the teardown view, if there is one
+ * @param {TeardownContext | null | undefined} context
+ * @param {() => void} fn
+ */
+function with_teardown_context(context, fn) {
+	var previous = teardown_context;
+
+	if (context) {
+		// the view may have cached deriveds before writes that its `reverted_values` doesn't
+		// include, so evaluate them afresh
+		context.derived_cache.clear();
+		set_teardown_context(context);
+	}
+
+	try {
+		fn();
+	} finally {
+		set_teardown_context(previous);
+	}
+}
+
+/**
  * @template Key
  */
 export class BranchManager {
@@ -53,9 +75,9 @@ export class BranchManager {
 	#offscreen = new Map();
 
 	/**
-	 * Per-block-effect teardown contexts, for the edge case in which block effects are
+	 * Per-batch teardown contexts, for the edge case in which block effects are
 	 * triggered from `flush_queued_effects` with partial teardown contexts
-	 * @type {Map<Batch, TeardownContext> | null}
+	 * @type {Map<Batch, TeardownContext | null> | null}
 	 */
 	#teardown_contexts = null;
 
@@ -121,74 +143,74 @@ export class BranchManager {
 			}
 		}
 
-		var previous_teardown_context = teardown_context;
 		var block_teardown_context = this.#teardown_contexts?.get(batch);
 
 		// other batches can still commit (in any order), so their selections remain
-		this.#discard(batch);
+		this.#discard(batch, true);
 
-		if (block_teardown_context) set_teardown_context(block_teardown_context);
+		// the branch is detached because the block selected a different one, so its teardowns
+		// should see the partial view that the eager run saw (see `ensure`)
+		with_teardown_context(block_teardown_context, () => {
+			// outro/destroy all onscreen effects...
+			for (const [k, effect] of this.#onscreen) {
+				// ...except the one that was just committed
+				//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
+				if (k === key || this.#outroing.has(k)) continue;
 
-		// outro/destroy all onscreen effects...
-		for (const [k, effect] of this.#onscreen) {
-			// ...except the one that was just committed
-			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
-			if (k === key || this.#outroing.has(k)) continue;
+				const on_destroy = () => {
+					const keys = Array.from(this.#batches.values());
 
-			const on_destroy = () => {
-				const keys = Array.from(this.#batches.values());
+					if (keys.includes(k)) {
+						// keep the effect offscreen, as another batch will need it
+						var fragment = document.createDocumentFragment();
+						move_effect(effect, fragment);
 
-				if (keys.includes(k)) {
-					// keep the effect offscreen, as another batch will need it
-					var fragment = document.createDocumentFragment();
-					move_effect(effect, fragment);
+						fragment.append(create_text()); // TODO can we avoid this?
 
-					fragment.append(create_text()); // TODO can we avoid this?
+						this.#offscreen.set(k, { effect, fragment });
+					} else {
+						destroy_effect(effect);
+					}
 
-					this.#offscreen.set(k, { effect, fragment });
+					this.#outroing.delete(k);
+					this.#onscreen.delete(k);
+				};
+
+				if (this.#transition || !onscreen) {
+					this.#outroing.add(k);
+					pause_effect(effect, on_destroy, false);
 				} else {
-					destroy_effect(effect);
+					on_destroy();
 				}
-
-				this.#outroing.delete(k);
-				this.#onscreen.delete(k);
-			};
-
-			if (this.#transition || !onscreen) {
-				this.#outroing.add(k);
-				pause_effect(effect, on_destroy, false);
-			} else {
-				on_destroy();
 			}
-		}
-
-		set_teardown_context(previous_teardown_context);
+		});
 	};
 
 	/**
 	 * @param {Batch} batch
+	 * @param {boolean} [from_commit] Whether the batch is committing (rather than being discarded)
 	 */
-	#discard = (batch) => {
+	#discard = (batch, from_commit = false) => {
 		for (const b of this.#batches.keys()) {
 			// (batches that were merged into another one don't select anything anymore)
 			if (b === batch || !b.linked) this.#batches.delete(b);
 		}
 
 		const keys = Array.from(this.#batches.values());
+		const block_teardown_context = from_commit ? this.#teardown_contexts?.get(batch) : null;
 
-		var previous_teardown_context = teardown_context;
-		var block_teardown_context = this.#teardown_contexts?.get(batch);
-		if (block_teardown_context) set_teardown_context(block_teardown_context);
-
-		for (const [k, branch] of this.#offscreen) {
-			if (!keys.includes(k)) {
-				destroy_effect(branch.effect);
-				this.#offscreen.delete(k);
-			}
+		try {
+			with_teardown_context(block_teardown_context, () => {
+				for (const [k, branch] of this.#offscreen) {
+					if (!keys.includes(k)) {
+						destroy_effect(branch.effect);
+						this.#offscreen.delete(k);
+					}
+				}
+			});
+		} finally {
+			this.#teardown_contexts?.delete(batch);
 		}
-
-		this.#teardown_contexts?.delete(batch);
-		set_teardown_context(previous_teardown_context);
 	};
 
 	/**
@@ -200,13 +222,18 @@ export class BranchManager {
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
 
+		if (eager_block_effects !== null) {
+			// We came here from `flush_queued_effects`: don't create the branch yet, but
+			// remember the partial teardown view this run sees. This is deliberately a live
+			// reference — the flush narrows it to the next batch's writes, which is the view
+			// that the branch's teardowns should see when that batch commits
+			(this.#teardown_contexts ??= new Map()).set(batch, teardown_context);
+		}
+
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			if (eager_block_effects !== null) {
-				// we came here from `flush_queued_effects` — don't create the branch yet,
-				// but come back here when the newly-created batch is processed
+				// come back here when the newly-created batch is processed
 				batch.schedule(/** @type {Effect} */ (active_effect), DIRTY);
-
-				(this.#teardown_contexts ??= new Map()).set(batch, teardown_context);
 			} else if (defer) {
 				var fragment = document.createDocumentFragment();
 				var target = create_text();
