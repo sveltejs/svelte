@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js' */
-import { current_batch } from '../../reactivity/batch.js';
+import { current_batch, eager_block_effects } from '../../reactivity/batch.js';
 import {
 	branch,
 	destroy_effect,
@@ -73,6 +73,54 @@ export class BranchManager {
 	}
 
 	/**
+	 * Outro or destroy every onscreen branch except the one for `key`, keeping branches
+	 * offscreen for other batches that select them. When a block re-runs eagerly, this
+	 * takes the branches that it no longer selects out of the DOM before the rest of the
+	 * flush runs their effects, while the branch it selects is committed by the batch
+	 * @param {Batch} batch
+	 * @param {Key} key
+	 * @param {boolean} has_selected Whether the block has a branch for `key` (rather than selecting none)
+	 * @param {boolean} [keep_batch] Whether `batch` still selects `key` and is yet to commit it
+	 */
+	#prune(batch, key, has_selected, keep_batch = false) {
+		// other batches can still commit (in any order), so their selections remain
+		this.#discard(batch, keep_batch);
+
+		// outro/destroy all onscreen effects...
+		for (const [k, effect] of this.#onscreen) {
+			// ...except the one that was just committed
+			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
+			if (k === key || this.#outroing.has(k)) continue;
+
+			const on_destroy = () => {
+				const keys = Array.from(this.#batches.values());
+
+				if (keys.includes(k)) {
+					// keep the effect offscreen, as another batch will need it
+					var fragment = document.createDocumentFragment();
+					move_effect(effect, fragment);
+
+					fragment.append(create_text()); // TODO can we avoid this?
+
+					this.#offscreen.set(k, { effect, fragment });
+				} else {
+					destroy_effect(effect);
+				}
+
+				this.#outroing.delete(k);
+				this.#onscreen.delete(k);
+			};
+
+			if (this.#transition || !has_selected) {
+				this.#outroing.add(k);
+				pause_effect(effect, on_destroy, false);
+			} else {
+				on_destroy();
+			}
+		}
+	}
+
+	/**
 	 * @param {Batch} batch
 	 */
 	#commit = (batch) => {
@@ -113,50 +161,17 @@ export class BranchManager {
 			}
 		}
 
-		// other batches can still commit (in any order), so their selections remain
-		this.#discard(batch);
-
-		// outro/destroy all onscreen effects...
-		for (const [k, effect] of this.#onscreen) {
-			// ...except the one that was just committed
-			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
-			if (k === key || this.#outroing.has(k)) continue;
-
-			const on_destroy = () => {
-				const keys = Array.from(this.#batches.values());
-
-				if (keys.includes(k)) {
-					// keep the effect offscreen, as another batch will need it
-					var fragment = document.createDocumentFragment();
-					move_effect(effect, fragment);
-
-					fragment.append(create_text()); // TODO can we avoid this?
-
-					this.#offscreen.set(k, { effect, fragment });
-				} else {
-					destroy_effect(effect);
-				}
-
-				this.#outroing.delete(k);
-				this.#onscreen.delete(k);
-			};
-
-			if (this.#transition || !onscreen) {
-				this.#outroing.add(k);
-				pause_effect(effect, on_destroy, false);
-			} else {
-				on_destroy();
-			}
-		}
+		this.#prune(batch, key, onscreen !== undefined);
 	};
 
 	/**
 	 * @param {Batch} batch
+	 * @param {boolean} [keep_batch] Whether `batch` still selects `key` and is yet to commit it
 	 */
-	#discard = (batch) => {
+	#discard = (batch, keep_batch = false) => {
 		for (const b of this.#batches.keys()) {
 			// (batches that were merged into another one don't select anything anymore)
-			if (b === batch || !b.linked) this.#batches.delete(b);
+			if (!b.linked || (b === batch && !keep_batch)) this.#batches.delete(b);
 		}
 
 		const keys = Array.from(this.#batches.values());
@@ -221,6 +236,14 @@ export class BranchManager {
 
 			batch.oncommit(this.#commit);
 			batch.ondiscard(this.#discard);
+
+			if (eager_block_effects !== null) {
+				// This run only exists to find out which branches the rest of the current flush must skip.
+				// Removing those can't wait for the batch to commit: effects inside them would otherwise
+				// run with values that the block no longer selects. The branch that was selected is
+				// appended by the batch, like any other (see `should_defer_append`)
+				this.#prune(batch, key, this.#onscreen.has(key) || this.#offscreen.has(key), true);
+			}
 		} else {
 			if (hydrating) {
 				this.anchor = hydrate_node;

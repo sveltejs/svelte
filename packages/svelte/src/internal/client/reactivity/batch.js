@@ -1217,7 +1217,8 @@ export class Batch {
 				var effect = /** @type {Effect} */ (reaction);
 
 				if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
-					// these run right away (see `flush_queued_effects`)
+					// these run right away to find out which branches the rest of the flush must
+					// skip (see `flush_queued_effects`); they select their branch again in `next_batch`
 					set_signal_status(effect, status);
 					eager_block_effects.add(effect);
 				}
