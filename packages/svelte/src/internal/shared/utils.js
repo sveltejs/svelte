@@ -129,7 +129,7 @@ export function exclude_from_object(obj, keys) {
 	var result = {};
 
 	for (var key in obj) {
-		if (!keys.includes(key)) {
+		if (!keys.includes(key) && has_own_property.call(obj, key)) {
 			result[key] = obj[key];
 		}
 	}
