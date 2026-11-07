@@ -8,19 +8,19 @@ export default test({
 
 	async test({ assert, target }) {
 		const [show, resolve] = target.querySelectorAll('button');
-		const buttons = '<button>show</button><button>resolve</button>';
+		const [output] = target.querySelectorAll('#output');
 
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>false</p>`);
+		assert.htmlEqual(output.innerHTML, `<p>false</p>`);
 
 		show.click();
 		await tick();
 
 		// the branch with the `await` is still pending, so the current branch remains
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>false</p>`);
+		assert.htmlEqual(output.innerHTML, `<p>false</p>`);
 
 		resolve.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>true</p><p>shown</p>`);
+		assert.htmlEqual(output.innerHTML, `<p>true</p><p>shown</p>`);
 	}
 });

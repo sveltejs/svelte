@@ -16,9 +16,11 @@
 <button onclick={() => (trigger = true)}>show</button>
 <button onclick={() => resolvers.shift()?.()}>resolve</button>
 
-{#if show}
-	<p>true</p>
-	<p>{await delay('shown')}</p>
-{:else}
-	<p>false</p>
-{/if}
+<div id="output">
+	{#if show}
+		<p>true</p>
+		<p>{await delay('shown')}</p>
+	{:else}
+		<p>false</p>
+	{/if}
+</div>
