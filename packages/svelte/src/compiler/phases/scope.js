@@ -15,6 +15,8 @@ import {
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 
+// Map keys use SameValueZero equality, so distinguish -0 with a separate key.
+const NEGATIVE_ZERO = Symbol('negative zero');
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 const NUMBER = Symbol('number');
@@ -195,7 +197,7 @@ export class Binding {
 }
 
 class Evaluation {
-	/** @type {Set<any>} */
+	/** @type {Map<any, any>} */
 	values;
 
 	/**
@@ -257,7 +259,7 @@ class Evaluation {
 	 *
 	 * @param {Scope} scope
 	 * @param {Expression | FunctionDeclaration} expression
-	 * @param {Set<any>} values
+	 * @param {Map<any, any>} values
 	 */
 	constructor(scope, expression, values) {
 		current_evaluations.set(expression, this);
@@ -266,7 +268,7 @@ class Evaluation {
 
 		switch (expression.type) {
 			case 'Literal': {
-				this.values.add(expression.value);
+				this.add(expression.value);
 				break;
 			}
 
@@ -278,7 +280,7 @@ class Evaluation {
 						binding.initial?.type === 'CallExpression' &&
 						get_rune(binding.initial, scope) === '$props.id'
 					) {
-						this.values.add(STRING);
+						this.add(STRING);
 						break;
 					}
 
@@ -288,14 +290,14 @@ class Evaluation {
 						binding.kind === 'bindable_prop';
 
 					if (binding.initial?.type === 'EachBlock' && binding.initial.index === expression.name) {
-						this.values.add(NUMBER);
+						this.add(NUMBER);
 						break;
 					}
 
 					if (binding.initial?.type === 'SnippetBlock') {
 						this.is_defined = true;
 						this.is_known = false;
-						this.values.add(UNKNOWN);
+						this.add(UNKNOWN);
 						break;
 					}
 
@@ -304,14 +306,14 @@ class Evaluation {
 						break;
 					}
 				} else if (expression.name === 'undefined') {
-					this.values.add(undefined);
+					this.add(undefined);
 					break;
 				}
 
 				// TODO glean what we can from reassignments
 				// TODO one day, expose props and imports somehow
 
-				this.values.add(UNKNOWN);
+				this.add(UNKNOWN);
 				break;
 			}
 
@@ -320,7 +322,7 @@ class Evaluation {
 				const b = scope.evaluate(expression.right);
 
 				if (a.is_known && b.is_known) {
-					this.values.add(binary[expression.operator](a.value, b.value));
+					this.add(binary[expression.operator](a.value, b.value));
 					break;
 				}
 
@@ -335,8 +337,8 @@ class Evaluation {
 					case '===':
 					case 'in':
 					case 'instanceof':
-						this.values.add(true);
-						this.values.add(false);
+						this.add(true);
+						this.add(false);
 						break;
 
 					case '%':
@@ -350,22 +352,22 @@ class Evaluation {
 					case '>>>':
 					case '^':
 					case '|':
-						this.values.add(NUMBER);
+						this.add(NUMBER);
 						break;
 
 					case '+':
 						if (a.is_string || b.is_string) {
-							this.values.add(STRING);
+							this.add(STRING);
 						} else if (a.is_number && b.is_number) {
-							this.values.add(NUMBER);
+							this.add(NUMBER);
 						} else {
-							this.values.add(STRING);
-							this.values.add(NUMBER);
+							this.add(STRING);
+							this.add(NUMBER);
 						}
 						break;
 
 					default:
-						this.values.add(UNKNOWN);
+						this.add(UNKNOWN);
 				}
 				break;
 			}
@@ -376,16 +378,16 @@ class Evaluation {
 				const alternate = scope.evaluate(expression.alternate);
 
 				if (test.is_known) {
-					for (const value of (test.value ? consequent : alternate).values) {
-						this.values.add(value);
+					for (const value of (test.value ? consequent : alternate).values.values()) {
+						this.add(value);
 					}
 				} else {
-					for (const value of consequent.values) {
-						this.values.add(value);
+					for (const value of consequent.values.values()) {
+						this.add(value);
 					}
 
-					for (const value of alternate.values) {
-						this.values.add(value);
+					for (const value of alternate.values.values()) {
+						this.add(value);
 					}
 				}
 				break;
@@ -397,7 +399,7 @@ class Evaluation {
 
 				if (a.is_known) {
 					if (b.is_known) {
-						this.values.add(logical[expression.operator](a.value, b.value));
+						this.add(logical[expression.operator](a.value, b.value));
 						break;
 					}
 
@@ -406,22 +408,22 @@ class Evaluation {
 						(expression.operator === '||' && a.value) ||
 						(expression.operator === '??' && a.value != null)
 					) {
-						this.values.add(a.value);
+						this.add(a.value);
 					} else {
-						for (const value of b.values) {
-							this.values.add(value);
+						for (const value of b.values.values()) {
+							this.add(value);
 						}
 					}
 
 					break;
 				}
 
-				for (const value of a.values) {
-					this.values.add(value);
+				for (const value of a.values.values()) {
+					this.add(value);
 				}
 
-				for (const value of b.values) {
-					this.values.add(value);
+				for (const value of b.values.values()) {
+					this.add(value);
 				}
 				break;
 			}
@@ -430,33 +432,33 @@ class Evaluation {
 				const argument = scope.evaluate(expression.argument);
 
 				if (argument.is_known) {
-					this.values.add(unary[expression.operator](argument.value));
+					this.add(unary[expression.operator](argument.value));
 					break;
 				}
 
 				switch (expression.operator) {
 					case '!':
 					case 'delete':
-						this.values.add(false);
-						this.values.add(true);
+						this.add(false);
+						this.add(true);
 						break;
 
 					case '+':
 					case '-':
 					case '~':
-						this.values.add(NUMBER);
+						this.add(NUMBER);
 						break;
 
 					case 'typeof':
-						this.values.add(STRING);
+						this.add(STRING);
 						break;
 
 					case 'void':
-						this.values.add(undefined);
+						this.add(undefined);
 						break;
 
 					default:
-						this.values.add(UNKNOWN);
+						this.add(UNKNOWN);
 				}
 				break;
 			}
@@ -475,17 +477,17 @@ class Evaluation {
 								if (arg) {
 									scope.evaluate(arg, this.values);
 								} else {
-									this.values.add(undefined);
+									this.add(undefined);
 								}
 								break;
 
 							case '$props.id':
-								this.values.add(STRING);
+								this.add(STRING);
 								break;
 
 							case '$effect.tracking':
-								this.values.add(false);
-								this.values.add(true);
+								this.add(false);
+								this.add(true);
 								break;
 
 							case '$derived.by':
@@ -494,11 +496,11 @@ class Evaluation {
 									break;
 								}
 
-								this.values.add(UNKNOWN);
+								this.add(UNKNOWN);
 								break;
 
 							default: {
-								this.values.add(UNKNOWN);
+								this.add(UNKNOWN);
 							}
 						}
 
@@ -513,16 +515,16 @@ class Evaluation {
 						const values = expression.arguments.map((arg) => scope.evaluate(arg));
 
 						if (fn && values.every((e) => e.is_known)) {
-							this.values.add(fn(...values.map((e) => e.value)));
+							this.add(fn(...values.map((e) => e.value)));
 						} else {
-							this.values.add(type);
+							this.add(type);
 						}
 
 						break;
 					}
 				}
 
-				this.values.add(UNKNOWN);
+				this.add(UNKNOWN);
 				break;
 			}
 
@@ -535,12 +537,12 @@ class Evaluation {
 					if (e.is_known) {
 						result += e.value + expression.quasis[i + 1].value.cooked;
 					} else {
-						this.values.add(STRING);
+						this.add(STRING);
 						break;
 					}
 				}
 
-				this.values.add(result);
+				this.add(result);
 				break;
 			}
 
@@ -548,27 +550,27 @@ class Evaluation {
 				const keypath = get_global_keypath(expression, scope);
 
 				if (keypath && Object.hasOwn(global_constants, keypath)) {
-					this.values.add(global_constants[keypath]);
+					this.add(global_constants[keypath]);
 					break;
 				}
 
-				this.values.add(UNKNOWN);
+				this.add(UNKNOWN);
 				break;
 			}
 
 			case 'ArrowFunctionExpression':
 			case 'FunctionExpression':
 			case 'FunctionDeclaration': {
-				this.values.add(FUNCTION);
+				this.add(FUNCTION);
 				break;
 			}
 
 			default: {
-				this.values.add(UNKNOWN);
+				this.add(UNKNOWN);
 			}
 		}
 
-		for (const value of this.values) {
+		for (const value of this.values.values()) {
 			this.value = value; // saves having special logic for `size === 1`
 
 			if (value !== STRING && typeof value !== 'string') {
@@ -598,6 +600,11 @@ class Evaluation {
 		}
 
 		current_evaluations.delete(expression);
+	}
+
+	/** @param {any} value */
+	add(value) {
+		this.values.set(Object.is(value, -0) ? NEGATIVE_ZERO : value, value);
 	}
 }
 
@@ -797,9 +804,9 @@ export class Scope {
 	 * Only call this once scope has been fully generated in a first pass,
 	 * else this evaluates on incomplete data and may yield wrong results.
 	 * @param {Expression} expression
-	 * @param {Set<any>} [values]
+	 * @param {Map<any, any>} [values]
 	 */
-	evaluate(expression, values = new Set()) {
+	evaluate(expression, values = new Map()) {
 		const current = current_evaluations.get(expression);
 		if (current) return current;
 
