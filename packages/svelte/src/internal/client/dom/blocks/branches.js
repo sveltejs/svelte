@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
-/** @import { Batch } from '../../reactivity/batch.js' */
-import { current_batch, eager_block_effects, view_batch } from '../../reactivity/batch.js';
+/** @import { Batch, TeardownContext } from '../../reactivity/batch.js' */
+import { current_batch, eager_block_effects, set_teardown_context, teardown_context } from '../../reactivity/batch.js';
 import { active_effect } from '../../runtime.js';
 import {
 	branch,
@@ -51,6 +51,13 @@ export class BranchManager {
 	 * @type {Map<Key, Branch>}
 	 */
 	#offscreen = new Map();
+
+	/**
+	 * Per-block-effect teardown contexts, for the edge case in which block effects are
+	 * triggered from `flush_queued_effects` with partial teardown contexts
+	 * @type {Map<Batch, TeardownContext> | null}
+	 */
+	#teardown_contexts = null;
 
 	/**
 	 * Keys of effects that are currently outroing
@@ -114,8 +121,13 @@ export class BranchManager {
 			}
 		}
 
+		var previous_teardown_context = teardown_context;
+		var block_teardown_context = this.#teardown_contexts?.get(batch);
+
 		// other batches can still commit (in any order), so their selections remain
 		this.#discard(batch);
+
+		if (block_teardown_context) set_teardown_context(block_teardown_context);
 
 		// outro/destroy all onscreen effects...
 		for (const [k, effect] of this.#onscreen) {
@@ -149,6 +161,8 @@ export class BranchManager {
 				on_destroy();
 			}
 		}
+
+		set_teardown_context(previous_teardown_context);
 	};
 
 	/**
@@ -162,12 +176,19 @@ export class BranchManager {
 
 		const keys = Array.from(this.#batches.values());
 
+		var previous_teardown_context = teardown_context;
+		var block_teardown_context = this.#teardown_contexts?.get(batch);
+		if (block_teardown_context) set_teardown_context(block_teardown_context);
+
 		for (const [k, branch] of this.#offscreen) {
 			if (!keys.includes(k)) {
 				destroy_effect(branch.effect);
 				this.#offscreen.delete(k);
 			}
 		}
+
+		this.#teardown_contexts?.delete(batch);
+		set_teardown_context(previous_teardown_context);
 	};
 
 	/**
@@ -184,6 +205,8 @@ export class BranchManager {
 				// we came here from `flush_queued_effects` — don't create the branch yet,
 				// but come back here when the newly-created batch is processed
 				batch.schedule(/** @type {Effect} */ (active_effect), DIRTY);
+
+				(this.#teardown_contexts ??= new Map()).set(batch, teardown_context);
 			} else if (defer) {
 				var fragment = document.createDocumentFragment();
 				var target = create_text();

@@ -1484,6 +1484,8 @@ function flush_queued_effects(effects, earlier_writes = null) {
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.size > 0) {
+				var batch = /** @type {Batch} */ (current_batch);
+
 				// these run because of the writes of the effect, so their teardowns revert those
 				var previous_teardown_context = teardown_context;
 
@@ -1496,7 +1498,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 					// Skip eager effects that have already been unmounted, or that are inside a
 					// branch that an earlier eager run (e.g. of an ancestor block) deselected
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
-					if (async_mode_flag && current_batch !== null && current_batch.is_skipped(e)) continue;
+					if (async_mode_flag && batch.is_skipped(e)) continue;
 
 					// Run effects in order from ancestor to descendant, else we could run into nullpointers
 					/** @type {Effect[]} */
@@ -1514,7 +1516,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 						const e = ordered_effects[j];
 						// a block run may have deselected the branch that a later one is in
 						if ((e.f & (DESTROYED | INERT)) !== 0) continue;
-						if (async_mode_flag && current_batch !== null && current_batch.is_skipped(e)) continue;
+						if (async_mode_flag && batch.is_skipped(e)) continue;
 						update_effect(e);
 					}
 				}
