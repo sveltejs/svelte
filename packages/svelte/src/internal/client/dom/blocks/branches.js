@@ -1,6 +1,11 @@
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Batch, TeardownContext } from '../../reactivity/batch.js' */
-import { current_batch, eager_block_effects, set_teardown_context, teardown_context } from '../../reactivity/batch.js';
+import {
+	current_batch,
+	eager_block_effects,
+	set_teardown_context,
+	teardown_context
+} from '../../reactivity/batch.js';
 import { active_effect } from '../../runtime.js';
 import {
 	branch,
@@ -18,28 +23,6 @@ import { DEV } from 'esm-env';
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
  */
-
-/**
- * Run `fn` with `context` as the teardown view, if there is one
- * @param {TeardownContext | null | undefined} context
- * @param {() => void} fn
- */
-function with_teardown_context(context, fn) {
-	var previous = teardown_context;
-
-	if (context) {
-		// the view may have cached deriveds before writes that its `reverted_values` doesn't
-		// include, so evaluate them afresh
-		context.derived_cache.clear();
-		set_teardown_context(context);
-	}
-
-	try {
-		fn();
-	} finally {
-		set_teardown_context(previous);
-	}
-}
 
 /**
  * @template Key
@@ -104,6 +87,33 @@ export class BranchManager {
 
 	/**
 	 * @param {Batch} batch
+	 * @param {boolean} commit
+	 */
+	#resolve = (batch, commit) => {
+		var context = this.#teardown_contexts?.get(batch);
+		var fn = commit ? this.#commit : this.#discard;
+
+		if (context) {
+			var previous = teardown_context;
+
+			// the view may have cached deriveds before writes that its `reverted_values` doesn't
+			// include, so evaluate them afresh
+			context.derived_cache.clear();
+			set_teardown_context(context);
+
+			try {
+				fn(batch);
+			} finally {
+				set_teardown_context(previous);
+				/** @type {Map<Batch, TeardownContext>} */ (this.#teardown_contexts).delete(batch);
+			}
+		} else {
+			fn(batch);
+		}
+	};
+
+	/**
+	 * @param {Batch} batch
 	 */
 	#commit = (batch) => {
 		// if this batch was made obsolete, bail
@@ -143,73 +153,59 @@ export class BranchManager {
 			}
 		}
 
-		var block_teardown_context = this.#teardown_contexts?.get(batch);
-
 		// other batches can still commit (in any order), so their selections remain
-		this.#discard(batch, true);
+		this.#discard(batch);
 
-		// the branch is detached because the block selected a different one, so its teardowns
-		// should see the partial view that the eager run saw (see `ensure`)
-		with_teardown_context(block_teardown_context, () => {
-			// outro/destroy all onscreen effects...
-			for (const [k, effect] of this.#onscreen) {
-				// ...except the one that was just committed
-				//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
-				if (k === key || this.#outroing.has(k)) continue;
+		// outro/destroy all onscreen effects...
+		for (const [k, effect] of this.#onscreen) {
+			// ...except the one that was just committed
+			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
+			if (k === key || this.#outroing.has(k)) continue;
 
-				const on_destroy = () => {
-					const keys = Array.from(this.#batches.values());
+			const on_destroy = () => {
+				const keys = Array.from(this.#batches.values());
 
-					if (keys.includes(k)) {
-						// keep the effect offscreen, as another batch will need it
-						var fragment = document.createDocumentFragment();
-						move_effect(effect, fragment);
+				if (keys.includes(k)) {
+					// keep the effect offscreen, as another batch will need it
+					var fragment = document.createDocumentFragment();
+					move_effect(effect, fragment);
 
-						fragment.append(create_text()); // TODO can we avoid this?
+					fragment.append(create_text()); // TODO can we avoid this?
 
-						this.#offscreen.set(k, { effect, fragment });
-					} else {
-						destroy_effect(effect);
-					}
-
-					this.#outroing.delete(k);
-					this.#onscreen.delete(k);
-				};
-
-				if (this.#transition || !onscreen) {
-					this.#outroing.add(k);
-					pause_effect(effect, on_destroy, false);
+					this.#offscreen.set(k, { effect, fragment });
 				} else {
-					on_destroy();
+					destroy_effect(effect);
 				}
+
+				this.#outroing.delete(k);
+				this.#onscreen.delete(k);
+			};
+
+			if (this.#transition || !onscreen) {
+				this.#outroing.add(k);
+				pause_effect(effect, on_destroy, false);
+			} else {
+				on_destroy();
 			}
-		});
+		}
 	};
 
 	/**
 	 * @param {Batch} batch
-	 * @param {boolean} [from_commit] Whether the batch is committing (rather than being discarded)
 	 */
-	#discard = (batch, from_commit = false) => {
+	#discard = (batch) => {
 		for (const b of this.#batches.keys()) {
 			// (batches that were merged into another one don't select anything anymore)
 			if (b === batch || !b.linked) this.#batches.delete(b);
 		}
 
 		const keys = Array.from(this.#batches.values());
-		const block_teardown_context = from_commit ? this.#teardown_contexts?.get(batch) : null;
 
-		try {
-			with_teardown_context(block_teardown_context, () => {
-				for (const [k, branch] of this.#offscreen) {
-					if (!keys.includes(k)) {
-						destroy_effect(branch.effect);
-						this.#offscreen.delete(k);
-					}
-				}
-			});
-		} finally {
-			this.#teardown_contexts?.delete(batch);
+		for (const [k, branch] of this.#offscreen) {
+			if (!keys.includes(k)) {
+				destroy_effect(branch.effect);
+				this.#offscreen.delete(k);
+			}
 		}
 	};
 
@@ -224,9 +220,7 @@ export class BranchManager {
 
 		if (eager_block_effects !== null) {
 			// We came here from `flush_queued_effects`: don't create the branch yet, but
-			// remember the partial teardown view this run sees. This is deliberately a live
-			// reference — the flush narrows it to the next batch's writes, which is the view
-			// that the branch's teardowns should see when that batch commits
+			// remember the partial teardown view this run sees
 			(this.#teardown_contexts ??= new Map()).set(batch, teardown_context);
 		}
 
@@ -274,8 +268,8 @@ export class BranchManager {
 				}
 			}
 
-			batch.oncommit(this.#commit);
-			batch.ondiscard(this.#discard);
+			batch.oncommit((batch) => this.#resolve(batch, true));
+			batch.ondiscard((batch) => this.#resolve(batch, false));
 		} else {
 			if (hydrating) {
 				this.anchor = hydrate_node;
