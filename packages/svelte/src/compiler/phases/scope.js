@@ -133,7 +133,7 @@ export class Binding {
 
 	/**
 	 * Additional metadata, varies per binding type
-	 * @type {null | { inside_rest?: boolean; is_template_declaration?: boolean; exclude_props?: string[] }}
+	 * @type {null | { inside_rest?: boolean; is_template_declaration?: boolean; is_destructured?: boolean; exclude_props?: string[] }}
 	 */
 	metadata = null;
 
@@ -299,7 +299,13 @@ class Evaluation {
 						break;
 					}
 
-					if (!binding.updated && binding.initial !== null && !is_prop) {
+					// For destructured bindings, `initial` is the whole initializer, not the binding's value.
+					if (
+						!binding.updated &&
+						binding.initial !== null &&
+						!binding.metadata?.is_destructured &&
+						!is_prop
+					) {
 						binding.scope.evaluate(/** @type {Expression} */ (binding.initial), this.values);
 						break;
 					}
@@ -1207,7 +1213,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 						node.kind,
 						declarator.init
 					);
-					binding.metadata = { is_template_declaration: true };
+					binding.metadata = {
+						is_template_declaration: true,
+						is_destructured: declarator.id.type !== 'Identifier'
+					};
 					bindings.push(binding);
 				}
 			}

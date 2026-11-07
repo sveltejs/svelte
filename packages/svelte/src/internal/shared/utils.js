@@ -102,7 +102,7 @@ export function to_array(value, n) {
 	// if value is not iterable, or `n` is unspecified (indicates a rest
 	// element, which means we're not concerned about unbounded iterables)
 	// convert to an array with `Array.from`
-	if (n === undefined || !(Symbol.iterator in value)) {
+	if (n === undefined || !(Symbol.iterator in Object(value))) {
 		return Array.from(value);
 	}
 
@@ -111,7 +111,7 @@ export function to_array(value, n) {
 	/** @type {T[]} */
 	const array = [];
 
-	for (const element of value) {
+	for (const element of /** @type {Iterable<T>} */ (value)) {
 		array.push(element);
 		if (array.length === n) break;
 	}
