@@ -6,9 +6,9 @@ import { test } from '../../test';
 // replaces it sees its own value when it is torn down.
 export default test({
 	async test({ assert, instance, logs }) {
-		assert.deepEqual([...logs], [0]);
+		assert.deepEqual(logs, [0]);
 
 		await unmount(instance);
-		assert.deepEqual([...logs], [0, 1]);
+		assert.deepEqual(logs, [0, 1]);
 	}
 });
