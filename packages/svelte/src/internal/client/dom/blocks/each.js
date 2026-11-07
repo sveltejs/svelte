@@ -340,6 +340,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (eager_block_effects !== null) {
+			// we came here from `flush_queued_effects` — come back when the newly-created batch is processed
 			batch.schedule(/** @type {Effect} */ (active_effect), DIRTY);
 			return;
 		}
