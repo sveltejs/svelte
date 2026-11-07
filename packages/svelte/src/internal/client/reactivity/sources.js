@@ -266,6 +266,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		// during reactive execution/traversal must always propagate, as must writes
 		// in a fork or another batch's view of the world.
 		var can_skip =
+			(source.f & DERIVED) === 0 &&
 			active_reaction === null &&
 			active_effect === null &&
 			!batch.started &&

@@ -314,6 +314,7 @@ export function update_reaction(reaction) {
 
 		return handle_error(error);
 	} finally {
+		reset_marked_sources();
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
