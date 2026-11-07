@@ -1049,6 +1049,16 @@ export class Batch {
 	}
 
 	/**
+	 * Ensure `effect` runs the next time this batch is processed, even if the versions of its
+	 * dependencies don't make it dirty. Used for blocks that selected a branch during an eager
+	 * run, which deferred creating it to this batch (see `flush_queued_effects`)
+	 * @param {Effect} effect
+	 */
+	rerun(effect) {
+		add_dirty_effect(this.#unprocessed, effect, DIRTY);
+	}
+
+	/**
 	 * @param {Map<Effect, number>} dirty_effects
 	 */
 	transfer_effects(dirty_effects) {

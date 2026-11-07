@@ -1,6 +1,7 @@
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js' */
-import { current_batch } from '../../reactivity/batch.js';
+import { current_batch, eager_block_effects } from '../../reactivity/batch.js';
+import { active_effect } from '../../runtime.js';
 import {
 	branch,
 	destroy_effect,
@@ -179,7 +180,18 @@ export class BranchManager {
 		var defer = should_defer_append();
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
-			if (defer) {
+			// A block that is re-run eagerly only works out which branch it selects; the branch is
+			// created and appended by the next batch. Other blocks created while a flush is running
+			// (e.g. by a nested `mount`) are not in `eager_block_effects` and run normally
+			var eager =
+				defer &&
+				eager_block_effects !== null &&
+				eager_block_effects.has(/** @type {Effect} */ (active_effect));
+
+			if (eager) {
+				// the batch that the run belongs to has to create the branch, so run this block again then
+				batch.rerun(/** @type {Effect} */ (active_effect));
+			} else if (defer) {
 				var fragment = document.createDocumentFragment();
 				var target = create_text();
 

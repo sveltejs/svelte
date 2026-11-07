@@ -12,7 +12,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<button>go</button>');
 		assert.deepEqual(
 			[...logs],
-			['writer teardown: double=0', 'child setup: x=1 double=2', 'child teardown: x=0 double=0']
+			['writer teardown: double=0']
 		);
 	}
 });
