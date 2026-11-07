@@ -1,10 +1,7 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
 
-// The first effect's teardown evaluates `double` before its setup writes `x`. The child
-// it creates is detached when that batch commits, so the child's teardown sees the
-// batch's writes reverted (`x = 0`) and must recompute `double` as 0, rather than reusing
-// the 2 cached by the child's setup.
+// The child is never rendered, because `show` is set `false` before it can be
 export default test({
 	test({ assert, target, logs }) {
 		flushSync(() => target.querySelector('button')?.click());
