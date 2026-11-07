@@ -35,7 +35,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { BRANCH_EFFECT, COMMENT_NODE, DESTROYED, EFFECT_OFFSCREEN, INERT } from '#client/constants';
+import { BRANCH_EFFECT, COMMENT_NODE, DESTROYED, DIRTY, EFFECT_OFFSCREEN, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
@@ -337,6 +337,13 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
+		var batch = /** @type {Batch} */ (current_batch);
+
+		if (eager_block_effects !== null) {
+			batch.schedule(/** @type {Effect} */ (active_effect), DIRTY);
+			return;
+		}
+
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
@@ -354,15 +361,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		var keys = new Set();
-		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
-
-		// An eagerly re-run block only works out which items it selects; the branch for an item
-		// that doesn't exist yet is created by the batch, when it runs this block again
-		var eager =
-			defer &&
-			eager_block_effects !== null &&
-			eager_block_effects.has(/** @type {Effect} */ (active_effect));
 
 		for (var index = 0; index < length; index += 1) {
 			if (
@@ -398,8 +397,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				if (defer) {
 					batch.unskip_effect(item.e);
 				}
-			} else if (eager) {
-				batch.rerun(/** @type {Effect} */ (active_effect));
 			} else {
 				item = create_item(
 					items,
@@ -427,8 +424,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		if (length === 0 && fallback_fn && !fallback) {
 			if (first_run) {
 				fallback = branch(() => fallback_fn(anchor));
-			} else if (eager) {
-				batch.rerun(/** @type {Effect} */ (active_effect));
 			} else {
 				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
 				// until it is committed, the fallback only exists for the batches that select it
