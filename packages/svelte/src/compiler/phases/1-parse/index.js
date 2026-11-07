@@ -83,24 +83,44 @@ const META_TAGS = [
 	'svelte:boundary'
 ];
 
-const regex_lang_attribute =
-	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
-
 export const regex_valid_component_name =
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers adjusted for our needs
 	// (must start with uppercase letter if no dots, can contain dots)
 	/^(?:\p{Lu}[$‌‍\p{ID_Continue}.]*|\p{ID_Start}[$‌‍\p{ID_Continue}]*(?:\.[$‌‍\p{ID_Continue}]+)+)$/u;
 
 /**
- * Whether the first script tag asks for TypeScript, which then holds for the whole component.
+ * Whether the first script tag with a `lang` attribute asks for TypeScript, which then holds for
+ * the whole component. A tag inside an HTML comment does not count.
  * @param {string} template
  */
 function is_typescript(template) {
-	let match;
-	do match = regex_lang_attribute.exec(template);
-	while (match && match[0][1] !== 's'); // ensure it starts with '<s' to match script tags
-	regex_lang_attribute.lastIndex = 0;
-	return match?.[2] === 'ts';
+	let from = 0;
+	while (true) {
+		const comment = template.indexOf('<!--', from);
+		const script = template.indexOf('<script', from);
+		if (script === -1) return false;
+		if (comment !== -1 && comment < script) {
+			const end = template.indexOf('-->', comment + 4);
+			from = end === -1 ? comment + 1 : end + 3;
+			continue;
+		}
+		from = script + 7;
+		const close = template.indexOf('>', from);
+		if (close === -1 || !/\s/.test(template[from])) continue;
+		const tag = template.slice(from, close);
+		// the last `lang=` in the tag whose value is unquoted or closed by the quote it opens with
+		let at = tag.lastIndexOf('lang=');
+		while (at !== -1) {
+			let start = at + 5;
+			const quote = tag[start];
+			const quoted = quote === '"' || quote === "'";
+			if (quoted) start++;
+			let end = start;
+			while (end < tag.length && tag[end] !== '"' && tag[end] !== "'" && tag[end] !== ' ') end++;
+			if (end > start && (!quoted || tag[end] === quote)) return tag.slice(start, end) === 'ts';
+			at = at === 0 ? -1 : tag.lastIndexOf('lang=', at - 1);
+		}
+	}
 }
 
 /**
