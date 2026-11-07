@@ -1,9 +1,169 @@
 {
-	"css": null,
-	"js": [],
+	"type": "Root",
 	"start": 0,
 	"end": 173,
-	"type": "Root",
+	"css": null,
+	"js": [],
+	"options": null,
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 52,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 18,
+			"end": 43,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 3,
+					"column": 9
+				}
+			},
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 20,
+					"end": 42,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 2,
+							"column": 23
+						}
+					},
+					"declare": false,
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 24,
+							"end": 41,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 5
+								},
+								"end": {
+									"line": 2,
+									"column": 22
+								}
+							},
+							"definite": false,
+							"id": {
+								"type": "Identifier",
+								"start": 24,
+								"end": 29,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 5
+									},
+									"end": {
+										"line": 2,
+										"column": 10
+									}
+								},
+								"decorators": [],
+								"optional": false,
+								"name": "count"
+							},
+							"init": {
+								"type": "CallExpression",
+								"start": 32,
+								"end": 41,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 13
+									},
+									"end": {
+										"line": 2,
+										"column": 22
+									}
+								},
+								"callee": {
+									"type": "Identifier",
+									"start": 32,
+									"end": 38,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 13
+										},
+										"end": {
+											"line": 2,
+											"column": 19
+										}
+									},
+									"decorators": [],
+									"optional": false,
+									"name": "$state"
+								},
+								"arguments": [
+									{
+										"type": "Literal",
+										"start": 39,
+										"end": 40,
+										"loc": {
+											"start": {
+												"line": 2,
+												"column": 20
+											},
+											"end": {
+												"line": 2,
+												"column": 21
+											}
+										},
+										"value": 0,
+										"raw": "0"
+									}
+								],
+								"optional": false
+							}
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
+		},
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 8,
+				"end": 17,
+				"name": "lang",
+				"value": [
+					{
+						"type": "Text",
+						"start": 14,
+						"end": 16,
+						"raw": "ts",
+						"data": "ts"
+					}
+				],
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 8,
+						"character": 8
+					},
+					"end": {
+						"line": 1,
+						"column": 12,
+						"character": 12
+					}
+				}
+			}
+		]
+	},
 	"fragment": {
 		"type": "Fragment",
 		"nodes": [
@@ -19,36 +179,12 @@
 				"start": 54,
 				"end": 173,
 				"name": "button",
-				"name_loc": {
-					"start": {
-						"line": 5,
-						"column": 1,
-						"character": 55
-					},
-					"end": {
-						"line": 5,
-						"column": 7,
-						"character": 61
-					}
-				},
 				"attributes": [
 					{
+						"type": "OnDirective",
 						"start": 63,
 						"end": 147,
-						"type": "OnDirective",
 						"name": "click",
-						"name_loc": {
-							"start": {
-								"line": 6,
-								"column": 1,
-								"character": 63
-							},
-							"end": {
-								"line": 6,
-								"column": 9,
-								"character": 71
-							}
-						},
 						"expression": {
 							"type": "ArrowFunctionExpression",
 							"start": 73,
@@ -82,7 +218,6 @@
 											"column": 25
 										}
 									},
-									"name": "e",
 									"typeAnnotation": {
 										"type": "TSTypeAnnotation",
 										"start": 75,
@@ -125,10 +260,15 @@
 														"column": 25
 													}
 												},
+												"decorators": [],
+												"optional": false,
 												"name": "MouseEvent"
 											}
 										}
-									}
+									},
+									"decorators": [],
+									"optional": false,
+									"name": "e"
 								}
 							],
 							"body": {
@@ -160,6 +300,7 @@
 												"column": 33
 											}
 										},
+										"declare": false,
 										"declarations": [
 											{
 												"type": "VariableDeclarator",
@@ -175,6 +316,7 @@
 														"column": 32
 													}
 												},
+												"definite": false,
 												"id": {
 													"type": "Identifier",
 													"start": 102,
@@ -189,7 +331,6 @@
 															"column": 20
 														}
 													},
-													"name": "next",
 													"typeAnnotation": {
 														"type": "TSTypeAnnotation",
 														"start": 106,
@@ -219,7 +360,10 @@
 																}
 															}
 														}
-													}
+													},
+													"decorators": [],
+													"optional": false,
+													"name": "next"
 												},
 												"init": {
 													"type": "BinaryExpression",
@@ -249,6 +393,8 @@
 																"column": 28
 															}
 														},
+														"decorators": [],
+														"optional": false,
 														"name": "count"
 													},
 													"operator": "+",
@@ -317,6 +463,8 @@
 														"column": 7
 													}
 												},
+												"decorators": [],
+												"optional": false,
 												"name": "count"
 											},
 											"right": {
@@ -333,6 +481,8 @@
 														"column": 14
 													}
 												},
+												"decorators": [],
+												"optional": false,
 												"name": "next"
 											}
 										}
@@ -340,7 +490,19 @@
 								]
 							}
 						},
-						"modifiers": []
+						"modifiers": [],
+						"name_loc": {
+							"start": {
+								"line": 6,
+								"column": 1,
+								"character": 63
+							},
+							"end": {
+								"line": 6,
+								"column": 9,
+								"character": 71
+							}
+						}
 					}
 				],
 				"fragment": {
@@ -371,165 +533,25 @@
 										"column": 15
 									}
 								},
+								"decorators": [],
+								"optional": false,
 								"name": "count"
 							}
 						}
 					]
-				}
-			}
-		]
-	},
-	"options": null,
-	"instance": {
-		"type": "Script",
-		"start": 0,
-		"end": 52,
-		"context": "default",
-		"content": {
-			"type": "Program",
-			"start": 18,
-			"end": 43,
-			"loc": {
-				"start": {
-					"line": 1,
-					"column": 0
 				},
-				"end": {
-					"line": 3,
-					"column": 9
-				}
-			},
-			"body": [
-				{
-					"type": "VariableDeclaration",
-					"start": 20,
-					"end": 42,
-					"loc": {
-						"start": {
-							"line": 2,
-							"column": 1
-						},
-						"end": {
-							"line": 2,
-							"column": 23
-						}
-					},
-					"declarations": [
-						{
-							"type": "VariableDeclarator",
-							"start": 24,
-							"end": 41,
-							"loc": {
-								"start": {
-									"line": 2,
-									"column": 5
-								},
-								"end": {
-									"line": 2,
-									"column": 22
-								}
-							},
-							"id": {
-								"type": "Identifier",
-								"start": 24,
-								"end": 29,
-								"loc": {
-									"start": {
-										"line": 2,
-										"column": 5
-									},
-									"end": {
-										"line": 2,
-										"column": 10
-									}
-								},
-								"name": "count"
-							},
-							"init": {
-								"type": "CallExpression",
-								"start": 32,
-								"end": 41,
-								"loc": {
-									"start": {
-										"line": 2,
-										"column": 13
-									},
-									"end": {
-										"line": 2,
-										"column": 22
-									}
-								},
-								"callee": {
-									"type": "Identifier",
-									"start": 32,
-									"end": 38,
-									"loc": {
-										"start": {
-											"line": 2,
-											"column": 13
-										},
-										"end": {
-											"line": 2,
-											"column": 19
-										}
-									},
-									"name": "$state"
-								},
-								"arguments": [
-									{
-										"type": "Literal",
-										"start": 39,
-										"end": 40,
-										"loc": {
-											"start": {
-												"line": 2,
-												"column": 20
-											},
-											"end": {
-												"line": 2,
-												"column": 21
-											}
-										},
-										"value": 0,
-										"raw": "0"
-									}
-								],
-								"optional": false
-							}
-						}
-					],
-					"kind": "let"
-				}
-			],
-			"sourceType": "module"
-		},
-		"attributes": [
-			{
-				"type": "Attribute",
-				"start": 8,
-				"end": 17,
-				"name": "lang",
 				"name_loc": {
 					"start": {
-						"line": 1,
-						"column": 8,
-						"character": 8
+						"line": 5,
+						"column": 1,
+						"character": 55
 					},
 					"end": {
-						"line": 1,
-						"column": 12,
-						"character": 12
+						"line": 5,
+						"column": 7,
+						"character": 61
 					}
-				},
-				"value": [
-					{
-						"start": 14,
-						"end": 16,
-						"type": "Text",
-						"raw": "ts",
-						"data": "ts"
-					}
-				]
+				}
 			}
 		]
 	}
