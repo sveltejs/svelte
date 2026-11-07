@@ -24,7 +24,7 @@ import {
 	MANAGED_EFFECT,
 	REACTION_RAN
 } from './constants.js';
-import { old_values } from './reactivity/sources.js';
+import { old_values, reset_marked_sources } from './reactivity/sources.js';
 import {
 	reactivity_loss_tracker,
 	execute_derived,
@@ -218,6 +218,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 
 /** @param {Reaction} reaction */
 export function update_reaction(reaction) {
+	reset_marked_sources();
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
 	var previous_untracked_writes = untracked_writes;
@@ -313,6 +314,7 @@ export function update_reaction(reaction) {
 
 		return handle_error(error);
 	} finally {
+		reset_marked_sources();
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
@@ -541,6 +543,8 @@ export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
 
+	if (is_derived) reset_marked_sources();
+
 	captured_signals?.add(signal);
 
 	// Register the dependency on the current reaction signal.
@@ -570,6 +574,7 @@ export function get(signal) {
 					}
 				}
 			} else {
+				reset_marked_sources();
 				// We're adding a dependency outside the init/update cycle (i.e. after an `await`).
 				// We have to deduplicate deps/reactions in this case or remove_reactions could
 				// disconnect deps/reactions that are actually still in use (if skip_deps says

@@ -1,4 +1,4 @@
-import { describe, assert, it } from 'vitest';
+import { describe, assert, it, vi } from 'vitest';
 import { flushSync, tick } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
@@ -22,7 +22,7 @@ import {
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
-import { source_stacks } from '../../src/internal/client/reactivity/batch';
+import { Batch, source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
@@ -65,6 +65,104 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	for (const writes of [1, 10, 100]) {
+		test(`batched writes traverse each source once (${writes} writes)`, () => {
+			const value = state(0);
+			const values: number[] = [];
+			let traversals = 0;
+			for (let i = 0; i < 20; i++) {
+				const computed = derived(() => $.get(value));
+				render_effect(() => {
+					values[i] = $.get(computed);
+				});
+				let reactions = computed.reactions;
+				Object.defineProperty(computed, 'reactions', {
+					get() {
+						traversals++;
+						return reactions;
+					},
+					set(value) {
+						reactions = value;
+					}
+				});
+			}
+
+			return () => {
+				flushSync();
+				const schedule = vi.spyOn(Batch.prototype, 'schedule');
+				try {
+					for (let round = 0; round < 2; round++) {
+						traversals = 0;
+						schedule.mockClear();
+						for (let i = 1; i <= writes; i++) set(value, round * writes + i);
+						assert.equal(traversals, 20);
+						assert.equal(schedule.mock.calls.length, 20);
+						flushSync();
+						assert.deepEqual(values, Array(20).fill((round + 1) * writes));
+					}
+				} finally {
+					schedule.mockRestore();
+				}
+			};
+		});
+	}
+
+	test('writes after a derived read or a new reader invalidate again', () => {
+		const value = state(0);
+		const computed = derived(() => $.get(value) * 2);
+		const values: number[] = [];
+		render_effect(() => {
+			values[0] = $.get(computed);
+		});
+
+		return () => {
+			flushSync();
+			set(value, 1);
+			assert.equal($.get(computed), 2);
+			set(value, 2);
+			assert.equal($.get(computed), 4);
+			set(value, 3);
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					values[1] = $.get(value) * 2;
+				});
+			});
+			try {
+				set(value, 4);
+				flushSync();
+				assert.deepEqual(values, [8, 8]);
+			} finally {
+				destroy();
+			}
+		};
+	});
+
+	test('interleaved writes share invalidation for each source', () => {
+		const a = state(0);
+		const b = state(0);
+		const computed = derived(() => $.get(a) + $.get(b));
+		let value = 0;
+		render_effect(() => {
+			value = $.get(computed);
+		});
+
+		return () => {
+			flushSync();
+			const schedule = vi.spyOn(Batch.prototype, 'schedule');
+			try {
+				for (let i = 1; i <= 100; i++) {
+					set(a, i);
+					set(b, i);
+				}
+				assert.equal(schedule.mock.calls.length, 2);
+				flushSync();
+				assert.equal(value, 200);
+			} finally {
+				schedule.mockRestore();
+			}
+		};
+	});
+
 	for (const render of [false, true]) {
 		test(`${render ? 'render' : 'user'} effects scheduled during traversal retain tree order`, () => {
 			if (render) enable_async_mode_flag();
