@@ -179,9 +179,10 @@ export function get_transform(scope, state) {
 	for (const [name, binding] of scope.declarations) {
 		if (
 			binding.kind === 'normal' ||
-			// Reads of `$state(...)` declarations are not
+			// Reads of `$state(...)` and `$state.raw(...)` declarations are not
 			// transformed if they are never reassigned
-			(binding.kind === 'state' && !is_state_source(binding, state.analysis))
+			((binding.kind === 'state' || binding.kind === 'raw_state') &&
+				!is_state_source(binding, state.analysis))
 		) {
 			delete transform[name];
 		}
