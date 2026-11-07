@@ -14,6 +14,7 @@ import {
 	TEXT_NODE
 } from '#client/constants';
 import { NAMESPACE_HTML } from '../../../constants.js';
+import { eager_block_effects } from '../reactivity/batch.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -244,10 +245,15 @@ export function clear_text_content(node) {
  * current `<svelte:boundary>`
  */
 export function should_defer_append() {
-	if (!async_mode_flag) return false;
-
 	var flags = /** @type {Effect} */ (active_effect).f;
-	return (flags & REACTION_RAN) !== 0;
+	var ran = (flags & REACTION_RAN) !== 0;
+
+	if (!async_mode_flag) {
+		if (eager_block_effects !== null) return ran;
+		return false;
+	}
+
+	return ran;
 }
 
 /**

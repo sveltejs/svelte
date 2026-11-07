@@ -275,7 +275,11 @@ export class BranchManager {
 				this.anchor = hydrate_node;
 			}
 
-			this.#commit(batch);
+			// use the teardown view saved by an eager run, if there is one: in non-async
+			// mode, the branch is created and committed here rather than when the batch
+			// commits, but its teardowns should still see that view
+			// TODO when we remove non-async mode this can just be `this.#commit(batch)`
+			this.#resolve(batch, true);
 		}
 	}
 }
