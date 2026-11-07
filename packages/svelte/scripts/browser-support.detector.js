@@ -2,10 +2,8 @@ import ts from 'typescript';
 import { features } from 'web-features';
 
 /**
- * Maps compat-key suffixes under `javascript.operators` and
- * `javascript.statements` (and a few other `javascript.*` subtrees) to
- * detection callbacks. The callback receives a TS AST node and returns
- * true if that node represents the operator or statement.
+ * Maps JavaScript compat keys or suffixes to AST predicates. A full key
+ * uses its own compatibility status instead of the feature group's status.
  *
  * @type {Record<string, (node: ts.Node) => boolean>}
  */
@@ -32,7 +30,10 @@ const SYNTAX_PREDICATES = {
 		ts.isCatchClause(node) && node.variableDeclaration === undefined,
 	async_iteration: (node) => ts.isForOfStatement(node) && node.awaitModifier !== undefined,
 	for_await: (node) => ts.isForOfStatement(node) && node.awaitModifier !== undefined,
-	private_class_fields: (node) => ts.isPrivateIdentifier(node),
+	'javascript.classes.private_class_fields': (node) =>
+		ts.isPropertyDeclaration(node) && ts.isPrivateIdentifier(node.name),
+	'javascript.classes.private_class_methods': (node) =>
+		(ts.isMethodDeclaration(node) || ts.isAccessor(node)) && ts.isPrivateIdentifier(node.name),
 	async_generator_function: (node) =>
 		(ts.isFunctionDeclaration(node) ||
 			ts.isFunctionExpression(node) ||
@@ -60,6 +61,8 @@ const SYNTAX_PREDICATES = {
 		ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)
 };
 
+/** @typedef {Extract<(typeof features)[string], { kind: 'feature' }>['status']} FeatureStatus */
+
 /**
  * Walk `web-features` once and partition every `compat_features` path
  * into the lookup tables the AST walker uses.
@@ -73,6 +76,8 @@ function build_detection_maps() {
 	const string_literals = new Map();
 	/** @type {Array<{ predicate: (n: ts.Node) => boolean, feature_id: string }>} */
 	const syntax_predicates = [];
+	/** @type {Map<string, Pick<FeatureStatus, 'baseline_low_date' | 'support'>>} */
+	const compat_statuses = new Map();
 
 	const add_member = (
 		/** @type {string} */ type,
@@ -125,11 +130,16 @@ function build_detection_maps() {
 				continue;
 			}
 
-			// `javascript.*` syntax: try the second segment first (covers
-			// `javascript.operators.X` and `javascript.statements.X`), then
-			// the last segment (covers `javascript.classes.private_class_fields`
-			// and similar).
+			// `javascript.*` syntax: prefer exact matches, then check the
+			// syntax name and the final segment for shared predicates.
 			if (parts[0] === 'javascript' && parts.length >= 3) {
+				const exact_predicate = SYNTAX_PREDICATES[path];
+				if (exact_predicate) {
+					compat_statuses.set(path, feature.status.by_compat_key?.[path] ?? feature.status);
+					syntax_predicates.push({ predicate: exact_predicate, feature_id: path });
+					continue;
+				}
+
 				const candidates = [parts[2], parts[parts.length - 1]];
 				for (const key of candidates) {
 					if (Object.hasOwn(SYNTAX_PREDICATES, key)) {
@@ -142,7 +152,7 @@ function build_detection_maps() {
 		}
 	}
 
-	return { globals, members, string_literals, syntax_predicates };
+	return { globals, members, string_literals, syntax_predicates, compat_statuses };
 }
 
 const MAPS = build_detection_maps();
@@ -345,7 +355,7 @@ function walk_source(source, checker, emit) {
 
 /**
  * Detect features used in a set of bundle files. Returns the union of
- * web-features IDs flagged across all files.
+ * web-features IDs and compatibility keys flagged across all files.
  *
  * @param {string[]} bundle_files Absolute paths to JS/TS files.
  * @returns {Set<string>}
@@ -359,6 +369,15 @@ export function detect_features(bundle_files) {
 		walk_source(source, checker, (id) => flagged.add(id));
 	}
 	return flagged;
+}
+
+/** @param {string} feature_id */
+function status_for_feature(feature_id) {
+	const feature = features[feature_id];
+	return (
+		MAPS.compat_statuses.get(feature_id) ??
+		(feature?.kind === 'feature' ? feature.status : undefined)
+	);
 }
 
 /**
@@ -392,11 +411,9 @@ export function detect_features_in_text(source_text) {
 export function versions_for_feature(feature_id) {
 	const extra = EXTRA_FEATURE_INFO.get(feature_id);
 	if (extra) return extra.versions;
-	const feature = features[feature_id];
-	if (!feature || !('status' in feature)) return null;
-	return /** @type {Record<string, string> | null} */ (
-		/** @type {unknown} */ (feature.status.support)
-	);
+	const status = status_for_feature(feature_id);
+	if (!status) return null;
+	return /** @type {Record<string, string> | null} */ (/** @type {unknown} */ (status.support));
 }
 
 /**
@@ -409,9 +426,7 @@ export function versions_for_feature(feature_id) {
 export function baseline_year_for_feature(feature_id) {
 	const extra = EXTRA_FEATURE_INFO.get(feature_id);
 	if (extra) return extra.baseline_year;
-	const feature = features[feature_id];
-	if (!feature || !('status' in feature)) return null;
-	const status = /** @type {{ baseline_low_date?: string }} */ (feature.status);
-	if (!status.baseline_low_date) return null;
+	const status = status_for_feature(feature_id);
+	if (!status?.baseline_low_date) return null;
 	return Number(status.baseline_low_date.slice(0, 4));
 }
