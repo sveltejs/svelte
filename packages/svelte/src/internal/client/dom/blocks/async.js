@@ -1,6 +1,8 @@
-/** @import { Blocker, TemplateNode, Value } from '#client' */
-import { flatten } from '../../reactivity/async.js';
-import { get } from '../../runtime.js';
+/** @import { Blocker, Effect, TemplateNode, Value } from '#client' */
+import { HYDRATION_ERROR } from '../../../../constants.js';
+import { capture, flatten } from '../../reactivity/async.js';
+import { destroy_effect } from '../../reactivity/effects.js';
+import { active_effect, get } from '../../runtime.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -50,6 +52,10 @@ export function async(node, blockers = [], expressions = [], fn) {
 	}
 
 	flatten(blockers, [], expressions, (values) => {
+		var restore = capture();
+		var parent = /** @type {Effect} */ (active_effect);
+		var last = parent.last;
+
 		if (was_hydrating) {
 			set_hydrating(true);
 			set_hydrate_node(previous_hydrate_node);
@@ -60,6 +66,30 @@ export function async(node, blockers = [], expressions = [], fn) {
 			for (const d of values) get(d);
 
 			fn(node, ...values);
+		} catch (error) {
+			// `hydrate(...)` can only recover from mismatches that happen synchronously,
+			// so we recover from this one here, by discarding the server-rendered
+			// content of this block and rendering it from scratch
+			if (!was_hydrating || error !== HYDRATION_ERROR) {
+				throw error;
+			}
+
+			// the mismatch may have interrupted a component, leaving its context active
+			restore(false);
+
+			var effect = last === null ? parent.first : last.next;
+
+			while (effect !== null) {
+				var next = effect.next;
+				destroy_effect(effect, false);
+				effect = next;
+			}
+
+			set_hydrate_node(previous_hydrate_node);
+			var anchor = skip_nodes();
+
+			set_hydrating(false);
+			fn(anchor, ...values);
 		} finally {
 			if (was_hydrating) {
 				set_hydrating(false);
