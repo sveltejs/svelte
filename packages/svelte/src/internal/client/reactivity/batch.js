@@ -329,7 +329,7 @@ export class Batch {
 
 		for (const effect of this.#blocking_pending.keys()) {
 			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
-			if (!this.#is_skipped(effect)) {
+			if (!this.is_skipped(effect)) {
 				return true;
 			}
 		}
@@ -352,7 +352,7 @@ export class Batch {
 	 * Whether `effect` is inside a branch that this batch skips
 	 * @param {Effect} effect
 	 */
-	#is_skipped(effect) {
+	is_skipped(effect) {
 		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
 			if (this.#skips(e)) return true;
 		}
@@ -664,7 +664,7 @@ export class Batch {
 				if (
 					(flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 &&
 					// branches that this batch skips don't exist in its view of the world
-					!this.#is_skipped(effect)
+					!this.is_skipped(effect)
 				) {
 					this.schedule(effect, MAYBE_DIRTY);
 				}
@@ -1452,7 +1452,14 @@ function flush_queued_effects(effects, earlier_writes = null) {
 	while (i < length) {
 		var effect = effects[i++];
 
-		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
+		if (
+			(effect.f & (DESTROYED | INERT)) === 0 &&
+			is_dirty(effect) &&
+			// don't run an effect inside a branch that an eager block run deselected. The branch
+			// is only detached when the batch that deselected it commits, but its effects must
+			// not run for the rest of this flush
+			!(async_mode_flag && current_batch !== null && current_batch.is_skipped(effect))
+		) {
 			eager_block_effects = new Set();
 
 			var version = write_version;
@@ -1486,8 +1493,10 @@ function flush_queued_effects(effects, earlier_writes = null) {
 				if (earlier_writes !== null) push_teardown_context(earlier_writes);
 
 				for (const e of eager_block_effects) {
-					// Skip eager effects that have already been unmounted
+					// Skip eager effects that have already been unmounted, or that are inside a
+					// branch that an earlier eager run (e.g. of an ancestor block) deselected
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+					if (async_mode_flag && current_batch !== null && current_batch.is_skipped(e)) continue;
 
 					// Run effects in order from ancestor to descendant, else we could run into nullpointers
 					/** @type {Effect[]} */
@@ -1503,8 +1512,9 @@ function flush_queued_effects(effects, earlier_writes = null) {
 
 					for (let j = ordered_effects.length - 1; j >= 0; j--) {
 						const e = ordered_effects[j];
-						// Skip eager effects that have already been unmounted
+						// a block run may have deselected the branch that a later one is in
 						if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+						if (async_mode_flag && current_batch !== null && current_batch.is_skipped(e)) continue;
 						update_effect(e);
 					}
 				}
