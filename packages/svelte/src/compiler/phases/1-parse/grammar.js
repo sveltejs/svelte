@@ -5,7 +5,7 @@ const error = { error: g.bind(g.js.pattern) };
 const transition = { expression: g.value.expression };
 
 /** The template language, as the parser reads it: its elements, its directives, its blocks and tags. */
-export const grammar = g.grammar('svelte', {
+export const grammar = g.grammar({
 	document: {
 		node: 'Root',
 		form: [
@@ -42,6 +42,7 @@ export const grammar = g.grammar('svelte', {
 	],
 
 	elements: {
+		reserved: ['svelte:'],
 		rules: {
 			// `this` stays an attribute: a text value is promoted with a warning, the Svelte 4 behaviour
 			'svelte:element': { node: 'SvelteElement' },
