@@ -426,7 +426,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			}
 		}
 
-		if (defer && fallback !== null && (fallback.f & EFFECT_OFFSCREEN) !== 0) {
+		if (defer && fallback !== null) {
 			if (length === 0) {
 				batch.unskip_effect(fallback);
 			} else {
