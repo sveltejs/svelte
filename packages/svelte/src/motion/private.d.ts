@@ -8,3 +8,10 @@ export interface TickContext {
 	};
 	settled: boolean;
 }
+
+export interface SpringState<T> {
+	last: T;
+	current: T;
+	target: T;
+	time: number;
+}
