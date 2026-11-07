@@ -7,9 +7,6 @@ export default test({
 		flushSync(() => target.querySelector('button')?.click());
 
 		assert.htmlEqual(target.innerHTML, '<button>go</button>');
-		assert.deepEqual(
-			[...logs],
-			['writer teardown: double=0']
-		);
+		assert.deepEqual(logs, ['writer teardown: double=0']);
 	}
 });
