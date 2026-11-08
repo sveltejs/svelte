@@ -156,6 +156,7 @@ export { invalidate_inner_signals } from './legacy.js';
 export { set_text } from './render.js';
 export {
 	get,
+	get_prop_value,
 	safe_get,
 	tick,
 	untrack,
