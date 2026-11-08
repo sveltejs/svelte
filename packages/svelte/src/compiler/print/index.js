@@ -731,17 +731,15 @@ const svelte_visitors = (comments, state) => ({
 		context.write('=');
 
 		if (Array.isArray(node.value)) {
-			if (node.value.length > 1 || node.value[0].type === 'Text') {
-				context.write('"');
-			}
+			// a quoted value is always an array, even if it is a single expression tag —
+			// `class="{x}"` and `class={x}` mean different things, so keep the quotes
+			context.write('"');
 
 			for (const chunk of node.value) {
 				context.visit(chunk);
 			}
 
-			if (node.value.length > 1 || node.value[0].type === 'Text') {
-				context.write('"');
-			}
+			context.write('"');
 		} else {
 			context.visit(node.value);
 		}
