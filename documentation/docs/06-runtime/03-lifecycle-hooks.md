@@ -9,6 +9,12 @@ title: Lifecycle hooks
 
 In Svelte 5, the component lifecycle consists of only two parts: Its creation and its destruction. Everything in-between — when certain state is updated — is not related to the component as a whole; only the parts that need to react to the state change are notified. This is because under the hood the smallest unit of change is actually not a component, it's the (render) effects that the component sets up upon component initialization. Consequently, there's no such thing as a "before update"/"after update" hook.
 
+## Component initialisation
+
+A component is initialised when Svelte creates an instance and runs its instance `<script>` code. The top-level code in that script runs for each instance, including functions it calls immediately. This is when lifecycle callbacks are registered: calling `onMount` registers a callback during initialisation, while the callback itself runs later, after mounting.
+
+A helper function can register lifecycle callbacks if it is called during initialisation, even if the helper is defined in another module. In contrast, code at the top level of a [`<script module>`](svelte-files#script-module) runs when the module is first evaluated, rather than for each component instance. Event handlers and timer callbacks also run outside component initialisation.
+
 ## `onMount`
 
 The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live _inside_ the component; it can be called from an external module).
