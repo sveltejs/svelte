@@ -180,6 +180,17 @@ var seen = null;
 /** Number of transitive dependencies, see {@link seen} for more info */
 var count_deps = 0;
 
+/** Sources invalidated without any intervening reactive execution. @type {Set<Value>} */
+var marked_sources = new Set();
+/** @type {Batch | null} */
+var marked_batch = null;
+
+export function reset_marked_sources() {
+	if (marked_batch === null) return;
+	marked_sources.clear();
+	marked_batch = null;
+}
+
 /**
  * @template V
  * @param {Value<V>} source
@@ -250,10 +261,33 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 		// For debugging, in case you want to know which reactions are being scheduled:
 		// log_reactions(source);
-		seen = null;
-		count_deps = 0;
-		mark_reactions(source, DIRTY, updated_during_traversal);
-		seen = null;
+		// Before processing starts, repeated writes can share the same invalidation.
+		// Reads that can clean reactions or change the graph reset this cache. Writes
+		// during reactive execution/traversal must always propagate, as must writes
+		// in a fork or another batch's view of the world.
+		var can_skip =
+			(source.f & DERIVED) === 0 &&
+			active_reaction === null &&
+			active_effect === null &&
+			!batch.started &&
+			batch_values === null &&
+			updated_during_traversal === null;
+
+		if (!can_skip || marked_batch !== batch) {
+			reset_marked_sources();
+		}
+
+		if (!marked_sources.has(source)) {
+			if (can_skip) {
+				marked_batch = batch;
+				marked_sources.add(source);
+			}
+
+			seen = null;
+			count_deps = 0;
+			mark_reactions(source, DIRTY, updated_during_traversal);
+			seen = null;
+		}
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
