@@ -132,6 +132,9 @@ export class Renderer {
 	 */
 	#is_component_body = false;
 
+	/** @type {boolean} */
+	#is_title = false;
+
 	/**
 	 * If set, this renderer is an error boundary. When async collection
 	 * of the children fails, the failed snippet is rendered instead.
@@ -503,26 +506,12 @@ export class Renderer {
 	 * @param {(renderer: Renderer) => void} fn
 	 */
 	title(fn) {
-		const path = this.get_path();
+		const title = new Renderer(this.global, this);
+		title.type = 'head';
+		title.#is_title = true;
 
-		/** @param {string} head */
-		const close = (head) => {
-			this.global.set_title(head, path);
-		};
-
-		this.child((renderer) => {
-			const r = new Renderer(renderer.global, renderer);
-			fn(r);
-
-			if (renderer.global.mode === 'async') {
-				return r.#collect_content_async().then((content) => {
-					close(content.head);
-				});
-			} else {
-				const content = r.#collect_content();
-				close(content.head);
-			}
-		});
+		this.#out.push(title);
+		title.child(fn);
 	}
 
 	/**
@@ -544,18 +533,12 @@ export class Renderer {
 	}
 
 	/**
-	 * @returns {number[]}
-	 */
-	get_path() {
-		return this.#parent ? [...this.#parent.get_path(), this.#parent.#out.indexOf(this)] : [];
-	}
-
-	/**
 	 * @deprecated this is needed for legacy component bindings
 	 */
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
 		copy.type = this.type;
+		copy.#is_title = this.#is_title;
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promise = this.promise;
 		return copy;
@@ -585,6 +568,7 @@ export class Renderer {
 		});
 		this.promise = other.promise;
 		this.type = other.type;
+		this.#is_title = other.#is_title;
 	}
 
 	get length() {
@@ -802,7 +786,9 @@ export class Renderer {
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
-			} else if (item instanceof Renderer) {
+			} else if (item.#is_title) {
+				this.global.title = item.#collect_content().head;
+			} else {
 				item.#collect_content(content);
 			}
 		}
@@ -822,12 +808,15 @@ export class Renderer {
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
-			} else if (item instanceof Renderer) {
+			} else if (item.#is_title) {
+				this.global.title = (await item.#collect_content_async()).head;
+			} else {
 				if (item.#boundary) {
 					// This renderer is an error boundary - collect into a separate
 					// accumulator so we can discard partial content on error
 					/** @type {AccumulatedContent} */
 					const boundary_content = { head: '', body: '' };
+					const title = this.global.title;
 
 					try {
 						await item.#collect_content_async(boundary_content);
@@ -835,6 +824,9 @@ export class Renderer {
 						content.head += boundary_content.head;
 						content.body += boundary_content.body;
 					} catch (error) {
+						// a failed boundary does not render its title
+						this.global.title = title;
+
 						const { context, failed, transformError } = item.#boundary;
 
 						set_ssr_context(context);
@@ -909,7 +901,7 @@ export class Renderer {
 	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
-		let head = content.head + renderer.global.get_title();
+		let head = content.head + renderer.global.title;
 		let body = content.body;
 
 		for (const { hash, code } of renderer.global.css) {
@@ -992,6 +984,9 @@ export class SSRState {
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
 
+	/** set while collecting so the last title in document order wins */
+	title = '';
+
 	/** @type {Set<Promise<unknown>>} */
 	#pending = new Set();
 
@@ -1006,9 +1001,6 @@ export class SSRState {
 	 * @type {(error: unknown) => unknown}
 	 */
 	transformError;
-
-	/** @type {{ path: number[], value: string }} */
-	#title = { path: [], value: '' };
 
 	/**
 	 * @param {'sync' | 'async'} mode
@@ -1060,35 +1052,5 @@ export class SSRState {
 		const controller = (this.#controller ??= new AbortController());
 		if (this.#aborted) controller.abort(STALE_REACTION);
 		return controller.signal;
-	}
-
-	get_title() {
-		return this.#title.value;
-	}
-
-	/**
-	 * Performs a depth-first (lexicographic) comparison using the path. Rejects sets
-	 * from earlier than or equal to the current value.
-	 * @param {string} value
-	 * @param {number[]} path
-	 */
-	set_title(value, path) {
-		const current = this.#title.path;
-
-		let i = 0;
-		let l = Math.min(path.length, current.length);
-
-		// skip identical prefixes - [1, 2, 3, ...] === [1, 2, 3, ...]
-		while (i < l && path[i] === current[i]) i += 1;
-
-		if (path[i] === undefined) return;
-
-		// replace title if
-		// - incoming path is longer - [7, 8, 9] > [7, 8]
-		// - incoming path is later  - [7, 8, 9] > [7, 8, 8]
-		if (current[i] === undefined || path[i] > current[i]) {
-			this.#title.path = path;
-			this.#title.value = value;
-		}
 	}
 }
