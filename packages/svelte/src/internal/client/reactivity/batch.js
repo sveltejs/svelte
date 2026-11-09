@@ -770,6 +770,7 @@ export class Batch {
 
 		for (const [reaction, record] of batch.records ?? []) {
 			if ((reaction.f & BLOCK_EFFECT) === 0) {
+				abort_record(this.records?.get(reaction));
 				(this.records ??= new Map()).set(reaction, record);
 
 				// the run moves to this batch
