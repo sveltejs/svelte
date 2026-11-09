@@ -13,7 +13,7 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { has_own_property, is_array, noop } from '../shared/utils.js';
+import { has_own_property, is_array, noop, push_array } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -627,7 +627,7 @@ export class Renderer {
 		 */
 		const visit = (renderer, callbacks) => {
 			if (renderer.#is_component_body) callbacks = [];
-			if (renderer.#on_destroy) callbacks.push(...renderer.#on_destroy);
+			if (renderer.#on_destroy) push_array(callbacks, renderer.#on_destroy);
 
 			for (const child of renderer.#out) {
 				if (child instanceof Renderer) visit(child, callbacks);
