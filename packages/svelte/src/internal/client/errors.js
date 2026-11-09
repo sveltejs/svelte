@@ -313,6 +313,22 @@ export function get_abort_signal_outside_reaction() {
 }
 
 /**
+ * `getAbortSignal` cannot be called after an `await`
+ * @returns {never}
+ */
+export function get_abort_signal_after_await() {
+	if (DEV) {
+		const error = new Error(`get_abort_signal_after_await\n\`getAbortSignal\` cannot be called after an \`await\`\nhttps://svelte.dev/e/get_abort_signal_after_await`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/get_abort_signal_after_await`);
+	}
+}
+
+/**
  * Expected to find a hydratable with key `%key%` during hydration, but did not.
  * @param {string} key
  * @returns {never}

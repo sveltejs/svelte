@@ -64,6 +64,7 @@ import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
+import * as e from './errors.js';
 import * as w from './warnings.js';
 
 export let is_destroying_effect = false;
@@ -360,18 +361,20 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 let abort_controller = null;
 
 /**
- * The signal of the run of `reaction` that is in progress — or, after an `await` in it, of the run that applies in the
- * active batch's view (`run_of`), which is where its reads after the `await` go, too (see `record_late_read`)
+ * The signal of the run of `reaction` that is in progress. Its controller is stored with the run once it's done
+ * (see `set_global_signal` and `update_record`) — `reaction.ac` is the previous global run's until then
  * @param {Reaction} reaction
  */
 export function get_abort_signal(reaction) {
-	reaction.f |= HAS_SIGNAL;
-
-	if ((reaction.f & REACTION_IS_UPDATING) !== 0) {
-		return (abort_controller ??= new AbortController()).signal;
+	if ((reaction.f & REACTION_IS_UPDATING) === 0) {
+		// for now, disallow calling `getAbortSignal()` after an `await`. we could
+		// potentially relax this restriction in future, but it adds complexity
+		e.get_abort_signal_after_await();
 	}
 
-	return (run_of(reaction).ac ??= new AbortController()).signal;
+	reaction.f |= HAS_SIGNAL;
+
+	return (abort_controller ??= new AbortController()).signal;
 }
 
 /** @param {AbortController | null | undefined} controller */

@@ -16,7 +16,7 @@ const buttons = `
 // never commits. (On `main`, B doesn't run the expression at all, but commits the branch without its
 // content.) This needs the `run`/`flatten` work that lives on `batch-views-run-flatten`
 export default test({
-	// TODO see above
+	// unskip if we ever remove `e.get_abort_signal_after_await()`
 	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {

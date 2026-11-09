@@ -10,6 +10,9 @@ const buttons = `
 
 // Test that different worlds don't interfere with respects to their abort signals (variant where there's chained awaits, and a fork)
 export default test({
+	// unskip if we ever remove `e.get_abort_signal_after_await()`
+	skip: true,
+
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		const [toggle, fork, discard, shift] = target.querySelectorAll('button');
