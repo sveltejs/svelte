@@ -514,7 +514,7 @@ export function update_reaction(reaction) {
 	untracking = false;
 	update_version = ++read_version;
 
-	var previous_run_controller = abort_controller;
+	var previous_abort_controller = abort_controller;
 	abort_controller = null;
 
 	if ((flags & HAS_ABORT_CONTROLLER) !== 0) {
@@ -601,7 +601,7 @@ export function update_reaction(reaction) {
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 		update_version = previous_update_version;
-		abort_controller = previous_run_controller;
+		abort_controller = previous_abort_controller;
 	}
 }
 
