@@ -4,6 +4,7 @@ import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
 	block,
+	branch,
 	effect,
 	effect_root,
 	render_effect,
@@ -64,6 +65,46 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	for (const render of [false, true]) {
+		test(`${render ? 'render' : 'user'} effects scheduled during traversal retain tree order`, () => {
+			if (render) enable_async_mode_flag();
+			const create = render ? render_effect : effect;
+			const value = state(0);
+			const item = source(0);
+			const log: string[] = [];
+			let first = true;
+
+			// Model an each block updating the source of an existing item.
+			block(() => {
+				internal_set(item, $.get(value));
+				if (first) {
+					first = false;
+					branch(() => {
+						create(() => {
+							log.push(`child:${$.get(item)}`);
+						});
+					});
+				}
+			});
+
+			create(() => {
+				log.push(`sibling:${$.get(value)}`);
+			});
+
+			return () => {
+				try {
+					flushSync();
+					assert.deepEqual(log, ['child:0', 'sibling:0']);
+					log.length = 0;
+					flushSync(() => set(value, 1));
+					assert.deepEqual(log, ['child:1', 'sibling:1']);
+				} finally {
+					if (render) disable_async_mode_flag();
+				}
+			};
+		});
+	}
+
 	test('effect with state and derived in it', () => {
 		const log: string[] = [];
 

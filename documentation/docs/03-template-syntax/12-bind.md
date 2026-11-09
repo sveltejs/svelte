@@ -1,5 +1,6 @@
 ﻿---
 title: bind:
+tags: template-bind
 ---
 
 Data ordinarily flows down, from parent to child. The `bind:` directive allows data to flow the other way, from child to parent.

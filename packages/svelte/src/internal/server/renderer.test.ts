@@ -57,28 +57,54 @@ test('child inherits parent type when not specified', () => {
 	expect(head).toBe('<meta name="x"/><style>/* css */</style>');
 });
 
-test('get_path returns the path indexes to a renderer', () => {
-	const root = new Renderer(new SSRState('sync'));
-	let child_a: InstanceType<typeof Renderer> | undefined;
-	let child_b: InstanceType<typeof Renderer> | undefined;
-	let child_b_0: InstanceType<typeof Renderer> | undefined;
-
-	root.child(($$renderer) => {
-		child_a = $$renderer;
-		$$renderer.push('A');
-	});
-	root.child(($$renderer) => {
-		child_b = $$renderer;
-		$$renderer.child(($$inner) => {
-			child_b_0 = $$inner;
-			$$inner.push('B0');
+test('renders the title after the rest of the head', () => {
+	const component = (renderer: Renderer) => {
+		renderer.head(($$renderer) => {
+			$$renderer.title(($$renderer) => $$renderer.push('<title>T</title>'));
+			$$renderer.push('<meta name="x"/>');
 		});
-		$$renderer.push('B1');
-	});
+	};
 
-	expect(child_a!.get_path()).toEqual([0]);
-	expect(child_b!.get_path()).toEqual([1]);
-	expect(child_b_0!.get_path()).toEqual([1, 0]);
+	const { head } = Renderer.render(component as unknown as Component);
+	expect(head).toBe('<meta name="x"/><title>T</title>');
+});
+
+test('renders the last title in document order', () => {
+	const component = (renderer: Renderer) => {
+		renderer.head(($$renderer) => {
+			$$renderer.child(($$renderer) => {
+				$$renderer.title(($$renderer) => $$renderer.push('<title>A</title>'));
+			});
+			$$renderer.title(($$renderer) => $$renderer.push('<title>B</title>'));
+		});
+		renderer.head(($$renderer) => {
+			$$renderer.title(($$renderer) => $$renderer.push('<title>C</title>'));
+			$$renderer.title(($$renderer) => $$renderer.push('<title>D</title>'));
+		});
+	};
+
+	const { head } = Renderer.render(component as unknown as Component);
+	expect(head).toBe('<title>D</title>');
+});
+
+test('does not render a title from inside a failed boundary', () => {
+	const component = (renderer: Renderer) => {
+		renderer.head(($$renderer) => {
+			$$renderer.title(($$renderer) => $$renderer.push('<title>outside</title>'));
+		});
+		renderer.boundary({ failed: (renderer) => renderer.push('failed') }, (renderer) => {
+			renderer.head(($$renderer) => {
+				$$renderer.title(($$renderer) => $$renderer.push('<title>inside</title>'));
+			});
+			throw new Error('oops');
+		});
+	};
+
+	const { head } = Renderer.render(
+		component as unknown as Component,
+		{ transformError: () => 'transformed' } as any
+	);
+	expect(head).toBe('<title>outside</title>');
 });
 
 test('creating an async child in a sync context throws', () => {
@@ -121,7 +147,6 @@ test('subsume replaces tree content and state from other', () => {
 		$$renderer.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
-	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
 	b.promise = Promise.resolve();
 
@@ -145,7 +170,6 @@ test('subsume refuses to switch modes', () => {
 		$$renderer.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
-	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
 	b.promise = Promise.resolve();
 
@@ -157,33 +181,6 @@ test('subsume refuses to switch modes', () => {
 test('SSRState uid generator uses prefix', () => {
 	const state = new SSRState('sync', 'id-');
 	expect(state.uid()).toBe('id-s1');
-});
-
-test('SSRState title ordering favors later lexicographic paths', () => {
-	const state = new SSRState('sync');
-
-	state.set_title('A', [1]);
-	expect(state.get_title()).toBe('A');
-
-	// equal path -> unchanged
-	state.set_title('B', [1]);
-	expect(state.get_title()).toBe('A');
-
-	// earlier -> unchanged
-	state.set_title('C', [0, 9]);
-	expect(state.get_title()).toBe('A');
-
-	// later -> update
-	state.set_title('D', [2]);
-	expect(state.get_title()).toBe('D');
-
-	// longer but same prefix -> update
-	state.set_title('E', [2, 0]);
-	expect(state.get_title()).toBe('E');
-
-	// shorter (earlier) than current with same prefix -> unchanged
-	state.set_title('F', [2]);
-	expect(state.get_title()).toBe('E');
 });
 
 test('selects an option with an explicit value', () => {
@@ -371,6 +368,52 @@ describe('async', () => {
 		expect(result.head).toBe('');
 		expect(result.body).toBe('<!--[-->123<!--]-->');
 		expect(() => result.html).toThrow('html_deprecated');
+	});
+
+	test('does not render a title from inside a boundary that fails asynchronously', async () => {
+		const component = (renderer: Renderer) => {
+			renderer.head(($$renderer) => {
+				$$renderer.title(($$renderer) => $$renderer.push('<title>outside</title>'));
+			});
+			renderer.boundary({ failed: (renderer) => renderer.push('failed') }, (renderer) => {
+				renderer.head(($$renderer) => {
+					$$renderer.title(($$renderer) => $$renderer.push('<title>inside</title>'));
+				});
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('oops');
+				});
+			});
+		};
+
+		const { head, body } = await Renderer.render(
+			component as unknown as Component,
+			{ transformError: () => 'transformed' } as any
+		);
+		expect(body).toContain('failed');
+		expect(head).toBe('<title>outside</title>');
+	});
+
+	test('renders the last title in document order, regardless of when it resolves', async () => {
+		const component = (renderer: Renderer) => {
+			renderer.head(($$renderer) => {
+				$$renderer.title(($$renderer) => {
+					$$renderer.push(async () => {
+						await new Promise((resolve) => setTimeout(resolve, 10));
+						return '<title>A</title>';
+					});
+				});
+				$$renderer.title(($$renderer) => {
+					$$renderer.push(async () => {
+						await Promise.resolve();
+						return '<title>B</title>';
+					});
+				});
+			});
+		};
+
+		const { head } = await Renderer.render(component as unknown as Component);
+		expect(head).toBe('<title>B</title>');
 	});
 
 	test('push accepts async functions in async context', async () => {

@@ -368,6 +368,16 @@ export class Batch {
 					throw e;
 				}
 			}
+
+			if (this.#scheduled.length > 0) {
+				// A later traversal may discover effects before ones we already collected.
+				// Recollect them together so they are flushed in tree order, rather than
+				// appending earlier effects after their later siblings.
+				for (const effect of render_effects) this.#scheduled.push(effect);
+				for (const effect of effects) this.#scheduled.push(effect);
+				render_effects.length = 0;
+				effects.length = 0;
+			}
 		}
 
 		// any writes should take effect in a subsequent batch
