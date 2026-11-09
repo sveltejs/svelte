@@ -10,6 +10,7 @@ The relevant code lives in
 - `packages/svelte/src/internal/client/reactivity/sources.js` — `internal_set`
 - `packages/svelte/src/internal/client/dom/blocks/branches.js` — `BranchManager` (the branch each batch selected)
 - `packages/svelte/src/internal/client/dom/blocks/each.js` — each items that only exist offscreen for some batches
+- `packages/svelte/src/internal/client/dom/blocks/await.js` — `await_block` (the latest run in the real world and in each fork)
 
 ## Contents
 
@@ -389,7 +390,7 @@ Walks the reactions that transitively depend on `values`. Deriveds that are `CLE
 - **When another batch commits** (`#commit`, also if it still has pending work, [§10.5](#105-committing-with-pending-work)), for the committed sources that change each remaining batch's view:
 
   - a source the batch didn't write;
-  - a source an earlier batch wrote with a different value, which it then takes over — unless it's the batch's own result of an async expression (`capture_result`). Its run read the values of the batch's own view, which can differ from those the committed batch's run read, so taking over the result could be wrong. And if none of what the run read changes in the batch's view, nothing makes it run again: the batch would commit the other batch's result next to its own writes (`async-fork-own-result-kept`). If what it read does change, it's re-validated and runs again, and its result replaces the entry. In practice, this only prevents a fork from taking over values of a committing later real batch: a later batch that wrote a source that an earlier real batch wrote, too, intersects with it, and is merged into it rather than committed ([§6.1](#61-batchactivate)).
+  - a source an earlier batch wrote with a different value, which it then takes over — unless it's the batch's own result of an async expression or `{#await}` block (`capture_result`, [§10.7](#107-await-blocks)). Its run read the values of the batch's own view, which can differ from those the committed batch's run read, so taking over the result could be wrong. And if none of what the run read changes in the batch's view, nothing makes it run again: the batch would commit the other batch's result next to its own writes (`async-fork-own-result-kept`). If what it read does change, it's re-validated and runs again, and its result replaces the entry. In practice, this only prevents a fork from taking over values of a committing later real batch: a later batch that wrote a source that an earlier real batch wrote, too, intersects with it, and is merged into it rather than committed ([§6.1](#61-batchactivate)).
 
   Sources with the same value, sources a later batch wrote (its value is more recent), and the batch's own results are left out. Such batches are added to `rebases`, and `flush` processes them again at the end, so block effects re-select branches and async work restarts in the new view right away.
 
@@ -440,6 +441,10 @@ Now `async_derived` only hands out its first value once no other batch holds it 
 - if the other batch's write isn't the expression's first value (an earlier run's value was written before): other views undo it;
 - for forks, whose writes aren't part of other views at all;
 - outside pending boundaries. There, the creator's own run provides the first value, because a run in another batch doesn't supersede it. And waiting could deadlock: the creator waits for the code that awaits the value, and could be the batch that the other one merges into.
+
+### 10.7 `{#await}` blocks
+
+`{#await}` blocks don't follow the async logic above: in the real world, the pending, then and catch states of a run are each their own batch, which commits right away, so they don't hold back the batch that ran the block. A fork's states can't work that way, as they would show in the real world. So `await_block` (`await.js`) keeps the latest run of the block for the real world, and for each fork that ran it. Only the latest run of a world changes its states. A fork's run doesn't supersede a real run that's still pending, and the other way around.
 
 ## 11. Offscreen branches
 
@@ -620,7 +625,7 @@ Bugs noticed while working on this branch but not fixed, with a guess whether th
 
 Tests copied from `async-another-try-pt-1` that still fail here are marked `skip: true`, with a `// batch-views:` comment guessing why. They all fail on `main` too, so they are gaps rather than regressions:
 
-- `{#await}` blocks aren't fork- or batch-aware (`await.js` is unchanged from `main`): a fork's pending state or result shows in the real world (`async-fork-await-block*`, `async-fork-flush-stolen-effects-render`, `async-fork-obsolete-equal-values`).
+- Forks that the real world overtook: `async-fork-obsolete-equal-values` (not ported) still fails, also now that `{#await}` blocks are fork-aware ([§10.7](#107-await-blocks)). At the end, the content of `{#if show}` and the `{#await}` result are missing. It expects a fork whose changes the real world overtook to be discarded rather than committed, as on `async-another-try-pt-1`.
 - A real batch taking over branches or each items a fork created, when the fork is discarded or re-processed: tearing (`async-fork-branch-async-adopted-variants`, `async-fork-branch-component-adopted`), a crash on an internal symbol (`async-fork-each-item-adopted*`), or nested branches recreated, which starts their async work again (`async-fork-nested-adopted`, `async-fork-nested-branch`).
 - Forks: a write-back inside a fork (`x = 1; x = 0`) is lost (`async-fork-write-back`).
 - In async mode, a render effect created in a new branch runs before the existing ones (`new-render-effect-order`).

@@ -315,6 +315,13 @@ export class Batch {
 
 	is_fork = false;
 
+	/**
+	 * The batch that this one was merged into, if any (see `#merge`). Its async work that is still in flight
+	 * continues as part of that one
+	 * @type {Batch | null}
+	 */
+	merged = null;
+
 	#decrement_queued = false;
 
 	constructor() {
@@ -783,6 +790,7 @@ export class Batch {
 		const discard = () => batch.discard();
 		this.oncommit(discard);
 		this.ondiscard(discard);
+		batch.merged = this;
 		batch.#unlink();
 
 		// processing re-validates everything that depends on the (now merged) writes of this batch
@@ -884,7 +892,7 @@ export class Batch {
 	}
 
 	/**
-	 * Write the result of this batch's own run of an async expression
+	 * Write the result of this batch's own run of an async expression or `{#await}` block
 	 * @param {Source} source
 	 * @param {any} value
 	 * @param {boolean} [error]
