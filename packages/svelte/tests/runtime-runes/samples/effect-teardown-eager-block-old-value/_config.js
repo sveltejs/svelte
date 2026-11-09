@@ -1,10 +1,9 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
 
-// The parent effect writes `show = false` into the next batch, but the
-// `{#if}` runs eagerly while the `count` batch is still committing.
-// The child's teardown therefore sees both reverted values:
-// `count = 0` and `show = true`.
+// The eager run deselects the branch, but it is only detached when the next batch
+// — the one with `show = false` — commits. Its teardown therefore sees `count = 1`,
+// which that batch does not revert, and `show = true`, which it does.
 export default test({
 	html: '<button>increment</button><p>child</p>',
 
@@ -12,6 +11,6 @@ export default test({
 		flushSync(() => target.querySelector('button')?.click());
 
 		assert.htmlEqual(target.innerHTML, '<button>increment</button>');
-		assert.deepEqual(logs, ['setup', 'teardown: count=0 show=true']);
+		assert.deepEqual(logs, ['setup', 'teardown: count=1 show=true']);
 	}
 });

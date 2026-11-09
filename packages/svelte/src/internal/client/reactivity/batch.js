@@ -33,6 +33,7 @@ import {
 	is_dirty,
 	promote_record,
 	prune_edges,
+	untrack,
 	update_effect,
 	write_version
 } from '../runtime.js';
@@ -240,13 +241,6 @@ export class Batch {
 	records = null;
 
 	/**
-	 * True while the batch commits, i.e. while it updates the DOM and runs effects.
-	 * Effects that run then do so for the real world (they don't necessarily run
-	 * with the latest values but dependencies/reactions should be pruned accordingly, and dv set, etc)
-	 */
-	committing = false;
-
-	/**
 	 * Earlier batches whose changes are part of this batch's view of the world, because
 	 * they intersect with it (this batch will be merged into them, see `#merge`)
 	 * @type {Batch[]}
@@ -255,16 +249,19 @@ export class Batch {
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
-	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
-	 * @type {Set<(batch: Batch) => void>}
+	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks.
+	 * Each callback maps to the writes that apply in the teardowns it causes, if it was added
+	 * while block effects re-ran eagerly (see `eager_block_writes`)
+	 * @type {Map<(batch: Batch) => void, Map<Value, BatchValue> | null>}
 	 */
-	#commit_callbacks = new Set();
+	#commit_callbacks = new Map();
 
 	/**
 	 * If a fork is discarded, we need to destroy any effects that are no longer needed
-	 * @type {Set<(batch: Batch) => void>}
+	 * (see `#commit_callbacks`)
+	 * @type {Map<(batch: Batch) => void, Map<Value, BatchValue> | null>}
 	 */
-	#discard_callbacks = new Set();
+	#discard_callbacks = new Map();
 
 	/**
 	 * The number of async effects that are currently in flight
@@ -352,7 +349,7 @@ export class Batch {
 
 		for (const effect of this.#blocking_pending.keys()) {
 			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
-			if (!this.#is_skipped(effect)) {
+			if (!this.is_skipped(effect)) {
 				return true;
 			}
 		}
@@ -375,7 +372,7 @@ export class Batch {
 	 * Whether `effect` is inside a branch that this batch skips
 	 * @param {Effect} effect
 	 */
-	#is_skipped(effect) {
+	is_skipped(effect) {
 		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
 			if (this.#skips(e)) return true;
 		}
@@ -612,17 +609,14 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
-		this.committing = this.committed = true;
+		this.committed = true;
 		this.#release_records(true);
 
 		// append/remove branches
-		for (const fn of this.#commit_callbacks) fn(this);
-		this.#commit_callbacks.clear();
+		this.#run_callbacks(this.#commit_callbacks);
 
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
-
-		this.committing = false;
 
 		this.#deferred?.resolve();
 
@@ -658,29 +652,42 @@ export class Batch {
 	}
 
 	/**
-	 * Schedule the reactions that (transitively) depend on `values` for re-validation in this batch.
+	 * Schedule the reactions that (transitively) depend on `sources` for re-validation in this batch.
 	 * They are marked MAYBE_DIRTY, which means that they are only re-run if the exact versions
 	 * of their dependencies differ from the ones they last saw (in this batch's view of the world)
-	 * @param {Iterable<Value>} values
-	 * @param {Set<Reaction>} [seen]
+	 * @param {Iterable<Source>} sources
 	 */
-	#revalidate(values, seen = new Set()) {
-		for (const value of values) {
-			for (const reaction of value.reactions ?? []) {
-				var flags = reaction.f;
+	#revalidate(sources) {
+		// deriveds added during iteration are visited too, so this doubles as a worklist
+		/** @type {Set<Value>} */
+		var values = new Set(sources);
 
-				if (seen.has(reaction)) continue;
-				seen.add(reaction);
+		/** @type {Set<Effect>} */
+		var effects = new Set();
+
+		for (const value of values) {
+			var reactions = value.reactions;
+			if (reactions === null) continue;
+
+			for (const reaction of reactions) {
+				var flags = reaction.f;
 
 				if ((flags & DERIVED) !== 0) {
 					if ((flags & CLEAN) !== 0) set_signal_status(reaction, MAYBE_DIRTY);
-					this.#revalidate([/** @type {Derived} */ (reaction)], seen);
-				} else if (
+					values.add(/** @type {Derived} */ (reaction));
+					continue;
+				}
+
+				var effect = /** @type {Effect} */ (reaction);
+				if (effects.has(effect)) continue;
+				effects.add(effect);
+
+				if (
 					(flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 &&
 					// branches that this batch skips don't exist in its view of the world
-					!this.#is_skipped(/** @type {Effect} */ (reaction))
+					!this.is_skipped(effect)
 				) {
-					this.schedule(/** @type {Effect} */ (reaction), MAYBE_DIRTY);
+					this.schedule(effect, MAYBE_DIRTY);
 				}
 			}
 		}
@@ -1005,8 +1012,7 @@ export class Batch {
 	}
 
 	discard() {
-		for (const fn of this.#discard_callbacks) fn(this);
-		this.#discard_callbacks.clear();
+		this.#run_callbacks(this.#discard_callbacks);
 
 		for (const deferred of this.async_deriveds.values()) {
 			deferred?.reject(OBSOLETE);
@@ -1136,7 +1142,7 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	revalidate(effect) {
-		if ((effect.f & (DESTROYED | INERT)) === 0 && !this.#is_skipped(effect)) {
+		if ((effect.f & (DESTROYED | INERT)) === 0 && !this.is_skipped(effect)) {
 			this.#revalidate_branch(effect);
 			this.#queue_flush();
 		}
@@ -1155,12 +1161,47 @@ export class Batch {
 
 	/** @param {(batch: Batch) => void} fn */
 	oncommit(fn) {
-		this.#commit_callbacks.add(fn);
+		this.#commit_callbacks.set(fn, eager_block_writes?.size ? eager_block_writes : null);
 	}
 
 	/** @param {(batch: Batch) => void} fn */
 	ondiscard(fn) {
-		this.#discard_callbacks.add(fn);
+		this.#discard_callbacks.set(fn, eager_block_writes?.size ? eager_block_writes : null);
+	}
+
+	/**
+	 * Runs the commit/discard callbacks.
+	 * A callback that was added while block effects re-ran eagerly detaches the branches that such a run
+	 * deselected (see `flush_queued_effects`). The teardowns it causes see the writes that applied in the
+	 * run's view, like they would have during the run: of the values that the current teardown context
+	 * reverts, the writes of the effects that ran before the one whose writes caused the run are restored.
+	 * Callbacks run untracked, because a batch can commit while an effect runs (e.g. one that calls `flushSync`)
+	 * @param {Map<(batch: Batch) => void, Map<Value, BatchValue> | null>} callbacks
+	 */
+	#run_callbacks(callbacks) {
+		untrack(() => {
+			for (const [fn, writes] of callbacks) {
+				if (writes === null) {
+					fn(this);
+					continue;
+				}
+
+				var previous_teardown_context = teardown_context;
+				var context = push_teardown_context();
+
+				for (const [source, write] of writes) {
+					if (context.reverted_values.has(source)) context.reverted_values.set(source, write);
+				}
+
+				try {
+					fn(this);
+				} finally {
+					teardown_context = previous_teardown_context;
+				}
+			}
+		});
+
+		callbacks.clear();
 	}
 
 	settled() {
@@ -1311,7 +1352,8 @@ export class Batch {
 				var effect = /** @type {Effect} */ (reaction);
 
 				if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
-					// these run right away (see `flush_queued_effects`)
+					// these run right away to find out which branches the rest of the flush must skip
+					// (see `flush_queued_effects`); the DOM changes when this batch commits
 					set_signal_status(effect, status);
 					eager_block_effects.add(effect);
 				}
@@ -1403,6 +1445,11 @@ export class Batch {
 		// Release ownership before pruning. Merged runs are retained by the receiving batch
 		this.records = null;
 		for (const [reaction, record] of records) {
+			// A derived's record is a run in this batch's view: it is only the real-world value if its
+			// dependencies still hold what it read, which is checked where a record is promoted on read
+			// (see `update_derived`) and cannot be checked here. So it is dropped rather than promoted,
+			// and its edges are left for its next global run to prune (see `prune_edges`). A destroyed
+			// reaction has nothing left to update either
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
 				if (commit) {
 					promote_record(reaction, record);
@@ -1532,6 +1579,15 @@ function infinite_loop_guard() {
 export let eager_block_effects = null;
 
 /**
+ * While block effects re-run eagerly (see `flush_queued_effects`), the writes of the effects that ran before the one
+ * whose writes caused the re-runs, which apply in their view (possibly none). `null` otherwise. The branches that
+ * these runs select/unskip are only appended (and those they skip detached) when the batch with the writes commits
+ * (see `should_defer_append`), and the teardowns that this causes see these writes, too (see `#run_callbacks`)
+ * @type {Map<Value, BatchValue> | null}
+ */
+export let eager_block_writes = null;
+
+/**
  * `earlier_writes` includes writes from the pre-effect phase. Eager block teardowns
  * revert the running effect's writes, but not these earlier writes.
  * @param {Array<Effect>} effects
@@ -1547,7 +1603,13 @@ function flush_queued_effects(effects, earlier_writes = null) {
 	while (i < length) {
 		var effect = effects[i++];
 
-		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
+		if (
+			(effect.f & (DESTROYED | INERT)) === 0 &&
+			// don't run if already marked for destruction in the next batch
+			// (this can happen if an effect writes a value which e.g. makes an if block falsy)
+			!current_batch?.is_skipped(effect) &&
+			is_dirty(effect)
+		) {
 			eager_block_effects = new Set();
 
 			var version = write_version;
@@ -1580,32 +1642,40 @@ function flush_queued_effects(effects, earlier_writes = null) {
 				// afresh rather than reusing results cached before those writes.
 				if (earlier_writes !== null) push_teardown_context(earlier_writes);
 
-				for (const e of eager_block_effects) {
-					// Skip eager effects that have already been unmounted
-					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+				// (a copy, as `earlier_writes` grows while the flush continues)
+				var previous_eager_block_writes = eager_block_writes;
+				eager_block_writes = new Map(earlier_writes);
 
-					// Run effects in order from ancestor to descendant, else we could run into nullpointers
-					/** @type {Effect[]} */
-					const ordered_effects = [e];
-					let ancestor = e.parent;
-					while (ancestor !== null) {
-						if (eager_block_effects.has(ancestor)) {
-							eager_block_effects.delete(ancestor);
-							ordered_effects.push(ancestor);
+				try {
+					for (const e of eager_block_effects) {
+						// Skip eager effects that have already been unmounted, or that are inside a
+						// branch that an earlier eager run (e.g. of an ancestor block) skips
+						if ((e.f & (DESTROYED | INERT)) !== 0 || current_batch?.is_skipped(e)) continue;
+
+						// Run effects in order from ancestor to descendant, else we could run into nullpointers
+						/** @type {Effect[]} */
+						const ordered_effects = [e];
+						let ancestor = e.parent;
+						while (ancestor !== null) {
+							if (eager_block_effects.has(ancestor)) {
+								eager_block_effects.delete(ancestor);
+								ordered_effects.push(ancestor);
+							}
+							ancestor = ancestor.parent;
 						}
-						ancestor = ancestor.parent;
-					}
 
-					for (let j = ordered_effects.length - 1; j >= 0; j--) {
-						const e = ordered_effects[j];
-						// Skip eager effects that have already been unmounted
-						if ((e.f & (DESTROYED | INERT)) !== 0) continue;
-						update_effect(e);
+						for (let j = ordered_effects.length - 1; j >= 0; j--) {
+							const e = ordered_effects[j];
+							// a block run may have skipped/destroyed the branch that a later one is in
+							if ((e.f & (DESTROYED | INERT)) !== 0 || current_batch?.is_skipped(e)) continue;
+							update_effect(e);
+						}
 					}
+				} finally {
+					eager_block_writes = previous_eager_block_writes;
+					eager_block_effects?.clear();
+					teardown_context = previous_teardown_context;
 				}
-
-				eager_block_effects.clear();
-				teardown_context = previous_teardown_context;
 			}
 
 			// if the effect — or the block effects — wrote anything
