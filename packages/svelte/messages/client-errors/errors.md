@@ -130,7 +130,7 @@ This restriction only applies when using the `experimental.async` option, which 
 
 > `getAbortSignal()` cannot be called after an `await`
 
-Abort signals must be associated with their deriveds/effects as soon as they run — if it happens after an `await`, it's too late.
+Abort signals must be associated with their deriveds/effects as soon as they run — if it happens after an `await`, it's too late. Create the abort signal first, before awaiting anything.
 
 ## get_abort_signal_outside_reaction
 
