@@ -21,7 +21,7 @@ import {
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
-	HAS_SIGNAL,
+	HAS_ABORT_CONTROLLER,
 	MANAGED_EFFECT,
 	REACTION_RAN,
 	ASYNC,
@@ -372,7 +372,7 @@ export function get_abort_signal(reaction) {
 		e.get_abort_signal_after_await();
 	}
 
-	reaction.f |= HAS_SIGNAL;
+	reaction.f |= HAS_ABORT_CONTROLLER;
 
 	return (abort_controller ??= new AbortController()).signal;
 }
@@ -464,8 +464,8 @@ function supersedes(batch, other) {
  * @param {Reaction} reaction
  */
 export function abort_all(reaction) {
-	if ((reaction.f & HAS_SIGNAL) === 0) return false;
-	reaction.f ^= HAS_SIGNAL;
+	if ((reaction.f & HAS_ABORT_CONTROLLER) === 0) return false;
+	reaction.f ^= HAS_ABORT_CONTROLLER;
 
 	abort_signal(reaction.ac);
 	reaction.ac = null;
@@ -517,7 +517,7 @@ export function update_reaction(reaction) {
 	var previous_run_controller = abort_controller;
 	abort_controller = null;
 
-	if ((flags & HAS_SIGNAL) !== 0) {
+	if ((flags & HAS_ABORT_CONTROLLER) !== 0) {
 		abort_replaced(reaction, flags);
 	}
 

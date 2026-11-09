@@ -58,7 +58,7 @@ export const ASYNC = 1 << 22;
 export const ERROR_VALUE = 1 << 23;
 
 /** A run of the reaction asked for an abort signal (see `getAbortSignal`) */
-export const HAS_SIGNAL = 1 << 27;
+export const HAS_ABORT_CONTROLLER = 1 << 27;
 
 // Flags exclusive to deriveds
 /** The global state of the derived is a value that was assigned to it, rather than a run of it */
