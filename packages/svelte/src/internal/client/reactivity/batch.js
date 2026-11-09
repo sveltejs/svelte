@@ -614,6 +614,7 @@ export class Batch {
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
 			this.#commit();
+			if (this.linked && this.prev !== null) this.#move_to_front();
 		}
 
 		if (next_batch !== null) {
@@ -864,6 +865,10 @@ export class Batch {
 
 		// an assignment replaces the value of a derived that the active view of the world holds
 		view_cache?.delete(/** @type {Derived} */ (source));
+
+		// in order, this batch's change comes before that of the later batch, which replaces it (this happens when a
+		// result arrives in a batch that committed while it was pending, see `#move_to_front`)
+		if (!this.is_fork && later !== null) later.previous.set(source, entry);
 
 		if (!this.is_fork && !same && later === null) {
 			apply(source, entry);
@@ -1366,6 +1371,25 @@ export class Batch {
 				prune_edges(reaction);
 			}
 		}
+	}
+
+	/**
+	 * A batch that committed while work inside a pending boundary was in flight stays linked, so that the results
+	 * arrive in it. Its writes are the real world now, part of every other batch's view, so it comes first from now
+	 * on: This ensures logic about who sees what values in intersects/merge/etc work correctly.
+	 */
+	#move_to_front() {
+		var prev = /** @type {Batch} */ (this.prev);
+		var first = /** @type {Batch} */ (first_batch);
+
+		prev.next = this.next;
+		if (this.next === null) last_batch = prev;
+		else this.next.prev = prev;
+
+		this.prev = null;
+		this.next = first;
+		first.prev = first_batch = this;
+		this.id = first.id - 1;
 	}
 
 	#unlink() {
