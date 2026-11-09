@@ -125,17 +125,18 @@ export function to_array(value, n) {
  * @returns {Record<string | symbol, unknown>}
  */
 export function exclude_from_object(obj, keys) {
+	const exclude = new Set(keys);
 	/** @type {Record<string | symbol, unknown>} */
 	var result = {};
 
 	for (var key in obj) {
-		if (!keys.includes(key)) {
+		if (!exclude.has(key)) {
 			result[key] = obj[key];
 		}
 	}
 
 	for (var symbol of Object.getOwnPropertySymbols(obj)) {
-		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
+		if (Object.propertyIsEnumerable.call(obj, symbol) && !exclude.has(symbol)) {
 			result[symbol] = obj[symbol];
 		}
 	}

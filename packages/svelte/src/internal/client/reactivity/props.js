@@ -95,11 +95,11 @@ export function rest_props(props, exclude, name) {
 
 /**
  * The proxy handler for legacy $$restProps and $$props
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: Source<number>, parent_effect: Effect }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Set<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: Source<number>, parent_effect: Effect }>}}
  */
 const legacy_rest_props_handler = {
 	get(target, key) {
-		if (target.exclude.includes(key)) return;
+		if (target.exclude.has(key)) return;
 		get(target.version);
 		return key in target.special ? target.special[key]() : target.props[key];
 	},
@@ -131,7 +131,7 @@ const legacy_rest_props_handler = {
 		return true;
 	},
 	getOwnPropertyDescriptor(target, key) {
-		if (target.exclude.includes(key)) return;
+		if (target.exclude.has(key)) return;
 		if (key in target.props) {
 			return {
 				enumerable: true,
@@ -142,17 +142,17 @@ const legacy_rest_props_handler = {
 	},
 	deleteProperty(target, key) {
 		// Svelte 4 allowed for deletions on $$restProps
-		if (target.exclude.includes(key)) return true;
-		target.exclude.push(key);
+		if (target.exclude.has(key)) return true;
+		target.exclude.add(key);
 		update(target.version);
 		return true;
 	},
 	has(target, key) {
-		if (target.exclude.includes(key)) return false;
+		if (target.exclude.has(key)) return false;
 		return key in target.props;
 	},
 	ownKeys(target) {
-		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.includes(key));
+		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.has(key));
 	}
 };
 
@@ -165,7 +165,7 @@ export function legacy_rest_props(props, exclude) {
 	return new Proxy(
 		{
 			props,
-			exclude,
+			exclude: new Set(exclude),
 			special: {},
 			version: source(0),
 			// TODO this is only necessary because we need to track component
