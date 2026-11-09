@@ -413,6 +413,8 @@ Work inside a boundary that shows its pending snippet doesn't block a batch (`in
 
 Its writes are in the DOM from the commit on, so they are part of the real world for everyone: `#commit` rebases the other batches right away (not only once the batch is done), and clears the batch's `current` and `previous`. Until its pending work resolves, it has no writes. So other views don't undo what it committed, don't fold it, and later batches don't merge into it. And for `capture`, a write it committed is never "later" than another batch's write.
 
+It also moves to the front of the list of batches (`#move_to_front`, with an `id` below the others'): none of the batches that haven't committed are earlier than it anymore. All other batches now see its latest values and it in turn will only see their previous values.
+
 Before, the other batches went on undoing the writes until the batch was done, although the DOM already showed them (this is also what `main` does):
 
 - An earlier batch committed in a view without them. With `x + y` and a batch Y that writes `y` and commits while its async work is pending, a batch X that writes `x` and commits after it showed `x + y` without Y's `y`, until Y was done (on `main`, for good: `async-commit-with-pending-rebases`).
