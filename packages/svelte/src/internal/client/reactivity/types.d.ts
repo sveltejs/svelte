@@ -74,6 +74,13 @@ export interface BatchValue {
 	 * from before a write (`Batch#previous`) may have been computed instead
 	 */
 	assigned: boolean;
+	/**
+	 * Whether the value is the result of the batch's own run of an async expression (see
+	 * `Batch#capture_result`). Another batch's write doesn't overwrite it (see `Batch#commit`): the run is
+	 * re-validated in the batch's view instead. Realistically this only matters when a later real batch
+	 * commits and is then prevented from overriding an earlier fork's result.
+	 */
+	result?: boolean;
 }
 
 /**

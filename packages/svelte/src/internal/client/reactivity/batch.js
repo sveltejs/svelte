@@ -883,6 +883,18 @@ export class Batch {
 		}
 	}
 
+	/**
+	 * Write the result of this batch's own run of an async expression
+	 * @param {Source} source
+	 * @param {any} value
+	 * @param {boolean} [error]
+	 */
+	capture_result(source, value, error = false) {
+		var same = !error && source.equals(value) && (source.f & ERROR_VALUE) === 0;
+		this.capture(source, value, same, error);
+		/** @type {BatchValue} */ (this.current.get(source)).result = true;
+	}
+
 	deactivate() {
 		current_batch = null;
 		batch_values = view_cache = null;
@@ -957,12 +969,12 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v) {
+					if (is_earlier && entry.v !== own.v && !own.result) {
 						// bring the value up to date
 						batch.current.set(source, entry);
 					} else {
-						// same value or later batch has more recent value,
-						// no need to re-run these effects
+						// same value, later batch has more recent value, or the batch's own result
+						// of an async expression (see `capture_result`) — no need to re-run these effects
 						continue;
 					}
 				}

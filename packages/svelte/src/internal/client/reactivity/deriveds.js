@@ -11,8 +11,7 @@ import {
 	REACTION_RAN,
 	INERT,
 	CONNECTED,
-	ASSIGNED,
-	ERROR_VALUE
+	ASSIGNED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -218,8 +217,8 @@ export function async_derived(fn, label, location) {
 
 			if (error === OBSOLETE) return;
 
-			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			batch.capture(signal, error ?? value, same, !!error);
+			// write the result in the batch's view of the world
+			batch.capture_result(signal, error ?? value, !!error);
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
