@@ -297,6 +297,22 @@ export function fork_timing() {
 }
 
 /**
+ * `getAbortSignal()` cannot be called after an `await`
+ * @returns {never}
+ */
+export function get_abort_signal_after_await() {
+	if (DEV) {
+		const error = new Error(`get_abort_signal_after_await\n\`getAbortSignal()\` cannot be called after an \`await\`\nhttps://svelte.dev/e/get_abort_signal_after_await`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/get_abort_signal_after_await`);
+	}
+}
+
+/**
  * `getAbortSignal()` can only be called inside an effect or derived
  * @returns {never}
  */
@@ -309,22 +325,6 @@ export function get_abort_signal_outside_reaction() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/get_abort_signal_outside_reaction`);
-	}
-}
-
-/**
- * `getAbortSignal` cannot be called after an `await`
- * @returns {never}
- */
-export function get_abort_signal_after_await() {
-	if (DEV) {
-		const error = new Error(`get_abort_signal_after_await\n\`getAbortSignal\` cannot be called after an \`await\`\nhttps://svelte.dev/e/get_abort_signal_after_await`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/get_abort_signal_after_await`);
 	}
 }
 

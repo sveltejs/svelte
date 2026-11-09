@@ -128,7 +128,7 @@ This restriction only applies when using the `experimental.async` option, which 
 
 ## get_abort_signal_after_await
 
-> `getAbortSignal` cannot be called after an `await`
+> `getAbortSignal()` cannot be called after an `await`
 
 Abort signals must be associated with their deriveds/effects as soon as they run — if it happens after an `await`, it's too late.
 
