@@ -13,7 +13,9 @@
 		const entry = () => d.resolve(v);
 		signal.addEventListener('abort', () => {
 			console.log(`aborted ${v}`);
-			queue.splice(queue.indexOf(entry), 1);
+			// (the promise may have resolved already, e.g. when the run is dropped after its batch committed)
+			const i = queue.indexOf(entry);
+			if (i !== -1) queue.splice(i, 1);
 			d.reject(signal.reason);
 		});
 		queue.push(entry);
