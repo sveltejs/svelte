@@ -731,15 +731,22 @@ const svelte_visitors = (comments, state) => ({
 		context.write('=');
 
 		if (Array.isArray(node.value)) {
-			// a quoted value is always an array, even if it is a single expression tag —
-			// `class="{x}"` and `class={x}` mean different things, so keep the quotes
-			context.write('"');
+			// `class="{x}"` and `class={x}` mean different things (only the latter goes
+			// through `clsx`), so keep the quotes around a lone expression tag there
+			const quoted =
+				node.value.length > 1 || node.value[0].type === 'Text' || node.name === 'class';
+
+			if (quoted) {
+				context.write('"');
+			}
 
 			for (const chunk of node.value) {
 				context.visit(chunk);
 			}
 
-			context.write('"');
+			if (quoted) {
+				context.write('"');
+			}
 		} else {
 			context.visit(node.value);
 		}

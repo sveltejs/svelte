@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: keep the quotes around a single expression in an attribute value in `print`
+fix: keep the quotes around a single expression in a `class` attribute value in `print`
