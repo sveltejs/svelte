@@ -35,7 +35,8 @@ import {
 	prune_edges,
 	untrack,
 	update_effect,
-	write_version
+	write_version,
+	abort_record
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
@@ -769,7 +770,14 @@ export class Batch {
 
 		for (const [reaction, record] of batch.records ?? []) {
 			if ((reaction.f & BLOCK_EFFECT) === 0) {
+				var replaced = this.records?.get(reaction);
 				(this.records ??= new Map()).set(reaction, record);
+
+				// the run moves to this batch
+				batch.records?.delete(reaction);
+
+				// (once it's replaced, as both batches may hold the same record, see `keep_global_run`)
+				abort_record(reaction, replaced);
 			}
 		}
 
@@ -1371,6 +1379,9 @@ export class Batch {
 
 				prune_edges(reaction);
 			}
+
+			// abort this run - if it was promoted to global, or another batch holds it, too, this is a noop
+			abort_record(reaction, record);
 		}
 	}
 
