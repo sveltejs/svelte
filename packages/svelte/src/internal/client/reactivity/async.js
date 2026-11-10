@@ -86,7 +86,7 @@ export function flatten(blockers, sync, async, fn) {
 			invoke_error_boundary(error, parent);
 		}
 
-		unset_context();
+		unset_context(restore_batch);
 	}
 
 	var decrement_pending = increment_pending();
