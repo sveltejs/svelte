@@ -412,23 +412,6 @@ export class Batch {
 	}
 
 	/**
-	 * Re-validate `effect` and everything inside it in this batch's view of the world,
-	 * e.g. because another batch created it, in its own view
-	 * @param {Effect} effect
-	 */
-	revalidate(effect) {
-		var flags = effect.f;
-
-		if ((flags & (DESTROYED | INERT)) !== 0 || this.#skips(effect)) return;
-
-		if ((flags & (BRANCH_EFFECT | ROOT_EFFECT | EAGER_EFFECT)) === 0 && effect.fn !== null) {
-			this.schedule(effect, MAYBE_DIRTY);
-		}
-
-		this.#revalidate_branch(effect);
-	}
-
-	/**
 	 * @param {Effect} effect
 	 */
 	revalidate_branch(effect) {
