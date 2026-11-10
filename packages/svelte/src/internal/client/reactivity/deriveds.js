@@ -11,7 +11,8 @@ import {
 	REACTION_RAN,
 	INERT,
 	CONNECTED,
-	ASSIGNED
+	ASSIGNED,
+	ERROR_VALUE
 } from '#client/constants';
 import {
 	active_reaction,
@@ -125,6 +126,7 @@ export function async_derived(fn, label, location) {
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
+	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
@@ -217,8 +219,8 @@ export function async_derived(fn, label, location) {
 
 			if (error === OBSOLETE) return;
 
-			// write the result in the batch's view of the world
-			batch.capture_result(signal, error ?? value, !!error);
+			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
+			batch.capture(signal, error ?? value, same, !!error);
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
@@ -240,12 +242,6 @@ export function async_derived(fn, label, location) {
 			d.reject(OBSOLETE);
 		}
 	});
-
-	if (DEV) {
-		// add a flag that lets this be printed as a derived
-		// when using `$inspect.trace()`
-		signal.f |= ASYNC;
-	}
 
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */

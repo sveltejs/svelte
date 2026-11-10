@@ -852,7 +852,8 @@ export class Batch {
 			wv: same ? source.wv : increment_write_version(),
 			e: error,
 			// a write to a derived is an assignment
-			assigned: (source.f & DERIVED) !== 0
+			assigned: (source.f & DERIVED) !== 0,
+			result: (source.f & ASYNC) !== 0
 		};
 
 		this.current.set(source, entry);
@@ -881,18 +882,6 @@ export class Batch {
 				flush_eager_effects();
 			}
 		}
-	}
-
-	/**
-	 * Write the result of this batch's own run of an async expression
-	 * @param {Source} source
-	 * @param {any} value
-	 * @param {boolean} [error]
-	 */
-	capture_result(source, value, error = false) {
-		var same = !error && source.equals(value) && (source.f & ERROR_VALUE) === 0;
-		this.capture(source, value, same, error);
-		/** @type {BatchValue} */ (this.current.get(source)).result = true;
 	}
 
 	deactivate() {
