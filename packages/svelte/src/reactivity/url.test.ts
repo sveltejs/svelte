@@ -3,6 +3,70 @@ import { flushSync } from '../index-client.js';
 import { SvelteURL } from './url.js';
 import { assert, test } from 'vitest';
 
+test.each(['set', 'delete', 'delete value'] as const)(
+	'url.searchParams.%s serializes the URL even if entries do not change',
+	(method) => {
+		const url = new SvelteURL('https://svelte.dev/?q=hello%20world~');
+		const native = new URL(url.href);
+		const hrefs: string[] = [];
+		const entries: string[] = [];
+		const cleanup = effect_root(() => {
+			render_effect(() => {
+				hrefs.push(url.href);
+			});
+			render_effect(() => {
+				entries.push(url.searchParams.toString());
+			});
+		});
+
+		try {
+			for (let i = 0; i < 2; i++) {
+				flushSync(() => {
+					if (method === 'set') {
+						url.searchParams.set('q', 'hello world~');
+						native.searchParams.set('q', 'hello world~');
+					} else if (method === 'delete') {
+						url.searchParams.delete('missing');
+						native.searchParams.delete('missing');
+					} else {
+						url.searchParams.delete('q', 'other');
+						native.searchParams.delete('q', 'other');
+					}
+				});
+				assert.equal(url.href, native.href);
+				assert.equal(url.search, native.search);
+			}
+			assert.deepEqual(hrefs, ['https://svelte.dev/?q=hello%20world~', native.href]);
+			assert.deepEqual(entries, ['q=hello+world%7E']);
+		} finally {
+			cleanup();
+		}
+	}
+);
+
+test.each(['set', 'delete'] as const)(
+	'url.searchParams.%s does not track unchanged entries while serializing the URL',
+	(method) => {
+		const url = new SvelteURL('https://svelte.dev/?q=hello%20world~');
+		let runs = 0;
+		const cleanup = effect_root(() => {
+			render_effect(() => {
+				runs++;
+				if (method === 'set') url.searchParams.set('q', 'hello world~');
+				else url.searchParams.delete('missing');
+			});
+		});
+
+		try {
+			flushSync(() => url.searchParams.append('other', 'value'));
+			assert.equal(runs, 1);
+			assert.equal(url.search, '?q=hello+world%7E&other=value');
+		} finally {
+			cleanup();
+		}
+	}
+);
+
 test('url.hash', () => {
 	const url = new SvelteURL('https://svelte.dev');
 	const log: any = [];
