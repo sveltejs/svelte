@@ -426,11 +426,7 @@ function abort_replaced(reaction, flags) {
 
 	abort_record(reaction, view_batch?.records?.get(reaction), true);
 
-	if (
-		is_derived
-			? batch_values === null || (real && is_outdated(reaction))
-			: real || !is_recorded_effect(flags)
-	) {
+	if (is_derived ? batch_values === null || (real && is_outdated(reaction)) : real) {
 		// (the controller stays referenced until the new run is stored, see `keep_global_run`)
 		abort_signal(reaction.ac);
 	}
