@@ -654,8 +654,8 @@ function update_dependencies(reaction, flags, value, error) {
 	// ...and so can the last reaction of a derived, which aborts the derived's signals, see `remove_reaction`.
 	// `abort_all` removed the flag that the run in progress set, so its signal is still to be aborted
 	if (abort_controller !== null && (reaction.f & HAS_ABORT_CONTROLLER) === 0) {
-		// abort_signal(abort_controller);
-		// abort_controller = null;
+		abort_signal(abort_controller);
+		abort_controller = null;
 	}
 
 	if ((flags & DERIVED) !== 0 && is_destroying_effect) {
