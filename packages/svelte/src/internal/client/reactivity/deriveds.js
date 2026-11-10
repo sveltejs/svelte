@@ -13,7 +13,8 @@ import {
 	CONNECTED,
 	ASSIGNED,
 	ERROR_VALUE,
-	HAS_ABORT_CONTROLLER
+	HAS_ABORT_CONTROLLER,
+	PAUSED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -127,7 +128,7 @@ export function async_expression(fn, label, location) {
 	}
 
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
-	signal.f |= ASYNC;
+	signal.f |= ASYNC | PAUSED;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
@@ -213,6 +214,8 @@ export function async_expression(fn, label, location) {
 			deferreds.delete(d);
 
 			if (error === OBSOLETE) return;
+
+			signal.f &= ~PAUSED;
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			batch.capture(signal, error ?? value, same, !!error);

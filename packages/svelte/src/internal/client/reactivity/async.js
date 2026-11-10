@@ -1,6 +1,6 @@
 /** @import { Blocker, Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
-import { DESTROYED, EFFECT_PRESERVED, STALE_REACTION } from '#client/constants';
+import { DESTROYED, EFFECT_PRESERVED, PAUSED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -105,7 +105,7 @@ export function flatten(blockers, sync, async, fn) {
 
 		block(() => {
 			for (const s of signals) {
-				if (s.v === UNINITIALIZED) {
+				if ((s.f & PAUSED) !== 0) {
 					get(s);
 					return;
 				}
