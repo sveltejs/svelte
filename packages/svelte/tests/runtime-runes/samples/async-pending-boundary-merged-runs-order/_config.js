@@ -9,9 +9,10 @@ const buttons = `
 	<button>shift q</button>
 `;
 
-// Two batches that re-run an async expression inside a boundary that shows its pending snippet merge into the
-// batch that created it, one after the other. The run of the second one saw the writes of the first one, and
-// supersedes its run: that one's result doesn't overwrite it, even if it resolves later
+// Two batches re-run an async expression inside a boundary that shows its pending snippet, one after the other,
+// and each commits while its run is in flight. The run of the second one saw the (committed) writes of the first
+// one, and supersedes its run (see `Batch#release_records`): that one's result doesn't overwrite it, even if it
+// resolves later
 export default test({
 	async test({ assert, target, logs }) {
 		const [a, c, shift_p, pop_p, shift_q] = target.querySelectorAll('button');
@@ -21,11 +22,11 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>loading...</p>`);
 
-		// batch A re-runs `p` (which the creator ran, see `Batch#intersects`), and merges into the creator
+		// batch A re-runs `p`, and commits (its run is inside the pending boundary)
 		a.click();
 		await tick();
 
-		// batch C re-runs `p` with A's write (the creator holds A's run now), and merges into the creator, too
+		// batch C re-runs `p` with A's write, and commits, too: its run supersedes A's
 		c.click();
 		await tick();
 		assert.deepEqual(logs, ['p 0', 'q 0', 'p 1', 'p 2']);

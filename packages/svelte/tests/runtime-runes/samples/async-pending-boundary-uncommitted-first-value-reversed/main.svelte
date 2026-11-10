@@ -37,7 +37,7 @@
 
 {#if show}
 	<svelte:boundary>
-		<p>p: {await push('p', a + c)}</p>
+		<p>p: {await push('p', `${a}/${c}`)}</p>
 
 		{#snippet pending()}
 			<p>loading p...</p>

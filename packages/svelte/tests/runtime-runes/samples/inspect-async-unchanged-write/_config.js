@@ -24,12 +24,12 @@ export default test({
 		a.click();
 		await tick();
 
-		// ...and a later one re-runs `d` and `e` (seeing the earlier batch's write, since both re-run `d`)
+		// ...and a later one re-runs `d` and `e`
 		b.click();
 		await tick();
 
 		// the later batch's `d` resolves first (while it still waits for `e`), changing its real-world value
-		resolve['d:11'].click();
+		resolve['d:10'].click();
 		await tick();
 		assert.deepEqual(logs, ['init: zero', 'update: positive']);
 

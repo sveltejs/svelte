@@ -123,8 +123,8 @@ export function async_derived(fn, label, location) {
 
 	/**
 	 * The runs of the async expression that aren't obsolete (pending or done) until the first value is there, and the
-	 * batch each one started in. A run belongs to the batch that holds it as its latest run (see `next`), which is a
-	 * different one if that batch was merged into another one (see `Batch#merge`)
+	 * batch each one started in. A run is live while that batch holds it as its latest run (see `next`). A batch that
+	 * was merged into another one hands its results over to that batch's runs (see `Batch#merge`)
 	 * @type {Map<ReturnType<typeof deferred<V>>, Batch>}
 	 */
 	var runs = new Map();
@@ -207,7 +207,7 @@ export function async_derived(fn, label, location) {
 			reactivity_loss_tracker = null;
 		}
 
-		var batch = merge_target(/** @type {Batch} */ (current_batch));
+		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
 			// We only increment the batch's pending state for updates, not creation, otherwise we will decrement
@@ -241,10 +241,8 @@ export function async_derived(fn, label, location) {
 
 			deferreds.delete(d);
 
+			// A batch that was merged into another one continues as that one
 			var target = merge_target(batch);
-
-			// A superseded run may have settled before the rejection in `Batch#merge` or by a rerun arrives in the microtask after
-			if (should_suspend && target.async_deriveds.get(effect) !== d) error = OBSOLETE;
 
 			if (error === OBSOLETE) {
 				decrement_pending?.();
@@ -263,8 +261,8 @@ export function async_derived(fn, label, location) {
 				// A batch whose run is done isn't done with it until the content that awaits it exists, since the
 				// content is created by the batch whose run the first value comes from. Then it re-validates the
 				// content in its own view (before it can commit it, i.e. in the same go). Unless it's merged into
-				// that batch once it's done: then its runs become that batch's (see `Batch#merge`), and it must
-				// not wait for them
+				// that batch once it's done: then it hands its results over to that batch's runs (see
+				// `Batch#merge`), and must not wait for them
 				waiting.then(() => {
 					if (target.linked) target.revalidate(parent);
 					decrement_pending?.();
@@ -274,8 +272,9 @@ export function async_derived(fn, label, location) {
 			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
+			target.capture(signal, error ?? value, same, !!error);
 
-			if (DEV && !error && location !== undefined && !signal.equals(value)) {
+			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
 
 				setTimeout(() => {
@@ -285,9 +284,6 @@ export function async_derived(fn, label, location) {
 					}
 				});
 			}
-
-			// write the result in the batch's view of the world
-			target.capture(signal, error ?? value, same, !!error);
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));

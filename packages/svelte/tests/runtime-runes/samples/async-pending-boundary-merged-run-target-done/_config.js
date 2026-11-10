@@ -10,10 +10,10 @@ const buttons = `
 	<button>shift q</button>
 `;
 
-// A batch that is merged into another one, whose run of an async expression inside a boundary that shows its
-// pending snippet supersedes that batch's run, hands over its pending work, too: here, the batch it's merged into
-// has no other pending work, so it would be done once its own run is superseded, and Y's result would arrive in a
-// batch that nobody processes anymore
+// Two batches re-run an async expression inside a boundary that shows its pending snippet, and commit while their
+// runs are in flight. The later one's committed run supersedes the earlier one's (see `Batch#release_records`),
+// which then has no pending work left, and is done. The later one stays live until its run resolves, so its
+// result arrives in a batch that is still processed, and the boundary shows it
 export default test({
 	async test({ assert, target, logs }) {
 		const [a, c, show, shift_p, pop_p, shift_q] = target.querySelectorAll('button');
@@ -29,7 +29,7 @@ export default test({
 		a.click();
 		await tick();
 
-		// batch Y re-runs `p`, which X ran, so it intersects with X (see `Batch#intersects`), and merges into it
+		// batch Y re-runs `p` (with X's committed write), and commits, too: its run supersedes X's
 		c.click();
 		await tick();
 		assert.deepEqual(logs, ['p 0', 'q 0', 'p 1', 'p 2']);

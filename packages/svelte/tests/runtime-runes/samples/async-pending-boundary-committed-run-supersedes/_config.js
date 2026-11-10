@@ -11,8 +11,8 @@ const buttons = `
 
 // A batch that committed while its run of an async expression inside a pending boundary was in flight
 // holds no run of it anymore. Once another batch commits a run of it, that run supersedes the batch's.
-// Here, the other batch is the earlier one. The later one committed before it, so it doesn't intersect with
-// it (although both ran the expression, see `Batch#intersects`), and nothing is merged
+// Here, the other batch is the earlier one: the later one committed before it, which revealed the boundary in
+// the earlier batch's view, too
 export default test({
 	async test({ assert, target }) {
 		const [a, show, shift_b, shift_p, pop_p] = target.querySelectorAll('button');

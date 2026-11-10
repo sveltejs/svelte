@@ -16,6 +16,7 @@
 <button onclick={() => { a = true; x = 1; }}>a</button>
 <button onclick={() => (b = true)}>b</button>
 <button onclick={() => queue.shift()?.()}>shift</button>
+<button onclick={() => queue.pop()?.()}>pop</button>
 
 {#if a || b}
 	<p>{await push(x)} {x}</p>

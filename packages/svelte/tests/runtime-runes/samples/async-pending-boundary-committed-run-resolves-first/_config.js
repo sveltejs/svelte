@@ -10,9 +10,8 @@ const buttons = `
 `;
 
 // Like `async-pending-boundary-committed-run-supersedes`, but the run of the batch that committed resolves
-// before the earlier batch commits. That batch committed before the earlier one ran the expression, so its
-// run didn't see the earlier batch's writes: it doesn't intersect with it (see `Batch#intersects`), and its
-// result mustn't resolve the earlier batch's run (which read a = 1) when it's merged into it
+// before the earlier batch commits. Its view undoes the earlier batch's write, so its run read a = 0, and the
+// earlier batch's a = 1: the boundary shows the earlier batch's result once that batch commits
 export default test({
 	async test({ assert, target }) {
 		const [a, show, shift_b, shift_p] = target.querySelectorAll('button');
