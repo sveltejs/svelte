@@ -121,9 +121,9 @@ export function flatten(blockers, sync, async, fn) {
 	}
 
 	if (blocker_promise) {
+		// TODO fold blocker_promise into `signals`
 		blocker_promise.then(() => {
 			if ((parent.f & DESTROYED) !== 0) {
-				decrement_pending();
 				return;
 			}
 
