@@ -132,7 +132,7 @@ export function async_expression(fn, label, location) {
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
 	// only suspend in async deriveds created on initialisation
-	var should_suspend = !active_reaction;
+	var should_suspend = true;// !active_reaction;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -264,7 +264,7 @@ export function async_derived(fn, label, location) {
 			} else {
 				fulfil(source);
 			}
-		})
+		});
 	});
 }
 
