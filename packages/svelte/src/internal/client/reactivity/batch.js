@@ -853,7 +853,7 @@ export class Batch {
 			e: error,
 			// a write to a derived is an assignment
 			assigned: (source.f & DERIVED) !== 0,
-			result: (source.f & ASYNC) !== 0
+			async: (source.f & ASYNC) !== 0
 		};
 
 		this.current.set(source, entry);
@@ -958,7 +958,7 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v && !own.result) {
+					if (is_earlier && entry.v !== own.v && !own.async) {
 						// bring the value up to date
 						batch.current.set(source, entry);
 					} else {

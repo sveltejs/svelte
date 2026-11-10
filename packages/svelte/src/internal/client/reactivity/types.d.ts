@@ -80,7 +80,7 @@ export interface BatchValue {
 	 * re-validated in the batch's view instead. Realistically this only matters when a later real batch
 	 * commits and is then prevented from overriding an earlier fork's result.
 	 */
-	result?: boolean;
+	async?: boolean;
 }
 
 /**
