@@ -272,9 +272,8 @@ export function async_derived(fn, label, location) {
 			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			target.capture(signal, error ?? value, same, !!error);
 
-			if (DEV && location !== undefined && !signal.equals(value)) {
+			if (DEV && !error && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
 
 				setTimeout(() => {
@@ -284,6 +283,8 @@ export function async_derived(fn, label, location) {
 					}
 				});
 			}
+
+			target.capture(signal, error ?? value, same, !!error);
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
