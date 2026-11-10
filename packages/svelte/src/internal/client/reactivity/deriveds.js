@@ -257,7 +257,7 @@ export function async_derived(fn, label, location) {
 		const source = async_expression(fn, label, location);
 
 		block(() => {
-			if (source.v === UNINITIALIZED) {
+			if ((source.f & PAUSED) !== 0) {
 				get(source);
 				return;
 			}
