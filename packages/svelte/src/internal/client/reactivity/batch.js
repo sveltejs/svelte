@@ -412,6 +412,23 @@ export class Batch {
 	}
 
 	/**
+	 * Re-validate `effect` and everything inside it in this batch's view of the world,
+	 * e.g. because another batch created it, in its own view
+	 * @param {Effect} effect
+	 */
+	revalidate(effect) {
+		var flags = effect.f;
+
+		if ((flags & (DESTROYED | INERT)) !== 0 || this.#skips(effect)) return;
+
+		if ((flags & (BRANCH_EFFECT | ROOT_EFFECT | EAGER_EFFECT)) === 0 && effect.fn !== null) {
+			this.schedule(effect, MAYBE_DIRTY);
+		}
+
+		this.#revalidate_branch(effect);
+	}
+
+	/**
 	 * @param {Effect} effect
 	 */
 	#revalidate_branch(effect) {
@@ -791,6 +808,17 @@ export class Batch {
 		// Clear them or else those that are still pending might get rejected on discard (after merged-into batch is done).
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
 		batch.async_deriveds.clear();
+
+		// That pending work is this batch's from now on: it decrements this batch's counts (see `increment_pending`),
+		// so this batch stays linked until the work is done, and receives the effects that a boundary defers until then
+		this.#pending += batch.#pending;
+		batch.#pending = 0;
+
+		for (const [effect, count] of batch.#blocking_pending) {
+			this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
+		}
+
+		batch.#blocking_pending.clear();
 
 		this.transfer_effects(batch.#unprocessed);
 

@@ -26,5 +26,5 @@ export function defer_effect(effect, dirty_effects) {
 	}
 
 	// mark as clean so they get scheduled if they depend on pending async state
-	// set_signal_status(effect, CLEAN);
+	set_signal_status(effect, CLEAN);
 }

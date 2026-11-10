@@ -1,5 +1,4 @@
 /** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Effect, Reaction, Source, Value } from '#client' */
-/** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
 import {
 	DERIVED,
@@ -44,13 +43,14 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import {
+	Batch,
 	batch_values,
 	current_batch,
 	uncommitted_first_value,
 	view_batch,
 	view_cache
 } from './batch.js';
-import { increment_pending, unset_context } from './async.js';
+import { increment_pending, merge_target, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -133,7 +133,7 @@ export function async_expression(fn, label, location) {
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
 	// only suspend in async deriveds created on initialisation
-	var should_suspend = true;// !active_reaction;
+	var should_suspend = !active_reaction;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -210,15 +210,54 @@ export function async_expression(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
-			decrement_pending?.();
 			deferreds.delete(d);
 
+			// The first value lets the code that waits for it continue (see `flatten`), which may start more
+			// work. The batch is only done with this run once that has happened, i.e. once it was processed
+			// with the value — otherwise a boundary would show content that doesn't exist yet. An error
+			// creates nothing
+			var hold =
+				(signal.f & PAUSED) !== 0 && error === undefined && decrement_pending !== undefined;
+
+			if (!hold) decrement_pending?.();
 			if (error === OBSOLETE) return;
 
 			signal.f &= ~PAUSED;
 
+			// A batch that was merged into another one continues as that one
+			var target = merge_target(batch);
+
+			// An async derived that was created inside a reaction doesn't hold its batch back, so the batch
+			// may be done by now, in which case the result belongs to a new one
+			if (!should_suspend && !target.linked) {
+				target = Batch.ensure();
+			}
+
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			batch.capture(signal, error ?? value, same, !!error);
+			target.capture(signal, error ?? value, same, !!error);
+
+			// Nothing processes a batch that isn't held back once the value is there, but whoever
+			// waits for the value does so in an effect (see `async_derived`), which has to run
+			if (!should_suspend && target.linked) {
+				queue_micro_task(() => {
+					if (target.linked) target.flush();
+				});
+			}
+
+			if (hold) {
+				queue_micro_task(() => {
+					try {
+						target = merge_target(target);
+						if (target.linked) target.flush();
+					} catch (e) {
+						// (not via `queue_micro_task`, which must not be used while a `flushSync` unwinds)
+						queueMicrotask(() => decrement_pending?.());
+						throw e;
+					}
+
+					decrement_pending?.();
+				});
+			}
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
@@ -256,17 +295,22 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil, reject) => {
 		const source = async_expression(fn, label, location);
 
+		var settled = false;
+
 		block(() => {
-			if (source.v === UNINITIALIZED) {
-				get(source);
+			if (settled) return;
+
+			try {
+				// (the value in the active view of the world: a fork's result is only part of its own view)
+				if (get(source) === UNINITIALIZED) return;
+			} catch (error) {
+				settled = true;
+				reject(error);
 				return;
 			}
 
-			if ((source.f & ERROR_VALUE) !== 0) {
-				reject(source.v);
-			} else {
-				fulfil(source);
-			}
+			settled = true;
+			fulfil(source);
 		});
 	});
 }
