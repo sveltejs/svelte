@@ -295,22 +295,17 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil, reject) => {
 		const source = async_expression(fn, label, location);
 
-		var settled = false;
-
 		block(() => {
-			if (settled) return;
-
-			try {
-				// (the value in the active view of the world: a fork's result is only part of its own view)
-				if (get(source) === UNINITIALIZED) return;
-			} catch (error) {
-				settled = true;
-				reject(error);
+			if ((source.f & PAUSED) !== 0) {
+				get(source);
 				return;
 			}
 
-			settled = true;
-			fulfil(source);
+			if ((source.f & ERROR_VALUE) !== 0) {
+				reject(source.v);
+			} else {
+				fulfil(source);
+			}
 		});
 	});
 }
