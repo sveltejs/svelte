@@ -25,8 +25,7 @@ import {
 	set_reactivity_loss_tracker,
 	async_expression
 } from './deriveds.js';
-import { aborted, block, teardown } from './effects.js';
-import { UNINITIALIZED } from '../../../constants.js';
+import { aborted, block, branch, teardown } from './effects.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -103,17 +102,8 @@ export function flatten(blockers, sync, async, fn) {
 	function run() {
 		const signals = async.map((expression) => async_expression(expression));
 
-		/**
-		 * The batch that created the content, in its view of the world
-		 * @type {Batch | null}
-		 */
-		var creator = null;
-
-		/**
-		 * The effects that `fn` created
-		 * @type {Effect[]}
-		 */
-		var content = [];
+		/** @type {Effect | null} */
+		var effect = null;
 
 		block(() => {
 			for (const s of signals) {
@@ -123,26 +113,18 @@ export function flatten(blockers, sync, async, fn) {
 				}
 			}
 
-			var batch = /** @type {Batch} */ (current_batch);
-
-			if (creator === null) {
-				// The content is created once, by the first batch that gets here
-				creator = batch;
-
-				var last = parent.last;
-
-				finish(signals, false);
-
-				for (var e = last === null ? parent.first : last.next; e !== null; e = e.next) {
-					content.push(e);
-				}
-			} else if (batch !== creator) {
-				// Every other batch that ran the expressions gets here, too, once it has its own results.
-				// What the content shows was computed in the creator's view, so it has to be re-validated
-				for (const effect of content) {
-					batch.revalidate(effect);
-				}
+			if (effect !== null) {
+				/** @type {Batch} */ (current_batch).revalidate_branch(effect);
+			} else {
+				effect = branch(() => {
+					try {
+						fn([...deriveds, ...signals]);
+					} catch (error) {
+						invoke_error_boundary(error, parent);
+					}
+				});
 			}
+
 			// decrement_pending();
 		}, EFFECT_PRESERVED);
 
