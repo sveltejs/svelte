@@ -169,9 +169,10 @@ export function capture() {
 		set_component_context(previous_component_context);
 
 		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
-			// TODO we only need optional chaining here because `{#await ...}` blocks
+			// A batch that was merged into another one continues as that one.
+			// TODO we only need the check here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
-			batch?.activate();
+			if (batch) merge_target(batch).activate();
 		}
 
 		if (DEV) {
@@ -410,18 +411,21 @@ export function wait(blockers) {
 }
 
 /**
+ * Adds pending work to the current batch, and to the boundary of the active effect. If the batch is merged
+ * into another one before the work is done, it's that batch's from then on (see `Batch#merge`)
  * @returns {(skip?: boolean) => void}
  */
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
-	var batch = /** @type {Batch} */ (current_batch);
+	var batch = merge_target(/** @type {Batch} */ (current_batch));
 	var blocking = !!boundary?.is_rendered();
 
 	boundary?.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
 	return () => {
+		batch = merge_target(batch);
 		boundary?.update_pending_count(-1, batch);
 		batch.decrement(blocking, effect);
 	};

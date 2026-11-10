@@ -792,6 +792,17 @@ export class Batch {
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
 		batch.async_deriveds.clear();
 
+		// That pending work is this batch's from now on: it decrements this batch's counts (see `increment_pending`),
+		// so this batch stays linked until the work is done, and receives the effects that a boundary defers until then
+		this.#pending += batch.#pending;
+		batch.#pending = 0;
+
+		for (const [effect, count] of batch.#blocking_pending) {
+			this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
+		}
+
+		batch.#blocking_pending.clear();
+
 		this.transfer_effects(batch.#unprocessed);
 
 		// What the merged batch did on its own (e.g. branches it selected) is obsolete once this batch is

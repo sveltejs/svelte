@@ -50,7 +50,7 @@ import {
 	view_batch,
 	view_cache
 } from './batch.js';
-import { increment_pending, unset_context } from './async.js';
+import { increment_pending, merge_target, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -218,7 +218,7 @@ export function async_expression(fn, label, location) {
 			signal.f &= ~PAUSED;
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			batch.capture(signal, error ?? value, same, !!error);
+			merge_target(batch).capture(signal, error ?? value, same, !!error);
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
