@@ -649,10 +649,17 @@ function update_dependencies(reaction, flags, value, error) {
 	var length = skipped_deps + (new_deps === null ? 0 : new_deps.length);
 	var dv = reaction.dv;
 
-	// (an effect can be destroyed while it runs, e.g. by an error boundary)
+	// an effect can be destroyed while it runs, e.g. by an error boundary
 	if ((reaction.f & DESTROYED) !== 0) {
 		abort_signal(abort_controller);
 		return;
+	}
+
+	// ...and so can the last reaction of a derived, which aborts the derived's signals, see `remove_reaction`.
+	// `abort_all` removed the flag that the run in progress set, so its signal is still to be aborted
+	if (abort_controller !== null && (reaction.f & HAS_ABORT_CONTROLLER) === 0) {
+		// abort_signal(abort_controller);
+		// abort_controller = null;
 	}
 
 	if ((flags & DERIVED) !== 0 && is_destroying_effect) {
