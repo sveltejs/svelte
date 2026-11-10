@@ -413,6 +413,7 @@ export function deferred_template_effect(fn, sync = [], async = [], blockers = [
  * @param {number} flags
  */
 export function block(fn, flags = 0) {
+	Batch.ensure();
 	var effect = create_effect(BLOCK_EFFECT | flags, fn);
 	if (DEV) {
 		effect.dev_stack = dev_stack;
