@@ -853,7 +853,8 @@ export class Batch {
 			wv: same ? source.wv : increment_write_version(),
 			e: error,
 			// a write to a derived is an assignment
-			assigned: (source.f & DERIVED) !== 0
+			assigned: (source.f & DERIVED) !== 0,
+			async: (source.f & ASYNC) !== 0
 		};
 
 		this.current.set(source, entry);
@@ -962,12 +963,12 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v) {
+					if (is_earlier && entry.v !== own.v && !own.async) {
 						// bring the value up to date
 						batch.current.set(source, entry);
 					} else {
-						// same value or later batch has more recent value,
-						// no need to re-run these effects
+						// same value, later batch has more recent value, or the batch's own result
+						// of an async expression — no need to re-run these effects
 						continue;
 					}
 				}

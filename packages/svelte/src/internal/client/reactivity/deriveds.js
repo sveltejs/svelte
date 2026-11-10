@@ -126,6 +126,7 @@ export function async_derived(fn, label, location) {
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
+	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
@@ -241,12 +242,6 @@ export function async_derived(fn, label, location) {
 			d.reject(OBSOLETE);
 		}
 	});
-
-	if (DEV) {
-		// add a flag that lets this be printed as a derived
-		// when using `$inspect.trace()`
-		signal.f |= ASYNC;
-	}
 
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */

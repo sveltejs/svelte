@@ -74,6 +74,13 @@ export interface BatchValue {
 	 * from before a write (`Batch#previous`) may have been computed instead
 	 */
 	assigned: boolean;
+	/**
+	 * Whether the value is the result of the batch's own run of an async expression.
+	 * Conceptually (if not mechanically) this is a derived, and so its value should
+	 * be determined by its inputs, and not those of an overlapping batch.
+	 * This matters when a batch commits and is prevented from overriding an earlier fork's result.
+	 */
+	async?: boolean;
 }
 
 /**
