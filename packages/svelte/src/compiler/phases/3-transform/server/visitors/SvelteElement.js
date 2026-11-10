@@ -41,7 +41,8 @@ export function SvelteElement(node, context) {
 	/** @type {Statement[]} */
 	let statements = [];
 
-	build_element_attributes(node, { ...context, state }, optimiser.transform);
+	const tag_id = b.id(context.state.scope.generate('$$tag'));
+	build_element_attributes(node, { ...context, state }, optimiser.transform, tag_id);
 
 	if (dev) {
 		const location = locator(node.start);
@@ -68,7 +69,7 @@ export function SvelteElement(node, context) {
 					'$.element',
 					b.id('$$renderer'),
 					tag,
-					attributes.body.length > 0 && b.thunk(attributes),
+					attributes.body.length > 0 && b.arrow([tag_id], attributes),
 					children.body.length > 0 && b.thunk(children)
 				)
 			)
