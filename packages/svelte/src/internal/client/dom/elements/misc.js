@@ -1,7 +1,7 @@
 import { hydrating } from '../hydration.js';
 import { clear_text_content, get_first_child } from '../operations.js';
 import { queue_micro_task } from '../task.js';
-import { FORM_RESET_HANDLER } from '../../constants.js';
+import { FORM_RESET_HANDLER, HYDRATION_FORM_STATE } from '../../constants.js';
 
 /**
  * @param {HTMLElement} dom
@@ -28,8 +28,12 @@ export function autofocus(dom, value) {
  * @returns {void}
  */
 export function remove_textarea_child(dom) {
-	if (hydrating && get_first_child(dom) !== null) {
-		clear_text_content(dom);
+	if (hydrating) {
+		/** @type {any} */ (dom)[HYDRATION_FORM_STATE] = true;
+
+		if (get_first_child(dom) !== null) {
+			clear_text_content(dom);
+		}
 	}
 }
 
