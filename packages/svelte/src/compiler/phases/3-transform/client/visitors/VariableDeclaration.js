@@ -25,6 +25,7 @@ export function VariableDeclaration(node, context) {
 			if (
 				!rune ||
 				rune === '$effect.tracking' ||
+				rune === '$effect.pending' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
 				rune === '$inspect.trace' ||
