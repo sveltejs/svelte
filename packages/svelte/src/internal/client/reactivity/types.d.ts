@@ -55,7 +55,10 @@ export interface Reaction extends Signal {
 	dv: null | number[];
 	/** Graph edges: a superset of the dependencies of every live run. Never modified in place, like `deps` */
 	edges: null | Value[];
-	/** An AbortController that aborts when the signal is destroyed */
+	/**
+	 * The AbortController of the signal of the global run, if any (see `getAbortSignal`). A record has its
+	 * own (`BatchRecord#ac`). It aborts once the run is replaced or dropped, or the reaction is destroyed
+	 */
 	ac: null | AbortController;
 }
 
@@ -75,12 +78,12 @@ export interface BatchValue {
 	 */
 	assigned: boolean;
 	/**
-	 * Whether the value is the result of the batch's own run of an async expression or `{#await}` block (see
-	 * `Batch#capture_result`). Another batch's write doesn't overwrite it (see `Batch#commit`): the run is
-	 * re-validated in the batch's view instead. Realistically this only matters when a later real batch
-	 * commits and is then prevented from overriding an earlier fork's result.
+	 * Whether the value is the result of the batch's own run of an async expression or `{#await}` block.
+	 * Conceptually (if not mechanically) this is a derived, and so its value should
+	 * be determined by its inputs, and not those of an overlapping batch.
+	 * This matters when a batch commits and is prevented from overriding an earlier fork's result.
 	 */
-	result?: boolean;
+	async?: boolean;
 }
 
 /**
@@ -97,6 +100,8 @@ export interface BatchRecord {
 	wv?: number;
 	/** Whether the value of a derived record is an error */
 	e?: boolean;
+	/** The AbortController of the run's signal, if any (see `getAbortSignal`) */
+	ac?: null | AbortController;
 }
 
 /** A record of a derived, which — unlike the record of an effect — has a value */

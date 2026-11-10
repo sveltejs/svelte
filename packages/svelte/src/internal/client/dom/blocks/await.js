@@ -12,7 +12,7 @@ import {
 import { queue_micro_task } from '../task.js';
 import { should_defer_append } from '../operations.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
-import { DESTROYED, EFFECT_PRESERVED } from '#client/constants';
+import { ASYNC, DESTROYED, EFFECT_PRESERVED } from '#client/constants';
 import { is_runes } from '../../context.js';
 import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
@@ -45,6 +45,11 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var v = /** @type {V} */ (UNINITIALIZED);
 	var value = runes ? source(v) : mutable_source(v, false, false);
 	var error = runes ? source(v) : mutable_source(v, false, false);
+
+	// like the result of an async expression, the states of a run belong to the batch
+	// that holds them: another batch's commit doesn't overwrite them (see `BatchValue#async`)
+	value.f |= ASYNC;
+	error.f |= ASYNC;
 
 	if (DEV) {
 		value.label = '{#await ...} value';
@@ -154,7 +159,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 					restore(true, target);
 
 					try {
-						fn((source, v) => /** @type {Batch} */ (target).capture_result(source, v));
+						fn((source, v) => /** @type {Batch} */ (target).capture(source, v, source.equals(v)));
 					} finally {
 						unset_context(false);
 						target.flush();
@@ -223,7 +228,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				});
 			}
 		} else {
-			if (owner(batch) === batch) batch.capture_result(value, input);
+			if (owner(batch) === batch) batch.capture(value, input, value.equals(input));
 			else internal_set(value, input);
 
 			branches.ensure(THEN, then_fn && ((target) => then_fn(target, value)));
