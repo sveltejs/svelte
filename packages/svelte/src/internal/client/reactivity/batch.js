@@ -320,12 +320,6 @@ export class Batch {
 	is_fork = false;
 
 	/**
-	 * True once the batch committed: its view of the world is the real one from then on, plus the results
-	 * of its async work that was still pending (see `#commit`)
-	 */
-	committed = false;
-
-	/**
 	 * The batch that this one was merged into, if any (see `#merge`). Its async work that is still in flight
 	 * continues as part of that one
 	 * @type {Batch | null}
@@ -610,7 +604,6 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
-		this.committed = true;
 		this.#release_records(true);
 
 		// append/remove branches
@@ -771,12 +764,6 @@ export class Batch {
 			if (batch.current.has(source)) return true;
 		}
 
-		// A batch that committed (and is still linked because of pending work inside a pending boundary) didn't
-		// intersect with `batch` when it committed, else it would have been merged into it. So its runs didn't see
-		// the writes of `batch`, and its view must stay the real world's (see `#commit`). Its runs that `batch` ran,
-		// too, are superseded once `batch` commits (see `#release_records`), and mustn't supersede those of `batch`
-		if (this.committed) return false;
-
 		for (const effect of this.async_deriveds.keys()) {
 			// For this batch, the entry can also be a write's mark (`null`, see `mark`): this is checked
 			// in `activate`, before traversal determines whether the expression actually re-runs (it may not, e.g.
@@ -800,8 +787,6 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	#fold(effect) {
-		if (this.committed) return false;
-
 		for (let batch = this.prev; batch !== null; batch = batch.prev) {
 			if (!batch.is_fork && batch.async_deriveds.get(effect) && !this.folded.includes(batch)) {
 				// the batches intersect from now on (a run that follows replaces the mark)

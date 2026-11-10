@@ -357,7 +357,6 @@ export function async_derived(fn, label, location) {
 
 		return (
 			(live.find(([, b]) => b === target && (!b.is_fork || real.length === 0)) ??
-				real.find(([, b]) => b.committed) ??
 				real[0] ??
 				live[0])?.[0] ?? null
 		);
