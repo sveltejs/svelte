@@ -76,9 +76,9 @@ export interface BatchValue {
 	assigned: boolean;
 	/**
 	 * Whether the value is the result of the batch's own run of an async expression.
-	 * Another batch's write doesn't overwrite it (see `Batch#commit`): the run is
-	 * re-validated in the batch's view instead. Realistically this only matters when a later real batch
-	 * commits and is then prevented from overriding an earlier fork's result.
+	 * Conceptually (if not mechanically) this is a derived, and so its value should
+	 * be determined by its inputs, and not those of an overlapping batch.
+	 * This matters when a batch commits and is prevented from overriding an earlier fork's result.
 	 */
 	async?: boolean;
 }
