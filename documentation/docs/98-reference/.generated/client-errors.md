@@ -164,6 +164,14 @@ Cannot commit a fork that was already discarded
 Cannot create a fork inside an effect or when state changes are pending
 ```
 
+### get_abort_signal_after_await
+
+```
+`getAbortSignal()` cannot be called after an `await`
+```
+
+Abort signals must be associated with their deriveds/effects as soon as they run — if it happens after an `await`, it's too late. Create the abort signal first, before awaiting anything.
+
 ### get_abort_signal_outside_reaction
 
 ```

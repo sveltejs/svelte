@@ -1,4 +1,5 @@
 /** @import { Blocker, Effect, Source, Value } from '#client' */
+/** @import { Batch } from './batch.js' */
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -15,7 +16,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { Batch, current_batch } from './batch.js';
+import { current_batch } from './batch.js';
 import {
 	async_derived,
 	reactivity_loss_tracker,
@@ -140,7 +141,11 @@ export function capture() {
 		var previous_dev_stack = dev_stack;
 	}
 
-	return function restore(activate_batch = true) {
+	/**
+	 * @param {boolean} [activate_batch]
+	 * @param {Batch | null} [batch] the batch to continue in, if not the one that was active before
+	 */
+	return function restore(activate_batch = true, batch = previous_batch) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
@@ -148,7 +153,7 @@ export function capture() {
 		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
 			// TODO we only need optional chaining here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
-			previous_batch?.activate();
+			batch?.activate();
 		}
 
 		if (DEV) {
@@ -402,4 +407,13 @@ export function increment_pending() {
 		boundary?.update_pending_count(-1, batch);
 		batch.decrement(blocking, effect);
 	};
+}
+
+/**
+ * The batch that `batch` was merged into, if any (transitively), else `batch` itself
+ * @param {Batch} batch
+ */
+export function merge_target(batch) {
+	while (batch.merged !== null) batch = batch.merged;
+	return batch;
 }

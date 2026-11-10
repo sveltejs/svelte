@@ -12,7 +12,8 @@ import {
 	INERT,
 	CONNECTED,
 	ASSIGNED,
-	ERROR_VALUE
+	ERROR_VALUE,
+	HAS_ABORT_CONTROLLER
 } from '#client/constants';
 import {
 	active_reaction,
@@ -27,16 +28,16 @@ import {
 	new_deps,
 	is_current,
 	promote_record,
-	unchanged_since,
-	is_dirty
+	changed_since,
+	is_dirty,
+	abort_all
 } from '../runtime.js';
-import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, set_eager_effects, source } from './sources.js';
-import { get_error } from '../../shared/dev.js';
+import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
@@ -126,6 +127,7 @@ export function async_derived(fn, label, location) {
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
+	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
@@ -208,6 +210,8 @@ export function async_derived(fn, label, location) {
 		 */
 		const handler = (value, error = undefined) => {
 			if (DEV) {
+				invariant(view_batch === null, 'Batch is currently active');
+
 				reactivity_loss_tracker = null;
 			}
 
@@ -239,12 +243,6 @@ export function async_derived(fn, label, location) {
 			d.reject(OBSOLETE);
 		}
 	});
-
-	if (DEV) {
-		// add a flag that lets this be printed as a derived
-		// when using `$inspect.trace()`
-		signal.f |= ASYNC;
-	}
 
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
@@ -389,12 +387,16 @@ export function execute_derived(derived) {
 }
 
 /**
- * Update the global state of `derived`, adopting the active batch's run if its view has
- * become the real world (e.g. because a fork was committed), or re-evaluating it otherwise
- * @param {Derived} derived
+ * Update the global state of a derived, adopting the active batch's run if its view has
+ * become the real world (e.g. because a fork was committed), or re-evaluating it otherwise.
+ * `signal` can be a source, too, which is cheaper than checking first (this is called for every dependency that
+ * is checked): only reactions ever get a dirty status, so `is_dirty` returns `false` for a source right away
+ * @param {Value} signal
  * @returns {void}
  */
-export function update_derived(derived) {
+export function update_derived(signal) {
+	var derived = /** @type {Derived} */ (signal);
+
 	if (!is_dirty(derived)) return;
 
 	var records = view_batch?.records;
@@ -426,21 +428,18 @@ export function get_view(derived) {
 
 	var batch = /** @type {Batch} */ (view_batch);
 
-	// What the view holds for the derived is a write to it — an assignment in this batch, or the value from
-	// before another batch's assignment that this view undoes — or else its global state. An assigned value
+	// What the view holds for the derived is a write to it — an assignment (in this batch, or made while it commits),
+	// or the value from before another batch's assignment that this view undoes — or else its global state. An assigned value
 	// holds until one of the derived's dependencies — what its run in this view (its record in the batch, if
-	// any, else its global run) read — is written after it (see `unchanged_since`). The value from before an
+	// any, else its global run) read — is written after it (see `changed_since`). The value from before an
 	// undone assignment is only used if it was assigned, too: a computed value was computed in some other
 	// view of the world, and may depend on writes that this view undoes
 	var written = /** @type {Map<Value, BatchValue>} */ (batch_values).get(derived);
 	var held = written ?? derived;
-	var assigned =
-		written === undefined
-			? (derived.f & ASSIGNED) !== 0
-			: written === batch.current.get(derived) || (written.f & ASSIGNED) !== 0;
+	var assigned = (held.f & ASSIGNED) !== 0;
 	var record = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
 
-	if (assigned && unchanged_since((record ?? derived).deps, held.wv)) {
+	if (assigned && !changed_since((record ?? derived).deps, held.wv)) {
 		entry = held;
 	} else if (record !== undefined && is_current(record.deps, record.dv)) {
 		entry = record;
@@ -473,14 +472,9 @@ export function freeze_derived_effects(derived) {
 
 	for (const e of derived.effects) {
 		// if the effect has a teardown function or abort signal, call it
-		if (e.teardown || e.ac) {
+		if (e.teardown || (e.f & HAS_ABORT_CONTROLLER) !== 0) {
 			e.teardown?.();
-			if (e.ac !== null) {
-				without_reactive_context(() => {
-					/** @type {AbortController} */ (e.ac).abort(STALE_REACTION);
-					e.ac = null;
-				});
-			}
+			abort_all(e);
 
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence

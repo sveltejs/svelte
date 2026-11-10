@@ -11,7 +11,7 @@ import {
 	skip_nodes
 } from '../hydration.js';
 import { BranchManager } from './branches.js';
-import { HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
+import { HYDRATION_START } from '../../../../constants.js';
 
 /**
  * @template P
