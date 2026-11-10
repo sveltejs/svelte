@@ -89,10 +89,12 @@ export function flatten(blockers, sync, async, fn) {
 		unset_context(restore_batch);
 	}
 
-	var decrement_pending = increment_pending();
+	// var decrement_pending = increment_pending();
 
 	// Fast path: blockers but no async expressions
+	// TODO get rid in favour of unified mechanism
 	if (async.length === 0) {
+		var decrement_pending = increment_pending();
 		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([])).finally(decrement_pending);
 		return;
 	}
@@ -110,11 +112,11 @@ export function flatten(blockers, sync, async, fn) {
 			}
 
 			finish(signals, false);
-			decrement_pending();
+			// decrement_pending();
 		}, EFFECT_PRESERVED);
 
 		teardown(() => {
-			decrement_pending();
+			// decrement_pending();
 		});
 	}
 
