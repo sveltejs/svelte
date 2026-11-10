@@ -383,14 +383,27 @@ function abort_signal(controller) {
 }
 
 /**
- * Abort the signal of a record that is replaced or dropped
+ * Abort the signal of a record of `reaction` that a batch replaces or drops — unless another batch holds the
+ * record, too (see `keep_global_run`), in which case it aborts once the last one lets go of it
+ * @param {Reaction} reaction
  * @param {BatchRecord | undefined} record
+ * @param {boolean} [rerun] whether `reaction` is about to run again (see `abort_replaced`). The active batch
+ * and the batches that the new run supersedes still hold the record then, but don't count
  */
-export function abort_record(record) {
-	if (record?.ac) {
-		abort_signal(record.ac);
-		record.ac = null;
+export function abort_record(reaction, record, rerun = false) {
+	if (!record?.ac) return;
+
+	for (var b = first_batch; b !== null; b = b.next) {
+		if (
+			b.records?.get(reaction) === record &&
+			!(rerun && (b === view_batch || supersedes(current_batch, b)))
+		) {
+			return;
+		}
 	}
+
+	abort_signal(record.ac);
+	record.ac = null;
 }
 
 /**
@@ -411,7 +424,7 @@ function abort_replaced(reaction, flags) {
 
 	var real = batch === null || !batch.is_fork;
 
-	abort_record(view_batch?.records?.get(reaction));
+	abort_record(reaction, view_batch?.records?.get(reaction), true);
 
 	if (
 		is_derived
@@ -424,18 +437,18 @@ function abort_replaced(reaction, flags) {
 
 	if (real && batch !== null) {
 		for (var b = first_batch; b !== null; b = b.next) {
-			if (!b.is_fork && b.id < batch.id) abort_record(b.records?.get(reaction));
+			if (!b.is_fork && b.id < batch.id) abort_record(reaction, b.records?.get(reaction), true);
 		}
 	}
 }
 
 /**
  * The run that just ended is the global state of `reaction`: its signal replaces the global run's, which aborts —
- * unless a fork's view ran it (a derived that only read latest values there), because forks stay independent
+ * unless other batches took that run over, along with its signal (see `keep_global_run`)
  * @param {Reaction} reaction
  */
 function set_global_signal(reaction) {
-	if (!current_batch?.is_fork) abort_signal(reaction.ac);
+	abort_signal(reaction.ac);
 	reaction.ac = abort_controller;
 }
 
@@ -470,7 +483,15 @@ export function abort_all(reaction) {
 	abort_signal(reaction.ac);
 	reaction.ac = null;
 
-	for (var b = first_batch; b !== null; b = b.next) abort_record(b.records?.get(reaction));
+	for (var b = first_batch; b !== null; b = b.next) {
+		var record = b.records?.get(reaction);
+
+		if (record?.ac) {
+			abort_signal(record.ac);
+			record.ac = null;
+		}
+	}
+
 	return true;
 }
 
@@ -860,7 +881,11 @@ function update_record(reaction, flags, length, value, error) {
  *
  * If the derived uses an abort signal, the kept run's may have been aborted when the derived ran again. Only the batches
  * that the new run supersedes (see `supersedes`) keep it regardless — it stays aborted for them until something it read
- * changes in their view. The others (forks, later batches) evaluate the derived again
+ * changes in their view. The others (forks, later batches) evaluate the derived again.
+ *
+ * A fork's run supersedes nothing, though, so the run it replaces isn't aborted: a batch may still be waiting for it.
+ * Every other batch keeps it then, and the record takes over its signal, which aborts once no batch holds the record
+ * anymore (see `abort_record`)
  * @param {Derived} derived
  * @param {number} flags the flags of the derived before the run
  */
@@ -880,12 +905,18 @@ function keep_global_run(derived, flags) {
 	/** @type {DerivedRecord | undefined} */
 	var record;
 
+	var ac = derived.ac;
+
+	// whether the run's signal stays live, because a fork's view ran the derived (it's only aborted before the
+	// derived runs again if the run was in the real world, see `abort_replaced`)
+	var live = ac !== null && current_batch !== null && current_batch.is_fork && !ac.signal.aborted;
+
 	for (var batch = first_batch; batch !== null; batch = batch.next) {
 		if (
 			batch !== view_batch &&
 			!batch.records?.has(derived) &&
-			// the run's signal may have been aborted when the derived ran again
-			(derived.ac === null || supersedes(current_batch, batch))
+			// otherwise, the run's signal was aborted when the derived ran again, or is about to be (see `set_global_signal`)
+			(ac === null || live || supersedes(current_batch, batch))
 		) {
 			// All batches that retain this run share one record. (Its versions are copied: the
 			// derived's next global run in the real world updates its own in place)
@@ -898,6 +929,12 @@ function keep_global_run(derived, flags) {
 			};
 			(batch.records ??= new Map()).set(derived, record);
 		}
+	}
+
+	if (live && record !== undefined) {
+		// the signal belongs to the batches that kept the run now. (If none did, `set_global_signal` aborts it)
+		record.ac = ac;
+		derived.ac = null;
 	}
 }
 

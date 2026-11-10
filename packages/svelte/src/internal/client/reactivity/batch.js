@@ -770,11 +770,14 @@ export class Batch {
 
 		for (const [reaction, record] of batch.records ?? []) {
 			if ((reaction.f & BLOCK_EFFECT) === 0) {
-				abort_record(this.records?.get(reaction));
+				var replaced = this.records?.get(reaction);
 				(this.records ??= new Map()).set(reaction, record);
 
 				// the run moves to this batch
 				batch.records?.delete(reaction);
+
+				// (once it's replaced, as both batches may hold the same record, see `keep_global_run`)
+				abort_record(reaction, replaced);
 			}
 		}
 
@@ -1376,8 +1379,8 @@ export class Batch {
 				prune_edges(reaction);
 			}
 
-			// abort this run - if it was promoted to global, this is a noop
-			abort_record(record);
+			// abort this run - if it was promoted to global, or another batch holds it, too, this is a noop
+			abort_record(reaction, record);
 		}
 	}
 
