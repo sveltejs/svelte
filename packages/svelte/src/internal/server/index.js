@@ -33,7 +33,7 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
 /**
  * @param {Renderer} renderer
  * @param {string} tag
- * @param {() => void} attributes_fn
+ * @param {(tag: string) => string | null | void} attributes_fn
  * @param {() => void} children_fn
  * @returns {void}
  */
@@ -45,11 +45,15 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
 			e.dynamic_element_invalid_tag(tag);
 		}
 		renderer.push(`<${tag}`);
-		attributes_fn();
+		const content = attributes_fn(tag);
 		renderer.push(`>`);
 
 		if (!is_void(tag)) {
-			children_fn();
+			if (content != null) {
+				renderer.push(content);
+			} else {
+				children_fn();
+			}
 			if (!is_raw_text_element(tag)) {
 				renderer.push(EMPTY_COMMENT);
 			}
@@ -125,9 +129,10 @@ export function css_props(renderer, is_html, props, component, dynamic = false) 
  * @param {Record<string, boolean>} [classes]
  * @param {Record<string, string>} [styles]
  * @param {number} [flags]
+ * @param {string} [tag]
  * @returns {string}
  */
-export function attributes(attrs, css_hash, classes, styles, flags = 0) {
+export function attributes(attrs, css_hash, classes, styles, flags = 0, tag) {
 	if (styles) {
 		attrs.style = to_style(attrs.style, styles);
 	}
@@ -145,7 +150,7 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 
 	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
-	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
+	const is_input = (flags & ELEMENT_IS_INPUT) !== 0 || (is_html && tag === 'input');
 	const names = Object.keys(attrs);
 
 	outer: for (let i = 0; i < names.length; i++) {
@@ -179,6 +184,35 @@ export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	}
 
 	return attr_str;
+}
+
+/**
+ * Extract a textarea's content from a fresh spread object before serializing its attributes.
+ * @param {Record<string, unknown>} attrs
+ * @param {boolean} [has_children]
+ * @returns {string | null}
+ */
+export function textarea_value(attrs, has_children = false) {
+	let value;
+	let default_value;
+
+	for (const name of Object.keys(attrs)) {
+		const lower = name.toLowerCase();
+		if (lower === 'value') {
+			value = attrs[name];
+			delete attrs[name];
+		} else if (lower === 'defaultvalue') {
+			default_value = attrs[name];
+			delete attrs[name];
+		}
+	}
+
+	value ??= has_children ? null : default_value;
+	if (value == null || typeof value === 'function') return null;
+
+	const content = escape_html(value);
+	// HTML parsing discards the first newline immediately after the opening tag.
+	return /^[\n\r]/.test(content) ? '\n' + content : content;
 }
 
 /**
