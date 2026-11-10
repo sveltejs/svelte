@@ -168,9 +168,9 @@ export function capture() {
 		set_component_context(previous_component_context);
 
 		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
-			// TODO we only need optional chaining here because `{#await ...}` blocks
-			// are anomalous. Once we retire them we can get rid of it
-			batch?.activate();
+			// TODO we only need the check here because `{#await ...}` blocks
+			// are anomalous. Once we retire them we can get rid of it.
+			if (batch) merge_target(batch).activate();
 		}
 
 		if (DEV) {
@@ -455,12 +455,13 @@ export function increment_pending(count = true) {
 	var effect = /** @type {Effect} */ (active_effect);
 	var blocking = !!effect.b?.is_rendered();
 	var boundary = count ? effect.b : null; // undefined if called outside the render tree, e.g. a standalone $effect.root
-	var batch = /** @type {Batch} */ (current_batch);
+	var batch = merge_target(/** @type {Batch} */ (current_batch));
 
 	boundary?.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
 	return () => {
+		batch = merge_target(batch);
 		boundary?.update_pending_count(-1, batch);
 		batch.decrement(blocking, effect);
 	};
