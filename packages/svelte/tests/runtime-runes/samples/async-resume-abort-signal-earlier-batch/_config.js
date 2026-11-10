@@ -36,10 +36,15 @@ export default test({
 		assert.htmlEqual(target.innerHTML, buttons);
 		assert.deepEqual(logs.splice(0), []);
 
-		// A's run: the content is created, B commits it in its view, then A in its own
+		// A's run: the content is created, B commits it in its view, then A in its own. A's run
+		// replaces B's as the committed one, which aborts that one's signal (though it's done already)
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
-		assert.deepEqual(logs.splice(0), ['commit c=1 a=false x=0', 'commit c=1 a=true x=1']);
+		assert.deepEqual(logs.splice(0), [
+			'commit c=1 a=false x=0',
+			'aborted x 0',
+			'commit c=1 a=true x=1'
+		]);
 	}
 });

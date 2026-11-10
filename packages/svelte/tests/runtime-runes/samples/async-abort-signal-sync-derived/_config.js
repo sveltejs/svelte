@@ -9,13 +9,9 @@ const buttons = `
 `;
 
 // A sync derived that returns a promise, with an abort signal (`$derived(load(x, getAbortSignal()))`), which
-// async expressions await. A derived has one signal, which every evaluation aborts. But it's evaluated in each
-// batch's view: B evaluates it with A's `x = 1` undone, which aborts the promise A's content awaits. That never
-// settles, so A never commits. (On `main`, B doesn't evaluate it again, and commits A's promise's value next to
-// its own `x`, for good: `<i>1 0</i>`)
+// async expressions await. It's evaluated in each batch's view: B evaluates it with A's `x = 1` undone, which mustn't
+// abort the promise A's content awaits.
 export default test({
-	// TODO see step 4 in getAbortSignalFixes.md
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		const [a, b, shift, pop] = target.querySelectorAll('button');
@@ -34,6 +30,9 @@ export default test({
 		pop.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<i>0 0</i>`);
+
+		// B committed, so its run of `p` is dropped
+		assert.deepEqual(logs.splice(0), ['aborted 0']);
 
 		// A's promise
 		shift.click();

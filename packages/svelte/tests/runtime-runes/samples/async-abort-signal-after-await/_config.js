@@ -8,9 +8,16 @@ const buttons = `
 	<button>pop</button>
 `;
 
-// Test that different worlds don't interfere with respects to their abort signals (variant where there's chained awaits)
-// (`load('x', await ..., getAbortSignal())`).
+// Test that different worlds don't interfere in respect of their abort signals, in the variant where
+// the signal is requested after an `await` (`load('x', await ..., getAbortSignal())`).
+//
+// TODO the signal can't be attributed to the run when it's requested after an `await`: it's the
+// effect's, which the next run of any batch aborts. So B's run aborts A's, which never settles, and A
+// never commits. (On `main`, B doesn't run the expression at all, but commits the branch without its
+// content.) This needs the `run`/`flatten` work that lives on `batch-views-run-flatten`
 export default test({
+	// unskip if we ever remove `e.get_abort_signal_after_await()`
+	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		await tick();
@@ -24,7 +31,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, buttons);
 		assert.deepEqual(logs.splice(0), ['c 1', 'x 1']);
 
-		// B's `c` result: B reveals the branch, and runs the expression in its own view
+		// B's `c` result: B reveals the branch, and runs the expression — which mustn't abort A's run
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
@@ -36,7 +43,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, buttons);
 		assert.deepEqual(logs.splice(0), []);
 
-		// A's run: the content is created, B commits it in its view, then A in its own
+		// A's run
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);

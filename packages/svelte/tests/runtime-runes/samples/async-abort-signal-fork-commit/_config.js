@@ -11,13 +11,9 @@ const buttons = `
 	<button>toggle</button>
 `;
 
-// The signal of the committed run should be aborted once the run is replaced. A fork's run doesn't replace it
-// when it starts (the fork may be discarded), but when the fork commits. Since each batch has its own signal, the
-// fork's run doesn't abort it anymore (before, it aborted it right away, the same on `main`), but the fork's
-// commit doesn't either: only the next run of a real batch does (step 3 in getAbortSignalFixes.md)
+// The signal of the real world's run is aborted once a run replaces it. A fork's run doesn't replace it
+// when it starts (the fork may be discarded), but when the fork commits
 export default test({
-	// TODO see above; not really pressing to fix but would be nice to at some point
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		const [inc_a, inc_b, fork, commit, discard, shift, toggle] = target.querySelectorAll('button');

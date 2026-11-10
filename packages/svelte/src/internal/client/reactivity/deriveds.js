@@ -12,7 +12,8 @@ import {
 	INERT,
 	CONNECTED,
 	ASSIGNED,
-	ERROR_VALUE
+	ERROR_VALUE,
+	HAS_ABORT_CONTROLLER
 } from '#client/constants';
 import {
 	active_reaction,
@@ -145,6 +146,7 @@ export function async_derived(fn, label, location) {
 	var first = deferred();
 
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
+	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
@@ -299,12 +301,6 @@ export function async_derived(fn, label, location) {
 			d.reject(OBSOLETE);
 		}
 	});
-
-	if (DEV) {
-		// add a flag that lets this be printed as a derived
-		// when using `$inspect.trace()`
-		signal.f |= ASYNC;
-	}
 
 	/**
 	 * Make `r` the run that the first value comes from (see `run`), and provide the value once that run is
@@ -557,7 +553,7 @@ export function freeze_derived_effects(derived) {
 
 	for (const e of derived.effects) {
 		// if the effect has a teardown function or abort signal, call it
-		if (e.teardown || e.ac) {
+		if (e.teardown || (e.f & HAS_ABORT_CONTROLLER) !== 0) {
 			e.teardown?.();
 			abort_all(e);
 
