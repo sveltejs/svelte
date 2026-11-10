@@ -963,7 +963,7 @@ export class Batch {
 						batch.current.set(source, entry);
 					} else {
 						// same value, later batch has more recent value, or the batch's own result
-						// of an async expression (see `capture_result`) — no need to re-run these effects
+						// of an async expression — no need to re-run these effects
 						continue;
 					}
 				}
