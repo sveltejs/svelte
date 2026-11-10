@@ -340,7 +340,7 @@ export function async_derived(fn, label, location) {
 	/**
 	 * Find the next run to wait for (or the current one is still the correct one):
 	 * - current one is ok if still in `runs` and either not a fork or no other real batches exist
-	 * - else find first real committed, else first real, else just next one
+	 * - else find first real, else just next one
 	 * @param {Batch} batch
 	 */
 	function next(batch) {
