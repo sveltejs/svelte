@@ -294,10 +294,13 @@ function set_attributes(
 
 	var is_custom_element = attributes[IS_CUSTOM_ELEMENT];
 	var preserve_attribute_case = !attributes[IS_HTML];
+	var should_isolate = is_custom_element || element.hasAttribute('is');
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
 
 	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
 	// then it might run block logic in hydration mode, which we have to prevent.
-	let is_hydrating_custom_element = hydrating && is_custom_element;
+	let is_hydrating_custom_element = hydrating && should_isolate;
 	if (is_hydrating_custom_element) {
 		set_hydrating(false);
 	}
@@ -322,6 +325,13 @@ function set_attributes(
 
 		if (next[STYLE]) {
 			next.style ??= null; /* force call to set_style() */
+		}
+
+		// Keep class normalization tracked, but do not let custom element setters or
+		// lifecycle callbacks capture the spread's dependencies or child effects.
+		if (should_isolate) {
+			set_active_reaction(null);
+			set_active_effect(null);
 		}
 
 		var setters = get_setters(element);
@@ -499,6 +509,11 @@ function set_attributes(
 			}
 		}
 	} finally {
+		if (should_isolate) {
+			set_active_reaction(previous_reaction);
+			set_active_effect(previous_effect);
+		}
+
 		if (is_hydrating_custom_element) {
 			set_hydrating(true);
 		}
