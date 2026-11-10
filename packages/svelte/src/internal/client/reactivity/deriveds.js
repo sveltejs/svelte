@@ -30,12 +30,13 @@ import {
 	promote_record,
 	changed_since,
 	is_dirty,
-	abort_all
+	abort_all,
+	get
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
+import { async_effect, block, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, set_eager_effects, source } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -115,17 +116,16 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
- * @returns {Promise<Source<V>>}
+ * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, label, location) {
+export function async_expression(fn, label, location) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
 		e.async_derived_orphan();
 	}
 
-	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 	signal.f |= ASYNC;
 
@@ -133,9 +133,6 @@ export function async_derived(fn, label, location) {
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
-
-	// The batch the derived is created in. Whoever awaits its first value continues in its view (see `flatten` and `run`)
-	var creator = current_batch;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -149,7 +146,6 @@ export function async_derived(fn, label, location) {
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
-		promise = d.promise;
 
 		try {
 			// If this code is changed at some point, make sure to still access the then property
@@ -195,9 +191,7 @@ export function async_derived(fn, label, location) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
 			// we will decrement to zero before the work that depends on this promise (e.g. a
 			// template effect) has initialized, causing the batch to resolve prematurely
-			if ((effect.f & REACTION_RAN) !== 0) {
-				var decrement_pending = increment_pending();
-			}
+			var decrement_pending = increment_pending();
 
 			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
 			deferreds.add(d);
@@ -244,44 +238,33 @@ export function async_derived(fn, label, location) {
 		}
 	});
 
-	return new Promise((fulfil) => {
-		/** @param {Promise<V>} p */
-		function next(p) {
-			function go() {
-				if (p !== promise) {
-					// if the effect re-runs before the initial promise
-					// resolves, delay resolution until we have a value
-					next(promise);
-					return;
-				}
+	return signal;
+}
 
-				// While the boundary shows its pending snippet, batches commit without waiting for their runs, and a
-				// committed run supersedes those of the batches that committed before (see `Batch#release_records`).
-				// So the first value can be another batch's result, which the creator's view can't undo. Until that
-				// batch commits it, the creator mustn't continue with it — and the boundary keeps showing its pending
-				// snippet. (Elsewhere, the creator's own run provides the first value in its view)
-				var writer =
-					should_suspend && !(/** @type {Effect} */ (parent).b?.is_rendered())
-						? uncommitted_first_value(signal, creator)
-						: null;
+/**
+ * @template V
+ * @param {() => V | Promise<V>} fn
+ * @param {string} [label]
+ * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @returns {Promise<Source<V>>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function async_derived(fn, label, location) {
+	return new Promise((fulfil, reject) => {
+		const source = async_expression(fn, label, location);
 
-				if (writer === null) {
-					fulfil(signal);
-				} else {
-					// (check again once the commit is done)
-					writer.oncommit(resume);
-					writer.ondiscard(resume);
-				}
+		block(() => {
+			if (source.v === UNINITIALIZED) {
+				get(source);
+				return;
 			}
 
-			function resume() {
-				queue_micro_task(go);
+			if ((source.f & ERROR_VALUE) !== 0) {
+				reject(source.v);
+			} else {
+				fulfil(source);
 			}
-
-			p.then(go, go);
-		}
-
-		next(promise);
+		})
 	});
 }
 

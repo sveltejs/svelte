@@ -1,6 +1,6 @@
 /** @import { Blocker, Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
-import { DESTROYED, STALE_REACTION } from '#client/constants';
+import { DESTROYED, EFFECT_PRESERVED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -13,18 +13,20 @@ import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
 	active_reaction,
+	get,
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
 import { current_batch } from './batch.js';
 import {
-	async_derived,
 	reactivity_loss_tracker,
 	derived,
 	derived_safe_equal,
-	set_reactivity_loss_tracker
+	set_reactivity_loss_tracker,
+	async_expression
 } from './deriveds.js';
-import { aborted } from './effects.js';
+import { aborted, block, teardown } from './effects.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -69,13 +71,14 @@ export function flatten(blockers, sync, async, fn) {
 
 	/**
 	 * @param {Source[]} async
+	 * @param {boolean} restore_batch TODO get rid of this
 	 */
-	function finish(async) {
+	function finish(async, restore_batch = true) {
 		if ((parent.f & DESTROYED) !== 0) {
 			return;
 		}
 
-		restore();
+		restore(restore_batch);
 
 		try {
 			fn([...deriveds, ...async]);
@@ -96,10 +99,23 @@ export function flatten(blockers, sync, async, fn) {
 
 	// Full path: has async expressions
 	function run() {
-		Promise.all(async.map((expression) => async_derived(expression)))
-			.then(finish)
-			.catch((error) => invoke_error_boundary(error, parent))
-			.finally(decrement_pending);
+		const signals = async.map((expression) => async_expression(expression));
+
+		block(() => {
+			for (const s of signals) {
+				if (s.v === UNINITIALIZED) {
+					get(s);
+					return;
+				}
+			}
+
+			finish(signals, false);
+			decrement_pending();
+		}, EFFECT_PRESERVED);
+
+		teardown(() => {
+			decrement_pending();
+		});
 	}
 
 	if (blocker_promise) {
