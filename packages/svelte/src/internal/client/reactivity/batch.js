@@ -394,7 +394,7 @@ export class Batch {
 			// that so far only existed offscreen (possibly for another batch, whose view of the world its
 			// effects ran in), or that a batch whose writes are part of its view skips (and so didn't run the
 			// effects that its writes affect, or reset them) — re-validate its effects in this batch's view
-			this.#revalidate_branch(effect);
+			this.revalidate_branch(effect);
 		}
 
 		this.#unskipped_branches.add(effect);
@@ -414,7 +414,7 @@ export class Batch {
 	/**
 	 * @param {Effect} effect
 	 */
-	#revalidate_branch(effect) {
+	revalidate_branch(effect) {
 		for (var e = effect.first; e !== null; e = e.next) {
 			var flags = e.f;
 
@@ -424,7 +424,7 @@ export class Batch {
 					this.schedule(e, MAYBE_DIRTY);
 				}
 
-				this.#revalidate_branch(e);
+				this.revalidate_branch(e);
 			}
 		}
 	}

@@ -25,8 +25,7 @@ import {
 	set_reactivity_loss_tracker,
 	async_expression
 } from './deriveds.js';
-import { aborted, block, teardown } from './effects.js';
-import { UNINITIALIZED } from '../../../constants.js';
+import { aborted, block, branch, teardown } from './effects.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -103,6 +102,9 @@ export function flatten(blockers, sync, async, fn) {
 	function run() {
 		const signals = async.map((expression) => async_expression(expression));
 
+		/** @type {Effect | null} */
+		var effect = null;
+
 		block(() => {
 			for (const s of signals) {
 				if ((s.f & PAUSED) !== 0) {
@@ -111,7 +113,18 @@ export function flatten(blockers, sync, async, fn) {
 				}
 			}
 
-			finish(signals, false);
+			if (effect !== null) {
+				/** @type {Batch} */ (current_batch).revalidate_branch(effect);
+			} else {
+				effect = branch(() => {
+					try {
+						fn([...deriveds, ...signals]);
+					} catch (error) {
+						invoke_error_boundary(error, parent);
+					}
+				});
+			}
+
 			// decrement_pending();
 		}, EFFECT_PRESERVED);
 
