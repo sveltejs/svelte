@@ -13,7 +13,7 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
-import { has_own_property, is_array, noop } from '../shared/utils.js';
+import { has_own_property, is_array, noop, push_array } from '../shared/utils.js';
 import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -613,69 +613,41 @@ export class Renderer {
 	}
 
 	/**
-	 * Collect all of the `onDestroy` callbacks registered during rendering. In an async context, this is only safe to call
-	 * after awaiting `collect_async`.
-	 *
-	 * Child renderers are "porous" and don't affect execution order, but component body renderers
-	 * create ordering boundaries. Within a renderer, callbacks run in order until hitting a component boundary.
-	 * @returns {Iterable<() => void>}
-	 */
-	*#collect_on_destroy() {
-		for (const component of this.#traverse_components()) {
-			yield* component.#collect_ondestroy();
-		}
-	}
-
-	/**
-	 * Performs a depth-first search of renderers, yielding the deepest components first, then additional components as we backtrack up the tree.
-	 * @returns {Iterable<Renderer>}
-	 */
-	*#traverse_components() {
-		for (const child of this.#out) {
-			if (typeof child !== 'string') {
-				yield* child.#traverse_components();
-			}
-		}
-		if (this.#is_component_body) {
-			yield this;
-		}
-	}
-
-	/**
-	 * @returns {Iterable<() => void>}
-	 */
-	*#collect_ondestroy() {
-		if (this.#on_destroy) {
-			for (const fn of this.#on_destroy) {
-				yield fn;
-			}
-		}
-		for (const child of this.#out) {
-			if (child instanceof Renderer && !child.#is_component_body) {
-				yield* child.#collect_ondestroy();
-			}
-		}
-	}
-
-	/**
-	 * Runs every `onDestroy` callback in this renderer tree. On a failed render,
-	 * cleanup errors are suppressed so they do not mask the render error.
-	 * @param {boolean} suppress_errors
+	 * runs onDestroy callbacks deepest component first, each with its child renderers in document order
+	 * only call once the content has been collected
+	 * @param {boolean} suppress_errors so callback errors on a failed render do not mask the render error
 	 */
 	#run_on_destroy(suppress_errors) {
 		let first_error;
 		let has_error = false;
 
-		for (const cleanup of this.#collect_on_destroy()) {
-			try {
-				cleanup();
-			} catch (error) {
-				if (!suppress_errors && !has_error) {
-					first_error = error;
-					has_error = true;
+		/**
+		 * @param {Renderer} renderer
+		 * @param {Array<() => void>} callbacks callbacks of the enclosing component
+		 */
+		const visit = (renderer, callbacks) => {
+			if (renderer.#is_component_body) callbacks = [];
+			if (renderer.#on_destroy) push_array(callbacks, renderer.#on_destroy);
+
+			for (const child of renderer.#out) {
+				if (child instanceof Renderer) visit(child, callbacks);
+			}
+
+			if (!renderer.#is_component_body) return;
+
+			for (const cleanup of callbacks) {
+				try {
+					cleanup();
+				} catch (error) {
+					if (!suppress_errors && !has_error) {
+						first_error = error;
+						has_error = true;
+					}
 				}
 			}
-		}
+		};
+
+		visit(this, []);
 
 		if (has_error) throw first_error;
 	}
