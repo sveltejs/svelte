@@ -27,7 +27,8 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>loading 1...</p> <p>loading 2...</p>`);
 
 		// batch C: writes a=1; the async-a effect re-runs in C. That's inside boundary 2, which shows
-		// its pending snippet, so C commits (and stays live until the run resolves). Its run supersedes B's
+		// its pending snippet, so C is done right away. B ran the effect, too, so C merges into B (see
+		// `Batch#intersects`), whose run C's supersedes, and B commits a=1 (and stays live until the run resolves)
 		up.click();
 		await tick();
 
