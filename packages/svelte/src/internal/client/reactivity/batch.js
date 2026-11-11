@@ -1087,7 +1087,12 @@ export class Batch {
 	 */
 	transfer_effects(dirty_effects) {
 		for (const [effect, status] of dirty_effects) {
-			add_dirty_effect(this.#unprocessed, effect, status);
+			if (is_processing && current_batch === this) {
+				// (unprocessed effects are scheduled when the batch is processed, which is happening right now)
+				this.#add(effect, status);
+			} else {
+				add_dirty_effect(this.#unprocessed, effect, status);
+			}
 		}
 
 		dirty_effects.clear();

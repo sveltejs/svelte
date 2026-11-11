@@ -1,4 +1,5 @@
 /** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
 import {
 	DERIVED,
@@ -48,7 +49,7 @@ import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { Batch, batch_values, current_batch, view_batch, view_cache } from './batch.js';
+import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
 import { increment_pending, merge_target, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
@@ -200,40 +201,15 @@ export function async_expression(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
+			decrement_pending?.();
 			deferreds.delete(d);
 
-			// The first value lets the code that waits for it continue (see `flatten`), which may start more
-			// work. The batch is only done with this run once that has happened, i.e. once it was processed
-			// with the value — otherwise a boundary would show content that doesn't exist yet. An error
-			// creates nothing
-			var hold =
-				(signal.f & PAUSED) !== 0 && error === undefined && decrement_pending !== undefined;
-
-			if (!hold) decrement_pending?.();
 			if (error === OBSOLETE) return;
 
 			signal.f &= ~PAUSED;
 
-			// A batch that was merged into another one continues as that one
-			var target = merge_target(batch);
-
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			target.capture(signal, error ?? value, same, !!error);
-
-			if (hold) {
-				queue_micro_task(() => {
-					try {
-						target = merge_target(target);
-						if (target.linked) target.flush();
-					} catch (e) {
-						// (not via `queue_micro_task`, which must not be used while a `flushSync` unwinds)
-						queueMicrotask(() => decrement_pending?.());
-						throw e;
-					}
-
-					decrement_pending?.();
-				});
-			}
+			merge_target(batch).capture(signal, error ?? value, same, !!error);
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);

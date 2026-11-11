@@ -441,9 +441,13 @@ export class Boundary {
 	 * Do not call from inside the class
 	 * @param {1 | -1} d
 	 * @param {Batch} batch
+	 * @param {boolean} [counts] `false` for something that isn't pending work (which `$effect.pending()` counts),
+	 * but has to happen before the content can be shown
 	 */
-	update_pending_count(d, batch) {
+	update_pending_count(d, batch, counts = true) {
 		this.#update_pending_count(d, batch);
+
+		if (!counts) return;
 
 		this.#local_pending_count += d;
 

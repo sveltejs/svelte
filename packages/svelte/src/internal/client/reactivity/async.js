@@ -105,6 +105,19 @@ export function flatten(blockers, sync, async, fn) {
 		/** @type {Effect | null} */
 		var effect = null;
 
+		// Creating the branch may start more async work. Until that has happened, the boundary must not show
+		// its content, even if all the work that it knows of is done. (A batch can't commit in between, as
+		// the branch is created when the batch is processed)
+		var boundary = parent.b;
+		var batch = /** @type {Batch} */ (current_batch);
+
+		boundary?.update_pending_count(1, batch, false);
+
+		function release() {
+			boundary?.update_pending_count(-1, current_batch ?? merge_target(batch), false);
+			boundary = null;
+		}
+
 		block(() => {
 			for (const s of signals) {
 				if ((s.f & PAUSED) !== 0) {
@@ -121,16 +134,14 @@ export function flatten(blockers, sync, async, fn) {
 						fn([...deriveds, ...signals]);
 					} catch (error) {
 						invoke_error_boundary(error, parent);
+					} finally {
+						release();
 					}
 				});
 			}
-
-			// decrement_pending();
 		}, EFFECT_PRESERVED);
 
-		teardown(() => {
-			// decrement_pending();
-		});
+		teardown(release);
 	}
 
 	if (blocker_promise) {
