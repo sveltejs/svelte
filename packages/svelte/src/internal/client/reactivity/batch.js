@@ -66,7 +66,11 @@ let last_batch = null;
 /** @type {Batch | null} */
 export let current_batch = null;
 
-/** @type {Batch | null} */
+/**
+ * The batch currently being processed (see `#process`). Used to resolve
+ * pending boundaries when branches are created or abandoned
+ * @type {Batch | null}
+ */
 export let processing_batch = null;
 
 /**
