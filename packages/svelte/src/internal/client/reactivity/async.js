@@ -1,5 +1,6 @@
 /** @import { Blocker, Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
+/** @import { Boundary } from '../dom/blocks/boundary.js' */
 import { DESTROYED, EFFECT_PRESERVED, PAUSED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -108,14 +109,13 @@ export function flatten(blockers, sync, async, fn) {
 		// Creating the branch may start more async work. Until that has happened, the boundary must not show
 		// its content, even if all the work that it knows of is done. (A batch can't commit in between, as
 		// the branch is created when the batch is processed)
-		var boundary = parent.b;
+		var boundary = /** @type {Boundary} */ (parent.b);
 		var batch = /** @type {Batch} */ (current_batch);
 
 		boundary?.update_pending_count(1, batch, false);
 
 		function release() {
 			boundary?.update_pending_count(-1, current_batch ?? merge_target(batch), false);
-			boundary = null;
 		}
 
 		block(() => {
