@@ -62,13 +62,15 @@ export const userState = $state({
 
 Stores are still a good solution when you have complex asynchronous data streams or it's important to have more manual control over updating values or listening to changes. If you're familiar with RxJs and want to reuse that knowledge, the `$` also comes in handy for you.
 
-## Stores and effects
+## Granularity of stores
 
 Stores notify subscribers about their entire value. Unlike a deeply reactive [`$state` proxy]($state#Deep-state), a plain object held in a store does not track individual property reads. An [`$effect`]($effect) that reads `$user.name` therefore also re-runs when the store is updated because another property, such as `age`, changed.
 
 If an effect should only react to a particular value, select that value with [`$derived`]($derived):
 
+<!-- codeblock:start {"title":"$effect.tracking()"} -->
 ```svelte
+<!-- file: App.svelte -->
 <script>
 	import { writable } from 'svelte/store';
 
@@ -89,8 +91,7 @@ If an effect should only react to a particular value, select that value with [`$
 <button onclick={() => ($user.age += 1)}>Increase age</button>
 <button onclick={() => ($user.name += '!')}>Change name</button>
 ```
-
-Both effects run initially. Clicking **Increase age** re-runs only the first effect; clicking **Change name** re-runs both. The derived `name` is a string, so its [equality check]($derived#Update-propagation) prevents updates from reaching the second effect while the name stays the same.
+<!-- codeblock:end -->
 
 ## svelte/store
 
