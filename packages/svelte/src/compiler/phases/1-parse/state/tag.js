@@ -4,7 +4,7 @@
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { create_fragment, ExpressionMetadata } from '../../nodes.js';
-import { parse_expression_at, parse_statement_at } from '../acorn.js';
+import { parse_expression_at, parse_statement_at, try_parse_expression_from } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
@@ -489,11 +489,16 @@ function open(parser) {
 
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(
+					try_parse_expression_from(
 						parser,
-						parser.template.slice(0, parser.index) + ' => {}',
+						parser.template.slice(params_start, parser.index) + ' => {}',
 						params_start
-					)
+					) ??
+						parse_expression_at(
+							parser,
+							parser.template.slice(0, parser.index) + ' => {}',
+							params_start
+						)
 				)
 			: { params: [] };
 
