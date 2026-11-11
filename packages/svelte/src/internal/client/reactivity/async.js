@@ -96,7 +96,7 @@ export function flatten(blockers, sync, async, fn) {
 		boundary.increment();
 
 		function release() {
-			// `procssing_batch` can be `null` during `unmount`
+			// `processing_batch` can be `null` during `unmount`
 			if (processing_batch !== null) {
 				boundary.decrement(processing_batch);
 			}
