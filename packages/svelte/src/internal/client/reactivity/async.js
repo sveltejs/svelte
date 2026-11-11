@@ -55,13 +55,9 @@ export function flatten(blockers, sync, async, fn) {
 
 	if (pending.length > 0) {
 		var restore = capture();
+		var p = pending.length === 1 ? pending[0].promise : Promise.all(pending.map((b) => b.promise));
 
-		var promise =
-			pending.length === 1
-				? pending[0].promise
-				: Promise.all(pending.map((b) => b.promise));
-
-		promise.then(() => {
+		p.then(() => {
 			if ((parent.f & DESTROYED) !== 0) {
 				return;
 			}
