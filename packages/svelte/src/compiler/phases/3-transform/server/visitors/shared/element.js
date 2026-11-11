@@ -164,7 +164,7 @@ export function build_element_attributes(node, context, transform) {
 					name: 'checked',
 					expression: is_checkbox
 						? b.call(
-								b.member(expression, 'includes'),
+								b.member(b.logical('||', expression, b.array()), 'includes'),
 								build_attribute_value(value_attribute.value, context, transform)
 							)
 						: b.binary(
