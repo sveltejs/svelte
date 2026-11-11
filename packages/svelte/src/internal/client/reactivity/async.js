@@ -112,10 +112,10 @@ export function flatten(blockers, sync, async, fn) {
 		var boundary = /** @type {Boundary} */ (parent.b);
 		var batch = /** @type {Batch} */ (current_batch);
 
-		boundary?.update_pending_count(1, batch, false);
+		boundary.update_pending_count(1, batch);
 
 		function release() {
-			boundary?.update_pending_count(-1, current_batch ?? merge_target(batch), false);
+			boundary.update_pending_count(-1, current_batch ?? merge_target(batch));
 		}
 
 		block(() => {
@@ -446,11 +446,13 @@ export function increment_pending() {
 	var blocking = !!boundary?.is_rendered();
 
 	boundary?.update_pending_count(1, batch);
+	boundary?.update_effect_pending(1);
 	batch.increment(blocking, effect);
 
 	return () => {
 		batch = merge_target(batch);
 		boundary?.update_pending_count(-1, batch);
+		boundary?.update_effect_pending(-1);
 		batch.decrement(blocking, effect);
 	};
 }

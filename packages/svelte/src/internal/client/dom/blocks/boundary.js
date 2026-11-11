@@ -407,10 +407,10 @@ export class Boundary {
 	 * @param {1 | -1} d
 	 * @param {Batch} batch
 	 */
-	#update_pending_count(d, batch) {
+	update_pending_count(d, batch) {
 		if (!this.has_pending_snippet()) {
 			if (this.parent) {
-				this.parent.#update_pending_count(d, batch);
+				this.parent.update_pending_count(d, batch);
 			}
 
 			// if there's no parent, we're in a scope with no pending snippet
@@ -436,19 +436,11 @@ export class Boundary {
 	}
 
 	/**
-	 * Update the source that powers `$effect.pending()` inside this boundary,
-	 * and controls when the current `pending` snippet (if any) is removed.
+	 * Update the source that powers `$effect.pending()` inside this boundary.
 	 * Do not call from inside the class
 	 * @param {1 | -1} d
-	 * @param {Batch} batch
-	 * @param {boolean} [counts] `false` for something that isn't pending work (which `$effect.pending()` counts),
-	 * but has to happen before the content can be shown
 	 */
-	update_pending_count(d, batch, counts = true) {
-		this.#update_pending_count(d, batch);
-
-		if (!counts) return;
-
+	update_effect_pending(d) {
 		this.#local_pending_count += d;
 
 		if (!this.#effect_pending || this.#pending_count_update_queued) return;
