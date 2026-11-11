@@ -92,14 +92,13 @@ export function flatten(blockers, sync, async, fn) {
 		// its content, even if all the work that it knows of is done. (A batch can't commit in between, as
 		// the branch is created when the batch is processed)
 		var boundary = /** @type {Boundary} */ (parent.b);
-		var batch = /** @type {Batch} */ (current_batch);
 
-		boundary.update_pending_count(1, batch);
+		boundary.increment();
 
 		function release() {
 			// `procssing_batch` can be `null` during `unmount`
 			if (processing_batch !== null) {
-				boundary.update_pending_count(-1, processing_batch);
+				boundary.decrement(processing_batch);
 			}
 		}
 
@@ -415,13 +414,13 @@ export function increment_pending() {
 	var batch = merge_target(/** @type {Batch} */ (current_batch));
 	var blocking = !!boundary?.is_rendered();
 
-	boundary?.update_pending_count(1, batch);
+	boundary?.increment();
 	boundary?.update_effect_pending(1);
 	batch.increment(blocking, effect);
 
 	return () => {
 		batch = merge_target(batch);
-		boundary?.update_pending_count(-1, batch);
+		boundary?.decrement(batch);
 		boundary?.update_effect_pending(-1);
 		batch.decrement(blocking, effect);
 	};

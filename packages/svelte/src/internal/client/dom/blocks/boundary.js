@@ -401,25 +401,27 @@ export class Boundary {
 		}
 	}
 
-	/**
-	 * Updates the pending count associated with the currently visible pending snippet,
-	 * if any, such that we can replace the snippet with content once work is done
-	 * @param {1 | -1} d
-	 * @param {Batch} batch
-	 */
-	update_pending_count(d, batch) {
+	increment() {
 		if (!this.has_pending_snippet()) {
-			if (this.parent) {
-				this.parent.update_pending_count(d, batch);
-			}
-
-			// if there's no parent, we're in a scope with no pending snippet
+			this.parent?.increment();
 			return;
 		}
 
-		this.#pending_count += d;
+		this.#pending_count += 1;
+	}
 
-		if (this.#pending_count === 0) {
+	/**
+	 * Updates the pending count associated with the currently visible pending snippet,
+	 * if any, such that we can replace the snippet with content once work is done
+	 * @param {Batch} batch
+	 */
+	decrement(batch) {
+		if (!this.has_pending_snippet()) {
+			this.parent?.decrement(batch);
+			return;
+		}
+
+		if (--this.#pending_count === 0) {
 			this.#resolve(batch);
 
 			if (this.#pending_effect) {
