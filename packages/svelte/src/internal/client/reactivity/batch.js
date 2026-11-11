@@ -1091,9 +1091,12 @@ export class Batch {
 	 * @param {Map<Effect, number>} dirty_effects
 	 */
 	transfer_effects(dirty_effects) {
+		if (dirty_effects.size === 0) return;
+
 		for (const [effect, status] of dirty_effects) {
-			if (is_processing && current_batch === this) {
-				// (unprocessed effects are scheduled when the batch is processed, which is happening right now)
+			if (this === processing_batch) {
+				// we are in the branch commit phase. we got here because a `boundary.decrement(...)` in `flatten`
+				// caused a pending boundary to resolve. it's too late to add the effect to `this.#unprocessed`
 				this.#add(effect, status);
 			} else {
 				add_dirty_effect(this.#unprocessed, effect, status);
