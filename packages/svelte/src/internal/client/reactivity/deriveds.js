@@ -36,20 +36,19 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, block, destroy_effect, destroy_effect_children, teardown } from './effects.js';
+import {
+	async_effect,
+	block,
+	destroy_effect,
+	destroy_effect_children,
+	teardown
+} from './effects.js';
 import { eager_effects, set_eager_effects, source } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import {
-	Batch,
-	batch_values,
-	current_batch,
-	uncommitted_first_value,
-	view_batch,
-	view_cache
-} from './batch.js';
+import { Batch, batch_values, current_batch, view_batch, view_cache } from './batch.js';
 import { increment_pending, merge_target, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
