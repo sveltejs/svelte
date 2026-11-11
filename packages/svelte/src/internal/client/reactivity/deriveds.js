@@ -131,9 +131,6 @@ export function async_expression(fn, label, location) {
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
-	// only suspend in async deriveds created on initialisation
-	var should_suspend = !active_reaction;
-
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
 
@@ -186,17 +183,11 @@ export function async_expression(fn, label, location) {
 		}
 
 		var batch = /** @type {Batch} */ (current_batch);
+		var decrement_pending = increment_pending();
 
-		if (should_suspend) {
-			// we only increment the batch's pending state for updates, not creation, otherwise
-			// we will decrement to zero before the work that depends on this promise (e.g. a
-			// template effect) has initialized, causing the batch to resolve prematurely
-			var decrement_pending = increment_pending();
-
-			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
-			deferreds.add(d);
-			batch.async_deriveds.set(effect, d);
-		}
+		batch.async_deriveds.get(effect)?.reject(OBSOLETE);
+		deferreds.add(d);
+		batch.async_deriveds.set(effect, d);
 
 		/**
 		 * @param {any} value
@@ -226,22 +217,8 @@ export function async_expression(fn, label, location) {
 			// A batch that was merged into another one continues as that one
 			var target = merge_target(batch);
 
-			// An async derived that was created inside a reaction doesn't hold its batch back, so the batch
-			// may be done by now, in which case the result belongs to a new one
-			if (!should_suspend && !target.linked) {
-				target = Batch.ensure();
-			}
-
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			target.capture(signal, error ?? value, same, !!error);
-
-			// Nothing processes a batch that isn't held back once the value is there, but whoever
-			// waits for the value does so in an effect (see `async_derived`), which has to run
-			if (!should_suspend && target.linked) {
-				queue_micro_task(() => {
-					if (target.linked) target.flush();
-				});
-			}
 
 			if (hold) {
 				queue_micro_task(() => {
@@ -291,6 +268,11 @@ export function async_expression(fn, label, location) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
+	if (current_batch === null || active_reaction !== null) {
+		// `$derived(await ...)` created outside traversal, don't participate in coordination
+		return Promise.resolve(fn()).then((value) => source(value));
+	}
+
 	return new Promise((fulfil, reject) => {
 		const source = async_expression(fn, label, location);
 
