@@ -69,34 +69,29 @@ export function flatten(blockers, sync, async, fn) {
 				? Promise.all(pending.map((b) => b.promise))
 				: null;
 
-	/**
-	 * @param {Source[]} async
-	 * @param {boolean} restore_batch TODO get rid of this
-	 */
-	function finish(async, restore_batch = true) {
-		if ((parent.f & DESTROYED) !== 0) {
-			return;
-		}
+	if (blocker_promise) {
+		// TODO fold blocker_promise into `signals`
+		blocker_promise.then(() => {
+			if ((parent.f & DESTROYED) !== 0) {
+				return;
+			}
 
-		restore(restore_batch);
+			restore();
 
-		try {
-			fn([...deriveds, ...async]);
-		} catch (error) {
-			invoke_error_boundary(error, parent);
-		}
+			try {
+				if (async.length > 0) {
+					run();
+				} else {
+					fn(deriveds);
+				}
+			} catch (error) {
+				invoke_error_boundary(error, parent);
+			}
 
-		unset_context(restore_batch);
-	}
-
-	// var decrement_pending = increment_pending();
-
-	// Fast path: blockers but no async expressions
-	// TODO get rid in favour of unified mechanism
-	if (async.length === 0) {
-		var decrement_pending = increment_pending();
-		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([])).finally(decrement_pending);
-		return;
+			unset_context();
+		});
+	} else {
+		run();
 	}
 
 	// Full path: has async expressions
@@ -145,21 +140,6 @@ export function flatten(blockers, sync, async, fn) {
 		}, EFFECT_PRESERVED);
 
 		teardown(release);
-	}
-
-	if (blocker_promise) {
-		// TODO fold blocker_promise into `signals`
-		blocker_promise.then(() => {
-			if ((parent.f & DESTROYED) !== 0) {
-				return;
-			}
-
-			restore();
-			run();
-			unset_context();
-		});
-	} else {
-		run();
 	}
 }
 
