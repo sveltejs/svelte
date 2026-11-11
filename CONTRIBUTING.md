@@ -113,6 +113,8 @@ Test samples are kept in `/tests/xxx/samples` folders.
 
    (You can also do `FILTER=<test-name> pnpm test <suite-name>` which removes other tests rather than simply skipping them — this will result in faster and more compact test results, but it's non-idiomatic. Choose your fighter.)
 
+The `runtime-*` and `server-side-rendering` suites only recompile a test's components if the test's files, its compile options or the compiler itself changed since it was last compiled (see `_output/{client,server}/info.json`). To always recompile, run `NO_COMPILE_CACHE=true pnpm test`.
+
 ##### Updating `.expected` files
 
 1. Tests suites like `snapshot` and `parser` assert that the generated output matches the existing snapshot.

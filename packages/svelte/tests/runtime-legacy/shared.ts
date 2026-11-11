@@ -6,7 +6,7 @@ import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
-import { async_mode, compile_directory, fragments } from '../helpers.js';
+import { async_mode, compile_directory_cached, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
@@ -262,8 +262,8 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
 	// so you can manipulate the output manually to see what fixes it, adding console.logs etc.
 	if (!config.load_compiled) {
-		await compile_directory(cwd, 'client', compileOptions);
-		await compile_directory(cwd, 'server', compileOptions);
+		await compile_directory_cached(cwd, 'client', compileOptions);
+		await compile_directory_cached(cwd, 'server', compileOptions);
 	}
 
 	return compileOptions;
