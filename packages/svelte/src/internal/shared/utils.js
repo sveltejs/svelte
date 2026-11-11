@@ -49,6 +49,18 @@ export function run_all(arr) {
 }
 
 /**
+ * `array.push(...items)` overflows the stack for large `items`.
+ * @template T
+ * @param {T[]} array
+ * @param {T[]} items
+ */
+export function push_array(array, items) {
+	for (var i = 0; i < items.length; i++) {
+		array.push(items[i]);
+	}
+}
+
+/**
  * TODO replace with Promise.withResolvers once supported widely enough
  * @template [T=void]
  */
