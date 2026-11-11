@@ -6,6 +6,11 @@ import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
 import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 import { async_mode_flag } from '../../../../flags/index.js';
+import {
+	has_attribute,
+	remove_attribute,
+	set_attribute as set_attribute_op
+} from '../../operations.js';
 
 /**
  * Sets the `selected` attribute on an option so form reset can restore it.
@@ -14,9 +19,13 @@ import { async_mode_flag } from '../../../../flags/index.js';
  */
 export function set_selected(option, selected) {
 	if (selected) {
-		if (!option.hasAttribute('selected')) option.setAttribute('selected', '');
+		// The selected option could've changed via user selection, and
+		// setting the value without this check would set it back.
+		if (!has_attribute(option, 'selected')) {
+			set_attribute_op(option, 'selected', '');
+		}
 	} else {
-		option.removeAttribute('selected');
+		remove_attribute(option, 'selected');
 	}
 }
 
