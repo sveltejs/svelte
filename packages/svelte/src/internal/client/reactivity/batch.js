@@ -830,12 +830,7 @@ export class Batch {
 	 */
 	capture(source, value, same, error = false, updated_during_traversal = null) {
 		var previous = this.previous.get(source);
-
-		var later = this.next;
-
-		while (later !== null && (later.is_fork || !later.current.has(source))) {
-			later = later.next;
-		}
+		var later = later_writer(this, source);
 
 		if (previous === undefined) {
 			// the value before this batch's change is the one before the later batch's change, if any
@@ -1633,6 +1628,22 @@ function flush_queued_effects(effects, earlier_writes = null) {
 }
 
 /**
+ * The next batch after `batch` that wrote `source`, if any. Its write comes after one of `batch` in order, so
+ * that one isn't the real-world value. Forks are skipped: their writes only exist in their own view of the world
+ * @param {Batch} batch
+ * @param {Value} source
+ */
+function later_writer(batch, source) {
+	var later = batch.next;
+
+	while (later !== null && (later.is_fork || !later.current.has(source))) {
+		later = later.next;
+	}
+
+	return later;
+}
+
+/**
  * Make a write the real-world value of `source`. A write to a derived is an assignment, whose
  * value holds until one of the derived's dependencies is written after it (see `changed_since`)
  * @param {Value} source
@@ -1853,16 +1864,21 @@ export function fork(fn) {
 			}
 
 			committed = true;
-
 			batch.is_fork = false;
 
 			// Apply the changes to the real world. They keep the versions they had in the fork,
 			// so that everything the fork computed remains valid (processing the batch
 			// re-validates everything that depends on them, see `#process`)
-			for (var [source, entry] of batch.current) {
-				batch.mark(source, MAYBE_DIRTY);
+			for (const [source, entry] of batch.current) {
+				const later = later_writer(batch, source);
 
-				apply(source, entry);
+				if (later !== null) {
+					// in order, the fork's write comes before the later batch's, which replaces it
+					later.previous.set(source, entry);
+				} else {
+					batch.mark(source, MAYBE_DIRTY);
+					apply(source, entry);
+				}
 			}
 
 			if (eager_effects.size > 0) {
