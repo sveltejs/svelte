@@ -27,6 +27,7 @@ import {
 	async_expression
 } from './deriveds.js';
 import { aborted, block, branch, teardown } from './effects.js';
+import { branch_promises } from '../dom/blocks/branches.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -35,6 +36,7 @@ import { aborted, block, branch, teardown } from './effects.js';
  * @param {(values: Value[]) => any} fn
  */
 export function flatten(blockers, sync, async, fn) {
+	console.warn('flatten');
 	var parent = /** @type {Effect} */ (active_effect);
 	var deriveds = sync.map(is_runes() ? derived : derived_safe_equal);
 
@@ -395,6 +397,8 @@ export function run(thunks) {
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
 		.finally(decrement_pending);
+
+	branch_promises.push(promise);
 
 	return blockers;
 }

@@ -18,6 +18,9 @@ import { DEV } from 'esm-env';
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
  */
 
+/** @type {Array<Promise<void>>} */
+export let branch_promises = [];
+
 /**
  * @template Key
  */
@@ -50,6 +53,13 @@ export class BranchManager {
 	 * @type {Map<Key, Branch>}
 	 */
 	#offscreen = new Map();
+
+	/**
+	 * Initialisation work that happens when a branch is created must be awaited by any
+	 * batch that later selects the branch, not just the batch that created the branch
+	 * @type {Map<Effect, Promise<any>>}
+	 */
+	#promises = new Map();
 
 	/**
 	 * Keys of effects that are currently outroing
@@ -178,14 +188,28 @@ export class BranchManager {
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
 
-		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
+		var effect = this.#onscreen.get(key) ?? this.#offscreen.get(key)?.effect;
+
+		if (fn && !effect) {
 			if (defer) {
 				var fragment = document.createDocumentFragment();
 				var target = create_text();
 
 				fragment.append(target);
 
-				var effect = branch(() => fn(target));
+				var previous_branch_promises = branch_promises;
+				branch_promises = [];
+
+				try {
+					effect = branch(() => fn(target));
+
+					if (branch_promises.length > 0) {
+						var promise = branch_promises.length === 0 ? branch_promises[0] : Promise.all(branch_promises);
+						this.#promises.set(effect, promise);
+					}
+				} finally {
+					branch_promises = previous_branch_promises;
+				}
 
 				// until it is committed, the branch only exists for the batches that select it
 				effect.f |= EFFECT_OFFSCREEN;
@@ -201,6 +225,10 @@ export class BranchManager {
 		}
 
 		this.#batches.set(batch, key);
+
+		// TODO when we select a branch, with `batch.unskip_effect`, we need to somehow
+		// tell the batch to wait for the associated promise to resolve, if it exists
+		// (but if we later unselect it with `batch.skip_effect` we stop waiting)
 
 		if (defer) {
 			for (const [k, effect] of this.#onscreen) {
