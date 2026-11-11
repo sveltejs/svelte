@@ -67,8 +67,7 @@ let last_batch = null;
 export let current_batch = null;
 
 /**
- * The batch currently being processed (see `#process`). Used to resolve
- * pending boundaries when branches are created or abandoned
+ * The batch currently being processed (see `#process`)
  * @type {Batch | null}
  */
 export let processing_batch = null;
@@ -161,7 +160,6 @@ let last_scheduled_effect = null;
 var rebases = new Set();
 
 export let is_flushing_sync = false;
-let is_processing = false;
 
 /**
  * During traversal, this is an array. Newly created effects are (if not immediately
@@ -931,8 +929,6 @@ export class Batch {
 		var context = push_teardown_context(this.previous);
 
 		try {
-			is_processing = true;
-
 			this.#process();
 
 			// (the size check avoids allocating an iterator in the common case)
@@ -951,7 +947,6 @@ export class Batch {
 			last_scheduled_effect = null;
 			collected_effects = null;
 			legacy_updates = null;
-			is_processing = false;
 
 			teardown_context = context.parent;
 			this.deactivate();
@@ -1159,7 +1154,7 @@ export class Batch {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 
-			if (!is_processing && !is_flushing_sync) {
+			if (processing_batch === null && !is_flushing_sync) {
 				queue_micro_task(() => {
 					if (!batch.started) {
 						batch.flush();
@@ -1341,7 +1336,7 @@ export class Batch {
 			return;
 		}
 
-		if ((!is_processing || current_batch !== this) && active_reaction === null) {
+		if (processing_batch !== this && active_reaction === null) {
 			if (this.prev !== null || this.next !== null || this.is_fork) {
 				add_dirty_effect(this.#unprocessed, effect, MAYBE_DIRTY);
 				return;
