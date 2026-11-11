@@ -2,7 +2,7 @@
 /** @import { Parser } from '../index.js' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import { has_lf_line_breaks_only, parse_expression_at, remove_parens } from '../acorn.js';
+import { parse_expression_at, remove_parens } from '../acorn.js';
 import { find_matching_bracket } from '../utils/bracket.js';
 import { is_reserved } from '../../../../utils.js';
 import { locator } from '../../../state.js';
@@ -70,7 +70,7 @@ export default function read_expression(parser, opening_token, disallow_loose) {
  * @returns {Expression | null}
  */
 function read_simple_expression(parser) {
-	if (!has_lf_line_breaks_only(parser)) return null;
+	if (!parser.lf_only) return null;
 
 	const template = parser.template;
 	const index = parser.index;
