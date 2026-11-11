@@ -1,5 +1,4 @@
 /** @import { Blocker, Effect, Source, Value } from '#client' */
-/** @import { Batch } from './batch.js' */
 /** @import { Boundary } from '../dom/blocks/boundary.js' */
 import { DESTROYED, EFFECT_PRESERVED, PAUSED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
@@ -18,7 +17,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch, processing_batch } from './batch.js';
+import { Batch, current_batch, processing_batch } from './batch.js';
 import {
 	reactivity_loss_tracker,
 	derived,
@@ -27,7 +26,6 @@ import {
 	async_expression
 } from './deriveds.js';
 import { aborted, block, branch, teardown } from './effects.js';
-import { branch_promises } from '../dom/blocks/branches.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -36,7 +34,6 @@ import { branch_promises } from '../dom/blocks/branches.js';
  * @param {(values: Value[]) => any} fn
  */
 export function flatten(blockers, sync, async, fn) {
-	console.warn('flatten');
 	var parent = /** @type {Effect} */ (active_effect);
 	var deriveds = sync.map(is_runes() ? derived : derived_safe_equal);
 
@@ -332,7 +329,7 @@ export function unset_context(deactivate_batch = true) {
 export function run(thunks) {
 	const restore = capture();
 
-	const decrement_pending = increment_pending();
+	const decrement_pending = increment_pending(true);
 
 	var active = /** @type {Effect} */ (active_effect);
 
@@ -398,8 +395,6 @@ export function run(thunks) {
 		.then(() => Promise.resolve())
 		.finally(decrement_pending);
 
-	branch_promises.push(promise);
-
 	return blockers;
 }
 
@@ -413,9 +408,12 @@ export function wait(blockers) {
 /**
  * Adds pending work to the current batch, and to the boundary of the active effect. If the batch is merged
  * into another one before the work is done, it's that batch's from then on (see `Batch#merge`)
+ * @param {boolean} [initial] whether the work is part of creating the active effect's content (the rest of a
+ * component's script after an `await`), in which case every batch that selects the branch that the effect is
+ * in waits for it, not just the current one (see `Batch.initialize`)
  * @returns {(skip?: boolean) => void}
  */
-export function increment_pending() {
+export function increment_pending(initial = false) {
 	var effect = /** @type {Effect} */ (active_effect);
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
 	var batch = merge_target(/** @type {Batch} */ (current_batch));
@@ -425,11 +423,14 @@ export function increment_pending() {
 	boundary?.update_effect_pending(1);
 	batch.increment(blocking, effect);
 
+	var initialized = initial && blocking ? Batch.initialize(effect) : null;
+
 	return () => {
 		batch = merge_target(batch);
 		boundary?.decrement(batch);
 		boundary?.update_effect_pending(-1);
 		batch.decrement(blocking, effect);
+		initialized?.(batch);
 	};
 }
 

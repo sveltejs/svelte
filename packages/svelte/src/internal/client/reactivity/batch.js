@@ -198,6 +198,13 @@ let uid = 1;
 
 let last_processed = 0;
 
+/**
+ * Effects whose content is still being created by blocking async work, with the amount
+ * of that work (see `Batch.initialize`)
+ * @type {Map<Effect, number>}
+ */
+var initializing = new Map();
+
 export class Batch {
 	id = uid++;
 
@@ -350,7 +357,64 @@ export class Batch {
 			}
 		}
 
+		// a branch that is still being created can't be committed, whichever batch started creating it
+		for (const effect of initializing.keys()) {
+			if ((effect.f & DESTROYED) !== 0) {
+				initializing.delete(effect);
+			} else if (this.#selects(effect)) {
+				return true;
+			}
+		}
+
 		return false;
+	}
+
+	/**
+	 * Whether `effect` is inside a branch that only exists offscreen so far, and that this batch selects
+	 * @param {Effect} effect
+	 */
+	#selects(effect) {
+		var selected = false;
+
+		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
+			if (this.#skips(e)) return false;
+			if ((e.f & EFFECT_OFFSCREEN) !== 0) selected = true;
+		}
+
+		return selected;
+	}
+
+	/**
+	 * Blocking work that is part of creating the content of `effect` starts (see `increment_pending`). Unlike
+	 * other pending work it isn't just the current batch's: the code that creates the content runs once, so
+	 * every batch that selects the branch that `effect` is in waits for it (see `#is_deferred`).
+	 * Returns a function to call once the work is done, with the batch that it was done in
+	 * @param {Effect} effect
+	 * @returns {(batch: Batch) => void}
+	 */
+	static initialize(effect) {
+		initializing.set(effect, (initializing.get(effect) ?? 0) + 1);
+
+		return (batch) => {
+			var count = initializing.get(effect);
+			if (count === undefined) return;
+
+			if (count > 1) {
+				initializing.set(effect, count - 1);
+				return;
+			}
+
+			initializing.delete(effect);
+
+			// The other batches that select the branch can go on. What the work created ran in the view
+			// of the batch that the work was done in, so they have to re-validate it in theirs first
+			for (var b = first_batch; b !== null; b = b.next) {
+				if (b !== batch && b.#selects(effect)) {
+					b.revalidate_branch(effect);
+					b.#queue_flush();
+				}
+			}
+		};
 	}
 
 	/**
@@ -1070,6 +1134,10 @@ export class Batch {
 			}
 		}
 
+		this.#queue_flush();
+	}
+
+	#queue_flush() {
 		if (this.#decrement_queued) return;
 		this.#decrement_queued = true;
 
