@@ -83,7 +83,7 @@ export function flatten(blockers, sync, async, fn) {
 			return;
 		}
 
-		const signals = async.map((expression) => async_expression(expression));
+		var signals = async.map((fn) => async_expression(fn));
 
 		/** @type {Effect | null} */
 		var effect = null;
@@ -104,7 +104,7 @@ export function flatten(blockers, sync, async, fn) {
 		}
 
 		block(() => {
-			for (const s of signals) {
+			for (var s of signals) {
 				if ((s.f & PAUSED) !== 0) {
 					get(s);
 					return;
