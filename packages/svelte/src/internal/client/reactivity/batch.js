@@ -66,6 +66,9 @@ let last_batch = null;
 /** @type {Batch | null} */
 export let current_batch = null;
 
+/** @type {Batch | null} */
+export let processing_batch = null;
+
 /**
  * @typedef {Object} TeardownContext
  * @property {Map<Value, BatchValue>} reverted_values What teardowns see instead of the values sources hold: the values
@@ -477,7 +480,7 @@ export class Batch {
 	}
 
 	#process() {
-		current_batch = this;
+		current_batch = processing_batch = this;
 
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
@@ -916,9 +919,7 @@ export class Batch {
 	}
 
 	deactivate() {
-		current_batch = null;
-		batch_values = view_cache = null;
-		view_batch = null;
+		current_batch = processing_batch = batch_values = view_cache = view_batch = null;
 	}
 
 	flush() {

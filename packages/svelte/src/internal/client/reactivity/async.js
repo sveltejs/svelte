@@ -18,7 +18,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch } from './batch.js';
+import { current_batch, processing_batch } from './batch.js';
 import {
 	reactivity_loss_tracker,
 	derived,
@@ -115,7 +115,10 @@ export function flatten(blockers, sync, async, fn) {
 		boundary.update_pending_count(1, batch);
 
 		function release() {
-			boundary.update_pending_count(-1, current_batch ?? merge_target(batch));
+			// `procssing_batch` can be `null` during `unmount`
+			if (processing_batch !== null) {
+				boundary.update_pending_count(-1, processing_batch);
+			}
 		}
 
 		block(() => {
