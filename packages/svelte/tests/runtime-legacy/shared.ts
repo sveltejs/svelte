@@ -5,7 +5,7 @@ import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
-import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
+import { afterAll, assert, beforeAll, beforeEach, inject } from 'vitest';
 import { async_mode, compile_directory_cached, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
@@ -266,7 +266,24 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		await compile_directory_cached(cwd, 'server', compileOptions);
 	}
 
+	// Components using `$inspect.trace` turn on tracing mode for good, by importing `svelte/internal/flags/tracing`.
+	// All subsequent tests in the same worker would then also run in (much slower) tracing mode, so these samples
+	// get a shard of their own (see `vitest.config.js`). That only works if they follow the naming convention
+	if (inject('shard')?.include !== 'inspect-trace' && uses_tracing(`${cwd}/_output/client`)) {
+		throw new Error(
+			'Samples using `$inspect.trace` must be in runtime-runes and named `inspect-trace-*`, ' +
+				'so that they run in their own worker (see `vitest.config.js`). This is enforced to' +
+				'prevent the tracing flag being enabled for all tests in a suite, which slows them down.'
+		);
+	}
+
 	return compileOptions;
+}
+
+function uses_tracing(output_dir: string) {
+	return globSync('**/*.js', { cwd: output_dir }).some((file) =>
+		fs.readFileSync(`${output_dir}/${file}`, 'utf-8').includes('svelte/internal/flags/tracing')
+	);
 }
 
 async function run_test_variant(
