@@ -35,12 +35,8 @@ import { aborted, block, branch, teardown } from './effects.js';
  * @param {(values: Value[]) => any} fn
  */
 export function flatten(blockers, sync, async, fn) {
-	const d = is_runes() ? derived : derived_safe_equal;
-
-	// Filter out already-settled blockers - no need to wait for them
-	var pending = blockers.filter((b) => !b.settled);
-
-	var deriveds = sync.map(d);
+	var parent = /** @type {Effect} */ (active_effect);
+	var deriveds = sync.map(is_runes() ? derived : derived_safe_equal);
 
 	if (DEV) {
 		deriveds.forEach((d, i) => {
@@ -54,24 +50,18 @@ export function flatten(blockers, sync, async, fn) {
 		});
 	}
 
-	if (async.length === 0 && pending.length === 0) {
-		fn(deriveds);
-		return;
-	}
+	// Filter out already-settled blockers - no need to wait for them
+	var pending = blockers.filter((b) => !b.settled);
 
-	var parent = /** @type {Effect} */ (active_effect);
+	if (pending.length > 0) {
+		var restore = capture();
 
-	var restore = capture();
-	var blocker_promise =
-		pending.length === 1
-			? pending[0].promise
-			: pending.length > 1
-				? Promise.all(pending.map((b) => b.promise))
-				: null;
+		var promise =
+			pending.length === 1
+				? pending[0].promise
+				: Promise.all(pending.map((b) => b.promise));
 
-	if (blocker_promise) {
-		// TODO fold blocker_promise into `signals`
-		blocker_promise.then(() => {
+		promise.then(() => {
 			if ((parent.f & DESTROYED) !== 0) {
 				return;
 			}
@@ -79,11 +69,7 @@ export function flatten(blockers, sync, async, fn) {
 			restore();
 
 			try {
-				if (async.length > 0) {
-					run();
-				} else {
-					fn(deriveds);
-				}
+				run();
 			} catch (error) {
 				invoke_error_boundary(error, parent);
 			}
@@ -96,6 +82,11 @@ export function flatten(blockers, sync, async, fn) {
 
 	// Full path: has async expressions
 	function run() {
+		if (async.length === 0) {
+			fn(deriveds);
+			return;
+		}
+
 		const signals = async.map((expression) => async_expression(expression));
 
 		/** @type {Effect | null} */
