@@ -153,8 +153,8 @@ export function async_expression(fn, label, location) {
 				.then(d.resolve, (e) => {
 					// if the promise was rejected by the user, via `getAbortSignal`, then
 					// wait for a subsequent resolution instead of flushing the batch
-					// if (e !== STALE_REACTION) d.reject(e);
-					d.reject(e);
+					if (e !== STALE_REACTION) d.reject(e);
+					// d.reject(e);
 				})
 				.finally(unset_context);
 		} catch (error) {
