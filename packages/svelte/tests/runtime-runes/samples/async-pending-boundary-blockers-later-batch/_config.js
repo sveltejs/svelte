@@ -11,7 +11,6 @@ const buttons = `
 // blockers are done: the expression runs in it then, and its result must resolve the boundary
 export default test({
 	mode: ['client'],
-	solo: true,
 	async test({ assert, target }) {
 		const [show, shift] = target.querySelectorAll('button');
 		await tick();
