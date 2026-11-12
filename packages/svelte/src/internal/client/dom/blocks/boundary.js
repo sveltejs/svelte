@@ -342,7 +342,8 @@ export class Boundary {
 				this.#children(this.#anchor);
 			});
 
-			var batch = /** @type {Batch} */ (current_batch);
+			const batch = /** @type {Batch} */ (current_batch);
+			const pending = this.#props.pending;
 
 			if (this.is_ready(batch)) {
 				this.is_pending = false;
@@ -355,12 +356,11 @@ export class Boundary {
 				// }
 
 				// this.#dirty_effects.clear();
-			} else {
+			} else if (pending) {
 				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 				move_effect(this.#main_effect, fragment);
 
-				const pending = this.#props.pending;
-				if (pending) this.#pending_effect = branch(() => pending(this.#anchor));
+				this.#pending_effect = branch(() => pending(this.#anchor));
 			}
 
 		} catch (error) {
@@ -474,7 +474,9 @@ export class Boundary {
 			this.#pending.set(effect, blocking_pending_count - 1);
 		}
 
-		batch.schedule(this.#effect, MAYBE_DIRTY);
+		if (this.#pending.size === 0) {
+			batch.schedule(this.#effect, MAYBE_DIRTY);
+		}
 	}
 
 	/**
