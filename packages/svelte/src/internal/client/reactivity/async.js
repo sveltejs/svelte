@@ -99,11 +99,12 @@ export function flatten(blockers, sync, async, fn) {
 
 		var released = false;
 
+		// TODO do we still need this?
 		function release() {
 			// `processing_batch` can be `null` during `unmount`
 			if (!released && processing_batch !== null) {
 				released = true;
-				boundary.decrement(parent);
+				boundary.decrement(parent, processing_batch);
 			}
 		}
 
@@ -428,7 +429,7 @@ export function wait(blockers) {
  */
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
-	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
+	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root TODO does this even make sense?
 	var batch = merge_target(/** @type {Batch} */ (current_batch));
 
 	batch.increment(effect);
@@ -437,7 +438,7 @@ export function increment_pending() {
 
 	return () => {
 		merge_target(batch).decrement(effect);
-		boundary?.decrement(effect);
+		boundary?.decrement(effect, batch);
 		boundary?.update_effect_pending(-1);
 	};
 }

@@ -4,7 +4,8 @@ import {
 	DESTROYED,
 	DESTROYING,
 	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT
+	EFFECT_TRANSPARENT,
+	MAYBE_DIRTY
 } from '#client/constants';
 import {
 	HYDRATION_ERROR,
@@ -459,8 +460,9 @@ export class Boundary {
 
 	/**
 	 * @param {Effect} effect
+	 * @param {Batch} batch
 	 */
-	decrement(effect) {
+	decrement(effect, batch) {
 		let blocking_pending_count = this.#pending.get(effect) ?? 0;
 
 		if (blocking_pending_count === 1) {
@@ -468,6 +470,8 @@ export class Boundary {
 		} else {
 			this.#pending.set(effect, blocking_pending_count - 1);
 		}
+
+		batch.schedule(this.#effect, MAYBE_DIRTY);
 	}
 
 	/**
