@@ -1,4 +1,4 @@
-import type { Store } from '#shared';
+import type { Store, WarpKey } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Batch } from './reactivity/batch.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
@@ -6,8 +6,13 @@ import type { Effect, Source, Value } from './reactivity/types.js';
 declare global {
 	interface Window {
 		__svelte?: {
-			/** hydratables */
-			h?: Map<string, unknown>;
+			/** `Warp` values, keyed by the `Warp`'s id */
+			w?: Map<string, Map<WarpKey, unknown>>;
+			/**
+			 * The queue that the server's `<script>`s push `Warp` values onto: an array until
+			 * the client handles it, and devalue's queue after that
+			 */
+			d?: unknown;
 		};
 	}
 }
