@@ -397,8 +397,7 @@ export function run(thunks) {
 		.finally(decrement_pending);
 
 	async_effect(() => {
-		var decrement_pending = increment_pending();
-		promise.finally(decrement_pending);
+		promise.finally(increment_pending());
 	});
 
 	return blockers;
