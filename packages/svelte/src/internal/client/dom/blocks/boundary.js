@@ -313,21 +313,14 @@ export class Boundary {
 
 			var batch = /** @type {Batch} */ (current_batch);
 
-			if (this.#main_effect === null) {
-				this.#offscreen_fragment = null;
-				if (handled) this.#resolve(batch);
-				return;
-			}
-
-			if (this.is_ready(batch)) {
+			if (this.#main_effect !== null && this.is_ready(batch)) {
+				this.is_pending = false;
 				this.#anchor.before(fragment);
 				this.#offscreen_fragment = null;
 
 				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
 					this.#pending_effect = null;
 				});
-
-				this.#resolve(batch);
 			}
 		});
 	}
@@ -347,15 +340,6 @@ export class Boundary {
 
 			if (this.is_ready(batch)) {
 				this.is_pending = false;
-				// console.log(this.#dirty_effects);
-				// console.log('batch ready');
-
-				// for (const [effect, status] of this.#dirty_effects) {
-				// 	// collected_effects?.push(effect);
-				// 	batch.schedule(effect, status);
-				// }
-
-				// this.#dirty_effects.clear();
 			} else {
 				if (this.parent?.is_pending) {
 					this.parent.increment(this.#main_effect);
@@ -374,18 +358,6 @@ export class Boundary {
 		} catch (error) {
 			this.error(error);
 		}
-	}
-
-	/**
-	 * TODO do we still need this?
-	 * @param {Batch} batch
-	 */
-	#resolve(batch) {
-		this.is_pending = false;
-
-		// any effects that were previously deferred should be transferred
-		// to the batch, which will flush in the next microtask
-		batch.transfer_effects(this.#dirty_effects);
 	}
 
 	/**
