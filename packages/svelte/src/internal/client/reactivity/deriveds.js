@@ -8,7 +8,6 @@ import {
 	STALE_REACTION,
 	ASYNC,
 	DESTROYED,
-	REACTION_RAN,
 	INERT,
 	CONNECTED,
 	ASSIGNED,
@@ -51,7 +50,6 @@ import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
 import { increment_pending, merge_target, unset_context } from './async.js';
-import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -201,7 +199,7 @@ export function async_expression(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
-			decrement_pending?.();
+			decrement_pending();
 			deferreds.delete(d);
 
 			if (error === OBSOLETE) return;

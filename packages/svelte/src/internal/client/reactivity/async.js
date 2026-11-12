@@ -76,7 +76,6 @@ export function flatten(blockers, sync, async, fn) {
 		run();
 	}
 
-	// Full path: has async expressions
 	function run() {
 		if (async.length === 0) {
 			fn(deriveds);
@@ -388,10 +387,13 @@ export function run(thunks) {
 	}
 
 	async_effect(() => {
+		// Inside an effect so later adopting branches can rerun this
 		promise
 			// wait one more tick, so that template effects are
-			// guaranteed to run before `$effect(...)`
+			// guaranteed to run before `$effect(...)`.
 			.then(() => Promise.resolve())
+			// The increment_pending() runs directly and finally
+			// will run its decrement.
 			.finally(increment_pending());
 	});
 
@@ -408,7 +410,7 @@ export function wait(blockers) {
 /**
  * Adds pending work to the current batch, and to the boundary of the active effect. If the batch is merged
  * into another one before the work is done, it's that batch's from then on (see `Batch#merge`)
- * @returns {(skip?: boolean) => void}
+ * @returns {() => void}
  */
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
