@@ -8,12 +8,8 @@ const buttons = `
 	<button>shift</button>
 `;
 
-// A fork re-runs an expression with an `await` inside, and is discarded while its run is in flight. Then hiding
-// the branch doesn't take effect, and neither does showing it again afterwards (its content isn't created again).
-// Without the `await` inside the expression, it works.
+// A fork re-runs an expression with an `await` inside, and is discarded while its run is in flight
 export default test({
-	// TODO see above
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		const [toggle, fork, discard, shift] = target.querySelectorAll('button');
