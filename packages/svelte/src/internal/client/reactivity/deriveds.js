@@ -32,7 +32,8 @@ import {
 	changed_since,
 	is_dirty,
 	abort_all,
-	get
+	get,
+	untrack
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -54,7 +55,6 @@ import { increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
-import { untrack } from 'svelte';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals

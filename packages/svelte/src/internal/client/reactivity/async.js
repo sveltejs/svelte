@@ -344,6 +344,7 @@ export function run(thunks) {
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
 		if (!aborted(active)) {
+			restore();
 			invoke_error_boundary(error, active);
 		}
 	};
