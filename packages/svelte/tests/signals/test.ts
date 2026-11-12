@@ -21,7 +21,8 @@ import {
 } from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
-import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { derived, user_derived } from '../../src/internal/client/reactivity/deriveds';
+import { capture, unset_context } from '../../src/internal/client/reactivity/async';
 import { source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
@@ -1698,6 +1699,89 @@ describe('signals', () => {
 			flushSync();
 
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
+		};
+	});
+
+	// https://github.com/sveltejs/svelte/issues/19227
+	test('deriveds read in the reaction that created them do not retain their sources', () => {
+		return () => {
+			const long_lived = state(1);
+			const long_lived_derived = user_derived(() => $.get(long_lived) + 1);
+			const destroy = effect_root(() => {
+				const component_derived = user_derived(() => $.get(long_lived_derived) + 1);
+				render_effect(() => {
+					const local = user_derived(() => $.get(component_derived) + 1);
+					assert.equal($.get(local), 4);
+				});
+			});
+
+			flushSync();
+			destroy();
+			flushSync();
+			assert.equal(long_lived.reactions, null);
+			assert.equal(long_lived_derived.reactions, null);
+		};
+	});
+
+	test('same-reaction derived reads stay fresh and can later connect to a tracked reader', () => {
+		return () => {
+			const source = state(1);
+			let local!: Derived<number>;
+			const log: number[] = [];
+			const destroy_owner = effect_root(() => {
+				render_effect(() => {
+					local = user_derived(() => $.get(source) + 1);
+					log.push($.get(local), $.get(local));
+				});
+			});
+
+			assert.equal(source.reactions, null);
+			assert.equal(local.f & CONNECTED, 0);
+			flushSync(() => set(source, 2));
+			assert.deepEqual(log, [2, 2]);
+			assert.equal($.get(local), 3);
+			assert.equal(source.reactions, null);
+
+			const destroy_reader = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(local));
+				});
+			});
+
+			flushSync(() => set(source, 3));
+			assert.deepEqual(log, [2, 2, 3, 4]);
+			assert.equal(source.reactions?.length, 1);
+			destroy_reader();
+			assert.equal(source.reactions, null);
+			destroy_owner();
+		};
+	});
+
+	test('a read in a restored destroyed effect context does not connect deriveds', () => {
+		return () => {
+			const source = state(1);
+			const value = derived(() => $.get(source) + 1);
+			const trigger = state(0);
+			let restore!: ReturnType<typeof capture>;
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(trigger);
+					restore = capture();
+				});
+			});
+
+			destroy();
+			// Model an async continuation resuming after its effect was destroyed.
+			restore(false);
+			try {
+				assert.equal($.get(value), 2);
+			} finally {
+				unset_context(false);
+			}
+
+			assert.equal(source.reactions, null);
+			assert.equal(value.reactions, null);
+			assert.equal(value.f & CONNECTED, 0);
 		};
 	});
 
