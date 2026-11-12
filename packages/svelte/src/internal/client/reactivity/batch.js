@@ -370,7 +370,14 @@ export class Batch {
 		var e = effect;
 
 		while (e !== root) {
-			if (this.#skips(e) || ((e.f & BOUNDARY_EFFECT) !== 0 && /** @type {Boundary} */ (e.b).is_pending)) return true;
+			if (this.#skips(e)) {
+				return true;
+			}
+
+			if ((e.f & BOUNDARY_EFFECT) !== 0 && (e.f & DESTROYED) === 0 && /** @type {Boundary} */ (e.b).is_pending) {
+				return true;
+			}
+
 			e = /** @type {Effect} */ (e.parent);
 		}
 

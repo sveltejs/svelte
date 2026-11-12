@@ -426,7 +426,7 @@ export class Boundary {
 	is_ready(batch) {
 		for (const effect of this.#pending.keys()) {
 			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
-			if (batch.is_skipped(effect, this.#effect)) {
+			if (!batch.is_skipped(effect, this.#main_effect)) {
 				return false;
 			}
 		}
