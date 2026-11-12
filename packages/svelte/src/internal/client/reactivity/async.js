@@ -131,6 +131,7 @@ export function flatten(blockers, sync, async, fn) {
 			}
 		}, EFFECT_TRANSPARENT);
 
+		// TODO i think we can delete this?
 		teardown(release);
 	}
 }
