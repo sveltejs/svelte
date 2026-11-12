@@ -249,6 +249,9 @@ export function CallExpression(node, context) {
 			...context.state,
 			function_depth: context.state.function_depth + 1,
 			derived_function_depth: context.state.function_depth + 1,
+			// `$derived(...)` is itself the reactive boundary declaration tags are missing, so
+			// an outer-scope reference read here is a legitimate deferred read, not a snapshot
+			outer_function_depth: undefined,
 			expression
 		});
 
@@ -259,7 +262,11 @@ export function CallExpression(node, context) {
 		// Tell surrounding declaration tag about metadata for correct calculation of blockers etc
 		if (context.state.in_declaration_tag) context.state.expression?.merge(expression);
 	} else if (rune === '$inspect') {
-		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
+		context.next({
+			...context.state,
+			function_depth: context.state.function_depth + 1,
+			outer_function_depth: undefined
+		});
 	} else {
 		context.next();
 	}
