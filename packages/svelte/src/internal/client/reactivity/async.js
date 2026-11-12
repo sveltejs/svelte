@@ -328,10 +328,7 @@ export function unset_context(deactivate_batch = true) {
  * @param {Array<() => void | Promise<void>>} thunks
  */
 export function run(thunks) {
-	const restore = capture();
-
-	const decrement_pending = increment_pending();
-
+	var restore = capture();
 	var active = /** @type {Effect} */ (active_effect);
 
 	/** @type {null | { error: any }} */
@@ -390,14 +387,12 @@ export function run(thunks) {
 		});
 	}
 
-	promise
-		// wait one more tick, so that template effects are
-		// guaranteed to run before `$effect(...)`
-		.then(() => Promise.resolve())
-		.finally(decrement_pending);
-
 	async_effect(() => {
-		promise.finally(increment_pending());
+		promise
+			// wait one more tick, so that template effects are
+			// guaranteed to run before `$effect(...)`
+			.then(() => Promise.resolve())
+			.finally(increment_pending());
 	});
 
 	return blockers;
