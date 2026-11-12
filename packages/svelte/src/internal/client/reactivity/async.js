@@ -100,10 +100,15 @@ export function flatten(blockers, sync, async, fn) {
 		var released = false;
 
 		function release() {
+			// prefer current_batch if set: in that case processing_batch, if present,
+			// would be in the effect flushing phase already, by which time it's too late
+			// to hand potential effects to that batch. current_batch might also be the only
+			// one set in case this comes from a transition with a deferred destroy.
 			// `processing_batch` can be `null` during `unmount`
-			if (!released && processing_batch !== null) {
+			var batch = current_batch ?? processing_batch;
+			if (!released && batch !== null) {
 				released = true;
-				boundary.decrement(processing_batch);
+				boundary.decrement(batch);
 			}
 		}
 
