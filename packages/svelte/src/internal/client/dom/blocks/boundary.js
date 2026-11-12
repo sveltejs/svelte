@@ -342,8 +342,8 @@ export class Boundary {
 				this.#children(this.#anchor);
 			});
 
-			const batch = /** @type {Batch} */ (current_batch);
-			const pending = this.#props.pending;
+			var batch = /** @type {Batch} */ (current_batch);
+
 
 			if (this.is_ready(batch)) {
 				this.is_pending = false;
@@ -356,11 +356,19 @@ export class Boundary {
 				// }
 
 				// this.#dirty_effects.clear();
-			} else if (pending) {
-				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
-				move_effect(this.#main_effect, fragment);
+			} else {
+				if (this.parent?.is_pending) {
+					this.parent.increment(this.#main_effect);
+				}
 
-				this.#pending_effect = branch(() => pending(this.#anchor));
+				const pending = this.#props.pending;
+
+				if (pending) {
+					var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+					move_effect(this.#main_effect, fragment);
+
+					this.#pending_effect = branch(() => pending(this.#anchor));
+				}
 			}
 
 		} catch (error) {
@@ -476,6 +484,10 @@ export class Boundary {
 
 		if (this.#pending.size === 0) {
 			batch.schedule(this.#effect, MAYBE_DIRTY);
+
+			if (this.parent?.is_pending) {
+				this.parent.decrement(/** @type {Effect} */ (this.#main_effect), batch);
+			}
 		}
 	}
 
