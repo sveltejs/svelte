@@ -158,7 +158,6 @@ export function async_expression(fn, label, location) {
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
-			unset_context();
 		}
 
 		if (DEV) {
