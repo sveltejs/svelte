@@ -197,7 +197,6 @@ export function async_expression(fn, label, location) {
 		const handler = (value, error = undefined) => {
 			if (DEV) {
 				invariant(view_batch === null, 'Batch is currently active');
-
 				reactivity_loss_tracker = null;
 			}
 

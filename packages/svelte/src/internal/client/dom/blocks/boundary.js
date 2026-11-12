@@ -342,6 +342,7 @@ export class Boundary {
 			var batch = /** @type {Batch} */ (current_batch);
 
 			if (this.is_ready(batch)) {
+				this.is_pending = false;
 				// console.log(this.#dirty_effects);
 				// console.log('batch ready');
 
@@ -358,6 +359,7 @@ export class Boundary {
 				const pending = this.#props.pending;
 				if (pending) this.#pending_effect = branch(() => pending(this.#anchor));
 			}
+
 		} catch (error) {
 			this.error(error);
 		}
@@ -424,7 +426,7 @@ export class Boundary {
 	is_ready(batch) {
 		for (const effect of this.#pending.keys()) {
 			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
-			if (!batch.is_skipped(effect)) {
+			if (batch.is_skipped(effect, this.#effect)) {
 				return false;
 			}
 		}

@@ -364,10 +364,14 @@ export class Batch {
 	/**
 	 * Whether `effect` is inside a branch that this batch skips
 	 * @param {Effect} effect
+	 * @param {Effect | null} root
 	 */
-	is_skipped(effect) {
-		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
-			if (this.#skips(e)) return true;
+	is_skipped(effect, root = null) {
+		var e = effect;
+
+		while (e !== root) {
+			if (this.#skips(e) || ((e.f & BOUNDARY_EFFECT) !== 0 && /** @type {Boundary} */ (e.b).is_pending)) return true;
+			e = /** @type {Effect} */ (e.parent);
 		}
 
 		return false;
