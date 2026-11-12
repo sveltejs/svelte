@@ -311,13 +311,15 @@ export class Boundary {
 				}
 			});
 
+			var batch = /** @type {Batch} */ (current_batch);
+
 			if (this.#main_effect === null) {
 				this.#offscreen_fragment = null;
-				if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
+				if (handled) this.#resolve(batch);
 				return;
 			}
 
-			if (this.#pending_count === 0) {
+			if (this.is_ready(batch)) {
 				this.#anchor.before(fragment);
 				this.#offscreen_fragment = null;
 
@@ -325,7 +327,7 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.#resolve(/** @type {Batch} */ (current_batch));
+				this.#resolve(batch);
 			}
 		});
 	}
@@ -367,6 +369,7 @@ export class Boundary {
 	}
 
 	/**
+	 * TODO do we still need this?
 	 * @param {Batch} batch
 	 */
 	#resolve(batch) {
