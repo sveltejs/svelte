@@ -503,9 +503,15 @@ export function destroy_block_effect_children(signal) {
 
 	while (effect !== null) {
 		var next = effect.next;
-		if ((effect.f & BRANCH_EFFECT) === 0) {
+
+		if ((effect.f & ROOT_EFFECT) !== 0) {
+			// this is now an independent root
+			unlink_effect(effect);
+			effect.parent = effect.prev = effect.next = null;
+		} else if ((effect.f & BRANCH_EFFECT) === 0) {
 			destroy_effect(effect);
 		}
+
 		effect = next;
 	}
 }
