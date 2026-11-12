@@ -8,8 +8,7 @@ const buttons = `
 	<button>shift</button>
 `;
 
-// A fork re-runs an expression with an `await` inside, and is discarded while its run is in flight. Hiding the
-// branch afterwards still takes effect, and so does showing it again (its content is created again)
+// A fork re-runs an expression with an `await` inside, and is discarded while its run is in flight
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
