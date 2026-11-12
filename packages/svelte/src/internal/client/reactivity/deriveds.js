@@ -154,7 +154,6 @@ export function async_expression(fn, label, location) {
 					// if the promise was rejected by the user, via `getAbortSignal`, then
 					// wait for a subsequent resolution instead of flushing the batch
 					if (e !== STALE_REACTION) d.reject(e);
-					// d.reject(e);
 				})
 				.finally(unset_context);
 		} catch (error) {
@@ -197,13 +196,14 @@ export function async_expression(fn, label, location) {
 		const handler = (value, error = undefined) => {
 			if (DEV) {
 				invariant(view_batch === null, 'Batch is currently active');
+
 				reactivity_loss_tracker = null;
 			}
 
 			decrement_pending();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE || error === STALE_REACTION) return;
+			if (error === OBSOLETE) return;
 
 			signal.f &= ~PAUSED;
 
