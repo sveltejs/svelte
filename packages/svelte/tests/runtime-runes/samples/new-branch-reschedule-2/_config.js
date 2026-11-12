@@ -1,5 +1,6 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
+import { async_mode } from '../../../helpers.js';
 
 export default test({
 	async test({ assert, target, logs }) {
@@ -41,6 +42,6 @@ export default test({
 			`
 		);
 
-		assert.deepEqual(logs, ['effect ran']);
+		assert.deepEqual(logs, async_mode ? ['effect ran', 'effect ran'] : ['effect ran']);
 	}
 });

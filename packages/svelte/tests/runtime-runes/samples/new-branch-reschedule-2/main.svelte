@@ -1,6 +1,7 @@
-<script module>
+<script>
 	let active = $state(false);
 	let panelWidth = $state(null);
+	let counter = $state(0);
 
 	const store = {
 		get active() { return active; },
@@ -19,10 +20,6 @@
 	};
 </script>
 
-<script>
-	let counter = $state(0);
-</script>
-
 <button onclick={() => store.open()}>Open</button>
 <button onclick={() => store.close()}>Close</button>
 <button onclick={() => counter++}>{counter}</button>
@@ -34,4 +31,3 @@
 		closed
 	{/if}
 </div>
- 
