@@ -166,4 +166,5 @@ export type MaybeSource<T = unknown> = T | Source<T>;
 export interface Blocker {
 	promise: Promise<any>;
 	settled: boolean;
+	failed: boolean;
 }

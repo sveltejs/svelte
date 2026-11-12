@@ -77,6 +77,8 @@ export function flatten(blockers, sync, async, fn) {
 	}
 
 	function run() {
+		if (blockers.some((b) => b.failed)) return;
+
 		if (async.length === 0) {
 			fn(deriveds);
 			return;
@@ -335,22 +337,30 @@ export function run(thunks) {
 
 	/** @param {any} error */
 	const handle_error = (error) => {
+		if (errored) return;
+
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
 		if (!aborted(active)) {
 			restore();
-			invoke_error_boundary(error, active);
+
+			try {
+				invoke_error_boundary(error, active);
+			} finally {
+				unset_context();
+			}
 		}
 	};
 
 	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
 
 	/** @type {Blocker} */
-	var blocker = { promise, settled: false };
+	var blocker = { promise, settled: false, failed: false };
 	var blockers = [blocker];
 
 	promise.finally(() => {
 		blocker.settled = true;
+		blocker.failed = errored !== null;
 		unset_context();
 	});
 
@@ -377,11 +387,13 @@ export function run(thunks) {
 			})
 			.catch(handle_error);
 
-		const blocker = { promise, settled: false };
+		/** @type {Blocker} */
+		const blocker = { promise, settled: false, failed: false };
 		blockers.push(blocker);
 
 		promise.finally(() => {
 			blocker.settled = true;
+			blocker.failed = errored !== null;
 			// ... but we also need it after such a promise has resolved in case it restores our context
 			unset_context();
 		});
