@@ -484,8 +484,7 @@ export function destroy_effect_children(signal, remove_dom = false) {
 		var next = effect.next;
 
 		if ((effect.f & ROOT_EFFECT) !== 0) {
-			// this is now an independent root
-			effect.parent = null;
+			detach_root_effect(effect);
 		} else {
 			destroy_effect(effect, remove_dom);
 		}
@@ -505,14 +504,29 @@ export function destroy_block_effect_children(signal) {
 		var next = effect.next;
 
 		if ((effect.f & ROOT_EFFECT) !== 0) {
-			// this is now an independent root
+			// the block keeps its branches, so take the root out of the list
 			unlink_effect(effect);
-			effect.parent = effect.prev = effect.next = null;
+			detach_root_effect(effect);
 		} else if ((effect.f & BRANCH_EFFECT) === 0) {
 			destroy_effect(effect);
 		}
 
 		effect = next;
+	}
+}
+
+/**
+ * Turns a child root effect into an independent root, because the
+ * effect it was created in is being destroyed or re-run
+ * @param {Effect} effect
+ */
+function detach_root_effect(effect) {
+	effect.parent = effect.prev = effect.next = null;
+
+	// if the current traversal was going to reach this root through its old
+	// parent, it no longer can, so the root needs to be traversed on its own
+	if ((effect.f & CLEAN) === 0) {
+		Batch.ensure().schedule(effect);
 	}
 }
 
