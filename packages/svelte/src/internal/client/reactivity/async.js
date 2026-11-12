@@ -55,6 +55,7 @@ export function flatten(blockers, sync, async, fn) {
 
 	if (pending.length > 0) {
 		var restore = capture();
+		var decrement_pending = increment_pending();
 		var p = pending.length === 1 ? pending[0].promise : Promise.all(pending.map((b) => b.promise));
 
 		p.then(() => {
@@ -71,7 +72,7 @@ export function flatten(blockers, sync, async, fn) {
 			}
 
 			unset_context();
-		});
+		}).finally(decrement_pending);
 	} else {
 		run();
 	}
