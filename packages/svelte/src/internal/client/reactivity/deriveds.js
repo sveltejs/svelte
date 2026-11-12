@@ -54,6 +54,7 @@ import { increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
+import { untrack } from 'svelte';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -257,10 +258,17 @@ export function async_derived(fn, label, location) {
 				return;
 			}
 
-			if ((source.f & ERROR_VALUE) !== 0) {
-				reject(source.v);
-			} else {
+			try {
+				// We get the source and catch in case it's an error.
+				// We do this instead of checking ERROR_VALUE on source.f
+				// because that only applies to the real world, maybe
+				// this was resolved (and has thrown) in a fork.
+				// We untrack so that the block no longer has a dependency
+				// on the source.
+				untrack(() => get(source));
 				fulfil(source);
+			} catch (e) {
+				reject(e);
 			}
 		}, EFFECT_TRANSPARENT);
 	});
