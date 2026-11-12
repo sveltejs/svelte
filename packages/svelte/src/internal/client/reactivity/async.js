@@ -95,7 +95,7 @@ export function flatten(blockers, sync, async, fn) {
 		// the branch is created when the batch is processed)
 		var boundary = /** @type {Boundary} */ (parent.b);
 
-		boundary.increment();
+		boundary.increment(parent);
 
 		var released = false;
 
@@ -103,7 +103,7 @@ export function flatten(blockers, sync, async, fn) {
 			// `processing_batch` can be `null` during `unmount`
 			if (!released && processing_batch !== null) {
 				released = true;
-				boundary.decrement(processing_batch);
+				boundary.decrement(parent);
 			}
 		}
 
@@ -430,17 +430,15 @@ export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
 	var batch = merge_target(/** @type {Batch} */ (current_batch));
-	var blocking = !!boundary?.is_rendered();
 
-	boundary?.increment();
+	batch.increment(effect);
+	boundary?.increment(effect);
 	boundary?.update_effect_pending(1);
-	batch.increment(blocking, effect);
 
 	return () => {
-		batch = merge_target(batch);
-		boundary?.decrement(batch);
+		merge_target(batch).decrement(effect);
+		boundary?.decrement(effect);
 		boundary?.update_effect_pending(-1);
-		batch.decrement(blocking, effect);
 	};
 }
 

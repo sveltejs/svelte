@@ -40,7 +40,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, current_batch } from '../../reactivity/batch.js';
+import { Batch, collected_effects, current_batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -114,6 +114,12 @@ export class Boundary {
 
 	/** @type {Map<Effect, number>} */
 	#dirty_effects = new Map();
+
+	/**
+	 * Async effects that are currently in flight
+	 * @type {Map<Effect, number>}
+	 */
+	#pending = new Map();
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -333,14 +339,24 @@ export class Boundary {
 				this.#children(this.#anchor);
 			});
 
-			if (this.#pending_count > 0) {
+			var batch = /** @type {Batch} */ (current_batch);
+
+			if (this.is_ready(batch)) {
+				// console.log(this.#dirty_effects);
+				// console.log('batch ready');
+
+				// for (const [effect, status] of this.#dirty_effects) {
+				// 	// collected_effects?.push(effect);
+				// 	batch.schedule(effect, status);
+				// }
+
+				// this.#dirty_effects.clear();
+			} else {
 				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 				move_effect(this.#main_effect, fragment);
 
-				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
-				this.#pending_effect = branch(() => pending(this.#anchor));
-			} else {
-				this.#resolve(/** @type {Batch} */ (current_batch));
+				const pending = this.#props.pending;
+				if (pending) this.#pending_effect = branch(() => pending(this.#anchor));
 			}
 		} catch (error) {
 			this.error(error);
@@ -401,39 +417,54 @@ export class Boundary {
 		}
 	}
 
-	increment() {
-		if (!this.has_pending_snippet()) {
-			this.parent?.increment();
-			return;
+	/**
+	 *
+	 * @param {Batch} batch
+	 */
+	is_ready(batch) {
+		for (const effect of this.#pending.keys()) {
+			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
+			if (!batch.is_skipped(effect)) {
+				return false;
+			}
 		}
 
-		this.#pending_count += 1;
+		return true;
+	}
+
+	reveal() {
+		this.is_pending = false;
+
+		if (this.#pending_effect) {
+			pause_effect(this.#pending_effect, () => {
+				this.#pending_effect = null;
+			});
+		}
+
+		if (this.#offscreen_fragment) {
+			this.#anchor.before(this.#offscreen_fragment);
+			this.#offscreen_fragment = null;
+		}
 	}
 
 	/**
-	 * Updates the pending count associated with the currently visible pending snippet,
-	 * if any, such that we can replace the snippet with content once work is done
-	 * @param {Batch} batch
+	 * @param {Effect} effect
 	 */
-	decrement(batch) {
-		if (!this.has_pending_snippet()) {
-			this.parent?.decrement(batch);
-			return;
-		}
+	increment(effect) {
+		let blocking_pending_count = this.#pending.get(effect) ?? 0;
+		this.#pending.set(effect, blocking_pending_count + 1);
+	}
 
-		if (--this.#pending_count === 0) {
-			this.#resolve(batch);
+	/**
+	 * @param {Effect} effect
+	 */
+	decrement(effect) {
+		let blocking_pending_count = this.#pending.get(effect) ?? 0;
 
-			if (this.#pending_effect) {
-				pause_effect(this.#pending_effect, () => {
-					this.#pending_effect = null;
-				});
-			}
-
-			if (this.#offscreen_fragment) {
-				this.#anchor.before(this.#offscreen_fragment);
-				this.#offscreen_fragment = null;
-			}
+		if (blocking_pending_count === 1) {
+			this.#pending.delete(effect);
+		} else {
+			this.#pending.set(effect, blocking_pending_count - 1);
 		}
 	}
 

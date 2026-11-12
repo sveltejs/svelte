@@ -1,5 +1,6 @@
 /** @import { Fork } from 'svelte' */
 /** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Boundary } from '../dom/blocks/boundary.js' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -20,7 +21,8 @@ import {
 	EFFECT_OFFSCREEN,
 	ASSIGNED,
 	ASYNC,
-	REACTION_IS_UPDATING
+	REACTION_IS_UPDATING,
+	BOUNDARY_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -266,15 +268,10 @@ export class Batch {
 	#discard_callbacks = new Map();
 
 	/**
-	 * The number of async effects that are currently in flight
-	 */
-	#pending = 0;
-
-	/**
-	 * Async effects that are currently in flight, _not_ inside a pending boundary
+	 * Async effects that are currently in flight
 	 * @type {Map<Effect, number>}
 	 */
-	#blocking_pending = new Map();
+	#pending = new Map();
 
 	/**
 	 * A deferred that resolves when the batch is committed, used with `settled()`
@@ -343,7 +340,7 @@ export class Batch {
 	#is_deferred() {
 		if (this.is_fork) return true;
 
-		for (const effect of this.#blocking_pending.keys()) {
+		for (const effect of this.#pending.keys()) {
 			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
 			if (!this.is_skipped(effect)) {
 				return true;
@@ -600,6 +597,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
+
 			return;
 		}
 
@@ -616,7 +614,7 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.#pending === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
+		if (this.#pending.size === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
 			this.#unlink();
 		}
 
@@ -729,6 +727,14 @@ export class Batch {
 			}
 
 			while (effect !== null) {
+				if ((effect.f & BOUNDARY_EFFECT) !== 0 && (effect.f & DESTROYED) === 0) {
+					var boundary = /** @type {Boundary} */ (effect.b);
+
+					if (boundary.is_pending && boundary.is_ready(this)) {
+						boundary.reveal();
+					}
+				}
+
 				var next = effect.next;
 
 				if (next !== null) {
@@ -798,14 +804,11 @@ export class Batch {
 
 		// That pending work is this batch's from now on: it decrements this batch's counts (see `increment_pending`),
 		// so this batch stays linked until the work is done, and receives the effects that a boundary defers until then
-		this.#pending += batch.#pending;
-		batch.#pending = 0;
-
-		for (const [effect, count] of batch.#blocking_pending) {
-			this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
+		for (const [effect, count] of batch.#pending) {
+			this.#pending.set(effect, (this.#pending.get(effect) ?? 0) + count);
 		}
 
-		batch.#blocking_pending.clear();
+		batch.#pending.clear();
 
 		this.transfer_effects(batch.#unprocessed);
 
@@ -1041,33 +1044,23 @@ export class Batch {
 	}
 
 	/**
-	 * @param {boolean} blocking
 	 * @param {Effect} effect
 	 */
-	increment(blocking, effect) {
-		this.#pending += 1;
-
-		if (blocking) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
-			this.#blocking_pending.set(effect, blocking_pending_count + 1);
-		}
+	increment(effect) {
+		let blocking_pending_count = this.#pending.get(effect) ?? 0;
+		this.#pending.set(effect, blocking_pending_count + 1);
 	}
 
 	/**
-	 * @param {boolean} blocking
 	 * @param {Effect} effect
 	 */
-	decrement(blocking, effect) {
-		this.#pending -= 1;
+	decrement(effect) {
+		let blocking_pending_count = this.#pending.get(effect) ?? 0;
 
-		if (blocking) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
-
-			if (blocking_pending_count === 1) {
-				this.#blocking_pending.delete(effect);
-			} else {
-				this.#blocking_pending.set(effect, blocking_pending_count - 1);
-			}
+		if (blocking_pending_count === 1) {
+			this.#pending.delete(effect);
+		} else {
+			this.#pending.set(effect, blocking_pending_count - 1);
 		}
 
 		if (this.#decrement_queued) return;
@@ -1360,14 +1353,15 @@ export class Batch {
 
 		// defer render effects inside a pending boundary
 		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
-		if (
-			effect.b?.is_pending &&
-			(effect.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
-			(effect.f & REACTION_RAN) === 0
-		) {
-			effect.b.defer_effect(effect);
-			return;
-		}
+		// if (
+		// 	effect.b?.is_pending &&
+		// 	(effect.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
+		// 	(effect.f & REACTION_RAN) === 0
+		// ) {
+		// 	console.log('deferring', effect.fn);
+		// 	effect.b.defer_effect(effect);
+		// 	return;
+		// }
 
 		this.#scheduled.push(effect);
 	}

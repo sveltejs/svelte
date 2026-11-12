@@ -23,8 +23,8 @@ export function defer_effect(effect, dirty_effects) {
 
 	if (status !== 0) {
 		add_dirty_effect(dirty_effects, effect, status);
-	}
 
-	// mark as clean so they get scheduled if they depend on pending async state
-	set_signal_status(effect, CLEAN);
+		// mark as clean so they get scheduled if they depend on pending async state
+		set_signal_status(effect, CLEAN);
+	}
 }

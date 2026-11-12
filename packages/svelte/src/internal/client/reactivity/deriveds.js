@@ -153,7 +153,8 @@ export function async_expression(fn, label, location) {
 				.then(d.resolve, (e) => {
 					// if the promise was rejected by the user, via `getAbortSignal`, then
 					// wait for a subsequent resolution instead of flushing the batch
-					if (e !== STALE_REACTION) d.reject(e);
+					// if (e !== STALE_REACTION) d.reject(e);
+					d.reject(e);
 				})
 				.finally(unset_context);
 		} catch (error) {
@@ -203,7 +204,7 @@ export function async_expression(fn, label, location) {
 			decrement_pending();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) return;
+			if (error === OBSOLETE || error === STALE_REACTION) return;
 
 			signal.f &= ~PAUSED;
 
