@@ -44,7 +44,14 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
+import {
+	Batch,
+	collected_effects,
+	current_batch,
+	processing_batch,
+	set_teardown_context,
+	teardown_context
+} from './batch.js';
 import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
 
@@ -626,7 +633,22 @@ export function pause_effect(effect, callback, destroy = true) {
 
 	var remaining = transitions.length;
 	if (remaining > 0) {
-		var check = () => --remaining || fn();
+		// prefer current_batch if set: in that case processing_batch, if present,
+		// would be in the effect flushing phase already, which means this is most
+		// likely a teardown caused by an effect write, which is associated with the
+		// current_batch, not the processing one.
+		var batch = current_batch ?? processing_batch;
+		var check = () => {
+			if (!--remaining) {
+				// `check` can get called synchronously, and if we're inside
+				// the branch commit or effect flushing phase, (de)activating
+				// the batch would mess everything up.
+				const set_batch = !(processing_batch || current_batch);
+				if (set_batch) batch?.activate();
+				fn();
+				if (set_batch) batch?.deactivate();
+			}
+		};
 		for (var transition of transitions) {
 			transition.out(check);
 		}

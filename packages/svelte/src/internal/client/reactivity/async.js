@@ -90,24 +90,6 @@ export function flatten(blockers, sync, async, fn) {
 		/** @type {Effect | null} */
 		var effect = null;
 
-		// Creating the branch may start more async work. Until that has happened, the boundary must not show
-		// its content, even if all the work that it knows of is done. (A batch can't commit in between, as
-		// the branch is created when the batch is processed)
-		var boundary = /** @type {Boundary} */ (parent.b);
-
-		boundary.increment(parent);
-
-		var released = false;
-
-		// TODO do we still need this?
-		function release() {
-			// `processing_batch` can be `null` during `unmount`
-			if (!released && processing_batch !== null) {
-				released = true;
-				boundary.decrement(parent, processing_batch);
-			}
-		}
-
 		block(() => {
 			for (var s of signals) {
 				if ((s.f & PAUSED) !== 0) {
@@ -124,15 +106,10 @@ export function flatten(blockers, sync, async, fn) {
 						fn([...deriveds, ...signals]);
 					} catch (error) {
 						invoke_error_boundary(error, parent);
-					} finally {
-						release();
 					}
 				});
 			}
 		}, EFFECT_TRANSPARENT);
-
-		// TODO i think we can delete this?
-		teardown(release);
 	}
 }
 
