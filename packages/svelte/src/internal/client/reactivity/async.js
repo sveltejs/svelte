@@ -1,7 +1,13 @@
 /** @import { Blocker, Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
 /** @import { Boundary } from '../dom/blocks/boundary.js' */
-import { DESTROYED, EFFECT_PRESERVED, PAUSED, STALE_REACTION } from '#client/constants';
+import {
+	DESTROYED,
+	EFFECT_PRESERVED,
+	EFFECT_TRANSPARENT,
+	PAUSED,
+	STALE_REACTION
+} from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -125,7 +131,7 @@ export function flatten(blockers, sync, async, fn) {
 					}
 				});
 			}
-		}, EFFECT_PRESERVED);
+		}, EFFECT_PRESERVED | EFFECT_TRANSPARENT);
 
 		teardown(release);
 	}

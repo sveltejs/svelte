@@ -13,7 +13,8 @@ import {
 	ASSIGNED,
 	ERROR_VALUE,
 	HAS_ABORT_CONTROLLER,
-	PAUSED
+	PAUSED,
+	EFFECT_TRANSPARENT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -261,7 +262,7 @@ export function async_derived(fn, label, location) {
 			} else {
 				fulfil(source);
 			}
-		});
+		}, EFFECT_TRANSPARENT);
 	});
 }
 
