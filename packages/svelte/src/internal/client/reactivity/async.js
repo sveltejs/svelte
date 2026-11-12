@@ -26,7 +26,7 @@ import {
 	set_reactivity_loss_tracker,
 	async_expression
 } from './deriveds.js';
-import { aborted, block, branch, teardown } from './effects.js';
+import { aborted, async_effect, block, branch, teardown } from './effects.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -395,6 +395,11 @@ export function run(thunks) {
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
 		.finally(decrement_pending);
+
+	async_effect(() => {
+		var decrement_pending = increment_pending();
+		promise.finally(decrement_pending);
+	});
 
 	return blockers;
 }
