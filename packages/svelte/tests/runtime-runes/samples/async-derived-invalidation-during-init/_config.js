@@ -13,9 +13,10 @@ export default test({
 		const [toggle, resolve1, resolve2] = target.querySelectorAll('button');
 
 		toggle.click();
+		await tick();
 		resolve1.click();
+		await tick();
 		resolve2.click();
-
 		await tick();
 
 		assert.htmlEqual(
