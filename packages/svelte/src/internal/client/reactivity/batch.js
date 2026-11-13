@@ -1385,18 +1385,6 @@ export class Batch {
 			set_signal_status(effect, status);
 		}
 
-		// defer render effects inside a pending boundary
-		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
-		// if (
-		// 	effect.b?.is_pending &&
-		// 	(effect.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
-		// 	(effect.f & REACTION_RAN) === 0
-		// ) {
-		// 	console.log('deferring', effect.fn);
-		// 	effect.b.defer_effect(effect);
-		// 	return;
-		// }
-
 		this.#scheduled.push(effect);
 	}
 
