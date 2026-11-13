@@ -164,7 +164,7 @@ export function spring(value, opts = {}) {
  * </script>
  *
  * <input type="range" bind:value={spring.target} />
- * <input type="range" bind:value={spring.current} disabled />
+ * <input type="range" value={spring.current} disabled />
  * ```
  * @template T
  * @since 5.8.0

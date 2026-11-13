@@ -33,7 +33,7 @@ export function Fragment(node, context) {
 	};
 
 	for (const node of hoisted) {
-		context.visit(node, state);
+		if (node.type !== 'TitleElement') context.visit(node, state);
 	}
 
 	if (is_text_first) {
@@ -42,6 +42,11 @@ export function Fragment(node, context) {
 	}
 
 	process_children(trimmed, { ...context, state });
+
+	// the client sets titles after the rest of the fragment
+	for (const node of hoisted) {
+		if (node.type === 'TitleElement') context.visit(node, state);
+	}
 
 	if (state.async_consts && state.async_consts.thunks.length > 0) {
 		state.init.push(
