@@ -410,13 +410,22 @@ export function increment_pending() {
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root TODO does this even make sense?
 	var batch = merge_target(/** @type {Batch} */ (current_batch));
 
+	// The work holds up the nearest boundary with a `pending` snippet, which is shown in the meantime.
+	// Boundaries in between have nothing to show instead of their content, so they don't keep track of it
+	var pending_boundary = boundary;
+
+	while (pending_boundary && !pending_boundary.has_pending_snippet()) {
+		pending_boundary = pending_boundary.parent;
+	}
+
 	batch.increment(effect);
-	boundary?.increment(effect);
+	pending_boundary?.increment(effect);
 	boundary?.update_effect_pending(1);
 
 	return () => {
-		merge_target(batch).decrement(effect);
-		boundary?.decrement(effect, batch);
+		batch = merge_target(batch);
+		batch.decrement(effect);
+		pending_boundary?.decrement(effect, batch);
 		boundary?.update_effect_pending(-1);
 	};
 }

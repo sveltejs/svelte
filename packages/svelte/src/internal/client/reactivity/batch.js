@@ -341,8 +341,7 @@ export class Batch {
 		if (this.is_fork) return true;
 
 		for (const effect of this.#pending.keys()) {
-			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
-			if (!this.is_skipped(effect)) {
+			if (this.is_blocked_by(effect)) {
 				return true;
 			}
 		}
@@ -362,26 +361,40 @@ export class Batch {
 	}
 
 	/**
-	 * Whether `effect` is inside a branch that this batch skips
+	 * Whether `effect` is inside a branch that this batch skips, i.e. doesn't exist in its view of the world
 	 * @param {Effect} effect
-	 * @param {Effect | null} root
 	 */
-	is_skipped(effect, root = null) {
-		var e = effect;
-
-		while (e !== root) {
-			if (this.#skips(e)) {
-				return true;
-			}
-
-			if ((e.f & BOUNDARY_EFFECT) !== 0 && (e.f & DESTROYED) === 0 && /** @type {Boundary} */ (e.b).is_pending) {
-				return true;
-			}
-
-			e = /** @type {Effect} */ (e.parent);
+	is_skipped(effect) {
+		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
+			if (this.#skips(e)) return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether async work in `effect` holds up this batch — or, with `root`, the boundary whose content `root` is.
+	 * It doesn't if the effect is inside a branch that this batch skips (the branch is going to be destroyed),
+	 * or inside a boundary that is pending (which shows its pending snippet in the meantime).
+	 * Unlike a skipped branch, the content of a pending boundary does exist in the view of the batch: its
+	 * effects are still re-validated (see `#revalidate`), they just don't keep the batch from committing
+	 * @param {Effect} effect
+	 * @param {Effect | null} [root]
+	 */
+	is_blocked_by(effect, root = null) {
+		for (var e = /** @type {Effect | null} */ (effect); e !== null && e !== root; e = e.parent) {
+			if (this.#skips(e)) return false;
+
+			if (
+				(e.f & BOUNDARY_EFFECT) !== 0 &&
+				(e.f & DESTROYED) === 0 &&
+				/** @type {Boundary} */ (e.b).is_pending
+			) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -752,7 +765,7 @@ export class Batch {
 					var boundary = /** @type {Boundary} */ (effect.b);
 
 					if (boundary.is_pending && boundary.is_ready(this)) {
-						boundary.reveal();
+						boundary.reveal(this);
 					}
 				}
 
@@ -1560,6 +1573,28 @@ export let eager_block_effects = null;
 export let eager_block_writes = null;
 
 /**
+ * An effect (as opposed to a render effect, which keeps the offscreen content up to date) inside a boundary
+ * that is still pending doesn't run when the batch commits. The boundary keeps it until it is revealed,
+ * and hands it to the batch that reveals it (see `Boundary#reveal`)
+ * @param {Effect} effect
+ * @returns {boolean} whether the effect was deferred
+ */
+function defer_if_pending(effect) {
+	// A boundary is only pending while its content is new, so an effect that
+	// has run before can't be inside one, and we can skip the lookup
+	if ((effect.f & (EFFECT | REACTION_RAN)) !== EFFECT) return false;
+
+	for (var boundary = effect.b; boundary !== null; boundary = boundary.parent) {
+		if (boundary.is_pending) {
+			boundary.defer_effect(effect);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * `earlier_writes` includes writes from the pre-effect phase. Eager block teardowns
  * revert the running effect's writes, but not these earlier writes.
  * @param {Array<Effect>} effects
@@ -1580,6 +1615,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 			// don't run if already marked for destruction in the next batch
 			// (this can happen if an effect writes a value which e.g. makes an if block falsy)
 			!current_batch?.is_skipped(effect) &&
+			!defer_if_pending(effect) &&
 			is_dirty(effect)
 		) {
 			eager_block_effects = new Set();

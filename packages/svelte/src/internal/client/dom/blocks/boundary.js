@@ -341,10 +341,6 @@ export class Boundary {
 			if (this.is_ready(batch)) {
 				this.is_pending = false;
 			} else {
-				if (this.parent?.is_pending) {
-					this.parent.increment(this.#main_effect);
-				}
-
 				const pending = this.#props.pending;
 
 				if (pending) {
@@ -409,8 +405,7 @@ export class Boundary {
 	 */
 	is_ready(batch) {
 		for (const effect of this.#pending.keys()) {
-			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
-			if (!batch.is_skipped(effect, this.#main_effect)) {
+			if (batch.is_blocked_by(effect, this.#main_effect)) {
 				return false;
 			}
 		}
@@ -418,8 +413,15 @@ export class Boundary {
 		return true;
 	}
 
-	reveal() {
+	/**
+	 * @param {Batch} batch the batch whose traversal found the boundary to be ready
+	 */
+	reveal(batch) {
 		this.is_pending = false;
+
+		// effects that were held back while the boundary was pending (see
+		// `defer_pending_effects`) run when the batch that reveals it commits
+		batch.transfer_effects(this.#dirty_effects);
 
 		if (this.#pending_effect) {
 			pause_effect(this.#pending_effect, () => {
@@ -456,10 +458,6 @@ export class Boundary {
 
 		if (this.#pending.size === 0) {
 			batch.schedule(this.#effect, MAYBE_DIRTY);
-
-			if (this.parent?.is_pending) {
-				this.parent.decrement(/** @type {Effect} */ (this.#main_effect), batch);
-			}
 		}
 	}
 
