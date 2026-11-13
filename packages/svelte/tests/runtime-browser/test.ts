@@ -195,6 +195,9 @@ async function run_test(
 
 	try {
 		const page = await browser.newPage();
+		if (config.test_browser) {
+			await page.exposeFunction('test_browser', () => config.test_browser!({ assert, page }));
+		}
 		page.on('console', (message) => {
 			let method = message.type();
 			// @ts-ignore

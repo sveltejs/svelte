@@ -43,7 +43,14 @@ export function add_form_reset_listener() {
 			(evt) => {
 				// Needs to happen one tick later or else the dom properties of the form
 				// elements have not updated to their reset values yet
-				Promise.resolve().then(() => {
+				Promise.resolve().then(function callback() {
+					// Native events can run microtasks between listeners, before a later
+					// listener cancels the reset. Wait until dispatch has finished.
+					if (evt.eventPhase !== Event.NONE) {
+						setTimeout(callback);
+						return;
+					}
+
 					if (!evt.defaultPrevented) {
 						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
 							/** @type {any} */ (e)[FORM_RESET_HANDLER]?.();
