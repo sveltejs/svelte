@@ -1067,20 +1067,20 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	increment(effect) {
-		let blocking_pending_count = this.#pending.get(effect) ?? 0;
-		this.#pending.set(effect, blocking_pending_count + 1);
+		var count = this.#pending.get(effect) ?? 0;
+		this.#pending.set(effect, count + 1);
 	}
 
 	/**
 	 * @param {Effect} effect
 	 */
 	decrement(effect) {
-		let blocking_pending_count = this.#pending.get(effect) ?? 0;
+		var count = this.#pending.get(effect) ?? 0;
 
-		if (blocking_pending_count === 1) {
+		if (count === 1) {
 			this.#pending.delete(effect);
 		} else {
-			this.#pending.set(effect, blocking_pending_count - 1);
+			this.#pending.set(effect, count - 1);
 		}
 
 		if (this.#decrement_queued) return;

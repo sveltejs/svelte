@@ -416,7 +416,7 @@ export class Boundary {
 	 * @param {Effect} effect
 	 */
 	increment(effect) {
-		let count = this.#pending.get(effect) ?? 0;
+		var count = this.#pending.get(effect) ?? 0;
 		this.#pending.set(effect, count + 1);
 	}
 
@@ -425,7 +425,7 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	decrement(effect, batch) {
-		let count = this.#pending.get(effect) ?? 0;
+		var count = this.#pending.get(effect) ?? 0;
 
 		if (count === 1) {
 			this.#pending.delete(effect);
