@@ -16,7 +16,6 @@ const buttons = `
 // aborted run, which only settles once B is merged into A — and B waits for the script to be done (it re-ran the
 // first expression, whose step continued already)
 export default test({
-	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		const [a, b, first_1, first_2, second_2] = target.querySelectorAll('button');
@@ -40,13 +39,13 @@ export default test({
 		second_2.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
-		assert.deepEqual(logs.splice(0), ['continued with 1 2']);
+		assert.deepEqual(logs.splice(0), []);
 
 		// B is done, and merged into A, which commits
 		first_2.click();
 		await tick();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
-		assert.deepEqual(logs.splice(0), []);
+		assert.deepEqual(logs.splice(0), ['continued with 2 2']);
 	}
 });
