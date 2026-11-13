@@ -116,6 +116,10 @@ declare module 'svelte' {
 	 */
 	export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
 
+	type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
+		? I
+		: never;
+
 	/**
 	 * Can be used to create strongly typed Svelte components.
 	 *
@@ -141,7 +145,7 @@ declare module 'svelte' {
 	export interface Component<
 		Props extends Record<string, any> = {},
 		Exports extends Record<string, any> = {},
-		Bindings extends keyof Props | '' = string
+		Bindings extends keyof UnionToIntersection<Required<Props>> | (string & {}) | '' = string
 	> {
 		/**
 		 * @param internal An internal object used by Svelte. Do not use or modify.
@@ -2685,6 +2689,11 @@ declare module 'svelte/reactivity/window' {
 declare module 'svelte/server' {
 	import type { ComponentProps, Component, SvelteComponent, ComponentType } from 'svelte';
 	/**
+	 * Prevents `T` from being inferred from the value it annotates (like the built-in `NoInfer`, which requires TypeScript 5.4)
+	 */
+	type NoInferProps<T> = [T][T extends any ? 0 : never];
+
+	/**
 	 * Only available on the server and when compiling with the `server` option.
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 */
@@ -2696,7 +2705,7 @@ declare module 'svelte/server' {
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 					options?: {
-						props?: Omit<Props, '$$slots' | '$$events'>;
+						props?: NoInferProps<Props>;
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
@@ -2706,7 +2715,7 @@ declare module 'svelte/server' {
 			: [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 					options: {
-						props: Omit<Props, '$$slots' | '$$events'>;
+						props: NoInferProps<Props>;
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
