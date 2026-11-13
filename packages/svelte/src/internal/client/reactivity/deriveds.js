@@ -202,10 +202,7 @@ export function async_expression(fn, label, location) {
 			decrement_pending();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) {
-				batch.obsolete = true;
-				return;
-			}
+			if (error === OBSOLETE) return;
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
@@ -254,7 +251,7 @@ export function async_derived(fn, label, location) {
 		const source = async_expression(fn, label, location);
 
 		block(() => {
-			if (is_uninitialized(source) || (batch !== current_batch && !batch.obsolete)) {
+			if (is_uninitialized(source) || batch !== current_batch) {
 				get(source);
 				return;
 			}
