@@ -3,6 +3,7 @@ import {
 	BOUNDARY_EFFECT,
 	DESTROYED,
 	DESTROYING,
+	DIRTY,
 	EFFECT_PRESERVED,
 	EFFECT_TRANSPARENT,
 	MAYBE_DIRTY
@@ -46,7 +47,6 @@ import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
-import { defer_effect } from '../../reactivity/utils.js';
 import { set_signal_status } from '../../reactivity/status.js';
 
 /**
@@ -113,8 +113,8 @@ export class Boundary {
 	#local_pending_count = 0;
 	#pending_count_update_queued = false;
 
-	/** @type {Map<Effect, number>} */
-	#dirty_effects = new Map();
+	/** @type {Effect[]} */
+	#effects = [];
 
 	/**
 	 * Async effects that are currently in flight
@@ -352,7 +352,7 @@ export class Boundary {
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_effects);
+		this.#effects.push(effect);
 	}
 
 	has_pending_snippet() {
@@ -397,13 +397,14 @@ export class Boundary {
 
 		this.is_pending = false;
 
-		if (this.#dirty_effects.size > 0) {
-			for (const [effect, status] of this.#dirty_effects) {
-				set_signal_status(effect, status);
-				effects.push(effect);
+		if (this.#effects.length > 0) {
+			for (let i = 0; i < this.#effects.length; i += 1) {
+				var e = this.#effects[i];
+				set_signal_status(e, DIRTY);
+				effects.push(e);
 			}
 
-			this.#dirty_effects.clear();
+			this.#effects.length = 0;
 		}
 
 		if (this.#pending_effect) {

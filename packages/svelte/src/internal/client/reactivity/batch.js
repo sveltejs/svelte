@@ -52,7 +52,6 @@ import {
 	update
 } from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
-import { add_dirty_effect, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
@@ -834,7 +833,7 @@ export class Batch {
 
 		if (batch.#unprocessed.size > 0) {
 			for (const [effect, status] of batch.#unprocessed) {
-				add_dirty_effect(this.#unprocessed, effect, status);
+				this.#add_dirty_effect(effect, status);
 			}
 
 			batch.#unprocessed.clear();
@@ -853,11 +852,30 @@ export class Batch {
 	}
 
 	/**
+	 * Note that `effect` needs to be (re-)validated, without downgrading a DIRTY effect to MAYBE_DIRTY
+	 * @param {Effect} effect
+	 * @param {number} status DIRTY or MAYBE_DIRTY
+	 */
+	#add_dirty_effect(effect, status) {
+		if (status === DIRTY || this.#unprocessed.get(effect) !== DIRTY) {
+			this.#unprocessed.set(effect, status);
+		}
+	}
+
+	/**
 	 * @param {Effect[]} effects
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(effects[i], this.#unprocessed);
+			var effect = effects[i];
+			var status = effect.f & (DIRTY | MAYBE_DIRTY);
+
+			if (status !== 0) {
+				this.#add_dirty_effect(effect, status);
+
+				// mark as clean so they get scheduled if they depend on pending async state
+				set_signal_status(effect, CLEAN);
+			}
 		}
 	}
 
@@ -1330,8 +1348,7 @@ export class Batch {
 		// They may still run as part of it (for that batch's reasons) and see the write, so versions decide — unless
 		// the effect is running, in which case it would record the version it didn't see (see `update_dependencies`)
 		if (view_batch !== null && view_batch !== this && effect !== active_reaction) {
-			add_dirty_effect(
-				this.#unprocessed,
+			this.#add_dirty_effect(
 				effect,
 				(effect.f & REACTION_IS_UPDATING) !== 0 ? status : MAYBE_DIRTY
 			);
@@ -1340,7 +1357,7 @@ export class Batch {
 
 		if (processing_batch !== this && active_reaction === null) {
 			if (this.prev !== null || this.next !== null || this.is_fork) {
-				add_dirty_effect(this.#unprocessed, effect, MAYBE_DIRTY);
+				this.#add_dirty_effect(effect, MAYBE_DIRTY);
 				return;
 			}
 
@@ -1539,6 +1556,7 @@ export let eager_block_writes = null;
  * An effect (as opposed to a render effect, which keeps the offscreen content up to date) inside a boundary
  * that is still pending doesn't run when the batch commits. The boundary keeps it until it is revealed,
  * and hands it to the batch that reveals it (see `Boundary#reveal`)
+ * TODO I feel like there's probably a less roundabout way to achieve this
  * @param {Effect} effect
  * @returns {boolean} whether the effect was deferred
  */
