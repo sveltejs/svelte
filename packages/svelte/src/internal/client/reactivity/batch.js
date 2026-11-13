@@ -386,8 +386,7 @@ export class Batch {
 			if (this.#skips(e)) return false;
 
 			if (
-				(e.f & BOUNDARY_EFFECT) !== 0 &&
-				(e.f & DESTROYED) === 0 &&
+				(e.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT &&
 				/** @type {Boundary} */ (e.b).is_pending
 			) {
 				return false;
@@ -503,7 +502,6 @@ export class Batch {
 	}
 
 	#process() {
-		// console.group('#process', this.id);
 		current_batch = processing_batch = this;
 
 		// A different batch view may apply, even when processing continues within the same flush.
@@ -611,9 +609,6 @@ export class Batch {
 				/** @type {Batch} */ (/** @type {unknown} */ (current_batch)).#process();
 			}
 
-			// console.log('deferred');
-			// console.groupEnd();
-
 			return;
 		}
 
@@ -625,9 +620,6 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
-
-			// console.log('merged');
-			// console.groupEnd();
 
 			return;
 		}
@@ -673,9 +665,6 @@ export class Batch {
 
 			next_batch.#process();
 		}
-
-		// console.log('done');
-		// console.groupEnd();
 	}
 
 	/**

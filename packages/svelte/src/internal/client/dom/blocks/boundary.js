@@ -421,8 +421,8 @@ export class Boundary {
 	 * @param {Effect} effect
 	 */
 	increment(effect) {
-		let blocking_pending_count = this.#pending.get(effect) ?? 0;
-		this.#pending.set(effect, blocking_pending_count + 1);
+		let count = this.#pending.get(effect) ?? 0;
+		this.#pending.set(effect, count + 1);
 	}
 
 	/**
@@ -430,16 +430,16 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	decrement(effect, batch) {
-		let blocking_pending_count = this.#pending.get(effect) ?? 0;
+		let count = this.#pending.get(effect) ?? 0;
 
-		if (blocking_pending_count === 1) {
+		if (count === 1) {
 			this.#pending.delete(effect);
-		} else {
-			this.#pending.set(effect, blocking_pending_count - 1);
-		}
 
-		if (this.#pending.size === 0) {
-			batch.schedule(this.#effect, MAYBE_DIRTY);
+			if (this.#pending.size === 0) {
+				batch.schedule(this.#effect, MAYBE_DIRTY);
+			}
+		} else {
+			this.#pending.set(effect, count - 1);
 		}
 	}
 
