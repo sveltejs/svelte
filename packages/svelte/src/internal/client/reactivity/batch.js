@@ -224,7 +224,6 @@ export class Batch {
 	 * For a derived, `assigned` says whether its value before was assigned, too (otherwise it was computed).
 	 * A source that this batch gave its first value (e.g. an async expression that resolved for the first time) has
 	 * no entry: there's no value from before it, so other views can't undo the write, and teardowns don't revert it.
-	 * `uncommitted_first_value` relies on this
 	 * @type {Map<Value, BatchValue>}
 	 */
 	previous = new Map();
@@ -737,6 +736,15 @@ export class Batch {
 		}
 	}
 
+	/**
+	 * Whether this batch is merged into `batch` (or a batch in between) once it's done, rather than committed
+	 * on its own (see `#find_earlier_batch`)
+	 * @param {Batch} batch
+	 */
+	merges_into(batch) {
+		return batch.id < this.id && !batch.is_fork && batch.linked && this.#intersects(batch);
+	}
+
 	#find_earlier_batch() {
 		for (var batch = this.prev; batch !== null; batch = batch.prev) {
 			if (!batch.is_fork && this.#intersects(batch)) return batch;
@@ -791,6 +799,17 @@ export class Batch {
 		// Clear them or else those that are still pending might get rejected on discard (after merged-into batch is done).
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
 		batch.async_deriveds.clear();
+
+		// That pending work is this batch's from now on: it decrements this batch's counts (see `increment_pending`),
+		// so this batch stays linked until the work is done, and receives the effects that a boundary defers until then
+		this.#pending += batch.#pending;
+		batch.#pending = 0;
+
+		for (const [effect, count] of batch.#blocking_pending) {
+			this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
+		}
+
+		batch.#blocking_pending.clear();
 
 		this.transfer_effects(batch.#unprocessed);
 
@@ -1060,6 +1079,10 @@ export class Batch {
 			}
 		}
 
+		this.#queue_flush();
+	}
+
+	#queue_flush() {
 		if (this.#decrement_queued) return;
 		this.#decrement_queued = true;
 
@@ -1070,6 +1093,18 @@ export class Batch {
 				this.flush();
 			}
 		});
+	}
+
+	/**
+	 * Re-validate everything inside `effect` in this batch's view of the world (e.g. because another batch
+	 * created it in its own view), and process the batch again soon
+	 * @param {Effect} effect
+	 */
+	revalidate(effect) {
+		if ((effect.f & (DESTROYED | INERT)) === 0 && !this.is_skipped(effect)) {
+			this.#revalidate_branch(effect);
+			this.#queue_flush();
+		}
 	}
 
 	/**
@@ -1647,25 +1682,6 @@ function apply(source, entry) {
 		source.f |= ASSIGNED;
 		update_derived_status(/** @type {Derived} */ (source));
 	}
-}
-
-/**
- * A batch other than `batch` that gave `value` its first value, and hasn't committed it yet (see `#commit`). Other
- * views of the world can't undo such a write, as there's no value from before it — which is why there's an entry for
- * `value` in the batch's `current`, but none in its `previous` (see `Batch#previous`) — unless they have their own
- * write of it, like `batch` might. (The writes of forks aren't part of other views at all)
- * @param {Value} value
- * @param {Batch | null} batch
- * @returns {Batch | null}
- */
-export function uncommitted_first_value(value, batch) {
-	if (batch?.current.has(value)) return null;
-
-	for (let b = first_batch; b !== null; b = b.next) {
-		if (b !== batch && !b.is_fork && b.current.has(value) && !b.previous.has(value)) return b;
-	}
-
-	return null;
 }
 
 /** @type {Source<number>[]} */

@@ -409,7 +409,7 @@ export function abort_record(reaction, record, rerun = false) {
 /**
  * Before `reaction` runs again, abort the signals of the runs it replaces: its run in the active batch (which the
  * new run replaces either way, see `update_record`), its global run if the new run is going to replace that one,
- * and the runs of earlier batches, which a run in a real batch supersedes. (Forks stay independent until they're
+ * and the runs of earlier batches that a run in a real batch supersedes (see `supersedes`). (Forks stay independent until they're
  * committed or discarded.) Whether a derived's run in a view replaces the global run is only known once it's done
  * (see `set_global_signal`) — unless the global run is outdated in the real world anyway
  * @param {Reaction} reaction
@@ -431,10 +431,8 @@ function abort_replaced(reaction, flags) {
 		abort_signal(reaction.ac);
 	}
 
-	if (real && batch !== null) {
-		for (var b = first_batch; b !== null; b = b.next) {
-			if (!b.is_fork && b.id < batch.id) abort_record(reaction, b.records?.get(reaction), true);
-		}
+	for (var b = first_batch; b !== null; b = b.next) {
+		if (supersedes(batch, b)) abort_record(reaction, b.records?.get(reaction), true);
 	}
 }
 
@@ -459,12 +457,21 @@ function is_outdated({ deps, dv }) {
 
 /**
  * Whether a run in `batch` supersedes the runs of batch `other`, so that their signals abort (see `abort_replaced`):
- * a run in a real batch supersedes those of earlier batches. Forks stay independent until they're committed or discarded
+ * a run in a real batch supersedes those of earlier batches whose writes it saw — because it ran in the real world,
+ * or in a view that folds them, or undoes none of their writes (e.g. because they committed, see `Batch#activate`).
+ * The runs of other earlier batches read their writes, which this run didn't see, so they still apply in their
+ * views. Forks stay independent until they're committed or discarded
  * @param {Batch | null} batch
  * @param {Batch} other
  */
 function supersedes(batch, other) {
-	return batch !== null && !batch.is_fork && !other.is_fork && other.id < batch.id;
+	return (
+		batch !== null &&
+		!batch.is_fork &&
+		!other.is_fork &&
+		other.id < batch.id &&
+		(batch_values === null || other.previous.size === 0 || batch.folded.includes(other))
+	);
 }
 
 /**
