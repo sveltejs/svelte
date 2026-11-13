@@ -10,6 +10,7 @@ import { dev_stack } from '../context.js';
  * @param {SourceLocation[]} locations
  * @returns {any}
  */
+// Kept for compatibility with previously compiled dev-mode components.
 export function add_locations(fn, filename, locations) {
 	return (/** @type {any[]} */ ...args) => {
 		const dom = fn(...args);
@@ -26,7 +27,7 @@ export function add_locations(fn, filename, locations) {
  * @param {string} filename
  * @param {SourceLocation} location
  */
-function assign_location(element, filename, location) {
+export function assign_location(element, filename, location) {
 	// @ts-expect-error
 	element.__svelte_meta = {
 		parent: dev_stack,

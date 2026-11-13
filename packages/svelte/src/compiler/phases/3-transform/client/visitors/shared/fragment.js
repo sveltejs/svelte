@@ -6,6 +6,7 @@ import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.
 import * as b from '#compiler/builders';
 import { is_custom_element_node } from '../../../../nodes.js';
 import { build_template_chunk } from './utils.js';
+import { dev } from '../../../../../state.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -140,6 +141,8 @@ export function process_children(nodes, initial, is_element, context) {
  */
 export function is_static_element(node) {
 	if (node.type !== 'RegularElement') return false;
+	// Dev metadata needs a reference to each element outside static subtrees.
+	if (dev) return false;
 	if (node.fragment.metadata.dynamic) return false;
 	if (is_custom_element_node(node)) return false; // we're setting all attributes on custom elements through properties
 

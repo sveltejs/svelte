@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { dev, is_ignored } from '../../../../../state.js';
+import { dev, is_ignored, locator } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
@@ -497,6 +497,20 @@ export function build_component(node, component_name, loc, context) {
 
 		context.state.template.push_comment();
 		context.state.template.pop_element();
+
+		if (dev) {
+			const { line, column } = locator(node.start);
+			statements.push(
+				b.stmt(
+					b.call(
+						'$.assign_location',
+						anchor,
+						b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
+						b.array([b.literal(line), b.literal(column)])
+					)
+				)
+			);
+		}
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),

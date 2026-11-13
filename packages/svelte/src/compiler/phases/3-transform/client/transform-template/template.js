@@ -46,6 +46,8 @@ export class Template {
 
 		this.#fragment = /** @type {Element} */ (this.#element).children;
 		this.#stack.push(this.#fragment);
+
+		return this.#element;
 	}
 
 	/** @param {string} [data] */
