@@ -1105,6 +1105,8 @@ export class Batch {
 
 		if (count === 1) {
 			this.#pending.delete(effect);
+		} else if (count === 0) {
+			return;
 		} else {
 			this.#pending.set(effect, count - 1);
 		}
@@ -1402,6 +1404,9 @@ export class Batch {
 					// pending boundary). Their in-flight runs are superseded: their results would overwrite this one
 					// TODO feels pretty hacky and indication of an X-Y problem: This only works because !b.records?.has(reaction)
 					// means "this would re-use the real world result, i.e. the one we just committed, so we can reject this old run".
+					// Update: As it turns out this can also obsolete runs inside pending batches that shouldn't be obsoleted yet.
+					// It will still work out in the end because there's a superseeding batch, but strictly speaking this is wrong.
+					// We should somehow not do this for async/if blocks inside pending boundaries.
 					if ((reaction.f & ASYNC) !== 0) {
 						for (let b = first_batch; b !== null; b = b.next) {
 							if (b !== this && !b.records?.has(reaction)) {

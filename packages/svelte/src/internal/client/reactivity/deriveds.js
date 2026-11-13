@@ -44,7 +44,7 @@ import {
 	destroy_effect_children,
 	teardown
 } from './effects.js';
-import { eager_effects, set_eager_effects, source } from './sources.js';
+import { eager_effects, set, set_eager_effects, source } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
@@ -116,10 +116,12 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @param {(batch: Batch) => void} [on_superseded] Called when the run of a batch is aborted by another batch's run
+ * that supersedes it (see `abort_replaced`), i.e. the batch won't have a result of its own unless it runs again
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_expression(fn, label, location) {
+export function async_expression(fn, label, location, on_superseded) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
@@ -152,7 +154,12 @@ export function async_expression(fn, label, location) {
 				.then(d.resolve, (e) => {
 					// if the promise was rejected by the user, via `getAbortSignal`, then
 					// wait for a subsequent resolution instead of flushing the batch
-					if (e !== STALE_REACTION) d.reject(e);
+					if (e !== STALE_REACTION) {
+						d.reject(e);
+					} else if (batch.async_deriveds.get(effect) === d) {
+						// (not if the batch ran it again, which aborts this run, too)
+						on_superseded?.(batch);
+					}
 				})
 				.finally(unset_context);
 		} catch (error) {
@@ -202,7 +209,10 @@ export function async_expression(fn, label, location) {
 			decrement_pending();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) return;
+			if (error === OBSOLETE) {
+				on_superseded?.(batch);
+				return;
+			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
@@ -247,14 +257,75 @@ export function async_derived(fn, label, location) {
 		return Promise.resolve(fn()).then((value) => source(value));
 	}
 
+	// The script continues in the view of the batch that created it (see `run`), which can't undo another batch's
+	// first value. So only that batch resolves the promise, until it has committed or is discarded, or — if it's a
+	// fork — a real batch overtakes it. Other batches that have a value in the meantime wait for it, and run the
+	// block again once it has committed or is discarded (see `retry`). By then, it has resolved the promise (and
+	// they no longer wait), or it hasn't (e.g. it was discarded, or its run was superseded) and they resolve it
+	let version = source(0);
+	/** @param {Batch} batch */
+	const retry = (batch) => {
+		// TODO idea here is: run the version increment in the context of a specific batch which should be retried
+		// maybe needs queue_micro_task instead to run clear of any other batch
+		const activate = !current_batch;
+		if (activate) batch.activate();
+		untrack(() => set(version, version.v + 1));
+		if (activate) batch.deactivate();
+	};
+	let settled = false;
+	let waiting = false;
+
+	// Whether the creator's run was aborted by another batch's run that supersedes it (e.g. a later batch that
+	// folds it, and that is merged into it once it's done), so it won't have a value of its own to wait for.
+	let superseded = false;
+
+	// TODO something something know which one to retry next when creator obsoleted/aborted
+	const retries = new Set();
+
 	return new Promise((fulfil, reject) => {
-		const source = async_expression(fn, label, location);
+		const source = async_expression(fn, label, location, (b) => {
+			if (merge_target(b) !== merge_target(batch)) return;
+			superseded = true;
+			if (waiting) retry(b);
+		});
 
 		block(() => {
-			if (is_uninitialized(source) || batch !== current_batch) {
+			var effect = /** @type {Effect} */ (active_effect);
+
+			// (a no-op unless this batch waited)
+			current_batch?.decrement(effect);
+
+			if (is_uninitialized(source)) {
 				get(source);
 				return;
 			}
+
+			// (a batch that was merged into another one continues as that one, see `restore`)
+			var creator = merge_target(batch);
+
+			if (
+				current_batch !== creator &&
+				creator.linked &&
+				// !creator.committed &&
+				!superseded
+				// this commented out is for when we wanna overtake forks with real batches
+				// &&
+				// (!creator.is_fork || /** @type {Batch} */ (current_batch).is_fork)
+			) {
+				// Hold up this batch until the creator is done. It has to wait even if the promise is resolved already,
+				// so that it doesn't commit (or merge into the creator) before the script has continued in the creator's view
+				waiting = true;
+				current_batch?.increment(effect);
+				get(version);
+				const b = current_batch;
+				const r = () => retry(b);
+				retries.add(r);
+				creator.ondiscard(r);
+				return;
+			}
+
+			if (settled) return;
+			settled = true;
 
 			try {
 				// We get the source and catch in case it's an error.
