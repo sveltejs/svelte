@@ -1719,6 +1719,23 @@ function extract_type_and_comment(declarator, state, path) {
 			};
 		}
 	}
+	if (declarator.init?.type === 'ArrayExpression') {
+		const types = declarator.init.elements.map((element) =>
+			element?.type === 'Literal' ? typeof element.value : null
+		);
+		const type = types[0];
+		if (
+			(type === 'string' || type === 'number' || type === 'boolean') &&
+			types.every((element_type) => element_type === type)
+		) {
+			state.has_type_or_fallback = true;
+			return {
+				type: `${type}[]`,
+				comment: state.uses_ts ? comment : cleaned_comment,
+				trailing_comment: state.uses_ts ? trailing_comment : cleaned_comment_trailing
+			};
+		}
+	}
 	return {
 		type: 'any',
 		comment: state.uses_ts ? comment : cleaned_comment,
