@@ -1,5 +1,16 @@
 <script>
-	import { make } from './helper.svelte.js';
+	/**
+	 * @param {() => Promise<number>} load
+	 */
+	async function make(load) {
+		let v = $derived(await load());
+
+		return {
+			get v() {
+				return v;
+			}
+		};
+	}
 
 	let x = $state(0);
 
