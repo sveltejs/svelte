@@ -390,7 +390,7 @@ export class Boundary {
 	 * @param {Effect[]} effects
 	 */
 	check(batch, effects) {
-		if (!this.is_pending) return;
+		if (!this.is_pending || (batch.is_fork && this.#pending.size > 0)) return;
 
 		for (const effect of this.#pending.keys()) {
 			if (batch.is_blocked_by(effect, this.#main_effect)) {
