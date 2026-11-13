@@ -832,7 +832,7 @@ export class Batch {
 			batch.#pending.clear();
 		}
 
-		if (batch.#unprocessed.size !== 0) {
+		if (batch.#unprocessed.size > 0) {
 			for (const [effect, status] of batch.#unprocessed) {
 				add_dirty_effect(this.#unprocessed, effect, status);
 			}
