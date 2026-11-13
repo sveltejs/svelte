@@ -387,20 +387,15 @@ export class Boundary {
 	 *
 	 * @param {Batch} batch
 	 */
-	is_ready(batch) {
+	check(batch) {
+		if (!this.is_pending) return;
+
 		for (const effect of this.#pending.keys()) {
 			if (batch.is_blocked_by(effect, this.#main_effect)) {
-				return false;
+				return;
 			}
 		}
 
-		return true;
-	}
-
-	/**
-	 * @param {Batch} batch the batch whose traversal found the boundary to be ready
-	 */
-	reveal(batch) {
 		this.is_pending = false;
 
 		batch.transfer_effects(this.#dirty_effects);

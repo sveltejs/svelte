@@ -750,12 +750,9 @@ export class Batch {
 			}
 
 			while (effect !== null) {
-				if ((effect.f & BOUNDARY_EFFECT) !== 0 && (effect.f & DESTROYED) === 0) {
-					var boundary = /** @type {Boundary} */ (effect.b);
-
-					if (boundary.is_pending && boundary.is_ready(this)) {
-						boundary.reveal(this);
-					}
+				// if a pending boundary is now resolved, reveal it
+				if ((effect.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT) {
+					/** @type {Boundary} */ (effect.b).check(this);
 				}
 
 				var next = effect.next;
