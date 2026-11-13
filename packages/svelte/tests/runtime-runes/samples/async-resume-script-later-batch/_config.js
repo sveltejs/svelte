@@ -20,7 +20,6 @@ const buttons = `
 // that, and then commits its own values
 export default test({
 	mode: ['client'],
-	skip: true,
 	async test({ assert, target, logs }) {
 		const [a, b, first_1, second_1, first_2, second_2, reset] = target.querySelectorAll('button');
 
@@ -64,14 +63,14 @@ export default test({
 					// B has all its results, but still waits for the content, which A creates
 					first_2.click();
 					await tick();
-					assert.htmlEqual(target.innerHTML, buttons);
-					assert.deepEqual(logs.splice(0), []);
+					assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
+					assert.deepEqual(logs.splice(0), ['continued with 2 2']);
 
 					// A's second result: the script continues in A's view, A commits, and B right after it
 					second_1.click();
 					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
-					assert.deepEqual(logs.splice(0), ['continued with 1 1']);
+					assert.deepEqual(logs.splice(0), []);
 				}
 
 				reset.click();

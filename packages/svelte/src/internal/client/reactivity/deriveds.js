@@ -240,7 +240,9 @@ export function async_expression(fn, label, location) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	if (current_batch === null || active_reaction !== null) {
+	const batch = current_batch;
+
+	if (batch === null || active_reaction !== null) {
 		// `$derived(await ...)` created outside traversal, don't participate in coordination
 		return Promise.resolve(fn()).then((value) => source(value));
 	}
@@ -249,7 +251,7 @@ export function async_derived(fn, label, location) {
 		const source = async_expression(fn, label, location);
 
 		block(() => {
-			if (is_uninitialized(source)) {
+			if (is_uninitialized(source) || batch !== current_batch) {
 				get(source);
 				return;
 			}
