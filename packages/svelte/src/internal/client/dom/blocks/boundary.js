@@ -110,7 +110,6 @@ export class Boundary {
 	#offscreen_fragment = null;
 
 	#local_pending_count = 0;
-	#pending_count = 0;
 	#pending_count_update_queued = false;
 
 	/** @type {Map<Effect, number>} */
@@ -328,7 +327,6 @@ export class Boundary {
 	#render() {
 		try {
 			this.is_pending = this.has_pending_snippet();
-			this.#pending_count = 0;
 			this.#local_pending_count = 0;
 
 			this.#main_effect = branch(() => {
