@@ -116,6 +116,10 @@ function normalize_children(node) {
 
 // The following two functions need to be in here; if we had them in test.ts, esbuild would choke on node imports etc
 
+// `__real_click` performs a real (trusted) mouse click at viewport coordinates.
+// Pass `real_click: true` in the test config to expose `window.__real_click`
+// for dispatching real (trusted) mouse clicks from the test.
+
 /**
  * @template Props
  * @param {{
@@ -154,6 +158,7 @@ function normalize_children(node) {
  *			InputEvent: typeof InputEvent;
  *			KeyboardEvent: typeof KeyboardEvent;
  *			MouseEvent: typeof MouseEvent;
+ *			__real_click: (x: number, y: number) => Promise<void>;
  *		};
  *		waitUntil: (fn: any, ms?: number) => Promise<void>;
  *	}) => void;
@@ -161,6 +166,7 @@ function normalize_children(node) {
  *	immutable?: boolean;
  *	dev?: boolean;
  *	warnings?: Warning[];
+ *	real_click?: boolean;
  *}} args
  */
 export function test(args) {
