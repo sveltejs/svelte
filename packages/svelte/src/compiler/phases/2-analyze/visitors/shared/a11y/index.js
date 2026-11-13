@@ -312,8 +312,19 @@ export function check_element(node, context) {
 		role ? role_static_value : get_implicit_role(node.name, attribute_map)
 	);
 
+	// A `separator` is static structure by default, but an explicit `role="separator"` on an element
+	// that is made focusable with `tabindex` is a widget (https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/).
+	// Native non-interactive elements such as `<hr>` are excluded so they keep their current checks.
+	const is_focusable_separator =
+		role_static_value === 'separator' && !is_non_interactive && attribute_map.has('tabindex');
+
 	// no-noninteractive-tabindex
-	if (!is_dynamic_element && !is_interactive && !is_interactive_roles(role_static_value)) {
+	if (
+		!is_dynamic_element &&
+		!is_interactive &&
+		!is_interactive_roles(role_static_value) &&
+		!is_focusable_separator
+	) {
 		const tab_index = attribute_map.get('tabindex');
 		const tab_index_value = get_static_text_value(tab_index);
 		if (tab_index && (tab_index_value === null || Number(tab_index_value) >= 0)) {
@@ -343,7 +354,7 @@ export function check_element(node, context) {
 		!has_contenteditable_attr &&
 		!is_hidden_from_screen_reader(node.name, attribute_map) &&
 		!is_presentation_role(role_static_value) &&
-		((!is_interactive && is_non_interactive_roles(role_static_value)) ||
+		((!is_interactive && is_non_interactive_roles(role_static_value) && !is_focusable_separator) ||
 			(is_non_interactive && !role))
 	) {
 		const has_interactive_handlers = [...handlers].some((handler) =>
