@@ -116,7 +116,7 @@ export function proxy(value) {
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
-		defineProperty(_, prop, descriptor) {
+		defineProperty(target, prop, descriptor) {
 			if (
 				!('value' in descriptor) ||
 				descriptor.configurable === false ||
@@ -130,6 +130,8 @@ export function proxy(value) {
 				e.state_descriptors_fixed();
 			}
 			var s = sources.get(prop);
+			var has = s === undefined ? prop in target : s.v !== UNINITIALIZED;
+
 			if (s === undefined) {
 				with_parent(() => {
 					var s = source(descriptor.value, stack);
@@ -141,6 +143,11 @@ export function proxy(value) {
 				});
 			} else {
 				set(s, descriptor.value, true);
+			}
+
+			// adding (or restoring) a property changes the keys of the object
+			if (!has) {
+				increment(version);
 			}
 
 			return true;
