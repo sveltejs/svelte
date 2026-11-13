@@ -323,7 +323,7 @@ export class Batch {
 	 */
 	merged = null;
 
-	#decrement_queued = false;
+	#flush_queued = false;
 
 	constructor() {
 		if (last_batch === null) {
@@ -986,7 +986,7 @@ export class Batch {
 					rebases.delete(batch);
 
 					// the batch is processed again anyway if a flush is queued
-					if (batch.linked && !batch.#decrement_queued) {
+					if (batch.linked && !batch.#flush_queued) {
 						batch.#process();
 					}
 				}
@@ -1069,7 +1069,7 @@ export class Batch {
 			} else if (sources.length > 0) {
 				// The microtask queue can contain the batch already scheduled to run right
 				// after this one is finished, so throwing the invariant would be wrong here.
-				if (DEV && !batch.#decrement_queued) {
+				if (DEV && !batch.#flush_queued) {
 					invariant(batch.#scheduled.length === 0, 'Batch has scheduled effects');
 				}
 
@@ -1111,11 +1111,25 @@ export class Batch {
 			this.#pending.set(effect, count - 1);
 		}
 
-		if (this.#decrement_queued) return;
-		this.#decrement_queued = true;
+		this.#queue_flush();
+	}
+
+	/**
+	 * Retry coordination work whose inputs include a batch's lifecycle, rather than just signal versions.
+	 * Keep DIRTY local to this batch until traversal, without writing a synthetic dependency into its view.
+	 * @param {Effect} effect
+	 */
+	retry(effect) {
+		this.#add_dirty_effect(effect, DIRTY);
+		this.#queue_flush();
+	}
+
+	#queue_flush() {
+		if (this.#flush_queued) return;
+		this.#flush_queued = true;
 
 		queue_micro_task(() => {
-			this.#decrement_queued = false;
+			this.#flush_queued = false;
 
 			if (this.linked) {
 				this.flush();

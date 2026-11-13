@@ -44,7 +44,7 @@ import {
 	destroy_effect_children,
 	teardown
 } from './effects.js';
-import { eager_effects, set, set_eager_effects, source } from './sources.js';
+import { eager_effects, set_eager_effects, source } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
@@ -210,7 +210,8 @@ export function async_expression(fn, label, location, on_superseded) {
 			deferreds.delete(d);
 
 			if (error === OBSOLETE) {
-				on_superseded?.(batch);
+				// Replacing a run in this same batch doesn't supersede its replacement.
+				if (batch.async_deriveds.get(effect) === d) on_superseded?.(batch);
 				return;
 			}
 
@@ -257,45 +258,44 @@ export function async_derived(fn, label, location) {
 		return Promise.resolve(fn()).then((value) => source(value));
 	}
 
-	// The script continues in the view of the batch that created it (see `run`), which can't undo another batch's
-	// first value. So only that batch resolves the promise, until it has committed or is discarded, or — if it's a
-	// fork — a real batch overtakes it. Other batches that have a value in the meantime wait for it, and run the
-	// block again once it has committed or is discarded (see `retry`). By then, it has resolved the promise (and
-	// they no longer wait), or it hasn't (e.g. it was discarded, or its run was superseded) and they resolve it
-	let version = source(0);
-	/** @param {Batch} batch */
-	const retry = (batch) => {
-		// TODO idea here is: run the version increment in the context of a specific batch which should be retried
-		// maybe needs queue_micro_task instead to run clear of any other batch
-		const activate = !current_batch;
-		if (activate) batch.activate();
-		untrack(() => set(version, version.v + 1));
-		if (activate) batch.deactivate();
-	};
+	// A first value can't be undone in another batch's view. Let the creator supply it unless its run
+	// has been superseded or discarded, in which case `run` continues in the batch that supplies it.
 	let settled = false;
-	let waiting = false;
-
-	// Whether the creator's run was aborted by another batch's run that supersedes it (e.g. a later batch that
-	// folds it, and that is merged into it once it's done), so it won't have a value of its own to wait for.
 	let superseded = false;
-
-	// TODO something something know which one to retry next when creator obsoleted/aborted
-	const retries = new Set();
-
 	const for_run = batch_for_run;
+
+	/** @type {Set<Batch>} */
+	const waiting = new Set();
+
+	const retry = () => {
+		if (settled) return;
+
+		for (const batch of waiting) {
+			const target = merge_target(batch);
+			if (target.linked) target.retry(effect);
+		}
+
+		// The batch with the replacement value may already have committed and unlinked. Its value is
+		// then part of the creator's view, so the creator can continue even without a result of its own.
+		const creator = merge_target(batch);
+		if (creator.linked) creator.retry(effect);
+	};
+
+	/** @type {Effect} */
+	let effect;
 
 	return new Promise((fulfil, reject) => {
 		const source = async_expression(fn, label, location, (b) => {
-			if (merge_target(b) !== merge_target(batch)) return;
+			if (settled || merge_target(b) !== merge_target(batch)) return;
 			superseded = true;
-			if (waiting) retry(b);
+			retry();
 		});
 
-		block(() => {
-			var effect = /** @type {Effect} */ (active_effect);
+		batch.ondiscard(retry);
+		teardown(() => waiting.clear());
 
-			// (a no-op unless this batch waited)
-			current_batch?.decrement(effect);
+		effect = block(() => {
+			if (settled) return;
 
 			if (is_uninitialized(source)) {
 				get(source);
@@ -305,29 +305,15 @@ export function async_derived(fn, label, location) {
 			// (a batch that was merged into another one continues as that one, see `restore`)
 			var creator = merge_target(batch);
 
-			if (
-				current_batch !== creator &&
-				creator.linked &&
-				// !creator.committed &&
-				!superseded
-				// this commented out is for when we wanna overtake forks with real batches
-				// &&
-				// (!creator.is_fork || /** @type {Batch} */ (current_batch).is_fork)
-			) {
-				// Hold up this batch until the creator is done. It has to wait even if the promise is resolved already,
-				// so that it doesn't commit (or merge into the creator) before the script has continued in the creator's view
-				waiting = true;
-				current_batch?.increment(effect);
-				get(version);
-				const b = current_batch;
-				const r = () => retry(b);
-				retries.add(r);
-				creator.ondiscard(r);
+			if (current_batch !== creator && creator.linked && !superseded) {
+				// Don't hold up this batch: it must be able to merge its results into the creator.
+				// `run` accounts for the pending script in batches that adopt it independently.
+				waiting.add(/** @type {Batch} */ (current_batch));
 				return;
 			}
 
-			if (settled) return;
 			settled = true;
+			waiting.clear();
 
 			if (for_run) for_run.batch = /** @type {Batch} */ (current_batch);
 

@@ -338,7 +338,19 @@ export function run(thunks) {
 		}
 	};
 
-	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+	/** @param {() => void | Promise<void>} fn */
+	const invoke = (fn) => {
+		var previous = batch_for_run;
+		batch_for_run = for_run;
+
+		try {
+			return fn();
+		} finally {
+			batch_for_run = previous;
+		}
+	};
+
+	var promise = Promise.resolve(invoke(thunks[0])).catch(handle_error);
 
 	/** @type {Blocker} */
 	var blocker = { promise, settled: false, failed: false };
@@ -364,10 +376,8 @@ export function run(thunks) {
 						throw STALE_REACTION;
 					}
 
-					batch_for_run = for_run;
-					return fn();
+					return invoke(fn);
 				} finally {
-					batch_for_run = null;
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
 					unset_context();
@@ -389,13 +399,20 @@ export function run(thunks) {
 
 	async_effect(() => {
 		// Inside an effect so later adopting branches can rerun this
+		var batch = /** @type {Batch} */ (current_batch);
+		var decrement_pending = increment_pending();
+
 		promise
 			// wait one more tick, so that template effects are
 			// guaranteed to run before `$effect(...)`.
 			.then(() => Promise.resolve())
-			// The increment_pending() runs directly and finally
-			// will run its decrement.
-			.finally(increment_pending());
+			.finally(() => {
+				// The script can create effects after another batch adopted its branch. Those effects
+				// need to run in the adopting batch as well, not just the one that continued the script.
+				var target = merge_target(batch);
+				if (target.linked && !aborted(active)) target.revalidate_branch(active);
+				decrement_pending();
+			});
 	});
 
 	return blockers;
