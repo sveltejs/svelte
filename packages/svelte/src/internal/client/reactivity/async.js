@@ -24,7 +24,8 @@ import {
 	derived,
 	derived_safe_equal,
 	set_reactivity_loss_tracker,
-	async_expression
+	async_expression,
+	is_uninitialized
 } from './deriveds.js';
 import { aborted, async_effect, block, branch, teardown } from './effects.js';
 
@@ -92,7 +93,7 @@ export function flatten(blockers, sync, async, fn) {
 
 		block(() => {
 			for (var s of signals) {
-				if ((s.f & PAUSED) !== 0) {
+				if (is_uninitialized(s)) {
 					get(s);
 					return;
 				}

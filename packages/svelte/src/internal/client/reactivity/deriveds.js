@@ -13,7 +13,6 @@ import {
 	ASSIGNED,
 	ERROR_VALUE,
 	HAS_ABORT_CONTROLLER,
-	PAUSED,
 	EFFECT_TRANSPARENT
 } from '#client/constants';
 import {
@@ -128,7 +127,7 @@ export function async_expression(fn, label, location) {
 	}
 
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
-	signal.f |= ASYNC | PAUSED;
+	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
@@ -205,8 +204,6 @@ export function async_expression(fn, label, location) {
 
 			if (error === OBSOLETE) return;
 
-			signal.f &= ~PAUSED;
-
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
 
@@ -252,7 +249,7 @@ export function async_derived(fn, label, location) {
 		const source = async_expression(fn, label, location);
 
 		block(() => {
-			if ((source.f & PAUSED) !== 0) {
+			if (is_uninitialized(source)) {
 				get(source);
 				return;
 			}
@@ -271,6 +268,14 @@ export function async_derived(fn, label, location) {
 			}
 		}, EFFECT_TRANSPARENT);
 	});
+}
+
+/**
+ * Whether the signal of an async expression has no value yet in the active view of the world
+ * @param {Source} signal
+ */
+export function is_uninitialized(signal) {
+	return (batch_values?.get(signal) ?? signal).v === UNINITIALIZED;
 }
 
 /**
