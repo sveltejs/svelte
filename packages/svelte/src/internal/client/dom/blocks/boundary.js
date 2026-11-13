@@ -113,7 +113,10 @@ export class Boundary {
 	#local_pending_count = 0;
 	#pending_count_update_queued = false;
 
-	/** @type {Effect[]} */
+	/**
+	 * User effects created inside this boundary. They will run when the boundary is revealed
+	 * @type {Effect[]}
+	 */
 	#effects = [];
 
 	/**
@@ -397,6 +400,7 @@ export class Boundary {
 
 		this.is_pending = false;
 
+		// Add any deferred effects to the batch's effect queue
 		if (this.#effects.length > 0) {
 			for (let i = 0; i < this.#effects.length; i += 1) {
 				var e = this.#effects[i];
