@@ -11,7 +11,7 @@ const buttons = `
 // A fork's run of an async expression inside a pending boundary doesn't supersede the run of a real batch:
 // the fork's result isn't part of the real world until it's committed
 export default test({
-	async test({ assert, target }) {
+	async test({ assert, target, logs }) {
 		const [show, fork, shift, commit] = target.querySelectorAll('button');
 
 		show.click();
@@ -28,9 +28,11 @@ export default test({
 		shift.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>0</p>`);
+		assert.deepEqual(logs, [0]);
 
 		commit.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>1</p>`);
+		assert.deepEqual(logs, [0, 1]);
 	}
 });

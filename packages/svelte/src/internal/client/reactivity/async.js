@@ -424,7 +424,7 @@ export function increment_pending() {
 	return () => {
 		batch = merge_target(batch);
 		batch.decrement(effect);
-		pending?.decrement(effect, batch);
+		pending?.decrement(effect);
 		boundary?.update_effect_pending(-1);
 	};
 }

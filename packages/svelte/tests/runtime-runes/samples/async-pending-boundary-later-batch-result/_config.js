@@ -14,7 +14,7 @@ const buttons = `
 // creator's results, and the later batch's results only once it commits them — for an `await` in the
 // template (p), and in a component's script (q)
 export default test({
-	async test({ assert, target }) {
+	async test({ assert, target, logs }) {
 		const [a, show, shift_b, shift_p, shift_q] = target.querySelectorAll('button');
 
 		shift_b.click();
@@ -47,10 +47,12 @@ export default test({
 		shift_q.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>b: 0</p> <p>p: 0</p> <p>q: 0</p>`);
+		assert.deepEqual(logs, [0]);
 
 		// 2 commits
 		shift_b.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons} <p>b: 1</p> <p>p: 1</p> <p>q: 1</p>`);
+		assert.deepEqual(logs, [0, 1]);
 	}
 });

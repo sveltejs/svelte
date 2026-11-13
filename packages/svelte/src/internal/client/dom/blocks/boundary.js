@@ -441,16 +441,22 @@ export class Boundary {
 
 	/**
 	 * @param {Effect} effect
-	 * @param {Batch} batch
 	 */
-	decrement(effect, batch) {
+	decrement(effect) {
 		var count = this.#pending.get(effect) ?? 0;
 
 		if (count === 1) {
 			this.#pending.delete(effect);
 
 			if (this.#pending.size === 0) {
-				batch.schedule(this.#effect, MAYBE_DIRTY);
+				// The batch whose work finished may be a fork, or still be waiting for work outside
+				// this boundary. Check again in a normal batch, after the result's batch has flushed,
+				// so that we reveal committed content and run deferred effects in the same view.
+				queue_micro_task(() => {
+					if (this.is_pending && !this.#is_destroyed()) {
+						Batch.ensure().schedule(this.#effect, MAYBE_DIRTY);
+					}
+				});
 			}
 		} else {
 			this.#pending.set(effect, count - 1);
