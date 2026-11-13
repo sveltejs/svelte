@@ -197,7 +197,8 @@ var count_deps = 0;
 
 let uid = 1;
 
-let last_processed = 0;
+/** @type {number | null} */
+let last_processed = null;
 
 export class Batch {
 	id = uid++;
@@ -1206,6 +1207,10 @@ export class Batch {
 	activate() {
 		current_batch = this;
 		view_batch = this;
+
+		// Async continuations can create or run reactions in another batch's view without
+		// processing it. The next flush must re-validate those reactions in its own view.
+		if (last_processed !== this.id) last_processed = null;
 
 		if (!async_mode_flag) {
 			batch_values = view_cache = null;
