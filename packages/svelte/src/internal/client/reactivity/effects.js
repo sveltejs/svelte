@@ -632,23 +632,22 @@ export function pause_effect(effect, callback, destroy = true) {
 	};
 
 	var remaining = transitions.length;
+
 	if (remaining > 0) {
-		// prefer current_batch if set: in that case processing_batch, if present,
-		// would be in the effect flushing phase already, which means this is most
-		// likely a teardown caused by an effect write, which is associated with the
-		// current_batch, not the processing one.
-		var batch = current_batch ?? processing_batch;
+		// only reactivate `processing_batch` if `fn` runs later
+		/** @type {Batch | null} */
+		var batch = null;
+
 		var check = () => {
 			if (!--remaining) {
-				// `check` can get called synchronously, and if we're inside
-				// the branch commit or effect flushing phase, (de)activating
-				// the batch would mess everything up.
-				const set_batch = !(processing_batch || current_batch);
-				if (set_batch) batch?.activate();
+				batch?.activate();
 				fn();
-				if (set_batch) batch?.deactivate();
+				batch?.deactivate();
 			}
 		};
+
+		batch = processing_batch;
+
 		for (var transition of transitions) {
 			transition.out(check);
 		}
