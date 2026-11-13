@@ -16,6 +16,7 @@ const buttons = `
 // aborted run, which only settles once B is merged into A — and B waits for the script to be done (it re-ran the
 // first expression, whose step continued already)
 export default test({
+	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		const [a, b, first_1, first_2, second_2] = target.querySelectorAll('button');

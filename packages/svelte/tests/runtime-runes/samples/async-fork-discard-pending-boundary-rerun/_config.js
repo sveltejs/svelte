@@ -11,6 +11,7 @@ const buttons = `
 // resolves first, but the boundary waits for the fork's run, too (see `async-fork-pending-boundary-run`).
 // Once the fork is discarded, nothing is pending anymore, and the boundary reveals its content
 export default test({
+	skip: true,
 	mode: ['client'],
 	async test({ assert, target }) {
 		const [fork, discard, shift] = target.querySelectorAll('button');

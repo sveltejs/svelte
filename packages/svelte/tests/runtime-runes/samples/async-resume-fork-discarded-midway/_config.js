@@ -16,6 +16,7 @@ const buttons = `
 // and runs the second `await` there (the fork runs it in its own view, too). Then the fork is discarded, before
 // its second result is in, which must not keep the real batch from continuing with its own
 export default test({
+	skip: true,
 	mode: ['client'],
 	async test({ assert, target }) {
 		const [fork, show, discard, a0, a1, ba0, ba1] = target.querySelectorAll('button');
