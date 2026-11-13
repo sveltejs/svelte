@@ -1,6 +1,7 @@
 /** @import { CompileOptions } from '#compiler' */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { globSync } from 'tinyglobby';
 import { VERSION, compile, compileModule, preprocess } from 'svelte/compiler';
 import { vi } from 'vitest';
@@ -162,6 +163,113 @@ export async function compile_directory(
 			}
 		}
 	}
+}
+
+const svelte_dir = path.resolve(fileURLToPath(import.meta.url), '../..');
+
+/** @type {number | undefined} */
+let compiler_last_modified;
+
+/**
+ * Returns the most recent modification time of anything that can affect compiler output:
+ * all files in `src/compiler`, all files outside of it that the compiler (transitively)
+ * imports (`src/utils.js`, `src/constants.js` etc), the lockfile (for dependencies
+ * like `esrap`) and this file (which contains `compile_directory`)
+ */
+function get_compiler_last_modified() {
+	if (compiler_last_modified !== undefined) return compiler_last_modified;
+
+	const files = globSync('**', {
+		cwd: path.join(svelte_dir, 'src/compiler'),
+		absolute: true,
+		onlyFiles: true
+	}).map((file) => path.resolve(file));
+
+	const seen = new Set(files);
+
+	// `files` grows as we go, so that we also follow imports of files outside `src/compiler`
+	for (let i = 0; i < files.length; i += 1) {
+		const file = files[i];
+		if (!file.endsWith('.js')) continue;
+
+		const code = fs.readFileSync(file, 'utf-8');
+
+		for (const match of code.matchAll(/from\s*['"](\.\.?\/[^'"]+)['"]/g)) {
+			const dependency = path.resolve(path.dirname(file), match[1]);
+			if (seen.has(dependency)) continue;
+
+			seen.add(dependency);
+			if (fs.existsSync(dependency)) files.push(dependency);
+		}
+	}
+
+	files.push(fileURLToPath(import.meta.url), path.resolve(svelte_dir, '../../pnpm-lock.yaml'));
+
+	compiler_last_modified = Math.max(
+		...files.filter((file) => fs.existsSync(file)).map((file) => fs.statSync(file).mtimeMs)
+	);
+
+	return compiler_last_modified;
+}
+
+/**
+ * Like `compile_directory`, but skips compilation if `_output/{generate}` is still up to date.
+ * That's the case if it was compiled with the same options and from the same set of files, and
+ * neither the compiler (see `get_compiler_last_modified`) nor any of these files changed since.
+ * The time of the last compilation is stored in `_output/{generate}/info.json`.
+ *
+ * Set `NO_COMPILE_CACHE=true` to always compile.
+ *
+ * @param {string} cwd
+ * @param {'client' | 'server'} generate
+ * @param {Partial<CompileOptions>} compileOptions
+ */
+export async function compile_directory_cached(cwd, generate, compileOptions = {}) {
+	const info_file = `${cwd}/_output/${generate}/info.json`;
+
+	// same files as `compile_directory` reads
+	const files = globSync('**', { cwd, onlyFiles: true, ignore: ['_output/**'] })
+		.filter((file) => !file.startsWith('_'))
+		.sort();
+
+	// functions such as `cssHash` would be dropped otherwise
+	const options = JSON.stringify(compileOptions, (_, value) =>
+		typeof value === 'function' ? value.toString() : value
+	);
+
+	if (process.env.NO_COMPILE_CACHE !== 'true') {
+		/** @type {{ compiled_at: number; options: string; files: string[] } | null} */
+		let info = null;
+
+		try {
+			info = JSON.parse(fs.readFileSync(info_file, 'utf-8'));
+		} catch {
+			// missing or corrupted (e.g. the process was killed while writing it)
+		}
+
+		if (
+			typeof info?.compiled_at === 'number' &&
+			info.options === options &&
+			Array.isArray(info.files) &&
+			info.files.join('\n') === files.join('\n')
+		) {
+			let last_modified = get_compiler_last_modified();
+
+			for (const file of files) {
+				last_modified = Math.max(last_modified, fs.statSync(`${cwd}/${file}`).mtimeMs);
+			}
+
+			if (last_modified < info.compiled_at) return;
+		}
+	}
+
+	// take the timestamp before compiling, so that changes made while compiling are picked up next time
+	const compiled_at = Date.now();
+
+	// this removes `_output/{generate}` (including `info.json`) first, so if compilation fails we'll retry next time
+	await compile_directory(cwd, generate, compileOptions);
+
+	write(info_file, JSON.stringify({ compiled_at, options, files }, null, '\t'));
 }
 
 export function should_update_expected() {

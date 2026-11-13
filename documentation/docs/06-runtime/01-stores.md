@@ -62,6 +62,37 @@ export const userState = $state({
 
 Stores are still a good solution when you have complex asynchronous data streams or it's important to have more manual control over updating values or listening to changes. If you're familiar with RxJs and want to reuse that knowledge, the `$` also comes in handy for you.
 
+## Granularity of stores
+
+Stores notify subscribers about their entire value. Unlike a deeply reactive [`$state` proxy]($state#Deep-state), a plain object held in a store does not track individual property reads. An [`$effect`]($effect) that reads `$user.name` therefore also re-runs when the store is updated because another property, such as `age`, changed.
+
+If an effect should only react to a particular value, select that value with [`$derived`]($derived):
+
+<!-- codeblock:start {"title":"$effect.tracking()"} -->
+```svelte
+<!-- file: App.svelte -->
+<script>
+	import { writable } from 'svelte/store';
+
+	const user = writable({ name: 'Ada', age: 36 });
+	let name = $derived($user.name);
+
+	$effect(() => {
+		// Re-runs when either name or age changes
+		console.log('Store updated:', $user.name);
+	});
+
+	$effect(() => {
+		// Re-runs only when name changes
+		console.log('Name changed:', name);
+	});
+</script>
+
+<button onclick={() => ($user.age += 1)}>Increase age</button>
+<button onclick={() => ($user.name += '!')}>Change name</button>
+```
+<!-- codeblock:end -->
+
 ## svelte/store
 
 The `svelte/store` module contains a minimal store implementation which fulfil the store contract. It provides methods for creating stores that you can update from the outside, stores you can only update from the inside, and for combining and deriving stores.
