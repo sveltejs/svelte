@@ -1,4 +1,5 @@
 /** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { TeardownContext } from './batch.js' */
 import {
 	is_dirty,
 	active_effect,
@@ -47,8 +48,6 @@ import { component_context, dev_current_component_function, dev_stack } from '..
 import {
 	Batch,
 	collected_effects,
-	current_batch,
-	processing_batch,
 	set_teardown_context,
 	teardown_context
 } from './batch.js';
@@ -634,19 +633,19 @@ export function pause_effect(effect, callback, destroy = true) {
 	var remaining = transitions.length;
 
 	if (remaining > 0) {
-		// only reactivate `processing_batch` if `fn` runs later
-		/** @type {Batch | null} */
-		var batch = null;
+		// only reactivate the teardown context if `fn` runs later
+		/** @type {TeardownContext | null} */
+		var previous_teardown_context = null;
 
 		var check = () => {
 			if (!--remaining) {
-				batch?.activate();
+				if (previous_teardown_context) set_teardown_context(previous_teardown_context);
 				fn();
-				batch?.deactivate();
+				if (previous_teardown_context) set_teardown_context(null);
 			}
 		};
 
-		batch = processing_batch;
+		previous_teardown_context = teardown_context;
 
 		for (var transition of transitions) {
 			transition.out(check);
