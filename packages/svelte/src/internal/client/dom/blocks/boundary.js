@@ -47,6 +47,7 @@ import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
 import { defer_effect } from '../../reactivity/utils.js';
+import { set_signal_status } from '../../reactivity/status.js';
 
 /**
  * @typedef {{
@@ -384,10 +385,10 @@ export class Boundary {
 	}
 
 	/**
-	 *
 	 * @param {Batch} batch
+	 * @param {Effect[]} effects
 	 */
-	check(batch) {
+	check(batch, effects) {
 		if (!this.is_pending) return;
 
 		for (const effect of this.#pending.keys()) {
@@ -398,7 +399,14 @@ export class Boundary {
 
 		this.is_pending = false;
 
-		batch.transfer_effects(this.#dirty_effects);
+		if (this.#dirty_effects.size > 0) {
+			for (const [effect, status] of this.#dirty_effects) {
+				set_signal_status(effect, status);
+				effects.push(effect);
+			}
+
+			this.#dirty_effects.clear();
+		}
 
 		if (this.#pending_effect) {
 			pause_effect(this.#pending_effect, () => {

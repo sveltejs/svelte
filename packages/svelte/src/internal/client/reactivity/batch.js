@@ -752,7 +752,7 @@ export class Batch {
 			while (effect !== null) {
 				// if a pending boundary is now resolved, reveal it
 				if ((effect.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT) {
-					/** @type {Boundary} */ (effect.b).check(this);
+					/** @type {Boundary} */ (effect.b).check(this, effects);
 				}
 
 				var next = effect.next;
@@ -824,13 +824,21 @@ export class Batch {
 
 		// That pending work is this batch's from now on: it decrements this batch's counts (see `increment_pending`),
 		// so this batch stays linked until the work is done, and receives the effects that a boundary defers until then
-		for (const [effect, count] of batch.#pending) {
-			this.#pending.set(effect, (this.#pending.get(effect) ?? 0) + count);
+		if (batch.#pending.size > 0) {
+			for (const [effect, count] of batch.#pending) {
+				this.#pending.set(effect, (this.#pending.get(effect) ?? 0) + count);
+			}
+
+			batch.#pending.clear();
 		}
 
-		batch.#pending.clear();
+		if (batch.#unprocessed.size !== 0) {
+			for (const [effect, status] of batch.#unprocessed) {
+				add_dirty_effect(this.#unprocessed, effect, status);
+			}
 
-		this.transfer_effects(batch.#unprocessed);
+			batch.#unprocessed.clear();
+		}
 
 		// What the merged batch did on its own (e.g. branches it selected) is obsolete once this batch is
 		// done — whether it commits or is discarded (e.g. because of an error)
@@ -1093,25 +1101,6 @@ export class Batch {
 				this.flush();
 			}
 		});
-	}
-
-	/**
-	 * @param {Map<Effect, number>} dirty_effects
-	 */
-	transfer_effects(dirty_effects) {
-		if (dirty_effects.size === 0) return;
-
-		for (const [effect, status] of dirty_effects) {
-			if (this === processing_batch) {
-				// we are in the branch commit phase. we got here because a `boundary.decrement(...)` in `flatten`
-				// caused a pending boundary to resolve. it's too late to add the effect to `this.#unprocessed`
-				this.#add(effect, status);
-			} else {
-				add_dirty_effect(this.#unprocessed, effect, status);
-			}
-		}
-
-		dirty_effects.clear();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
