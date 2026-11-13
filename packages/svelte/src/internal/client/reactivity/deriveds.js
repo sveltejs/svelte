@@ -50,7 +50,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
-import { increment_pending, merge_target, unset_context } from './async.js';
+import { batch_for_run, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -282,6 +282,8 @@ export function async_derived(fn, label, location) {
 	// TODO something something know which one to retry next when creator obsoleted/aborted
 	const retries = new Set();
 
+	const for_run = batch_for_run;
+
 	return new Promise((fulfil, reject) => {
 		const source = async_expression(fn, label, location, (b) => {
 			if (merge_target(b) !== merge_target(batch)) return;
@@ -326,6 +328,8 @@ export function async_derived(fn, label, location) {
 
 			if (settled) return;
 			settled = true;
+
+			if (for_run) for_run.batch = /** @type {Batch} */ (current_batch);
 
 			try {
 				// We get the source and catch in case it's an error.

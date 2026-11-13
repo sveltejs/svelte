@@ -305,6 +305,9 @@ export function unset_context(deactivate_batch = true) {
 	}
 }
 
+/** @type {{batch: Batch} | null} */
+export let batch_for_run = null;
+
 /**
  * @param {Array<() => void | Promise<void>>} thunks
  */
@@ -315,6 +318,9 @@ export function run(thunks) {
 	/** @type {null | { error: any }} */
 	var errored = null;
 
+	/** @type {NonNullable<typeof batch_for_run>} */
+	var for_run = { batch: /** @type {Batch} */ (current_batch) };
+
 	/** @param {any} error */
 	const handle_error = (error) => {
 		if (errored) return;
@@ -322,7 +328,7 @@ export function run(thunks) {
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
 		if (!aborted(active)) {
-			restore();
+			restore(true, for_run.batch);
 
 			try {
 				invoke_error_boundary(error, active);
@@ -347,7 +353,7 @@ export function run(thunks) {
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
-				restore();
+				restore(true, for_run.batch);
 
 				try {
 					if (errored) {
@@ -358,8 +364,10 @@ export function run(thunks) {
 						throw STALE_REACTION;
 					}
 
+					batch_for_run = for_run;
 					return fn();
 				} finally {
+					batch_for_run = null;
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
 					unset_context();
