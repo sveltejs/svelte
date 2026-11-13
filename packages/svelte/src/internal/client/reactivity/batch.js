@@ -207,6 +207,8 @@ export class Batch {
 
 	linked = true;
 
+	obsolete = false;
+
 	/** @type {Batch | null} */
 	prev = null;
 
