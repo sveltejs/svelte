@@ -418,13 +418,13 @@ export function increment_pending() {
 	}
 
 	batch.increment(effect);
-	pending?.increment(effect);
+	pending?.increment(effect, batch);
 	boundary?.update_effect_pending(1);
 
 	return () => {
-		batch = merge_target(batch);
-		batch.decrement(effect);
-		pending?.decrement(effect);
+		merge_target(batch).decrement(effect);
+		// The boundary keeps counts under the originating batch, even if it was merged.
+		pending?.decrement(effect, batch);
 		boundary?.update_effect_pending(-1);
 	};
 }
