@@ -1065,6 +1065,8 @@ declare module 'svelte/compiler' {
 		 * This is always `'injected'` when compiling with `customElement` mode.
 		 *
 		 * You can also pass a function that receives `{ filename }` and returns either `'injected'` or `'external'`.
+		 *
+		 * @default 'external'
 		 */
 		css?: 'injected' | 'external' | ((options: { filename: string }) => 'injected' | 'external');
 		/**
@@ -3163,6 +3165,8 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * This is always `'injected'` when compiling with `customElement` mode.
 		 *
 		 * You can also pass a function that receives `{ filename }` and returns either `'injected'` or `'external'`.
+		 *
+		 * @default 'external'
 		 */
 		css?: 'injected' | 'external' | ((options: { filename: string }) => 'injected' | 'external');
 		/**
