@@ -1,7 +1,6 @@
 /** @import { Blocker, Effect, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
-/** @import { Boundary } from '../dom/blocks/boundary.js' */
-import { DESTROYED, EFFECT_TRANSPARENT, PAUSED, STALE_REACTION } from '#client/constants';
+import { DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -18,7 +17,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch, processing_batch } from './batch.js';
+import { current_batch } from './batch.js';
 import {
 	reactivity_loss_tracker,
 	derived,
@@ -27,7 +26,7 @@ import {
 	async_expression,
 	is_uninitialized
 } from './deriveds.js';
-import { aborted, async_effect, block, branch, teardown } from './effects.js';
+import { aborted, async_effect, block, branch } from './effects.js';
 
 /**
  * @param {Blocker[]} blockers
