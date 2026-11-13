@@ -30,10 +30,7 @@ export default test({
 				(first === 'real' ? pop : shift).click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, first === 'real' ? buttons : buttons);
-				assert.deepEqual(
-					logs.splice(0),
-					first === 'real' ? [] : ['continued with 1']
-				);
+				assert.deepEqual(logs.splice(0), first === 'real' ? [] : ['continued with 1']);
 
 				(first === 'real' ? shift : pop).click();
 				await tick();
