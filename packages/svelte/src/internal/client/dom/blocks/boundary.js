@@ -330,8 +330,6 @@ export class Boundary {
 				this.#children(this.#anchor);
 			});
 
-			var batch = /** @type {Batch} */ (current_batch);
-
 			if (this.#pending.size === 0) {
 				this.is_pending = false;
 			} else {
