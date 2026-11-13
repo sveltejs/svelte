@@ -387,17 +387,25 @@ export class Boundary {
 
 	/**
 	 * @param {Batch} batch
-	 * @param {Effect[]} effects
 	 */
-	check(batch, effects) {
-		if (!this.is_pending || (batch.is_fork && this.#pending.size > 0)) return;
+	is_ready(batch) {
+		if (batch.is_fork && this.#pending.size > 0) {
+			return false;
+		}
 
 		for (const effect of this.#pending.keys()) {
 			if (batch.is_blocked_by(effect, this.#main_effect)) {
-				return;
+				return false;
 			}
 		}
 
+		return true;
+	}
+
+	/**
+	 * @param {Effect[]} effects
+	 */
+	reveal(effects) {
 		this.is_pending = false;
 
 		// Add any deferred effects to the batch's effect queue

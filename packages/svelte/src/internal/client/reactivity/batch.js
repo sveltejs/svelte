@@ -542,6 +542,9 @@ export class Batch {
 		/** @type {Effect[]} */
 		var render_effects = [];
 
+		/** @type {Boundary[]} */
+		var revealed_boundaries = [];
+
 		/**
 		 * @type {Effect[]}
 		 * @deprecated when we get rid of legacy mode and stores, we can get rid of this
@@ -559,7 +562,7 @@ export class Batch {
 
 			for (const root of this.#resolve()) {
 				try {
-					this.#traverse(root, effects, render_effects);
+					this.#traverse(root, effects, render_effects, revealed_boundaries);
 				} catch (e) {
 					reset_branch(root, true);
 					// If there's no async work left, this branch is now dead and needs
@@ -623,6 +626,10 @@ export class Batch {
 			earlier_batch.#merge(this);
 
 			return;
+		}
+
+		for (const boundary of revealed_boundaries) {
+			boundary.reveal(effects);
 		}
 
 		// The results of this batch are about to become the real-world state
@@ -716,8 +723,9 @@ export class Batch {
 	 * @param {Effect} root
 	 * @param {Effect[]} effects
 	 * @param {Effect[]} render_effects
+	 * @param {Boundary[]} revealed_boundaries
 	 */
-	#traverse(root, effects, render_effects) {
+	#traverse(root, effects, render_effects, revealed_boundaries) {
 		root.f ^= CLEAN;
 
 		var effect = root.first;
@@ -753,7 +761,11 @@ export class Batch {
 			while (effect !== null) {
 				// if a pending boundary is now resolved, reveal it
 				if ((effect.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT) {
-					/** @type {Boundary} */ (effect.b).check(this, effects);
+					var boundary = /** @type {Boundary} */ (effect.b);
+
+					if (boundary.is_pending && boundary.is_ready(this)) {
+						revealed_boundaries.push(boundary);
+					}
 				}
 
 				var next = effect.next;
