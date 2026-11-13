@@ -8,6 +8,7 @@ import { is_custom_element_node } from '../../../../nodes.js';
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '#compiler/builders';
 import {
+	ELEMENT_IS_CUSTOM_ELEMENT,
 	ELEMENT_IS_INPUT,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
@@ -214,6 +215,7 @@ export function build_element_attributes(node, context, transform) {
 		);
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
+		const attr = is_custom_element_node(node) ? '$.custom_element_attr' : '$.attr';
 
 		for (const attribute of /** @type {Array<AST.Attribute | TransformedAttribute>} */ (
 			attributes
@@ -221,7 +223,7 @@ export function build_element_attributes(node, context, transform) {
 			if (attribute.type === 'transformed') {
 				context.state.template.push(
 					b.call(
-						'$.attr',
+						attr,
 						b.literal(attribute.name),
 						attribute.expression,
 						is_boolean_attribute(attribute.name) && b.true
@@ -279,7 +281,7 @@ export function build_element_attributes(node, context, transform) {
 				context.state.template.push(build_attr_style(style_directives, value, context, transform));
 			} else {
 				context.state.template.push(
-					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+					b.call(attr, b.literal(name), value, is_boolean_attribute(name) && b.true)
 				);
 			}
 		}
@@ -477,7 +479,7 @@ export function prepare_element_spread(
 	if (element.metadata.svg || element.metadata.mathml) {
 		flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
 	} else if (is_custom_element_node(element)) {
-		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE | ELEMENT_IS_CUSTOM_ELEMENT;
 	} else if (element.type === 'RegularElement' && element.name === 'input') {
 		flags |= ELEMENT_IS_INPUT;
 	}

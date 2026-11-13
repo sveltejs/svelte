@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	mode: ['client'],
+	mode: ['client', 'hydrate'],
 	async test({ assert, target }) {
 		const my_element = /** @type HTMLElement & { object: { test: true }; } */ (
 			target.querySelector('my-element')
