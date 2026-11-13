@@ -291,7 +291,6 @@ export class Boundary {
 
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
-			var handled = false;
 
 			fragment.append(anchor);
 
@@ -301,7 +300,6 @@ export class Boundary {
 				} catch (error) {
 					try {
 						this.error(error);
-						handled = true;
 					} catch (error) {
 						invoke_error_boundary(error, this.#effect.parent);
 					}
@@ -335,7 +333,6 @@ export class Boundary {
 
 			var batch = /** @type {Batch} */ (current_batch);
 
-
 			if (this.is_ready(batch)) {
 				this.is_pending = false;
 			} else {
@@ -348,7 +345,6 @@ export class Boundary {
 					this.#pending_effect = branch(() => pending(this.#anchor));
 				}
 			}
-
 		} catch (error) {
 			this.error(error);
 		}
@@ -360,14 +356,6 @@ export class Boundary {
 	 */
 	defer_effect(effect) {
 		defer_effect(effect, this.#dirty_effects);
-	}
-
-	/**
-	 * Returns `false` if the effect exists inside a boundary whose pending snippet is shown
-	 * @returns {boolean}
-	 */
-	is_rendered() {
-		return !this.is_pending && (!this.parent || this.parent.is_rendered());
 	}
 
 	has_pending_snippet() {
