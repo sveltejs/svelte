@@ -72,6 +72,12 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	var group;
 	var remaining = to_destroy.length;
 
+	/**
+	 * Effects whose outros finished synchronously, before `group` was created
+	 * @type {Set<Effect>}
+	 */
+	var finished = new Set();
+
 	for (var i = 0; i < length; i++) {
 		let effect = to_destroy[i];
 
@@ -94,6 +100,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 					}
 				} else {
 					remaining -= 1;
+					finished.add(effect);
 				}
 			},
 			false
@@ -123,8 +130,8 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 		destroy_effects(state, to_destroy, !fast_path);
 	} else {
 		group = {
-			pending: new Set(to_destroy),
-			done: new Set()
+			pending: new Set(to_destroy.filter((effect) => !finished.has(effect))),
+			done: finished
 		};
 
 		(state.outrogroups ??= new Set()).add(group);
