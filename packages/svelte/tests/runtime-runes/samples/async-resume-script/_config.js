@@ -29,16 +29,13 @@ export default test({
 				// the fork's run is first in the queue, the real batch's last
 				(first === 'real' ? pop : shift).click();
 				await tick();
-				assert.htmlEqual(target.innerHTML, first === 'real' ? `${buttons}<p>0 0</p>` : buttons);
-				assert.deepEqual(
-					logs.splice(0),
-					first === 'real' ? ['continued with 0'] : ['continued with 1']
-				);
+				assert.htmlEqual(target.innerHTML, first === 'real' ? buttons : buttons);
+				assert.deepEqual(logs.splice(0), first === 'real' ? [] : ['continued with 1']);
 
 				(first === 'real' ? shift : pop).click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, `${buttons}<p>0 0</p>`);
-				assert.deepEqual(logs, []);
+				assert.deepEqual(logs.splice(0), first === 'real' ? ['continued with 1'] : []);
 
 				commit.click();
 				await tick();

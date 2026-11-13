@@ -3,8 +3,10 @@ import {
 	BOUNDARY_EFFECT,
 	DESTROYED,
 	DESTROYING,
+	DIRTY,
 	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT
+	EFFECT_TRANSPARENT,
+	MAYBE_DIRTY
 } from '#client/constants';
 import {
 	HYDRATION_ERROR,
@@ -45,7 +47,7 @@ import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
-import { defer_effect } from '../../reactivity/utils.js';
+import { set_signal_status } from '../../reactivity/status.js';
 
 /**
  * @typedef {{
@@ -109,11 +111,19 @@ export class Boundary {
 	#offscreen_fragment = null;
 
 	#local_pending_count = 0;
-	#pending_count = 0;
 	#pending_count_update_queued = false;
 
-	/** @type {Map<Effect, number>} */
-	#dirty_effects = new Map();
+	/**
+	 * User effects created inside this boundary. They will run when the boundary is revealed
+	 * @type {Effect[]}
+	 */
+	#effects = [];
+
+	/**
+	 * Async effects that are currently in flight
+	 * @type {Map<Effect, number>}
+	 */
+	#pending = new Map();
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -285,7 +295,6 @@ export class Boundary {
 
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
-			var handled = false;
 
 			fragment.append(anchor);
 
@@ -295,7 +304,6 @@ export class Boundary {
 				} catch (error) {
 					try {
 						this.error(error);
-						handled = true;
 					} catch (error) {
 						invoke_error_boundary(error, this.#effect.parent);
 					}
@@ -304,21 +312,14 @@ export class Boundary {
 				}
 			});
 
-			if (this.#main_effect === null) {
-				this.#offscreen_fragment = null;
-				if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
-				return;
-			}
-
-			if (this.#pending_count === 0) {
+			if (this.#main_effect !== null && this.#pending.size === 0) {
+				this.is_pending = false;
 				this.#anchor.before(fragment);
 				this.#offscreen_fragment = null;
 
 				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
 					this.#pending_effect = null;
 				});
-
-				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		});
 	}
@@ -326,21 +327,23 @@ export class Boundary {
 	#render() {
 		try {
 			this.is_pending = this.has_pending_snippet();
-			this.#pending_count = 0;
 			this.#local_pending_count = 0;
 
 			this.#main_effect = branch(() => {
 				this.#children(this.#anchor);
 			});
 
-			if (this.#pending_count > 0) {
-				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
-				move_effect(this.#main_effect, fragment);
-
-				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
-				this.#pending_effect = branch(() => pending(this.#anchor));
+			if (this.#pending.size === 0) {
+				this.is_pending = false;
 			} else {
-				this.#resolve(/** @type {Batch} */ (current_batch));
+				const pending = this.#props.pending;
+
+				if (pending) {
+					var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+					move_effect(this.#main_effect, fragment);
+
+					this.#pending_effect = branch(() => pending(this.#anchor));
+				}
 			}
 		} catch (error) {
 			this.error(error);
@@ -348,30 +351,11 @@ export class Boundary {
 	}
 
 	/**
-	 * @param {Batch} batch
-	 */
-	#resolve(batch) {
-		this.is_pending = false;
-
-		// any effects that were previously deferred should be transferred
-		// to the batch, which will flush in the next microtask
-		batch.transfer_effects(this.#dirty_effects);
-	}
-
-	/**
 	 * Defer an effect inside a pending boundary until the boundary resolves
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_effects);
-	}
-
-	/**
-	 * Returns `false` if the effect exists inside a boundary whose pending snippet is shown
-	 * @returns {boolean}
-	 */
-	is_rendered() {
-		return !this.is_pending && (!this.parent || this.parent.is_rendered());
+		this.#effects.push(effect);
 	}
 
 	has_pending_snippet() {
@@ -401,39 +385,67 @@ export class Boundary {
 		}
 	}
 
-	increment() {
-		if (!this.has_pending_snippet()) {
-			this.parent?.increment();
-			return;
+	/**
+	 * @param {Batch} batch
+	 * @param {Effect[]} effects
+	 */
+	check(batch, effects) {
+		if (!this.is_pending || (batch.is_fork && this.#pending.size > 0)) return;
+
+		for (const effect of this.#pending.keys()) {
+			if (batch.is_blocked_by(effect, this.#main_effect)) {
+				return;
+			}
 		}
 
-		this.#pending_count += 1;
+		this.is_pending = false;
+
+		// Add any deferred effects to the batch's effect queue
+		if (this.#effects.length > 0) {
+			for (let i = 0; i < this.#effects.length; i += 1) {
+				var e = this.#effects[i];
+				set_signal_status(e, DIRTY);
+				effects.push(e);
+			}
+
+			this.#effects.length = 0;
+		}
+
+		if (this.#pending_effect) {
+			pause_effect(this.#pending_effect, () => {
+				this.#pending_effect = null;
+			});
+		}
+
+		if (this.#offscreen_fragment) {
+			this.#anchor.before(this.#offscreen_fragment);
+			this.#offscreen_fragment = null;
+		}
 	}
 
 	/**
-	 * Updates the pending count associated with the currently visible pending snippet,
-	 * if any, such that we can replace the snippet with content once work is done
+	 * @param {Effect} effect
+	 */
+	increment(effect) {
+		var count = this.#pending.get(effect) ?? 0;
+		this.#pending.set(effect, count + 1);
+	}
+
+	/**
+	 * @param {Effect} effect
 	 * @param {Batch} batch
 	 */
-	decrement(batch) {
-		if (!this.has_pending_snippet()) {
-			this.parent?.decrement(batch);
-			return;
-		}
+	decrement(effect, batch) {
+		var count = this.#pending.get(effect) ?? 0;
 
-		if (--this.#pending_count === 0) {
-			this.#resolve(batch);
+		if (count === 1) {
+			this.#pending.delete(effect);
 
-			if (this.#pending_effect) {
-				pause_effect(this.#pending_effect, () => {
-					this.#pending_effect = null;
-				});
+			if (this.#pending.size === 0) {
+				batch.schedule(this.#effect, MAYBE_DIRTY);
 			}
-
-			if (this.#offscreen_fragment) {
-				this.#anchor.before(this.#offscreen_fragment);
-				this.#offscreen_fragment = null;
-			}
+		} else {
+			this.#pending.set(effect, count - 1);
 		}
 	}
 

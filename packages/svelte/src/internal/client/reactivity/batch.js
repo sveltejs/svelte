@@ -1,5 +1,6 @@
 /** @import { Fork } from 'svelte' */
 /** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Boundary } from '../dom/blocks/boundary.js' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -20,7 +21,8 @@ import {
 	EFFECT_OFFSCREEN,
 	ASSIGNED,
 	ASYNC,
-	REACTION_IS_UPDATING
+	REACTION_IS_UPDATING,
+	BOUNDARY_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -50,7 +52,6 @@ import {
 	update
 } from './sources.js';
 import { eager_effect, teardown, unlink_effect } from './effects.js';
-import { add_dirty_effect, defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
@@ -206,6 +207,8 @@ export class Batch {
 
 	linked = true;
 
+	obsolete = false;
+
 	/** @type {Batch | null} */
 	prev = null;
 
@@ -266,15 +269,10 @@ export class Batch {
 	#discard_callbacks = new Map();
 
 	/**
-	 * The number of async effects that are currently in flight
-	 */
-	#pending = 0;
-
-	/**
-	 * Async effects that are currently in flight, _not_ inside a pending boundary
+	 * Async effects that are currently in flight
 	 * @type {Map<Effect, number>}
 	 */
-	#blocking_pending = new Map();
+	#pending = new Map();
 
 	/**
 	 * A deferred that resolves when the batch is committed, used with `settled()`
@@ -343,9 +341,8 @@ export class Batch {
 	#is_deferred() {
 		if (this.is_fork) return true;
 
-		for (const effect of this.#blocking_pending.keys()) {
-			// pending work inside a skipped branch doesn't block, the branch is going to be destroyed
-			if (!this.is_skipped(effect)) {
+		for (const effect of this.#pending.keys()) {
+			if (this.is_blocked_by(effect)) {
 				return true;
 			}
 		}
@@ -365,7 +362,7 @@ export class Batch {
 	}
 
 	/**
-	 * Whether `effect` is inside a branch that this batch skips
+	 * Whether `effect` is inside a branch that this batch skips, i.e. doesn't exist in its view of the world
 	 * @param {Effect} effect
 	 */
 	is_skipped(effect) {
@@ -374,6 +371,30 @@ export class Batch {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether async work in `effect` holds up this batch — or, with `root`, the boundary whose content `root` is.
+	 * It doesn't if the effect is inside a branch that this batch skips (the branch is going to be destroyed),
+	 * or inside a boundary that is pending (which shows its pending snippet in the meantime).
+	 * Unlike a skipped branch, the content of a pending boundary does exist in the view of the batch: its
+	 * effects are still re-validated (see `#revalidate`), they just don't keep the batch from committing
+	 * @param {Effect} effect
+	 * @param {Effect | null} [root]
+	 */
+	is_blocked_by(effect, root = null) {
+		for (var e = /** @type {Effect | null} */ (effect); e !== null && e !== root; e = e.parent) {
+			if (this.#skips(e)) return false;
+
+			if (
+				(e.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT &&
+				/** @type {Boundary} */ (e.b).is_pending
+			) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -600,6 +621,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
+
 			return;
 		}
 
@@ -616,7 +638,7 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.#pending === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
+		if (this.#pending.size === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
 			this.#unlink();
 		}
 
@@ -729,6 +751,11 @@ export class Batch {
 			}
 
 			while (effect !== null) {
+				// if a pending boundary is now resolved, reveal it
+				if ((effect.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT) {
+					/** @type {Boundary} */ (effect.b).check(this, effects);
+				}
+
 				var next = effect.next;
 
 				if (next !== null) {
@@ -798,16 +825,21 @@ export class Batch {
 
 		// That pending work is this batch's from now on: it decrements this batch's counts (see `increment_pending`),
 		// so this batch stays linked until the work is done, and receives the effects that a boundary defers until then
-		this.#pending += batch.#pending;
-		batch.#pending = 0;
+		if (batch.#pending.size > 0) {
+			for (const [effect, count] of batch.#pending) {
+				this.#pending.set(effect, (this.#pending.get(effect) ?? 0) + count);
+			}
 
-		for (const [effect, count] of batch.#blocking_pending) {
-			this.#blocking_pending.set(effect, (this.#blocking_pending.get(effect) ?? 0) + count);
+			batch.#pending.clear();
 		}
 
-		batch.#blocking_pending.clear();
+		if (batch.#unprocessed.size > 0) {
+			for (const [effect, status] of batch.#unprocessed) {
+				this.#add_dirty_effect(effect, status);
+			}
 
-		this.transfer_effects(batch.#unprocessed);
+			batch.#unprocessed.clear();
+		}
 
 		// What the merged batch did on its own (e.g. branches it selected) is obsolete once this batch is
 		// done — whether it commits or is discarded (e.g. because of an error)
@@ -822,11 +854,30 @@ export class Batch {
 	}
 
 	/**
+	 * Note that `effect` needs to be (re-)validated, without downgrading a DIRTY effect to MAYBE_DIRTY
+	 * @param {Effect} effect
+	 * @param {number} status DIRTY or MAYBE_DIRTY
+	 */
+	#add_dirty_effect(effect, status) {
+		if (status === DIRTY || this.#unprocessed.get(effect) !== DIRTY) {
+			this.#unprocessed.set(effect, status);
+		}
+	}
+
+	/**
 	 * @param {Effect[]} effects
 	 */
 	#defer_effects(effects) {
 		for (var i = 0; i < effects.length; i += 1) {
-			defer_effect(effects[i], this.#unprocessed);
+			var effect = effects[i];
+			var status = effect.f & (DIRTY | MAYBE_DIRTY);
+
+			if (status !== 0) {
+				this.#add_dirty_effect(effect, status);
+
+				// mark as clean so they get scheduled if they depend on pending async state
+				set_signal_status(effect, CLEAN);
+			}
 		}
 	}
 
@@ -1041,33 +1092,23 @@ export class Batch {
 	}
 
 	/**
-	 * @param {boolean} blocking
 	 * @param {Effect} effect
 	 */
-	increment(blocking, effect) {
-		this.#pending += 1;
-
-		if (blocking) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
-			this.#blocking_pending.set(effect, blocking_pending_count + 1);
-		}
+	increment(effect) {
+		var count = this.#pending.get(effect) ?? 0;
+		this.#pending.set(effect, count + 1);
 	}
 
 	/**
-	 * @param {boolean} blocking
 	 * @param {Effect} effect
 	 */
-	decrement(blocking, effect) {
-		this.#pending -= 1;
+	decrement(effect) {
+		var count = this.#pending.get(effect) ?? 0;
 
-		if (blocking) {
-			let blocking_pending_count = this.#blocking_pending.get(effect) ?? 0;
-
-			if (blocking_pending_count === 1) {
-				this.#blocking_pending.delete(effect);
-			} else {
-				this.#blocking_pending.set(effect, blocking_pending_count - 1);
-			}
+		if (count === 1) {
+			this.#pending.delete(effect);
+		} else {
+			this.#pending.set(effect, count - 1);
 		}
 
 		if (this.#decrement_queued) return;
@@ -1080,25 +1121,6 @@ export class Batch {
 				this.flush();
 			}
 		});
-	}
-
-	/**
-	 * @param {Map<Effect, number>} dirty_effects
-	 */
-	transfer_effects(dirty_effects) {
-		if (dirty_effects.size === 0) return;
-
-		for (const [effect, status] of dirty_effects) {
-			if (this === processing_batch) {
-				// we are in the branch commit phase. we got here because a `boundary.decrement(...)` in `flatten`
-				// caused a pending boundary to resolve. it's too late to add the effect to `this.#unprocessed`
-				this.#add(effect, status);
-			} else {
-				add_dirty_effect(this.#unprocessed, effect, status);
-			}
-		}
-
-		dirty_effects.clear();
 	}
 
 	/** @param {(batch: Batch) => void} fn */
@@ -1328,8 +1350,7 @@ export class Batch {
 		// They may still run as part of it (for that batch's reasons) and see the write, so versions decide — unless
 		// the effect is running, in which case it would record the version it didn't see (see `update_dependencies`)
 		if (view_batch !== null && view_batch !== this && effect !== active_reaction) {
-			add_dirty_effect(
-				this.#unprocessed,
+			this.#add_dirty_effect(
 				effect,
 				(effect.f & REACTION_IS_UPDATING) !== 0 ? status : MAYBE_DIRTY
 			);
@@ -1338,7 +1359,7 @@ export class Batch {
 
 		if (processing_batch !== this && active_reaction === null) {
 			if (this.prev !== null || this.next !== null || this.is_fork) {
-				add_dirty_effect(this.#unprocessed, effect, MAYBE_DIRTY);
+				this.#add_dirty_effect(effect, MAYBE_DIRTY);
 				return;
 			}
 
@@ -1356,17 +1377,6 @@ export class Batch {
 		// don't set a DIRTY effect to MAYBE_DIRTY
 		if ((effect.f & DIRTY) === 0) {
 			set_signal_status(effect, status);
-		}
-
-		// defer render effects inside a pending boundary
-		// TODO the `REACTION_RAN` check is only necessary because of legacy `$:` effects AFAICT — we can remove later
-		if (
-			effect.b?.is_pending &&
-			(effect.f & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0 &&
-			(effect.f & REACTION_RAN) === 0
-		) {
-			effect.b.defer_effect(effect);
-			return;
 		}
 
 		this.#scheduled.push(effect);
@@ -1545,6 +1555,29 @@ export let eager_block_effects = null;
 export let eager_block_writes = null;
 
 /**
+ * An effect (as opposed to a render effect, which keeps the offscreen content up to date) inside a boundary
+ * that is still pending doesn't run when the batch commits. The boundary keeps it until it is revealed,
+ * and hands it to the batch that reveals it (see `Boundary#reveal`)
+ * TODO I feel like there's probably a less roundabout way to achieve this
+ * @param {Effect} effect
+ * @returns {boolean} whether the effect was deferred
+ */
+function defer_if_pending(effect) {
+	// A boundary is only pending while its content is new, so an effect that
+	// has run before can't be inside one, and we can skip the lookup
+	if ((effect.f & (EFFECT | REACTION_RAN)) !== EFFECT) return false;
+
+	for (var boundary = effect.b; boundary !== null; boundary = boundary.parent) {
+		if (boundary.is_pending) {
+			boundary.defer_effect(effect);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * `earlier_writes` includes writes from the pre-effect phase. Eager block teardowns
  * revert the running effect's writes, but not these earlier writes.
  * @param {Array<Effect>} effects
@@ -1565,6 +1598,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 			// don't run if already marked for destruction in the next batch
 			// (this can happen if an effect writes a value which e.g. makes an if block falsy)
 			!current_batch?.is_skipped(effect) &&
+			!defer_if_pending(effect) &&
 			is_dirty(effect)
 		) {
 			eager_block_effects = new Set();

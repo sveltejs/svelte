@@ -24,7 +24,8 @@ import {
 	derived,
 	derived_safe_equal,
 	set_reactivity_loss_tracker,
-	async_expression
+	async_expression,
+	is_uninitialized
 } from './deriveds.js';
 import { aborted, async_effect, block, branch, teardown } from './effects.js';
 
@@ -90,31 +91,9 @@ export function flatten(blockers, sync, async, fn) {
 		/** @type {Effect | null} */
 		var effect = null;
 
-		// Creating the branch may start more async work. Until that has happened, the boundary must not show
-		// its content, even if all the work that it knows of is done. (A batch can't commit in between, as
-		// the branch is created when the batch is processed)
-		var boundary = /** @type {Boundary} */ (parent.b);
-
-		boundary.increment();
-
-		var released = false;
-
-		function release() {
-			// prefer current_batch if set: in that case processing_batch, if present,
-			// would be in the effect flushing phase already, by which time it's too late
-			// to hand potential effects to that batch. current_batch might also be the only
-			// one set in case this comes from a transition with a deferred destroy.
-			// `processing_batch` can be `null` during `unmount`
-			var batch = current_batch ?? processing_batch;
-			if (!released && batch !== null) {
-				released = true;
-				boundary.decrement(batch);
-			}
-		}
-
 		block(() => {
 			for (var s of signals) {
-				if ((s.f & PAUSED) !== 0) {
+				if (is_uninitialized(s)) {
 					get(s);
 					return;
 				}
@@ -128,14 +107,10 @@ export function flatten(blockers, sync, async, fn) {
 						fn([...deriveds, ...signals]);
 					} catch (error) {
 						invoke_error_boundary(error, parent);
-					} finally {
-						release();
 					}
 				});
 			}
 		}, EFFECT_TRANSPARENT);
-
-		teardown(release);
 	}
 }
 
@@ -435,17 +410,23 @@ export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
 	var batch = merge_target(/** @type {Batch} */ (current_batch));
-	var blocking = !!boundary?.is_rendered();
 
-	boundary?.increment();
+	/** The nearest boundary with a pending snippet, if there is one */
+	var pending = boundary;
+
+	while (pending && !pending.is_pending) {
+		pending = pending.parent;
+	}
+
+	batch.increment(effect);
+	pending?.increment(effect);
 	boundary?.update_effect_pending(1);
-	batch.increment(blocking, effect);
 
 	return () => {
 		batch = merge_target(batch);
-		boundary?.decrement(batch);
+		batch.decrement(effect);
+		pending?.decrement(effect, batch);
 		boundary?.update_effect_pending(-1);
-		batch.decrement(blocking, effect);
 	};
 }
 

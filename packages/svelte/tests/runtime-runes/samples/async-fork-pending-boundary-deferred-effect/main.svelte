@@ -22,9 +22,7 @@
 
 <button onclick={() => (f = fork(() => (show = true)))}>fork</button>
 <button onclick={() => (hide = true)}>hide</button>
-<button onclick={() => resolve('forked')}>resolve forked</button>
 <button onclick={() => resolve('init')}>resolve init</button>
-<button onclick={() => f.commit()}>commit</button>
 
 <svelte:boundary>
 	<Effect />

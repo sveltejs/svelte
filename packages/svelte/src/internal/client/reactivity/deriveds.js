@@ -13,7 +13,6 @@ import {
 	ASSIGNED,
 	ERROR_VALUE,
 	HAS_ABORT_CONTROLLER,
-	PAUSED,
 	EFFECT_TRANSPARENT
 } from '#client/constants';
 import {
@@ -128,7 +127,7 @@ export function async_expression(fn, label, location) {
 	}
 
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
-	signal.f |= ASYNC | PAUSED;
+	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
@@ -203,9 +202,10 @@ export function async_expression(fn, label, location) {
 			decrement_pending();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) return;
-
-			signal.f &= ~PAUSED;
+			if (error === OBSOLETE) {
+				batch.obsolete = true;
+				return;
+			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
@@ -243,7 +243,9 @@ export function async_expression(fn, label, location) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	if (current_batch === null || active_reaction !== null) {
+	const batch = current_batch;
+
+	if (batch === null || active_reaction !== null) {
 		// `$derived(await ...)` created outside traversal, don't participate in coordination
 		return Promise.resolve(fn()).then((value) => source(value));
 	}
@@ -252,7 +254,7 @@ export function async_derived(fn, label, location) {
 		const source = async_expression(fn, label, location);
 
 		block(() => {
-			if ((source.f & PAUSED) !== 0) {
+			if (is_uninitialized(source) || (batch !== current_batch && !batch.obsolete)) {
 				get(source);
 				return;
 			}
@@ -271,6 +273,14 @@ export function async_derived(fn, label, location) {
 			}
 		}, EFFECT_TRANSPARENT);
 	});
+}
+
+/**
+ * Whether the signal of an async expression has no value yet in the active view of the world
+ * @param {Source} signal
+ */
+export function is_uninitialized(signal) {
+	return (batch_values?.get(signal) ?? signal).v === UNINITIALIZED;
 }
 
 /**

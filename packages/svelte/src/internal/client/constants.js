@@ -20,7 +20,6 @@ export const BOUNDARY_EFFECT = 1 << 7;
  * as opposed to its descendants which are merely `INERT`. This allows `resume_effect` on
  * an ancestor to skip subtrees that were paused for their own reasons (such as a block
  * whose condition is still false) rather than resurrecting them.
- * Also used on signals of async effects to represent "no value yet".
  */
 export const PAUSED = 1 << 8;
 /**
