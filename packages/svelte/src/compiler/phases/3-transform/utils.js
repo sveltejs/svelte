@@ -450,3 +450,18 @@ export function get_inspect_args(rune, node, visit) {
 			rune === '$inspect' ? 'console.log' : /** @type {Expression} */ (visit(node.arguments[0]))
 	};
 }
+
+/**
+ * Discard comments inside a removed node so that they are not printed alongside
+ * the next surviving node (which could turn a pure annotation into an invalid one).
+ * @param {Node} node
+ * @param {TransformState} state
+ */
+export function remove_comments(node, state) {
+	const { start, end } = node;
+	if (start === undefined || end === undefined) return;
+
+	state.analysis.comments = state.analysis.comments.filter(
+		(comment) => comment.start < start || comment.end > end
+	);
+}

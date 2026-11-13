@@ -2,6 +2,8 @@
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
+import { dev } from '../../../../state.js';
+import { remove_comments } from '../../utils.js';
 
 /**
  * @param {ExpressionStatement} node
@@ -12,6 +14,7 @@ export function ExpressionStatement(node, context) {
 		const rune = get_rune(node.expression, context.state.scope);
 
 		if (rune === '$inspect.trace') {
+			if (!dev) remove_comments(node, context.state);
 			return b.empty;
 		}
 	}

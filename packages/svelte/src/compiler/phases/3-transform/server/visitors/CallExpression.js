@@ -3,7 +3,7 @@
 import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
-import { get_inspect_args } from '../../utils.js';
+import { get_inspect_args, remove_comments } from '../../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -20,6 +20,7 @@ export function CallExpression(node, context) {
 	) {
 		// we will only encounter `$effect` etc if they are top-level statements in the <script>
 		// following an `await`, otherwise they are removed by the ExpressionStatement visitor
+		remove_comments(node, context.state);
 		return b.void0;
 	}
 
@@ -28,6 +29,7 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$effect.root') {
+		remove_comments(node, context.state);
 		// ignore $effect.root() calls, just return a noop which mimics the cleanup function
 		return b.arrow([], b.block([]));
 	}
@@ -58,7 +60,10 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$inspect' || rune === '$inspect().with') {
-		if (!dev) return b.empty;
+		if (!dev) {
+			remove_comments(node, context.state);
+			return b.empty;
+		}
 
 		const { args, inspector } = get_inspect_args(rune, node, context.visit);
 
