@@ -123,19 +123,19 @@ export function async_derived(fn, label, location) {
 
 	/**
 	 * The runs of the async expression that aren't obsolete (pending or done) until the first value is there, and the
-	 * batch each one started in. A run is live while that batch holds it as its latest run (see `next`). A batch that
-	 * was merged into another one hands its results over to that batch's runs (see `Batch#merge`)
-	 * @type {Map<ReturnType<typeof deferred<V>>, Batch>}
+	 * batch each one started in. A run is live while that batch holds it as its latest run (see `next`), unless it was
+	 * aborted. A batch that was merged into another one hands its results over to that batch's runs (see `Batch#merge`)
+	 * @type {Map<NonNullable<typeof run>, Batch>}
 	 */
 	var runs = new Map();
 
 	/**
 	 * The run that the first value comes from, and in whose batch's view the code that awaits it continues (see
-	 * `flatten` and `run`): the first run, unless it becomes obsolete (see `next`), or it's a fork's and a real batch
-	 * runs the expression, too — the fork's result isn't part of the real world, and it would show up there when a
-	 * boundary that shows its pending snippet reveals the content, or when the real batch commits it.
+	 * `flatten` and `run`): the first run, unless it becomes obsolete or is aborted (see `next`), or it's a fork's and a
+	 * real batch runs the expression, too — the fork's result isn't part of the real world, and it would show up there
+	 * when a boundary that shows its pending snippet reveals the content, or when the real batch commits it.
 	 * Without suspending, the latest run
-	 * @type {ReturnType<typeof deferred<V>> | null}
+	 * @type {ReturnType<typeof deferred<V>> & { aborted?: boolean } | null}
 	 */
 	var run = null;
 
@@ -166,7 +166,7 @@ export function async_derived(fn, label, location) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
 		}
 
-		/** @type {ReturnType<typeof deferred<V>>} */
+		/** @type {NonNullable<typeof run>} */
 		var d = deferred();
 
 		try {
@@ -177,7 +177,15 @@ export function async_derived(fn, label, location) {
 				.then(d.resolve, (e) => {
 					// if the promise was rejected by the user, via `getAbortSignal`, then
 					// wait for a subsequent resolution instead of flushing the batch
-					if (e !== STALE_REACTION) d.reject(e);
+					if (e !== STALE_REACTION) {
+						d.reject(e);
+					} else {
+						// A later batch's run superseded this one (see `abort_replaced`), which doesn't settle until that
+						// batch hands its result over (see `Batch#merge`). That batch may wait for the content that awaits
+						// the first value (see below), so the first value can't come from this run anymore
+						d.aborted = true;
+						if (d === run) follow(next(batch));
+					}
 				})
 				.finally(unset_context);
 		} catch (error) {
@@ -341,12 +349,12 @@ export function async_derived(fn, label, location) {
 	 * @param {Batch} batch
 	 */
 	function next(batch) {
-		/** @type {Array<[ReturnType<typeof deferred<V>>, Batch]>} */
+		/** @type {Array<[NonNullable<typeof run>, Batch]>} */
 		var live = [];
 
 		for (let [r, b] of runs) {
 			b = merge_target(b);
-			if (b.async_deriveds.get(effect) === r) live.push([r, b]);
+			if (!r.aborted && b.async_deriveds.get(effect) === r) live.push([r, b]);
 		}
 
 		var real = live.filter(([, b]) => !b.is_fork);

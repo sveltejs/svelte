@@ -24,7 +24,7 @@ import {
 	derived_safe_equal,
 	set_reactivity_loss_tracker
 } from './deriveds.js';
-import { aborted } from './effects.js';
+import { aborted, async_effect } from './effects.js';
 import { deferred } from '../../shared/utils.js';
 
 /**
@@ -332,8 +332,6 @@ export function unset_context(deactivate_batch = true) {
 export function run(thunks) {
 	const restore = capture();
 
-	const decrement_pending = increment_pending();
-
 	var active = /** @type {Effect} */ (active_effect);
 	var collector = collector_for();
 
@@ -387,14 +385,16 @@ export function run(thunks) {
 		return blocker;
 	});
 
-	promise
-		// wait one more tick, so that template effects are
-		// guaranteed to run before `$effect(...)`
-		.then(() => Promise.resolve())
-		.finally(() => {
-			done(collector);
-			decrement_pending();
-		});
+	// wait one more tick, so that template effects are guaranteed to run before `$effect(...)`
+	var settled = promise.then(() => Promise.resolve());
+	settled.finally(() => done(collector));
+
+	// The script's pending work is counted inside an effect, so that a batch that adopts the branch that it's in (one
+	// that another batch created, see `Batch#unskip_effect`) runs it again, and waits for the script, too: it only
+	// runs once, so the batch would otherwise commit the component without what the script creates
+	async_effect(() => {
+		settled.finally(increment_pending());
+	});
 
 	return blockers;
 }
