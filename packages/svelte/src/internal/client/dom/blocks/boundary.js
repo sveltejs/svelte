@@ -308,9 +308,7 @@ export class Boundary {
 				}
 			});
 
-			var batch = /** @type {Batch} */ (current_batch);
-
-			if (this.#main_effect !== null && this.is_ready(batch)) {
+			if (this.#main_effect !== null && this.#pending.size === 0) {
 				this.is_pending = false;
 				this.#anchor.before(fragment);
 				this.#offscreen_fragment = null;
@@ -333,7 +331,7 @@ export class Boundary {
 
 			var batch = /** @type {Batch} */ (current_batch);
 
-			if (this.is_ready(batch)) {
+			if (this.#pending.size === 0) {
 				this.is_pending = false;
 			} else {
 				const pending = this.#props.pending;
@@ -405,8 +403,6 @@ export class Boundary {
 	reveal(batch) {
 		this.is_pending = false;
 
-		// effects that were held back while the boundary was pending (see
-		// `defer_pending_effects`) run when the batch that reveals it commits
 		batch.transfer_effects(this.#dirty_effects);
 
 		if (this.#pending_effect) {
