@@ -1,0 +1,30 @@
+	@KEYFRAMES svelte-xyz-Spin {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@KeYfRaMeS svelte-xyz-spin {
+		from { color: red; }
+		to { color: blue; }
+	}
+
+	@-WEBKIT-KEYFRAMES svelte-xyz-Spin {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@-MoZ-KeYfRaMeS svelte-xyz-spin {
+		from { color: red; }
+		to { color: blue; }
+	}
+
+	@KEYFRAMES GlobalSpin {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	div.svelte-xyz {
+		ANIMATION: svelte-xyz-Spin 1s;
+		-WeBkIt-AnImAtIoN-NaMe: svelte-xyz-spin;
+		animation-name: svelte-xyz-Spin, svelte-xyz-spin, GlobalSpin;
+	}
