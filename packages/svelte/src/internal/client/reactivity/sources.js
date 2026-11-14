@@ -36,6 +36,7 @@ import {
 	Batch,
 	batch_values,
 	eager_block_effects,
+	teardown_block_effects,
 	schedule_effect,
 	legacy_updates,
 	source_stacks
@@ -399,8 +400,12 @@ function mark_reactions(signal, status, updated_during_traversal) {
 		} else if (not_dirty) {
 			var effect = /** @type {Effect} */ (reaction);
 
-			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
-				eager_block_effects.add(effect);
+			if ((flags & BLOCK_EFFECT) !== 0) {
+				if (eager_block_effects !== null) {
+					eager_block_effects.add(effect);
+				} else if (is_destroying_effect) {
+					teardown_block_effects?.add(effect);
+				}
 			}
 
 			if (updated_during_traversal !== null) {

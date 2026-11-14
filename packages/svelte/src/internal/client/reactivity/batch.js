@@ -86,6 +86,13 @@ export let collected_effects = null;
  */
 export let legacy_updates = null;
 
+/**
+ * Blocks invalidated by teardowns during traversal or branch commit. They must
+ * run before collected effects, without making appends eager during traversal.
+ * @type {Set<Effect> | null}
+ */
+export let teardown_block_effects = null;
+
 var flush_count = 0;
 
 /** Sources whose DEV update counts and stack traces need resetting after the flush. @type {Set<Value>} */
@@ -174,6 +181,9 @@ export class Batch {
 	 * @type {Effect[]}
 	 */
 	#new_effects = [];
+
+	/** @type {Set<Effect>} */
+	#teardown_effects = new Set();
 
 	/**
 	 * Deferred effects (which run after async work has completed) and their status (DIRTY or MAYBE_DIRTY)
@@ -320,6 +330,17 @@ export class Batch {
 	}
 
 	#process() {
+		var previous = teardown_block_effects;
+		teardown_block_effects = this.#teardown_effects;
+
+		try {
+			this.#process_effects();
+		} finally {
+			teardown_block_effects = previous;
+		}
+	}
+
+	#process_effects() {
 		this.started = true;
 
 		// We always reschedule previously-deferred effects, not just when
@@ -428,6 +449,13 @@ export class Batch {
 		this.#commit_callbacks.clear();
 
 		previous_batch = this;
+
+		if (this.#teardown_effects.size > 0) {
+			eager_block_effects = this.#teardown_effects;
+			flush_eager_block_effects();
+			eager_block_effects = null;
+		}
+
 		flush_queued_effects(render_effects);
 		flush_queued_effects(effects);
 		previous_batch = null;
@@ -1093,41 +1121,45 @@ function flush_queued_effects(effects) {
 				unlink_effect(effect);
 			}
 
-			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
-			// which already handled this logic and did set eager_block_effects to null.
-			if (eager_block_effects?.size > 0) {
-				old_values.clear();
-
-				for (const e of eager_block_effects) {
-					// Skip eager effects that have already been unmounted
-					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
-
-					// Run effects in order from ancestor to descendant, else we could run into nullpointers
-					/** @type {Effect[]} */
-					const ordered_effects = [e];
-					let ancestor = e.parent;
-					while (ancestor !== null) {
-						if (eager_block_effects.has(ancestor)) {
-							eager_block_effects.delete(ancestor);
-							ordered_effects.push(ancestor);
-						}
-						ancestor = ancestor.parent;
-					}
-
-					for (let j = ordered_effects.length - 1; j >= 0; j--) {
-						const e = ordered_effects[j];
-						// Skip eager effects that have already been unmounted
-						if ((e.f & (DESTROYED | INERT)) !== 0) continue;
-						update_effect(e);
-					}
-				}
-
-				eager_block_effects.clear();
-			}
+			flush_eager_block_effects();
 		}
 	}
 
 	eager_block_effects = null;
+}
+
+function flush_eager_block_effects() {
+	// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
+	// which already handled this logic and did set eager_block_effects to null.
+	if (eager_block_effects !== null && eager_block_effects.size > 0) {
+		old_values.clear();
+
+		for (const e of eager_block_effects) {
+			// Skip eager effects that have already been unmounted
+			if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+
+			// Run effects in order from ancestor to descendant, else we could run into nullpointers
+			/** @type {Effect[]} */
+			const ordered_effects = [e];
+			let ancestor = e.parent;
+			while (ancestor !== null) {
+				if (eager_block_effects.has(ancestor)) {
+					eager_block_effects.delete(ancestor);
+					ordered_effects.push(ancestor);
+				}
+				ancestor = ancestor.parent;
+			}
+
+			for (let j = ordered_effects.length - 1; j >= 0; j--) {
+				const e = ordered_effects[j];
+				// Skip eager effects that have already been unmounted
+				if ((e.f & (DESTROYED | INERT)) !== 0 || !is_dirty(e)) continue;
+				update_effect(e);
+			}
+		}
+
+		eager_block_effects.clear();
+	}
 }
 
 /**
