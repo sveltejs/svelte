@@ -1215,7 +1215,7 @@ function depends_on(reaction, sources, checked) {
  * @returns {void}
  */
 export function schedule_effect(effect) {
-	/** @type {Batch} */ (current_batch).schedule(effect);
+	Batch.ensure().schedule(effect);
 }
 
 /** @type {Source<number>[]} */
