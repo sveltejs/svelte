@@ -8,12 +8,12 @@ import {
 	STALE_REACTION,
 	ASYNC,
 	DESTROYED,
-	REACTION_RAN,
 	INERT,
 	CONNECTED,
 	ASSIGNED,
 	ERROR_VALUE,
-	HAS_ABORT_CONTROLLER
+	HAS_ABORT_CONTROLLER,
+	EFFECT_TRANSPARENT
 } from '#client/constants';
 import {
 	active_reaction,
@@ -30,26 +30,27 @@ import {
 	promote_record,
 	changed_since,
 	is_dirty,
-	abort_all
+	abort_all,
+	get,
+	untrack
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
+import {
+	async_effect,
+	block,
+	destroy_effect,
+	destroy_effect_children,
+	teardown
+} from './effects.js';
 import { eager_effects, set_eager_effects, source } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import {
-	batch_values,
-	current_batch,
-	uncommitted_first_value,
-	view_batch,
-	view_cache
-} from './batch.js';
-import { increment_pending, unset_context } from './async.js';
-import { queue_micro_task } from '../dom/task.js';
+import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
+import { increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -115,27 +116,20 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
- * @returns {Promise<Source<V>>}
+ * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, label, location) {
+export function async_expression(fn, label, location) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
 		e.async_derived_orphan();
 	}
 
-	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
-
-	// only suspend in async deriveds created on initialisation
-	var should_suspend = !active_reaction;
-
-	// The batch the derived is created in. Whoever awaits its first value continues in its view (see `flatten` and `run`)
-	var creator = current_batch;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -149,7 +143,6 @@ export function async_derived(fn, label, location) {
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
-		promise = d.promise;
 
 		try {
 			// If this code is changed at some point, make sure to still access the then property
@@ -164,7 +157,6 @@ export function async_derived(fn, label, location) {
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
-			unset_context();
 		}
 
 		if (DEV) {
@@ -190,19 +182,11 @@ export function async_derived(fn, label, location) {
 		}
 
 		var batch = /** @type {Batch} */ (current_batch);
+		var decrement_pending = increment_pending();
 
-		if (should_suspend) {
-			// we only increment the batch's pending state for updates, not creation, otherwise
-			// we will decrement to zero before the work that depends on this promise (e.g. a
-			// template effect) has initialized, causing the batch to resolve prematurely
-			if ((effect.f & REACTION_RAN) !== 0) {
-				var decrement_pending = increment_pending();
-			}
-
-			batch.async_deriveds.get(effect)?.reject(OBSOLETE);
-			deferreds.add(d);
-			batch.async_deriveds.set(effect, d);
-		}
+		batch.async_deriveds.get(effect)?.reject(OBSOLETE);
+		deferreds.add(d);
+		batch.async_deriveds.set(effect, d);
 
 		/**
 		 * @param {any} value
@@ -215,13 +199,16 @@ export function async_derived(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
-			decrement_pending?.();
+			decrement_pending();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) return;
+			if (error === OBSOLETE) {
+				batch.obsolete = true;
+				return;
+			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			batch.capture(signal, error ?? value, same, !!error);
+			merge_target(batch).capture(signal, error ?? value, same, !!error);
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
@@ -244,45 +231,56 @@ export function async_derived(fn, label, location) {
 		}
 	});
 
-	return new Promise((fulfil) => {
-		/** @param {Promise<V>} p */
-		function next(p) {
-			function go() {
-				if (p !== promise) {
-					// if the effect re-runs before the initial promise
-					// resolves, delay resolution until we have a value
-					next(promise);
-					return;
-				}
+	return signal;
+}
 
-				// While the boundary shows its pending snippet, batches commit without waiting for their runs, and a
-				// committed run supersedes those of the batches that committed before (see `Batch#release_records`).
-				// So the first value can be another batch's result, which the creator's view can't undo. Until that
-				// batch commits it, the creator mustn't continue with it — and the boundary keeps showing its pending
-				// snippet. (Elsewhere, the creator's own run provides the first value in its view)
-				var writer =
-					should_suspend && !(/** @type {Effect} */ (parent).b?.is_rendered())
-						? uncommitted_first_value(signal, creator)
-						: null;
+/**
+ * @template V
+ * @param {() => V | Promise<V>} fn
+ * @param {string} [label]
+ * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @returns {Promise<Source<V>>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function async_derived(fn, label, location) {
+	const batch = current_batch;
 
-				if (writer === null) {
-					fulfil(signal);
-				} else {
-					// (check again once the commit is done)
-					writer.oncommit(resume);
-					writer.ondiscard(resume);
-				}
+	if (batch === null || active_reaction !== null) {
+		// `$derived(await ...)` created outside traversal, don't participate in coordination
+		return Promise.resolve(fn()).then((value) => source(value));
+	}
+
+	return new Promise((fulfil, reject) => {
+		const source = async_expression(fn, label, location);
+
+		block(() => {
+			if (is_uninitialized(source) || (batch !== current_batch && !batch.obsolete)) {
+				get(source);
+				return;
 			}
 
-			function resume() {
-				queue_micro_task(go);
+			try {
+				// We get the source and catch in case it's an error.
+				// We do this instead of checking ERROR_VALUE on source.f
+				// because that only applies to the real world, maybe
+				// this was resolved (and has thrown) in a fork.
+				// We untrack so that the block no longer has a dependency
+				// on the source.
+				untrack(() => get(source));
+				fulfil(source);
+			} catch (e) {
+				reject(e);
 			}
-
-			p.then(go, go);
-		}
-
-		next(promise);
+		}, EFFECT_TRANSPARENT);
 	});
+}
+
+/**
+ * Whether the signal of an async expression has no value yet in the active view of the world
+ * @param {Source} signal
+ */
+export function is_uninitialized(signal) {
+	return (batch_values?.get(signal) ?? signal).v === UNINITIALIZED;
 }
 
 /**

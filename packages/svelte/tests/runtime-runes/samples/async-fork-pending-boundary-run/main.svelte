@@ -1,5 +1,6 @@
 <script>
 	import { fork } from 'svelte';
+	import Effect from './Effect.svelte';
 
 	let a = $state(0);
 	let show = $state(false);
@@ -26,6 +27,7 @@
 
 {#if show}
 	<svelte:boundary>
+		<Effect value={a} />
 		<p>{await push(a)}</p>
 
 		{#snippet pending()}

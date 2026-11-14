@@ -10,6 +10,7 @@ import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
 import * as state from '../../state.js';
 import { is_whitespace } from './utils/whitespace.js';
+import { has_lf_line_breaks_only } from './acorn.js';
 
 const regex_lang_attribute =
 	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
@@ -30,6 +31,12 @@ export class Parser {
 
 	/** */
 	index = 0;
+
+	/**
+	 * @readonly
+	 * @type {boolean}
+	 */
+	lf_only;
 
 	/** @type {AST.CSS.CSSComment[]} */
 	css_comments = [];
@@ -78,6 +85,7 @@ export class Parser {
 
 		this.loose = loose;
 		this.template = template.trimEnd();
+		this.lf_only = has_lf_line_breaks_only(this.template);
 
 		let match_lang;
 

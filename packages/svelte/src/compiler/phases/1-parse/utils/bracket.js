@@ -173,6 +173,12 @@ export function match_bracket(parser, start, brackets = default_brackets) {
 			continue;
 		}
 
+		// the `>` in an arrow function type (e.g. `T extends () => void`) doesn't close
+		// the type parameter list
+		if (char === '>' && close.has('>') && parser.template[i - 2] === '=') {
+			continue;
+		}
+
 		if (char in brackets) {
 			bracket_stack.push(char);
 		} else if (close.has(char)) {
