@@ -208,8 +208,6 @@ export class Batch {
 
 	linked = true;
 
-	obsolete = false;
-
 	/** @type {Batch | null} */
 	prev = null;
 
@@ -326,7 +324,7 @@ export class Batch {
 	 */
 	merged = null;
 
-	#decrement_queued = false;
+	#flush_queued = false;
 
 	constructor() {
 		if (last_batch === null) {
@@ -999,7 +997,7 @@ export class Batch {
 					rebases.delete(batch);
 
 					// the batch is processed again anyway if a flush is queued
-					if (batch.linked && !batch.#decrement_queued) {
+					if (batch.linked && !batch.#flush_queued) {
 						batch.#process();
 					}
 				}
@@ -1082,7 +1080,7 @@ export class Batch {
 			} else if (sources.length > 0) {
 				// The microtask queue can contain the batch already scheduled to run right
 				// after this one is finished, so throwing the invariant would be wrong here.
-				if (DEV && !batch.#decrement_queued) {
+				if (DEV && !batch.#flush_queued) {
 					invariant(batch.#scheduled.length === 0, 'Batch has scheduled effects');
 				}
 
@@ -1122,11 +1120,25 @@ export class Batch {
 			this.#pending.set(effect, count - 1);
 		}
 
-		if (this.#decrement_queued) return;
-		this.#decrement_queued = true;
+		this.#queue_flush();
+	}
+
+	/**
+	 * Retry coordination work whose inputs include a batch's lifecycle, rather than just signal versions.
+	 * Keep DIRTY local to this batch until traversal, without writing a synthetic dependency into its view.
+	 * @param {Effect} effect
+	 */
+	retry(effect) {
+		this.#add_dirty_effect(effect, DIRTY);
+		this.#queue_flush();
+	}
+
+	#queue_flush() {
+		if (this.#flush_queued) return;
+		this.#flush_queued = true;
 
 		queue_micro_task(() => {
-			this.#decrement_queued = false;
+			this.#flush_queued = false;
 
 			if (this.linked) {
 				this.flush();
@@ -1419,6 +1431,9 @@ export class Batch {
 					// pending boundary). Their in-flight runs are superseded: their results would overwrite this one
 					// TODO feels pretty hacky and indication of an X-Y problem: This only works because !b.records?.has(reaction)
 					// means "this would re-use the real world result, i.e. the one we just committed, so we can reject this old run".
+					// Update: As it turns out this can also obsolete runs inside pending batches that shouldn't be obsoleted yet.
+					// It will still work out in the end because there's a superseeding batch, but strictly speaking this is wrong.
+					// We should somehow not do this for async/if blocks inside pending boundaries.
 					if ((reaction.f & ASYNC) !== 0) {
 						for (let b = first_batch; b !== null; b = b.next) {
 							if (b !== this && !b.records?.has(reaction)) {

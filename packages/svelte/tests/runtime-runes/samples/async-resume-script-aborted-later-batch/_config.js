@@ -39,13 +39,12 @@ export default test({
 		second_2.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
-		assert.deepEqual(logs.splice(0), []);
+		assert.deepEqual(logs.splice(0), ['continued with 1 2']);
 
-		// B is done, and merged into A, which commits
+		// B is done, and merged into A, which commits without continuing the script again
 		first_2.click();
 		await tick();
-		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
-		assert.deepEqual(logs.splice(0), ['continued with 2 2']);
+		assert.deepEqual(logs.splice(0), []);
 	}
 });
