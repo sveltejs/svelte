@@ -45,12 +45,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import {
-	Batch,
-	collected_effects,
-	set_teardown_context,
-	teardown_context
-} from './batch.js';
+import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
 import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
 
