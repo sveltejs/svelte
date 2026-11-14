@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../types.js' */
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
-import { determine_namespace_for_children } from '../../utils.js';
+import { build_void_element_content_check, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
 import { build_template, create_child_block, PromiseOptimiser } from './shared/utils.js';
 
@@ -25,7 +25,18 @@ export function SvelteElement(node, context) {
 
 		context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 		if (node.fragment.nodes.length > 0) {
-			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', b.thunk(tag))));
+			context.state.init.push(
+				b.stmt(
+					b.call(
+						'$.validate_void_dynamic_element',
+						b.thunk(tag),
+						build_void_element_content_check(
+							node,
+							(n) => /** @type {Expression} */ (context.visit(n))
+						)
+					)
+				)
+			);
 		}
 	}
 

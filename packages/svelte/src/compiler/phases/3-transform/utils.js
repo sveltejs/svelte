@@ -8,7 +8,8 @@ import {
 } from '../patterns.js';
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
-import { extract_identifiers } from '../../utils/ast.js';
+import { extract_identifiers, unwrap_optional } from '../../utils/ast.js';
+import * as b from '#compiler/builders';
 import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
@@ -449,4 +450,33 @@ export function get_inspect_args(rune, node, visit) {
 		inspector:
 			rune === '$inspect' ? 'console.log' : /** @type {Expression} */ (visit(node.arguments[0]))
 	};
+}
+
+/**
+ * If the content of a `<svelte:element>` consists only of optional render tags like
+ * `{@render children?.()}`, returns a thunk that checks whether any of those snippets exist,
+ * so that we don't warn about void elements having content that will never be rendered
+ * @param {AST.SvelteElement} node
+ * @param {(node: Expression) => Expression} visit
+ * @returns {Expression | undefined}
+ */
+export function build_void_element_content_check(node, visit) {
+	/** @type {Expression[]} */
+	const checks = [];
+
+	for (const child of node.fragment.nodes) {
+		if (child.type === 'Comment') continue;
+		if (child.type === 'Text' && !regex_not_whitespace.test(child.data)) continue;
+
+		if (child.type !== 'RenderTag' || child.metadata.expression.is_async()) return;
+
+		const call = unwrap_optional(child.expression);
+		if (!call.optional) return;
+
+		checks.push(b.binary('!=', visit(/** @type {Expression} */ (call.callee)), b.null));
+	}
+
+	if (checks.length === 0) return;
+
+	return b.thunk(checks.reduce((a, c) => b.logical('||', a, c)));
 }
