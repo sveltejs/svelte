@@ -2,6 +2,7 @@
 /** @import { Context } from '../types.js' */
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
+import { remove_comments } from '../../utils.js';
 
 /**
  * @param {ExpressionStatement} node
@@ -16,6 +17,7 @@ export function ExpressionStatement(node, context) {
 		rune === '$effect.root' ||
 		rune === '$inspect.trace'
 	) {
+		remove_comments(node, context.state);
 		return b.empty;
 	}
 
