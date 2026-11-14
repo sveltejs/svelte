@@ -15,6 +15,12 @@ export default test({
 		<hr>
 		<p>foo</p>
 		<hr>
+		<p>foo</p>
+		<hr>
+		<p>foo</p>
+		<hr>
+		<p>foo</p>
+		<hr>
 		<p>bar</p>
 		<hr>
 		<hr>
@@ -28,6 +34,12 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
+				<p>bar</p>
+				<hr>
+				<p>bar</p>
+				<hr>
+				<p>bar</p>
+				<hr>
 				<p>bar</p>
 				<hr>
 				<p>bar</p>
