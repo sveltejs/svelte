@@ -521,13 +521,8 @@ export class Batch {
 			// also selected. Until they run, they have no dependencies for #revalidate to discover.
 			for (let batch = this.prev; batch !== null; batch = batch.prev) {
 				for (const effect of batch.#unprocessed.keys()) {
-					if (this.is_skipped(effect)) continue;
-
-					for (var parent = effect.parent; parent !== null; parent = parent.parent) {
-						if (this.#unskipped_branches.has(parent) && batch.#unskipped_branches.has(parent)) {
-							this.#add(effect, MAYBE_DIRTY);
-							break;
-						}
+					if ((effect.f & REACTION_RAN) === 0 && !this.is_skipped(effect)) {
+						this.#add(effect, MAYBE_DIRTY);
 					}
 				}
 			}
