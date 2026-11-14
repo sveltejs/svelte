@@ -70,7 +70,7 @@ If an effect should only react to a particular value, select that value with [`$
 
 <!-- codeblock:start {"title":"$effect.tracking()"} -->
 ```svelte
-<!-- file: App.svelte -->
+<!--- file: App.svelte --->
 <script>
 	import { writable } from 'svelte/store';
 
