@@ -630,7 +630,10 @@ export class Batch {
 		}
 
 		for (const boundary of revealed_boundaries) {
-			boundary.reveal(effects);
+			// A later traversal may have restored an unresolved branch since this boundary was queued.
+			if (boundary.is_pending && boundary.is_ready(this)) {
+				boundary.reveal(effects);
+			}
 		}
 
 		// The results of this batch are about to become the real-world state
