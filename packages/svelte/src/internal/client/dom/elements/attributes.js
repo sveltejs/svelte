@@ -86,6 +86,23 @@ export function remove_input_defaults(input) {
 
 /**
  * @param {Element} element
+ * @param {string} property
+ * @param {any} value
+ */
+export function set_property(element, property, value) {
+	var attributes = get_attributes(element);
+
+	// Even `undefined` must be assigned on the first call, since DOM setters
+	// can coerce it to a different value (e.g. defaultValue becomes "undefined").
+	if (property in attributes && attributes[property] === value) return;
+	attributes[property] = value;
+
+	// @ts-expect-error
+	element[property] = value;
+}
+
+/**
+ * @param {Element} element
  * @param {any} value
  */
 export function set_value(element, value) {
