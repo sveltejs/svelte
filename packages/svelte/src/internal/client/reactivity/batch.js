@@ -288,7 +288,15 @@ export class Batch {
 			// skip effects that are destroyed, or that already ran (e.g. because
 			// they were reached by the traversal that preceded a drain iteration,
 			// or because they were scheduled twice)
-			if ((effect.f & DESTROYED) !== 0 || (effect.f & (DIRTY | MAYBE_DIRTY)) === 0) continue;
+			if ((effect.f & DESTROYED) !== 0) continue;
+
+			if ((effect.f & ROOT_EFFECT) !== 0) {
+				// a root is only scheduled when it is detached while the path to it is
+				// marked (see `detach_root_effect`). skip it if it was traversed since
+				if ((effect.f & CLEAN) !== 0) continue;
+			} else if ((effect.f & (DIRTY | MAYBE_DIRTY)) === 0) {
+				continue;
+			}
 
 			var e = effect;
 			var covered = false;
