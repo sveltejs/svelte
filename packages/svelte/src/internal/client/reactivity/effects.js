@@ -1,4 +1,5 @@
 /** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { TeardownContext } from './batch.js' */
 import {
 	is_dirty,
 	active_effect,
@@ -44,14 +45,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import {
-	Batch,
-	collected_effects,
-	current_batch,
-	processing_batch,
-	set_teardown_context,
-	teardown_context
-} from './batch.js';
+import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
 import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
 
@@ -634,19 +628,29 @@ export function pause_effect(effect, callback, destroy = true) {
 	var remaining = transitions.length;
 
 	if (remaining > 0) {
-		// only reactivate `processing_batch` if `fn` runs later
-		/** @type {Batch | null} */
-		var batch = null;
+		// only reactivate the teardown context if `fn` runs later
+		/** @type {TeardownContext | null} */
+		var context = null;
 
 		var check = () => {
 			if (!--remaining) {
-				batch?.activate();
-				fn();
-				batch?.deactivate();
+				var previous_context = teardown_context;
+
+				try {
+					if (context) {
+						// Other outros can share this context, and state may have changed
+						// since its derived values were cached.
+						context.derived_cache.clear();
+						set_teardown_context(context);
+					}
+					fn();
+				} finally {
+					if (context) set_teardown_context(previous_context);
+				}
 			}
 		};
 
-		batch = processing_batch;
+		context = teardown_context;
 
 		for (var transition of transitions) {
 			transition.out(check);

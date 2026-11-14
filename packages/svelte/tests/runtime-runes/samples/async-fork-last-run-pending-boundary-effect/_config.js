@@ -7,9 +7,9 @@ const buttons = `
 	<button>shift</button>
 `;
 
-// A fork re-runs the only `await` inside a boundary that shows its pending snippet, and its run is the last
-// one to resolve. Then nothing is pending anymore: the boundary reveals its content, and the effects it
-// deferred run in the real world — they aren't handed to the fork, which is discarded
+// A fork re-runs the only `await` inside a pending boundary and resolves last. The real result must reveal
+// the content and run deferred effects without waiting for the fork. Completing and discarding the fork
+// afterwards must neither steal those effects nor run them again.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -20,12 +20,12 @@ export default test({
 		fork.click();
 		await tick();
 
-		// the real world's run
+		// the real world's run reveals the boundary without waiting for speculative work
 		shift.click();
 		await tick();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons} <p>pending</p>`);
-		assert.deepEqual(logs, []);
+		assert.htmlEqual(target.innerHTML, `${buttons} <p>0</p>`);
+		assert.deepEqual(logs, ['effect ran']);
 
 		// the fork's run
 		shift.click();

@@ -120,8 +120,9 @@ export class Boundary {
 	#effects = [];
 
 	/**
-	 * Async effects that are currently in flight
-	 * @type {Map<Effect, number>}
+	 * Async effects that are currently in flight, grouped by the batch that started them.
+	 * A speculative fork's work must not hold up the real world's boundary.
+	 * @type {Map<Batch, Map<Effect, number>>}
 	 */
 	#pending = new Map();
 
@@ -387,17 +388,29 @@ export class Boundary {
 
 	/**
 	 * @param {Batch} batch
-	 * @param {Effect[]} effects
 	 */
-	check(batch, effects) {
-		if (!this.is_pending || (batch.is_fork && this.#pending.size > 0)) return;
+	is_ready(batch) {
+		if (batch.is_fork && this.#pending.size > 0) {
+			return false;
+		}
 
-		for (const effect of this.#pending.keys()) {
-			if (batch.is_blocked_by(effect, this.#main_effect)) {
-				return;
+		for (const [owner, pending] of this.#pending) {
+			if (owner.is_fork) continue;
+
+			for (const effect of pending.keys()) {
+				if (batch.is_blocked_by(effect, this.#main_effect)) {
+					return false;
+				}
 			}
 		}
 
+		return true;
+	}
+
+	/**
+	 * @param {Effect[]} effects
+	 */
+	reveal(effects) {
 		this.is_pending = false;
 
 		// Add any deferred effects to the batch's effect queue
@@ -425,10 +438,17 @@ export class Boundary {
 
 	/**
 	 * @param {Effect} effect
+	 * @param {Batch} batch
 	 */
-	increment(effect) {
-		var count = this.#pending.get(effect) ?? 0;
-		this.#pending.set(effect, count + 1);
+	increment(effect, batch) {
+		var pending = this.#pending.get(batch);
+
+		if (pending === undefined) {
+			this.#pending.set(batch, (pending = new Map()));
+		}
+
+		var count = pending.get(effect) ?? 0;
+		pending.set(effect, count + 1);
 	}
 
 	/**
@@ -436,16 +456,26 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	decrement(effect, batch) {
-		var count = this.#pending.get(effect) ?? 0;
+		var pending = /** @type {Map<Effect, number>} */ (this.#pending.get(batch));
+		var count = /** @type {number} */ (pending.get(effect));
 
 		if (count === 1) {
-			this.#pending.delete(effect);
+			pending.delete(effect);
 
-			if (this.#pending.size === 0) {
-				batch.schedule(this.#effect, MAYBE_DIRTY);
+			if (pending.size === 0) {
+				this.#pending.delete(batch);
 			}
+
+			// The remaining work may belong to speculative forks. Check again in a normal batch,
+			// after the result's batch has flushed, so that we reveal committed content and run
+			// deferred effects in the same view.
+			queue_micro_task(() => {
+				if (this.is_pending && !this.#is_destroyed()) {
+					Batch.ensure().schedule(this.#effect, MAYBE_DIRTY);
+				}
+			});
 		} else {
-			this.#pending.set(effect, count - 1);
+			pending.set(effect, count - 1);
 		}
 	}
 

@@ -197,7 +197,8 @@ var count_deps = 0;
 
 let uid = 1;
 
-let last_processed = 0;
+/** @type {number | null} */
+let last_processed = null;
 
 export class Batch {
 	id = uid++;
@@ -540,6 +541,9 @@ export class Batch {
 		/** @type {Effect[]} */
 		var render_effects = [];
 
+		/** @type {Boundary[]} */
+		var revealed_boundaries = [];
+
 		/**
 		 * @type {Effect[]}
 		 * @deprecated when we get rid of legacy mode and stores, we can get rid of this
@@ -557,7 +561,7 @@ export class Batch {
 
 			for (const root of this.#resolve()) {
 				try {
-					this.#traverse(root, effects, render_effects);
+					this.#traverse(root, effects, render_effects, revealed_boundaries);
 				} catch (e) {
 					reset_branch(root, true);
 					// If there's no async work left, this branch is now dead and needs
@@ -621,6 +625,13 @@ export class Batch {
 			earlier_batch.#merge(this);
 
 			return;
+		}
+
+		for (const boundary of revealed_boundaries) {
+			// A later traversal may have restored an unresolved branch since this boundary was queued.
+			if (boundary.is_pending && boundary.is_ready(this)) {
+				boundary.reveal(effects);
+			}
 		}
 
 		// The results of this batch are about to become the real-world state
@@ -714,8 +725,9 @@ export class Batch {
 	 * @param {Effect} root
 	 * @param {Effect[]} effects
 	 * @param {Effect[]} render_effects
+	 * @param {Boundary[]} revealed_boundaries
 	 */
-	#traverse(root, effects, render_effects) {
+	#traverse(root, effects, render_effects, revealed_boundaries) {
 		root.f ^= CLEAN;
 
 		var effect = root.first;
@@ -751,7 +763,11 @@ export class Batch {
 			while (effect !== null) {
 				// if a pending boundary is now resolved, reveal it
 				if ((effect.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT) {
-					/** @type {Boundary} */ (effect.b).check(this, effects);
+					var boundary = /** @type {Boundary} */ (effect.b);
+
+					if (boundary.is_pending && boundary.is_ready(this)) {
+						revealed_boundaries.push(boundary);
+					}
 				}
 
 				var next = effect.next;
@@ -894,12 +910,7 @@ export class Batch {
 	 */
 	capture(source, value, same, error = false, updated_during_traversal = null) {
 		var previous = this.previous.get(source);
-
-		var later = this.next;
-
-		while (later !== null && (later.is_fork || !later.current.has(source))) {
-			later = later.next;
-		}
+		var later = later_writer(this, source);
 
 		if (previous === undefined) {
 			// the value before this batch's change is the one before the later batch's change, if any
@@ -1105,8 +1116,6 @@ export class Batch {
 
 		if (count === 1) {
 			this.#pending.delete(effect);
-		} else if (count === 0) {
-			return;
 		} else {
 			this.#pending.set(effect, count - 1);
 		}
@@ -1208,6 +1217,10 @@ export class Batch {
 	activate() {
 		current_batch = this;
 		view_batch = this;
+
+		// Async continuations can create or run reactions in another batch's view without
+		// processing it. The next flush must re-validate those reactions in its own view.
+		if (last_processed !== this.id) last_processed = null;
 
 		if (!async_mode_flag) {
 			batch_values = view_cache = null;
@@ -1702,6 +1715,22 @@ function flush_queued_effects(effects, earlier_writes = null) {
 }
 
 /**
+ * The next batch after `batch` that wrote `source`, if any. Its write comes after one of `batch` in order, so
+ * that one isn't the real-world value. Forks are skipped: their writes only exist in their own view of the world
+ * @param {Batch} batch
+ * @param {Value} source
+ */
+function later_writer(batch, source) {
+	var later = batch.next;
+
+	while (later !== null && (later.is_fork || !later.current.has(source))) {
+		later = later.next;
+	}
+
+	return later;
+}
+
+/**
  * Make a write the real-world value of `source`. A write to a derived is an assignment, whose
  * value holds until one of the derived's dependencies is written after it (see `changed_since`)
  * @param {Value} source
@@ -1903,16 +1932,21 @@ export function fork(fn) {
 			}
 
 			committed = true;
-
 			batch.is_fork = false;
 
 			// Apply the changes to the real world. They keep the versions they had in the fork,
 			// so that everything the fork computed remains valid (processing the batch
 			// re-validates everything that depends on them, see `#process`)
-			for (var [source, entry] of batch.current) {
-				batch.mark(source, MAYBE_DIRTY);
+			for (const [source, entry] of batch.current) {
+				const later = later_writer(batch, source);
 
-				apply(source, entry);
+				if (later !== null) {
+					// in order, the fork's write comes before the later batch's, which replaces it
+					later.previous.set(source, entry);
+				} else {
+					batch.mark(source, MAYBE_DIRTY);
+					apply(source, entry);
+				}
 			}
 
 			if (eager_effects.size > 0) {

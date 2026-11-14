@@ -33,7 +33,7 @@ export default test({
 		pop.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>0 0</p>`);
-		assert.deepEqual(logs.splice(0), ['effect 0 0']);
+		assert.deepEqual(logs.splice(0), ['effect 0 0', 'created']);
 
 		commit.click();
 		await tick();

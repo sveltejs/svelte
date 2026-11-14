@@ -377,7 +377,7 @@ Records a write in the batch and decides its version:
 
 ### 9.3 Fork commit
 
-`fork.commit` writes the fork's values **with their versions** into the real world (`source.v = entry.v; source.wv = entry.wv`). Entries of deriveds (assignments) are flagged `ASSIGNED`. Then the fork is processed as an ordinary, now usually alone, batch. Everything computed in the fork (records of async/block effects, and derived records, which `update_derived` adopts) is still valid, because its versions didn't change. The commit marks what depends on the fork's writes `MAYBE_DIRTY` (`Batch#mark`), and `#process` re-validates ([§10.3](#103-revalidatevalues)) everything depending on them, too; anything already computed passes the version check.
+`fork.commit` writes the fork's values **with their versions** into the real world (`source.v = entry.v; source.wv = entry.wv`). Entries of deriveds (assignments) are flagged `ASSIGNED`. Then the fork is processed as an ordinary, now usually alone, batch. Sources are promoted to the real world except when a later batch already has a newer value. Everything computed in the fork (records of async/block effects, and derived records, which `update_derived` adopts) is still valid, because its versions didn't change. The commit marks what depends on the fork's writes `MAYBE_DIRTY` (`Batch#mark`), and `#process` re-validates ([§10.3](#103-revalidatevalues)) everything depending on them, too; anything already computed passes the version check.
 
 ## 10. Statuses are scoped to batches
 
