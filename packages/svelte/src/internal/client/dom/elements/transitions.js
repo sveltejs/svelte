@@ -205,11 +205,13 @@ export function transition(flags, element, get_fn, get_params) {
 	var inert = element.inert;
 
 	/**
-	 * The default overflow style, stashed so we can revert changes during the transition
-	 * that are necessary to work around a Safari <18 bug
+	 * The default overflow styles, stashed so we can revert changes during the transition
+	 * that are necessary to work around a Safari <18 bug. We stash the longhands, because
+	 * restoring the shorthand would wipe e.g. an inline `overflow-x`
 	 * TODO 6.0 remove this, if older versions of Safari have died out enough
 	 */
-	var overflow = element.style.overflow;
+	var overflow_x = element.style.overflowX;
+	var overflow_y = element.style.overflowY;
 
 	/** @type {Animation | undefined} */
 	var intro;
@@ -261,7 +263,8 @@ export function transition(flags, element, get_fn, get_params) {
 					intro?.abort();
 					intro = current_options = undefined;
 
-					element.style.overflow = overflow;
+					element.style.overflowX = overflow_x;
+					element.style.overflowY = overflow_y;
 				}
 			);
 		},
