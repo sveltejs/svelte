@@ -33,7 +33,14 @@ import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, legacy_updates, in_real_world, teardown_write, source_stacks } from './batch.js';
+import {
+	Batch,
+	batch_values,
+	legacy_updates,
+	in_real_world,
+	teardown_write,
+	source_stacks
+} from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status } from './status.js';
@@ -168,7 +175,11 @@ export function set(source, value, should_proxy = false) {
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
-	if (!source.equals(value) || (source.f & ERROR_VALUE) !== 0) {
+	var same = source.equals(value) && (source.f & ERROR_VALUE) === 0;
+	var entry = batch_values?.get(source);
+
+	// A value that equals the real one may still overwrite a different value in the active view.
+	if (!same || (entry !== undefined && (entry.e || !source.equals.call(entry, value)))) {
 		var batch = Batch.ensure();
 
 		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
@@ -178,7 +189,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			execute_derived(/** @type {Derived} */ (source));
 		}
 
-		batch.capture(source, value, false, false, updated_during_traversal);
+		batch.capture(source, value, same, false, updated_during_traversal);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
