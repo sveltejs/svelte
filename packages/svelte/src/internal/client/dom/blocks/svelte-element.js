@@ -7,7 +7,16 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { create_element, create_text, get_first_child } from '../operations.js';
+import {
+	create_element,
+	create_text,
+	get_first_child,
+	append_child,
+	create_comment,
+	insert_before,
+	node_type,
+	remove_child
+} from '../operations.js';
 import { block, teardown } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { active_effect } from '../../runtime.js';
@@ -40,7 +49,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	/** @type {null | Element} */
 	var element = null;
 
-	if (hydrating && hydrate_node.nodeType === ELEMENT_NODE) {
+	if (hydrating && node_type(hydrate_node) === ELEMENT_NODE) {
 		element = /** @type {Element} */ (hydrate_node);
 		hydrate_next();
 	}
@@ -93,14 +102,14 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 					if (hydrating && is_raw_text_element(next_tag)) {
 						// prevent hydration glitches (code just below expects an anchor)
-						element.append((tmp_comment = document.createComment('')));
+						append_child(element, (tmp_comment = create_comment('')));
 					}
 
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = hydrating
 						? get_first_child(element)
-						: element.appendChild(create_text());
+						: /** @type {Text} */ (append_child(element, create_text()));
 
 					if (hydrating) {
 						if (child_anchor === null) {
@@ -117,7 +126,9 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// contains children, it's a user error (which is warned on elsewhere)
 					// and the DOM will be silently discarded
 					render_fn(element, child_anchor);
-					tmp_comment?.remove();
+					if (tmp_comment) {
+						remove_child(element, tmp_comment);
+					}
 					set_animation_effect_override(null);
 				}
 
@@ -125,7 +136,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = element;
 
 				// we only move the node if we are not hydrating since a claimed element is already in place
-				if (!is_hydrating) anchor.before(element);
+				if (!is_hydrating) insert_before(anchor, element);
 			}
 
 			if (hydrating) {
