@@ -32,7 +32,8 @@ import {
 	is_dirty,
 	abort_all,
 	get,
-	untrack
+	untrack,
+	abort_controller
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -148,12 +149,28 @@ export function async_expression(fn, label, location) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn())
-				.then(d.resolve, (e) => {
-					// if the promise was rejected by the user, via `getAbortSignal`, then
-					// wait for a subsequent resolution instead of flushing the batch
-					if (e !== STALE_REACTION) d.reject(e);
-				})
+			var promise = Promise.resolve(fn());
+			var abort_signal = abort_controller?.signal;
+
+			abort_signal?.addEventListener('abort', () => {
+				// a future run aborted this one. merge the later batch into the earlier one
+				var later = /** @type {Batch} */ (current_batch);
+				console.log(`TODO merge ${later.id} into ${batch.id}`);
+			});
+
+			promise
+				.then(
+					(value) => {
+						if (!abort_signal?.aborted) d.resolve(value);
+					},
+					(e) => {
+						// if the promise was rejected by the user, via `getAbortSignal`, then
+						// wait for a subsequent resolution instead of flushing the batch
+						if (!abort_signal?.aborted && e !== STALE_REACTION) {
+							d.reject(e);
+						}
+					}
+				)
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);

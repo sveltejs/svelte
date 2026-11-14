@@ -358,7 +358,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
  * done, it's stored with the run: on the reaction for its global run, or on the record a batch holds of it
  * @type {AbortController | null}
  */
-let abort_controller = null;
+export let abort_controller = null;
 
 /**
  * The signal of the run of `reaction` that is in progress. Its controller is stored with the run once it's done
