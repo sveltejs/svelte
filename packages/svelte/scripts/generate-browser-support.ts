@@ -150,7 +150,7 @@ const AGGREGATE_IGNORE = new Set([...SAFE_TO_IGNORE, ...BEHAVIORAL_IGNORE]);
  * hints at CJS, but `./server` and `./internal/server` are plain `default`
  * entries indistinguishable from a browser module.
  */
-const NODE_ONLY_EXPORTS = new Set(['./compiler', './server', './internal/server']);
+const NODE_ONLY_EXPORTS = new Set(['./compiler', './register', './server', './internal/server']);
 
 /**
  * Every subpath in `pkg.exports` that ships browser JS. Type-only entries

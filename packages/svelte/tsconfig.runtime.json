@@ -11,5 +11,5 @@
 	// Compiler is allowed to use more recent methods; people using it in the browser are expected to know
 	// how to polyfill missing methods. Also make sure to not include test files as these include Vitest
 	// which then loads node globals.
-	"exclude": ["./src/compiler/**/*", "./src/**/*.test.ts"]
+	"exclude": ["./src/compiler/**/*", "./src/register/**/*", "./src/**/*.test.ts"]
 }
