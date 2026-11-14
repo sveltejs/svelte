@@ -72,12 +72,43 @@ export function html(
 	template_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
-		if (value === (value = get_value() ?? '')) {
-			if (hydrating) hydrate_next();
+		if (value === (value = get_value() ?? '') && !hydrating) return;
+
+		if (hydrating) {
+			// We're deliberately not trying to repair mismatches between server and client,
+			// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
+			var hash = /** @type {Comment} */ (hydrate_node).data;
+
+			/** @type {TemplateNode | null} */
+			var next = hydrate_next();
+
+			/** @type {TemplateNode | null} */
+			var last = null;
+
+			while (
+				next !== null &&
+				(next.nodeType !== COMMENT_NODE || /** @type {Comment} */ (next).data !== '')
+			) {
+				last = next;
+				next = get_next_sibling(next);
+			}
+
+			if (next === null) {
+				w.hydration_mismatch();
+				throw HYDRATION_ERROR;
+			}
+
+			if (DEV && !skip_warning) {
+				check_hash(/** @type {Element} */ (next.parentNode), hash, value);
+			}
+
+			// An empty SSR region has no nodes to remove on subsequent updates.
+			if (last !== null) assign_nodes(hydrate_node, last);
+			anchor = set_hydrate_node(next);
 			return;
 		}
 
-		if (is_controlled && !hydrating) {
+		if (is_controlled) {
 			// When @html is the only child, use innerHTML directly.
 			// This also handles contenteditable, where the user may delete the anchor comment.
 			effect.nodes = null;
@@ -99,37 +130,6 @@ export function html(
 		}
 
 		if (value === '') return;
-
-		if (hydrating) {
-			// We're deliberately not trying to repair mismatches between server and client,
-			// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
-			var hash = /** @type {Comment} */ (hydrate_node).data;
-
-			/** @type {TemplateNode | null} */
-			var next = hydrate_next();
-			var last = next;
-
-			while (
-				next !== null &&
-				(next.nodeType !== COMMENT_NODE || /** @type {Comment} */ (next).data !== '')
-			) {
-				last = next;
-				next = get_next_sibling(next);
-			}
-
-			if (next === null) {
-				w.hydration_mismatch();
-				throw HYDRATION_ERROR;
-			}
-
-			if (DEV && !skip_warning) {
-				check_hash(/** @type {Element} */ (next.parentNode), hash, value);
-			}
-
-			assign_nodes(hydrate_node, last);
-			anchor = set_hydrate_node(next);
-			return;
-		}
 
 		// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
 		// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
