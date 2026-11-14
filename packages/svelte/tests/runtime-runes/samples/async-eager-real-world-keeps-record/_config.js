@@ -7,38 +7,47 @@ export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
 		await tick();
-		const [a, b, resolve_y, resolve_all] = target.querySelectorAll('button');
+		const [a, b, other, resolve_y, resolve_x, resolve_all] = target.querySelectorAll('button');
 		const buttons =
-			'<button>a</button><button>b</button><button>resolve y</button><button>resolve all</button><button>c</button>';
+			'<button>a</button><button>b</button><button>other</button><button>resolve y</button><button>resolve x</button><button>resolve all</button>';
 
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p>`);
+		assert.htmlEqual(target.innerHTML, `${buttons}<b>0</b><p>0</p><p>0</p>`);
 		logs.length = 0;
 
-		// batch A
+		// batch A, which is pending
 		a.click();
 		await tick();
-		assert.deepEqual(logs, ['x 10']);
+		assert.deepEqual(logs, ['z 1']);
 
-		// batch B, whose view undoes A's write — so its run of `d` is a record in B.
-		// (In the real world, `d` reads `c` now, i.e. its dependencies change)
+		// batch B, whose view undoes A's write — so its run of `d` (`1`) is a record in B
 		b.click();
 		await tick();
-		assert.deepEqual(logs, ['x 10', 'y 1', 'x 1']);
+		assert.deepEqual(logs, ['z 1', 'y 1', 'x 1']);
 
-		// B is processed again, and creates the branch, which evaluates `d` in the real world.
-		// `x` is still current in B's view
+		// B is processed again, and creates the branch, whose `$state.eager(d)` evaluates `d`
+		// in the real world (`11`) while B's view is active
 		resolve_y.click();
 		await tick();
-		assert.deepEqual(logs, ['x 10', 'y 1', 'x 1']);
+		assert.deepEqual(logs, ['z 1', 'y 1', 'x 1']);
+		assert.htmlEqual(target.innerHTML, `${buttons}<b>0</b><p>0</p><p>0</p>`);
 
-		// B commits (without redoing `x`), and A sees `b = 1` now
+		// an unrelated batch commits, so B is processed again and re-validates what reads its writes.
+		// Its record of `d` still holds, so `f('x', d)` doesn't run again
+		other.click();
+		await tick();
+		assert.deepEqual(logs, ['z 1', 'y 1', 'x 1']);
+		assert.htmlEqual(target.innerHTML, `${buttons}<b>1</b><p>0</p><p>0</p>`);
+
+		// B commits, and A sees `b = 1` now
+		resolve_x.click();
+		await tick();
+		assert.deepEqual(logs, ['z 1', 'y 1', 'x 1', 'x 11']);
+		assert.htmlEqual(target.innerHTML, `${buttons}<b>1</b><p>0</p><p>1</p><span>11</span>`);
+
+		// A commits
 		resolve_all.click();
 		await tick();
-		assert.deepEqual(logs, ['x 10', 'y 1', 'x 1', 'x 11']);
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>1</p><span>11</span>`);
-
-		resolve_all.click();
-		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<p>11</p><span>11</span>`);
+		assert.deepEqual(logs, ['z 1', 'y 1', 'x 1', 'x 11']);
+		assert.htmlEqual(target.innerHTML, `${buttons}<b>1</b><p>1</p><p>11</p><span>11</span>`);
 	}
 });

@@ -6,6 +6,9 @@
 
 	const queue = [];
 
+	/** @type {() => void} */
+	let resolve_x;
+
 	function load(a, x) {
 		const signal = getAbortSignal();
 		const label = `${a}/${x}`;
@@ -27,11 +30,19 @@
 			});
 		});
 	}
+
+	function delay() {
+		return new Promise((fulfil) => (resolve_x = () => fulfil('x')));
+	}
 </script>
 
-<button onclick={() => a++}>a++</button>
 <button onclick={() => x++}>x++</button>
+<button onclick={() => a++}>a++</button>
+<button onclick={() => resolve_x()}>resolve x</button>
 <button onclick={() => queue.shift()?.()}>shift</button>
+
+<!-- keeps the batch that writes `x` pending, without touching the expression below -->
+<i>{x ? await delay() : 0}</i>
 
 <!-- only the run with `a === 1` depends on `x` -->
 <p>{await load(a, a === 1 ? x : 0)}</p>

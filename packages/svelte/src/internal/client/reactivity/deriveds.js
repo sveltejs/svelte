@@ -48,7 +48,7 @@ import {
 	view_batch,
 	view_cache
 } from './batch.js';
-import { increment_pending, unset_context } from './async.js';
+import { increment_pending, merge_target, unset_context } from './async.js';
 import { queue_micro_task } from '../dom/task.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -189,7 +189,7 @@ export function async_derived(fn, label, location) {
 			reactivity_loss_tracker = null;
 		}
 
-		var batch = /** @type {Batch} */ (current_batch);
+		var batch = merge_target(/** @type {Batch} */ (current_batch));
 
 		if (should_suspend) {
 			// we only increment the batch's pending state for updates, not creation, otherwise
@@ -218,12 +218,16 @@ export function async_derived(fn, label, location) {
 			decrement_pending?.();
 			deferreds.delete(d);
 
+			var target = merge_target(batch);
+
+			// A superseded run may have settled before the rejection in `Batch#merge` or by a rerun arrives in the microtask after
+			if (should_suspend && target.async_deriveds.get(effect) !== d) error = OBSOLETE;
+
 			if (error === OBSOLETE) return;
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			batch.capture(signal, error ?? value, same, !!error);
 
-			if (DEV && location !== undefined && !signal.equals(value)) {
+			if (DEV && !error && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
 
 				setTimeout(() => {
@@ -233,6 +237,9 @@ export function async_derived(fn, label, location) {
 					}
 				});
 			}
+
+			// write the result in the batch's view of the world
+			target.capture(signal, error ?? value, same, !!error);
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -255,14 +262,15 @@ export function async_derived(fn, label, location) {
 					return;
 				}
 
-				// While the boundary shows its pending snippet, batches commit without waiting for their runs, and a
-				// committed run supersedes those of the batches that committed before (see `Batch#release_records`).
+				// While the boundary shows its pending snippet, batches commit without waiting for their runs, and the
+				// run of a later batch that re-runs the expression supersedes theirs (see `Batch#merge`).
 				// So the first value can be another batch's result, which the creator's view can't undo. Until that
 				// batch commits it, the creator mustn't continue with it — and the boundary keeps showing its pending
 				// snippet. (Elsewhere, the creator's own run provides the first value in its view)
+				// A creator that was merged into another batch continues as that one (see `Batch#merge`)
 				var writer =
 					should_suspend && !(/** @type {Effect} */ (parent).b?.is_rendered())
-						? uncommitted_first_value(signal, creator)
+						? uncommitted_first_value(signal, creator && merge_target(creator))
 						: null;
 
 				if (writer === null) {

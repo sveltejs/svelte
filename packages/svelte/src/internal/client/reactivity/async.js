@@ -397,13 +397,14 @@ export function wait(blockers) {
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
-	var batch = /** @type {Batch} */ (current_batch);
+	var batch = merge_target(/** @type {Batch} */ (current_batch));
 	var blocking = !!boundary?.is_rendered();
 
 	boundary?.update_pending_count(1, batch);
 	batch.increment(blocking, effect);
 
 	return () => {
+		batch = merge_target(batch);
 		boundary?.update_pending_count(-1, batch);
 		batch.decrement(blocking, effect);
 	};
