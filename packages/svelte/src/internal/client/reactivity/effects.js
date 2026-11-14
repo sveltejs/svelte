@@ -1,4 +1,5 @@
 /** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { TeardownContext } from './batch.js' */
 import {
 	is_dirty,
 	active_effect,
@@ -625,8 +626,32 @@ export function pause_effect(effect, callback, destroy = true) {
 	};
 
 	var remaining = transitions.length;
+
 	if (remaining > 0) {
-		var check = () => --remaining || fn();
+		// only reactivate the teardown context if `fn` runs later
+		/** @type {TeardownContext | null} */
+		var context = null;
+
+		var check = () => {
+			if (!--remaining) {
+				var previous_context = teardown_context;
+
+				try {
+					if (context) {
+						// Other outros can share this context, and state may have changed
+						// since its derived values were cached.
+						context.derived_cache.clear();
+						set_teardown_context(context);
+					}
+					fn();
+				} finally {
+					if (context) set_teardown_context(previous_context);
+				}
+			}
+		};
+
+		context = teardown_context;
+
 		for (var transition of transitions) {
 			transition.out(check);
 		}
