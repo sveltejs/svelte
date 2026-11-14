@@ -509,14 +509,14 @@ export class Batch {
 		// A different batch view may apply, even when processing continues within the same flush.
 		teardown_context?.derived_cache.clear();
 
-		if (async_mode_flag && this.started && last_processed !== this.id) {
-			// Since this batch last ran, reactions may have come to depend on its writes without it
-			// knowing (e.g. effects created by other batches), or have run in the view of other batches.
-			// Re-validate them in this batch's view — this only re-runs those that are out of date
-			this.#revalidate(this.current.keys());
-		}
-
 		if (async_mode_flag) {
+			if (this.started && last_processed !== this.id) {
+				// Since this batch last ran, reactions may have come to depend on its writes without it
+				// knowing (e.g. effects created by other batches), or have run in the view of other batches.
+				// Re-validate them in this batch's view — this only re-runs those that are out of date
+				this.#revalidate(this.current.keys());
+			}
+
 			// Async continuations in earlier batches can create effects inside branches that this batch
 			// also selected. Until they run, they have no dependencies for #revalidate to discover.
 			for (let batch = this.prev; batch !== null; batch = batch.prev) {
@@ -527,6 +527,7 @@ export class Batch {
 				}
 			}
 		}
+
 
 		this.started = true;
 		last_processed = this.id;
