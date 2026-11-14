@@ -182,6 +182,7 @@ export class SvelteMap extends Map {
 	set(key, value) {
 		var sources = this.#sources;
 		var s = sources.get(key);
+		var had_key = super.has(key);
 		var prev_res = super.get(key);
 		var res = super.set(key, value);
 		var version = this.#version;
@@ -194,8 +195,13 @@ export class SvelteMap extends Map {
 			}
 
 			sources.set(key, s);
-			set(this.#size, super.size);
-			increment(version);
+
+			// only a new key changes the key set, which is what the version
+			// source and `size` track
+			if (!had_key) {
+				set(this.#size, super.size);
+				increment(version);
+			}
 		} else if (prev_res !== value) {
 			increment(s);
 
