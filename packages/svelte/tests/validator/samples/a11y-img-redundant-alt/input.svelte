@@ -7,3 +7,4 @@
 <img src="foo" alt="Picturesque food" />
 <img src="baz" alt={'baz'} />
 <img src="baz" alt />
+<img src="bar" aria-hidden="false" alt="Picture of a bar" />
