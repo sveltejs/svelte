@@ -3,8 +3,10 @@ import {
 	BOUNDARY_EFFECT,
 	DESTROYED,
 	DESTROYING,
+	DIRTY,
 	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT
+	EFFECT_TRANSPARENT,
+	MAYBE_DIRTY
 } from '#client/constants';
 import {
 	HYDRATION_ERROR,
@@ -45,7 +47,7 @@ import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
-import { defer_effect } from '../../reactivity/utils.js';
+import { set_signal_status } from '../../reactivity/status.js';
 
 /**
  * @typedef {{
@@ -109,11 +111,20 @@ export class Boundary {
 	#offscreen_fragment = null;
 
 	#local_pending_count = 0;
-	#pending_count = 0;
 	#pending_count_update_queued = false;
 
-	/** @type {Map<Effect, number>} */
-	#dirty_reactions = new Map();
+	/**
+	 * User effects created inside this boundary. They will run when the boundary is revealed
+	 * @type {Effect[]}
+	 */
+	#effects = [];
+
+	/**
+	 * Async effects that are currently in flight, grouped by the batch that started them.
+	 * A speculative fork's work must not hold up the real world's boundary.
+	 * @type {Map<Batch, Map<Effect, number>>}
+	 */
+	#pending = new Map();
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -285,7 +296,6 @@ export class Boundary {
 
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
-			var handled = false;
 
 			fragment.append(anchor);
 
@@ -295,7 +305,6 @@ export class Boundary {
 				} catch (error) {
 					try {
 						this.error(error);
-						handled = true;
 					} catch (error) {
 						invoke_error_boundary(error, this.#effect.parent);
 					}
@@ -304,21 +313,14 @@ export class Boundary {
 				}
 			});
 
-			if (this.#main_effect === null) {
-				this.#offscreen_fragment = null;
-				if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
-				return;
-			}
-
-			if (this.#pending_count === 0) {
+			if (this.#main_effect !== null && this.#pending.size === 0) {
+				this.is_pending = false;
 				this.#anchor.before(fragment);
 				this.#offscreen_fragment = null;
 
 				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
 					this.#pending_effect = null;
 				});
-
-				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		});
 	}
@@ -326,21 +328,23 @@ export class Boundary {
 	#render() {
 		try {
 			this.is_pending = this.has_pending_snippet();
-			this.#pending_count = 0;
 			this.#local_pending_count = 0;
 
 			this.#main_effect = branch(() => {
 				this.#children(this.#anchor);
 			});
 
-			if (this.#pending_count > 0) {
-				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
-				move_effect(this.#main_effect, fragment);
-
-				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
-				this.#pending_effect = branch(() => pending(this.#anchor));
+			if (this.#pending.size === 0) {
+				this.is_pending = false;
 			} else {
-				this.#resolve(/** @type {Batch} */ (current_batch));
+				const pending = this.#props.pending;
+
+				if (pending) {
+					var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+					move_effect(this.#main_effect, fragment);
+
+					this.#pending_effect = branch(() => pending(this.#anchor));
+				}
 			}
 		} catch (error) {
 			this.error(error);
@@ -348,30 +352,11 @@ export class Boundary {
 	}
 
 	/**
-	 * @param {Batch} batch
-	 */
-	#resolve(batch) {
-		this.is_pending = false;
-
-		// any effects that were previously deferred should be transferred
-		// to the batch, which will flush in the next microtask
-		batch.transfer_reactions(this.#dirty_reactions);
-	}
-
-	/**
 	 * Defer an effect inside a pending boundary until the boundary resolves
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_reactions);
-	}
-
-	/**
-	 * Returns `false` if the effect exists inside a boundary whose pending snippet is shown
-	 * @returns {boolean}
-	 */
-	is_rendered() {
-		return !this.is_pending && (!this.parent || this.parent.is_rendered());
+		this.#effects.push(effect);
 	}
 
 	has_pending_snippet() {
@@ -402,49 +387,104 @@ export class Boundary {
 	}
 
 	/**
-	 * Updates the pending count associated with the currently visible pending snippet,
-	 * if any, such that we can replace the snippet with content once work is done
-	 * @param {1 | -1} d
 	 * @param {Batch} batch
 	 */
-	#update_pending_count(d, batch) {
-		if (!this.has_pending_snippet()) {
-			if (this.parent) {
-				this.parent.#update_pending_count(d, batch);
-			}
-
-			// if there's no parent, we're in a scope with no pending snippet
-			return;
+	is_ready(batch) {
+		if (batch.is_fork && this.#pending.size > 0) {
+			return false;
 		}
 
-		this.#pending_count += d;
+		for (const [owner, pending] of this.#pending) {
+			if (owner.is_fork) continue;
 
-		if (this.#pending_count === 0) {
-			this.#resolve(batch);
+			for (const effect of pending.keys()) {
+				if (batch.is_blocked_by(effect, this.#main_effect)) {
+					return false;
+				}
+			}
+		}
 
-			if (this.#pending_effect) {
-				pause_effect(this.#pending_effect, () => {
-					this.#pending_effect = null;
-				});
+		return true;
+	}
+
+	/**
+	 * @param {Effect[]} effects
+	 */
+	reveal(effects) {
+		this.is_pending = false;
+
+		// Add any deferred effects to the batch's effect queue
+		if (this.#effects.length > 0) {
+			for (let i = 0; i < this.#effects.length; i += 1) {
+				var e = this.#effects[i];
+				set_signal_status(e, DIRTY);
+				effects.push(e);
 			}
 
-			if (this.#offscreen_fragment) {
-				this.#anchor.before(this.#offscreen_fragment);
-				this.#offscreen_fragment = null;
-			}
+			this.#effects.length = 0;
+		}
+
+		if (this.#pending_effect) {
+			pause_effect(this.#pending_effect, () => {
+				this.#pending_effect = null;
+			});
+		}
+
+		if (this.#offscreen_fragment) {
+			this.#anchor.before(this.#offscreen_fragment);
+			this.#offscreen_fragment = null;
 		}
 	}
 
 	/**
-	 * Update the source that powers `$effect.pending()` inside this boundary,
-	 * and controls when the current `pending` snippet (if any) is removed.
-	 * Do not call from inside the class
-	 * @param {1 | -1} d
+	 * @param {Effect} effect
 	 * @param {Batch} batch
 	 */
-	update_pending_count(d, batch) {
-		this.#update_pending_count(d, batch);
+	increment(effect, batch) {
+		var pending = this.#pending.get(batch);
 
+		if (pending === undefined) {
+			this.#pending.set(batch, (pending = new Map()));
+		}
+
+		var count = pending.get(effect) ?? 0;
+		pending.set(effect, count + 1);
+	}
+
+	/**
+	 * @param {Effect} effect
+	 * @param {Batch} batch
+	 */
+	decrement(effect, batch) {
+		var pending = /** @type {Map<Effect, number>} */ (this.#pending.get(batch));
+		var count = /** @type {number} */ (pending.get(effect));
+
+		if (count === 1) {
+			pending.delete(effect);
+
+			if (pending.size === 0) {
+				this.#pending.delete(batch);
+			}
+
+			// The remaining work may belong to speculative forks. Check again in a normal batch,
+			// after the result's batch has flushed, so that we reveal committed content and run
+			// deferred effects in the same view.
+			queue_micro_task(() => {
+				if (this.is_pending && !this.#is_destroyed()) {
+					Batch.ensure().schedule(this.#effect, MAYBE_DIRTY);
+				}
+			});
+		} else {
+			pending.set(effect, count - 1);
+		}
+	}
+
+	/**
+	 * Update the source that powers `$effect.pending()` inside this boundary.
+	 * Do not call from inside the class
+	 * @param {1 | -1} d
+	 */
+	update_effect_pending(d) {
 		this.#local_pending_count += d;
 
 		if (!this.#effect_pending || this.#pending_count_update_queued) return;

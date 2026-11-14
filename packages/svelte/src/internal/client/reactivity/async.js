@@ -1,6 +1,6 @@
-/** @import { Blocker, Effect, Source, Value } from '#client' */
+/** @import { Blocker, Effect, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
-import { DESTROYED, STALE_REACTION } from '#client/constants';
+import { DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -13,18 +13,20 @@ import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
 	active_reaction,
+	get,
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
 import { current_batch } from './batch.js';
 import {
-	async_derived,
 	reactivity_loss_tracker,
 	derived,
 	derived_safe_equal,
-	set_reactivity_loss_tracker
+	set_reactivity_loss_tracker,
+	async_expression,
+	is_uninitialized
 } from './deriveds.js';
-import { aborted } from './effects.js';
+import { aborted, async_effect, block, branch } from './effects.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -33,12 +35,8 @@ import { aborted } from './effects.js';
  * @param {(values: Value[]) => any} fn
  */
 export function flatten(blockers, sync, async, fn) {
-	const d = is_runes() ? derived : derived_safe_equal;
-
-	// Filter out already-settled blockers - no need to wait for them
-	var pending = blockers.filter((b) => !b.settled);
-
-	var deriveds = sync.map(d);
+	var parent = /** @type {Effect} */ (active_effect);
+	var deriveds = sync.map(is_runes() ? derived : derived_safe_equal);
 
 	if (DEV) {
 		deriveds.forEach((d, i) => {
@@ -52,69 +50,66 @@ export function flatten(blockers, sync, async, fn) {
 		});
 	}
 
-	if (async.length === 0 && pending.length === 0) {
-		fn(deriveds);
-		return;
-	}
+	// Filter out already-settled blockers - no need to wait for them
+	var pending = blockers.filter((b) => !b.settled);
 
-	var parent = /** @type {Effect} */ (active_effect);
+	if (pending.length > 0) {
+		var restore = capture();
+		var decrement_pending = increment_pending();
+		var p = pending.length === 1 ? pending[0].promise : Promise.all(pending.map((b) => b.promise));
 
-	var restore = capture();
-	var blocker_promise =
-		pending.length === 1
-			? pending[0].promise
-			: pending.length > 1
-				? Promise.all(pending.map((b) => b.promise))
-				: null;
-
-	/**
-	 * @param {Source[]} async
-	 */
-	function finish(async) {
-		if ((parent.f & DESTROYED) !== 0) {
-			return;
-		}
-
-		restore();
-
-		try {
-			fn([...deriveds, ...async]);
-		} catch (error) {
-			invoke_error_boundary(error, parent);
-		}
-
-		unset_context();
-	}
-
-	var decrement_pending = increment_pending();
-
-	// Fast path: blockers but no async expressions
-	if (async.length === 0) {
-		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([])).finally(decrement_pending);
-		return;
-	}
-
-	// Full path: has async expressions
-	function run() {
-		Promise.all(async.map((expression) => async_derived(expression)))
-			.then(finish)
-			.catch((error) => invoke_error_boundary(error, parent))
-			.finally(decrement_pending);
-	}
-
-	if (blocker_promise) {
-		blocker_promise.then(() => {
+		p.then(() => {
 			if ((parent.f & DESTROYED) !== 0) {
-				decrement_pending();
 				return;
 			}
 
 			restore();
-			run();
+
+			try {
+				run();
+			} catch (error) {
+				invoke_error_boundary(error, parent);
+			}
+
 			unset_context();
-		});
+		}).finally(decrement_pending);
 	} else {
 		run();
+	}
+
+	function run() {
+		if (blockers.some((b) => b.failed)) return;
+
+		if (async.length === 0) {
+			fn(deriveds);
+			return;
+		}
+
+		var signals = async.map((fn) => async_expression(fn));
+
+		/** @type {Effect | null} */
+		var effect = null;
+
+		block(() => {
+			for (var s of signals) {
+				if (is_uninitialized(s)) {
+					get(s);
+					return;
+				}
+			}
+
+			if (effect !== null) {
+				/** @type {Batch} */ (current_batch).revalidate_branch(effect);
+			} else {
+				effect = branch(() => {
+					try {
+						fn([...deriveds, ...signals]);
+					} catch (error) {
+						invoke_error_boundary(error, parent);
+					}
+				});
+			}
+		}, EFFECT_TRANSPARENT);
 	}
 }
 
@@ -141,16 +136,20 @@ export function capture() {
 		var previous_dev_stack = dev_stack;
 	}
 
-	return function restore(activate_batch = true) {
+	/**
+	 * @param {boolean} [activate_batch]
+	 * @param {Batch | null} [batch] the batch to continue in, if not the one that was active before
+	 */
+	return function restore(activate_batch = true, batch = previous_batch) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 
 		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
-			// TODO we only need optional chaining here because `{#await ...}` blocks
+			// A batch that was merged into another one continues as that one.
+			// TODO we only need the check here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
-			previous_batch?.activate();
-			previous_batch?.apply();
+			if (batch) merge_target(batch).activate();
 		}
 
 		if (DEV) {
@@ -310,10 +309,7 @@ export function unset_context(deactivate_batch = true) {
  * @param {Array<() => void | Promise<void>>} thunks
  */
 export function run(thunks) {
-	const restore = capture();
-
-	const decrement_pending = increment_pending();
-
+	var restore = capture();
 	var active = /** @type {Effect} */ (active_effect);
 
 	/** @type {null | { error: any }} */
@@ -321,21 +317,30 @@ export function run(thunks) {
 
 	/** @param {any} error */
 	const handle_error = (error) => {
+		if (errored) return;
+
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
 		if (!aborted(active)) {
-			invoke_error_boundary(error, active);
+			restore();
+
+			try {
+				invoke_error_boundary(error, active);
+			} finally {
+				unset_context();
+			}
 		}
 	};
 
 	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
 
 	/** @type {Blocker} */
-	var blocker = { promise, settled: false };
+	var blocker = { promise, settled: false, failed: false };
 	var blockers = [blocker];
 
 	promise.finally(() => {
 		blocker.settled = true;
+		blocker.failed = errored !== null;
 		unset_context();
 	});
 
@@ -362,21 +367,28 @@ export function run(thunks) {
 			})
 			.catch(handle_error);
 
-		const blocker = { promise, settled: false };
+		/** @type {Blocker} */
+		const blocker = { promise, settled: false, failed: false };
 		blockers.push(blocker);
 
 		promise.finally(() => {
 			blocker.settled = true;
+			blocker.failed = errored !== null;
 			// ... but we also need it after such a promise has resolved in case it restores our context
 			unset_context();
 		});
 	}
 
-	promise
-		// wait one more tick, so that template effects are
-		// guaranteed to run before `$effect(...)`
-		.then(() => Promise.resolve())
-		.finally(decrement_pending);
+	async_effect(() => {
+		// Inside an effect so later adopting branches can rerun this
+		promise
+			// wait one more tick, so that template effects are
+			// guaranteed to run before `$effect(...)`.
+			.then(() => Promise.resolve())
+			// The increment_pending() runs directly and finally
+			// will run its decrement.
+			.finally(increment_pending());
+	});
 
 	return blockers;
 }
@@ -389,19 +401,39 @@ export function wait(blockers) {
 }
 
 /**
- * @returns {(skip?: boolean) => void}
+ * Adds pending work to the current batch, and to the boundary of the active effect. If the batch is merged
+ * into another one before the work is done, it's that batch's from then on (see `Batch#merge`)
+ * @returns {() => void}
  */
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
-	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = !!boundary?.is_rendered();
+	var batch = merge_target(/** @type {Batch} */ (current_batch));
 
-	boundary?.update_pending_count(1, batch);
-	batch.increment(blocking, effect);
+	/** The nearest boundary with a pending snippet, if there is one */
+	var pending = boundary;
+
+	while (pending && !pending.is_pending) {
+		pending = pending.parent;
+	}
+
+	batch.increment(effect);
+	pending?.increment(effect, batch);
+	boundary?.update_effect_pending(1);
 
 	return () => {
-		boundary?.update_pending_count(-1, batch);
-		batch.decrement(blocking, effect);
+		merge_target(batch).decrement(effect);
+		// The boundary keeps counts under the originating batch, even if it was merged.
+		pending?.decrement(effect, batch);
+		boundary?.update_effect_pending(-1);
 	};
+}
+
+/**
+ * The batch that `batch` was merged into, if any (transitively), else `batch` itself
+ * @param {Batch} batch
+ */
+export function merge_target(batch) {
+	while (batch.merged !== null) batch = batch.merged;
+	return batch;
 }
