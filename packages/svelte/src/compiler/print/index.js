@@ -728,7 +728,12 @@ const svelte_visitors = (comments, state) => ({
 		context.write('=');
 
 		if (Array.isArray(node.value)) {
-			if (node.value.length > 1 || node.value[0].type === 'Text') {
+			// `class="{x}"` and `class={x}` mean different things (only the latter goes
+			// through `clsx`), so keep the quotes around a lone expression tag there
+			const quoted =
+				node.value.length > 1 || node.value[0].type === 'Text' || node.name === 'class';
+
+			if (quoted) {
 				context.write('"');
 			}
 
@@ -736,7 +741,7 @@ const svelte_visitors = (comments, state) => ({
 				context.visit(chunk);
 			}
 
-			if (node.value.length > 1 || node.value[0].type === 'Text') {
+			if (quoted) {
 				context.write('"');
 			}
 		} else {
