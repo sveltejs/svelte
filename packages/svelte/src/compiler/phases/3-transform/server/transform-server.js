@@ -2,7 +2,7 @@
 /** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
-import { walk } from 'zimmerframe';
+import { walk } from '../../../utils/walk.js';
 import { set_scope } from '../../scope.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';

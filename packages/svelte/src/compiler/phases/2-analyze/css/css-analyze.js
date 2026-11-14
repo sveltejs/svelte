@@ -1,7 +1,7 @@
 /** @import { ComponentAnalysis } from '../../types.js' */
 /** @import { AST } from '#compiler' */
 /** @import { Visitors } from 'zimmerframe' */
-import { walk } from 'zimmerframe';
+import { walk } from '../../../utils/walk.js';
 import * as e from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
 import { is_global, is_unscoped_pseudo_class } from './utils.js';

@@ -1,9 +1,62 @@
 {
-	"css": null,
-	"js": [],
+	"type": "Root",
 	"start": 0,
 	"end": 192,
-	"type": "Root",
+	"css": null,
+	"js": [],
+	"options": null,
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 28,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 18,
+			"end": 19,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 2,
+					"column": 9
+				}
+			},
+			"body": [],
+			"sourceType": "module"
+		},
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 8,
+				"end": 17,
+				"name": "lang",
+				"value": [
+					{
+						"type": "Text",
+						"start": 14,
+						"end": 16,
+						"raw": "ts",
+						"data": "ts"
+					}
+				],
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 8,
+						"character": 8
+					},
+					"end": {
+						"line": 1,
+						"column": 12,
+						"character": 12
+					}
+				}
+			}
+		]
+	},
 	"fragment": {
 		"type": "Fragment",
 		"nodes": [
@@ -20,7 +73,6 @@
 				"end": 92,
 				"expression": {
 					"type": "Identifier",
-					"name": "generic",
 					"start": 40,
 					"end": 47,
 					"loc": {
@@ -34,7 +86,10 @@
 							"column": 17,
 							"character": 47
 						}
-					}
+					},
+					"decorators": [],
+					"optional": false,
+					"name": "generic"
 				},
 				"typeParams": "T extends string",
 				"parameters": [
@@ -52,7 +107,6 @@
 								"column": 42
 							}
 						},
-						"name": "val",
 						"typeAnnotation": {
 							"type": "TSTypeAnnotation",
 							"start": 69,
@@ -95,10 +149,15 @@
 											"column": 42
 										}
 									},
+									"decorators": [],
+									"optional": false,
 									"name": "T"
 								}
 							}
-						}
+						},
+						"decorators": [],
+						"optional": false,
+						"name": "val"
 					}
 				],
 				"body": {
@@ -129,6 +188,8 @@
 										"column": 5
 									}
 								},
+								"decorators": [],
+								"optional": false,
 								"name": "val"
 							}
 						},
@@ -155,7 +216,6 @@
 				"end": 192,
 				"expression": {
 					"type": "Identifier",
-					"name": "complex_generic",
 					"start": 104,
 					"end": 119,
 					"loc": {
@@ -169,7 +229,10 @@
 							"column": 25,
 							"character": 119
 						}
-					}
+					},
+					"decorators": [],
+					"optional": false,
+					"name": "complex_generic"
 				},
 				"typeParams": "T extends { bracket: \"<\" } | \"<\" | Set<\"<>\">",
 				"parameters": [
@@ -187,7 +250,6 @@
 								"column": 78
 							}
 						},
-						"name": "val",
 						"typeAnnotation": {
 							"type": "TSTypeAnnotation",
 							"start": 169,
@@ -230,10 +292,15 @@
 											"column": 78
 										}
 									},
+									"decorators": [],
+									"optional": false,
 									"name": "T"
 								}
 							}
-						}
+						},
+						"decorators": [],
+						"optional": false,
+						"name": "val"
 					}
 				],
 				"body": {
@@ -264,6 +331,8 @@
 										"column": 5
 									}
 								},
+								"decorators": [],
+								"optional": false,
 								"name": "val"
 							}
 						},
@@ -276,59 +345,6 @@
 						}
 					]
 				}
-			}
-		]
-	},
-	"options": null,
-	"instance": {
-		"type": "Script",
-		"start": 0,
-		"end": 28,
-		"context": "default",
-		"content": {
-			"type": "Program",
-			"start": 18,
-			"end": 19,
-			"loc": {
-				"start": {
-					"line": 1,
-					"column": 0
-				},
-				"end": {
-					"line": 2,
-					"column": 9
-				}
-			},
-			"body": [],
-			"sourceType": "module"
-		},
-		"attributes": [
-			{
-				"type": "Attribute",
-				"start": 8,
-				"end": 17,
-				"name": "lang",
-				"name_loc": {
-					"start": {
-						"line": 1,
-						"column": 8,
-						"character": 8
-					},
-					"end": {
-						"line": 1,
-						"column": 12,
-						"character": 12
-					}
-				},
-				"value": [
-					{
-						"start": 14,
-						"end": 16,
-						"type": "Text",
-						"raw": "ts",
-						"data": "ts"
-					}
-				]
 			}
 		]
 	}

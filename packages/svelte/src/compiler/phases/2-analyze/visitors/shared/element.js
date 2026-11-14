@@ -45,13 +45,8 @@ export function validate_element(node, context) {
 
 				if (is_expression) {
 					const expression = get_attribute_expression(attribute);
-					if (expression.type === 'SequenceExpression') {
-						let i = /** @type {number} */ (expression.start);
-						while (--i > 0) {
-							const char = context.state.analysis.source[i];
-							if (char === '(') break; // parenthesized sequence expressions are ok
-							if (char === '{') e.attribute_invalid_sequence_expression(expression);
-						}
+					if (expression.type === 'SequenceExpression' && !expression.parenthesized) {
+						e.attribute_invalid_sequence_expression(expression);
 					}
 				}
 			}

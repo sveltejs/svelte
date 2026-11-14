@@ -1,7 +1,7 @@
 /** @import { ObjectExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
-import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
-import * as e from '../../../errors.js';
+import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../constants.js';
+import * as e from '../../errors.js';
 
 /**
  * @param {AST.SvelteOptionsRaw} node

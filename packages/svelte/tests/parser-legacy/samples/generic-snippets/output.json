@@ -17,7 +17,6 @@
 				"end": 92,
 				"expression": {
 					"type": "Identifier",
-					"name": "generic",
 					"start": 40,
 					"end": 47,
 					"loc": {
@@ -31,7 +30,10 @@
 							"column": 17,
 							"character": 47
 						}
-					}
+					},
+					"decorators": [],
+					"optional": false,
+					"name": "generic"
 				},
 				"parameters": [
 					{
@@ -48,7 +50,6 @@
 								"column": 42
 							}
 						},
-						"name": "val",
 						"typeAnnotation": {
 							"type": "TSTypeAnnotation",
 							"start": 69,
@@ -91,10 +92,15 @@
 											"column": 42
 										}
 									},
+									"decorators": [],
+									"optional": false,
 									"name": "T"
 								}
 							}
-						}
+						},
+						"decorators": [],
+						"optional": false,
+						"name": "val"
 					}
 				],
 				"children": [
@@ -116,6 +122,8 @@
 									"column": 5
 								}
 							},
+							"decorators": [],
+							"optional": false,
 							"name": "val"
 						}
 					}
@@ -135,7 +143,6 @@
 				"end": 192,
 				"expression": {
 					"type": "Identifier",
-					"name": "complex_generic",
 					"start": 104,
 					"end": 119,
 					"loc": {
@@ -149,7 +156,10 @@
 							"column": 25,
 							"character": 119
 						}
-					}
+					},
+					"decorators": [],
+					"optional": false,
+					"name": "complex_generic"
 				},
 				"parameters": [
 					{
@@ -166,7 +176,6 @@
 								"column": 78
 							}
 						},
-						"name": "val",
 						"typeAnnotation": {
 							"type": "TSTypeAnnotation",
 							"start": 169,
@@ -209,10 +218,15 @@
 											"column": 78
 										}
 									},
+									"decorators": [],
+									"optional": false,
 									"name": "T"
 								}
 							}
-						}
+						},
+						"decorators": [],
+						"optional": false,
+						"name": "val"
 					}
 				],
 				"children": [
@@ -234,6 +248,8 @@
 									"column": 5
 								}
 							},
+							"decorators": [],
+							"optional": false,
 							"name": "val"
 						}
 					}
