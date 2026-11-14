@@ -70,20 +70,17 @@ export interface Reaction extends Signal {
 export interface BatchValue {
 	v: any;
 	wv: number;
-	/** Whether the value is an error */
-	e: boolean;
 	/**
-	 * For a derived: whether the value was assigned to it. Always the case for a write (`Batch#current`); the value
-	 * from before a write (`Batch#previous`) may have been computed instead
+	 * Flags describing the value:
+	 * - `ERROR_VALUE`: the value is an error
+	 * - `ASSIGNED`: for a derived, the value was assigned to it. Always the case for a write (`Batch#current`); the
+	 *   value from before a write (`Batch#previous`) may have been computed instead
+	 * - `ASYNC`: the value is the result of the batch's own run of an async expression or `{#await}` block.
+	 *   Conceptually (if not mechanically) this is a derived, and so its value should
+	 *   be determined by its inputs, and not those of an overlapping batch.
+	 *   This matters when a batch commits and is prevented from overriding an earlier fork's result.
 	 */
-	assigned: boolean;
-	/**
-	 * Whether the value is the result of the batch's own run of an async expression or `{#await}` block.
-	 * Conceptually (if not mechanically) this is a derived, and so its value should
-	 * be determined by its inputs, and not those of an overlapping batch.
-	 * This matters when a batch commits and is prevented from overriding an earlier fork's result.
-	 */
-	async?: boolean;
+	f: number;
 }
 
 /**
@@ -94,12 +91,11 @@ export interface BatchValue {
 export interface BatchRecord {
 	deps: null | Value[];
 	dv: number[];
+	f: number;
 	/** Set for deriveds, omitted for effects */
 	v?: any;
 	/** Set for deriveds, omitted for effects */
 	wv?: number;
-	/** Whether the value of a derived record is an error */
-	e?: boolean;
 	/** The AbortController of the run's signal, if any (see `getAbortSignal`) */
 	ac?: null | AbortController;
 }
@@ -108,7 +104,6 @@ export interface BatchRecord {
 export interface DerivedRecord extends BatchRecord {
 	v: any;
 	wv: number;
-	e: boolean;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {

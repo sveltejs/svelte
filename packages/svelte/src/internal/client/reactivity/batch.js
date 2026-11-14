@@ -843,8 +843,7 @@ export class Batch {
 				previous = {
 					v: source.v,
 					wv: source.wv,
-					e: (source.f & ERROR_VALUE) !== 0,
-					assigned: (source.f & ASSIGNED) !== 0
+					f: source.f & (ERROR_VALUE | ASSIGNED)
 				};
 			}
 
@@ -862,10 +861,11 @@ export class Batch {
 		var entry = {
 			v: value,
 			wv: same ? source.wv : increment_write_version(),
-			e: error,
-			// a write to a derived is an assignment
-			assigned: (source.f & DERIVED) !== 0,
-			async: (source.f & ASYNC) !== 0
+			f:
+				(error ? ERROR_VALUE : 0) |
+				// a write to a derived is an assignment
+				((source.f & DERIVED) !== 0 ? ASSIGNED : 0) |
+				(source.f & ASYNC)
 		};
 
 		this.current.set(source, entry);
@@ -974,7 +974,7 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v && !own.async) {
+					if (is_earlier && entry.v !== own.v && (own.f & ASYNC) === 0) {
 						// bring the value up to date
 						batch.current.set(source, entry);
 					} else {
@@ -1652,7 +1652,7 @@ function later_writer(batch, source) {
 function apply(source, entry) {
 	source.v = entry.v;
 	source.wv = entry.wv;
-	source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
+	source.f = (entry.f & ERROR_VALUE) !== 0 ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
 
 	if ((source.f & DERIVED) !== 0) {
 		source.f |= ASSIGNED;
