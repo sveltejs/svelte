@@ -516,6 +516,23 @@ export class Batch {
 			this.#revalidate(this.current.keys());
 		}
 
+		if (async_mode_flag) {
+			// Async continuations in earlier batches can create effects inside branches that this batch
+			// also selected. Until they run, they have no dependencies for #revalidate to discover.
+			for (let batch = this.prev; batch !== null; batch = batch.prev) {
+				for (const effect of batch.#unprocessed.keys()) {
+					if (this.is_skipped(effect)) continue;
+
+					for (var parent = effect.parent; parent !== null; parent = parent.parent) {
+						if (this.#unskipped_branches.has(parent) && batch.#unskipped_branches.has(parent)) {
+							this.#add(effect, MAYBE_DIRTY);
+							break;
+						}
+					}
+				}
+			}
+		}
+
 		this.started = true;
 		last_processed = this.id;
 
@@ -889,7 +906,9 @@ export class Batch {
 			var status = effect.f & (DIRTY | MAYBE_DIRTY);
 
 			if (status !== 0) {
-				this.#add_dirty_effect(effect, status);
+				// Missing dependency versions already make a never-run effect dirty. Another batch may
+				// run it first, so don't retain a DIRTY status that would force it to run again.
+				this.#add_dirty_effect(effect, effect.dv === null ? MAYBE_DIRTY : status);
 
 				// mark as clean so they get scheduled if they depend on pending async state
 				set_signal_status(effect, CLEAN);
