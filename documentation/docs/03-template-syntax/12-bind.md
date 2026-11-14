@@ -339,15 +339,32 @@ All visible elements have the following readonly bindings, measured with a `Resi
 - [`clientHeight`](https://developer.mozilla.org/en-US/docs/Web/API/Element/clientHeight)
 - [`offsetWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetWidth)
 - [`offsetHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetHeight)
-- [`contentRect`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/contentRect)
-- [`contentBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/contentBoxSize)
-- [`borderBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/borderBoxSize)
-- [`devicePixelContentBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/devicePixelContentBoxSize)
 
 ```svelte
 <div bind:offsetWidth={width} bind:offsetHeight={height}>
 	<Chart {width} {height} />
 </div>
+```
+
+You can also bind to properties of the `ResizeObserverEntry`. For HTML elements, these describe the following sizes:
+
+- [`contentRect`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/contentRect) — a `DOMRectReadOnly` describing the content box, with `width` and `height` in CSS pixels
+- [`contentBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/contentBoxSize) — the content box size in CSS pixels
+- [`borderBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/borderBoxSize) — the border box size in CSS pixels, including padding and borders
+- [`devicePixelContentBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/devicePixelContentBoxSize) — the content box size in device pixels, rather than CSS pixels
+
+The three `*BoxSize` bindings are arrays of `ResizeObserverSize` objects. Each object has `inlineSize` and `blockSize` properties, which follow the element's writing mode: in horizontal writing modes they correspond to width and height, respectively; in vertical writing modes they correspond to height and width.
+
+These bindings are readonly and are first populated when the observer delivers a notification. For example, use optional chaining to read the first size while waiting for that notification:
+
+```svelte
+<script>
+	/** @type {ResizeObserverSize[] | undefined} */
+	let size = $state();
+</script>
+
+<div bind:contentBoxSize={size}>Resize the window to update this element's size.</div>
+<p>inline: {size?.[0].inlineSize}px; block: {size?.[0].blockSize}px</p>
 ```
 
 > [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`. Note that CSS transformations do not trigger `ResizeObserver` callbacks.
