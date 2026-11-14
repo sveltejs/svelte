@@ -230,10 +230,31 @@ export class Batch {
 	 */
 	#is_skipped(effect) {
 		for (var e = /** @type {Effect | null} */ (effect); e !== null; e = e.parent) {
-			if (this.#skipped_branches.has(e)) return true;
+			if (this.#get_skipped_branch(e)) return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Earlier intersecting batches contribute their branch decisions just as they
+	 * contribute their values in `apply`. A newer explicit unskip takes precedence.
+	 * @param {Effect} effect
+	 */
+	#get_skipped_branch(effect) {
+		var tracked = this.#skipped_branches.get(effect);
+		if (tracked || this.#unskipped_branches.has(effect)) return tracked;
+
+		for (var batch = this.prev; batch !== null; batch = batch.prev) {
+			tracked = batch.#skipped_branches.get(effect);
+			if (
+				(tracked || batch.#unskipped_branches.has(effect)) &&
+				!batch.is_fork &&
+				batch.#intersects(this)
+			) {
+				return tracked;
+			}
+		}
 	}
 
 	/**
@@ -473,7 +494,14 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_branches.has(effect);
+			var skipped = this.#get_skipped_branch(effect);
+			var skip = is_skippable_branch || (flags & INERT) !== 0 || skipped !== undefined;
+
+			if (skipped && !this.#skipped_branches.has(effect)) {
+				// The inherited skip may outlive this traversal. Keep the shared path
+				// markers clean, tracking dirty children in the batch that skipped them.
+				reset_branch(effect, skipped);
+			}
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
