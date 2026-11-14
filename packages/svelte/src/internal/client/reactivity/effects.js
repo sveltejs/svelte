@@ -635,17 +635,22 @@ export function pause_effect(effect, callback, destroy = true) {
 	if (remaining > 0) {
 		// only reactivate the teardown context if `fn` runs later
 		/** @type {TeardownContext | null} */
-		var previous_teardown_context = null;
+		var context = null;
 
 		var check = () => {
 			if (!--remaining) {
-				if (previous_teardown_context) set_teardown_context(previous_teardown_context);
-				fn();
-				if (previous_teardown_context) set_teardown_context(null);
+				var previous_context = teardown_context;
+
+				try {
+					if (context) set_teardown_context(context);
+					fn();
+				} finally {
+					if (context) set_teardown_context(previous_context);
+				}
 			}
 		};
 
-		previous_teardown_context = teardown_context;
+		context = teardown_context;
 
 		for (var transition of transitions) {
 			transition.out(check);
