@@ -404,7 +404,11 @@ function mark_reactions(signal, status, updated_during_traversal) {
 			}
 
 			if (updated_during_traversal !== null) {
-				updated_during_traversal.push(effect);
+				if (is_destroying_effect && (flags & BLOCK_EFFECT) !== 0) {
+					schedule_effect(effect);
+				} else {
+					updated_during_traversal.push(effect);
+				}
 			} else {
 				schedule_effect(effect);
 			}
