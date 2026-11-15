@@ -87,7 +87,7 @@ export function set_is_destroying_effect(value, version = write_version) {
  * `teardown_view` takes it right after `execute_derived`
  * @type {BatchValue}
  */
-let teardown_run = { v: undefined, wv: 0, e: false, assigned: false };
+let teardown_run = { v: undefined, wv: 0, f: 0 };
 
 /** @type {null | Reaction} */
 export let active_reaction = null;
@@ -682,7 +682,7 @@ function update_dependencies(reaction, flags, value, error) {
 
 		// TODO: the run's signal (if any) is never aborted — should we abort when the teardown's view of the
 		// world is done with the run?
-		teardown_run = { v: value, wv, e: error, assigned: (flags & ASSIGNED) !== 0 };
+		teardown_run = { v: value, wv, f: (error ? ERROR_VALUE : 0) | (flags & ASSIGNED) };
 		return;
 	}
 
@@ -860,11 +860,11 @@ function update_record(reaction, flags, length, value, error) {
 						deps: read,
 						dv,
 						v: value,
-						e: error,
+						f: error ? ERROR_VALUE : 0,
 						wv: derived_version(/** @type {Derived} */ (reaction), batch, value, error),
 						ac: abort_controller
 					}
-				: { deps: read, dv, ac: abort_controller }
+				: { deps: read, dv, f: 0, ac: abort_controller }
 		);
 	} else {
 		reaction.deps = read;
@@ -936,7 +936,7 @@ function keep_global_run(derived, flags) {
 				dv: dv.slice(),
 				v: derived.v,
 				wv: derived.wv,
-				e: (flags & ERROR_VALUE) !== 0
+				f: flags & ERROR_VALUE
 			};
 			(batch.records ??= new Map()).set(derived, record);
 		}
@@ -978,7 +978,11 @@ function seen_version(signal) {
 function derived_version(derived, batch, value, error) {
 	if (!error) {
 		var previous = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
-		if (previous !== undefined && !previous.e && derived.equals.call(previous, value)) {
+		if (
+			previous !== undefined &&
+			(previous.f & ERROR_VALUE) === 0 &&
+			derived.equals.call(previous, value)
+		) {
 			return previous.wv;
 		}
 
@@ -1005,7 +1009,7 @@ export function promote_record(reaction, record) {
 
 		derived.v = record.v;
 		derived.wv = /** @type {number} */ (record.wv);
-		derived.f = (record.e ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE) & ~ASSIGNED;
+		derived.f = (record.f & ERROR_VALUE) | (derived.f & ~ERROR_VALUE & ~ASSIGNED);
 		update_derived_status(derived);
 	}
 
@@ -1343,7 +1347,7 @@ export function get(signal) {
 		var held = teardown_view(signal);
 
 		if (held !== undefined) {
-			if (held.e) throw held.v;
+			if ((held.f & ERROR_VALUE) !== 0) throw held.v;
 			return held.v;
 		}
 	}
@@ -1351,7 +1355,7 @@ export function get(signal) {
 	/**
 	 * The value (and version) as the active view of the world sees it, if it differs from the real
 	 * world — for a derived, this is the derived itself if its global state applies (see `get_view`)
-	 * @type {{ v: any, wv: number, e?: boolean } | undefined}
+	 * @type {{ v: any, wv: number, f: number } | undefined}
 	 */
 	var view;
 
@@ -1392,7 +1396,7 @@ export function get(signal) {
 	}
 
 	if (view !== undefined && view !== signal) {
-		if (view.e) throw view.v;
+		if ((view.f & ERROR_VALUE) !== 0) throw view.v;
 		return view.v;
 	}
 
@@ -1465,19 +1469,14 @@ function teardown_view(signal) {
 	// A value written to the derived — reverted, or the active view's — holds if it was assigned, like in `get_view`:
 	// the value from before an assignment may have been computed, with values that the teardown reverts
 	var held = written ?? batch_values?.get(derived);
-	var assigned = held === undefined ? (derived.f & ASSIGNED) !== 0 : held.assigned;
+	var assigned = ((held ?? derived).f & ASSIGNED) !== 0;
 	// (the versions its global run read, if that can apply)
 	var dv = held === undefined && !assigned ? derived.dv : null;
 	var deps = derived.deps ?? [];
 	var holds = assigned || dv !== null;
 	var length = dv?.length ?? deps.length;
 
-	held ??= {
-		v: derived.v,
-		wv: derived.wv,
-		e: (derived.f & ERROR_VALUE) !== 0,
-		assigned: (derived.f & ASSIGNED) !== 0
-	};
+	held ??= { v: derived.v, wv: derived.wv, f: derived.f & (ERROR_VALUE | ASSIGNED) };
 
 	for (var i = 0; holds && i < length; i++) {
 		var version = teardown_version_of(deps[i]);
@@ -1490,7 +1489,11 @@ function teardown_view(signal) {
 		execute_derived(derived);
 		record = teardown_run;
 
-		if (held.wv < record.wv && !held.e && !record.e && derived.equals.call(held, record.v)) {
+		if (
+			held.wv < record.wv &&
+			((held.f | record.f) & ERROR_VALUE) === 0 &&
+			derived.equals.call(held, record.v)
+		) {
 			record.wv = held.wv;
 		}
 	}
