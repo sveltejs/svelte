@@ -13,6 +13,7 @@ import {
 	ROOT_EFFECT,
 	MAYBE_DIRTY,
 	DERIVED,
+	DERIVED_SOURCE,
 	EAGER_EFFECT,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
@@ -230,8 +231,8 @@ export class Batch {
 
 	/**
 	 * The values (and their versions) to restore when undoing this batch's writes: the preceding writes in batch
-	 * order, or the committed values if there is no earlier writer. Independent commits of async results advance
-	 * this baseline (see `#commit`).
+	 * order, or the committed values if there is no earlier writer. Independent commits of computed sources
+	 * advance this baseline (see `#commit`).
 	 * For a derived, `assigned` says whether its value before was assigned, too (otherwise it was computed).
 	 * A source that this batch gave its first value (e.g. an async expression that resolved for the first time) has
 	 * no entry: there's no value from before it, so other views can't undo the write, and teardowns don't revert it.
@@ -797,7 +798,7 @@ export class Batch {
 	/** @param {Batch} batch */
 	#intersects(batch) {
 		for (const source of this.current.keys()) {
-			if ((source.f & ASYNC) === 0 && batch.current.has(source)) return true;
+			if ((source.f & DERIVED_SOURCE) === 0 && batch.current.has(source)) return true;
 		}
 
 		return false;
@@ -949,10 +950,12 @@ export class Batch {
 			e: error,
 			// a write to a derived is an assignment
 			assigned: (source.f & DERIVED) !== 0,
-			async: (source.f & ASYNC) !== 0
+			computed: (source.f & DERIVED_SOURCE) !== 0
 		};
 
 		this.current.set(source, entry);
+
+		var visible = batch_values?.get(source);
 
 		// The active view of the world sees writes made while it's active, even if they don't belong to the batch whose
 		// view it is — e.g. those of effects that run while a batch commits, which go to a new batch. (Async results
@@ -970,15 +973,19 @@ export class Batch {
 			apply(source, entry);
 		}
 
-		// A value that equals the real one, with the same version, changes nothing that reactions
-		// could read outside this batch's view — which is revalidated when the batch is processed
-		if (!same) {
+		// An each block can write a value equal to the real one but different from its snapshot.
+		// Its dependents still need updating during this traversal, without invalidating eager
+		// effects that only see the real world (or giving the unchanged real value a new version).
+		if (
+			!same ||
+			(visible !== undefined && (visible.e !== error || !source.equals.call(visible, value)))
+		) {
 			seen = null;
 			count_deps = 0;
-			this.mark(source, DIRTY, updated_during_traversal);
+			this.mark(source, DIRTY, updated_during_traversal, same);
 			seen = null;
 
-			if (eager_effects.size > 0 && !eager_effects_deferred) {
+			if (!same && eager_effects.size > 0 && !eager_effects_deferred) {
 				flush_eager_effects();
 			}
 		}
@@ -1053,12 +1060,12 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v && !own.async) {
+					if (is_earlier && entry.v !== own.v && !own.computed) {
 						// bring the value up to date
 						batch.current.set(source, entry);
 					} else {
-						// same value, later batch has more recent value, or the batch's own result
-						// of an async expression — no need to re-run these effects
+						// same value, later batch has more recent value, or the batch's own computed
+						// result — no need to re-run these effects
 						continue;
 					}
 				}
@@ -1098,12 +1105,12 @@ export class Batch {
 			}
 		}
 
-		// Async results can be shared by batches that commit independently. Rebuild their write chains
+		// Computed sources can be shared by batches that commit independently. Rebuild their write chains
 		// around the newly committed value: the first remaining writer reverts to it, subsequent writers
 		// revert to the preceding writer's result, and the source holds the last writer's result.
 		// Do this after discarding obsolete batches, so their results aren't kept in the chain.
 		for (const [source, entry] of this.current) {
-			if (!entry.async) continue;
+			if (!entry.computed) continue;
 
 			var previous = entry;
 
@@ -1264,19 +1271,19 @@ export class Batch {
 			if (batch.id < this.id && batch.#intersects(this)) {
 				this.folded.push(batch);
 
-				// A folded batch's async results belong to this view, even if an independent earlier
+				// A folded batch's computed sources belong to this view, even if an independent earlier
 				// batch already supplied a reverted value. This batch's own results take precedence.
 				for (const [source, entry] of batch.current) {
-					if (entry.async && !this.current.has(source)) batch_values.set(source, entry);
+					if (entry.computed && !this.current.has(source)) batch_values.set(source, entry);
 				}
 			} else {
 				for (const [source, previous] of batch.previous) {
 					// Where the views agree, the real value and version apply. Not for an assigned derived
-					// (its value may have been computed in another view, see `get_view`), or an async result:
+					// (its value may have been computed in another view, see `get_view`), or a computed source:
 					// keep its earliest rollback even if equal, so a later writer's previous can't replace it.
 					if (
 						!batch_values.has(source) &&
-						((source.f & (DERIVED | ASYNC)) !== 0 || !source.equals(previous.v))
+						((source.f & (DERIVED | DERIVED_SOURCE)) !== 0 || !source.equals(previous.v))
 					) {
 						batch_values.set(source, previous);
 					}
@@ -1306,9 +1313,10 @@ export class Batch {
 	 * @param {Value} signal
 	 * @param {number} status should be DIRTY or MAYBE_DIRTY
 	 * @param {Effect[] | null} [updated_during_traversal]
+	 * @param {boolean} [local] whether only the active view changed, leaving real-world eager effects unaffected
 	 * @returns {void}
 	 */
-	mark(signal, status, updated_during_traversal = null) {
+	mark(signal, status, updated_during_traversal = null, local = false) {
 		var reactions = signal.reactions;
 		if (reactions === null) return;
 
@@ -1337,7 +1345,7 @@ export class Batch {
 			var not_dirty = (flags & DIRTY) === 0;
 
 			if ((flags & EAGER_EFFECT) !== 0) {
-				if (!this.is_fork) {
+				if (!local && !this.is_fork) {
 					// don't set a DIRTY reaction to MAYBE_DIRTY
 					if (not_dirty) {
 						set_signal_status(reaction, status);
@@ -1357,7 +1365,7 @@ export class Batch {
 				var derived = /** @type {Derived} */ (reaction);
 
 				view_cache?.delete(derived);
-				this.mark(derived, MAYBE_DIRTY, updated_during_traversal);
+				this.mark(derived, MAYBE_DIRTY, updated_during_traversal, local);
 			} else if (not_dirty) {
 				var effect = /** @type {Effect} */ (reaction);
 

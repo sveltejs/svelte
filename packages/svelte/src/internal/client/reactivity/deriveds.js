@@ -6,7 +6,7 @@ import {
 	DIRTY,
 	EFFECT_PRESERVED,
 	STALE_REACTION,
-	ASYNC,
+	DERIVED_SOURCE,
 	DESTROYED,
 	INERT,
 	CONNECTED,
@@ -127,7 +127,7 @@ export function async_expression(fn, label, location) {
 	}
 
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
-	signal.f |= ASYNC;
+	signal.f |= DERIVED_SOURCE;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 

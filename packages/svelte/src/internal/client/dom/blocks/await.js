@@ -12,7 +12,7 @@ import {
 import { queue_micro_task } from '../task.js';
 import { should_defer_append } from '../operations.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
-import { ASYNC, DESTROYED, EFFECT_PRESERVED } from '#client/constants';
+import { DERIVED_SOURCE, DESTROYED, EFFECT_PRESERVED } from '#client/constants';
 import { is_runes } from '../../context.js';
 import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
@@ -46,10 +46,10 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var value = runes ? source(v) : mutable_source(v, false, false);
 	var error = runes ? source(v) : mutable_source(v, false, false);
 
-	// like the result of an async expression, the states of a run belong to the batch
-	// that holds them: another batch's commit doesn't overwrite them (see `BatchValue#async`)
-	value.f |= ASYNC;
-	error.f |= ASYNC;
+	// Like async expressions and each items, these values are computed in the batch's view,
+	// not independent state writes (see `BatchValue#computed`).
+	value.f |= DERIVED_SOURCE;
+	error.f |= DERIVED_SOURCE;
 
 	if (DEV) {
 		value.label = '{#await ...} value';

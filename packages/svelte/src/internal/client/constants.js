@@ -1,4 +1,6 @@
 // General flags
+/** A source computed by a reaction (async expressions, await blocks, each values/indices), not independent state */
+export const DERIVED_SOURCE = 1 << 0;
 export const DERIVED = 1 << 1;
 export const EFFECT = 1 << 2;
 export const RENDER_EFFECT = 1 << 3;

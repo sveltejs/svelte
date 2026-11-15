@@ -35,7 +35,14 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { BRANCH_EFFECT, COMMENT_NODE, DESTROYED, EFFECT_OFFSCREEN, INERT } from '#client/constants';
+import {
+	BRANCH_EFFECT,
+	COMMENT_NODE,
+	DERIVED_SOURCE,
+	DESTROYED,
+	EFFECT_OFFSCREEN,
+	INERT
+} from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
@@ -760,6 +767,11 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
 			: null;
 
 	var i = (flags & EACH_INDEX_REACTIVE) !== 0 ? source(index) : null;
+
+	// These values are computed from the collection in each batch's view. Sharing an item
+	// doesn't make otherwise independent state changes intersect.
+	if (v) v.f |= DERIVED_SOURCE;
+	if (i) i.f |= DERIVED_SOURCE;
 
 	if (DEV && v) {
 		// For tracing purposes, we need to link the source signal we create with the

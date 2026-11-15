@@ -78,12 +78,11 @@ export interface BatchValue {
 	 */
 	assigned: boolean;
 	/**
-	 * Whether the value is the result of the batch's own run of an async expression or `{#await}` block.
-	 * Conceptually (if not mechanically) this is a derived, and so its value should
-	 * be determined by its inputs, and not those of an overlapping batch.
-	 * This matters when a batch commits and is prevented from overriding an earlier fork's result.
+	 * Whether the value was computed in this batch (an async result, or an await/each block's source).
+	 * Conceptually this is a derived: its value is determined by its inputs in the batch's view,
+	 * and must not be overwritten by an overlapping batch's result when that batch commits.
 	 */
-	async?: boolean;
+	computed?: boolean;
 }
 
 /**
