@@ -60,8 +60,10 @@ export const ERROR_VALUE = 1 << 23;
 /** A run of the reaction asked for an abort signal (see `getAbortSignal`) */
 export const HAS_ABORT_CONTROLLER = 1 << 27;
 
-// Flags exclusive to deriveds
-/** The global state of the derived is a value that was assigned to it, rather than a run of it */
+/**
+ * The value was assigned rather than computed. Always set on ordinary sources; unset on
+ * deriveds, async results and each/await sources unless their value was explicitly overridden.
+ */
 export const ASSIGNED = 1 << 26;
 
 export const STATE_SYMBOL = Symbol('$state');

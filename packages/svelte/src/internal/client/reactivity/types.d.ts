@@ -73,17 +73,11 @@ export interface BatchValue {
 	/** Whether the value is an error */
 	e: boolean;
 	/**
-	 * For a derived: whether the value was assigned to it. Always the case for a write (`Batch#current`); the value
-	 * from before a write (`Batch#previous`) may have been computed instead
+	 * Whether the value was assigned rather than computed. Always true for ordinary sources;
+	 * false for computed derived/async/await/each values, unless explicitly overridden.
+	 * This belongs to the value in the batch's view, independently of the source's global flags.
 	 */
 	assigned: boolean;
-	/**
-	 * Whether the value is the result of the batch's own run of an async expression or `{#await}` block.
-	 * Conceptually (if not mechanically) this is a derived, and so its value should
-	 * be determined by its inputs, and not those of an overlapping batch.
-	 * This matters when a batch commits and is prevented from overriding an earlier fork's result.
-	 */
-	async?: boolean;
 }
 
 /**
