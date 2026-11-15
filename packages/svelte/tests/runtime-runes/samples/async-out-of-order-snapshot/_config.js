@@ -12,7 +12,7 @@ export default test({
 
 		/** @param {string} text */
 		const click = async (text) => {
-			buttons.find((b) => b.textContent === text).click();
+			buttons.find((b) => b.textContent === text)?.click();
 			await tick();
 		};
 
