@@ -29,7 +29,7 @@
 <button onclick={() => (c = 100)}>c</button>
 <button onclick={() => y++}>y</button>
 
-{#each ['d1', 'd10', 'd100', 'b10', 'c100', 'd111'] as key}
+{#each ['d100', 'd10', 'd1', 'c100', 'b10', 'd110', 'a1', 'd111'] as key}
 	<button onclick={() => shift(key)}>{key}</button>
 {/each}
 

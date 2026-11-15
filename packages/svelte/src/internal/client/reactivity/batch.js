@@ -229,7 +229,9 @@ export class Batch {
 	current = new Map();
 
 	/**
-	 * The values (and their versions) of any sources that are updated in this batch _before_ those updates took place.
+	 * The values (and their versions) to restore when undoing this batch's writes: the preceding writes in batch
+	 * order, or the committed values if there is no earlier writer. Independent commits of async results advance
+	 * this baseline (see `#commit`).
 	 * For a derived, `assigned` says whether its value before was assigned, too (otherwise it was computed).
 	 * A source that this batch gave its first value (e.g. an async expression that resolved for the first time) has
 	 * no entry: there's no value from before it, so other views can't undo the write, and teardowns don't revert it.
@@ -795,7 +797,7 @@ export class Batch {
 	/** @param {Batch} batch */
 	#intersects(batch) {
 		for (const source of this.current.keys()) {
-			if (batch.current.has(source)) return true;
+			if ((source.f & ASYNC) === 0 && batch.current.has(source)) return true;
 		}
 
 		return false;
@@ -1096,6 +1098,28 @@ export class Batch {
 			}
 		}
 
+		// Async results can be shared by batches that commit independently. Rebuild their write chains
+		// around the newly committed value: the first remaining writer reverts to it, subsequent writers
+		// revert to the preceding writer's result, and the source holds the last writer's result.
+		// Do this after discarding obsolete batches, so their results aren't kept in the chain.
+		for (const [source, entry] of this.current) {
+			if (!entry.async) continue;
+
+			var previous = entry;
+
+			for (let batch = first_batch; batch !== null; batch = batch.next) {
+				if (batch === this) continue;
+
+				const own = batch.current.get(source);
+				if (own === undefined) continue;
+
+				batch.previous.set(source, previous);
+				if (!batch.is_fork) previous = own;
+			}
+
+			apply(source, previous);
+		}
+
 		// The writes are part of the real world now. A batch that is still linked (because of pending work)
 		// only has writes again once that work resolves, which it then commits
 		this.current.clear();
@@ -1239,13 +1263,20 @@ export class Batch {
 			// batches up until this batch.
 			if (batch.id < this.id && batch.#intersects(this)) {
 				this.folded.push(batch);
+
+				// A folded batch's async results belong to this view, even if an independent earlier
+				// batch already supplied a reverted value. This batch's own results take precedence.
+				for (const [source, entry] of batch.current) {
+					if (entry.async && !this.current.has(source)) batch_values.set(source, entry);
+				}
 			} else {
 				for (const [source, previous] of batch.previous) {
-					// (where the views agree on the value, the real one — and its version — applies. Not for an
-					// assigned derived: its value before may have been computed in another view, see `get_view`)
+					// Where the views agree, the real value and version apply. Not for an assigned derived
+					// (its value may have been computed in another view, see `get_view`), or an async result:
+					// keep its earliest rollback even if equal, so a later writer's previous can't replace it.
 					if (
 						!batch_values.has(source) &&
-						((source.f & DERIVED) !== 0 || !source.equals(previous.v))
+						((source.f & (DERIVED | ASYNC)) !== 0 || !source.equals(previous.v))
 					) {
 						batch_values.set(source, previous);
 					}

@@ -1,10 +1,9 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-// Batches A, B and C each write `d` (an async derived), in reverse order. Each earlier batch's
-// value from before its write must be the one from before the later batch's write (i.e. `0`), not
-// the later batch's uncommitted value — otherwise, once the later batches have merged into it,
-// independent batches see that value instead of the committed one
+// Batches A, B and C each write `d` (an async derived), in reverse order. Sharing an async
+// result doesn't make them intersect: each can commit independently, rebasing the others.
+// Independent batches must see the committed result, not an uncommitted or outdated one.
 export default test({
 	async test({ assert, target }) {
 		await tick();
@@ -13,7 +12,7 @@ export default test({
 
 		/** @param {string} text */
 		const click = async (text) => {
-			buttons.find((b) => b.textContent === text)?.click();
+			buttons.find((b) => b.textContent === text).click();
 			await tick();
 		};
 
@@ -31,15 +30,28 @@ export default test({
 		await click('d10');
 		await click('d1');
 
-		// C merges into B, which then merges into A — A is still pending
-		await click('c100');
-		await click('b10');
-		await click('d111');
+		// None of the async results have committed yet
+		await click('y');
+		assert.htmlEqual(target.innerHTML, `${html}<p>0 0 0</p><p>y: 1, d: 0</p>`);
 
-		assert.htmlEqual(target.innerHTML, `${html}<p>0 0 0</p><p>y: 0, d: 0</p>`);
+		await click('c100');
+		assert.htmlEqual(target.innerHTML, `${html}<p>0 0 100</p><p>y: 1, d: 100</p>`);
+
+		await click('y');
+		assert.htmlEqual(target.innerHTML, `${html}<p>0 0 100</p><p>y: 2, d: 100</p>`);
+
+		// C is resolved, so A and B are rebased
+		await click('b10');
+		await click('d110');
+		assert.htmlEqual(target.innerHTML, `${html}<p>0 10 100</p><p>y: 2, d: 110</p>`);
 
 		// an independent batch sees the committed value of `d`
 		await click('y');
-		assert.htmlEqual(target.innerHTML, `${html}<p>0 0 0</p><p>y: 1, d: 0</p>`);
+		assert.htmlEqual(target.innerHTML, `${html}<p>0 10 100</p><p>y: 3, d: 110</p>`);
+
+		// B is resolved, so A is rebased
+		await click('a1');
+		await click('d111');
+		assert.htmlEqual(target.innerHTML, `${html}<p>1 10 100</p><p>y: 3, d: 111</p>`);
 	}
 });
