@@ -528,7 +528,6 @@ export class Batch {
 			}
 		}
 
-
 		this.started = true;
 		last_processed = this.id;
 
