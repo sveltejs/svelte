@@ -5,15 +5,14 @@ import {
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	STALE_REACTION,
+	StaleReactionError,
 	ASYNC,
 	DESTROYED,
 	INERT,
 	CONNECTED,
 	ASSIGNED,
 	ERROR_VALUE,
-	HAS_ABORT_CONTROLLER,
-	EFFECT_TRANSPARENT
+	HAS_ABORT_CONTROLLER
 } from '#client/constants';
 import {
 	active_reaction,
@@ -30,20 +29,12 @@ import {
 	promote_record,
 	changed_since,
 	is_dirty,
-	abort_all,
-	get,
-	untrack
+	abort_all
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import {
-	async_effect,
-	block,
-	destroy_effect,
-	destroy_effect_children,
-	teardown
-} from './effects.js';
+import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, set_eager_effects, source } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -116,12 +107,11 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
- * @param {(batch: Batch) => void} [on_superseded] Called when the run of a batch is aborted by another batch's run
- * that supersedes it (see `abort_replaced`), i.e. the batch won't have a result of its own unless it runs again
+ * @param {(error: unknown) => void} [onready] Called once the first result is captured, with its error if it failed
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_expression(fn, label, location, on_superseded) {
+export function async_expression(fn, label, location, onready) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
@@ -135,6 +125,30 @@ export function async_expression(fn, label, location, on_superseded) {
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
+
+	// Inside `run` (a component's script), the first value comes from the run of the batch that created the
+	// expression, and the script continues in the view of that batch. Results of other batches wait until then.
+	// If its run is superseded or obsolete, another batch takes over
+	var for_run = batch_for_run;
+
+	/**
+	 * The batch whose run delivers the first value (`null`: whichever comes first)
+	 * @type {Batch | null}
+	 */
+	var resolver = for_run && current_batch;
+
+	/**
+	 * Results of other batches that wait for the first value to be delivered
+	 * @type {Array<() => void> | null}
+	 */
+	var waiting = for_run && [];
+
+	/** Try the waiting results again, e.g. because another batch delivers the first value now */
+	function retry() {
+		var fns = /** @type {Array<() => void>} */ (waiting);
+		waiting = [];
+		for (const fn of fns) fn();
+	}
 
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
@@ -152,13 +166,29 @@ export function async_expression(fn, label, location, on_superseded) {
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
 			Promise.resolve(fn())
 				.then(d.resolve, (e) => {
-					// if the promise was rejected by the user, via `getAbortSignal`, then
-					// wait for a subsequent resolution instead of flushing the batch
-					if (e !== STALE_REACTION) {
+					if (!(e instanceof StaleReactionError)) {
 						d.reject(e);
-					} else if (batch.async_deriveds.get(effect) === d) {
-						// (not if the batch ran it again, which aborts this run, too)
-						on_superseded?.(batch);
+						return;
+					}
+
+					// if the promise was rejected by the user, via `getAbortSignal`, then
+					// wait for a subsequent resolution instead of flushing the batch.
+					// If the resolver's run was aborted because another batch's run replaced it (not because the
+					// batch ran it again), that batch delivers the first value now. It has to be merged into
+					// this one, whose run gets its result that way, so that this batch can commit eventually
+					var by = e.batch;
+
+					if (
+						for_run !== null &&
+						resolver !== null &&
+						by !== null &&
+						merge_target(resolver) === merge_target(batch) &&
+						merge_target(by) !== merge_target(batch) &&
+						batch.async_deriveds.get(effect) === d
+					) {
+						resolver = by;
+						by.overlaps.add(batch);
+						retry();
 					}
 				})
 				.finally(unset_context);
@@ -206,17 +236,63 @@ export function async_expression(fn, label, location, on_superseded) {
 				reactivity_loss_tracker = null;
 			}
 
+			if (waiting !== null && error !== OBSOLETE) {
+				resolver ??= batch;
+
+				if (merge_target(batch) !== merge_target(resolver)) {
+					// wait for the resolver's result. By then, this one is obsolete if the batch ran the
+					// expression again, or was discarded (a batch that was merged continues as the other one)
+					waiting.push(() => {
+						var obsolete =
+							(effect.f & DESTROYED) !== 0 ||
+							(batch.linked ? batch.async_deriveds.get(effect) !== d : !merge_target(batch).linked);
+
+						handler(value, obsolete ? OBSOLETE : error);
+					});
+
+					return;
+				}
+			}
+
+			// TODO to ensure all effects correctly run for that batch also may need https://github.com/sveltejs/svelte/pull/19272 to pick up unprocessed effects of earlier batches
 			decrement_pending();
 			deferreds.delete(d);
 
 			if (error === OBSOLETE) {
-				// Replacing a run in this same batch doesn't supersede its replacement.
-				if (batch.async_deriveds.get(effect) === d) on_superseded?.(batch);
+				// If the resolver's run is obsolete (e.g. because the batch was discarded) the next result delivers
+				// the first value, with those that wait going first. (Replacing a run in the same batch doesn't count)
+				if (
+					for_run !== null &&
+					resolver !== null &&
+					merge_target(resolver) === merge_target(batch) &&
+					batch.async_deriveds.get(effect) === d
+				) {
+					resolver = null;
+					retry();
+				}
+
 				return;
 			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
+
+			if (for_run !== null) {
+				// The first value: the script continues in the view of this batch. Once it
+				// did, the results that wait for this one can follow
+				for_run.batch = batch;
+
+				for_run.continued.push(() => {
+					var fns = /** @type {Array<() => void>} */ (waiting);
+					waiting = resolver = null;
+					for (const fn of fns) fn();
+				});
+
+				for_run = null;
+			}
+
+			onready?.(error);
+			onready = undefined;
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
@@ -251,85 +327,17 @@ export function async_expression(fn, label, location, on_superseded) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	const batch = current_batch;
-
-	if (batch === null || active_reaction !== null) {
+	if (current_batch === null || active_reaction !== null) {
 		// `$derived(await ...)` created outside traversal, don't participate in coordination
 		return Promise.resolve(fn()).then((value) => source(value));
 	}
 
-	// A first value can't be undone in another batch's view. Let the creator supply it unless its run
-	// has been superseded or discarded, in which case `run` continues in the batch that supplies it.
-	let settled = false;
-	let superseded = false;
-	const for_run = batch_for_run;
-
-	/** @type {Set<Batch>} */
-	const waiting = new Set();
-
-	const retry = () => {
-		if (settled) return;
-
-		for (const batch of waiting) {
-			const target = merge_target(batch);
-			if (target.linked) target.retry(effect);
-		}
-
-		// The batch with the replacement value may already have committed and unlinked. Its value is
-		// then part of the creator's view, so the creator can continue even without a result of its own.
-		const creator = merge_target(batch);
-		if (creator.linked) creator.retry(effect);
-	};
-
-	/** @type {Effect} */
-	let effect;
-
+	// (the first value is delivered by the batch that `run` continues in, see `async_expression`)
 	return new Promise((fulfil, reject) => {
-		const source = async_expression(fn, label, location, (b) => {
-			if (settled || merge_target(b) !== merge_target(batch)) return;
-			superseded = true;
-			retry();
+		const source = async_expression(fn, label, location, (error) => {
+			if (error === undefined) fulfil(source);
+			else reject(error);
 		});
-
-		batch.ondiscard(retry);
-		teardown(() => waiting.clear());
-
-		effect = block(() => {
-			if (settled) return;
-
-			if (is_uninitialized(source)) {
-				get(source);
-				return;
-			}
-
-			// (a batch that was merged into another one continues as that one, see `restore`)
-			var creator = merge_target(batch);
-
-			if (current_batch !== creator && creator.linked && !superseded) {
-				// Don't hold up this batch: it must be able to merge its results into the creator.
-				// `run` accounts for the pending script in batches that adopt it independently.
-				waiting.add(/** @type {Batch} */ (current_batch));
-				return;
-			}
-
-			settled = true;
-			waiting.clear();
-
-			if (for_run) for_run.batch = /** @type {Batch} */ (current_batch);
-
-			try {
-				// We get the source and catch in case it's an error.
-				// We do this instead of checking ERROR_VALUE on source.f
-				// because that only applies to the real world, maybe
-				// this was resolved (and has thrown) in a fork.
-				// We untrack so that the block no longer has a dependency
-				// on the source.
-				untrack(() => get(source));
-				fulfil(source);
-			} catch (e) {
-				reject(e);
-			}
-		}, EFFECT_TRANSPARENT);
 	});
 }
 

@@ -20,6 +20,7 @@ import {
 	CONNECTED,
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
+	StaleReactionError,
 	ERROR_VALUE,
 	HAS_ABORT_CONTROLLER,
 	MANAGED_EFFECT,
@@ -377,9 +378,15 @@ export function get_abort_signal(reaction) {
 	return (abort_controller ??= new AbortController()).signal;
 }
 
-/** @param {AbortController | null | undefined} controller */
-function abort_signal(controller) {
-	if (controller) without_reactive_context(() => controller.abort(STALE_REACTION));
+/**
+ * @param {AbortController | null | undefined} controller
+ * @param {Batch | null} [batch] the batch whose run replaces the aborted one, if any (see `abort_replaced`)
+ */
+function abort_signal(controller, batch = null) {
+	if (controller) {
+		var reason = batch === null ? STALE_REACTION : new StaleReactionError(batch);
+		without_reactive_context(() => controller.abort(reason));
+	}
 }
 
 /**
@@ -402,7 +409,7 @@ export function abort_record(reaction, record, rerun = false) {
 		}
 	}
 
-	abort_signal(record.ac);
+	abort_signal(record.ac, rerun ? current_batch : null);
 	record.ac = null;
 }
 
@@ -429,7 +436,7 @@ function abort_replaced(reaction, flags) {
 
 	if (is_derived ? batch_values === null || (real && is_outdated(reaction)) : real) {
 		// (the controller stays referenced until the new run is stored, see `keep_global_run`)
-		abort_signal(reaction.ac);
+		abort_signal(reaction.ac, batch);
 	}
 
 	for (var b = first_batch; b !== null; b = b.next) {
@@ -448,11 +455,11 @@ function set_global_signal(reaction) {
 }
 
 /**
- * Whether the global run of `reaction` is outdated in the real world for sure: it's invalid, or a value it read
- * has another version there now. (This doesn't evaluate anything, so a derived it read may be outdated, too)
- * @param {Reaction} reaction
+ * Whether a run (the global run of a reaction, or a record) is outdated in the real world for sure: it's invalid, or a
+ * value it read has another version there now. (This doesn't evaluate anything, so a derived it read may be outdated, too)
+ * @param {Reaction | BatchRecord} run
  */
-function is_outdated({ deps, dv }) {
+export function is_outdated({ deps, dv }) {
 	return dv === null || dv.some((version, i) => /** @type {Value[]} */ (deps)[i].wv !== version);
 }
 

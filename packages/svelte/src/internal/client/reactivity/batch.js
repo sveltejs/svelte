@@ -33,6 +33,7 @@ import {
 	increment_write_version,
 	is_destroying_effect,
 	is_dirty,
+	is_outdated,
 	promote_record,
 	prune_edges,
 	untrack,
@@ -324,7 +325,15 @@ export class Batch {
 	 */
 	merged = null;
 
-	#flush_queued = false;
+	/**
+	 * Batches that this one is merged into once it's done, whether their writes intersect or not (and even if it
+	 * comes first, because it committed with pending work): its run of an async expression superseded theirs,
+	 * which then only settles with this one's result (see `async_expression` and `#merge`)
+	 * @type {Set<Batch>}
+	 */
+	overlaps = new Set();
+
+	#decrement_queued = false;
 
 	constructor() {
 		if (last_batch === null) {
@@ -783,6 +792,10 @@ export class Batch {
 	}
 
 	#find_earlier_batch() {
+		for (const batch of this.overlaps) {
+			if (batch.linked) return batch;
+		}
+
 		for (var batch = this.prev; batch !== null; batch = batch.prev) {
 			if (!batch.is_fork && this.#intersects(batch)) return batch;
 		}
@@ -997,7 +1010,7 @@ export class Batch {
 					rebases.delete(batch);
 
 					// the batch is processed again anyway if a flush is queued
-					if (batch.linked && !batch.#flush_queued) {
+					if (batch.linked && !batch.#decrement_queued) {
 						batch.#process();
 					}
 				}
@@ -1080,7 +1093,7 @@ export class Batch {
 			} else if (sources.length > 0) {
 				// The microtask queue can contain the batch already scheduled to run right
 				// after this one is finished, so throwing the invariant would be wrong here.
-				if (DEV && !batch.#flush_queued) {
+				if (DEV && !batch.#decrement_queued) {
 					invariant(batch.#scheduled.length === 0, 'Batch has scheduled effects');
 				}
 
@@ -1120,25 +1133,11 @@ export class Batch {
 			this.#pending.set(effect, count - 1);
 		}
 
-		this.#queue_flush();
-	}
-
-	/**
-	 * Retry coordination work whose inputs include a batch's lifecycle, rather than just signal versions.
-	 * Keep DIRTY local to this batch until traversal, without writing a synthetic dependency into its view.
-	 * @param {Effect} effect
-	 */
-	retry(effect) {
-		this.#add_dirty_effect(effect, DIRTY);
-		this.#queue_flush();
-	}
-
-	#queue_flush() {
-		if (this.#flush_queued) return;
-		this.#flush_queued = true;
+		if (this.#decrement_queued) return;
+		this.#decrement_queued = true;
 
 		queue_micro_task(() => {
-			this.#flush_queued = false;
+			this.#decrement_queued = false;
 
 			if (this.linked) {
 				this.flush();
@@ -1423,7 +1422,13 @@ export class Batch {
 			// and its edges are left for its next global run to prune (see `prune_edges`). A destroyed
 			// reaction has nothing left to update either
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
-				if (commit) {
+				// The record of an async effect that read values that aren't the real-world ones anymore, while the global
+				// run did, was replaced by a run that another batch committed in the meantime (e.g. because this batch
+				// committed before, with work inside a pending boundary in flight, and ran the effect after that). That
+				// one stays the global run, or else the effect would run again (and restart its async work) everywhere
+				var replaced = (reaction.f & ASYNC) !== 0 && is_outdated(record) && !is_outdated(reaction);
+
+				if (commit && !replaced) {
 					promote_record(reaction, record);
 
 					// The committed run is now what applies in the view of every batch without a run of the async

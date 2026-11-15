@@ -79,10 +79,21 @@ export const FORM_RESET_HANDLER = Symbol('form reset');
 export const HMR_ANCHOR = Symbol('hmr anchor');
 
 /** allow users to ignore aborted signal errors if `reason.name === 'StaleReactionError` */
-export const STALE_REACTION = new (class StaleReactionError extends Error {
+export class StaleReactionError extends Error {
 	name = 'StaleReactionError';
 	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
-})();
+
+	/**
+	 * @param {import('./reactivity/batch.js').Batch | null} [batch] The batch whose run of the reaction replaced
+	 * the aborted one, if it was aborted because the reaction re-ran (see `abort_replaced`)
+	 */
+	constructor(batch = null) {
+		super();
+		this.batch = batch;
+	}
+}
+
+export const STALE_REACTION = new StaleReactionError();
 
 export const IS_XHTML =
 	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location

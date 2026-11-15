@@ -305,7 +305,12 @@ export function unset_context(deactivate_batch = true) {
 	}
 }
 
-/** @type {{batch: Batch} | null} */
+/**
+ * While a step of `run` executes: the batch that the script continues in. The async expressions that the step
+ * creates update it once they deliver their first value, and add what can happen once the script continued
+ * with that value to `continued` (see `async_expression`)
+ * @type {{ batch: Batch, continued: Array<() => void> } | null}
+ */
 export let batch_for_run = null;
 
 /**
@@ -319,7 +324,11 @@ export function run(thunks) {
 	var errored = null;
 
 	/** @type {NonNullable<typeof batch_for_run>} */
-	var for_run = { batch: /** @type {Batch} */ (current_batch) };
+	var for_run = { batch: /** @type {Batch} */ (current_batch), continued: [] };
+
+	const continued = () => {
+		for (const fn of for_run.continued.splice(0)) fn();
+	};
 
 	/** @param {any} error */
 	const handle_error = (error) => {
@@ -381,6 +390,8 @@ export function run(thunks) {
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
 					unset_context();
+					// the script continued with the first values that the previous step awaited
+					continued();
 				}
 			})
 			.catch(handle_error);
@@ -396,6 +407,9 @@ export function run(thunks) {
 			unset_context();
 		});
 	}
+
+	// (for the last step, there's no next one to continue with its first values)
+	promise.finally(continued);
 
 	async_effect(() => {
 		// Inside an effect so later adopting branches can rerun this

@@ -63,14 +63,14 @@ export default test({
 					// B has all its results, but still waits for the content, which A creates
 					first_2.click();
 					await tick();
-					assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
-					assert.deepEqual(logs.splice(0), ['continued with 2 2']);
+					assert.htmlEqual(target.innerHTML, buttons);
+					assert.deepEqual(logs.splice(0), []);
 
 					// A's second result: the script continues in A's view, A commits, and B right after it
 					second_1.click();
 					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
-					assert.deepEqual(logs.splice(0), []);
+					assert.deepEqual(logs.splice(0), ['continued with 1 1']);
 				}
 
 				reset.click();
