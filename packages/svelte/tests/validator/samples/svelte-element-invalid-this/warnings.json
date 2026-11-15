@@ -1,0 +1,26 @@
+[
+	{
+		"code": "svelte_element_invalid_this",
+		"message": "`this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte",
+		"start": {
+			"column": 16,
+			"line": 1
+		},
+		"end": {
+			"column": 26,
+			"line": 1
+		}
+	},
+	{
+		"code": "svelte_element_invalid_this",
+		"message": "`this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte",
+		"start": {
+			"column": 16,
+			"line": 2
+		},
+		"end": {
+			"column": 25,
+			"line": 2
+		}
+	}
+]

@@ -6,7 +6,7 @@
 import { build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
-import { walk } from 'zimmerframe';
+import { walk } from '../../../../utils/walk.js';
 
 /**
  * @param {VariableDeclaration} node

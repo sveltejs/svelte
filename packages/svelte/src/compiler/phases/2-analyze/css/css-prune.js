@@ -1,5 +1,5 @@
 /** @import * as Compiler from '#compiler' */
-import { walk } from 'zimmerframe';
+import { walk } from '../../../utils/walk.js';
 import {
 	get_parent_rules,
 	get_possible_values,

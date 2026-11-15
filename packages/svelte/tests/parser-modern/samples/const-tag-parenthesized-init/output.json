@@ -115,11 +115,31 @@
 											"optional": false
 										},
 										"start": 31,
-										"end": 47
+										"end": 47,
+										"loc": {
+											"start": {
+												"line": 2,
+												"column": 9
+											},
+											"end": {
+												"line": 2,
+												"column": 25
+											}
+										}
 									}
 								],
 								"start": 25,
-								"end": 47
+								"end": 47,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 3
+									},
+									"end": {
+										"line": 2,
+										"column": 25
+									}
+								}
 							}
 						},
 						{
@@ -239,11 +259,31 @@
 											}
 										},
 										"start": 58,
-										"end": 74
+										"end": 74,
+										"loc": {
+											"start": {
+												"line": 3,
+												"column": 9
+											},
+											"end": {
+												"line": 3,
+												"column": 25
+											}
+										}
 									}
 								],
 								"start": 52,
-								"end": 74
+								"end": 74,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 3
+									},
+									"end": {
+										"line": 3,
+										"column": 25
+									}
+								}
 							}
 						},
 						{
@@ -383,11 +423,31 @@
 											]
 										},
 										"start": 85,
-										"end": 104
+										"end": 104,
+										"loc": {
+											"start": {
+												"line": 4,
+												"column": 9
+											},
+											"end": {
+												"line": 4,
+												"column": 28
+											}
+										}
 									}
 								],
 								"start": 79,
-								"end": 104
+								"end": 104,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 3
+									},
+									"end": {
+										"line": 4,
+										"column": 28
+									}
+								}
 							}
 						},
 						{
