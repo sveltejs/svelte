@@ -65,7 +65,7 @@ export interface Spring<T> extends Readable<T> {
  * </script>
  *
  * <input type="range" bind:value={spring.target} />
- * <input type="range" bind:value={spring.current} disabled />
+ * <input type="range" value={spring.current} disabled />
  * ```
  * @since 5.8.0
  */

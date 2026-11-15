@@ -7,7 +7,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { setImmediate } from 'node:timers/promises';
 import { render } from 'svelte/server';
-import { compile_directory } from '../helpers';
+import { compile_directory_cached } from '../helpers';
 import { assert_html_equal_with_options } from '../html_equal';
 import { suite } from '../suite';
 import { describe } from 'vitest';
@@ -17,7 +17,7 @@ export async function run_ssr_test(
 	test_dir: string
 ) {
 	try {
-		await compile_directory(test_dir, 'server', config.compileOptions);
+		await compile_directory_cached(test_dir, 'server', config.compileOptions);
 
 		const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 		const { body } = render(Component, { props: config.props || {}, idPrefix: config.id_prefix });

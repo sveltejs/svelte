@@ -2,7 +2,8 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	mode: ['client', 'hydrate'],
+	// infinite loops are slow in dev mode (stack traces are captured for the updates), so only run this once
+	mode: ['client'],
 
 	compileOptions: {
 		dev: true

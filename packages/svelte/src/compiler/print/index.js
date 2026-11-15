@@ -707,10 +707,7 @@ const svelte_visitors = (comments, state) => ({
 
 	AnimateDirective(node, context) {
 		context.write(`animate:${node.name}`);
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -994,10 +991,7 @@ const svelte_visitors = (comments, state) => ({
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -1144,10 +1138,7 @@ const svelte_visitors = (comments, state) => ({
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -1156,10 +1147,7 @@ const svelte_visitors = (comments, state) => ({
 
 	UseDirective(node, context) {
 		context.write(`use:${node.name}`);
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
