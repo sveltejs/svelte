@@ -12,7 +12,7 @@ import {
 import { queue_micro_task } from '../task.js';
 import { should_defer_append } from '../operations.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
-import { DERIVED_SOURCE, DESTROYED, EFFECT_PRESERVED } from '#client/constants';
+import { ASYNC, DESTROYED, EFFECT_PRESERVED } from '#client/constants';
 import { is_runes } from '../../context.js';
 import { Batch, current_batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
@@ -47,9 +47,9 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var error = runes ? source(v) : mutable_source(v, false, false);
 
 	// Like async expressions and each items, these values are computed in the batch's view,
-	// not independent state writes (see `BatchValue#computed`).
-	value.f |= DERIVED_SOURCE;
-	error.f |= DERIVED_SOURCE;
+	// not independent state writes (see `BatchValue#assigned`).
+	value.f = ASYNC;
+	error.f = ASYNC;
 
 	if (DEV) {
 		value.label = '{#await ...} value';
@@ -159,7 +159,9 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 					restore(true, target);
 
 					try {
-						fn((source, v) => /** @type {Batch} */ (target).capture(source, v, source.equals(v)));
+						fn((source, v) =>
+							/** @type {Batch} */ (target).capture(source, v, source.equals(v), false, null, false)
+						);
 					} finally {
 						unset_context(false);
 						target.flush();
@@ -184,7 +186,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				Batch.ensure();
 
 				try {
-					fn(internal_set);
+					fn((source, value) => internal_set(source, value, null, false));
 				} finally {
 					unset_context(false);
 
@@ -228,8 +230,11 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				});
 			}
 		} else {
-			if (owner(batch) === batch) batch.capture(value, input, value.equals(input));
-			else internal_set(value, input);
+			if (owner(batch) === batch) {
+				batch.capture(value, input, value.equals(input), false, null, false);
+			} else {
+				internal_set(value, input, null, false);
+			}
 
 			branches.ensure(THEN, then_fn && ((target) => then_fn(target, value)));
 		}

@@ -25,7 +25,7 @@ import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
+import { ASSIGNED, CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
@@ -65,6 +65,41 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	test('computed sources retain their value version when assignment status changes', () => {
+		enable_async_mode_flag();
+		const value = source(1);
+		assert.ok(value.f & ASSIGNED);
+		value.f &= ~ASSIGNED;
+		const log: number[] = [];
+
+		effect(() => {
+			log.push($.get(value));
+		});
+
+		return () => {
+			try {
+				flushSync();
+				const version = value.wv;
+
+				flushSync(() => set(value, 1));
+				assert.ok(value.f & ASSIGNED);
+				assert.equal(value.wv, version);
+
+				flushSync(() => internal_set(value, 1, null, false));
+				assert.equal(value.f & ASSIGNED, 0);
+				assert.equal(value.wv, version);
+
+				const f = fork(() => set(value, 2));
+				assert.equal(value.f & ASSIGNED, 0);
+				assert.equal($.get(value), 1);
+				f.discard();
+				assert.deepEqual(log, [1]);
+			} finally {
+				disable_async_mode_flag();
+			}
+		};
+	});
+
 	test('nested commit retains latest block dependencies', () => {
 		const trigger = state(0);
 		const mode = state(0);

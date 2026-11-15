@@ -1,7 +1,7 @@
 /** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Reaction, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
-import { DERIVED, DERIVED_SOURCE, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { ASSIGNED, ASYNC, DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { batch_values, view_batch } from '../reactivity/batch.js';
 import { get_view } from '../reactivity/deriveds.js';
@@ -132,7 +132,7 @@ function log_entry(signal, entry, run, since) {
  * @returns {'$state' | '$derived' | 'store'}
  */
 function get_type(signal) {
-	if ((signal.f & (DERIVED | DERIVED_SOURCE)) !== 0) return '$derived';
+	if ((signal.f & (DERIVED | ASYNC)) !== 0 || (signal.f & ASSIGNED) === 0) return '$derived';
 	return signal.label?.startsWith('$') ? 'store' : '$state';
 }
 

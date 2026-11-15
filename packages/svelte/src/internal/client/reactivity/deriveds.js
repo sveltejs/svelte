@@ -6,7 +6,7 @@ import {
 	DIRTY,
 	EFFECT_PRESERVED,
 	STALE_REACTION,
-	DERIVED_SOURCE,
+	ASYNC,
 	DESTROYED,
 	INERT,
 	CONNECTED,
@@ -127,7 +127,7 @@ export function async_expression(fn, label, location) {
 	}
 
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
-	signal.f |= DERIVED_SOURCE;
+	signal.f = ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
 
@@ -208,7 +208,7 @@ export function async_expression(fn, label, location) {
 			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			merge_target(batch).capture(signal, error ?? value, same, !!error);
+			merge_target(batch).capture(signal, error ?? value, same, !!error, null, false);
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
@@ -247,7 +247,11 @@ export function async_derived(fn, label, location) {
 
 	if (batch === null || active_reaction !== null) {
 		// `$derived(await ...)` created outside traversal, don't participate in coordination
-		return Promise.resolve(fn()).then((value) => source(value));
+		return Promise.resolve(fn()).then((value) => {
+			var signal = source(value);
+			signal.f = ASYNC;
+			return signal;
+		});
 	}
 
 	return new Promise((fulfil, reject) => {

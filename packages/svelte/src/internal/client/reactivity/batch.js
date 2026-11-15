@@ -13,7 +13,6 @@ import {
 	ROOT_EFFECT,
 	MAYBE_DIRTY,
 	DERIVED,
-	DERIVED_SOURCE,
 	EAGER_EFFECT,
 	ERROR_VALUE,
 	MANAGED_EFFECT,
@@ -797,8 +796,11 @@ export class Batch {
 
 	/** @param {Batch} batch */
 	#intersects(batch) {
-		for (const source of this.current.keys()) {
-			if ((source.f & DERIVED_SOURCE) === 0 && batch.current.has(source)) return true;
+		for (const [source, entry] of this.current) {
+			const other = batch.current.get(source);
+			// Computed results don't intersect each other, but an explicit write establishes ordering.
+			// Use the writes' provenance, not the source's flags, which may belong to another view.
+			if (other !== undefined && (entry.assigned || other.assigned)) return true;
 		}
 
 		return false;
@@ -909,11 +911,19 @@ export class Batch {
 	 * @param {Value} source
 	 * @param {any} value
 	 * @param {boolean} same whether the value equals the real one (it can, if this batch sees another one, see
-	 * `internal_set`) — in which case the source isn't updated, and the value gets the same version
+	 * `internal_set`) — in which case it keeps its version, even if its assignment status changes
 	 * @param {boolean} [error] whether the value is an error (thrown when read, see `runtime.js#get`)
 	 * @param {Effect[] | null} [updated_during_traversal]
+	 * @param {boolean} [assigned] whether this is an assignment rather than a computed result
 	 */
-	capture(source, value, same, error = false, updated_during_traversal = null) {
+	capture(
+		source,
+		value,
+		same,
+		error = false,
+		updated_during_traversal = null,
+		assigned = (source.f & (DERIVED | ASSIGNED)) !== 0
+	) {
 		var previous = this.previous.get(source);
 		var later = later_writer(this, source);
 
@@ -948,9 +958,7 @@ export class Batch {
 			v: value,
 			wv: same ? source.wv : increment_write_version(),
 			e: error,
-			// a write to a derived is an assignment
-			assigned: (source.f & DERIVED) !== 0,
-			computed: (source.f & DERIVED_SOURCE) !== 0
+			assigned
 		};
 
 		this.current.set(source, entry);
@@ -969,7 +977,9 @@ export class Batch {
 		// result arrives in a batch that committed while it was pending, see `#move_to_front`)
 		if (!this.is_fork && later !== null) later.previous.set(source, entry);
 
-		if (!this.is_fork && !same && later === null) {
+		if (!this.is_fork && later === null) {
+			// Even an equal value can replace an assignment with a computed result, or vice versa.
+			// Apply its provenance without changing its version or rerunning value consumers.
 			apply(source, entry);
 		}
 
@@ -1060,7 +1070,11 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v && !own.computed) {
+					if (
+						is_earlier &&
+						own.assigned &&
+						(entry.v !== own.v || entry.e !== own.e || entry.assigned !== own.assigned)
+					) {
 						// bring the value up to date
 						batch.current.set(source, entry);
 					} else {
@@ -1110,7 +1124,7 @@ export class Batch {
 		// revert to the preceding writer's result, and the source holds the last writer's result.
 		// Do this after discarding obsolete batches, so their results aren't kept in the chain.
 		for (const [source, entry] of this.current) {
-			if (!entry.computed) continue;
+			if (entry.assigned) continue;
 
 			var previous = entry;
 
@@ -1274,7 +1288,7 @@ export class Batch {
 				// A folded batch's computed sources belong to this view, even if an independent earlier
 				// batch already supplied a reverted value. This batch's own results take precedence.
 				for (const [source, entry] of batch.current) {
-					if (entry.computed && !this.current.has(source)) batch_values.set(source, entry);
+					if (!entry.assigned && !this.current.has(source)) batch_values.set(source, entry);
 				}
 			} else {
 				for (const [source, previous] of batch.previous) {
@@ -1283,7 +1297,10 @@ export class Batch {
 					// keep its earliest rollback even if equal, so a later writer's previous can't replace it.
 					if (
 						!batch_values.has(source) &&
-						((source.f & (DERIVED | DERIVED_SOURCE)) !== 0 || !source.equals(previous.v))
+						((source.f & (DERIVED | ASSIGNED)) !== ASSIGNED ||
+							!previous.assigned ||
+							!batch.current.get(source)?.assigned ||
+							!source.equals(previous.v))
 					) {
 						batch_values.set(source, previous);
 					}
@@ -1764,9 +1781,9 @@ function apply(source, entry) {
 	source.v = entry.v;
 	source.wv = entry.wv;
 	source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
+	source.f = entry.assigned ? source.f | ASSIGNED : source.f & ~ASSIGNED;
 
 	if ((source.f & DERIVED) !== 0) {
-		source.f |= ASSIGNED;
 		update_derived_status(/** @type {Derived} */ (source));
 	}
 }

@@ -38,7 +38,7 @@ import { array_from, is_array } from '../../../shared/utils.js';
 import {
 	BRANCH_EFFECT,
 	COMMENT_NODE,
-	DERIVED_SOURCE,
+	ASSIGNED,
 	DESTROYED,
 	EFFECT_OFFSCREEN,
 	INERT
@@ -392,8 +392,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
-				if (item.v) internal_set(item.v, value);
-				if (item.i) internal_set(item.i, index);
+				if (item.v) internal_set(item.v, value, null, false);
+				if (item.i) internal_set(item.i, index, null, false);
 
 				if (defer) {
 					batch.unskip_effect(item.e);
@@ -770,8 +770,8 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
 
 	// These values are computed from the collection in each batch's view. Sharing an item
 	// doesn't make otherwise independent state changes intersect.
-	if (v) v.f |= DERIVED_SOURCE;
-	if (i) i.f |= DERIVED_SOURCE;
+	if (v) v.f &= ~ASSIGNED;
+	if (i) i.f &= ~ASSIGNED;
 
 	if (DEV && v) {
 		// For tracing purposes, we need to link the source signal we create with the

@@ -71,7 +71,7 @@ export function set_eager_effects_deferred() {
 export function source(v, stack) {
 	/** @type {Source<V>} */
 	var signal = {
-		f: 0,
+		f: ASSIGNED,
 		v,
 		reactions: null,
 		equals,
@@ -164,7 +164,7 @@ export function set(source, value, should_proxy = false) {
 		tag_proxy(new_value, /** @type {string} */ (source.label));
 	}
 
-	return internal_set(source, new_value, legacy_updates);
+	return internal_set(source, new_value, legacy_updates, true);
 }
 
 /**
@@ -172,14 +172,26 @@ export function set(source, value, should_proxy = false) {
  * @param {Value<V>} source
  * @param {V} value
  * @param {Effect[] | null} [updated_during_traversal]
+ * @param {boolean} [assigned] whether this is an assignment rather than a computed result
  * @returns {V}
  */
-export function internal_set(source, value, updated_during_traversal = null) {
+export function internal_set(
+	source,
+	value,
+	updated_during_traversal = null,
+	assigned = (source.f & DERIVED) !== 0 ||
+		(batch_values?.get(source)?.assigned ?? (source.f & ASSIGNED) !== 0)
+) {
 	var same = source.equals(value) && (source.f & ERROR_VALUE) === 0;
 	var entry = batch_values?.get(source);
 
-	// A value that equals the real one may still overwrite a different value in the active view.
-	if (!same || (entry !== undefined && (entry.e || !source.equals.call(entry, value)))) {
+	// A value that equals the real one may still overwrite a different value or assignment in the active view.
+	if (
+		!same ||
+		((source.f & ASSIGNED) !== 0) !== assigned ||
+		(entry !== undefined &&
+			(entry.e || entry.assigned !== assigned || !source.equals.call(entry, value)))
+	) {
 		var batch = Batch.ensure();
 
 		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
@@ -189,7 +201,7 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			execute_derived(/** @type {Derived} */ (source));
 		}
 
-		batch.capture(source, value, same, false, updated_during_traversal);
+		batch.capture(source, value, same, false, updated_during_traversal, assigned);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
