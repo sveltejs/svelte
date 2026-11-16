@@ -273,12 +273,12 @@ export function async_derived(fn, label, location) {
 		const source = async_expression(fn, label, location);
 
 		block(() => {
-			if (is_uninitialized(source) || (merge_target(batch) !== current_batch && !batch.obsolete)) {
-				get(source);
-				return;
-			}
-
 			try {
+				if (is_uninitialized(source) || (merge_target(batch) !== current_batch && !batch.obsolete)) {
+					get(source);
+					return;
+				}
+
 				// We get the source and catch in case it's an error.
 				// We do this instead of checking ERROR_VALUE on source.f
 				// because that only applies to the real world, maybe
