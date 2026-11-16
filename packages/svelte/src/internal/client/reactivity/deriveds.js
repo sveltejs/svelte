@@ -51,14 +51,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, merge_requests, view_batch, view_cache } from './batch.js';
-import {
-	adopt_async_context,
-	async_context,
-	increment_pending,
-	merge_target,
-	unset_context
-} from './async.js';
-import { invoke_error_boundary } from '../error-handling.js';
+import { async_context, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -129,7 +122,6 @@ export const OBSOLETE = Symbol('obsolete');
 /*#__NO_SIDE_EFFECTS__*/
 export function async_expression(fn, label, location) {
 	let parent = /** @type {Effect | null} */ (active_effect);
-	var context = async_context;
 
 	if (parent === null) {
 		e.async_derived_orphan();
@@ -237,14 +229,8 @@ export function async_expression(fn, label, location) {
 				return;
 			}
 
-			if (
-				error !== undefined &&
-				context &&
-				batch.is_fork &&
-				merge_target(context.batch) === merge_target(batch)
-			) {
-				internal_set(context.failed, merge_target(batch));
-			}
+			// A failed speculative result must not hold shared initialization hostage.
+			if (error !== undefined && batch.is_fork) internal_set(batch.obsolete, true);
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
@@ -294,8 +280,6 @@ export function async_derived(fn, label, location) {
 	return new Promise((fulfil, reject) => {
 		const source = async_expression(fn, label, location);
 		var settled = false;
-		/** @type {Set<Batch>} */
-		var failed_forks = new Set();
 
 		block(() => {
 			if (settled) return;
@@ -303,10 +287,9 @@ export function async_derived(fn, label, location) {
 			const owner = merge_target(batch);
 
 			try {
-				const failed = context && get(context.failed) === owner;
 				if (
 					is_uninitialized(source) ||
-					(owner !== target && !get(batch.obsolete) && !owner.discarded && !failed)
+					(owner !== target && !get(batch.obsolete) && !owner.discarded)
 				) {
 					get(source);
 					return;
@@ -314,8 +297,8 @@ export function async_derived(fn, label, location) {
 
 				// Read in the resolving view: an error can be private to a fork.
 				untrack(() => get(source));
-				if (context && (owner.discarded || failed)) {
-					adopt_async_context(context, target);
+				if (context && (owner.discarded || (owner.is_fork && batch.obsolete.v))) {
+					context.batch = target;
 				}
 				settled = true;
 				fulfil(source);
@@ -323,23 +306,15 @@ export function async_derived(fn, label, location) {
 				if (error === UNINITIALIZED) return;
 
 				if (target.is_fork) {
-					// A speculative failure must not reject a shared initializer that a real
-					// batch can still complete. Surface it only if this fork is committed.
-					if (!failed_forks.has(target)) {
-						failed_forks.add(target);
-						invoke_error_boundary(error, parent);
-						target.oncommit(() => {
-							if (!settled) {
-								settled = true;
-								reject(error);
-							}
-						});
-					}
+					// Retain the source, not a captured error: changed dependencies can
+					// produce a successful replacement before this fork is committed.
+					// Do not skip its boundary, which would prevent that revalidation.
+					target.async_errors.set(source, parent);
 					return;
 				}
 
 				// Route real errors in the view that produced them, not the creator fork.
-				if (context) adopt_async_context(context, target);
+				if (context) context.batch = target;
 				settled = true;
 				reject(error);
 			}

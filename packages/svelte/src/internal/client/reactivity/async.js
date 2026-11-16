@@ -1,5 +1,4 @@
 /** @import { AsyncContext, Blocker, Effect, Value } from '#client' */
-/** @import { Batch } from './batch.js' */
 import { ASYNC, DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -17,7 +16,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch } from './batch.js';
+import { Batch, current_batch, get_batches } from './batch.js';
 import {
 	reactivity_loss_tracker,
 	derived,
@@ -27,37 +26,27 @@ import {
 	is_uninitialized
 } from './deriveds.js';
 import { aborted, async_effect, block, branch } from './effects.js';
-import { source } from './sources.js';
 
 /** @type {AsyncContext | null} */
 export let async_context = null;
 
-/**
- * Move a shared script away from a discarded or failed creator. The new owner must
- * remain alive until the script and its template continuation have finished.
- * @param {AsyncContext} context
- * @param {Batch} batch
- */
-export function adopt_async_context(context, batch) {
-	context.batch = merge_target(batch);
-	context.track(context.batch);
-}
-
 /** @param {AsyncContext} context */
 function continuation_batch(context) {
 	var batch = merge_target(context.batch);
-	if (!batch.discarded && (!batch.is_fork || context.failed.v !== batch)) return batch;
+	if (!batch.discarded) {
+		// Initialization need not retain an otherwise finished batch just to resume later.
+		return (context.batch = batch.linked ? batch : Batch.ensure());
+	}
 
-	for (const owner of context.pending) {
-		var candidate = merge_target(owner);
+	for (const candidate of get_batches()) {
 		if (
 			candidate !== batch &&
 			candidate.linked &&
 			!candidate.discarded &&
+			candidate.has_pending(context.effect) &&
 			!candidate.is_skipped(context.effect)
 		) {
-			adopt_async_context(context, candidate);
-			return candidate;
+			return (context.batch = candidate);
 		}
 	}
 
@@ -355,29 +344,10 @@ export function unset_context(deactivate_batch = true) {
 export function run(thunks) {
 	var active = /** @type {Effect} */ (active_effect);
 	var previous_context = async_context;
-	/** @type {Promise<any>} */
-	var completion;
-
 	/** @type {AsyncContext} */
 	var context = {
 		batch: /** @type {Batch} */ (current_batch),
-		effect: active,
-		failed: source(null),
-		pending: new Set(),
-		track(batch) {
-			var target = merge_target(batch);
-			if (!target.linked || target.discarded) return;
-			for (const owner of context.pending) {
-				if (merge_target(owner) === target) return;
-			}
-
-			context.pending.add(target);
-			var decrement = increment_pending(active, target);
-			completion.finally(() => {
-				context.pending.delete(target);
-				decrement();
-			});
-		}
+		effect: active
 	};
 
 	async_context = context;
@@ -403,6 +373,7 @@ export function run(thunks) {
 		}
 	};
 
+	/** @type {Promise<any>} */
 	var promise;
 	try {
 		promise = Promise.resolve(thunks[0]()).catch(handle_error);
@@ -448,9 +419,10 @@ export function run(thunks) {
 		});
 	}
 
-	// Keep owners alive until template continuations have had a chance to run.
-	completion = promise.then(() => Promise.resolve());
-	async_effect(() => context.track(/** @type {Batch} */ (current_batch)));
+	context.effect = async_effect(() => {
+		// Adopting batches wait for the script and its template continuations.
+		promise.then(() => Promise.resolve()).finally(increment_pending());
+	});
 
 	return blockers;
 }
@@ -465,16 +437,12 @@ export function wait(blockers) {
 /**
  * Adds pending work to the current batch, and to the boundary of the active effect. If the batch is merged
  * into another one before the work is done, it's that batch's from then on (see `Batch#merge`)
- * @param {Effect} [effect]
- * @param {Batch} [owner]
  * @returns {() => void}
  */
-export function increment_pending(
-	effect = /** @type {Effect} */ (active_effect),
-	owner = /** @type {Batch} */ (current_batch)
-) {
+export function increment_pending() {
+	var effect = /** @type {Effect} */ (active_effect);
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
-	var batch = merge_target(owner);
+	var batch = merge_target(/** @type {Batch} */ (current_batch));
 
 	/** The nearest boundary with a pending snippet, if there is one */
 	var pending = boundary;

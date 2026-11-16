@@ -167,12 +167,8 @@ export type MaybeSource<T = unknown> = T | Source<T>;
 /** The live owner of a component's shared async initialization. */
 export interface AsyncContext {
 	batch: Batch;
+	/** The script's pending-work tracker, used to identify batches waiting for it. */
 	effect: Effect;
-	/** A failed creator can yield initialization to another view without failing its script. */
-	failed: Source<Batch | null>;
-	/** Batches waiting for this script, including views that adopted its branch. */
-	pending: Set<Batch>;
-	track: (batch: Batch) => void;
 }
 
 export interface Blocker {

@@ -26,5 +26,10 @@ export default test({
 		assert.htmlEqual(output.innerHTML, '');
 		// The handler compares error identity, not just its message.
 		assert.deepEqual(logs.splice(0), ['caught fork failure']);
+
+		commit.click();
+		await tick();
+		assert.htmlEqual(output.innerHTML, '');
+		assert.deepEqual(logs.splice(0), ['caught fork failure']);
 	}
 });

@@ -236,6 +236,12 @@ export class Batch {
 	async_deriveds = new Map();
 
 	/**
+	 * Speculative initialization errors, checked against their latest result on commit.
+	 * @type {Map<Source, Effect | null>}
+	 */
+	async_errors = new Map();
+
+	/**
 	 * The current values (and their versions) of any sources that are updated in this batch,
 	 * including deriveds that were overridden via assignment — until it commits them (see `#commit`).
 	 * Its keys are those of `this.previous`, plus the sources this batch gave their first value. `e` says whether
@@ -1079,6 +1085,7 @@ export class Batch {
 		this.current.clear();
 		this.previous.clear();
 		this.async_deriveds.clear();
+		this.async_errors.clear();
 		this.#scheduled.length = 0;
 		this.#unprocessed.clear();
 		this.#skipped_branches.clear();
@@ -1152,6 +1159,11 @@ export class Batch {
 		// only has writes again once that work resolves, which it then commits
 		this.current.clear();
 		this.previous.clear();
+	}
+
+	/** @param {Effect} effect */
+	has_pending(effect) {
+		return this.#pending.has(effect);
 	}
 
 	/**
@@ -1973,8 +1985,20 @@ export function fork(fn) {
 				return;
 			}
 
-			committed = true;
 			batch.is_fork = false;
+
+			try {
+				for (const [source, effect] of batch.async_errors) {
+					const result = batch.current.get(source);
+					if (result?.e) invoke_error_boundary(result.v, effect);
+				}
+			} catch (error) {
+				batch.fatal_error = { error };
+				batch.discard();
+				throw error;
+			}
+			batch.async_errors.clear();
+			committed = true;
 
 			// Apply the changes to the real world. They keep the versions they had in the fork,
 			// so that everything the fork computed remains valid (processing the batch
