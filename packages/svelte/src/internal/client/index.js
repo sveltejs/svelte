@@ -112,6 +112,13 @@ export {
 	run_after_blockers,
 	wait
 } from './reactivity/async.js';
+export {
+	script_replay,
+	script_binding,
+	script_value,
+	script_template_effect,
+	script_async
+} from './reactivity/script-replay.js';
 export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
 	async_derived,

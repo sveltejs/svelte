@@ -199,6 +199,22 @@ export function build_render_statement(state) {
 
 	const ids = memoizer.apply();
 
+	if (state.analysis.script_replay) {
+		return b.stmt(
+			b.call(
+				'$.script_template_effect',
+				b.arrow(
+					ids,
+					state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
+						? state.update[0].expression
+						: b.block(state.update)
+				),
+				memoizer.sync_values(),
+				memoizer.blockers()
+			)
+		);
+	}
+
 	return b.stmt(
 		b.call(
 			'$.template_effect',

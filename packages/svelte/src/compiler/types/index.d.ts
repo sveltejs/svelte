@@ -238,6 +238,13 @@ export interface ModuleCompileOptions {
 		 * @since 5.36
 		 */
 		async?: boolean;
+		/**
+		 * Opt into the narrow client script replay prototype. Requires `async`.
+		 * Only straight-line identifier deriveds and immutable locals after the first
+		 * await are supported. Unsupported client constructs are rejected; SSR is unchanged.
+		 * @default false
+		 */
+		scriptReplay?: boolean;
 	};
 }
 

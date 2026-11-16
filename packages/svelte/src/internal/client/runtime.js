@@ -25,7 +25,8 @@ import {
 	MANAGED_EFFECT,
 	REACTION_RAN,
 	ASYNC,
-	ASSIGNED
+	ASSIGNED,
+	SCRIPT_EFFECT
 } from './constants.js';
 import {
 	reactivity_loss_tracker,
@@ -301,6 +302,10 @@ export function is_dirty(reaction) {
 	} else if ((flags & DIRTY) !== 0) {
 		return true;
 	} else {
+		// Admission is distinct from dependency invalidation. The scheduler deduplicates
+		// by canonical batch, even when its factory has no directly tracked reads.
+		if ((flags & SCRIPT_EFFECT) !== 0) return true;
+
 		var run = run_of(reaction);
 		var deps = run.deps;
 		var dv = run.dv;

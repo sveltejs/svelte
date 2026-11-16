@@ -1198,6 +1198,13 @@ declare module 'svelte/compiler' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * Opt into the narrow client script replay prototype. Requires `async`.
+			 * Only straight-line identifier deriveds and immutable locals after the first
+			 * await are supported. Unsupported client constructs are rejected; SSR is unchanged.
+			 * @default false
+			 */
+			scriptReplay?: boolean;
 		};
 	}
 	/**
@@ -3296,6 +3303,13 @@ declare module 'svelte/types/compiler/interfaces' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * Opt into the narrow client script replay prototype. Requires `async`.
+			 * Only straight-line identifier deriveds and immutable locals after the first
+			 * await are supported. Unsupported client constructs are rejected; SSR is unchanged.
+			 * @default false
+			 */
+			scriptReplay?: boolean;
 		};
 	}
 	/**

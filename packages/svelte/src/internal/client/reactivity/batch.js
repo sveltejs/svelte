@@ -57,6 +57,13 @@ import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 import { is_runes } from '../context.js';
+import {
+	commit_scripts,
+	discard_scripts,
+	merge_scripts,
+	prepare_script_commit,
+	finalize_script_commit
+} from './script-replay.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
@@ -221,6 +228,12 @@ export class Batch {
 
 	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
 	async_deriveds = new Map();
+
+	/** @type {Map<Effect, import('./script-replay.js').ScriptAttempt>} */
+	script_initializers = new Map();
+
+	/** Terminal for replay admission, including reentry from discard/abort callbacks. */
+	scripts_discarded = false;
 
 	/**
 	 * The current values (and their versions) of any sources that are updated in this batch,
@@ -662,6 +675,7 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
+		commit_scripts(this);
 		this.#release_records(true);
 
 		// append/remove branches
@@ -833,6 +847,9 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
+		if (batch === this || !this.linked || !batch.linked) return;
+		merge_scripts(this, batch);
+
 		for (const [source, entry] of batch.current) {
 			if (!this.previous.has(source)) {
 				const previous = batch.previous.get(source);
@@ -1050,6 +1067,8 @@ export class Batch {
 	}
 
 	discard() {
+		this.scripts_discarded = true;
+		discard_scripts(this);
 		this.#run_callbacks(this.#discard_callbacks);
 
 		for (const deferred of this.async_deriveds.values()) {
@@ -1077,8 +1096,14 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v && !own.async) {
-						// bring the value up to date
+					if (
+						(is_earlier || (batch.script_initializers.size > 0 && entry.wv > own.wv)) &&
+						entry.v !== own.v &&
+						!own.async
+					) {
+						// A newer input write may have merged into an older canonical batch.
+						// Replay outcomes still see that write's version, not the target's age;
+						// their own produced snapshots remain protected by `own.async`.
 						batch.current.set(source, entry);
 					} else {
 						// same value, later batch has more recent value, or the batch's own result
@@ -1093,7 +1118,9 @@ export class Batch {
 			// If not started yet or no sources to update (which is e.g. possible for the very first batch) then bail
 			if (!batch.started || batch.current.size === 0) continue;
 
-			var obsolete = true;
+			// A private initializer outcome is not superseded merely because another
+			// batch wrote the same selection cell (in particular, a cached fork error).
+			var obsolete = batch.script_initializers.size === 0;
 
 			for (const source of batch.current.keys()) {
 				if (!this.current.has(source)) {
@@ -1924,49 +1951,64 @@ export function fork(fn) {
 	var settled = batch.settled();
 	var committed = false;
 	var discarded = false;
+	/** @type {Promise<void> | null} */
+	var commit_result = null;
 
 	return {
-		commit: async () => {
-			if (committed) {
-				await settled;
-				return;
-			}
-
-			if (discarded) {
-				e.fork_discarded();
-			}
-
-			if (!batch.linked) {
-				// batch was made obsolete by later changes
-				committed = true;
-				return;
-			}
-
-			committed = true;
-			batch.is_fork = false;
-
-			// Apply the changes to the real world. They keep the versions they had in the fork,
-			// so that everything the fork computed remains valid (processing the batch
-			// re-validates everything that depends on them, see `#process`)
-			for (const [source, entry] of batch.current) {
-				const later = later_writer(batch, source);
-
-				if (later !== null) {
-					// in order, the fork's write comes before the later batch's, which replaces it
-					later.previous.set(source, entry);
-				} else {
-					batch.mark(source, MAYBE_DIRTY);
-					apply(source, entry);
+		commit: () =>
+			(commit_result ??= (async () => {
+				if (committed) {
+					await settled;
+					return;
 				}
-			}
 
-			if (eager_effects.size > 0) {
-				flush_eager_effects();
-			}
+				if (discarded) {
+					e.fork_discarded();
+				}
 
-			batch.flush();
-			await settled;
-		},
+				if (!batch.linked) {
+					// batch was made obsolete by later changes
+					committed = true;
+					return;
+				}
+
+				committed = true;
+				if (batch.script_initializers.size > 0) {
+					try {
+						do {
+							await prepare_script_commit(batch);
+						} while (batch.linked && !finalize_script_commit(batch));
+					} catch (error) {
+						// Keep the cached rejection for repeat commits, but permit disposal.
+						committed = false;
+						throw error;
+					}
+				}
+				if (!batch.linked) return;
+				batch.is_fork = false;
+
+				// Apply the changes to the real world. They keep the versions they had in the fork,
+				// so that everything the fork computed remains valid (processing the batch
+				// re-validates everything that depends on them, see `#process`)
+				for (const [source, entry] of batch.current) {
+					const later = later_writer(batch, source);
+
+					if (later !== null) {
+						// in order, the fork's write comes before the later batch's, which replaces it
+						later.previous.set(source, entry);
+					} else {
+						batch.mark(source, MAYBE_DIRTY);
+						apply(source, entry);
+					}
+				}
+
+				if (eager_effects.size > 0) {
+					flush_eager_effects();
+				}
+
+				batch.flush();
+				await settled;
+			})()),
 		discard: () => {
 			if (!committed && batch.linked) {
 				batch.discard();

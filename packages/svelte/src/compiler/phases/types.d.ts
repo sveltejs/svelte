@@ -5,6 +5,7 @@ import type {
 	ClassBody,
 	ClassDeclaration,
 	FunctionDeclaration,
+	Expression,
 	Identifier,
 	LabeledStatement,
 	ModuleDeclaration,
@@ -125,6 +126,19 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
+	/** Per-attempt storage is deliberately separate from binding readiness/blockers. */
+	script_replay: {
+		id: Identifier;
+		bindings: Map<
+			Binding,
+			{
+				index: number;
+				checkpoint: number;
+				kind: 'async' | 'derived' | 'local';
+				expression: Expression;
+			}
+		>;
+	} | null;
 	/**
 	 * Pre-transformed `<script>` block
 	 */
