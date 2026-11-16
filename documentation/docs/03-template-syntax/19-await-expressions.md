@@ -68,7 +68,28 @@ Svelte will do as much asynchronous work as it can in parallel. For example if y
 
 ...both functions will run at the same time, as they are independent expressions, even though they are _visually_ sequential.
 
-This does not apply to sequential `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript. An exception is that independent `$derived` expressions will update independently, even though they will run sequentially when they are first created:
+This does also apply to sequential `$derived(await ...)` expressions inside your `<script>` that are independent of each other — in the following example, `a` and `b` are created at the same time, so that they run in parallel, while `c` is only created once `b` resolves:
+
+```js
+/** @param {number} x */
+async function one(x) { return x; }
+/** @param {number} y */
+async function two(y) { return y; }
+/** @param {number} z */
+async function three(z) { return z; }
+let x = $state(1);
+let y = $state(2);
+// ---cut---
+// `a` and `b` are created at the same time ...
+let a = $derived(await one(x));
+let b = $derived(await two(y));
+// ... but `c` has to wait for `b`, because it depends on it.
+// Once created they will all update independently,
+// even if `x` and `y` update simultaneously.
+let c = $derived(await three(b + x));
+```
+
+This does not apply to other `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript:
 
 ```js
 /** @param {number} x */
@@ -78,14 +99,16 @@ async function two(y) { return y; }
 let x = $state(1);
 let y = $state(2);
 // ---cut---
-// `b` will not be created until `a` has resolved,
-// but once created they will update independently
-// even if `x` and `y` update simultaneously
 let a = $derived(await one(x));
+let doubled = $derived(a * 2);
+
+// `b` does not depend on `a`, but because of the
+// statement in between, it will not be created until
+// `a` has resolved
 let b = $derived(await two(y));
 ```
 
-> [!NOTE] If you write code like this, expect Svelte to give you an [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) warning
+> [!NOTE] If you write code like this, expect Svelte to give you an [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) warning. In the above example, declaring `b` before `doubled` lets `a` and `b` run in parallel
 
 ## Indicating loading states
 

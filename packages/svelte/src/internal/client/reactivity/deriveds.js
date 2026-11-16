@@ -263,7 +263,7 @@ export function async_derived(fn, label, location) {
 		signal.f |= ASYNC;
 	}
 
-	return new Promise((fulfil) => {
+	const result = new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
 			function go() {
@@ -281,6 +281,20 @@ export function async_derived(fn, label, location) {
 
 		next(promise);
 	});
+
+	return handled(result);
+}
+
+/**
+ * Independent `$derived(await ...)` declarations in a component's `<script>` are created up front
+ * and then awaited in order, so one of them may reject while an earlier one is still being awaited.
+ * Mark the promise as handled, so that this isn't reported as an unhandled rejection
+ * @template T
+ * @param {Promise<T>} promise
+ */
+function handled(promise) {
+	promise.catch(noop);
+	return promise;
 }
 
 /**

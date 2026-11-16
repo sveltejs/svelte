@@ -79,7 +79,22 @@ let total = $derived(await sum(a, b));
 
 > An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
 
-In a case like this...
+Consecutive `$derived` declarations with `await` expressions that are independent of each other are created at the same time. But in a case like this...
+
+```js
+async function one() { return 1 }
+async function two() { return 2 }
+// ---cut---
+let a = $derived(await one());
+let doubled = $derived(a * 2);
+let b = $derived(await two());
+```
+
+...the second async `$derived` will not be created until the first one has resolved, because of the statement in between. Since `await two()` does not depend on the value of `a`, this delay, often described as a 'waterfall', is unnecessary.
+
+(Note that if the values of `await one()` and `await two()` subsequently change, they can do so concurrently — the waterfall only occurs when the deriveds are first created.)
+
+You can solve this by declaring the independent deriveds next to each other:
 
 ```js
 async function one() { return 1 }
@@ -87,23 +102,7 @@ async function two() { return 2 }
 // ---cut---
 let a = $derived(await one());
 let b = $derived(await two());
-```
-
-...the second `$derived` will not be created until the first one has resolved. Since `await two()` does not depend on the value of `a`, this delay, often described as a 'waterfall', is unnecessary.
-
-(Note that if the values of `await one()` and `await two()` subsequently change, they can do so concurrently — the waterfall only occurs when the deriveds are first created.)
-
-You can solve this by creating the promises first and _then_ awaiting them:
-
-```js
-async function one() { return 1 }
-async function two() { return 2 }
-// ---cut---
-let aPromise = $derived(one());
-let bPromise = $derived(two());
-
-let a = $derived(await aPromise);
-let b = $derived(await bPromise);
+let doubled = $derived(a * 2);
 ```
 
 ## binding_property_non_reactive

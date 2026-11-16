@@ -1111,6 +1111,87 @@ function calculate_blockers(instance, analysis) {
 	}
 
 	/**
+	 * The group of consecutive `$derived(await ...)` declarations that is currently being built.
+	 * They are created up front and awaited in order afterwards, so that they run in parallel.
+	 * This is only possible if none of them references another one, directly or indirectly
+	 * @type {null | {
+	 *   entry: ComponentAnalysis['instance_body']['async'][number];
+	 *   blocker: NonNullable<Binding['blocker']>;
+	 *   declared: Set<Binding>;
+	 *   touched: Set<Binding>;
+	 * }}
+	 */
+	let parallel_group = null;
+
+	/**
+	 * @param {ESTree.VariableDeclarator} declarator
+	 */
+	function is_async_derived(declarator) {
+		return (
+			get_rune(declarator.init, instance.scope) === '$derived' &&
+			has_await_expression(/** @type {ESTree.CallExpression} */ (declarator.init))
+		);
+	}
+
+	/**
+	 * Adds a `$derived(await ...)` declarator to the current parallel group, or starts a new one
+	 * if it is not independent of the deriveds in the current group
+	 * @param {ESTree.VariableDeclarator} declarator
+	 * @param {Set<Binding>} writes
+	 */
+	function push_async_derived(declarator, writes) {
+		/** @type {Set<Binding>} */
+		const declared = new Set();
+		for (const id of extract_identifiers(declarator.id)) {
+			declared.add(/** @type {Binding} */ (instance.scope.get(id.name)));
+		}
+
+		// everything the derived references, including via function calls and assignments
+		/** @type {Set<Binding>} */
+		const touched = new Set();
+		touch(/** @type {ESTree.Expression} */ (declarator.init), instance.scope, touched, new Set());
+
+		const independent =
+			parallel_group !== null &&
+			!intersects(parallel_group.declared, touched) &&
+			!intersects(declared, parallel_group.touched);
+
+		if (!independent) {
+			flush_sync_group();
+
+			parallel_group = {
+				entry: { nodes: [], has_await: true },
+				blocker: /** @type {NonNullable<Binding['blocker']>} */ (
+					b.member(promises, b.literal(analysis.instance_body.async.length), true)
+				),
+				declared: new Set(),
+				touched: new Set()
+			};
+
+			analysis.instance_body.async.push(parallel_group.entry);
+		}
+
+		const group = /** @type {NonNullable<typeof parallel_group>} */ (parallel_group);
+
+		for (const binding of writes) {
+			binding.blocker = group.blocker;
+		}
+
+		for (const id of extract_identifiers(declarator.id)) {
+			push_declaration(id, group.blocker);
+		}
+
+		for (const binding of declared) group.declared.add(binding);
+		for (const binding of touched) group.touched.add(binding);
+
+		group.entry.nodes.push(declarator);
+
+		if (group.entry.nodes.length > 1) {
+			group.entry.parallel = true;
+		}
+	}
+
+	/**
 	 * Analysis of blockers for functions is deferred until we know which statements are async/blockers
 	 * @type {Array<ESTree.FunctionDeclaration | ESTree.VariableDeclarator>}
 	 */
@@ -1171,6 +1252,14 @@ function calculate_blockers(instance, analysis) {
 
 					trace_references(declarator, reads, writes, instance.scope);
 
+					if (is_async_derived(declarator)) {
+						push_async_derived(declarator, writes);
+						continue;
+					}
+
+					// anything in between async deriveds means they have to run sequentially
+					parallel_group = null;
+
 					// Needs to happen before blocker computation
 					if (has_await) flush_sync_group();
 
@@ -1202,6 +1291,9 @@ function calculate_blockers(instance, analysis) {
 			const writes = new Set();
 
 			trace_references(node, reads, writes, instance.scope);
+
+			// anything in between async deriveds means they have to run sequentially
+			parallel_group = null;
 
 			// Needs to happen before blocker computation
 			if (has_await) flush_sync_group();
@@ -1292,6 +1384,19 @@ function calculate_blockers(instance, analysis) {
 
 		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
 	}
+}
+
+/**
+ * @template T
+ * @param {Set<T>} a
+ * @param {Set<T>} b
+ */
+function intersects(a, b) {
+	for (const value of a) {
+		if (b.has(value)) return true;
+	}
+
+	return false;
 }
 
 /**

@@ -6,8 +6,14 @@ export default function Async_in_derived($$renderer, $$props) {
 		var yes1, yes2, no1, no2;
 
 		var $$promises = $$renderer.run([
-			async () => yes1 = await $.async_derived(() => 1),
-			async () => yes2 = await $.async_derived(async () => foo(await 1)),
+			async () => {
+				var yes1_promise = $.async_derived(() => 1);
+				var yes2_promise = $.async_derived(async () => foo(await 1));
+
+				yes1 = await yes1_promise;
+				yes2 = await yes2_promise;
+			},
+
 			() => {
 				no1 = $.derived(async () => {
 					return await 1;
@@ -48,7 +54,7 @@ export default function Async_in_derived($$renderer, $$props) {
 			$$renderer.push('<!--[0-->');
 
 			let x;
-			var promises_1 = $$renderer.run([() => $$promises[2], () => x = no2()]);
+			var promises_1 = $$renderer.run([() => $$promises[1], () => x = no2()]);
 		} else {
 			$$renderer.push('<!--[-1-->');
 		}

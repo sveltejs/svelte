@@ -144,7 +144,8 @@ export function Program(node, context) {
 			body: transform_body(
 				context.state.analysis.instance_body,
 				b.id('$.run'),
-				(node) => /** @type {Node} */ (context.visit(node))
+				(node) => /** @type {Node} */ (context.visit(node)),
+				context.state.analysis.instance.scope
 			)
 		};
 	}
