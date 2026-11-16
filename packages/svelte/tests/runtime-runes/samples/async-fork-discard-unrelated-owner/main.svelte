@@ -7,23 +7,34 @@
 	let marker = $state(0);
 	let creator: Fork;
 	let unrelated: Fork;
-	const requests = new Map<number, () => void>();
+	const requests: Array<{ site: string; value: number; settled: boolean; resolve: () => void }> = [];
 
-	function load(value: number) {
+	function load(site: string, value: number) {
 		console.log(`load ${value}`);
 		const d = Promise.withResolvers<number>();
-		requests.set(value, () => d.resolve(value));
+		requests.push({ site, value, settled: false, resolve: () => d.resolve(value) });
 		return d.promise;
+	}
+
+	function resolve(site: string, value: number, occurrence = 0) {
+		const request = requests.filter((request) => request.site === site && request.value === value)[occurrence];
+		if (!request || request.settled) {
+			throw new Error(`No pending ${site}(${value}) request at occurrence ${occurrence}`);
+		}
+		request.settled = true;
+		request.resolve();
 	}
 </script>
 
 <button onclick={() => (creator = fork(() => { show = true; count = 1; }))}>creator</button>
 <button onclick={() => (show = true)}>real</button>
-<button onclick={() => requests.get(0)!()}>resolve first</button>
+<button onclick={() => resolve('first', 0)}>resolve real first</button>
 <button onclick={() => (unrelated = fork(() => (marker = 99)))}>unrelated</button>
 <button onclick={() => creator.discard()}>discard creator</button>
-<button onclick={() => requests.get(10)!()}>resolve second</button>
+<button onclick={() => resolve('second', 10)}>resolve real second</button>
 <button onclick={() => unrelated.discard()}>discard unrelated</button>
+<button onclick={() => resolve('first', 1)}>resolve discarded creator</button>
+<button onclick={() => resolve('first', 0, 1)}>resolve discarded unrelated</button>
 
 <output>
 	<i>{count}</i><b>{marker}</b>

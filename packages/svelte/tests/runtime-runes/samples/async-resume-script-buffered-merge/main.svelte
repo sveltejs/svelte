@@ -6,11 +6,22 @@
 	let show = $state(false);
 	let x = $state(0);
 	const gate = Promise.withResolvers<number>();
-	const answers = new Map<number, (value: number) => void>();
+	const requests: Array<{ value: number; settled: boolean; resolve: () => void }> = [];
 
 	function load(value: number) {
 		console.log(value);
-		return new Promise<number>((resolve) => answers.set(value, resolve));
+		return new Promise<number>((resolve) => {
+			requests.push({ value, settled: false, resolve: () => resolve(value) });
+		});
+	}
+
+	function resolve(value: number, occurrence: number) {
+		const request = requests.filter((request) => request.value === value)[occurrence];
+		if (!request || request.settled) {
+			throw new Error(`No pending load(${value}) request at occurrence ${occurrence}`);
+		}
+		request.settled = true;
+		request.resolve();
 	}
 </script>
 
@@ -19,8 +30,10 @@
 <button onclick={() => { n++; x = 2; }}>update</button>
 <button onclick={() => { n++; show = false; }}>hide</button>
 <button onclick={() => { n++; show = true; }}>reveal</button>
-<button onclick={() => answers.get(2)!(2)}>resolve</button>
+<button onclick={() => resolve(2, 0)}>resolve update</button>
 <button onclick={() => gate.resolve(1)}>finish</button>
+<button onclick={() => resolve(2, 1)}>resolve reveal</button>
+<button onclick={() => resolve(1, 0)}>resolve obsolete</button>
 
 <output>
 	<p>{n}</p><p>{waiting ? await gate.promise : 0}</p>

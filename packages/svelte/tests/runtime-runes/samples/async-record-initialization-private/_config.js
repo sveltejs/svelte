@@ -34,7 +34,7 @@ export default test({
 		ready.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
-		assert.deepEqual(logs.splice(0), ['first 1', 'second 1']);
+		assert.deepEqual(logs.splice(0), ['first 1']);
 
 		// A can still finish and commit its older view while B's work is pending.
 		second_0.click();
@@ -45,11 +45,11 @@ export default test({
 		first_1.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>0 0 0</p>');
-		assert.deepEqual(logs.splice(0), []);
+		assert.deepEqual(logs.splice(0), ['second 1']);
 
 		second_1.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>1 1 1</p>');
-		assert.deepEqual(logs.splice(0), []);
+		assert.deepEqual(logs.splice(0), ['continued with 1 1']);
 	}
 });

@@ -16,12 +16,18 @@ export default function Main($$anchor) {
 			return [
 				() => load($.get(input)),
 				() => $.get($$bindings[0]) * 2,
-				() => snapshot = $.get($$bindings[0]),
-				() => load($.get($$bindings[1]) + $.get($$bindings[2]))
+				() => void 0,
+				() => load($.get($$bindings[1]) + $.get($$bindings[2])),
+				() => {
+					snapshot = $.get($$bindings[0]);
+
+					return [void 0, snapshot];
+				}
 			];
 		},
 		['async', 'derived', 'local', 'async'],
-		[0, 1, 1, 2]
+		[0, 1, 1, 2],
+		[[1, 3, 4]]
 	);
 
 	var fragment = root_1();
@@ -30,12 +36,12 @@ export default function Main($$anchor) {
 	var text = $.only_child(output);
 	var node = $.sibling(output, 2);
 
-	$.script_async(node, [$$script.ready[2]], (node) => {
+	$.async(node, [$$script.ready[2]], void 0, (node) => {
 		var consequent = ($$anchor) => {
 			var p = root();
 			var text_1 = $.only_child(p, true);
 
-			$.script_template_effect(() => $.set_text(text_1, $.get($.script_binding($$script, 3))), void 0, [$$script.ready[2]]);
+			$.template_effect(() => $.set_text(text_1, $.get($.script_binding($$script, 3))), void 0, void 0, [$$script.ready[2]]);
 			$.append($$anchor, p);
 		};
 
@@ -44,7 +50,7 @@ export default function Main($$anchor) {
 		});
 	});
 
-	$.script_template_effect(() => $.set_text(text, `${$.get($.script_binding($$script, 0)) ?? ''} ${$.get($.script_binding($$script, 1)) ?? ''} ${$.script_value($$script, 2) ?? ''} ${$.get($.script_binding($$script, 3)) ?? ''}`), void 0, [$$script.ready[2]]);
+	$.template_effect(() => $.set_text(text, `${$.get($.script_binding($$script, 0)) ?? ''} ${$.get($.script_binding($$script, 1)) ?? ''} ${$.script_value($$script, 2) ?? ''} ${$.get($.script_binding($$script, 3)) ?? ''}`), void 0, void 0, [$$script.ready[2]]);
 	$.delegated('click', button, () => $.update(input));
 	$.append($$anchor, fragment);
 }

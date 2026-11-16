@@ -111,18 +111,7 @@ export function IfBlock(node, context) {
 
 	statements.push(add_svelte_meta(b.call('$.if', ...args), node, 'if'));
 
-	if (has_blockers && context.state.analysis.script_replay) {
-		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.script_async',
-					context.state.node,
-					node.metadata.expression.blockers(),
-					b.arrow([context.state.node], b.block(statements))
-				)
-			)
-		);
-	} else if (has_await || has_blockers) {
+	if (has_await || has_blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(

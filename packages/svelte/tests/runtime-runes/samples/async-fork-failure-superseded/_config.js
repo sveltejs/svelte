@@ -33,11 +33,12 @@ export default test({
 		assert.htmlEqual(output.innerHTML, '<p>2</p>');
 		assert.deepEqual(logs.splice(0), ['continued 2', 'load 2']);
 
-		// Finish F's replacement run before committing it.
+		// Finish F's replacement initializer before committing it. Its independent
+		// continuation runs once, but must never retry the failed load(1).
 		resolve_2.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>2</p>');
-		assert.deepEqual(logs.splice(0), []);
+		assert.deepEqual(logs.splice(0), ['continued 2']);
 
 		commit.click();
 		await tick();

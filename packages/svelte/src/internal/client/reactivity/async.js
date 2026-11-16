@@ -1,6 +1,6 @@
-/** @import { Blocker, Effect, Value } from '#client' */
+/** @import { Blocker, Effect, PromiseBlocker, ScriptReadiness, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
-import { DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
+import { DESTROYED, EFFECT_PRESERVED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -26,7 +26,13 @@ import {
 	async_expression,
 	is_uninitialized
 } from './deriveds.js';
-import { aborted, async_effect, block, branch } from './effects.js';
+import { aborted, async_effect, block, branch, destroy_effect, teardown } from './effects.js';
+import { deferred } from '../../shared/utils.js';
+
+/** @param {Blocker} blocker @returns {blocker is ScriptReadiness} */
+export function is_script_ready(blocker) {
+	return 'kind' in blocker && blocker.kind === 'script';
+}
 
 /**
  * @param {Blocker[]} blockers
@@ -35,6 +41,33 @@ import { aborted, async_effect, block, branch } from './effects.js';
  * @param {(values: Value[]) => any} fn
  */
 export function flatten(blockers, sync, async, fn) {
+	var readies = blockers.filter(is_script_ready);
+	var promises = /** @type {PromiseBlocker[]} */ (
+		blockers.filter((blocker) => !is_script_ready(blocker))
+	);
+	if (readies.length > 0) {
+		/** @type {Effect | null} */
+		var content = null;
+		// Install one gate now, not one shared continuation after a promise. All
+		// consumers (render effects, blocks, directives and template awaits) use it.
+		block(() => {
+			var batch = /** @type {Batch} */ (current_batch);
+			for (const ready of readies) {
+				if (!get(ready)) {
+					if (content !== null) batch.skip_effect(content);
+					return;
+				}
+			}
+			if (content !== null) {
+				batch.unskip_effect(content);
+				batch.revalidate_branch(content);
+			} else {
+				content = branch(() => flatten(promises, sync, async, fn));
+			}
+		}, EFFECT_TRANSPARENT | EFFECT_PRESERVED);
+		return;
+	}
+
 	var parent = /** @type {Effect} */ (active_effect);
 	var deriveds = sync.map(is_runes() ? derived : derived_safe_equal);
 
@@ -51,7 +84,7 @@ export function flatten(blockers, sync, async, fn) {
 	}
 
 	// Filter out already-settled blockers - no need to wait for them
-	var pending = blockers.filter((b) => !b.settled);
+	var pending = promises.filter((b) => !b.settled);
 
 	if (pending.length > 0) {
 		var restore = capture();
@@ -78,7 +111,7 @@ export function flatten(blockers, sync, async, fn) {
 	}
 
 	function run() {
-		if (blockers.some((b) => b.failed)) return;
+		if (promises.some((b) => b.failed)) return;
 
 		if (async.length === 0) {
 			fn(deriveds);
@@ -94,11 +127,13 @@ export function flatten(blockers, sync, async, fn) {
 			for (var s of signals) {
 				if (is_uninitialized(s)) {
 					get(s);
+					if (effect !== null) /** @type {Batch} */ (current_batch).skip_effect(effect);
 					return;
 				}
 			}
 
 			if (effect !== null) {
+				/** @type {Batch} */ (current_batch).unskip_effect(effect);
 				/** @type {Batch} */ (current_batch).revalidate_branch(effect);
 			} else {
 				effect = branch(() => {
@@ -321,7 +356,7 @@ export function run(thunks) {
 
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
-		if (!aborted(active)) {
+		if (error !== STALE_REACTION && !aborted(active)) {
 			restore();
 
 			try {
@@ -334,7 +369,7 @@ export function run(thunks) {
 
 	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
 
-	/** @type {Blocker} */
+	/** @type {PromiseBlocker} */
 	var blocker = { promise, settled: false, failed: false };
 	var blockers = [blocker];
 
@@ -367,7 +402,7 @@ export function run(thunks) {
 			})
 			.catch(handle_error);
 
-		/** @type {Blocker} */
+		/** @type {PromiseBlocker} */
 		const blocker = { promise, settled: false, failed: false };
 		blockers.push(blocker);
 
@@ -397,7 +432,49 @@ export function run(thunks) {
  * @param {Blocker[]} blockers
  */
 export function wait(blockers) {
-	return Promise.all(blockers.map((b) => b.promise));
+	return Promise.all(blockers.map((b) => (is_script_ready(b) ? wait_for_script(b) : b.promise)));
+}
+
+/** @param {ScriptReadiness} ready */
+function wait_for_script(ready) {
+	var batch = /** @type {Batch} */ (current_batch);
+	var completion = deferred();
+	var done = false;
+	/** @type {Effect | undefined} */
+	var watcher;
+	/** @param {boolean} stale */
+	function finish(stale) {
+		if (done) return;
+		done = true;
+		if (stale) completion.reject(STALE_REACTION);
+		else completion.resolve();
+		queueMicrotask(() => {
+			if (watcher) destroy_effect(watcher);
+		});
+	}
+
+	watcher = block(() => {
+		if (done) return;
+		var target = merge_target(batch);
+		if (target.scripts_discarded) {
+			finish(true);
+			return;
+		}
+		if (current_batch === null || merge_target(current_batch) !== target) return;
+		if (get(ready)) {
+			finish(false);
+		} else {
+			var snapshot = get(ready.script.selection);
+			if (snapshot && [...snapshot.errors.keys()].some((site) => site <= ready.checkpoint)) {
+				// The initializer owns delivery of this error. Retire the legacy template
+				// continuation rather than reporting a second speculative boundary error.
+				finish(true);
+			}
+		}
+	}, EFFECT_PRESERVED);
+	batch.ondiscard(() => finish(true));
+	teardown(() => finish(true));
+	return completion.promise;
 }
 
 /**

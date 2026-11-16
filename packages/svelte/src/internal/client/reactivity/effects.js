@@ -1,4 +1,4 @@
-/** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager, Value } from '#client' */
 /** @import { TeardownContext } from './batch.js' */
 import {
 	is_dirty,
@@ -46,7 +46,8 @@ import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
-import { flatten } from './async.js';
+import { flatten, is_script_ready } from './async.js';
+import { is_uninitialized } from './deriveds.js';
 import { set_signal_status } from './status.js';
 
 /**
@@ -389,6 +390,31 @@ export function render_effect(fn, flags = 0) {
  * @param {Blocker[]} blockers
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
+	var readies = blockers.filter(is_script_ready);
+	if (readies.length > 0) {
+		/** @type {Value[] | null} */
+		var values = null;
+		// Allocating this in the first ready view would eagerly render a fork into
+		// shared DOM. Install it now and let the batch defer its body until commit.
+		var effect = create_effect(RENDER_EFFECT | EFFECT_PRESERVED, () => {
+			for (const ready of readies) if (!get(ready)) return;
+			if (values !== null) {
+				for (var i = sync.length; i < values.length; i++) {
+					if (is_uninitialized(values[i])) {
+						get(values[i]);
+						return;
+					}
+				}
+				fn(...values.map(get));
+			}
+		});
+		flatten(blockers, sync, async, (signals) => {
+			values = signals;
+			Batch.ensure().schedule(effect, DIRTY);
+		});
+		return;
+	}
+
 	flatten(blockers, sync, async, (values) => {
 		create_effect(RENDER_EFFECT, () => {
 			fn(...values.map(get));

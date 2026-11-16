@@ -55,6 +55,7 @@ import {
 	current_batch,
 	processing_batch,
 	first_batch,
+	get_batches,
 	flushSync,
 	push_teardown_context,
 	teardown_context,
@@ -430,6 +431,7 @@ function abort_replaced(reaction, flags) {
 	if (is_derived && is_destroying_effect) return;
 
 	var real = batch === null || !batch.is_fork;
+	var batches = get_batches();
 
 	abort_record(reaction, view_batch?.records?.get(reaction), true);
 
@@ -438,8 +440,8 @@ function abort_replaced(reaction, flags) {
 		abort_signal(reaction.ac);
 	}
 
-	for (var b = first_batch; b !== null; b = b.next) {
-		if (supersedes(batch, b)) abort_record(reaction, b.records?.get(reaction), true);
+	for (const b of batches) {
+		if (b.linked && supersedes(batch, b)) abort_record(reaction, b.records?.get(reaction), true);
 	}
 }
 
@@ -489,11 +491,12 @@ function supersedes(batch, other) {
 export function abort_all(reaction) {
 	if ((reaction.f & HAS_ABORT_CONTROLLER) === 0) return false;
 	reaction.f ^= HAS_ABORT_CONTROLLER;
+	var batches = get_batches();
 
 	abort_signal(reaction.ac);
 	reaction.ac = null;
 
-	for (var b = first_batch; b !== null; b = b.next) {
+	for (const b of batches) {
 		var record = b.records?.get(reaction);
 
 		if (record?.ac) {
@@ -747,9 +750,19 @@ function set_derived_value(derived, value, error) {
 	// a run replaces a value that was assigned to the derived
 	var flags = derived.f & ~ASSIGNED;
 
-	if (error || (flags & ERROR_VALUE) !== 0 || !derived.equals(value)) {
-		derived.v = value;
+	var changed = error || (flags & ERROR_VALUE) !== 0 || !derived.equals(value);
+
+	// A fork becoming real can hold an equal private result with its own version,
+	// even if the global value is also equal (e.g. two views independently became
+	// ready). Keep the active view's version, just as promoting a valid record does.
+	if (view_batch !== null) {
+		derived.wv = derived_version(derived, view_batch, value, error);
+	} else if (changed) {
 		derived.wv = increment_write_version();
+	}
+
+	if (changed) {
+		derived.v = value;
 		flags = error ? flags | ERROR_VALUE : flags & ~ERROR_VALUE;
 	}
 

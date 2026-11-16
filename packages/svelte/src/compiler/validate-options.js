@@ -43,10 +43,10 @@ const common_options = {
 
 	warningFilter: fun(() => true),
 
-	experimental: validator({ async: false, scriptReplay: false }, (input, keypath) => {
+	experimental: validator({ async: false, scriptReplay: undefined }, (input, keypath) => {
 		const options = object({
 			async: boolean(false),
-			scriptReplay: boolean(false)
+			scriptReplay: boolean(undefined)
 		})(input, keypath);
 
 		if (options.scriptReplay && !options.async) {

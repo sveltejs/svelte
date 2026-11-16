@@ -1199,10 +1199,10 @@ declare module 'svelte/compiler' {
 			 */
 			async?: boolean;
 			/**
-			 * Opt into the narrow client script replay prototype. Requires `async`.
-			 * Only straight-line identifier deriveds and immutable locals after the first
-			 * await are supported. Unsupported client constructs are rejected; SSR is unchanged.
-			 * @default false
+			 * Temporary migration control for client script replay. Requires `async`.
+			 * By default, supported script initializers use replay. `true` rejects unsupported
+			 * constructs instead of retaining their existing lowering; `false` disables replay.
+			 * SSR is unchanged. This control will be removed when migration is complete.
 			 */
 			scriptReplay?: boolean;
 		};
@@ -3304,10 +3304,10 @@ declare module 'svelte/types/compiler/interfaces' {
 			 */
 			async?: boolean;
 			/**
-			 * Opt into the narrow client script replay prototype. Requires `async`.
-			 * Only straight-line identifier deriveds and immutable locals after the first
-			 * await are supported. Unsupported client constructs are rejected; SSR is unchanged.
-			 * @default false
+			 * Temporary migration control for client script replay. Requires `async`.
+			 * By default, supported script initializers use replay. `true` rejects unsupported
+			 * constructs instead of retaining their existing lowering; `false` disables replay.
+			 * SSR is unchanged. This control will be removed when migration is complete.
 			 */
 			scriptReplay?: boolean;
 		};

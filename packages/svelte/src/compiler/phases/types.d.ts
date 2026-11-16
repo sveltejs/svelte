@@ -69,6 +69,14 @@ export interface Analysis {
 	pickled_awaits: Set<AwaitExpression>;
 }
 
+export interface ScriptReplayStage {
+	index: number;
+	binding: Binding | null;
+	checkpoint: number;
+	kind: 'async' | 'derived' | 'local' | 'await' | 'statement';
+	expression: Expression;
+}
+
 export interface ComponentAnalysis extends Analysis {
 	root: ScopeRoot;
 	instance: Js;
@@ -129,15 +137,10 @@ export interface ComponentAnalysis extends Analysis {
 	/** Per-attempt storage is deliberately separate from binding readiness/blockers. */
 	script_replay: {
 		id: Identifier;
-		bindings: Map<
-			Binding,
-			{
-				index: number;
-				checkpoint: number;
-				kind: 'async' | 'derived' | 'local';
-				expression: Expression;
-			}
-		>;
+		bindings: Map<Binding, ScriptReplayStage>;
+		stages: ScriptReplayStage[];
+		/** Original synchronous groups, with exclusive end indices. */
+		groups: Array<{ start: number; end: number }>;
 	} | null;
 	/**
 	 * Pre-transformed `<script>` block

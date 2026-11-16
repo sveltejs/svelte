@@ -10,12 +10,20 @@ export default function Async_if_chain($$anchor) {
 	}
 
 	let foo = true;
-	var blocking;
-	var $$promises = $.run([async () => blocking = await $.async_derived(() => foo)]);
+
+	const $$script = $.script_replay(
+		($$bindings) => {
+			return [() => foo];
+		},
+		['async'],
+		[0],
+		[]
+	);
+
 	var fragment = root();
 	var node = $.first_child(fragment);
 
-	$.async(node, [$$promises[0]], void 0, (node) => {
+	$.async(node, [$$script.ready[0]], void 0, (node) => {
 		var consequent = ($$anchor) => {
 			var text = $.text('foo');
 
@@ -41,7 +49,7 @@ export default function Async_if_chain($$anchor) {
 
 	var node_1 = $.sibling(node, 2);
 
-	$.async(node_1, [$$promises[0]], [() => foo], (node_1, $$condition) => {
+	$.async(node_1, [$$script.ready[0]], [() => foo], (node_1, $$condition) => {
 		var consequent_2 = ($$anchor) => {
 			var text_3 = $.text('foo');
 
@@ -92,7 +100,7 @@ export default function Async_if_chain($$anchor) {
 
 	$.async(
 		node_3,
-		[$$promises[0]],
+		[$$script.ready[0]],
 		[
 			async () => {
 				try {
@@ -121,7 +129,7 @@ export default function Async_if_chain($$anchor) {
 
 				$.async(
 					node_4,
-					[$$promises[0]],
+					[$$script.ready[0]],
 					[
 						async () => {
 							try {
@@ -199,7 +207,7 @@ export default function Async_if_chain($$anchor) {
 
 	var node_6 = $.sibling(node_5, 2);
 
-	$.async(node_6, [$$promises[0]], void 0, (node_6) => {
+	$.async(node_6, [$$script.ready[0]], void 0, (node_6) => {
 		var consequent_11 = ($$anchor) => {
 			var text_15 = $.text('foo');
 
@@ -219,7 +227,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_6, ($$render) => {
-			if ($.get(blocking) > 10) $$render(consequent_11); else if ($.get(blocking) > 5) $$render(consequent_12, 1); else $$render(alternate_6, -1);
+			if ($.get($.script_binding($$script, 0)) > 10) $$render(consequent_11); else if ($.get($.script_binding($$script, 0)) > 5) $$render(consequent_12, 1); else $$render(alternate_6, -1);
 		});
 	});
 

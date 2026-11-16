@@ -1,31 +1,21 @@
-/** @import { Derived, Effect, Source, TemplateNode, Value } from '#client' */
+/** @import { Derived, Effect, ScriptReadiness, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
 import {
 	ASYNC,
 	DESTROYED,
 	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT,
+	EFFECT_OFFSCREEN,
 	SCRIPT_EFFECT,
 	STALE_REACTION
 } from '../constants.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { active_effect, abort_controller, get, get_abort_signal, untrack } from '../runtime.js';
+import { active_effect, abort_controller, get, set_active_effect, untrack } from '../runtime.js';
 import { current_batch, merge_requests } from './batch.js';
 import { capture, increment_pending, merge_target, unset_context } from './async.js';
-import { async_effect, block, branch, render_effect, teardown } from './effects.js';
+import { async_effect, block, branch, destroy_effect, teardown } from './effects.js';
 import { derived } from './deriveds.js';
 import { source } from './sources.js';
 import { has_error_boundary, invoke_error_boundary } from '../error-handling.js';
-import { deferred } from '../../shared/utils.js';
-import {
-	hydrate_next,
-	hydrate_node,
-	hydrating,
-	set_hydrate_node,
-	set_hydrating,
-	skip_nodes
-} from '../dom/hydration.js';
-import { assign_nodes } from '../dom/template.js';
 
 /**
  * This is deliberately a suffix-initialization kernel, not a second component runtime.
@@ -33,16 +23,19 @@ import { assign_nodes } from '../dom/template.js';
  * locals. In particular, no user code resumes inside a thunk after an await.
  * Attempt object identity is the generation token; snapshots are immutable publications.
  *
- * @typedef {'async' | 'derived' | 'local'} ScriptKind
- * @typedef {{ attempt: ScriptAttempt, progress: number, values: any[], errors: Map<number, unknown>, error: { value: unknown } | null }} ScriptSnapshot
+ * @typedef {'async' | 'derived' | 'local' | 'await' | 'statement'} ScriptKind
+ * @typedef {{ value: unknown }} ScriptFailure
+ * @typedef {{ attempt: ScriptAttempt, progress: number, values: any[], errors: Map<number, ScriptFailure>, error: ScriptFailure | null }} ScriptSnapshot
  * @typedef {Object} Script
- * @property {(bindings: Value[]) => Array<() => any>} factory
+ * @property {(bindings: Value[]) => Array<(() => any) | null>} factory
  * @property {ScriptKind[]} kinds
+ * @property {Map<number, [number, number]>} groups
  * @property {Source<ScriptSnapshot | null>} selection
+ * @property {Map<number, Source>} producer_values
  * @property {Source<any[] | null>} locals
  * @property {Derived<ScriptAttempt | null>} selected
  * @property {Derived<boolean>[]} available
- * @property {Derived<boolean>[]} ready
+ * @property {ScriptReadiness[]} ready
  * @property {Derived[]} bindings
  * @property {Effect} effect
  * @property {ScriptAttempt | null} sealed
@@ -52,18 +45,19 @@ import { assign_nodes } from '../dom/template.js';
  * @typedef {Object} ScriptAttempt
  * @property {Script} script
  * @property {Batch} batch
- * @property {Array<() => any>} thunks
+ * @property {Array<(() => any) | null>} thunks
  * @property {ScriptAttempt} environment
+ * @property {Effect} scope
  * @property {'pending' | 'succeeded' | 'failed' | 'cancelled'} outcome
  * @property {ScriptSnapshot} snapshot
+ * @property {Set<ScriptFailure>} reported
  * @property {() => void} finish
- * @property {Promise<void>} done
  *
  * @typedef {Object} ScriptRun
  * @property {ScriptAttempt} attempt
  * @property {Batch} batch
- * @property {AbortController} controller
- * @property {Promise<void>} done
+ * @property {number} site
+ * @property {AbortController | null} controller
  * @property {boolean} active
  * @property {() => void} finish
  */
@@ -72,12 +66,13 @@ import { assign_nodes } from '../dom/template.js';
  * Allocate the stable shell once. Each admitted batch gets a fresh factory environment,
  * but producer effects and public projections keep their identity for its whole lifetime.
  *
- * @param {(bindings: Value[]) => Array<() => any>} factory
+ * @param {(bindings: Value[]) => Array<(() => any) | null>} factory
  * @param {ScriptKind[]} kinds
  * @param {number[]} checkpoints The original coarse checkpoint of each declaration
+ * @param {Array<[number, number, number]>} groups Atomic synchronous groups: start, exclusive end, thunk index
  * @returns {Script}
  */
-export function script_replay(factory, kinds, checkpoints) {
+export function script_replay(factory, kinds, checkpoints, groups = []) {
 	// A null baseline can be undone by another view, unlike UNINITIALIZED. ASYNC marks
 	// these writes as produced results: a rebase must not replace a fork's private frame.
 	var selection = source(/** @type {ScriptSnapshot | null} */ (null));
@@ -88,7 +83,9 @@ export function script_replay(factory, kinds, checkpoints) {
 	var script = {
 		factory,
 		kinds,
+		groups: new Map(groups.map(([start, end, thunk]) => [start, [end, thunk]])),
 		selection,
+		producer_values: new Map(),
 		locals: source(/** @type {any[] | null} */ (null)),
 		selected,
 		available: [],
@@ -101,6 +98,11 @@ export function script_replay(factory, kinds, checkpoints) {
 	};
 
 	for (let i = 0; i < kinds.length; i++) {
+		if (kinds[i] === 'async') {
+			var value = source(null);
+			value.f |= ASYNC;
+			script.producer_values.set(i, value);
+		}
 		script.available.push(
 			derived(() => {
 				var snapshot = get(selection);
@@ -112,11 +114,11 @@ export function script_replay(factory, kinds, checkpoints) {
 				if (kinds[i] === 'derived') {
 					var attempt = get(selected);
 					if (attempt === null) throw UNINITIALIZED;
-					return attempt.thunks[i]();
+					return /** @type {() => any} */ (attempt.thunks[i])();
 				}
 
 				var snapshot = get(selection);
-				if (kinds[i] === 'local') {
+				if (kinds[i] !== 'async') {
 					var locals = get(script.locals);
 					// Publishing another view cannot itself supersede this fork's cached
 					// failure. Keep its failed expression's local inputs until a genuine
@@ -124,20 +126,23 @@ export function script_replay(factory, kinds, checkpoints) {
 					var failed_fork =
 						snapshot !== null &&
 						snapshot.error !== null &&
-						merge_target(snapshot.attempt.batch).is_fork;
+						(merge_target(snapshot.attempt.batch).is_fork ||
+							merge_target(snapshot.attempt.batch).fork_commit_waiters.size > 0);
 					if (locals !== null && !failed_fork) return locals[i];
 				}
 
 				if (snapshot === null || snapshot.progress <= i) throw UNINITIALIZED;
-				if (snapshot.errors.has(i)) throw snapshot.errors.get(i);
-				return snapshot.values[i];
+				if (snapshot.errors.has(i)) throw snapshot.errors.get(i)?.value;
+				return kinds[i] === 'async'
+					? get(/** @type {Source} */ (script.producer_values.get(i)))
+					: snapshot.values[i];
 			})
 		);
 	}
 
 	for (let checkpoint = 0; checkpoint <= Math.max(-1, ...checkpoints); checkpoint++) {
 		const last = checkpoints.lastIndexOf(checkpoint);
-		script.ready.push(
+		var ready = /** @type {ScriptReadiness} */ (
 			derived(() => {
 				var snapshot = get(selection);
 				return (
@@ -147,6 +152,10 @@ export function script_replay(factory, kinds, checkpoints) {
 				);
 			})
 		);
+		ready.kind = 'script';
+		ready.script = script;
+		ready.checkpoint = last;
+		script.ready.push(ready);
 	}
 
 	block(() => {
@@ -158,7 +167,10 @@ export function script_replay(factory, kinds, checkpoints) {
 	// Siblings of the scheduler, not disposable children of one of its executions.
 	// Even sites with no dependencies keep an effect, rather than the async_derived fast path.
 	for (let i = 0; i < kinds.length; i++) {
-		async_effect(() => run_site(script, i));
+		const site = i;
+		async_effect(() => run_site(script, site));
+		var group = script.groups.get(site);
+		if (group) i = group[0] - 1;
 	}
 
 	teardown(() => {
@@ -192,16 +204,19 @@ function ensure_attempt(script, batch) {
 	var established = script.sealed;
 	var values = snapshot.values.slice();
 	for (var i = 0; i < script.kinds.length; i++) {
-		if (script.kinds[i] === 'local') values[i] = established.snapshot.values[i];
+		if (script.kinds[i] !== 'async' && script.kinds[i] !== 'derived') {
+			values[i] = established.snapshot.values[i];
+		}
 	}
 	attempt = {
 		script,
 		batch,
 		thunks: established.thunks,
 		environment: established.environment,
+		scope: established.scope,
 		outcome: 'succeeded',
+		reported: new Set(),
 		snapshot: /** @type {ScriptSnapshot} */ (/** @type {unknown} */ (null)),
-		done: Promise.resolve(),
 		finish: () => {}
 	};
 	attempt.snapshot = {
@@ -218,11 +233,24 @@ function ensure_attempt(script, batch) {
 }
 
 /** @param {Script} script @param {Batch} batch */
+function create_scope(script, batch) {
+	var previous = active_effect;
+	set_active_effect(script.effect.parent);
+	try {
+		var scope = branch(() => {});
+		scope.f |= EFFECT_OFFSCREEN;
+		batch.unskip_new_effect(scope);
+		return scope;
+	} finally {
+		set_active_effect(previous);
+	}
+}
+
+/** @param {Script} script @param {Batch} batch */
 function start_attempt(script, batch) {
 	var previous = batch.script_initializers.get(script.effect);
 	if (previous) retire_attempt(previous);
 
-	var completion = deferred();
 	var decrement = increment_pending();
 	var finished = false;
 	/** @type {ScriptAttempt} */
@@ -231,14 +259,14 @@ function start_attempt(script, batch) {
 		batch,
 		thunks: [],
 		environment: /** @type {ScriptAttempt} */ (/** @type {unknown} */ (null)),
+		scope: create_scope(script, batch),
 		outcome: 'pending',
+		reported: new Set(),
 		snapshot: /** @type {ScriptSnapshot} */ (/** @type {unknown} */ (null)),
-		done: completion.promise,
 		finish: () => {
 			if (finished) return;
 			finished = true;
 			decrement();
-			completion.resolve();
 		}
 	};
 	attempt.environment = attempt;
@@ -247,10 +275,14 @@ function start_attempt(script, batch) {
 	batch.script_initializers.set(script.effect, attempt);
 	publish(attempt, attempt.snapshot);
 
+	var owner = active_effect;
+	set_active_effect(attempt.scope);
 	try {
 		attempt.thunks = untrack(() => script.factory(script.bindings));
 	} catch (error) {
 		fail(attempt, error);
+	} finally {
+		set_active_effect(owner);
 	}
 	return attempt;
 }
@@ -272,14 +304,15 @@ function run_site(script, site) {
 	var snapshot = /** @type {ScriptSnapshot} */ (untrack(() => get(script.selection)));
 	if (snapshot.progress <= site && site > 0 && !get(script.available[site - 1])) return;
 	var kind = script.kinds[site];
+	var group = script.groups.get(site);
 
-	if (kind === 'derived') {
+	if (kind === 'derived' && !group) {
 		if (snapshot.progress <= site && snapshot.error === null) {
 			complete(attempt, snapshot, site, undefined);
 		}
 		return;
 	}
-	if (kind === 'local' && script.sealed !== null && snapshot.progress > site) return;
+	if (kind !== 'async' && script.sealed !== null && snapshot.progress > site) return;
 
 	// An already-observed prefix changed while later initialization was unfinished.
 	// Never combine its old locals with new producer values. After sealing, locals are
@@ -289,29 +322,33 @@ function run_site(script, site) {
 		return;
 	}
 
-	var effect = /** @type {Effect} */ (active_effect);
-	var signal = get_abort_signal(effect);
+	// Replacing work within one view always retires that run. Independent real
+	// views remain independent unless user code requested an abort signal.
+	for (const previous of script.runs) {
+		if (previous.site === site && merge_target(previous.batch) === batch) {
+			previous.finish();
+			previous.controller?.abort(STALE_REACTION);
+		}
+	}
 	var restore = capture();
 	var decrement = increment_pending();
-	var completion = deferred();
 	/** @type {ScriptRun} */
 	var run = {
 		attempt,
 		batch,
-		controller: /** @type {AbortController} */ (abort_controller),
-		done: completion.promise,
+		site,
+		controller: null,
 		active: true,
 		finish: () => {
 			if (!run.active) return;
 			run.active = false;
 			script.runs.delete(run);
 			decrement();
-			completion.resolve();
 		}
 	};
 	script.runs.add(run);
 
-	signal.addEventListener('abort', () => {
+	function handle_abort() {
 		run.finish();
 		var target = merge_target(batch);
 		if (
@@ -324,11 +361,11 @@ function run_site(script, site) {
 		) {
 			merge_requests.add(target);
 		}
-	});
+	}
 
 	/** @param {any} value @param {boolean} failed */
 	function settle(value, failed) {
-		if (!run.active || signal.aborted || attempt.outcome === 'cancelled') return;
+		if (!run.active || run.controller?.signal.aborted || attempt.outcome === 'cancelled') return;
 		var target = merge_target(batch);
 		if (!target.linked || target.scripts_discarded || (script.effect.f & DESTROYED) !== 0) {
 			run.finish();
@@ -342,7 +379,7 @@ function run_site(script, site) {
 			if (failed) {
 				if (value !== STALE_REACTION && value !== UNINITIALIZED) fail(attempt, value, site);
 			} else {
-				complete(attempt, selected, site, value);
+				complete(attempt, selected, site, value, group?.[0]);
 			}
 		} finally {
 			run.finish();
@@ -350,33 +387,60 @@ function run_site(script, site) {
 		}
 	}
 
+	var owner = active_effect;
+	// Keep dependency/abort identity on the stable producer reaction, but anything
+	// created by user code belongs to this attempt, never another view's producer run.
+	set_active_effect(attempt.scope);
 	try {
 		// Plain snapshots track their prefix inputs until sealing too. Their result is
 		// published in a microtask, after the effect has recorded those input versions,
 		// so publishing the selection cannot invalidate its own in-progress reads.
-		Promise.resolve(attempt.thunks[site]()).then(
+		var thunk = /** @type {() => any} */ (attempt.thunks[group?.[1] ?? site]);
+		var promise = Promise.resolve(kind === 'statement' && !group ? untrack(thunk) : thunk());
+		run.controller = abort_controller;
+		if (run.controller !== null) {
+			run.controller.signal.addEventListener('abort', handle_abort);
+			if (run.controller.signal.aborted) handle_abort();
+		}
+		promise.then(
 			(value) => settle(value, false),
 			(error) => settle(error, true)
 		);
 	} catch (error) {
 		// An unavailable projection is a tracked suspension, not a user error or a value.
 		// The dependency that suspended the site will wake this same stable producer.
-		try {
-			if (error !== UNINITIALIZED) fail(attempt, error, site);
-		} finally {
+		if (error === UNINITIALIZED) {
 			run.finish();
+		} else {
+			run.controller = abort_controller;
+			run.controller?.signal.addEventListener('abort', handle_abort);
+			if (run.controller?.signal.aborted) handle_abort();
+			Promise.resolve().then(() => settle(error, true));
 		}
+	} finally {
+		set_active_effect(owner);
 	}
 }
 
-/** @param {ScriptAttempt} attempt @param {ScriptSnapshot} snapshot @param {number} site @param {any} value */
-function complete(attempt, snapshot, site, value) {
+/** @param {ScriptAttempt} attempt @param {ScriptSnapshot} snapshot @param {number} site @param {any} value @param {number} [end] */
+function complete(attempt, snapshot, site, value, end) {
 	var values = snapshot.values.slice();
-	values[site] = value;
-	var progress = Math.max(snapshot.progress, site + 1);
 	var errors = new Map(snapshot.errors);
-	errors.delete(site);
-	var error = errors.size > 0 ? { value: errors.values().next().value } : null;
+	var last = end ?? site + 1;
+	for (var i = site; i < last; i++) {
+		var result = end === undefined ? value : value[i - site];
+		var signal = attempt.script.producer_values.get(i);
+		if (signal) {
+			// Only a result produced by this view gets private provenance. Merely
+			// adopting the established instance must not pin all its inherited values.
+			merge_target(attempt.batch).capture(signal, result, signal.equals(result));
+		} else {
+			values[i] = result;
+		}
+		errors.delete(i);
+	}
+	var progress = Math.max(snapshot.progress, last);
+	var error = errors.values().next().value ?? null;
 	var next = { attempt, progress, values, errors, error };
 
 	publish(attempt, next);
@@ -391,12 +455,23 @@ function complete(attempt, snapshot, site, value) {
 function fail(attempt, error, site = -1) {
 	attempt.outcome = 'failed';
 	var errors = new Map(attempt.snapshot.errors);
-	errors.set(site, error);
-	publish(attempt, { ...attempt.snapshot, errors, error: { value: errors.values().next().value } });
+	var failure = { value: error };
+	errors.set(site, failure);
+	publish(attempt, { ...attempt.snapshot, errors, error: errors.values().next().value ?? null });
 	attempt.finish();
 
 	var batch = merge_target(attempt.batch);
-	if (!batch.is_fork) invoke_error_boundary(error, attempt.script.effect);
+	if (!batch.is_fork) {
+		// Handled failures are selected at the real commit, not captured in an early
+		// callback that could outlive a successful replacement while siblings wait.
+		if (batch.fork_commit_waiters.size > 0 && has_error_boundary(attempt.script.effect)) return;
+		attempt.reported.add(failure);
+		try {
+			invoke_error_boundary(error, attempt.script.effect);
+		} catch (error) {
+			if (!batch.reject_fork_commit(error)) throw error;
+		}
+	}
 }
 
 /** @param {ScriptAttempt} attempt */
@@ -407,8 +482,11 @@ function retire_attempt(attempt) {
 	for (const run of attempt.script.runs) {
 		if (run.attempt === attempt) {
 			run.finish();
-			run.controller.abort(STALE_REACTION);
+			run.controller?.abort(STALE_REACTION);
 		}
+	}
+	if (attempt.scope !== attempt.script.sealed?.scope && (attempt.scope.f & DESTROYED) === 0) {
+		destroy_effect(attempt.scope);
 	}
 }
 
@@ -425,12 +503,33 @@ export function merge_scripts(target, incoming) {
 		if (losing && losing !== attempt) retire_attempt(losing);
 		target.script_initializers.set(effect, attempt);
 		attempt.batch = target;
+		target.unskip_effect(attempt.scope);
 	}
 	incoming.script_initializers.clear();
 }
 
 /** Called at the actual publication point, not whenever a batch stops waiting. @param {Batch} batch */
 export function commit_scripts(batch) {
+	// Read the current outcome only at actual publication. A handled speculative
+	// failure can be superseded while unrelated work is pending, without a sticky
+	// boundary callback capturing the old error.
+	for (const attempt of [...batch.script_initializers.values()]) {
+		var failure = attempt.snapshot.error;
+		if (
+			failure !== null &&
+			!attempt.reported.has(failure) &&
+			attempt.outcome === 'failed' &&
+			!batch.is_skipped(attempt.script.effect)
+		) {
+			attempt.reported.add(failure);
+			try {
+				invoke_error_boundary(failure.value, attempt.script.effect);
+			} catch (error) {
+				if (!batch.reject_fork_commit(error)) throw error;
+				return false;
+			}
+		}
+	}
 	for (const [effect, attempt] of batch.script_initializers) {
 		if (batch.is_skipped(effect)) {
 			retire_attempt(attempt);
@@ -441,65 +540,34 @@ export function commit_scripts(batch) {
 		var script = attempt.script;
 		if (script.sealed === null) {
 			script.sealed = attempt;
+			attempt.scope.f &= ~EFFECT_OFFSCREEN;
 			// Established plain locals are lifetime state, not speculative producer results.
 			// Publishing them separately leaves cached producer projection versions intact.
 			batch.capture(script.locals, attempt.snapshot.values, false);
+		} else if (attempt.scope !== script.sealed.scope) {
+			// Committing an older successful fork adopts results, not a second component
+			// lifetime. Its speculative registrations never mount beside the winner's.
+			destroy_effect(attempt.scope);
+			attempt.scope = script.sealed.scope;
 		}
 		batch.script_initializers.delete(effect);
 		if (attempt !== script.sealed) script.attempts.delete(attempt);
 	}
-}
-
-/**
- * A fork commit waits on this fork's current generations before making its writes real.
- * This also covers rejection *after* commit() was requested; a cached failure is never
- * retried just to discover it again. Replacement settles the old waiter and loops.
- * @param {Batch} batch
- */
-export async function prepare_script_commit(batch) {
-	while (batch.linked) {
-		check_script_errors(batch, false);
-		var pending = script_waiters(batch);
-		if (pending.length === 0) return;
-		// Wake on each outcome, so one fatal error cannot be hidden behind a pending sibling.
-		await Promise.race(pending);
-	}
-}
-
-/**
- * Recheck after the await, then route handled errors without another suspension before
- * fork publication. No failed-branch callback is installed while a sibling is pending:
- * a genuinely superseding producer can still replace the cached failure during the wait.
- * @param {Batch} batch
- */
-export function finalize_script_commit(batch) {
-	check_script_errors(batch, false);
-	if (script_waiters(batch).length > 0) return false;
-	check_script_errors(batch, true);
 	return true;
 }
 
-/** @param {Batch} batch */
-function script_waiters(batch) {
-	/** @type {Promise<void>[]} */
-	var pending = [];
-	for (const attempt of batch.script_initializers.values()) {
-		if (batch.is_skipped(attempt.script.effect)) continue;
-		if (attempt.outcome === 'pending') pending.push(attempt.done);
-		for (const run of attempt.script.runs) {
-			if (merge_target(run.batch) === batch) pending.push(run.done);
-		}
-	}
-	return pending;
-}
-
-/** @param {Batch} batch @param {boolean} handle */
-function check_script_errors(batch, handle) {
+/**
+ * Reject already-cached unhandled failure before applying any speculative writes.
+ * Pending work does not delay publication of a pending boundary. Failures occurring
+ * before the first real commit are instead delivered to Batch.fork_commit_waiters.
+ * @param {Batch} batch
+ */
+export function prepare_script_commit(batch) {
 	for (const attempt of batch.script_initializers.values()) {
 		if (
 			attempt.outcome !== 'failed' ||
 			batch.is_skipped(attempt.script.effect) ||
-			(!handle && has_error_boundary(attempt.script.effect))
+			has_error_boundary(attempt.script.effect)
 		)
 			continue;
 
@@ -507,62 +575,10 @@ function check_script_errors(batch, handle) {
 		try {
 			invoke_error_boundary(attempt.snapshot.error?.value, attempt.script.effect);
 		} catch (error) {
-			// Fatal cached failure must not wait for an unrelated never-settling
-			// initializer. Disposal retires sibling work before callbacks run.
 			batch.discard();
 			throw error;
 		} finally {
 			batch.deactivate();
 		}
 	}
-}
-
-/** @param {(...values: any[]) => void} fn @param {Array<() => any>} sync @param {Value<boolean>[]} readies */
-export function script_template_effect(fn, sync = [], readies = []) {
-	var values = sync.map(derived);
-	render_effect(() => {
-		for (const ready of readies) if (!get(ready)) return;
-		fn(...values.map(get));
-	}, EFFECT_PRESERVED);
-}
-
-/** @param {TemplateNode} anchor @param {Value<boolean>[]} readies @param {(anchor: TemplateNode) => void} render */
-export function script_async(anchor, readies, render) {
-	var was_hydrating = hydrating;
-	var previous = hydrate_node;
-	if (was_hydrating) {
-		hydrate_next();
-		var end = skip_nodes(false);
-		assign_nodes(anchor, end);
-		previous = hydrate_node;
-		set_hydrate_node(end);
-	}
-
-	/** @type {Effect | null} */
-	var content = null;
-	block(() => {
-		var batch = /** @type {Batch} */ (current_batch);
-		for (const ready of readies) {
-			if (!get(ready)) {
-				if (content !== null) batch.skip_effect(content);
-				return;
-			}
-		}
-
-		if (content !== null) {
-			batch.unskip_effect(content);
-			batch.revalidate_branch(content);
-			return;
-		}
-
-		if (was_hydrating) {
-			set_hydrating(true);
-			set_hydrate_node(previous);
-		}
-		try {
-			content = branch(() => render(anchor));
-		} finally {
-			if (was_hydrating) set_hydrating(false);
-		}
-	}, EFFECT_TRANSPARENT | EFFECT_PRESERVED);
 }

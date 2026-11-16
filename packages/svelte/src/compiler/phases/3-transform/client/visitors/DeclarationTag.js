@@ -75,9 +75,7 @@ export function add_async_declaration(context, metadata, ids, assignments, kind 
 		.map((dep) => dep.blocker)
 		.filter((b) => b !== null && b.object !== context.state.async_consts?.id);
 
-	if (blockers.length === 1) {
-		run.thunks.push(b.thunk(b.member(/** @type {Expression} */ (blockers[0]), 'promise')));
-	} else if (blockers.length > 0) {
+	if (blockers.length > 0) {
 		run.thunks.push(b.thunk(b.call('$.wait', b.array(blockers))));
 	}
 

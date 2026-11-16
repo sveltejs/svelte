@@ -1,31 +1,53 @@
 /** @import * as ESTree from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
-/** @import { ComponentAnalysis } from '../types.js' */
+/** @import { ComponentAnalysis, ScriptReplayStage } from '../types.js' */
+/** @import { Scope } from '../scope.js' */
 import { walk } from 'zimmerframe';
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../scope.js';
 import { is_custom_element_node } from '../nodes.js';
-import { has_await_expression } from '../../utils/ast.js';
+import { has_await_expression, object, unwrap_pattern } from '../../utils/ast.js';
+
+class UnsupportedScriptReplay extends Error {
+	/** @param {ESTree.Node | AST.SvelteNode | null} node @param {string} reason */
+	constructor(node, reason) {
+		super(reason);
+		this.node = node;
+	}
+}
 
 /**
- * This is intentionally a closed language subset, not a fallback to shared script
- * variables when a declaration or readiness consumer has not been implemented.
+ * Classify without changing analysis until the entire script/template is supported.
+ * The non-strict route is transitional while the remaining binding and readiness
+ * consumers migrate; strict mode makes that unsupported surface testable.
  *
  * @param {ComponentAnalysis} analysis
+ * @param {boolean} strict
  */
-export function analyze_script_replay(analysis) {
+export function analyze_script_replay(analysis, strict = true) {
+	try {
+		analyze_replay(analysis);
+	} catch (error) {
+		if (!(error instanceof UnsupportedScriptReplay)) throw error;
+		if (strict) {
+			e.options_invalid_value(
+				error.node && 'start' in error.node ? error.node : null,
+				`experimental.scriptReplay does not support ${error.message}`
+			);
+		}
+	}
+}
+
+/** @param {ComponentAnalysis} analysis */
+function analyze_replay(analysis) {
 	const { instance, instance_body } = analysis;
-	// There is no replay region in a synchronous wrapper component.
 	if (instance_body.async.length === 0) return;
 
-	/** @param {ESTree.Node | AST.SvelteNode | null} node @param {string} reason */
+	/** @param {ESTree.Node | AST.SvelteNode | null} node @param {string} reason @returns {never} */
 	function unsupported(node, reason) {
-		e.options_invalid_value(
-			node && 'start' in node ? node : null,
-			`experimental.scriptReplay does not support ${reason}`
-		);
+		throw new UnsupportedScriptReplay(node, reason);
 	}
 
 	if (!analysis.runes) unsupported(instance.ast, 'legacy components');
@@ -42,53 +64,65 @@ export function analyze_script_replay(analysis) {
 		suffix ||= has_await_expression(statement);
 		if (!suffix) {
 			prefix.push(statement);
-			if (statement.type !== 'VariableDeclaration' && statement.type !== 'FunctionDeclaration') {
-				unsupported(statement, 'non-declaration prefix statements');
-			}
 			continue;
 		}
 
-		if (statement.type !== 'VariableDeclaration' || statement.declarations.length !== 1) {
-			unsupported(statement, 'anything but single-declarator suffix declarations');
+		if (
+			statement.type !== 'ExpressionStatement' &&
+			(statement.type !== 'VariableDeclaration' || statement.declarations.length !== 1)
+		) {
+			unsupported(statement, 'anything but single-declarator suffix declarations and expressions');
 		}
 	}
 
-	/** @type {NonNullable<ComponentAnalysis['script_replay']>} */
-	const replay = {
-		id: analysis.root.unique('$$script'),
-		bindings: new Map()
-	};
+	/** @type {ScriptReplayStage[]} */
+	const stages = [];
+	/** @type {Map<Binding, ScriptReplayStage>} */
+	const bindings = new Map();
+	/** @type {Array<{ start: number; end: number }>} */
+	const groups = [];
 
 	for (const [checkpoint, group] of instance_body.async.entries()) {
+		const start = stages.length;
 		for (const node of group.nodes) {
-			if (node.type !== 'VariableDeclarator' || node.id.type !== 'Identifier' || !node.init) {
-				unsupported(node, 'destructuring or uninitialized suffix declarations');
-			}
+			/** @type {Binding | null} */
+			let binding = null;
+			/** @type {ScriptReplayStage['kind']} */
+			let kind = 'statement';
+			/** @type {ESTree.Expression} */
+			let expression;
 
-			const declaration =
-				/** @type {ESTree.VariableDeclarator & { id: ESTree.Identifier; init: ESTree.Expression }} */ (
-					node
-				);
-			const binding = /** @type {Binding} */ (instance.scope.get(declaration.id.name));
-			const rune = get_rune(declaration.init, instance.scope);
-			/** @type {'async' | 'derived' | 'local'} */
-			let kind = 'local';
-			let expression = declaration.init;
-
-			if (rune) {
-				if (rune !== '$derived') unsupported(declaration.init, `suffix ${rune} declarations`);
-				expression = /** @type {ESTree.Expression} */ (
-					/** @type {ESTree.CallExpression} */ (declaration.init).arguments[0]
-				);
-				kind = 'derived';
-				if (expression.type === 'AwaitExpression') {
-					kind = 'async';
-					expression = expression.argument;
+			if (node.type === 'VariableDeclarator') {
+				if (node.id.type !== 'Identifier' || !node.init) {
+					unsupported(node, 'destructuring or uninitialized suffix declarations');
 				}
+
+				binding = /** @type {Binding} */ (instance.scope.get(node.id.name));
+				const rune = get_rune(node.init, instance.scope);
+				kind = 'local';
+				expression = node.init;
+				if (rune) {
+					if (rune !== '$derived') unsupported(node.init, `suffix ${rune} declarations`);
+					expression = /** @type {ESTree.Expression} */ (
+						/** @type {ESTree.CallExpression} */ (node.init).arguments[0]
+					);
+					kind = 'derived';
+				}
+				if (binding.updated) unsupported(node, 'writes to replay bindings');
+			} else if (node.type === 'ExpressionStatement') {
+				expression = node.expression;
+			} else {
+				unsupported(node, 'suffix control flow');
 			}
 
+			if (expression.type === 'AwaitExpression') {
+				kind = kind === 'derived' ? 'async' : 'await';
+				expression = expression.argument;
+			}
 			if (has_await_expression(expression)) unsupported(expression, 'nested or inline awaits');
-			if (binding.updated) unsupported(declaration, 'writes to replay bindings');
+			if ((kind === 'local' || kind === 'await') && calls_state_mutator(expression, analysis)) {
+				unsupported(expression, 'state-mutating local or raw-await initializers');
+			}
 
 			walk(expression, null, {
 				CallExpression(node, { next }) {
@@ -112,22 +146,26 @@ export function analyze_script_replay(analysis) {
 				}
 			});
 
-			replay.bindings.set(binding, {
-				index: replay.bindings.size,
-				checkpoint,
-				kind,
-				expression
-			});
+			const stage = { index: stages.length, binding, checkpoint, kind, expression };
+			stages.push(stage);
+			if (binding) bindings.set(binding, stage);
 		}
+		if (!group.has_await) groups.push({ start, end: stages.length });
 	}
 
-	for (const { index, expression } of replay.bindings.values()) {
+	/** @type {Map<ScriptReplayStage, Set<ScriptReplayStage>>} */
+	const dependencies = new Map();
+	for (const stage of stages) {
+		const { index, expression } = stage;
+		const references = new Set();
+		dependencies.set(stage, references);
 		walk(expression, null, {
 			Identifier(node, { path }) {
 				const parent = path.at(-1);
 				if (parent && !is_reference(node, parent)) return;
 				const binding = instance.scope.get(node.name);
-				const dependency = binding && replay.bindings.get(binding);
+				const dependency = binding && bindings.get(binding);
+				if (dependency) references.add(dependency);
 				if (dependency && dependency.index >= index) {
 					unsupported(node, 'forward references to replay bindings');
 				}
@@ -135,11 +173,33 @@ export function analyze_script_replay(analysis) {
 		});
 	}
 
-	// Functions/arrows are normally hoisted out of the suffix by calculate_blockers.
-	// Do not accidentally leave one outside the fresh attempt environment.
+	for (const { start, end } of groups) {
+		/** @type {Set<ScriptReplayStage>} */
+		const deriveds_reading_locals = new Set();
+		for (const stage of stages.slice(start, end)) {
+			const references = /** @type {Set<ScriptReplayStage>} */ (dependencies.get(stage));
+			if (stage.kind === 'derived') {
+				if (
+					[...references].some(
+						(dependency) =>
+							(dependency.kind === 'local' && dependency.index >= start) ||
+							deriveds_reading_locals.has(dependency)
+					)
+				) {
+					deriveds_reading_locals.add(stage);
+				}
+			} else if ([...references].some((dependency) => deriveds_reading_locals.has(dependency))) {
+				// Reading this derived would consult a local projection before the group's
+				// atomic publication. Do not introduce a mutable staging cache to hide that.
+				unsupported(stage.expression, 'same-group local dependencies through deriveds');
+			}
+		}
+	}
+
+	// calculate_blockers normally hoists suffix functions. Do not put those outside
+	// the fresh factory without separately proving their closure/lifetime semantics.
 	for (const statement of instance_body.sync) {
 		if (!prefix.includes(statement) && statement.type !== 'ImportDeclaration') {
-			// A multi-declarator prefix is split by calculate_blockers.
 			const is_prefix_declaration =
 				statement.type === 'VariableDeclaration' &&
 				statement.declarations.every((declaration) =>
@@ -151,37 +211,15 @@ export function analyze_script_replay(analysis) {
 		}
 	}
 
-	/** @type {Map<ESTree.MemberExpression, ESTree.MemberExpression>} */
-	const blockers = new Map();
 	for (const binding of instance.scope.declarations.values()) {
 		if (binding.kind === 'store_sub') unsupported(binding.node, 'store subscriptions');
-		if (replay.bindings.has(binding)) {
+		if (bindings.has(binding)) {
 			for (const reference of binding.references) {
 				if (reference.path.some((node) => prefix.includes(/** @type {ESTree.Node} */ (node)))) {
 					unsupported(reference.node, 'prefix captures of replay bindings');
 				}
 			}
 		}
-
-		// Blockers describe readiness, including prefix bindings touched by a later
-		// call. They do not determine which bindings need per-attempt storage.
-		if (binding.blocker) {
-			let ready = blockers.get(binding.blocker);
-			if (!ready) {
-				ready = b.member(b.member(replay.id, 'ready'), binding.blocker.property, true);
-				blockers.set(binding.blocker, ready);
-			}
-			binding.blocker = ready;
-		}
-	}
-
-	/** @param {ESTree.Expression} expression */
-	function check_template_expression(expression) {
-		walk(expression, null, {
-			AwaitExpression(node) {
-				unsupported(node, 'template awaits');
-			}
-		});
 	}
 
 	walk(/** @type {AST.SvelteNode} */ (analysis.template.ast), null, {
@@ -194,7 +232,10 @@ export function analyze_script_replay(analysis) {
 					'RegularElement',
 					'Attribute',
 					'ExpressionTag',
-					'IfBlock'
+					'IfBlock',
+					'EachBlock',
+					'BindDirective',
+					'UseDirective'
 				].includes(node.type)
 			) {
 				unsupported(node, `template ${node.type}`);
@@ -202,20 +243,106 @@ export function analyze_script_replay(analysis) {
 			next();
 		},
 		RegularElement(node, { next }) {
-			// Custom-element attributes install their own promise-gated effect instead
-			// of using build_render_statement. Do not mix the two gate contracts.
 			if (is_custom_element_node(node)) unsupported(node, 'custom-element readiness');
 			next();
 		},
-		ExpressionTag(node) {
-			check_template_expression(node.expression);
-		},
+		// These expressions use the ordinary visitors and the runtime's common
+		// readiness-aware flatten/wait contract, including template async expressions.
+		ExpressionTag() {},
+		BindDirective() {},
+		UseDirective() {},
 		IfBlock(node, { visit }) {
-			check_template_expression(node.test);
 			visit(node.consequent);
 			if (node.alternate) visit(node.alternate);
+		},
+		EachBlock(node, { visit }) {
+			visit(node.body);
+			if (node.fallback) visit(node.fallback);
 		}
 	});
 
+	// Commit classification only after every check succeeds. In particular, never
+	// leave readiness expressions pointing at a replay script that was not emitted.
+	const replay = { id: analysis.root.unique('$$script'), bindings, stages, groups };
+	const blockers = new Set();
+	for (const binding of instance.scope.declarations.values()) {
+		if (!binding.blocker || blockers.has(binding.blocker)) continue;
+		blockers.add(binding.blocker);
+		// ExpressionMetadata caches blocker identities while analyzing e.g. else-if
+		// chains. Preserve that identity rather than leaving cached $$promises reads.
+		binding.blocker.object = b.member(replay.id, 'ready');
+	}
 	analysis.script_replay = replay;
+}
+
+/**
+ * Local/await inputs must be tracked until sealing. Unlike standalone statements,
+ * we cannot untrack an initializer merely to permit writes hidden in a helper.
+ * Keep statically known mutating helpers on their existing lowering for now.
+ * Imported/dynamic callees require a more general initialization reaction context.
+ *
+ * @param {ESTree.Expression} expression
+ * @param {ComponentAnalysis} analysis
+ */
+function calls_state_mutator(expression, analysis) {
+	/** @type {Set<ESTree.Node>} */
+	const seen = new Set();
+	let mutates = false;
+
+	/** @param {ESTree.Node} node @param {Scope} scope */
+	function visit(node, scope) {
+		if (seen.has(node) || mutates) return;
+		seen.add(node);
+		walk(
+			node,
+			{ scope },
+			{
+				_(node, context) {
+					if (mutates) return;
+					context.next({
+						scope:
+							analysis.instance.scopes.get(node) ??
+							analysis.module.scopes.get(node) ??
+							context.state.scope
+					});
+				},
+				AssignmentExpression(node, { state, next }) {
+					check_assignment(node.left, state.scope);
+					next();
+				},
+				UpdateExpression(node, { state, next }) {
+					check_assignment(node.argument, state.scope);
+					next();
+				},
+				CallExpression(node, { state, next }) {
+					if (node.callee.type === 'Identifier') {
+						const binding = state.scope.get(node.callee.name);
+						const initial = binding?.initial;
+						if (
+							binding &&
+							initial &&
+							['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(
+								initial.type
+							)
+						) {
+							visit(/** @type {ESTree.Node} */ (initial), binding.scope);
+						}
+					}
+					next();
+				}
+			}
+		);
+	}
+
+	/** @param {ESTree.Pattern | ESTree.Expression} pattern @param {Scope} scope */
+	function check_assignment(pattern, scope) {
+		for (const target of unwrap_pattern(/** @type {ESTree.Pattern} */ (pattern))) {
+			const node = object(target);
+			const binding = node && scope.get(node.name);
+			if (binding && ['state', 'raw_state', 'derived'].includes(binding.kind)) mutates = true;
+		}
+	}
+
+	visit(expression, analysis.instance.scope);
+	return mutates;
 }

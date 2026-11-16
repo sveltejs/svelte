@@ -163,8 +163,17 @@ export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
 
-export interface Blocker {
+export interface PromiseBlocker {
 	promise: Promise<any>;
 	settled: boolean;
 	failed: boolean;
 }
+
+/** A view-local script checkpoint, never a globally settled promise. */
+export interface ScriptReadiness extends Derived<boolean> {
+	kind: 'script';
+	script: import('./script-replay.js').Script;
+	checkpoint: number;
+}
+
+export type Blocker = PromiseBlocker | ScriptReadiness;

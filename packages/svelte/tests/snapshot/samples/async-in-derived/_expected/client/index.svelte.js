@@ -84,7 +84,7 @@ export default function Async_in_derived($$anchor, $$props) {
 			let x;
 
 			var promises_1 = $.run([
-				() => $$promises[2].promise,
+				() => $.wait([$$promises[2]]),
 				() => x = $.derived(() => $.get(no2))
 			]);
 		};

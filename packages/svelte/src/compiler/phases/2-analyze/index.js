@@ -948,8 +948,12 @@ export function analyze_component(root, source, options) {
 	// TODO
 	// analysis.stylesheet.warn_on_unused_selectors(analysis);
 
-	if (options.generate === 'client' && options.experimental.scriptReplay) {
-		analyze_script_replay(analysis);
+	if (
+		options.generate === 'client' &&
+		options.experimental.async &&
+		options.experimental.scriptReplay !== false
+	) {
+		analyze_script_replay(analysis, options.experimental.scriptReplay === true);
 	}
 
 	return analysis;

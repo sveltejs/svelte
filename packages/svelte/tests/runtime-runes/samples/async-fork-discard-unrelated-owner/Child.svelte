@@ -2,12 +2,12 @@
 	let { count, marker, load }: {
 		count: number;
 		marker: number;
-		load: (value: number) => Promise<number>;
+		load: (site: string, value: number) => Promise<number>;
 	} = $props();
 
-	const first = $derived(await load(count));
+	const first = $derived(await load('first', count));
 	const snapshot = marker;
-	const second = $derived(await load(first + 10));
+	const second = $derived(await load('second', first + 10));
 	console.log(`continued ${first} ${second} ${snapshot}`);
 </script>
 

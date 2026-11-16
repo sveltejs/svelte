@@ -1,9 +1,9 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-// The fork creates the shared script but is discarded before its first async
-// derived exists. Resuming the raw script await must select the adopting real
-// batch's view rather than creating fresh work for the discarded fork.
+// Each view starts its own raw script await. The fork is discarded before its
+// first async derived exists. Resolving the shared user promise must continue
+// only the live real attempt, never create fresh work for the discarded fork.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -19,7 +19,7 @@ export default test({
 		real.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
-		assert.deepEqual(logs.splice(0), []);
+		assert.deepEqual(logs.splice(0), ['begin']);
 
 		discard.click();
 		await tick();

@@ -6,12 +6,13 @@ import { test } from '../../test';
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
-		const [fork, discard, real, shift, shift_second] = target.querySelectorAll('button');
+		const [fork, discard, real, fork_first, real_first, real_second, discarded_second] =
+			target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('output');
 
 		fork.click();
 		await tick();
-		shift.click();
+		fork_first.click();
 		await tick();
 		real.click();
 		await tick();
@@ -20,17 +21,18 @@ export default test({
 		assert.htmlEqual(output.innerHTML, '');
 		assert.deepEqual(logs, [2, 3, 3]);
 
-		// Leave the fork's unresolved held=3 request at the front of the queue.
-		shift_second.click();
+		// Leave the fork's second(3) request unresolved; the real first(3)
+		// request has the same value but belongs to a different producer site.
+		real_first.click();
 		await tick();
 		assert.deepEqual(logs, [2, 3, 3, 4]);
-		shift_second.click();
+		real_second.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '4');
 		assert.deepEqual(logs, [2, 3, 3, 4]);
 
 		// A late result from the discarded fork must not replace the real value.
-		shift.click();
+		discarded_second.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '4');
 		assert.deepEqual(logs, [2, 3, 3, 4]);

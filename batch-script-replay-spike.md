@@ -1,5 +1,7 @@
 # Per-batch script replay: bounded spike
 
+> Historical checkpoint (`e29a81d3d0`). Default integration, subsequent fixes, and the passing full-suite result are recorded in [batch-script-replay-progress.md](batch-script-replay-progress.md). The results below describe the earlier opt-in spike, not the final integration state.
+
 ## Starting point and scope
 
 Inspected on 2026-11-16. The clean checkout was `0f5e2f8988c2bfa3eeae0a32c3b13496e61bba7e` on `batch-views-script-replay-plan`. Its only difference from `06910d5b2bd547e2bba7b0ffe5669dbf5f7b0a48` was `batch-script-replay-plan.md` (two plan commits). No handoff implementation was merged, reset to, or cherry-picked. Recovered test provenance and the untouched-runtime results are in [batch-script-replay-baseline.md](batch-script-replay-baseline.md).

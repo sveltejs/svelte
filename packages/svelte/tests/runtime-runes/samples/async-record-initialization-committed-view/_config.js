@@ -21,7 +21,9 @@ export default test({
 		first.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<b>0</b><p>pending</p>');
-		assert.deepEqual(logs, [0]);
+		// Both attempts await this user promise, then initialize in their own view.
+		// B's private load(1) must not expose its uncommitted count in A's output.
+		assert.deepEqual(logs, [0, 1]);
 
 		finish_update.click();
 		await tick();

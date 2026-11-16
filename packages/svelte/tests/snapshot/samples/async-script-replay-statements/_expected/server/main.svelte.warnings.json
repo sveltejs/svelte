@@ -1,0 +1,62 @@
+[
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `input`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/async-script-replay-statements/main.svelte",
+		"start": {
+			"line": 5,
+			"column": 12,
+			"character": 136
+		},
+		"end": {
+			"line": 5,
+			"column": 17,
+			"character": 141
+		},
+		"position": [
+			136,
+			141
+		],
+		"frame": "3:   const load = (value: number) => Promise.resolve(value);\n4:   console.log('prefix');\n5:   await load(input);\n                     ^\n6:   const snapshot = await load(input);\n7:   console.log(snapshot);"
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `input`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/async-script-replay-statements/main.svelte",
+		"start": {
+			"line": 6,
+			"column": 29,
+			"character": 173
+		},
+		"end": {
+			"line": 6,
+			"column": 34,
+			"character": 178
+		},
+		"position": [
+			173,
+			178
+		],
+		"frame": "4:   console.log('prefix');\n5:   await load(input);\n6:   const snapshot = await load(input);\n                                      ^\n7:   console.log(snapshot);\n8:   let value = $derived(await load(input + snapshot));"
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `value`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/async-script-replay-statements/main.svelte",
+		"start": {
+			"line": 9,
+			"column": 13,
+			"character": 271
+		},
+		"end": {
+			"line": 9,
+			"column": 18,
+			"character": 276
+		},
+		"position": [
+			271,
+			276
+		],
+		"frame": " 7:   console.log(snapshot);\n 8:   let value = $derived(await load(input + snapshot));\n 9:   console.log(value);\n                       ^\n10: </script>\n11: "
+	}
+]

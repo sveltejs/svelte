@@ -1,7 +1,12 @@
 import { afterEach, assert, beforeEach, describe, expect, it } from 'vitest';
 import { flushSync, fork, getAbortSignal } from '../../src/index-client';
 import { push, pop } from '../../src/internal/client/context';
-import { block, branch, effect_root } from '../../src/internal/client/reactivity/effects';
+import {
+	block,
+	branch,
+	effect_root,
+	template_effect
+} from '../../src/internal/client/reactivity/effects';
 import {
 	Batch,
 	clear,
@@ -13,8 +18,7 @@ import { source, set } from '../../src/internal/client/reactivity/sources';
 import {
 	script_replay,
 	script_binding,
-	script_value,
-	script_template_effect
+	script_value
 } from '../../src/internal/client/reactivity/script-replay';
 import { enable_async_mode_flag, disable_async_mode_flag } from '../../src/internal/flags';
 import type { Effect } from '../../src/internal/client/types';
@@ -107,7 +111,7 @@ function harness(
 									kinds.map((_, i) => i)
 								);
 								installations++;
-								script_template_effect(
+								template_effect(
 									() => {
 										renders.push([
 											get(script_binding(script, 0)),
@@ -119,6 +123,7 @@ function harness(
 											get(local)
 										]);
 									},
+									[],
 									[],
 									[script.ready[kinds.length - 1]]
 								);

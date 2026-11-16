@@ -19,11 +19,13 @@ export function transform_script_replay(context) {
 	/** @type {ESTree.Identifier[]} */
 	const locals = [];
 	/** @type {ESTree.Expression[]} */
-	const stages = [];
+	const thunks = [];
 	/** @type {ESTree.Expression[]} */
 	const kinds = [];
 	/** @type {ESTree.Expression[]} */
 	const checkpoints = [];
+	/** @type {ESTree.Expression[]} */
+	const groups = [];
 
 	for (const [binding, { index, kind }] of replay.bindings) {
 		const slot = b.literal(index);
@@ -36,24 +38,64 @@ export function transform_script_replay(context) {
 
 		context.state.transform[binding.node.name] = {
 			read: () =>
-				kind === 'local'
+				kind === 'local' || kind === 'await'
 					? b.call('$.script_value', replay.id, slot)
 					: b.call('$.get', b.call('$.script_binding', replay.id, slot))
 		};
 		if (kind === 'local') locals.push(binding.node);
 	}
 
-	for (const [binding, { kind, expression, checkpoint }] of replay.bindings) {
-		const value = /** @type {ESTree.Expression} */ (
-			context.visit(expression, { ...context.state, transform })
-		);
-		stages.push(b.arrow([], kind === 'local' ? b.assignment('=', binding.node, value) : value));
+	for (const { kind, expression, checkpoint } of replay.stages) {
+		// Initialization-only synchronous code runs in its original group below,
+		// never in independently scheduled callbacks with microtasks between them.
+		const value =
+			kind === 'local' || kind === 'statement'
+				? b.void0
+				: /** @type {ESTree.Expression} */ (
+						context.visit(expression, { ...context.state, transform })
+					);
+		thunks.push(b.arrow([], value));
 		kinds.push(b.literal(kind));
 		checkpoints.push(b.literal(checkpoint));
 	}
 
+	for (const { start, end } of replay.groups) {
+		const group_transform = { ...transform };
+		const stages = replay.stages.slice(start, end);
+		for (const { binding, kind } of stages) {
+			if (binding && kind === 'local')
+				group_transform[binding.node.name] = { read: (node) => node };
+		}
+
+		/** @type {ESTree.Statement[]} */
+		const statements = [];
+		/** @type {ESTree.Expression[]} */
+		const values = [];
+		for (const { binding, kind, expression } of stages) {
+			if (kind === 'derived') {
+				// Derived creation is lazy and retains the stable per-site reader above.
+				values.push(b.void0);
+				continue;
+			}
+			const value = /** @type {ESTree.Expression} */ (
+				context.visit(expression, { ...context.state, transform: group_transform })
+			);
+			if (binding) {
+				statements.push(b.stmt(b.assignment('=', binding.node, value)));
+				values.push(binding.node);
+			} else {
+				statements.push(b.stmt(b.call('$.untrack', b.arrow([], b.unary('void', value)))));
+				values.push(b.void0);
+			}
+		}
+		statements.push(b.return(b.array(values)));
+		// Runtime ABI: [startSite, endSiteExclusive, thunkIndex].
+		groups.push(b.array([b.literal(start), b.literal(end), b.literal(thunks.length)]));
+		thunks.push(b.arrow([], b.block(statements)));
+	}
+
 	/** @type {ESTree.Statement[]} */
-	const body = [b.return(b.array(stages))];
+	const body = [b.return(b.array(thunks))];
 	if (locals.length) {
 		body.unshift(
 			b.declaration(
@@ -70,7 +112,8 @@ export function transform_script_replay(context) {
 				'$.script_replay',
 				b.arrow([bindings], b.block(body)),
 				b.array(kinds),
-				b.array(checkpoints)
+				b.array(checkpoints),
+				b.array(groups)
 			)
 		)
 	];
