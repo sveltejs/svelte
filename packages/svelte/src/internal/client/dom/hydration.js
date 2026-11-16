@@ -5,7 +5,8 @@ import {
 	HYDRATION_END,
 	HYDRATION_ERROR,
 	HYDRATION_START,
-	HYDRATION_START_ELSE
+	HYDRATION_START_ELSE,
+	HYDRATION_START_FAILED
 } from '../../../constants.js';
 import * as w from '../warnings.js';
 import { get_next_sibling } from './operations.js';
@@ -98,6 +99,8 @@ export function skip_nodes(remove = true) {
 			} else if (
 				data === HYDRATION_START ||
 				data === HYDRATION_START_ELSE ||
+				// "[?" followed by the serialized error, for failed boundaries
+				data.startsWith(HYDRATION_START_FAILED) ||
 				// "[1", "[2", etc. for if blocks
 				(data[0] === '[' && !isNaN(Number(data.slice(1))))
 			) {
