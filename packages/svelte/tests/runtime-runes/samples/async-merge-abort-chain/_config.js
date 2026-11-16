@@ -26,7 +26,7 @@ export default test({
 		await tick();
 		assert.htmlEqual(
 			output.innerHTML,
-			'<p>value: 3 3</p><p>other: 3 3</p><span>3</span>0'
+			'<p>value: 3 3</p><p>other: 3 3</p><span>3</span> 0'
 		);
 
 		value_1.click();
@@ -37,7 +37,7 @@ export default test({
 		assert.deepEqual(logs, []);
 		assert.htmlEqual(
 			output.innerHTML,
-			'<p>value: 3 3</p><p>other: 3 3</p><span>3</span>0'
+			'<p>value: 3 3</p><p>other: 3 3</p><span>3</span> 0'
 		);
 	}
 });
