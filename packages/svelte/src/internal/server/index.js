@@ -123,7 +123,7 @@ export function css_props(renderer, is_html, props, component, dynamic = false) 
  * @param {Record<string, unknown>} attrs
  * @param {string} [css_hash]
  * @param {Record<string, boolean>} [classes]
- * @param {Record<string, string>} [styles]
+ * @param {Record<string, string> | [Record<string, string>, Record<string, string>]} [styles]
  * @param {number} [flags]
  * @returns {string}
  */
