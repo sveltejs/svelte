@@ -45,7 +45,7 @@ import {
 	destroy_effect_children,
 	teardown
 } from './effects.js';
-import { eager_effects, set_eager_effects, source } from './sources.js';
+import { eager_effects, set_eager_effects, source, internal_set } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
@@ -222,7 +222,7 @@ export function async_expression(fn, label, location) {
 			deferreds.delete(d);
 
 			if (error === OBSOLETE) {
-				batch.obsolete = true;
+				internal_set(batch.obsolete, true);
 				return;
 			}
 
@@ -274,7 +274,7 @@ export function async_derived(fn, label, location) {
 
 		block(() => {
 			try {
-				if (is_uninitialized(source) || (merge_target(batch) !== current_batch && !batch.obsolete)) {
+				if (is_uninitialized(source) || (merge_target(batch) !== current_batch && !get(batch.obsolete))) {
 					get(source);
 					return;
 				}

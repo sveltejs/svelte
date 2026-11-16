@@ -211,7 +211,7 @@ export class Batch {
 
 	linked = true;
 
-	obsolete = false;
+	obsolete = source(false);
 
 	/** @type {Batch | null} */
 	prev = null;
