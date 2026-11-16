@@ -50,7 +50,7 @@ import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
+import { batch_values, current_batch, merge_requests, view_batch, view_cache } from './batch.js';
 import { increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -153,9 +153,10 @@ export function async_expression(fn, label, location) {
 			var abort_signal = abort_controller?.signal;
 
 			abort_signal?.addEventListener('abort', () => {
-				// a future run aborted this one. merge the later batch into the earlier one
-				var later = /** @type {Batch} */ (current_batch);
-				console.log(`TODO merge ${later.id} into ${batch.id}`);
+				if (current_batch !== null) {
+					// a future run aborted this one. merge the later batch into the earlier one
+					merge_requests.add(merge_target(batch));
+				}
 			});
 
 			promise
@@ -271,7 +272,7 @@ export function async_derived(fn, label, location) {
 		const source = async_expression(fn, label, location);
 
 		block(() => {
-			if (is_uninitialized(source) || (batch !== current_batch && !batch.obsolete)) {
+			if (is_uninitialized(source) || (merge_target(batch) !== current_batch && !batch.obsolete)) {
 				get(source);
 				return;
 			}

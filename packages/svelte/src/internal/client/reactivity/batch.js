@@ -184,6 +184,9 @@ var flush_count = 0;
 /** Sources whose DEV update counts and stack traces need resetting after the flush. @type {Set<Value>} */
 export const source_stacks = new Set();
 
+/** @type {Set<Batch>} */
+export const merge_requests = new Set();
+
 /**
  * A set of signals we have already seen while traversing in `batch.mark`.
  * Not always set to balance the common case of sources only having a couple
@@ -504,7 +507,6 @@ export class Batch {
 	}
 
 	#process() {
-		console.group('#process', this.id);
 		current_batch = processing_batch = this;
 
 		// A different batch view may apply, even when processing continues within the same flush.
@@ -602,6 +604,29 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
+		if (merge_requests.size > 0) {
+			const sorted = Array.from(merge_requests).sort((a, b) => a.id - b.id);
+			merge_requests.clear();
+
+			this.#defer_effects(render_effects);
+			this.#defer_effects(effects);
+
+			/** @type {Batch} */
+			var target = this;
+			var i = sorted.length;
+
+			while (i--) {
+				var earlier = sorted[i];
+				earlier.#merge(target);
+				target = earlier;
+			}
+
+
+			target.#process();
+
+			return;
+		}
+
 		// if the batch has outstanding pending work, stash effects and bail
 		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
@@ -615,9 +640,6 @@ export class Batch {
 				/** @type {Batch} */ (/** @type {unknown} */ (current_batch)).#process();
 			}
 
-			console.log('deferred');
-			console.groupEnd();
-
 			return;
 		}
 
@@ -629,9 +651,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
-
-			console.log('merged');
-			console.groupEnd();
+			earlier_batch.#process();
 
 			return;
 		}
@@ -684,9 +704,6 @@ export class Batch {
 
 			next_batch.#process();
 		}
-
-		console.log('done');
-		console.groupEnd();
 	}
 
 	/**
@@ -830,6 +847,11 @@ export class Batch {
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
 			if (d) deferred.promise.then(d.resolve).catch(d.reject);
+
+			// if (d && d !== deferred) deferred.promise.then(d.resolve, d.reject);
+			// // The incoming run can still be pending. A subsequent replacement must reach
+			// // this deferred too, not just the older waiters to which it forwards its result.
+			// this.async_deriveds.set(effect, deferred);
 		}
 
 		for (const [reaction, record] of batch.records ?? []) {
@@ -874,9 +896,6 @@ export class Batch {
 		this.ondiscard(discard);
 		batch.merged = this;
 		batch.#unlink();
-
-		// processing re-validates everything that depends on the (now merged) writes of this batch
-		this.#process();
 	}
 
 	/**
