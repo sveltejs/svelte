@@ -318,6 +318,8 @@ For replay:
 
 Do not remove `#move_to_front` as a shortcut. Earlier investigation proved that disabling it leaks uncommitted state into committed output (`async-pending-boundary-committed-run-resolves-last`, both DOM and hydration). Reordering is part of the current view model, not the root cause of initialization ownership bugs.
 
+_User's edit: if there's another way to prevent uncommitted state leaking into committed output, without reordering batches, it's worth investigating._
+
 ## 7. Completion, publication, and existing forks
 
 **A batch committing is not an initializer finishing.** Pending boundaries let batches commit and remain alive while their scripts still await. Similarly, a fork can complete without publishing anything.
