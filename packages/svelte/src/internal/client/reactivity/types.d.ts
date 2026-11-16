@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch.js';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -163,8 +164,16 @@ export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
 
+/** The live owner of a component's shared async initialization. */
+export interface AsyncContext {
+	batch: Batch;
+	/** The script's pending-work tracker, used to identify batches waiting for it. */
+	effect: Effect;
+}
+
 export interface Blocker {
 	promise: Promise<any>;
 	settled: boolean;
 	failed: boolean;
+	context?: AsyncContext;
 }

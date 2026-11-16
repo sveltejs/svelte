@@ -1,7 +1,7 @@
 /** @import { Effect } from '#client' */
 /** @import { Boundary } from './dom/blocks/boundary.js' */
 import { DEV } from 'esm-env';
-import { FILENAME, HYDRATION_ERROR } from '../../constants.js';
+import { FILENAME, HYDRATION_ERROR, UNINITIALIZED } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
 import { BOUNDARY_EFFECT, REACTION_RAN, EFFECT, DESTROYED, DESTROYING } from './constants.js';
 import { define_property, get_descriptor } from '../shared/utils.js';
@@ -13,6 +13,10 @@ const adjustments = new WeakMap();
  * @param {unknown} error
  */
 export function handle_error(error) {
+	// An async dependency has no value in this view yet. Keep the reaction's dependencies
+	// (and cache the suspension on deriveds), but don't send it to an error boundary.
+	if (error === UNINITIALIZED) return error;
+
 	var effect = active_effect;
 
 	// for unowned deriveds, don't throw until we read the value (the error becomes their value)

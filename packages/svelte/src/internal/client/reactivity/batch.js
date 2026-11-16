@@ -73,6 +73,13 @@ export let current_batch = null;
  */
 export let processing_batch = null;
 
+/** Snapshot active batches before invoking callbacks that may discard them. @returns {Batch[]} */
+export function get_batches() {
+	var batches = [];
+	for (var batch = first_batch; batch !== null; batch = batch.next) batches.push(batch);
+	return batches;
+}
+
 /**
  * @typedef {Object} TeardownContext
  * @property {Map<Value, BatchValue>} reverted_values What teardowns see instead of the values sources hold: the values
@@ -211,6 +218,12 @@ export class Batch {
 
 	linked = true;
 
+	/** Discard is terminal, even while a shared script still holds its original context. */
+	discarded = false;
+
+	/** An unhandled speculative error is reported only when commit is requested. @type {{ error: unknown } | null} */
+	fatal_error = null;
+
 	obsolete = source(false);
 
 	/** @type {Batch | null} */
@@ -221,6 +234,12 @@ export class Batch {
 
 	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
 	async_deriveds = new Map();
+
+	/**
+	 * Speculative initialization errors, checked against their latest result on commit.
+	 * @type {Map<Source, Effect | null>}
+	 */
+	async_errors = new Map();
 
 	/**
 	 * The current values (and their versions) of any sources that are updated in this batch,
@@ -1050,6 +1069,10 @@ export class Batch {
 	}
 
 	discard() {
+		if (this.discarded) return;
+		this.discarded = true;
+		merge_requests.delete(this);
+		this.#commit_callbacks.clear();
 		this.#run_callbacks(this.#discard_callbacks);
 
 		for (const deferred of this.async_deriveds.values()) {
@@ -1057,6 +1080,16 @@ export class Batch {
 		}
 
 		this.#unlink();
+		this.prev = this.next = null;
+		this.folded = [];
+		this.current.clear();
+		this.previous.clear();
+		this.async_deriveds.clear();
+		this.async_errors.clear();
+		this.#scheduled.length = 0;
+		this.#unprocessed.clear();
+		this.#skipped_branches.clear();
+		this.#unskipped_branches.clear();
 		this.#deferred?.resolve();
 	}
 
@@ -1065,8 +1098,8 @@ export class Batch {
 		// in other words, their view of the world now includes the newly committed
 		// state (unless the batch in question has a more recent value for a given source),
 		// so everything that depends on it needs to be re-validated in their view
-		for (let batch = first_batch; batch !== null; batch = batch.next) {
-			if (batch === this) continue;
+		for (const batch of get_batches()) {
+			if (batch === this || !batch.linked) continue;
 
 			var is_earlier = batch.id < this.id;
 
@@ -1126,6 +1159,11 @@ export class Batch {
 		// only has writes again once that work resolves, which it then commits
 		this.current.clear();
 		this.previous.clear();
+	}
+
+	/** @param {Effect} effect */
+	has_pending(effect) {
+		return this.#pending.has(effect);
 	}
 
 	/**
@@ -1936,14 +1974,31 @@ export function fork(fn) {
 				e.fork_discarded();
 			}
 
+			if (batch.fatal_error !== null) {
+				batch.discard();
+				throw batch.fatal_error.error;
+			}
+
 			if (!batch.linked) {
 				// batch was made obsolete by later changes
 				committed = true;
 				return;
 			}
 
-			committed = true;
 			batch.is_fork = false;
+
+			try {
+				for (const [source, effect] of batch.async_errors) {
+					const result = batch.current.get(source);
+					if (result?.e) invoke_error_boundary(result.v, effect);
+				}
+			} catch (error) {
+				batch.fatal_error = { error };
+				batch.discard();
+				throw error;
+			}
+			batch.async_errors.clear();
+			committed = true;
 
 			// Apply the changes to the real world. They keep the versions they had in the fork,
 			// so that everything the fork computed remains valid (processing the batch
