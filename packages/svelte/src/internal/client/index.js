@@ -176,6 +176,7 @@ export {
 	child,
 	only_child,
 	first_child,
+	get_last_child,
 	sibling,
 	$window as window,
 	$document as document

@@ -503,7 +503,9 @@ export function build_component(node, component_name, loc, context) {
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(anchor, 'lastChild'))),
+			b.stmt(
+				fn(custom_renderer ? b.call('$.get_last_child', anchor) : b.member(anchor, 'lastChild'))
+			),
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
