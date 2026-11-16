@@ -127,13 +127,8 @@ function create_effect(type, fn) {
 	var e = effect;
 
 	if ((type & EFFECT) !== 0) {
-		if (collected_effects !== null) {
-			// created during traversal — collect and run afterwards
-			collected_effects.push(effect);
-		} else {
-			// schedule for later
-			Batch.ensure().schedule(effect);
-		}
+		// If created during traversal, collect and run afterwards, unless a boundary is pending.
+		Batch.ensure().schedule(effect, collected_effects);
 	} else if (fn !== null) {
 		try {
 			update_effect(effect);
