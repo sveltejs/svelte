@@ -621,9 +621,7 @@ export class Batch {
 				target = earlier;
 			}
 
-
 			target.#process();
-
 			return;
 		}
 
