@@ -156,7 +156,10 @@ export function async_expression(fn, label, location) {
 				if (current_batch !== null) {
 					// a future run aborted this one. merge the later batch into the earlier one
 					const target = merge_target(batch);
-					if (target !== current_batch && target.linked) merge_requests.add(target);
+
+					if (target !== current_batch && target.linked && !target.is_fork) {
+						merge_requests.add(target);
+					}
 				}
 			});
 
