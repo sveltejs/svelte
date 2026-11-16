@@ -1,42 +1,38 @@
-<script>
-	import { settled } from 'svelte';
+<script lang="ts">
 	import Child from './Child.svelte';
+
 	let visible = $state(false);
 	let a = $state(0);
 	let x = $state(0);
-	const queue = new Map();
+	const queue = new Map<string, PromiseWithResolvers<number>>();
 
-	function push(label, value, signal) {
-		const d = Promise.withResolvers();
+	function push(label: string, value: number, signal?: AbortSignal) {
+		const d = Promise.withResolvers<number>();
 		queue.set(`${label} ${value}`, d);
 		return d.promise;
 	}
 
-	export function first() {
-		visible = true;
-		a = 1;
-		return settled();
-	}
-	export function middle() {
-		x = 1;
-		return settled();
-	}
-	export function last() {
-		a = 2;
-		x = 2;
-		return settled();
-	}
-	export function resolve(label, value) {
+	function resolve(label: string, value: number) {
 		queue.get(`${label} ${value}`)?.resolve(value);
 	}
 </script>
 
-{#if x || visible}
-	<Child {a} {x} {push} />
-{/if}
+<button onclick={() => (visible = true, a = 1)}>first</button>
+<button onclick={() => (x = 1)}>middle</button>
+<button onclick={() => (a = 2, x = 2)}>last</button>
+<button onclick={() => resolve('value', 2)}>resolve value 2</button>
+<button onclick={() => resolve('gate', 2)}>resolve gate 2</button>
+<button onclick={() => resolve('gate', 1)}>resolve gate 1</button>
+<button onclick={() => resolve('value', 1)}>resolve value 1</button>
 
-{#if x}
-	<span>{await push('gate', x)}</span>
-{/if}
+<output>
+	{#if x || visible}
+		<Child {a} {x} {push} />
+	{/if}
 
-<output>{$effect.pending()}</output>
+	{#if x}
+		<span>{await push('gate', x)}</span>
+	{/if}
+
+	{$effect.pending()}
+</output>

@@ -1,19 +1,19 @@
-<script>
+<script lang="ts">
 	import Child from './Child.svelte';
 
 	let visible = $state(false);
 	let x = $state(0);
-	let gate = $state(false);
-	const queue = new Map();
+	let gate = $state<number | false>(false);
+	const queue = new Map<string, PromiseWithResolvers<number>>();
 
-	function push(label, value, signal) {
-		const d = Promise.withResolvers();
+	function push(label: string, value: number, signal?: AbortSignal) {
+		const d = Promise.withResolvers<number>();
 		// Intentionally ignore signal: stale results are automatically suppressed.
 		queue.set(`${label} ${value}`, d);
 		return d.promise;
 	}
 
-	function resolve(label, value) {
+	function resolve(label: string, value: number) {
 		queue.get(`${label} ${value}`)?.resolve(value);
 	}
 </script>

@@ -3,17 +3,20 @@ import { test } from '../../test';
 
 export default test({
 	mode: ['client'],
-	async test({ assert, instance, target, logs }) {
-		instance.show();
+	async test({ assert, target, logs }) {
+		const [show, update, value, gate] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('output');
+
+		show.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<i>pending</i>');
-		instance.update();
+		assert.htmlEqual(output.innerHTML, '<i>pending</i>');
+		update.click();
 		await tick();
-		instance.resolve('value', 2);
+		value.click();
 		await tick();
 		assert.deepEqual(logs.splice(0), ['continued value with 2 2']);
-		instance.resolve('gate', 2);
+		gate.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>value: 2 2</p><span>2</span>');
+		assert.htmlEqual(output.innerHTML, '<p>value: 2 2</p><span>2</span>');
 	}
 });
