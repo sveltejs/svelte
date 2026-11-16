@@ -15,13 +15,9 @@ export default test({
 		reject.click();
 		await tick();
 
-		// A skips the shared branch, but B still needs it. A's successful first value
-		// must be observed before B publishes its buffered rejection.
-		hide.click();
-		await tick();
-		resolve.click();
-		await tick();
-		assert.deepEqual(logs, [1]);
+		// B is merged into A, which means `value` throws and the error boundary appears
+		assert.deepEqual(logs, []);
+		assert.htmlEqual(output.innerHTML, '<p>0</p><p>failed: later</p>');
 
 		finish.click();
 		await tick();
