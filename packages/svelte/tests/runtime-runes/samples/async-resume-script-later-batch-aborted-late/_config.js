@@ -21,16 +21,17 @@ export default test({
 		await tick();
 		assert.deepEqual(logs.splice(0), ['first 2', 'second 2']);
 
-		// A's run was aborted, but its promise hasn't rejected yet, so the script still waits for A
+		// B supersedes 'second 1'
 		second_2.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
-		assert.deepEqual(logs.splice(0), []);
+		assert.deepEqual(logs.splice(0), ['continued with 1 2']);
 
+		// has no effect, batch B was merged into batch A making the rejection irrelevant
 		reject.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
-		assert.deepEqual(logs.splice(0), ['continued with 1 2']);
+		assert.deepEqual(logs.splice(0), []);
 
 		// B is done, and merged into A, which commits without continuing the script again
 		first_2.click();
