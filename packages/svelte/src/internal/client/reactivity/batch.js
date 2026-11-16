@@ -900,7 +900,7 @@ export class Batch {
 			var status = effect.f & (DIRTY | MAYBE_DIRTY);
 
 			if (status !== 0) {
-				this.#add_dirty_effect(effect, status);
+				this.#add_dirty_effect(effect, effect.dv === null ? MAYBE_DIRTY : status);
 
 				// mark as clean so they get scheduled if they depend on pending async state
 				set_signal_status(effect, CLEAN);
