@@ -1,5 +1,4 @@
 <script>
-	import { settled } from 'svelte';
 	import Child from './Child.svelte';
 
 	let visible = $state(false);
@@ -14,35 +13,33 @@
 		return d.promise;
 	}
 
-	export function show() {
-		visible = true;
-		x = 1;
-		return settled();
-	}
-
-	export function update() {
-		x++;
-		gate = x;
-		return settled();
-	}
-
-	export function hide() {
-		visible = gate = false;
-		return settled();
-	}
-
-	export function resolve(label, value) {
+	function resolve(label, value) {
 		queue.get(`${label} ${value}`)?.resolve(value);
 	}
 </script>
 
-{#if gate || visible}
-	<Child {x} {push} label="value" />
-{/if}
+<button onclick={() => (visible = true, x = 1)}>show</button>
+<button onclick={() => (x++, gate = x)}>update</button>
+<button onclick={() => (visible = gate = false)}>hide</button>
 
-{#if gate}
-	<Child {x} {push} label="other" />
-	<span>{await push('gate', x)}</span>
-{/if}
+<button onclick={() => resolve('value', 3)}>resolve value 3</button>
+<button onclick={() => resolve('other', 3)}>resolve other 3</button>
+<button onclick={() => resolve('gate', 3)}>resolve gate 3</button>
 
-<output>{$effect.pending()}</output>
+<button onclick={() => resolve('value', 1)}>resolve value 1</button>
+<button onclick={() => resolve('value', 2)}>resolve value 2</button>
+<button onclick={() => resolve('other', 2)}>resolve other 2</button>
+<button onclick={() => resolve('gate', 2)}>resolve gate 2</button>
+
+<output>
+	{#if gate || visible}
+		<Child {x} {push} label="value" />
+	{/if}
+
+	{#if gate}
+		<Child {x} {push} label="other" />
+		<span>{await push('gate', x)}</span>
+	{/if}
+
+	{$effect.pending()}
+</output>

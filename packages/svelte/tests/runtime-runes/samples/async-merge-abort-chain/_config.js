@@ -3,43 +3,41 @@ import { test } from '../../test';
 
 export default test({
 	mode: ['client'],
-	async test({ assert, instance, target, logs }) {
-		const a = instance.show();
+	async test({ assert, target, logs }) {
+		const [show, update, hide, value_3, other_3, gate_3, value_1, value_2, other_2, gate_2] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('output');
+
+		show.click();
 		await tick();
-		const b = instance.update();
+		update.click();
 		await tick();
-		const c = instance.update();
+		update.click();
 		await tick();
 
-		instance.resolve('value', 3);
+		value_3.click();
 		await tick();
 		assert.deepEqual(logs.splice(0), ['continued value with 3 3']);
-		instance.resolve('other', 3);
+		other_3.click();
 		await tick();
 		assert.deepEqual(logs.splice(0), ['continued other with 3 3']);
 		assert.equal(target.querySelector('p'), null);
 
-		instance.resolve('gate', 3);
-		await Promise.all([a, b, c]);
+		gate_3.click();
 		await tick();
 		assert.htmlEqual(
-			target.innerHTML,
-			'<p>value: 3 3</p><p>other: 3 3</p><span>3</span><output>0</output>'
+			output.innerHTML,
+			'<p>value: 3 3</p><p>other: 3 3</p><span>3</span>0'
 		);
 
-		for (const [label, n] of [
-			['value', 1],
-			['value', 2],
-			['other', 2],
-			['gate', 2]
-		]) {
-			instance.resolve(label, n);
-		}
+		value_1.click();
+		value_2.click();
+		other_2.click();
+		gate_2.click();
 		await tick();
 		assert.deepEqual(logs, []);
 		assert.htmlEqual(
-			target.innerHTML,
-			'<p>value: 3 3</p><p>other: 3 3</p><span>3</span><output>0</output>'
+			output.innerHTML,
+			'<p>value: 3 3</p><p>other: 3 3</p><span>3</span>0'
 		);
 	}
 });
