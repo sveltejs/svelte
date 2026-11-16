@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	$effect(() => {
 		console.log('effect ran');
 	});

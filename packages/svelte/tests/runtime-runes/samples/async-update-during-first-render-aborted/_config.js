@@ -6,16 +6,19 @@ import { test } from '../../test';
 // the update is merged into the creating batch (their writes don't intersect), so that the creating batch is done, too
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance, logs }) {
+	async test({ assert, target, logs }) {
+		const [bump, resolve] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('output');
+
 		await tick();
-		instance.bump();
+		bump.click();
 		await tick();
 		assert.deepEqual(logs, [0, 'aborted 0', 1]);
 
-		instance.resolve();
+		resolve.click();
 		await tick();
 
-		assert.htmlEqual(target.innerHTML, `<p>one 1</p>`);
+		assert.htmlEqual(output.innerHTML, '<p>one 1</p>');
 		assert.deepEqual(logs, [0, 'aborted 0', 1]);
 	}
 });

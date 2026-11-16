@@ -1,5 +1,8 @@
-<script>
-	let { x, push } = $props();
+<script lang="ts">
+	let { x, push }: {
+		x: number;
+		push: (label: string, value: number) => Promise<number>;
+	} = $props();
 
 	let v = $derived(await push('v', x));
 

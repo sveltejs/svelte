@@ -1,21 +1,21 @@
-<script>
+<script lang="ts">
 	import Child from './Child.svelte';
 
 	let a = $state(false);
 	let b = $state(false);
 	let x = $state(0);
 
-	let queue = [];
+	let queue: Array<{ key: string; resolve: () => void }> = [];
 
-	function push(label, v, signal) {
+	function push(label: string, v: number, signal: AbortSignal) {
 		console.log(`${label} ${v}`);
-		const d = Promise.withResolvers();
+		const d = Promise.withResolvers<number>();
 		signal.addEventListener('abort', () => d.reject(signal.reason));
 		queue.push({ key: `${label} ${v}`, resolve: () => d.resolve(v) });
 		return d.promise;
 	}
 
-	function resolve(key) {
+	function resolve(key: string) {
 		const i = queue.findIndex((e) => e.key === key);
 		if (i !== -1) queue.splice(i, 1)[0].resolve();
 	}
@@ -28,6 +28,8 @@
 <button onclick={() => resolve('first 2')}>first 2</button>
 <button onclick={() => resolve('second 2')}>second 2</button>
 
-{#if b || a}
-	<Child {x} {push} />
-{/if}
+<output>
+	{#if b || a}
+		<Child {x} {push} />
+	{/if}
+</output>

@@ -7,19 +7,22 @@ import { test } from '../../test';
 // on 5.57.3, it shows `one 1`.
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance, logs }) {
+	async test({ assert, target, logs }) {
+		const [bump, resolve] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('output');
+
 		// still waiting on `slow(0)`
 		await tick();
-		instance.bump();
+		bump.click();
 		await tick();
 		assert.deepEqual(logs, [0, 1]);
 
-		instance.resolve();
+		resolve.click();
 		await tick();
 		await tick();
 		await new Promise((r) => setTimeout(r, 10));
 
-		assert.htmlEqual(target.innerHTML, `<p>one 1</p>`);
+		assert.htmlEqual(output.innerHTML, '<p>one 1</p>');
 		assert.deepEqual(logs, [0, 1]);
 	}
 });

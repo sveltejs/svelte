@@ -1,20 +1,14 @@
-<script>
-	import { getAbortSignal } from 'svelte';
+<script lang="ts">
+	import Child from './Child.svelte';
 
 	let count = $state(0);
 	let value = $state.raw(Promise.resolve('one'));
+	const answers = new Map<number, (n: number) => void>();
 
-	/** @type {Map<number, (n: number) => void>} */
-	const answers = new Map();
-
-	/**
-	 * @param {number} n
-	 * @param {AbortSignal} signal
-	 */
-	function slow(n, signal) {
+	function slow(n: number, signal: AbortSignal) {
 		console.log(n);
 
-		return new Promise((resolve, reject) => {
+		return new Promise<number>((resolve, reject) => {
 			answers.set(n, resolve);
 			signal.addEventListener('abort', () => {
 				console.log(`aborted ${n}`);
@@ -23,16 +17,18 @@
 		});
 	}
 
-	export function bump() {
-		count++;
-	}
-
-	export function resolve() {
+	function resolve() {
 		for (const [n, fn] of answers) fn(n);
 	}
-
-	const shown = $derived(await value);
-	const held = $derived(await slow(count, getAbortSignal()));
 </script>
 
-<p>{shown} {held}</p>
+<button onclick={() => count++}>bump</button>
+<button onclick={resolve}>resolve</button>
+
+<!-- Keep the controls available while the child's first render is pending. -->
+<output>
+	<svelte:boundary>
+		<Child {count} {value} {slow} />
+		{#snippet pending()}{/snippet}
+	</svelte:boundary>
+</output>
