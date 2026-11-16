@@ -1,6 +1,6 @@
-/** @import { Blocker, Effect, Value } from '#client' */
+/** @import { AsyncContext, Blocker, Effect, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
-import { DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
+import { ASYNC, DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -27,6 +27,42 @@ import {
 	is_uninitialized
 } from './deriveds.js';
 import { aborted, async_effect, block, branch } from './effects.js';
+import { source } from './sources.js';
+
+/** @type {AsyncContext | null} */
+export let async_context = null;
+
+/**
+ * Move a shared script away from a discarded or failed creator. The new owner must
+ * remain alive until the script and its template continuation have finished.
+ * @param {AsyncContext} context
+ * @param {Batch} batch
+ */
+export function adopt_async_context(context, batch) {
+	context.batch = merge_target(batch);
+	context.track(context.batch);
+}
+
+/** @param {AsyncContext} context */
+function continuation_batch(context) {
+	var batch = merge_target(context.batch);
+	if (!batch.discarded && (!batch.is_fork || context.failed.v !== batch)) return batch;
+
+	for (const owner of context.pending) {
+		var candidate = merge_target(owner);
+		if (
+			candidate !== batch &&
+			candidate.linked &&
+			!candidate.discarded &&
+			!candidate.is_skipped(context.effect)
+		) {
+			adopt_async_context(context, candidate);
+			return candidate;
+		}
+	}
+
+	throw STALE_REACTION;
+}
 
 /**
  * @param {Blocker[]} blockers
@@ -54,6 +90,7 @@ export function flatten(blockers, sync, async, fn) {
 	var pending = blockers.filter((b) => !b.settled);
 
 	if (pending.length > 0) {
+		var context = pending[0].context;
 		var restore = capture();
 		var decrement_pending = increment_pending();
 		var p = pending.length === 1 ? pending[0].promise : Promise.all(pending.map((b) => b.promise));
@@ -63,7 +100,7 @@ export function flatten(blockers, sync, async, fn) {
 				return;
 			}
 
-			restore();
+			restore(true, context ? continuation_batch(context) : undefined);
 
 			try {
 				run();
@@ -131,6 +168,7 @@ export function capture() {
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 	var previous_batch = /** @type {Batch} */ (current_batch);
+	var previous_async_context = async_context;
 
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
@@ -141,6 +179,11 @@ export function capture() {
 	 * @param {Batch | null} [batch] the batch to continue in, if not the one that was active before
 	 */
 	return function restore(activate_batch = true, batch = previous_batch) {
+		if (batch && merge_target(batch).discarded && ((previous_reaction?.f ?? 0) & ASYNC) !== 0) {
+			throw STALE_REACTION;
+		}
+
+		async_context = previous_async_context;
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
@@ -294,6 +337,7 @@ export async function* for_await_track_reactivity_loss(iterable) {
 
 export function unset_context(deactivate_batch = true) {
 	restored = false;
+	async_context = null;
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
@@ -309,8 +353,35 @@ export function unset_context(deactivate_batch = true) {
  * @param {Array<() => void | Promise<void>>} thunks
  */
 export function run(thunks) {
-	var restore = capture();
 	var active = /** @type {Effect} */ (active_effect);
+	var previous_context = async_context;
+	/** @type {Promise<any>} */
+	var completion;
+
+	/** @type {AsyncContext} */
+	var context = {
+		batch: /** @type {Batch} */ (current_batch),
+		effect: active,
+		failed: source(null),
+		pending: new Set(),
+		track(batch) {
+			var target = merge_target(batch);
+			if (!target.linked || target.discarded) return;
+			for (const owner of context.pending) {
+				if (merge_target(owner) === target) return;
+			}
+
+			context.pending.add(target);
+			var decrement = increment_pending(active, target);
+			completion.finally(() => {
+				context.pending.delete(target);
+				decrement();
+			});
+		}
+	};
+
+	async_context = context;
+	var restore = capture();
 
 	/** @type {null | { error: any }} */
 	var errored = null;
@@ -322,7 +393,7 @@ export function run(thunks) {
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
 		if (!aborted(active)) {
-			restore();
+			restore(true, continuation_batch(context));
 
 			try {
 				invoke_error_boundary(error, active);
@@ -332,10 +403,15 @@ export function run(thunks) {
 		}
 	};
 
-	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+	var promise;
+	try {
+		promise = Promise.resolve(thunks[0]()).catch(handle_error);
+	} finally {
+		async_context = previous_context;
+	}
 
 	/** @type {Blocker} */
-	var blocker = { promise, settled: false, failed: false };
+	var blocker = { promise, settled: false, failed: false, context };
 	var blockers = [blocker];
 
 	promise.finally(() => {
@@ -347,48 +423,34 @@ export function run(thunks) {
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
-				restore();
+				if (errored) throw errored.error;
+				if (aborted(active)) throw STALE_REACTION;
+				restore(true, continuation_batch(context));
 
 				try {
-					if (errored) {
-						throw errored.error;
-					}
-
-					if (aborted(active)) {
-						throw STALE_REACTION;
-					}
-
 					return fn();
 				} finally {
-					// We gotta unset context directly in case the function returns a promise, in which case
-					// unset_context in .finally() would be too late ...
+					// A returned promise can restore context before it settles, so unset it both here
+					// and once the thunk has finished.
 					unset_context();
 				}
 			})
 			.catch(handle_error);
 
 		/** @type {Blocker} */
-		const blocker = { promise, settled: false, failed: false };
+		const blocker = { promise, settled: false, failed: false, context };
 		blockers.push(blocker);
 
 		promise.finally(() => {
 			blocker.settled = true;
 			blocker.failed = errored !== null;
-			// ... but we also need it after such a promise has resolved in case it restores our context
 			unset_context();
 		});
 	}
 
-	async_effect(() => {
-		// Inside an effect so later adopting branches can rerun this
-		promise
-			// wait one more tick, so that template effects are
-			// guaranteed to run before `$effect(...)`.
-			.then(() => Promise.resolve())
-			// The increment_pending() runs directly and finally
-			// will run its decrement.
-			.finally(increment_pending());
-	});
+	// Keep owners alive until template continuations have had a chance to run.
+	completion = promise.then(() => Promise.resolve());
+	async_effect(() => context.track(/** @type {Batch} */ (current_batch)));
 
 	return blockers;
 }
@@ -403,12 +465,16 @@ export function wait(blockers) {
 /**
  * Adds pending work to the current batch, and to the boundary of the active effect. If the batch is merged
  * into another one before the work is done, it's that batch's from then on (see `Batch#merge`)
+ * @param {Effect} [effect]
+ * @param {Batch} [owner]
  * @returns {() => void}
  */
-export function increment_pending() {
-	var effect = /** @type {Effect} */ (active_effect);
+export function increment_pending(
+	effect = /** @type {Effect} */ (active_effect),
+	owner = /** @type {Batch} */ (current_batch)
+) {
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
-	var batch = merge_target(/** @type {Batch} */ (current_batch));
+	var batch = merge_target(owner);
 
 	/** The nearest boundary with a pending snippet, if there is one */
 	var pending = boundary;

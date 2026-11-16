@@ -512,6 +512,12 @@ export class Boundary {
 		// If we have nothing to capture the error, or if we hit an error while
 		// rendering the fallback, re-throw for another boundary to handle
 		if (!this.#props.onerror && !this.#props.failed) {
+			if (current_batch?.is_fork && this.parent === null) {
+				// An unhandled speculative error belongs to the fork, not the live root.
+				if (this.#main_effect) current_batch.skip_effect(this.#main_effect);
+				current_batch.fatal_error ??= { error };
+				return;
+			}
 			throw error;
 		}
 

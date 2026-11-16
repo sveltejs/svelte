@@ -54,6 +54,7 @@ import {
 	current_batch,
 	processing_batch,
 	first_batch,
+	get_batches,
 	flushSync,
 	push_teardown_context,
 	teardown_context,
@@ -433,8 +434,8 @@ function abort_replaced(reaction, flags) {
 		abort_signal(reaction.ac);
 	}
 
-	for (var b = first_batch; b !== null; b = b.next) {
-		if (supersedes(batch, b)) abort_record(reaction, b.records?.get(reaction), true);
+	for (const b of get_batches()) {
+		if (b.linked && supersedes(batch, b)) abort_record(reaction, b.records?.get(reaction), true);
 	}
 }
 
@@ -488,7 +489,7 @@ export function abort_all(reaction) {
 	abort_signal(reaction.ac);
 	reaction.ac = null;
 
-	for (var b = first_batch; b !== null; b = b.next) {
+	for (const b of get_batches()) {
 		var record = b.records?.get(reaction);
 
 		if (record?.ac) {
@@ -621,6 +622,10 @@ export function update_reaction(reaction) {
 		try {
 			value = handle_error(error);
 		} finally {
+			// Suspension still counts as a run: a block that resumes in another batch must
+			// record that run there rather than treating it as its global initialization.
+			if (error === UNINITIALIZED) reaction.f |= REACTION_RAN;
+
 			// Still commit the deps read before the throw, otherwise deriveds connected by this run keep no reader
 			// and the reaction never re-runs when they change. For a derived, the error is the value of the run
 			// (`get` throws it) — unless an error boundary took care of it
@@ -1356,7 +1361,7 @@ export function get(signal) {
 		var held = teardown_view(signal);
 
 		if (held !== undefined) {
-			if (held.e) throw held.v;
+			if (held.e || ((flags & ASYNC) !== 0 && held.v === UNINITIALIZED)) throw held.v;
 			return held.v;
 		}
 	}
@@ -1402,6 +1407,11 @@ export function get(signal) {
 
 	if (late_reader !== null) {
 		record_late_read(late_reader, signal, view === undefined ? signal.wv : view.wv);
+	}
+
+	// Track the read before suspending, so the reaction retries when this view has a value.
+	if ((flags & ASYNC) !== 0 && (view ?? signal).v === UNINITIALIZED) {
+		throw UNINITIALIZED;
 	}
 
 	if (view !== undefined && view !== signal) {
