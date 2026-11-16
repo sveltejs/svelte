@@ -846,12 +846,11 @@ export class Batch {
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
-			if (d) deferred.promise.then(d.resolve).catch(d.reject);
 
-			// if (d && d !== deferred) deferred.promise.then(d.resolve, d.reject);
-			// // The incoming run can still be pending. A subsequent replacement must reach
-			// // this deferred too, not just the older waiters to which it forwards its result.
-			// this.async_deriveds.set(effect, deferred);
+			if (d && d !== deferred) deferred.promise.then(d.resolve, d.reject);
+			// The incoming run can still be pending. A subsequent replacement must reach
+			// this deferred too, not just the older waiters to which it forwards its result.
+			this.async_deriveds.set(effect, deferred);
 		}
 
 		for (const [reaction, record] of batch.records ?? []) {
