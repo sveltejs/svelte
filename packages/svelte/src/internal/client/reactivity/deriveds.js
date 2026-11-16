@@ -155,7 +155,8 @@ export function async_expression(fn, label, location) {
 			abort_signal?.addEventListener('abort', () => {
 				if (current_batch !== null) {
 					// a future run aborted this one. merge the later batch into the earlier one
-					merge_requests.add(merge_target(batch));
+					const target = merge_target(batch);
+					if (target !== current_batch && target.linked) merge_requests.add(target);
 				}
 			});
 
