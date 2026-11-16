@@ -1,5 +1,19 @@
 import fs from 'node:fs';
-import { it } from 'vitest';
+import { inject, it } from 'vitest';
+
+declare module 'vitest' {
+	export interface ProvidedContext {
+		/** Set for suites that are split up into several shards, see `vitest.config.js` */
+		shard?: {
+			index: number;
+			count: number;
+			/** Only run samples whose name starts with this prefix */
+			include?: string;
+			/** Don't run samples whose name starts with one of these prefixes (they have their own shard) */
+			exclude?: string[];
+		};
+	}
+}
 
 export interface BaseTest {
 	skip?: boolean;
@@ -83,8 +97,19 @@ async function for_each_dir<Test extends BaseTest>(
 	cwd = cwd.replace(/\\/g, '/');
 	let created_test = false;
 
-	for (const dir of fs.readdirSync(`${cwd}/${samples_dir}`)) {
-		if (dir[0] === '.' || !filter.test(dir)) continue;
+	const shard = inject('shard');
+	const dirs = fs.readdirSync(`${cwd}/${samples_dir}`).filter((dir) => {
+		if (dir[0] === '.') return false;
+		if (shard?.include !== undefined) return dir.startsWith(shard.include);
+		return !shard?.exclude?.some((prefix) => dir.startsWith(prefix));
+	});
+
+	for (let i = 0; i < dirs.length; i += 1) {
+		const dir = dirs[i];
+
+		// distribute samples in chunks
+		if (shard && Math.floor((i * shard.count) / dirs.length) !== shard.index) continue;
+		if (!filter.test(dir)) continue;
 
 		if (fs.readdirSync(`${cwd}/${samples_dir}/${dir}`).every((file) => ignored.includes(file))) {
 			continue;
