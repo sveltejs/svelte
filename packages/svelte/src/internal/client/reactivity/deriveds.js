@@ -274,7 +274,10 @@ export function async_derived(fn, label, location) {
 
 		block(() => {
 			try {
-				if (is_uninitialized(source) || (merge_target(batch) !== current_batch && !get(batch.obsolete))) {
+				if (
+					is_uninitialized(source) ||
+					(merge_target(batch) !== current_batch && !get(batch.obsolete))
+				) {
 					get(source);
 					return;
 				}
