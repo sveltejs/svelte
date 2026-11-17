@@ -43,7 +43,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
-import { current_run, increment_pending, merge_target, unset_context } from './async.js';
+import { current_runner, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -130,22 +130,22 @@ export function async_expression(fn, label, location, onready) {
 
 	// `run` continues in the creating batch's view; other batches' results wait until then.
 	// A superseded or obsolete run lets another batch supply the first value.
-	var run = current_run;
+	var runner = current_runner;
 
-	var created = run && run.signals;
+	var created = runner && runner.signals;
 	var index = created === null ? 0 : created.push(signal) - 1;
 
 	/**
 	 * The batch whose run delivers the first value (`null`: whichever comes first)
 	 * @type {Batch | null}
 	 */
-	var resolver = run && current_batch;
+	var resolver = runner && current_batch;
 
 	/**
 	 * Results buffered until the script continues; `null` disables buffering.
 	 * @type {Array<() => void> | null}
 	 */
-	var waiting = run && [];
+	var waiting = runner && [];
 
 	/**
 	 * Retry buffered results, or release them once the script has continued.
@@ -199,7 +199,7 @@ export function async_expression(fn, label, location, onready) {
 						// An aborted run waits for its replacement, even if the user catches the abort.
 						// A script awaiting another reaction's aborted promise must release its resolver:
 						// the eager merge includes the signal's owner, but not necessarily this waiter.
-						if (abort_signal?.aborted || (e === STALE_REACTION && run === null)) {
+						if (abort_signal?.aborted || (e === STALE_REACTION && runner === null)) {
 							return;
 						}
 
@@ -294,13 +294,13 @@ export function async_expression(fn, label, location, onready) {
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
 
-			if (run !== null) {
+			if (runner !== null) {
 				// Let the script consume the first value in this batch's view before releasing buffered results.
-				run.switch(batch);
+				runner.switch(batch);
 
-				run.continued.push(() => flush_waiting(true));
+				runner.continued.push(() => flush_waiting(true));
 
-				run = null;
+				runner = null;
 			}
 
 			onready?.(error);
