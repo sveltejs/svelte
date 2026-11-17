@@ -1,4 +1,4 @@
-/** @import { Blocker, Effect, Value } from '#client' */
+/** @import { Blocker, Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
 import { DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
@@ -308,8 +308,9 @@ export function unset_context(deactivate_batch = true) {
 /**
  * While a step of `run` executes: the batch that the script continues in. The async expressions that the step
  * creates update it once they deliver their first value, and add what can happen once the script continued
- * with that value to `continued` (see `async_expression`)
- * @type {{ batch: Batch, continued: Array<() => void> } | null}
+ * with that value to `continued` (see `async_expression`). `signals` holds the async expressions of the script,
+ * in the order it created them
+ * @type {{ batch: Batch, continued: Array<() => void>, signals: Source[] } | null}
  */
 export let batch_for_run = null;
 
@@ -324,7 +325,7 @@ export function run(thunks) {
 	var errored = null;
 
 	/** @type {NonNullable<typeof batch_for_run>} */
-	var for_run = { batch: /** @type {Batch} */ (current_batch), continued: [] };
+	var for_run = { batch: /** @type {Batch} */ (current_batch), continued: [], signals: [] };
 
 	const continued = () => {
 		for (const fn of for_run.continued.splice(0)) fn();

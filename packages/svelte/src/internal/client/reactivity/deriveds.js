@@ -41,7 +41,7 @@ import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, first_batch, view_batch, view_cache } from './batch.js';
+import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
 import { batch_for_run, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -133,6 +133,13 @@ export function async_expression(fn, label, location, onready) {
 	var for_run = batch_for_run;
 
 	/**
+	 * The async expressions of the script, in the order it created them: the first `index` ones come before this one.
+	 * In a view in which one of them has no value yet, the script didn't get to this one
+	 */
+	var created = for_run && for_run.signals;
+	var index = created === null ? 0 : created.push(signal) - 1;
+
+	/**
 	 * The batch whose run delivers the first value (`null`: whichever comes first)
 	 * @type {Batch | null}
 	 */
@@ -154,12 +161,12 @@ export function async_expression(fn, label, location, onready) {
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
-		// If this is the "new branch just created, doing run() now"-phase, a real
-		// batch can come in after a fork, then wanting to rerun all the already-created
-		// async effects in parallel. But some may depend on each other, i.e. async derived A
-		// on async derived B. And then B would throw because the result of A is not there yet.
-		// For that reason we defer execution of B until A is done.
-		var uninitialized = resolver?.is_fork ? find_uninitialized(deps_of(effect)) : undefined;
+		// A batch that adopts the branch of a script that another batch created (e.g. a real batch after a fork, also
+		// once that fork is discarded) reruns its async expressions in parallel, in its own view. But in a view in which
+		// an earlier one has no value yet, the script didn't get to this one, which may depend on that value. So it
+		// waits until the earlier one has its first value in that view (once this one has a value in a view, so do they)
+		var uninitialized =
+			created !== null && is_uninitialized(signal) ? find_uninitialized(created, index) : undefined;
 
 		if (uninitialized !== undefined) {
 			/** @type {Batch} */ (current_batch).async_deriveds.get(effect)?.reject(OBSOLETE);
@@ -273,20 +280,22 @@ export function async_expression(fn, label, location, onready) {
 			decrement_pending();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) {
+			if (error) {
 				// If the resolver's run is obsolete (e.g. because the batch was discarded) the next result delivers
 				// the first value, with those that wait going first. (Replacing a run in the same batch doesn't count)
 				if (
-					for_run !== null &&
+					waiting !== null &&
 					resolver !== null &&
+					(deferreds.size > 0 || waiting.length > 0 || error === OBSOLETE) &&
 					merge_target(resolver) === merge_target(batch) &&
 					batch.async_deriveds.get(effect) === d
 				) {
 					resolver = null;
 					retry();
+					return;
+				} else if (error === OBSOLETE) {
+					return;
 				}
-
-				return;
 			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
@@ -357,40 +366,16 @@ export function async_derived(fn, label, location) {
 }
 
 /**
- * An async signal without a value in the active view of the world among `deps`, directly or through the deriveds
- * among them — without evaluating anything. (A derived always has a value in a view: it's computed from its dependencies)
- * @param {Value[] | null} deps
+ * The last of the first `n` signals that has no value in the active view of the world, if any. (If one of them has
+ * none, neither has any later one: each waits for the ones before it, see `async_expression`)
+ * @param {Source[]} signals
+ * @param {number} n
  * @returns {Source | undefined}
  */
-function find_uninitialized(deps) {
-	if (deps === null) return;
-
-	for (const dep of deps) {
-		// just doing untrack(() => get(...)) won't work because the derived's get(...)
-		// outside this function will then also throw. Also, we would've executed a derived
-		// when it wasn't "ready" yet.
-		if ((dep.f & DERIVED) !== 0) {
-			var found = find_uninitialized(deps_of(/** @type {Derived} */ (dep)));
-			if (found !== undefined) return found;
-		} else if ((dep.f & ASYNC) !== 0 && is_uninitialized(/** @type {Source} */ (dep))) {
-			return /** @type {Source} */ (dep);
-		}
+function find_uninitialized(signals, n) {
+	for (var i = n - 1; i >= 0; i--) {
+		if (is_uninitialized(signals[i])) return signals[i];
 	}
-}
-
-/**
- * The values that the latest run of `reaction` read in the active view of the world — or, if it hasn't run there yet,
- * in the view of another batch that holds a run of it (e.g. a fork, in whose view it was created)
- * @param {Reaction} reaction
- */
-function deps_of(reaction) {
-	var deps = (view_batch?.get_record(reaction) ?? reaction).deps;
-
-	for (var batch = first_batch; deps === null && batch !== null; batch = batch.next) {
-		deps = batch.records?.get(reaction)?.deps ?? null;
-	}
-
-	return deps;
 }
 
 /**
