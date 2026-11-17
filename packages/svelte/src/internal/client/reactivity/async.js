@@ -329,7 +329,7 @@ class Runner {
 
 	/**
 	 * Async deriveds created during this run
-	 * @type {Source[] | null}
+	 * @type {Source[]}
 	 */
 	signals = [];
 
