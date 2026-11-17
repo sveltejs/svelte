@@ -5,31 +5,44 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<button>update</button> <output> </output>`, 1);
 
 export default function Main($$anchor) {
-	let input = $.state(1);
-	const load = (value) => Promise.resolve(value);
-
-	console.log('prefix');
-
 	const $$script = $.script_replay(
-		($$bindings) => {
-			return [
-				() => load($.get(input)),
-				() => load($.get(input)),
-				() => void 0,
-				() => load($.get(input) + $.get($$bindings[1])),
-				() => void 0,
-				() => {
-					$.untrack(() => void console.log($.get($$bindings[1])));
+		($$bindings, $$access) => {
+			let input = $$access.state(0, $.state(1));
+			const load = (value) => Promise.resolve(value);
 
-					return [void 0];
-				},
+			console.log('prefix');
 
-				() => {
-					$.untrack(() => void console.log($.get($$bindings[3])));
+			return {
+				thunks: [
+					() => $$access.read(1)($$access.read(0)),
+					() => $$access.read(1)($$access.read(0)),
+					() => void 0,
+					() => $$access.read(1)($$access.read(0) + $.get($$bindings[1])),
+					() => void 0,
+					() => {
+						void console.log($.get($$bindings[1]));
 
-					return [void 0];
-				}
-			];
+						return [void 0];
+					},
+
+					() => {
+						void console.log($.get($$bindings[3]));
+
+						return [void 0];
+					}
+				],
+				environment: [
+					{
+						reactive: true,
+						read: () => $.get(input),
+						assign: ($$value, $$proxy) => $$proxy ? $.set(input, $$value, true) : $.set(input, $$value),
+						update: ($$delta, $$pre) => $$delta === -1
+							? $$pre ? $.update_pre(input, -1) : $.update(input, -1)
+							: $$pre ? $.update_pre(input) : $.update(input)
+					},
+					{ reactive: true, read: () => load }
+				]
+			};
 		},
 		['await', 'await', 'statement', 'async', 'statement'],
 		[0, 1, 2, 3, 4],
@@ -42,7 +55,7 @@ export default function Main($$anchor) {
 	var text = $.only_child(output);
 
 	$.template_effect(() => $.set_text(text, `${$.get($.script_binding($$script, 3)) ?? ''} ${$.script_value($$script, 1) ?? ''}`), void 0, void 0, [$$script.ready[4]]);
-	$.delegated('click', button, () => $.update(input));
+	$.delegated('click', button, () => $.script_accessor($$script, 0).update(1, false));
 	$.append($$anchor, fragment);
 }
 

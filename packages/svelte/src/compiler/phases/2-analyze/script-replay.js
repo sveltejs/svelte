@@ -1,14 +1,16 @@
 /** @import * as ESTree from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { ComponentAnalysis, ScriptReplayStage } from '../types.js' */
-/** @import { Scope } from '../scope.js' */
 import { walk } from 'zimmerframe';
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../scope.js';
-import { is_custom_element_node } from '../nodes.js';
-import { has_await_expression, object, unwrap_pattern } from '../../utils/ast.js';
+import { ExpressionMetadata, is_custom_element_node } from '../nodes.js';
+import { has_await_expression } from '../../utils/ast.js';
+import { find_context_mutation } from './script-replay-context.js';
+import { find_stateful_class } from './script-replay-class.js';
+import { find_deferred_state_write } from './script-replay-async.js';
 
 class UnsupportedScriptReplay extends Error {
 	/** @param {ESTree.Node | AST.SvelteNode | null} node @param {string} reason */
@@ -54,6 +56,11 @@ function analyze_replay(analysis) {
 	if (analysis.exports.length || analysis.custom_element) {
 		unsupported(instance.ast, 'component exports or custom elements');
 	}
+	if (analysis.props_id) unsupported(analysis.props_id, '$props.id hydration initialization');
+
+	const deferred_write = find_deferred_state_write(instance.ast.body, analysis);
+	if (deferred_write)
+		unsupported(deferred_write, 'state writes in deferred initialization callbacks');
 
 	let suffix = false;
 	/** @type {ESTree.Node[]} */
@@ -74,6 +81,9 @@ function analyze_replay(analysis) {
 			unsupported(statement, 'anything but single-declarator suffix declarations and expressions');
 		}
 	}
+
+	const context_mutation = find_context_mutation(prefix, analysis);
+	if (context_mutation) unsupported(context_mutation, 'per-attempt component context setters');
 
 	/** @type {ScriptReplayStage[]} */
 	const stages = [];
@@ -120,9 +130,6 @@ function analyze_replay(analysis) {
 				expression = expression.argument;
 			}
 			if (has_await_expression(expression)) unsupported(expression, 'nested or inline awaits');
-			if ((kind === 'local' || kind === 'await') && calls_state_mutator(expression, analysis)) {
-				unsupported(expression, 'state-mutating local or raw-await initializers');
-			}
 
 			walk(expression, null, {
 				CallExpression(node, { next }) {
@@ -152,6 +159,12 @@ function analyze_replay(analysis) {
 		}
 		if (!group.has_await) groups.push({ start, end: stages.length });
 	}
+
+	const stateful_class = find_stateful_class(
+		[...prefix, ...stages.map((stage) => stage.expression)],
+		analysis
+	);
+	if (stateful_class) unsupported(stateful_class, 'stateful class or constructor initialization');
 
 	/** @type {Map<ScriptReplayStage, Set<ScriptReplayStage>>} */
 	const dependencies = new Map();
@@ -211,6 +224,8 @@ function analyze_replay(analysis) {
 		}
 	}
 
+	/** @type {NonNullable<ComponentAnalysis['script_replay']>['environment']} */
+	const environment = new Map();
 	for (const binding of instance.scope.declarations.values()) {
 		if (binding.kind === 'store_sub') unsupported(binding.node, 'store subscriptions');
 		if (bindings.has(binding)) {
@@ -219,6 +234,30 @@ function analyze_replay(analysis) {
 					unsupported(reference.node, 'prefix captures of replay bindings');
 				}
 			}
+		} else if (binding.declaration_kind !== 'import') {
+			if (binding.kind === 'state') {
+				const initial = binding.initial;
+				const value = initial?.type === 'CallExpression' ? initial.arguments[0] : null;
+				if (
+					binding.mutated ||
+					(binding.reassigned &&
+						(value?.type === 'ObjectExpression' || value?.type === 'ArrayExpression'))
+				) {
+					unsupported(binding.node, 'external writes to proxy state before publication');
+				}
+			}
+			if (binding.kind === 'bindable_prop' && binding.mutated) {
+				unsupported(binding.node, 'bindable prop mutation hooks');
+			}
+			environment.set(binding, {
+				index: environment.size,
+				// `reactive` selects the runtime's equality-preserving reader, not the
+				// source-language binding kind. A const reference is immutable even when
+				// the referenced object's properties can still change.
+				reactive:
+					binding.declaration_kind === 'const' ||
+					['state', 'raw_state', 'derived', 'prop', 'bindable_prop'].includes(binding.kind)
+			});
 		}
 	}
 
@@ -263,7 +302,7 @@ function analyze_replay(analysis) {
 
 	// Commit classification only after every check succeeds. In particular, never
 	// leave readiness expressions pointing at a replay script that was not emitted.
-	const replay = { id: analysis.root.unique('$$script'), bindings, stages, groups };
+	const replay = { id: analysis.root.unique('$$script'), bindings, environment, stages, groups };
 	const blockers = new Set();
 	for (const binding of instance.scope.declarations.values()) {
 		if (!binding.blocker || blockers.has(binding.blocker)) continue;
@@ -272,77 +311,18 @@ function analyze_replay(analysis) {
 		// chains. Preserve that identity rather than leaving cached $$promises reads.
 		binding.blocker.object = b.member(replay.id, 'ready');
 	}
-	analysis.script_replay = replay;
-}
-
-/**
- * Local/await inputs must be tracked until sealing. Unlike standalone statements,
- * we cannot untrack an initializer merely to permit writes hidden in a helper.
- * Keep statically known mutating helpers on their existing lowering for now.
- * Imported/dynamic callees require a more general initialization reaction context.
- *
- * @param {ESTree.Expression} expression
- * @param {ComponentAnalysis} analysis
- */
-function calls_state_mutator(expression, analysis) {
-	/** @type {Set<ESTree.Node>} */
-	const seen = new Set();
-	let mutates = false;
-
-	/** @param {ESTree.Node} node @param {Scope} scope */
-	function visit(node, scope) {
-		if (seen.has(node) || mutates) return;
-		seen.add(node);
-		walk(
-			node,
-			{ scope },
-			{
-				_(node, context) {
-					if (mutates) return;
-					context.next({
-						scope:
-							analysis.instance.scopes.get(node) ??
-							analysis.module.scopes.get(node) ??
-							context.state.scope
-					});
-				},
-				AssignmentExpression(node, { state, next }) {
-					check_assignment(node.left, state.scope);
-					next();
-				},
-				UpdateExpression(node, { state, next }) {
-					check_assignment(node.argument, state.scope);
-					next();
-				},
-				CallExpression(node, { state, next }) {
-					if (node.callee.type === 'Identifier') {
-						const binding = state.scope.get(node.callee.name);
-						const initial = binding?.initial;
-						if (
-							binding &&
-							initial &&
-							['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(
-								initial.type
-							)
-						) {
-							visit(/** @type {ESTree.Node} */ (initial), binding.scope);
-						}
-					}
-					next();
-				}
+	const environment_ready = b.member(replay.id, 'environment_ready');
+	for (const binding of environment.keys()) {
+		binding.blocker ??= environment_ready;
+	}
+	walk(/** @type {AST.SvelteNode} */ (analysis.template.ast), null, {
+		_(node, { next }) {
+			if ('metadata' in node && node.metadata && 'expression' in node.metadata) {
+				const expression = node.metadata.expression;
+				if (expression instanceof ExpressionMetadata) expression.invalidate_blockers();
 			}
-		);
-	}
-
-	/** @param {ESTree.Pattern | ESTree.Expression} pattern @param {Scope} scope */
-	function check_assignment(pattern, scope) {
-		for (const target of unwrap_pattern(/** @type {ESTree.Pattern} */ (pattern))) {
-			const node = object(target);
-			const binding = node && scope.get(node.name);
-			if (binding && ['state', 'raw_state', 'derived'].includes(binding.kind)) mutates = true;
+			next();
 		}
-	}
-
-	visit(expression, analysis.instance.scope);
-	return mutates;
+	});
+	analysis.script_replay = replay;
 }

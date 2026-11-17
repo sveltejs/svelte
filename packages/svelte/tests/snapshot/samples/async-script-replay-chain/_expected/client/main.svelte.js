@@ -6,24 +6,36 @@ var root = $.from_html(`<p> </p>`);
 var root_1 = $.from_html(`<button>update</button> <output> </output> <!>`, 1);
 
 export default function Main($$anchor) {
-	let input = $.state(1);
-	const load = (value) => Promise.resolve(value + 1);
-
 	const $$script = $.script_replay(
-		($$bindings) => {
+		($$bindings, $$access) => {
+			let input = $$access.state(0, $.state(1));
+			const load = (value) => Promise.resolve(value + 1);
 			let snapshot;
 
-			return [
-				() => load($.get(input)),
-				() => $.get($$bindings[0]) * 2,
-				() => void 0,
-				() => load($.get($$bindings[1]) + $.get($$bindings[2])),
-				() => {
-					snapshot = $.get($$bindings[0]);
+			return {
+				thunks: [
+					() => $$access.read(1)($$access.read(0)),
+					() => $.get($$bindings[0]) * 2,
+					() => void 0,
+					() => $$access.read(1)($.get($$bindings[1]) + $.get($$bindings[2])),
+					() => {
+						snapshot = $.get($$bindings[0]);
 
-					return [void 0, snapshot];
-				}
-			];
+						return [void 0, snapshot];
+					}
+				],
+				environment: [
+					{
+						reactive: true,
+						read: () => $.get(input),
+						assign: ($$value, $$proxy) => $$proxy ? $.set(input, $$value, true) : $.set(input, $$value),
+						update: ($$delta, $$pre) => $$delta === -1
+							? $$pre ? $.update_pre(input, -1) : $.update(input, -1)
+							: $$pre ? $.update_pre(input) : $.update(input)
+					},
+					{ reactive: true, read: () => load }
+				]
+			};
 		},
 		['async', 'derived', 'local', 'async'],
 		[0, 1, 1, 2],
@@ -51,7 +63,7 @@ export default function Main($$anchor) {
 	});
 
 	$.template_effect(() => $.set_text(text, `${$.get($.script_binding($$script, 0)) ?? ''} ${$.get($.script_binding($$script, 1)) ?? ''} ${$.script_value($$script, 2) ?? ''} ${$.get($.script_binding($$script, 3)) ?? ''}`), void 0, void 0, [$$script.ready[2]]);
-	$.delegated('click', button, () => $.update(input));
+	$.delegated('click', button, () => $.script_accessor($$script, 0).update(1, false));
 	$.append($$anchor, fragment);
 }
 

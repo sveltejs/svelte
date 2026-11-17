@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { compile } from './index.js';
 
 const experimental = { async: true, scriptReplay: true };
@@ -41,14 +42,19 @@ describe('experimental.scriptReplay', () => {
 		);
 	});
 
-	it('separates the stable shell, fresh locals, producer sites and readiness', () => {
+	it('keeps user initialization in the whole factory with separate producer sites', () => {
 		const code = compile(source, { experimental }).js.code;
-		expect(code).toContain('let input = $.state(1)');
+		expect(code).toContain('$$access.state(0, $.state(1))');
+		expect(code.indexOf('let input =')).toBeGreaterThan(code.indexOf('($$bindings, $$access) =>'));
+		expect(code.indexOf('const load =')).toBeGreaterThan(code.indexOf('($$bindings, $$access) =>'));
+		expect(code).toContain('environment: [');
+		expect(code).toContain('reactive: true');
+		expect(code).toContain('$.script_accessor($$script, 0).update(1, false)');
 		expect(code).toContain('let snapshot;');
 		expect(code).toContain("['async', 'derived', 'local', 'async']");
 		expect(code).toContain('[0, 1, 1, 2]');
 		expect(code).toContain('snapshot = $.get($$bindings[0])');
-		expect(code).toContain('() => load($.get($$bindings[1]) + $.get($$bindings[2]))');
+		expect(code).toContain('() => $$access.read(1)($.get($$bindings[1]) + $.get($$bindings[2]))');
 		expect(code).toContain('$.script_value($$script, 2)');
 		expect(code).toContain('$.get($.script_binding($$script, 3))');
 		expect(code).toContain('$.template_effect(');
@@ -58,6 +64,255 @@ describe('experimental.scriptReplay', () => {
 		expect(code).not.toContain('$.async_derived(');
 		expect(code).not.toContain('$.run(');
 		expect(code).not.toContain('var a,');
+	});
+
+	it('keeps prop accessors, state handles, and live function reads in the environment', () => {
+		const code = compile(
+			`<script>
+		let { n = $bindable(0), input = 1 } = $props();
+		let count = $state(n);
+		function edit() { count++; }
+		const origin = input;
+		let value = $derived(await Promise.resolve(input));
+		</script><input bind:value={n}><button onclick={edit}>edit</button><output>{origin} {count} {value}</output>`,
+			{ experimental }
+		).js.code;
+		expect(code).toContain('$.prop($$props,');
+		expect(code).toContain('read: () => n()');
+		expect(code).toContain('read: () => $.get(count)');
+		expect(code).toContain('read: () => edit');
+		expect(code).toContain('read: () => origin');
+		expect(code).toContain('$.script_accessor($$script, 0).assign(');
+		expect(code).toMatch(/\$\.script_read\(\$\$script, \d+\)\?\.apply\(this, \$\$args\)/);
+		expect(code.indexOf('function edit()')).toBeGreaterThan(
+			code.indexOf('($$bindings, $$access) =>')
+		);
+	});
+
+	it('memoizes immutable prefix const reads without caching mutable locals or functions', () => {
+		const code = compile(
+			`<script>
+		let { input } = $props();
+		const key = input;
+		let local = 0;
+		function helper() { return local; }
+		function edit() { local++; helper = () => local; }
+		const result = $derived(await Promise.resolve(key));
+		</script><button onclick={edit}>edit</button>{key} {local} {helper()} {result}`,
+			{ experimental }
+		).js.code;
+		expect(code).toContain('{ reactive: true, read: () => key }');
+		expect(code).toMatch(/reactive: false,\s*read: \(\) => local/);
+		expect(code).toMatch(/reactive: false,\s*read: \(\) => helper/);
+	});
+
+	it('keeps proxy state as a proxy rather than copying its value into a source', () => {
+		const code = compile(
+			'<script>const object = $state({ n: 1 }); const value = $derived(await Promise.resolve(1));</script>{object.n} {value}',
+			{ experimental }
+		).js.code;
+		expect(code).toContain('const object = $.proxy(');
+		expect(code).not.toContain('$$access.state(');
+		expect(code).toContain('read: () => object');
+		expect(code).toContain('$.script_read($$script, 0).n');
+	});
+
+	it.each(['object.n++', 'object = { n: 2 }'])(
+		'keeps unproven external proxy writes explicit: %s',
+		(write) => {
+			const source = `<script>let object = $state({ n: 0 }); const value = $derived(await Promise.resolve(1));</script><button onclick={() => ${write}}>write</button>{value}`;
+			expect(() => compile(source, { experimental })).toThrow(
+				'external writes to proxy state before publication'
+			);
+			expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+				compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+			);
+		}
+	);
+
+	it.each([
+		'class Counter { value = $state(0); } const counter = new Counter();',
+		'class Counter { #value = $state.raw(0); read() { return this.#value; } } const counter = new Counter();',
+		'class Counter { constructor() { this.value = $state(0); } } const counter = new Counter();',
+		'class Counter { constructor() { let n = $state(0); this.read = () => n; this.increment = () => n++; } } const counter = new Counter();',
+		'function make() { let n = $state(0); return () => n++; } class Counter { constructor() { this.increment = make(); } } const counter = new Counter();',
+		'function Counter() { let n = $state(0); this.increment = () => n++; } const counter = new Counter();'
+	])('does not claim scalar state registration covers a stateful constructor: %s', (prefix) => {
+		const source = `<script>${prefix} const value = $derived(await Promise.resolve(1));</script>{value}`;
+		expect(() => compile(source, { experimental })).toThrow(
+			'stateful class or constructor initialization'
+		);
+		expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+			compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+		);
+	});
+
+	it.each([
+		'const counter = new Counter();',
+		'const Alias = Counter; const counter = new Alias();',
+		'class Child extends Counter {} const counter = new Child();'
+	])('recognizes component-module stateful constructor allocation: %s', (prefix) => {
+		const source = `<script module>class Counter { value = $state(0); }</script><script>${prefix} const value = $derived(await Promise.resolve(1));</script>{value}`;
+		expect(() => compile(source, { experimental })).toThrow(
+			'stateful class or constructor initialization'
+		);
+		expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+			compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+		);
+	});
+
+	it('retains stateless classes with native prefix captures inside the factory', () => {
+		const source =
+			'<script>let { input } = $props(); const origin = input; class Snapshot { constructor() { this.origin = origin; } read() { return this.origin; } } const snapshot = new Snapshot(); const value = $derived(await Promise.resolve(input));</script>{snapshot.read()} {value}';
+		const code = compile(source, { experimental }).js.code;
+		expect(code).toContain('$.script_replay(');
+		expect(code.indexOf('class Snapshot')).toBeGreaterThan(
+			code.indexOf('($$bindings, $$access) =>')
+		);
+		expect(code).toContain('this.origin = origin');
+		expect(code).not.toContain('$$access.state(');
+	});
+
+	it('adds environment readiness to formerly static prefix-only template reads', () => {
+		const code = compile(
+			'<script>let { input } = $props(); const origin = input; const value = $derived(await Promise.resolve(input));</script><output>{origin}</output>{value}',
+			{ experimental }
+		).js.code;
+		expect(code).toMatch(
+			/template_effect[\s\S]*script_read\(\$\$script, 1\)[\s\S]*environment_ready/
+		);
+	});
+
+	it.each([
+		"import { setContext } from 'svelte'; setContext('x', 1);",
+		"import { setContext as provide } from 'svelte'; provide('x', 1);",
+		"import * as api from 'svelte'; api.setContext('x', 1);",
+		"import { setContext } from 'svelte'; const provide = setContext; provide('x', 1);",
+		"import { createContext } from 'svelte'; const [read, provide] = createContext(); provide(1);",
+		"import { getAllContexts } from 'svelte'; const contexts = getAllContexts(); contexts.set('x', 1);",
+		"import { getAllContexts } from 'svelte'; getAllContexts().clear();"
+	])('keeps known context mutations entirely on the existing lowering: %s', (prefix) => {
+		const source = `<script>${prefix} const value = $derived(await Promise.resolve(1));</script>{value}`;
+		expect(() => compile(source, { experimental })).toThrow(
+			'per-attempt component context setters'
+		);
+		expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+			compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+		);
+	});
+
+	it('recognizes module-declared context setters used by initialization', () => {
+		for (const module of [
+			"import { createContext } from 'svelte'; const [read, provide] = createContext();",
+			"import { setContext } from 'svelte'; function provide(value) { setContext('x', value); }"
+		]) {
+			const source = `<script module>${module}</script><script>provide(1);const value = $derived(await Promise.resolve(1));</script>{value}`;
+			expect(() => compile(source, { experimental })).toThrow(
+				'per-attempt component context setters'
+			);
+		}
+	});
+
+	it.each([
+		"import { getContext } from 'svelte'; const parent = getContext('x');",
+		"import { getAllContexts } from 'svelte'; const parent = getAllContexts().get('x');",
+		"import { createContext } from 'svelte'; const [read, provide] = createContext();",
+		"import { onMount, onDestroy } from 'svelte'; onMount(() => {}); onDestroy(() => {});",
+		'$effect(() => {});'
+	])('does not reject readonly context or ordinary lifecycle effects: %s', (prefix) => {
+		const source = `<script>${prefix} const value = $derived(await Promise.resolve(1));</script>{value}`;
+		expect(compile(source, { experimental }).js.code).toContain('$.script_replay(');
+	});
+
+	it.each([
+		'function run() { return Promise.resolve().then(() => count++); }',
+		'function run() { function update() { count++; } return Promise.resolve().then(update); }',
+		'function run() { const callback = mutate; return Promise.reject(0).catch(callback); }',
+		'function run() { return Promise.resolve().finally(mutate); }',
+		'const callback = mutate.bind(null); function run() { return Promise.resolve().then(callback); }',
+		'function run() { return Promise.reject(0).then(null, mutate); }',
+		'function middle() { mutate(); } function run() { return Promise.resolve().then(middle); }',
+		'function schedule(callback) { return Promise.resolve().then(callback); } function run() { return schedule(mutate); }',
+		'function schedule(callback) { queueMicrotask(callback); } function middle(callback) { schedule(callback); } function run() { middle(mutate); return Promise.resolve(1); }',
+		'function run() { setTimeout(mutate, 0); return Promise.resolve(1); }',
+		'function run() { setInterval(() => mutate(), 1); return Promise.resolve(1); }',
+		'function run() { queueMicrotask(() => mutate()); return Promise.resolve(1); }',
+		'function run() { requestAnimationFrame(mutate); return Promise.resolve(1); }',
+		'function run() { process.nextTick(mutate); return Promise.resolve(1); }',
+		'const later = queueMicrotask; function run() { later(mutate); return Promise.resolve(1); }',
+		'const host = globalThis; function run() { host.queueMicrotask(mutate); return Promise.resolve(1); }',
+		"import { setTimeout as later } from 'node:timers'; function run() { later(mutate, 0); return Promise.resolve(1); }",
+		'async function run() { await Promise.resolve(); count++; return 1; }',
+		'async function run() { await Promise.resolve(); mutate(); return 1; }',
+		'function run() { return new Promise(resolve => { queueMicrotask(() => { count++; resolve(1); }); }); }'
+	])('rejects initialization-reachable deferred state writes: %s', (helpers) => {
+		const source = `<script>let count = $state(0); function mutate() { count++; } ${helpers} const result = await run();</script>{count} {result}`;
+		expect(() => compile(source, { experimental })).toThrow(
+			'state writes in deferred initialization callbacks'
+		);
+		const baseline = compile(source, { experimental: { async: true, scriptReplay: false } }).js
+			.code;
+		expect(compile(source, { experimental: { async: true } }).js.code).toBe(baseline);
+		expect(baseline).not.toContain('$.script_replay(');
+	});
+
+	it('follows deferred object mutations through bound callback arguments', () => {
+		const source =
+			'<script>let object = $state({ count: 0 }); function mutate(value) { value.count++; } const callback = mutate.bind(null, object); function run() { return Promise.resolve().then(callback); } const result = await run();</script>{result}';
+		expect(() => compile(source, { experimental })).toThrow(
+			'state writes in deferred initialization callbacks'
+		);
+		expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+			compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+		);
+	});
+
+	it('follows deferred object mutations through callback parameters', () => {
+		const source =
+			'<script>let object = $state({ count: 0 }); function mutate(value) { value.count++; } function run() { setTimeout(mutate, 0, object); return Promise.resolve(1); } const result = await run();</script>{result}';
+		expect(() => compile(source, { experimental })).toThrow(
+			'state writes in deferred initialization callbacks'
+		);
+		expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+			compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+		);
+	});
+
+	it.each([
+		'function run() { mutate(); return Promise.resolve(1); }',
+		'function run() { return new Promise(resolve => { mutate(); resolve(1); }); }',
+		'function run() { return new Promise(resolve => setTimeout(resolve, 0)); }',
+		'function run() { return Promise.resolve(1).then(value => value + 1); }',
+		'async function run() { let local = 0; await Promise.resolve(); local++; return local; }',
+		'function run() { return Promise.resolve(1); } function click() { Promise.resolve().then(mutate); }',
+		'let { register } = $props(); register(() => count++); function run() { return Promise.resolve(1); }',
+		'let { register } = $props(); register(mutate.bind(null)); function run() { return Promise.resolve(1); }',
+		"import { invoke } from './helper.js'; function run() { return Promise.resolve(invoke(mutate)); }",
+		'let { invoke } = $props(); function run() { return Promise.resolve(invoke(mutate)); }',
+		'function setTimeout(callback) { callback(); } function run() { setTimeout(mutate); return Promise.resolve(1); }',
+		'function run() { function callback(count) { count++; } return Promise.resolve(1).then(callback); }'
+	])('retains controlled synchronous work and unrelated callback registration: %s', (helpers) => {
+		const source = `<script>let count = $state(0); function mutate() { count++; } ${helpers} const result = await run();</script>{count} {result}`;
+		expect(compile(source, { experimental }).js.code).toContain('$.script_replay(');
+	});
+
+	it('leaves an uncalled async event helper outside initializer reachability', () => {
+		const source =
+			'<script>let count = $state(0); async function click() { await Promise.resolve(); count++; } const result = await Promise.resolve(1);</script><button onclick={click}>update</button>{count} {result}';
+		expect(compile(source, { experimental }).js.code).toContain('$.script_replay(');
+	});
+
+	it('classifies the resolve-stale deferred writer without any fixture-specific option', () => {
+		const source = readFileSync(
+			new URL('../../tests/runtime-runes/samples/async-resolve-stale/main.svelte', import.meta.url),
+			'utf8'
+		);
+		expect(() => compile(source, { experimental })).toThrow(
+			'state writes in deferred initialization callbacks'
+		);
+		expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+			compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+		);
 	});
 
 	it('classifies unsupported default scripts without leaving replay metadata behind', () => {
@@ -97,7 +352,7 @@ describe('experimental.scriptReplay', () => {
 			{ experimental: { async: true } }
 		).js.code;
 		expect(code).toContain('b = a + 1;');
-		expect(code).toContain('$.untrack(() => void console.log(b));');
+		expect(code).toContain('void console.log(b);');
 		expect(code).toContain('return [a, b, void 0]');
 		expect(code).toContain('[[1, 4, 4]]');
 	});
@@ -161,25 +416,24 @@ describe('experimental.scriptReplay', () => {
 	});
 
 	it.each(['const value = mutate();', 'const value = await mutate();', 'await mutate();'])(
-		'keeps a known state-mutating initializer on the old path: %s',
+		'runs an imperative state-mutating initializer in the initialization context: %s',
 		(suffix) => {
 			const source = `<script>${prefix}function inner() { input++; return input; } function mutate() { return inner(); } ${first}${suffix}</script>{a}`;
-			expect(() => compile(source, { experimental })).toThrow(
-				'state-mutating local or raw-await initializers'
-			);
-			expect(compile(source, { experimental: { async: true } }).js.code).toBe(
-				compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
-			);
+			const code = compile(source, { experimental }).js.code;
+			expect(code).toContain('$.script_replay(');
+			expect(code).not.toContain('$.run(');
+			expect(code).toContain('$$access.read(3)()');
 		}
 	);
 
-	it('untracks ordinary statement side effects without untracking local values', () => {
+	it('keeps initialization reads tracked and selects prefix helpers through the facade', () => {
 		const code = compile(
 			`<script>${prefix}function mutate() { input++; } ${first}mutate(); const snapshot = input;</script>{a} {snapshot}`,
 			{ experimental }
 		).js.code;
-		expect(code).toContain('$.untrack(() => void mutate())');
-		expect(code).toContain('snapshot = $.get(input)');
+		expect(code).not.toContain('$.untrack(');
+		expect(code).toContain('void $$access.read(2)()');
+		expect(code).toContain('snapshot = $$access.read(0)');
 	});
 
 	it('keeps template shadowing lexical', () => {

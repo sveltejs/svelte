@@ -36,6 +36,7 @@ import { component_context, is_runes } from '../context.js';
 import {
 	Batch,
 	batch_values,
+	processing_batch,
 	legacy_updates,
 	in_real_world,
 	teardown_write,
@@ -44,6 +45,7 @@ import {
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status } from './status.js';
+import { get_initialization_context } from './script-context.js';
 
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
@@ -146,7 +148,9 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(source, value, should_proxy = false) {
+	var initializing = get_initialization_context(active_reaction) !== null;
 	if (
+		!initializing &&
 		active_reaction !== null &&
 		// since we are untracking the function inside `$inspect.with` we need to add this check
 		// to ensure we error if state is set inside an inspect effect
@@ -164,7 +168,7 @@ export function set(source, value, should_proxy = false) {
 		tag_proxy(new_value, /** @type {string} */ (source.label));
 	}
 
-	return internal_set(source, new_value, legacy_updates);
+	return internal_set(source, new_value, initializing ? null : legacy_updates);
 }
 
 /**
@@ -180,7 +184,9 @@ export function internal_set(source, value, updated_during_traversal = null) {
 
 	// A value that equals the real one may still overwrite a different value in the active view.
 	if (!same || (entry !== undefined && (entry.e || !source.equals.call(entry, value)))) {
-		var batch = Batch.ensure();
+		var initialization = get_initialization_context(active_reaction);
+		var batch = initialization?.attempt.batch ?? Batch.ensure();
+		while (batch.merged !== null) batch = batch.merged;
 
 		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
 		// it's assigned already: it tracks them, and its flags don't tell whether the assignment still holds,
@@ -189,7 +195,16 @@ export function internal_set(source, value, updated_during_traversal = null) {
 			execute_derived(/** @type {Derived} */ (source));
 		}
 
-		batch.capture(source, value, same, false, updated_during_traversal);
+		batch.capture(
+			source,
+			value,
+			same,
+			false,
+			// Abort callbacks can write after the processing batch was discarded.
+			// Their fresh batch must not use the abandoned traversal's update list.
+			initialization || processing_batch?.scripts_discarded ? null : updated_during_traversal,
+			initialization ? batch : null
+		);
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {

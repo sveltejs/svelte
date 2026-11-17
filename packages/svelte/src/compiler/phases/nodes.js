@@ -147,6 +147,10 @@ export class ExpressionMetadata {
 		return b.array([...this.#get_blockers()]);
 	}
 
+	invalidate_blockers() {
+		this.#blockers = null;
+	}
+
 	has_blockers() {
 		return this.#get_blockers().size > 0;
 	}

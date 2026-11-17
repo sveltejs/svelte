@@ -57,6 +57,8 @@ import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 import { is_runes } from '../context.js';
+import { note_script_invalidation } from './script-context.js';
+import { record_script_state_write, rebase_script_state_write } from './script-state.js';
 import {
 	commit_scripts,
 	discard_scripts,
@@ -238,6 +240,11 @@ export class Batch {
 
 	/** @type {Map<Effect, import('./script-replay.js').ScriptAttempt>} */
 	script_initializers = new Map();
+
+	/** External edits to logical scalar state slots, applied by a fresh factory.
+	 * @type {Map<import('./script-replay.js').Script, Map<number, import('./script-state.js').StateOverride>>}
+	 */
+	script_state_overrides = new Map();
 
 	/** Terminal for replay admission, including reentry from discard/abort callbacks. */
 	scripts_discarded = false;
@@ -745,35 +752,34 @@ export class Batch {
 	 * @param {Iterable<Source>} sources
 	 */
 	#revalidate(sources) {
-		// deriveds added during iteration are visited too, so this doubles as a worklist
-		/** @type {Set<Value>} */
-		var values = new Set(sources);
-
+		/** @type {Array<[Value, Batch | null]>} */
+		var values = Array.from(sources, (value) => [value, this.current.get(value)?.init ?? null]);
+		/** @type {Map<Value, Set<Batch | null>>} */
+		var visited = new Map();
 		/** @type {Set<Effect>} */
 		var effects = new Set();
 
-		for (const value of values) {
+		for (const [value, origin] of values) {
+			var origins = visited.get(value);
+			if (origins?.has(origin)) continue;
+			if (!origins) visited.set(value, (origins = new Set()));
+			origins.add(origin);
 			var reactions = value.reactions;
 			if (reactions === null) continue;
 
 			for (const reaction of reactions) {
 				var flags = reaction.f;
-
 				if ((flags & DERIVED) !== 0) {
 					if ((flags & CLEAN) !== 0) set_signal_status(reaction, MAYBE_DIRTY);
-					values.add(/** @type {Derived} */ (reaction));
+					values.push([/** @type {Derived} */ (reaction), origin]);
 					continue;
 				}
 
 				var effect = /** @type {Effect} */ (reaction);
+				note_script_invalidation(this, effect, origin);
 				if (effects.has(effect)) continue;
 				effects.add(effect);
-
-				if (
-					(flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 &&
-					// branches that this batch skips don't exist in its view of the world
-					!this.is_skipped(effect)
-				) {
+				if ((flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 && !this.is_skipped(effect)) {
 					this.schedule(effect, MAYBE_DIRTY);
 				}
 			}
@@ -870,6 +876,19 @@ export class Batch {
 		if (batch === this || !this.linked || !batch.linked) return;
 		for (const waiter of batch.fork_commit_waiters) this.fork_commit_waiters.add(waiter);
 		batch.fork_commit_waiters.clear();
+		for (const [script, incoming] of batch.script_state_overrides) {
+			var overrides = this.script_state_overrides.get(script);
+			if (!overrides) this.script_state_overrides.set(script, (overrides = new Map()));
+			for (const [slot, value] of incoming) {
+				if (
+					!overrides.has(slot) ||
+					/** @type {import('./script-state.js').StateOverride} */ (overrides.get(slot)).wv <=
+						value.wv
+				)
+					overrides.set(slot, value);
+			}
+		}
+		batch.script_state_overrides.clear();
 		merge_scripts(this, batch);
 
 		for (const [source, entry] of batch.current) {
@@ -974,8 +993,9 @@ export class Batch {
 	 * `internal_set`) — in which case the source isn't updated, and the value gets the same version
 	 * @param {boolean} [error] whether the value is an error (thrown when read, see `runtime.js#get`)
 	 * @param {Effect[] | null} [updated_during_traversal]
+	 * @param {Batch | null} [origin]
 	 */
-	capture(source, value, same, error = false, updated_during_traversal = null) {
+	capture(source, value, same, error = false, updated_during_traversal = null, origin = null) {
 		var previous = this.previous.get(source);
 		var later = later_writer(this, source);
 
@@ -1012,10 +1032,12 @@ export class Batch {
 			e: error,
 			// a write to a derived is an assignment
 			assigned: (source.f & DERIVED) !== 0,
-			async: (source.f & ASYNC) !== 0
+			async: (source.f & ASYNC) !== 0,
+			init: origin
 		};
 
 		this.current.set(source, entry);
+		if (origin === null) record_script_state_write(this, source, entry);
 
 		// The active view of the world sees writes made while it's active, even if they don't belong to the batch whose
 		// view it is — e.g. those of effects that run while a batch commits, which go to a new batch. (Async results
@@ -1038,7 +1060,7 @@ export class Batch {
 		if (!same) {
 			seen = null;
 			count_deps = 0;
-			this.mark(source, DIRTY, updated_during_traversal);
+			this.mark(source, DIRTY, updated_during_traversal, origin);
 			seen = null;
 
 			if (eager_effects.size > 0 && !eager_effects_deferred) {
@@ -1104,6 +1126,7 @@ export class Batch {
 			}
 
 			this.async_deriveds.clear();
+			this.script_state_overrides.clear();
 			this.#unlink();
 			this.current.clear();
 			this.previous.clear();
@@ -1153,6 +1176,7 @@ export class Batch {
 					}
 				}
 
+				rebase_script_state_write(batch, source, entry);
 				sources.push(source);
 			}
 
@@ -1303,10 +1327,11 @@ export class Batch {
 	}
 
 	static ensure() {
-		if (current_batch === null) {
+		var orphaned = current_batch?.scripts_discarded ?? false;
+		if (current_batch === null || orphaned) {
 			const batch = (current_batch = new Batch());
 
-			if (processing_batch === null && !is_flushing_sync) {
+			if (orphaned || (processing_batch === null && !is_flushing_sync)) {
 				queue_micro_task(() => {
 					if (!batch.started) {
 						batch.flush();
@@ -1394,9 +1419,10 @@ export class Batch {
 	 * @param {Value} signal
 	 * @param {number} status should be DIRTY or MAYBE_DIRTY
 	 * @param {Effect[] | null} [updated_during_traversal]
+	 * @param {Batch | null} [origin]
 	 * @returns {void}
 	 */
-	mark(signal, status, updated_during_traversal = null) {
+	mark(signal, status, updated_during_traversal = null, origin = null) {
 		var reactions = signal.reactions;
 		if (reactions === null) return;
 
@@ -1423,6 +1449,7 @@ export class Batch {
 			if (!runes && reaction === active_effect) continue;
 
 			var not_dirty = (flags & DIRTY) === 0;
+			if ((flags & DERIVED) === 0) note_script_invalidation(this, reaction, origin);
 
 			if ((flags & EAGER_EFFECT) !== 0) {
 				if (!this.is_fork) {
@@ -1445,7 +1472,7 @@ export class Batch {
 				var derived = /** @type {Derived} */ (reaction);
 
 				view_cache?.delete(derived);
-				this.mark(derived, MAYBE_DIRTY, updated_during_traversal);
+				this.mark(derived, MAYBE_DIRTY, updated_during_traversal, origin);
 			} else if (not_dirty) {
 				var effect = /** @type {Effect} */ (reaction);
 

@@ -2,6 +2,8 @@
 
 Recorded on 2026-11-16 while default integration was being stabilized. This is a read-only compiler/runtime assessment, not another lowering extension. The only change made for this assessment is this document. Current integration results belong in [batch-script-replay-progress.md](batch-script-replay-progress.md).
 
+> The inventory below records the 2026-11-16 suffix-based implementation, not the current whole-factory eligibility count. The 2026-11-17 whole-script context boundary is recorded at the end of this document.
+
 ## Fixed-corpus before/after measurement
 
 The comparison captured the source text of 5,089 files matching `packages/svelte/tests/**/samples/**/*.svelte`, excluding `_output`, `_expected`, and `_actual` directories. It selected the 189 components with an instance-script top-level await according to the compiler's `has_await_expression` helper. Await expressions inside ordinary functions, template-only awaits, module compilation, and programmatic source strings inside unit tests are not part of this denominator. Server-only samples are included as language-shape probes, not as executed client-runtime tests.
@@ -157,3 +159,45 @@ Globally untracking local/raw-await work, suppressing mutation errors, or perman
 Default auto-eligibility, the retained shared runner, and `experimental.scriptReplay` are temporary migration mechanisms. The compiler currently has two script-initialization models, and 96 of the 189 inventoried initializers still use the older one. A passing full suite would be necessary evidence for default integration, but would not prove the original single-model goal or cover the admitted mutation gaps above.
 
 This assessment ran no broad suite and changed no compiler, runtime, or test source. The comparison and compile probes completed with exit `0`; 96/96 fallback outputs matched the explicitly disabled route. The bounded development-mode kernel probe also completed with exit `0`. Current runtime failure counts and the eventual full-suite result must be reported separately by the integration owner, not inferred from these read-only checks.
+
+## 2026-11-17: whole-script context boundary
+
+The user subsequently replaced the stable-prefix proposal with [whole-instance initialization](batch-script-replay-whole-script-api.md). Supported scripts now create their user declarations, state, functions, and side effects inside each attempt factory. Initialization reads are tracked, and initialization-owned writes use an explicit runtime context rather than globally untracking the script. The historical mutation-gap counts and self-write diagnostic above are not results for this new implementation.
+
+Component context maps are **not yet per-attempt**. In particular, `setContext` currently requires a pre-mount branch and no active reaction; simply executing it in the tracked factory would fail even on the first initialization. Clearing `active_reaction` or globally toggling `component_context.i`/`.c` would not establish isolation between concurrent attempts.
+
+The compiler therefore keeps the entire component on its existing lowering when it recognizes an unsupported context mutation before suspension. It does not keep a context-setting prefix outside an otherwise replayed script. Strict `scriptReplay: true` reports `per-attempt component context setters`. The classifier recognizes named/aliased/namespace `setContext`, locally visible `createContext` setters, directly called module helpers containing setters, and known `getAllContexts()` map `set`/`delete`/`clear` operations. It is not inter-module effect analysis: an opaque imported helper can still conceal a context mutation, so this guard is not a full-language safety proof.
+
+Read-only `getContext`/`hasContext`/`getAllContexts` access to a valid stable parent context is not rejected. Ordinary `$effect`, onMount, and onDestroy registration are not rejected merely for using component lifecycle machinery; their attempt resource ownership is a separate runtime contract. No claim is made that arbitrary shared context-map mutation or rebinding works under replay.
+
+Other explicit whole-factory limits include unproved external proxy mutation carryover, bindable-prop mutation hooks, and `$props.id` hydration initialization. Actual native state sources use `facade.state(slot, source)` so external scalar state edits can be adopted before following initialization reads. That does not by itself prove deep proxy writes, derived overrides, or mutable local fallback state inside prop accessors. These restrictions must remain explicit until separately proved, not be hidden by passing unrelated tests.
+
+### Stateful classes and constructors
+
+A compile audit confirmed that prefix class fields, `this.value = $state(...)` constructor assignments, and constructor-local `$state` variables were admitted by replay while generating a native `$.state` call with **no** `facade.state` registration. Class-field lowering happens outside the hooked top-level variable-declaration path; constructor-local bindings are not top-level environment slots either.
+
+For example, a prefix `class Counter { value = $state(0); }` followed by `const counter = new Counter()` can expose a callback that writes `counter.value` while the final script await is pending. Reconstructing the class on the next attempt cannot preserve that external edit using the scalar variable-slot hook alone. This is a generated-code capability finding, not a claimed passing runtime carryover test.
+
+The classifier now rejects known stateful class/constructor initialization in strict mode and retains the whole existing component lowering by default. The guard covers visible class fields, constructor-local creation, statically visible helper-created state, and known component-module constructors reached through allocations, aliases, or inheritance. It does not implement generalized class ownership. Stateless classes remain eligible and retain native captures inside the attempt factory.
+
+There is still an explicit opaque-constructor gap: `import Counter from './Counter.svelte.js'; const counter = new Counter()` can be admitted because the component compiler cannot inspect that imported constructor's state creation. A compile-only probe confirmed replay emission with no constructor state registration for this opaque form. Dynamic/imported stateful constructors must not be described as covered by `facade.state`; no class/proxy ownership generalization was attempted in this audit.
+
+### Immutable versus mutable accessor reads
+
+The current `Accessor.reactive` flag selects an equality-preserving reader; it is not a claim about the source-language binding kind. Immutable prefix `const` bindings use that path too. This prevents publication of another environment from invalidating a producer merely because an unchanged constant key is now read through another accessor. Mutable ordinary locals and reassignable functions remain live, uncached getter reads.
+
+Memoizing a const binding caches its value/reference, not its object's properties or a function's captured state. Native property reads still observe the same mutable object, and genuinely different object/function identities are not collapsed. The focused prefix-error regression and the existing mutable-local environment test passed with this metadata distinction.
+
+### Deferred helper state writes
+
+`async-resolve-stale` exposed a different limit from synchronous initialization writes. Its initializer calls `asd`, which schedules `update_and_resolve` using `Promise.resolve().then(...)`. That callback increments `$state` before resolving the awaited request. The synchronous initialization context has already ended, so this write is external; admitting another whole factory can recreate the request/resolver environment and repeat the callback indefinitely. Keeping an ambient initialization context across foreign microtasks would misattribute unrelated work and is not a solution.
+
+The compiler now conservatively retains the entire existing component lowering for known initialization-reachable deferred state writers. Strict mode reports `state writes in deferred initialization callbacks`. This is a general classifier, not a fixture-specific option or exception. The actual `async-resolve-stale` source is checked against disabled replay output in a compiler unit test.
+
+The local call graph starts at executed instance initialization expressions. It follows visible function definitions, aliases/reassignments, callback parameter forwarding, and bound callback arguments. It recognizes `.then` (both callbacks), `.catch`, `.finally`, global timers/microtasks, common global-object aliases, and named `node:timers` imports. A known async helper containing its own await is conservatively treated as deferred for state-write analysis; the check is not path-sensitive enough to distinguish an otherwise-safe write before that await. Framework state/prop writes and known state-object mutations are identified by binding identity, including visible parameter/alias paths.
+
+Function bodies are not inspected merely because they are declared. Uncalled after-publication event helpers and callbacks passed to an ordinary opaque `register` API remain eligible. Synchronous visible helpers, synchronous Promise executors, and opaque synchronous imported/prop callbacks also remain eligible. A Promise executor is synchronous; callbacks it schedules through a recognized deferred API are not.
+
+The bounded regression `async-script-replay-deferred-writer-fallback` limits the bad path to three writes and four requests, so it fails finitely rather than starving timers. Before the guard it produced `3 / 42 / 4` instead of `1 / 42 / 1`. With default compilation and unchanged assertions, the guarded component uses the existing lowering and passes. The original resolve-stale DOM/hydration cases also complete and pass.
+
+This fallback does not implement deferred-write attribution. An opaque imported or prop helper can conceal asynchronous state writes; arbitrary dynamic/higher-order callback production and effectful getters are not proved by this local analysis. Method-based mutations such as array mutators or collection `.set` calls are not expanded into writes, and recursion is bounded rather than interpreted for every possible callback-parameter flow. Conversely, branch/assignment unions and method-name recognition are conservative and can reject a path that would not actually write state during that initialization. In particular, the compiler cannot distinguish an opaque API that invokes a supplied callback synchronously from one that invokes it in a later microtask, while also preserving legitimate external callback registration. Such admitted opaque async behavior remains an explicit implementation gap. Class/context guards remain separate, and no runtime ambient-context propagation was added.

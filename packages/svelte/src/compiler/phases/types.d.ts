@@ -138,6 +138,8 @@ export interface ComponentAnalysis extends Analysis {
 	script_replay: {
 		id: Identifier;
 		bindings: Map<Binding, ScriptReplayStage>;
+		/** Bindings initialized by the synchronous start of each whole-script factory. */
+		environment: Map<Binding, { index: number; reactive: boolean }>;
 		stages: ScriptReplayStage[];
 		/** Original synchronous groups, with exclusive end indices. */
 		groups: Array<{ start: number; end: number }>;

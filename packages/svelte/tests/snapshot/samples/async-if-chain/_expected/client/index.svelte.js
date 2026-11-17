@@ -5,15 +5,21 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<!> <!> <!> <!> <!>`, 1);
 
 export default function Async_if_chain($$anchor) {
-	function complex1() {
-		return 1;
-	}
-
-	let foo = true;
-
 	const $$script = $.script_replay(
-		($$bindings) => {
-			return [() => foo];
+		($$bindings, $$access) => {
+			function complex1() {
+				return 1;
+			}
+
+			let foo = true;
+
+			return {
+				thunks: [() => $$access.read(1)],
+				environment: [
+					{ reactive: false, read: () => complex1 },
+					{ reactive: true, read: () => foo }
+				]
+			};
 		},
 		['async'],
 		[0],
@@ -43,13 +49,13 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node, ($$render) => {
-			if (foo) $$render(consequent); else if (bar) $$render(consequent_1, 1); else $$render(alternate, -1);
+			if ($.script_read($$script, 1)) $$render(consequent); else if (bar) $$render(consequent_1, 1); else $$render(alternate, -1);
 		});
 	});
 
 	var node_1 = $.sibling(node, 2);
 
-	$.async(node_1, [$$script.ready[0]], [() => foo], (node_1, $$condition) => {
+	$.async(node_1, [$$script.ready[0]], [() => $.script_read($$script, 1)], (node_1, $$condition) => {
 		var consequent_2 = ($$anchor) => {
 			var text_3 = $.text('foo');
 
@@ -104,7 +110,7 @@ export default function Async_if_chain($$anchor) {
 		[
 			async () => {
 				try {
-					return (await $.save(foo))() > 10;
+					return (await $.save($.script_read($$script, 1)))() > 10;
 				} finally {
 					$.unsave();
 				}
@@ -133,7 +139,7 @@ export default function Async_if_chain($$anchor) {
 					[
 						async () => {
 							try {
-								return (await $.save(foo))() > 5;
+								return (await $.save($.script_read($$script, 1)))() > 5;
 							} finally {
 								$.unsave();
 							}
@@ -192,7 +198,7 @@ export default function Async_if_chain($$anchor) {
 			$.append($$anchor, text_13);
 		};
 
-		var d = $.derived(() => complex1() * complex2 > 100);
+		var d = $.derived(() => $.script_read($$script, 0)() * complex2 > 100);
 
 		var alternate_5 = ($$anchor) => {
 			var text_14 = $.text('else');

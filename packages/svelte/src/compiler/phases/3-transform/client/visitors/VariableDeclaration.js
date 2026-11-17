@@ -153,6 +153,17 @@ export function VariableDeclaration(node, context) {
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));
 						}
+
+						const slot = context.state.analysis.script_replay?.environment.get(binding);
+						if (context.state.script_replay_factory && slot) {
+							// The initializer still runs. An external write to this logical slot
+							// is adopted before subsequent user initialization reads the source.
+							value = b.call(
+								b.member(context.state.script_replay_factory, 'state'),
+								b.literal(slot.index),
+								value
+							);
+						}
 					}
 
 					return value;

@@ -1,6 +1,8 @@
 # Script replay integration progress
 
-## Current verified status
+> Historical integration checkpoint `8e634c0f0b`. Subsequent whole-instance initialization work, the user's revised semantics, and its independent verification are recorded in [the whole-script progress notes](batch-script-replay-whole-script.md). The passing results below do not verify that later work.
+
+## Verified status at the integration checkpoint
 
 On 2026-11-16, the final **`pnpm test` passed, exit `0`: 44 test files passed, 8,347 tests passed, 39 skipped** (8,386 total). Vitest started at local time `23:29:59` and reported `30.03s`. Full output is temporarily available at `/tmp/svelte-script-replay-full-final.log`. The 39 skips match the full-suite checkpoint baseline; no skip or expected-error exemptions were added for replay.
 

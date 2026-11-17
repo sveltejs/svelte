@@ -11,9 +11,10 @@ const buttons = `
 	<button>reset</button>
 `;
 
-// A and B initialize the same stable branch in independent views. Each starts
-// its second await only after its own first checkpoint. Either view can finish
-// first, but A's late result must never overwrite a newer committed B result.
+// A and B initialize independently until one publishes. A pending attempt then
+// adopts the established initializer: reactive producers can update in its view
+// without finishing its old imperative suffix. A's late result must never
+// overwrite a newer committed B result.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -41,17 +42,19 @@ export default test({
 					second_1.click();
 					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
-					assert.deepEqual(logs.splice(0), ['continued with 1 1']);
+					// Adoption starts B's first second-site invocation: its x=2 differs
+					// from A's completed x=1. The parent push function is unchanged.
+					assert.deepEqual(logs.splice(0), ['continued with 1 1', 'second 2']);
 
 					first_2.click();
 					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
-					assert.deepEqual(logs.splice(0), ['second 2']);
+					assert.deepEqual(logs.splice(0), [], 'adoption must not duplicate the second(2) request');
 
 					second_2.click();
 					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
-					assert.deepEqual(logs.splice(0), ['continued with 2 2']);
+					assert.deepEqual(logs.splice(0), [], 'B must not resume its abandoned imperative suffix');
 				} else {
 					first_2.click();
 					await tick();

@@ -27,16 +27,16 @@ import * as b from '#compiler/builders';
  * @param {ComponentAnalysis['instance_body']} instance_body
  * @param {ESTree.Expression} runner
  * @param {(node: ESTree.Node) => ESTree.Node} transform
- * @param {(() => ESTree.Statement[]) | undefined} [replay] Explicit client-only suffix strategy
+ * @param {(() => ESTree.Statement[]) | undefined} [replay] Explicit client-only whole-initializer strategy
  * @returns {Array<ESTree.Statement | ESTree.VariableDeclaration>}
  */
 export function transform_body(instance_body, runner, transform, replay) {
+	if (replay) return replay();
+
 	// Any sync statements before the first await expression
 	const statements = instance_body.sync.map(
 		(node) => /** @type {ESTree.Statement | ESTree.VariableDeclaration} */ (transform(node))
 	);
-
-	if (replay) return [...statements, ...replay()];
 
 	// Declarations for the await expressions (they will assign to them; need to be hoisted to be available in whole instance scope)
 	if (instance_body.declarations.length > 0) {

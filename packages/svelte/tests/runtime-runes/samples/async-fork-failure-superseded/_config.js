@@ -33,12 +33,13 @@ export default test({
 		assert.htmlEqual(output.innerHTML, '<p>2</p>');
 		assert.deepEqual(logs.splice(0), ['continued 2', 'load 2']);
 
-		// Finish F's replacement initializer before committing it. Its independent
-		// continuation runs once, but must never retry the failed load(1).
+		// Finish F's successful replacement before committing it. R is already
+		// published, so the healthy fork adopts that initializer rather than running
+		// its remaining imperative suffix. It must never retry failed load(1).
 		resolve_2.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>2</p>');
-		assert.deepEqual(logs.splice(0), ['continued 2']);
+		assert.deepEqual(logs.splice(0), []);
 
 		commit.click();
 		await tick();

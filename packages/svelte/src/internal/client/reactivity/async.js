@@ -39,8 +39,9 @@ export function is_script_ready(blocker) {
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {(values: Value[]) => any} fn
+ * @param {(() => void) | undefined} [on_ready] Wake an already allocated consumer in each ready view
  */
-export function flatten(blockers, sync, async, fn) {
+export function flatten(blockers, sync, async, fn, on_ready) {
 	var readies = blockers.filter(is_script_ready);
 	var promises = /** @type {PromiseBlocker[]} */ (
 		blockers.filter((blocker) => !is_script_ready(blocker))
@@ -61,8 +62,9 @@ export function flatten(blockers, sync, async, fn) {
 			if (content !== null) {
 				batch.unskip_effect(content);
 				batch.revalidate_branch(content);
+				on_ready?.();
 			} else {
-				content = branch(() => flatten(promises, sync, async, fn));
+				content = branch(() => flatten(promises, sync, async, fn, on_ready));
 			}
 		}, EFFECT_TRANSPARENT | EFFECT_PRESERVED);
 		return;
@@ -135,6 +137,7 @@ export function flatten(blockers, sync, async, fn) {
 			if (effect !== null) {
 				/** @type {Batch} */ (current_batch).unskip_effect(effect);
 				/** @type {Batch} */ (current_batch).revalidate_branch(effect);
+				on_ready?.();
 			} else {
 				effect = branch(() => {
 					try {

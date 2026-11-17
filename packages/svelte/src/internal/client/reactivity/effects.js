@@ -1,4 +1,4 @@
-/** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 /** @import { TeardownContext } from './batch.js' */
 import {
 	is_dirty,
@@ -392,26 +392,36 @@ export function render_effect(fn, flags = 0) {
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	var readies = blockers.filter(is_script_ready);
 	if (readies.length > 0) {
-		/** @type {Value[] | null} */
-		var values = null;
-		// Allocating this in the first ready view would eagerly render a fork into
-		// shared DOM. Install it now and let the batch defer its body until commit.
-		var effect = create_effect(RENDER_EFFECT | EFFECT_PRESERVED, () => {
-			for (const ready of readies) if (!get(ready)) return;
-			if (values !== null) {
-				for (var i = sync.length; i < values.length; i++) {
-					if (is_uninitialized(values[i])) {
-						get(values[i]);
-						return;
+		// Keep the effect's identity from construction, but do not record a successful
+		// readiness-only run before its values exist. A deferred first body must still
+		// have dv=null when the batch validates it.
+		var effect = create_effect(RENDER_EFFECT | EFFECT_PRESERVED, null);
+		var constructing = true;
+		flatten(
+			blockers,
+			sync,
+			async,
+			(values) => {
+				effect.fn = () => {
+					for (const ready of readies) if (!get(ready)) return;
+					for (var i = sync.length; i < values.length; i++) {
+						if (is_uninitialized(values[i])) {
+							get(values[i]);
+							return;
+						}
 					}
-				}
-				fn(...values.map(get));
+					fn(...values.map(get));
+				};
+				if (constructing) update_effect(effect);
+				else Batch.ensure().schedule(effect, MAYBE_DIRTY);
+			},
+			() => {
+				// The renderer is outside flatten's cached content branch. Waking that
+				// branch alone cannot schedule its first body in a later ready view.
+				if (effect.fn !== null) Batch.ensure().schedule(effect, MAYBE_DIRTY);
 			}
-		});
-		flatten(blockers, sync, async, (signals) => {
-			values = signals;
-			Batch.ensure().schedule(effect, DIRTY);
-		});
+		);
+		constructing = false;
 		return;
 	}
 

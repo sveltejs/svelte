@@ -2,19 +2,39 @@
 /** @import { Batch } from './batch.js' */
 import {
 	ASYNC,
+	CLEAN,
 	DESTROYED,
+	DIRTY,
+	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
 	EFFECT_OFFSCREEN,
 	SCRIPT_EFFECT,
 	STALE_REACTION
 } from '../constants.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { active_effect, abort_controller, get, set_active_effect, untrack } from '../runtime.js';
+import {
+	active_effect,
+	active_reaction,
+	abort_controller,
+	get,
+	set_active_effect,
+	untrack,
+	update_effect
+} from '../runtime.js';
+import {
+	initialization_context,
+	get_initialization_context,
+	set_initialization_context,
+	script_reactions
+} from './script-context.js';
 import { current_batch, merge_requests } from './batch.js';
 import { capture, increment_pending, merge_target, unset_context } from './async.js';
 import { async_effect, block, branch, destroy_effect, teardown } from './effects.js';
 import { derived } from './deriveds.js';
-import { source } from './sources.js';
+import { source, internal_set } from './sources.js';
+import { script_states } from './script-state.js';
+import { set_signal_status } from './status.js';
+import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { has_error_boundary, invoke_error_boundary } from '../error-handling.js';
 
 /**
@@ -24,20 +44,30 @@ import { has_error_boundary, invoke_error_boundary } from '../error-handling.js'
  * Attempt object identity is the generation token; snapshots are immutable publications.
  *
  * @typedef {'async' | 'derived' | 'local' | 'await' | 'statement'} ScriptKind
+ * @typedef {{ reactive: boolean, read: () => any, assign?: (value: any, proxy?: boolean) => any, update?: (delta: number, pre: boolean) => any, mutate?: (operation: any) => any }} ScriptAccessor
+ * @typedef {{ read: (index: number) => any, get: (index: number) => ScriptAccessor, state: (index: number, value: Source) => Source }} ScriptFacade
+ * @typedef {{ thunks: Array<(() => any) | null>, environment: ScriptAccessor[] }} ScriptFactoryResult
  * @typedef {{ value: unknown }} ScriptFailure
- * @typedef {{ attempt: ScriptAttempt, progress: number, values: any[], errors: Map<number, ScriptFailure>, error: ScriptFailure | null }} ScriptSnapshot
+ * @typedef {{ attempt: ScriptAttempt, progress: number, values: any[], environment: ScriptAccessor[] | null, private_retry: boolean, errors: Map<number, ScriptFailure>, error: ScriptFailure | null }} ScriptSnapshot
  * @typedef {Object} Script
- * @property {(bindings: Value[]) => Array<(() => any) | null>} factory
+ * @property {(bindings: Value[], facade: ScriptFacade) => ScriptFactoryResult | Array<(() => any) | null>} factory
  * @property {ScriptKind[]} kinds
  * @property {Map<number, [number, number]>} groups
  * @property {Source<ScriptSnapshot | null>} selection
  * @property {Map<number, Source>} producer_values
  * @property {Source<any[] | null>} locals
  * @property {Derived<ScriptAttempt | null>} selected
+ * @property {Derived<ScriptAccessor[] | null>} environment
+ * @property {ScriptReadiness} environment_ready
+ * @property {ScriptFacade} access
+ * @property {Map<number, Derived>} readers
  * @property {Derived<boolean>[]} available
  * @property {ScriptReadiness[]} ready
  * @property {Derived[]} bindings
  * @property {Effect} effect
+ * @property {Effect | null} cleanup
+ * @property {Map<number, Effect>} sites
+ * @property {Effect | null} admitting
  * @property {ScriptAttempt | null} sealed
  * @property {Set<ScriptAttempt>} attempts
  * @property {Set<ScriptRun>} runs
@@ -51,6 +81,11 @@ import { has_error_boundary, invoke_error_boundary } from '../error-handling.js'
  * @property {'pending' | 'succeeded' | 'failed' | 'cancelled'} outcome
  * @property {ScriptSnapshot} snapshot
  * @property {Set<ScriptFailure>} reported
+ * @property {Map<number, number>} invalidations
+ * @property {Set<number>} started
+ * @property {boolean} factory_complete
+ * @property {boolean} adopted
+ * @property {boolean} private_retry
  * @property {() => void} finish
  *
  * @typedef {Object} ScriptRun
@@ -66,7 +101,7 @@ import { has_error_boundary, invoke_error_boundary } from '../error-handling.js'
  * Allocate the stable shell once. Each admitted batch gets a fresh factory environment,
  * but producer effects and public projections keep their identity for its whole lifetime.
  *
- * @param {(bindings: Value[]) => Array<(() => any) | null>} factory
+ * @param {(bindings: Value[], facade: ScriptFacade) => ScriptFactoryResult | Array<(() => any) | null>} factory
  * @param {ScriptKind[]} kinds
  * @param {number[]} checkpoints The original coarse checkpoint of each declaration
  * @param {Array<[number, number, number]>} groups Atomic synchronous groups: start, exclusive end, thunk index
@@ -78,6 +113,13 @@ export function script_replay(factory, kinds, checkpoints, groups = []) {
 	var selection = source(/** @type {ScriptSnapshot | null} */ (null));
 	selection.f |= ASYNC;
 	var selected = derived(() => get(selection)?.attempt.environment ?? null);
+	var environment = derived(() => get(selection)?.environment ?? null);
+	var environment_ready = /** @type {ScriptReadiness} */ (
+		derived(() => {
+			var frame = get(selection);
+			return frame?.environment != null && !frame.private_retry;
+		})
+	);
 
 	/** @type {Script} */
 	var script = {
@@ -88,14 +130,37 @@ export function script_replay(factory, kinds, checkpoints, groups = []) {
 		producer_values: new Map(),
 		locals: source(/** @type {any[] | null} */ (null)),
 		selected,
+		environment,
+		environment_ready,
+		access: {
+			read: (index) => script_read(script, index),
+			get: (index) => script_accessor(script, index),
+			state: (index, value) => {
+				var attempt = initialization_context?.attempt;
+				if (!attempt || attempt.script !== script)
+					throw new Error('State registered outside initialization');
+				script_states.set(value, { script, slot: index, attempt });
+				var overrides = merge_target(attempt.batch).script_state_overrides.get(script);
+				if (overrides?.has(index)) internal_set(value, overrides.get(index)?.value);
+				return value;
+			}
+		},
+		readers: new Map(),
 		available: [],
 		ready: [],
 		bindings: [],
 		effect: /** @type {Effect} */ (/** @type {unknown} */ (null)),
+		cleanup: null,
+		sites: new Map(),
+		admitting: null,
 		sealed: null,
 		attempts: new Set(),
 		runs: new Set()
 	};
+
+	environment_ready.kind = 'script';
+	environment_ready.script = script;
+	environment_ready.checkpoint = -1;
 
 	for (let i = 0; i < kinds.length; i++) {
 		if (kinds[i] === 'async') {
@@ -128,7 +193,7 @@ export function script_replay(factory, kinds, checkpoints, groups = []) {
 						snapshot.error !== null &&
 						(merge_target(snapshot.attempt.batch).is_fork ||
 							merge_target(snapshot.attempt.batch).fork_commit_waiters.size > 0);
-					if (locals !== null && !failed_fork) return locals[i];
+					if (locals !== null && !failed_fork && !snapshot?.private_retry) return locals[i];
 				}
 
 				if (snapshot === null || snapshot.progress <= i) throw UNINITIALIZED;
@@ -160,8 +225,30 @@ export function script_replay(factory, kinds, checkpoints, groups = []) {
 
 	block(() => {
 		script.effect = /** @type {Effect} */ (active_effect);
+		if (script.cleanup === null) {
+			script.cleanup = branch(() =>
+				teardown(() => {
+					for (const attempt of script.attempts) retire_attempt(attempt);
+					for (const run of script.runs) run.finish();
+				})
+			);
+		}
+		script_reactions.set(script.effect, { script, site: -1 });
 		var batch = merge_target(/** @type {Batch} */ (current_batch));
-		if (!batch.scripts_discarded) ensure_attempt(script, batch);
+		if (batch.scripts_discarded) return;
+		var attempt = batch.script_initializers.get(script.effect);
+		var reason = attempt?.invalidations.get(-1) ?? 0;
+		attempt?.invalidations.delete(-1);
+		if (
+			attempt &&
+			attempt.factory_complete &&
+			(reason & 2) !== 0 &&
+			(script.sealed === null || attempt.outcome === 'failed' || attempt.private_retry)
+		) {
+			start_attempt(script, batch);
+		} else {
+			ensure_attempt(script, batch);
+		}
 	}, SCRIPT_EFFECT | EFFECT_PRESERVED);
 
 	// Siblings of the scheduler, not disposable children of one of its executions.
@@ -172,11 +259,6 @@ export function script_replay(factory, kinds, checkpoints, groups = []) {
 		var group = script.groups.get(site);
 		if (group) i = group[0] - 1;
 	}
-
-	teardown(() => {
-		for (const attempt of script.attempts) retire_attempt(attempt);
-		for (const run of script.runs) run.finish();
-	});
 
 	return script;
 }
@@ -191,11 +273,56 @@ export function script_value(script, slot) {
 	return get(script.bindings[slot]);
 }
 
+/** Select the accessor before evaluating an assignment RHS. @param {Script} script @param {number} index */
+export function script_accessor(script, index) {
+	var environment = get(script.environment);
+	if (environment === null) throw UNINITIALIZED;
+	return environment[index];
+}
+
+/** Ordinary getters stay live; reactive getters have stable equality-preserving projections.
+ * @param {Script} script @param {number} index
+ */
+export function script_read(script, index) {
+	var reader = script.readers.get(index);
+	return reader ? get(reader) : script_accessor(script, index).read();
+}
+
+/** Execute admission on the prologue reaction, not on the calling producer.
+ * @param {Script} script
+ */
+function run_prologue(script) {
+	var previous = script.admitting;
+	var caller = /** @type {Effect} */ (active_reaction);
+	script.admitting = caller;
+	try {
+		update_effect(script.effect);
+		// Writes during the factory invalidated the caller's old inputs. Its new
+		// execution has not read anything yet and will record the new versions.
+		set_signal_status(caller, CLEAN);
+	} finally {
+		script.admitting = previous;
+	}
+}
+
 /** @param {Script} script @param {Batch} batch */
 function ensure_attempt(script, batch) {
 	var attempt = batch.script_initializers.get(script.effect);
-	if (attempt) return attempt;
-	if (script.sealed === null) return start_attempt(script, batch);
+	if (attempt) {
+		if (
+			script.sealed !== null &&
+			!attempt.adopted &&
+			!attempt.private_retry &&
+			attempt.outcome !== 'failed'
+		)
+			adopt_attempt(attempt);
+		return attempt;
+	}
+	if (script.sealed === null) {
+		if (active_reaction === script.effect) return start_attempt(script, batch);
+		run_prologue(script);
+		return /** @type {ScriptAttempt} */ (batch.script_initializers.get(script.effect));
+	}
 
 	// An established instance still has per-view producer outcomes, but no new factory
 	// or script execution. Its stable environment projection avoids invalidating every
@@ -216,6 +343,11 @@ function ensure_attempt(script, batch) {
 		scope: established.scope,
 		outcome: 'succeeded',
 		reported: new Set(),
+		invalidations: new Map(),
+		started: new Set(),
+		factory_complete: true,
+		adopted: true,
+		private_retry: false,
 		snapshot: /** @type {ScriptSnapshot} */ (/** @type {unknown} */ (null)),
 		finish: () => {}
 	};
@@ -223,6 +355,8 @@ function ensure_attempt(script, batch) {
 		attempt,
 		progress: script.kinds.length,
 		values,
+		environment: established.snapshot.environment,
+		private_retry: false,
 		errors: new Map(),
 		error: null
 	};
@@ -230,6 +364,53 @@ function ensure_attempt(script, batch) {
 	batch.script_initializers.set(script.effect, attempt);
 	publish(attempt, attempt.snapshot);
 	return attempt;
+}
+
+/** Convert a healthy private initialization coherently, never running its remaining
+ * imperative stages against another attempt's state. @param {ScriptAttempt} attempt
+ */
+function adopt_attempt(attempt) {
+	var script = attempt.script;
+	var established = /** @type {ScriptAttempt} */ (script.sealed);
+	if (attempt === established || attempt.adopted) return;
+	attempt.adopted = true;
+	attempt.private_retry = false;
+	merge_target(attempt.batch).script_state_overrides.delete(script);
+	var previous_scope = attempt.scope;
+	attempt.scope = established.scope;
+	attempt.thunks = established.thunks;
+	attempt.outcome = 'succeeded';
+	var values = attempt.snapshot.values.slice();
+	for (var i = 0; i < script.kinds.length; i++) {
+		if (script.kinds[i] !== 'async' && script.kinds[i] !== 'derived')
+			values[i] = established.snapshot.values[i];
+	}
+	publish(attempt, {
+		...attempt.snapshot,
+		progress: script.kinds.length,
+		values,
+		environment: established.snapshot.environment,
+		private_retry: false
+	});
+	var batch = merge_target(attempt.batch);
+	for (const [site, effect] of script.sites) {
+		if (script.kinds[site] === 'async' && !attempt.started.has(site)) {
+			// A suspended initializer has no producer inputs yet. Adoption validates
+			// the established run instead of treating false->true readiness as new data.
+			batch.records?.delete(effect);
+			set_signal_status(effect, MAYBE_DIRTY);
+			batch.schedule(effect, MAYBE_DIRTY);
+		}
+	}
+	// Publication precedes cancellation: abort callbacks may reenter the runtime.
+	for (const run of script.runs) {
+		if (run.attempt === attempt && script.kinds[run.site] !== 'async') {
+			run.finish();
+			abort_run(run);
+		}
+	}
+	if (previous_scope !== established.scope) destroy_effect(previous_scope);
+	attempt.finish();
 }
 
 /** @param {Script} script @param {Batch} batch */
@@ -249,7 +430,7 @@ function create_scope(script, batch) {
 /** @param {Script} script @param {Batch} batch */
 function start_attempt(script, batch) {
 	var previous = batch.script_initializers.get(script.effect);
-	if (previous) retire_attempt(previous);
+	if (previous) retire_attempt(previous, true);
 
 	var decrement = increment_pending();
 	var finished = false;
@@ -262,6 +443,11 @@ function start_attempt(script, batch) {
 		scope: create_scope(script, batch),
 		outcome: 'pending',
 		reported: new Set(),
+		invalidations: new Map(),
+		started: new Set(),
+		factory_complete: false,
+		adopted: false,
+		private_retry: script.sealed !== null,
 		snapshot: /** @type {ScriptSnapshot} */ (/** @type {unknown} */ (null)),
 		finish: () => {
 			if (finished) return;
@@ -270,18 +456,58 @@ function start_attempt(script, batch) {
 		}
 	};
 	attempt.environment = attempt;
-	attempt.snapshot = { attempt, progress: 0, values: [], errors: new Map(), error: null };
+	attempt.snapshot = {
+		attempt,
+		progress: 0,
+		values: [],
+		environment: null,
+		private_retry: attempt.private_retry,
+		errors: new Map(),
+		error: null
+	};
 	script.attempts.add(attempt);
 	batch.script_initializers.set(script.effect, attempt);
 	publish(attempt, attempt.snapshot);
 
 	var owner = active_effect;
+	var previous_context = initialization_context;
 	set_active_effect(attempt.scope);
+	set_initialization_context({ attempt, reaction: /** @type {Effect} */ (active_reaction) });
 	try {
-		attempt.thunks = untrack(() => script.factory(script.bindings));
+		var result = script.factory(script.bindings, script.access);
+		get_initialization_context(active_reaction);
+		for (const site of script.sites.values()) {
+			if (site !== script.admitting) batch.schedule(site, DIRTY);
+		}
+		var environment = Array.isArray(result) ? [] : result.environment;
+		attempt.thunks = Array.isArray(result) ? result : result.thunks;
+		attempt.factory_complete = true;
+		publish(attempt, { ...attempt.snapshot, environment });
+		// These caches outlive every private scope. Allocation never evaluates getters.
+		set_active_effect(script.effect);
+		for (let i = 0; i < environment.length; i++) {
+			if (environment[i].reactive && !script.readers.has(i)) {
+				script.readers.set(
+					i,
+					derived(() => {
+						// Keep this view's projection version even when adopting an environment
+						// whose equal getter value has another global cache version.
+						var frame = get(script.selection);
+						if (frame?.environment == null) throw UNINITIALIZED;
+						return frame.environment[i].read();
+					})
+				);
+			}
+		}
+		if (script.kinds.length === 0) {
+			attempt.outcome = 'succeeded';
+			attempt.finish();
+		}
 	} catch (error) {
-		fail(attempt, error);
+		attempt.factory_complete = true;
+		if (error !== STALE_REACTION && attempt.outcome !== 'cancelled') fail(attempt, error);
 	} finally {
+		set_initialization_context(previous_context);
 		set_active_effect(owner);
 	}
 	return attempt;
@@ -291,17 +517,25 @@ function start_attempt(script, batch) {
 function publish(attempt, snapshot) {
 	attempt.snapshot = snapshot;
 	var batch = merge_target(attempt.batch);
-	batch.capture(attempt.script.selection, snapshot, false);
+	if (batch.scripts_discarded || attempt.outcome === 'cancelled') return;
+	batch.capture(attempt.script.selection, snapshot, false, false, null, batch);
 }
 
 /** @param {Script} script @param {number} site */
 function run_site(script, site) {
 	var batch = merge_target(/** @type {Batch} */ (current_batch));
 	if (batch.scripts_discarded) return;
+	script_reactions.set(/** @type {Effect} */ (active_reaction), { script, site });
+	script.sites.set(site, /** @type {Effect} */ (active_reaction));
 	var attempt = ensure_attempt(script, batch);
-	get(script.selected);
+	var reason = attempt.invalidations.get(site) ?? 0;
+	attempt.invalidations.delete(site);
 	if (attempt.outcome === 'cancelled') return;
 	var snapshot = /** @type {ScriptSnapshot} */ (untrack(() => get(script.selection)));
+	if (snapshot.environment === null) {
+		get(script.environment_ready);
+		return;
+	}
 	if (snapshot.progress <= site && site > 0 && !get(script.available[site - 1])) return;
 	var kind = script.kinds[site];
 	var group = script.groups.get(site);
@@ -312,22 +546,36 @@ function run_site(script, site) {
 		}
 		return;
 	}
-	if (kind !== 'async' && script.sealed !== null && snapshot.progress > site) return;
+	if (
+		kind !== 'async' &&
+		script.sealed !== null &&
+		!attempt.private_retry &&
+		snapshot.progress > site
+	)
+		return;
 
 	// An already-observed prefix changed while later initialization was unfinished.
 	// Never combine its old locals with new producer values. After sealing, locals are
 	// permanent and only ordinary producer runs change, including in existing forks.
-	if (script.sealed === null && (attempt.outcome === 'failed' || snapshot.progress > site)) {
-		start_attempt(script, batch);
+	if (
+		(script.sealed === null || attempt.private_retry) &&
+		(reason & 2) !== 0 &&
+		attempt.started.has(site)
+	) {
+		attempt.invalidations.set(-1, 2);
+		run_prologue(script);
+		run_site(script, site);
 		return;
 	}
+	if (kind !== 'async' && snapshot.progress > site) return;
+	attempt.started.add(site);
 
 	// Replacing work within one view always retires that run. Independent real
 	// views remain independent unless user code requested an abort signal.
 	for (const previous of script.runs) {
 		if (previous.site === site && merge_target(previous.batch) === batch) {
 			previous.finish();
-			previous.controller?.abort(STALE_REACTION);
+			abort_run(previous);
 		}
 	}
 	var restore = capture();
@@ -388,6 +636,10 @@ function run_site(script, site) {
 	}
 
 	var owner = active_effect;
+	var previous_context = initialization_context;
+	if (group || kind !== 'async') {
+		set_initialization_context({ attempt, reaction: /** @type {Effect} */ (active_reaction) });
+	}
 	// Keep dependency/abort identity on the stable producer reaction, but anything
 	// created by user code belongs to this attempt, never another view's producer run.
 	set_active_effect(attempt.scope);
@@ -418,6 +670,7 @@ function run_site(script, site) {
 			Promise.resolve().then(() => settle(error, true));
 		}
 	} finally {
+		set_initialization_context(previous_context);
 		set_active_effect(owner);
 	}
 }
@@ -433,7 +686,8 @@ function complete(attempt, snapshot, site, value, end) {
 		if (signal) {
 			// Only a result produced by this view gets private provenance. Merely
 			// adopting the established instance must not pin all its inherited values.
-			merge_target(attempt.batch).capture(signal, result, signal.equals(result));
+			var batch = merge_target(attempt.batch);
+			batch.capture(signal, result, signal.equals(result), false, null, batch);
 		} else {
 			values[i] = result;
 		}
@@ -441,12 +695,30 @@ function complete(attempt, snapshot, site, value, end) {
 	}
 	var progress = Math.max(snapshot.progress, last);
 	var error = errors.values().next().value ?? null;
-	var next = { attempt, progress, values, errors, error };
+	var next = {
+		attempt,
+		progress,
+		values,
+		environment: snapshot.environment,
+		private_retry: snapshot.private_retry,
+		errors,
+		error
+	};
 
 	publish(attempt, next);
 
 	if (progress === attempt.script.kinds.length) {
 		attempt.outcome = error === null ? 'succeeded' : 'failed';
+	}
+	if (
+		error === null &&
+		attempt.script.sealed !== null &&
+		attempt.script.sealed !== attempt &&
+		!attempt.adopted &&
+		(!attempt.private_retry || progress === attempt.script.kinds.length)
+	) {
+		adopt_attempt(attempt);
+	} else if (progress === attempt.script.kinds.length) {
 		attempt.finish();
 	}
 }
@@ -474,15 +746,31 @@ function fail(attempt, error, site = -1) {
 	}
 }
 
-/** @param {ScriptAttempt} attempt */
-function retire_attempt(attempt) {
+/** User abort callbacks are not initializer code. @param {ScriptRun} run */
+function abort_run(run) {
+	var context = initialization_context;
+	set_initialization_context(null);
+	try {
+		without_reactive_context(() => run.controller?.abort(STALE_REACTION));
+	} finally {
+		set_initialization_context(context);
+	}
+}
+
+/** @param {ScriptAttempt} attempt @param {boolean} keep_overrides */
+function retire_attempt(attempt, keep_overrides = false) {
 	attempt.outcome = 'cancelled';
 	attempt.finish();
 	attempt.script.attempts.delete(attempt);
+	var owner = merge_target(attempt.batch);
+	if (owner.script_initializers.get(attempt.script.effect) === attempt) {
+		owner.script_initializers.delete(attempt.script.effect);
+		if (!keep_overrides) owner.script_state_overrides.delete(attempt.script);
+	}
 	for (const run of attempt.script.runs) {
 		if (run.attempt === attempt) {
 			run.finish();
-			run.controller?.abort(STALE_REACTION);
+			abort_run(run);
 		}
 	}
 	if (attempt.scope !== attempt.script.sealed?.scope && (attempt.scope.f & DESTROYED) === 0) {
@@ -500,7 +788,7 @@ export function discard_scripts(batch) {
 export function merge_scripts(target, incoming) {
 	for (const [effect, attempt] of incoming.script_initializers) {
 		var losing = target.script_initializers.get(effect);
-		if (losing && losing !== attempt) retire_attempt(losing);
+		if (losing && losing !== attempt) retire_attempt(losing, true);
 		target.script_initializers.set(effect, attempt);
 		attempt.batch = target;
 		target.unskip_effect(attempt.scope);
@@ -540,7 +828,17 @@ export function commit_scripts(batch) {
 		var script = attempt.script;
 		if (script.sealed === null) {
 			script.sealed = attempt;
+			attempt.adopted = true;
 			attempt.scope.f &= ~EFFECT_OFFSCREEN;
+			for (const other of script.attempts) {
+				if (other === attempt || other.outcome === 'failed' || other.outcome === 'cancelled')
+					continue;
+				const owner = merge_target(other.batch);
+				owner.schedule(script.effect, DIRTY);
+				queueMicrotask(() => {
+					if (owner.linked && !owner.scripts_discarded) owner.flush();
+				});
+			}
 			// Established plain locals are lifetime state, not speculative producer results.
 			// Publishing them separately leaves cached producer projection versions intact.
 			batch.capture(script.locals, attempt.snapshot.values, false);
@@ -551,6 +849,7 @@ export function commit_scripts(batch) {
 			attempt.scope = script.sealed.scope;
 		}
 		batch.script_initializers.delete(effect);
+		batch.script_state_overrides.delete(script);
 		if (attempt !== script.sealed) script.attempts.delete(attempt);
 	}
 	return true;

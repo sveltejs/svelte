@@ -4,7 +4,7 @@ import { test } from '../../test';
 // The fork's first async producer starts after its own raw await, and stays
 // private when the real view starts an independent initializer. Real publication
 // establishes snapshot=0; a later fork commit can update the reactive value, but
-// must not replace the established snapshot with the fork's private snapshot=1.
+// must not finish its abandoned suffix or replace the established snapshot.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -42,7 +42,9 @@ export default test({
 			resolve_1.click();
 			await tick();
 			assert.htmlEqual(output.innerHTML, '<b>0</b><p>0 0</p>');
-			assert.deepEqual(logs.splice(0), ['continued 1 1']);
+			// R published the established initializer before this result arrived.
+			// F may update its reactive value, not finish its old imperative suffix.
+			assert.deepEqual(logs.splice(0), []);
 
 			finish.click();
 			await tick();

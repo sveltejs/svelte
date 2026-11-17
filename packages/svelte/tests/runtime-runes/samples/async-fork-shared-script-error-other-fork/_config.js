@@ -1,9 +1,9 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-// F creates the child, but G initializes independently and can start its second
-// await before F fails. F's failure must not poison G's progress. Neither fork
-// can render before G commits, and the child's stable prefix is installed once.
+// F and G each execute the whole script, including its prefix, and G can start
+// its second await before F fails. F's failure must not poison G's progress.
+// Neither fork can render before G commits; prefix replay is not DOM installation.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -20,7 +20,7 @@ export default test({
 		fork_g.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
-		assert.deepEqual(logs.splice(0), ['load 2']);
+		assert.deepEqual(logs.splice(0), ['created', 'load 2']);
 
 		// G's dependent await can start without waiting for F's result.
 		first_g.click();

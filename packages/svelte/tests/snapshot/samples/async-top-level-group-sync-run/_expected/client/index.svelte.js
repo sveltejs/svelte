@@ -4,20 +4,23 @@ import * as $ from 'svelte/internal/client';
 
 export default function Async_top_level_group_sync_run($$anchor) {
 	const $$script = $.script_replay(
-		($$bindings) => {
+		($$bindings, $$access) => {
 			let b, c;
 
-			return [
-				() => Promise.resolve(1),
-				() => void 0,
-				() => void 0,
-				() => {
-					b = $.get($$bindings[0]) + 1;
-					c = b + 1;
+			return {
+				thunks: [
+					() => Promise.resolve(1),
+					() => void 0,
+					() => void 0,
+					() => {
+						b = $.get($$bindings[0]) + 1;
+						c = b + 1;
 
-					return [b, c];
-				}
-			];
+						return [b, c];
+					}
+				],
+				environment: []
+			};
 		},
 		['await', 'local', 'local'],
 		[0, 1, 1],

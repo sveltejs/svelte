@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch.js';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -84,6 +85,8 @@ export interface BatchValue {
 	 * This matters when a batch commits and is prevented from overriding an earlier fork's result.
 	 */
 	async?: boolean;
+	/** Canonical batch in which ordinary initialization caused this write. */
+	init?: Batch | null;
 }
 
 /**

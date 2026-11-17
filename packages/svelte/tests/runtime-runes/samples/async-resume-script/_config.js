@@ -11,8 +11,9 @@ const buttons = `
 `;
 
 // Each view initializes independently. A ready real attempt can publish without
-// waiting for the fork, while a ready fork stays invisible until commit. Both
-// continuations must read their own value and later reactive updates remain live.
+// waiting for the fork, while a ready fork stays invisible until commit. Once R
+// publishes, an unfinished healthy F adopts it instead of running its old suffix.
+// Continuations that do execute read their own value; reactive updates stay live.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -35,7 +36,7 @@ export default test({
 				(first === 'real' ? shift : pop).click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, `${buttons}<p>0 0</p>`);
-				assert.deepEqual(logs.splice(0), [`continued with ${first === 'real' ? 1 : 0}`]);
+				assert.deepEqual(logs.splice(0), first === 'real' ? [] : ['continued with 0']);
 
 				commit.click();
 				await tick();
