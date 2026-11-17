@@ -296,7 +296,7 @@ export function async_expression(fn, label, location, onready) {
 
 			if (for_run !== null) {
 				// Let the script consume the first value in this batch's view before releasing buffered results.
-				for_run.batch = batch;
+				for_run.switch(batch);
 
 				for_run.continued.push(() => flush_waiting(true));
 

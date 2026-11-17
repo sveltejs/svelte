@@ -310,9 +310,36 @@ export function unset_context(deactivate_batch = true) {
  * The script's state while a `run` step executes.
  * Async expressions set `batch` when they deliver their first value. `continued` holds callbacks
  * to run after the script resumes, and `signals` lists the expressions in creation order.
- * @type {{ batch: Batch, continued: Array<() => void>, signals: Source[] } | null}
+ * @type {Run | null}
  */
 export let batch_for_run = null;
+
+class Run {
+	batch = /** @type {Batch} */ (current_batch);
+
+	/** @type {Array<() => void>} */
+	continued = [];
+
+	/** @type {Source[] | null} */
+	signals = [];
+
+	constructor() {
+		this.batch = /** @type {Batch} */ (current_batch);
+	}
+
+	continue() {
+		for (const fn of this.continued.splice(0)) fn();
+	}
+
+	/**
+	 * Switch away from the previous batch (which is now obsolete)
+	 * to another one
+	 * @param {Batch} batch
+	 */
+	switch(batch) {
+		this.batch = batch;
+	}
+}
 
 /**
  * @param {Array<() => void | Promise<void>>} thunks
@@ -324,12 +351,7 @@ export function run(thunks) {
 	/** @type {null | { error: any }} */
 	var errored = null;
 
-	/** @type {NonNullable<typeof batch_for_run>} */
-	var for_run = { batch: /** @type {Batch} */ (current_batch), continued: [], signals: [] };
-
-	const continued = () => {
-		for (const fn of for_run.continued.splice(0)) fn();
-	};
+	var for_run = new Run();
 
 	/**
 	 * Batches that adopted the script's branch, in adoption order.
@@ -411,7 +433,7 @@ export function run(thunks) {
 					// unset_context in .finally() would be too late ...
 					unset_context();
 					// Release buffered results now that the script has used the previous step's first values.
-					continued();
+					for_run.continue();
 				}
 			})
 			.catch(handle_error);
@@ -429,7 +451,7 @@ export function run(thunks) {
 	}
 
 	// The last step has no following step to release its buffered results.
-	promise.finally(continued);
+	promise.finally(() => for_run.continue());
 
 	async_effect(() => {
 		// Inside an effect so later adopting branches can rerun this
