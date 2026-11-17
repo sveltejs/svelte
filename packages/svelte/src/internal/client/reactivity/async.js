@@ -1,4 +1,4 @@
-/** @import { Blocker, Effect, Source, Value } from '#client' */
+/** @import { Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
 import { DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
@@ -64,7 +64,7 @@ export function flatten(blockers, sync, async, fn) {
 			}
 
 			// Use the script's current batch so the template can read its first values.
-			restore(pending[0].batch());
+			pending[0].run.restore();
 
 			try {
 				run();
@@ -314,6 +314,9 @@ export function unset_context(deactivate_batch = true) {
 export let current_run = null;
 
 class Run {
+	/** @type {ReturnType<typeof capture>} */
+	#restore;
+
 	batch = /** @type {Batch} */ (current_batch);
 
 	/** @type {Array<() => void>} */
@@ -328,8 +331,16 @@ class Run {
 	 */
 	adopters = new Set();
 
+	/**
+	 * @param {Promise<any>} promise
+	 */
+	blocker(promise) {
+		return new Blocker(this, promise);
+	}
+
 	constructor() {
 		this.batch = /** @type {Batch} */ (current_batch);
+		this.#restore = capture();
 	}
 
 	continue() {
@@ -350,6 +361,17 @@ class Run {
 		}
 	}
 
+	restore() {
+		if (!merge_target(this.batch).linked) {
+			for (const b of this.adopters) {
+				var target = merge_target(b);
+				if (target.linked) this.batch = target;
+			}
+		}
+
+		this.#restore(this.batch);
+	}
+
 	/**
 	 * Switch away from the previous batch (which is now obsolete)
 	 * to another one
@@ -360,30 +382,30 @@ class Run {
 	}
 }
 
+export class Blocker {
+	settled = false;
+	failed = false;
+
+	/**
+	 * @param {Run} run
+	 * @param {Promise<any>} promise
+	 */
+	constructor(run, promise) {
+		this.run = run;
+		this.promise = promise;
+	}
+}
+
 /**
  * @param {Array<() => void | Promise<void>>} thunks
  */
 export function run(thunks) {
-	var restore = capture();
 	var active = /** @type {Effect} */ (active_effect);
 
 	/** @type {null | { error: any }} */
 	var errored = null;
 
 	var run = new Run();
-
-	// If the fork was discarded, continue in the first remaining adopter.
-	function continue_in() {
-		var batch = merge_target(run.batch);
-		if (batch.linked) return batch;
-
-		for (const b of run.adopters) {
-			var target = merge_target(b);
-			if (target.linked) return (run.batch = target);
-		}
-
-		return (run.batch = batch);
-	}
 
 	/** @param {any} error */
 	const handle_error = (error) => {
@@ -392,7 +414,7 @@ export function run(thunks) {
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
 		if (!aborted(active)) {
-			restore(continue_in());
+			run.restore();
 
 			try {
 				invoke_error_boundary(error, active);
@@ -404,11 +426,11 @@ export function run(thunks) {
 
 	var promise = Promise.resolve(run.invoke(thunks[0])).catch(handle_error);
 
-	/** @type {Blocker} */
-	var blocker = { promise, settled: false, failed: false, batch: continue_in };
+	var blocker = run.blocker(promise);
 	var blockers = [blocker];
 
 	promise.finally(() => {
+		// TODO encapsulate this in Blocker
 		blocker.settled = true;
 		blocker.failed = errored !== null;
 		unset_context();
@@ -417,7 +439,7 @@ export function run(thunks) {
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
-				restore(continue_in());
+				run.restore();
 
 				try {
 					if (errored) {
@@ -439,8 +461,7 @@ export function run(thunks) {
 			})
 			.catch(handle_error);
 
-		/** @type {Blocker} */
-		const blocker = { promise, settled: false, failed: false, batch: continue_in };
+		const blocker = run.blocker(promise);
 		blockers.push(blocker);
 
 		promise.finally(() => {

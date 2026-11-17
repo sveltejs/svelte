@@ -163,11 +163,3 @@ export interface Effect extends Reaction {
 export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
-
-export interface Blocker {
-	promise: Promise<any>;
-	settled: boolean;
-	failed: boolean;
-	/** The batch that the script continues in, which may differ from its creator */
-	batch: () => Batch;
-}

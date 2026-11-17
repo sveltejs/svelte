@@ -1,4 +1,5 @@
-/** @import { Blocker, TemplateNode, Value } from '#client' */
+/** @import { TemplateNode, Value } from '#client' */
+/** @import { Blocker } from '../../reactivity/async.js' */
 import { flatten } from '../../reactivity/async.js';
 import { get } from '../../runtime.js';
 import {
