@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch.js';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -84,6 +85,8 @@ export interface BatchValue {
 	 * This matters when a batch commits and is prevented from overriding an earlier fork's result.
 	 */
 	async?: boolean;
+	/** Canonical batch in which ordinary initialization caused this write. */
+	init?: Batch | null;
 }
 
 /**
@@ -163,8 +166,17 @@ export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
 
-export interface Blocker {
+export interface PromiseBlocker {
 	promise: Promise<any>;
 	settled: boolean;
 	failed: boolean;
 }
+
+/** A view-local script checkpoint, never a globally settled promise. */
+export interface ScriptReadiness extends Derived<boolean> {
+	kind: 'script';
+	script: import('./script-replay.js').Script;
+	checkpoint: number;
+}
+
+export type Blocker = PromiseBlocker | ScriptReadiness;

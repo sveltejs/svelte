@@ -135,7 +135,12 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					const is_state = is_state_source(binding, context.state.analysis);
+					const replay = context.state.analysis.script_replay;
+					const stage = replay?.bindings.get(binding);
+					// Replay state slots contain native Sources even for readonly bindings
+					// that the ordinary declaration lowering could optimize to raw values.
+					const is_state =
+						is_state_source(binding, context.state.analysis) || stage?.kind === 'state';
 					const is_proxy = should_proxy(value, context.state.scope);
 
 					if (rune === '$state' && is_proxy) {
@@ -152,6 +157,21 @@ export function VariableDeclaration(node, context) {
 
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));
+						}
+
+						const slot =
+							replay?.environment.get(binding)?.index ??
+							(stage?.kind === 'state'
+								? /** @type {NonNullable<typeof replay>} */ (replay).environment.size + stage.index
+								: undefined);
+						if (context.state.script_replay_factory && slot !== undefined) {
+							// The initializer still runs. An external write to this logical slot
+							// is adopted before subsequent user initialization reads the source.
+							value = b.call(
+								b.member(context.state.script_replay_factory, 'state'),
+								b.literal(slot),
+								value
+							);
 						}
 					}
 

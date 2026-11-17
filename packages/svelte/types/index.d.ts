@@ -1198,6 +1198,13 @@ declare module 'svelte/compiler' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * Temporary migration control for client script replay. Requires `async`.
+			 * By default, supported script initializers use replay. `true` rejects unsupported
+			 * constructs instead of retaining their existing lowering; `false` disables replay.
+			 * SSR is unchanged. This control will be removed when migration is complete.
+			 */
+			scriptReplay?: boolean;
 		};
 	}
 	/**
@@ -3296,6 +3303,13 @@ declare module 'svelte/types/compiler/interfaces' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * Temporary migration control for client script replay. Requires `async`.
+			 * By default, supported script initializers use replay. `true` rejects unsupported
+			 * constructs instead of retaining their existing lowering; `false` disables replay.
+			 * SSR is unchanged. This control will be removed when migration is complete.
+			 */
+			scriptReplay?: boolean;
 		};
 	}
 	/**

@@ -503,6 +503,10 @@ export class Boundary {
 		return get(/** @type {Source<number>} */ (this.#effect_pending));
 	}
 
+	can_handle_error() {
+		return !!(this.#props.onerror || this.#props.failed);
+	}
+
 	/** @param {unknown} error */
 	error(error) {
 		if (error === HYDRATION_ERROR) {
@@ -511,7 +515,7 @@ export class Boundary {
 
 		// If we have nothing to capture the error, or if we hit an error while
 		// rendering the fallback, re-throw for another boundary to handle
-		if (!this.#props.onerror && !this.#props.failed) {
+		if (!this.can_handle_error()) {
 			throw error;
 		}
 

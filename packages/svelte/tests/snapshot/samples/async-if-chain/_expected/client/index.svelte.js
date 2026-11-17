@@ -5,17 +5,31 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<!> <!> <!> <!> <!>`, 1);
 
 export default function Async_if_chain($$anchor) {
-	function complex1() {
-		return 1;
-	}
+	const $$script = $.script_replay(
+		($$bindings, $$access) => {
+			function complex1() {
+				return 1;
+			}
 
-	let foo = true;
-	var blocking;
-	var $$promises = $.run([async () => blocking = await $.async_derived(() => foo)]);
+			let foo = true;
+
+			return {
+				thunks: [() => $$access.read(1)],
+				environment: [
+					{ reactive: false, read: () => complex1 },
+					{ reactive: true, read: () => foo }
+				]
+			};
+		},
+		['async'],
+		[0],
+		[]
+	);
+
 	var fragment = root();
 	var node = $.first_child(fragment);
 
-	$.async(node, [$$promises[0]], void 0, (node) => {
+	$.async(node, [$$script.ready[0]], void 0, (node) => {
 		var consequent = ($$anchor) => {
 			var text = $.text('foo');
 
@@ -35,13 +49,13 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node, ($$render) => {
-			if (foo) $$render(consequent); else if (bar) $$render(consequent_1, 1); else $$render(alternate, -1);
+			if ($.script_read($$script, 1)) $$render(consequent); else if (bar) $$render(consequent_1, 1); else $$render(alternate, -1);
 		});
 	});
 
 	var node_1 = $.sibling(node, 2);
 
-	$.async(node_1, [$$promises[0]], [() => foo], (node_1, $$condition) => {
+	$.async(node_1, [$$script.ready[0]], [() => $.script_read($$script, 1)], (node_1, $$condition) => {
 		var consequent_2 = ($$anchor) => {
 			var text_3 = $.text('foo');
 
@@ -92,11 +106,11 @@ export default function Async_if_chain($$anchor) {
 
 	$.async(
 		node_3,
-		[$$promises[0]],
+		[$$script.ready[0]],
 		[
 			async () => {
 				try {
-					return (await $.save(foo))() > 10;
+					return (await $.save($.script_read($$script, 1)))() > 10;
 				} finally {
 					$.unsave();
 				}
@@ -121,11 +135,11 @@ export default function Async_if_chain($$anchor) {
 
 				$.async(
 					node_4,
-					[$$promises[0]],
+					[$$script.ready[0]],
 					[
 						async () => {
 							try {
-								return (await $.save(foo))() > 5;
+								return (await $.save($.script_read($$script, 1)))() > 5;
 							} finally {
 								$.unsave();
 							}
@@ -184,7 +198,7 @@ export default function Async_if_chain($$anchor) {
 			$.append($$anchor, text_13);
 		};
 
-		var d = $.derived(() => complex1() * complex2 > 100);
+		var d = $.derived(() => $.script_read($$script, 0)() * complex2 > 100);
 
 		var alternate_5 = ($$anchor) => {
 			var text_14 = $.text('else');
@@ -199,7 +213,7 @@ export default function Async_if_chain($$anchor) {
 
 	var node_6 = $.sibling(node_5, 2);
 
-	$.async(node_6, [$$promises[0]], void 0, (node_6) => {
+	$.async(node_6, [$$script.ready[0]], void 0, (node_6) => {
 		var consequent_11 = ($$anchor) => {
 			var text_15 = $.text('foo');
 
@@ -219,7 +233,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_6, ($$render) => {
-			if ($.get(blocking) > 10) $$render(consequent_11); else if ($.get(blocking) > 5) $$render(consequent_12, 1); else $$render(alternate_6, -1);
+			if ($.get($.script_binding($$script, 0)) > 10) $$render(consequent_11); else if ($.get($.script_binding($$script, 0)) > 5) $$render(consequent_12, 1); else $$render(alternate_6, -1);
 		});
 	});
 

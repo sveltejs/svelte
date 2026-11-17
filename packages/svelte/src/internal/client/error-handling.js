@@ -39,6 +39,28 @@ export function handle_error(error) {
 	invoke_error_boundary(error, effect);
 }
 
+/** A read-only preflight: unlike invoking a boundary, this never selects a failed branch.
+ * @param {Effect | null} effect
+ */
+export function get_error_boundary(effect) {
+	while (effect !== null) {
+		if (
+			(effect.f & (BOUNDARY_EFFECT | DESTROYED | DESTROYING)) === BOUNDARY_EFFECT &&
+			(effect.f & REACTION_RAN) !== 0 &&
+			effect.b?.can_handle_error()
+		) {
+			return effect;
+		}
+		effect = effect.parent;
+	}
+	return null;
+}
+
+/** @param {Effect | null} effect */
+export function has_error_boundary(effect) {
+	return get_error_boundary(effect) !== null;
+}
+
 /**
  * @param {unknown} error
  * @param {Effect | null} effect

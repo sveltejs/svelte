@@ -3,24 +3,34 @@ import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/client';
 
 export default function Async_top_level_group_sync_run($$anchor) {
-	var a,
-		// these should be grouped into one, having an async tick inbetween
-		// would change how the code runs and could introduce subtle timing bugs
-		b,
-		c;
+	const $$script = $.script_replay(
+		($$bindings, $$access) => {
+			let b, c;
 
-	var $$promises = $.run([
-		async () => a = await Promise.resolve(1),
-		() => {
-			b = a + 1;
-			c = b + 1;
-		}
-	]);
+			return {
+				thunks: [
+					() => Promise.resolve(1),
+					() => void 0,
+					() => void 0,
+					() => {
+						b = $.get($$bindings[0]) + 1;
+						c = b + 1;
+
+						return [b, c];
+					}
+				],
+				environment: []
+			};
+		},
+		['await', 'local', 'local'],
+		[0, 1, 1],
+		[[1, 3, 3]]
+	);
 
 	$.next();
 
 	var text = $.text();
 
-	$.template_effect(() => $.set_text(text, c), void 0, void 0, [$$promises[1]]);
+	$.template_effect(() => $.set_text(text, $.script_value($$script, 2)), void 0, void 0, [$$script.ready[1]]);
 	$.append($$anchor, text);
 }

@@ -157,7 +157,12 @@ export function async_expression(fn, label, location) {
 					// a future run aborted this one. merge the later batch into the earlier one
 					const target = merge_target(batch);
 
-					if (target !== current_batch && target.linked && !target.is_fork) {
+					if (
+						target !== current_batch &&
+						target.linked &&
+						!target.scripts_discarded &&
+						!target.is_fork
+					) {
 						merge_requests.add(target);
 					}
 				}
@@ -224,13 +229,16 @@ export function async_expression(fn, label, location) {
 			decrement_pending();
 			deferreds.delete(d);
 
+			var target = merge_target(batch);
+			if (!target.linked || target.scripts_discarded) return;
+
 			if (error === OBSOLETE) {
 				internal_set(batch.obsolete, true);
 				return;
 			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
-			merge_target(batch).capture(signal, error ?? value, same, !!error);
+			target.capture(signal, error ?? value, same, !!error);
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);

@@ -18,6 +18,7 @@ import { ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import { create_attribute, is_custom_element_node } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
+import { analyze_script_replay } from './script-replay.js';
 import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
@@ -560,6 +561,7 @@ export function analyze_component(root, source, options) {
 		snippets: new Set(),
 		async_deriveds: new Map(),
 		pickled_awaits: new Set(),
+		script_replay: null,
 		instance_body: {
 			sync: [],
 			async: [],
@@ -945,6 +947,14 @@ export function analyze_component(root, source, options) {
 
 	// TODO
 	// analysis.stylesheet.warn_on_unused_selectors(analysis);
+
+	if (
+		options.generate === 'client' &&
+		options.experimental.async &&
+		options.experimental.scriptReplay !== false
+	) {
+		analyze_script_replay(analysis, options.experimental.scriptReplay === true);
+	}
 
 	return analysis;
 }

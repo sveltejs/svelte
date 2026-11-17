@@ -20,6 +20,10 @@ export interface ClientTransformState extends TransformState {
 	 * us to rewrite `this.foo` as `this.#foo.value`
 	 */
 	readonly in_constructor: boolean;
+	/** Facade for registering actual native state sources while compiling a replay factory. */
+	readonly script_replay_factory?: Identifier;
+	/** Native attempt-local transforms for approved initialization-created callbacks. */
+	readonly script_replay_captures?: ClientTransformState['transform'];
 
 	readonly transform: Record<
 		string,

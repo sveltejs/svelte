@@ -1,0 +1,22 @@
+[
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `a`. Did you mean to reference it inside a closure instead?\nhttps://svelte.dev/e/state_referenced_locally",
+		"filename": "packages/svelte/tests/snapshot/samples/async-script-replay-chain/main.svelte",
+		"start": {
+			"line": 6,
+			"column": 18,
+			"character": 192
+		},
+		"end": {
+			"line": 6,
+			"column": 19,
+			"character": 193
+		},
+		"position": [
+			192,
+			193
+		],
+		"frame": "4:   let a = $derived(await load(input));\n5:   let doubled = $derived(a * 2);\n6:   const snapshot = a;\n                       ^\n7:   let b = $derived(await load(doubled + snapshot));\n8: </script>"
+	}
+]

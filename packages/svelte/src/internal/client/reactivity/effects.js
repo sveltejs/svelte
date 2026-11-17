@@ -46,7 +46,8 @@ import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
-import { flatten } from './async.js';
+import { flatten, is_script_ready } from './async.js';
+import { is_uninitialized } from './deriveds.js';
 import { set_signal_status } from './status.js';
 
 /**
@@ -389,6 +390,41 @@ export function render_effect(fn, flags = 0) {
  * @param {Blocker[]} blockers
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
+	var readies = blockers.filter(is_script_ready);
+	if (readies.length > 0) {
+		// Keep the effect's identity from construction, but do not record a successful
+		// readiness-only run before its values exist. A deferred first body must still
+		// have dv=null when the batch validates it.
+		var effect = create_effect(RENDER_EFFECT | EFFECT_PRESERVED, null);
+		var constructing = true;
+		flatten(
+			blockers,
+			sync,
+			async,
+			(values) => {
+				effect.fn = () => {
+					for (const ready of readies) if (!get(ready)) return;
+					for (var i = sync.length; i < values.length; i++) {
+						if (is_uninitialized(values[i])) {
+							get(values[i]);
+							return;
+						}
+					}
+					fn(...values.map(get));
+				};
+				if (constructing) update_effect(effect);
+				else Batch.ensure().schedule(effect, MAYBE_DIRTY);
+			},
+			() => {
+				// The renderer is outside flatten's cached content branch. Waking that
+				// branch alone cannot schedule its first body in a later ready view.
+				if (effect.fn !== null) Batch.ensure().schedule(effect, MAYBE_DIRTY);
+			}
+		);
+		constructing = false;
+		return;
+	}
+
 	flatten(blockers, sync, async, (values) => {
 		create_effect(RENDER_EFFECT, () => {
 			fn(...values.map(get));

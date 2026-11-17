@@ -43,7 +43,7 @@ import {
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
-import { invoke_error_boundary } from '../error-handling.js';
+import { get_error_boundary, invoke_error_boundary } from '../error-handling.js';
 import {
 	eager_effects,
 	eager_effects_deferred,
@@ -57,12 +57,28 @@ import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 import { is_runes } from '../context.js';
+import { note_script_invalidation } from './script-context.js';
+import { record_script_state_write, rebase_script_state_write } from './script-state.js';
+import {
+	commit_scripts,
+	discard_scripts,
+	merge_scripts,
+	prepare_script_commit
+} from './script-replay.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
 
 /** @type {Batch | null} */
 let last_batch = null;
+
+/** Snapshot before invoking callbacks that can unlink this or another batch. */
+export function get_batches() {
+	/** @type {Batch[]} */
+	var batches = [];
+	for (var batch = first_batch; batch !== null; batch = batch.next) batches.push(batch);
+	return batches;
+}
 
 /** @type {Batch | null} */
 export let current_batch = null;
@@ -222,6 +238,17 @@ export class Batch {
 	/** @type {Map<Effect, ReturnType<typeof deferred<any>>>} */
 	async_deriveds = new Map();
 
+	/** @type {Map<Effect, import('./script-replay.js').ScriptAttempt>} */
+	script_initializers = new Map();
+
+	/** External edits to logical scalar state slots, applied by a fresh factory.
+	 * @type {Map<import('./script-replay.js').Script, Map<number, import('./script-state.js').StateOverride>>}
+	 */
+	script_state_overrides = new Map();
+
+	/** Terminal for replay admission, including reentry from discard/abort callbacks. */
+	scripts_discarded = false;
+
 	/**
 	 * The current values (and their versions) of any sources that are updated in this batch,
 	 * including deriveds that were overridden via assignment — until it commits them (see `#commit`).
@@ -322,6 +349,9 @@ export class Batch {
 
 	is_fork = false;
 
+	/** Fork commit promises waiting for this view's first actual publication. @type {Set<Batch>} */
+	fork_commit_waiters = new Set();
+
 	/**
 	 * The batch that this one was merged into, if any (see `#merge`). Its async work that is still in flight
 	 * continues as part of that one
@@ -390,11 +420,20 @@ export class Batch {
 		for (var e = /** @type {Effect | null} */ (effect); e !== null && e !== root; e = e.parent) {
 			if (this.#skips(e)) return false;
 
-			if (
-				(e.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT &&
-				/** @type {Boundary} */ (e.b).is_pending
-			) {
-				return false;
+			if ((e.f & (BOUNDARY_EFFECT | DESTROYED)) === BOUNDARY_EFFECT) {
+				if (/** @type {Boundary} */ (e.b).is_pending) return false;
+
+				// A current handled failure replaces this boundary's content when we
+				// commit. Its pending siblings must not prevent that commit, but remain
+				// revalidatable while work outside the boundary is still outstanding.
+				for (const attempt of this.script_initializers.values()) {
+					if (
+						attempt.outcome === 'failed' &&
+						!this.is_skipped(attempt.script.effect) &&
+						get_error_boundary(attempt.script.effect) === e
+					)
+						return false;
+				}
 			}
 		}
 
@@ -662,6 +701,7 @@ export class Batch {
 		}
 
 		// The results of this batch are about to become the real-world state
+		if (!commit_scripts(this)) return;
 		this.#release_records(true);
 
 		// append/remove branches
@@ -670,6 +710,7 @@ export class Batch {
 		var earlier_writes = flush_queued_effects(render_effects);
 		flush_queued_effects(effects, earlier_writes);
 
+		this.resolve_fork_commit_waiters();
 		this.#deferred?.resolve();
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
@@ -711,35 +752,34 @@ export class Batch {
 	 * @param {Iterable<Source>} sources
 	 */
 	#revalidate(sources) {
-		// deriveds added during iteration are visited too, so this doubles as a worklist
-		/** @type {Set<Value>} */
-		var values = new Set(sources);
-
+		/** @type {Array<[Value, Batch | null]>} */
+		var values = Array.from(sources, (value) => [value, this.current.get(value)?.init ?? null]);
+		/** @type {Map<Value, Set<Batch | null>>} */
+		var visited = new Map();
 		/** @type {Set<Effect>} */
 		var effects = new Set();
 
-		for (const value of values) {
+		for (const [value, origin] of values) {
+			var origins = visited.get(value);
+			if (origins?.has(origin)) continue;
+			if (!origins) visited.set(value, (origins = new Set()));
+			origins.add(origin);
 			var reactions = value.reactions;
 			if (reactions === null) continue;
 
 			for (const reaction of reactions) {
 				var flags = reaction.f;
-
 				if ((flags & DERIVED) !== 0) {
 					if ((flags & CLEAN) !== 0) set_signal_status(reaction, MAYBE_DIRTY);
-					values.add(/** @type {Derived} */ (reaction));
+					values.push([/** @type {Derived} */ (reaction), origin]);
 					continue;
 				}
 
 				var effect = /** @type {Effect} */ (reaction);
+				note_script_invalidation(this, effect, origin);
 				if (effects.has(effect)) continue;
 				effects.add(effect);
-
-				if (
-					(flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 &&
-					// branches that this batch skips don't exist in its view of the world
-					!this.is_skipped(effect)
-				) {
+				if ((flags & (EAGER_EFFECT | INERT | DESTROYED)) === 0 && !this.is_skipped(effect)) {
 					this.schedule(effect, MAYBE_DIRTY);
 				}
 			}
@@ -833,6 +873,24 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
+		if (batch === this || !this.linked || !batch.linked) return;
+		for (const waiter of batch.fork_commit_waiters) this.fork_commit_waiters.add(waiter);
+		batch.fork_commit_waiters.clear();
+		for (const [script, incoming] of batch.script_state_overrides) {
+			var overrides = this.script_state_overrides.get(script);
+			if (!overrides) this.script_state_overrides.set(script, (overrides = new Map()));
+			for (const [slot, value] of incoming) {
+				if (
+					!overrides.has(slot) ||
+					/** @type {import('./script-state.js').StateOverride} */ (overrides.get(slot)).wv <=
+						value.wv
+				)
+					overrides.set(slot, value);
+			}
+		}
+		batch.script_state_overrides.clear();
+		merge_scripts(this, batch);
+
 		for (const [source, entry] of batch.current) {
 			if (!this.previous.has(source)) {
 				const previous = batch.previous.get(source);
@@ -935,8 +993,9 @@ export class Batch {
 	 * `internal_set`) — in which case the source isn't updated, and the value gets the same version
 	 * @param {boolean} [error] whether the value is an error (thrown when read, see `runtime.js#get`)
 	 * @param {Effect[] | null} [updated_during_traversal]
+	 * @param {Batch | null} [origin]
 	 */
-	capture(source, value, same, error = false, updated_during_traversal = null) {
+	capture(source, value, same, error = false, updated_during_traversal = null, origin = null) {
 		var previous = this.previous.get(source);
 		var later = later_writer(this, source);
 
@@ -973,10 +1032,12 @@ export class Batch {
 			e: error,
 			// a write to a derived is an assignment
 			assigned: (source.f & DERIVED) !== 0,
-			async: (source.f & ASYNC) !== 0
+			async: (source.f & ASYNC) !== 0,
+			init: origin
 		};
 
 		this.current.set(source, entry);
+		if (origin === null) record_script_state_write(this, source, entry);
 
 		// The active view of the world sees writes made while it's active, even if they don't belong to the batch whose
 		// view it is — e.g. those of effects that run while a batch commits, which go to a new batch. (Async results
@@ -999,7 +1060,7 @@ export class Batch {
 		if (!same) {
 			seen = null;
 			count_deps = 0;
-			this.mark(source, DIRTY, updated_during_traversal);
+			this.mark(source, DIRTY, updated_during_traversal, origin);
 			seen = null;
 
 			if (eager_effects.size > 0 && !eager_effects_deferred) {
@@ -1050,14 +1111,36 @@ export class Batch {
 	}
 
 	discard() {
-		this.#run_callbacks(this.#discard_callbacks);
+		if (this.scripts_discarded) return;
+		// Retire before callbacks: abort listeners may discard again or schedule a merge.
+		this.scripts_discarded = true;
+		merge_requests.delete(this);
+		rebases.delete(this);
 
-		for (const deferred of this.async_deriveds.values()) {
-			deferred.reject(OBSOLETE);
+		try {
+			discard_scripts(this);
+			this.#run_callbacks(this.#discard_callbacks);
+		} finally {
+			for (const deferred of this.async_deriveds.values()) {
+				deferred.reject(OBSOLETE);
+			}
+
+			this.async_deriveds.clear();
+			this.script_state_overrides.clear();
+			this.#unlink();
+			this.current.clear();
+			this.previous.clear();
+			this.folded = [];
+			this.#pending.clear();
+			this.#scheduled = [];
+			this.#unprocessed.clear();
+			this.#commit_callbacks.clear();
+			this.#discard_callbacks.clear();
+			this.#skipped_branches.clear();
+			this.#unskipped_branches.clear();
+			this.resolve_fork_commit_waiters();
+			this.#deferred?.resolve();
 		}
-
-		this.#unlink();
-		this.#deferred?.resolve();
 	}
 
 	#commit() {
@@ -1065,8 +1148,8 @@ export class Batch {
 		// in other words, their view of the world now includes the newly committed
 		// state (unless the batch in question has a more recent value for a given source),
 		// so everything that depends on it needs to be re-validated in their view
-		for (let batch = first_batch; batch !== null; batch = batch.next) {
-			if (batch === this) continue;
+		for (const batch of get_batches()) {
+			if (batch === this || !batch.linked) continue;
 
 			var is_earlier = batch.id < this.id;
 
@@ -1077,8 +1160,14 @@ export class Batch {
 				var own = batch.current.get(source);
 
 				if (own !== undefined) {
-					if (is_earlier && entry.v !== own.v && !own.async) {
-						// bring the value up to date
+					if (
+						(is_earlier || (batch.script_initializers.size > 0 && entry.wv > own.wv)) &&
+						entry.v !== own.v &&
+						!own.async
+					) {
+						// A newer input write may have merged into an older canonical batch.
+						// Replay outcomes still see that write's version, not the target's age;
+						// their own produced snapshots remain protected by `own.async`.
 						batch.current.set(source, entry);
 					} else {
 						// same value, later batch has more recent value, or the batch's own result
@@ -1087,13 +1176,24 @@ export class Batch {
 					}
 				}
 
+				rebase_script_state_write(batch, source, entry);
 				sources.push(source);
 			}
 
-			// If not started yet or no sources to update (which is e.g. possible for the very first batch) then bail
-			if (!batch.started || batch.current.size === 0) continue;
+			// A pending-boundary commit can leave an initializer alive with no private
+			// writes. Its selection still needs checking when a later attempt publishes.
+			if (!batch.started || (batch.current.size === 0 && batch.script_initializers.size === 0))
+				continue;
 
-			var obsolete = true;
+			// Private fork outcomes survive unrelated real success. An earlier real view
+			// can retire once this commit covers all its writes AND initializer selections.
+			var obsolete = !batch.is_fork || batch.script_initializers.size === 0;
+			for (const attempt of batch.script_initializers.values()) {
+				if (!this.current.has(attempt.script.selection)) {
+					obsolete = false;
+					break;
+				}
+			}
 
 			for (const source of batch.current.keys()) {
 				if (!this.current.has(source)) {
@@ -1141,6 +1241,7 @@ export class Batch {
 	 */
 	decrement(effect) {
 		var count = this.#pending.get(effect) ?? 0;
+		if (this.scripts_discarded && count === 0) return;
 
 		if (count === 1) {
 			this.#pending.delete(effect);
@@ -1209,11 +1310,28 @@ export class Batch {
 		return (this.#deferred ??= deferred()).promise;
 	}
 
+	resolve_fork_commit_waiters() {
+		for (const waiter of this.fork_commit_waiters) waiter.#deferred?.resolve();
+		this.fork_commit_waiters.clear();
+	}
+
+	/** Reject a still-pending real-phase commit, rather than leaking an async error.
+	 * @param {unknown} error
+	 */
+	reject_fork_commit(error) {
+		if (this.fork_commit_waiters.size === 0) return false;
+		for (const waiter of this.fork_commit_waiters) waiter.#deferred?.reject(error);
+		this.fork_commit_waiters.clear();
+		this.discard();
+		return true;
+	}
+
 	static ensure() {
-		if (current_batch === null) {
+		var orphaned = current_batch?.scripts_discarded ?? false;
+		if (current_batch === null || orphaned) {
 			const batch = (current_batch = new Batch());
 
-			if (processing_batch === null && !is_flushing_sync) {
+			if (orphaned || (processing_batch === null && !is_flushing_sync)) {
 				queue_micro_task(() => {
 					if (!batch.started) {
 						batch.flush();
@@ -1301,9 +1419,10 @@ export class Batch {
 	 * @param {Value} signal
 	 * @param {number} status should be DIRTY or MAYBE_DIRTY
 	 * @param {Effect[] | null} [updated_during_traversal]
+	 * @param {Batch | null} [origin]
 	 * @returns {void}
 	 */
-	mark(signal, status, updated_during_traversal = null) {
+	mark(signal, status, updated_during_traversal = null, origin = null) {
 		var reactions = signal.reactions;
 		if (reactions === null) return;
 
@@ -1330,6 +1449,7 @@ export class Batch {
 			if (!runes && reaction === active_effect) continue;
 
 			var not_dirty = (flags & DIRTY) === 0;
+			if ((flags & DERIVED) === 0) note_script_invalidation(this, reaction, origin);
 
 			if ((flags & EAGER_EFFECT) !== 0) {
 				if (!this.is_fork) {
@@ -1352,7 +1472,7 @@ export class Batch {
 				var derived = /** @type {Derived} */ (reaction);
 
 				view_cache?.delete(derived);
-				this.mark(derived, MAYBE_DIRTY, updated_during_traversal);
+				this.mark(derived, MAYBE_DIRTY, updated_during_traversal, origin);
 			} else if (not_dirty) {
 				var effect = /** @type {Effect} */ (reaction);
 
@@ -1502,6 +1622,7 @@ export class Batch {
 		}
 
 		this.linked = false;
+		this.prev = this.next = null;
 		this.#release_records();
 	}
 }
@@ -1924,49 +2045,63 @@ export function fork(fn) {
 	var settled = batch.settled();
 	var committed = false;
 	var discarded = false;
+	/** @type {Promise<void> | null} */
+	var commit_result = null;
 
 	return {
-		commit: async () => {
-			if (committed) {
-				await settled;
-				return;
-			}
-
-			if (discarded) {
-				e.fork_discarded();
-			}
-
-			if (!batch.linked) {
-				// batch was made obsolete by later changes
-				committed = true;
-				return;
-			}
-
-			committed = true;
-			batch.is_fork = false;
-
-			// Apply the changes to the real world. They keep the versions they had in the fork,
-			// so that everything the fork computed remains valid (processing the batch
-			// re-validates everything that depends on them, see `#process`)
-			for (const [source, entry] of batch.current) {
-				const later = later_writer(batch, source);
-
-				if (later !== null) {
-					// in order, the fork's write comes before the later batch's, which replaces it
-					later.previous.set(source, entry);
-				} else {
-					batch.mark(source, MAYBE_DIRTY);
-					apply(source, entry);
+		commit: () =>
+			(commit_result ??= (async () => {
+				if (committed) {
+					await settled;
+					return;
 				}
-			}
 
-			if (eager_effects.size > 0) {
-				flush_eager_effects();
-			}
+				if (discarded) {
+					e.fork_discarded();
+				}
 
-			batch.flush();
-			await settled;
-		},
+				if (!batch.linked) {
+					// batch was made obsolete by later changes
+					committed = true;
+					return;
+				}
+
+				committed = true;
+				if (batch.script_initializers.size > 0) {
+					try {
+						prepare_script_commit(batch);
+					} catch (error) {
+						// Keep the cached rejection for repeat commits, but permit disposal.
+						committed = false;
+						throw error;
+					}
+				}
+				if (!batch.linked) return;
+				batch.fork_commit_waiters.add(batch);
+				batch.is_fork = false;
+
+				// Apply the changes to the real world. They keep the versions they had in the fork,
+				// so that everything the fork computed remains valid (processing the batch
+				// re-validates everything that depends on them, see `#process`)
+				for (const [source, entry] of batch.current) {
+					const later = later_writer(batch, source);
+
+					if (later !== null) {
+						// in order, the fork's write comes before the later batch's, which replaces it
+						later.previous.set(source, entry);
+					} else {
+						batch.mark(source, MAYBE_DIRTY);
+						apply(source, entry);
+					}
+				}
+
+				if (eager_effects.size > 0) {
+					flush_eager_effects();
+				}
+
+				batch.flush();
+				await settled;
+			})()),
 		discard: () => {
 			if (!committed && batch.linked) {
 				batch.discard();

@@ -25,7 +25,8 @@ import {
 	MANAGED_EFFECT,
 	REACTION_RAN,
 	ASYNC,
-	ASSIGNED
+	ASSIGNED,
+	SCRIPT_EFFECT
 } from './constants.js';
 import {
 	reactivity_loss_tracker,
@@ -54,6 +55,7 @@ import {
 	current_batch,
 	processing_batch,
 	first_batch,
+	get_batches,
 	flushSync,
 	push_teardown_context,
 	teardown_context,
@@ -62,6 +64,11 @@ import {
 } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
+import {
+	clear_script_invalidation,
+	suppress_initialization_update,
+	needs_script_admission
+} from './reactivity/script-context.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
@@ -293,6 +300,10 @@ export function is_dirty(reaction) {
 	if ((flags & (DIRTY | MAYBE_DIRTY)) === 0) {
 		return false;
 	}
+	if (suppress_initialization_update(current_batch ?? view_batch, reaction)) {
+		set_signal_status(reaction, CLEAN);
+		return false;
+	}
 
 	if ((flags & ASSIGNED) !== 0) {
 		// A value assigned to a derived holds until one of its dependencies is written after it, which its flags
@@ -301,6 +312,14 @@ export function is_dirty(reaction) {
 	} else if ((flags & DIRTY) !== 0) {
 		return true;
 	} else {
+		// Admission is distinct from dependency invalidation. The scheduler deduplicates
+		// by canonical batch, even when its factory has no directly tracked reads.
+		if (
+			(flags & SCRIPT_EFFECT) !== 0 &&
+			needs_script_admission(current_batch ?? view_batch, reaction)
+		)
+			return true;
+
 		var run = run_of(reaction);
 		var deps = run.deps;
 		var dv = run.dv;
@@ -323,6 +342,7 @@ export function is_dirty(reaction) {
 	if ((flags & CONNECTED) !== 0) {
 		set_signal_status(reaction, CLEAN);
 	}
+	clear_script_invalidation(current_batch ?? view_batch, reaction);
 
 	return false;
 }
@@ -425,6 +445,7 @@ function abort_replaced(reaction, flags) {
 	if (is_derived && is_destroying_effect) return;
 
 	var real = batch === null || !batch.is_fork;
+	var batches = get_batches();
 
 	abort_record(reaction, view_batch?.records?.get(reaction), true);
 
@@ -433,8 +454,8 @@ function abort_replaced(reaction, flags) {
 		abort_signal(reaction.ac);
 	}
 
-	for (var b = first_batch; b !== null; b = b.next) {
-		if (supersedes(batch, b)) abort_record(reaction, b.records?.get(reaction), true);
+	for (const b of batches) {
+		if (b.linked && supersedes(batch, b)) abort_record(reaction, b.records?.get(reaction), true);
 	}
 }
 
@@ -484,11 +505,12 @@ function supersedes(batch, other) {
 export function abort_all(reaction) {
 	if ((reaction.f & HAS_ABORT_CONTROLLER) === 0) return false;
 	reaction.f ^= HAS_ABORT_CONTROLLER;
+	var batches = get_batches();
 
 	abort_signal(reaction.ac);
 	reaction.ac = null;
 
-	for (var b = first_batch; b !== null; b = b.next) {
+	for (const b of batches) {
 		var record = b.records?.get(reaction);
 
 		if (record?.ac) {
@@ -506,7 +528,7 @@ export function abort_all(reaction) {
  */
 function is_recorded_effect(flags) {
 	if (
-		(flags & ASYNC) === 0 &&
+		(flags & (ASYNC | SCRIPT_EFFECT)) === 0 &&
 		(flags & (BLOCK_EFFECT | REACTION_RAN)) !== (BLOCK_EFFECT | REACTION_RAN)
 	) {
 		return false;
@@ -742,9 +764,19 @@ function set_derived_value(derived, value, error) {
 	// a run replaces a value that was assigned to the derived
 	var flags = derived.f & ~ASSIGNED;
 
-	if (error || (flags & ERROR_VALUE) !== 0 || !derived.equals(value)) {
-		derived.v = value;
+	var changed = error || (flags & ERROR_VALUE) !== 0 || !derived.equals(value);
+
+	// A fork becoming real can hold an equal private result with its own version,
+	// even if the global value is also equal (e.g. two views independently became
+	// ready). Keep the active view's version, just as promoting a valid record does.
+	if (view_batch !== null) {
+		derived.wv = derived_version(derived, view_batch, value, error);
+	} else if (changed) {
 		derived.wv = increment_write_version();
+	}
+
+	if (changed) {
+		derived.v = value;
 		flags = error ? flags | ERROR_VALUE : flags & ~ERROR_VALUE;
 	}
 

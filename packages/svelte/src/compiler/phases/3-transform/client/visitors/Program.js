@@ -4,6 +4,7 @@ import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
 import { transform_body } from '../../shared/transform-async.js';
+import { transform_script_replay } from '../transform-script-replay.js';
 
 /**
  * @param {Program} node
@@ -144,7 +145,8 @@ export function Program(node, context) {
 			body: transform_body(
 				context.state.analysis.instance_body,
 				b.id('$.run'),
-				(node) => /** @type {Node} */ (context.visit(node))
+				(node) => /** @type {Node} */ (context.visit(node)),
+				context.state.analysis.script_replay ? () => transform_script_replay(context) : undefined
 			)
 		};
 	}

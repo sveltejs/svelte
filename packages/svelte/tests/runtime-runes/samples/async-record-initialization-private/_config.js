@@ -34,13 +34,15 @@ export default test({
 		ready.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
-		assert.deepEqual(logs.splice(0), ['first 1', 'second 1']);
+		assert.deepEqual(logs.splice(0), ['first 1']);
 
 		// A can still finish and commit its older view while B's work is pending.
+		// B then adopts the published initializer, so its independent second
+		// producer can start without waiting for B's first result.
 		second_0.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>0 0 0</p>');
-		assert.deepEqual(logs.splice(0), ['continued with 0 0']);
+		assert.deepEqual(logs.splice(0), ['continued with 0 0', 'second 1']);
 
 		first_1.click();
 		await tick();
@@ -50,6 +52,8 @@ export default test({
 		second_1.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>1 1 1</p>');
+		// B's reactive results commit, but its abandoned initialization suffix
+		// must not execute against the already-published environment.
 		assert.deepEqual(logs.splice(0), []);
 	}
 });

@@ -10,9 +10,10 @@ const buttons = `
 	<button>reset</button>
 `;
 
-// Like `async-resume-template-expression`, with a top-level `await` in a component's script: the script
-// continues in the view of the real batch, once it has its result. What it computes imperatively is that
-// batch's (it only runs once), what's reactive is up to date in every batch's view
+// Each view initializes independently. A ready real attempt can publish without
+// waiting for the fork, while a ready fork stays invisible until commit. Once R
+// publishes, an unfinished healthy F adopts it instead of running its old suffix.
+// Continuations that do execute read their own value; reactive updates stay live.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -29,13 +30,13 @@ export default test({
 				// the fork's run is first in the queue, the real batch's last
 				(first === 'real' ? pop : shift).click();
 				await tick();
-				assert.htmlEqual(target.innerHTML, first === 'real' ? buttons : buttons);
-				assert.deepEqual(logs.splice(0), first === 'real' ? [] : ['continued with 1']);
+				assert.htmlEqual(target.innerHTML, first === 'real' ? `${buttons}<p>0 0</p>` : buttons);
+				assert.deepEqual(logs.splice(0), [`continued with ${first === 'real' ? 0 : 1}`]);
 
 				(first === 'real' ? shift : pop).click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, `${buttons}<p>0 0</p>`);
-				assert.deepEqual(logs.splice(0), first === 'real' ? ['continued with 1'] : []);
+				assert.deepEqual(logs.splice(0), first === 'real' ? [] : ['continued with 0']);
 
 				commit.click();
 				await tick();

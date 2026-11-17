@@ -5,37 +5,47 @@ const buttons = `
 	<button>fork</button>
 	<button>show</button>
 	<button>count</button>
-	<button>shift</button>
+	<button>resolve fork</button>
+	<button>resolve real</button>
 	<button>commit</button>
 `;
 
-// A fork creates a component with a top-level `await` in its script, and a real batch selects the same branch
-// while the script is waiting. The script runs once, so the real batch waits for it, too (unlike a batch that
-// doesn't select the branch), and then shows the content as it is in its own view
+// A fork and a real batch select the same stable component, but each raw script
+// await belongs to its own initializer. Unrelated count changes must not restart
+// either attempt, and committing the fork must preserve the established DOM.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
-		const [fork, show, count, shift, commit] = target.querySelectorAll('button');
+		const [fork, show, count, resolve_fork, resolve_real, commit] =
+			target.querySelectorAll('button');
 
 		fork.click();
 		await tick();
 		show.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<span>0</span>`);
+		assert.deepEqual(logs.splice(0), ['await 0', 'await 1']);
 
 		count.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<span>1</span>`);
 		assert.deepEqual(logs, []);
 
-		shift.click();
+		resolve_fork.click();
+		await tick();
+		assert.htmlEqual(target.innerHTML, `${buttons}<span>1</span>`);
+		assert.deepEqual(logs.splice(0), ['continued']);
+
+		resolve_real.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<span>1</span><p>0</p>`);
-		assert.deepEqual(logs, ['continued']);
+		assert.deepEqual(logs.splice(0), ['continued']);
+		const [node] = target.querySelectorAll('p');
 
 		commit.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<span>1</span><p>1</p>`);
-		assert.deepEqual(logs, ['continued']);
+		assert.equal(target.querySelector('p'), node);
+		assert.deepEqual(logs, [], 'commit must not start or continue another initializer');
 	}
 });

@@ -11,13 +11,10 @@ const buttons = `
 	<button>reset</button>
 `;
 
-// Like `async-resume-recheck`, with two `await`s in a component's script (`$.run`) instead of a template
-// expression (`$.flatten`). Batch A reveals the component, and its first result comes in, so the script continues
-// in A's view and starts the second `await`. Then a later batch B reveals the branch, too (`b || a`, so that the
-// block reads `b`), and re-runs both expressions in its own view. B's second result is there before A's, but the
-// script must not continue with it: the first value of `second` comes from A's run, so the script continues (and
-// the content is created) once that one is done, in A's view. Whatever B resolves in the meantime, it waits for
-// that, and then commits its own values
+// A and B initialize independently until one publishes. A pending attempt then
+// adopts the established initializer: reactive producers can update in its view
+// without finishing its old imperative suffix. A's late result must never
+// overwrite a newer committed B result.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -30,43 +27,45 @@ export default test({
 				assert.htmlEqual(target.innerHTML, buttons);
 				assert.deepEqual(logs.splice(0), ['first 1']);
 
-				// A's first result: the script continues in A's view
 				first_1.click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, buttons);
 				assert.deepEqual(logs.splice(0), ['second 1']);
 
-				// B reveals the branch, too, and re-runs both expressions in its own view
 				b.click();
 				await tick();
 				assert.htmlEqual(target.innerHTML, buttons);
-				assert.deepEqual(logs.splice(0), ['first 2', 'second 2']);
-
-				// B's second result overtakes A's, but the script waits for A's
-				second_2.click();
-				await tick();
-				assert.htmlEqual(target.innerHTML, buttons);
-				assert.deepEqual(logs.splice(0), []);
+				assert.deepEqual(logs.splice(0), ['first 2']);
 
 				if (next === 'a') {
-					// A's second result: the script continues and A commits, then B once its first result is in
+					// Leave B's first result pending so A can finish its older view.
 					second_1.click();
 					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
-					assert.deepEqual(logs.splice(0), ['continued with 1 1']);
+					// Adoption starts B's first second-site invocation: its x=2 differs
+					// from A's completed x=1. The parent push function is unchanged.
+					assert.deepEqual(logs.splice(0), ['continued with 1 1', 'second 2']);
 
 					first_2.click();
 					await tick();
+					assert.htmlEqual(target.innerHTML, `${buttons}<p>1 1</p>`);
+					assert.deepEqual(logs.splice(0), [], 'adoption must not duplicate the second(2) request');
+
+					second_2.click();
+					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
-					assert.deepEqual(logs.splice(0), []);
+					assert.deepEqual(logs.splice(0), [], 'B must not resume its abandoned imperative suffix');
 				} else {
-					// B has all its results, but still waits for the content, which A creates
 					first_2.click();
+					await tick();
+					assert.htmlEqual(target.innerHTML, buttons);
+					assert.deepEqual(logs.splice(0), ['second 2']);
+
+					second_2.click();
 					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
 					assert.deepEqual(logs.splice(0), ['continued with 2 2']);
 
-					// A's second result: the script continues in A's view, A commits, and B right after it
 					second_1.click();
 					await tick();
 					assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
