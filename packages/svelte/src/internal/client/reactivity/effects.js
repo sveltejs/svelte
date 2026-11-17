@@ -601,6 +601,9 @@ export function unlink_effect(effect) {
 		if (parent.first === effect) parent.first = next;
 		if (parent.last === effect) parent.last = prev;
 	}
+
+	// A derived can still reference this effect and destroy it after it has been unlinked.
+	effect.prev = effect.next = null;
 }
 
 /**
