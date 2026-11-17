@@ -5,7 +5,7 @@ import { test } from '../../test';
 // `held` must become 1 after `slow(1)` resolves, producing `one 1`.
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance, logs }) {
+	async test({ assert, target, logs }) {
 		const [bump, resolve] = target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('output');
 
