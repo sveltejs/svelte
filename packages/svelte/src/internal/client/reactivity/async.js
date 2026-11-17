@@ -323,6 +323,12 @@ class Run {
 	/** @type {Source[] | null} */
 	signals = [];
 
+	/**
+	 * Other batches that share this run
+	 * @type {Set<Batch>}
+	 */
+	adopters = new Set();
+
 	constructor() {
 		this.batch = /** @type {Batch} */ (current_batch);
 	}
@@ -353,18 +359,12 @@ export function run(thunks) {
 
 	var run = new Run();
 
-	/**
-	 * Batches that adopted the script's branch, in adoption order.
-	 * @type {Set<Batch>}
-	 */
-	var adopters = new Set();
-
 	// If the fork was discarded, continue in the first remaining adopter.
 	function continue_in() {
 		var batch = merge_target(run.batch);
 		if (batch.linked) return batch;
 
-		for (const b of adopters) {
+		for (const b of run.adopters) {
 			var target = merge_target(b);
 			if (target.linked) return (run.batch = target);
 		}
@@ -456,7 +456,7 @@ export function run(thunks) {
 	async_effect(() => {
 		// Inside an effect so later adopting branches can rerun this
 		var batch = /** @type {Batch} */ (current_batch);
-		adopters.add(batch);
+		run.adopters.add(batch);
 		var decrement_pending = increment_pending();
 
 		promise
