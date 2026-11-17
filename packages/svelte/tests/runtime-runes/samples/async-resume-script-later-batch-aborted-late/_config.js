@@ -2,7 +2,8 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 // Like `async-resume-script-later-batch-aborted`, but A's aborted promise rejects after B's second result
-// arrives. The script waits for A, even in B's view, until that rejection lets it continue with B's value.
+// arrives. B merges into A as soon as it aborts A's run, so the script can continue with B's value
+// without waiting for the abandoned promise to reject.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -20,18 +21,19 @@ export default test({
 		await tick();
 		assert.deepEqual(logs.splice(0), ['first 2', 'second 2']);
 
-		// A's run was aborted, but its promise hasn't rejected yet, so the script still waits for A
+		// The replacement result resumes the script even though A's promise hasn't rejected yet.
 		second_2.click();
-		await tick();
-		assert.htmlEqual(output.innerHTML, '');
-		assert.deepEqual(logs.splice(0), []);
-
-		reject.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '');
 		assert.deepEqual(logs.splice(0), ['continued with 1 2']);
 
-		// B is done, and merged into A, which commits without continuing the script again
+		// The delayed rejection cannot resume the script again or affect the merged batch.
+		reject.click();
+		await tick();
+		assert.htmlEqual(output.innerHTML, '');
+		assert.deepEqual(logs.splice(0), []);
+
+		// The replacement first result allows the already-merged batch to commit.
 		first_2.click();
 		await tick();
 		assert.htmlEqual(output.innerHTML, '<p>2 2</p>');

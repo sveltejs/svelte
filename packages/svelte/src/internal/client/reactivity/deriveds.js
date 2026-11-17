@@ -5,7 +5,7 @@ import {
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	StaleReactionError,
+	STALE_REACTION,
 	ASYNC,
 	DESTROYED,
 	INERT,
@@ -30,6 +30,7 @@ import {
 	changed_since,
 	is_dirty,
 	abort_all,
+	abort_controller,
 	get
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
@@ -186,32 +187,25 @@ export function async_expression(fn, label, location, onready) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn())
-				.then(d.resolve, (e) => {
-					if (!(e instanceof StaleReactionError)) {
-						d.reject(e);
-						return;
-					}
+			var promise = Promise.resolve(fn());
+			var abort_signal = abort_controller?.signal;
 
-					// On `getAbortSignal` cancellation, wait for a later result rather than flushing.
-					// If another batch replaced the resolver's run, it supplies the first value.
-					// Merge it into this batch so the aborted run settles and this batch can commit.
-					// A rerun in the same batch doesn't transfer ownership.
-					var by = e.batch;
+			promise
+				.then(
+					(value) => {
+						if (!abort_signal?.aborted) d.resolve(value);
+					},
+					(e) => {
+						// An aborted run waits for its replacement, even if the user catches the abort.
+						// A script awaiting another reaction's aborted promise must release its resolver:
+						// the eager merge includes the signal's owner, but not necessarily this waiter.
+						if (abort_signal?.aborted || (e === STALE_REACTION && for_run === null)) {
+							return;
+						}
 
-					if (
-						for_run !== null &&
-						resolver !== null &&
-						by !== null &&
-						merge_target(resolver) === merge_target(batch) &&
-						merge_target(by) !== merge_target(batch) &&
-						batch.async_deriveds.get(effect) === d
-					) {
-						resolver = by;
-						by.overlaps.add(batch);
-						flush_waiting();
+						d.reject(e === STALE_REACTION ? OBSOLETE : e);
 					}
-				})
+				)
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
@@ -287,7 +281,7 @@ export function async_expression(fn, label, location, onready) {
 					resolver !== null &&
 					(deferreds.size > 0 || error === OBSOLETE) &&
 					merge_target(resolver) === merge_target(batch) &&
-					batch.async_deriveds.get(effect) === d
+					merge_target(batch).async_deriveds.get(effect) === d
 				) {
 					resolver = null;
 					flush_waiting();

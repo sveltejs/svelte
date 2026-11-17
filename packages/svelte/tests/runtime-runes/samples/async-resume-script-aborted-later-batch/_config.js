@@ -9,12 +9,10 @@ const buttons = `
 	<button>second 2</button>
 `;
 
-// Like `async-resume-script-later-batch`, but the script's second `await` uses `getAbortSignal`. Batch B writes the
-// same source as A, so its view includes A's writes, and its run of the second expression supersedes A's, which is
-// aborted. A can't continue with its own result anymore, so B takes over: the script continues in B's view once
-// B's result is there (with A's `first`, as the first step continued with that). Otherwise A would wait for its
-// aborted run, which only settles once B is merged into A — and B waits for the script to be done (it re-ran the
-// first expression, whose step continued already)
+// Like `async-resume-script-later-batch`, but the second `await` requests an abort signal.
+// B supersedes A's pending second run, so it merges into A before either replacement result arrives.
+// Resolving the second result resumes the script with the first value it already received;
+// the replacement first result still holds up the DOM commit.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -35,13 +33,13 @@ export default test({
 		assert.htmlEqual(target.innerHTML, buttons);
 		assert.deepEqual(logs.splice(0), ['first 2', 'aborted second 1', 'second 2']);
 
-		// B's second result: the script continues in B's view. B waits for its first result to commit
+		// The second result resumes the script in the merged view, with the original first value.
 		second_2.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
 		assert.deepEqual(logs.splice(0), ['continued with 1 2']);
 
-		// B is done, and merged into A, which commits without continuing the script again
+		// The replacement first result updates the derived, allowing the merged batch to commit.
 		first_2.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>2 2</p>`);
