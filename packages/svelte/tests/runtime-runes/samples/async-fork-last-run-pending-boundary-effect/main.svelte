@@ -1,14 +1,14 @@
-<script>
+<script lang="ts">
 	import { fork } from 'svelte';
 	import Effect from './Effect.svelte';
 
 	let x = $state(0);
-	let f;
+	let f: ReturnType<typeof fork>;
 
-	const queue = [];
+	const queue: Array<() => void> = [];
 
-	function push(v) {
-		const d = Promise.withResolvers();
+	function push(v: number) {
+		const d = Promise.withResolvers<number>();
 		queue.push(() => d.resolve(v));
 		return d.promise;
 	}
@@ -18,11 +18,13 @@
 <button onclick={() => f.discard()}>discard</button>
 <button onclick={() => queue.shift()?.()}>shift</button>
 
-<svelte:boundary>
-	<Effect />
-	<p>{await push(x)}</p>
+<output>
+	<svelte:boundary>
+		<Effect />
+		<p>{await push(x)}</p>
 
-	{#snippet pending()}
-		<p>pending</p>
-	{/snippet}
-</svelte:boundary>
+		{#snippet pending()}
+			<p>pending</p>
+		{/snippet}
+	</svelte:boundary>
+</output>

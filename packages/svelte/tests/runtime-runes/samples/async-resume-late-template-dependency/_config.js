@@ -1,19 +1,13 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-const buttons = `
-	<button>update</button>
-	<button>first</button>
-	<button>blocker</button>
-	<button>second</button>
-`;
-
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {
 		await tick();
 		const [update, first, blocker, second] = target.querySelectorAll('button');
-		assert.htmlEqual(target.innerHTML, `${buttons}<i>0</i><b>0</b><span>pending</span>`);
+		const [output] = target.querySelectorAll('output');
+		assert.htmlEqual(output.innerHTML, '<i>0</i><b>0</b><span>pending</span>');
 
 		// A writes x before the older batch's template expression has read it, then waits on y.
 		update.click();
@@ -29,6 +23,6 @@ export default test({
 		await tick();
 		second.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, `${buttons}<i>1</i><b>1</b><p>1</p>`);
+		assert.htmlEqual(output.innerHTML, '<i>1</i><b>1</b><p>1</p>');
 	}
 });

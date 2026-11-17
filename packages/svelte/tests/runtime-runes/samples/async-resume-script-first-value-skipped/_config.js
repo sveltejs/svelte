@@ -3,25 +3,24 @@ import { test } from '../../test';
 
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance, logs }) {
+	async test({ assert, target, logs }) {
 		await tick();
-		instance.start();
+		const [start, update, hide, reject, resolve, finish] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('output');
+
+		start.click();
 		await tick();
-		instance.update();
+		update.click();
 		await tick();
-		instance.reject();
+		reject.click();
 		await tick();
 
-		// A skips the shared branch, but B still needs it. A's successful first value
-		// must be observed before B publishes its buffered rejection.
-		instance.hide();
-		await tick();
-		instance.resolve();
-		await tick();
-		assert.deepEqual(logs, [1]);
+		// B is merged into A, which means `value` throws and the error boundary appears
+		assert.deepEqual(logs, []);
+		assert.htmlEqual(output.innerHTML, '<p>0</p><p>failed: later</p>');
 
-		instance.finish();
+		finish.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>1</p><p>failed: later</p>');
+		assert.htmlEqual(output.innerHTML, '<p>1</p><p>failed: later</p>');
 	}
 });

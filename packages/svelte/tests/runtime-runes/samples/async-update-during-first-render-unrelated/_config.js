@@ -5,16 +5,19 @@ import { test } from '../../test';
 // An unrelated commit must not discard it as an empty subset of that batch's writes.
 export default test({
 	mode: ['client'],
-	async test({ assert, target, instance }) {
-		await tick();
-		assert.htmlEqual(target.innerHTML, '');
+	async test({ assert, target }) {
+		const [bump, resolve] = target.querySelectorAll('button');
+		const [output] = target.querySelectorAll('output');
 
-		instance.bump();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '');
+		assert.htmlEqual(output.innerHTML, '');
 
-		instance.resolve();
+		bump.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>one ready 1</p>');
+		assert.htmlEqual(output.innerHTML, '');
+
+		resolve.click();
+		await tick();
+		assert.htmlEqual(output.innerHTML, '<p>one ready 1</p>');
 	}
 });
