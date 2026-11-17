@@ -21,3 +21,30 @@ it('treeshakes a11y deps when only `parse` is used', async () => {
 	assert.notInclude(output[0].code, 'aria-query');
 	assert.notInclude(output[0].code, 'axobject-query');
 });
+
+it('keeps side effects of modules compiled components import bare', async () => {
+	const ids = ['disclose-version', 'flags/legacy', 'flags/async', 'flags/tracing'];
+	const side_effects: Record<string, unknown> = {};
+
+	await rollup({
+		input: 'entry',
+		plugins: [
+			virtual({ entry: ids.map((id) => `import 'svelte/internal/${id}';`).join('\n') }),
+			nodeResolve(),
+			{
+				name: 'collect',
+				buildEnd() {
+					for (const id of this.getModuleIds()) {
+						side_effects[id.replaceAll('\\', '/')] = this.getModuleInfo(id)?.moduleSideEffects;
+					}
+				}
+			}
+		],
+		onwarn: () => {}
+	});
+
+	for (const id of ids) {
+		const file = Object.keys(side_effects).find((f) => f.endsWith(`/src/internal/${id}.js`));
+		assert.equal(file && side_effects[file], true, id);
+	}
+});
