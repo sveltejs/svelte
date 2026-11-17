@@ -20,6 +20,11 @@ export default test({
 
 		const sections = output.querySelectorAll('section');
 		assert.equal(sections.length, 2);
+		const component = /** @type {any} */ (output).__svelte_meta.component;
+		assert.ok(component);
+		for (const section of sections) {
+			assert.equal(/** @type {any} */ (section).__svelte_meta.component, component);
+		}
 
 		/** @type {Array<[number, string]>} */
 		const renders = [
@@ -32,7 +37,7 @@ export default test({
 
 			// Raw roots belong to their render callsite, not their declaration or the next element.
 			// @ts-expect-error
-			assert.deepEqual(sections[index].__svelte_meta, {
+			assert.deepInclude(sections[index].__svelte_meta, {
 				loc,
 				parent: { ...loc, type: 'render', snippetName, parent: null }
 			});
@@ -50,7 +55,7 @@ export default test({
 			const [element] = target.querySelectorAll(selector);
 
 			// @ts-expect-error
-			assert.deepEqual(element.__svelte_meta, {
+			assert.deepInclude(element.__svelte_meta, {
 				loc: { file: 'main.svelte', line, column },
 				parent: null
 			});

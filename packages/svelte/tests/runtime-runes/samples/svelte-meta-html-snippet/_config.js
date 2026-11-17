@@ -10,6 +10,9 @@ export default test({
 		assert.htmlEqual(output.innerHTML, '<span>child</span><b>html</b>');
 
 		const [b] = output.querySelectorAll('b');
+		const component = /** @type {any} */ (output).__svelte_meta.component;
+		assert.ok(component);
+		assert.equal(/** @type {any} */ (b).__svelte_meta.component, component);
 
 		// The `{@html}` tag is declared in main.svelte even though the snippet is rendered by
 		// Receiver.svelte, and the child component rendered before it must not change that
