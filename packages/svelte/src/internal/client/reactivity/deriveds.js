@@ -114,12 +114,6 @@ export const OBSOLETE = Symbol('obsolete');
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_expression(fn, label, location, onready) {
-	let parent = /** @type {Effect | null} */ (active_effect);
-
-	if (parent === null) {
-		e.async_derived_orphan();
-	}
-
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 	signal.f |= ASYNC;
 
