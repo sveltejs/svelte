@@ -355,76 +355,44 @@ class Runner {
 	run(thunks) {
 		var active = /** @type {Effect} */ (active_effect);
 
-		/** @type {null | { error: any }} */
-		var errored = null;
-
-		/** @param {any} error */
-		const handle_error = (error) => {
-			if (errored) return;
-
-			errored = { error }; // wrap in object in case a promise rejects with a falsy value
-
-			if (!aborted(active)) {
-				this.restore();
-
-				try {
-					invoke_error_boundary(error, active);
-				} finally {
-					unset_context();
-				}
-			}
-		};
-
-		var promise = Promise.resolve(this.#invoke(thunks[0])).catch(handle_error);
-
-		var blocker = this.#blocker(promise);
-		var blockers = [blocker];
-
-		promise.finally(() => {
-			// TODO encapsulate this in Blocker
-			blocker.settled = true;
-			blocker.failed = errored !== null;
-			unset_context();
-		});
+		var promise = Promise.resolve(this.#invoke(thunks[0]));
+		var blockers = [this.#blocker(promise)];
 
 		for (const fn of thunks.slice(1)) {
-			promise = promise
-				.then(() => {
+			promise = promise.then(() => {
+				if (aborted(active)) {
+					throw STALE_REACTION;
+				}
+
+				try {
+					this.restore();
+					return this.#invoke(fn);
+				} finally {
+					// We gotta unset context directly in case the function returns a promise, in which case
+					// unset_context in .finally() would be too late
+					unset_context();
+					// Release buffered results now that the script has used the previous step's first values.
+					this.#continue();
+				}
+			});
+
+			blockers.push(this.#blocker(promise));
+		}
+
+		promise = promise
+			.catch((error) => {
+				if (!aborted(active)) {
 					this.restore();
 
 					try {
-						if (errored) {
-							throw errored.error;
-						}
-
-						if (aborted(active)) {
-							throw STALE_REACTION;
-						}
-
-						return this.#invoke(fn);
+						invoke_error_boundary(error, active);
 					} finally {
-						// We gotta unset context directly in case the function returns a promise, in which case
-						// unset_context in .finally() would be too late ...
 						unset_context();
-						// Release buffered results now that the script has used the previous step's first values.
-						this.#continue();
 					}
-				})
-				.catch(handle_error);
-
-			const blocker = this.#blocker(promise);
-			blockers.push(blocker);
-
-			promise.finally(() => {
-				blocker.settled = true;
-				blocker.failed = errored !== null;
-				// ... but we also need it after such a promise has resolved in case it restores our context
-				unset_context();
-			});
-		}
-
-		// The last step has no following step to release its buffered results.
-		promise.finally(() => this.#continue());
+				}
+			})
+			// The last step has no following step to release its buffered results.
+			.finally(() => this.#continue());
 
 		async_effect(() => {
 			// Inside an effect so later adopting branches can rerun this
@@ -492,7 +460,12 @@ export class Blocker {
 	 */
 	constructor(run, promise) {
 		this.run = run;
-		this.promise = promise;
+		this.promise = promise.catch(() => {
+			this.failed = true;
+		}).finally(() => {
+			this.settled = true;
+			unset_context();
+		});
 	}
 }
 
