@@ -312,7 +312,7 @@ export function unset_context(deactivate_batch = true) {
  * to run after the script resumes, and `signals` lists the expressions in creation order.
  * @type {Run | null}
  */
-export let batch_for_run = null;
+export let current_run = null;
 
 class Run {
 	batch = /** @type {Batch} */ (current_batch);
@@ -391,13 +391,13 @@ export function run(thunks) {
 
 	/** @param {() => void | Promise<void>} fn */
 	const invoke = (fn) => {
-		var previous = batch_for_run;
-		batch_for_run = for_run;
+		var previous_run = current_run;
+		current_run = for_run;
 
 		try {
 			return fn();
 		} finally {
-			batch_for_run = previous;
+			current_run = previous_run;
 		}
 	};
 
