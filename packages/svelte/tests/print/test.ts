@@ -1,9 +1,11 @@
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { parse, print } from 'svelte/compiler';
+import { compile, parse, print } from 'svelte/compiler';
 import { suite, type BaseTest } from '../suite.js';
 
-interface PrintTest extends BaseTest {}
+interface PrintTest extends BaseTest {
+	check_semantics?: boolean;
+}
 
 const { test, run } = suite<PrintTest>(async (config, cwd) => {
 	const input = fs.readFileSync(`${cwd}/input.svelte`, 'utf-8');
@@ -15,6 +17,12 @@ const { test, run } = suite<PrintTest>(async (config, cwd) => {
 	// the printed output must itself be valid Svelte — `print` should never emit
 	// code that `parse` cannot read back (e.g. CSS escape sequences must round-trip)
 	parse(outputCode, { modern: true });
+
+	if (config.check_semantics) {
+		for (const generate of ['client', 'server'] as const) {
+			assert.equal(compile(outputCode, { generate }).js.code, compile(input, { generate }).js.code);
+		}
+	}
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test print` to update print tests
 	if (process.env.UPDATE_SNAPSHOTS) {
