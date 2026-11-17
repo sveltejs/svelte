@@ -17,6 +17,20 @@
     "compiler",
     "README.md"
   ],
+  "sideEffects": [
+    "./src/*.js",
+    "./src/animate/**",
+    "./src/attachments/**",
+    "./src/easing/**",
+    "./src/events/**",
+    "./src/internal/**",
+    "./src/legacy/**",
+    "./src/motion/**",
+    "./src/reactivity/**",
+    "./src/server/**",
+    "./src/store/**",
+    "./src/transition/**"
+  ],
   "module": "src/index-client.js",
   "main": "src/index-client.js",
   "exports": {
