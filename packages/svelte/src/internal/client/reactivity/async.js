@@ -327,7 +327,10 @@ class Runner {
 	/** @type {Array<() => void>} */
 	continued = [];
 
-	/** @type {Source[] | null} */
+	/**
+	 * Async deriveds created during this run
+	 * @type {Source[] | null}
+	 */
 	signals = [];
 
 	constructor() {
