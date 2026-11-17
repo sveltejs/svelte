@@ -7,6 +7,7 @@ import {
 	ERROR_VALUE,
 	BOUNDARY_EFFECT,
 	REACTION_RAN,
+	DEFERRED_RUN,
 	EFFECT,
 	DESTROYED,
 	DESTROYING
@@ -32,10 +33,10 @@ export function handle_error(error) {
 		adjustments.set(error, get_adjustments(error, effect));
 	}
 
-	// if the error occurred while creating this subtree, we let it
-	// bubble up until it hits a boundary that can handle it, unless
-	// it's an $effect in which case it doesn't run immediately
-	if ((effect.f & REACTION_RAN) === 0 && (effect.f & EFFECT) === 0) {
+	// if the error occurred while creating this subtree, we let it bubble up until it hits
+	// a boundary that can handle it, unless it's an $effect or a render effect created during
+	// traversal, in which case it doesn't run immediately (but once the batch flushes)
+	if ((effect.f & REACTION_RAN) === 0 && (effect.f & (EFFECT | DEFERRED_RUN)) === 0) {
 		if (DEV && !effect.parent && error instanceof Error) {
 			apply_adjustments(error);
 		}
