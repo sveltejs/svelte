@@ -1,3 +1,5 @@
+import { DEV } from 'esm-env';
+import { dev_stack } from '../../context.js';
 import { hydrate_next, hydrating } from '../hydration.js';
 import { create_element, create_text } from '../operations.js';
 import { append } from '../template.js';
@@ -8,8 +10,9 @@ import { append } from '../template.js';
  * @param {string} name
  * @param {Record<string, unknown>} slot_props
  * @param {null | ((anchor: Comment) => void)} fallback_fn
+ * @param {[string, number, number]} [location] the filename, line and column of the slot
  */
-export function slot(anchor, $$props, name, slot_props, fallback_fn) {
+export function slot(anchor, $$props, name, slot_props, fallback_fn, location) {
 	if (hydrating) {
 		hydrate_next();
 	}
@@ -19,6 +22,20 @@ export function slot(anchor, $$props, name, slot_props, fallback_fn) {
 	if ($$props.$$host?.$$shadowRoot) {
 		const element = create_element('slot');
 		if (name !== 'default') element.name = name;
+
+		if (DEV && location) {
+			// Native slots are created outside the template, so mark their ownership
+			// before the surrounding template assigns its locations.
+			// @ts-expect-error
+			element.__svelte_meta = {
+				parent: dev_stack,
+				loc: {
+					file: location[0],
+					line: location[1],
+					column: location[2]
+				}
+			};
+		}
 
 		append(anchor, element);
 

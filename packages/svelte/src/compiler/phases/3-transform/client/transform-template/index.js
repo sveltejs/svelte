@@ -1,4 +1,4 @@
-/** @import { TemplateLiteral } from 'estree' */
+/** @import { Expression, Statement, TemplateLiteral } from 'estree' */
 /** @import { Namespace } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Node } from './types.js' */
@@ -31,6 +31,30 @@ function build_locations(nodes) {
 }
 
 /**
+ * In dev, returns a statement that assigns source locations to the elements of the current template.
+ * It must run after the template's content has been created, so that during hydration the elements
+ * belonging to child components (which already have their own locations) can be skipped
+ * @param {ComponentClientTransformState} state
+ * @param {Expression} node
+ * @returns {Statement | undefined}
+ */
+export function build_locations_statement(state, node) {
+	if (!dev) return;
+
+	const locations = build_locations(state.template.nodes);
+	if (locations.elements.length === 0) return;
+
+	return b.stmt(
+		b.call(
+			'$.add_locations',
+			node,
+			b.member(b.id(state.analysis.name), '$.FILENAME', true),
+			locations
+		)
+	);
+}
+
+/**
  * @param {ComponentClientTransformState} state
  * @param {string} name
  * @param {number} [flags]
@@ -47,14 +71,13 @@ export function transform_template(state, name, flags = 0) {
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
 
-	const key =
-		tree || dev
-			? null
-			: get_template_key(
-					/** @type {TemplateLiteral} */ (expression),
-					state.metadata.namespace,
-					flags
-				);
+	const key = tree
+		? null
+		: get_template_key(
+				/** @type {TemplateLiteral} */ (expression),
+				state.metadata.namespace,
+				flags
+			);
 
 	if (key !== null) {
 		const existing = state.templates.get(key);
@@ -76,15 +99,6 @@ export function transform_template(state, name, flags = 0) {
 		call = b.call(`$.with_script`, call);
 	}
 
-	if (dev) {
-		call = b.call(
-			'$.add_locations',
-			call,
-			b.member(b.id(state.analysis.name), '$.FILENAME', true),
-			build_locations(state.template.nodes)
-		);
-	}
-
 	const id = state.scope.root.unique(name);
 	state.hoisted.push(b.var(id, call));
 
@@ -98,8 +112,7 @@ export function transform_template(state, name, flags = 0) {
 /**
  * Returns a stable key for templates that are safe to deduplicate - plain
  * `$.from_html`/`from_svg`/`from_mathml` factories with literal arguments - or `null`
- * for anything else. Dev-mode templates are wrapped in `$.add_locations(...)`, which
- * embeds per-call-site locations, so they never produce a key and are never shared.
+ * for anything else.
  * @param {TemplateLiteral} template
  * @param {Namespace} namespace
  * @param {number} flags

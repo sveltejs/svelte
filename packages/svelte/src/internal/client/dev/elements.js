@@ -5,20 +5,16 @@ import { hydrating } from '../dom/hydration.js';
 import { component_context, dev_stack } from '../context.js';
 
 /**
- * @param {any} fn
+ * Called once the template's content has been created. At that point the elements belonging
+ * to child components, snippets and `{@html ...}` tags (which during hydration aren't
+ * delimited by hydration markers) already have their own locations, so we skip them
+ * @param {DocumentFragment | Element} dom
  * @param {string} filename
  * @param {SourceLocation[]} locations
- * @returns {any}
  */
-export function add_locations(fn, filename, locations) {
-	return (/** @type {any[]} */ ...args) => {
-		const dom = fn(...args);
-
-		var node = hydrating ? dom : dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom;
-		assign_locations(node, filename, locations);
-
-		return dom;
-	};
+export function add_locations(dom, filename, locations) {
+	var node = hydrating ? dom : dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom;
+	assign_locations(node, filename, locations);
 }
 
 /**
@@ -55,7 +51,8 @@ function assign_locations(node, filename, locations) {
 			else if (comment.data[0] === HYDRATION_END) depth -= 1;
 		}
 
-		if (depth === 0 && node.nodeType === ELEMENT_NODE) {
+		// @ts-expect-error
+		if (depth === 0 && node.nodeType === ELEMENT_NODE && !node.__svelte_meta) {
 			assign_location(/** @type {Element} */ (node), filename, locations[i++]);
 		}
 
