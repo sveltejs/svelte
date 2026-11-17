@@ -26,7 +26,9 @@ async function bundle_code(entry) {
 				}
 			},
 			nodeResolve({
-				exportConditions: ['production', 'import', 'browser', 'default']
+				exportConditions: ['production', 'import', 'browser', 'default'],
+				// check the code itself, not what `sideEffects` in package.json claims
+				ignoreSideEffectsForRoot: true
 			})
 		],
 		onwarn: (warning, handle) => {
