@@ -1,15 +1,6 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-const buttons = `
-	<button>a</button>
-	<button>b</button>
-	<button>first 1</button>
-	<button>first 2</button>
-	<button>second 2</button>
-	<button>reject</button>
-`;
-
 // Like `async-resume-script-later-batch-aborted`, but A's aborted promise rejects after B's second result
 // arrives. The script waits for A, even in B's view, until that rejection lets it continue with B's value.
 export default test({
