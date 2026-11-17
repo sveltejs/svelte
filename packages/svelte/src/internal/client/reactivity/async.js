@@ -351,7 +351,7 @@ export function run(thunks) {
 	/** @type {null | { error: any }} */
 	var errored = null;
 
-	var for_run = new Run();
+	var run = new Run();
 
 	/**
 	 * Batches that adopted the script's branch, in adoption order.
@@ -361,15 +361,15 @@ export function run(thunks) {
 
 	// If the fork was discarded, continue in the first remaining adopter.
 	function continue_in() {
-		var batch = merge_target(for_run.batch);
+		var batch = merge_target(run.batch);
 		if (batch.linked) return batch;
 
 		for (const b of adopters) {
 			var target = merge_target(b);
-			if (target.linked) return (for_run.batch = target);
+			if (target.linked) return (run.batch = target);
 		}
 
-		return (for_run.batch = batch);
+		return (run.batch = batch);
 	}
 
 	/** @param {any} error */
@@ -392,7 +392,7 @@ export function run(thunks) {
 	/** @param {() => void | Promise<void>} fn */
 	const invoke = (fn) => {
 		var previous_run = current_run;
-		current_run = for_run;
+		current_run = run;
 
 		try {
 			return fn();
@@ -433,7 +433,7 @@ export function run(thunks) {
 					// unset_context in .finally() would be too late ...
 					unset_context();
 					// Release buffered results now that the script has used the previous step's first values.
-					for_run.continue();
+					run.continue();
 				}
 			})
 			.catch(handle_error);
@@ -451,7 +451,7 @@ export function run(thunks) {
 	}
 
 	// The last step has no following step to release its buffered results.
-	promise.finally(() => for_run.continue());
+	promise.finally(() => run.continue());
 
 	async_effect(() => {
 		// Inside an effect so later adopting branches can rerun this
