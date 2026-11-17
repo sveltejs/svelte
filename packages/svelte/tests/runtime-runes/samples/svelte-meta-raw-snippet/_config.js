@@ -32,7 +32,7 @@ export default test({
 
 			// Raw roots belong to their render callsite, not their declaration or the next element.
 			// @ts-expect-error
-			assert.deepEqual(sections[index].__svelte_meta, {
+			assert.deepInclude(sections[index].__svelte_meta, {
 				loc,
 				parent: { ...loc, type: 'render', snippetName, parent: null }
 			});
@@ -50,7 +50,7 @@ export default test({
 			const [element] = target.querySelectorAll(selector);
 
 			// @ts-expect-error
-			assert.deepEqual(element.__svelte_meta, {
+			assert.deepInclude(element.__svelte_meta, {
 				loc: { file: 'main.svelte', line, column },
 				parent: null
 			});

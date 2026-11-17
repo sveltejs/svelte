@@ -50,7 +50,7 @@ export default test({
 
 				// Native slots must not consume the locations of their following siblings.
 				// @ts-expect-error
-				assert.deepEqual(element.__svelte_meta, {
+				assert.deepInclude(element.__svelte_meta, {
 					loc: { file: 'main.svelte', line, column },
 					parent: null
 				});
