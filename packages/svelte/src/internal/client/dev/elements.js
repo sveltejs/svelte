@@ -5,16 +5,34 @@ import { hydrating } from '../dom/hydration.js';
 import { component_context, dev_stack } from '../context.js';
 
 /**
- * Called once the template's content has been created. At that point the elements belonging
- * to child components, snippets and `{@html ...}` tags (which during hydration aren't
- * delimited by hydration markers) already have their own locations, so we skip them
- * @param {DocumentFragment | Element} dom
+ * Assign locations immediately after cloning, before blocks or child components insert elements.
+ * During hydration, the compiler calls the factory's `hydrate_assign_locations` method after the
+ * template's children have their own locations and can be skipped.
+ * @param {() => DocumentFragment | Element} fn
  * @param {string} filename
  * @param {SourceLocation[]} locations
  */
-export function add_locations(dom, filename, locations) {
-	var node = hydrating ? dom : dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom;
-	assign_locations(node, filename, locations);
+export function add_locations(fn, filename, locations) {
+	var create = () => {
+		var dom = fn();
+
+		if (!hydrating) {
+			assign_locations(
+				dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom,
+				filename,
+				locations
+			);
+		}
+
+		return dom;
+	};
+
+	create.hydrate_assign_locations = (/** @type {Node} */ node) => {
+		// Pass the node explicitly because the same factory can be called repeatedly (e.g. in each blocks).
+		if (hydrating) assign_locations(node, filename, locations);
+	};
+
+	return create;
 }
 
 /**

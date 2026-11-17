@@ -31,27 +31,18 @@ function build_locations(nodes) {
 }
 
 /**
- * In dev, returns a statement that assigns source locations to the elements of the current template.
- * It must run after the template's content has been created, so that during hydration the elements
- * belonging to child components (which already have their own locations) can be skipped
+ * In dev, returns a statement that assigns source locations after the template's content has been
+ * hydrated. Child components, snippets and `{@html ...}` tags then have their own locations, so we
+ * can skip their elements.
  * @param {ComponentClientTransformState} state
+ * @param {Expression} template_name
  * @param {Expression} node
  * @returns {Statement | undefined}
  */
-export function build_locations_statement(state, node) {
-	if (!dev) return;
-
-	const locations = build_locations(state.template.nodes);
-	if (locations.elements.length === 0) return;
-
-	return b.stmt(
-		b.call(
-			'$.add_locations',
-			node,
-			b.member(b.id(state.analysis.name), '$.FILENAME', true),
-			locations
-		)
-	);
+export function build_hydration_locations_statement(state, template_name, node) {
+	if (dev && state.template.nodes.some((node) => node.type === 'element')) {
+		return b.stmt(b.call(b.member(template_name, 'hydrate_assign_locations'), node));
+	}
 }
 
 /**
@@ -71,13 +62,14 @@ export function transform_template(state, name, flags = 0) {
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
 
-	const key = tree
-		? null
-		: get_template_key(
-				/** @type {TemplateLiteral} */ (expression),
-				state.metadata.namespace,
-				flags
-			);
+	const key =
+		tree || dev
+			? null
+			: get_template_key(
+					/** @type {TemplateLiteral} */ (expression),
+					state.metadata.namespace,
+					flags
+				);
 
 	if (key !== null) {
 		const existing = state.templates.get(key);
@@ -97,6 +89,19 @@ export function transform_template(state, name, flags = 0) {
 
 	if (state.template.contains_script_tag) {
 		call = b.call(`$.with_script`, call);
+	}
+
+	if (dev) {
+		const locations = build_locations(nodes);
+
+		if (locations.elements.length > 0) {
+			call = b.call(
+				'$.add_locations',
+				call,
+				b.member(b.id(state.analysis.name), '$.FILENAME', true),
+				locations
+			);
+		}
 	}
 
 	const id = state.scope.root.unique(name);

@@ -28,7 +28,10 @@ import { process_children, is_static_element } from './shared/fragment.js';
 import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 import { Template } from '../transform-template/template.js';
-import { build_locations_statement, transform_template } from '../transform-template/index.js';
+import {
+	build_hydration_locations_statement,
+	transform_template
+} from '../transform-template/index.js';
 import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 
 /**
@@ -402,9 +405,13 @@ export function RegularElement(node, context) {
 			}
 		);
 
-		// Transform the template to $.from_html(...) and hoist it (deduplicating identical templates)
+		// Transform the template to $.from_html(...) and hoist it (deduplicating in production)
 		const template_name = transform_template(select_state, `${name}_content`, TEMPLATE_FRAGMENT);
-		const locations = build_locations_statement(select_state, fragment_id);
+		const hydrate_locations = build_hydration_locations_statement(
+			select_state,
+			template_name,
+			fragment_id
+		);
 
 		// Build the rich content function body
 		// The anchor is the child of the element (a hydration marker during hydration)
@@ -414,7 +421,7 @@ export function RegularElement(node, context) {
 			...select_state.init,
 			...(select_state.update.length > 0 ? [build_render_statement(select_state)] : []),
 			...select_state.after_update,
-			...(locations ? [locations] : []),
+			...(hydrate_locations ? [hydrate_locations] : []),
 			b.stmt(b.call('$.append', anchor_id, fragment_id))
 		]);
 
