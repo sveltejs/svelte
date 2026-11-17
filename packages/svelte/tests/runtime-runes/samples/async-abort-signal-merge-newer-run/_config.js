@@ -7,9 +7,8 @@ const buttons = `
 	<button>shift</button>
 `;
 
-// A later batch that is merged into an earlier one hands over its run, which replaces the earlier batch's.
-// If the earlier batch ran the expression again in the meantime, that run is still in flight (the later
-// batch's run didn't supersede it, as it came first), so its signal must abort when it's replaced
+// A later batch that aborts an earlier run merges into its batch before resolving.
+// The abandoned run no longer keeps a separate view in which its dependencies can restart it.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
@@ -35,13 +34,12 @@ export default test({
 		await step(inc_a, '0/0', ['aborted 0/0', 'run 1/0']);
 		await step(inc_a, '0/0', ['aborted 1/0', 'run 2/0']);
 
-		// a third batch writes `x` and commits. Only the first batch's run (with `a === 1`) read `x`,
-		// so only that batch runs the expression again. Its run is now newer than the second batch's
-		await step(inc_x, '0/0', ['run 1/1']);
+		// A third batch writes `x` and commits. The run with `a === 1` was already replaced,
+		// so its dependency on `x` must not restart it.
+		await step(inc_x, '0/0', []);
 
-		// the second batch's run resolves, and the batch is merged into the first one. Its
-		// run replaces the first batch's, which is dropped — so that one's signal aborts
-		await step(shift, '2/0', ['aborted 1/1']);
+		// The replacement run resolves in the already-merged batch.
+		await step(shift, '2/0', []);
 
 		// nothing is left in flight
 		await step(shift, '2/0', []);

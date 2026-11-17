@@ -20,7 +20,6 @@ import {
 	CONNECTED,
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
-	StaleReactionError,
 	ERROR_VALUE,
 	HAS_ABORT_CONTROLLER,
 	MANAGED_EFFECT,
@@ -359,7 +358,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
  * done, it's stored with the run: on the reaction for its global run, or on the record a batch holds of it
  * @type {AbortController | null}
  */
-let abort_controller = null;
+export let abort_controller = null;
 
 /**
  * The signal of the run of `reaction` that is in progress. Its controller is stored with the run once it's done
@@ -378,15 +377,9 @@ export function get_abort_signal(reaction) {
 	return (abort_controller ??= new AbortController()).signal;
 }
 
-/**
- * @param {AbortController | null | undefined} controller
- * @param {Batch | null} [batch] The batch that replaced the aborted run, if any (see `abort_replaced`)
- */
-function abort_signal(controller, batch = null) {
-	if (controller) {
-		var reason = batch === null ? STALE_REACTION : new StaleReactionError(batch);
-		without_reactive_context(() => controller.abort(reason));
-	}
+/** @param {AbortController | null | undefined} controller */
+function abort_signal(controller) {
+	if (controller) without_reactive_context(() => controller.abort(STALE_REACTION));
 }
 
 /**
@@ -409,7 +402,7 @@ export function abort_record(reaction, record, rerun = false) {
 		}
 	}
 
-	abort_signal(record.ac, rerun ? current_batch : null);
+	abort_signal(record.ac);
 	record.ac = null;
 }
 
@@ -436,7 +429,7 @@ function abort_replaced(reaction, flags) {
 
 	if (is_derived ? batch_values === null || (real && is_outdated(reaction)) : real) {
 		// (the controller stays referenced until the new run is stored, see `keep_global_run`)
-		abort_signal(reaction.ac, batch);
+		abort_signal(reaction.ac);
 	}
 
 	for (var b = first_batch; b !== null; b = b.next) {

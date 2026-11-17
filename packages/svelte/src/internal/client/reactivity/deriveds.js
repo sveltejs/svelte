@@ -5,7 +5,7 @@ import {
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	StaleReactionError,
+	STALE_REACTION,
 	ASYNC,
 	DESTROYED,
 	INERT,
@@ -30,6 +30,7 @@ import {
 	changed_since,
 	is_dirty,
 	abort_all,
+	abort_controller,
 	get
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
@@ -41,7 +42,7 @@ import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
+import { batch_values, current_batch, merge_requests, view_batch, view_cache } from './batch.js';
 import { batch_for_run, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -186,32 +187,30 @@ export function async_expression(fn, label, location, onready) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn())
-				.then(d.resolve, (e) => {
-					if (!(e instanceof StaleReactionError)) {
-						d.reject(e);
-						return;
-					}
+			var promise = Promise.resolve(fn());
+			var abort_signal = abort_controller?.signal;
 
-					// On `getAbortSignal` cancellation, wait for a later result rather than flushing.
-					// If another batch replaced the resolver's run, it supplies the first value.
-					// Merge it into this batch so the aborted run settles and this batch can commit.
-					// A rerun in the same batch doesn't transfer ownership.
-					var by = e.batch;
+			abort_signal?.addEventListener('abort', () => {
+				if (current_batch !== null) {
+					// A future run aborted this one. Merge the later batch into the earlier one.
+					const target = merge_target(batch);
 
-					if (
-						for_run !== null &&
-						resolver !== null &&
-						by !== null &&
-						merge_target(resolver) === merge_target(batch) &&
-						merge_target(by) !== merge_target(batch) &&
-						batch.async_deriveds.get(effect) === d
-					) {
-						resolver = by;
-						by.overlaps.add(batch);
-						flush_waiting();
+					if (target !== current_batch && target.linked && !target.is_fork) {
+						merge_requests.add(target);
 					}
-				})
+				}
+			});
+
+			promise
+				.then(
+					(value) => {
+						if (!abort_signal?.aborted) d.resolve(value);
+					},
+					(e) => {
+						// An aborted run waits for its replacement, even if the user catches the abort.
+						if (!abort_signal?.aborted && e !== STALE_REACTION) d.reject(e);
+					}
+				)
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
@@ -287,7 +286,7 @@ export function async_expression(fn, label, location, onready) {
 					resolver !== null &&
 					(deferreds.size > 0 || error === OBSOLETE) &&
 					merge_target(resolver) === merge_target(batch) &&
-					batch.async_deriveds.get(effect) === d
+					merge_target(batch).async_deriveds.get(effect) === d
 				) {
 					resolver = null;
 					flush_waiting();

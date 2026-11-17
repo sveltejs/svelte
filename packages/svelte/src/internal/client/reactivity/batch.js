@@ -186,6 +186,13 @@ var flush_count = 0;
 export const source_stacks = new Set();
 
 /**
+ * Batches whose async runs were aborted during traversal. Merge the current batch into them
+ * before waiting for pending work, so that their aborted runs receive its results.
+ * @type {Set<Batch>}
+ */
+export const merge_requests = new Set();
+
+/**
  * A set of signals we have already seen while traversing in `batch.mark`.
  * Not always set to balance the common case of sources only having a couple
  * of (transitive) dependencies (where always creating a Set would be bad for perf)
@@ -324,13 +331,6 @@ export class Batch {
 	 * @type {Batch | null}
 	 */
 	merged = null;
-
-	/**
-	 * Batches whose async runs this batch replaced. Merge into them when this batch finishes
-	 * so they receive its results, regardless of write overlap or batch order (see `#merge`).
-	 * @type {Set<Batch>}
-	 */
-	overlaps = new Set();
 
 	#decrement_queued = false;
 
@@ -607,6 +607,28 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
+		if (merge_requests.size > 0) {
+			const sorted = Array.from(merge_requests).sort((a, b) => a.id - b.id);
+			merge_requests.clear();
+
+			this.#defer_effects(render_effects);
+			this.#defer_effects(effects);
+
+			/** @type {Batch} */
+			var target = this;
+			var i = sorted.length;
+
+			while (i--) {
+				var earlier = sorted[i];
+				earlier.#merge(target);
+				target = earlier;
+			}
+
+			// Revalidate once all the writes and pending work belong to the same batch.
+			target.#process();
+			return;
+		}
+
 		// if the batch has outstanding pending work, stash effects and bail
 		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
@@ -631,6 +653,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
+			earlier_batch.#process();
 
 			return;
 		}
@@ -791,10 +814,6 @@ export class Batch {
 	}
 
 	#find_earlier_batch() {
-		for (const batch of this.overlaps) {
-			if (batch.linked) return batch;
-		}
-
 		for (var batch = this.prev; batch !== null; batch = batch.prev) {
 			if (!batch.is_fork && this.#intersects(batch)) return batch;
 		}
@@ -812,7 +831,8 @@ export class Batch {
 	}
 
 	/**
-	 * Take over the writes of a later batch that depends on this one, because it finished first.
+	 * Take over the writes of a later batch that depends on this one, because it finished first
+	 * or aborted one of this batch's runs.
 	 * Values it produced (async results, deriveds) remain valid; block effects select their
 	 * branches again for this batch, if needed (their selections are keyed by batch)
 	 * @param {Batch} batch
@@ -829,7 +849,10 @@ export class Batch {
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
-			if (d) deferred.promise.then(d.resolve).catch(d.reject);
+			if (d && d !== deferred) deferred.promise.then(d.resolve, d.reject);
+			// The incoming run can still be pending. A subsequent replacement must reach
+			// this deferred too, not just the older waiters to which it forwards its result.
+			this.async_deriveds.set(effect, deferred);
 		}
 
 		for (const [reaction, record] of batch.records ?? []) {
@@ -874,9 +897,6 @@ export class Batch {
 		this.ondiscard(discard);
 		batch.merged = this;
 		batch.#unlink();
-
-		// processing re-validates everything that depends on the (now merged) writes of this batch
-		this.#process();
 	}
 
 	/**
