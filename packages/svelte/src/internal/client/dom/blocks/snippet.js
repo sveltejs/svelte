@@ -5,6 +5,7 @@ import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { block, teardown } from '../../reactivity/effects.js';
 import {
 	dev_current_component_function,
+	dev_stack,
 	set_dev_current_component_function
 } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
@@ -91,6 +92,16 @@ export function createRawSnippet(fn) {
 			}
 
 			anchor.before(element);
+		}
+
+		if (DEV && dev_stack !== null) {
+			// Raw snippets have no template locations, so use the render callsite.
+			// This also keeps the surrounding template from claiming their root.
+			// @ts-expect-error
+			element.__svelte_meta = {
+				parent: dev_stack,
+				loc: { file: dev_stack.file, line: dev_stack.line, column: dev_stack.column }
+			};
 		}
 
 		const result = snippet.setup?.(element);
