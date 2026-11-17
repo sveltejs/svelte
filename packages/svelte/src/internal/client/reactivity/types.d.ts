@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch.js';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -167,4 +168,6 @@ export interface Blocker {
 	promise: Promise<any>;
 	settled: boolean;
 	failed: boolean;
+	/** The batch that the script continues in, which may differ from its creator */
+	batch: () => Batch;
 }

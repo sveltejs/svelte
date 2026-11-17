@@ -63,7 +63,8 @@ export function flatten(blockers, sync, async, fn) {
 				return;
 			}
 
-			restore();
+			// The script may have continued in another batch, whose first values the template needs.
+			restore(true, pending[0].batch());
 
 			try {
 				run();
@@ -384,7 +385,7 @@ export function run(thunks) {
 	var promise = Promise.resolve(invoke(thunks[0])).catch(handle_error);
 
 	/** @type {Blocker} */
-	var blocker = { promise, settled: false, failed: false };
+	var blocker = { promise, settled: false, failed: false, batch: continue_in };
 	var blockers = [blocker];
 
 	promise.finally(() => {
@@ -419,7 +420,7 @@ export function run(thunks) {
 			.catch(handle_error);
 
 		/** @type {Blocker} */
-		const blocker = { promise, settled: false, failed: false };
+		const blocker = { promise, settled: false, failed: false, batch: continue_in };
 		blockers.push(blocker);
 
 		promise.finally(() => {
