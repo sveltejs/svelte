@@ -28,7 +28,8 @@ export default test({
 		assert.deepEqual(logs.splice(0), ['plain 3', 'aborted 2', 'signal 3']);
 		assert.htmlEqual(target.innerHTML, `${buttons}<p>0</p>${blocks}`);
 
-		for (const n of [1, 2, 3]) {
+		// Aborting each previous signal merges the batches, so only the latest view commits.
+		for (const n of [0, 0, 3]) {
 			shift.click();
 			await tick();
 			assert.htmlEqual(target.innerHTML, `${buttons}<p>${n}</p>${blocks}`);

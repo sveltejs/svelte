@@ -58,6 +58,7 @@ import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 import { is_runes } from '../context.js';
+import { merge_target } from './async.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
@@ -184,13 +185,6 @@ var flush_count = 0;
 
 /** Sources whose DEV update counts and stack traces need resetting after the flush. @type {Set<Value>} */
 export const source_stacks = new Set();
-
-/**
- * Batches whose async runs were aborted during traversal. Merge the current batch into them
- * before waiting for pending work, so that their aborted runs receive its results.
- * @type {Set<Batch>}
- */
-export const merge_requests = new Set();
 
 /**
  * A set of signals we have already seen while traversing in `batch.mark`.
@@ -331,6 +325,14 @@ export class Batch {
 	 * @type {Batch | null}
 	 */
 	merged = null;
+
+	/**
+	 * Batches whose runs this batch aborted. Merge into them before waiting for pending work.
+	 * Requests belong to this batch because a synchronous derived can abort outside traversal,
+	 * before an unrelated batch is processed (e.g. a fork being committed).
+	 * @type {Set<Batch>}
+	 */
+	merge_requests = new Set();
 
 	#decrement_queued = false;
 
@@ -607,26 +609,31 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
-		if (merge_requests.size > 0) {
-			const sorted = Array.from(merge_requests).sort((a, b) => a.id - b.id);
-			merge_requests.clear();
+		if (this.merge_requests.size > 0) {
+			const sorted = Array.from(this.merge_requests, merge_target)
+				.filter((batch) => batch !== this && batch.linked && !batch.is_fork)
+				.sort((a, b) => a.id - b.id);
+			this.merge_requests.clear();
 
-			this.#defer_effects(render_effects);
-			this.#defer_effects(effects);
+			if (sorted.length > 0) {
+				this.#defer_effects(render_effects);
+				this.#defer_effects(effects);
 
-			/** @type {Batch} */
-			var target = this;
-			var i = sorted.length;
+				/** @type {Batch} */
+				var target = this;
+				var i = sorted.length;
 
-			while (i--) {
-				var earlier = sorted[i];
-				earlier.#merge(target);
-				target = earlier;
+				while (i--) {
+					var earlier = sorted[i];
+					if (earlier === target) continue;
+					earlier.#merge(target);
+					target = earlier;
+				}
+
+				// Revalidate once all the writes and pending work belong to the same batch.
+				target.#process();
+				return;
 			}
-
-			// Revalidate once all the writes and pending work belong to the same batch.
-			target.#process();
-			return;
 		}
 
 		// if the batch has outstanding pending work, stash effects and bail
@@ -838,6 +845,9 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
+		for (const target of batch.merge_requests) this.merge_requests.add(target);
+		batch.merge_requests.clear();
+
 		for (const [source, entry] of batch.current) {
 			if (!this.previous.has(source)) {
 				const previous = batch.previous.get(source);

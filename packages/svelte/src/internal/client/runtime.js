@@ -64,6 +64,7 @@ import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
+import { merge_target } from './reactivity/async.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
 
@@ -518,6 +519,7 @@ function is_recorded_effect(flags) {
 
 /** @param {Reaction} reaction */
 export function update_reaction(reaction) {
+	const batch = current_batch;
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
 	var previous_untracked_writes = untracked_writes;
@@ -617,6 +619,22 @@ export function update_reaction(reaction) {
 
 		return value;
 	} finally {
+		var signal = /** @type {AbortController | null} */ (abort_controller)?.signal;
+
+		if (batch !== null && signal !== undefined) {
+			// The reaction that requested the signal identifies the merge target, even if
+			// another reaction awaits its result (e.g. `let promise = $derived(load(...))`).
+			signal.addEventListener('abort', () => {
+				if (current_batch !== null) {
+					const target = merge_target(batch);
+
+					if (target !== current_batch && target.linked && !target.is_fork) {
+						current_batch.merge_requests.add(target);
+					}
+				}
+			});
+		}
+
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;

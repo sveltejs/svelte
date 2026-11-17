@@ -42,7 +42,7 @@ import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, merge_requests, view_batch, view_cache } from './batch.js';
+import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
 import { batch_for_run, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -189,17 +189,6 @@ export function async_expression(fn, label, location, onready) {
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
 			var promise = Promise.resolve(fn());
 			var abort_signal = abort_controller?.signal;
-
-			abort_signal?.addEventListener('abort', () => {
-				if (current_batch !== null) {
-					// A future run aborted this one. Merge the later batch into the earlier one.
-					const target = merge_target(batch);
-
-					if (target !== current_batch && target.linked && !target.is_fork) {
-						merge_requests.add(target);
-					}
-				}
-			});
 
 			promise
 				.then(

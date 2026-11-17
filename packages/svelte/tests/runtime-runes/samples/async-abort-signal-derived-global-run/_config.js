@@ -41,9 +41,10 @@ export default test({
 		// view (which undoes A's `n`) evaluates `p` as a run of its own, which mustn't abort the global run
 		await step(m, '<i>0</i><b>0</b>', ['aborted 1,0', 'load 1,1', 'handler object', 'load 0,1']);
 
-		await step(shift, '<i>1</i><b>0</b>', []);
+		// The handler aborted A's run, merging B into A. Both delays must resolve before either write commits.
+		await step(shift, '<i>0</i><b>0</b>', []);
 
-		// B commits, which drops its own run of `p` (from its view), so that one's signal aborts
+		// The merged batch commits, dropping B's own run of `p`, so that one's signal aborts
 		await step(shift, '<i>1</i><b>1</b>', ['aborted 0,1']);
 
 		// the real world still uses the handler's run
