@@ -758,10 +758,6 @@ function resume_children(effect, local) {
 	}
 }
 
-export function aborted(effect = /** @type {Effect} */ (active_effect)) {
-	return (effect.f & DESTROYED) !== 0;
-}
-
 /**
  * @param {Effect} effect
  * @param {DocumentFragment} fragment

@@ -26,7 +26,7 @@ import {
 	async_expression,
 	is_uninitialized
 } from './deriveds.js';
-import { aborted, async_effect, block, branch } from './effects.js';
+import { async_effect, block, branch } from './effects.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -360,7 +360,7 @@ class Runner {
 
 		for (const fn of thunks.slice(1)) {
 			promise = promise.then(() => {
-				if (aborted(active)) {
+				if ((active.f & DESTROYED) !== 0) {
 					throw STALE_REACTION;
 				}
 
@@ -381,7 +381,7 @@ class Runner {
 
 		promise = promise
 			.catch((error) => {
-				if (!aborted(active)) {
+				if ((active.f & DESTROYED) === 0) {
 					this.restore();
 
 					try {
@@ -400,16 +400,16 @@ class Runner {
 			this.#adopters.add(batch);
 			var decrement_pending = increment_pending();
 
-			promise
-				// wait one more tick, so that template effects are
-				// guaranteed to run before `$effect(...)`.
-				.then(() => Promise.resolve())
-				.finally(() => {
-					// An adopting batch must also run effects created after it adopted the script's branch.
-					var target = merge_target(batch);
-					if (target.linked && !aborted(active)) target.revalidate_branch(active);
-					decrement_pending();
-				});
+			promise.finally(() => {
+				// An adopting batch must also run effects created after it adopted the script's branch.
+				var target = merge_target(batch);
+
+				if (target.linked && (active.f & DESTROYED) === 0) {
+					target.revalidate_branch(active);
+				}
+
+				decrement_pending();
+			});
 		});
 
 		return blockers;
