@@ -4,7 +4,10 @@
 import * as b from '#compiler/builders';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
-import { build_locations_statements, transform_template } from '../transform-template/index.js';
+import {
+	build_hydration_locations_statement,
+	transform_template
+} from '../transform-template/index.js';
 import { Template } from '../transform-template/template.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
@@ -59,8 +62,8 @@ export function Fragment(node, context) {
 	/** @type {Statement | undefined} */
 	let close = undefined;
 
-	/** @type {{ create: Statement, hydrate: Statement } | null} */
-	let locations = null;
+	/** @type {Statement | undefined} */
+	let hydrate_locations = undefined;
 
 	/** @type {ComponentClientTransformState} */
 	const state = {
@@ -100,8 +103,8 @@ export function Fragment(node, context) {
 
 		const template_name = transform_template(state, 'root', flags);
 
-		locations = build_locations_statements(state, id);
-		state.init.unshift(b.var(id, b.call(template_name)), ...(locations ? [locations.create] : []));
+		hydrate_locations = build_hydration_locations_statement(state, template_name, id);
+		state.init.unshift(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
@@ -147,11 +150,8 @@ export function Fragment(node, context) {
 
 			const template_name = transform_template(state, 'root', flags);
 
-			locations = build_locations_statements(state, id);
-			state.init.unshift(
-				b.var(id, b.call(template_name)),
-				...(locations ? [locations.create] : [])
-			);
+			hydrate_locations = build_hydration_locations_statement(state, template_name, id);
+			state.init.unshift(b.var(id, b.call(template_name)));
 
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		}
@@ -176,8 +176,8 @@ export function Fragment(node, context) {
 
 	body.push(...state.after_update);
 
-	if (locations !== null) {
-		body.push(locations.hydrate);
+	if (hydrate_locations !== undefined) {
+		body.push(hydrate_locations);
 	}
 
 	if (close !== undefined) {

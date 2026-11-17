@@ -5,33 +5,34 @@ import { hydrating } from '../dom/hydration.js';
 import { component_context, dev_stack } from '../context.js';
 
 /**
- * Called right after a template has been created. When rendering on the client, the template only
- * contains its own elements at that point (unlike at the end of the template's body, by which time
- * blocks, child components etc may have inserted elements that don't have locations of their own)
- * @param {DocumentFragment | Element} dom
+ * Assign locations immediately after cloning, before blocks or child components insert elements.
+ * During hydration, the compiler calls the factory's `hydrate_assign_locations` method after the
+ * template's children have their own locations and can be skipped.
+ * @param {() => DocumentFragment | Element} fn
  * @param {string} filename
  * @param {SourceLocation[]} locations
  */
-export function add_locations(dom, filename, locations) {
-	if (hydrating) return;
-	assign_locations(
-		dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom,
-		filename,
-		locations
-	);
-}
+export function add_locations(fn, filename, locations) {
+	var create = () => {
+		var dom = fn();
 
-/**
- * Called once the template's content has been created. During hydration, the elements belonging
- * to child components, snippets and `{@html ...}` tags aren't delimited by hydration markers, but
- * at this point they already have their own locations, so we skip them
- * @param {Node} node
- * @param {string} filename
- * @param {SourceLocation[]} locations
- */
-export function add_hydration_locations(node, filename, locations) {
-	if (!hydrating) return;
-	assign_locations(node, filename, locations);
+		if (!hydrating) {
+			assign_locations(
+				dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom,
+				filename,
+				locations
+			);
+		}
+
+		return dom;
+	};
+
+	create.hydrate_assign_locations = (/** @type {Node} */ node) => {
+		// Pass the node explicitly because the same factory can be called repeatedly (e.g. in each blocks).
+		if (hydrating) assign_locations(node, filename, locations);
+	};
+
+	return create;
 }
 
 /**
