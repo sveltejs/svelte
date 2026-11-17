@@ -338,6 +338,20 @@ class Run {
 	}
 
 	/**
+	 * @param {() => void | Promise<void>} fn
+	 */
+	invoke(fn) {
+		var previous_run = current_run;
+		current_run = this;
+
+		try {
+			return fn();
+		} finally {
+			current_run = previous_run;
+		}
+	}
+
+	/**
 	 * Switch away from the previous batch (which is now obsolete)
 	 * to another one
 	 * @param {Batch} batch
@@ -389,19 +403,7 @@ export function run(thunks) {
 		}
 	};
 
-	/** @param {() => void | Promise<void>} fn */
-	const invoke = (fn) => {
-		var previous_run = current_run;
-		current_run = run;
-
-		try {
-			return fn();
-		} finally {
-			current_run = previous_run;
-		}
-	};
-
-	var promise = Promise.resolve(invoke(thunks[0])).catch(handle_error);
+	var promise = Promise.resolve(run.invoke(thunks[0])).catch(handle_error);
 
 	/** @type {Blocker} */
 	var blocker = { promise, settled: false, failed: false, batch: continue_in };
@@ -427,7 +429,7 @@ export function run(thunks) {
 						throw STALE_REACTION;
 					}
 
-					return invoke(fn);
+					return run.invoke(fn);
 				} finally {
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
