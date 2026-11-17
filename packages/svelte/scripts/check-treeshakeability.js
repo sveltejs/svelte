@@ -28,6 +28,7 @@ async function bundle_code(entry) {
 			nodeResolve({
 				exportConditions: ['production', 'import', 'browser', 'default'],
 				// check the code itself, not what `sideEffects` in package.json claims
+				// @ts-expect-error supported at runtime, missing from the plugin's types
 				ignoreSideEffectsForRoot: true
 			})
 		],
