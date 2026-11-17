@@ -71,14 +71,13 @@ export function transform_template(state, name, flags = 0) {
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
 
-	const key =
-		tree || dev
-			? null
-			: get_template_key(
-					/** @type {TemplateLiteral} */ (expression),
-					state.metadata.namespace,
-					flags
-				);
+	const key = tree
+		? null
+		: get_template_key(
+				/** @type {TemplateLiteral} */ (expression),
+				state.metadata.namespace,
+				flags
+			);
 
 	if (key !== null) {
 		const existing = state.templates.get(key);
@@ -113,8 +112,7 @@ export function transform_template(state, name, flags = 0) {
 /**
  * Returns a stable key for templates that are safe to deduplicate - plain
  * `$.from_html`/`from_svg`/`from_mathml` factories with literal arguments - or `null`
- * for anything else. Dev-mode templates are wrapped in `$.add_locations(...)`, which
- * embeds per-call-site locations, so they never produce a key and are never shared.
+ * for anything else.
  * @param {TemplateLiteral} template
  * @param {Namespace} namespace
  * @param {number} flags
