@@ -238,6 +238,15 @@ export interface ModuleCompileOptions {
 		 * @since 5.36
 		 */
 		async?: boolean;
+		/**
+		 * Internal: a list of devtools plugin browser runtimes (module specifiers, e.g. `'my-devtools/runtime'`).
+		 * In dev, every compiled client component and module imports each of them before anything else.
+		 * Ignored unless `dev` is `true` and `generate` is `'client'`.
+		 * Specifiers must be resolvable paths, not virtual modules.
+		 *
+		 * This is an internal option for the official Svelte devtools and has no stability guarantee.
+		 */
+		devtools?: string[];
 	};
 }
 

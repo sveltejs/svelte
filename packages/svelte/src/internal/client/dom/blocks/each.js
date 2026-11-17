@@ -42,7 +42,7 @@ import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
-import { tag } from '../../dev/tracing.js';
+import { label_source, tag } from '../../dev/tracing.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -755,6 +755,11 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
 			: null;
 
 	var i = (flags & EACH_INDEX_REACTIVE) !== 0 ? source(index) : null;
+
+	if (DEV) {
+		if (v) label_source(v, '{#each ...} item');
+		if (i) label_source(i, '{#each ...} index');
+	}
 
 	if (DEV && v) {
 		// For tracing purposes, we need to link the source signal we create with the

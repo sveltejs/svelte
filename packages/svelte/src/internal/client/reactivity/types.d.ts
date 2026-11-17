@@ -39,6 +39,8 @@ export interface Value<V = unknown> extends Signal {
 	set_during_effect?: boolean;
 	/** A function that retrieves the underlying source, used for each block item signals */
 	trace?: null | (() => void);
+	/** Dev only. Where the signal was declared (`file:line:column`), for devtools */
+	location?: string;
 }
 
 export interface Reaction extends Signal {
@@ -157,6 +159,8 @@ export interface Effect extends Reaction {
 	component_function?: any;
 	/** Dev only. Only set for certain block effects. Contains a reference to the stack that represents the render tree */
 	dev_stack?: DevStackEntry | null;
+	/** Dev only. Where a `$effect` / `$effect.pre` was declared (`file:line:column`), for devtools */
+	location?: string;
 }
 
 export type Source<V = unknown> = Value<V>;

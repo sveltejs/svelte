@@ -19,6 +19,7 @@ import { BranchManager } from './branches.js';
 import { capture, merge_target, unset_context } from '../../reactivity/async.js';
 import { DEV } from 'esm-env';
 import { active_effect } from '../../runtime.js';
+import { label_source } from '../../dev/tracing.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -52,8 +53,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	error.f |= ASYNC;
 
 	if (DEV) {
-		value.label = '{#await ...} value';
-		error.label = '{#await ...} error';
+		label_source(value, '{#await ...} value');
+		label_source(error, '{#await ...} error');
 	}
 
 	var branches = new BranchManager(node);

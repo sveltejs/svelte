@@ -7,6 +7,7 @@ import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 import { DEV } from 'esm-env';
+import { label_source } from '../dev/tracing.js';
 
 /**
  * We set this to `true` when updating a store so that we correctly
@@ -41,7 +42,7 @@ export function store_get(store, store_name, stores) {
 	});
 
 	if (DEV) {
-		entry.source.label = store_name;
+		label_source(entry.source, store_name);
 	}
 
 	// if the component that setup this is already unmounted we don't want to register a subscription

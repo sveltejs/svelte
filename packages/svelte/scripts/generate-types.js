@@ -40,6 +40,7 @@ await createBundle({
 		[`${pkg.name}/attachments`]: `${dir}/src/attachments/public.d.ts`,
 		[`${pkg.name}/compiler`]: `${dir}/src/compiler/public.d.ts`,
 		[`${pkg.name}/easing`]: `${dir}/src/easing/index.js`,
+		[`${pkg.name}/internal/devtools`]: `${dir}/src/internal/devtools/public.d.ts`,
 		[`${pkg.name}/legacy`]: `${dir}/src/legacy/legacy-client.js`,
 		[`${pkg.name}/motion`]: `${dir}/src/motion/public.d.ts`,
 		[`${pkg.name}/reactivity`]: `${dir}/src/reactivity/index-client.js`,

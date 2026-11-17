@@ -22,10 +22,15 @@ import {
 	flush_eager_effects,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
-import { COMPONENT_SYMBOL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import {
+	COMPONENT_SYMBOL,
+	PROXY_PATH_SYMBOL,
+	PROXY_SOURCES_SYMBOL,
+	STATE_SYMBOL
+} from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
-import { tag } from './dev/tracing.js';
+import { label_source, tag_proxy } from './dev/tracing.js';
 import { get_error } from '../shared/dev.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
@@ -99,23 +104,41 @@ export function proxy(value) {
 
 	/** Used in dev for $inspect.trace() */
 	var path = '';
+	/** Used in dev for devtools: where the (root) state was declared */
+	/** @type {string | undefined} */
+	var location = undefined;
 	let updating = false;
-	/** @param {string} new_path */
-	function update_path(new_path) {
+	/**
+	 * @param {string} new_path
+	 * @param {string} [new_location]
+	 */
+	function update_path(new_path, new_location) {
 		if (updating) return;
 		updating = true;
 		path = new_path;
+		if (new_location !== undefined) location = new_location;
 
-		tag(version, `${path} version`);
+		label_source(version, `${path} version`, location, proxied);
 
 		// rename all child sources and child proxies
 		for (const [prop, source] of sources) {
-			tag(source, get_label(path, prop));
+			tag_child(source, prop);
 		}
 		updating = false;
 	}
 
-	return new Proxy(/** @type {any} */ (value), {
+	/**
+	 * Dev only: label a child source, and announce it to devtools as belonging to this proxy
+	 * @param {Source} source
+	 * @param {string | symbol} prop
+	 */
+	function tag_child(source, prop) {
+		label_source(source, get_label(path, prop), location, proxied, prop);
+		tag_proxy(source.v, get_label(path, prop), location);
+	}
+
+	/** @type {any} */
+	var proxied = new Proxy(/** @type {any} */ (value), {
 		defineProperty(_, prop, descriptor) {
 			if (
 				!('value' in descriptor) ||
@@ -135,7 +158,7 @@ export function proxy(value) {
 					var s = source(descriptor.value, stack);
 					sources.set(prop, s);
 					if (DEV && typeof prop === 'string') {
-						tag(s, get_label(path, prop));
+						tag_child(s, prop);
 					}
 					return s;
 				});
@@ -156,7 +179,7 @@ export function proxy(value) {
 					increment(version);
 
 					if (DEV) {
-						tag(s, get_label(path, prop));
+						tag_child(s, prop);
 					}
 				}
 			} else {
@@ -176,6 +199,10 @@ export function proxy(value) {
 				return update_path;
 			}
 
+			if (DEV && prop === PROXY_SOURCES_SYMBOL) {
+				return sources;
+			}
+
 			var s = sources.get(prop);
 			var exists = prop in target;
 
@@ -186,7 +213,7 @@ export function proxy(value) {
 					var s = source(p, stack);
 
 					if (DEV) {
-						tag(s, get_label(path, prop));
+						tag_child(s, prop);
 					}
 
 					return s;
@@ -250,7 +277,7 @@ export function proxy(value) {
 						var s = source(p, stack);
 
 						if (DEV) {
-							tag(s, get_label(path, prop));
+							tag_child(s, prop);
 						}
 
 						return s;
@@ -286,7 +313,7 @@ export function proxy(value) {
 						sources.set(i + '', other_s);
 
 						if (DEV) {
-							tag(other_s, get_label(path, i));
+							tag_child(other_s, i + '');
 						}
 					}
 				}
@@ -301,7 +328,7 @@ export function proxy(value) {
 					s = with_parent(() => source(undefined, stack));
 
 					if (DEV) {
-						tag(s, get_label(path, prop));
+						tag_child(s, prop);
 					}
 					set(s, proxy(value));
 
@@ -362,6 +389,8 @@ export function proxy(value) {
 			e.state_prototype_fixed();
 		}
 	});
+
+	return proxied;
 }
 
 /**

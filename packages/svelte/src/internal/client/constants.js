@@ -70,6 +70,8 @@ export const COMPONENT_SYMBOL = Symbol('component');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+/** Dev only: returns the sources map of a `$state` proxy, used by the devtools `snapshot` helper */
+export const PROXY_SOURCES_SYMBOL = Symbol('proxy sources');
 export const ATTRIBUTES_CACHE = Symbol('attributes');
 export const CLASS_CACHE = Symbol('class');
 export const STYLE_CACHE = Symbol('style');

@@ -44,7 +44,17 @@ const common_options = {
 	warningFilter: fun(() => true),
 
 	experimental: object({
-		async: boolean(false)
+		async: boolean(false),
+		devtools: validator(/** @type {string[]} */ ([]), (input, keypath) => {
+			if (
+				!Array.isArray(input) ||
+				!input.every((specifier) => typeof specifier === 'string' && specifier !== '')
+			) {
+				throw_error(`${keypath} should be an array of module specifiers`);
+			}
+
+			return input;
+		})
 	})
 };
 
