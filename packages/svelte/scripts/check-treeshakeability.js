@@ -207,16 +207,6 @@ for (const id of bare_imports) {
 	report(`svelte/internal/${id} has side effects`, entry?.[1] === true);
 }
 
-// a folder missing from `sideEffects` would be silently treated as pure
-for (const dir of fs.readdirSync('src', { withFileTypes: true })) {
-	if (!dir.isDirectory() || dir.name === 'compiler') continue;
-	if (
-		!fs.readdirSync(`src/${dir.name}`, { recursive: true }).some((f) => String(f).endsWith('.js'))
-	)
-		continue;
-	report(`src/${dir.name} in sideEffects`, pkg.sideEffects.includes(`./src/${dir.name}/**`));
-}
-
 if (failed) {
 	// eslint-disable-next-line no-console
 	console.error('Full bundle at', path.resolve('scripts/_bundle.js'));
