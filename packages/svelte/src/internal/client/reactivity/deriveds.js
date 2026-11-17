@@ -151,10 +151,14 @@ export function async_expression(fn, label, location, onready) {
 	 */
 	var waiting = for_run && [];
 
-	/** Try the waiting results again, e.g. because another batch delivers the first value now */
-	function retry() {
+	/**
+	 * Retry buffered results, or release them once the script has continued.
+	 * @param {boolean} [continued]
+	 */
+	function flush_waiting(continued = false) {
 		var fns = /** @type {Array<() => void>} */ (waiting);
-		waiting = [];
+		waiting = continued ? null : [];
+		if (continued) resolver = null;
 		for (const fn of fns) fn();
 	}
 
@@ -164,15 +168,18 @@ export function async_expression(fn, label, location, onready) {
 		// A batch that adopts the branch of a script that another batch created (e.g. a real batch after a fork, also
 		// once that fork is discarded) reruns its async expressions in parallel, in its own view. But in a view in which
 		// an earlier one has no value yet, the script didn't get to this one, which may depend on that value. So it
-		// waits until the earlier one has its first value in that view (once this one has a value in a view, so do they)
-		var uninitialized =
-			created !== null && is_uninitialized(signal) ? find_uninitialized(created, index) : undefined;
-
-		if (uninitialized !== undefined) {
-			/** @type {Batch} */ (current_batch).async_deriveds.get(effect)?.reject(OBSOLETE);
-			/** @type {Batch} */ (current_batch).async_deriveds.delete(effect);
-			get(uninitialized);
-			return;
+		// waits for the last earlier expression that still has no value. Check all earlier expressions, since
+		// assignments to async deriveds can initialize them out of order.
+		if (created !== null && is_uninitialized(signal)) {
+			for (var i = index - 1; i >= 0; i--) {
+				if (is_uninitialized(created[i])) {
+					var pending = /** @type {Batch} */ (current_batch).async_deriveds;
+					pending.get(effect)?.reject(OBSOLETE);
+					pending.delete(effect);
+					get(created[i]);
+					return;
+				}
+			}
 		}
 
 		if (DEV) {
@@ -210,7 +217,7 @@ export function async_expression(fn, label, location, onready) {
 					) {
 						resolver = by;
 						by.overlaps.add(batch);
-						retry();
+						flush_waiting();
 					}
 				})
 				.finally(unset_context);
@@ -286,12 +293,12 @@ export function async_expression(fn, label, location, onready) {
 				if (
 					waiting !== null &&
 					resolver !== null &&
-					(deferreds.size > 0 || waiting.length > 0 || error === OBSOLETE) &&
+					(deferreds.size > 0 || error === OBSOLETE) &&
 					merge_target(resolver) === merge_target(batch) &&
 					batch.async_deriveds.get(effect) === d
 				) {
 					resolver = null;
-					retry();
+					flush_waiting();
 					return;
 				} else if (error === OBSOLETE) {
 					return;
@@ -306,11 +313,7 @@ export function async_expression(fn, label, location, onready) {
 				// did, the results that wait for this one can follow
 				for_run.batch = batch;
 
-				for_run.continued.push(() => {
-					var fns = /** @type {Array<() => void>} */ (waiting);
-					waiting = resolver = null;
-					for (const fn of fns) fn();
-				});
+				for_run.continued.push(() => flush_waiting(true));
 
 				for_run = null;
 			}
@@ -363,19 +366,6 @@ export function async_derived(fn, label, location) {
 			else reject(error);
 		});
 	});
-}
-
-/**
- * The last of the first `n` signals that has no value in the active view of the world, if any. (If one of them has
- * none, neither has any later one: each waits for the ones before it, see `async_expression`)
- * @param {Source[]} signals
- * @param {number} n
- * @returns {Source | undefined}
- */
-function find_uninitialized(signals, n) {
-	for (var i = n - 1; i >= 0; i--) {
-		if (is_uninitialized(signals[i])) return signals[i];
-	}
 }
 
 /**

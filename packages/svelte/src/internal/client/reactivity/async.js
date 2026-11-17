@@ -344,18 +344,12 @@ export function run(thunks) {
 		var batch = merge_target(for_run.batch);
 		if (batch.linked) return batch;
 
-		/** @type {Batch | null} */
-		var next = batch;
-
 		for (const b of adopters) {
 			var target = merge_target(b);
-			if (!target.linked) continue;
-			next = target;
-			break;
+			if (target.linked) return (for_run.batch = target);
 		}
 
-		for_run.batch = next;
-		return for_run.batch;
+		return (for_run.batch = batch);
 	}
 
 	/** @param {any} error */
