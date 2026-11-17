@@ -8,9 +8,9 @@ const buttons = `
 	<button>v 2</button>
 `;
 
-// B creates the component, inside a boundary that shows its pending snippet, so B doesn't wait for the script.
-// B intersects A, which is still waiting for other work, so B is merged into it while the script waits. The script
-// then continues in A, the batch that B became part of, once that has a value
+// B creates the component inside a pending boundary, so it doesn't wait for the script.
+// Its writes intersect A's, so B merges into A while A waits for other work.
+// When the script's value arrives, the script must continue in A.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {

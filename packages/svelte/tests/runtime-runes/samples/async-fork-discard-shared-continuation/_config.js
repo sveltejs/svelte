@@ -13,7 +13,7 @@ export default test({
 			button.click();
 			await tick();
 		}
-		// The real batch reruns the first await; the second one follows once that has its value in its view
+		// The real batch reruns the first await, then the second once the first resolves.
 		assert.deepEqual(logs, [2, 3, 3]);
 
 		// Resolve all subsequent work but leave the original fork's second await pending.

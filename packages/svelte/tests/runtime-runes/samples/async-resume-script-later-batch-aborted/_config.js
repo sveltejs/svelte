@@ -10,10 +10,9 @@ const buttons = `
 	<button>second 2</button>
 `;
 
-// Like `async-resume-script-later-batch`, but the expressions use `getAbortSignal`. B folds A (both write `x`),
-// so its runs supersede A's, which aborts them: A won't have a second value of its own. So B mustn't wait
-// for A to continue the script (that would never happen). The script continues with B's second value, and
-// once B is done, it's merged into A, which commits B's values
+// Like `async-resume-script-later-batch`, but with `getAbortSignal`. B folds A because both write `x`,
+// aborting A's runs. The script must continue with B's second value rather than wait forever for A.
+// Once B finishes, it merges into A, which commits B's values.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {

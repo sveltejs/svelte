@@ -108,7 +108,7 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
- * @param {(error: unknown) => void} [onready] Called once the first result is captured, with its error if it failed
+ * @param {(error: unknown) => void} [onready] Called when the first result is captured; receives its error, if any
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
@@ -127,15 +127,10 @@ export function async_expression(fn, label, location, onready) {
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
 
-	// Inside `run` (a component's script), the first value comes from the run of the batch that created the
-	// expression, and the script continues in the view of that batch. Results of other batches wait until then.
-	// If its run is superseded or obsolete, another batch takes over
+	// `run` continues in the creating batch's view; other batches' results wait until then.
+	// A superseded or obsolete run lets another batch supply the first value.
 	var for_run = batch_for_run;
 
-	/**
-	 * The async expressions of the script, in the order it created them: the first `index` ones come before this one.
-	 * In a view in which one of them has no value yet, the script didn't get to this one
-	 */
 	var created = for_run && for_run.signals;
 	var index = created === null ? 0 : created.push(signal) - 1;
 
@@ -146,7 +141,7 @@ export function async_expression(fn, label, location, onready) {
 	var resolver = for_run && current_batch;
 
 	/**
-	 * Results of other batches that wait for the first value to be delivered
+	 * Results buffered until the script continues; `null` disables buffering.
 	 * @type {Array<() => void> | null}
 	 */
 	var waiting = for_run && [];
@@ -165,10 +160,8 @@ export function async_expression(fn, label, location, onready) {
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
-		// A batch that adopts the branch of a script that another batch created (e.g. a real batch after a fork, also
-		// once that fork is discarded) reruns its async expressions in parallel, in its own view. But in a view in which
-		// an earlier one has no value yet, the script didn't get to this one, which may depend on that value. So it
-		// waits for the last earlier expression that still has no value. Check all earlier expressions, since
+		// An adopting batch may not yet have values for earlier expressions.
+		// Wait for the last one without a value. Check all earlier expressions, since
 		// assignments to async deriveds can initialize them out of order.
 		if (created !== null && is_uninitialized(signal)) {
 			for (var i = index - 1; i >= 0; i--) {
@@ -200,11 +193,10 @@ export function async_expression(fn, label, location, onready) {
 						return;
 					}
 
-					// if the promise was rejected by the user, via `getAbortSignal`, then
-					// wait for a subsequent resolution instead of flushing the batch.
-					// If the resolver's run was aborted because another batch's run replaced it (not because the
-					// batch ran it again), that batch delivers the first value now. It has to be merged into
-					// this one, whose run gets its result that way, so that this batch can commit eventually
+					// On `getAbortSignal` cancellation, wait for a later result rather than flushing.
+					// If another batch replaced the resolver's run, it supplies the first value.
+					// Merge it into this batch so the aborted run settles and this batch can commit.
+					// A rerun in the same batch doesn't transfer ownership.
 					var by = e.batch;
 
 					if (
@@ -269,8 +261,8 @@ export function async_expression(fn, label, location, onready) {
 				resolver ??= batch;
 
 				if (merge_target(batch) !== merge_target(resolver)) {
-					// wait for the resolver's result. By then, this one is obsolete if the batch ran the
-					// expression again, or was discarded (a batch that was merged continues as the other one)
+					// Recheck staleness after waiting: the batch may have rerun or been discarded.
+					// Merged batches remain valid while their merge target is linked.
 					waiting.push(() => {
 						var obsolete =
 							(effect.f & DESTROYED) !== 0 ||
@@ -283,13 +275,13 @@ export function async_expression(fn, label, location, onready) {
 				}
 			}
 
-			// TODO to ensure all effects correctly run for that batch also may need https://github.com/sveltejs/svelte/pull/19272 to pick up unprocessed effects of earlier batches
 			decrement_pending();
 			deferreds.delete(d);
 
 			if (error) {
-				// If the resolver's run is obsolete (e.g. because the batch was discarded) the next result delivers
-				// the first value, with those that wait going first. (Replacing a run in the same batch doesn't count)
+				// If the resolver's run is obsolete, let the next result supply the first value.
+				// Do the same on failure if other results are pending. Try buffered results first.
+				// A rerun in the same batch keeps ownership.
 				if (
 					waiting !== null &&
 					resolver !== null &&
@@ -309,8 +301,7 @@ export function async_expression(fn, label, location, onready) {
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
 
 			if (for_run !== null) {
-				// The first value: the script continues in the view of this batch. Once it
-				// did, the results that wait for this one can follow
+				// Let the script consume the first value in this batch's view before releasing buffered results.
 				for_run.batch = batch;
 
 				for_run.continued.push(() => flush_waiting(true));
@@ -359,7 +350,6 @@ export function async_derived(fn, label, location) {
 		return Promise.resolve(fn()).then((value) => source(value));
 	}
 
-	// (the first value is delivered by the batch that `run` continues in, see `async_expression`)
 	return new Promise((fulfil, reject) => {
 		const source = async_expression(fn, label, location, (error) => {
 			if (error === undefined) fulfil(source);

@@ -1,8 +1,8 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-// The fork creates Parent and (once Parent's script continued) Child, then is discarded while a real batch
-// adopts both. In its view, Parent's `a` has no value yet, so Child's `b` (which reads it via a prop) must wait
+// The fork creates Parent, then Child after Parent's script resumes. A real batch adopts both as the fork
+// is discarded. Child's `b` reads Parent's `a` via a prop, so it must wait for `a` in the real batch's view.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {

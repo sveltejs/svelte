@@ -1,10 +1,9 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-// F creates the shared script, while G's first result is already ready when F
-// fails. That failure must wake G and transfer initialization to it, including
-// the dependent second await. The template must also resume in G's view: F still
-// has no values for either derived. Neither fork can render before G commits.
+// F creates the shared script, then fails after G's first result is ready.
+// The second await and template must continue in G's view: F has neither derived's value.
+// Nothing renders until G commits.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {

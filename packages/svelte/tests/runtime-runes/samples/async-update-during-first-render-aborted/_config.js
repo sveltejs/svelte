@@ -1,9 +1,9 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-// Like `async-update-during-first-render`, but the update's run of the expression aborts the run of the batch that
-// created it, which therefore won't get a value of its own. The script continues with the update's value instead, and
-// the update is merged into the creating batch (their writes don't intersect), so that the creating batch is done, too
+// Like `async-update-during-first-render`, but the update aborts the original run.
+// The script must continue with the update's value. The update must merge into the creating batch
+// despite their nonintersecting writes, so both batches can finish.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, instance, logs }) {

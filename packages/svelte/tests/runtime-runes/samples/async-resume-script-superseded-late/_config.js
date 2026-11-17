@@ -8,11 +8,9 @@ const buttons = `
 	<button>y 1</button>
 `;
 
-// The batch that creates the component commits right away, because the boundary shows its pending snippet,
-// and the script waits for its run of the `await`. A later batch runs it again, and has its result first, but
-// waits for other work. So the script keeps waiting for the batch that created it — until the later batch
-// commits, which supersedes that batch's run: it won't get a value of its own anymore. Then the script continues
-// (with the value that's now part of every view), rather than waiting forever
+// The creating batch commits while the script awaits a value inside a pending boundary.
+// A later batch gets its result first but waits for other work. The script must wait until that batch
+// commits and supersedes the original run, then continue with the value now shared by every view.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {

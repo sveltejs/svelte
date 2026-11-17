@@ -84,8 +84,8 @@ export class StaleReactionError extends Error {
 	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
 
 	/**
-	 * @param {import('./reactivity/batch.js').Batch | null} [batch] The batch whose run of the reaction replaced
-	 * the aborted one, if it was aborted because the reaction re-ran (see `abort_replaced`)
+	 * @param {import('./reactivity/batch.js').Batch | null} [batch] The batch that replaced the aborted run,
+	 * if any (see `abort_replaced`)
 	 */
 	constructor(batch = null) {
 		super();

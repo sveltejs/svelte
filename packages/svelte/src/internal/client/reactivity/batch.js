@@ -326,9 +326,8 @@ export class Batch {
 	merged = null;
 
 	/**
-	 * Batches that this one is merged into once it's done, whether their writes intersect or not (and even if it
-	 * comes first, because it committed with pending work): its run of an async expression superseded theirs,
-	 * which then only settles with this one's result (see `async_expression` and `#merge`)
+	 * Batches whose async runs this batch replaced. Merge into them when this batch finishes
+	 * so they receive its results, regardless of write overlap or batch order (see `#merge`).
 	 * @type {Set<Batch>}
 	 */
 	overlaps = new Set();
@@ -1422,10 +1421,8 @@ export class Batch {
 			// and its edges are left for its next global run to prune (see `prune_edges`). A destroyed
 			// reaction has nothing left to update either
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
-				// The record of an async effect that read values that aren't the real-world ones anymore, while the global
-				// run did, was replaced by a run that another batch committed in the meantime (e.g. because this batch
-				// committed before, with work inside a pending boundary in flight, and ran the effect after that). That
-				// one stays the global run, or else the effect would run again (and restart its async work) everywhere
+				// Keep a newer committed async run instead of promoting an outdated record.
+				// Otherwise, the effect would rerun and restart its async work in every batch.
 				var replaced = (reaction.f & ASYNC) !== 0 && is_outdated(record) && !is_outdated(reaction);
 
 				if (commit && !replaced) {
@@ -1436,9 +1433,8 @@ export class Batch {
 					// pending boundary). Their in-flight runs are superseded: their results would overwrite this one
 					// TODO feels pretty hacky and indication of an X-Y problem: This only works because !b.records?.has(reaction)
 					// means "this would re-use the real world result, i.e. the one we just committed, so we can reject this old run".
-					// Update: As it turns out this can also obsolete runs inside pending batches that shouldn't be obsoleted yet.
-					// It will still work out in the end because there's a superseeding batch, but strictly speaking this is wrong.
-					// We should somehow not do this for async/if blocks inside pending boundaries.
+					// This can reject runs too early in pending batches. The superseding batch eventually settles them,
+					// but async/if blocks inside pending boundaries should be excluded.
 					if ((reaction.f & ASYNC) !== 0) {
 						for (let b = first_batch; b !== null; b = b.next) {
 							if (b !== this && !b.records?.has(reaction)) {

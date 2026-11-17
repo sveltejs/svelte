@@ -1,9 +1,8 @@
 import { tick } from 'svelte';
 import { test } from '../../test';
 
-// A fork creates the child, then the real batch adopts the same branch. Rejecting
-// the fork's run must not permanently poison the shared script's initialization:
-// the real batch still continues with its own successful result.
+// A real batch adopts a child created by a fork. If the fork's run rejects,
+// the shared script must still continue with the real batch's successful result.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {

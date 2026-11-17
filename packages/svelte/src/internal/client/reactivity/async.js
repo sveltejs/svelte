@@ -63,7 +63,7 @@ export function flatten(blockers, sync, async, fn) {
 				return;
 			}
 
-			// The script may have continued in another batch, whose first values the template needs.
+			// Use the script's current batch so the template can read its first values.
 			restore(true, pending[0].batch());
 
 			try {
@@ -307,10 +307,9 @@ export function unset_context(deactivate_batch = true) {
 }
 
 /**
- * While a step of `run` executes: the batch that the script continues in. The async expressions that the step
- * creates update it once they deliver their first value, and add what can happen once the script continued
- * with that value to `continued` (see `async_expression`). `signals` holds the async expressions of the script,
- * in the order it created them
+ * The script's state while a `run` step executes.
+ * Async expressions set `batch` when they deliver their first value. `continued` holds callbacks
+ * to run after the script resumes, and `signals` lists the expressions in creation order.
  * @type {{ batch: Batch, continued: Array<() => void>, signals: Source[] } | null}
  */
 export let batch_for_run = null;
@@ -333,14 +332,12 @@ export function run(thunks) {
 	};
 
 	/**
-	 * The batches that adopted the script's branch, in order (the async effect below runs in each of them)
+	 * Batches that adopted the script's branch, in adoption order.
 	 * @type {Set<Batch>}
 	 */
 	var adopters = new Set();
 
-	/**
-	 * A fork could be discarded mid-run, so we switch to the next existing one (if any).
-	 */
+	// If the fork was discarded, continue in the first remaining adopter.
 	function continue_in() {
 		var batch = merge_target(for_run.batch);
 		if (batch.linked) return batch;
@@ -413,7 +410,7 @@ export function run(thunks) {
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
 					unset_context();
-					// the script continued with the first values that the previous step awaited
+					// Release buffered results now that the script has used the previous step's first values.
 					continued();
 				}
 			})
@@ -431,7 +428,7 @@ export function run(thunks) {
 		});
 	}
 
-	// (for the last step, there's no next one to continue with its first values)
+	// The last step has no following step to release its buffered results.
 	promise.finally(continued);
 
 	async_effect(() => {
@@ -445,8 +442,7 @@ export function run(thunks) {
 			// guaranteed to run before `$effect(...)`.
 			.then(() => Promise.resolve())
 			.finally(() => {
-				// The script can create effects after another batch adopted its branch. Those effects
-				// need to run in the adopting batch as well, not just the one that continued the script.
+				// An adopting batch must also run effects created after it adopted the script's branch.
 				var target = merge_target(batch);
 				if (target.linked && !aborted(active)) target.revalidate_branch(active);
 				decrement_pending();

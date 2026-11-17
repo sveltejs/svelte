@@ -9,9 +9,9 @@ const buttons = `
 	<button>commit</button>
 `;
 
-// A fork creates a component with an `await` in its script, and a real batch reveals it, too. The script continues
-// in the fork's view, which is where the effects that it creates are scheduled. The real batch, which waits for the
-// script, runs them in its own view when it commits — not only the fork, once it commits
+// A real batch adopts a component created by a fork. The script resumes and creates effects in the fork's
+// view. When the real batch commits, it must run those effects in its own view without waiting for the fork
+// to commit.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {

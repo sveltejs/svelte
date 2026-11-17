@@ -380,7 +380,7 @@ export function get_abort_signal(reaction) {
 
 /**
  * @param {AbortController | null | undefined} controller
- * @param {Batch | null} [batch] the batch whose run replaces the aborted one, if any (see `abort_replaced`)
+ * @param {Batch | null} [batch] The batch that replaced the aborted run, if any (see `abort_replaced`)
  */
 function abort_signal(controller, batch = null) {
 	if (controller) {
@@ -455,8 +455,8 @@ function set_global_signal(reaction) {
 }
 
 /**
- * Whether a run (the global run of a reaction, or a record) is outdated in the real world for sure: it's invalid, or a
- * value it read has another version there now. (This doesn't evaluate anything, so a derived it read may be outdated, too)
+ * Whether a run is invalid or a dependency's real-world version has changed.
+ * This does not evaluate derived dependencies, which may themselves be outdated.
  * @param {Reaction | BatchRecord} run
  */
 export function is_outdated({ deps, dv }) {

@@ -10,9 +10,8 @@ const buttons = `
 	<button>reject</button>
 `;
 
-// Like `async-resume-script-later-batch-aborted`, but the aborted run's promise only rejects after B's second
-// result is in. Until then, the script waits for A, also in B's view. Once the rejection says that A won't have
-// a second value of its own, the script continues with B's
+// Like `async-resume-script-later-batch-aborted`, but A's aborted promise rejects after B's second result
+// arrives. The script waits for A, even in B's view, until that rejection lets it continue with B's value.
 export default test({
 	mode: ['client'],
 	async test({ assert, target, logs }) {
