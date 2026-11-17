@@ -331,6 +331,33 @@ export function run(thunks) {
 		for (const fn of for_run.continued.splice(0)) fn();
 	};
 
+	/**
+	 * The batches that adopted the script's branch, in order (the async effect below runs in each of them)
+	 * @type {Set<Batch>}
+	 */
+	var adopters = new Set();
+
+	/**
+	 * A fork could be discarded mid-run, so we switch to the next existing one (if any).
+	 */
+	function continue_in() {
+		var batch = merge_target(for_run.batch);
+		if (batch.linked) return batch;
+
+		/** @type {Batch | null} */
+		var next = batch;
+
+		for (const b of adopters) {
+			var target = merge_target(b);
+			if (!target.linked) continue;
+			next = target;
+			break;
+		}
+
+		for_run.batch = next;
+		return for_run.batch;
+	}
+
 	/** @param {any} error */
 	const handle_error = (error) => {
 		if (errored) return;
@@ -338,7 +365,7 @@ export function run(thunks) {
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
 		if (!aborted(active)) {
-			restore(true, for_run.batch);
+			restore(true, continue_in());
 
 			try {
 				invoke_error_boundary(error, active);
@@ -375,7 +402,7 @@ export function run(thunks) {
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
-				restore(true, for_run.batch);
+				restore(true, continue_in());
 
 				try {
 					if (errored) {
@@ -415,6 +442,7 @@ export function run(thunks) {
 	async_effect(() => {
 		// Inside an effect so later adopting branches can rerun this
 		var batch = /** @type {Batch} */ (current_batch);
+		adopters.add(batch);
 		var decrement_pending = increment_pending();
 
 		promise
