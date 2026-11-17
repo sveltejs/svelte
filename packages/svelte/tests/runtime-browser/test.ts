@@ -118,6 +118,8 @@ async function run_test(
 			}
 		],
 		bundle: true,
+		// fixtures live inside the package, whose `sideEffects` would drop bare `.svelte` imports
+		ignoreAnnotations: true,
 		format: 'iife',
 		globalName: 'test'
 	});
