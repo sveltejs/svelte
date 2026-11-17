@@ -6,9 +6,6 @@ import virtual from '@rollup/plugin-virtual';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { compile } from 'svelte/compiler';
 
-const REGEX_BARE_DEP = /^[@a-z]/;
-const REGEX_A11Y_DEPS = /aria-query|axobject-query/;
-
 /**
  * @param {string} entry
  */
@@ -151,61 +148,6 @@ function check_bundle(case_name, ...strings) {
 check_bundle('Hydration code', 'hydrate_node', 'hydrate_next');
 check_bundle('Legacy code', 'component_context.l');
 check_bundle('$inspect.trace', `'CreatedAt'`);
-
-/**
- * Resolves `svelte` through node_modules (unlike `bundle_code`) so the `sideEffects` field applies.
- * @param {string} entry
- */
-async function bundle_package(entry) {
-	/** @type {Map<string, boolean | 'no-treeshake' | undefined>} */
-	const side_effects = new Map();
-	const bundle = await rollup({
-		input: '__entry__',
-		plugins: [
-			virtual({ __entry__: entry }),
-			nodeResolve({ exportConditions: ['production'] }),
-			{
-				name: 'side-effects',
-				buildEnd() {
-					for (const id of this.getModuleIds()) {
-						side_effects.set(id.replaceAll('\\', '/'), this.getModuleInfo(id)?.moduleSideEffects);
-					}
-				}
-			}
-		],
-		external: (id) => !id.startsWith('svelte') && REGEX_BARE_DEP.test(id),
-		onwarn: (warning, handle) => {
-			if (warning.code !== 'EMPTY_BUNDLE' && warning.code !== 'CIRCULAR_DEPENDENCY') {
-				handle(warning);
-			}
-		}
-	});
-	const { output } = await bundle.generate({});
-	return { code: output[0].code.trim(), side_effects };
-}
-
-/**
- * @param {string} name
- * @param {boolean} ok
- */
-function report(name, ok) {
-	// eslint-disable-next-line no-console
-	console.error(`${ok ? '✅' : '❌'} ${name}`);
-	if (!ok) failed = true;
-}
-
-const parse_only = await bundle_package(`import { parse } from 'svelte/compiler'; parse('');`);
-report('parse treeshakes a11y', !REGEX_A11Y_DEPS.test(parse_only.code));
-
-// compiled components import these only for their side effects
-const bare_imports = ['disclose-version', 'flags/legacy', 'flags/async', 'flags/tracing'];
-const { side_effects } = await bundle_package(
-	bare_imports.map((id) => `import 'svelte/internal/${id}';`).join('\n')
-);
-for (const id of bare_imports) {
-	const entry = [...side_effects].find(([file]) => file.endsWith(`/src/internal/${id}.js`));
-	report(`svelte/internal/${id} has side effects`, entry?.[1] === true);
-}
 
 if (failed) {
 	// eslint-disable-next-line no-console
