@@ -5,15 +5,32 @@ import { hydrating } from '../dom/hydration.js';
 import { dev_stack } from '../context.js';
 
 /**
- * Called once the template's content has been created. At that point the elements belonging
- * to child components, snippets and `{@html ...}` tags (which during hydration aren't
- * delimited by hydration markers) already have their own locations, so we skip them
+ * Called right after a template has been created. When rendering on the client, the template only
+ * contains its own elements at that point (unlike at the end of the template's body, by which time
+ * blocks, child components etc may have inserted elements that don't have locations of their own)
  * @param {DocumentFragment | Element} dom
  * @param {string} filename
  * @param {SourceLocation[]} locations
  */
 export function add_locations(dom, filename, locations) {
-	var node = hydrating ? dom : dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom;
+	if (hydrating) return;
+	assign_locations(
+		dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom,
+		filename,
+		locations
+	);
+}
+
+/**
+ * Called once the template's content has been created. During hydration, the elements belonging
+ * to child components, snippets and `{@html ...}` tags aren't delimited by hydration markers, but
+ * at this point they already have their own locations, so we skip them
+ * @param {Node} node
+ * @param {string} filename
+ * @param {SourceLocation[]} locations
+ */
+export function add_hydration_locations(node, filename, locations) {
+	if (!hydrating) return;
 	assign_locations(node, filename, locations);
 }
 

@@ -31,27 +31,31 @@ function build_locations(nodes) {
 }
 
 /**
- * In dev, returns a statement that assigns source locations to the elements of the current template.
- * It must run after the template's content has been created, so that during hydration the elements
- * belonging to child components (which already have their own locations) can be skipped
+ * In dev, returns the statements that assign source locations to the elements of the current template:
+ * - `create` must run right after the template has been created. When rendering on the client, the
+ *   template only contains its own elements at that point, so they can be matched against the locations
+ * - `hydrate` must run after the template's content has been created. During hydration, the elements
+ *   belonging to child components, snippets and `{@html ...}` tags aren't delimited by hydration
+ *   markers, so we wait until they have their own locations and skip them
  * @param {ComponentClientTransformState} state
  * @param {Expression} node
- * @returns {Statement | undefined}
+ * @returns {{ create: Statement, hydrate: Statement } | null}
  */
-export function build_locations_statement(state, node) {
-	if (!dev) return;
+export function build_locations_statements(state, node) {
+	if (!dev) return null;
 
 	const locations = build_locations(state.template.nodes);
-	if (locations.elements.length === 0) return;
+	if (locations.elements.length === 0) return null;
 
-	return b.stmt(
-		b.call(
-			'$.add_locations',
-			node,
-			b.member(b.id(state.analysis.name), '$.FILENAME', true),
-			locations
-		)
-	);
+	const id = state.scope.root.unique('locations');
+	state.hoisted.push(b.var(id, locations));
+
+	const filename = b.member(b.id(state.analysis.name), '$.FILENAME', true);
+
+	return {
+		create: b.stmt(b.call('$.add_locations', node, filename, id)),
+		hydrate: b.stmt(b.call('$.add_hydration_locations', node, filename, id))
+	};
 }
 
 /**
