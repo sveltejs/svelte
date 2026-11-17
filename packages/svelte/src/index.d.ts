@@ -372,6 +372,18 @@ export interface Fork {
 	 * Discard the fork
 	 */
 	discard(): void;
+	/**
+	 * Whether the fork has been committed
+	 */
+	isCommitted(): boolean;
+	/**
+	 * Whether the fork has been discarded
+	 */
+	isDiscarded(): boolean;
+	/**
+	 * Run a function within the forked context.
+	 */
+	run(fn: () => void): Promise<void>;
 }
 
 export * from './index-client.js';
