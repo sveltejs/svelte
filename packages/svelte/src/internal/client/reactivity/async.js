@@ -307,6 +307,61 @@ export function unset_context(deactivate_batch = true) {
 }
 
 /**
+ * Dev-only. The step of a `run(...)` call that is currently being started. Async deriveds created by it defer
+ * their `await_waterfall` check until the step has finished, as their values can't be read before then. That
+ * way, independent deriveds that are created up front and then awaited in order don't trigger the warning:
+ * `var a = $.async_derived(...); var b = $.async_derived(...); await a; await b;` — `b` resolving first and
+ * waiting for `a` is not a waterfall
+ * @type {null | RunStep}
+ */
+export let current_run_step = null;
+
+/**
+ * @typedef {{ settled: boolean, checks: Array<() => void> }} RunStep
+ */
+
+/** @param {RunStep | null} step */
+export function set_current_run_step(step) {
+	current_run_step = step;
+}
+
+/** @returns {RunStep} */
+function create_run_step() {
+	return { settled: false, checks: [] };
+}
+
+/**
+ * @template T
+ * @param {() => T} fn
+ * @param {RunStep} step
+ */
+function start_run_step(fn, step) {
+	var previous = current_run_step;
+	current_run_step = step;
+
+	try {
+		return fn();
+	} finally {
+		current_run_step = previous;
+	}
+}
+
+/**
+ * @param {RunStep} step
+ * @param {boolean} errored
+ */
+function settle_run_step(step, errored) {
+	step.settled = true;
+
+	// no need to look for waterfalls if the script failed
+	if (!errored) {
+		for (const check of step.checks) check();
+	}
+
+	step.checks.length = 0;
+}
+
+/**
  * @param {Array<() => void | Promise<void>>} thunks
  */
 export function run(thunks) {
@@ -328,7 +383,11 @@ export function run(thunks) {
 		}
 	};
 
-	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+	var step = DEV ? create_run_step() : null;
+
+	var promise = Promise.resolve(DEV && step ? start_run_step(thunks[0], step) : thunks[0]()).catch(
+		handle_error
+	);
 
 	/** @type {Blocker} */
 	var blocker = { promise, settled: false };
@@ -337,9 +396,12 @@ export function run(thunks) {
 	promise.finally(() => {
 		blocker.settled = true;
 		unset_context();
+		if (DEV && step) settle_run_step(step, errored !== null);
 	});
 
 	for (const fn of thunks.slice(1)) {
+		const step = DEV ? create_run_step() : null;
+
 		promise = promise
 			.then(() => {
 				restore();
@@ -353,7 +415,7 @@ export function run(thunks) {
 						throw STALE_REACTION;
 					}
 
-					return fn();
+					return DEV && step ? start_run_step(fn, step) : fn();
 				} finally {
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late ...
@@ -369,6 +431,7 @@ export function run(thunks) {
 			blocker.settled = true;
 			// ... but we also need it after such a promise has resolved in case it restores our context
 			unset_context();
+			if (DEV && step) settle_run_step(step, errored !== null);
 		});
 	}
 

@@ -44,7 +44,12 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, previous_batch } from './batch.js';
-import { increment_pending, unset_context } from './async.js';
+import {
+	current_run_step,
+	increment_pending,
+	set_current_run_step,
+	unset_context
+} from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -126,6 +131,9 @@ export function async_derived(fn, label, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
+	// the `run(...)` step (if any) that creates this derived — its value can't be read before that step has finished
+	var run_step = DEV ? current_run_step : null;
+
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
 
@@ -139,6 +147,10 @@ export function async_derived(fn, label, location) {
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
 		promise = d.promise;
+
+		// async deriveds created while computing this one don't belong to the `run(...)` step
+		var previous_run_step = current_run_step;
+		if (DEV) set_current_run_step(null);
 
 		try {
 			// If this code is changed at some point, make sure to still access the then property
@@ -154,6 +166,8 @@ export function async_derived(fn, label, location) {
 		} catch (error) {
 			d.reject(error);
 			unset_context();
+		} finally {
+			if (DEV) set_current_run_step(previous_run_step);
 		}
 
 		if (DEV) {
@@ -234,12 +248,20 @@ export function async_derived(fn, label, location) {
 				if (DEV && location !== undefined && !signal.equals(value)) {
 					recent_async_deriveds.add(signal);
 
-					setTimeout(() => {
-						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
-							w.await_waterfall(/** @type {string} */ (signal.label), location);
-							recent_async_deriveds.delete(signal);
-						}
-					});
+					const check = () => {
+						setTimeout(() => {
+							if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
+								w.await_waterfall(/** @type {string} */ (signal.label), location);
+								recent_async_deriveds.delete(signal);
+							}
+						});
+					};
+
+					if (run_step !== null && !run_step.settled) {
+						run_step.checks.push(check);
+					} else {
+						check();
+					}
 				}
 
 				internal_set(signal, value);
