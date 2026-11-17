@@ -199,9 +199,11 @@ export function async_expression(fn, label, location, onready) {
 						// An aborted run waits for its replacement, even if the user catches the abort.
 						// A script awaiting another reaction's aborted promise must release its resolver:
 						// the eager merge includes the signal's owner, but not necessarily this waiter.
-						if (!abort_signal?.aborted && (e !== STALE_REACTION || for_run !== null)) {
-							d.reject(e === STALE_REACTION ? OBSOLETE : e);
+						if (abort_signal?.aborted || (e === STALE_REACTION && for_run === null)) {
+							return;
 						}
+
+						d.reject(e === STALE_REACTION ? OBSOLETE : e);
 					}
 				)
 				.finally(unset_context);
