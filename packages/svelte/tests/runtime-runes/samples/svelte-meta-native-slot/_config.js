@@ -31,6 +31,11 @@ export default test({
 
 			const slots = output.querySelectorAll('slot');
 			assert.equal(slots.length, 2);
+			const component = /** @type {any} */ (output).__svelte_meta.component;
+			assert.ok(component);
+			for (const slot of slots) {
+				assert.equal(/** @type {any} */ (slot).__svelte_meta.component, component);
+			}
 			assert.equal(slots[0].name, '');
 			assert.equal(slots[1].name, 'named');
 
@@ -50,7 +55,7 @@ export default test({
 
 				// Native slots must not consume the locations of their following siblings.
 				// @ts-expect-error
-				assert.deepEqual(element.__svelte_meta, {
+				assert.deepInclude(element.__svelte_meta, {
 					loc: { file: 'main.svelte', line, column },
 					parent: null
 				});

@@ -2,7 +2,7 @@
 import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, ELEMENT_NODE } from '#client/constants';
 import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
-import { dev_stack } from '../context.js';
+import { component_context, dev_stack } from '../context.js';
 
 /**
  * Called once the template's content has been created. At that point the elements belonging
@@ -26,7 +26,8 @@ function assign_location(element, filename, location) {
 	// @ts-expect-error
 	element.__svelte_meta = {
 		parent: dev_stack,
-		loc: { file: filename, line: location[0], column: location[1] }
+		loc: { file: filename, line: location[0], column: location[1] },
+		component: component_context
 	};
 
 	if (location[2]) {
