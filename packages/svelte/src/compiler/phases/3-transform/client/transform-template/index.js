@@ -1,4 +1,4 @@
-/** @import { TemplateLiteral } from 'estree' */
+/** @import { Expression, Statement, TemplateLiteral } from 'estree' */
 /** @import { Namespace } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Node } from './types.js' */
@@ -28,6 +28,30 @@ function build_locations(nodes) {
 	}
 
 	return array;
+}
+
+/**
+ * In dev, returns a statement that assigns source locations to the elements of the current template.
+ * It must run after the template's content has been created, so that during hydration the elements
+ * belonging to child components (which already have their own locations) can be skipped
+ * @param {ComponentClientTransformState} state
+ * @param {Expression} node
+ * @returns {Statement | undefined}
+ */
+export function build_locations_statement(state, node) {
+	if (!dev) return;
+
+	const locations = build_locations(state.template.nodes);
+	if (locations.elements.length === 0) return;
+
+	return b.stmt(
+		b.call(
+			'$.add_locations',
+			node,
+			b.member(b.id(state.analysis.name), '$.FILENAME', true),
+			locations
+		)
+	);
 }
 
 /**
@@ -74,15 +98,6 @@ export function transform_template(state, name, flags = 0) {
 
 	if (state.template.contains_script_tag) {
 		call = b.call(`$.with_script`, call);
-	}
-
-	if (dev) {
-		call = b.call(
-			'$.add_locations',
-			call,
-			b.member(b.id(state.analysis.name), '$.FILENAME', true),
-			build_locations(state.template.nodes)
-		);
 	}
 
 	const id = state.scope.root.unique(name);

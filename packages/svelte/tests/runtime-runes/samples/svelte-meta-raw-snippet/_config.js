@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	mode: ['client'],
+	mode: ['client', 'hydrate'],
 	compileOptions: {
 		dev: true
 	},
