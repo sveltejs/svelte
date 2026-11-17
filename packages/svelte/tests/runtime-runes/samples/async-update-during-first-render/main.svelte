@@ -1,26 +1,27 @@
-<script>
+<script lang="ts">
+	import Child from './Child.svelte';
+
 	let count = $state(0);
 	let value = $state.raw(Promise.resolve('one'));
+	const answers = new Map<number, (n: number) => void>();
 
-	/** @type {Map<number, (n: number) => void>} */
-	const answers = new Map();
-
-	/** @param {number} n */
-	function slow(n) {
+	function slow(n: number) {
 		console.log(n);
-		return new Promise((resolve) => answers.set(n, resolve));
+		return new Promise<number>((resolve) => answers.set(n, resolve));
 	}
 
-	export function bump() {
-		count++;
-	}
-
-	export function resolve() {
+	function resolve() {
 		for (const [n, fn] of answers) fn(n);
 	}
-
-	const shown = $derived(await value);
-	const held = $derived(await slow(count));
 </script>
 
-<p>{shown} {held}</p>
+<button onclick={() => count++}>bump</button>
+<button onclick={resolve}>resolve</button>
+
+<!-- Keep the controls available while the child's first render is pending. -->
+<output>
+	<svelte:boundary>
+		<Child {count} {value} {slow} />
+		{#snippet pending()}{/snippet}
+	</svelte:boundary>
+</output>
