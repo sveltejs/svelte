@@ -64,7 +64,7 @@ export function flatten(blockers, sync, async, fn) {
 			}
 
 			// Use the script's current batch so the template can read its first values.
-			restore(true, pending[0].batch());
+			restore(pending[0].batch());
 
 			try {
 				run();
@@ -138,19 +138,18 @@ export function capture() {
 	}
 
 	/**
-	 * @param {boolean} [activate_batch]
 	 * @param {Batch | null} [batch] the batch to continue in, if not the one that was active before
 	 */
-	return function restore(activate_batch = true, batch = previous_batch) {
+	return function restore(batch = previous_batch) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 
-		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
+		if (batch !== null && (previous_effect.f & DESTROYED) === 0) {
 			// A batch that was merged into another one continues as that one.
 			// TODO we only need the check here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
-			if (batch) merge_target(batch).activate();
+			merge_target(batch).activate();
 		}
 
 		if (DEV) {
@@ -393,7 +392,7 @@ export function run(thunks) {
 		errored = { error }; // wrap in object in case a promise rejects with a falsy value
 
 		if (!aborted(active)) {
-			restore(true, continue_in());
+			restore(continue_in());
 
 			try {
 				invoke_error_boundary(error, active);
@@ -418,7 +417,7 @@ export function run(thunks) {
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
-				restore(true, continue_in());
+				restore(continue_in());
 
 				try {
 					if (errored) {
