@@ -54,7 +54,6 @@ export function flatten(blockers, sync, async, fn) {
 	var pending = blockers.filter((b) => !b.settled);
 
 	if (pending.length > 0) {
-		var restore = capture();
 		var decrement_pending = increment_pending();
 		var p = pending.length === 1 ? pending[0].promise : Promise.all(pending.map((b) => b.promise));
 
