@@ -93,7 +93,7 @@ export class StaleReactionError extends Error {
 	}
 }
 
-export const STALE_REACTION = new StaleReactionError();
+export const STALE_REACTION = /* @__PURE__ */ new StaleReactionError();
 
 export const IS_XHTML =
 	// We gotta write it like this because after downleveling the pure comment may end up in the wrong location

@@ -9,7 +9,9 @@ export default test({
 		const [fork, resolve_1, discard_real, resolve_3, resolve_13] =
 			target.querySelectorAll('button');
 		const [output] = target.querySelectorAll('output');
+		/** @type {string[]} */
 		const steps = [];
+		/** @param {string} name */
 		const record = (name) =>
 			steps.push(
 				`${name}: ${output.innerHTML.replace(/<!---->/g, '').trim()} | ${JSON.stringify(logs.splice(0))}`
@@ -22,9 +24,9 @@ export default test({
 			['resolve 3', resolve_3],
 			['resolve 13', resolve_13]
 		]) {
-			button.click();
+			/** @type {HTMLButtonElement} */ (button).click();
 			await tick();
-			record(name);
+			record(/** @type {string} */ (name));
 		}
 
 		assert.deepEqual(steps, [
