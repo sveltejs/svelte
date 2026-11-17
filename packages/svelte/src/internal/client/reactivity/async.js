@@ -333,6 +333,8 @@ class Runner {
 	 */
 	signals = [];
 
+	running = true;
+
 	constructor() {
 		// TODO this should be unnecessary! these should just be class initializers. but
 		// something somewhere (vitest?) must be doing some transpilation that breaks classes
@@ -412,6 +414,8 @@ class Runner {
 				}
 
 				decrement_pending();
+
+				this.running = false;
 			});
 		});
 
