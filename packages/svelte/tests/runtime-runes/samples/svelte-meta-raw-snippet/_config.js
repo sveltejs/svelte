@@ -20,6 +20,11 @@ export default test({
 
 		const sections = output.querySelectorAll('section');
 		assert.equal(sections.length, 2);
+		const component = /** @type {any} */ (output).__svelte_meta.component;
+		assert.ok(component);
+		for (const section of sections) {
+			assert.equal(/** @type {any} */ (section).__svelte_meta.component, component);
+		}
 
 		/** @type {Array<[number, string]>} */
 		const renders = [

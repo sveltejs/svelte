@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { dev_stack } from '../../context.js';
+import { component_context, dev_stack } from '../../context.js';
 import { hydrate_next, hydrating } from '../hydration.js';
 import { create_element, create_text } from '../operations.js';
 import { append } from '../template.js';
@@ -33,7 +33,8 @@ export function slot(anchor, $$props, name, slot_props, fallback_fn, location) {
 					file: location[0],
 					line: location[1],
 					column: location[2]
-				}
+				},
+				component: component_context
 			};
 		}
 
