@@ -339,9 +339,8 @@ export function async_expression(fn, label, location, onready) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	if (current_batch === null || active_reaction !== null) {
-		// `$derived(await ...)` created outside traversal, don't participate in coordination
-		return Promise.resolve(fn()).then((value) => source(value));
+	if (!current_runner) {
+		e.async_derived_orphan();
 	}
 
 	return new Promise((fulfil, reject) => {

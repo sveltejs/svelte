@@ -5,12 +5,12 @@ import { DEV } from 'esm-env';
 export *  from '../shared/errors.js';
 
 /**
- * Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+ * Can only create a `$derived(...)` with an `await` expression during component initialization or in a declaration tag
  * @returns {never}
  */
 export function async_derived_orphan() {
 	if (DEV) {
-		const error = new Error(`async_derived_orphan\nCannot create a \`$derived(...)\` with an \`await\` expression outside of an effect tree\nhttps://svelte.dev/e/async_derived_orphan`);
+		const error = new Error(`async_derived_orphan\nCan only create a \`$derived(...)\` with an \`await\` expression during component initialization or in a declaration tag\nhttps://svelte.dev/e/async_derived_orphan`);
 
 		error.name = 'Svelte error';
 
