@@ -569,6 +569,8 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/init-operations'));
 	}
 
+	body.unshift(...devtools_imports(options));
+
 	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
 		component_block.body.unshift(
@@ -762,7 +764,7 @@ export function client_module(analysis, options) {
 		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
-	const body = [b.import_all('$', 'svelte/internal/client')];
+	const body = [...devtools_imports(options), b.import_all('$', 'svelte/internal/client')];
 
 	if (analysis.tracing) {
 		body.push(b.imports([], 'svelte/internal/flags/tracing'));
@@ -773,4 +775,16 @@ export function client_module(analysis, options) {
 		sourceType: 'module',
 		body: [...body, ...module.body]
 	};
+}
+
+/**
+ * In dev, import every devtools plugin runtime listed in `experimental.devtools` before anything
+ * else, so that the plugins subscribe before the first signal is created
+ * @param {ValidatedModuleCompileOptions} options
+ * @returns {ESTree.ImportDeclaration[]}
+ */
+function devtools_imports(options) {
+	if (!dev) return [];
+
+	return (options.experimental.devtools ?? []).map((specifier) => b.imports([], specifier));
 }
