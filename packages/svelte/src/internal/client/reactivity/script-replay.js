@@ -38,12 +38,12 @@ import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { has_error_boundary, invoke_error_boundary } from '../error-handling.js';
 
 /**
- * This is deliberately a suffix-initialization kernel, not a second component runtime.
- * The compiler only supplies root-await producers, synchronous deriveds and immutable
- * locals. In particular, no user code resumes inside a thunk after an await.
+ * The factory owns whole-instance initialization. Continuation stages contain
+ * root-await producers, synchronous deriveds, locals and native state handles;
+ * no user code resumes inside a thunk after an await.
  * Attempt object identity is the generation token; snapshots are immutable publications.
  *
- * @typedef {'async' | 'derived' | 'local' | 'await' | 'statement'} ScriptKind
+ * @typedef {'async' | 'derived' | 'local' | 'await' | 'statement' | 'state'} ScriptKind
  * @typedef {{ reactive: boolean, read: () => any, assign?: (value: any, proxy?: boolean) => any, update?: (delta: number, pre: boolean) => any, mutate?: (operation: any) => any }} ScriptAccessor
  * @typedef {{ read: (index: number) => any, get: (index: number) => ScriptAccessor, state: (index: number, value: Source) => Source }} ScriptFacade
  * @typedef {{ thunks: Array<(() => any) | null>, environment: ScriptAccessor[] }} ScriptFactoryResult
@@ -136,7 +136,7 @@ export function script_replay(factory, kinds, checkpoints, groups = []) {
 			read: (index) => script_read(script, index),
 			get: (index) => script_accessor(script, index),
 			state: (index, value) => {
-				var attempt = initialization_context?.attempt;
+				var attempt = get_initialization_context(active_reaction)?.attempt;
 				if (!attempt || attempt.script !== script)
 					throw new Error('State registered outside initialization');
 				script_states.set(value, { script, slot: index, attempt });
@@ -495,6 +495,21 @@ function start_attempt(script, batch) {
 						var frame = get(script.selection);
 						if (frame?.environment == null) throw UNINITIALIZED;
 						return frame.environment[i].read();
+					})
+				);
+			}
+		}
+		for (let site = 0; site < script.kinds.length; site++) {
+			const key = environment.length + site;
+			if (script.kinds[site] === 'state' && !script.readers.has(key)) {
+				script.readers.set(
+					key,
+					derived(() => {
+						// A handle may adopt the winning Source without changing its value.
+						// Keep private-frame provenance so an equal value retains this view's
+						// version instead of reusing a differently-versioned global cache.
+						get(script.selection);
+						return get(/** @type {Source} */ (get(script.bindings[site])));
 					})
 				);
 			}

@@ -1,6 +1,7 @@
 /** @import * as ESTree from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { ComponentAnalysis, ScriptReplayStage } from '../types.js' */
+/** @import { Scope } from '../scope.js' */
 import { walk } from 'zimmerframe';
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
@@ -91,6 +92,8 @@ function analyze_replay(analysis) {
 	const bindings = new Map();
 	/** @type {Array<{ start: number; end: number }>} */
 	const groups = [];
+	/** @type {Map<ESTree.ArrowFunctionExpression, Set<Binding>>} */
+	const callbacks = new Map();
 
 	for (const [checkpoint, group] of instance_body.async.entries()) {
 		const start = stages.length;
@@ -112,52 +115,143 @@ function analyze_replay(analysis) {
 				kind = 'local';
 				expression = node.init;
 				if (rune) {
-					if (rune !== '$derived') unsupported(node.init, `suffix ${rune} declarations`);
+					if (rune !== '$derived' && rune !== '$state' && rune !== '$state.raw') {
+						unsupported(node.init, `suffix ${rune} declarations`);
+					}
 					expression = /** @type {ESTree.Expression} */ (
-						/** @type {ESTree.CallExpression} */ (node.init).arguments[0]
+						/** @type {ESTree.CallExpression} */ (node.init).arguments[0] ?? b.void0
 					);
-					kind = 'derived';
+					kind = rune === '$derived' ? 'derived' : 'state';
 				}
-				if (binding.updated) unsupported(node, 'writes to replay bindings');
+				if (binding.updated && kind !== 'state') unsupported(node, 'writes to replay bindings');
 			} else if (node.type === 'ExpressionStatement') {
 				expression = node.expression;
 			} else {
 				unsupported(node, 'suffix control flow');
 			}
 
+			if (kind === 'state' && has_await_expression(expression)) {
+				unsupported(expression, 'awaiting state initializers');
+			}
 			if (expression.type === 'AwaitExpression') {
 				kind = kind === 'derived' ? 'async' : 'await';
 				expression = expression.argument;
 			}
 			if (has_await_expression(expression)) unsupported(expression, 'nested or inline awaits');
 
-			walk(expression, null, {
-				CallExpression(node, { next }) {
-					if (get_rune(node, instance.scope)) unsupported(node, 'nested suffix runes');
+			const stage = {
+				index: stages.length,
+				binding,
+				checkpoint,
+				kind,
+				expression,
+				declaration: node.type === 'VariableDeclarator' ? node : null
+			};
+			stages.push(stage);
+			if (binding) bindings.set(binding, stage);
+		}
+		if (!group.has_await) groups.push({ start, end: stages.length });
+	}
+
+	/** @param {Binding} binding @param {ESTree.ArrowFunctionExpression} callback */
+	function callback_local(binding, callback) {
+		const owner = instance.scopes.get(callback);
+		for (let scope = /** @type {Scope | null} */ (binding.scope); scope; scope = scope.parent) {
+			if (scope === owner) return true;
+		}
+		return false;
+	}
+
+	for (const stage of stages) {
+		/** @param {Binding} binding @param {ESTree.Node} node @param {ESTree.ArrowFunctionExpression | null} callback */
+		function capture(binding, node, callback) {
+			if (!callback || callback_local(binding, callback)) return;
+			const dependency = bindings.get(binding);
+			if (dependency && (dependency.kind !== 'state' || dependency.index >= stage.index)) {
+				unsupported(node, 'unproved suffix binding captures in state callbacks');
+			}
+			callbacks.get(callback)?.add(binding);
+		}
+
+		/** @param {ESTree.Pattern | ESTree.Expression} target @param {Scope} scope @param {ESTree.ArrowFunctionExpression | null} callback */
+		function write(target, scope, callback) {
+			if (target.type !== 'Identifier') unsupported(target, 'non-identifier suffix state writes');
+			const binding = scope.get(target.name);
+			if (!binding) unsupported(target, 'writes to non-state replay bindings');
+			if (callback && callback_local(binding, callback)) return;
+			if (binding.kind !== 'state' && binding.kind !== 'raw_state') {
+				unsupported(target, 'writes to non-state replay bindings');
+			}
+			const dependency = bindings.get(binding);
+			if (dependency && (dependency.kind !== 'state' || dependency.index >= stage.index)) {
+				unsupported(target, 'forward references to replay bindings');
+			}
+			capture(binding, target, callback);
+		}
+
+		walk(
+			/** @type {ESTree.Node} */ (stage.expression),
+			{
+				scope: instance.scope,
+				callback: /** @type {ESTree.ArrowFunctionExpression | null} */ (null)
+			},
+			{
+				_(node, context) {
+					const scope = instance.scopes.get(node) ?? context.state.scope;
+					context.next({ ...context.state, scope });
+				},
+				CallExpression(node, { state, next }) {
+					if (get_rune(node, state.scope)) unsupported(node, 'nested suffix runes');
 					next();
 				},
-				ArrowFunctionExpression(node) {
-					unsupported(node, 'suffix closures');
+				ArrowFunctionExpression(node, context) {
+					if (stage.kind === 'derived' || stage.kind === 'async') {
+						unsupported(node, 'closures in replay producers');
+					}
+					if (node.async || context.state.callback)
+						unsupported(node, 'async or nested suffix closures');
+					callbacks.set(node, new Set());
+					context.next({ ...context.state, callback: node });
 				},
 				FunctionExpression(node) {
+					unsupported(node, 'suffix closures');
+				},
+				FunctionDeclaration(node) {
 					unsupported(node, 'suffix closures');
 				},
 				ClassExpression(node) {
 					unsupported(node, 'suffix classes');
 				},
-				AssignmentExpression(node) {
-					unsupported(node, 'suffix assignments');
+				ClassDeclaration(node) {
+					unsupported(node, 'suffix classes');
 				},
-				UpdateExpression(node) {
-					unsupported(node, 'suffix updates');
+				AwaitExpression(node) {
+					unsupported(node, 'suspensions in state callbacks');
+				},
+				AssignmentExpression(node, { state, next }) {
+					write(node.left, state.scope, state.callback);
+					next();
+				},
+				UpdateExpression(node, { state, next }) {
+					write(node.argument, state.scope, state.callback);
+					next();
+				},
+				Identifier(node, { state, path }) {
+					const parent = path.at(-1);
+					if (parent && !is_reference(node, parent)) return;
+					const binding = state.scope.get(node.name);
+					if (binding && node !== binding.node) capture(binding, node, state.callback);
 				}
-			});
+			}
+		);
+	}
 
-			const stage = { index: stages.length, binding, checkpoint, kind, expression };
-			stages.push(stage);
-			if (binding) bindings.set(binding, stage);
+	for (const [callback, captures] of callbacks) {
+		if (
+			![...captures].some((binding) => binding.kind === 'state' || binding.kind === 'raw_state')
+		) {
+			unsupported(callback, 'suffix closures without an admitted state capture');
 		}
-		if (!group.has_await) groups.push({ start, end: stages.length });
 	}
 
 	const stateful_class = find_stateful_class(
@@ -172,18 +266,25 @@ function analyze_replay(analysis) {
 		const { index, expression } = stage;
 		const references = new Set();
 		dependencies.set(stage, references);
-		walk(expression, null, {
-			Identifier(node, { path }) {
-				const parent = path.at(-1);
-				if (parent && !is_reference(node, parent)) return;
-				const binding = instance.scope.get(node.name);
-				const dependency = binding && bindings.get(binding);
-				if (dependency) references.add(dependency);
-				if (dependency && dependency.index >= index) {
-					unsupported(node, 'forward references to replay bindings');
+		walk(
+			expression,
+			{ scope: instance.scope },
+			{
+				_(node, context) {
+					context.next({ scope: instance.scopes.get(node) ?? context.state.scope });
+				},
+				Identifier(node, { path, state }) {
+					const parent = path.at(-1);
+					if (parent && !is_reference(node, parent)) return;
+					const binding = state.scope.get(node.name);
+					const dependency = binding && bindings.get(binding);
+					if (dependency) references.add(dependency);
+					if (dependency && dependency.index >= index) {
+						unsupported(node, 'forward references to replay bindings');
+					}
 				}
 			}
-		});
+		);
 	}
 
 	for (const { start, end } of groups) {
@@ -195,7 +296,8 @@ function analyze_replay(analysis) {
 				if (
 					[...references].some(
 						(dependency) =>
-							(dependency.kind === 'local' && dependency.index >= start) ||
+							((dependency.kind === 'local' || dependency.kind === 'state') &&
+								dependency.index >= start) ||
 							deriveds_reading_locals.has(dependency)
 					)
 				) {
@@ -228,6 +330,18 @@ function analyze_replay(analysis) {
 	const environment = new Map();
 	for (const binding of instance.scope.declarations.values()) {
 		if (binding.kind === 'store_sub') unsupported(binding.node, 'store subscriptions');
+		// This exclusion applies to state on either side of the first await.
+		if (binding.kind === 'state') {
+			const initial = binding.initial;
+			const value = initial?.type === 'CallExpression' ? initial.arguments[0] : null;
+			if (
+				binding.mutated ||
+				(binding.reassigned &&
+					(value?.type === 'ObjectExpression' || value?.type === 'ArrayExpression'))
+			) {
+				unsupported(binding.node, 'external writes to proxy state before publication');
+			}
+		}
 		if (bindings.has(binding)) {
 			for (const reference of binding.references) {
 				if (reference.path.some((node) => prefix.includes(/** @type {ESTree.Node} */ (node)))) {
@@ -235,17 +349,6 @@ function analyze_replay(analysis) {
 				}
 			}
 		} else if (binding.declaration_kind !== 'import') {
-			if (binding.kind === 'state') {
-				const initial = binding.initial;
-				const value = initial?.type === 'CallExpression' ? initial.arguments[0] : null;
-				if (
-					binding.mutated ||
-					(binding.reassigned &&
-						(value?.type === 'ObjectExpression' || value?.type === 'ArrayExpression'))
-				) {
-					unsupported(binding.node, 'external writes to proxy state before publication');
-				}
-			}
 			if (binding.kind === 'bindable_prop' && binding.mutated) {
 				unsupported(binding.node, 'bindable prop mutation hooks');
 			}
@@ -302,7 +405,14 @@ function analyze_replay(analysis) {
 
 	// Commit classification only after every check succeeds. In particular, never
 	// leave readiness expressions pointing at a replay script that was not emitted.
-	const replay = { id: analysis.root.unique('$$script'), bindings, environment, stages, groups };
+	const replay = {
+		id: analysis.root.unique('$$script'),
+		bindings,
+		environment,
+		stages,
+		groups,
+		callbacks
+	};
 	const blockers = new Set();
 	for (const binding of instance.scope.declarations.values()) {
 		if (!binding.blocker || blockers.has(binding.blocker)) continue;

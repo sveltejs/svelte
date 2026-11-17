@@ -3,6 +3,27 @@
 import * as b from '#compiler/builders';
 
 /**
+ * State reads and write references are separate: reads may use an equality-preserving
+ * projection, while a write must select its native Source before evaluating the RHS.
+ * @param {() => ESTree.Expression} source
+ * @param {() => ESTree.Expression} [read]
+ * @returns {ClientTransformState['transform'][string]}
+ */
+function state_transform(source, read = () => b.call('$.get', source())) {
+	return {
+		read,
+		assign: (_, value, proxy = false) => b.call('$.set', source(), value, proxy && b.true),
+		update: (node) =>
+			b.call(
+				node.prefix ? '$.update_pre' : '$.update',
+				source(),
+				node.operator === '--' && b.literal(-1)
+			),
+		mutate: (_, mutation) => mutation
+	};
+}
+
+/**
  * The factory owns every user binding and statement before the first suspension,
  * as well as the continuation environment. Only compiler scaffolding stays outside.
  * Native lexical transforms run inside the factory; its continuations and the
@@ -30,6 +51,7 @@ export function transform_script_replay(context) {
 			)
 	);
 	const transform = { ...lexical };
+	const captures = { ...lexical };
 	/** @type {ESTree.Expression[]} */
 	const environment = [];
 	/** @type {ESTree.Identifier[]} */
@@ -124,24 +146,41 @@ export function transform_script_replay(context) {
 
 	for (const [binding, { index, kind }] of replay.bindings) {
 		const slot = b.literal(index);
-		transform[binding.node.name] = {
-			read: () => b.call('$.get', b.member(bindings, slot, true))
-		};
-		context.state.transform[binding.node.name] = {
-			read: () =>
-				kind === 'local' || kind === 'await'
-					? b.call('$.script_value', replay.id, slot)
-					: b.call('$.get', b.call('$.script_binding', replay.id, slot))
-		};
-		if (kind === 'local') locals.push(binding.node);
+		if (kind === 'state') {
+			const key = b.literal(replay.environment.size + index);
+			transform[binding.node.name] = state_transform(
+				() => b.call('$.get', b.member(bindings, slot, true)),
+				() => b.call(b.member(facade, 'read'), key)
+			);
+			context.state.transform[binding.node.name] = state_transform(
+				() => b.call('$.get', b.call('$.script_binding', replay.id, slot)),
+				() => b.call('$.script_read', replay.id, key)
+			);
+			captures[binding.node.name] = state_transform(() => b.id(binding.node.name));
+		} else {
+			transform[binding.node.name] = {
+				read: () => b.call('$.get', b.member(bindings, slot, true))
+			};
+			context.state.transform[binding.node.name] = {
+				read: () =>
+					kind === 'local' || kind === 'await'
+						? b.call('$.script_value', replay.id, slot)
+						: b.call('$.get', b.call('$.script_binding', replay.id, slot))
+			};
+		}
+		if (kind === 'local' || kind === 'state') locals.push(binding.node);
 	}
 
 	for (const { kind, expression, checkpoint } of replay.stages) {
 		const value =
-			kind === 'local' || kind === 'statement'
+			kind === 'local' || kind === 'statement' || kind === 'state'
 				? b.void0
 				: /** @type {ESTree.Expression} */ (
-						context.visit(expression, { ...context.state, transform })
+						context.visit(expression, {
+							...context.state,
+							transform,
+							script_replay_captures: captures
+						})
 					);
 		thunks.push(b.arrow([], value));
 		kinds.push(b.literal(kind));
@@ -154,19 +193,35 @@ export function transform_script_replay(context) {
 		for (const { binding, kind } of stages) {
 			if (binding && kind === 'local')
 				group_transform[binding.node.name] = { read: (node) => node };
+			if (binding && kind === 'state')
+				group_transform[binding.node.name] = captures[binding.node.name];
 		}
 		/** @type {ESTree.Statement[]} */
 		const statements = [];
 		/** @type {ESTree.Expression[]} */
 		const values = [];
-		for (const { binding, kind, expression } of stages) {
+		for (const { binding, kind, expression, declaration } of stages) {
 			if (kind === 'derived') {
 				values.push(b.void0);
 				continue;
 			}
-			const value = /** @type {ESTree.Expression} */ (
-				context.visit(expression, { ...context.state, transform: group_transform })
-			);
+			const group_state = {
+				...context.state,
+				transform: group_transform,
+				script_replay_factory: facade,
+				script_replay_captures: captures
+			};
+			/** @type {ESTree.Expression} */
+			let value;
+			if (kind === 'state') {
+				const node = /** @type {ESTree.VariableDeclarator} */ (declaration);
+				const visited = /** @type {ESTree.VariableDeclaration} */ (
+					context.visit(b.var(node.id, node.init), group_state)
+				);
+				value = /** @type {ESTree.Expression} */ (visited.declarations[0].init);
+			} else {
+				value = /** @type {ESTree.Expression} */ (context.visit(expression, group_state));
+			}
 			if (binding) {
 				statements.push(b.stmt(b.assignment('=', binding.node, value)));
 				values.push(binding.node);

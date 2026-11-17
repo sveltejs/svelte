@@ -1,6 +1,7 @@
 import type { AST, Binding, StateField } from '#compiler';
 import type {
 	AwaitExpression,
+	ArrowFunctionExpression,
 	CallExpression,
 	ClassBody,
 	ClassDeclaration,
@@ -73,8 +74,9 @@ export interface ScriptReplayStage {
 	index: number;
 	binding: Binding | null;
 	checkpoint: number;
-	kind: 'async' | 'derived' | 'local' | 'await' | 'statement';
+	kind: 'async' | 'derived' | 'local' | 'await' | 'statement' | 'state';
 	expression: Expression;
+	declaration: VariableDeclarator | null;
 }
 
 export interface ComponentAnalysis extends Analysis {
@@ -141,6 +143,8 @@ export interface ComponentAnalysis extends Analysis {
 		/** Bindings initialized by the synchronous start of each whole-script factory. */
 		environment: Map<Binding, { index: number; reactive: boolean }>;
 		stages: ScriptReplayStage[];
+		/** Initialization-created synchronous callbacks and their proven lexical captures. */
+		callbacks: Map<ArrowFunctionExpression, Set<Binding>>;
 		/** Original synchronous groups, with exclusive end indices. */
 		groups: Array<{ start: number; end: number }>;
 	} | null;

@@ -315,6 +315,126 @@ describe('experimental.scriptReplay', () => {
 		);
 	});
 
+	it.each([
+		['isolation', 'Child'],
+		['external-write', 'Child'],
+		['self-write', 'Child'],
+		['operators', 'main'],
+		['derived-purity', 'Child']
+	])(
+		'admits the actual post-await state fixture by default and in strict mode: %s',
+		(sample, component) => {
+			const source = readFileSync(
+				new URL(
+					`../../tests/runtime-runes/samples/async-script-replay-post-await-state-${sample}/${component}.svelte`,
+					import.meta.url
+				),
+				'utf8'
+			);
+			for (const options of [{ async: true }, experimental]) {
+				const code = compile(source, { experimental: options }).js.code;
+				expect(code).toContain('$.script_replay(');
+				expect(code).toContain("'state'");
+				expect(code).not.toContain('$.run(');
+			}
+			expect(compile(source, { generate: 'server', experimental }).js.code).toBe(
+				compile(source, { generate: 'server', experimental: { async: true, scriptReplay: false } })
+					.js.code
+			);
+		}
+	);
+
+	it('stores native state handles, reads their value projections, and captures initialized sources', () => {
+		const source =
+			'<script>let { input, register } = $props(); await Promise.resolve(); let n = $state(input); const snapshot = n; register(() => n++); await Promise.resolve(); const copy = n;</script><input bind:value={n}>{n} {snapshot} {copy}';
+		const code = compile(source, { experimental }).js.code;
+		expect(code).toContain('n = $$access.state(3, $.state(');
+		expect(code).toContain('snapshot = $.get(n)');
+		expect(code).toContain('() => $.update(n)');
+		expect(code).toContain('copy = $$access.read(3)');
+		expect(code).toContain('$.script_read($$script, 3)');
+		expect(code).toContain('$.set($.get($.script_binding($$script, 1)), $$value)');
+		expect(code).toContain('return [n, snapshot, void 0]');
+	});
+
+	it('captures a prior-group Source and native prefix helpers, not another selected view', () => {
+		const source =
+			'<script>let { register } = $props(); function notify(value) {} await Promise.resolve(); let n = $state(0); await Promise.resolve(); register(() => { n++; notify(n); });</script>{n}';
+		const code = compile(source, { experimental }).js.code;
+		expect(code).toContain('$.update(n)');
+		expect(code).toContain('notify($.get(n))');
+		expect(code).not.toContain('notify($$access');
+		expect(code).not.toContain('$.untrack(');
+	});
+
+	it('keeps callback parameter shadowing lexical', () => {
+		const source =
+			'<script>let { register } = $props(); await Promise.resolve(); let n = $state(0); let other = $state(0); register((n) => { n++; other++; });</script>{n} {other}';
+		const code = compile(source, { experimental }).js.code;
+		expect(code).toContain('(n) => {');
+		expect(code).toContain('n++;');
+		expect(code).toContain('$.update(other)');
+		expect(code).not.toContain('$.update(n)');
+	});
+
+	it('forces readonly state boxing and preserves raw/proxy initialization', () => {
+		const source =
+			'<script>await Promise.resolve(); const constant = $state(7); const object = $state({ n: 1 }); let raw = $state.raw({ n: 1 });</script><button onclick={() => raw = { n: 2 }}>replace</button>{constant} {object.n} {raw.n}';
+		const code = compile(source, { experimental }).js.code;
+		expect(code).toContain('constant = $$access.state(1, $.state(7))');
+		expect(code).toContain('object = $$access.state(2, $.state($.proxy(');
+		expect(code).toContain('raw = $$access.state(3, $.state({ n: 1 }))');
+		expect(code).toContain('$.set($.get($.script_binding($$script, 3)), { n: 2 })');
+	});
+
+	it('selects the state write reference before evaluating a reentrant RHS', () => {
+		const source =
+			'<script>function rhs() { return 1; } await Promise.resolve(); let n = $state(0); await Promise.resolve(); n = rhs();</script><button onclick={() => n = rhs()}>write</button>{n}';
+		const code = compile(source, { experimental }).js.code;
+		expect(code).toContain('$.set($.get($$bindings[1]), $$access.read(0)(), true)');
+		expect(code).toContain(
+			'$.set($.get($.script_binding($$script, 1)), $.script_read($$script, 0)(), true)'
+		);
+	});
+
+	it.each([
+		'let n = $state(await Promise.resolve(0));',
+		'let n = $state.raw(await Promise.resolve(0));',
+		'const [n] = $state([0]);',
+		'let n = $state(0); const snapshot = n; register(() => snapshot);',
+		'let n = $state(0); const raw = await Promise.resolve(1); register(() => raw);',
+		'let n = $state(0); const derived = $derived(n); register(() => derived);',
+		'register(() => n++); let n = $state(0);',
+		'let n = $state(0); register(() => 1);',
+		'let n = $state(0); register(async () => n++);',
+		'let n = $state(0); const d = $derived(() => n);',
+		'let n = $state(0); const d = $derived(await Promise.resolve(() => n));',
+		'let n = $state(0); register(() => () => n++);',
+		'let n = $state(0); const edit = () => n++;',
+		'let n = $state(0); const d = $derived(n); const snapshot = d;'
+	])('keeps unproved state initialization/capture forms explicit: %s', (suffix) => {
+		const source = `<script>let { register } = $props(); await Promise.resolve(); ${suffix}</script>`;
+		expect(() => compile(source, { experimental })).toThrow(
+			'experimental.scriptReplay does not support'
+		);
+		expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+			compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+		);
+	});
+
+	it.each(['object.n++', 'object = { n: 2 }'])(
+		'applies the existing proxy-write exclusion after an await: %s',
+		(write) => {
+			const source = `<script>await Promise.resolve(); let object = $state({ n: 0 });</script><button onclick={() => ${write}}>write</button>{object.n}`;
+			expect(() => compile(source, { experimental })).toThrow(
+				'external writes to proxy state before publication'
+			);
+			expect(compile(source, { experimental: { async: true } }).js.code).toBe(
+				compile(source, { experimental: { async: true, scriptReplay: false } }).js.code
+			);
+		}
+	);
+
 	it('classifies unsupported default scripts without leaving replay metadata behind', () => {
 		const unsupported = `<script>${prefix}${first}</script><my-element value={a}></my-element>`;
 		const baseline = compile(unsupported, { experimental: { async: true, scriptReplay: false } }).js
@@ -376,7 +496,7 @@ describe('experimental.scriptReplay', () => {
 	it.each([
 		['inline await', 'let value = $derived(1 + await load(input));'],
 		['nested await', 'let value = $derived(await load(await load(input)));'],
-		['state', 'let value = $state(1);'],
+		['awaiting state', 'let value = $state(await load(input));'],
 		['nested rune', 'let value = Number($state.snapshot(a));'],
 		['derived.by', 'let value = $derived.by(() => a);'],
 		['destructuring', 'const [value] = [a];'],
@@ -384,8 +504,8 @@ describe('experimental.scriptReplay', () => {
 		['closure', 'const value = () => a;'],
 		['function', 'function value() { return a; }'],
 		['class', 'class Value {}'],
-		['assignment', 'input = a;'],
-		['nested assignment', 'const value = (input = a);'],
+		['assignment', 'let value = 0; value = a;'],
+		['nested assignment', 'let value = 0; const other = (value = a);'],
 		['control flow', 'if (a) input++;'],
 		['override', 'a = 2;'],
 		['effect', '$effect(() => console.log(a));']
