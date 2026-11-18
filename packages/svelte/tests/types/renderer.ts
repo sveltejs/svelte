@@ -16,7 +16,6 @@ type MyNodes = { fragment: MyFragment; element: MyElement; text: MyText; comment
 const rest = {
 	nodeType: () => 'element' as const,
 	getNodeValue: () => null,
-	getAttribute: () => null,
 	setAttribute() {},
 	removeAttribute() {},
 	hasAttribute: () => false,
@@ -37,6 +36,7 @@ const renderer = createRenderer<MyNodes>({
 	createElement: (name) => ({ kind: 'element', name }),
 	createTextNode: (value) => ({ kind: 'text', value }),
 	createComment: () => ({ kind: 'comment' }),
+	getAttribute: () => null,
 	setText(node, text) {
 		const typed: MyElement | MyText | MyComment = node;
 		// @ts-expect-error fragments can't be passed to `setText`
@@ -52,6 +52,7 @@ createRenderer<MyNodes>({
 	// @ts-expect-error `value` must be a string
 	createTextNode: (value) => ({ kind: 'text', value: 1 }),
 	createComment: () => ({ kind: 'comment' }),
+	getAttribute: () => null,
 	setText() {}
 });
 
@@ -65,17 +66,43 @@ function wrap<R extends Renderer<any>>(renderer: R): R {
 
 wrap(renderer);
 
-// without the node types, the renderer is returned as written
-const untyped = createRenderer({
-	...rest,
+// without the node types, they are inferred from the `create*` methods (which must come first)...
+const inferred = createRenderer({
 	createFragment: (): MyFragment => ({ kind: 'fragment' }),
-	createElement: (name: string): MyElement => ({ kind: 'element', name }),
-	createTextNode: (value: string): MyText => ({ kind: 'text', value }),
+	createElement: (name): MyElement => ({ kind: 'element', name }),
+	createTextNode: (value): MyText => ({ kind: 'text', value }),
 	createComment: (): MyComment => ({ kind: 'comment' }),
-	setText() {}
+	...rest,
+	setText(node, text) {
+		const typed: MyElement | MyText | MyComment = node;
+		// @ts-expect-error fragments can't be passed to `setText`
+		const fragment: MyFragment = node;
+	},
+	getAttribute(element, name) {
+		const typed: MyElement = element;
+		// @ts-expect-error `element` is inferred from `createElement`
+		const text: MyText = element;
+		return null;
+	}
 });
 
-const element: MyElement = untyped.createElement('div');
+// ...including when the `create*` methods' return types aren't annotated...
+createRenderer({
+	createFragment: () => ({ kind: 'fragment' as const }),
+	createElement: (name) => ({ kind: 'element' as const, name }),
+	createTextNode: (value) => ({ kind: 'text' as const, value }),
+	createComment: () => ({ kind: 'comment' as const }),
+	...rest,
+	setText() {},
+	getAttribute(element) {
+		const name: string = element.name;
+		return null;
+	}
+});
+
+// ...and the result has the same type as one created with explicit node types
+const inferred_as_public: Renderer<MyNodes> = inferred;
+const element: MyElement = inferred.createElement('div');
 
 const type: NodeType = 'element';
 // @ts-expect-error not a node type
