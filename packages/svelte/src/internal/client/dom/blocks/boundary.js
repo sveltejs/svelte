@@ -48,7 +48,7 @@ import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text, create_fragment, append_child, insert_before } from '../operations.js';
 import { set_signal_status } from '../../reactivity/status.js';
-import { push_renderer } from '../../custom-renderer/state.js';
+import { push_renderer, pop_renderer } from '../../custom-renderer/state.js';
 import { custom_renderers_flag } from '../../../flags/index.js';
 
 /**
@@ -296,7 +296,7 @@ export class Boundary {
 		queue_micro_task(() => {
 			if (this.#is_destroyed()) return;
 
-			var pop_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : undefined;
+			var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
 
 			try {
 				var fragment = (this.#offscreen_fragment = create_fragment());
@@ -328,7 +328,7 @@ export class Boundary {
 					});
 				}
 			} finally {
-				pop_renderer?.();
+				if (custom_renderers_flag) pop_renderer(previous_renderer);
 			}
 		});
 	}
@@ -384,7 +384,7 @@ export class Boundary {
 		set_active_reaction(this.#effect);
 		set_component_context(this.#effect.ctx);
 
-		var pop_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : undefined;
+		var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
 
 		try {
 			Batch.ensure();
@@ -393,7 +393,7 @@ export class Boundary {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_ctx);
-			pop_renderer?.();
+			if (custom_renderers_flag) pop_renderer(previous_renderer);
 		}
 	}
 
@@ -439,10 +439,14 @@ export class Boundary {
 		}
 
 		if (this.#offscreen_fragment) {
-			var pop_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : undefined;
-			insert_before(this.#anchor, this.#offscreen_fragment);
-			this.#offscreen_fragment = null;
-			pop_renderer?.();
+			var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
+
+			try {
+				insert_before(this.#anchor, this.#offscreen_fragment);
+				this.#offscreen_fragment = null;
+			} finally {
+				if (custom_renderers_flag) pop_renderer(previous_renderer);
+			}
 		}
 	}
 

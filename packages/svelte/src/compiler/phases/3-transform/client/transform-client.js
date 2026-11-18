@@ -617,12 +617,12 @@ export function client_component(analysis, options) {
 					)
 				)
 			),
-			b.var('$$pop_renderer', b.call('$.push_renderer', renderer)),
+			b.var('$$previous_renderer', b.call('$.push_renderer', renderer)),
 			{
 				type: 'TryStatement',
 				block: b.block(component_block.body),
 				handler: null,
-				finalizer: b.block([b.stmt(b.call('$$pop_renderer'))])
+				finalizer: b.block([b.stmt(b.call('$.pop_renderer', b.id('$$previous_renderer')))])
 			}
 		];
 	}

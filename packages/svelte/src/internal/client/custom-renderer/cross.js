@@ -12,7 +12,7 @@ import {
 } from '../dom/operations.js';
 import { listen_to_delegated_events } from '../dom/elements/events.js';
 import * as e from '../errors.js';
-import { current_renderer, push_renderer } from './state.js';
+import { current_renderer, push_renderer, pop_renderer } from './state.js';
 
 /**
  * Returns `true` if rendering content that belongs to `renderer` at the current
@@ -81,7 +81,7 @@ export function cross(renderer, anchor, render) {
 	/** @type {T} */
 	var result;
 
-	var pop_renderer = push_renderer(renderer);
+	var previous_renderer = push_renderer(renderer);
 
 	try {
 		// the guest side: markers inside the container, inserted using the guest renderer
@@ -104,7 +104,7 @@ export function cross(renderer, anchor, render) {
 			result = render(last);
 		});
 	} finally {
-		pop_renderer();
+		pop_renderer(previous_renderer);
 
 		// Registered in `finally` so that the connection is cleaned up even if rendering the
 		// guest throws (e.g. inside a `<svelte:boundary>`), and created after the guest branch
@@ -113,7 +113,7 @@ export function cross(renderer, anchor, render) {
 		// since the container could be shared between several crossings (e.g. multiple scenes
 		// rendered into the same canvas)
 		teardown(() => {
-			var pop_renderer = push_renderer(renderer);
+			var previous_renderer = push_renderer(renderer);
 
 			try {
 				var node = start;
@@ -124,7 +124,7 @@ export function cross(renderer, anchor, render) {
 					node = next;
 				}
 			} finally {
-				pop_renderer();
+				pop_renderer(previous_renderer);
 			}
 
 			stop_listening?.();

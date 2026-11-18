@@ -67,7 +67,7 @@ import { set_signal_status, update_derived_status } from './reactivity/status.js
 import { merge_target } from './reactivity/async.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
-import { push_renderer } from './custom-renderer/state.js';
+import { push_renderer, pop_renderer } from './custom-renderer/state.js';
 
 export let is_destroying_effect = false;
 
@@ -1172,7 +1172,7 @@ export function update_effect(effect) {
 
 	active_effect = effect;
 
-	var pop_renderer = custom_renderers_flag ? push_renderer(effect.r) : undefined;
+	var previous_renderer = custom_renderers_flag ? push_renderer(effect.r) : null;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -1210,7 +1210,7 @@ export function update_effect(effect) {
 	} finally {
 		active_effect = previous_effect;
 
-		pop_renderer?.();
+		if (custom_renderers_flag) pop_renderer(previous_renderer);
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);
