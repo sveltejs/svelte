@@ -10,9 +10,9 @@
 	function push(v) {
 		if (v === 1) return v;
 
-		const p = Promise.withResolvers();
-		queue.push(() => p.resolve(v));
-		return p.promise;
+		return new Promise((resolve) => {
+			queue.push(() => resolve(v));
+		});
 	}
 
 	function shift() {
