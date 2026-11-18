@@ -51,9 +51,16 @@ export interface SignalCreatedInfo {
 	kind: SignalKind;
 	/** e.g. `count` for `let count = $state(0)`, or `todos[0].text` for a proxy property */
 	label: string | undefined;
-	/** `file:line:column` of the declaration, if known */
+	/**
+	 * `file:line:column` of the declaration, if known. For `proxy-prop` and `proxy-version`
+	 * signals, that of the `$state` holding the proxy
+	 */
 	location: string | undefined;
-	/** The component context active when the signal was created */
+	/**
+	 * The component context active when the signal was created. For `proxy-prop` and
+	 * `proxy-version` signals, the one where the `$state` at `location` was declared, even if the
+	 * signal is created later. It can already be destroyed
+	 */
 	ctx: ComponentContext | null;
 	/** The effect active when the signal was created */
 	effect: Effect | null;
@@ -95,9 +102,24 @@ export interface DevtoolsHooks {
 	reactionRunEnd?(reaction: Reaction): void;
 
 	// batches
+	/**
+	 * A flush started. `batch` is the batch that started it. Other batches can be processed in the
+	 * same flush, e.g. new batches for writes made by effects. A batch can be flushed more than once
+	 * before it ends, e.g. while it waits for async work or is a fork, and flushes can nest
+	 */
 	flushStart?(batch: Batch): void;
+	/** The flush ended. `batch` is the same batch as in the matching `flushStart` */
 	flushEnd?(batch: Batch): void;
+	/**
+	 * A batch ended and its changes were applied. Always called during a flush, but not
+	 * necessarily one started by this batch. A batch gets at most one of `batchCommitted` and
+	 * `batchDiscarded`, or neither if it never ends
+	 */
 	batchCommitted?(batch: Batch): void;
+	/**
+	 * A batch ended without its changes being applied, e.g. a fork that was discarded or replaced
+	 * by a later change. Can be called outside a flush
+	 */
 	batchDiscarded?(batch: Batch): void;
 
 	// misc

@@ -1,4 +1,4 @@
-/** @import { Source } from '#client' */
+/** @import { ComponentContext, Source } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	get,
@@ -107,18 +107,25 @@ export function proxy(value) {
 	/** Used in dev for devtools: where the (root) state was declared */
 	/** @type {string | undefined} */
 	var location = undefined;
+	/** Used in dev for devtools: the component the (root) state was declared in */
+	/** @type {ComponentContext | null | undefined} */
+	var owner = undefined;
 	let updating = false;
 	/**
 	 * @param {string} new_path
 	 * @param {string} [new_location]
+	 * @param {ComponentContext | null} [new_owner]
 	 */
-	function update_path(new_path, new_location) {
+	function update_path(new_path, new_location, new_owner) {
 		if (updating) return;
 		updating = true;
 		path = new_path;
-		if (new_location !== undefined) location = new_location;
+		if (new_location !== undefined) {
+			location = new_location;
+			owner = new_owner;
+		}
 
-		label_source(version, `${path} version`, location, proxied);
+		label_source(version, `${path} version`, location, proxied, undefined, owner);
 
 		// rename all child sources and child proxies
 		for (const [prop, source] of sources) {
@@ -133,8 +140,8 @@ export function proxy(value) {
 	 * @param {string | symbol} prop
 	 */
 	function tag_child(source, prop) {
-		label_source(source, get_label(path, prop), location, proxied, prop);
-		tag_proxy(source.v, get_label(path, prop), location);
+		label_source(source, get_label(path, prop), location, proxied, prop, owner);
+		tag_proxy(source.v, get_label(path, prop), location, owner);
 	}
 
 	/** @type {any} */
