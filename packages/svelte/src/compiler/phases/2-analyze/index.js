@@ -473,13 +473,20 @@ export function analyze_component(root, source, options) {
 	const css = options.css({ filename: options.filename });
 	const custom_renderer = options.experimental.customRenderer({ filename: options.filename });
 
-	// only an actual renderer module (a string) is incompatible with injected css — a `null`
-	// renderer means the component renders to the DOM, which is fine. `css` and `customRenderer`
-	// can each come from either `<svelte:options>` or the compiler options, so this is checked
-	// here rather than while parsing; point at the `css` attribute if there is one
-	if (css === 'injected' && typeof custom_renderer === 'string') {
+	// Injected styles are added to the document, which doesn't apply to components that use a
+	// custom renderer (an actual renderer module, i.e. a string — `null` means the DOM): they are
+	// never server-rendered and their nodes aren't in the document. An inherited `css: 'injected'`
+	// (from the compiler options, which tools like vite-plugin-svelte set) is therefore ignored and
+	// the CSS is returned as with `css: 'external'`; only an explicit `<svelte:options css="injected" />`
+	// in such a component is an error
+	const has_custom_renderer = typeof custom_renderer === 'string';
+
+	if (has_custom_renderer) {
 		const css_attribute = root.options?.attributes.find((attribute) => attribute.name === 'css');
-		e.incompatible_with_custom_renderer(css_attribute ?? null, "`css: 'injected'`");
+
+		if (css_attribute) {
+			e.incompatible_with_custom_renderer(css_attribute, "`css: 'injected'`");
+		}
 	}
 
 	const custom_element = options.customElementOptions ?? custom_element_from_option;
@@ -545,7 +552,7 @@ export function analyze_component(root, source, options) {
 		event_directive_node: null,
 		uses_event_attributes: false,
 		custom_element,
-		inject_styles: css === 'injected' || is_custom_element,
+		inject_styles: (css === 'injected' && !has_custom_renderer) || is_custom_element,
 		accessors:
 			is_custom_element ||
 			(runes ? false : !!options.accessors) ||
