@@ -1,8 +1,9 @@
-/** @import { Blocker, Effect } from '#client' */
+/** @import { Effect } from '#client' */
+/** @import { Blocker } from '../../reactivity/async.js' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { create_event, delegate, delegated, event, event_symbol } from './events.js';
+import { create_event, delegate, delegated } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import {
@@ -178,7 +179,8 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		}
 	}
 
-	if (attributes[attribute] === (attributes[attribute] = value)) return;
+	var previous = attributes[attribute];
+	if (previous === (attributes[attribute] = value)) return;
 
 	if (attribute === 'loading') {
 		// @ts-expect-error
@@ -190,7 +192,14 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	} else if (typeof value !== 'string' && get_setters(element).has(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
-	} else {
+	} else if (
+		// while hydrating, skip a number or boolean whose string the server already rendered
+		!(
+			hydrating &&
+			(typeof value === 'number' || typeof value === 'boolean') &&
+			previous === String(value)
+		)
+	) {
 		element.setAttribute(attribute, value);
 	}
 }
@@ -343,7 +352,7 @@ function set_attributes(
 				// the value is set to the text content of the option element, and setting the value
 				// to null or undefined means the value is set to the string "null" or "undefined".
 				// To align with how we handle this case in non-spread-scenarios, this logic is needed.
-				// There's a super-edge-case bug here that is left in in favor of smaller code size:
+				// There's a super-edge-case bug here that is left in favor of smaller code size:
 				// Because of the "set missing props to null" logic above, we can't differentiate
 				// between a missing value and an explicitly set value of null or undefined. That means
 				// that once set, the value attribute of an <option> element can't be removed. This is

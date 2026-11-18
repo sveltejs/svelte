@@ -532,6 +532,7 @@ function next(parser) {
 	if (block.type === 'IfBlock') {
 		if (!parser.eat('else')) e.expected_token(start, '{:else} or {:else if}');
 		if (parser.eat('if')) e.block_invalid_elseif(start);
+		if (block.alternate) e.block_duplicate_clause(start, '{:else}');
 
 		parser.allow_whitespace();
 
@@ -580,6 +581,7 @@ function next(parser) {
 
 	if (block.type === 'EachBlock') {
 		if (!parser.eat('else')) e.expected_token(start, '{:else}');
+		if (block.fallback) e.block_duplicate_clause(start, '{:else}');
 
 		parser.allow_whitespace();
 		parser.eat('}', true);

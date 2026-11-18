@@ -241,7 +241,8 @@ export function proxy(value) {
 
 			if (
 				s !== undefined ||
-				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
+				((active_effect !== null || active_reaction !== null) &&
+					(!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
 					s = with_parent(() => {

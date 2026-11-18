@@ -138,28 +138,21 @@ export function parse_statement_at(parser, source, index) {
 
 const regex_non_lf_line_break = /\r(?!\n)|[\u2028\u2029]/;
 
-let last_template = '';
-let lf_only = true;
-
 /**
  * Without `startLocation`, acorn counts the lines before `index` on every call
  * @param {Parser} parser
  * @param {number} index
  */
 function start_location(parser, index) {
-	return has_lf_line_breaks_only(parser) ? locator(index) : undefined;
+	return parser.lf_only ? locator(index) : undefined;
 }
 
 /**
  * acorn breaks lines on bare `\r`, `\u2028` and `\u2029`, which the locator doesn't
- * @param {Parser} parser
+ * @param {string} template
  */
-export function has_lf_line_breaks_only(parser) {
-	if (parser.template !== last_template) {
-		last_template = parser.template;
-		lf_only = !regex_non_lf_line_break.test(last_template);
-	}
-	return lf_only;
+export function has_lf_line_breaks_only(template) {
+	return !regex_non_lf_line_break.test(template);
 }
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
@@ -261,15 +254,12 @@ function get_comment_handlers(source, comments, index = 0) {
 							if (is_last_in_body) {
 								// Special case: There can be multiple trailing comments after the last node in a block,
 								// and they can be separated by newlines
-								let end = node.end;
-
 								while (comments.length) {
 									const comment = comments[0];
 									if (parent && comment.start >= parent.end) break;
 
 									(node.trailingComments ||= []).push(comment);
 									comments.shift();
-									end = comment.end;
 								}
 							} else if (node.end <= comments[0].start && /^[,) \t]*$/.test(slice)) {
 								node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];

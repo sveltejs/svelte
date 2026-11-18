@@ -1,5 +1,111 @@
 # svelte
 
+## 5.58.0
+
+### Minor Changes
+
+- feat: include `snippetName` in `render` entries of the dev `__svelte_meta` stack ([#19283](https://github.com/sveltejs/svelte/pull/19283))
+
+- feat: include the `component` instance an element was rendered in for Svelte devtools to track ([#19286](https://github.com/sveltejs/svelte/pull/19286))
+
+### Patch Changes
+
+- perf: let the garbage collector free each component's AST after it is compiled ([#19241](https://github.com/sveltejs/svelte/pull/19241))
+
+- fix: render the same `<title>` on the server as on the client and ignore titles inside failed boundaries ([#19176](https://github.com/sveltejs/svelte/pull/19176))
+
+- fix: allow `autocorrect` on all elements ([#19105](https://github.com/sveltejs/svelte/pull/19105))
+
+- fix: parse snippet type parameters containing arrow function types ([#19141](https://github.com/sveltejs/svelte/pull/19141))
+
+- fix: keep directive values that match the directive name in `print` ([#19229](https://github.com/sveltejs/svelte/pull/19229))
+
+- fix: correctly assign dev element locations after components during hydration ([#19287](https://github.com/sveltejs/svelte/pull/19287))
+
+- perf: don't compare the whole template on every expression when a source is parsed again ([#19215](https://github.com/sveltejs/svelte/pull/19215))
+
+- docs: avoid binding to read-only current values in Spring and Tween examples ([#19226](https://github.com/sveltejs/svelte/pull/19226))
+
+- fix: keep positions right after optional properties in template type annotations ([#19217](https://github.com/sveltejs/svelte/pull/19217))
+
+- perf: speed up server rendering of pages with many or deeply nested components ([#19177](https://github.com/sveltejs/svelte/pull/19177))
+
+- fix: remove all of the server-rendered content when hydrating a different branch that contains a failed boundary ([#19166](https://github.com/sveltejs/svelte/pull/19166))
+
+- fix: preserve effect tree order across batch traversal passes ([#19132](https://github.com/sveltejs/svelte/pull/19132))
+
+- fix: reset dev update counters for sources written during batch traversal ([#19092](https://github.com/sveltejs/svelte/pull/19092))
+
+- chore: bump esrap ([#19290](https://github.com/sveltejs/svelte/pull/19290))
+
+- fix: don't leak reactive context past nested awaits in production ([#19134](https://github.com/sveltejs/svelte/pull/19134))
+
+## 5.57.3
+
+### Patch Changes
+
+- fix: use the first valid fallback role in `role` for a11y checks ([#19045](https://github.com/sveltejs/svelte/pull/19045))
+
+- chore: remove obsolete code ([#19051](https://github.com/sveltejs/svelte/pull/19051))
+
+- fix: keep creating state sources for property checks during component init ([#18949](https://github.com/sveltejs/svelte/pull/18949))
+
+- fix: skip redundant attribute writes during hydration ([#18869](https://github.com/sveltejs/svelte/pull/18869))
+
+- fix: track missing state property checks in unowned deriveds ([#18944](https://github.com/sveltejs/svelte/pull/18944))
+
+- fix: `devalue` link in `hydratable_serialization_failed` error ([#18999](https://github.com/sveltejs/svelte/pull/18999))
+
+## 5.57.2
+
+### Patch Changes
+
+- fix: don't create async deriveds for a component destroyed while waiting for its top-level `await` ([#18931](https://github.com/sveltejs/svelte/pull/18931))
+
+- fix: prevent untracked derived reads from retaining disconnected dependencies ([#18829](https://github.com/sveltejs/svelte/pull/18829))
+
+- fix: error if `{:else}` is followed by another `{:else}` or `{:else if ...}` ([#18900](https://github.com/sveltejs/svelte/pull/18900))
+
+- fix: avoid tracking SvelteURLSearchParams during URL updates ([#18791](https://github.com/sveltejs/svelte/pull/18791))
+
+- fix: restore hydration state when custom element attribute updates throw ([#18467](https://github.com/sveltejs/svelte/pull/18467))
+
+- fix: attach event handlers that are assigned after a top-level `await` in production ([#18933](https://github.com/sveltejs/svelte/pull/18933))
+
+- fix: flush anything pending before invoking flushSync callback function ([#18878](https://github.com/sveltejs/svelte/pull/18878))
+
+- fix: preserve location information for `await` wrappers ([#18859](https://github.com/sveltejs/svelte/pull/18859))
+
+- fix: keep a reactive assignment with no dependencies when `migrate` cannot turn it into a declaration ([#18817](https://github.com/sveltejs/svelte/pull/18817))
+
+- fix: don't hang `migrate` on a declaration that shares a line with its script tag ([#18816](https://github.com/sveltejs/svelte/pull/18816))
+
+- fix: prevent duplicate subscriptions when reconnecting deriveds ([#18899](https://github.com/sveltejs/svelte/pull/18899))
+
+- fix: recover when an unexpected node replaces a nested boundary comment during hydration ([#18925](https://github.com/sveltejs/svelte/pull/18925))
+
+- fix: print `{#await}` blocks that only have a pending branch ([#18908](https://github.com/sveltejs/svelte/pull/18908))
+
+- fix: don't warn about a redundant `link` role on `<area>` elements without an `href` ([#18872](https://github.com/sveltejs/svelte/pull/18872))
+
+- fix: don't throw `state_unsafe_mutation` when the focused element is removed while `bind:activeElement` is used ([#18921](https://github.com/sveltejs/svelte/pull/18921))
+
+- fix: don't overwrite an unchanged spread `value`, preserving incomplete number input ([#18864](https://github.com/sveltejs/svelte/pull/18864))
+
+- fix: read batch-local array on each-block commit ([#18879](https://github.com/sveltejs/svelte/pull/18879))
+
+- fix: error at compile time when a declaration in a snippet redeclares one of its parameters ([#18842](https://github.com/sveltejs/svelte/pull/18842))
+
+- fix: error when using `let:` directives on a component with a `children` snippet ([#18873](https://github.com/sveltejs/svelte/pull/18873))
+
+- fix: ignore stale boundary reset callbacks ([#18886](https://github.com/sveltejs/svelte/pull/18886))
+
+- fix: handle deferred transitions aborted before initialization ([#18776](https://github.com/sveltejs/svelte/pull/18776))
+
+- fix: prevent hydration mismatch recovery from being intercepted by error boundaries ([#18841](https://github.com/sveltejs/svelte/pull/18841))
+
+- fix: preserve dynamic element connections during hydration ([#18855](https://github.com/sveltejs/svelte/pull/18855))
+
 ## 5.57.1
 
 ### Patch Changes

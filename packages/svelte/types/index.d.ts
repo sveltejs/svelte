@@ -375,7 +375,7 @@ declare module 'svelte' {
 	/**
 	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
 	 *
-	 * Must be called while a derived or effect is running.
+	 * Must be called while a derived or effect is running, before anything is awaited.
 	 *
 	 * ```svelte
 	 * <script>
@@ -2186,7 +2186,7 @@ declare module 'svelte/motion' {
 	 * </script>
 	 *
 	 * <input type="range" bind:value={spring.target} />
-	 * <input type="range" bind:value={spring.current} disabled />
+	 * <input type="range" value={spring.current} disabled />
 	 * ```
 	 * @since 5.8.0
 	 */
@@ -2301,7 +2301,7 @@ declare module 'svelte/motion' {
 	 * </script>
 	 *
 	 * <input type="range" bind:value={tween.target} />
-	 * <input type="range" bind:value={tween.current} disabled />
+	 * <input type="range" value={tween.current} disabled />
 	 * ```
 	 * @since 5.8.0
 	 */

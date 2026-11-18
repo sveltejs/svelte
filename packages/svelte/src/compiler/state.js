@@ -174,6 +174,6 @@ export function adjust(state) {
 	}
 
 	ignore_stack = [];
-	ignore_map.clear();
+	ignore_map = new Map(); // faster than .clear()
 	cached_ignore_snapshot = null;
 }
