@@ -294,9 +294,23 @@ function to_number(value) {
  * @param {(value: FileList | null) => void} set
  */
 export function bind_files(input, get, set = get) {
-	listen_to_event_and_reset_event(input, 'change', () => {
-		set(input.files);
-	});
+	listen_to_event_and_reset_event(
+		input,
+		'change',
+		() => {
+			set(input.files);
+		},
+		() => {
+			// A form reset can empty the input's `FileList` in place, which is then the very
+			// object the binding already holds and would not be seen as a change: give the
+			// input a new, empty one instead
+			if (typeof DataTransfer === 'function') {
+				input.files = new DataTransfer().files;
+			}
+
+			set(input.files);
+		}
+	);
 
 	if (
 		// If we are hydrating and the value has since changed,
