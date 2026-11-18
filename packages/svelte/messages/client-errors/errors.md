@@ -62,6 +62,8 @@ The key expression in a keyed each block must return the same value when called 
 
 Effects can only be created while a parent effect is running. This means that they cannot, for example, be created inside an event handler or after an `await` expression (unless the `await` occurs directly inside a component's `<script>` tag, and not inside an async function).
 
+Code at the top level of a `.svelte.js` module or a `<script module>` block runs once, when the module is first imported, rather than while a component is being initialised, so `$effect`, `$effect.pre` and `$inspect` can't be used there either. Move the code into a function and call that from the top level of a component's `<script>` instead.
+
 In very rare cases, it is appropriate to use [`$effect.root`]($effect#$effect.root) so that you can create effects outside the normal component lifecycle.
 
 ## effect_pending_outside_reaction
