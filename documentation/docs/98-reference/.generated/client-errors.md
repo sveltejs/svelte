@@ -46,6 +46,14 @@ Attempted to instantiate %component% with `new %name%`, which is no longer valid
 
 See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
 
+### custom_renderer_unsupported_operation
+
+```
+`%operation%` is not supported when rendering with a custom renderer
+```
+
+Some of Svelte's internals only work with the DOM, and are never expected to run while a custom renderer is active — for example, `{@html ...}` and hydration are not available with custom renderers. Reaching one of these code paths indicates a bug in Svelte rather than in your app or renderer, so please [open an issue](https://github.com/sveltejs/svelte/issues) with a reproduction.
+
 ### derived_references_self
 
 ```
