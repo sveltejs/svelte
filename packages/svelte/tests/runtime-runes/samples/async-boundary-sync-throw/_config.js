@@ -6,7 +6,7 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, `<button>invalidate</button><p>ready</p>`);
 
-		target.querySelector('button').click();
+		target.querySelector('button')?.click();
 		await tick();
 
 		assert.htmlEqual(target.innerHTML, `<button>invalidate</button><p>original error</p>`);
