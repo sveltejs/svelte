@@ -2,10 +2,9 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
-import { custom_renderer } from '../../../../state.js';
+import { custom_renderer, source } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_expression, Memoizer } from './shared/utils.js';
-import { source } from '../../../../state.js';
 
 /**
  * @param {AST.RenderTag} node
