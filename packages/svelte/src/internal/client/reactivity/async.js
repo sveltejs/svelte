@@ -319,14 +319,30 @@ export let current_run_step = null;
  * @typedef {{ settled: boolean, checks: Array<() => void> }} RunStep
  */
 
-/** @param {RunStep | null} step */
-export function set_current_run_step(step) {
+/**
+ * Dev-only waterfall tracking for one script thunk. Its scope is synchronous, but its
+ * checks wait for the thunk's result, independently of the runner and its blockers.
+ * @param {() => void | Promise<void>} fn
+ */
+function run_step(fn) {
+	var previous_step = current_run_step;
+	/** @type {RunStep} */
+	var step = { settled: false, checks: [] };
 	current_run_step = step;
-}
 
-/** @returns {RunStep} */
-function create_run_step() {
-	return { settled: false, checks: [] };
+	try {
+		var promise = Promise.resolve(fn());
+		promise.then(
+			() => settle_run_step(step, false),
+			() => settle_run_step(step, true)
+		);
+		return promise;
+	} catch (error) {
+		settle_run_step(step, true);
+		throw error;
+	} finally {
+		current_run_step = previous_step;
+	}
 }
 
 /**
@@ -407,13 +423,10 @@ class Runner {
 	run(thunks) {
 		var active = /** @type {Effect} */ (active_effect);
 
-		var step = DEV ? create_run_step() : null;
-		var promise = Promise.resolve(this.#invoke(thunks[0], step));
-		var blockers = [new Blocker(this, promise, step)];
+		var promise = Promise.resolve(this.#invoke(thunks[0]));
+		var blockers = [new Blocker(this, promise)];
 
 		for (const fn of thunks.slice(1)) {
-			const step = DEV ? create_run_step() : null;
-
 			promise = promise.then(() => {
 				if ((active.f & DESTROYED) !== 0) {
 					throw STALE_REACTION;
@@ -421,7 +434,7 @@ class Runner {
 
 				try {
 					this.restore();
-					return this.#invoke(fn, step);
+					return this.#invoke(fn);
 				} finally {
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late
@@ -431,7 +444,7 @@ class Runner {
 				}
 			});
 
-			blockers.push(new Blocker(this, promise, step));
+			blockers.push(new Blocker(this, promise));
 		}
 
 		promise = promise
@@ -485,21 +498,15 @@ class Runner {
 		for (const fn of this.continued.splice(0)) fn();
 	}
 
-	/**
-	 * @param {() => void | Promise<void>} fn
-	 * @param {RunStep | null} step
-	 */
-	#invoke(fn, step) {
+	/** @param {() => void | Promise<void>} fn */
+	#invoke(fn) {
 		var previous_runner = current_runner;
-		var previous_step = current_run_step;
 		current_runner = this;
-		if (DEV) current_run_step = step;
 
 		try {
-			return fn();
+			return DEV ? run_step(fn) : fn();
 		} finally {
 			current_runner = previous_runner;
-			if (DEV) current_run_step = previous_step;
 		}
 	}
 }
@@ -511,9 +518,8 @@ export class Blocker {
 	/**
 	 * @param {Runner} run
 	 * @param {Promise<any>} promise
-	 * @param {RunStep | null} step
 	 */
-	constructor(run, promise, step) {
+	constructor(run, promise) {
 		this.run = run;
 		this.promise = promise
 			.catch(() => {
@@ -522,7 +528,6 @@ export class Blocker {
 			.finally(() => {
 				this.settled = true;
 				unset_context();
-				if (DEV && step) settle_run_step(step, this.failed);
 			});
 	}
 }
