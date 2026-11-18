@@ -714,6 +714,11 @@ function move(effect, next, anchor) {
 	var node = effect.nodes.start;
 	var end = effect.nodes.end;
 
+	// skip effects that rendered nothing, e.g. an empty `{:else}`
+	while (next !== null && next.nodes === null) {
+		next = next.next;
+	}
+
 	var dest =
 		next && (next.f & EFFECT_OFFSCREEN) === 0
 			? /** @type {EffectNodes} */ (next.nodes).start
