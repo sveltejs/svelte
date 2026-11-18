@@ -1,6 +1,7 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Literal, Property, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
+import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { build_attribute_value } from './shared/element.js';
 import { Memoizer } from './shared/utils.js';
@@ -69,8 +70,25 @@ export function SlotElement(node, context) {
 			? b.null
 			: b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fragment)));
 
+	const location = dev && locator(node.start);
+
 	statements.push(
-		b.stmt(b.call('$.slot', context.state.node, b.id('$$props'), name, props_expression, fallback))
+		b.stmt(
+			b.call(
+				'$.slot',
+				context.state.node,
+				b.id('$$props'),
+				name,
+				props_expression,
+				fallback,
+				location &&
+					b.array([
+						b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
+						b.literal(location.line),
+						b.literal(location.column)
+					])
+			)
+		)
 	);
 
 	const async_values = memoizer.async_values();

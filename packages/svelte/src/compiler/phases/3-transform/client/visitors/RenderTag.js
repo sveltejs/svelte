@@ -5,6 +5,7 @@ import { unwrap_optional } from '../../../../utils/ast.js';
 import { custom_renderer } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_expression, Memoizer } from './shared/utils.js';
+import { source } from '../../../../state.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -38,11 +39,16 @@ export function RenderTag(node, context) {
 	/** @type {Statement[]} */
 	const statements = memoizer.deriveds(context.state.analysis.runes);
 
-	let snippet_function = build_expression(
-		context,
-		/** @type {Expression} */ (call.callee),
-		node.metadata.expression
-	);
+	const callee = /** @type {Expression} */ (call.callee);
+
+	let snippet_function = build_expression(context, callee, node.metadata.expression);
+
+	const meta = {
+		snippetName: source.slice(
+			/** @type {number} */ (callee.start),
+			/** @type {number} */ (callee.end)
+		)
+	};
 
 	if (node.metadata.dynamic) {
 		// In custom renderer components, validate that the snippet is compatible
@@ -60,7 +66,8 @@ export function RenderTag(node, context) {
 			add_svelte_meta(
 				b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args),
 				node,
-				'render'
+				'render',
+				meta
 			)
 		);
 	} else {
@@ -78,7 +85,8 @@ export function RenderTag(node, context) {
 					...args
 				),
 				node,
-				'render'
+				'render',
+				meta
 			)
 		);
 	}

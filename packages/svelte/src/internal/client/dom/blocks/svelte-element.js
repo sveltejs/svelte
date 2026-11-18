@@ -91,7 +91,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 							file: filename,
 							line: location[0],
 							column: location[1]
-						}
+						},
+						component: component_context
 					};
 				}
 

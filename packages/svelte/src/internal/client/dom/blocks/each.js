@@ -141,23 +141,26 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 
 /**
  * @param {EachState} state
+ * @returns {Set<Effect>}
+ */
+function selected_effects(state) {
+	var selected = new Set();
+	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
+	for (const keys of state.pending.values()) {
+		for (const key of keys) {
+			selected.add(/** @type {EachItem} */ (state.items.get(key)).e);
+		}
+	}
+	return selected;
+}
+
+/**
+ * @param {EachState} state
  * @param {Effect[]} to_destroy
  * @param {boolean} remove_dom
  */
 function destroy_effects(state, to_destroy, remove_dom = true) {
-	/** @type {Set<Effect> | undefined} */
-	var preserved_effects;
-
-	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
-	if (state.pending.size > 0) {
-		preserved_effects = new Set();
-
-		for (const keys of state.pending.values()) {
-			for (const key of keys) {
-				preserved_effects.add(/** @type {EachItem} */ (state.items.get(key)).e);
-			}
-		}
-	}
+	var preserved_effects = state.pending.size > 0 ? selected_effects(state) : undefined;
 
 	for (var i = 0; i < to_destroy.length; i++) {
 		var e = to_destroy[i];
@@ -167,10 +170,32 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 
 			const fragment = create_fragment();
 			move_effect(e, fragment);
+
+			// `reconcile` expects offscreen items to come after all onscreen items
+			if (e !== state.effect.last) {
+				link(state, e.prev, e.next);
+				link(state, state.effect.last, e);
+				link(state, e, null);
+			}
 		} else {
 			destroy_effect(to_destroy[i], remove_dom);
 		}
 	}
+}
+
+/**
+ * Whether the item is outroing, i.e. `pause_effects` destroys it (or keeps it offscreen) once its outro is done
+ * @param {EachState} state
+ * @param {Effect} effect
+ */
+function is_outroing(state, effect) {
+	if (state.outrogroups !== null) {
+		for (const group of state.outrogroups) {
+			if (group.pending.has(effect) || group.done.has(effect)) return true;
+		}
+	}
+
+	return false;
 }
 
 // we need to handle the case of multiple renderers so we need to use a WeakMap of offscreen anchors rather than a single variable.
@@ -301,6 +326,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		} finally {
 			pop_renderer?.();
 		}
+
+		destroy_unselected();
 	}
 
 	/**
@@ -308,6 +335,42 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	 */
 	function discard(batch) {
 		state.pending.delete(batch);
+
+		if ((state.effect.f & DESTROYED) === 0) {
+			destroy_unselected();
+		}
+	}
+
+	/**
+	 * Destroys the offscreen items that no pending batch selects anymore. Offscreen items only exist
+	 * for the batches that select them: they were created in their view, or kept for them when a
+	 * commit removed them (see `destroy_effects`). A batch stops selecting an item when it's discarded,
+	 * or when its block runs again without it. `reconcile` doesn't destroy such an item if it was kept,
+	 * as kept items are paused, and it leaves paused items alone (taking them to be outroing)
+	 */
+	function destroy_unselected() {
+		/** @type {Set<Effect> | undefined} */
+		var selected;
+		var effect = state.effect.last;
+
+		// offscreen items come after all onscreen items (see `destroy_effects`)
+		while (effect !== null) {
+			var prev = effect.prev;
+
+			// (an offscreen fallback isn't paused, so the next commit shows it or destroys it, see above)
+			if ((effect.f & BRANCH_EFFECT) !== 0 && effect !== fallback) {
+				if ((effect.f & EFFECT_OFFSCREEN) === 0) break;
+
+				// create lazily to save work in the common case
+				selected ??= selected_effects(state);
+
+				if (!selected.has(effect) && !is_outroing(state, effect)) {
+					destroy_effect(effect);
+				}
+			}
+
+			effect = prev;
+		}
 	}
 
 	var effect = block(() => {
@@ -381,7 +444,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				);
 
 				if (!first_run) {
+					// until it is committed, the item only exists for the batches that select it
 					item.e.f |= EFFECT_OFFSCREEN;
+					if (defer) batch.unskip_new_effect(item.e);
 				}
 
 				items.set(key, item);
@@ -395,7 +460,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn(anchor));
 			} else {
 				fallback = branch(() => fallback_fn(get_offscreen_anchor()));
+				// until it is committed, the fallback only exists for the batches that select it
 				fallback.f |= EFFECT_OFFSCREEN;
+				if (defer) batch.unskip_new_effect(fallback);
+			}
+		}
+
+		if (defer && fallback !== null) {
+			if (length === 0) {
+				batch.unskip_effect(fallback);
+			} else {
+				batch.skip_effect(fallback);
 			}
 		}
 

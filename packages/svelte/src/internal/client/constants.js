@@ -19,7 +19,7 @@ export const BOUNDARY_EFFECT = 1 << 7;
  * Set on the effect that `pause_effect` was called on, i.e. the root of a paused subtree,
  * as opposed to its descendants which are merely `INERT`. This allows `resume_effect` on
  * an ancestor to skip subtrees that were paused for their own reasons (such as a block
- * whose condition is still false) rather than resurrecting them
+ * whose condition is still false) rather than resurrecting them.
  */
 export const PAUSED = 1 << 8;
 /**
@@ -56,6 +56,13 @@ export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;
 
 export const ERROR_VALUE = 1 << 23;
+
+/** A run of the reaction asked for an abort signal (see `getAbortSignal`) */
+export const HAS_ABORT_CONTROLLER = 1 << 27;
+
+// Flags exclusive to deriveds
+/** The global state of the derived is a value that was assigned to it, rather than a run of it */
+export const ASSIGNED = 1 << 26;
 
 export const STATE_SYMBOL = Symbol('$state');
 /** Marks component export objects, so that `proxy(...)` leaves them untouched */

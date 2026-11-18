@@ -15,7 +15,7 @@ import {
 	COMMENT_NODE,
 	CUSTOM_RENDERER_NODE_TYPE_MAP
 } from '#client/constants';
-import { eager_block_effects } from '../reactivity/batch.js';
+import { eager_block_writes } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
 import { current_renderer } from '../custom-renderer/state.js';
 
@@ -262,8 +262,7 @@ export function clear_text_content(node) {
  * current `<svelte:boundary>`
  */
 export function should_defer_append() {
-	if (!async_mode_flag) return false;
-	if (eager_block_effects !== null) return false;
+	if (!async_mode_flag && eager_block_writes === null) return false;
 
 	var flags = /** @type {Effect} */ (active_effect).f;
 	return (flags & REACTION_RAN) !== 0;

@@ -1,4 +1,4 @@
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { DevStackEntry, Effect, TemplateNode } from '#client' */
 /** @import {} from 'trusted-types' */
 import {
 	FILENAME,
@@ -13,7 +13,7 @@ import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
-import { dev_current_component_function } from '../../context.js';
+import { component_context, dev_current_component_function, dev_stack } from '../../context.js';
 import {
 	create_element,
 	get_first_child,
@@ -21,32 +21,57 @@ import {
 	get_last_child,
 	set_inner_html,
 	insert_before,
-	get_parent_node,
 	node_type,
 	get_node_value
 } from '../operations.js';
 import { active_effect } from '../../runtime.js';
-import { COMMENT_NODE } from '#client/constants';
+import { COMMENT_NODE, ELEMENT_NODE } from '#client/constants';
 
 /**
- * @param {Element} element
  * @param {string | null} server_hash
  * @param {string | TrustedHTML} value
+ * @param {[string, number, number] | undefined} loc
  */
-function check_hash(element, server_hash, value) {
+function check_hash(server_hash, value, loc) {
 	if (!server_hash || server_hash === hash(String(value ?? ''))) return;
 
 	let location;
 
-	// @ts-expect-error
-	const loc = element.__svelte_meta?.loc;
 	if (loc) {
-		location = `near ${loc.file}:${loc.line}:${loc.column}`;
+		location = `near ${loc[0]}:${loc[1]}:${loc[2]}`;
 	} else if (dev_current_component_function?.[FILENAME]) {
 		location = `in ${dev_current_component_function[FILENAME]}`;
 	}
 
 	w.hydration_html_changed(sanitize_location(location));
+}
+
+/**
+ * Assigns the location of the `{@html ...}` tag to the top-level elements it created,
+ * which also prevents the surrounding template from assigning its locations to them
+ * @param {Effect} effect
+ * @param {DevStackEntry | null} parent
+ * @param {[string, number, number]} loc
+ */
+function assign_locations(effect, parent, loc) {
+	if (effect.nodes === null) return;
+
+	/** @type {TemplateNode | null} */
+	var node = effect.nodes.start;
+
+	while (node !== null) {
+		if (node_type(node) === ELEMENT_NODE) {
+			// @ts-expect-error
+			node.__svelte_meta = {
+				parent,
+				loc: { file: loc[0], line: loc[1], column: loc[2] },
+				component: component_context
+			};
+		}
+
+		if (node === effect.nodes.end) break;
+		node = get_next_sibling(node);
+	}
 }
 
 /**
@@ -56,6 +81,7 @@ function check_hash(element, server_hash, value) {
  * @param {boolean} [svg]
  * @param {boolean} [mathml]
  * @param {boolean} [skip_warning]
+ * @param {[string, number, number]} [location] the filename, line and column of the tag
  * @returns {void}
  */
 export function html(
@@ -64,9 +90,11 @@ export function html(
 	is_controlled = false,
 	svg = false,
 	mathml = false,
-	skip_warning = false
+	skip_warning = false,
+	location
 ) {
 	var anchor = node;
+	var parent = DEV ? dev_stack : null;
 
 	/** @type {string | TrustedHTML} */
 	var value = '';
@@ -98,6 +126,8 @@ export function html(
 					/** @type {TemplateNode} */ (get_first_child(parent_node)),
 					/** @type {TemplateNode} */ (get_last_child(parent_node))
 				);
+
+				if (DEV && location) assign_locations(effect, parent, location);
 			}
 
 			return;
@@ -130,10 +160,11 @@ export function html(
 			}
 
 			if (DEV && !skip_warning) {
-				check_hash(/** @type {Element} */ (get_parent_node(next)), hash, value);
+				check_hash(hash, value, location);
 			}
 
 			assign_nodes(hydrate_node, last);
+			if (DEV && location) assign_locations(effect, parent, location);
 			anchor = set_hydrate_node(next);
 			return;
 		}
@@ -155,6 +186,8 @@ export function html(
 			/** @type {TemplateNode} */ (get_first_child(node)),
 			/** @type {TemplateNode} */ (get_last_child(node))
 		);
+
+		if (DEV && location) assign_locations(effect, parent, location);
 
 		if (svg || mathml) {
 			while (get_first_child(node)) {
