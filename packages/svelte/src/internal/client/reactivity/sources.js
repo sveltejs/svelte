@@ -26,7 +26,8 @@ import {
 	ROOT_EFFECT,
 	ASYNC,
 	ASSIGNED,
-	ERROR_VALUE
+	ERROR_VALUE,
+	REACTION_IS_UPDATING
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -229,7 +230,8 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		if (
 			is_runes() &&
 			active_effect !== null &&
-			(active_effect.f & CLEAN) !== 0 &&
+			// Restoring an async context does not start a new reaction run.
+			(active_effect.f & (CLEAN | REACTION_IS_UPDATING)) === (CLEAN | REACTION_IS_UPDATING) &&
 			(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
 		) {
 			if (untracked_writes === null) {
