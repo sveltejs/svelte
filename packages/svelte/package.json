@@ -91,6 +91,9 @@
       "types": "./types/index.d.ts",
       "default": "./src/reactivity/window/index.js"
     },
+    "./register": {
+      "default": "./src/register/index.js"
+    },
     "./server": {
       "types": "./types/index.d.ts",
       "default": "./src/server/index.js"
@@ -174,6 +177,7 @@
     "@jridgewell/remapping": "^2.3.5",
     "@jridgewell/sourcemap-codec": "^1.6.0",
     "@sveltejs/acorn-typescript": "^1.0.13",
+    "@sveltejs/load-config": "^0.2.3",
     "@types/estree": "^1.0.9",
     "acorn": "^8.18.0",
     "aria-query": "5.3.1",

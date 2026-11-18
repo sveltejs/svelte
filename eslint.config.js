@@ -78,7 +78,7 @@ export default [
 	},
 	{
 		files: ['packages/svelte/src/**/*'],
-		ignores: ['packages/svelte/src/compiler/**/*'],
+		ignores: ['packages/svelte/src/compiler/**/*', 'packages/svelte/src/register/**/*'],
 		rules: {
 			'custom/no_compiler_imports': 'error',
 			'svelte/no-svelte-internal': 'off'

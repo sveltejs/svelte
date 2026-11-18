@@ -77,6 +77,9 @@ importers:
       '@sveltejs/acorn-typescript':
         specifier: ^1.0.13
         version: 1.0.13(acorn@8.18.0)
+      '@sveltejs/load-config':
+        specifier: ^0.2.3
+        version: 0.2.3
       '@types/estree':
         specifier: ^1.0.9
         version: 1.0.9
@@ -936,6 +939,10 @@ packages:
       eslint-plugin-svelte: '>= 3'
       typescript: '>= 5'
       typescript-eslint: '>= 8'
+
+  '@sveltejs/load-config@0.2.3':
+    resolution: {integrity: sha512-VT3qmUb8pRV2QrZjd8iAmtg8lf4W0TIjZbvXtz5MKei/q96teWZgGJyyidJzOjzZzvdq616eSRVeMYIQChUTAQ==}
+    engines: {node: '>= 18.0.0'}
 
   '@sveltejs/vite-plugin-svelte-inspector@5.0.1':
     resolution: {integrity: sha512-ubWshlMk4bc8mkwWbg6vNvCeT7lGQojE3ijDh3QTR6Zr/R+GXxsGbyH4PExEPpiFmqPhYiVSVmHBjUcVc1JIrA==}
@@ -3071,6 +3078,8 @@ snapshots:
       globals: 17.3.0
       typescript: 5.5.4
       typescript-eslint: 8.56.0(eslint@10.0.0)(typescript@5.5.4)
+
+  '@sveltejs/load-config@0.2.3': {}
 
   '@sveltejs/vite-plugin-svelte-inspector@5.0.1(@sveltejs/vite-plugin-svelte@6.2.0(svelte@packages+svelte)(vite@7.3.5(@types/node@24.5.2)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0)))(svelte@packages+svelte)(vite@7.3.5(@types/node@24.5.2)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0))':
     dependencies:
