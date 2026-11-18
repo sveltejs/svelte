@@ -372,6 +372,17 @@ export function object_pattern(properties) {
  * @returns {ESTree.Property & { value: Value }}
  */
 export function prop(kind, key, value, computed = false) {
+	// `__proto__: value` would set the object's prototype rather than define a property
+	if (
+		kind === 'init' &&
+		!computed &&
+		((key.type === 'Identifier' && key.name === '__proto__') ||
+			(key.type === 'Literal' && key.value === '__proto__'))
+	) {
+		key = literal('__proto__');
+		computed = true;
+	}
+
 	return { type: 'Property', kind, key, value, method: false, shorthand: false, computed };
 }
 

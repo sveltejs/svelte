@@ -4,7 +4,7 @@
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
-import { build_getter, get_transform } from './utils.js';
+import { build_getter, copy_transform, get_transform } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -152,7 +152,7 @@ export function client_component(analysis, options) {
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,
 		state_fields: new Map(),
-		transform: {},
+		transform: copy_transform(),
 		in_constructor: false,
 		instance_level_snippets: [],
 		module_level_snippets: [],
@@ -175,7 +175,7 @@ export function client_component(analysis, options) {
 
 	const instance_state = {
 		...state,
-		transform: { ...state.transform },
+		transform: copy_transform(state.transform),
 		scope: analysis.instance.scope,
 		scopes: analysis.instance.scopes,
 		is_instance: true
@@ -686,7 +686,7 @@ export function client_module(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		state_fields: new Map(),
-		transform: {},
+		transform: copy_transform(),
 		in_constructor: false,
 		is_instance: false
 	};

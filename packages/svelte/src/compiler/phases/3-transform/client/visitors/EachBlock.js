@@ -12,7 +12,7 @@ import {
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { async_thunk } from '../utils.js';
+import { async_thunk, copy_transform } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 import { build_expression, add_svelte_meta } from './shared/utils.js';
 
@@ -125,14 +125,14 @@ export function EachBlock(node, context) {
 
 	const child_state = {
 		...context.state,
-		transform: { ...context.state.transform },
+		transform: copy_transform(context.state.transform),
 		store_to_invalidate
 	};
 
 	/** The state used when generating the key function, if necessary */
 	const key_state = {
 		...context.state,
-		transform: { ...context.state.transform }
+		transform: copy_transform(context.state.transform)
 	};
 
 	// We need to generate a unique identifier in case there's a bind:group below

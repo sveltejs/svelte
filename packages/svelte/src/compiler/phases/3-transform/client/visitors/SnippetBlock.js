@@ -5,6 +5,7 @@ import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
+import { copy_transform } from '../utils.js';
 
 /**
  * @param {AST.SnippetBlock} node
@@ -20,7 +21,7 @@ export function SnippetBlock(node, context) {
 	/** @type {Statement[]} */
 	const declarations = [];
 
-	const transform = { ...context.state.transform };
+	const transform = copy_transform(context.state.transform);
 	const child_state = { ...context.state, transform };
 
 	for (let i = 0; i < node.parameters.length; i++) {

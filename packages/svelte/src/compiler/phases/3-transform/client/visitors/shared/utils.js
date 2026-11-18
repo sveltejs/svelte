@@ -9,7 +9,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
-import { async_thunk, build_getter, is_state_source } from '../../utils.js';
+import { async_thunk, build_getter, copy_transform, is_state_source } from '../../utils.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
@@ -255,7 +255,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 	/** @type {string[]} */
 	const seen = [];
 
-	const transform = { ...state.transform };
+	const transform = copy_transform(state.transform);
 
 	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
