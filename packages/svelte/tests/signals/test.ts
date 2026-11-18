@@ -1401,7 +1401,9 @@ describe('signals', () => {
 			});
 			const a = derived(() => $.get(leaf));
 			const destroy_listener = effect_root(() => {
-				render_effect(() => $.get(leaf));
+				render_effect(() => {
+					$.get(leaf);
+				});
 			});
 			let checks_at_abort = 0;
 			let checks: { count: number };
