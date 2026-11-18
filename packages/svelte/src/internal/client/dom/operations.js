@@ -83,7 +83,7 @@ export function init_operations() {
  * @returns {Text}
  */
 export function create_text(value = '') {
-	if (current_renderer) return /** @type {Text} */ (current_renderer.createTextNode(value));
+	if (current_renderer) return /** @type {Text} */ (current_renderer.createText(value));
 	return document.createTextNode(value);
 }
 
@@ -369,7 +369,7 @@ function is_comment(node) {
 export function node_type(node) {
 	if (node == null) return undefined;
 	if (current_renderer) {
-		const type = current_renderer.nodeType(node);
+		const type = current_renderer.getNodeType(node);
 		return CUSTOM_RENDERER_NODE_TYPE_MAP[type];
 	}
 	return node.nodeType;
@@ -494,8 +494,8 @@ export function replace_with(old_node, new_node) {
  */
 export function set_text_content(node, value) {
 	if (current_renderer) {
-		current_renderer.setText(node, value);
-		return;
+		// only used for DOM-only features (injected styles and `<script>` tags in `{@html ...}`)
+		e.custom_renderer_unsupported_operation('textContent');
 	}
 	node.textContent = value;
 }
@@ -625,7 +625,7 @@ function remove_style_property_in_string(style_string, property) {
  * @returns {string | null}
  */
 export function get_node_value(node) {
-	if (current_renderer) return current_renderer.getNodeValue(node);
+	if (current_renderer) return current_renderer.getText(node);
 	return node.nodeValue;
 }
 
@@ -731,7 +731,7 @@ export function remove_attribute(element, name) {
  * @returns {boolean}
  */
 export function has_attribute(element, name) {
-	if (current_renderer) return current_renderer.hasAttribute(element, name);
+	if (current_renderer) return current_renderer.getAttribute(element, name) !== null;
 	return element.hasAttribute(name);
 }
 

@@ -319,7 +319,7 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 type MountRenderer = {
 	createFragment(): object;
 	createElement(name: string): object;
-	createTextNode(data: string): object;
+	createText(data: string): object;
 	createComment(data: string): object;
 };
 
@@ -332,7 +332,7 @@ type MountRendererTarget<Renderer> = Renderer extends {
 
 type MountRendererAnchor<Renderer> = Renderer extends {
 	createElement(name: string): infer TElement;
-	createTextNode(data: string): infer TTextNode;
+	createText(data: string): infer TTextNode;
 	createComment(data: string): infer TComment;
 }
 	? TElement | TTextNode | TComment

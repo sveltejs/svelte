@@ -15,8 +15,8 @@ export type Renderer<
 	/** Creates an element with the given name. */
 	createElement(name: string): TElement;
 
-	/** Creates a text node with the given data. */
-	createTextNode(data: string): TTextNode;
+	/** Creates a text node with the given text. */
+	createText(data: string): TTextNode;
 
 	/**
 	 * Creates a comment node with the given data.
@@ -24,16 +24,11 @@ export type Renderer<
 	 */
 	createComment(data: string): TComment;
 
-	/** Should return the type of the node in string form. */
-	nodeType(node: TNode): NodeType;
+	/** Return the type of the node: `'fragment'`, `'element'`, `'text'` or `'comment'`. */
+	getNodeType(node: TNode): NodeType;
 
-	/**
-	 * Return the value of the node:
-	 * - text value of a text node
-	 * - data value of a comment
-	 * - null for elements and fragments
-	 */
-	getNodeValue(node: TTextNode | TComment): string | null;
+	/** Return the text of a text node, or the data of a comment. */
+	getText(node: TTextNode | TComment): string | null;
 
 	/** Return the value of the attribute with the given name on the element, or null if it doesn't exist. */
 	getAttribute(element: TElement, name: string): string | null;
@@ -44,14 +39,8 @@ export type Renderer<
 	/** Remove the attribute with the given name from the element. */
 	removeAttribute(element: TElement, name: string): void;
 
-	/** Return true if the element has an attribute with the given name. */
-	hasAttribute(element: TElement, name: string): boolean;
-
-	/**
-	 * Set the text content of the node to the given value.
-	 * This should work for both text nodes and elements.
-	 */
-	setText(node: TElement | TTextNode | TComment, text: string): void;
+	/** Set the text of a text node. */
+	setText(node: TTextNode, text: string): void;
 
 	/** Return the first child of the element or fragment, or null if it has no children. */
 	getFirstChild(element: TElement | TFragment): TNode | null;
@@ -63,20 +52,20 @@ export type Renderer<
 	getNextSibling(node: TElement | TTextNode | TComment): TNode | null;
 
 	/**
-	 * Insert the element into the parent before the anchor.
-	 * If anchor is null, insert at the end.
+	 * Insert the node into the parent before the anchor, or at the end if the anchor is `null`.
+	 * Inserting a fragment should insert its children (and leave the fragment empty).
 	 */
 	insert(
 		parent: TElement | TFragment,
-		element: TNode,
+		node: TNode,
 		anchor: TElement | TTextNode | TComment | null
 	): void;
 
 	/** Remove the node from the tree. */
 	remove(node: TElement | TTextNode | TComment): void;
 
-	/** Return the parent of the element, or null if it has no parent. */
-	getParent(element: TElement | TTextNode | TComment): TNode | null;
+	/** Return the parent of the node, or null if it has no parent. */
+	getParent(node: TElement | TTextNode | TComment): TNode | null;
 
 	/** Add an event listener of the given type and handler to the target node. */
 	addEventListener(target: TElement, type: string, handler: any, options?: any): void;
