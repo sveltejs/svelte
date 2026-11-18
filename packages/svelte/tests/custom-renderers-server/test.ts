@@ -3,7 +3,7 @@
 // This suite runs in a dedicated Vitest project (see the root `vitest.config.js`
 // `projects` array) that resolves `svelte` using only the server/`default`
 // export condition — i.e. it simulates running a custom renderer in Node
-// *without* the required `custom-renderer` (or `browser`) resolve condition.
+// *without* the required `svelte-custom-renderer` (or `browser`) resolve condition.
 // In that situation Svelte should fail fast with a descriptive error rather
 // than letting the user hit a cryptic `mount` failure later on.
 

@@ -1,8 +1,8 @@
 ## custom_renderer_unavailable_on_server
 
-> You need to specify a custom condition to use a custom renderer in a non-browser environment such as Node. Add the `custom-renderer` resolve condition (eg. run Node with `--conditions=custom-renderer`).
+> You need to specify a custom condition to use a custom renderer in a non-browser environment such as Node. Add the `svelte-custom-renderer` resolve condition (eg. run Node with `--conditions=svelte-custom-renderer`).
 >
-> If you're using a bundler, add `custom-renderer` to its list of resolve conditions instead.
+> If you're using a bundler, add `svelte-custom-renderer` to its list of resolve conditions instead.
 
 ## experimental_async_required
 
