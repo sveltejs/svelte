@@ -76,3 +76,32 @@ describe('customRenderer function resolver validation', () => {
 		});
 	}
 });
+
+describe("customRenderer with css: 'injected'", () => {
+	const source = '<p>hello</p><style>p { color: red; }</style>';
+
+	it('ignores an inherited `css: injected` for custom renderer components', () => {
+		const result = compile(source, { ...enabled, css: 'injected' });
+
+		assert.notInclude(result.js.code, 'append_styles');
+		assert.include(result.css?.code, 'color: red');
+	});
+
+	it('still injects styles for DOM components when custom renderers are enabled', () => {
+		const result = compile(source, {
+			generate: 'client',
+			css: 'injected',
+			experimental: { customRenderer: true }
+		});
+
+		assert.include(result.js.code, 'append_styles');
+		assert.isNull(result.css);
+	});
+
+	it('rejects an explicit `<svelte:options css="injected" />` in a custom renderer component', () => {
+		assert.throws(
+			() => compile(`<svelte:options css="injected" />${source}`, enabled),
+			/incompatible_with_custom_renderer/
+		);
+	});
+});
