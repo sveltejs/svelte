@@ -1,5 +1,5 @@
 import { describe, assert, it } from 'vitest';
-import { flushSync, tick } from '../../src/index-client';
+import { flushSync, fork, tick } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
@@ -65,6 +65,30 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	test('nested commit retains latest block dependencies', () => {
+		const trigger = state(0);
+		const mode = state(0);
+		const a = state(0);
+		const b = state(0);
+		const log: number[] = [];
+
+		block(() => {
+			$.get(trigger);
+			log.push($.get(mode) === 2 ? $.get(b) : $.get(a));
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) flushSync(() => set(mode, 2));
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			flushSync(() => set(b, 1));
+			assert.equal(log.at(-1), 1);
+		};
+	});
+
 	for (const render of [false, true]) {
 		test(`${render ? 'render' : 'user'} effects scheduled during traversal retain tree order`, () => {
 			if (render) enable_async_mode_flag();
@@ -1950,6 +1974,71 @@ describe('signals', () => {
 		} finally {
 			destroy();
 			pop();
+		}
+	});
+
+	it('prunes the edges of a block effect once the batches that ran it commit', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1), state(2), state(3)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+			for (let i = 1; i < items.length; i++) flushSync(() => set(index, i));
+
+			assert.deepEqual(
+				items.map((item) => item.reactions !== null),
+				[false, false, false, true]
+			);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('prunes the edges of a block effect that only a discarded batch needed', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+		flushSync();
+
+		const pending = fork(() => set(index, 1));
+
+		try {
+			// the fork's run of the block read `items[1]`
+			assert.notEqual(items[1].reactions, null);
+
+			pending.discard();
+			assert.equal(items[1].reactions, null);
+			assert.notEqual(items[0].reactions, null);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			pending.discard();
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
 		}
 	});
 });

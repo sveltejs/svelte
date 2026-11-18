@@ -1,0 +1,37 @@
+<script lang="ts">
+	import Child from './Child.svelte';
+
+	let a = $state(false);
+	let b = $state(false);
+	let x = $state(0);
+
+	let queue: Array<{ key: string; resolve: () => void }> = [];
+	let aborted: Array<() => void> = [];
+
+	function push(label: string, v: number, signal: AbortSignal) {
+		console.log(`${label} ${v}`);
+		const d = Promise.withResolvers<number>();
+		// the promise only rejects once `reject` is clicked
+		signal.addEventListener('abort', () => aborted.push(() => d.reject(signal.reason)));
+		queue.push({ key: `${label} ${v}`, resolve: () => d.resolve(v) });
+		return d.promise;
+	}
+
+	function resolve(key: string) {
+		const i = queue.findIndex((e) => e.key === key);
+		if (i !== -1) queue.splice(i, 1)[0].resolve();
+	}
+</script>
+
+<button onclick={() => { a = true; x = 1; }}>a</button>
+<button onclick={() => { b = true; x = 2; }}>b</button>
+<button onclick={() => resolve('first 1')}>first 1</button>
+<button onclick={() => resolve('first 2')}>first 2</button>
+<button onclick={() => resolve('second 2')}>second 2</button>
+<button onclick={() => aborted.splice(0).forEach((reject) => reject())}>reject</button>
+
+<output>
+	{#if b || a}
+		<Child {x} {push} />
+	{/if}
+</output>
