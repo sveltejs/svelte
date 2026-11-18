@@ -4,8 +4,8 @@ import { test } from '../../test';
 // An item that a committed batch removes, but that a pending batch still selects, is kept offscreen —
 // and is updated in the pending batch's view, which waits for it
 export default test({
-	// batch-views: the item kept offscreen for B stays paused, so B doesn't update it and commits it
-	// with stale content (see batch-views.md, "Kept offscreen, but paused")
+	// The item kept offscreen for B stays paused, so B doesn't update it and commits it
+	// with stale content (see documentation/internals/known-bugs-and-gaps.md, "Kept offscreen, but paused")
 	skip: true,
 	mode: ['client'],
 	async test({ assert, target, logs }) {
