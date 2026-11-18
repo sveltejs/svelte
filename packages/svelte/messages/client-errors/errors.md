@@ -6,7 +6,7 @@ In Svelte, there are two types of reactions — [`$derived`](/docs/svelte/$deriv
 
 Because of this, effects can only be created inside other effects (or [effect roots](/docs/svelte/$effect#$effect.root), such as the one that is created when you first mount a component) so that Svelte knows when to destroy them.
 
-Some sleight of hand occurs when a derived contains an `await` expression: Since waiting until we read `$derived(await getPromise())` to call `getPromise` would be too late, we use an effect to instead call it proactively, notifying Svelte when the value is available. But since we're using an effect, this can only happen during component initialization or in a [declaration tag](/docs/svelte/declaration-tags).
+Some sleight of hand occurs when a derived contains an `await` expression: since waiting until we read `$derived(await getPromise())` to call `getPromise` would be too late, we use an effect to instead call it proactively, notifying Svelte when the value is available. But since we're using an effect, this can only happen during component initialization or in a [declaration tag](/docs/svelte/declaration-tags).
 
 ## bind_invalid_checkbox_value
 
