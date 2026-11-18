@@ -18,11 +18,12 @@ export default test({
 		<p>hi</p>
 		<p>hi</p>
 		<p>hi</p>
+		<p>local</p>
 	`,
 
 	async test({ target, assert }) {
 		function check() {
-			const [main, if_, each, await_, key, child1, child2, child3, child4, dynamic] =
+			const [main, if_, each, await_, key, child1, child2, child3, child4, dynamic, local] =
 				target.querySelectorAll('p');
 
 			// @ts-expect-error
@@ -84,6 +85,7 @@ export default test({
 				parent: {
 					file: 'passthrough.svelte',
 					type: 'render',
+					snippetName: 'children',
 					line: 5,
 					column: 0,
 					parent: {
@@ -107,6 +109,7 @@ export default test({
 				parent: {
 					file: 'passthrough.svelte',
 					type: 'render',
+					snippetName: 'children',
 					line: 5,
 					column: 0,
 					parent: {
@@ -118,6 +121,7 @@ export default test({
 						parent: {
 							file: 'passthrough.svelte',
 							type: 'render',
+							snippetName: 'children',
 							line: 5,
 							column: 0,
 							parent: {
@@ -137,6 +141,7 @@ export default test({
 			assert.deepEqual(child4.__svelte_meta.parent, {
 				file: 'passthrough.svelte',
 				type: 'render',
+				snippetName: 'named',
 				line: 8,
 				column: 1,
 				parent: {
@@ -167,6 +172,16 @@ export default test({
 				type: 'component',
 				componentTag: 'x.y',
 				line: 50,
+				column: 0,
+				parent: null
+			});
+
+			// @ts-expect-error
+			assert.deepEqual(local.__svelte_meta.parent, {
+				file: 'main.svelte',
+				type: 'render',
+				snippetName: 'local',
+				line: 56,
 				column: 0,
 				parent: null
 			});
