@@ -26,10 +26,12 @@ export default test({
 	target: 'dom',
 	compileOptions: { dev: true, hmr: true },
 	async test({ assert, target, serialize_dom }) {
-		// the module instance `main` imports...
-		const { default: Child } = await import('./_output/client/Child.svelte.js');
+		// The compiled module doesn't exist when this file is loaded, so hide the imports from
+		// Vite's import analysis. This is the module instance `main` imports...
+		const child = './_output/client/Child.svelte.js';
+		const { default: Child } = await import(/* @vite-ignore */ child);
 		// ...and a fresh instance, standing in for the updated module
-		const { default: Next } = await import('./_output/client/Child.svelte.js?next');
+		const { default: Next } = await import(/* @vite-ignore */ `${child}?next`);
 
 		assert.equal(
 			serialize_dom(target),
