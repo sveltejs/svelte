@@ -484,7 +484,15 @@ export class Batch {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
 					if ((flags & BLOCK_EFFECT) !== 0) this.add_dirty_reaction(effect, MAYBE_DIRTY);
-					update_effect(effect);
+
+					try {
+						update_effect(effect);
+					} catch (error) {
+						// The batch isn't discarded if it still has blocking async work. Don't
+						// replay the effect that threw each time the batch is processed again
+						this.#dirty_reactions.delete(effect);
+						throw error;
+					}
 				}
 
 				var child = effect.first;
