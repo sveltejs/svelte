@@ -25,7 +25,7 @@ import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { COMMENT_NODE, TEXT_CACHE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
-import { push_renderer } from './custom-renderer/state.js';
+import { push_renderer, pop_renderer } from './custom-renderer/state.js';
 import { custom_renderers_flag } from '../flags/index.js';
 
 /**
@@ -158,12 +158,12 @@ export function hydrate(component, options) {
  */
 function _mount(Component, options) {
 	if (custom_renderers_flag && options.renderer) {
-		var pop_renderer = push_renderer(options.renderer);
+		var previous_renderer = push_renderer(options.renderer);
 
 		try {
 			return _mount_inner(Component, options);
 		} finally {
-			pop_renderer();
+			pop_renderer(previous_renderer);
 		}
 	}
 

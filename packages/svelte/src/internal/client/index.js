@@ -192,5 +192,5 @@ export {
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
-export { push_renderer } from './custom-renderer/state.js';
+export { push_renderer, pop_renderer } from './custom-renderer/state.js';
 export { cross, is_crossing } from './custom-renderer/cross.js';

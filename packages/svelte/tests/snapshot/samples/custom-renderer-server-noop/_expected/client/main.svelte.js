@@ -8,7 +8,7 @@ var root = $.from_tree([['div', { class: 'greeting' }, ' ']]);
 export default function Main($$anchor, $$props) {
 	if ($.is_crossing($renderer)) return $.cross($renderer, $$anchor, ($$anchor) => Main($$anchor, $$props));
 
-	var $$pop_renderer = $.push_renderer($renderer);
+	var $$previous_renderer = $.push_renderer($renderer);
 
 	try {
 		let name = $.prop($$props, 'name', 3, 'world');
@@ -18,6 +18,6 @@ export default function Main($$anchor, $$props) {
 		$.template_effect(() => $.set_text(text, `Hello ${name() ?? ''}!`));
 		$.append($$anchor, div);
 	} finally {
-		$$pop_renderer();
+		$.pop_renderer($$previous_renderer);
 	}
 }

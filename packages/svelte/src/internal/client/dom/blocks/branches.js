@@ -22,7 +22,7 @@ import {
 	get_last_child
 } from '../operations.js';
 import { DEV } from 'esm-env';
-import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
+import { push_renderer, current_renderer, pop_renderer } from '../../custom-renderer/state.js';
 import { custom_renderers_flag } from '../../../flags/index.js';
 
 /**
@@ -99,7 +99,7 @@ export class BranchManager {
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
 
-		var pop_renderer = custom_renderers_flag ? push_renderer(this.#renderer) : undefined;
+		var previous_renderer = custom_renderers_flag ? push_renderer(this.#renderer) : null;
 
 		try {
 			var key = /** @type {Key} */ (this.#batches.get(batch));
@@ -172,7 +172,7 @@ export class BranchManager {
 				}
 			}
 		} finally {
-			pop_renderer?.();
+			if (custom_renderers_flag) pop_renderer(previous_renderer);
 		}
 	};
 
