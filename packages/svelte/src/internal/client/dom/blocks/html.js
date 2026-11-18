@@ -13,10 +13,11 @@ import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
-import { component_context, dev_current_component_function, dev_stack } from '../../context.js';
+import { dev_current_component_function, dev_stack } from '../../context.js';
 import { create_element, get_first_child, get_next_sibling } from '../operations.js';
 import { active_effect } from '../../runtime.js';
 import { COMMENT_NODE, ELEMENT_NODE } from '#client/constants';
+import { set_dev_metadata } from '../../dev/elements.js';
 
 /**
  * @param {string | null} server_hash
@@ -52,12 +53,11 @@ function assign_locations(effect, parent, loc) {
 
 	while (node !== null) {
 		if (node.nodeType === ELEMENT_NODE) {
-			// @ts-expect-error
-			node.__svelte_meta = {
-				parent,
-				loc: { file: loc[0], line: loc[1], column: loc[2] },
-				component: component_context
-			};
+			set_dev_metadata(
+				/** @type {Element} */ (node),
+				{ file: loc[0], line: loc[1], column: loc[2] },
+				parent
+			);
 		}
 
 		if (node === effect.nodes.end) break;
