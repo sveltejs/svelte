@@ -50,7 +50,7 @@ import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
 import { tag } from '../../dev/tracing.js';
 
-import { push_renderer, current_renderer } from '../../custom-renderer/state.js';
+import { push_renderer, current_renderer, pop_renderer } from '../../custom-renderer/state.js';
 import { custom_renderers_flag } from '../../../flags/index.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
@@ -294,7 +294,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		var pop_renderer = custom_renderers_flag ? push_renderer(renderer) : undefined;
+		var previous_renderer = custom_renderers_flag ? push_renderer(renderer) : null;
 
 		try {
 			state.pending.delete(batch);
@@ -325,7 +325,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				}
 			}
 		} finally {
-			pop_renderer?.();
+			if (custom_renderers_flag) pop_renderer(previous_renderer);
 		}
 
 		destroy_unselected();

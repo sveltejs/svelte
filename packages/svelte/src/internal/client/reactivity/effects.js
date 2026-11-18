@@ -48,7 +48,7 @@ import { component_context, dev_current_component_function, dev_stack } from '..
 import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
 import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
-import { push_renderer, current_renderer } from '../custom-renderer/state.js';
+import { push_renderer, current_renderer, pop_renderer } from '../custom-renderer/state.js';
 import { custom_renderers_flag } from '../../flags/index.js';
 
 /**
@@ -519,30 +519,35 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	var pop_renderer = custom_renderers_flag ? push_renderer(effect.r) : undefined;
+	var previous_renderer = custom_renderers_flag ? push_renderer(effect.r) : null;
 
-	if (
-		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
-		effect.nodes !== null &&
-		effect.nodes.end !== null
-	) {
-		remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
-		removed = true;
-	}
-
-	effect.f |= DESTROYING;
-	destroy_effect_children(effect, remove_dom && !removed);
-	remove_reactions(effect);
-
-	var transitions = effect.nodes && effect.nodes.t;
-
-	if (transitions !== null) {
-		for (const transition of transitions) {
-			transition.stop();
+	try {
+		if (
+			(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
+			effect.nodes !== null &&
+			effect.nodes.end !== null
+		) {
+			remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
+			removed = true;
 		}
-	}
 
-	execute_effect_teardown(effect);
+		effect.f |= DESTROYING;
+		destroy_effect_children(effect, remove_dom && !removed);
+		remove_reactions(effect);
+
+		var transitions = effect.nodes && effect.nodes.t;
+
+		if (transitions !== null) {
+			for (const transition of transitions) {
+				transition.stop();
+			}
+		}
+
+		execute_effect_teardown(effect);
+	} finally {
+		// nothing below interacts with the renderer
+		if (custom_renderers_flag) pop_renderer(previous_renderer);
+	}
 
 	effect.f ^= DESTROYING;
 	effect.f |= DESTROYED;
@@ -573,8 +578,6 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.b =
 		effect.r =
 			null;
-
-	pop_renderer?.();
 }
 
 /**
@@ -768,7 +771,7 @@ function resume_children(effect, local) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
-	var pop_renderer = custom_renderers_flag ? push_renderer(effect.r) : undefined;
+	var previous_renderer = custom_renderers_flag ? push_renderer(effect.r) : null;
 
 	try {
 		/** @type {TemplateNode | null} */
@@ -783,6 +786,6 @@ export function move_effect(effect, fragment) {
 			node = next;
 		}
 	} finally {
-		pop_renderer?.();
+		if (custom_renderers_flag) pop_renderer(previous_renderer);
 	}
 }
