@@ -53,7 +53,11 @@ export interface SignalCreatedInfo {
 	label: string | undefined;
 	/** `file:line:column` of the declaration, if known */
 	location: string | undefined;
-	/** The component context active when the signal was created */
+	/**
+	 * The component context active when the signal was created. For `proxy-prop` and
+	 * `proxy-version` signals, the one where the `$state` at `location` was declared, even if the
+	 * signal is created later. It can already be destroyed
+	 */
 	ctx: ComponentContext | null;
 	/** The effect active when the signal was created */
 	effect: Effect | null;

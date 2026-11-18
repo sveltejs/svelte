@@ -183,8 +183,9 @@ export function devtools_state_write() {
  * @param {string | undefined} location
  * @param {object} [proxy] the proxy owning this source, if any
  * @param {PropertyKey} [key] the property of `proxy` this source belongs to (`undefined` for the version source)
+ * @param {ComponentContext | null} [ctx] the component the source was declared in
  */
-export function announce_signal(source, label, location, proxy, key) {
+export function announce_signal(source, label, location, proxy, key, ctx = component_context) {
 	if (announced.has(source)) return;
 	announced.add(source);
 
@@ -206,7 +207,7 @@ export function announce_signal(source, label, location, proxy, key) {
 		kind,
 		label,
 		location,
-		ctx: /** @type {any} */ (component_context),
+		ctx: /** @type {any} */ (ctx),
 		effect: /** @type {any} */ (active_effect)
 	};
 
