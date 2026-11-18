@@ -83,6 +83,49 @@ export type Renderer<
 
 	/** Remove an event listener of the given type and handler from the target node. */
 	removeEventListener(target: TElement, type: string, handler: any, options?: any): void;
+
+	/**
+	 * Called when a component (or snippet) that uses this renderer is rendered inside
+	 * content that belongs to a different renderer (`host` is `null` for the DOM).
+	 *
+	 * Return a `container` owned by this renderer that the content will be rendered into
+	 * and, optionally, a `node` owned by the host that represents the content in the host
+	 * tree. If no `node` is returned, an empty text node is used.
+	 *
+	 * `parent` is the host-owned parent of the position being rendered into, which makes it
+	 * possible to render into an element the user wrote, for example a `<canvas>`.
+	 */
+	embed?(context: {
+		host: Renderer<any, any, any, any> | null;
+		parent: unknown;
+		anchor: unknown;
+	}): RendererConnection<unknown, TElement | TFragment>;
+
+	/**
+	 * Called when a component (or snippet) that uses a different renderer (`guest` is `null`
+	 * for the DOM) is rendered inside content that belongs to this renderer, and the guest
+	 * renderer doesn't define `embed`.
+	 *
+	 * Return a `container` owned by the guest renderer that the content will be rendered into
+	 * and, optionally, a `node` owned by this renderer that represents the content in this tree.
+	 */
+	host?(context: {
+		guest: Renderer<any, any, any, any> | null;
+		parent: TElement | TFragment | null;
+		anchor: TElement | TTextNode | TComment;
+	}): RendererConnection<TElement | TTextNode | TComment, unknown>;
+};
+
+/**
+ * Describes how content belonging to one renderer is attached to content belonging to another
+ */
+export type RendererConnection<THostNode, TContainer> = {
+	/** A node owned by the host renderer that represents the content in the host tree */
+	node?: THostNode;
+	/** A node owned by the guest renderer that the content is rendered into */
+	container: TContainer;
+	/** Called after the content has been removed */
+	destroy?(): void;
 };
 
 export type RendererNodes<

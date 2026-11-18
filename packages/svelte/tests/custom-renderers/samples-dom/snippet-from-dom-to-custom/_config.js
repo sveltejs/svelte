@@ -1,6 +1,6 @@
 import { test } from '../../test-dom.test';
 
 export default test({
-	error:
-		'A snippet created in a component with a custom renderer cannot be rendered by a different renderer'
+	// the snippet belongs to the DOM, so rendering it inside the custom component crosses into the DOM
+	html: '<div><dom-host><span>hello world</span></dom-host></div>'
 });

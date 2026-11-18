@@ -53,7 +53,7 @@ export function RenderTag(node, context) {
 		// In custom renderer components, validate that the snippet is compatible
 		// with the current renderer before rendering it
 		if (custom_renderer) {
-			snippet_function = b.call('$.validate_snippet_renderer', b.id('$renderer'), snippet_function);
+			snippet_function = b.call('$.validate_snippet_renderer', snippet_function);
 		}
 
 		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
@@ -73,7 +73,7 @@ export function RenderTag(node, context) {
 		// In custom renderer components, validate that the snippet is compatible
 		// with the current renderer before rendering it
 		if (custom_renderer) {
-			snippet_function = b.call('$.validate_snippet_renderer', b.id('$renderer'), snippet_function);
+			snippet_function = b.call('$.validate_snippet_renderer', snippet_function);
 		}
 
 		statements.push(

@@ -1,3 +1,4 @@
+/** @import { Renderer } from '../../custom-renderer/types.js' */
 /** @import { Snippet } from 'svelte' */
 /** @import { TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
@@ -19,6 +20,8 @@ import { get_first_child, get_next_sibling, insert_before, node_type } from '../
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
 import { BranchManager } from './branches.js';
 import { current_renderer } from '../../custom-renderer/state.js';
+import { cross, is_crossing } from '../../custom-renderer/cross.js';
+import { has_own_property } from '../../../shared/utils.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -65,44 +68,44 @@ export function wrap_snippet(component, fn) {
 }
 
 /**
- * Wraps a snippet function created in a component with a custom renderer,
- * ensuring it can only be rendered by the same renderer.
- * @template {(...args: any[]) => void} T
- * @param {any} expected_renderer
+ * Wraps a snippet function so that it remembers which renderer it was compiled for
+ * (`null` for DOM). If it is rendered by a different renderer, the snippet content
+ * is rendered across a renderer boundary (see `cross`).
+ * @template {(...args: any[]) => any} T
+ * @param {Renderer | null} renderer
  * @param {T} fn
  * @returns {T}
  */
-export function renderer_snippet(expected_renderer, fn) {
+export function renderer_snippet(renderer, fn) {
 	var wrapped = /** @type {T} */ (
-		(.../** @type {any[]} */ args) => {
-			if (current_renderer !== expected_renderer) {
-				e.snippet_renderer_mismatch();
+		(/** @type {TemplateNode} */ anchor, /** @type {any[]} */ ...args) => {
+			if (is_crossing(renderer)) {
+				return cross(renderer, anchor, (anchor) => fn(anchor, ...args));
 			}
-			return fn(...args);
+
+			return fn(anchor, ...args);
 		}
 	);
-	// we could technically avoid checking for expected_renderer in the function
-	// and store it in the returned function to check with `validate_snippet_renderer`
-	// but this keeps all the changes on the custom renderer side and leave the paths
-	// of "normal svelte" untouched...since that's the default people are gonna use
-	// svelte with we should optimize for that case
-	/** @type {any} */ (wrapped).__renderer = expected_renderer;
+
+	/** @type {any} */ (wrapped).__renderer = renderer;
 
 	return wrapped;
 }
 
 /**
- * Validates that a snippet function is compatible with the given renderer.
- * Used at render sites in custom renderer components.
+ * Validates that a snippet can be rendered by a custom renderer. Snippets compiled with
+ * custom renderer support know which renderer they belong to and can cross renderer
+ * boundaries; anything else (e.g. snippets from components compiled without the
+ * `experimental.customRenderer` option) can only be rendered by the DOM.
  * @template {((...args: any[]) => void) | null | undefined} T
- * @param {any} expected_renderer
  * @param {T} fn
  * @returns {T}
  */
-export function validate_snippet_renderer(expected_renderer, fn) {
-	if (fn != null && /** @type {any} */ (fn).__renderer !== expected_renderer) {
+export function validate_snippet_renderer(fn) {
+	if (fn != null && !has_own_property.call(fn, '__renderer')) {
 		e.snippet_renderer_mismatch();
 	}
+
 	return fn;
 }
 

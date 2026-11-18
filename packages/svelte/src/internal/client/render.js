@@ -8,8 +8,6 @@ import {
 	get_first_child,
 	get_next_sibling,
 	append_child,
-	add_event_listener,
-	remove_event_listener,
 	get_parent_node,
 	remove_child,
 	set_node_value,
@@ -21,16 +19,10 @@ import { active_effect } from './runtime.js';
 import { push, pop, component_context, mark_as_component } from './context.js';
 import { component_root } from './reactivity/effects.js';
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from './dom/hydration.js';
-import { array_from } from '../shared/utils.js';
-import {
-	all_registered_events,
-	handle_event_propagation,
-	root_event_handles
-} from './dom/elements/events.js';
+import { listen_to_delegated_events } from './dom/elements/events.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
-import { is_passive_event } from '../../utils.js';
 import { COMMENT_NODE, TEXT_CACHE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
 import { push_renderer } from './custom-renderer/state.js';
@@ -158,9 +150,6 @@ export function hydrate(component, options) {
 	}
 }
 
-/** @type {Map<EventTarget, Map<string, number>>} */
-const listeners = new Map();
-
 /**
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
@@ -241,77 +230,15 @@ function _mount_inner(
 			transformError
 		);
 
-		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up
-		/** @type {Set<string>} */
-		var registered_events = new Set();
-		/** @type {null | ((events: Array<string>) => void)} */
-		var event_handle = null;
-
-		if (!renderer) {
-			var dom_target = /** @type {EventTarget} */ (target);
-
-			/** @param {Array<string>} events */
-			event_handle = (events) => {
-				for (var i = 0; i < events.length; i++) {
-					var event_name = events[i];
-
-					if (registered_events.has(event_name)) continue;
-					registered_events.add(event_name);
-
-					var passive = is_passive_event(event_name);
-
-					// Add the event listener to both the container and the document.
-					// The container listener ensures we catch events from within in case
-					// the outer content stops propagation of the event.
-					//
-					// The document listener ensures we catch events that originate from elements that were
-					// manually moved outside of the container (e.g. via manual portals).
-					for (const node of [dom_target, document]) {
-						var counts = listeners.get(node);
-
-						if (counts === undefined) {
-							counts = new Map();
-							listeners.set(node, counts);
-						}
-
-						var count = counts.get(event_name);
-
-						if (count === undefined) {
-							add_event_listener(node, event_name, handle_event_propagation, { passive });
-							counts.set(event_name, 1);
-						} else {
-							counts.set(event_name, count + 1);
-						}
-					}
-				}
-			};
-
-			event_handle(array_from(all_registered_events));
-			root_event_handles.add(event_handle);
-		}
+		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up.
+		// When mounting with a custom renderer the target isn't a DOM node; any DOM content inside it is rendered
+		// into DOM containers that become delegation roots themselves (see `cross`)
+		var stop_listening = renderer
+			? null
+			: listen_to_delegated_events(/** @type {EventTarget} */ (target));
 
 		return () => {
-			if (event_handle !== null) {
-				for (var event_name of registered_events) {
-					for (const node of [/** @type {EventTarget} */ (target), document]) {
-						var counts = /** @type {Map<string, number>} */ (listeners.get(node));
-						var count = /** @type {number} */ (counts.get(event_name));
-
-						if (--count == 0) {
-							remove_event_listener(node, event_name, handle_event_propagation);
-							counts.delete(event_name);
-
-							if (counts.size === 0) {
-								listeners.delete(node);
-							}
-						} else {
-							counts.set(event_name, count);
-						}
-					}
-				}
-
-				root_event_handles.delete(event_handle);
-			}
+			stop_listening?.();
 
 			if (anchor_node !== anchor) {
 				var parent = get_parent_node(/** @type {Node} */ (anchor_node));

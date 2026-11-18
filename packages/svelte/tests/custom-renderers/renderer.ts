@@ -4,27 +4,36 @@
  * Runs in plain Node.js — no DOM required. Creates a tree of plain objects
  * with simple properties (type, name, children, attributes, value, etc).
  * Proves that Svelte can render into non-DOM targets.
+ *
+ * Renderers created with `cross: true` implement `embed` and `host`, so that they
+ * can be combined with the DOM and with other custom renderers:
+ *
+ * - a component using this renderer inside the DOM is represented by a
+ *   `<custom-root>` DOM element, whose `__custom` property holds the object tree
+ * - a DOM component inside this renderer is represented by a `<dom-host>` object
+ *   element, whose `dom` property holds a DOM container
+ * - a component using another custom renderer is represented by a `<foreign-root>`
+ *   element, whose `nested` property holds a fragment of the other renderer
  */
 
 import { createRenderer } from '../../src/renderer/index.js';
 
-type ObjElement = {
+export type ObjElement = {
 	type: 'element';
 	name: string;
 	attributes: Record<string, string>;
 	children: ObjNode[];
 	listeners: Record<string, Array<{ handler: any; options?: any }>>;
 	parent: ObjNode | null;
+	/** DOM container for DOM content rendered inside this renderer */
+	dom?: HTMLElement;
+	/** container for content belonging to a different custom renderer */
+	nested?: ObjFragment;
 };
-type ObjText = { type: 'text'; value: string; parent: ObjNode | null };
-type ObjComment = {
-	type: 'comment';
-	value: string;
-	parent: ObjNode | null;
-	before: (node: any) => void;
-};
-type ObjFragment = { type: 'fragment'; children: ObjNode[]; parent: ObjNode | null };
-type ObjNode = ObjElement | ObjText | ObjComment | ObjFragment;
+export type ObjText = { type: 'text'; value: string; parent: ObjNode | null };
+export type ObjComment = { type: 'comment'; value: string; parent: ObjNode | null };
+export type ObjFragment = { type: 'fragment'; children: ObjNode[]; parent: ObjNode | null };
+export type ObjNode = ObjElement | ObjText | ObjComment | ObjFragment;
 
 function insert_node(
 	parent: ObjNode & { children?: ObjNode[] },
@@ -69,128 +78,153 @@ function remove_from_parent(node: ObjNode) {
 	children.splice(idx, 1);
 }
 
-export const dom_elements: Array<DocumentFragment | Node> = [];
+function create_element(name: string): ObjElement {
+	return { type: 'element', name, attributes: {}, children: [], listeners: {}, parent: null };
+}
 
-const renderer = createRenderer<{
-	fragment: ObjFragment;
-	element: ObjElement;
-	text: ObjText;
-	comment: ObjComment;
-}>({
-	createFragment() {
-		return {
-			type: 'fragment',
-			children: [],
-			parent: null
-		};
-	},
+function create_fragment(): ObjFragment {
+	return { type: 'fragment', children: [], parent: null };
+}
 
-	createElement(name) {
-		return {
-			type: 'element',
-			name,
-			attributes: {},
-			children: [],
-			listeners: {},
-			parent: null
-		};
-	},
+/** Number of connections that have been created but not destroyed, for leak checks */
+export const connections = { open: 0 };
 
-	createTextNode(data) {
-		return {
-			type: 'text',
-			value: data,
-			parent: null
-		};
-	},
+export function create_test_renderer({ cross }: { cross: boolean }) {
+	const renderer = createRenderer<{
+		fragment: ObjFragment;
+		element: ObjElement;
+		text: ObjText;
+		comment: ObjComment;
+	}>({
+		createFragment: create_fragment,
+		createElement: create_element,
 
-	createComment(data) {
-		return {
-			type: 'comment',
-			value: data,
-			parent: null,
-			// adding this allows for this renderer to interleave with a DOM-based renderer
-			// the argument will be the DOM node that represent a DOM Component being mounted
-			before(node) {
-				dom_elements.push(node);
+		createTextNode(data) {
+			return { type: 'text', value: data, parent: null };
+		},
+
+		createComment(data) {
+			return { type: 'comment', value: data, parent: null };
+		},
+
+		nodeType(node) {
+			return node.type;
+		},
+
+		getNodeValue(node) {
+			if (node.type === 'text' || node.type === 'comment') return node.value;
+			return null;
+		},
+
+		getAttribute(element, name) {
+			return element.attributes?.[name] ?? null;
+		},
+
+		setAttribute(element, key, value) {
+			element.attributes[key] = String(value);
+		},
+
+		removeAttribute(element, name) {
+			delete element.attributes[name];
+		},
+
+		hasAttribute(element, name) {
+			return name in (element.attributes ?? {});
+		},
+
+		setText(node, text) {
+			if (node.type === 'text' || node.type === 'comment') {
+				node.value = text;
 			}
-		};
-	},
+		},
 
-	nodeType(node) {
-		return node.type;
-	},
+		getFirstChild(element) {
+			return element.children?.[0] ?? null;
+		},
 
-	getNodeValue(node) {
-		if (node.type === 'text' || node.type === 'comment') return node.value;
-		return null;
-	},
+		getLastChild(element) {
+			const c = element.children;
+			return c?.[c.length - 1] ?? null;
+		},
 
-	getAttribute(element, name) {
-		return element.attributes?.[name] ?? null;
-	},
+		getNextSibling(node) {
+			const parent = node.parent;
+			if (!parent || !('children' in parent)) return null;
+			const idx = parent.children.indexOf(node);
+			return parent.children[idx + 1] ?? null;
+		},
 
-	setAttribute(element, key, value) {
-		element.attributes[key] = String(value);
-	},
+		insert(parent, element, anchor) {
+			insert_node(parent, element, anchor);
+		},
 
-	removeAttribute(element, name) {
-		delete element.attributes[name];
-	},
+		remove(node) {
+			remove_from_parent(node);
+		},
 
-	hasAttribute(element, name) {
-		return name in (element.attributes ?? {});
-	},
+		getParent(node) {
+			return node.parent ?? null;
+		},
 
-	setText(node, text) {
-		if (node.type === 'text' || node.type === 'comment') {
-			node.value = text;
+		addEventListener(target, type, handler, options) {
+			if (target.type !== 'element') return;
+			if (!target.listeners) target.listeners = {};
+			if (!target.listeners[type]) target.listeners[type] = [];
+			target.listeners[type].push({ handler, options });
+		},
+
+		removeEventListener(target, type, handler, options) {
+			if (target.type !== 'element') return;
+			if (!target.listeners?.[type]) return;
+			target.listeners[type] = target.listeners[type].filter(
+				(/** @type {any} */ l) => l.handler !== handler
+			);
 		}
-	},
+	});
 
-	getFirstChild(element) {
-		return element.children?.[0] ?? null;
-	},
+	if (cross) {
+		// a component using this renderer, inside the DOM or another custom renderer
+		renderer.embed = ({ host }) => {
+			const container = create_fragment();
+			connections.open += 1;
 
-	getLastChild(element) {
-		const c = element.children;
-		return c?.[c.length - 1] ?? null;
-	},
+			if (host === null) {
+				const node = document.createElement('custom-root');
+				(node as any).__custom = container;
 
-	getNextSibling(node) {
-		const parent = node.parent;
-		if (!parent || !('children' in parent)) return null;
-		const idx = parent.children.indexOf(node);
-		return parent.children[idx + 1] ?? null;
-	},
+				return { node, container, destroy: () => void (connections.open -= 1) };
+			}
 
-	insert(parent, element, anchor) {
-		insert_node(parent, element, anchor);
-	},
+			const node = host.createElement('foreign-root');
+			node.nested = container;
 
-	remove(node) {
-		remove_from_parent(node);
-	},
+			return { node, container, destroy: () => void (connections.open -= 1) };
+		};
 
-	getParent(node) {
-		return node.parent ?? null;
-	},
+		// a component using a different renderer (that can't embed itself) inside this one
+		renderer.host = ({ guest }) => {
+			connections.open += 1;
 
-	addEventListener(target, type, handler, options) {
-		if (target.type !== 'element') return;
-		if (!target.listeners) target.listeners = {};
-		if (!target.listeners[type]) target.listeners[type] = [];
-		target.listeners[type].push({ handler, options });
-	},
+			if (guest === null) {
+				const node = create_element('dom-host');
+				const container = document.createElement('dom-container');
+				node.dom = container;
 
-	removeEventListener(target, type, handler, options) {
-		if (target.type !== 'element') return;
-		if (!target.listeners?.[type]) return;
-		target.listeners[type] = target.listeners[type].filter(
-			(/** @type {any} */ l) => l.handler !== handler
-		);
+				return { node, container, destroy: () => void (connections.open -= 1) };
+			}
+
+			const node = create_element('foreign-root');
+			const container = guest.createFragment();
+			node.nested = container;
+
+			return { node, container, destroy: () => void (connections.open -= 1) };
+		};
 	}
-});
+
+	return renderer;
+}
+
+const renderer = create_test_renderer({ cross: true });
 
 // ---- Test helpers ----
 
@@ -215,6 +249,7 @@ export function dispatch_event(node: any, type: string, detail?: any) {
 
 /**
  * Serialize an object tree to an HTML-like string for easy assertion.
+ * Content belonging to other renderers (DOM or custom) is serialized inline.
  */
 export function serialize(node: ObjNode): string {
 	if (!node) return '';
@@ -233,12 +268,42 @@ export function serialize(node: ObjNode): string {
 			for (const key of sorted_keys) {
 				attrs += ` ${key}="${node.attributes[key]}"`;
 			}
-			const children = node.children.map(serialize).join('');
+			const children = node.dom
+				? serialize_dom_children(node.dom)
+				: node.nested
+					? serialize(node.nested)
+					: node.children.map(serialize).join('');
 			return `<${tag}${attrs}>${children}</${tag}>`;
 		}
 		default:
 			return '';
 	}
+}
+
+/**
+ * Serialize the children of a DOM node, including the object trees of any
+ * custom renderer content embedded inside it.
+ */
+export function serialize_dom_children(node: Node): string {
+	let result = '';
+
+	for (const child of node.childNodes) {
+		if (child.nodeType === 3) {
+			result += child.textContent;
+		} else if (child.nodeType === 1) {
+			const element = child as Element;
+			const tag = element.nodeName.toLowerCase();
+			let attrs = '';
+			for (const name of element.getAttributeNames().sort()) {
+				attrs += ` ${name}="${element.getAttribute(name)}"`;
+			}
+			const custom = (element as any).__custom as ObjFragment | undefined;
+			const children = custom ? serialize(custom) : serialize_dom_children(element);
+			result += `<${tag}${attrs}>${children}</${tag}>`;
+		}
+	}
+
+	return result;
 }
 
 export default renderer;

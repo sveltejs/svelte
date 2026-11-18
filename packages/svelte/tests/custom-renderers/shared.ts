@@ -5,8 +5,15 @@ import { assert } from 'vitest';
 import { compile_directory } from '../helpers.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
-import renderer, { create_root, serialize, dispatch_event, dom_elements } from './renderer.js';
-import { mount, unmount } from '../../src/index-client.js';
+import renderer, {
+	create_root,
+	serialize,
+	serialize_dom_children,
+	dispatch_event,
+	connections
+} from './renderer.js';
+import { mount, unmount, hydrate } from '../../src/index-client.js';
+import { render } from '../../src/server/index.js';
 import { writeFile } from 'node:fs/promises';
 import { globSync } from 'tinyglobby';
 
@@ -29,6 +36,13 @@ type Assert = Omit<typeof import('vitest').assert, keyof NonAssertingMethods> & 
 export interface CustomRendererTest extends BaseTest {
 	html?: string;
 	compileOptions?: Partial<CompileOptions>;
+	/**
+	 * Where to mount `main.svelte`. Defaults to a custom renderer root (mounted with
+	 * `renderer`); `'dom'` mounts into a DOM element without specifying a renderer
+	 */
+	target?: 'dom';
+	/** Server-render `main.svelte` and hydrate it into a DOM element (implies `target: 'dom'`) */
+	hydrate?: true;
 	props?: Record<string, any>;
 	context?: Map<any, any>;
 	error?: string;
@@ -45,8 +59,8 @@ export interface CustomRendererTest extends BaseTest {
 		warnings: any[];
 		renderer: typeof renderer;
 		serialize: typeof serialize;
+		serialize_dom: typeof serialize_dom_children;
 		dispatch_event: typeof dispatch_event;
-		dom_elements: Array<DocumentFragment | Node>;
 	}) => void | Promise<void>;
 }
 
@@ -97,6 +111,10 @@ async function common_setup(
 
 	try {
 		await compile_directory(cwd, 'client', compile_options);
+
+		if (config.hydrate) {
+			await compile_directory(cwd, 'server', compile_options);
+		}
 	} catch (err) {
 		if (config.compile_error) {
 			assert.include((err as Error).message, config.compile_error);
@@ -165,17 +183,37 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 
 	try {
 		const mod = await import(`${cwd}/_output/client/main.svelte.js`);
-		const target = create_root();
+		const is_dom = config.target === 'dom' || config.hydrate === true;
+		const target: any = is_dom ? document.createElement('main') : create_root();
+		const serialize_target = () => (is_dom ? serialize_dom_children(target) : serialize(target));
+
+		connections.open = 0;
 
 		let component: Record<string, any> | undefined;
 		try {
-			dom_elements.length = 0;
-			component = mount(mod.default, {
-				renderer,
-				target,
-				props: config.props ?? {},
-				context: config.context
-			});
+			if (config.hydrate) {
+				const server = await import(`${cwd}/_output/server/main.svelte.js`);
+				target.innerHTML = (await render(server.default, { props: config.props ?? {} })).body;
+
+				component = hydrate(mod.default, {
+					target,
+					props: config.props ?? {},
+					context: config.context
+				});
+			} else if (is_dom) {
+				component = mount(mod.default, {
+					target,
+					props: config.props ?? {},
+					context: config.context
+				});
+			} else {
+				component = mount(mod.default, {
+					renderer,
+					target,
+					props: config.props ?? {},
+					context: config.context
+				});
+			}
 		} catch (err) {
 			if (config.error) {
 				assert.include((err as Error).message, config.error);
@@ -187,7 +225,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 		writeFile(
 			path.join(cwd, '_output/client/output.json'),
 			JSON.stringify(
-				target,
+				is_dom ? serialize_target() : target,
 				(key, value) => {
 					if (key === 'parent') return undefined;
 					return value;
@@ -202,8 +240,7 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 		}
 
 		if (config.html) {
-			const html = serialize(target);
-			assert.equal(html, config.html);
+			assert.equal(serialize_target(), config.html);
 		}
 
 		try {
@@ -217,8 +254,8 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 					warnings,
 					renderer: renderer,
 					serialize,
-					dispatch_event,
-					dom_elements
+					serialize_dom: serialize_dom_children,
+					dispatch_event
 				});
 			}
 
@@ -236,8 +273,9 @@ async function run_test(cwd: string, config: CustomRendererTest, compile_options
 			}
 
 			// After unmount the target should be empty (only comments remain, which serialize to '')
-			const remaining = serialize(target);
+			const remaining = serialize_target();
 			assert.equal(remaining, '', 'Expected component to leave nothing behind after unmount');
+			assert.equal(connections.open, 0, 'Expected every renderer connection to be destroyed');
 		}
 	} catch (err) {
 		if (config.runtime_error) {
