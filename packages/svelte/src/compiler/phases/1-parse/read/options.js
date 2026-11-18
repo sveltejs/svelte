@@ -213,17 +213,6 @@ export default function read_options(node) {
 		}
 	}
 
-	if (
-		component_options.css === 'injected' &&
-		typeof component_options.customRenderer === 'string'
-	) {
-		// Find the css attribute node for the error position
-		const css_attribute = node.attributes.find(
-			(/** @type {any} */ a) => a.type === 'Attribute' && a.name === 'css'
-		);
-		e.incompatible_with_custom_renderer(css_attribute ?? node, "`css: 'injected'`");
-	}
-
 	return component_options;
 }
 

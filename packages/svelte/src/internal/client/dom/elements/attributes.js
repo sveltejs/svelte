@@ -255,10 +255,10 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			(setters_cache.has(get_attribute(node, 'is') || (node_name(node) ?? '')) ||
+			(setters_cache.has(get_attribute(node, 'is') || node_name(node)) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
-			customElements.get(get_attribute(node, 'is') || (node_name(node) ?? '').toLowerCase())
+			customElements.get(get_attribute(node, 'is') || node_name(node).toLowerCase())
 				? get_setters(node).has(prop)
 				: value && typeof value === 'object')
 		) {
@@ -340,7 +340,7 @@ function set_attributes(
 		var setters = get_setters(element);
 
 		if (
-			// the following logic only make sense in a dev environment
+			// the following logic only makes sense in a DOM environment
 			current_renderer == null &&
 			node_name(element) === INPUT_TAG &&
 			'type' in next &&
@@ -641,7 +641,7 @@ export function attribute_effect(
 function get_attributes(element) {
 	return /** @type {Record<string | symbol, unknown>} **/ (
 		/** @type {any} */ (element)[ATTRIBUTES_CACHE] ??= {
-			[IS_CUSTOM_ELEMENT]: (node_name(element) ?? '').includes('-'),
+			[IS_CUSTOM_ELEMENT]: node_name(element).includes('-'),
 			[IS_HTML]: current_renderer == null && element.namespaceURI === NAMESPACE_HTML
 		}
 	);
@@ -655,7 +655,7 @@ var empty_setters = new Set();
 function get_setters(element) {
 	// if we have a custom renderer we just skip the check all together
 	if (current_renderer) return empty_setters;
-	var cache_key = get_attribute(element, 'is') || (node_name(element) ?? '');
+	var cache_key = get_attribute(element, 'is') || node_name(element);
 	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
 	setters_cache.set(cache_key, (setters = new Set()));
