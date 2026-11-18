@@ -63,10 +63,13 @@ export function cross(renderer, anchor, render) {
 	insert_before(anchor, host_node);
 	assign_nodes(host_node, host_node);
 
-	/** @type {TemplateNode} */
-	var start;
-	/** @type {TemplateNode} */
-	var end;
+	/**
+	 * The guest-owned markers, set once they are both in the container
+	 * @type {TemplateNode | null}
+	 */
+	var start = null;
+	/** @type {TemplateNode | null} */
+	var end = null;
 
 	/** @type {T} */
 	var result;
@@ -75,40 +78,44 @@ export function cross(renderer, anchor, render) {
 
 	try {
 		// the guest side: markers inside the container, inserted using the guest renderer
-		start = create_text();
-		end = create_text();
+		var first = create_text();
+		var last = create_text();
 		var container = /** @type {Node} */ (connection.container);
-		append_child(container, start);
-		append_child(container, end);
+		append_child(container, first);
+		append_child(container, last);
+		start = first;
+		end = last;
 
 		branch(() => {
-			result = render(end);
+			result = render(last);
 		});
 	} finally {
 		pop_renderer();
-	}
 
-	// created after the guest branch, so it runs after the guest's own teardown logic.
-	// Removing everything between the markers is idempotent, and is necessary even if
-	// the host node is being removed, since the container could be shared between
-	// several crossings (e.g. multiple scenes rendered into the same canvas)
-	teardown(() => {
-		var pop_renderer = push_renderer(renderer);
+		// Registered in `finally` so that the connection is cleaned up even if rendering the
+		// guest throws (e.g. inside a `<svelte:boundary>`), and created after the guest branch
+		// so that it runs after the guest's own teardown logic. Removing everything between
+		// the markers is idempotent, and is necessary even if the host node is being removed,
+		// since the container could be shared between several crossings (e.g. multiple scenes
+		// rendered into the same canvas)
+		teardown(() => {
+			var pop_renderer = push_renderer(renderer);
 
-		try {
-			var node = /** @type {TemplateNode | null} */ (start);
+			try {
+				var node = start;
 
-			while (node !== null) {
-				var next = node === end ? null : get_next_sibling(node);
-				remove_node(/** @type {ChildNode} */ (node));
-				node = next;
+				while (node !== null) {
+					var next = node === end ? null : get_next_sibling(node);
+					remove_node(/** @type {ChildNode} */ (node));
+					node = next;
+				}
+			} finally {
+				pop_renderer();
 			}
-		} finally {
-			pop_renderer();
-		}
 
-		connection.destroy?.();
-	});
+			connection.destroy?.();
+		});
+	}
 
 	// @ts-expect-error assigned synchronously by the branch
 	return result;
