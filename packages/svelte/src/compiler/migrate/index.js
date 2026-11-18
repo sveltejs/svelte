@@ -910,8 +910,10 @@ const instance_script = {
 				start = /** @type {number} */ (parent.start);
 				end = /** @type {number} */ (parent.end);
 			}
-			while (state.str.original[start] !== '\n') start--;
-			while (state.str.original[end] !== '\n') end++;
+			// remove the declaration's whole line, or what there is of it inside the script
+			const script = /** @type {{ start: number; end: number }} */ (state.analysis.instance.ast);
+			while (start > script.start && state.str.original[start] !== '\n') start--;
+			while (end < script.end && state.str.original[end] !== '\n') end++;
 			state.str.update(start, end, '');
 		}
 	},
@@ -987,8 +989,11 @@ const instance_script = {
 					return;
 				}
 
+				let declared = 0;
 				for (const binding of bindings) {
-					if (binding.reassigned && (ids.includes(binding.node) || expression_ids.length === 0)) {
+					// a binding this statement declares needs its `let` whether or not it is reassigned
+					if (ids.includes(binding.node) || (binding.reassigned && expression_ids.length === 0)) {
+						declared++;
 						check_rune_binding('state');
 						const init =
 							binding.kind === 'state'
@@ -1004,7 +1009,13 @@ const instance_script = {
 					}
 				}
 
-				if (expression_ids.length === 0 && bindings.every((b) => b.kind !== 'store_sub')) {
+				// the statement goes only once every target has a declaration standing in for it
+				if (
+					expression_ids.length === 0 &&
+					bindings.length > 0 &&
+					declared === bindings.length &&
+					bindings.every((b) => b.kind !== 'store_sub')
+				) {
 					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 					return;
 				}

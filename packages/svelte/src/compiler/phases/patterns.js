@@ -1,4 +1,3 @@
-export const regex_whitespace = /\s/;
 export const regex_whitespaces = /\s+/;
 export const regex_starts_with_newline = /^\r?\n/;
 export const regex_starts_with_whitespace = /^\s/;

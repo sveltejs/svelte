@@ -1,5 +1,13 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
+import {
+	BOUNDARY_EFFECT,
+	DESTROYED,
+	DESTROYING,
+	DIRTY,
+	EFFECT_PRESERVED,
+	EFFECT_TRANSPARENT,
+	MAYBE_DIRTY
+} from '#client/constants';
 import {
 	HYDRATION_ERROR,
 	HYDRATION_START_ELSE,
@@ -26,6 +34,7 @@ import {
 	hydrate_node,
 	hydrating,
 	next,
+	read_hydration_instruction,
 	skip_nodes,
 	set_hydrate_node
 } from '../hydration.js';
@@ -38,7 +47,7 @@ import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
-import { defer_effect } from '../../reactivity/utils.js';
+import { set_signal_status } from '../../reactivity/status.js';
 
 /**
  * @typedef {{
@@ -102,14 +111,20 @@ export class Boundary {
 	#offscreen_fragment = null;
 
 	#local_pending_count = 0;
-	#pending_count = 0;
 	#pending_count_update_queued = false;
 
-	/** @type {Set<Effect>} */
-	#dirty_effects = new Set();
+	/**
+	 * User effects created inside this boundary. They will run when the boundary is revealed
+	 * @type {Effect[]}
+	 */
+	#effects = [];
 
-	/** @type {Set<Effect>} */
-	#maybe_dirty_effects = new Set();
+	/**
+	 * Async effects that are currently in flight, grouped by the batch that started them.
+	 * A speculative fork's work must not hold up the real world's boundary.
+	 * @type {Map<Batch, Map<Effect, number>>}
+	 */
+	#pending = new Map();
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -158,16 +173,18 @@ export class Boundary {
 
 		this.#effect = block(() => {
 			if (hydrating) {
-				const comment = /** @type {Comment} */ (this.#hydrate_open);
+				const comment_data = read_hydration_instruction(
+					/** @type {TemplateNode} */ (this.#hydrate_open)
+				);
 				hydrate_next();
 
-				const server_rendered_pending = comment.data === HYDRATION_START_ELSE;
-				const server_rendered_failed = comment.data.startsWith(HYDRATION_START_FAILED);
+				const server_rendered_pending = comment_data === HYDRATION_START_ELSE;
+				const server_rendered_failed = comment_data.startsWith(HYDRATION_START_FAILED);
 
 				if (server_rendered_failed) {
 					// Server rendered the failed snippet - hydrate it.
 					// The serialized error is embedded in the comment: <!--[?<json>-->
-					const serialized_error = JSON.parse(comment.data.slice(HYDRATION_START_FAILED.length));
+					const serialized_error = JSON.parse(comment_data.slice(HYDRATION_START_FAILED.length));
 					this.#hydrate_failed_content(serialized_error);
 				} else if (server_rendered_pending) {
 					this.#hydrate_pending_content();
@@ -224,6 +241,8 @@ export class Boundary {
 		var calling_on_error = false;
 
 		const reset = () => {
+			if (this.#is_destroyed()) return;
+
 			if (did_reset) {
 				w.svelte_boundary_reset_noop();
 				return;
@@ -247,6 +266,8 @@ export class Boundary {
 		};
 
 		const invoke_onerror = () => {
+			if (this.#is_destroyed()) return;
+
 			try {
 				calling_on_error = true;
 				this.#props.onerror?.(error, reset);
@@ -259,6 +280,10 @@ export class Boundary {
 		return { reset, invoke_onerror };
 	}
 
+	#is_destroyed() {
+		return (this.#effect.f & (DESTROYED | DESTROYING)) !== 0;
+	}
+
 	#hydrate_pending_content() {
 		const pending = this.#props.pending;
 		if (!pending) return;
@@ -267,9 +292,10 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
+
 			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
 			var anchor = create_text();
-			var handled = false;
 
 			fragment.append(anchor);
 
@@ -279,7 +305,6 @@ export class Boundary {
 				} catch (error) {
 					try {
 						this.error(error);
-						handled = true;
 					} catch (error) {
 						invoke_error_boundary(error, this.#effect.parent);
 					}
@@ -288,21 +313,14 @@ export class Boundary {
 				}
 			});
 
-			if (this.#main_effect === null) {
-				this.#offscreen_fragment = null;
-				if (handled) this.#resolve(/** @type {Batch} */ (current_batch));
-				return;
-			}
-
-			if (this.#pending_count === 0) {
+			if (this.#main_effect !== null && this.#pending.size === 0) {
+				this.is_pending = false;
 				this.#anchor.before(fragment);
 				this.#offscreen_fragment = null;
 
 				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
 					this.#pending_effect = null;
 				});
-
-				this.#resolve(/** @type {Batch} */ (current_batch));
 			}
 		});
 	}
@@ -310,21 +328,23 @@ export class Boundary {
 	#render() {
 		try {
 			this.is_pending = this.has_pending_snippet();
-			this.#pending_count = 0;
 			this.#local_pending_count = 0;
 
 			this.#main_effect = branch(() => {
 				this.#children(this.#anchor);
 			});
 
-			if (this.#pending_count > 0) {
-				var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
-				move_effect(this.#main_effect, fragment);
-
-				const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
-				this.#pending_effect = branch(() => pending(this.#anchor));
+			if (this.#pending.size === 0) {
+				this.is_pending = false;
 			} else {
-				this.#resolve(/** @type {Batch} */ (current_batch));
+				const pending = this.#props.pending;
+
+				if (pending) {
+					var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+					move_effect(this.#main_effect, fragment);
+
+					this.#pending_effect = branch(() => pending(this.#anchor));
+				}
 			}
 		} catch (error) {
 			this.error(error);
@@ -332,30 +352,11 @@ export class Boundary {
 	}
 
 	/**
-	 * @param {Batch} batch
-	 */
-	#resolve(batch) {
-		this.is_pending = false;
-
-		// any effects that were previously deferred should be transferred
-		// to the batch, which will flush in the next microtask
-		batch.transfer_effects(this.#dirty_effects, this.#maybe_dirty_effects);
-	}
-
-	/**
 	 * Defer an effect inside a pending boundary until the boundary resolves
 	 * @param {Effect} effect
 	 */
 	defer_effect(effect) {
-		defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
-	}
-
-	/**
-	 * Returns `false` if the effect exists inside a boundary whose pending snippet is shown
-	 * @returns {boolean}
-	 */
-	is_rendered() {
-		return !this.is_pending && (!this.parent || this.parent.is_rendered());
+		this.#effects.push(effect);
 	}
 
 	has_pending_snippet() {
@@ -386,49 +387,101 @@ export class Boundary {
 	}
 
 	/**
-	 * Updates the pending count associated with the currently visible pending snippet,
-	 * if any, such that we can replace the snippet with content once work is done
-	 * @param {1 | -1} d
 	 * @param {Batch} batch
 	 */
-	#update_pending_count(d, batch) {
-		if (!this.has_pending_snippet()) {
-			if (this.parent) {
-				this.parent.#update_pending_count(d, batch);
-			}
-
-			// if there's no parent, we're in a scope with no pending snippet
-			return;
+	is_ready(batch) {
+		if (batch.is_fork && this.#pending.size > 0) {
+			return false;
 		}
 
-		this.#pending_count += d;
+		for (const [owner, pending] of this.#pending) {
+			if (owner.is_fork) continue;
 
-		if (this.#pending_count === 0) {
-			this.#resolve(batch);
-
-			if (this.#pending_effect) {
-				pause_effect(this.#pending_effect, () => {
-					this.#pending_effect = null;
-				});
+			for (const effect of pending.keys()) {
+				if (batch.is_blocked_by(effect, this.#main_effect)) {
+					return false;
+				}
 			}
+		}
 
-			if (this.#offscreen_fragment) {
-				this.#anchor.before(this.#offscreen_fragment);
-				this.#offscreen_fragment = null;
-			}
+		return true;
+	}
+
+	/**
+	 * @param {Effect[]} effects
+	 */
+	reveal(effects) {
+		this.is_pending = false;
+
+		// Add any deferred effects to the batch's effect queue
+		for (const effect of this.#effects) {
+			set_signal_status(effect, DIRTY);
+			effects.push(effect);
+		}
+
+		this.#effects.length = 0;
+
+		if (this.#pending_effect) {
+			pause_effect(this.#pending_effect, () => {
+				this.#pending_effect = null;
+			});
+		}
+
+		if (this.#offscreen_fragment) {
+			this.#anchor.before(this.#offscreen_fragment);
+			this.#offscreen_fragment = null;
 		}
 	}
 
 	/**
-	 * Update the source that powers `$effect.pending()` inside this boundary,
-	 * and controls when the current `pending` snippet (if any) is removed.
-	 * Do not call from inside the class
-	 * @param {1 | -1} d
+	 * @param {Effect} effect
 	 * @param {Batch} batch
 	 */
-	update_pending_count(d, batch) {
-		this.#update_pending_count(d, batch);
+	increment(effect, batch) {
+		var pending = this.#pending.get(batch);
 
+		if (pending === undefined) {
+			this.#pending.set(batch, (pending = new Map()));
+		}
+
+		var count = pending.get(effect) ?? 0;
+		pending.set(effect, count + 1);
+	}
+
+	/**
+	 * @param {Effect} effect
+	 * @param {Batch} batch
+	 */
+	decrement(effect, batch) {
+		var pending = /** @type {Map<Effect, number>} */ (this.#pending.get(batch));
+		var count = /** @type {number} */ (pending.get(effect));
+
+		if (count === 1) {
+			pending.delete(effect);
+
+			if (pending.size === 0) {
+				this.#pending.delete(batch);
+			}
+
+			// The remaining work may belong to speculative forks. Check again in a normal batch,
+			// after the result's batch has flushed, so that we reveal committed content and run
+			// deferred effects in the same view.
+			queue_micro_task(() => {
+				if (this.is_pending && !this.#is_destroyed()) {
+					Batch.ensure().schedule(this.#effect, MAYBE_DIRTY);
+				}
+			});
+		} else {
+			pending.set(effect, count - 1);
+		}
+	}
+
+	/**
+	 * Update the source that powers `$effect.pending()` inside this boundary.
+	 * Do not call from inside the class
+	 * @param {1 | -1} d
+	 */
+	update_effect_pending(d) {
 		this.#local_pending_count += d;
 
 		if (!this.#effect_pending || this.#pending_count_update_queued) return;
@@ -465,7 +518,7 @@ export class Boundary {
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
 
 			current_batch.oncommit(() => {
-				this.#handle_error(error);
+				if (!this.#is_destroyed()) this.#handle_error(error);
 			});
 		} else {
 			this.#handle_error(error);
@@ -501,11 +554,13 @@ export class Boundary {
 
 		/** @param {unknown} transformed_error */
 		const handle_error_result = (transformed_error) => {
+			if (this.#is_destroyed()) return;
+
 			const { reset, invoke_onerror } = this.#create_reset(transformed_error);
 
 			invoke_onerror();
 
-			if (failed) {
+			if (failed && !this.#is_destroyed()) {
 				this.#failed_effect = this.#run(() => {
 					try {
 						return branch(() => {
@@ -531,6 +586,8 @@ export class Boundary {
 		};
 
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
+
 			// Run the error through the API-level transformError transform (e.g. SvelteKit's handleError)
 			/** @type {unknown} */
 			var result;
