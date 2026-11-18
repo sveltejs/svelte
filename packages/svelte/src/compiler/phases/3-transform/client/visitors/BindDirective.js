@@ -261,7 +261,31 @@ export function BindDirective(node, context) {
 		parent.type === 'RegularElement' &&
 		parent.attributes.find((a) => a.type === 'UseDirective');
 
-	let statement = defer ? b.stmt(b.call('$.effect', b.thunk(call))) : b.stmt(call);
+	let statement = b.stmt(call);
+
+	if (defer) {
+		if (
+			node.name === 'checked' ||
+			node.name === 'group' ||
+			node.name === 'files' ||
+			(node.name === 'value' && parent.type === 'RegularElement' && parent.name !== 'select')
+		) {
+			// Capture hydration state now, but evaluate binding expressions in directive order.
+			// Use an explicit setter because the hydration flag follows it.
+			if (call.arguments.length === 2) call.arguments.push(get);
+			call.arguments.push(b.id('$$hydration_mismatch'));
+			statement = b.stmt(
+				b.call(
+					'$.defer_input_binding',
+					context.state.node,
+					b.literal(node.name === 'group' ? 'checked' : node.name),
+					b.arrow([b.id('$$hydration_mismatch')], call)
+				)
+			);
+		} else {
+			statement = b.stmt(b.call('$.effect', b.thunk(call)));
+		}
+	}
 
 	if (node.metadata.expression.is_async()) {
 		statement = b.stmt(
