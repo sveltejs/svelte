@@ -1,4 +1,6 @@
 import { to_class } from '../../../shared/attributes.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
+import { current_renderer } from '../../custom-renderer/state.js';
 import { CLASS_CACHE } from '../../constants.js';
 import { hydrating } from '../hydration.js';
 import {
@@ -23,7 +25,10 @@ export function set_class(dom, is_html, value, hash, prev_classes, next_classes)
 	if (
 		hydrating ||
 		prev !== value ||
-		prev === undefined // for edge case of `class={undefined}`
+		prev === undefined || // for edge case of `class={undefined}`
+		// custom renderers only deal in attributes, so rather than toggling individual classes
+		// (which would mean editing the `class` attribute), always set the whole thing
+		(custom_renderers_flag && current_renderer !== null)
 	) {
 		var next_class_name = to_class(value, hash, next_classes);
 

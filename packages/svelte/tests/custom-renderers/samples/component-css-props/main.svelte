@@ -5,4 +5,5 @@
 </script>
 
 <button onclick={() => (color = 'blue')}>change</button>
-<Child --color={color} />
+<button onclick={() => (color = null)}>remove</button>
+<Child --color={color} --size="2px" />

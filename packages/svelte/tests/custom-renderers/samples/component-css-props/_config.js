@@ -1,20 +1,22 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
 
+const html = (/** @type {string} */ style) =>
+	`<button>change</button> <button>remove</button> <svelte-css-wrapper style="${style}"><p>hello</p></svelte-css-wrapper>`;
+
 export default test({
-	html: '<button>change</button> <svelte-css-wrapper style="display: contents; --color: red"><p>hello</p></svelte-css-wrapper>',
+	html: html('display: contents; --color: red; --size: 2px;'),
 	test({ assert, target, serialize, dispatch_event }) {
-		const button = target.children.find(
+		const [change, remove] = target.children.filter(
 			(/** @type {any} */ n) => n.type === 'element' && n.name === 'button'
 		);
-		assert.ok(button);
 
-		dispatch_event(button, 'click');
+		dispatch_event(change, 'click');
 		flushSync();
+		assert.equal(serialize(target), html('display: contents; --color: blue; --size: 2px;'));
 
-		assert.equal(
-			serialize(target),
-			'<button>change</button> <svelte-css-wrapper style="display: contents; --color: blue"><p>hello</p></svelte-css-wrapper>'
-		);
+		dispatch_event(remove, 'click');
+		flushSync();
+		assert.equal(serialize(target), html('display: contents; --size: 2px;'));
 	}
 });
