@@ -24,7 +24,7 @@ import {
 	REACTION_IS_UPDATING,
 	BOUNDARY_EFFECT
 } from '#client/constants';
-import { async_mode_flag } from '../../flags/index.js';
+import { async_mode_flag, custom_renderers_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
@@ -1044,6 +1044,10 @@ export class Batch {
 					}
 				}
 			}
+
+			if (custom_renderers_flag && after_flush !== null) {
+				after_flush();
+			}
 		} finally {
 			flush_count = 0;
 			last_scheduled_effect = null;
@@ -1526,6 +1530,20 @@ export class Batch {
 }
 
 // TODO Svelte@6 think about removing the callback argument.
+/**
+ * Called at the end of each flush, if set. Custom renderers use this to keep the content of crossings
+ * that share a container in the order of their host nodes (see `custom-renderer/containers.js`)
+ * @type {(() => void) | null}
+ */
+let after_flush = null;
+
+/**
+ * @param {(() => void) | null} fn
+ */
+export function set_after_flush(fn) {
+	after_flush = fn;
+}
+
 /**
  * Synchronously flush any pending updates.
  * Returns void if no callback is provided, otherwise returns the result of calling the callback.
