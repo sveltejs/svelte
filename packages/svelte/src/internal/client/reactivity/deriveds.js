@@ -12,8 +12,7 @@ import {
 	CONNECTED,
 	ASSIGNED,
 	ERROR_VALUE,
-	HAS_ABORT_CONTROLLER,
-	EFFECT_TRANSPARENT
+	HAS_ABORT_CONTROLLER
 } from '#client/constants';
 import {
 	active_reaction,
@@ -31,26 +30,20 @@ import {
 	changed_since,
 	is_dirty,
 	abort_all,
-	get,
-	untrack
+	abort_controller,
+	get
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import {
-	async_effect,
-	block,
-	destroy_effect,
-	destroy_effect_children,
-	teardown
-} from './effects.js';
+import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
 import { eager_effects, set_eager_effects, source } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
-import { increment_pending, merge_target, unset_context } from './async.js';
+import { current_runner, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -116,16 +109,11 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @param {(error: unknown) => void} [onready] Called when the first result is captured; receives its error, if any
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_expression(fn, label, location) {
-	let parent = /** @type {Effect | null} */ (active_effect);
-
-	if (parent === null) {
-		e.async_derived_orphan();
-	}
-
+export function async_expression(fn, label, location, onready) {
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 	signal.f |= ASYNC;
 
@@ -133,6 +121,33 @@ export function async_expression(fn, label, location) {
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
+
+	// `run` continues in the creating batch's view; other batches' results wait until then.
+	// A superseded or obsolete run lets another batch supply the first value.
+	var runner = current_runner;
+
+	/**
+	 * The batch whose run delivers the first value (`null`: whichever comes first)
+	 * @type {Batch | null}
+	 */
+	var resolver = runner && current_batch;
+
+	/**
+	 * Results buffered until the script continues; `null` disables buffering.
+	 * @type {Array<() => void> | null}
+	 */
+	var waiting = runner && [];
+
+	/**
+	 * Retry buffered results, or release them once the script has continued.
+	 * @param {boolean} [continued]
+	 */
+	function flush_waiting(continued = false) {
+		var fns = /** @type {Array<() => void>} */ (waiting);
+		waiting = continued ? null : [];
+		if (continued) resolver = null;
+		for (const fn of fns) fn();
+	}
 
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
@@ -145,15 +160,32 @@ export function async_expression(fn, label, location) {
 		var d = deferred();
 
 		try {
+			var result = fn();
+			if (result === UNINITIALIZED) return;
+
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
+			var promise = Promise.resolve(result);
+			// The then getter may also call `getAbortSignal()`, so capture its signal afterwards.
+			var abort_signal = abort_controller?.signal;
+
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn())
-				.then(d.resolve, (e) => {
-					// if the promise was rejected by the user, via `getAbortSignal`, then
-					// wait for a subsequent resolution instead of flushing the batch
-					if (e !== STALE_REACTION) d.reject(e);
-				})
+			promise
+				.then(
+					(value) => {
+						if (!abort_signal?.aborted) d.resolve(value);
+					},
+					(e) => {
+						// An aborted run waits for its replacement, even if the user catches the abort.
+						// A script awaiting another reaction's aborted promise must release its resolver:
+						// the eager merge includes the signal's owner, but not necessarily this waiter.
+						if (abort_signal?.aborted || (e === STALE_REACTION && runner === null)) {
+							return;
+						}
+
+						d.reject(e === STALE_REACTION ? OBSOLETE : e);
+					}
+				)
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
@@ -199,16 +231,60 @@ export function async_expression(fn, label, location) {
 				reactivity_loss_tracker = null;
 			}
 
+			if (waiting !== null && error !== OBSOLETE) {
+				resolver ??= batch;
+
+				if (merge_target(batch) !== merge_target(resolver)) {
+					// Recheck staleness after waiting: the batch may have rerun or been discarded.
+					// Merged batches remain valid while their merge target is linked.
+					waiting.push(() => {
+						var obsolete =
+							(effect.f & DESTROYED) !== 0 ||
+							(batch.linked ? batch.async_deriveds.get(effect) !== d : !merge_target(batch).linked);
+
+						handler(value, obsolete ? OBSOLETE : error);
+					});
+
+					return;
+				}
+			}
+
 			decrement_pending();
 			deferreds.delete(d);
 
-			if (error === OBSOLETE) {
-				batch.obsolete = true;
-				return;
+			if (error) {
+				// If the resolver's run is obsolete, let the next result supply the first value.
+				// Do the same on failure if other results are pending. Try buffered results first.
+				// A rerun in the same batch keeps ownership.
+				if (
+					waiting !== null &&
+					resolver !== null &&
+					(deferreds.size > 0 || error === OBSOLETE) &&
+					merge_target(resolver) === merge_target(batch) &&
+					merge_target(batch).async_deriveds.get(effect) === d
+				) {
+					resolver = null;
+					flush_waiting();
+					return;
+				} else if (error === OBSOLETE) {
+					return;
+				}
 			}
 
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
+
+			if (runner !== null) {
+				// Let the script consume the first value in this batch's view before releasing buffered results.
+				runner.switch(batch);
+
+				runner.continued.push(() => flush_waiting(true));
+
+				runner = null;
+			}
+
+			onready?.(error);
+			onready = undefined;
 
 			if (DEV && location !== undefined && !signal.equals(value)) {
 				recent_async_deriveds.add(signal);
@@ -243,35 +319,47 @@ export function async_expression(fn, label, location) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	const batch = current_batch;
-
-	if (batch === null || active_reaction !== null) {
-		// `$derived(await ...)` created outside traversal, don't participate in coordination
-		return Promise.resolve(fn()).then((value) => source(value));
+	if (!current_runner) {
+		e.async_derived_orphan();
 	}
 
+	const runner = current_runner;
+	const batch = /** @type {Batch} */ (current_batch);
+
 	return new Promise((fulfil, reject) => {
-		const source = async_expression(fn, label, location);
+		var source = async_expression(
+			() => {
+				var effect = /** @type {Effect} */ (active_effect);
+				var target = merge_target(/** @type {Batch} */ (current_batch));
 
-		block(() => {
-			if (is_uninitialized(source) || (batch !== current_batch && !batch.obsolete)) {
-				get(source);
-				return;
-			}
+				if (runner.running && target !== batch && is_uninitialized(source)) {
+					// Check all earlier expressions: assignments can initialize them out of order.
+					for (var i = index - 1; i >= 0; i--) {
+						var s = runner.signals[i];
 
-			try {
-				// We get the source and catch in case it's an error.
-				// We do this instead of checking ERROR_VALUE on source.f
-				// because that only applies to the real world, maybe
-				// this was resolved (and has thrown) in a fork.
-				// We untrack so that the block no longer has a dependency
-				// on the source.
-				untrack(() => get(source));
-				fulfil(source);
-			} catch (e) {
-				reject(e);
+						if (is_uninitialized(s)) {
+							// re-run until we have a value
+							get(s);
+
+							var pending = /** @type {Batch} */ (current_batch).async_deriveds;
+							pending.get(effect)?.reject(OBSOLETE);
+							pending.delete(effect);
+							return UNINITIALIZED;
+						}
+					}
+				}
+
+				return fn();
+			},
+			label,
+			location,
+			(error) => {
+				if (error === undefined) fulfil(/** @type {Source<V>} */ (source));
+				else reject(error);
 			}
-		}, EFFECT_TRANSPARENT);
+		);
+
+		var index = runner.signals.push(source) - 1;
 	});
 }
 

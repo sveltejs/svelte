@@ -7,6 +7,7 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
+import type { Batch } from './batch.js';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -162,9 +163,3 @@ export interface Effect extends Reaction {
 export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
-
-export interface Blocker {
-	promise: Promise<any>;
-	settled: boolean;
-	failed: boolean;
-}

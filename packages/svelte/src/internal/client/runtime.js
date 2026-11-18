@@ -64,6 +64,7 @@ import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
+import { merge_target } from './reactivity/async.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
 
@@ -358,7 +359,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
  * done, it's stored with the run: on the reaction for its global run, or on the record a batch holds of it
  * @type {AbortController | null}
  */
-let abort_controller = null;
+export let abort_controller = null;
 
 /**
  * The signal of the run of `reaction` that is in progress. Its controller is stored with the run once it's done
@@ -448,11 +449,11 @@ function set_global_signal(reaction) {
 }
 
 /**
- * Whether the global run of `reaction` is outdated in the real world for sure: it's invalid, or a value it read
- * has another version there now. (This doesn't evaluate anything, so a derived it read may be outdated, too)
- * @param {Reaction} reaction
+ * Whether a run is invalid or a dependency's real-world version has changed.
+ * This does not evaluate derived dependencies, which may themselves be outdated.
+ * @param {Reaction | BatchRecord} run
  */
-function is_outdated({ deps, dv }) {
+export function is_outdated({ deps, dv }) {
 	return dv === null || dv.some((version, i) => /** @type {Value[]} */ (deps)[i].wv !== version);
 }
 
@@ -518,6 +519,7 @@ function is_recorded_effect(flags) {
 
 /** @param {Reaction} reaction */
 export function update_reaction(reaction) {
+	const batch = current_batch;
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
 	var previous_untracked_writes = untracked_writes;
@@ -617,6 +619,22 @@ export function update_reaction(reaction) {
 
 		return value;
 	} finally {
+		var signal = /** @type {AbortController | null} */ (abort_controller)?.signal;
+
+		if (batch !== null && signal !== undefined) {
+			// The reaction that requested the signal identifies the merge target, even if
+			// another reaction awaits its result (e.g. `let promise = $derived(load(...))`).
+			signal.addEventListener('abort', () => {
+				if (current_batch !== null) {
+					const target = merge_target(batch);
+
+					if (target !== current_batch && target.linked && !target.is_fork) {
+						current_batch.merge_requests.add(target);
+					}
+				}
+			});
+		}
+
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;

@@ -33,6 +33,7 @@ import {
 	increment_write_version,
 	is_destroying_effect,
 	is_dirty,
+	is_outdated,
 	promote_record,
 	prune_edges,
 	untrack,
@@ -57,6 +58,7 @@ import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 import { is_runes } from '../context.js';
+import { merge_target } from './async.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
@@ -208,8 +210,6 @@ export class Batch {
 
 	linked = true;
 
-	obsolete = false;
-
 	/** @type {Batch | null} */
 	prev = null;
 
@@ -325,6 +325,14 @@ export class Batch {
 	 * @type {Batch | null}
 	 */
 	merged = null;
+
+	/**
+	 * Batches whose runs this batch aborted. Merge into them before waiting for pending work.
+	 * Requests belong to this batch because a synchronous derived can abort outside traversal,
+	 * before an unrelated batch is processed (e.g. a fork being committed).
+	 * @type {Set<Batch>}
+	 */
+	merge_requests = new Set();
 
 	#decrement_queued = false;
 
@@ -601,6 +609,33 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
+		if (this.merge_requests.size > 0) {
+			const sorted = Array.from(this.merge_requests, merge_target)
+				.filter((batch) => batch !== this && batch.linked && !batch.is_fork)
+				.sort((a, b) => a.id - b.id);
+			this.merge_requests.clear();
+
+			if (sorted.length > 0) {
+				this.#defer_effects(render_effects);
+				this.#defer_effects(effects);
+
+				/** @type {Batch} */
+				var target = this;
+				var i = sorted.length;
+
+				while (i--) {
+					var earlier = sorted[i];
+					if (earlier === target) continue;
+					earlier.#merge(target);
+					target = earlier;
+				}
+
+				// Revalidate once all the writes and pending work belong to the same batch.
+				target.#process();
+				return;
+			}
+		}
+
 		// if the batch has outstanding pending work, stash effects and bail
 		if (this.#is_deferred()) {
 			this.#defer_effects(render_effects);
@@ -625,6 +660,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
+			earlier_batch.#process();
 
 			return;
 		}
@@ -802,12 +838,16 @@ export class Batch {
 	}
 
 	/**
-	 * Take over the writes of a later batch that depends on this one, because it finished first.
+	 * Take over the writes of a later batch that depends on this one, because it finished first
+	 * or aborted one of this batch's runs.
 	 * Values it produced (async results, deriveds) remain valid; block effects select their
 	 * branches again for this batch, if needed (their selections are keyed by batch)
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
+		for (const target of batch.merge_requests) this.merge_requests.add(target);
+		batch.merge_requests.clear();
+
 		for (const [source, entry] of batch.current) {
 			if (!this.previous.has(source)) {
 				const previous = batch.previous.get(source);
@@ -819,7 +859,10 @@ export class Batch {
 
 		for (const [effect, deferred] of batch.async_deriveds) {
 			const d = this.async_deriveds.get(effect);
-			if (d) deferred.promise.then(d.resolve).catch(d.reject);
+			if (d && d !== deferred) deferred.promise.then(d.resolve, d.reject);
+			// The incoming run can still be pending. A subsequent replacement must reach
+			// this deferred too, not just the older waiters to which it forwards its result.
+			this.async_deriveds.set(effect, deferred);
 		}
 
 		for (const [reaction, record] of batch.records ?? []) {
@@ -864,9 +907,6 @@ export class Batch {
 		this.ondiscard(discard);
 		batch.merged = this;
 		batch.#unlink();
-
-		// processing re-validates everything that depends on the (now merged) writes of this batch
-		this.#process();
 	}
 
 	/**
@@ -889,7 +929,7 @@ export class Batch {
 			var status = effect.f & (DIRTY | MAYBE_DIRTY);
 
 			if (status !== 0) {
-				this.#add_dirty_effect(effect, status);
+				this.#add_dirty_effect(effect, effect.dv === null ? MAYBE_DIRTY : status);
 
 				// mark as clean so they get scheduled if they depend on pending async state
 				set_signal_status(effect, CLEAN);
@@ -1411,7 +1451,11 @@ export class Batch {
 			// and its edges are left for its next global run to prune (see `prune_edges`). A destroyed
 			// reaction has nothing left to update either
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
-				if (commit) {
+				// Keep a newer committed async run instead of promoting an outdated record.
+				// Otherwise, the effect would rerun and restart its async work in every batch.
+				var replaced = (reaction.f & ASYNC) !== 0 && is_outdated(record) && !is_outdated(reaction);
+
+				if (commit && !replaced) {
 					promote_record(reaction, record);
 
 					// The committed run is now what applies in the view of every batch without a run of the async
@@ -1419,6 +1463,8 @@ export class Batch {
 					// pending boundary). Their in-flight runs are superseded: their results would overwrite this one
 					// TODO feels pretty hacky and indication of an X-Y problem: This only works because !b.records?.has(reaction)
 					// means "this would re-use the real world result, i.e. the one we just committed, so we can reject this old run".
+					// This can reject runs too early in pending batches. The superseding batch eventually settles them,
+					// but async/if blocks inside pending boundaries should be excluded.
 					if ((reaction.f & ASYNC) !== 0) {
 						for (let b = first_batch; b !== null; b = b.next) {
 							if (b !== this && !b.records?.has(reaction)) {
