@@ -333,9 +333,12 @@ export function EachBlock(node, context) {
 	];
 
 	if (node.fallback) {
-		args.push(
-			b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fallback)))
-		);
+		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
+
+		// An empty callback would create a fallback effect without any DOM nodes.
+		if (fallback.body.length > 0) {
+			args.push(b.arrow([b.id('$$anchor')], fallback));
+		}
 	}
 
 	const statements = [add_svelte_meta(b.call('$.each', ...args), node, 'each')];
