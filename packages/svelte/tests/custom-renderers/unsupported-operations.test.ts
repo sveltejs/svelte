@@ -1,5 +1,5 @@
 import { afterEach, assert, describe, it } from 'vitest';
-import { push_renderer } from '../../src/internal/client/custom-renderer/state.js';
+import { pop_renderer, push_renderer } from '../../src/internal/client/custom-renderer/state.js';
 import {
 	clone_node,
 	dispatch_event,
@@ -12,11 +12,10 @@ import renderer from './renderer.js';
 // renderer is active. If they do (i.e. because of a bug in Svelte), they should fail with a
 // documented error rather than a generic one.
 describe('DOM-only operations with a custom renderer', () => {
-	let pop: (() => void) | null = null;
+	let previous: ReturnType<typeof push_renderer> = null;
 
 	afterEach(() => {
-		pop?.();
-		pop = null;
+		pop_renderer(previous);
 	});
 
 	const operations: Array<[string, () => unknown]> = [
@@ -28,7 +27,7 @@ describe('DOM-only operations with a custom renderer', () => {
 
 	for (const [name, operation] of operations) {
 		it(`throws custom_renderer_unsupported_operation for ${name}`, () => {
-			pop = push_renderer(renderer);
+			previous = push_renderer(renderer);
 
 			assert.throws(
 				operation,
