@@ -233,6 +233,12 @@ Cannot do `bind:%key%={undefined}` when `%key%` has a fallback value
 Rest element properties of `$props()` such as `%property%` are readonly
 ```
 
+### renderer_cannot_cross
+
+```
+Cannot render content belonging to %guest% inside %host%. A custom renderer must define `embed` or `host` to be combined with another renderer
+```
+
 ### rune_outside_svelte
 
 ```
@@ -242,7 +248,7 @@ The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 ### snippet_renderer_mismatch
 
 ```
-A snippet created in a component with a custom renderer cannot be rendered by a different renderer
+A snippet created in a component that was compiled without `experimental.customRenderer` cannot be rendered by a custom renderer
 ```
 
 ### state_descriptors_fixed

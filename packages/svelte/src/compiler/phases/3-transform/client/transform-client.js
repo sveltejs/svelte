@@ -592,13 +592,39 @@ export function client_component(analysis, options) {
 	if (custom_renderer !== undefined) {
 		// when the custom renderer feature is enabled every component pushes a renderer: components
 		// with a renderer module push `$renderer`, DOM components push `null`
-		component_block.body.unshift(
-			b.var(
-				'$$pop_renderer',
-				b.call('$.push_renderer', custom_renderer ? b.id('$renderer') : b.literal(null))
-			)
-		);
-		component_block.body.push(b.stmt(b.call('$$pop_renderer')));
+		const renderer = custom_renderer ? b.id('$renderer') : b.literal(null);
+		const params = should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')];
+
+		/** @type {ESTree.Expression} */
+		let is_crossing = b.call('$.is_crossing', renderer);
+
+		if (options.compatibility.componentApi === 4) {
+			// `new Component(options)` is handled by the legacy wrapper inside the body
+			is_crossing = b.logical('&&', b.unary('!', b.id('new.target')), is_crossing);
+		}
+
+		component_block.body = [
+			// if the component is rendered inside content that belongs to a different renderer,
+			// render it across the boundary (which calls the component again, with its own renderer)
+			b.if(
+				is_crossing,
+				b.return(
+					b.call(
+						'$.cross',
+						renderer,
+						b.id('$$anchor'),
+						b.arrow([b.id('$$anchor')], b.call(b.id(analysis.name), ...params))
+					)
+				)
+			),
+			b.var('$$pop_renderer', b.call('$.push_renderer', renderer)),
+			{
+				type: 'TryStatement',
+				block: b.block(component_block.body),
+				handler: null,
+				finalizer: b.block([b.stmt(b.call('$$pop_renderer'))])
+			}
+		];
 	}
 
 	if (state.events.size > 0) {
