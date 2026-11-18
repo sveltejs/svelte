@@ -232,8 +232,20 @@ export function from_tree(structure, flags) {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
 	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
 
-	/** @type {Node} */
+	const ns =
+		(flags & TEMPLATE_USE_SVG) !== 0
+			? NAMESPACE_SVG
+			: (flags & TEMPLATE_USE_MATHML) !== 0
+				? NAMESPACE_MATHML
+				: undefined;
+
+	/** The DOM template that is cloned for each instance @type {Node | undefined} */
 	var node;
+
+	function create() {
+		var fragment = fragment_from_tree(structure, ns);
+		return is_fragment ? fragment : /** @type {TemplateNode} */ (get_first_child(fragment));
+	}
 
 	return () => {
 		if (hydrating) {
@@ -241,28 +253,21 @@ export function from_tree(structure, flags) {
 			return hydrate_node;
 		}
 
-		// for the custom renderer we skip the cloning and create new nodes every time...a bit less efficient
-		// but save custom renderers implementors from having to implement importNode or cloneNode
-		// which can be a pain
-		if (node === undefined || current_renderer != null) {
-			const ns =
-				(flags & TEMPLATE_USE_SVG) !== 0
-					? NAMESPACE_SVG
-					: (flags & TEMPLATE_USE_MATHML) !== 0
-						? NAMESPACE_MATHML
-						: undefined;
+		/** @type {TemplateNode} */
+		var clone;
 
-			node = fragment_from_tree(structure, ns);
-			if (!is_fragment) node = /** @type {TemplateNode} */ (get_first_child(node));
+		if (current_renderer !== null) {
+			// for custom renderers we create new nodes every time rather than cloning a template.
+			// It's a bit less efficient, but saves renderer authors from having to implement
+			// `cloneNode`/`importNode`, which can be a pain. The nodes are not cached, since
+			// that would keep the most recent instance alive after it is destroyed
+			clone = /** @type {TemplateNode} */ (create());
+		} else {
+			node ??= create();
+			clone = /** @type {TemplateNode} */ (
+				use_import_node || is_firefox ? import_node(node, true) : clone_node(node, true)
+			);
 		}
-
-		var clone = /** @type {TemplateNode} */ (
-			current_renderer != null
-				? node
-				: use_import_node || is_firefox
-					? import_node(node, true)
-					: clone_node(node, true)
-		);
 
 		if (is_fragment) {
 			var start = /** @type {TemplateNode} */ (get_first_child(clone));

@@ -371,20 +371,20 @@ export function node_type(node) {
 		const type = current_renderer.nodeType(node);
 		return CUSTOM_RENDERER_NODE_TYPE_MAP[type];
 	}
-	return node?.nodeType;
+	return node.nodeType;
 }
 
 /**
- * @param {Node | null | undefined} node
+ * @param {Node} node
+ * @returns {string}
  */
 export function node_name(node) {
-	if (node == null) return undefined;
 	if (current_renderer) {
 		// for custom renderers we don't need to return the node name since all the
 		// checks that we do on specific node names are meant to be for the HTML
 		return '';
 	}
-	return node?.nodeName;
+	return node.nodeName;
 }
 
 /**
@@ -859,7 +859,11 @@ export function set_css_text(element, value) {
  */
 export function class_list_toggle(element, name, force) {
 	if (current_renderer) {
-		const classes = current_renderer.getAttribute(element, 'class')?.split(/\s+/) ?? [];
+		// filter out empty strings, since `''.split(/\s+/)` (or leading/trailing whitespace)
+		// would otherwise end up as an empty class name, i.e. extra whitespace
+		const classes = (current_renderer.getAttribute(element, 'class') ?? '')
+			.split(/\s+/)
+			.filter(Boolean);
 		const has_class = classes.includes(name);
 		if (force === has_class) {
 			return;

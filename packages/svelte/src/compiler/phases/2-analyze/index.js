@@ -471,12 +471,15 @@ export function analyze_component(root, source, options) {
 
 	const custom_element_from_option = options.customElement({ filename: options.filename });
 	const css = options.css({ filename: options.filename });
-	const custom_renderer = options.experimental.customRenderer?.({ filename: options.filename });
+	const custom_renderer = options.experimental.customRenderer({ filename: options.filename });
 
 	// only an actual renderer module (a string) is incompatible with injected css — a `null`
-	// renderer means the component renders to the DOM, which is fine
+	// renderer means the component renders to the DOM, which is fine. `css` and `customRenderer`
+	// can each come from either `<svelte:options>` or the compiler options, so this is checked
+	// here rather than while parsing; point at the `css` attribute if there is one
 	if (css === 'injected' && typeof custom_renderer === 'string') {
-		e.incompatible_with_custom_renderer(null, "`css: 'injected'`");
+		const css_attribute = root.options?.attributes.find((attribute) => attribute.name === 'css');
+		e.incompatible_with_custom_renderer(css_attribute ?? null, "`css: 'injected'`");
 	}
 
 	const custom_element = options.customElementOptions ?? custom_element_from_option;
