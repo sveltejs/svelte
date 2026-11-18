@@ -6,9 +6,8 @@
  * @template {object} [TElement=T extends DefaultNodes ? object : T['element']]
  * @template {object} [TTextNode=T extends DefaultNodes ? object : T['text']]
  * @template {object} [TComment=T extends DefaultNodes ? object : T['comment']]
- * @template {Renderer<TFragment, TElement, TTextNode, TComment>} [R=Renderer<TFragment, TElement, TTextNode, TComment>]
- * @param {R} renderer
- * @returns {R}
+ * @param {Renderer<TFragment, TElement, TTextNode, TComment>} renderer
+ * @returns {Renderer<TFragment, TElement, TTextNode, TComment>}
  */
 export function createRenderer(renderer) {
 	return renderer;

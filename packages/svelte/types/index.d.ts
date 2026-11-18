@@ -2885,7 +2885,7 @@ declare module 'svelte/renderer' {
 	// for the other arguments (TFragment, TElement, TTextNode, TComment)
 	type UnsetObject = object & { readonly __unset: unique symbol };
 	type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;
-	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"], R extends Renderer<TFragment, TElement, TTextNode, TComment> = Renderer<TFragment, TElement, TTextNode, TComment>>(renderer: R): R;
+	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"]>(renderer: Renderer<TFragment, TElement, TTextNode, TComment>): Renderer<TFragment, TElement, TTextNode, TComment>;
 
 	export {};
 }
