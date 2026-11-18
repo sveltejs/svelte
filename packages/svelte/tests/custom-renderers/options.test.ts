@@ -77,6 +77,25 @@ describe('customRenderer function resolver validation', () => {
 	}
 });
 
+describe('customRenderer function resolver returning undefined', () => {
+	it('compiles the component as a DOM component, like returning null', () => {
+		const source = '<p>dom</p>';
+		const compile_with = (result: null | undefined) =>
+			compile(source, {
+				filename: 'App.svelte',
+				generate: 'client',
+				experimental: { customRenderer: () => result }
+			}).js.code;
+
+		const code = compile_with(undefined);
+
+		// the component takes part in crossings, so it can be rendered inside custom renderer content
+		assert.include(code, '$.push_renderer(null)');
+		assert.include(code, '$.is_crossing(null)');
+		assert.equal(code, compile_with(null));
+	});
+});
+
 describe("customRenderer with css: 'injected'", () => {
 	const source = '<p>hello</p><style>p { color: red; }</style>';
 

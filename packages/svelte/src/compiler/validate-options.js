@@ -49,10 +49,13 @@ const common_options = {
 		//  - `undefined`/`false`: the feature is off, components compile to plain DOM
 		//  - `true`: the feature is on, every component defaults to DOM (opt in via `<svelte:options>`)
 		//  - a string: the feature is on, every component defaults to that module (opt out via `<svelte:options>`)
-		//  - a function: the feature is on, the module is resolved lazily per file
+		//  - a function: the feature is on, the module is resolved lazily per file (`null` or
+		//    `undefined` mean DOM)
 		// The normalized value is always a function returning `string | null | undefined` where
 		// `string` is the renderer module, `null` is "DOM but feature enabled" (push `null`) and
-		// `undefined` is "feature off" (no renderer pushed at all).
+		// `undefined` is "feature off" (no renderer pushed at all). A function can't return
+		// `undefined` for individual files: those components wouldn't push `null`, so they'd break
+		// when rendered inside a component that uses a custom renderer.
 		customRenderer: validator(
 			/** @type {(options: { filename: string }) => string | null | undefined} */ (() => undefined),
 			(input, keypath) => {
@@ -76,7 +79,7 @@ const common_options = {
 							throw_error(`${keypath} function must return a string, null or undefined`);
 						}
 
-						return result;
+						return result ?? null;
 					};
 				}
 

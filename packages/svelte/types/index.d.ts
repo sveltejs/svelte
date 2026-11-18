@@ -1240,7 +1240,7 @@ declare module 'svelte/compiler' {
 			 *
 			 * - `true`, allowing components to individually opt in
 			 * - a string that points to a default custom renderer module. Individual components can override the default, or opt out with `<svelte:options customRenderer={null} />`
-			 * - a function that receives a `{ filename }` object and returns a custom renderer module path, or `null` if no custom renderer should be used
+			 * - a function that receives a `{ filename }` object and returns a custom renderer module path, or `null`/`undefined` if the component should use the DOM
 			 *
 			 * A custom renderer module's default export must be an object created with `createRenderer`.
 			 */
@@ -3509,7 +3509,7 @@ declare module 'svelte/types/compiler/interfaces' {
 			 *
 			 * - `true`, allowing components to individually opt in
 			 * - a string that points to a default custom renderer module. Individual components can override the default, or opt out with `<svelte:options customRenderer={null} />`
-			 * - a function that receives a `{ filename }` object and returns a custom renderer module path, or `null` if no custom renderer should be used
+			 * - a function that receives a `{ filename }` object and returns a custom renderer module path, or `null`/`undefined` if the component should use the DOM
 			 *
 			 * A custom renderer module's default export must be an object created with `createRenderer`.
 			 */
