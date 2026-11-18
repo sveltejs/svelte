@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-Fix orphaned comments when effects are removed from server rune modules.
+fix: remove related comments when effects are removed from server rune modules.
