@@ -9,7 +9,6 @@ import {
 	DERIVED,
 	DESTROYED,
 	EAGER_EFFECT,
-	EFFECT,
 	MANAGED_EFFECT,
 	PROXY_SOURCES_SYMBOL,
 	RENDER_EFFECT,
@@ -148,7 +147,10 @@ export function parentEffect(reaction) {
 /**
  * What kind of signal or effect this is, computed from its flags. Proxy properties can't be told
  * apart from `$state` this way, use the `kind` passed to `signalCreated` for that.
- * `render` includes template effects
+ * `effect` and `effectPre` are `$effect` and `$effect.pre` (which have a `location`) and APIs built
+ * on them, like `onMount`, `beforeUpdate`/`afterUpdate` and `run` from `svelte/legacy`. `render`
+ * includes template effects and the other effects Svelte creates for the template, like actions,
+ * attachments, bindings and transitions
  * @param {Signal | Effect} value
  * @returns {SignalKind | EffectKind}
  */
@@ -167,8 +169,7 @@ export function kind(value) {
 	if ((f & MANAGED_EFFECT) !== 0) return 'managed';
 	if ((f & EAGER_EFFECT) !== 0) return 'eager';
 	if ((f & ASYNC) !== 0) return 'async';
-	if ((f & RENDER_EFFECT) !== 0) return (f & USER_EFFECT) !== 0 ? 'effectPre' : 'render';
-	if ((f & EFFECT) !== 0) return 'effect';
+	if ((f & USER_EFFECT) !== 0) return (f & RENDER_EFFECT) !== 0 ? 'effectPre' : 'effect';
 
 	return 'render';
 }
