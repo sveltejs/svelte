@@ -37,24 +37,41 @@ export default test({
 	},
 
 	test({ assert, target }) {
-		const [nested, root, module] = target.querySelectorAll('button');
+		const [add, nested, root, module] = target.querySelectorAll('button');
+
+		// declared in main.svelte (or a module), first read in Child.svelte or in an event handler
+		flushSync(() => add.click());
+		assert.deepEqual(log, [
+			'obj version main.svelte:5:5 main.svelte',
+			'list version main.svelte:6:5 main.svelte',
+			'list.length main.svelte:6:5 main.svelte',
+			'obj.foo main.svelte:5:5 main.svelte',
+			'obj.nested main.svelte:5:5 main.svelte',
+			'obj.nested version main.svelte:5:5 main.svelte',
+			'obj.nested.bar main.svelte:5:5 main.svelte',
+			'store.x store.svelte.js:1:13 null',
+			'store.x version store.svelte.js:1:13 null',
+			'store.x.b store.svelte.js:1:13 null',
+			'list[0] main.svelte:6:5 main.svelte',
+			'obj.added main.svelte:5:5 main.svelte'
+		]);
 
 		// values assigned after the declaration keep the declaration's location and component
 		log = [];
 		flushSync(() => nested.click());
 		assert.deepEqual(log, [
-			'obj.nested version main.svelte:4:5 main.svelte',
-			'obj.nested.b main.svelte:4:5 main.svelte'
+			'obj.nested version main.svelte:5:5 main.svelte',
+			'obj.nested.bar main.svelte:5:5 main.svelte'
 		]);
 
 		log = [];
 		flushSync(() => root.click());
 		assert.deepEqual(log, [
-			'list version main.svelte:5:5 main.svelte',
-			'list.length main.svelte:5:5 main.svelte',
-			'list[0] main.svelte:5:5 main.svelte',
-			'list[0] version main.svelte:5:5 main.svelte',
-			'list[0].c main.svelte:5:5 main.svelte'
+			'list version main.svelte:6:5 main.svelte',
+			'list.length main.svelte:6:5 main.svelte',
+			'list[0] main.svelte:6:5 main.svelte',
+			'list[0] version main.svelte:6:5 main.svelte',
+			'list[0].c main.svelte:6:5 main.svelte'
 		]);
 
 		// declared in a module: no component, even when written from one

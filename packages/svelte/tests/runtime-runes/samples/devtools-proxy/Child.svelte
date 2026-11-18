@@ -4,4 +4,4 @@
 	let { obj } = $props();
 </script>
 
-<p>{obj.foo} {obj.nested.bar} {store.x}</p>
+<p>{obj.foo} {obj.nested.bar} {store.x.b}</p>
