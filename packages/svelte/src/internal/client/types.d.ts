@@ -207,6 +207,8 @@ export interface DevStackEntry {
 	column: number;
 	parent: DevStackEntry | null;
 	componentTag?: string;
+	/** The source text of the `{@render}` callee, e.g. `children` or `props.row` */
+	snippetName?: string;
 }
 
 export * from './reactivity/types';
