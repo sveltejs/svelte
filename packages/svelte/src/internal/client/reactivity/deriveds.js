@@ -392,7 +392,7 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		derived.wv = increment_write_version();
+		derived.wv = increment_write_version(true);
 
 		// in a fork, we don't update the underlying value, just `batch_values`.
 		// the underlying value will be updated when the fork is committed.

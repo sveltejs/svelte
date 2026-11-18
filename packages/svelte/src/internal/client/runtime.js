@@ -141,7 +141,21 @@ export function set_update_version(value) {
 	update_version = value;
 }
 
-export function increment_write_version() {
+/**
+ * Completed checks in a reconnecting read. Disconnected deriveds must remain
+ * MAYBE_DIRTY, but shared dependencies only need validating once per read.
+ * @type {{ nodes: Set<Derived>, version: number } | null}
+ */
+let derived_checks = null;
+
+/** @param {boolean} [is_derived] */
+export function increment_write_version(is_derived = false) {
+	if (!is_derived && derived_checks !== null) {
+		// Explicit writes invalidate earlier checks, unlike derived propagation.
+		derived_checks.nodes.clear();
+		derived_checks.version++;
+	}
+
 	return ++write_version;
 }
 
@@ -159,6 +173,11 @@ export function is_dirty(reaction) {
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
+		var checks = batch_values === null && !current_batch?.is_fork ? derived_checks : null;
+		var version = checks?.version;
+
+		if (checks?.nodes.has(/** @type {Derived} */ (reaction))) return false;
+
 		var dependencies = /** @type {Value[]} */ (reaction.deps);
 		var length = dependencies.length;
 
@@ -166,7 +185,7 @@ export function is_dirty(reaction) {
 			var dependency = dependencies[i];
 
 			if (is_dirty(/** @type {Derived} */ (dependency))) {
-				update_derived(/** @type {Derived} */ (dependency));
+				update_derived_checked(/** @type {Derived} */ (dependency));
 			}
 
 			if (dependency.wv > reaction.wv) {
@@ -181,6 +200,8 @@ export function is_dirty(reaction) {
 			batch_values === null
 		) {
 			set_signal_status(reaction, CLEAN);
+		} else if (checks !== null && checks.version === version && (flags & DERIVED) !== 0) {
+			checks.nodes.add(/** @type {Derived} */ (reaction));
 		}
 	}
 
@@ -681,19 +702,28 @@ export function get(signal) {
 
 		var is_new = (derived.f & REACTION_RAN) === 0;
 
-		if (is_dirty(derived)) {
-			if (should_connect) {
-				// set the flag before `update_derived`, so that the derived
-				// is added as a reaction to its dependencies
-				derived.f |= CONNECTED;
-			}
-
-			update_derived(derived);
+		var previous_checks = derived_checks;
+		if (should_connect && !is_new && batch_values === null && !current_batch?.is_fork) {
+			derived_checks ??= { nodes: new Set(), version: 0 };
 		}
 
-		if (should_connect && !is_new) {
-			unfreeze_derived_effects(derived);
-			reconnect(derived);
+		try {
+			if (is_dirty(derived)) {
+				if (should_connect) {
+					// set the flag before `update_derived`, so that the derived
+					// is added as a reaction to its dependencies
+					derived.f |= CONNECTED;
+				}
+
+				update_derived_checked(derived);
+			}
+
+			if (should_connect && !is_new) {
+				unfreeze_derived_effects(derived);
+				reconnect(derived);
+			}
+		} finally {
+			derived_checks = previous_checks;
 		}
 	}
 
@@ -706,6 +736,24 @@ export function get(signal) {
 	}
 
 	return signal.v;
+}
+
+/** @param {Derived} derived */
+function update_derived_checked(derived) {
+	var checks = derived_checks;
+	var version = checks?.version;
+
+	update_derived(derived);
+
+	if (
+		checks !== null &&
+		checks.version === version &&
+		batch_values === null &&
+		!current_batch?.is_fork &&
+		!is_destroying_effect
+	) {
+		checks.nodes.add(derived);
+	}
 }
 
 /**
