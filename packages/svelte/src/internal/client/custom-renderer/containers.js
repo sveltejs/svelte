@@ -1,6 +1,7 @@
 /** @import { TemplateNode } from '#client' */
 /** @import { Renderer } from './types.js' */
-import { get_next_sibling, get_parent_node, insert_before } from '../dom/operations.js';
+import { DOCUMENT_FRAGMENT_NODE } from '#client/constants';
+import { get_next_sibling, get_parent_node, insert_before, node_type } from '../dom/operations.js';
 import { queue_micro_task } from '../dom/task.js';
 import { set_after_flush } from '../reactivity/batch.js';
 import { pop_renderer, push_renderer } from './state.js';
@@ -163,6 +164,7 @@ function path(node) {
 
 	for (var n = /** @type {TemplateNode | null} */ (node); n !== null; n = get_parent_node(n)) {
 		nodes.push(n);
+		if (node_type(n) === DOCUMENT_FRAGMENT_NODE) break;
 	}
 
 	return nodes.reverse();
