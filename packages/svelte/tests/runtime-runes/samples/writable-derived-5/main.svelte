@@ -20,4 +20,5 @@
 	}}>reset</button
 >
 <button onclick={() => (y = 1)}>y</button>
+<button onclick={() => (d = 'first')}>first</button>
 <p>{d}</p>

@@ -43,7 +43,7 @@ import {
 	source_stacks
 } from './batch.js';
 import { proxy } from '../proxy.js';
-import { execute_derived } from './deriveds.js';
+import { execute_derived, update_derived } from './deriveds.js';
 import { set_signal_status } from './status.js';
 
 /** @type {Set<Effect>} */
@@ -183,20 +183,22 @@ export function internal_set(source, value, updated_during_traversal = null) {
 	if (!same || (entry !== undefined && (entry.e || !source.equals.call(entry, value)))) {
 		var batch = Batch.ensure();
 
-		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
-		// it's assigned already: it tracks them, and its flags don't tell whether the assignment still holds,
-		// which is what other views see when they undo this one — see `is_dirty`)
-		// In the real world MAYBE_DIRTY counts too, or a dependency could keep a stale value and miss a later change
-		// back to it — except once the owner is destroyed (the derived is frozen then, and this would only warn)
-		if ((source.f & (DERIVED | ASSIGNED)) === DERIVED) {
+		// A dirty derived runs first to track its dependencies, or one of them could keep a stale value
+		// and miss a later change back to it. An assigned one only gets them updated: running it would
+		// replace the value seen by views that undo this assignment. In a view only DIRTY counts (see
+		// `is_dirty`), and nothing is done once the owner is destroyed, where it would only warn
+		if ((source.f & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (source);
 			var parent = derived.parent;
 
-			if (
-				(parent === null || (parent.f & DESTROYED) === 0) &&
-				(batch_values === null ? is_dirty(derived) : (derived.f & DIRTY) !== 0)
-			) {
-				execute_derived(derived);
+			if (parent === null || (parent.f & DESTROYED) === 0) {
+				if (batch_values !== null) {
+					if ((derived.f & (DIRTY | ASSIGNED)) === DIRTY) execute_derived(derived);
+				} else if ((derived.f & ASSIGNED) !== 0) {
+					for (var dep of derived.deps ?? []) update_derived(dep);
+				} else if (is_dirty(derived)) {
+					execute_derived(derived);
+				}
 			}
 		}
 
