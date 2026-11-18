@@ -213,11 +213,12 @@ export function tag(source, label, location) {
  * @param {ComponentContext | null} [ctx] the component the source was declared in
  * @returns {T}
  */
-export function label_source(source, label, location, proxy, key, ctx) {
+export function label_source(source, label, location, proxy, key, ctx = component_context) {
 	source.label = label;
 
 	if (location !== undefined) {
 		source.location = location;
+		source.owner = ctx;
 	}
 
 	if (hooks.signalCreated !== null) {

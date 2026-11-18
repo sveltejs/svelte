@@ -51,7 +51,10 @@ export interface SignalCreatedInfo {
 	kind: SignalKind;
 	/** e.g. `count` for `let count = $state(0)`, or `todos[0].text` for a proxy property */
 	label: string | undefined;
-	/** `file:line:column` of the declaration, if known */
+	/**
+	 * `file:line:column` of the declaration, if known. For `proxy-prop` and `proxy-version`
+	 * signals, that of the `$state` holding the proxy
+	 */
 	location: string | undefined;
 	/**
 	 * The component context active when the signal was created. For `proxy-prop` and

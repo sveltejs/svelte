@@ -41,6 +41,8 @@ export interface Value<V = unknown> extends Signal {
 	trace?: null | (() => void);
 	/** Dev only. Where the signal was declared (`file:line:column`), for devtools */
 	location?: string;
+	/** Dev only. The component the signal was declared in, set together with `location` */
+	owner?: ComponentContext | null;
 }
 
 export interface Reaction extends Signal {
