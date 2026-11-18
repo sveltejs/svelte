@@ -17,8 +17,8 @@ export function set_renderer(value) {
 /** How many `push_renderer` calls haven't been matched by a `pop_renderer` yet */
 var depth = 0;
 
-/** The `depth` of the push that suspended hydration, or -1 if hydration isn't suspended */
-var suspended_hydration_at = -1;
+/** @type {number[]} Depths of pushes that suspended hydration, including nested hydrate calls */
+var suspended_hydration_at = [];
 
 /**
  * Makes `value` the current renderer (`null` for the DOM), returning the previous one.
@@ -38,7 +38,7 @@ export function push_renderer(value) {
 	// this is to allow hydration code to treeshake
 	if (hydrating && value !== null) {
 		set_hydrating(false);
-		suspended_hydration_at = depth;
+		suspended_hydration_at.push(depth);
 	}
 
 	return previous;
@@ -49,8 +49,8 @@ export function push_renderer(value) {
  * @param {Renderer<any, any, any, any> | null} previous The value returned by `push_renderer`
  */
 export function pop_renderer(previous) {
-	if (suspended_hydration_at === depth) {
-		suspended_hydration_at = -1;
+	if (suspended_hydration_at[suspended_hydration_at.length - 1] === depth) {
+		suspended_hydration_at.pop();
 		set_hydrating(true);
 	}
 

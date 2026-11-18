@@ -63,6 +63,24 @@ describe('push_renderer/pop_renderer', () => {
 		assert.isTrue(hydrating);
 	});
 
+	it('preserves the outer suspension across a nested hydrate call', () => {
+		set_hydrating(true);
+		const outer = push_renderer(a);
+		const dom = push_renderer(null);
+
+		// A nested hydrate() enables hydration, then restores its caller's state.
+		set_hydrating(true);
+		const inner = push_renderer(b);
+		pop_renderer(inner);
+		assert.isTrue(hydrating);
+		set_hydrating(false);
+
+		pop_renderer(dom);
+		assert.isFalse(hydrating);
+		pop_renderer(outer);
+		assert.isTrue(hydrating);
+	});
+
 	it("doesn't resume hydration that wasn't suspended by a push", () => {
 		const previous = push_renderer(a);
 		assert.isFalse(hydrating);
