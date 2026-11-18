@@ -1,4 +1,5 @@
-/** @import { Blocker, Effect } from '#client' */
+/** @import { Effect } from '#client' */
+/** @import { Blocker } from '../../reactivity/async.js' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';

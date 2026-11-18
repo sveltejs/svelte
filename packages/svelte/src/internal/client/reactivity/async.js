@@ -1,6 +1,6 @@
-/** @import { Blocker, Effect, Source, Value } from '#client' */
+/** @import { Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
-import { DESTROYED, STALE_REACTION } from '#client/constants';
+import { DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -13,18 +13,20 @@ import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
 	active_reaction,
+	get,
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
 import { current_batch } from './batch.js';
 import {
-	async_derived,
 	reactivity_loss_tracker,
 	derived,
 	derived_safe_equal,
-	set_reactivity_loss_tracker
+	set_reactivity_loss_tracker,
+	async_expression,
+	is_uninitialized
 } from './deriveds.js';
-import { aborted } from './effects.js';
+import { async_effect, block, branch } from './effects.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -33,12 +35,8 @@ import { aborted } from './effects.js';
  * @param {(values: Value[]) => any} fn
  */
 export function flatten(blockers, sync, async, fn) {
-	const d = is_runes() ? derived : derived_safe_equal;
-
-	// Filter out already-settled blockers - no need to wait for them
-	var pending = blockers.filter((b) => !b.settled);
-
-	var deriveds = sync.map(d);
+	var parent = /** @type {Effect} */ (active_effect);
+	var deriveds = sync.map(is_runes() ? derived : derived_safe_equal);
 
 	if (DEV) {
 		deriveds.forEach((d, i) => {
@@ -52,69 +50,67 @@ export function flatten(blockers, sync, async, fn) {
 		});
 	}
 
-	if (async.length === 0 && pending.length === 0) {
-		fn(deriveds);
-		return;
-	}
+	// Filter out already-settled blockers - no need to wait for them
+	var pending = blockers.filter((b) => !b.settled);
 
-	var parent = /** @type {Effect} */ (active_effect);
+	if (pending.length > 0) {
+		var restore = capture();
+		var decrement_pending = increment_pending();
+		var p = pending.length === 1 ? pending[0].promise : Promise.all(pending.map((b) => b.promise));
 
-	var restore = capture();
-	var blocker_promise =
-		pending.length === 1
-			? pending[0].promise
-			: pending.length > 1
-				? Promise.all(pending.map((b) => b.promise))
-				: null;
-
-	/**
-	 * @param {Source[]} async
-	 */
-	function finish(async) {
-		if ((parent.f & DESTROYED) !== 0) {
-			return;
-		}
-
-		restore();
-
-		try {
-			fn([...deriveds, ...async]);
-		} catch (error) {
-			invoke_error_boundary(error, parent);
-		}
-
-		unset_context();
-	}
-
-	var decrement_pending = increment_pending();
-
-	// Fast path: blockers but no async expressions
-	if (async.length === 0) {
-		/** @type {Promise<any>} */ (blocker_promise).then(() => finish([])).finally(decrement_pending);
-		return;
-	}
-
-	// Full path: has async expressions
-	function run() {
-		Promise.all(async.map((expression) => async_derived(expression)))
-			.then(finish)
-			.catch((error) => invoke_error_boundary(error, parent))
-			.finally(decrement_pending);
-	}
-
-	if (blocker_promise) {
-		blocker_promise.then(() => {
+		p.then(() => {
 			if ((parent.f & DESTROYED) !== 0) {
-				decrement_pending();
 				return;
 			}
 
-			restore();
-			run();
+			// Keep the caller's context, but use the script's batch to read its first values.
+			restore(pending[0].run.get_batch());
+
+			try {
+				run();
+			} catch (error) {
+				invoke_error_boundary(error, parent);
+			}
+
 			unset_context();
-		});
+		}).finally(decrement_pending);
 	} else {
 		run();
+	}
+
+	function run() {
+		if (blockers.some((b) => b.failed)) return;
+
+		if (async.length === 0) {
+			fn(deriveds);
+			return;
+		}
+
+		var signals = async.map((fn) => async_expression(fn));
+
+		/** @type {Effect | null} */
+		var effect = null;
+
+		block(() => {
+			for (var s of signals) {
+				if (is_uninitialized(s)) {
+					get(s);
+					return;
+				}
+			}
+
+			if (effect !== null) {
+				/** @type {Batch} */ (current_batch).revalidate_branch(effect);
+			} else {
+				effect = branch(() => {
+					try {
+						fn([...deriveds, ...signals]);
+					} catch (error) {
+						invoke_error_boundary(error, parent);
+					}
+				});
+			}
+		}, EFFECT_TRANSPARENT);
 	}
 }
 
@@ -141,16 +137,19 @@ export function capture() {
 		var previous_dev_stack = dev_stack;
 	}
 
-	return function restore(activate_batch = true) {
+	/**
+	 * @param {Batch | null} [batch] the batch to continue in, if not the one that was active before
+	 */
+	return function restore(batch = previous_batch) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 
-		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
-			// TODO we only need optional chaining here because `{#await ...}` blocks
+		if (batch !== null && (previous_effect.f & DESTROYED) === 0) {
+			// A batch that was merged into another one continues as that one.
+			// TODO we only need the check here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
-			previous_batch?.activate();
-			previous_batch?.apply();
+			merge_target(batch).activate();
 		}
 
 		if (DEV) {
@@ -331,22 +330,6 @@ function create_run_step() {
 }
 
 /**
- * @template T
- * @param {() => T} fn
- * @param {RunStep} step
- */
-function start_run_step(fn, step) {
-	var previous = current_run_step;
-	current_run_step = step;
-
-	try {
-		return fn();
-	} finally {
-		current_run_step = previous;
-	}
-}
-
-/**
  * @param {RunStep} step
  * @param {boolean} errored
  */
@@ -362,86 +345,193 @@ function settle_run_step(step, errored) {
 }
 
 /**
+ * The script's state while a `run` step executes.
+ * Async expressions set `batch` when they deliver their first value. `continued` holds callbacks
+ * to run after the script resumes, and `signals` lists the expressions in creation order.
+ * @type {Runner | null}
+ */
+export let current_runner = null;
+
+class Runner {
+	/** @type {ReturnType<typeof capture>} */
+	#restore;
+
+	/**
+	 * Other batches that share this run
+	 * @type {Set<Batch>}
+	 */
+	#adopters = new Set();
+
+	/** @type {Batch} */
+	#batch;
+
+	/** @type {Array<() => void>} */
+	continued = [];
+
+	/**
+	 * Async deriveds created during this run
+	 * @type {Source[]}
+	 */
+	signals = [];
+
+	/** Whether the full initialization promise chain is still pending. */
+	running = true;
+
+	constructor() {
+		// TODO this should be unnecessary! these should just be class initializers. but
+		// something somewhere (vitest?) must be doing some transpilation that breaks classes
+		this.#batch = /** @type {Batch} */ (current_batch);
+		this.#restore = capture();
+	}
+
+	/** The batch to continue in, even if the original fork was discarded. */
+	get_batch() {
+		if (!merge_target(this.#batch).linked) {
+			for (const b of this.#adopters) {
+				var target = merge_target(b);
+				if (target.linked) this.#batch = target;
+			}
+		}
+
+		return this.#batch;
+	}
+
+	restore() {
+		this.#restore(this.get_batch());
+	}
+
+	/**
+	 *
+	 * @param {Array<() => void | Promise<void>>} thunks
+	 */
+	run(thunks) {
+		var active = /** @type {Effect} */ (active_effect);
+
+		var step = DEV ? create_run_step() : null;
+		var promise = Promise.resolve(this.#invoke(thunks[0], step));
+		var blockers = [new Blocker(this, promise, step)];
+
+		for (const fn of thunks.slice(1)) {
+			const step = DEV ? create_run_step() : null;
+
+			promise = promise.then(() => {
+				if ((active.f & DESTROYED) !== 0) {
+					throw STALE_REACTION;
+				}
+
+				try {
+					this.restore();
+					return this.#invoke(fn, step);
+				} finally {
+					// We gotta unset context directly in case the function returns a promise, in which case
+					// unset_context in .finally() would be too late
+					unset_context();
+					// Release buffered results now that the script has used the previous step's first values.
+					this.#continue();
+				}
+			});
+
+			blockers.push(new Blocker(this, promise, step));
+		}
+
+		promise = promise
+			.catch((error) => {
+				if ((active.f & DESTROYED) === 0) {
+					this.restore();
+
+					try {
+						invoke_error_boundary(error, active);
+					} finally {
+						unset_context();
+					}
+				}
+			})
+			// The last step has no following step to release its buffered results.
+			.finally(() => this.#continue());
+
+		async_effect(() => {
+			// Inside an effect so later adopting branches can rerun this
+			var batch = /** @type {Batch} */ (current_batch);
+			this.#adopters.add(batch);
+			var decrement_pending = increment_pending();
+
+			promise.finally(() => {
+				// An adopting batch must also run effects created after it adopted the script's branch.
+				var target = merge_target(batch);
+
+				if (target.linked && (active.f & DESTROYED) === 0) {
+					target.revalidate_branch(active);
+				}
+
+				decrement_pending();
+
+				this.running = false;
+			});
+		});
+
+		return blockers;
+	}
+
+	/**
+	 * Switch away from the previous batch (which is now obsolete)
+	 * to another one
+	 * @param {Batch} batch
+	 */
+	switch(batch) {
+		this.#batch = batch;
+	}
+
+	#continue() {
+		for (const fn of this.continued.splice(0)) fn();
+	}
+
+	/**
+	 * @param {() => void | Promise<void>} fn
+	 * @param {RunStep | null} step
+	 */
+	#invoke(fn, step) {
+		var previous_runner = current_runner;
+		var previous_step = current_run_step;
+		current_runner = this;
+		if (DEV) current_run_step = step;
+
+		try {
+			return fn();
+		} finally {
+			current_runner = previous_runner;
+			if (DEV) current_run_step = previous_step;
+		}
+	}
+}
+
+export class Blocker {
+	settled = false;
+	failed = false;
+
+	/**
+	 * @param {Runner} run
+	 * @param {Promise<any>} promise
+	 * @param {RunStep | null} step
+	 */
+	constructor(run, promise, step) {
+		this.run = run;
+		this.promise = promise
+			.catch(() => {
+				this.failed = true;
+			})
+			.finally(() => {
+				this.settled = true;
+				unset_context();
+				if (DEV && step) settle_run_step(step, this.failed);
+			});
+	}
+}
+
+/**
  * @param {Array<() => void | Promise<void>>} thunks
  */
 export function run(thunks) {
-	const restore = capture();
-
-	const decrement_pending = increment_pending();
-
-	var active = /** @type {Effect} */ (active_effect);
-
-	/** @type {null | { error: any }} */
-	var errored = null;
-
-	/** @param {any} error */
-	const handle_error = (error) => {
-		errored = { error }; // wrap in object in case a promise rejects with a falsy value
-
-		if (!aborted(active)) {
-			invoke_error_boundary(error, active);
-		}
-	};
-
-	var step = DEV ? create_run_step() : null;
-
-	var promise = Promise.resolve(DEV && step ? start_run_step(thunks[0], step) : thunks[0]()).catch(
-		handle_error
-	);
-
-	/** @type {Blocker} */
-	var blocker = { promise, settled: false };
-	var blockers = [blocker];
-
-	promise.finally(() => {
-		blocker.settled = true;
-		unset_context();
-		if (DEV && step) settle_run_step(step, errored !== null);
-	});
-
-	for (const fn of thunks.slice(1)) {
-		const step = DEV ? create_run_step() : null;
-
-		promise = promise
-			.then(() => {
-				restore();
-
-				try {
-					if (errored) {
-						throw errored.error;
-					}
-
-					if (aborted(active)) {
-						throw STALE_REACTION;
-					}
-
-					return DEV && step ? start_run_step(fn, step) : fn();
-				} finally {
-					// We gotta unset context directly in case the function returns a promise, in which case
-					// unset_context in .finally() would be too late ...
-					unset_context();
-				}
-			})
-			.catch(handle_error);
-
-		const blocker = { promise, settled: false };
-		blockers.push(blocker);
-
-		promise.finally(() => {
-			blocker.settled = true;
-			// ... but we also need it after such a promise has resolved in case it restores our context
-			unset_context();
-			if (DEV && step) settle_run_step(step, errored !== null);
-		});
-	}
-
-	promise
-		// wait one more tick, so that template effects are
-		// guaranteed to run before `$effect(...)`
-		.then(() => Promise.resolve())
-		.finally(decrement_pending);
-
-	return blockers;
+	return new Runner().run(thunks);
 }
 
 /**
@@ -452,19 +542,39 @@ export function wait(blockers) {
 }
 
 /**
- * @returns {(skip?: boolean) => void}
+ * Adds pending work to the current batch, and to the boundary of the active effect. If the batch is merged
+ * into another one before the work is done, it's that batch's from then on (see `Batch#merge`)
+ * @returns {() => void}
  */
 export function increment_pending() {
 	var effect = /** @type {Effect} */ (active_effect);
 	var boundary = effect.b; // undefined if called outside the render tree, e.g. a standalone $effect.root
-	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = !!boundary?.is_rendered();
+	var batch = merge_target(/** @type {Batch} */ (current_batch));
 
-	boundary?.update_pending_count(1, batch);
-	batch.increment(blocking, effect);
+	/** The nearest boundary with a pending snippet, if there is one */
+	var pending = boundary;
+
+	while (pending && !pending.is_pending) {
+		pending = pending.parent;
+	}
+
+	batch.increment(effect);
+	pending?.increment(effect, batch);
+	boundary?.update_effect_pending(1);
 
 	return () => {
-		boundary?.update_pending_count(-1, batch);
-		batch.decrement(blocking, effect);
+		merge_target(batch).decrement(effect);
+		// The boundary keeps counts under the originating batch, even if it was merged.
+		pending?.decrement(effect, batch);
+		boundary?.update_effect_pending(-1);
 	};
+}
+
+/**
+ * The batch that `batch` was merged into, if any (transitively), else `batch` itself
+ * @param {Batch} batch
+ */
+export function merge_target(batch) {
+	while (batch.merged !== null) batch = batch.merged;
+	return batch;
 }
