@@ -48,7 +48,6 @@ import {
 	current_run_step,
 	increment_pending,
 	merge_target,
-	set_current_run_step,
 	unset_context
 } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
@@ -169,10 +168,6 @@ export function async_expression(fn, label, location, onready) {
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
 
-		// async deriveds created while computing this one don't belong to the `run(...)` step
-		var previous_run_step = current_run_step;
-		if (DEV) set_current_run_step(null);
-
 		try {
 			var result = fn();
 			if (result === UNINITIALIZED) return;
@@ -203,8 +198,6 @@ export function async_expression(fn, label, location, onready) {
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
-		} finally {
-			if (DEV) set_current_run_step(previous_run_step);
 		}
 
 		if (DEV) {
