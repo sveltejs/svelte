@@ -31,6 +31,7 @@ import {
 	active_reaction,
 	get,
 	increment_write_version,
+	invalidate_derived_checks,
 	is_destroying_effect,
 	is_dirty,
 	is_outdated,
@@ -1767,6 +1768,8 @@ function later_writer(batch, source) {
  * @param {BatchValue} entry
  */
 function apply(source, entry) {
+	// Fork commits apply existing versions, rather than allocating new ones.
+	invalidate_derived_checks();
 	source.v = entry.v;
 	source.wv = entry.wv;
 	source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;
