@@ -111,6 +111,23 @@ export function component_api_invalid_new(component, name) {
 }
 
 /**
+ * `%operation%` is not supported when rendering with a custom renderer
+ * @param {string} operation
+ * @returns {never}
+ */
+export function custom_renderer_unsupported_operation(operation) {
+	if (DEV) {
+		const error = new Error(`custom_renderer_unsupported_operation\n\`${operation}\` is not supported when rendering with a custom renderer\nhttps://svelte.dev/e/custom_renderer_unsupported_operation`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/custom_renderer_unsupported_operation`);
+	}
+}
+
+/**
  * A derived value cannot reference itself recursively
  * @returns {never}
  */

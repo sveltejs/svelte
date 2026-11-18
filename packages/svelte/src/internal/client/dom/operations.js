@@ -18,6 +18,7 @@ import {
 import { eager_block_writes } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
 import { current_renderer } from '../custom-renderer/state.js';
+import * as e from '../errors.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -740,7 +741,7 @@ export function has_attribute(element, name) {
  */
 export function set_inner_html(element, value) {
 	if (current_renderer) {
-		throw new Error('setInnerHTML is not supported with custom renderers');
+		e.custom_renderer_unsupported_operation('innerHTML');
 	}
 	element.innerHTML = value;
 }
@@ -752,7 +753,7 @@ export function set_inner_html(element, value) {
  */
 export function clone_node(node, deep) {
 	if (current_renderer) {
-		throw new Error('cloneNode is not supported with custom renderers');
+		e.custom_renderer_unsupported_operation('cloneNode');
 	}
 	return node.cloneNode(deep);
 }
@@ -764,7 +765,7 @@ export function clone_node(node, deep) {
  */
 export function import_node(node, deep) {
 	if (current_renderer) {
-		throw new Error('importNode is not supported with custom renderers');
+		e.custom_renderer_unsupported_operation('importNode');
 	}
 	return document.importNode(node, deep);
 }
@@ -804,8 +805,7 @@ export function remove_event_listener(target, type, handler, options) {
  */
 export function dispatch_event(target, event) {
 	if (current_renderer) {
-		// is only used in SSR which is not a thing for custom renderers
-		throw new Error('dispatchEvent is not supported with custom renderers');
+		e.custom_renderer_unsupported_operation('dispatchEvent');
 	}
 	return target.dispatchEvent(event);
 }
