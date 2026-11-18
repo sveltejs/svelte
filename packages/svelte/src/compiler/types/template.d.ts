@@ -545,6 +545,9 @@ export namespace AST {
 			/** The set of components/render tags that could render this snippet,
 			 * used for CSS pruning */
 			sites: Set<Component | SvelteComponent | SvelteSelf | RenderTag>;
+			/** The `bind:group` groups that depend on what the snippet declares,
+			 * one of each per render of the snippet */
+			binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 		};
 	}
 
