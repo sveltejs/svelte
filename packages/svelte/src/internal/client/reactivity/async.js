@@ -54,6 +54,7 @@ export function flatten(blockers, sync, async, fn) {
 	var pending = blockers.filter((b) => !b.settled);
 
 	if (pending.length > 0) {
+		var restore = capture();
 		var decrement_pending = increment_pending();
 		var p = pending.length === 1 ? pending[0].promise : Promise.all(pending.map((b) => b.promise));
 
@@ -62,8 +63,8 @@ export function flatten(blockers, sync, async, fn) {
 				return;
 			}
 
-			// Use the script's current batch so the template can read its first values.
-			pending[0].run.restore();
+			// Keep the caller's context, but use the script's batch to read its first values.
+			restore(pending[0].run.get_batch());
 
 			try {
 				run();
@@ -322,7 +323,8 @@ class Runner {
 	 */
 	#adopters = new Set();
 
-	#batch = /** @type {Batch} */ (current_batch);
+	/** @type {Batch} */
+	#batch;
 
 	/** @type {Array<() => void>} */
 	continued = [];
@@ -333,6 +335,7 @@ class Runner {
 	 */
 	signals = [];
 
+	/** Whether the full initialization promise chain is still pending. */
 	running = true;
 
 	constructor() {
@@ -342,7 +345,8 @@ class Runner {
 		this.#restore = capture();
 	}
 
-	restore() {
+	/** The batch to continue in, even if the original fork was discarded. */
+	get_batch() {
 		if (!merge_target(this.#batch).linked) {
 			for (const b of this.#adopters) {
 				var target = merge_target(b);
@@ -350,7 +354,11 @@ class Runner {
 			}
 		}
 
-		this.#restore(this.#batch);
+		return this.#batch;
+	}
+
+	restore() {
+		this.#restore(this.get_batch());
 	}
 
 	/**
@@ -361,7 +369,7 @@ class Runner {
 		var active = /** @type {Effect} */ (active_effect);
 
 		var promise = Promise.resolve(this.#invoke(thunks[0]));
-		var blockers = [this.#blocker(promise)];
+		var blockers = [new Blocker(this, promise)];
 
 		for (const fn of thunks.slice(1)) {
 			promise = promise.then(() => {
@@ -381,7 +389,7 @@ class Runner {
 				}
 			});
 
-			blockers.push(this.#blocker(promise));
+			blockers.push(new Blocker(this, promise));
 		}
 
 		promise = promise
@@ -431,13 +439,6 @@ class Runner {
 		this.#batch = batch;
 	}
 
-	/**
-	 * @param {Promise<any>} promise
-	 */
-	#blocker(promise) {
-		return new Blocker(this, promise);
-	}
-
 	#continue() {
 		for (const fn of this.continued.splice(0)) fn();
 	}
@@ -467,12 +468,14 @@ export class Blocker {
 	 */
 	constructor(run, promise) {
 		this.run = run;
-		this.promise = promise.catch(() => {
-			this.failed = true;
-		}).finally(() => {
-			this.settled = true;
-			unset_context();
-		});
+		this.promise = promise
+			.catch(() => {
+				this.failed = true;
+			})
+			.finally(() => {
+				this.settled = true;
+				unset_context();
+			});
 	}
 }
 

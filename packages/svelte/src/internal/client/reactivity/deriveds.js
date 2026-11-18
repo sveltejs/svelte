@@ -165,10 +165,12 @@ export function async_expression(fn, label, location, onready) {
 
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
-			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
+			var promise = Promise.resolve(result);
+			// The then getter may also call `getAbortSignal()`, so capture its signal afterwards.
 			var abort_signal = abort_controller?.signal;
 
-			Promise.resolve(result)
+			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
+			promise
 				.then(
 					(value) => {
 						if (!abort_signal?.aborted) d.resolve(value);
@@ -325,31 +327,37 @@ export function async_derived(fn, label, location) {
 	const batch = /** @type {Batch} */ (current_batch);
 
 	return new Promise((fulfil, reject) => {
-		var source = async_expression(() => {
-			var effect = /** @type {Effect} */ (active_effect);
-			var target = merge_target(/** @type {Batch} */ (current_batch));
+		var source = async_expression(
+			() => {
+				var effect = /** @type {Effect} */ (active_effect);
+				var target = merge_target(/** @type {Batch} */ (current_batch));
 
-			if (runner.running && target !== batch && is_uninitialized(source)) {
-				for (var i = index - 1; i >= 0; i--) {
-					var s = runner.signals[i];
+				if (runner.running && target !== batch && is_uninitialized(source)) {
+					// Check all earlier expressions: assignments can initialize them out of order.
+					for (var i = index - 1; i >= 0; i--) {
+						var s = runner.signals[i];
 
-					if (is_uninitialized(s)) {
-						// re-run until we have a value
-						get(s);
+						if (is_uninitialized(s)) {
+							// re-run until we have a value
+							get(s);
 
-						var pending = /** @type {Batch} */ (current_batch).async_deriveds;
-						pending.get(effect)?.reject(OBSOLETE);
-						pending.delete(effect);
-						return UNINITIALIZED;
+							var pending = /** @type {Batch} */ (current_batch).async_deriveds;
+							pending.get(effect)?.reject(OBSOLETE);
+							pending.delete(effect);
+							return UNINITIALIZED;
+						}
 					}
 				}
-			}
 
-			return fn();
-		}, label, location, (error) => {
-			if (error === undefined) fulfil(/** @type {Source<V>} */ (source));
-			else reject(error);
-		});
+				return fn();
+			},
+			label,
+			location,
+			(error) => {
+				if (error === undefined) fulfil(/** @type {Source<V>} */ (source));
+				else reject(error);
+			}
+		);
 
 		var index = runner.signals.push(source) - 1;
 	});
