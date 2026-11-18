@@ -46,5 +46,10 @@
     "typescript-eslint": "^8.56.0",
     "v8-natives": "^1.2.5",
     "vitest": "^4.1.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "devalue": "5.9.3"
+    }
   }
 }
