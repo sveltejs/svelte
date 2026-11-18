@@ -71,7 +71,14 @@ export function process_children(nodes, initial, is_element, context) {
 
 		context.state.template.push_text([{ type: 'Text', data: ' ', raw: ' ', start: -1, end: -1 }]);
 
-		const { has_state, value } = build_template_chunk(sequence, context);
+		// the text of a bound contenteditable is only set once, outside of any effect,
+		// so its expressions are not memoized: there is no effect to declare them
+		const { has_state, value } = build_template_chunk(
+			sequence,
+			context,
+			context.state,
+			within_bound_contenteditable ? (value) => value : undefined
+		);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
