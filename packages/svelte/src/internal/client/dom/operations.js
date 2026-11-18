@@ -735,41 +735,6 @@ export function has_attribute(element, name) {
 }
 
 /**
- * @param {Element} element
- * @param {string} value
- */
-export function set_inner_html(element, value) {
-	if (current_renderer) {
-		throw new Error('setInnerHTML is not supported with custom renderers');
-	}
-	element.innerHTML = value;
-}
-
-/**
- * @param {Node} node
- * @param {boolean} deep
- * @returns {Node}
- */
-export function clone_node(node, deep) {
-	if (current_renderer) {
-		throw new Error('cloneNode is not supported with custom renderers');
-	}
-	return node.cloneNode(deep);
-}
-
-/**
- * @param {Node} node
- * @param {boolean} deep
- * @returns {Node}
- */
-export function import_node(node, deep) {
-	if (current_renderer) {
-		throw new Error('importNode is not supported with custom renderers');
-	}
-	return document.importNode(node, deep);
-}
-
-/**
  * @param {EventTarget} target
  * @param {string} type
  * @param {EventListenerOrEventListenerObject} handler
@@ -795,19 +760,6 @@ export function remove_event_listener(target, type, handler, options) {
 		return;
 	}
 	target.removeEventListener(type, handler, options);
-}
-
-/**
- * @param {EventTarget} target
- * @param {Event} event
- * @returns {boolean}
- */
-export function dispatch_event(target, event) {
-	if (current_renderer) {
-		// is only used in SSR which is not a thing for custom renderers
-		throw new Error('dispatchEvent is not supported with custom renderers');
-	}
-	return target.dispatchEvent(event);
 }
 
 /**

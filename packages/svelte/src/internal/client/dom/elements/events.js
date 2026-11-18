@@ -11,12 +11,7 @@ import {
 	set_active_reaction
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
-import {
-	remove_attribute,
-	dispatch_event,
-	add_event_listener,
-	remove_event_listener
-} from '../operations.js';
+import { add_event_listener, remove_event_listener } from '../operations.js';
 import { current_renderer } from '../../custom-renderer/state.js';
 
 /**
@@ -37,11 +32,10 @@ export const root_event_handles = new Set();
  * @param {HTMLElement} dom
  */
 export function replay_events(dom) {
-	// custom renderers safe since it immediately returns if not hydrating
 	if (!hydrating) return;
 
-	remove_attribute(dom, 'onload');
-	remove_attribute(dom, 'onerror');
+	dom.removeAttribute('onload');
+	dom.removeAttribute('onerror');
 	// @ts-expect-error
 	const event = dom.__e;
 	if (event !== undefined) {
@@ -49,7 +43,7 @@ export function replay_events(dom) {
 		dom.__e = undefined;
 		queueMicrotask(() => {
 			if (dom.isConnected) {
-				dispatch_event(dom, event);
+				dom.dispatchEvent(event);
 			}
 		});
 	}

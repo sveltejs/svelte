@@ -1,5 +1,3 @@
-import { remove_node } from '../dom/operations.js';
-
 /** @type {Map<String, Set<HTMLStyleElement>>} */
 var all_styles = new Map();
 
@@ -26,7 +24,7 @@ export function cleanup_styles(hash) {
 	if (!styles) return;
 
 	for (const style of styles) {
-		remove_node(style);
+		style.remove();
 	}
 
 	all_styles.delete(hash);

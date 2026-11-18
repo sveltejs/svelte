@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { register_style } from '../dev/css.js';
 import { effect } from '../reactivity/effects.js';
-import { create_element, append_child, set_text_content } from './operations.js';
+import { create_element } from './operations.js';
 import { active_effect } from '../runtime.js';
 
 /**
@@ -23,12 +23,12 @@ export function append_styles(anchor, css) {
 
 		// Always querying the DOM is roughly the same perf as additionally checking for presence in a map first assuming
 		// that you'll get cache hits half of the time, so we just always query the dom for simplicity and code savings.
-		if (!(/** @type {Element} */ (target).querySelector('#' + css.hash))) {
+		if (!target.querySelector('#' + css.hash)) {
 			const style = create_element('style');
 			style.id = css.hash;
-			set_text_content(style, css.code);
+			style.textContent = css.code;
 
-			append_child(target, style);
+			target.appendChild(style);
 
 			if (DEV) {
 				register_style(css.hash, style);

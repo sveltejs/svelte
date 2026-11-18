@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { component_context, dev_stack } from '../../context.js';
 import { hydrate_next, hydrating } from '../hydration.js';
-import { append_child, create_element, create_text, set_attribute } from '../operations.js';
+import { create_element, create_text } from '../operations.js';
 import { append } from '../template.js';
 
 /**
@@ -21,7 +21,7 @@ export function slot(anchor, $$props, name, slot_props, fallback_fn, location) {
 	// Use the stored reference because the shadow root may be closed.
 	if ($$props.$$host?.$$shadowRoot) {
 		const element = create_element('slot');
-		if (name !== 'default') set_attribute(element, 'name', name);
+		if (name !== 'default') element.name = name;
 
 		if (DEV && location) {
 			// Native slots are created outside the template, so mark their ownership
@@ -42,7 +42,7 @@ export function slot(anchor, $$props, name, slot_props, fallback_fn, location) {
 
 		if (fallback_fn !== null) {
 			const fallback_anchor = create_text();
-			append_child(element, fallback_anchor);
+			element.append(fallback_anchor);
 			fallback_fn(fallback_anchor);
 		}
 

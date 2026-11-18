@@ -69,8 +69,6 @@ const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
 export function remove_input_defaults(input) {
 	if (!hydrating) return;
 
-	// we should be safe here from custom renderers as this only run during hydration
-
 	var already_removed = false;
 
 	// We try and remove the default attributes later, rather than sync during hydration.
@@ -82,13 +80,13 @@ export function remove_input_defaults(input) {
 		already_removed = true;
 
 		// Remove the attributes but preserve the values
-		if (has_attribute(input, 'value')) {
+		if (input.hasAttribute('value')) {
 			var value = input.value;
 			set_attribute(input, 'value', null);
 			input.value = value;
 		}
 
-		if (has_attribute(input, 'checked')) {
+		if (input.hasAttribute('checked')) {
 			var checked = input.checked;
 			set_attribute(input, 'checked', null);
 			input.checked = checked;
@@ -170,12 +168,12 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	var attributes = get_attributes(element);
 
 	if (hydrating) {
-		attributes[attribute] = get_attribute(element, attribute);
+		attributes[attribute] = element.getAttribute(attribute);
 
 		if (
 			attribute === 'src' ||
 			attribute === 'srcset' ||
-			(attribute === 'href' && node_name(element) === LINK_TAG)
+			(attribute === 'href' && element.nodeName === LINK_TAG)
 		) {
 			if (!skip_warning) {
 				check_src_in_dev_hydration(element, attribute, value ?? '');
@@ -220,7 +218,6 @@ export function set_attribute(element, attribute, value, skip_warning) {
  * @param {string} value
  */
 export function set_xlink_attribute(dom, attribute, value) {
-	// custom renderer safe since we never emit this
 	dom.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
@@ -230,7 +227,6 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {
-	// custom renderer safe since we never emit this
 	// We need to ensure that setting custom element props, which can
 	// invoke lifecycle methods on other custom elements, does not also
 	// associate those lifecycle methods with the current active reaction
@@ -255,10 +251,10 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			(setters_cache.has(get_attribute(node, 'is') || node_name(node)) ||
+			(setters_cache.has(node.getAttribute('is') || node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
-			customElements.get(get_attribute(node, 'is') || node_name(node).toLowerCase())
+			customElements.get(node.getAttribute('is') || node.nodeName.toLowerCase())
 				? get_setters(node).has(prop)
 				: value && typeof value === 'object')
 		) {
@@ -297,7 +293,7 @@ function set_attributes(
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	if (hydrating && should_remove_defaults && node_name(element) === INPUT_TAG) {
+	if (hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
 		if (!('defaultValue' in next || 'defaultChecked' in next)) {
 			remove_input_defaults(/** @type {HTMLInputElement} */ (element));
 		}
@@ -693,9 +689,9 @@ function get_setters(element) {
  * @param {string} value
  */
 function check_src_in_dev_hydration(element, attribute, value) {
-	if (!DEV || current_renderer != null) return;
+	if (!DEV) return;
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
-	if (src_url_equal(get_attribute(element, attribute) ?? '', value)) return;
+	if (src_url_equal(element.getAttribute(attribute) ?? '', value)) return;
 
 	w.hydration_attribute_changed(
 		attribute,
@@ -710,7 +706,7 @@ function check_src_in_dev_hydration(element, attribute, value) {
  * @returns {boolean}
  */
 function src_url_equal(element_src, url) {
-	if (element_src === url || current_renderer != null) return true;
+	if (element_src === url) return true;
 	return new URL(element_src, document.baseURI).href === new URL(url, document.baseURI).href;
 }
 
@@ -725,7 +721,6 @@ function split_srcset(srcset) {
  * @returns {boolean}
  */
 function srcset_url_equal(element, srcset) {
-	if (current_renderer != null) return true;
 	var element_urls = split_srcset(element.srcset);
 	var urls = split_srcset(srcset);
 

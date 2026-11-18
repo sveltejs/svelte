@@ -20,23 +20,17 @@ import { active_effect } from '../runtime.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import {
 	append_child,
-	clone_node,
 	create_comment,
 	create_element,
 	create_fragment,
 	create_text,
 	get_first_child,
 	get_last_child,
-	get_node_value,
-	import_node,
 	insert_before,
 	is_firefox,
 	merge_text_nodes,
 	node_name,
-	node_type,
-	replace_with,
-	set_attribute,
-	set_text_content
+	set_attribute
 } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 
@@ -85,12 +79,12 @@ export function from_html(content, flags) {
 		}
 
 		var clone = /** @type {TemplateNode} */ (
-			use_import_node || is_firefox ? import_node(node, true) : clone_node(node, true)
+			use_import_node || is_firefox ? document.importNode(node, true) : node.cloneNode(true)
 		);
 
 		if (is_fragment) {
 			var start = /** @type {TemplateNode} */ (get_first_child(clone));
-			var end = /** @type {TemplateNode} */ (get_last_child(clone));
+			var end = /** @type {TemplateNode} */ (clone.lastChild);
 
 			assign_nodes(start, end);
 		} else {
@@ -132,20 +126,20 @@ function from_namespace(content, flags, ns = 'svg') {
 			var root = /** @type {Element} */ (get_first_child(fragment));
 
 			if (is_fragment) {
-				node = create_fragment();
+				node = document.createDocumentFragment();
 				while (get_first_child(root)) {
-					append_child(node, /** @type {TemplateNode} */ (get_first_child(root)));
+					node.appendChild(/** @type {TemplateNode} */ (get_first_child(root)));
 				}
 			} else {
 				node = /** @type {Element} */ (get_first_child(root));
 			}
 		}
 
-		var clone = /** @type {TemplateNode} */ (clone_node(node, true));
+		var clone = /** @type {TemplateNode} */ (node.cloneNode(true));
 
 		if (is_fragment) {
 			var start = /** @type {TemplateNode} */ (get_first_child(clone));
-			var end = /** @type {TemplateNode} */ (get_last_child(clone));
+			var end = /** @type {TemplateNode} */ (clone.lastChild);
 
 			assign_nodes(start, end);
 		} else {
@@ -265,7 +259,7 @@ export function from_tree(structure, flags) {
 		} else {
 			node ??= create();
 			clone = /** @type {TemplateNode} */ (
-				use_import_node || is_firefox ? import_node(node, true) : clone_node(node, true)
+				use_import_node || is_firefox ? document.importNode(node, true) : node.cloneNode(true)
 			);
 		}
 
@@ -296,13 +290,12 @@ export function with_script(fn) {
  * @returns {Node | Node[]}
  */
 function run_scripts(node) {
-	// this should be custom renderer safe since we never emit `with_script` in that case
 	// scripts were SSR'd, in which case they will run
 	if (hydrating) return node;
 
-	const is_fragment = node_type(node) === DOCUMENT_FRAGMENT_NODE;
+	const is_fragment = node.nodeType === DOCUMENT_FRAGMENT_NODE;
 	const scripts =
-		node_name(node) === SCRIPT_TAG
+		/** @type {HTMLElement} */ (node).nodeName === SCRIPT_TAG
 			? [/** @type {HTMLScriptElement} */ (node)]
 			: node.querySelectorAll('script');
 
@@ -310,22 +303,21 @@ function run_scripts(node) {
 
 	for (const script of scripts) {
 		const clone = create_element('script');
-
 		for (var attribute of script.attributes) {
-			set_attribute(clone, attribute.name, attribute.value);
+			clone.setAttribute(attribute.name, attribute.value);
 		}
 
-		set_text_content(clone, script.textContent ?? '');
+		clone.textContent = script.textContent;
 
 		// The script has changed - if it's at the edges, the effect now points at dead nodes
-		if (is_fragment ? get_first_child(node) === script : node === script) {
+		if (is_fragment ? node.firstChild === script : node === script) {
 			effect.nodes.start = clone;
 		}
-		if (is_fragment ? get_last_child(node) === script : node === script) {
+		if (is_fragment ? node.lastChild === script : node === script) {
 			effect.nodes.end = clone;
 		}
 
-		replace_with(script, clone);
+		script.replaceWith(clone);
 	}
 	return node;
 }
@@ -343,9 +335,9 @@ export function text(value = '') {
 
 	var node = hydrate_node;
 
-	if (node_type(node) !== TEXT_NODE) {
+	if (node.nodeType !== TEXT_NODE) {
 		// if an {expression} is empty during SSR, we need to insert an empty text node
-		insert_before(node, (node = create_text()));
+		node.before((node = create_text()));
 		set_hydrate_node(node);
 	} else {
 		merge_text_nodes(/** @type {Text} */ (node));
@@ -409,17 +401,17 @@ export function append(anchor, dom) {
  * Create (or hydrate) an unique UID for the component instance.
  */
 export function props_id() {
-	let node_value;
 	if (
 		hydrating &&
 		hydrate_node &&
-		node_type(hydrate_node) === COMMENT_NODE &&
-		(node_value = get_node_value(hydrate_node))?.startsWith(`$`)
+		hydrate_node.nodeType === COMMENT_NODE &&
+		hydrate_node.textContent?.startsWith(`$`)
 	) {
-		const id = node_value.substring(1);
+		const id = hydrate_node.textContent.substring(1);
 		hydrate_next();
 		return id;
 	}
+
 	// @ts-expect-error This way we ensure the id is unique even across Svelte runtimes
 	(globalThis.__svelte ??= {}).uid ??= 1;
 
