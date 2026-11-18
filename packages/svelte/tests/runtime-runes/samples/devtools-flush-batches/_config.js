@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte';
 import { batchId, label, listen } from 'svelte/internal/devtools';
+import { async_mode } from '../../../helpers.js';
 import { test } from '../../test';
 
 /** @type {string[]} */
@@ -65,21 +66,36 @@ export default test({
 			'flushEnd B1'
 		]);
 
-		// `flushSync` inside an effect nests a flush of the new batch. Its commit rebases the
-		// outer batch, which then ends inside the nested flush
+		// `flushSync` inside an effect nests a flush of the new batch. In async mode its commit
+		// rebases the outer batch, which then ends inside the nested flush. Without async mode
+		// there is no rebase, so the outer batch ends after the nested flush
 		log = [];
 		names.clear();
 		flushSync(() => c.click());
 
-		assert.deepEqual(log, [
-			'write c B1',
-			'flushStart B1',
-			'write b B2',
-			'flushStart B2',
-			'committed B2',
-			'committed B1',
-			'flushEnd B2',
-			'flushEnd B1'
-		]);
+		assert.deepEqual(
+			log,
+			async_mode
+				? [
+						'write c B1',
+						'flushStart B1',
+						'write b B2',
+						'flushStart B2',
+						'committed B2',
+						'committed B1',
+						'flushEnd B2',
+						'flushEnd B1'
+					]
+				: [
+						'write c B1',
+						'flushStart B1',
+						'write b B2',
+						'flushStart B2',
+						'committed B2',
+						'flushEnd B2',
+						'committed B1',
+						'flushEnd B1'
+					]
+		);
 	}
 });
