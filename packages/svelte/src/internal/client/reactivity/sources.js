@@ -141,13 +141,12 @@ export function mutate(source, value) {
 }
 
 /**
- * @template V
- * @param {Value<V>} source
- * @param {V} value
- * @param {boolean} [should_proxy]
- * @returns {V}
+ * Throws if `source` cannot be written to in the current reaction. Called by `set`,
+ * and by anything that needs to know before it changes data of its own,
+ * such as `SvelteMap` and `SvelteSet`
+ * @param {Value} source
  */
-export function set(source, value, should_proxy = false) {
+export function check_mutation(source) {
 	if (
 		active_reaction !== null &&
 		// since we are untracking the function inside `$inspect.with` we need to add this check
@@ -159,6 +158,17 @@ export function set(source, value, should_proxy = false) {
 	) {
 		e.state_unsafe_mutation();
 	}
+}
+
+/**
+ * @template V
+ * @param {Value<V>} source
+ * @param {V} value
+ * @param {boolean} [should_proxy]
+ * @returns {V}
+ */
+export function set(source, value, should_proxy = false) {
+	check_mutation(source);
 
 	let new_value = should_proxy ? proxy(value) : value;
 

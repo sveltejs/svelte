@@ -1,6 +1,12 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { set, source, state, increment } from '../internal/client/reactivity/sources.js';
+import {
+	set,
+	source,
+	state,
+	increment,
+	check_mutation
+} from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get, update_version } from '../internal/client/runtime.js';
 
@@ -183,6 +189,14 @@ export class SvelteMap extends Map {
 		var sources = this.#sources;
 		var s = sources.get(key);
 		var prev_res = super.get(key);
+
+		// throw before the map changes, if this write is not allowed here
+		if (s === undefined) {
+			check_mutation(this.#size);
+		} else if (prev_res !== value) {
+			check_mutation(s);
+		}
+
 		var res = super.set(key, value);
 		var version = this.#version;
 
@@ -218,6 +232,14 @@ export class SvelteMap extends Map {
 	delete(key) {
 		var sources = this.#sources;
 		var s = sources.get(key);
+
+		// throw before the map changes, if this write is not allowed here
+		if (s !== undefined) {
+			check_mutation(s);
+		} else if (super.has(key)) {
+			check_mutation(this.#size);
+		}
+
 		var res = super.delete(key);
 
 		if (s !== undefined) {
@@ -237,6 +259,8 @@ export class SvelteMap extends Map {
 		if (super.size === 0) {
 			return;
 		}
+		// throw before the map changes, if this write is not allowed here
+		check_mutation(this.#size);
 		// Clear first, so we get nice console.log outputs with $inspect
 		super.clear();
 		var sources = this.#sources;

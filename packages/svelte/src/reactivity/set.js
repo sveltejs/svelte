@@ -1,6 +1,12 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set, state, increment } from '../internal/client/reactivity/sources.js';
+import {
+	source,
+	set,
+	state,
+	increment,
+	check_mutation
+} from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get, update_version } from '../internal/client/runtime.js';
 
@@ -145,6 +151,8 @@ export class SvelteSet extends Set {
 	/** @param {T} value */
 	add(value) {
 		if (!super.has(value)) {
+			// throw before the set changes, if this write is not allowed here
+			check_mutation(this.#size);
 			super.add(value);
 			set(this.#size, super.size);
 			increment(this.#version);
@@ -155,9 +163,17 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	delete(value) {
-		var deleted = super.delete(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
+
+		// throw before the set changes, if this write is not allowed here
+		if (s !== undefined) {
+			check_mutation(s);
+		} else if (super.has(value)) {
+			check_mutation(this.#size);
+		}
+
+		var deleted = super.delete(value);
 
 		if (s !== undefined) {
 			sources.delete(value);
@@ -176,6 +192,8 @@ export class SvelteSet extends Set {
 		if (super.size === 0) {
 			return;
 		}
+		// throw before the set changes, if this write is not allowed here
+		check_mutation(this.#size);
 		// Clear first, so we get nice console.log outputs with $inspect
 		super.clear();
 		var sources = this.#sources;
