@@ -563,6 +563,9 @@ export function client_component(analysis, options) {
 	if (custom_renderer) {
 		body.unshift(b.imports([['$renderer', '$renderer', true]], custom_renderer));
 	} else {
+		// DOM components set up the DOM operations (prototype caches etc) by importing this module, rather
+		// than `mount`/`hydrate` doing it, so that apps that only use custom renderers don't bundle it
+		// (or touch `window` etc, which might not exist). It only runs once however many components import it
 		body.unshift(b.imports([], 'svelte/internal/init-operations'));
 	}
 
