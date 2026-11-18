@@ -50,7 +50,11 @@ export function cross(renderer, anchor, render) {
 	} else {
 		e.renderer_cannot_cross(
 			renderer === null ? 'the DOM' : 'a custom renderer',
-			host === null ? 'the DOM' : render !== null ? 'a different custom renderer' : 'a custom renderer'
+			host === null
+				? 'the DOM'
+				: render !== null
+					? 'a different custom renderer'
+					: 'a custom renderer'
 		);
 	}
 
