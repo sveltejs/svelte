@@ -2734,8 +2734,7 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"], R extends Renderer<TFragment, TElement, TTextNode, TComment> = Renderer<TFragment, TElement, TTextNode, TComment>>(renderer: R): R;
-	type Renderer<
+	export type Renderer<
 		TFragment extends object = object,
 		TElement extends object = object,
 		TTextNode extends object = object,
@@ -2856,7 +2855,7 @@ declare module 'svelte/renderer' {
 	/**
 	 * Describes how content belonging to one renderer is attached to content belonging to another
 	 */
-	type RendererConnection<THostNode, TContainer> = {
+	export type RendererConnection<THostNode, TContainer> = {
 		/** A node owned by the host renderer that represents the content in the host tree */
 		node?: THostNode;
 		/** A node owned by the guest renderer that the content is rendered into */
@@ -2865,7 +2864,7 @@ declare module 'svelte/renderer' {
 		destroy?(): void;
 	};
 
-	type RendererNodes<
+	export type RendererNodes<
 		Fragment extends object,
 		Element extends object,
 		TextNode extends object,
@@ -2877,7 +2876,7 @@ declare module 'svelte/renderer' {
 		comment: Comment;
 	};
 
-	type NodeType = keyof RendererNodes<any, any, any, any>;
+	export type NodeType = keyof RendererNodes<any, any, any, any>;
 
 	// to detect if the user is passing a type or not we create this type utils that adds a unique symbol
 	// that the user will never be able to pass in. We then create a a DefaultNodes type that is used as the default
@@ -2886,6 +2885,7 @@ declare module 'svelte/renderer' {
 	// for the other arguments (TFragment, TElement, TTextNode, TComment)
 	type UnsetObject = object & { readonly __unset: unique symbol };
 	type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;
+	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"], R extends Renderer<TFragment, TElement, TTextNode, TComment> = Renderer<TFragment, TElement, TTextNode, TComment>>(renderer: R): R;
 
 	export {};
 }
