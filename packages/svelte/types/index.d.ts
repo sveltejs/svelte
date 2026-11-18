@@ -2734,34 +2734,31 @@ declare module 'svelte/reactivity/window' {
 }
 
 declare module 'svelte/renderer' {
-	export type Renderer<
-		TFragment extends object = object,
-		TElement extends object = object,
-		TTextNode extends object = object,
-		TComment extends object = object,
-		TNode extends TFragment | TElement | TTextNode | TComment =
-			| TFragment
-			| TElement
-			| TTextNode
-			| TComment
-	> = {
+	/**
+	 * A custom renderer. `N` describes the types of the renderer's nodes, for example:
+	 *
+	 * ```ts
+	 * const renderer: Renderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }> = ...
+	 * ```
+	 */
+	export type Renderer<N extends RendererNodes = RendererNodes> = {
 		/** Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of its children. */
-		createFragment(): TFragment;
+		createFragment(): N['fragment'];
 
 		/** Creates an element with the given name. */
-		createElement(name: string): TElement;
+		createElement(name: string): N['element'];
 
 		/** Creates a text node with the given data. */
-		createTextNode(data: string): TTextNode;
+		createTextNode(data: string): N['text'];
 
 		/**
 		 * Creates a comment node with the given data.
 		 * This is often used as an anchor for inserting elements; it doesn't necessarily need to be rendered.
 		 */
-		createComment(data: string): TComment;
+		createComment(data: string): N['comment'];
 
 		/** Should return the type of the node in string form. */
-		nodeType(node: TNode): NodeType;
+		nodeType(node: N[NodeType]): NodeType;
 
 		/**
 		 * Return the value of the node:
@@ -2769,56 +2766,56 @@ declare module 'svelte/renderer' {
 		 * - data value of a comment
 		 * - null for elements and fragments
 		 */
-		getNodeValue(node: TTextNode | TComment): string | null;
+		getNodeValue(node: N['text'] | N['comment']): string | null;
 
 		/** Return the value of the attribute with the given name on the element, or null if it doesn't exist. */
-		getAttribute(element: TElement, name: string): string | null;
+		getAttribute(element: N['element'], name: string): string | null;
 
 		/** Set the attribute with the given name and value on the element. */
-		setAttribute(element: TElement, key: string, value: any): void;
+		setAttribute(element: N['element'], key: string, value: any): void;
 
 		/** Remove the attribute with the given name from the element. */
-		removeAttribute(element: TElement, name: string): void;
+		removeAttribute(element: N['element'], name: string): void;
 
 		/** Return true if the element has an attribute with the given name. */
-		hasAttribute(element: TElement, name: string): boolean;
+		hasAttribute(element: N['element'], name: string): boolean;
 
 		/**
 		 * Set the text content of the node to the given value.
 		 * This should work for both text nodes and elements.
 		 */
-		setText(node: TElement | TTextNode | TComment, text: string): void;
+		setText(node: N['element'] | N['text'] | N['comment'], text: string): void;
 
 		/** Return the first child of the element or fragment, or null if it has no children. */
-		getFirstChild(element: TElement | TFragment): TNode | null;
+		getFirstChild(element: N['element'] | N['fragment']): N[NodeType] | null;
 
 		/** Return the last child of the element or fragment, or null if it has no children. */
-		getLastChild(element: TElement | TFragment): TNode | null;
+		getLastChild(element: N['element'] | N['fragment']): N[NodeType] | null;
 
 		/** Return the next sibling of the node, or null if it has no next sibling. */
-		getNextSibling(node: TElement | TTextNode | TComment): TNode | null;
+		getNextSibling(node: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
 
 		/**
 		 * Insert the element into the parent before the anchor.
 		 * If anchor is null, insert at the end.
 		 */
 		insert(
-			parent: TElement | TFragment,
-			element: TNode,
-			anchor: TElement | TTextNode | TComment | null
+			parent: N['element'] | N['fragment'],
+			element: N[NodeType],
+			anchor: N['element'] | N['text'] | N['comment'] | null
 		): void;
 
 		/** Remove the node from the tree. */
-		remove(node: TElement | TTextNode | TComment): void;
+		remove(node: N['element'] | N['text'] | N['comment']): void;
 
 		/** Return the parent of the element, or null if it has no parent. */
-		getParent(element: TElement | TTextNode | TComment): TNode | null;
+		getParent(element: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
 
 		/** Add an event listener of the given type and handler to the target node. */
-		addEventListener(target: TElement, type: string, handler: any, options?: any): void;
+		addEventListener(target: N['element'], type: string, handler: any, options?: any): void;
 
 		/** Remove an event listener of the given type and handler from the target node. */
-		removeEventListener(target: TElement, type: string, handler: any, options?: any): void;
+		removeEventListener(target: N['element'], type: string, handler: any, options?: any): void;
 
 		/**
 		 * Called when a component (or snippet) that uses this renderer is rendered inside
@@ -2832,10 +2829,10 @@ declare module 'svelte/renderer' {
 		 * possible to render into an element the user wrote, for example a `<canvas>`.
 		 */
 		embed?(context: {
-			host: Renderer<any, any, any, any> | null;
+			host: Renderer<any> | null;
 			parent: unknown;
 			anchor: unknown;
-		}): RendererConnection<unknown, TElement | TFragment>;
+		}): RendererConnection<unknown, N['element'] | N['fragment']>;
 
 		/**
 		 * Called when a component (or snippet) that uses a different renderer (`guest` is `null`
@@ -2846,10 +2843,10 @@ declare module 'svelte/renderer' {
 		 * and, optionally, a `node` owned by this renderer that represents the content in this tree.
 		 */
 		host?(context: {
-			guest: Renderer<any, any, any, any> | null;
-			parent: TElement | TFragment | null;
-			anchor: TElement | TTextNode | TComment;
-		}): RendererConnection<TElement | TTextNode | TComment, unknown>;
+			guest: Renderer<any> | null;
+			parent: N['element'] | N['fragment'] | null;
+			anchor: N['element'] | N['text'] | N['comment'];
+		}): RendererConnection<N['element'] | N['text'] | N['comment'], unknown>;
 	};
 
 	/**
@@ -2864,28 +2861,31 @@ declare module 'svelte/renderer' {
 		destroy?(): void;
 	};
 
-	export type RendererNodes<
-		Fragment extends object,
-		Element extends object,
-		TextNode extends object,
-		Comment extends object
-	> = {
-		fragment: Fragment;
-		element: Element;
-		text: TextNode;
-		comment: Comment;
+	/**
+	 * The types of a custom renderer's nodes. Used as the type argument of `Renderer` and `createRenderer`
+	 */
+	export type RendererNodes = {
+		fragment: object;
+		element: object;
+		text: object;
+		comment: object;
 	};
 
-	export type NodeType = keyof RendererNodes<any, any, any, any>;
-
-	// to detect if the user is passing a type or not we create this type utils that adds a unique symbol
-	// that the user will never be able to pass in. We then create a a DefaultNodes type that is used as the default
-	// type for the T generic of `createRenderer`. This means we can "detect" if the user is passing a type manually by
-	// checking if the type extends DefaultNodes and using different default values
-	// for the other arguments (TFragment, TElement, TTextNode, TComment)
-	type UnsetObject = object & { readonly __unset: unique symbol };
-	type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;
-	export function createRenderer<T extends RendererNodes<object, object, object, object> = DefaultNodes, TFragment extends object = T extends DefaultNodes ? object : T["fragment"], TElement extends object = T extends DefaultNodes ? object : T["element"], TTextNode extends object = T extends DefaultNodes ? object : T["text"], TComment extends object = T extends DefaultNodes ? object : T["comment"], R extends Renderer<TFragment, TElement, TTextNode, TComment> = Renderer<TFragment, TElement, TTextNode, TComment>>(renderer: R): R;
+	export type NodeType = keyof RendererNodes;
+	/**
+	 * Creates a custom renderer. Pass the types of the renderer's nodes as the type argument,
+	 * so that the methods' parameters are typed:
+	 *
+	 * ```ts
+	 * const renderer = createRenderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>({
+	 * 	createFragment: () => ...,
+	 * 	// ...
+	 * });
+	 * ```
+	 *
+	 * The renderer is returned as-is.
+	 * */
+	export function createRenderer<N extends RendererNodes = RendererNodes, R extends Renderer<N> = Renderer<N>>(renderer: R): R;
 
 	export {};
 }

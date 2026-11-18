@@ -1,12 +1,19 @@
-/** @import { Renderer, RendererNodes, DefaultNodes } from "./types.js" */
+/** @import { Renderer, RendererNodes } from "./types.js" */
 
 /**
- * @template {RendererNodes<object, object, object, object>} [T=DefaultNodes]
- * @template {object} [TFragment=T extends DefaultNodes ? object : T['fragment']]
- * @template {object} [TElement=T extends DefaultNodes ? object : T['element']]
- * @template {object} [TTextNode=T extends DefaultNodes ? object : T['text']]
- * @template {object} [TComment=T extends DefaultNodes ? object : T['comment']]
- * @template {Renderer<TFragment, TElement, TTextNode, TComment>} [R=Renderer<TFragment, TElement, TTextNode, TComment>]
+ * Creates a custom renderer. Pass the types of the renderer's nodes as the type argument,
+ * so that the methods' parameters are typed:
+ *
+ * ```ts
+ * const renderer = createRenderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>({
+ * 	createFragment: () => ...,
+ * 	// ...
+ * });
+ * ```
+ *
+ * The renderer is returned as-is.
+ * @template {RendererNodes} [N=RendererNodes]
+ * @template {Renderer<N>} [R=Renderer<N>]
  * @param {R} renderer
  * @returns {R}
  */

@@ -3,12 +3,12 @@
 import { hydrating, set_hydrating } from '../dom/hydration.js';
 
 /**
- * @type {Renderer<any, any, any, any> | null}
+ * @type {Renderer<any> | null}
  */
 export let current_renderer = null;
 
 /**
- * @param {Renderer<any, any, any, any> | null} value
+ * @param {Renderer<any> | null} value
  */
 export function set_renderer(value) {
 	current_renderer = value;
@@ -16,7 +16,7 @@ export function set_renderer(value) {
 
 /**
  *
- * @param {Renderer<any, any, any, any> | null} value
+ * @param {Renderer<any> | null} value
  */
 export function push_renderer(value) {
 	var previous_hydrating = hydrating;
