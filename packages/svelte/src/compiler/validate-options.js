@@ -68,6 +68,15 @@ const common_options = {
 				}
 
 				if (typeof input === 'string') {
+					// the module is imported by every component, so a relative path would resolve
+					// relative to each component rather than to wherever the option is set (which
+					// the compiler can't know)
+					if (/^\.\.?([/\\]|$)/.test(input)) {
+						throw_error(
+							`${keypath} cannot be a relative path, because it would be resolved relative to each component. Use a package name, an alias or an absolute path instead (received "${input}")`
+						);
+					}
+
 					return () => input;
 				}
 
