@@ -1,5 +1,6 @@
 import { teardown } from '../../reactivity/effects.js';
-import { define_property } from '../../../shared/utils.js';
+import { array_from, define_property } from '../../../shared/utils.js';
+import { is_passive_event } from '../../../../utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import { FILENAME } from '../../../../constants.js';
@@ -183,6 +184,89 @@ export function delegate(events) {
 	for (var fn of root_event_handles) {
 		fn(events);
 	}
+}
+
+/**
+ * How many delegation roots are listening to each event type on each node
+ * @type {Map<EventTarget, Map<string, number>>}
+ */
+const delegated_listeners = new Map();
+
+/**
+ * Makes `target` a root for delegated events: listens on `target` and on `document`
+ * for every delegated event type, including types registered later, and dispatches
+ * them to the handlers set with `delegated(...)`. Used for `mount`/`hydrate` targets,
+ * and for DOM containers that DOM content is rendered into from a custom renderer.
+ *
+ * This always uses DOM methods directly (rather than renderer-aware operations),
+ * since it may be torn down while a custom renderer is active.
+ * @param {EventTarget} target
+ * @returns {() => void} stops listening
+ */
+export function listen_to_delegated_events(target) {
+	/** @type {Set<string>} */
+	var registered_events = new Set();
+
+	/** @param {Array<string>} events */
+	var event_handle = (events) => {
+		for (var i = 0; i < events.length; i++) {
+			var event_name = events[i];
+
+			if (registered_events.has(event_name)) continue;
+			registered_events.add(event_name);
+
+			var passive = is_passive_event(event_name);
+
+			// Add the event listener to both the target and the document.
+			// The target listener ensures we catch events from within in case
+			// the outer content stops propagation of the event.
+			//
+			// The document listener ensures we catch events that originate from elements that were
+			// manually moved outside of the target (e.g. via manual portals).
+			for (const node of [target, document]) {
+				var counts = delegated_listeners.get(node);
+
+				if (counts === undefined) {
+					counts = new Map();
+					delegated_listeners.set(node, counts);
+				}
+
+				var count = counts.get(event_name);
+
+				if (count === undefined) {
+					node.addEventListener(event_name, handle_event_propagation, { passive });
+					counts.set(event_name, 1);
+				} else {
+					counts.set(event_name, count + 1);
+				}
+			}
+		}
+	};
+
+	event_handle(array_from(all_registered_events));
+	root_event_handles.add(event_handle);
+
+	return () => {
+		for (var event_name of registered_events) {
+			for (const node of [target, document]) {
+				var counts = /** @type {Map<string, number>} */ (delegated_listeners.get(node));
+				var count = /** @type {number} */ (counts.get(event_name));
+
+				if (--count == 0) {
+					node.removeEventListener(event_name, handle_event_propagation);
+					counts.delete(event_name);
+
+					if (counts.size === 0) {
+						delegated_listeners.delete(node);
+					}
+				} else {
+					counts.set(event_name, count);
+				}
+			}
+		}
+
+		root_event_handles.delete(event_handle);
+	};
 }
 
 // used to store the reference to the currently propagated event

@@ -10,6 +10,7 @@ import {
 	insert_before,
 	remove_node
 } from '../dom/operations.js';
+import { listen_to_delegated_events } from '../dom/elements/events.js';
 import * as e from '../errors.js';
 import { current_renderer, push_renderer } from './state.js';
 
@@ -71,6 +72,12 @@ export function cross(renderer, anchor, render) {
 	/** @type {TemplateNode | null} */
 	var end = null;
 
+	/**
+	 * Stops listening for delegated events on a DOM container
+	 * @type {(() => void) | null}
+	 */
+	var stop_listening = null;
+
 	/** @type {T} */
 	var result;
 
@@ -85,6 +92,13 @@ export function cross(renderer, anchor, render) {
 		append_child(container, last);
 		start = first;
 		end = last;
+
+		if (renderer === null) {
+			// DOM content compiles event handlers like `onclick` to delegated handlers, which
+			// only run if the event reaches a delegation root. The container is usually outside
+			// the DOM mount target (or there is no DOM mount at all), so make it a root
+			stop_listening = listen_to_delegated_events(container);
+		}
 
 		branch(() => {
 			result = render(last);
@@ -113,6 +127,7 @@ export function cross(renderer, anchor, render) {
 				pop_renderer();
 			}
 
+			stop_listening?.();
 			connection.destroy?.();
 		});
 	}
