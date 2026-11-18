@@ -198,7 +198,6 @@ export function async_expression(fn, label, location, onready) {
 			// settles. Unsetting eagerly nulls `active_effect`/`current_batch`, which turns
 			// the original error into `Cannot read properties of null (reading 'f')`.
 			// It is undone when the rejection is handled below instead.
-
 		}
 
 		if (DEV) {
