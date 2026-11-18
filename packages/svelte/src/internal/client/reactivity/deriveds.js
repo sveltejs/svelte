@@ -443,23 +443,21 @@ export function execute_derived(derived) {
 		return derived.v;
 	}
 
+	// Check before pushing, so that a recursive call doesn't remove the outer evaluation from the stack.
+	if (DEV && includes.call(stack, derived)) {
+		e.derived_references_self();
+	}
+
 	set_active_effect(parent);
 
 	var prev_eager_effects = eager_effects;
-	var recursive = DEV && includes.call(stack, derived);
 
 	if (DEV) {
 		set_eager_effects(new Set());
-
-		// (pushed in any case, so that `finally` doesn't remove the outer evaluation from the stack)
 		stack.push(derived);
 	}
 
 	try {
-		if (DEV && recursive) {
-			e.derived_references_self();
-		}
-
 		destroy_derived_effects(derived);
 		return update_reaction(derived);
 	} finally {

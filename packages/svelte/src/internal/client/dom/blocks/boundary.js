@@ -414,15 +414,12 @@ export class Boundary {
 		this.is_pending = false;
 
 		// Add any deferred effects to the batch's effect queue
-		if (this.#effects.length > 0) {
-			for (let i = 0; i < this.#effects.length; i += 1) {
-				var e = this.#effects[i];
-				set_signal_status(e, DIRTY);
-				effects.push(e);
-			}
-
-			this.#effects.length = 0;
+		for (const effect of this.#effects) {
+			set_signal_status(effect, DIRTY);
+			effects.push(effect);
 		}
+
+		this.#effects.length = 0;
 
 		if (this.#pending_effect) {
 			pause_effect(this.#pending_effect, () => {

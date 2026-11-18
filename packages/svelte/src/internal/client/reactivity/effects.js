@@ -1,6 +1,5 @@
 /** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 /** @import { Blocker } from './async.js' */
-/** @import { TeardownContext } from './batch.js' */
 import {
 	is_dirty,
 	active_effect,
@@ -629,9 +628,7 @@ export function pause_effect(effect, callback, destroy = true) {
 	var remaining = transitions.length;
 
 	if (remaining > 0) {
-		// only reactivate the teardown context if `fn` runs later
-		/** @type {TeardownContext | null} */
-		var context = null;
+		var context = teardown_context;
 
 		var check = () => {
 			if (!--remaining) {
@@ -650,8 +647,6 @@ export function pause_effect(effect, callback, destroy = true) {
 				}
 			}
 		};
-
-		context = teardown_context;
 
 		for (var transition of transitions) {
 			transition.out(check);

@@ -133,23 +133,26 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 
 /**
  * @param {EachState} state
+ * @returns {Set<Effect>}
+ */
+function selected_effects(state) {
+	var selected = new Set();
+	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
+	for (const keys of state.pending.values()) {
+		for (const key of keys) {
+			selected.add(/** @type {EachItem} */ (state.items.get(key)).e);
+		}
+	}
+	return selected;
+}
+
+/**
+ * @param {EachState} state
  * @param {Effect[]} to_destroy
  * @param {boolean} remove_dom
  */
 function destroy_effects(state, to_destroy, remove_dom = true) {
-	/** @type {Set<Effect> | undefined} */
-	var preserved_effects;
-
-	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
-	if (state.pending.size > 0) {
-		preserved_effects = new Set();
-
-		for (const keys of state.pending.values()) {
-			for (const key of keys) {
-				preserved_effects.add(/** @type {EachItem} */ (state.items.get(key)).e);
-			}
-		}
-	}
+	var preserved_effects = state.pending.size > 0 ? selected_effects(state) : undefined;
 
 	for (var i = 0; i < to_destroy.length; i++) {
 		var e = to_destroy[i];
@@ -314,15 +317,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				if ((effect.f & EFFECT_OFFSCREEN) === 0) break;
 
 				// create lazily to save work in the common case
-				if (selected === undefined) {
-					selected = new Set();
-
-					for (const keys of pending.values()) {
-						for (const key of keys) {
-							selected.add(/** @type {EachItem} */ (items.get(key)).e);
-						}
-					}
-				}
+				selected ??= selected_effects(state);
 
 				if (!selected.has(effect) && !is_outroing(state, effect)) {
 					destroy_effect(effect);

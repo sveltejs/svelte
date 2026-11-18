@@ -1201,7 +1201,6 @@ export class Batch {
 					continue;
 				}
 
-				var previous_teardown_context = teardown_context;
 				var context = push_teardown_context();
 
 				for (const [source, write] of writes) {
@@ -1211,7 +1210,7 @@ export class Batch {
 				try {
 					fn(this);
 				} finally {
-					teardown_context = previous_teardown_context;
+					teardown_context = context.parent;
 				}
 			}
 		});

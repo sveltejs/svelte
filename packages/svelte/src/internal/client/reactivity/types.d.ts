@@ -7,7 +7,6 @@ import type {
 	TransitionManager
 } from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
-import type { Batch } from './batch.js';
 
 export interface Signal {
 	/** Flags bitmask */
