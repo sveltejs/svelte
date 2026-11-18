@@ -1,4 +1,4 @@
-/** @import { Blocker, Effect, Source, Value } from '#client' */
+/** @import { Effect, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js' */
 import { DESTROYED, EFFECT_TRANSPARENT, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
@@ -26,7 +26,7 @@ import {
 	async_expression,
 	is_uninitialized
 } from './deriveds.js';
-import { aborted, async_effect, block, branch } from './effects.js';
+import { async_effect, block, branch } from './effects.js';
 
 /**
  * @param {Blocker[]} blockers
@@ -63,8 +63,8 @@ export function flatten(blockers, sync, async, fn) {
 				return;
 			}
 
-			// Use the script's current batch so the template can read its first values.
-			restore(true, pending[0].batch());
+			// Keep the caller's context, but use the script's batch to read its first values.
+			restore(pending[0].run.get_batch());
 
 			try {
 				run();
@@ -138,19 +138,18 @@ export function capture() {
 	}
 
 	/**
-	 * @param {boolean} [activate_batch]
 	 * @param {Batch | null} [batch] the batch to continue in, if not the one that was active before
 	 */
-	return function restore(activate_batch = true, batch = previous_batch) {
+	return function restore(batch = previous_batch) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 
-		if (activate_batch && (previous_effect.f & DESTROYED) === 0) {
+		if (batch !== null && (previous_effect.f & DESTROYED) === 0) {
 			// A batch that was merged into another one continues as that one.
 			// TODO we only need the check here because `{#await ...}` blocks
 			// are anomalous. Once we retire them we can get rid of it
-			if (batch) merge_target(batch).activate();
+			merge_target(batch).activate();
 		}
 
 		if (DEV) {
@@ -310,146 +309,181 @@ export function unset_context(deactivate_batch = true) {
  * The script's state while a `run` step executes.
  * Async expressions set `batch` when they deliver their first value. `continued` holds callbacks
  * to run after the script resumes, and `signals` lists the expressions in creation order.
- * @type {{ batch: Batch, continued: Array<() => void>, signals: Source[] } | null}
+ * @type {Runner | null}
  */
-export let batch_for_run = null;
+export let current_runner = null;
+
+class Runner {
+	/** @type {ReturnType<typeof capture>} */
+	#restore;
+
+	/**
+	 * Other batches that share this run
+	 * @type {Set<Batch>}
+	 */
+	#adopters = new Set();
+
+	/** @type {Batch} */
+	#batch;
+
+	/** @type {Array<() => void>} */
+	continued = [];
+
+	/**
+	 * Async deriveds created during this run
+	 * @type {Source[]}
+	 */
+	signals = [];
+
+	/** Whether the full initialization promise chain is still pending. */
+	running = true;
+
+	constructor() {
+		// TODO this should be unnecessary! these should just be class initializers. but
+		// something somewhere (vitest?) must be doing some transpilation that breaks classes
+		this.#batch = /** @type {Batch} */ (current_batch);
+		this.#restore = capture();
+	}
+
+	/** The batch to continue in, even if the original fork was discarded. */
+	get_batch() {
+		if (!merge_target(this.#batch).linked) {
+			for (const b of this.#adopters) {
+				var target = merge_target(b);
+				if (target.linked) this.#batch = target;
+			}
+		}
+
+		return this.#batch;
+	}
+
+	restore() {
+		this.#restore(this.get_batch());
+	}
+
+	/**
+	 *
+	 * @param {Array<() => void | Promise<void>>} thunks
+	 */
+	run(thunks) {
+		var active = /** @type {Effect} */ (active_effect);
+
+		var promise = Promise.resolve(this.#invoke(thunks[0]));
+		var blockers = [new Blocker(this, promise)];
+
+		for (const fn of thunks.slice(1)) {
+			promise = promise.then(() => {
+				if ((active.f & DESTROYED) !== 0) {
+					throw STALE_REACTION;
+				}
+
+				try {
+					this.restore();
+					return this.#invoke(fn);
+				} finally {
+					// We gotta unset context directly in case the function returns a promise, in which case
+					// unset_context in .finally() would be too late
+					unset_context();
+					// Release buffered results now that the script has used the previous step's first values.
+					this.#continue();
+				}
+			});
+
+			blockers.push(new Blocker(this, promise));
+		}
+
+		promise = promise
+			.catch((error) => {
+				if ((active.f & DESTROYED) === 0) {
+					this.restore();
+
+					try {
+						invoke_error_boundary(error, active);
+					} finally {
+						unset_context();
+					}
+				}
+			})
+			// The last step has no following step to release its buffered results.
+			.finally(() => this.#continue());
+
+		async_effect(() => {
+			// Inside an effect so later adopting branches can rerun this
+			var batch = /** @type {Batch} */ (current_batch);
+			this.#adopters.add(batch);
+			var decrement_pending = increment_pending();
+
+			promise.finally(() => {
+				// An adopting batch must also run effects created after it adopted the script's branch.
+				var target = merge_target(batch);
+
+				if (target.linked && (active.f & DESTROYED) === 0) {
+					target.revalidate_branch(active);
+				}
+
+				decrement_pending();
+
+				this.running = false;
+			});
+		});
+
+		return blockers;
+	}
+
+	/**
+	 * Switch away from the previous batch (which is now obsolete)
+	 * to another one
+	 * @param {Batch} batch
+	 */
+	switch(batch) {
+		this.#batch = batch;
+	}
+
+	#continue() {
+		for (const fn of this.continued.splice(0)) fn();
+	}
+
+	/**
+	 * @param {() => void | Promise<void>} fn
+	 */
+	#invoke(fn) {
+		var previous_runner = current_runner;
+		current_runner = this;
+
+		try {
+			return fn();
+		} finally {
+			current_runner = previous_runner;
+		}
+	}
+}
+
+export class Blocker {
+	settled = false;
+	failed = false;
+
+	/**
+	 * @param {Runner} run
+	 * @param {Promise<any>} promise
+	 */
+	constructor(run, promise) {
+		this.run = run;
+		this.promise = promise
+			.catch(() => {
+				this.failed = true;
+			})
+			.finally(() => {
+				this.settled = true;
+				unset_context();
+			});
+	}
+}
 
 /**
  * @param {Array<() => void | Promise<void>>} thunks
  */
 export function run(thunks) {
-	var restore = capture();
-	var active = /** @type {Effect} */ (active_effect);
-
-	/** @type {null | { error: any }} */
-	var errored = null;
-
-	/** @type {NonNullable<typeof batch_for_run>} */
-	var for_run = { batch: /** @type {Batch} */ (current_batch), continued: [], signals: [] };
-
-	const continued = () => {
-		for (const fn of for_run.continued.splice(0)) fn();
-	};
-
-	/**
-	 * Batches that adopted the script's branch, in adoption order.
-	 * @type {Set<Batch>}
-	 */
-	var adopters = new Set();
-
-	// If the fork was discarded, continue in the first remaining adopter.
-	function continue_in() {
-		var batch = merge_target(for_run.batch);
-		if (batch.linked) return batch;
-
-		for (const b of adopters) {
-			var target = merge_target(b);
-			if (target.linked) return (for_run.batch = target);
-		}
-
-		return (for_run.batch = batch);
-	}
-
-	/** @param {any} error */
-	const handle_error = (error) => {
-		if (errored) return;
-
-		errored = { error }; // wrap in object in case a promise rejects with a falsy value
-
-		if (!aborted(active)) {
-			restore(true, continue_in());
-
-			try {
-				invoke_error_boundary(error, active);
-			} finally {
-				unset_context();
-			}
-		}
-	};
-
-	/** @param {() => void | Promise<void>} fn */
-	const invoke = (fn) => {
-		var previous = batch_for_run;
-		batch_for_run = for_run;
-
-		try {
-			return fn();
-		} finally {
-			batch_for_run = previous;
-		}
-	};
-
-	var promise = Promise.resolve(invoke(thunks[0])).catch(handle_error);
-
-	/** @type {Blocker} */
-	var blocker = { promise, settled: false, failed: false, batch: continue_in };
-	var blockers = [blocker];
-
-	promise.finally(() => {
-		blocker.settled = true;
-		blocker.failed = errored !== null;
-		unset_context();
-	});
-
-	for (const fn of thunks.slice(1)) {
-		promise = promise
-			.then(() => {
-				restore(true, continue_in());
-
-				try {
-					if (errored) {
-						throw errored.error;
-					}
-
-					if (aborted(active)) {
-						throw STALE_REACTION;
-					}
-
-					return invoke(fn);
-				} finally {
-					// We gotta unset context directly in case the function returns a promise, in which case
-					// unset_context in .finally() would be too late ...
-					unset_context();
-					// Release buffered results now that the script has used the previous step's first values.
-					continued();
-				}
-			})
-			.catch(handle_error);
-
-		/** @type {Blocker} */
-		const blocker = { promise, settled: false, failed: false, batch: continue_in };
-		blockers.push(blocker);
-
-		promise.finally(() => {
-			blocker.settled = true;
-			blocker.failed = errored !== null;
-			// ... but we also need it after such a promise has resolved in case it restores our context
-			unset_context();
-		});
-	}
-
-	// The last step has no following step to release its buffered results.
-	promise.finally(continued);
-
-	async_effect(() => {
-		// Inside an effect so later adopting branches can rerun this
-		var batch = /** @type {Batch} */ (current_batch);
-		adopters.add(batch);
-		var decrement_pending = increment_pending();
-
-		promise
-			// wait one more tick, so that template effects are
-			// guaranteed to run before `$effect(...)`.
-			.then(() => Promise.resolve())
-			.finally(() => {
-				// An adopting batch must also run effects created after it adopted the script's branch.
-				var target = merge_target(batch);
-				if (target.linked && !aborted(active)) target.revalidate_branch(active);
-				decrement_pending();
-			});
-	});
-
-	return blockers;
+	return new Runner().run(thunks);
 }
 
 /**

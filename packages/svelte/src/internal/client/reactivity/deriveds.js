@@ -43,7 +43,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
-import { batch_for_run, increment_pending, merge_target, unset_context } from './async.js';
+import { current_runner, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -114,12 +114,6 @@ export const OBSOLETE = Symbol('obsolete');
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_expression(fn, label, location, onready) {
-	let parent = /** @type {Effect | null} */ (active_effect);
-
-	if (parent === null) {
-		e.async_derived_orphan();
-	}
-
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 	signal.f |= ASYNC;
 
@@ -130,22 +124,19 @@ export function async_expression(fn, label, location, onready) {
 
 	// `run` continues in the creating batch's view; other batches' results wait until then.
 	// A superseded or obsolete run lets another batch supply the first value.
-	var for_run = batch_for_run;
-
-	var created = for_run && for_run.signals;
-	var index = created === null ? 0 : created.push(signal) - 1;
+	var runner = current_runner;
 
 	/**
 	 * The batch whose run delivers the first value (`null`: whichever comes first)
 	 * @type {Batch | null}
 	 */
-	var resolver = for_run && current_batch;
+	var resolver = runner && current_batch;
 
 	/**
 	 * Results buffered until the script continues; `null` disables buffering.
 	 * @type {Array<() => void> | null}
 	 */
-	var waiting = for_run && [];
+	var waiting = runner && [];
 
 	/**
 	 * Retry buffered results, or release them once the script has continued.
@@ -161,21 +152,6 @@ export function async_expression(fn, label, location, onready) {
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
-		// An adopting batch may not yet have values for earlier expressions.
-		// Wait for the last one without a value. Check all earlier expressions, since
-		// assignments to async deriveds can initialize them out of order.
-		if (created !== null && is_uninitialized(signal)) {
-			for (var i = index - 1; i >= 0; i--) {
-				if (is_uninitialized(created[i])) {
-					var pending = /** @type {Batch} */ (current_batch).async_deriveds;
-					pending.get(effect)?.reject(OBSOLETE);
-					pending.delete(effect);
-					get(created[i]);
-					return;
-				}
-			}
-		}
-
 		if (DEV) {
 			reactivity_loss_tracker = { effect, effect_deps: new Set(), warned: false };
 		}
@@ -184,12 +160,16 @@ export function async_expression(fn, label, location, onready) {
 		var d = deferred();
 
 		try {
+			var result = fn();
+			if (result === UNINITIALIZED) return;
+
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
-			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			var promise = Promise.resolve(fn());
+			var promise = Promise.resolve(result);
+			// The then getter may also call `getAbortSignal()`, so capture its signal afterwards.
 			var abort_signal = abort_controller?.signal;
 
+			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
 			promise
 				.then(
 					(value) => {
@@ -199,7 +179,7 @@ export function async_expression(fn, label, location, onready) {
 						// An aborted run waits for its replacement, even if the user catches the abort.
 						// A script awaiting another reaction's aborted promise must release its resolver:
 						// the eager merge includes the signal's owner, but not necessarily this waiter.
-						if (abort_signal?.aborted || (e === STALE_REACTION && for_run === null)) {
+						if (abort_signal?.aborted || (e === STALE_REACTION && runner === null)) {
 							return;
 						}
 
@@ -294,13 +274,13 @@ export function async_expression(fn, label, location, onready) {
 			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
 			merge_target(batch).capture(signal, error ?? value, same, !!error);
 
-			if (for_run !== null) {
+			if (runner !== null) {
 				// Let the script consume the first value in this batch's view before releasing buffered results.
-				for_run.batch = batch;
+				runner.switch(batch);
 
-				for_run.continued.push(() => flush_waiting(true));
+				runner.continued.push(() => flush_waiting(true));
 
-				for_run = null;
+				runner = null;
 			}
 
 			onready?.(error);
@@ -339,16 +319,47 @@ export function async_expression(fn, label, location, onready) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn, label, location) {
-	if (current_batch === null || active_reaction !== null) {
-		// `$derived(await ...)` created outside traversal, don't participate in coordination
-		return Promise.resolve(fn()).then((value) => source(value));
+	if (!current_runner) {
+		e.async_derived_orphan();
 	}
 
+	const runner = current_runner;
+	const batch = /** @type {Batch} */ (current_batch);
+
 	return new Promise((fulfil, reject) => {
-		const source = async_expression(fn, label, location, (error) => {
-			if (error === undefined) fulfil(source);
-			else reject(error);
-		});
+		var source = async_expression(
+			() => {
+				var effect = /** @type {Effect} */ (active_effect);
+				var target = merge_target(/** @type {Batch} */ (current_batch));
+
+				if (runner.running && target !== batch && is_uninitialized(source)) {
+					// Check all earlier expressions: assignments can initialize them out of order.
+					for (var i = index - 1; i >= 0; i--) {
+						var s = runner.signals[i];
+
+						if (is_uninitialized(s)) {
+							// re-run until we have a value
+							get(s);
+
+							var pending = /** @type {Batch} */ (current_batch).async_deriveds;
+							pending.get(effect)?.reject(OBSOLETE);
+							pending.delete(effect);
+							return UNINITIALIZED;
+						}
+					}
+				}
+
+				return fn();
+			},
+			label,
+			location,
+			(error) => {
+				if (error === undefined) fulfil(/** @type {Source<V>} */ (source));
+				else reject(error);
+			}
+		);
+
+		var index = runner.signals.push(source) - 1;
 	});
 }
 

@@ -1,4 +1,5 @@
-/** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { Blocker } from './async.js' */
 /** @import { TeardownContext } from './batch.js' */
 import {
 	is_dirty,
@@ -755,10 +756,6 @@ function resume_children(effect, local) {
 			}
 		}
 	}
-}
-
-export function aborted(effect = /** @type {Effect} */ (active_effect)) {
-	return (effect.f & DESTROYED) !== 0;
 }
 
 /**

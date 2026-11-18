@@ -156,7 +156,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 				if (target !== null) {
 					var previous = current_batch;
-					restore(true, target);
+					restore(target);
 
 					try {
 						fn((source, v) => /** @type {Batch} */ (target).capture(source, v, source.equals(v)));
@@ -171,7 +171,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 				// We don't want to restore the previous batch here; {#await} blocks don't follow the async logic
 				// we have elsewhere, instead pending/resolve/fail states are each their own batch so to speak.
-				restore(false);
+				restore(null);
 				// ...but it might still be set here. That means a `save(...)` has restored it — but that batch will
 				// likely already have been committed by the time it resolves, and this resolve should be processed
 				// in a separate batch. We're not using batch.deactivate()/activate() above because get_input()
