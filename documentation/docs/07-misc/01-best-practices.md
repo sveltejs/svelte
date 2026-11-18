@@ -171,7 +171,7 @@ Use `createContext` rather than `setContext` and `getContext`, as it provides ty
 
 ## Async Svelte
 
-If using version 5.36 or higher, you can use [await expressions](await-expressions) and [hydratable](hydratable) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in the plugin options in `vite.config.js` or in the `svelte.config.js` as they are not yet considered fully stable.
+If using version 5.36 or higher, you can use [await expressions](await-expressions) and [`Warp`](warp) to use promises directly inside components. Note that these require the `experimental.async` option to be enabled in the plugin options in `vite.config.js` or in the `svelte.config.js` as they are not yet considered fully stable.
 
 ## Avoid legacy features
 
