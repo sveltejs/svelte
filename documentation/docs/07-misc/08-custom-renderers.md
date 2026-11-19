@@ -83,9 +83,63 @@ export default {
 
 Since the function knows which file it's choosing for, it can also return a path relative to that file. A `<svelte:options customRenderer={...}>` in a component takes precedence over the function.
 
-## Mounting
+## Running outside the browser
 
-You can use a custom renderer component inside a regular DOM app just like any other component — the next section explains how this works:
+Many renderers target environments that aren't browsers at all, such as a terminal, a PDF generator, a native runtime or a test runner. In those environments, `svelte` normally resolves to its server-side implementation, which renders components to HTML strings rather than running them.
+
+To use custom renderers there, add the `svelte-custom-renderer` [resolve condition](https://nodejs.org/api/packages.html#conditional-exports), which makes `svelte` resolve to the implementation that runs components. With Node, run your code with `--conditions=svelte-custom-renderer`. If you're using a bundler, add `svelte-custom-renderer` to its list of resolve conditions. If the condition is missing, Svelte throws an error explaining what to do.
+
+Your components still need to be compiled, as with any Svelte app — for example by bundling them with Vite and `vite-plugin-svelte`.
+
+As an example, here's a clock that runs in a terminal:
+
+```svelte
+<!--- file: Clock.svelte --->
+<svelte:options customRenderer="terminal-renderer" />
+
+<script>
+	let time = $state(new Date());
+
+	$effect(() => {
+		const interval = setInterval(() => (time = new Date()), 1000);
+		return () => clearInterval(interval);
+	});
+</script>
+
+<box border="round" padding={1}>
+	<text bold>The time is {time.toLocaleTimeString()}</text>
+</box>
+```
+
+To start it, pass the renderer to [`mount`](svelte#mount), along with a target created by that renderer:
+
+```js
+/// file: main.js
+// @noErrors
+import { mount } from 'svelte';
+import renderer, { draw } from 'terminal-renderer';
+import Clock from './Clock.svelte';
+
+const screen = renderer.createFragment();
+
+mount(Clock, {
+	target: screen,
+	renderer
+});
+
+// draw `screen` to the terminal, and again whenever it changes
+draw(screen);
+```
+
+> [!NOTE] Like `three-renderer`, `terminal-renderer` is made up. A real terminal renderer would redraw the screen whenever Svelte changes it, by calling methods like `insert` and `setText`.
+
+Every second, the effect updates `time`, Svelte updates the text node through the renderer, and the renderer redraws the screen. A PDF renderer would work the same way, except that instead of drawing continuously, you would convert the rendered content to a PDF once `mount` returns.
+
+`props`, component exports and [`unmount`](svelte#unmount) work as they do with the DOM.
+
+## Using in the browser
+
+In the browser, you can use a custom renderer component inside a regular Svelte app, just like any other component, provided its renderer supports being used inside the DOM. Most renderers designed for the browser will, but check the renderer's documentation, and see [Mixing renderers](#Mixing-renderers) for how this works:
 
 ```svelte
 <!--- file: App.svelte --->
@@ -100,9 +154,10 @@ You can use a custom renderer component inside a regular DOM app just like any o
 </canvas>
 ```
 
-To render an app entirely with a custom renderer, pass the renderer to [`mount`](svelte#mount), along with a target created by that renderer:
+You can also render an app entirely with a custom renderer, by passing the renderer to [`mount`](svelte#mount) along with a target created by that renderer, as in the [terminal example](#Running-outside-the-browser) above:
 
 ```js
+// @noErrors
 import { mount } from 'svelte';
 import renderer from 'three-renderer';
 import Scene from './Scene.svelte';
@@ -117,90 +172,6 @@ mount(Scene, {
 
 // `root` now contains the scene's nodes
 ```
-
-`unmount`, component exports and `props` work as they do with the DOM.
-
-## Mixing renderers
-
-Components that use different renderers can be freely nested. A page can contain a 3D scene, and the scene can in turn contain DOM content, such as HTML labels positioned over the 3D objects. Context, props, snippets, [error boundaries](svelte-boundary) and reactivity all work across the boundary.
-
-The place where content from one renderer appears inside content from another is called a _crossing_. The outer renderer is the _host_, and the inner one is the _guest_. At each crossing, Svelte needs two things:
-
-- a `container`, owned by the guest, that the guest's content is rendered into
-- optionally, a `node` owned by the host, that represents the guest's content in the host's tree. If there isn't one, Svelte inserts an empty text node
-
-Renderers provide these through two optional methods, `embed` and `host`:
-
-- `embed` is called on the guest. It means "I know how to put my content inside another renderer's tree"
-- `host` is called on the host. It means "I know how to make room for another renderer's content inside my tree"
-
-Svelte first tries the guest's `embed`, then the host's `host`. If neither exists, it throws an error. The DOM doesn't have either method, so in a mixed app it's always the custom renderer that provides them:
-
-| Situation                              | Method that is called                   | Example                                  |
-| -------------------------------------- | --------------------------------------- | ---------------------------------------- |
-| Custom renderer content inside the DOM | the custom renderer's `embed`           | a WebGL scene in a regular page          |
-| DOM content inside a custom renderer   | the custom renderer's `host`            | HTML labels floating over a 3D scene     |
-| Renderer A's content inside renderer B | A's `embed`, or B's `host` if A has none | a chart renderer inside a native app     |
-
-In other words: implement `embed` if your renderer will be used inside DOM apps, which is the case for most renderers. Implement `host` if DOM content (or another renderer's content) should be able to appear inside your renderer's tree.
-
-### `embed`
-
-`embed` receives the `host` renderer (`null` for the DOM), along with the `parent` and `anchor` of the position the content is rendered at. Here's how a canvas renderer might use it to render into a `<canvas>` element written by the user, or to create its own canvas otherwise:
-
-```js
-// @noErrors
-embed({ host, parent }) {
-	if (host !== null) {
-		throw new Error('The canvas renderer can only be used inside the DOM');
-	}
-
-	const canvas = parent instanceof HTMLCanvasElement ? parent : document.createElement('canvas');
-	const scene = create_scene(canvas);
-
-	return {
-		// only insert a canvas if we created one
-		node: canvas === parent ? undefined : canvas,
-		// the scene's root node, which the content is rendered into
-		container: scene.root,
-		// called once the content has been removed
-		destroy: () => scene.dispose()
-	};
-}
-```
-
-As in this example, throwing an error is the best way to reject a position your renderer doesn't support. It's also how you can express requirements like "only inside a `<canvas>`".
-
-### `host`
-
-`host` is the mirror image. It receives the `guest` renderer (`null` for the DOM), and returns a `node` from your renderer to put in your tree, and a `container` owned by the guest:
-
-```js
-// @noErrors
-host({ guest }) {
-	if (guest !== null) {
-		throw new Error('Only DOM content can be rendered inside a scene');
-	}
-
-	// a scene object that displays a DOM element as an overlay
-	const overlay = create_overlay();
-
-	return {
-		node: overlay,
-		container: overlay.element,
-		destroy: () => overlay.dispose()
-	};
-}
-```
-
-### Rules for crossings
-
-- `embed` and `host` are called once for each crossing, synchronously, when the component (or snippet) is created. Each instance of a component gets its own call.
-- `parent` may not be attached to anything yet. If the component is at the top level of its parent's markup, `parent` is a fragment that hasn't been inserted yet, so don't measure layout or assume the page is connected inside these methods. If the component is directly inside an element, such as the `<canvas>` above, `parent` is that element.
-- Svelte inserts and removes the `node` in the host's tree, and inserts and removes the content in the `container`. `destroy` is called after all of that, so only use it to release your own resources — don't remove the `node` or the content yourself.
-- Several crossings can share a container, for example several scenes drawn into the same canvas. Svelte keeps their content in the same order as their nodes in the host tree, including when they're reordered by a keyed `{#each}` block.
-- DOM event handlers like `onclick` work inside a DOM container, even if the container isn't part of the page. Events don't propagate from one renderer to another.
-- Snippets can be passed between renderers, as long as they were created by a component compiled with `experimental.customRenderer`. Snippets created with [`createRawSnippet`](svelte#createRawSnippet) can't be rendered by a custom renderer.
 
 ## What's supported
 
@@ -335,7 +306,7 @@ Svelte works with four kinds of node: fragments, elements, text nodes and commen
 
 ### Crossings
 
-`embed` and `host` are optional, and only needed if your renderer will be combined with the DOM or other renderers. See [Mixing renderers](#Mixing-renderers).
+`embed` and `host` are optional, and only needed if your renderer will be combined with the DOM or other renderers. They're described [below](#Mixing-renderers).
 
 ## TypeScript
 
@@ -359,8 +330,86 @@ If you don't, the node types are inferred from the return types of `createFragme
 
 The `Renderer` type is exported from `svelte/renderer` too, for code that works with renderers, such as a function that wraps one. It takes the same record of node types: `Renderer<{ fragment: ...; element: ...; text: ...; comment: ... }>`.
 
-## Running outside the browser
+## Mixing renderers
 
-Many renderers target environments that aren't browsers, such as Node, native runtimes or test runners. In those environments, `svelte` normally resolves to its server-side implementation, which can't render components on the client.
+Components that use different renderers can be nested, as long as the renderers involved anticipate it. A page can contain a 3D scene, and the scene can in turn contain DOM content, such as HTML labels positioned over the 3D objects. Context, props, snippets, [error boundaries](svelte-boundary) and reactivity all work across the boundary.
 
-To use custom renderers there, add the `svelte-custom-renderer` [resolve condition](https://nodejs.org/api/packages.html#conditional-exports). With Node, run it with `--conditions=svelte-custom-renderer`. If you're using a bundler, add `svelte-custom-renderer` to its list of resolve conditions. If the condition is missing, Svelte throws an error explaining this.
+If you're using a renderer library, its documentation should tell you where its components can be used. The rest of this section is for renderer authors.
+
+The place where content from one renderer appears inside content from another is called a _crossing_. The outer renderer is the _host_, and the inner one is the _guest_. At each crossing, Svelte needs two things:
+
+- a `container`, owned by the guest, that the guest's content is rendered into
+- optionally, a `node` owned by the host, that represents the guest's content in the host's tree. If there isn't one, Svelte inserts an empty text node
+
+Renderers provide these through two optional methods, `embed` and `host`:
+
+- `embed` is called on the guest. It means "I know how to put my content inside another renderer's tree"
+- `host` is called on the host. It means "I know how to make room for another renderer's content inside my tree"
+
+Svelte first tries the guest's `embed`, then the host's `host`. If neither exists, it throws an error. The DOM doesn't have either method, so in a mixed app it's always the custom renderer that provides them:
+
+| Situation                              | Method that is called                   | Example                                  |
+| -------------------------------------- | --------------------------------------- | ---------------------------------------- |
+| Custom renderer content inside the DOM | the custom renderer's `embed`           | a WebGL scene in a regular page          |
+| DOM content inside a custom renderer   | the custom renderer's `host`            | HTML labels floating over a 3D scene     |
+| Renderer A's content inside renderer B | A's `embed`, or B's `host` if A has none | a chart renderer inside a native app     |
+
+In other words: implement `embed` if your renderer will be used inside DOM apps, which is the case for most renderers. Implement `host` if DOM content (or another renderer's content) should be able to appear inside your renderer's tree.
+
+### `embed`
+
+`embed` receives the `host` renderer (`null` for the DOM), along with the `parent` and `anchor` of the position the content is rendered at. Here's how a canvas renderer might use it to render into a `<canvas>` element written by the user, or to create its own canvas otherwise:
+
+```js
+// @noErrors
+embed({ host, parent }) {
+	if (host !== null) {
+		throw new Error('The canvas renderer can only be used inside the DOM');
+	}
+
+	const canvas = parent instanceof HTMLCanvasElement ? parent : document.createElement('canvas');
+	const scene = create_scene(canvas);
+
+	return {
+		// only insert a canvas if we created one
+		node: canvas === parent ? undefined : canvas,
+		// the scene's root node, which the content is rendered into
+		container: scene.root,
+		// called once the content has been removed
+		destroy: () => scene.dispose()
+	};
+}
+```
+
+As in this example, throwing an error is the best way to reject a position your renderer doesn't support. It's also how you can express requirements like "only inside a `<canvas>`".
+
+### `host`
+
+`host` is the mirror image. It receives the `guest` renderer (`null` for the DOM), and returns a `node` from your renderer to put in your tree, and a `container` owned by the guest:
+
+```js
+// @noErrors
+host({ guest }) {
+	if (guest !== null) {
+		throw new Error('Only DOM content can be rendered inside a scene');
+	}
+
+	// a scene object that displays a DOM element as an overlay
+	const overlay = create_overlay();
+
+	return {
+		node: overlay,
+		container: overlay.element,
+		destroy: () => overlay.dispose()
+	};
+}
+```
+
+### Rules for crossings
+
+- `embed` and `host` are called once for each crossing, synchronously, when the component (or snippet) is created. Each instance of a component gets its own call.
+- `parent` may not be attached to anything yet. If the component is at the top level of its parent's markup, `parent` is a fragment that hasn't been inserted yet, so don't measure layout or assume the page is connected inside these methods. If the component is directly inside an element, such as the `<canvas>` above, `parent` is that element.
+- Svelte inserts and removes the `node` in the host's tree, and inserts and removes the content in the `container`. `destroy` is called after all of that, so only use it to release your own resources — don't remove the `node` or the content yourself.
+- Several crossings can share a container, for example several scenes drawn into the same canvas. Svelte keeps their content in the same order as their nodes in the host tree, including when they're reordered by a keyed `{#each}` block.
+- DOM event handlers like `onclick` work inside a DOM container, even if the container isn't part of the page. Events don't propagate from one renderer to another.
+- Snippets can be passed between renderers, as long as they were created by a component compiled with `experimental.customRenderer`. Snippets created with [`createRawSnippet`](svelte#createRawSnippet) can't be rendered by a custom renderer.
