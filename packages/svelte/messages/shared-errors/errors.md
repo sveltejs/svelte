@@ -1,3 +1,9 @@
+## each_block_not_iterable
+
+> {#each} only works with iterable values.
+
+An `{#each}` block can only iterate over arrays, array-like objects and iterables. In development mode, passing a truthy value that is none of those (for example a plain object) throws this error instead of silently rendering nothing. Falsy values (for example the `false` in `{#each cond && [item]}` while the condition is false) still render nothing.
+
 ## experimental_async_required
 
 > Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
