@@ -211,42 +211,64 @@ A renderer module's default export is an object created with `createRenderer` fr
 import { createRenderer } from 'svelte/renderer';
 
 export default createRenderer({
-	createFragment: () => ({ type: 'fragment', children: [], parent: null }),
-	createElement: (name) => ({
-		type: 'element',
-		name,
-		attributes: {},
-		listeners: {},
-		children: [],
-		parent: null
-	}),
-	createText: (data) => ({ type: 'text', data, parent: null }),
-	createComment: (data) => ({ type: 'comment', data, parent: null }),
+	createFragment() {
+		return { type: 'fragment', children: [], parent: null };
+	},
+	createElement(name) {
+		return {
+			type: 'element',
+			name,
+			attributes: {},
+			listeners: {},
+			children: [],
+			parent: null
+		};
+	},
+	createText(data) {
+		return { type: 'text', data, parent: null };
+	},
+	createComment(data) {
+		return { type: 'comment', data, parent: null };
+	},
 
-	getNodeType: (node) => node.type,
-	getText: (node) => node.data,
-	setText: (node, text) => {
+	getNodeType(node) {
+		return node.type;
+	},
+	getText(node) {
+		return node.data;
+	},
+	setText(node, text) {
 		node.data = text;
 	},
 
-	getAttribute: (element, name) => element.attributes[name] ?? null,
-	setAttribute: (element, name, value) => {
+	getAttribute(element, name) {
+		return element.attributes[name] ?? null;
+	},
+	setAttribute(element, name, value) {
 		element.attributes[name] = value;
 	},
-	removeAttribute: (element, name) => {
+	removeAttribute(element, name) {
 		delete element.attributes[name];
 	},
-	hasAttribute: (element, name) => name in element.attributes,
+	hasAttribute(element, name) {
+		return name in element.attributes;
+	},
 
-	getFirstChild: (node) => node.children[0] ?? null,
-	getLastChild: (node) => node.children.at(-1) ?? null,
-	getNextSibling: (node) => {
+	getFirstChild(node) {
+		return node.children[0] ?? null;
+	},
+	getLastChild(node) {
+		return node.children.at(-1) ?? null;
+	},
+	getNextSibling(node) {
 		const siblings = node.parent?.children ?? [];
 		return siblings[siblings.indexOf(node) + 1] ?? null;
 	},
-	getParent: (node) => node.parent,
+	getParent(node) {
+		return node.parent;
+	},
 
-	insert: (parent, node, anchor) => {
+	insert(parent, node, anchor) {
 		// inserting a fragment inserts its children, and leaves it empty
 		const nodes = node.type === 'fragment' ? node.children.splice(0) : [node];
 
@@ -258,17 +280,17 @@ export default createRenderer({
 
 		for (const child of nodes) child.parent = parent;
 	},
-	remove: (node) => {
+	remove(node) {
 		if (node.parent) {
 			node.parent.children.splice(node.parent.children.indexOf(node), 1);
 			node.parent = null;
 		}
 	},
 
-	addEventListener: (element, type, handler) => {
+	addEventListener(element, type, handler) {
 		(element.listeners[type] ??= new Set()).add(handler);
 	},
-	removeEventListener: (element, type, handler) => {
+	removeEventListener(element, type, handler) {
 		element.listeners[type]?.delete(handler);
 	}
 });
