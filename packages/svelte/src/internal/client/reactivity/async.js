@@ -415,9 +415,15 @@ class Runner {
 
 			promise.finally(() => {
 				// An adopting batch must also run effects created after it adopted the script's branch.
+				// The script's own batch already scheduled them. Revalidating it after a pending
+				// boundary committed would instead rerun them in its rebased view.
 				var target = merge_target(batch);
 
-				if (target.linked && (active.f & DESTROYED) === 0) {
+				if (
+					target.linked &&
+					target !== merge_target(this.get_batch()) &&
+					(active.f & DESTROYED) === 0
+				) {
 					target.revalidate_branch(active);
 				}
 
