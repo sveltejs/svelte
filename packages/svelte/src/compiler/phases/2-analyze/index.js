@@ -1508,6 +1508,10 @@ function calculate_blockers(instance, analysis) {
 					add(node.argument, context.state.scope);
 					context.next();
 				},
+				UnaryExpression(node, context) {
+					if (node.operator === 'delete') add(node.argument, context.state.scope);
+					context.next();
+				},
 				CallExpression(node, context) {
 					call(node, context.state.scope);
 					context.next();
