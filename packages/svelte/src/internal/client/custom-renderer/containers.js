@@ -99,31 +99,42 @@ function sync(crossings) {
 	var previous_renderer = push_renderer(host);
 
 	try {
-		var paths = new Map(crossings.map((crossing) => [crossing, path(crossing.host_node)]));
+		/** @type {Map<Crossing, TemplateNode[]>} */
+		var paths = new Map();
 
-		// Only order crossings whose host nodes are in the same tree as the first one's. Others,
-		// e.g. offscreen while an async batch is pending, keep their place until they come back
-		var root = /** @type {TemplateNode[]} */ (paths.get(crossings[0]))[0];
-		var placed = crossings.filter(
-			(crossing) => /** @type {TemplateNode[]} */ (paths.get(crossing))[0] === root
-		);
+		/**
+		 * The crossings whose host nodes are in the same tree, by the root of that tree. Host nodes
+		 * can be in different trees (e.g. one is offscreen while an async batch is pending, or the
+		 * host renderer has several roots), in which case there's no order between them
+		 * @type {Map<TemplateNode, Crossing[]>}
+		 */
+		var trees = new Map();
 
-		var sorted = placed
-			.slice()
-			.sort((a, b) =>
+		for (crossing of crossings) {
+			var nodes = path(crossing.host_node);
+			var tree = trees.get(nodes[0]);
+
+			if (tree === undefined) trees.set(nodes[0], (tree = []));
+
+			tree.push(crossing);
+			paths.set(crossing, nodes);
+		}
+
+		for (tree of trees.values()) {
+			tree.sort((a, b) =>
 				compare(
 					/** @type {TemplateNode[]} */ (paths.get(a)),
 					/** @type {TemplateNode[]} */ (paths.get(b))
 				)
 			);
-
-		// slot the sorted crossings into the positions the placed ones occupied
-		var order = crossings.slice();
-		var i = 0;
-
-		for (var j = 0; j < order.length; j++) {
-			if (placed.includes(order[j])) order[j] = sorted[i++];
 		}
+
+		// order the crossings of each tree, slotting them into the positions that the crossings
+		// of that tree occupied. This way, crossings keep their place relative to those of other trees
+		var order = crossings.map((crossing) => {
+			var root = /** @type {TemplateNode[]} */ (paths.get(crossing))[0];
+			return /** @type {Crossing} */ (/** @type {Crossing[]} */ (trees.get(root)).shift());
+		});
 
 		if (order.every((crossing, index) => crossing === crossings[index])) return;
 	} finally {
