@@ -257,8 +257,8 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 	const transform = { ...state.transform };
 
-	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
-	// Note that we only do this for each context variables, the consequence is that the value might be stale in
+	// Pass in each context variables and snippet parameters to the get/set functions, so that we can null out old values
+	// on teardown. Note that we only do this for those variables, the consequence is that the value might be stale in
 	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
 	walk(getter ?? expression, null, {
@@ -277,7 +277,10 @@ export function build_bind_this(expression, value, { state, visit }) {
 			if (is_state_source(binding, state.analysis) || binding.kind === 'derived') return;
 
 			for (const [owner, scope] of state.scopes) {
-				if (owner.type === 'EachBlock' && scope === binding.scope) {
+				if (
+					(owner.type === 'EachBlock' || owner.type === 'SnippetBlock') &&
+					scope === binding.scope
+				) {
 					ids.push(node);
 					values.push(/** @type {Expression} */ (visit(node)));
 
