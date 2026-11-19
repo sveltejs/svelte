@@ -1,77 +1,74 @@
-export type Renderer<
-	TFragment extends object = object,
-	TElement extends object = object,
-	TTextNode extends object = object,
-	TComment extends object = object,
-	TNode extends TFragment | TElement | TTextNode | TComment =
-		| TFragment
-		| TElement
-		| TTextNode
-		| TComment
-> = {
+/**
+ * A custom renderer. `N` describes the types of the renderer's nodes, for example:
+ *
+ * ```ts
+ * const renderer: Renderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }> = ...
+ * ```
+ */
+export type Renderer<N extends RendererNodes = RendererNodes> = {
 	/** Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of its children. */
-	createFragment(): TFragment;
+	createFragment(): N['fragment'];
 
 	/** Creates an element with the given name. */
-	createElement(name: string): TElement;
+	createElement(name: string): N['element'];
 
 	/** Creates a text node with the given text. */
-	createText(data: string): TTextNode;
+	createText(data: string): N['text'];
 
 	/**
 	 * Creates a comment node with the given data.
 	 * This is often used as an anchor for inserting elements; it doesn't necessarily need to be rendered.
 	 */
-	createComment(data: string): TComment;
+	createComment(data: string): N['comment'];
 
 	/** Return the type of the node: `'fragment'`, `'element'`, `'text'` or `'comment'`. */
-	getNodeType(node: TNode): NodeType;
+	getNodeType(node: N[NodeType]): NodeType;
 
 	/** Return the text of a text node, or the data of a comment. */
-	getText(node: TTextNode | TComment): string | null;
+	getText(node: N['text'] | N['comment']): string | null;
 
 	/** Return the value of the attribute with the given name on the element, or null if it doesn't exist. */
-	getAttribute(element: TElement, name: string): string | null;
+	getAttribute(element: N['element'], name: string): string | null;
 
 	/** Set the attribute with the given name and value on the element. */
-	setAttribute(element: TElement, key: string, value: any): void;
+	setAttribute(element: N['element'], key: string, value: any): void;
 
 	/** Remove the attribute with the given name from the element. */
-	removeAttribute(element: TElement, name: string): void;
+	removeAttribute(element: N['element'], name: string): void;
 
 	/** Set the text of a text node. */
-	setText(node: TTextNode, text: string): void;
+	setText(node: N['text'], text: string): void;
 
 	/** Return the first child of the element or fragment, or null if it has no children. */
-	getFirstChild(element: TElement | TFragment): TNode | null;
+	getFirstChild(element: N['element'] | N['fragment']): N[NodeType] | null;
 
 	/** Return the last child of the element or fragment, or null if it has no children. */
-	getLastChild(element: TElement | TFragment): TNode | null;
+	getLastChild(element: N['element'] | N['fragment']): N[NodeType] | null;
 
 	/** Return the next sibling of the node, or null if it has no next sibling. */
-	getNextSibling(node: TElement | TTextNode | TComment): TNode | null;
+	getNextSibling(node: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
 
 	/**
 	 * Insert the node into the parent before the anchor, or at the end if the anchor is `null`.
 	 * Inserting a fragment should insert its children (and leave the fragment empty).
 	 */
 	insert(
-		parent: TElement | TFragment,
-		node: TNode,
-		anchor: TElement | TTextNode | TComment | null
+		parent: N['element'] | N['fragment'],
+		node: N[NodeType],
+		anchor: N['element'] | N['text'] | N['comment'] | null
 	): void;
 
 	/** Remove the node from the tree. */
-	remove(node: TElement | TTextNode | TComment): void;
+	remove(node: N['element'] | N['text'] | N['comment']): void;
 
 	/** Return the parent of the node, or null if it has no parent. */
-	getParent(node: TElement | TTextNode | TComment): TNode | null;
+	getParent(node: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
 
 	/** Add an event listener of the given type and handler to the target node. */
-	addEventListener(target: TElement, type: string, handler: any, options?: any): void;
+	addEventListener(target: N['element'], type: string, handler: any, options?: any): void;
 
 	/** Remove an event listener of the given type and handler from the target node. */
-	removeEventListener(target: TElement, type: string, handler: any, options?: any): void;
+	removeEventListener(target: N['element'], type: string, handler: any, options?: any): void;
 
 	/**
 	 * Called when a component (or snippet) that uses this renderer is rendered inside
@@ -85,10 +82,10 @@ export type Renderer<
 	 * possible to render into an element the user wrote, for example a `<canvas>`.
 	 */
 	embed?(context: {
-		host: Renderer<any, any, any, any> | null;
+		host: Renderer<any> | null;
 		parent: unknown;
 		anchor: unknown;
-	}): RendererConnection<unknown, TElement | TFragment>;
+	}): RendererConnection<unknown, N['element'] | N['fragment']>;
 
 	/**
 	 * Called when a component (or snippet) that uses a different renderer (`guest` is `null`
@@ -99,10 +96,10 @@ export type Renderer<
 	 * and, optionally, a `node` owned by this renderer that represents the content in this tree.
 	 */
 	host?(context: {
-		guest: Renderer<any, any, any, any> | null;
-		parent: TElement | TFragment | null;
-		anchor: TElement | TTextNode | TComment;
-	}): RendererConnection<TElement | TTextNode | TComment, unknown>;
+		guest: Renderer<any> | null;
+		parent: N['element'] | N['fragment'] | null;
+		anchor: N['element'] | N['text'] | N['comment'];
+	}): RendererConnection<N['element'] | N['text'] | N['comment'], unknown>;
 };
 
 /**
@@ -117,24 +114,14 @@ export type RendererConnection<THostNode, TContainer> = {
 	destroy?(): void;
 };
 
-export type RendererNodes<
-	Fragment extends object,
-	Element extends object,
-	TextNode extends object,
-	Comment extends object
-> = {
-	fragment: Fragment;
-	element: Element;
-	text: TextNode;
-	comment: Comment;
+/**
+ * The types of a custom renderer's nodes. Used as the type argument of `Renderer` and `createRenderer`
+ */
+export type RendererNodes = {
+	fragment: object;
+	element: object;
+	text: object;
+	comment: object;
 };
 
-export type NodeType = keyof RendererNodes<any, any, any, any>;
-
-// to detect if the user is passing a type or not we create this type utils that adds a unique symbol
-// that the user will never be able to pass in. We then create a a DefaultNodes type that is used as the default
-// type for the T generic of `createRenderer`. This means we can "detect" if the user is passing a type manually by
-// checking if the type extends DefaultNodes and using different default values
-// for the other arguments (TFragment, TElement, TTextNode, TComment)
-export type UnsetObject = object & { readonly __unset: unique symbol };
-export type DefaultNodes = RendererNodes<UnsetObject, UnsetObject, UnsetObject, UnsetObject>;
+export type NodeType = keyof RendererNodes;

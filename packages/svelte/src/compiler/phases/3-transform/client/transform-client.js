@@ -606,6 +606,22 @@ export function client_component(analysis, options) {
 			is_crossing = b.logical('&&', b.unary('!', b.id('new.target')), is_crossing);
 		}
 
+		/** @type {ESTree.Expression} */
+		let component = b.id(analysis.name);
+
+		if (options.hmr) {
+			// with HMR, the component's binding is reassigned to the HMR wrapper, which is what
+			// called us. Call the unwrapped component, so the guest isn't wrapped a second time
+			component = b.logical(
+				'??',
+				/** @type {ESTree.Expression} */ ({
+					type: 'ChainExpression',
+					expression: b.member(b.member(component, b.member_id('$.HMR'), true), 'fn', false, true)
+				}),
+				component
+			);
+		}
+
 		component_block.body = [
 			// if the component is rendered inside content that belongs to a different renderer,
 			// render it across the boundary (which calls the component again, with its own renderer)
@@ -616,7 +632,7 @@ export function client_component(analysis, options) {
 						'$.cross',
 						renderer,
 						b.id('$$anchor'),
-						b.arrow([b.id('$$anchor')], b.call(b.id(analysis.name), ...params))
+						b.arrow([b.id('$$anchor')], b.call(component, ...params))
 					)
 				)
 			),

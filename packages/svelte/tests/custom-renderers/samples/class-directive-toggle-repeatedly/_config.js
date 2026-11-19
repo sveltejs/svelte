@@ -9,9 +9,9 @@ export default test({
 			(/** @type {any} */ n) => n.type === 'element' && n.name === 'button'
 		);
 
-		// on, off, on: the class attribute is an empty string after toggling off,
-		// which previously turned into a leading space when toggling on again
-		for (const expected of ['active', '', 'active']) {
+		// on, off, on: after toggling off there's no class attribute, as before the first toggle
+		// (an empty attribute used to turn into a leading space when toggling on again)
+		for (const expected of ['active', undefined, 'active']) {
 			dispatch_event(button, 'click');
 			flushSync();
 			assert.equal(div.attributes.class, expected);

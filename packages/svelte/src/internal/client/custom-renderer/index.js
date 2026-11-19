@@ -1,13 +1,27 @@
-/** @import { Renderer, RendererNodes, DefaultNodes } from "./types.js" */
+/** @import { Renderer, RendererNodes } from "./types.js" */
 
 /**
- * @template {RendererNodes<object, object, object, object>} [T=DefaultNodes]
- * @template {object} [TFragment=T extends DefaultNodes ? object : T['fragment']]
- * @template {object} [TElement=T extends DefaultNodes ? object : T['element']]
- * @template {object} [TTextNode=T extends DefaultNodes ? object : T['text']]
- * @template {object} [TComment=T extends DefaultNodes ? object : T['comment']]
- * @param {Renderer<TFragment, TElement, TTextNode, TComment>} renderer
- * @returns {Renderer<TFragment, TElement, TTextNode, TComment>}
+ * Creates a custom renderer.
+ *
+ * The types of the renderer's nodes are inferred from the return types of `createFragment`,
+ * `createElement`, `createTextNode` and `createComment`, as long as those methods come before
+ * the others. Alternatively, pass them as the type argument:
+ *
+ * ```ts
+ * const renderer = createRenderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>({
+ * 	// ...
+ * });
+ * ```
+ *
+ * Only the first type parameter is meant to be passed; the others exist so that the node types can be
+ * inferred from the methods (TypeScript can't infer the record itself from them).
+ * @template {RendererNodes} [N=RendererNodes]
+ * @template {object} [TFragment=N['fragment']]
+ * @template {object} [TElement=N['element']]
+ * @template {object} [TText=N['text']]
+ * @template {object} [TComment=N['comment']]
+ * @param {Renderer<{ fragment: TFragment; element: TElement; text: TText; comment: TComment }>} renderer
+ * @returns {Renderer<{ fragment: TFragment; element: TElement; text: TText; comment: TComment }>}
  */
 export function createRenderer(renderer) {
 	return renderer;
