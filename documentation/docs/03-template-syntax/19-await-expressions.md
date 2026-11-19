@@ -68,7 +68,7 @@ Svelte will do as much asynchronous work as it can in parallel. For example if y
 
 ...both functions will run at the same time, as they are independent expressions, even though they are _visually_ sequential.
 
-This does also apply to sequential `$derived(await ...)` expressions inside your `<script>` that are independent of each other — in the following example, `a` and `b` are created at the same time, so that they run in parallel, while `c` is only created once `b` resolves:
+This also applies to `$derived(await ...)` expressions inside your `<script>`: each one is created as soon as everything it depends on is available, even if other statements come before it. In the following example, `a` and `b` are created at the same time, so that they run in parallel, while `c` is only created once `b` resolves:
 
 ```js
 /** @param {number} x */
@@ -80,16 +80,18 @@ async function three(z) { return z; }
 let x = $state(1);
 let y = $state(2);
 // ---cut---
-// `a` and `b` are created at the same time ...
+// `a` and `b` are created at the same time,
+// even though there is a statement in between...
 let a = $derived(await one(x));
+let doubled = $derived(a * 2);
 let b = $derived(await two(y));
-// ... but `c` has to wait for `b`, because it depends on it.
+// ...but `c` has to wait for `b`, because it depends on it.
 // Once created they will all update independently,
 // even if `x` and `y` update simultaneously.
 let c = $derived(await three(b + x));
 ```
 
-This does not apply to other `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript:
+This does not apply to other `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript. A `$derived(await ...)` that comes after such an expression will not be created until it has resolved:
 
 ```js
 /** @param {number} x */
@@ -99,16 +101,14 @@ async function two(y) { return y; }
 let x = $state(1);
 let y = $state(2);
 // ---cut---
-let a = $derived(await one(x));
-let doubled = $derived(a * 2);
+let a = await one(x);
 
-// `b` does not depend on `a`, but because of the
-// statement in between, it will not be created until
-// `a` has resolved
+// `b` does not depend on `a`, but it will
+// not be created until `a` has resolved
 let b = $derived(await two(y));
 ```
 
-> [!NOTE] If you write code like this, expect Svelte to give you an [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) warning. In the above example, declaring `b` before `doubled` lets `a` and `b` run in parallel
+> [!NOTE] If you write code like this, expect Svelte to give you an [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) warning. In the above example, declaring `b` before `a` lets them run in parallel
 
 ## Indicating loading states
 

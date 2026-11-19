@@ -548,8 +548,8 @@ export function async_derived(fn) {
 		return () => value;
 	});
 
-	// Independent `$derived(await ...)` declarations in a component's `<script>` are created up front
-	// and then awaited in order, so one of them may reject while an earlier one is still being awaited.
+	// Independent `$derived(await ...)` declarations in a component's `<script>` may be created before
+	// they are awaited, so one of them may reject while an earlier step is still pending.
 	// Mark the promise as handled, so that this isn't reported as an unhandled rejection
 	promise.catch(noop);
 

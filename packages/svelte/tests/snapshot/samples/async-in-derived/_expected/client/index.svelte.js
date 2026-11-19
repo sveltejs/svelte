@@ -7,17 +7,16 @@ var root = $.from_html(`<!> <!>`, 1);
 export default function Async_in_derived($$anchor, $$props) {
 	$.push($$props, true);
 
-	var yes1, yes2, no1, no2;
+	var yes1, yes2, no1, no2, yes2_promise;
 
 	var $$promises = $.run([
 		async () => {
 			var yes1_promise = $.async_derived(() => 1);
-			var yes2_promise = $.async_derived(async () => foo(await 1));
 
+			yes2_promise = $.async_derived(async () => foo(await 1), void 0, void 0, 1);
 			yes1 = await yes1_promise;
-			yes2 = await yes2_promise;
 		},
-
+		async () => yes2 = await yes2_promise,
 		() => {
 			no1 = $.derived(async () => {
 				return await 1;
@@ -90,7 +89,7 @@ export default function Async_in_derived($$anchor, $$props) {
 			let x;
 
 			var promises_1 = $.run([
-				() => $$promises[1].promise,
+				() => $$promises[2].promise,
 				() => x = $.derived(() => $.get(no2))
 			]);
 		};

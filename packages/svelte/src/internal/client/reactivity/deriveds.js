@@ -43,13 +43,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
-import {
-	current_runner,
-	current_run_step,
-	increment_pending,
-	merge_target,
-	unset_context
-} from './async.js';
+import { current_runner, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -116,17 +110,15 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
  * @param {(error: unknown) => void} [onready] Called when the first result is captured; receives its error, if any
+ * @param {number} [step] The index of the `run(...)` step that awaits the expression, if not the one that creates it
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_expression(fn, label, location, onready) {
+export function async_expression(fn, label, location, onready, step) {
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
-
-	// the `run(...)` step (if any) that creates this derived — its value can't be read before that step has finished
-	var run_step = DEV ? current_run_step : null;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -134,6 +126,12 @@ export function async_expression(fn, label, location, onready) {
 	// `run` continues in the creating batch's view; other batches' results wait until then.
 	// A superseded or obsolete run lets another batch supply the first value.
 	var runner = current_runner;
+
+	// the `run(...)` step (if any) that awaits this derived — its value can't be read before that step
+	if (runner !== null) step ??= runner.index;
+
+	// Dev-only: the value can't be read before the step has finished either
+	var run_step = DEV && runner !== null ? runner.steps[/** @type {number} */ (step)] : null;
 
 	/**
 	 * The batch whose run delivers the first value (`null`: whichever comes first)
@@ -285,9 +283,7 @@ export function async_expression(fn, label, location, onready) {
 
 			if (runner !== null) {
 				// Let the script consume the first value in this batch's view before releasing buffered results.
-				runner.switch(batch);
-
-				runner.continued.push(() => flush_waiting(true));
+				runner.deliver(/** @type {number} */ (step), batch, () => flush_waiting(true));
 
 				runner = null;
 			}
@@ -308,7 +304,7 @@ export function async_expression(fn, label, location, onready) {
 					});
 				};
 
-				if (run_step !== null && !run_step.settled) {
+				if (run_step && !run_step.settled) {
 					run_step.checks.push(check);
 				} else {
 					check();
@@ -333,10 +329,11 @@ export function async_expression(fn, label, location, onready) {
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @param {number} [step] The index of the `run(...)` step that awaits the derived, if it is created in an earlier one
  * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, label, location) {
+export function async_derived(fn, label, location, step) {
 	if (!current_runner) {
 		e.async_derived_orphan();
 	}
@@ -374,7 +371,8 @@ export function async_derived(fn, label, location) {
 			(error) => {
 				if (error === undefined) fulfil(/** @type {Source<V>} */ (source));
 				else reject(error);
-			}
+			},
+			step
 		);
 
 		var index = runner.signals.push(source) - 1;
@@ -384,8 +382,8 @@ export function async_derived(fn, label, location) {
 }
 
 /**
- * Independent `$derived(await ...)` declarations in a component's `<script>` are created up front
- * and then awaited in order, so one of them may reject while an earlier one is still being awaited.
+ * Independent `$derived(await ...)` declarations in a component's `<script>` may be created before
+ * they are awaited, so one of them may reject while an earlier step is still pending.
  * Mark the promise as handled, so that this isn't reported as an unhandled rejection
  * @template T
  * @param {Promise<T>} promise

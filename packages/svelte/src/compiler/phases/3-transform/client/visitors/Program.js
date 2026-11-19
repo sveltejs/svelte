@@ -145,7 +145,8 @@ export function Program(node, context) {
 				context.state.analysis.instance_body,
 				b.id('$.run'),
 				(node) => /** @type {Node} */ (context.visit(node)),
-				context.state.analysis.instance.scope
+				context.state.analysis.instance.scope,
+				true
 			)
 		};
 	}

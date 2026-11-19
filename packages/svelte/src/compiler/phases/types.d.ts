@@ -135,10 +135,11 @@ export interface ComponentAnalysis extends Analysis {
 			nodes: Array<Statement | VariableDeclarator>;
 			has_await: boolean;
 			/**
-			 * `true` if `nodes` are multiple `$derived(await ...)` declarators that are independent of each other.
-			 * Their async deriveds are all created before the first one is awaited, so that they run in parallel
+			 * Set if `nodes` is a single `$derived(await ...)` declarator that is independent of the entries before it.
+			 * Its async derived is created at the start of the entry with this index, so that it runs in parallel with
+			 * the entries in between, but is still awaited (and assigned) as part of this entry
 			 */
-			parallel?: boolean;
+			hoisted_to?: number;
 		}>;
 		declarations: Array<Identifier>;
 	};

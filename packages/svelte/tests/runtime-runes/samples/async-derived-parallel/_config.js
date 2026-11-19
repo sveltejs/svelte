@@ -7,28 +7,25 @@ export default test({
 		const [a, b, c, d] = target.querySelectorAll('button');
 
 		await tick();
-		assert.deepEqual(logs.splice(0), ['load a', 'load b']);
+		assert.deepEqual(logs.splice(0), ['load a', 'load b', 'load d']);
 
-		// `b` resolving first doesn't let the script continue, it still waits for `a`
+		// `b` and `d` resolving first doesn't let the script continue, it still waits for `a`
 		b.click();
+		d.click();
 		await tick();
 		assert.deepEqual(logs.splice(0), []);
 		assert.equal(target.querySelectorAll('output').length, 0);
 
 		a.click();
 		await tick();
-		assert.deepEqual(logs.splice(0), ['load c', 'load d']);
-		assert.equal(target.querySelectorAll('output').length, 0);
-
-		d.click();
-		await tick();
+		assert.deepEqual(logs.splice(0), ['load c']);
 		assert.equal(target.querySelectorAll('output').length, 0);
 
 		c.click();
 		await tick();
 
 		const [output] = target.querySelectorAll('output');
-		assert.htmlEqual(output.innerHTML, 'a b c d');
+		assert.htmlEqual(output.innerHTML, 'a b c C d');
 		assert.deepEqual(logs, []);
 	}
 });

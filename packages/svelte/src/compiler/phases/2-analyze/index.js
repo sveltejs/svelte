@@ -1106,22 +1106,23 @@ function calculate_blockers(instance, analysis) {
 	function flush_sync_group() {
 		if (sync_group.length === 0) return;
 
-		analysis.instance_body.async.push({ nodes: sync_group, has_await: false });
+		const entry = { nodes: sync_group, has_await: false };
+		analysis.instance_body.async.push(entry);
+		infos.set(entry, sync_info);
+
 		sync_group = [];
+		sync_info = create_entry_info();
 	}
 
 	/**
-	 * The group of consecutive `$derived(await ...)` declarations that is currently being built.
-	 * They are created up front and awaited in order afterwards, so that they run in parallel.
-	 * This is only possible if none of them references another one, directly or indirectly
-	 * @type {null | {
-	 *   entry: ComponentAnalysis['instance_body']['async'][number];
-	 *   blocker: NonNullable<Binding['blocker']>;
-	 *   declared: Set<Binding>;
-	 *   touched: Set<Binding>;
-	 * }}
+	 * What we know about each entry of `analysis.instance_body.async`, so that we can decide
+	 * how far up the `run(...)` chain each async derived can be created (see `hoist_async_deriveds`)
+	 * @type {Map<ComponentAnalysis['instance_body']['async'][number], EntryInfo>}
 	 */
-	let parallel_group = null;
+	const infos = new Map();
+
+	/** @type {EntryInfo} */
+	let sync_info = create_entry_info();
 
 	/** @type {Map<ESTree.Node, number>} */
 	const statement_indexes = new Map(instance.ast.body.map((node, index) => [node, index]));
@@ -1311,13 +1312,13 @@ function calculate_blockers(instance, analysis) {
 	}
 
 	/**
-	 * Whether code reading any of the given bindings could run while a subsequent `$derived(await ...)` of
-	 * the same parallel group is evaluated, without that derived referencing it in a way `touch` can follow.
-	 * That's the case if a closure that (directly or indirectly) reads them is created before the group has
-	 * finished, and stored somewhere other than in a binding — e.g. assigned to an object property, used as
+	 * Whether code reading any of the given bindings could run while a `$derived(await ...)` that is created
+	 * before them is evaluated, without that derived referencing it in a way `touch` can follow.
+	 * That's the case if a closure that (directly or indirectly) reads them is created before the derived's
+	 * declaration, and stored somewhere other than in a binding — e.g. assigned to an object property, used as
 	 * a destructuring default or passed to a function. Unlike bindings, these places can't be traced back
 	 * @param {Iterable<Binding>} bindings
-	 * @param {number} end index of the instance statement that declares the bindings
+	 * @param {number} end index of the instance statement that declares the derived
 	 */
 	function escapes(bindings, end) {
 		/** @type {Map<Binding, boolean>} binding -> whether it holds a function (as opposed to a signal) */
@@ -1382,58 +1383,111 @@ function calculate_blockers(instance, analysis) {
 	}
 
 	/**
-	 * Adds a `$derived(await ...)` declarator to the current parallel group, or starts a new one
-	 * if it is not independent of the deriveds in the current group
-	 * @param {ESTree.VariableDeclarator} declarator
-	 * @param {Set<Binding>} writes
-	 * @param {number} index index of the instance statement containing the declarator
+	 * The given bindings, plus everything their values reference (transitively)
+	 * @param {Iterable<Binding>} bindings
 	 */
-	function push_async_derived(declarator, writes, index) {
-		const declared = new Set(instance.scope.get_bindings(declarator));
-		const touched = touch_with_stores(/** @type {ESTree.Expression} */ (declarator.init));
+	function expand(bindings) {
+		/** @type {Set<Binding>} */
+		const touched = new Set();
 
-		const independent =
-			parallel_group !== null &&
-			!intersects(parallel_group.declared, touched) &&
-			!intersects(declared, parallel_group.touched);
+		/** @type {Set<ESTree.Node>} */
+		const seen = new Set();
 
-		if (!independent) {
-			flush_sync_group();
+		for (const binding of bindings) {
+			touched.add(binding);
 
-			parallel_group = {
-				entry: { nodes: [], has_await: true },
-				blocker: /** @type {NonNullable<Binding['blocker']>} */ (
-					b.member(promises, b.literal(analysis.instance_body.async.length), true)
-				),
-				declared: new Set(),
-				touched: new Set()
-			};
-
-			analysis.instance_body.async.push(parallel_group.entry);
+			for (const assignment of binding.assignments) {
+				touch(assignment.value, assignment.scope, touched, seen);
+			}
 		}
 
-		const group = /** @type {NonNullable<typeof parallel_group>} */ (parallel_group);
+		return touched;
+	}
 
-		for (const binding of writes) {
-			binding.blocker = group.blocker;
+	/**
+	 * Records what a statement (or declarator) without top-level `await` declares, writes and reads,
+	 * so that we know whether an async derived can be created before it
+	 * @param {EntryInfo} info
+	 * @param {ESTree.Statement | ESTree.VariableDeclarator} node
+	 * @param {Set<Binding>} reads
+	 * @param {Set<Binding>} writes
+	 */
+	function record(info, node, reads, writes) {
+		if (node.type === 'VariableDeclarator') {
+			for (const binding of instance.scope.get_bindings(node)) info.out.add(binding);
+
+			const rune = get_rune(node.init, instance.scope);
+
+			// a (sync) derived is evaluated lazily, i.e. not as part of the statement itself,
+			// so there are no side effects whose order could change
+			if (rune === '$derived' || rune === '$derived.by') return;
+		} else if (node.type === 'ClassDeclaration') {
+			const binding = instance.scope.get(node.id.name);
+			if (binding) info.out.add(binding);
 		}
 
-		for (const id of extract_identifiers(declarator.id)) {
-			push_declaration(id, group.blocker);
+		for (const binding of writes) info.out.add(binding);
+		for (const binding of expand([...reads, ...writes])) info.touched.add(binding);
+	}
+
+	/**
+	 * Moves the creation of each `$derived(await ...)` as far up the `run(...)` chain as possible, so that it runs in
+	 * parallel with the entries in between. It is still awaited (and assigned) in its own entry, so nothing else has
+	 * to wait any longer than before. An async derived can be created before an entry if
+	 * - the entry contains no other top-level `await` (it is used for sequencing, e.g. `await connect()`, whose
+	 *   effects static analysis can't see)
+	 * - the derived doesn't (directly or indirectly) read anything the entry declares or writes
+	 * - the entry doesn't read anything the derived's expression might write. Expressions of async deriveds
+	 *   are exempt from this, i.e. like expressions in the template, they may run in a different order
+	 * - nothing the entry declares or writes can be read in ways we can't trace (see `escapes`)
+	 */
+	function hoist_async_deriveds() {
+		const entries = analysis.instance_body.async;
+
+		/** @type {Map<EntryInfo, Map<number, boolean>>} */
+		const escape_cache = new Map();
+
+		/**
+		 * @param {EntryInfo} info
+		 * @param {number} end
+		 */
+		function cached_escapes(info, end) {
+			let cache = escape_cache.get(info);
+			if (!cache) escape_cache.set(info, (cache = new Map()));
+
+			let result = cache.get(end);
+
+			if (result === undefined) {
+				result = escapes(info.out, end);
+				cache.set(end, result);
+			}
+
+			return result;
 		}
 
-		for (const binding of declared) group.declared.add(binding);
-		for (const binding of touched) group.touched.add(binding);
+		for (let j = 1; j < entries.length; j += 1) {
+			const derived = infos.get(entries[j])?.derived;
+			if (!derived) continue;
 
-		group.entry.nodes.push(declarator);
+			let target = j;
 
-		if (group.entry.nodes.length > 1) {
-			group.entry.parallel = true;
+			while (target > 0) {
+				const info = /** @type {EntryInfo} */ (infos.get(entries[target - 1]));
+
+				if (
+					info.barrier ||
+					intersects(derived.touched, info.out) ||
+					intersects(derived.writes, info.touched) ||
+					cached_escapes(info, derived.index)
+				) {
+					break;
+				}
+
+				target -= 1;
+			}
+
+			if (target < j) entries[j].hoisted_to = target;
 		}
-
-		// if code reading these bindings could be invoked in ways we can't trace,
-		// subsequent deriveds can't safely be created before they are assigned
-		if (escapes(declared, index)) parallel_group = null;
 	}
 
 	/**
@@ -1499,14 +1553,6 @@ function calculate_blockers(instance, analysis) {
 
 					trace_references(declarator, reads, writes, instance.scope);
 
-					if (is_async_derived(declarator)) {
-						push_async_derived(declarator, writes, index);
-						continue;
-					}
-
-					// anything in between async deriveds means they have to run sequentially
-					parallel_group = null;
-
 					// Needs to happen before blocker computation
 					if (has_await) flush_sync_group();
 
@@ -1524,9 +1570,28 @@ function calculate_blockers(instance, analysis) {
 
 					if (has_await) {
 						// one declarator per declaration, makes things simpler
-						analysis.instance_body.async.push({ nodes: [declarator], has_await: true });
+						const entry = { nodes: [declarator], has_await: true };
+						analysis.instance_body.async.push(entry);
+
+						infos.set(
+							entry,
+							is_async_derived(declarator)
+								? {
+										...create_entry_info(),
+										out: new Set(instance.scope.get_bindings(declarator)),
+										derived: {
+											touched: touch_with_stores(
+												/** @type {ESTree.Expression} */ (declarator.init)
+											),
+											writes,
+											index
+										}
+									}
+								: { ...create_entry_info(), barrier: true }
+						);
 					} else {
 						sync_group.push(declarator);
+						record(sync_info, declarator, reads, writes);
 					}
 				}
 			}
@@ -1538,9 +1603,6 @@ function calculate_blockers(instance, analysis) {
 			const writes = new Set();
 
 			trace_references(node, reads, writes, instance.scope);
-
-			// anything in between async deriveds means they have to run sequentially
-			parallel_group = null;
 
 			// Needs to happen before blocker computation
 			if (has_await) flush_sync_group();
@@ -1558,9 +1620,12 @@ function calculate_blockers(instance, analysis) {
 			}
 
 			if (has_await) {
-				analysis.instance_body.async.push({ nodes: [node], has_await: true });
+				const entry = { nodes: [node], has_await: true };
+				analysis.instance_body.async.push(entry);
+				infos.set(entry, { ...create_entry_info(), barrier: true });
 			} else {
 				sync_group.push(node);
+				record(sync_info, node, reads, writes);
 			}
 		} else {
 			analysis.instance_body.sync.push(node);
@@ -1572,6 +1637,7 @@ function calculate_blockers(instance, analysis) {
 	if (!awaited) return;
 
 	flush_sync_group();
+	hoist_async_deriveds();
 
 	// a store subscription must wait on whatever blocks the store itself; this must happen
 	// before function tracing so that functions reading `$store` inherit the blocker
@@ -1631,6 +1697,26 @@ function calculate_blockers(instance, analysis) {
 
 		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
 	}
+}
+
+/**
+ * What is known about an entry of `instance_body.async`, for hoisting async deriveds:
+ * - `barrier`: whether it contains a top-level `await` other than an async derived. Nothing is moved before it
+ * - `out`: bindings it declares or writes
+ * - `touched`: bindings it reads (or writes) as part of running it. Empty for deriveds, since they are lazy
+ * - `derived`: for a `$derived(await ...)` entry, everything its expression touches and might write,
+ *   and the index of its instance statement
+ * @typedef {{
+ *   barrier: boolean;
+ *   out: Set<Binding>;
+ *   touched: Set<Binding>;
+ *   derived: null | { touched: Set<Binding>; writes: Set<Binding>; index: number };
+ * }} EntryInfo
+ */
+
+/** @returns {EntryInfo} */
+function create_entry_info() {
+	return { barrier: false, out: new Set(), touched: new Set(), derived: null };
 }
 
 /**

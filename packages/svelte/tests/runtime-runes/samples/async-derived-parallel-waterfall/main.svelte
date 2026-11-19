@@ -10,7 +10,7 @@
 	}
 </script>
 
-{#each ['a', 'b'] as name}
+{#each ['a', 'b', 'c'] as name}
 	<button onclick={() => resolvers.get(name)?.()}>{name}</button>
 {/each}
 
