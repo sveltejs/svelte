@@ -244,6 +244,7 @@ export default createRenderer({
 	removeAttribute: (element, name) => {
 		delete element.attributes[name];
 	},
+	hasAttribute: (element, name) => name in element.attributes,
 
 	getFirstChild: (node) => node.children[0] ?? null,
 	getLastChild: (node) => node.children.at(-1) ?? null,
@@ -300,6 +301,7 @@ Svelte works with four kinds of node: fragments, elements, text nodes and commen
 - `setAttribute(element, name, value)` is called for every attribute, with the value as it is in the component — a number, an array, an object, a function and so on — rather than converted to a string. This includes attributes that are properties rather than attributes in the DOM, such as `value` and `checked`. Whether your renderer treats them as properties, attributes or something else is up to you
 - `removeAttribute(element, name)` is called instead of `setAttribute` when the value is `null` or `undefined`
 - `getAttribute(element, name)` returns the current value, or `null` if the attribute isn't set
+- `hasAttribute(element, name)` returns whether the attribute is set. Svelte uses this rather than checking whether `getAttribute` returns `null`, so in your renderer an attribute can be set and still have the value `null`
 
 `class` and `style` are always passed as strings. Svelte combines the `class` attribute with any `class:` directives and scoping class, and the `style` attribute with any `style:` directives, and sets the result in one go.
 
