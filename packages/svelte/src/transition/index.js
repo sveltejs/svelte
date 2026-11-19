@@ -197,6 +197,15 @@ export function scale(
 export function draw(node, { delay = 0, speed, duration, easing = cubic_in_out } = {}) {
 	let len = node.getTotalLength();
 	const style = getComputedStyle(node);
+	// When vector-effect: non-scaling-stroke is set, the stroke lives in screen
+	// pixels but getTotalLength() returns SVG user units. Scale len by the CTM
+	// x-basis magnitude so dasharray/dashoffset match the rendered stroke length.
+	if (style.vectorEffect === 'non-scaling-stroke') {
+		const ctm = /** @type {SVGGraphicsElement} */ (node).getCTM?.();
+		if (ctm) {
+			len = len * Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b);
+		}
+	}
 	if (style.strokeLinecap !== 'butt') {
 		len += parseInt(style.strokeWidth);
 	}
@@ -275,6 +284,7 @@ export function crossfade({ fallback, ...defaults }) {
 			easing,
 			css: (t, u) => `
 			   opacity: ${t * opacity};
+			   mix-blend-mode: plus-lighter;
 			   transform-origin: top left;
 			   transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${
 						t + (1 - t) * dh
