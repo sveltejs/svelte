@@ -1420,9 +1420,12 @@ function calculate_blockers(instance, analysis) {
 		 */
 		function add(pattern, scope) {
 			for (const node of unwrap_pattern(/** @type {ESTree.Pattern} */ (pattern))) {
-				const id = object(node);
-				const binding = id && scope.get(id.name);
-				if (binding) writes.add(binding);
+				if (node.type === 'MemberExpression') {
+					touch(node.object, scope, writes, touch_seen);
+				} else {
+					const binding = scope.get(node.name);
+					if (binding) writes.add(binding);
+				}
 			}
 		}
 
