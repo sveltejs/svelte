@@ -3,7 +3,7 @@
 import { DOCUMENT_FRAGMENT_NODE } from '#client/constants';
 import { get_next_sibling, get_parent_node, insert_before, node_type } from '../dom/operations.js';
 import { queue_micro_task } from '../dom/task.js';
-import { set_after_flush } from '../reactivity/batch.js';
+import { set_before_effects } from '../reactivity/batch.js';
 import { pop_renderer, push_renderer } from './state.js';
 
 /**
@@ -45,13 +45,14 @@ export function add_crossing(container, crossing) {
 	crossings.push(crossing);
 
 	if (crossings.length === 2 && shared_containers++ === 0) {
-		// updates can move host nodes (e.g. in a keyed `{#each}` block), so sync after each flush
-		set_after_flush(sync_shared_containers);
+		// updates can move host nodes (e.g. in a keyed `{#each}` block), so sync each time a
+		// batch has updated the content, before its user effects run
+		set_before_effects(sync_shared_containers);
 	}
 
 	// the host node might not be in its final position yet (e.g. it's still in a template fragment
-	// that hasn't been inserted), so sync once the current work is done. Flushes sync at the end
-	// anyway, but initial renders don't flush
+	// that hasn't been inserted), so sync once the current work is done. Batches sync when they
+	// update the content anyway, but initial renders don't involve one
 	if (!queued) {
 		queued = true;
 		queue_micro_task(() => {
@@ -70,7 +71,7 @@ export function remove_crossing(container, crossing) {
 	crossings.splice(crossings.indexOf(crossing), 1);
 
 	if (crossings.length === 1 && --shared_containers === 0) {
-		set_after_flush(null);
+		set_before_effects(null);
 	}
 	if (crossings.length === 0) containers.delete(container);
 }
