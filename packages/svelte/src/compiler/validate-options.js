@@ -46,23 +46,19 @@ const common_options = {
 	experimental: object({
 		async: boolean(false),
 		// `customRenderer` can be:
-		//  - `undefined`/`false`: the feature is off, components compile to plain DOM
+		//  - `undefined`: the feature is off, components compile to plain DOM
 		//  - `true`: the feature is on, every component defaults to DOM (opt in via `<svelte:options>`)
 		//  - a string: the feature is on, every component defaults to that module (opt out via `<svelte:options>`)
-		//  - a function: the feature is on, the module is resolved lazily per file (`null` or
-		//    `undefined` mean DOM)
+		//  - a function: the feature is on, the module is resolved lazily per file (`null` means DOM)
 		// The normalized value is always a function returning `string | null | undefined` where
 		// `string` is the renderer module, `null` is "DOM but feature enabled" (push `null`) and
 		// `undefined` is "feature off" (no renderer pushed at all). A function can't return
 		// `undefined` for individual files: those components wouldn't push `null`, so they'd break
-		// when rendered inside a component that uses a custom renderer.
+		// when rendered inside a component that uses a custom renderer. We throw rather than
+		// silently treating `undefined` as `null`, so that a forgotten `return` doesn't go unnoticed.
 		customRenderer: validator(
 			/** @type {(options: { filename: string }) => string | null | undefined} */ (() => undefined),
 			(input, keypath) => {
-				if (input === false) {
-					return () => undefined;
-				}
-
 				if (input === true) {
 					return () => null;
 				}
@@ -84,11 +80,11 @@ const common_options = {
 					return (/** @type {{ filename: string }} */ options) => {
 						const result = input(options);
 
-						if (result !== null && result !== undefined && typeof result !== 'string') {
-							throw_error(`${keypath} function must return a string, null or undefined`);
+						if (result !== null && typeof result !== 'string') {
+							throw_error(`${keypath} function must return a string or null`);
 						}
 
-						return result ?? null;
+						return result;
 					};
 				}
 

@@ -41,7 +41,8 @@ describe('customRenderer function resolver validation', () => {
 		['number', () => 42],
 		['true', () => true],
 		['false', () => false],
-		['object', () => ({})]
+		['object', () => ({})],
+		['undefined', () => undefined]
 	];
 
 	for (const [name, resolver] of invalid) {
@@ -60,8 +61,7 @@ describe('customRenderer function resolver validation', () => {
 
 	const valid: Array<[string, unknown]> = [
 		['string', () => 'my-renderer'],
-		['null', () => null],
-		['undefined', () => undefined]
+		['null', () => null]
 	];
 
 	for (const [name, resolver] of valid) {
@@ -75,6 +75,20 @@ describe('customRenderer function resolver validation', () => {
 			);
 		});
 	}
+});
+
+describe('customRenderer global option', () => {
+	it('rejects `false`', () => {
+		assert.throws(
+			() =>
+				compile('<div></div>', {
+					generate: 'client',
+					// @ts-expect-error `false` is not a valid value, omit the option instead
+					experimental: { customRenderer: false }
+				}),
+			/customRenderer should be true, a string or a function/
+		);
+	});
 });
 
 describe('customRenderer global module path', () => {
@@ -130,22 +144,30 @@ describe('customRenderer global module path', () => {
 	});
 });
 
-describe('customRenderer function resolver returning undefined', () => {
-	it('compiles the component as a DOM component, like returning null', () => {
-		const source = '<p>dom</p>';
-		const compile_with = (result: null | undefined) =>
-			compile(source, {
-				filename: 'App.svelte',
-				generate: 'client',
-				experimental: { customRenderer: () => result }
-			}).js.code;
-
-		const code = compile_with(undefined);
+describe('customRenderer function resolver returning null', () => {
+	it('compiles the component as a DOM component that takes part in crossings', () => {
+		const code = compile('<p>dom</p>', {
+			filename: 'App.svelte',
+			generate: 'client',
+			experimental: { customRenderer: () => null }
+		}).js.code;
 
 		// the component takes part in crossings, so it can be rendered inside custom renderer content
 		assert.include(code, '$.push_renderer(null)');
 		assert.include(code, '$.is_crossing(null)');
-		assert.equal(code, compile_with(null));
+	});
+
+	it('rejects a resolver returning undefined with a helpful message', () => {
+		assert.throws(
+			() =>
+				compile('<p>dom</p>', {
+					filename: 'App.svelte',
+					generate: 'client',
+					// @ts-expect-error undefined is not a valid return value
+					experimental: { customRenderer: () => undefined }
+				}),
+			/customRenderer function must return a string or null/
+		);
 	});
 });
 

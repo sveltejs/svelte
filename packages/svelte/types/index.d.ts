@@ -1240,14 +1240,11 @@ declare module 'svelte/compiler' {
 			 *
 			 * - `true`, allowing components to individually opt in
 			 * - a string that points to a default custom renderer module: a package name, an alias or an absolute path (not a relative path, since every component imports it). Individual components can override the default, or opt out with `<svelte:options customRenderer={null} />`
-			 * - a function that receives a `{ filename }` object and returns a custom renderer module path (resolved relative to that component, if relative), or `null`/`undefined` if the component should use the DOM
+			 * - a function that receives a `{ filename }` object and returns a custom renderer module path (resolved relative to that component, if relative), or `null` if the component should use the DOM
 			 *
 			 * A custom renderer module's default export must be an object created with `createRenderer`.
 			 */
-			customRenderer?:
-				| boolean
-				| string
-				| ((options: { filename: string }) => string | null | undefined);
+			customRenderer?: true | string | ((options: { filename: string }) => string | null);
 		};
 	}
 	/**
@@ -3509,14 +3506,11 @@ declare module 'svelte/types/compiler/interfaces' {
 			 *
 			 * - `true`, allowing components to individually opt in
 			 * - a string that points to a default custom renderer module: a package name, an alias or an absolute path (not a relative path, since every component imports it). Individual components can override the default, or opt out with `<svelte:options customRenderer={null} />`
-			 * - a function that receives a `{ filename }` object and returns a custom renderer module path (resolved relative to that component, if relative), or `null`/`undefined` if the component should use the DOM
+			 * - a function that receives a `{ filename }` object and returns a custom renderer module path (resolved relative to that component, if relative), or `null` if the component should use the DOM
 			 *
 			 * A custom renderer module's default export must be an object created with `createRenderer`.
 			 */
-			customRenderer?:
-				| boolean
-				| string
-				| ((options: { filename: string }) => string | null | undefined);
+			customRenderer?: true | string | ((options: { filename: string }) => string | null);
 		};
 	}
 	/**
