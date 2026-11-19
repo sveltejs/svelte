@@ -8,8 +8,13 @@ export default function Async_parallel_deriveds($$renderer) {
 	// reads `a` directly, so it is created once `a` has resolved, in parallel with `b`
 	// reads `c` indirectly via `get_c`, so it has to wait for `c`...
 	// ...whereas this one is independent of everything before it, so it's created right away
-	// a regular top-level `await` can't be skipped, so this has to wait
-	// reads `items`, which `g`'s expression might modify, so `g` can't be created before it
+	// a regular top-level `await` doesn't hold up async deriveds that don't depend on it...
+	// ...but this one reads `config`, so it has to wait for it
+	// `setup` visibly writes `items`, which `h` reads, so `h` has to wait for it
+	function setup() {
+		items.push(1);
+	}
+
 	function get_c() {
 		return c();
 	}
@@ -19,12 +24,15 @@ export default function Async_parallel_deriveds($$renderer) {
 		c,
 		d,
 		e,
+		config,
 		f,
-		count,
 		g,
+		h,
 		promise,
 		c_promise,
-		e_promise;
+		e_promise,
+		f_promise,
+		g_promise;
 
 	var $$promises = $$renderer.run([
 		async () => {
@@ -32,6 +40,7 @@ export default function Async_parallel_deriveds($$renderer) {
 
 			promise = $.async_derived(bar);
 			e_promise = $.async_derived(foo);
+			f_promise = $.async_derived(foo);
 			a = await a_promise;
 		},
 
@@ -45,10 +54,14 @@ export default function Async_parallel_deriveds($$renderer) {
 		async () => c = await c_promise,
 		async () => d = await $.async_derived(get_c),
 		async () => e = await e_promise,
-		baz,
-		async () => f = await $.async_derived(foo),
-		() => count = items.length,
-		async () => g = await $.async_derived(() => fill(items))
+		async () => config = await baz(),
+		async () => {
+			g_promise = $.async_derived(() => foo(config));
+			f = await f_promise;
+		},
+		async () => g = await g_promise,
+		() => void setup(),
+		async () => h = await $.async_derived(() => foo(items))
 	]);
 
 	$$renderer.push(`<!---->`);
@@ -64,7 +77,7 @@ export default function Async_parallel_deriveds($$renderer) {
 	$$renderer.push(` `);
 	$$renderer.async([$$promises[6]], ($$renderer) => $$renderer.push(() => $.escape(f())));
 	$$renderer.push(` `);
-	$$renderer.async([$$promises[7]], ($$renderer) => $$renderer.push(() => $.escape(count)));
+	$$renderer.async([$$promises[7]], ($$renderer) => $$renderer.push(() => $.escape(g())));
 	$$renderer.push(` `);
-	$$renderer.async([$$promises[8]], ($$renderer) => $$renderer.push(() => $.escape(g())));
+	$$renderer.async([$$promises[9]], ($$renderer) => $$renderer.push(() => $.escape(h())));
 }

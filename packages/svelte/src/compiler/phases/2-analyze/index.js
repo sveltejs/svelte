@@ -1383,63 +1383,146 @@ function calculate_blockers(instance, analysis) {
 	}
 
 	/**
-	 * The given bindings, plus everything their values reference (transitively)
-	 * @param {Iterable<Binding>} bindings
+	 * Collects the bindings that running `node` might write: assignment and update targets, and anything
+	 * passed to a function (as an argument, or as the object a method is called on), including in the bodies
+	 * of local functions that are called. Unlike in `trace_references`, calling a function doesn't count as
+	 * writing the function itself or everything it references — async deriveds must be pure, so they can't
+	 * rely on state that isn't visibly written
+	 * @param {ESTree.Node} node
+	 * @param {Scope} scope
+	 * @param {Set<Binding>} writes
+	 * @param {Set<ESTree.Node>} seen
 	 */
-	function expand(bindings) {
-		/** @type {Set<Binding>} */
-		const touched = new Set();
+	function collect_writes(node, scope, writes, seen) {
+		if (seen.has(node)) return;
+		seen.add(node);
 
 		/** @type {Set<ESTree.Node>} */
-		const seen = new Set();
+		const touch_seen = new Set();
 
-		for (const binding of bindings) {
-			touched.add(binding);
-
-			for (const assignment of binding.assignments) {
-				touch(assignment.value, assignment.scope, touched, seen);
+		/**
+		 * @param {ESTree.Pattern | ESTree.Expression} pattern
+		 * @param {Scope} scope
+		 */
+		function add(pattern, scope) {
+			for (const node of unwrap_pattern(/** @type {ESTree.Pattern} */ (pattern))) {
+				const id = object(node);
+				const binding = id && scope.get(id.name);
+				if (binding) writes.add(binding);
 			}
 		}
 
-		return touched;
+		/**
+		 * @param {ESTree.CallExpression | ESTree.NewExpression} node
+		 * @param {Scope} scope
+		 */
+		function call(node, scope) {
+			// effects only run once async work has completed
+			const rune = node.type === 'CallExpression' && get_rune(node, scope);
+			if (rune === '$effect' || rune === '$effect.pre') return;
+
+			const callee = node.callee;
+			const binding = callee.type === 'Identifier' ? scope.get(callee.name) : null;
+
+			if (binding) {
+				for (const assignment of binding.assignments) {
+					// declarations such as `function x() {}` are included, too
+					const value = /** @type {ESTree.Node} */ (assignment.value);
+
+					// calling a local function runs its body. Anything else (props, imports, return values etc)
+					// can only write what is passed to it, as async deriveds can't rely on its hidden state
+					if (
+						value.type === 'ArrowFunctionExpression' ||
+						value.type === 'FunctionExpression' ||
+						value.type === 'FunctionDeclaration'
+					) {
+						collect_writes(
+							value.body,
+							instance.scopes.get(value) ?? assignment.scope,
+							writes,
+							seen
+						);
+					}
+				}
+			} else if (callee.type === 'MemberExpression') {
+				// a method might mutate the object it is called on
+				touch(callee, scope, writes, touch_seen);
+			} else if (callee.type !== 'Identifier') {
+				touch(callee, scope, writes, touch_seen);
+			}
+
+			for (const argument of node.arguments) {
+				touch(argument, scope, writes, touch_seen);
+			}
+		}
+
+		walk(
+			node,
+			{ scope },
+			{
+				_(node, context) {
+					const scope = instance.scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
+				AssignmentExpression(node, context) {
+					add(node.left, context.state.scope);
+					context.next();
+				},
+				UpdateExpression(node, context) {
+					add(node.argument, context.state.scope);
+					context.next();
+				},
+				CallExpression(node, context) {
+					call(node, context.state.scope);
+				},
+				NewExpression(node, context) {
+					call(node, context.state.scope);
+				},
+				// functions don't run until they are called
+				ArrowFunctionExpression() {},
+				FunctionExpression() {},
+				FunctionDeclaration() {}
+			}
+		);
 	}
 
 	/**
-	 * Records what a statement (or declarator) without top-level `await` declares, writes and reads,
+	 * Records what a statement (or declarator) declares or might write,
 	 * so that we know whether an async derived can be created before it
 	 * @param {EntryInfo} info
 	 * @param {ESTree.Statement | ESTree.VariableDeclarator} node
-	 * @param {Set<Binding>} reads
-	 * @param {Set<Binding>} writes
 	 */
-	function record(info, node, reads, writes) {
+	function record(info, node) {
 		if (node.type === 'VariableDeclarator') {
 			for (const binding of instance.scope.get_bindings(node)) info.out.add(binding);
 
 			const rune = get_rune(node.init, instance.scope);
 
-			// a (sync) derived is evaluated lazily, i.e. not as part of the statement itself,
-			// so there are no side effects whose order could change
+			// deriveds are pure, so they don't write anything
 			if (rune === '$derived' || rune === '$derived.by') return;
 		} else if (node.type === 'ClassDeclaration') {
 			const binding = instance.scope.get(node.id.name);
 			if (binding) info.out.add(binding);
 		}
 
-		for (const binding of writes) info.out.add(binding);
-		for (const binding of expand([...reads, ...writes])) info.touched.add(binding);
+		collect_writes(node, instance.scope, info.out, new Set());
 	}
 
 	/**
 	 * Moves the creation of each `$derived(await ...)` as far up the `run(...)` chain as possible, so that it runs in
 	 * parallel with the entries in between. It is still awaited (and assigned) in its own entry, so nothing else has
-	 * to wait any longer than before. An async derived can be created before an entry if
-	 * - the entry contains no other top-level `await` (it is used for sequencing, e.g. `await connect()`, whose
-	 *   effects static analysis can't see)
-	 * - the derived doesn't (directly or indirectly) read anything the entry declares or writes
-	 * - the entry doesn't read anything the derived's expression might write. Expressions of async deriveds
-	 *   are exempt from this, i.e. like expressions in the template, they may run in a different order
+	 * to wait any longer than before. Since async deriveds must be pure, the only thing that matters is whether
+	 * they depend on an entry, i.e. an async derived can be created before an entry if
+	 * - it doesn't (directly or indirectly) read anything the entry declares or writes
 	 * - nothing the entry declares or writes can be read in ways we can't trace (see `escapes`)
+	 *
+	 * This includes entries with other top-level `await` expressions — an async derived that relies on their
+	 * side effects without referencing them (e.g. `await connect(); let user = $derived(await get_user())`)
+	 * breaks the contract
 	 */
 	function hoist_async_deriveds() {
 		const entries = analysis.instance_body.async;
@@ -1474,12 +1557,7 @@ function calculate_blockers(instance, analysis) {
 			while (target > 0) {
 				const info = /** @type {EntryInfo} */ (infos.get(entries[target - 1]));
 
-				if (
-					info.barrier ||
-					intersects(derived.touched, info.out) ||
-					intersects(derived.writes, info.touched) ||
-					cached_escapes(info, derived.index)
-				) {
+				if (intersects(derived.touched, info.out) || cached_escapes(info, derived.index)) {
 					break;
 				}
 
@@ -1573,25 +1651,19 @@ function calculate_blockers(instance, analysis) {
 						const entry = { nodes: [declarator], has_await: true };
 						analysis.instance_body.async.push(entry);
 
-						infos.set(
-							entry,
-							is_async_derived(declarator)
-								? {
-										...create_entry_info(),
-										out: new Set(instance.scope.get_bindings(declarator)),
-										derived: {
-											touched: touch_with_stores(
-												/** @type {ESTree.Expression} */ (declarator.init)
-											),
-											writes,
-											index
-										}
-									}
-								: { ...create_entry_info(), barrier: true }
-						);
+						const info = create_entry_info();
+						record(info, declarator);
+						infos.set(entry, info);
+
+						if (is_async_derived(declarator)) {
+							info.derived = {
+								touched: touch_with_stores(/** @type {ESTree.Expression} */ (declarator.init)),
+								index
+							};
+						}
 					} else {
 						sync_group.push(declarator);
-						record(sync_info, declarator, reads, writes);
+						record(sync_info, declarator);
 					}
 				}
 			}
@@ -1622,10 +1694,12 @@ function calculate_blockers(instance, analysis) {
 			if (has_await) {
 				const entry = { nodes: [node], has_await: true };
 				analysis.instance_body.async.push(entry);
-				infos.set(entry, { ...create_entry_info(), barrier: true });
+				const info = create_entry_info();
+				record(info, node);
+				infos.set(entry, info);
 			} else {
 				sync_group.push(node);
-				record(sync_info, node, reads, writes);
+				record(sync_info, node);
 			}
 		} else {
 			analysis.instance_body.sync.push(node);
@@ -1701,22 +1775,18 @@ function calculate_blockers(instance, analysis) {
 
 /**
  * What is known about an entry of `instance_body.async`, for hoisting async deriveds:
- * - `barrier`: whether it contains a top-level `await` other than an async derived. Nothing is moved before it
  * - `out`: bindings it declares or writes
- * - `touched`: bindings it reads (or writes) as part of running it. Empty for deriveds, since they are lazy
- * - `derived`: for a `$derived(await ...)` entry, everything its expression touches and might write,
+ * - `derived`: for a `$derived(await ...)` entry, everything its expression touches,
  *   and the index of its instance statement
  * @typedef {{
- *   barrier: boolean;
  *   out: Set<Binding>;
- *   touched: Set<Binding>;
- *   derived: null | { touched: Set<Binding>; writes: Set<Binding>; index: number };
+ *   derived: null | { touched: Set<Binding>; index: number };
  * }} EntryInfo
  */
 
 /** @returns {EntryInfo} */
 function create_entry_info() {
-	return { barrier: false, out: new Set(), touched: new Set(), derived: null };
+	return { out: new Set(), derived: null };
 }
 
 /**

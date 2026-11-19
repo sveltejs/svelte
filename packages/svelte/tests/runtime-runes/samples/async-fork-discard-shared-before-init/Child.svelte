@@ -2,11 +2,13 @@
 	let { x, begin, load }: {
 		x: number;
 		begin: () => Promise<void>;
-		load: (value: number) => Promise<number>;
+		load: (value: number, ready: void) => Promise<number>;
 	} = $props();
 
-	await begin();
-	const value = $derived(await load(x));
+	// `load` is passed the result of `begin`, so that the derived depends on it
+	// and isn't created until `begin` has resolved
+	const ready = await begin();
+	const value = $derived(await load(x, ready));
 	console.log(`continued ${value}`);
 </script>
 

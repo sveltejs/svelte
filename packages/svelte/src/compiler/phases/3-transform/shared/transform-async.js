@@ -109,7 +109,7 @@ export function transform_body(instance_body, runner, transform, scope, pass_ste
 		const [first, ...rest] = bodies[index];
 		const awaited = entry.hoisted_to === undefined && first && get_awaited(first);
 
-		if (awaited) {
+		if (awaited && is_async_derived_call(awaited.argument)) {
 			// this entry is an async derived itself, which precedes the hoisted ones
 			// in source order — create it first, so that they're all created in order
 			const declarator = /** @type {ESTree.VariableDeclarator} */ (entry.nodes[0]);
@@ -165,6 +165,23 @@ export function transform_body(instance_body, runner, transform, scope, pass_ste
  */
 function get_promise_name(declarator) {
 	return declarator.id.type === 'Identifier' ? `${declarator.id.name}_promise` : 'promise';
+}
+
+/**
+ * @param {ESTree.Expression} expression
+ */
+function is_async_derived_call(expression) {
+	if (expression.type !== 'CallExpression') return false;
+
+	const callee = expression.callee;
+
+	// `b.call('$.async_derived', ...)` creates an identifier with that name
+	return (
+		(callee.type === 'Identifier' && callee.name === '$.async_derived') ||
+		(callee.type === 'MemberExpression' &&
+			callee.property.type === 'Identifier' &&
+			callee.property.name === 'async_derived')
+	);
 }
 
 /**

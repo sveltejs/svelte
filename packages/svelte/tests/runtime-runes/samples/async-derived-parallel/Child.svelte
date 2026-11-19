@@ -9,9 +9,14 @@
 	const c = $derived(await load('c', b));
 	const upper = $derived(c.toUpperCase());
 
-	// `d` is independent of everything before it, so it is loaded right away,
-	// despite not being next to the other independent deriveds
+	// a regular `await` doesn't hold up async deriveds that don't depend on it...
+	const config = await load('config');
+
+	// ...so `d`, which is independent of everything before it, is loaded right away...
 	const d = $derived(await load('d'));
+
+	// ...while `e` reads `config`, so it is loaded once `config` is done
+	const e = $derived(await load('e', config));
 </script>
 
-<output>{a} {b} {c} {upper} {d}</output>
+<output>{a} {b} {c} {upper} {config} {d} {e}</output>
