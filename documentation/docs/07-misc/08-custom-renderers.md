@@ -210,14 +210,6 @@ A renderer module's default export is an object created with `createRenderer` fr
 /// file: renderer.js
 import { createRenderer } from 'svelte/renderer';
 
-/** Removes a node from its parent, if it has one */
-function detach(node) {
-	if (node.parent) {
-		node.parent.children.splice(node.parent.children.indexOf(node), 1);
-		node.parent = null;
-	}
-}
-
 export default createRenderer({
 	createFragment: () => ({ type: 'fragment', children: [], parent: null }),
 	createElement: (name) => ({
@@ -259,14 +251,19 @@ export default createRenderer({
 		const nodes = node.type === 'fragment' ? node.children.splice(0) : [node];
 
 		// if necessary, remove the child from its existing parent
-		for (const child of nodes) detach(child);
+		for (const child of nodes) this.remove(child);
 
 		const index = anchor ? parent.children.indexOf(anchor) : parent.children.length;
 		parent.children.splice(index, 0, ...nodes);
 
 		for (const child of nodes) child.parent = parent;
 	},
-	remove: (node) => detach(node),
+	remove: (node) => {
+		if (node.parent) {
+			node.parent.children.splice(node.parent.children.indexOf(node), 1);
+			node.parent = null;
+		}
+	},
 
 	addEventListener: (element, type, handler) => {
 		(element.listeners[type] ??= new Set()).add(handler);
@@ -276,6 +273,8 @@ export default createRenderer({
 	}
 });
 ```
+
+> [!NOTE] `createRenderer` returns its argument unchanged — its purpose is to provide type safety.
 
 The following sections describe what Svelte expects from each method.
 
