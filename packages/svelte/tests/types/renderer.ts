@@ -14,8 +14,8 @@ type MyComment = { kind: 'comment' };
 type MyNodes = { fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment };
 
 const rest = {
-	nodeType: () => 'element' as const,
-	getNodeValue: () => null,
+	getNodeType: () => 'element' as const,
+	getText: () => null,
 	setAttribute() {},
 	removeAttribute() {},
 	hasAttribute: () => false,
@@ -34,13 +34,13 @@ const renderer = createRenderer<MyNodes>({
 	...rest,
 	createFragment: () => ({ kind: 'fragment' }),
 	createElement: (name) => ({ kind: 'element', name }),
-	createTextNode: (value) => ({ kind: 'text', value }),
+	createText: (value) => ({ kind: 'text', value }),
 	createComment: () => ({ kind: 'comment' }),
 	getAttribute: () => null,
 	setText(node, text) {
-		const typed: MyElement | MyText | MyComment = node;
-		// @ts-expect-error fragments can't be passed to `setText`
-		const fragment: MyFragment = node;
+		const typed: MyText = node;
+		// @ts-expect-error only text nodes are passed to `setText`
+		const element: MyElement = node;
 	}
 });
 
@@ -50,7 +50,7 @@ createRenderer<MyNodes>({
 	createFragment: () => ({ kind: 'fragment' }),
 	createElement: (name) => ({ kind: 'element', name }),
 	// @ts-expect-error `value` must be a string
-	createTextNode: (value) => ({ kind: 'text', value: 1 }),
+	createText: (value) => ({ kind: 'text', value: 1 }),
 	createComment: () => ({ kind: 'comment' }),
 	getAttribute: () => null,
 	setText() {}
@@ -70,13 +70,13 @@ wrap(renderer);
 const inferred = createRenderer({
 	createFragment: (): MyFragment => ({ kind: 'fragment' }),
 	createElement: (name): MyElement => ({ kind: 'element', name }),
-	createTextNode: (value): MyText => ({ kind: 'text', value }),
+	createText: (value): MyText => ({ kind: 'text', value }),
 	createComment: (): MyComment => ({ kind: 'comment' }),
 	...rest,
 	setText(node, text) {
-		const typed: MyElement | MyText | MyComment = node;
-		// @ts-expect-error fragments can't be passed to `setText`
-		const fragment: MyFragment = node;
+		const typed: MyText = node;
+		// @ts-expect-error only text nodes are passed to `setText`
+		const element: MyElement = node;
 	},
 	getAttribute(element, name) {
 		const typed: MyElement = element;
@@ -90,7 +90,7 @@ const inferred = createRenderer({
 createRenderer({
 	createFragment: () => ({ kind: 'fragment' as const }),
 	createElement: (name) => ({ kind: 'element' as const, name }),
-	createTextNode: (value) => ({ kind: 'text' as const, value }),
+	createText: (value) => ({ kind: 'text' as const, value }),
 	createComment: () => ({ kind: 'comment' as const }),
 	...rest,
 	setText() {},

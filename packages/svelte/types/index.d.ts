@@ -318,7 +318,7 @@ declare module 'svelte' {
 	type MountRenderer = {
 		createFragment(): object;
 		createElement(name: string): object;
-		createTextNode(data: string): object;
+		createText(data: string): object;
 		createComment(data: string): object;
 	};
 
@@ -331,7 +331,7 @@ declare module 'svelte' {
 
 	type MountRendererAnchor<Renderer> = Renderer extends {
 		createElement(name: string): infer TElement;
-		createTextNode(data: string): infer TTextNode;
+		createText(data: string): infer TTextNode;
 		createComment(data: string): infer TComment;
 	}
 		? TElement | TTextNode | TComment
@@ -2748,8 +2748,8 @@ declare module 'svelte/renderer' {
 		/** Creates an element with the given name. */
 		createElement(name: string): N['element'];
 
-		/** Creates a text node with the given data. */
-		createTextNode(data: string): N['text'];
+		/** Creates a text node with the given text. */
+		createText(data: string): N['text'];
 
 		/**
 		 * Creates a comment node with the given data.
@@ -2757,16 +2757,11 @@ declare module 'svelte/renderer' {
 		 */
 		createComment(data: string): N['comment'];
 
-		/** Should return the type of the node in string form. */
-		nodeType(node: N[NodeType]): NodeType;
+		/** Return the type of the node: `'fragment'`, `'element'`, `'text'` or `'comment'`. */
+		getNodeType(node: N[NodeType]): NodeType;
 
-		/**
-		 * Return the value of the node:
-		 * - text value of a text node
-		 * - data value of a comment
-		 * - null for elements and fragments
-		 */
-		getNodeValue(node: N['text'] | N['comment']): string | null;
+		/** Return the text of a text node, or the data of a comment. */
+		getText(node: N['text'] | N['comment']): string | null;
 
 		/** Return the value of the attribute with the given name on the element, or null if it doesn't exist. */
 		getAttribute(element: N['element'], name: string): string | null;
@@ -2780,11 +2775,8 @@ declare module 'svelte/renderer' {
 		/** Return true if the element has an attribute with the given name. */
 		hasAttribute(element: N['element'], name: string): boolean;
 
-		/**
-		 * Set the text content of the node to the given value.
-		 * This should work for both text nodes and elements.
-		 */
-		setText(node: N['element'] | N['text'] | N['comment'], text: string): void;
+		/** Set the text of a text node. */
+		setText(node: N['text'], text: string): void;
 
 		/** Return the first child of the element or fragment, or null if it has no children. */
 		getFirstChild(element: N['element'] | N['fragment']): N[NodeType] | null;
@@ -2796,20 +2788,20 @@ declare module 'svelte/renderer' {
 		getNextSibling(node: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
 
 		/**
-		 * Insert the element into the parent before the anchor.
-		 * If anchor is null, insert at the end.
+		 * Insert the node into the parent before the anchor, or at the end if the anchor is `null`.
+		 * Inserting a fragment should insert its children (and leave the fragment empty).
 		 */
 		insert(
 			parent: N['element'] | N['fragment'],
-			element: N[NodeType],
+			node: N[NodeType],
 			anchor: N['element'] | N['text'] | N['comment'] | null
 		): void;
 
 		/** Remove the node from the tree. */
 		remove(node: N['element'] | N['text'] | N['comment']): void;
 
-		/** Return the parent of the element, or null if it has no parent. */
-		getParent(element: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
+		/** Return the parent of the node, or null if it has no parent. */
+		getParent(node: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
 
 		/** Add an event listener of the given type and handler to the target node. */
 		addEventListener(target: N['element'], type: string, handler: any, options?: any): void;

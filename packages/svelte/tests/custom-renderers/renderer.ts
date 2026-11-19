@@ -99,7 +99,7 @@ export function create_test_renderer({ cross }: { cross: boolean }) {
 		createFragment: create_fragment,
 		createElement: create_element,
 
-		createTextNode(data) {
+		createText(data) {
 			return { type: 'text', value: data, parent: null };
 		},
 
@@ -107,11 +107,11 @@ export function create_test_renderer({ cross }: { cross: boolean }) {
 			return { type: 'comment', value: data, parent: null };
 		},
 
-		nodeType(node) {
+		getNodeType(node) {
 			return node.type;
 		},
 
-		getNodeValue(node) {
+		getText(node) {
 			if (node.type === 'text' || node.type === 'comment') return node.value;
 			return null;
 		},
@@ -133,9 +133,7 @@ export function create_test_renderer({ cross }: { cross: boolean }) {
 		},
 
 		setText(node, text) {
-			if (node.type === 'text' || node.type === 'comment') {
-				node.value = text;
-			}
+			node.value = text;
 		},
 
 		getFirstChild(element) {

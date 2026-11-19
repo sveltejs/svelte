@@ -4,7 +4,8 @@ import {
 	clone_node,
 	dispatch_event,
 	import_node,
-	set_inner_html
+	set_inner_html,
+	set_text_content
 } from '../../src/internal/client/dom/operations.js';
 import renderer from './renderer.js';
 
@@ -22,7 +23,8 @@ describe('DOM-only operations with a custom renderer', () => {
 		['innerHTML', () => set_inner_html({} as any, '')],
 		['cloneNode', () => clone_node({} as any, true)],
 		['importNode', () => import_node({} as any, true)],
-		['dispatchEvent', () => dispatch_event({} as any, {} as any)]
+		['dispatchEvent', () => dispatch_event({} as any, {} as any)],
+		['textContent', () => set_text_content({} as any, '')]
 	];
 
 	for (const [name, operation] of operations) {
