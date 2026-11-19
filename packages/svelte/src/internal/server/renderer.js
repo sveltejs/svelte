@@ -7,7 +7,7 @@ import { STALE_REACTION } from '../client/constants.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
-import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { BLOCK_CLOSE, BLOCK_OPEN, EMPTY_COMMENT } from './hydration.js';
 import { HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
@@ -438,7 +438,7 @@ export class Renderer {
 			renderer.local.multiple = !!select_attrs.multiple;
 			fn(renderer);
 		});
-		this.push(`${is_rich ? '<!>' : ''}</select>`);
+		this.push(`${is_rich ? EMPTY_COMMENT : ''}</select>`);
 	}
 
 	/**
@@ -475,7 +475,7 @@ export class Renderer {
 				renderer.#out.push(' selected=""');
 			}
 
-			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
+			renderer.#out.push(`>${body}${is_rich ? EMPTY_COMMENT : ''}</option>`);
 
 			// super edge case, but may as well handle it
 			if (head) {
