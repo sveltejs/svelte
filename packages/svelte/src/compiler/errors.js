@@ -1710,6 +1710,15 @@ export function transition_duplicate(node, type) {
 }
 
 /**
+ * Valid transition modifiers are `local` and `global`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function transition_invalid_modifier(node) {
+	e(node, 'transition_invalid_modifier', `Valid transition modifiers are \`local\` and \`global\`\nhttps://svelte.dev/e/transition_invalid_modifier`);
+}
+
+/**
  * Unexpected end of input
  * @param {null | number | NodeLike} node
  * @returns {never}
