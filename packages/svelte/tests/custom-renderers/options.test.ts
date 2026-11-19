@@ -77,6 +77,59 @@ describe('customRenderer function resolver validation', () => {
 	}
 });
 
+describe('customRenderer global module path', () => {
+	const relative = [
+		'./renderer.js',
+		'../renderer.js',
+		'.\\renderer.js',
+		'..\\renderer.js',
+		'.',
+		'..'
+	];
+
+	for (const path of relative) {
+		it(`rejects the relative path ${JSON.stringify(path)}`, () => {
+			assert.throws(
+				() =>
+					compile('<div></div>', { generate: 'client', experimental: { customRenderer: path } }),
+				/customRenderer cannot be a relative path/
+			);
+		});
+	}
+
+	const allowed = [
+		'my-renderer',
+		'@scope/renderer',
+		'$lib/renderer.js',
+		'/src/renderer.js',
+		'C:\\project\\renderer.js',
+		'.hidden/renderer.js'
+	];
+
+	for (const path of allowed) {
+		it(`accepts ${JSON.stringify(path)}`, () => {
+			assert.doesNotThrow(() =>
+				compile('<div></div>', { generate: 'client', experimental: { customRenderer: path } })
+			);
+		});
+	}
+
+	it('still accepts relative paths from a resolver function or `<svelte:options>`', () => {
+		assert.doesNotThrow(() =>
+			compile('<div></div>', {
+				generate: 'client',
+				experimental: { customRenderer: () => './renderer.js' }
+			})
+		);
+		assert.doesNotThrow(() =>
+			compile('<svelte:options customRenderer="./renderer.js" /><div></div>', {
+				generate: 'client',
+				experimental: { customRenderer: true }
+			})
+		);
+	});
+});
+
 describe('customRenderer function resolver returning undefined', () => {
 	it('compiles the component as a DOM component, like returning null', () => {
 		const source = '<p>dom</p>';
