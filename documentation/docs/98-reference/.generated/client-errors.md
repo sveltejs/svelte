@@ -52,6 +52,33 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 A derived value cannot reference itself recursively
 ```
 
+This error occurs when a `$derived` value reads itself during evaluation, either directly or through a chain of other derived values.
+
+```js
+let count = $state(0);
+
+// directly references itself
+let total = $derived(total + count);
+```
+
+The cycle can also be indirect:
+
+```js
+let a = $derived(b + 1);
+let b = $derived(a + 1);
+```
+
+To fix this, identify which value in the chain should be the source of truth and make it a `$state` instead, updating it explicitly (for example in an event handler):
+
+```js
+let count = $state(0);
+let total = $state(0);
+
+function add() {
+	total += count;
+}
+```
+
 ### each_key_duplicate
 
 ```
