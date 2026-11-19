@@ -68,7 +68,7 @@ Every component imports the default renderer module, so a globally configured pa
 
 ### Choosing a renderer by file
 
-For more control, pass a function. It receives the filename of each component, and returns the renderer module for that component, or `null` (or `undefined`) for the DOM:
+For more control, pass a function. It receives the filename of each component, and returns the renderer module for that component, or `null` for the DOM:
 
 ```js
 // @noErrors
@@ -258,6 +258,7 @@ export default createRenderer({
 		// inserting a fragment inserts its children, and leaves it empty
 		const nodes = node.type === 'fragment' ? node.children.splice(0) : [node];
 
+		// if necessary, remove the child from its existing parent
 		for (const child of nodes) detach(child);
 
 		const index = anchor ? parent.children.indexOf(anchor) : parent.children.length;
@@ -283,7 +284,7 @@ The following sections describe what Svelte expects from each method.
 Svelte works with four kinds of node: fragments, elements, text nodes and comments. They can be whatever kind of object makes sense for your renderer.
 
 - `createFragment()` creates a fragment, a temporary container for several nodes. When a fragment is inserted somewhere, its children are moved there and the fragment is left empty. Fragments are also used as mount targets
-- `createElement(name)` creates an element with the given name, such as `'mesh'`
+- `createElement(name)` creates an element with the given name, such as `'mesh'` (you get to choose which elements are available in your render target)
 - `createText(data)` creates a text node
 - `createComment(data)` creates a comment. Svelte uses comments as invisible markers, for example to remember where the content of an `{#if}` block goes, so they don't need to be displayed
 - `getNodeType(node)` returns `'fragment'`, `'element'`, `'text'` or `'comment'`
