@@ -181,6 +181,54 @@ test('url.search normalizes value', () => {
 	cleanup();
 });
 
+for (const field of ['hash', 'search', 'searchParams'] as const) {
+	test(`opaque pathname stays synchronized after clearing ${field}`, () => {
+		const input = 'data:text/plain,hello   ?x=1#fragment';
+		const url = new SvelteURL(input);
+		const expected = new URL(input);
+		const initial_pathname = expected.pathname;
+		const log: string[] = [];
+		const cleanup = effect_root(() => {
+			render_effect(() => {
+				log.push(url.pathname);
+			});
+		});
+
+		try {
+			flushSync(() => {
+				if (field === 'hash') {
+					url.search = expected.search = '';
+				} else {
+					url.hash = expected.hash = '';
+				}
+			});
+			assert.equal(url.pathname, expected.pathname);
+			assert.deepEqual(log, [initial_pathname]);
+
+			flushSync(() => {
+				if (field === 'searchParams') {
+					url.searchParams.delete('x');
+					expected.searchParams.delete('x');
+				} else {
+					url[field] = expected[field] = '';
+				}
+			});
+			assert.equal(url.pathname, expected.pathname);
+			assert.equal(url.href, expected.href);
+			assert.equal(url.toString(), expected.toString());
+			assert.equal(url.toJSON(), expected.toJSON());
+			assert.deepEqual(
+				log,
+				initial_pathname === expected.pathname
+					? [initial_pathname]
+					: [initial_pathname, expected.pathname]
+			);
+		} finally {
+			cleanup();
+		}
+	});
+}
+
 test('SvelteURL instanceof URL', () => {
 	assert.ok(new SvelteURL('https://svelte.dev') instanceof URL);
 });
