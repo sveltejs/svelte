@@ -80,20 +80,29 @@ export function remove_crossing(container, crossing) {
  * which can change without the crossings being recreated (e.g. in a keyed `{#each}` block)
  */
 export function sync_shared_containers() {
-	for (var crossings of containers.values()) {
-		if (crossings.length > 1) sync(crossings);
-	}
+	// Moving the content of a crossing also moves the host nodes of the crossings nested inside it,
+	// which can be in another shared container (e.g. DOM > renderer A > renderer B) that was already
+	// synced. So if anything moved, sync again. This settles, since content only ever contains the
+	// host nodes of crossings nested deeper, and is only needed with several shared containers
+	do {
+		var moved = false;
+
+		for (var crossings of containers.values()) {
+			if (crossings.length > 1 && sync(crossings)) moved = true;
+		}
+	} while (moved && shared_containers > 1);
 }
 
 /**
  * @param {Crossing[]} crossings
+ * @returns {boolean} whether any content was moved
  */
 function sync(crossings) {
 	var host = crossings[0].host;
 
 	// with different hosts there's no common order to follow
 	for (var crossing of crossings) {
-		if (crossing.host !== host) return;
+		if (crossing.host !== host) return false;
 	}
 
 	var previous_renderer = push_renderer(host);
@@ -136,7 +145,7 @@ function sync(crossings) {
 			return /** @type {Crossing} */ (/** @type {Crossing[]} */ (trees.get(root)).shift());
 		});
 
-		if (order.every((crossing, index) => crossing === crossings[index])) return;
+		if (order.every((crossing, index) => crossing === crossings[index])) return false;
 	} finally {
 		pop_renderer(previous_renderer);
 	}
@@ -163,6 +172,7 @@ function sync(crossings) {
 	}
 
 	crossings.splice(0, crossings.length, ...order);
+	return true;
 }
 
 /**
