@@ -679,6 +679,12 @@ export class Batch {
 		this.#run_callbacks(this.#commit_callbacks);
 
 		var earlier_writes = flush_queued_effects(render_effects);
+
+		// the content has been updated, and user effects are about to see it
+		if (custom_renderers_flag && before_effects !== null) {
+			before_effects();
+		}
+
 		flush_queued_effects(effects, earlier_writes);
 
 		this.#deferred?.resolve();
@@ -1043,10 +1049,6 @@ export class Batch {
 						batch.#process();
 					}
 				}
-			}
-
-			if (custom_renderers_flag && after_flush !== null) {
-				after_flush();
 			}
 		} finally {
 			flush_count = 0;
@@ -1531,17 +1533,18 @@ export class Batch {
 
 // TODO Svelte@6 think about removing the callback argument.
 /**
- * Called at the end of each flush, if set. Custom renderers use this to keep the content of crossings
- * that share a container in the order of their host nodes (see `custom-renderer/containers.js`)
+ * Called each time a batch has updated the content, before its user effects run, if set. Custom renderers
+ * use this to keep the content of crossings that share a container in the order of their host nodes
+ * (see `custom-renderer/containers.js`), so that effects never see them in a stale order
  * @type {(() => void) | null}
  */
-let after_flush = null;
+let before_effects = null;
 
 /**
  * @param {(() => void) | null} fn
  */
-export function set_after_flush(fn) {
-	after_flush = fn;
+export function set_before_effects(fn) {
+	before_effects = fn;
 }
 
 /**
