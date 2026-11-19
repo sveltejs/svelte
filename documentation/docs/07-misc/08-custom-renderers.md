@@ -9,6 +9,7 @@ The renderer is a small object that tells Svelte how to create, arrange and upda
 This feature is currently experimental, and you must opt in by adding the `experimental.customRenderer` option wherever you [configure](/docs/kit/configuration) Svelte, usually `svelte.config.js` or `vite.config.js`:
 
 ```js
+// @noErrors
 /// file: svelte.config.js
 export default {
 	compilerOptions: {
@@ -50,6 +51,7 @@ The module path is resolved like any other import in the component, so it can be
 If most of your components use the same renderer, you can make it the default by passing the module path instead of `true`:
 
 ```js
+// @noErrors
 /// file: svelte.config.js
 export default {
 	compilerOptions: {
@@ -69,6 +71,7 @@ Every component imports the default renderer module, so a globally configured pa
 For more control, pass a function. It receives the filename of each component, and returns the renderer module for that component, or `null` (or `undefined`) for the DOM:
 
 ```js
+// @noErrors
 /// file: svelte.config.js
 export default {
 	compilerOptions: {
@@ -203,6 +206,7 @@ Custom renderer components render nothing during server-side rendering. If custo
 A renderer module's default export is an object created with `createRenderer` from `svelte/renderer`. Here's a complete renderer that renders to plain JavaScript objects, which is a good starting point for experimenting. A real renderer would call into the platform it targets instead — creating native views, scene objects, and so on.
 
 ```js
+// @noErrors
 /// file: renderer.js
 import { createRenderer } from 'svelte/renderer';
 
