@@ -512,114 +512,6 @@ export function set_node_value(node, value) {
 	node.nodeValue = value;
 }
 
-// --- Helpers for style attribute string manipulation (custom renderer) ---
-
-/**
- * Split only at top-level semicolons, preserving CSS strings, functions and comments.
- * @param {string} style_string
- * @returns {string[]} trimmed, non-empty declarations (without trailing `;`)
- */
-function split_style_declarations(style_string) {
-	/** @type {string[]} */
-	var declarations = [];
-
-	/** @type {false | '"' | "'"} */
-	var in_str = false;
-	var depth = 0;
-	var in_comment = false;
-	var start = 0;
-
-	for (var i = 0; i < style_string.length; i++) {
-		var c = style_string[i];
-
-		if (in_comment) {
-			if (c === '/' && style_string[i - 1] === '*') {
-				in_comment = false;
-			}
-			continue;
-		}
-
-		if (c === '\\') {
-			i++;
-			continue;
-		}
-
-		if (in_str) {
-			if (c === in_str) {
-				in_str = false;
-			}
-			continue;
-		}
-
-		if (c === '/' && style_string[i + 1] === '*') {
-			in_comment = true;
-		} else if (c === '"' || c === "'") {
-			in_str = c;
-		} else if (c === '(') {
-			depth++;
-		} else if (c === ')') {
-			if (depth > 0) depth--;
-		} else if (c === ';' && depth === 0) {
-			var declaration = style_string.slice(start, i).trim();
-			if (declaration) declarations.push(declaration);
-			start = i + 1;
-		}
-	}
-
-	var last = style_string.slice(start).trim();
-	if (last) declarations.push(last);
-
-	return declarations;
-}
-
-/**
- * @param {string} declaration
- * @returns {string | null}
- */
-function declaration_property(declaration) {
-	var colon_index = declaration.indexOf(':');
-	if (colon_index === -1) return null;
-	return declaration.slice(0, colon_index).trim();
-}
-
-/**
- * @param {string} style_string
- * @param {string} property
- * @param {string} value
- * @param {string} [priority]
- * @returns {string}
- */
-function set_style_property_in_string(style_string, property, value, priority) {
-	var declaration = property + ': ' + value + (priority ? ' !' + priority : '');
-	var parts = split_style_declarations(style_string);
-	var found = false;
-
-	for (var i = 0; i < parts.length; i++) {
-		if (declaration_property(parts[i]) === property) {
-			parts[i] = declaration;
-			found = true;
-			break;
-		}
-	}
-
-	if (!found) {
-		parts.push(declaration);
-	}
-
-	return parts.join('; ');
-}
-
-/**
- * @param {string} style_string
- * @param {string} property
- * @returns {string}
- */
-function remove_style_property_in_string(style_string, property) {
-	return split_style_declarations(style_string)
-		.filter((part) => declaration_property(part) !== property)
-		.join('; ');
-}
-
 /**
  * @param {Node} node
  * @returns {string | null}
@@ -817,12 +709,7 @@ export function dispatch_event(target, event) {
  * @param {string} [priority]
  */
 export function style_set_property(element, property, value, priority) {
-	if (current_renderer) {
-		var style = current_renderer.getAttribute(element, 'style') || '';
-		var updated = set_style_property_in_string(style, property, value, priority);
-		current_renderer.setAttribute(element, 'style', updated);
-		return;
-	}
+	// custom renderers never get here: `set_style` and `css_props` set the whole attribute instead
 	element.style.setProperty(property, value, priority);
 }
 
@@ -831,12 +718,7 @@ export function style_set_property(element, property, value, priority) {
  * @param {string} property
  */
 export function style_remove_property(element, property) {
-	if (current_renderer) {
-		var style = current_renderer.getAttribute(element, 'style') || '';
-		var updated = remove_style_property_in_string(style, property);
-		current_renderer.setAttribute(element, 'style', updated);
-		return;
-	}
+	// custom renderers never get here: `set_style` and `css_props` set the whole attribute instead
 	element.style.removeProperty(property);
 }
 
@@ -858,26 +740,6 @@ export function set_css_text(element, value) {
  * @param {boolean} force
  */
 export function class_list_toggle(element, name, force) {
-	if (current_renderer) {
-		// filter out empty strings, since `''.split(/\s+/)` (or leading/trailing whitespace)
-		// would otherwise end up as an empty class name, i.e. extra whitespace
-		const classes = (current_renderer.getAttribute(element, 'class') ?? '')
-			.split(/\s+/)
-			.filter(Boolean);
-		const has_class = classes.includes(name);
-		if (force === has_class) {
-			return;
-		}
-		if (force) {
-			classes.push(name);
-		} else {
-			const index = classes.indexOf(name);
-			if (index !== -1) {
-				classes.splice(index, 1);
-			}
-		}
-		current_renderer.setAttribute(element, 'class', classes.join(' '));
-		return;
-	}
+	// custom renderers never get here: `set_class` sets the whole attribute instead
 	element.classList.toggle(name, force);
 }
