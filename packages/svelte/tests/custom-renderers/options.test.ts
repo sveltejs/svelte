@@ -41,7 +41,8 @@ describe('customRenderer function resolver validation', () => {
 		['number', () => 42],
 		['true', () => true],
 		['false', () => false],
-		['object', () => ({})]
+		['object', () => ({})],
+		['undefined', () => undefined]
 	];
 
 	for (const [name, resolver] of invalid) {
@@ -60,8 +61,7 @@ describe('customRenderer function resolver validation', () => {
 
 	const valid: Array<[string, unknown]> = [
 		['string', () => 'my-renderer'],
-		['null', () => null],
-		['undefined', () => undefined]
+		['null', () => null]
 	];
 
 	for (const [name, resolver] of valid) {
@@ -75,6 +75,100 @@ describe('customRenderer function resolver validation', () => {
 			);
 		});
 	}
+});
+
+describe('customRenderer global option', () => {
+	it('rejects `false`', () => {
+		assert.throws(
+			() =>
+				compile('<div></div>', {
+					generate: 'client',
+					// @ts-expect-error `false` is not a valid value, omit the option instead
+					experimental: { customRenderer: false }
+				}),
+			/customRenderer should be true, a string or a function/
+		);
+	});
+});
+
+describe('customRenderer global module path', () => {
+	const relative = [
+		'./renderer.js',
+		'../renderer.js',
+		'.\\renderer.js',
+		'..\\renderer.js',
+		'.',
+		'..'
+	];
+
+	for (const path of relative) {
+		it(`rejects the relative path ${JSON.stringify(path)}`, () => {
+			assert.throws(
+				() =>
+					compile('<div></div>', { generate: 'client', experimental: { customRenderer: path } }),
+				/customRenderer cannot be a relative path/
+			);
+		});
+	}
+
+	const allowed = [
+		'my-renderer',
+		'@scope/renderer',
+		'$lib/renderer.js',
+		'/src/renderer.js',
+		'C:\\project\\renderer.js',
+		'.hidden/renderer.js'
+	];
+
+	for (const path of allowed) {
+		it(`accepts ${JSON.stringify(path)}`, () => {
+			assert.doesNotThrow(() =>
+				compile('<div></div>', { generate: 'client', experimental: { customRenderer: path } })
+			);
+		});
+	}
+
+	it('still accepts relative paths from a resolver function or `<svelte:options>`', () => {
+		assert.doesNotThrow(() =>
+			compile('<div></div>', {
+				generate: 'client',
+				experimental: { customRenderer: () => './renderer.js' }
+			})
+		);
+		assert.doesNotThrow(() =>
+			compile('<svelte:options customRenderer="./renderer.js" /><div></div>', {
+				generate: 'client',
+				experimental: { customRenderer: true }
+			})
+		);
+	});
+});
+
+describe('customRenderer function resolver returning null', () => {
+	it('compiles the component as a DOM component that takes part in crossings', () => {
+		const code = compile('<p>dom</p>', {
+			filename: 'App.svelte',
+			generate: 'client',
+			experimental: { customRenderer: () => null }
+		}).js.code;
+
+		// the component takes part in crossings, so it can be rendered inside custom renderer content
+		assert.include(code, '$.push_renderer(null)');
+		assert.include(code, '$.is_crossing(null)');
+	});
+
+	it('rejects a resolver returning undefined with a helpful message', () => {
+		assert.throws(
+			() =>
+				compile('<p>dom</p>', {
+					filename: 'App.svelte',
+					generate: 'client',
+					// @ts-expect-error undefined is not a valid return value
+					experimental: { customRenderer: () => undefined }
+				}),
+			/customRenderer function must return a string or null/
+		);
+	});
 });
 
 describe("customRenderer with css: 'injected'", () => {
