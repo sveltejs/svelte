@@ -13,6 +13,7 @@ import {
 import { listen_to_delegated_events } from '../dom/elements/events.js';
 import * as e from '../errors.js';
 import { current_renderer, push_renderer, pop_renderer } from './state.js';
+import { add_crossing, remove_crossing } from './containers.js';
 
 /**
  * Returns `true` if rendering content that belongs to `renderer` at the current
@@ -93,6 +94,11 @@ export function cross(renderer, anchor, render) {
 		start = first;
 		end = last;
 
+		// several crossings can share a container, in which case their content is kept in the
+		// order of their host nodes (see `sync_shared_containers`)
+		var crossing = { host, guest: renderer, host_node, start, end };
+		add_crossing(container, crossing);
+
 		if (renderer === null) {
 			// DOM content compiles event handlers like `onclick` to delegated handlers, which
 			// only run if the event reaches a delegation root. The container is usually outside
@@ -113,6 +119,8 @@ export function cross(renderer, anchor, render) {
 		// since the container could be shared between several crossings (e.g. multiple scenes
 		// rendered into the same canvas)
 		teardown(() => {
+			if (crossing !== undefined) remove_crossing(container, crossing);
+
 			var previous_renderer = push_renderer(renderer);
 
 			try {
