@@ -26,6 +26,7 @@ export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';
 export { attach } from './dom/elements/attachments.js';
 export {
+	mark_hydration_form_state,
 	remove_input_defaults,
 	set_attribute,
 	attribute_effect,
