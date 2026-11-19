@@ -1,0 +1,14 @@
+[
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `count`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"line": 8,
+			"column": 12
+		},
+		"end": {
+			"line": 8,
+			"column": 17
+		}
+	}
+]
