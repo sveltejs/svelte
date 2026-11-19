@@ -6,7 +6,7 @@ By default, Svelte components render to the DOM. A _custom renderer_ lets them r
 
 The renderer is a small object that tells Svelte how to create, arrange and update the nodes of the target environment. Svelte takes care of everything else.
 
-This feature is currently experimental, and you must opt in by adding the `experimental.customRenderer` option wherever you [configure](/docs/kit/configuration) Svelte, usually `svelte.config.js`:
+This feature is currently experimental, and you must opt in by adding the `experimental.customRenderer` option wherever you [configure](/docs/kit/configuration) Svelte, usually `svelte.config.js` or `vite.config.js`:
 
 ```js
 /// file: svelte.config.js
@@ -60,9 +60,9 @@ export default {
 };
 ```
 
-Individual components can still choose a different renderer, or use the DOM with `<svelte:options customRenderer={null} />`.
+Individual components can still choose a different renderer, or no custom renderer at all with `<svelte:options customRenderer={null} />`.
 
-Every component imports the default renderer module, so this path can't be relative — it would be resolved relative to each component, rather than relative to your config file. Use a package name, an alias such as `$lib/renderer.js`, or an absolute path.
+Every component imports the default renderer module, so a globally configured path can't be relative — it would be resolved relative to each component, rather than relative to your config file. Use a package name, a subpath import like `#lib/renderer.js`, or an absolute path.
 
 ### Choosing a renderer by file
 
@@ -225,7 +225,7 @@ If `css: 'injected'` is set in your compiler options (as it is in development wi
 
 ### Server-side rendering
 
-Custom renderer components render nothing during server-side rendering. They're created in the browser, after the page has loaded. The DOM around them is server-rendered and hydrated as usual.
+Custom renderer components render nothing during server-side rendering. If custom renderer is used in the browser, the components will be created there, after the page has loaded. The DOM around them is server-rendered and hydrated as usual.
 
 ## Writing a renderer
 
