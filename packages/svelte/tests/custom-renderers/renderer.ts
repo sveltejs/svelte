@@ -128,6 +128,10 @@ export function create_test_renderer({ cross }: { cross: boolean }) {
 			delete element.attributes[name];
 		},
 
+		hasAttribute(element, name) {
+			return name in (element.attributes ?? {});
+		},
+
 		setText(node, text) {
 			node.value = text;
 		},

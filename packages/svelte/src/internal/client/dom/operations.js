@@ -623,7 +623,7 @@ export function remove_attribute(element, name) {
  * @returns {boolean}
  */
 export function has_attribute(element, name) {
-	if (current_renderer) return current_renderer.getAttribute(element, name) !== null;
+	if (current_renderer) return current_renderer.hasAttribute(element, name);
 	return element.hasAttribute(name);
 }
 

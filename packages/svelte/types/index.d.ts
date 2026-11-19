@@ -2772,6 +2772,9 @@ declare module 'svelte/renderer' {
 		/** Remove the attribute with the given name from the element. */
 		removeAttribute(element: N['element'], name: string): void;
 
+		/** Return true if the element has an attribute with the given name. */
+		hasAttribute(element: N['element'], name: string): boolean;
+
 		/** Set the text of a text node. */
 		setText(node: N['text'], text: string): void;
 
