@@ -1381,6 +1381,7 @@ function calculate_blockers(instance, analysis) {
 
 		/** @type {Set<Binding>} */
 		const writes = new Set();
+		for (const param of fn.params) collect_writes(param, fn_scope, writes);
 		collect_writes(fn.body, fn_scope, writes);
 
 		let params = fn.type !== 'ArrowFunctionExpression' && fn_scope.references.has('arguments');
