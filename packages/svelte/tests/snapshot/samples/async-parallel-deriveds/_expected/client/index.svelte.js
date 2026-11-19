@@ -70,8 +70,10 @@ export default function Async_parallel_deriveds($$anchor) {
 	var text = $.text();
 
 	$.template_effect(() => $.set_text(text, `${$.get(a) ?? ''} ${$.get(b) ?? ''} ${$.get(c) ?? ''} ${$.get(d) ?? ''} ${$.get(e) ?? ''} ${$.get(f) ?? ''} ${$.get(g) ?? ''} ${$.get(h) ?? ''}`), void 0, void 0, [
-		$$promises[3],
+		$$promises[0],
 		$$promises[1],
+		$$promises[2],
+		$$promises[3],
 		$$promises[4],
 		$$promises[6],
 		$$promises[7],

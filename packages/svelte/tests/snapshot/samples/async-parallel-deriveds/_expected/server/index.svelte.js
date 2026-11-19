@@ -65,11 +65,11 @@ export default function Async_parallel_deriveds($$renderer) {
 	]);
 
 	$$renderer.push(`<!---->`);
-	$$renderer.async([$$promises[3]], ($$renderer) => $$renderer.push(() => $.escape(a())));
+	$$renderer.async([$$promises[0]], ($$renderer) => $$renderer.push(() => $.escape(a())));
 	$$renderer.push(` `);
 	$$renderer.async([$$promises[1]], ($$renderer) => $$renderer.push(() => $.escape(b())));
 	$$renderer.push(` `);
-	$$renderer.async([$$promises[3]], ($$renderer) => $$renderer.push(() => $.escape(c())));
+	$$renderer.async([$$promises[2]], ($$renderer) => $$renderer.push(() => $.escape(c())));
 	$$renderer.push(` `);
 	$$renderer.async([$$promises[3]], ($$renderer) => $$renderer.push(() => $.escape(d())));
 	$$renderer.push(` `);

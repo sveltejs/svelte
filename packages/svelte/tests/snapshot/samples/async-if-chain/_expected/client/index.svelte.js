@@ -15,7 +15,7 @@ export default function Async_if_chain($$anchor) {
 	var fragment = root();
 	var node = $.first_child(fragment);
 
-	$.async(node, [$$promises[0]], void 0, (node) => {
+	{
 		var consequent = ($$anchor) => {
 			var text = $.text('foo');
 
@@ -37,11 +37,11 @@ export default function Async_if_chain($$anchor) {
 		$.if(node, ($$render) => {
 			if (foo) $$render(consequent); else if (bar) $$render(consequent_1, 1); else $$render(alternate, -1);
 		});
-	});
+	}
 
 	var node_1 = $.sibling(node, 2);
 
-	$.async(node_1, [$$promises[0]], [() => foo], (node_1, $$condition) => {
+	$.async(node_1, [], [() => foo], (node_1, $$condition) => {
 		var consequent_2 = ($$anchor) => {
 			var text_3 = $.text('foo');
 
@@ -92,7 +92,7 @@ export default function Async_if_chain($$anchor) {
 
 	$.async(
 		node_3,
-		[$$promises[0]],
+		[],
 		[
 			async () => {
 				try {
@@ -121,7 +121,7 @@ export default function Async_if_chain($$anchor) {
 
 				$.async(
 					node_4,
-					[$$promises[0]],
+					[],
 					[
 						async () => {
 							try {

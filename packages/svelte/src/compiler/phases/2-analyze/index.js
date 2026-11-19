@@ -999,34 +999,15 @@ function calculate_blockers(instance, analysis) {
 	};
 
 	/**
+	 * Collects everything a function body references when it runs, including via the functions it calls
 	 * @param {ESTree.Node} node
-	 * @param {Set<Binding>} reads
-	 * @param {Set<Binding>} writes
+	 * @param {Set<Binding>} references
 	 * @param {Scope} scope
 	 */
-	const trace_references = (node, reads, writes, scope) => {
-		/**
-		 * @param {ESTree.Pattern} node
-		 * @param {Scope} scope
-		 */
-		function update(node, scope) {
-			for (const pattern of unwrap_pattern(node)) {
-				const node = object(pattern);
-				if (!node) return;
-
-				const binding = scope.get(node.name);
-				if (!binding) return;
-
-				writes.add(binding);
-			}
-		}
-
+	const trace_references = (node, references, scope) => {
 		// Share seen nodes across calls so transitive assignments are only visited once.
-		// Keep separate read/write state because the target sets can differ.
 		/** @type {Set<ESTree.Node>} */
-		const writes_seen = new Set();
-		/** @type {Set<ESTree.Node>} */
-		const reads_seen = new Set();
+		const seen = new Set();
 
 		walk(
 			node,
@@ -1040,31 +1021,19 @@ function calculate_blockers(instance, analysis) {
 						context.next();
 					}
 				},
-				AssignmentExpression(node, context) {
-					update(node.left, context.state.scope);
-				},
-				UpdateExpression(node, context) {
-					update(
-						/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
-						context.state.scope
-					);
-				},
 				CallExpression(node, context) {
-					// for now, assume everything touched by the callee ends up mutating the object
-					// TODO optimise this better
-
 					// special case — no need to peek inside effects as they only run once async work has completed
 					const rune = get_rune(node, context.state.scope);
-					if (rune === '$effect') return;
+					if (rune === '$effect' || rune === '$effect.pre') return;
 
-					touch(node, context.state.scope, writes, writes_seen);
+					touch(node, context.state.scope, references, seen);
 				},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
 					if (is_reference(node, parent)) {
 						const binding = context.state.scope.get(node.name);
 						if (binding) {
-							reads.add(binding);
+							references.add(binding);
 						}
 					}
 				},
@@ -1073,7 +1042,7 @@ function calculate_blockers(instance, analysis) {
 					// might be called immediately, so we have to touch all references within it. Example:
 					// function foo() { return () => blocker; } foo(); // blocker is touched
 					if (node.argument) {
-						touch(node.argument, context.state.scope, reads, reads_seen);
+						touch(node.argument, context.state.scope, references, seen);
 					}
 				},
 				// don't look inside functions until they are called
@@ -1383,20 +1352,64 @@ function calculate_blockers(instance, analysis) {
 	}
 
 	/**
-	 * Collects the bindings that running `node` might write: assignment and update targets, and anything
-	 * passed to a function (as an argument, or as the object a method is called on), including in the bodies
-	 * of local functions that are called. Unlike in `trace_references`, calling a function doesn't count as
-	 * writing the function itself or everything it references — async deriveds must be pure, so they can't
-	 * rely on state that isn't visibly written
+	 * Summaries of local functions for `collect_writes`, `null` while one is being computed
+	 * @type {Map<ESTree.Node, null | { writes: Set<Binding>; params: boolean }>}
+	 */
+	const summaries = new Map();
+
+	/**
+	 * What calling a local function might write. `writes` doesn't include its own parameters —
+	 * instead, `params` is `true` if it might write (or call) anything that's passed to it
+	 * @param {ESTree.ArrowFunctionExpression | ESTree.FunctionExpression | ESTree.FunctionDeclaration} fn
+	 * @param {Scope} scope
+	 */
+	function summarize(fn, scope) {
+		let summary = summaries.get(fn);
+		if (summary) return summary;
+
+		if (summary === null) {
+			// (mutual) recursion — assume that everything it references is written. Not cached, because it's partial
+			/** @type {Set<Binding>} */
+			const writes = new Set();
+			touch(fn, scope, writes, new Set());
+			return { writes, params: true };
+		}
+
+		summaries.set(fn, null);
+
+		const fn_scope = /** @type {Scope} */ (instance.scopes.get(fn));
+
+		/** @type {Set<Binding>} */
+		const writes = new Set();
+		collect_writes(fn.body, fn_scope, writes);
+
+		let params = fn.type !== 'ArrowFunctionExpression' && fn_scope.references.has('arguments');
+
+		for (const binding of fn_scope.declarations.values()) {
+			if (binding.declaration_kind === 'param' || binding.declaration_kind === 'rest_param') {
+				params ||= writes.delete(binding);
+			}
+		}
+
+		summary = { writes, params };
+		summaries.set(fn, summary);
+
+		return summary;
+	}
+
+	/**
+	 * Collects the bindings that running `node` might write: assignment and update targets, objects that methods
+	 * are called on, and arguments passed to functions, unless they are local functions that don't write (or call)
+	 * their parameters. Calling a local function writes what its body writes.
+	 *
+	 * Calling a function doesn't count as writing the function itself, or anything it reads but doesn't write.
+	 * Like with expressions in the template, side effects of imported functions are invisible: if `await init()`
+	 * changes what `get_value()` returns, the template can't know that `{get_value()}` needs to wait for it
 	 * @param {ESTree.Node} node
 	 * @param {Scope} scope
 	 * @param {Set<Binding>} writes
-	 * @param {Set<ESTree.Node>} seen
 	 */
-	function collect_writes(node, scope, writes, seen) {
-		if (seen.has(node)) return;
-		seen.add(node);
-
+	function collect_writes(node, scope, writes) {
 		/** @type {Set<ESTree.Node>} */
 		const touch_seen = new Set();
 
@@ -1422,37 +1435,52 @@ function calculate_blockers(instance, analysis) {
 			if (rune === '$effect' || rune === '$effect.pre') return;
 
 			const callee = node.callee;
-			const binding = callee.type === 'Identifier' ? scope.get(callee.name) : null;
 
-			if (binding) {
-				for (const assignment of binding.assignments) {
-					// declarations such as `function x() {}` are included, too
-					const value = /** @type {ESTree.Node} */ (assignment.value);
+			// whether the function might write (or call) its arguments
+			let writes_arguments = true;
 
-					// calling a local function runs its body. Anything else (props, imports, return values etc)
-					// can only write what is passed to it, as async deriveds can't rely on its hidden state
-					if (
-						value.type === 'ArrowFunctionExpression' ||
-						value.type === 'FunctionExpression' ||
-						value.type === 'FunctionDeclaration'
-					) {
-						collect_writes(
-							value.body,
-							instance.scopes.get(value) ?? assignment.scope,
-							writes,
-							seen
-						);
+			if (callee.type === 'Identifier') {
+				const binding = scope.get(callee.name);
+
+				if (binding?.declaration_kind === 'param' || binding?.declaration_kind === 'rest_param') {
+					// calling something that was passed in, see `summarize`
+					writes.add(binding);
+				} else if (binding && binding.assignments.length > 0) {
+					writes_arguments = false;
+
+					for (const assignment of binding.assignments) {
+						// declarations such as `function x() {}` are included, too
+						const value = /** @type {ESTree.Node} */ (assignment.value);
+
+						if (
+							value.type === 'ArrowFunctionExpression' ||
+							value.type === 'FunctionExpression' ||
+							value.type === 'FunctionDeclaration'
+						) {
+							const summary = summarize(value, assignment.scope);
+							for (const binding of summary.writes) writes.add(binding);
+							writes_arguments ||= summary.params;
+						} else {
+							writes_arguments = true;
+
+							// unless it's a prop, it could be e.g. a closure returned by a local function
+							if (get_rune(value, assignment.scope) !== '$props') {
+								touch(callee, scope, writes, touch_seen);
+							}
+						}
 					}
 				}
-			} else if (callee.type === 'MemberExpression') {
+
+				// otherwise it's an import or a global, which can only write what is passed to it
+			} else {
 				// a method might mutate the object it is called on
-				touch(callee, scope, writes, touch_seen);
-			} else if (callee.type !== 'Identifier') {
 				touch(callee, scope, writes, touch_seen);
 			}
 
-			for (const argument of node.arguments) {
-				touch(argument, scope, writes, touch_seen);
+			if (writes_arguments) {
+				for (const argument of node.arguments) {
+					touch(argument, scope, writes, touch_seen);
+				}
 			}
 		}
 
@@ -1478,9 +1506,11 @@ function calculate_blockers(instance, analysis) {
 				},
 				CallExpression(node, context) {
 					call(node, context.state.scope);
+					context.next();
 				},
 				NewExpression(node, context) {
 					call(node, context.state.scope);
+					context.next();
 				},
 				// functions don't run until they are called
 				ArrowFunctionExpression() {},
@@ -1491,25 +1521,39 @@ function calculate_blockers(instance, analysis) {
 	}
 
 	/**
+	 * The bindings that running a top-level statement (or declarator) might write.
+	 * Deriveds are pure (and evaluated lazily), so they don't write anything
+	 * @param {ESTree.Statement | ESTree.VariableDeclarator} node
+	 */
+	function get_writes(node) {
+		/** @type {Set<Binding>} */
+		const writes = new Set();
+
+		if (node.type === 'VariableDeclarator') {
+			const rune = get_rune(node.init, instance.scope);
+			if (rune === '$derived' || rune === '$derived.by') return writes;
+		}
+
+		collect_writes(node, instance.scope, writes);
+		return writes;
+	}
+
+	/**
 	 * Records what a statement (or declarator) declares or might write,
 	 * so that we know whether an async derived can be created before it
 	 * @param {EntryInfo} info
 	 * @param {ESTree.Statement | ESTree.VariableDeclarator} node
+	 * @param {Set<Binding>} writes
 	 */
-	function record(info, node) {
+	function record(info, node, writes) {
 		if (node.type === 'VariableDeclarator') {
 			for (const binding of instance.scope.get_bindings(node)) info.out.add(binding);
-
-			const rune = get_rune(node.init, instance.scope);
-
-			// deriveds are pure, so they don't write anything
-			if (rune === '$derived' || rune === '$derived.by') return;
 		} else if (node.type === 'ClassDeclaration') {
 			const binding = instance.scope.get(node.id.name);
 			if (binding) info.out.add(binding);
 		}
 
-		collect_writes(node, instance.scope, info.out, new Set());
+		for (const binding of writes) info.out.add(binding);
 	}
 
 	/**
@@ -1623,13 +1667,7 @@ function calculate_blockers(instance, analysis) {
 						node.declarations.length === 1 ? node : b.declaration(node.kind, [declarator])
 					);
 				} else {
-					/** @type {Set<Binding>} */
-					const reads = new Set(); // TODO we're not actually using this yet
-
-					/** @type {Set<Binding>} */
-					const writes = new Set();
-
-					trace_references(declarator, reads, writes, instance.scope);
+					const writes = get_writes(declarator);
 
 					// Needs to happen before blocker computation
 					if (has_await) flush_sync_group();
@@ -1652,7 +1690,7 @@ function calculate_blockers(instance, analysis) {
 						analysis.instance_body.async.push(entry);
 
 						const info = create_entry_info();
-						record(info, declarator);
+						record(info, declarator, writes);
 						infos.set(entry, info);
 
 						if (is_async_derived(declarator)) {
@@ -1663,18 +1701,12 @@ function calculate_blockers(instance, analysis) {
 						}
 					} else {
 						sync_group.push(declarator);
-						record(sync_info, declarator);
+						record(sync_info, declarator, writes);
 					}
 				}
 			}
 		} else if (awaited) {
-			/** @type {Set<Binding>} */
-			const reads = new Set(); // TODO we're not actually using this yet
-
-			/** @type {Set<Binding>} */
-			const writes = new Set();
-
-			trace_references(node, reads, writes, instance.scope);
+			const writes = get_writes(node);
 
 			// Needs to happen before blocker computation
 			if (has_await) flush_sync_group();
@@ -1695,11 +1727,11 @@ function calculate_blockers(instance, analysis) {
 				const entry = { nodes: [node], has_await: true };
 				analysis.instance_body.async.push(entry);
 				const info = create_entry_info();
-				record(info, node);
+				record(info, node, writes);
 				infos.set(entry, info);
 			} else {
 				sync_group.push(node);
-				record(sync_info, node);
+				record(sync_info, node, writes);
 			}
 		} else {
 			analysis.instance_body.sync.push(node);
@@ -1732,7 +1764,7 @@ function calculate_blockers(instance, analysis) {
 
 	for (const fn of functions) {
 		/** @type {Set<Binding>} */
-		const reads_writes = new Set();
+		const references = new Set();
 		const init =
 			fn.type === 'VariableDeclarator'
 				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init)
@@ -1741,14 +1773,14 @@ function calculate_blockers(instance, analysis) {
 		const fn_scope = /** @type {Scope} */ (instance.scopes.get(init));
 
 		if (init.body.type === 'BlockStatement') {
-			trace_references(init.body, reads_writes, reads_writes, fn_scope);
+			trace_references(init.body, references, fn_scope);
 		} else {
 			// A concise arrow body is an implicit return, so treat it like the
 			// `ReturnStatement` visitor in `trace_references` would.
-			touch(init.body, fn_scope, reads_writes, new Set());
+			touch(init.body, fn_scope, references, new Set());
 		}
 
-		const max = [...reads_writes].reduce((max, binding) => {
+		const max = [...references].reduce((max, binding) => {
 			if (binding.blocker) {
 				let property = /** @type {ESTree.SimpleLiteral & { value: number }} */ (
 					binding.blocker.property
