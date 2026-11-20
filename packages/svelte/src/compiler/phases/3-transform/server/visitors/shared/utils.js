@@ -216,16 +216,9 @@ export function prepend_block_marker(block, marker) {
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @param {boolean} trim_whitespace
- * @param {boolean} is_component
  * @returns {Expression}
  */
-export function build_attribute_value(
-	value,
-	context,
-	transform,
-	trim_whitespace = false,
-	is_component = false
-) {
+export function build_attribute_value(value, context, transform, trim_whitespace = false) {
 	if (value === true) {
 		return b.true;
 	}
@@ -238,7 +231,7 @@ export function build_attribute_value(
 				? chunk.data.replace(regex_whitespaces_strict, ' ').trim()
 				: chunk.data;
 
-			return b.literal(is_component ? data : escape_html(data, true));
+			return b.literal(data);
 		}
 
 		return transform(
