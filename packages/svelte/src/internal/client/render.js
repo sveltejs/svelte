@@ -25,6 +25,8 @@ import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
 import { COMMENT_NODE, TEXT_CACHE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
+import { current_batch } from './reactivity/batch.js';
+import { async_mode_flag } from '../flags/index.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -117,6 +119,15 @@ export function hydrate(component, options) {
 		set_hydrate_node(/** @type {Comment} */ (anchor));
 
 		const instance = _mount(component, { ...options, anchor });
+
+		// The server rendered the hydrated DOM with the state that hydration ran with (set before `hydrate()`,
+		// or while hydrating, e.g. by lazily initialized state), so that state is the real world from now on.
+		// This is what happens when mounting, too, where the batch commits right away because the root boundary
+		// is pending. Otherwise, while the hydration batch waits for async work, other batches' views would undo
+		// those writes — e.g. that of a pending boundary's content, which renders in a batch of its own
+		if (async_mode_flag && current_batch !== null) {
+			current_batch.commit_writes();
+		}
 
 		set_hydrating(false);
 

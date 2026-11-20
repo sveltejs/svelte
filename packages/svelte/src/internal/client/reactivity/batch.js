@@ -694,8 +694,7 @@ export class Batch {
 		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
-			this.#commit();
-			if (this.linked && this.prev !== null) this.#move_to_front();
+			this.commit_writes();
 		}
 
 		if (next_batch !== null) {
@@ -1140,6 +1139,15 @@ export class Batch {
 		// only has writes again once that work resolves, which it then commits
 		this.current.clear();
 		this.previous.clear();
+	}
+
+	/**
+	 * Make this batch's writes the real world, part of every other batch's view (see `#commit`).
+	 * If it has pending work it stays linked, coming first from now on (see `#move_to_front`)
+	 */
+	commit_writes() {
+		this.#commit();
+		if (this.linked && this.prev !== null) this.#move_to_front();
 	}
 
 	/**
