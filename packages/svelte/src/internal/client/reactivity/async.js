@@ -316,6 +316,61 @@ export function unset_context(deactivate_batch = true) {
 }
 
 /**
+ * Dev-only. The step of a `run(...)` call that is currently being started. Async deriveds created by it defer
+ * their `await_waterfall` check until the step has finished, as their values can't be read before then. That
+ * way, independent deriveds that are created up front and then awaited in order don't trigger the warning:
+ * `var a = $.async_derived(...); var b = $.async_derived(...); await a; await b;` — `b` resolving first and
+ * waiting for `a` is not a waterfall
+ * @type {null | RunStep}
+ */
+export let current_run_step = null;
+
+/**
+ * @typedef {{ settled: boolean, checks: Array<() => void> }} RunStep
+ */
+
+/**
+ * Dev-only waterfall tracking for one script thunk. Its scope is synchronous, but its
+ * checks wait for the thunk's result, independently of the runner and its blockers.
+ * @param {() => void | Promise<void>} fn
+ */
+function run_step(fn) {
+	var previous_step = current_run_step;
+	/** @type {RunStep} */
+	var step = { settled: false, checks: [] };
+	current_run_step = step;
+
+	try {
+		var promise = Promise.resolve(fn());
+		promise.then(
+			() => settle_run_step(step, false),
+			() => settle_run_step(step, true)
+		);
+		return promise;
+	} catch (error) {
+		settle_run_step(step, true);
+		throw error;
+	} finally {
+		current_run_step = previous_step;
+	}
+}
+
+/**
+ * @param {RunStep} step
+ * @param {boolean} errored
+ */
+function settle_run_step(step, errored) {
+	step.settled = true;
+
+	// no need to look for waterfalls if the script failed
+	if (!errored) {
+		for (const check of step.checks) check();
+	}
+
+	step.checks.length = 0;
+}
+
+/**
  * The script's state while a `run` step executes.
  * Async expressions set `batch` when they deliver their first value. `continued` holds callbacks
  * to run after the script resumes, and `signals` lists the expressions in creation order.
@@ -453,15 +508,13 @@ class Runner {
 		for (const fn of this.continued.splice(0)) fn();
 	}
 
-	/**
-	 * @param {() => void | Promise<void>} fn
-	 */
+	/** @param {() => void | Promise<void>} fn */
 	#invoke(fn) {
 		var previous_runner = current_runner;
 		current_runner = this;
 
 		try {
-			return fn();
+			return DEV ? run_step(fn) : fn();
 		} finally {
 			current_runner = previous_runner;
 		}

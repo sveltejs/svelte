@@ -43,7 +43,13 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
-import { current_runner, increment_pending, merge_target, unset_context } from './async.js';
+import {
+	current_runner,
+	current_run_step,
+	increment_pending,
+	merge_target,
+	unset_context
+} from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
@@ -118,6 +124,9 @@ export function async_expression(fn, label, location, onready) {
 	signal.f |= ASYNC;
 
 	if (DEV) signal.label = label ?? stringify_derived(fn);
+
+	// the `run(...)` step (if any) that creates this derived — its value can't be read before that step has finished
+	var run_step = DEV ? current_run_step : null;
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
@@ -286,15 +295,24 @@ export function async_expression(fn, label, location, onready) {
 			onready?.(error);
 			onready = undefined;
 
-			if (DEV && location !== undefined && !signal.equals(value)) {
+			// `capture` may already have updated the signal, so use the equality computed before it.
+			if (DEV && location !== undefined && !same && !error) {
 				recent_async_deriveds.add(signal);
 
-				setTimeout(() => {
-					if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
-						w.await_waterfall(/** @type {string} */ (signal.label), location);
-						recent_async_deriveds.delete(signal);
-					}
-				});
+				const check = () => {
+					setTimeout(() => {
+						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
+							w.await_waterfall(/** @type {string} */ (signal.label), location);
+							recent_async_deriveds.delete(signal);
+						}
+					});
+				};
+
+				if (run_step !== null && !run_step.settled) {
+					run_step.checks.push(check);
+				} else {
+					check();
+				}
 			}
 		};
 
@@ -326,7 +344,7 @@ export function async_derived(fn, label, location) {
 	const runner = current_runner;
 	const batch = /** @type {Batch} */ (current_batch);
 
-	return new Promise((fulfil, reject) => {
+	const result = new Promise((fulfil, reject) => {
 		var source = async_expression(
 			() => {
 				var effect = /** @type {Effect} */ (active_effect);
@@ -361,6 +379,20 @@ export function async_derived(fn, label, location) {
 
 		var index = runner.signals.push(source) - 1;
 	});
+
+	return handled(result);
+}
+
+/**
+ * Independent `$derived(await ...)` declarations in a component's `<script>` are created up front
+ * and then awaited in order, so one of them may reject while an earlier one is still being awaited.
+ * Mark the promise as handled, so that this isn't reported as an unhandled rejection
+ * @template T
+ * @param {Promise<T>} promise
+ */
+function handled(promise) {
+	promise.catch(noop);
+	return promise;
 }
 
 /**

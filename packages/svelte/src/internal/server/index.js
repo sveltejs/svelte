@@ -544,7 +544,14 @@ export function update_derived_pre(derived, d = 1) {
  * @param {()=>T} fn
  */
 export function async_derived(fn) {
-	return Promise.resolve(fn()).then((value) => {
+	const promise = Promise.resolve(fn()).then((value) => {
 		return () => value;
 	});
+
+	// Independent `$derived(await ...)` declarations in a component's `<script>` are created up front
+	// and then awaited in order, so one of them may reject while an earlier one is still being awaited.
+	// Mark the promise as handled, so that this isn't reported as an unhandled rejection
+	promise.catch(noop);
+
+	return promise;
 }

@@ -1130,12 +1130,340 @@ function calculate_blockers(instance, analysis) {
 	}
 
 	/**
+	 * The group of consecutive `$derived(await ...)` declarations that is currently being built.
+	 * They are created up front and awaited in order afterwards, so that they run in parallel.
+	 * This is only possible if none of them references another one, directly or indirectly
+	 * @type {null | {
+	 *   entry: ComponentAnalysis['instance_body']['async'][number];
+	 *   blocker: NonNullable<Binding['blocker']>;
+	 *   declared: Set<Binding>;
+	 *   touched: Set<Binding>;
+	 * }}
+	 */
+	let parallel_group = null;
+
+	/** @type {Map<ESTree.Node, number>} */
+	const statement_indexes = new Map(instance.ast.body.map((node, index) => [node, index]));
+
+	/**
+	 * Bindings that can be read from outside the component at any time
+	 * @type {Set<Binding | null>}
+	 */
+	const exported = new Set();
+
+	for (const node of instance.ast.body) {
+		if (node.type !== 'ExportNamedDeclaration') continue;
+
+		if (node.declaration?.type === 'VariableDeclaration') {
+			for (const declarator of node.declaration.declarations) {
+				for (const binding of instance.scope.get_bindings(declarator)) exported.add(binding);
+			}
+		} else if (node.declaration) {
+			exported.add(instance.scope.get(/** @type {ESTree.Identifier} */ (node.declaration.id).name));
+		} else {
+			for (const specifier of node.specifiers) {
+				if (specifier.local.type === 'Identifier') {
+					exported.add(instance.scope.get(specifier.local.name));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Everything an expression references, including via function calls and assignments,
+	 * and the store behind any `$store` subscription it reads
+	 * @param {ESTree.Expression} expression
+	 */
+	function touch_with_stores(expression) {
+		/** @type {Set<Binding>} */
+		const touched = new Set();
+
+		/** @type {Set<ESTree.Node>} */
+		const seen = new Set();
+
+		touch(expression, instance.scope, touched, seen);
+
+		// a `Set` visits values that are added during iteration, so this also handles stores
+		// that are only reached via the assignments of another store
+		for (const binding of touched) {
+			if (binding.kind !== 'store_sub') continue;
+
+			const store = instance.scope.get(binding.node.name.slice(1));
+			if (store === null || touched.has(store)) continue;
+
+			touched.add(store);
+
+			for (const assignment of store.assignments) {
+				touch(assignment.value, assignment.scope, touched, seen);
+			}
+		}
+
+		return touched;
+	}
+
+	/**
+	 * @param {AST.SvelteNode[]} path
+	 * @param {number} index
+	 */
+	function scope_at(path, index) {
+		for (let i = index; i >= 0; i -= 1) {
+			const scope = instance.scopes.get(path[i]);
+			if (scope) return scope;
+		}
+
+		return instance.scope;
+	}
+
+	/**
+	 * Whether code at the given path can run before the instance statement at index `end` has finished.
+	 * Function declarations and function-valued declarations are hoisted, so they can always run
+	 * @param {AST.SvelteNode[]} path
+	 * @param {number} end
+	 */
+	function is_early(path, end) {
+		const statement = /** @type {ESTree.Statement | ESTree.ModuleDeclaration} */ (path[1]);
+		const index = statement_indexes.get(statement);
+		if (index === undefined || index <= end) return true;
+
+		const node =
+			statement.type === 'ExportNamedDeclaration' && statement.declaration
+				? statement.declaration
+				: statement;
+
+		if (node.type === 'FunctionDeclaration') return true;
+
+		if (node.type === 'VariableDeclaration') {
+			const declarator = path[path.indexOf(node) + 1];
+
+			return (
+				declarator?.type === 'VariableDeclarator' &&
+				(declarator.init?.type === 'ArrowFunctionExpression' ||
+					declarator.init?.type === 'FunctionExpression')
+			);
+		}
+
+		return false;
+	}
+
+	/**
+	 * Finds the closest function or lazily evaluated `$derived(...)` that contains the node at the given path,
+	 * and through which bindings the code in it can be invoked. Returns `null` for code that runs directly as part of
+	 * a top-level statement, `'deferred'` for code that only runs once all async work has completed, and `'escaped'`
+	 * if it isn't only held by a binding (but e.g. assigned to a property, passed to a function, or part of a class),
+	 * i.e. could be invoked by anything. When in doubt, this errs on the side of `'escaped'`
+	 * @param {AST.SvelteNode[]} path
+	 * @returns {null | 'deferred' | 'escaped' | { bindings: Binding[]; is_function: boolean }}
+	 */
+	function get_closure(path) {
+		// effects only run once async work has completed, so nothing inside them is relevant
+		for (let i = 1; i < path.length - 1; i += 1) {
+			const parent = path[i];
+
+			if (
+				parent.type === 'CallExpression' &&
+				parent.arguments[0] === path[i + 1] &&
+				(path[i + 1].type === 'ArrowFunctionExpression' ||
+					path[i + 1].type === 'FunctionExpression')
+			) {
+				const rune = get_rune(parent, scope_at(path, i));
+				if (rune === '$effect' || rune === '$effect.pre') return 'deferred';
+			}
+		}
+
+		for (let i = path.length - 1; i > 0; i -= 1) {
+			const node = path[i];
+			const parent = path[i - 1];
+
+			// instances can end up anywhere
+			if (node.type === 'ClassExpression' || node.type === 'ClassDeclaration') return 'escaped';
+
+			if (
+				node.type === 'ArrowFunctionExpression' ||
+				node.type === 'FunctionExpression' ||
+				node.type === 'FunctionDeclaration'
+			) {
+				// the function could pass itself elsewhere via its own name
+				if (node.type === 'FunctionExpression' && node.id) return 'escaped';
+
+				// immediately invoked, so it runs as part of the surrounding code
+				if (parent.type === 'CallExpression' && parent.callee === node) continue;
+
+				// this computes the derived's value, handled below. In contrast, a function
+				// inside `$derived(...)` is (part of) the value, and could end up anywhere
+				if (
+					parent.type === 'CallExpression' &&
+					get_rune(parent, scope_at(path, i - 1)) === '$derived.by'
+				) {
+					continue;
+				}
+
+				const id =
+					node.type === 'FunctionDeclaration'
+						? node.id
+						: parent.type === 'VariableDeclarator' && parent.init === node
+							? parent.id
+							: null;
+
+				if (id?.type !== 'Identifier') return 'escaped';
+
+				const binding = scope_at(path, i - 1).get(id.name);
+				if (binding === null) return 'escaped';
+
+				return { bindings: [binding], is_function: true };
+			}
+
+			if (
+				node.type === 'CallExpression' &&
+				parent.type === 'VariableDeclarator' &&
+				parent.init === node
+			) {
+				const rune = get_rune(node, scope_at(path, i));
+
+				if (rune === '$derived' || rune === '$derived.by') {
+					// evaluated (lazily) whenever the derived is read
+					return { bindings: scope_at(path, i - 1).get_bindings(parent), is_function: false };
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Whether code reading any of the given bindings could run while a subsequent `$derived(await ...)` of
+	 * the same parallel group is evaluated, without that derived referencing it in a way `touch` can follow.
+	 * That's the case if a closure that (directly or indirectly) reads them is created before the group has
+	 * finished, and stored somewhere other than in a binding — e.g. assigned to an object property, used as
+	 * a destructuring default or passed to a function. Unlike bindings, these places can't be traced back
+	 * @param {Iterable<Binding>} bindings
+	 * @param {number} end index of the instance statement that declares the bindings
+	 */
+	function escapes(bindings, end) {
+		/** @type {Map<Binding, boolean>} binding -> whether it holds a function (as opposed to a signal) */
+		const tainted = new Map();
+
+		for (const binding of bindings) {
+			tainted.set(binding, false);
+
+			// reading `$store` reads `store`
+			const store_sub = instance.scope.declarations.get('$' + binding.node.name);
+			if (store_sub?.kind === 'store_sub') tainted.set(store_sub, false);
+		}
+
+		const queue = [...tainted.keys()];
+		let binding;
+
+		while ((binding = queue.pop())) {
+			if (exported.has(binding)) return true;
+
+			for (const { node, path } of binding.references) {
+				// the declaration itself
+				if (node === binding.node) continue;
+
+				// references in the template only run once the group has finished
+				if (path[0] !== instance.ast || !is_early(path, end)) continue;
+
+				const closure = get_closure(path);
+				if (closure === 'deferred') continue;
+				if (closure === 'escaped') return true;
+
+				if (tainted.get(binding)) {
+					// a function that is used other than by calling it could end up anywhere
+					const parent = /** @type {ESTree.Node} */ (path.at(-1));
+					const is_called =
+						(parent.type === 'CallExpression' || parent.type === 'NewExpression') &&
+						parent.callee === node;
+
+					if (!is_called) return true;
+				}
+
+				if (closure !== null) {
+					for (const binding of closure.bindings) {
+						if (tainted.has(binding)) continue;
+						tainted.set(binding, closure.is_function);
+						queue.push(binding);
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param {ESTree.VariableDeclarator} declarator
+	 */
+	function is_async_derived(declarator) {
+		return (
+			get_rune(declarator.init, instance.scope) === '$derived' &&
+			has_await_expression(/** @type {ESTree.CallExpression} */ (declarator.init))
+		);
+	}
+
+	/**
+	 * Adds a `$derived(await ...)` declarator to the current parallel group, or starts a new one
+	 * if it is not independent of the deriveds in the current group
+	 * @param {ESTree.VariableDeclarator} declarator
+	 * @param {Set<Binding>} writes
+	 * @param {number} index index of the instance statement containing the declarator
+	 */
+	function push_async_derived(declarator, writes, index) {
+		const declared = new Set(instance.scope.get_bindings(declarator));
+		const touched = touch_with_stores(/** @type {ESTree.Expression} */ (declarator.init));
+
+		const independent =
+			parallel_group !== null &&
+			!intersects(parallel_group.declared, touched) &&
+			!intersects(declared, parallel_group.touched);
+
+		if (!independent) {
+			flush_sync_group();
+
+			parallel_group = {
+				entry: { nodes: [], has_await: true },
+				blocker: /** @type {NonNullable<Binding['blocker']>} */ (
+					b.member(promises, b.literal(analysis.instance_body.async.length), true)
+				),
+				declared: new Set(),
+				touched: new Set()
+			};
+
+			analysis.instance_body.async.push(parallel_group.entry);
+		}
+
+		const group = /** @type {NonNullable<typeof parallel_group>} */ (parallel_group);
+
+		for (const binding of writes) {
+			binding.blocker = group.blocker;
+		}
+
+		for (const id of extract_identifiers(declarator.id)) {
+			push_declaration(id, group.blocker);
+		}
+
+		for (const binding of declared) group.declared.add(binding);
+		for (const binding of touched) group.touched.add(binding);
+
+		group.entry.nodes.push(declarator);
+
+		if (group.entry.nodes.length > 1) {
+			group.entry.parallel = true;
+		}
+
+		// if code reading these bindings could be invoked in ways we can't trace,
+		// subsequent deriveds can't safely be created before they are assigned
+		if (escapes(declared, index)) parallel_group = null;
+	}
+
+	/**
 	 * Analysis of blockers for functions is deferred until we know which statements are async/blockers
 	 * @type {Array<ESTree.FunctionDeclaration | ESTree.VariableDeclarator>}
 	 */
 	const functions = [];
 
-	for (let node of instance.ast.body) {
+	for (const [index, statement] of instance.ast.body.entries()) {
+		let node = statement;
+
 		if (node.type === 'ImportDeclaration') {
 			analysis.instance_body.hoisted.push(node);
 			continue;
@@ -1190,6 +1518,14 @@ function calculate_blockers(instance, analysis) {
 
 					trace_references(declarator, reads, writes, instance.scope);
 
+					if (is_async_derived(declarator)) {
+						push_async_derived(declarator, writes, index);
+						continue;
+					}
+
+					// anything in between async deriveds means they have to run sequentially
+					parallel_group = null;
+
 					// Needs to happen before blocker computation
 					if (has_await) flush_sync_group();
 
@@ -1221,6 +1557,9 @@ function calculate_blockers(instance, analysis) {
 			const writes = new Set();
 
 			trace_references(node, reads, writes, instance.scope);
+
+			// anything in between async deriveds means they have to run sequentially
+			parallel_group = null;
 
 			// Needs to happen before blocker computation
 			if (has_await) flush_sync_group();
@@ -1311,6 +1650,19 @@ function calculate_blockers(instance, analysis) {
 
 		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
 	}
+}
+
+/**
+ * @template T
+ * @param {Set<T>} a
+ * @param {Set<T>} b
+ */
+function intersects(a, b) {
+	for (const value of a) {
+		if (b.has(value)) return true;
+	}
+
+	return false;
 }
 
 /**

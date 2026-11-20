@@ -1,5 +1,6 @@
 /** @import * as ESTree from 'estree' */
 /** @import { ComponentAnalysis } from '../../types' */
+/** @import { Scope } from '../../scope' */
 import * as b from '#compiler/builders';
 
 /**
@@ -24,12 +25,32 @@ import * as b from '#compiler/builders';
  * and which expressions in the template can await on like `await $$promises[0]` which means they
  * wouldn't have to wait for e.g. `$$promises[1]` to resolve.
  *
+ * Consecutive `$derived(await ...)` declarations that are independent of each other are grouped
+ * into a single thunk, in which all of them are created before the first one is awaited, so that they run in parallel:
+ * ```js
+ * let a = $derived(await foo());
+ * let b = $derived(await bar());
+ * ```
+ * becomes:
+ * ```js
+ * var a, b;
+ * var $$promises = $.run([
+ *   async () => {
+ *     var a_promise = $.async_derived(() => foo());
+ *     var b_promise = $.async_derived(() => bar());
+ *     a = await a_promise;
+ *     b = await b_promise;
+ *   }
+ * ]);
+ * ```
+ *
  * @param {ComponentAnalysis['instance_body']} instance_body
  * @param {ESTree.Expression} runner
  * @param {(node: ESTree.Node) => ESTree.Node} transform
+ * @param {Scope} scope
  * @returns {Array<ESTree.Statement | ESTree.VariableDeclaration>}
  */
-export function transform_body(instance_body, runner, transform) {
+export function transform_body(instance_body, runner, transform, scope) {
 	// Any sync statements before the first await expression
 	const statements = instance_body.sync.map(
 		(node) => /** @type {ESTree.Statement | ESTree.VariableDeclaration} */ (transform(node))
@@ -49,11 +70,13 @@ export function transform_body(instance_body, runner, transform) {
 	if (instance_body.async.length > 0) {
 		const thunks = instance_body.async.map((entry) => {
 			/** @type {ESTree.Statement[]} */
-			const entry_statements = [];
-
-			for (const node of entry.nodes) {
-				entry_statements.push(...transform_async_node(node, transform));
-			}
+			const entry_statements = entry.parallel
+				? transform_parallel_deriveds(
+						/** @type {ESTree.VariableDeclarator[]} */ (entry.nodes),
+						transform,
+						scope
+					)
+				: entry.nodes.flatMap((node) => transform_async_node(node, transform));
 
 			if (entry_statements.length === 0) {
 				// Keep indices stable for async sequencing while avoiding array holes in run([...]).
@@ -72,6 +95,64 @@ export function transform_body(instance_body, runner, transform) {
 	}
 
 	return statements;
+}
+
+/**
+ * Transforms a group of independent `$derived(await ...)` declarators such that all async deriveds are
+ * created up front, and only then awaited one after the other (in source order)
+ * @param {ESTree.VariableDeclarator[]} declarators
+ * @param {(node: ESTree.Node) => ESTree.Node} transform
+ * @param {Scope} scope
+ * @returns {ESTree.Statement[]}
+ */
+function transform_parallel_deriveds(declarators, transform, scope) {
+	/** @type {ESTree.Statement[]} */
+	const create = [];
+
+	/** @type {ESTree.Statement[]} */
+	const assign = [];
+
+	for (const declarator of declarators) {
+		const [first, ...rest] = transform_async_node(declarator, transform);
+		if (!first) continue;
+
+		// `x = await $.async_derived(...)`, or `var $$d = await $.async_derived(...)` for destructured declarations
+		const awaited =
+			first.type === 'ExpressionStatement' && first.expression.type === 'AssignmentExpression'
+				? first.expression.right
+				: first.type === 'VariableDeclaration' && first.declarations.length === 1
+					? first.declarations[0].init
+					: null;
+
+		if (awaited?.type !== 'AwaitExpression') {
+			// should never happen, but if it does, awaiting in place is still correct, just not parallel
+			assign.push(first, ...rest);
+			continue;
+		}
+
+		const id = b.id(
+			scope.generate(
+				declarator.id.type === 'Identifier' ? `${declarator.id.name}_promise` : 'promise'
+			)
+		);
+
+		create.push(b.var(id, awaited.argument));
+
+		assign.push(
+			first.type === 'ExpressionStatement'
+				? b.stmt(
+						b.assignment(
+							'=',
+							/** @type {ESTree.AssignmentExpression} */ (first.expression).left,
+							b.await(id)
+						)
+					)
+				: b.var(/** @type {ESTree.VariableDeclaration} */ (first).declarations[0].id, b.await(id)),
+			...rest
+		);
+	}
+
+	return [...create, ...assign];
 }
 
 /**
