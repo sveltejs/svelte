@@ -1,0 +1,12 @@
+
+	div.svelte-xyz p:where(.svelte-xyz) /* (unused) span /* comment *\/ b*/ {
+		color: red;
+	}
+
+	/* (unused) span /* comment *\/ b,*/ div.svelte-xyz p:where(.svelte-xyz) {
+		color: green;
+	}
+
+	/* (unused) em, span /* comment *\/ b,*/ div.svelte-xyz p:where(.svelte-xyz) /* (unused) i/* comment *\/.c*/ {
+		color: blue;
+	}
