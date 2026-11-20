@@ -2,6 +2,8 @@
 import { FILENAME, HMR } from '../../../constants.js';
 import { EFFECT_TRANSPARENT, HMR_ANCHOR } from '#client/constants';
 import { hydrate_node, hydrating } from '../dom/hydration.js';
+import { create_comment } from '../dom/operations.js';
+import { assign_nodes } from '../dom/template.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
@@ -17,8 +19,9 @@ export function hmr(fn) {
 	/**
 	 * @param {TemplateNode} initial_anchor
 	 * @param {any} props
+	 * @param {boolean} [standalone]
 	 */
-	function wrapper(initial_anchor, props) {
+	function wrapper(initial_anchor, props, standalone = false) {
 		let component = {};
 		let instance = {};
 
@@ -27,6 +30,27 @@ export function hmr(fn) {
 
 		let ran = false;
 		let anchor = initial_anchor;
+
+		if (standalone) {
+			// Standalone component calls do not create a template. Give the parent
+			// effect a stable DOM range that survives HMR updates, without requiring
+			// extra anchors in the server-rendered HTML.
+			const start = create_comment();
+			const end = create_comment();
+
+			if (hydrating) {
+				// Keep the range empty until hydration succeeds, in case the component throws
+				hydrate_node.before(start, end);
+			} else {
+				// The anchor can be detached when an each block renders offscreen
+				const fragment = document.createDocumentFragment();
+				fragment.append(start, end);
+				anchor?.before(fragment);
+			}
+
+			assign_nodes(start, end);
+			anchor = end;
+		}
 
 		block(() => {
 			if (component === (component = get(current))) {
@@ -77,7 +101,12 @@ export function hmr(fn) {
 		ran = true;
 
 		if (hydrating) {
-			anchor = hydrate_node;
+			if (standalone) {
+				// Enclose the hydrated content without advancing the hydration cursor
+				hydrate_node.before(anchor);
+			} else {
+				anchor = hydrate_node;
+			}
 		}
 
 		return instance;
