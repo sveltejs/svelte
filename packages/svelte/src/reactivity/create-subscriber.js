@@ -1,9 +1,18 @@
-import { get, untrack } from '../internal/client/runtime.js';
+/** @import { Reaction } from '#client' */
+import {
+	active_effect,
+	active_reaction,
+	get,
+	get_abort_signal,
+	untrack
+} from '../internal/client/runtime.js';
 import { effect_tracking, render_effect } from '../internal/client/reactivity/effects.js';
 import { source, increment } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { DEV } from 'esm-env';
 import { queue_micro_task } from '../internal/client/dom/task.js';
+import { CONNECTED, DESTROYED, DESTROYING } from '../internal/client/constants.js';
+import { current_batch } from '../internal/client/reactivity/batch.js';
 
 /**
  * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
@@ -63,7 +72,15 @@ export function createSubscriber(start) {
 
 	return () => {
 		if (effect_tracking()) {
+			const reaction = /** @type {Reaction} */ (active_reaction);
+			const parent = active_effect;
+
+			if (parent && (parent.f & DESTROYED) !== 0) return;
+			if (current_batch?.is_fork && !current_batch.linked) return;
+
 			get(version);
+			const signal = get_abort_signal(reaction, true);
+			if (signal.aborted) return;
 
 			render_effect(() => {
 				if (subscribers === 0) {
@@ -71,23 +88,37 @@ export function createSubscriber(start) {
 				}
 
 				subscribers += 1;
+				let subscribed = true;
 
-				return () => {
+				const unsubscribe = () => {
+					if (!subscribed) return;
+					subscribed = false;
+					signal.removeEventListener('abort', unsubscribe);
+
 					queue_micro_task(() => {
-						// Only count down after a microtask, else we would reach 0 before our own render effect reruns,
-						// but reach 1 again when the tick callback of the prior teardown runs. That would mean we
-						// re-subcribe unnecessarily and create a memory leak because the old subscription is never cleaned up.
+						// A replacement run can subscribe before we reach zero, avoiding an
+						// unnecessary stop/start cycle when the same subscriber is read again.
 						subscribers -= 1;
 
 						if (subscribers === 0) {
 							stop?.();
 							stop = undefined;
-							// Increment the version to ensure any dependent deriveds are marked dirty when the subscription is picked up again later.
-							// If we didn't do this then the comparison of write versions would determine that the derived has a later version than
-							// the subscriber, and it would not be re-run.
+							// Invalidate cached derived values so that reconnecting them reads
+							// the external state again, even if it changed while unsubscribed.
 							increment(version);
 						}
 					});
+				};
+
+				signal.addEventListener('abort', unsubscribe, { once: true });
+
+				return () => {
+					// A speculative rerun destroys child effects, but the committed run still
+					// needs its subscription. Its signal aborts when that run is replaced.
+					// Untracked deriveds also need their parent's lifetime as a fallback.
+					if ((reaction.f & CONNECTED) === 0 || (parent && (parent.f & DESTROYING) !== 0)) {
+						unsubscribe();
+					}
 				};
 			});
 		}
