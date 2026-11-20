@@ -76,6 +76,7 @@ export function mount(component, options) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
+ * @template [Renderer=undefined]
  * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
  * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;
@@ -96,6 +97,8 @@ export function mount(component, options) {
  * 	}} options
  * @returns {Exports}
  */
+// `Renderer` is unused, but the type parameters need to match `mount`'s,
+// otherwise a `hydrate | mount` union isn't callable
 export function hydrate(component, options) {
 	options.intro = options.intro ?? false;
 	const target = options.target;
