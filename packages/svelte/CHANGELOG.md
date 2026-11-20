@@ -1,5 +1,11 @@
 # svelte
 
+## 5.59.1
+
+### Patch Changes
+
+- fix: keep `hydrate` and `mount` type parameters in sync so a union of them is callable ([#19357](https://github.com/sveltejs/svelte/pull/19357))
+
 ## 5.59.0
 
 ### Minor Changes
