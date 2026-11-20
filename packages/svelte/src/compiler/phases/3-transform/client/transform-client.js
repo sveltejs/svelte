@@ -512,6 +512,7 @@ export function client_component(analysis, options) {
 	if (options.hmr) {
 		const id = b.id(analysis.name);
 
+		/** @type {ESTree.Statement[]} */
 		const accept_fn_body = [
 			b.stmt(b.call(b.member(b.member(id, b.id('$.HMR'), true), 'update'), b.id('module.default')))
 		];
@@ -520,6 +521,9 @@ export function client_component(analysis, options) {
 			// remove existing `<style>` element, in case CSS changed
 			accept_fn_body.unshift(b.stmt(b.call('$.cleanup_styles', b.literal(analysis.css.hash))));
 		}
+
+		// Vite passes undefined if the updated module fails to load.
+		accept_fn_body.unshift(b.if(b.unary('!', b.id('module')), b.return()));
 
 		const hmr = b.block([
 			b.stmt(b.assignment('=', id, b.call('$.hmr', id))),
