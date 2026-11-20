@@ -43,11 +43,13 @@ import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
-import { get_next_sibling } from '../dom/operations.js';
+import { get_next_sibling, remove_node, append_child } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
 import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
+import { push_renderer, current_renderer, pop_renderer } from '../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../flags/index.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -117,7 +119,8 @@ function create_effect(type, fn) {
 		prev: null,
 		teardown: null,
 		wv: 0,
-		ac: null
+		ac: null,
+		r: current_renderer
 	};
 
 	if (DEV) {
@@ -516,28 +519,35 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if (
-		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
-		effect.nodes !== null &&
-		effect.nodes.end !== null
-	) {
-		remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
-		removed = true;
-	}
+	var previous_renderer = custom_renderers_flag ? push_renderer(effect.r) : null;
 
-	effect.f |= DESTROYING;
-	destroy_effect_children(effect, remove_dom && !removed);
-	remove_reactions(effect);
-
-	var transitions = effect.nodes && effect.nodes.t;
-
-	if (transitions !== null) {
-		for (const transition of transitions) {
-			transition.stop();
+	try {
+		if (
+			(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
+			effect.nodes !== null &&
+			effect.nodes.end !== null
+		) {
+			remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
+			removed = true;
 		}
-	}
 
-	execute_effect_teardown(effect);
+		effect.f |= DESTROYING;
+		destroy_effect_children(effect, remove_dom && !removed);
+		remove_reactions(effect);
+
+		var transitions = effect.nodes && effect.nodes.t;
+
+		if (transitions !== null) {
+			for (const transition of transitions) {
+				transition.stop();
+			}
+		}
+
+		execute_effect_teardown(effect);
+	} finally {
+		// nothing below interacts with the renderer
+		if (custom_renderers_flag) pop_renderer(previous_renderer);
+	}
 
 	effect.f ^= DESTROYING;
 	effect.f |= DESTROYED;
@@ -566,6 +576,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.nodes =
 		effect.ac =
 		effect.b =
+		effect.r =
 			null;
 }
 
@@ -579,7 +590,7 @@ export function remove_effect_dom(node, end) {
 		/** @type {TemplateNode | null} */
 		var next = node === end ? null : get_next_sibling(node);
 
-		node.remove();
+		remove_node(/** @type {ChildNode} */ (node));
 		node = next;
 	}
 }
@@ -760,15 +771,21 @@ function resume_children(effect, local) {
 export function move_effect(effect, fragment) {
 	if (!effect.nodes) return;
 
-	/** @type {TemplateNode | null} */
-	var node = effect.nodes.start;
-	var end = effect.nodes.end;
+	var previous_renderer = custom_renderers_flag ? push_renderer(effect.r) : null;
 
-	while (node !== null) {
+	try {
 		/** @type {TemplateNode | null} */
-		var next = node === end ? null : get_next_sibling(node);
+		var node = effect.nodes.start;
+		var end = effect.nodes.end;
 
-		fragment.append(node);
-		node = next;
+		while (node !== null) {
+			/** @type {TemplateNode | null} */
+			var next = node === end ? null : get_next_sibling(node);
+
+			append_child(fragment, node);
+			node = next;
+		}
+	} finally {
+		if (custom_renderers_flag) pop_renderer(previous_renderer);
 	}
 }

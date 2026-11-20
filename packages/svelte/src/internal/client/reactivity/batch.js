@@ -24,7 +24,7 @@ import {
 	REACTION_IS_UPDATING,
 	BOUNDARY_EFFECT
 } from '#client/constants';
-import { async_mode_flag } from '../../flags/index.js';
+import { async_mode_flag, custom_renderers_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
@@ -679,6 +679,12 @@ export class Batch {
 		this.#run_callbacks(this.#commit_callbacks);
 
 		var earlier_writes = flush_queued_effects(render_effects);
+
+		// the content has been updated, and user effects are about to see it
+		if (custom_renderers_flag && before_effects !== null) {
+			before_effects();
+		}
+
 		flush_queued_effects(effects, earlier_writes);
 
 		this.#deferred?.resolve();
@@ -694,8 +700,7 @@ export class Batch {
 		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
-			this.#commit();
-			if (this.linked && this.prev !== null) this.#move_to_front();
+			this.commit_writes();
 		}
 
 		if (next_batch !== null) {
@@ -1143,6 +1148,15 @@ export class Batch {
 	}
 
 	/**
+	 * Make this batch's writes the real world, part of every other batch's view (see `#commit`).
+	 * If it has pending work it stays linked, coming first from now on (see `#move_to_front`)
+	 */
+	commit_writes() {
+		this.#commit();
+		if (this.linked && this.prev !== null) this.#move_to_front();
+	}
+
+	/**
 	 * @param {Effect} effect
 	 */
 	increment(effect) {
@@ -1526,6 +1540,21 @@ export class Batch {
 }
 
 // TODO Svelte@6 think about removing the callback argument.
+/**
+ * Called each time a batch has updated the content, before its user effects run, if set. Custom renderers
+ * use this to keep the content of crossings that share a container in the order of their host nodes
+ * (see `custom-renderer/containers.js`), so that effects never see them in a stale order
+ * @type {(() => void) | null}
+ */
+let before_effects = null;
+
+/**
+ * @param {(() => void) | null} fn
+ */
+export function set_before_effects(fn) {
+	before_effects = fn;
+}
+
 /**
  * Synchronously flush any pending updates.
  * Returns void if no callback is provided, otherwise returns the result of calling the callback.

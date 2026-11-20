@@ -1,3 +1,9 @@
+## custom_renderer_unavailable_on_server
+
+> You need to specify a custom condition to use a custom renderer in a non-browser environment such as Node. Add the `svelte-custom-renderer` resolve condition (eg. run Node with `--conditions=svelte-custom-renderer`).
+>
+> If you're using a bundler, add `svelte-custom-renderer` to its list of resolve conditions instead.
+
 ## each_block_not_iterable
 
 > {#each} only works with iterable values.

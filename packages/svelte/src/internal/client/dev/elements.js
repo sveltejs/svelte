@@ -3,6 +3,7 @@ import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, ELEMENT_NODE } from '#client/cons
 import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
 import { component_context, dev_stack } from '../context.js';
+import { get_first_child, get_next_sibling, get_node_value, node_type } from '../dom/operations.js';
 
 /**
  * Assign locations immediately after cloning, before blocks or child components insert elements.
@@ -18,7 +19,7 @@ export function add_locations(fn, filename, locations) {
 
 		if (!hydrating) {
 			assign_locations(
-				dom.nodeType === DOCUMENT_FRAGMENT_NODE ? dom.firstChild : dom,
+				node_type(dom) === DOCUMENT_FRAGMENT_NODE ? get_first_child(dom) : dom,
 				filename,
 				locations
 			);
@@ -49,7 +50,7 @@ function assign_location(element, filename, location) {
 	};
 
 	if (location[2]) {
-		assign_locations(element.firstChild, filename, location[2]);
+		assign_locations(get_first_child(element), filename, location[2]);
 	}
 }
 
@@ -63,17 +64,18 @@ function assign_locations(node, filename, locations) {
 	var depth = 0;
 
 	while (node && i < locations.length) {
-		if (hydrating && node.nodeType === COMMENT_NODE) {
+		if (hydrating && node_type(node) === COMMENT_NODE) {
 			var comment = /** @type {Comment} */ (node);
-			if (comment.data[0] === HYDRATION_START) depth += 1;
-			else if (comment.data[0] === HYDRATION_END) depth -= 1;
+			const data = get_node_value(comment) ?? '';
+			if (data[0] === HYDRATION_START) depth += 1;
+			else if (data[0] === HYDRATION_END) depth -= 1;
 		}
 
 		// @ts-expect-error
-		if (depth === 0 && node.nodeType === ELEMENT_NODE && !node.__svelte_meta) {
+		if (depth === 0 && node_type(node) === ELEMENT_NODE && !node.__svelte_meta) {
 			assign_location(/** @type {Element} */ (node), filename, locations[i++]);
 		}
 
-		node = node.nextSibling;
+		node = get_next_sibling(node);
 	}
 }
