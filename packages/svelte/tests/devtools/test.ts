@@ -2,7 +2,7 @@
 import { afterEach, assert, describe, it } from 'vitest';
 import { compile, compileModule } from 'svelte/compiler';
 import { flushSync, mount, unmount } from 'svelte';
-import { listen, snapshot } from 'svelte/internal/devtools';
+import { kind, listen, location, snapshot } from 'svelte/internal/devtools';
 import { FILENAME, HMR } from '../../src/constants.js';
 import { hmr } from '../../src/internal/client/dev/hmr.js';
 import { proxy } from '../../src/internal/client/proxy.js';
@@ -151,6 +151,20 @@ describe('listen', () => {
 				c: false,
 				array: [1, 2, 3]
 			}
+		);
+	});
+
+	it('types the helpers for the reactions passed to reaction callbacks', () => {
+		unlisteners.push(
+			listen({
+				name: 'types',
+				reactionRunStart(reaction) {
+					const k: string = kind(reaction);
+					const l: string | undefined = location(reaction);
+					void k;
+					void l;
+				}
+			})
 		);
 	});
 

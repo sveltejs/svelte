@@ -145,13 +145,18 @@ export function parentEffect(reaction) {
  * @returns {SignalKind}
  */
 /**
+ * @overload
+ * @param {Reaction} value
+ * @returns {EffectKind | SignalKind}
+ */
+/**
  * What kind of signal or effect this is, computed from its flags. Proxy properties can't be told
  * apart from `$state` this way, use the `kind` passed to `signalCreated` for that.
  * `effect` and `effectPre` are `$effect` and `$effect.pre` (which have a `location`) and APIs built
  * on them, like `onMount`, `beforeUpdate`/`afterUpdate` and `run` from `svelte/legacy`. `render`
  * includes template effects and the other effects Svelte creates for the template, like actions,
  * attachments, bindings and transitions
- * @param {Signal | Effect} value
+ * @param {Signal | Reaction} value
  * @returns {SignalKind | EffectKind}
  */
 export function kind(value) {
@@ -193,7 +198,7 @@ export function label(signal) {
 
 /**
  * Where a signal or effect was declared, as `file:line:column`, if known
- * @param {Signal | Effect} value
+ * @param {Signal | Reaction} value
  * @returns {string | undefined}
  */
 export function location(value) {
