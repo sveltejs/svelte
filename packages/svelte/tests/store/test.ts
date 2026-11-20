@@ -397,6 +397,25 @@ describe('derived', () => {
 		unsubscribe();
 	});
 
+	it('prevents diamond dependency problem with more than 32 stores', () => {
+		const count = writable(0);
+
+		const stores = Array.from({ length: 33 }, () => derived(count, ($count) => $count));
+
+		const values: string[] = [];
+
+		const combined = derived(stores, ($stores) => `${$stores[0]},${$stores[32]}`);
+
+		const unsubscribe = combined.subscribe((v) => {
+			values.push(v);
+		});
+
+		count.set(1);
+		assert.deepEqual(values, ['0,0', '1,1']);
+
+		unsubscribe();
+	});
+
 	it('derived dependency does not update and shared ancestor updates', () => {
 		const root = writable({ a: 0, b: 0 });
 
