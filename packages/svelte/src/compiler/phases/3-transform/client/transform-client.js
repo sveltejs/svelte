@@ -521,6 +521,9 @@ export function client_component(analysis, options) {
 			accept_fn_body.unshift(b.stmt(b.call('$.cleanup_styles', b.literal(analysis.css.hash))));
 		}
 
+		// Vite passes undefined if the updated module fails to load.
+		accept_fn_body.unshift(b.if(b.unary('!', b.id('module')), b.return()));
+
 		const hmr = b.block([
 			b.stmt(b.assignment('=', id, b.call('$.hmr', id))),
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
