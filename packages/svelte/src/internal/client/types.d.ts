@@ -24,8 +24,8 @@ export type ComponentContext = {
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
-	/** deferred effects */
-	e: null | Array<() => void | (() => void)>;
+	/** deferred effects. In DEV, each callback is followed by its location */
+	e: null | Array<(() => void | (() => void)) | string | undefined>;
 	/** True if initialized, i.e. pop() ran */
 	i: boolean;
 	/**

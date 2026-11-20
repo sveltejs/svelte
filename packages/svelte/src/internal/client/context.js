@@ -210,8 +210,12 @@ export function pop(component) {
 	if (effects !== null) {
 		context.e = null;
 
-		for (var fn of effects) {
-			create_user_effect(fn);
+		// in DEV, each callback is followed by its location
+		for (var i = 0; i < effects.length; i += DEV ? 2 : 1) {
+			create_user_effect(
+				/** @type {() => void | (() => void)} */ (effects[i]),
+				DEV ? /** @type {string | undefined} */ (effects[i + 1]) : undefined
+			);
 		}
 	}
 

@@ -91,12 +91,6 @@ function push_effect(effect, parent_effect) {
 }
 
 /**
- * Dev only: locations of top-level `$effect`s that are deferred until the component is mounted
- * @type {WeakMap<Function, string>}
- */
-const deferred_effect_locations = new WeakMap();
-
-/**
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
  * @param {string} [location] Dev only: where a `$effect` / `$effect.pre` was declared
@@ -255,10 +249,12 @@ export function user_effect(fn, location) {
 	if (defer) {
 		// Top-level `$effect(...)` in an unmounted component — defer until mount
 		var context = /** @type {ComponentContext} */ (component_context);
-		(context.e ??= []).push(fn);
+		var deferred = (context.e ??= []);
+		deferred.push(fn);
 
-		if (DEV && location !== undefined) {
-			deferred_effect_locations.set(fn, location);
+		if (DEV) {
+			// each callback is followed by its location, see `pop`
+			deferred.push(location);
 		}
 	} else {
 		// Everything else — create immediately
@@ -271,10 +267,6 @@ export function user_effect(fn, location) {
  * @param {string} [location] Dev only
  */
 export function create_user_effect(fn, location) {
-	if (DEV && location === undefined) {
-		location = deferred_effect_locations.get(fn);
-	}
-
 	return create_effect(EFFECT | USER_EFFECT, fn, location);
 }
 
