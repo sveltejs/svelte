@@ -1,5 +1,11 @@
 # svelte
 
+## 5.59.0
+
+### Minor Changes
+
+- feat: custom renderer api ([#18042](https://github.com/sveltejs/svelte/pull/18042))
+
 ## 5.58.1
 
 ### Patch Changes
