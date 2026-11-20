@@ -5,6 +5,7 @@ import { flushSync, mount, unmount } from 'svelte';
 import { listen } from 'svelte/internal/devtools';
 import { FILENAME, HMR } from '../../src/constants.js';
 import { hmr } from '../../src/internal/client/dev/hmr.js';
+import { proxy } from '../../src/internal/client/proxy.js';
 
 const source = `<script>let count = $state(0); $effect(() => {});</script><button onclick={() => count++}>{count}</button>`;
 
@@ -93,6 +94,64 @@ describe('listen', () => {
 		unmount(app);
 
 		assert.deepEqual(log, ['second']);
+	});
+
+	it('rejects writes through proxy traps without changing state', () => {
+		const object = proxy<Record<string, any>>({ a: 1 });
+		const array = proxy([1, 2, 3]);
+		const messages: string[] = [];
+
+		const writes = [
+			() => delete object.a,
+			() => (object.b = 2),
+			() =>
+				Object.defineProperty(object, 'c', {
+					value: 3,
+					configurable: true,
+					enumerable: true,
+					writable: true
+				}),
+			() => (array.length = 1)
+		];
+
+		unlisteners.push(
+			listen({
+				name: 'writer',
+				componentCreated() {
+					for (const write of writes) {
+						try {
+							write();
+							messages.push('no error');
+						} catch (error) {
+							messages.push((error as Error).message);
+						}
+					}
+				}
+			})
+		);
+
+		const target = document.createElement('div');
+		const app = mount((() => {}) as any, { target });
+		unmount(app);
+
+		assert.deepEqual(
+			{
+				messages,
+				a: object.a,
+				keys: Object.keys(object),
+				b: 'b' in object,
+				c: 'c' in object,
+				array: [...array]
+			},
+			{
+				messages: writes.map(() => 'Devtools plugins must not write state inside their callbacks'),
+				a: 1,
+				keys: ['a'],
+				b: false,
+				c: false,
+				array: [1, 2, 3]
+			}
+		);
 	});
 
 	it('brackets HMR updates', () => {

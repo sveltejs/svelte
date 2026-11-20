@@ -33,6 +33,7 @@ import * as e from './errors.js';
 import { label_source, tag_proxy } from './dev/tracing.js';
 import { get_error } from '../shared/dev.js';
 import { tracing_mode_flag } from '../flags/index.js';
+import { devtools_depth, devtools_state_write } from './dev/devtools.js';
 
 // TODO move all regexes into shared module?
 const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
@@ -147,6 +148,10 @@ export function proxy(value) {
 	/** @type {any} */
 	var proxied = new Proxy(/** @type {any} */ (value), {
 		defineProperty(_, prop, descriptor) {
+			if (DEV && devtools_depth > 0) {
+				devtools_state_write();
+			}
+
 			if (
 				!('value' in descriptor) ||
 				descriptor.configurable === false ||
@@ -177,6 +182,10 @@ export function proxy(value) {
 		},
 
 		deleteProperty(target, prop) {
+			if (DEV && devtools_depth > 0) {
+				devtools_state_write();
+			}
+
 			var s = sources.get(prop);
 
 			if (s === undefined) {
@@ -303,6 +312,10 @@ export function proxy(value) {
 		},
 
 		set(target, prop, value, receiver) {
+			if (DEV && devtools_depth > 0) {
+				devtools_state_write();
+			}
+
 			var s = sources.get(prop);
 			var has = prop in target;
 
