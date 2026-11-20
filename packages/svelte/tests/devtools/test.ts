@@ -235,4 +235,18 @@ describe('snapshot', () => {
 		assert.notOk(2 in result);
 	});
 
+	it('keeps added properties whose names exist on Object.prototype', () => {
+		const object = proxy<Record<string, any>>({});
+		const descriptor = { configurable: true, enumerable: true, writable: true };
+
+		Object.defineProperty(object, 'toString', { ...descriptor, value: 'a' });
+		Object.defineProperty(object, '__proto__', { ...descriptor, value: { b: 1 } });
+
+		const result = snapshot(object);
+
+		assert.deepEqual(Object.keys(result), ['toString', '__proto__']);
+		assert.equal(Object.getOwnPropertyDescriptor(result, 'toString')?.value, 'a');
+		assert.equal(Object.getPrototypeOf(result), Object.prototype);
+		assert.deepEqual(Object.getOwnPropertyDescriptor(result, '__proto__')?.value, { b: 1 });
+	});
 });

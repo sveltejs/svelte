@@ -16,6 +16,7 @@ import {
 	STATE_SYMBOL,
 	USER_EFFECT
 } from '../client/constants.js';
+import { define_property, has_own_property } from '../shared/utils.js';
 
 // This is an internal, DEV-only, observe-only channel for the official Svelte devtools.
 // It has no stability guarantee and can change in any release.
@@ -336,17 +337,32 @@ function snapshot_value(value, seen) {
 		var source = sources.get(key);
 
 		if (source === undefined) {
-			object[key] = snapshot_value(target[key], seen);
+			set_own(object, key, snapshot_value(target[key], seen));
 		} else if (source.v !== UNINITIALIZED) {
-			object[key] = snapshot_value(source.v, seen);
+			set_own(object, key, snapshot_value(source.v, seen));
 		}
 	}
 
 	for (var [k, entry] of sources) {
-		if (typeof k === 'string' && !(k in object) && entry.v !== UNINITIALIZED) {
-			object[k] = snapshot_value(entry.v, seen);
+		if (typeof k === 'string' && !has_own_property.call(object, k) && entry.v !== UNINITIALIZED) {
+			set_own(object, k, snapshot_value(entry.v, seen));
 		}
 	}
 
 	return object;
+}
+
+/**
+ * Like `object[key] = value`, but a `__proto__` key becomes an own property instead of changing
+ * the prototype
+ * @param {Record<PropertyKey, any>} object
+ * @param {string} key
+ * @param {any} value
+ */
+function set_own(object, key, value) {
+	if (key === '__proto__') {
+		define_property(object, key, { value, enumerable: true, configurable: true, writable: true });
+	} else {
+		object[key] = value;
+	}
 }
