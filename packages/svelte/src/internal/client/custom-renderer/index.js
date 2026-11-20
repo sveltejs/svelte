@@ -8,7 +8,6 @@
  * the others. Alternatively, pass them as the type argument:
  *
  * ```ts
- * //@noErrors
  * const renderer = createRenderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>({
  * 	// ...
  * });

@@ -2,7 +2,6 @@
  * A custom renderer. `N` describes the types of the renderer's nodes, for example:
  *
  * ```ts
- * //@noErrors
  * const renderer: Renderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }> = ...
  * ```
  */
