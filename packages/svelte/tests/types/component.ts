@@ -358,6 +358,16 @@ hydrate(
 // if component receives no args, props can be omitted
 hydrate(null as any as Component<{}>, { target: null as any });
 
+// a union of `hydrate` and `mount` is callable
+const mount_or_hydrate = Math.random() > 0.5 ? hydrate : mount;
+mount_or_hydrate(functionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
+
 render(functionComponent, {
 	props: {
 		binding: true,
