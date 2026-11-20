@@ -120,8 +120,23 @@ export function bind_value(input, get, set = get) {
 const pending = new Set();
 
 /**
+ * @param {HTMLInputElement[]} binding_group
+ */
+function sort_binding_group(binding_group) {
+	if (!pending.has(binding_group)) {
+		pending.add(binding_group);
+
+		queue_micro_task(() => {
+			// necessary to maintain binding group order in all insertion scenarios
+			binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+			pending.delete(binding_group);
+		});
+	}
+}
+
+/**
  * @param {HTMLInputElement[]} inputs
- * @param {null | [number]} group_index
+ * @param {null | number[] | (() => number[])} group_index
  * @param {HTMLInputElement} input
  * @param {() => unknown} get
  * @param {(value: unknown) => void} set
@@ -135,13 +150,33 @@ export function bind_group(inputs, group_index, input, get, set = get) {
 	let hydration_mismatch = false;
 
 	if (group_index !== null) {
-		for (var index of group_index) {
+		for (var index of typeof group_index === 'function' ? untrack(group_index) : group_index) {
 			// @ts-expect-error
 			binding_group = binding_group[index] ??= [];
 		}
 	}
 
 	binding_group.push(input);
+
+	if (typeof group_index === 'function') {
+		// a keyed `{#each}` moves its items: the input joins the group of its item's new index
+		render_effect(() => {
+			var group = inputs;
+
+			for (var index of group_index()) {
+				// @ts-expect-error
+				group = group[index] ??= [];
+			}
+
+			if (group !== binding_group) {
+				var i = binding_group.indexOf(input);
+				if (i !== -1) binding_group.splice(i, 1);
+				binding_group = group;
+				binding_group.push(input);
+				sort_binding_group(binding_group);
+			}
+		});
+	}
 
 	listen_to_event_and_reset_event(
 		input,
@@ -188,15 +223,7 @@ export function bind_group(inputs, group_index, input, get, set = get) {
 		}
 	});
 
-	if (!pending.has(binding_group)) {
-		pending.add(binding_group);
-
-		queue_micro_task(() => {
-			// necessary to maintain binding group order in all insertion scenarios
-			binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
-			pending.delete(binding_group);
-		});
-	}
+	sort_binding_group(binding_group);
 
 	queue_micro_task(() => {
 		if (hydration_mismatch) {

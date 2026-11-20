@@ -45,7 +45,8 @@ export function EachBlock(node, context) {
 
 	let flags = 0;
 
-	if (node.metadata.keyed && node.index) {
+	// a `bind:group` inside a keyed block is grouped by the index, which changes as items move
+	if (node.metadata.keyed && (node.index || each_node_meta.contains_group_binding)) {
 		flags |= EACH_INDEX_REACTIVE;
 	}
 
