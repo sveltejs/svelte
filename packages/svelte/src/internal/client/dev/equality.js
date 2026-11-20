@@ -1,6 +1,27 @@
 import * as w from '../warnings.js';
 import { get_proxied_value } from '../proxy.js';
 
+/**
+ * Resolves `from_index` like the native array methods do (a negative index
+ * counts back from the end), so we only look at what they searched
+ * @param {number} length
+ * @param {number} from_index
+ */
+function resolve_index(length, from_index) {
+	const index = Math.trunc(from_index) || 0;
+	return index < 0 ? length + index : index;
+}
+
+/**
+ * Holes and other non-proxies can't cause a mismatch, so only a real proxy of `item` counts
+ * @param {any} value
+ * @param {any} item
+ */
+function is_proxy_of(value, item) {
+	const proxied = get_proxied_value(value);
+	return proxied !== value && proxied === item;
+}
+
 export function init_array_prototype_warnings() {
 	const array_prototype = Array.prototype;
 	// The REPL ends up here over and over, and this prevents it from adding more and more patches
@@ -17,8 +38,10 @@ export function init_array_prototype_warnings() {
 		const index = indexOf.call(this, item, from_index);
 
 		if (index === -1) {
-			for (let i = from_index ?? 0; i < this.length; i += 1) {
-				if (get_proxied_value(this[i]) === item) {
+			const start = Math.max(resolve_index(this.length, from_index ?? 0), 0);
+
+			for (let i = start; i < this.length; i += 1) {
+				if (is_proxy_of(this[i], item)) {
 					w.state_proxy_equality_mismatch('array.indexOf(...)');
 					break;
 				}
@@ -34,8 +57,13 @@ export function init_array_prototype_warnings() {
 		const index = lastIndexOf.call(this, item, from_index ?? this.length - 1);
 
 		if (index === -1) {
-			for (let i = 0; i <= (from_index ?? this.length - 1); i += 1) {
-				if (get_proxied_value(this[i]) === item) {
+			const end = Math.min(
+				resolve_index(this.length, from_index ?? this.length - 1),
+				this.length - 1
+			);
+
+			for (let i = 0; i <= end; i += 1) {
+				if (is_proxy_of(this[i], item)) {
 					w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
 					break;
 				}
@@ -49,8 +77,10 @@ export function init_array_prototype_warnings() {
 		const has = includes.call(this, item, from_index);
 
 		if (!has) {
-			for (let i = 0; i < this.length; i += 1) {
-				if (get_proxied_value(this[i]) === item) {
+			const start = Math.max(resolve_index(this.length, from_index ?? 0), 0);
+
+			for (let i = start; i < this.length; i += 1) {
+				if (is_proxy_of(this[i], item)) {
 					w.state_proxy_equality_mismatch('array.includes(...)');
 					break;
 				}
