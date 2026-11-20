@@ -46,8 +46,10 @@ import { Batch, current_batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
-import { create_text } from '../operations.js';
+import { create_text, create_fragment, append_child, insert_before } from '../operations.js';
 import { set_signal_status } from '../../reactivity/status.js';
+import { push_renderer, pop_renderer } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 /**
  * @typedef {{
@@ -294,33 +296,39 @@ export class Boundary {
 		queue_micro_task(() => {
 			if (this.#is_destroyed()) return;
 
-			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
-			var anchor = create_text();
+			var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
 
-			fragment.append(anchor);
+			try {
+				var fragment = (this.#offscreen_fragment = create_fragment());
+				var anchor = create_text();
 
-			this.#main_effect = this.#run(() => {
-				try {
-					return branch(() => this.#children(anchor));
-				} catch (error) {
+				append_child(fragment, anchor);
+
+				this.#main_effect = this.#run(() => {
 					try {
-						this.error(error);
+						return branch(() => this.#children(anchor));
 					} catch (error) {
-						invoke_error_boundary(error, this.#effect.parent);
+						try {
+							this.error(error);
+						} catch (error) {
+							invoke_error_boundary(error, this.#effect.parent);
+						}
+
+						return null;
 					}
-
-					return null;
-				}
-			});
-
-			if (this.#main_effect !== null && this.#pending.size === 0) {
-				this.is_pending = false;
-				this.#anchor.before(fragment);
-				this.#offscreen_fragment = null;
-
-				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
-					this.#pending_effect = null;
 				});
+
+				if (this.#main_effect !== null && this.#pending.size === 0) {
+					this.is_pending = false;
+					insert_before(this.#anchor, fragment);
+					this.#offscreen_fragment = null;
+
+					pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
+						this.#pending_effect = null;
+					});
+				}
+			} finally {
+				if (custom_renderers_flag) pop_renderer(previous_renderer);
 			}
 		});
 	}
@@ -340,7 +348,7 @@ export class Boundary {
 				const pending = this.#props.pending;
 
 				if (pending) {
-					var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+					var fragment = (this.#offscreen_fragment = create_fragment());
 					move_effect(this.#main_effect, fragment);
 
 					this.#pending_effect = branch(() => pending(this.#anchor));
@@ -376,6 +384,8 @@ export class Boundary {
 		set_active_reaction(this.#effect);
 		set_component_context(this.#effect.ctx);
 
+		var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
+
 		try {
 			Batch.ensure();
 			return fn();
@@ -383,6 +393,7 @@ export class Boundary {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_ctx);
+			if (custom_renderers_flag) pop_renderer(previous_renderer);
 		}
 	}
 
@@ -428,8 +439,14 @@ export class Boundary {
 		}
 
 		if (this.#offscreen_fragment) {
-			this.#anchor.before(this.#offscreen_fragment);
-			this.#offscreen_fragment = null;
+			var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
+
+			try {
+				insert_before(this.#anchor, this.#offscreen_fragment);
+				this.#offscreen_fragment = null;
+			} finally {
+				if (custom_renderers_flag) pop_renderer(previous_renderer);
+			}
 		}
 	}
 

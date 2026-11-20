@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { Renderer } from '../../custom-renderer/types.js' */
 /** @import { Batch } from '../../reactivity/batch.js' */
 import { current_batch } from '../../reactivity/batch.js';
 import {
@@ -11,8 +12,18 @@ import {
 import { HMR_ANCHOR } from '../../constants.js';
 import { EFFECT_OFFSCREEN } from '#client/constants';
 import { hydrate_node, hydrating } from '../hydration.js';
-import { create_text, should_defer_append } from '../operations.js';
+import {
+	create_text,
+	should_defer_append,
+	create_fragment,
+	append_child,
+	insert_before,
+	remove_node,
+	get_last_child
+} from '../operations.js';
 import { DEV } from 'esm-env';
+import { push_renderer, current_renderer, pop_renderer } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 /**
  * @typedef {{ effect: Effect, fragment: DocumentFragment }} Branch
@@ -64,12 +75,21 @@ export class BranchManager {
 	#transition = true;
 
 	/**
+	 * The renderer that was active when this BranchManager was created.
+	 * Needed so that #commit can push the correct renderer when doing DOM operations
+	 * outside of an effect context (e.g. as a batch commit callback).
+	 * @type {Renderer | null}
+	 */
+	#renderer = null;
+
+	/**
 	 * @param {TemplateNode} anchor
 	 * @param {boolean} transition
 	 */
 	constructor(anchor, transition = true) {
 		this.anchor = anchor;
 		this.#transition = transition;
+		this.#renderer = current_renderer;
 	}
 
 	/**
@@ -79,74 +99,80 @@ export class BranchManager {
 		// if this batch was made obsolete, bail
 		if (!this.#batches.has(batch)) return;
 
-		var key = /** @type {Key} */ (this.#batches.get(batch));
+		var previous_renderer = custom_renderers_flag ? push_renderer(this.#renderer) : null;
 
-		var onscreen = this.#onscreen.get(key);
+		try {
+			var key = /** @type {Key} */ (this.#batches.get(batch));
 
-		if (onscreen) {
-			// effect is already in the DOM — abort any current outro
-			resume_effect(onscreen);
-			this.#outroing.delete(key);
-		} else {
-			// effect is currently offscreen. put it in the DOM
-			var offscreen = this.#offscreen.get(key);
+			var onscreen = this.#onscreen.get(key);
 
-			if (offscreen) {
-				// effect could have been outro'ed before through a prior batch — resume if necessary
-				resume_effect(offscreen.effect);
-				this.#onscreen.set(key, offscreen.effect);
-				this.#offscreen.delete(key);
-
-				if (DEV) {
-					// Tell hmr.js about the anchor it should use for updates,
-					// since the initial one will be removed
-					/** @type {any} */ (offscreen.fragment.lastChild)[HMR_ANCHOR] = this.anchor;
-				}
-
-				// remove the anchor...
-				/** @type {TemplateNode} */ (offscreen.fragment.lastChild).remove();
-
-				// ...and append the fragment
-				this.anchor.before(offscreen.fragment);
-				onscreen = offscreen.effect;
-				onscreen.f &= ~EFFECT_OFFSCREEN;
-			}
-		}
-
-		// other batches can still commit (in any order), so their selections remain
-		this.#discard(batch);
-
-		// outro/destroy all onscreen effects...
-		for (const [k, effect] of this.#onscreen) {
-			// ...except the one that was just committed
-			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
-			if (k === key || this.#outroing.has(k)) continue;
-
-			const on_destroy = () => {
-				const keys = Array.from(this.#batches.values());
-
-				if (keys.includes(k)) {
-					// keep the effect offscreen, as another batch will need it
-					var fragment = document.createDocumentFragment();
-					move_effect(effect, fragment);
-
-					fragment.append(create_text()); // TODO can we avoid this?
-
-					this.#offscreen.set(k, { effect, fragment });
-				} else {
-					destroy_effect(effect);
-				}
-
-				this.#outroing.delete(k);
-				this.#onscreen.delete(k);
-			};
-
-			if (this.#transition || !onscreen) {
-				this.#outroing.add(k);
-				pause_effect(effect, on_destroy, false);
+			if (onscreen) {
+				// effect is already in the DOM — abort any current outro
+				resume_effect(onscreen);
+				this.#outroing.delete(key);
 			} else {
-				on_destroy();
+				// effect is currently offscreen. put it in the DOM
+				var offscreen = this.#offscreen.get(key);
+
+				if (offscreen) {
+					// effect could have been outro'ed before through a prior batch — resume if necessary
+					resume_effect(offscreen.effect);
+					this.#onscreen.set(key, offscreen.effect);
+					this.#offscreen.delete(key);
+
+					if (DEV) {
+						// Tell hmr.js about the anchor it should use for updates,
+						// since the initial one will be removed
+						/** @type {any} */ (get_last_child(offscreen.fragment))[HMR_ANCHOR] = this.anchor;
+					}
+
+					// remove the anchor...
+					remove_node(/** @type {ChildNode} */ (get_last_child(offscreen.fragment)));
+
+					// ...and append the fragment
+					insert_before(this.anchor, offscreen.fragment);
+					onscreen = offscreen.effect;
+					onscreen.f &= ~EFFECT_OFFSCREEN;
+				}
 			}
+
+			// other batches can still commit (in any order), so their selections remain
+			this.#discard(batch);
+
+			// outro/destroy all onscreen effects...
+			for (const [k, effect] of this.#onscreen) {
+				// ...except the one that was just committed
+				//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
+				if (k === key || this.#outroing.has(k)) continue;
+
+				const on_destroy = () => {
+					const keys = Array.from(this.#batches.values());
+
+					if (keys.includes(k)) {
+						// keep the effect offscreen, as another batch will need it
+						var fragment = create_fragment();
+						move_effect(effect, fragment);
+
+						append_child(fragment, create_text()); // TODO can we avoid this?
+
+						this.#offscreen.set(k, { effect, fragment });
+					} else {
+						destroy_effect(effect);
+					}
+
+					this.#outroing.delete(k);
+					this.#onscreen.delete(k);
+				};
+
+				if (this.#transition || !onscreen) {
+					this.#outroing.add(k);
+					pause_effect(effect, on_destroy, false);
+				} else {
+					on_destroy();
+				}
+			}
+		} finally {
+			if (custom_renderers_flag) pop_renderer(previous_renderer);
 		}
 	};
 
@@ -180,10 +206,10 @@ export class BranchManager {
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			if (defer) {
-				var fragment = document.createDocumentFragment();
+				var fragment = create_fragment();
 				var target = create_text();
 
-				fragment.append(target);
+				append_child(fragment, target);
 
 				var effect = branch(() => fn(target));
 
