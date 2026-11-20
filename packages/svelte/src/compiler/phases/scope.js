@@ -100,9 +100,13 @@ export class Binding {
 	/**
 	 * What the value was initialized with.
 	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
+	 * For other destructured bindings, this is the full initializer, not the extracted value.
 	 * @type {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock | AST.SnippetBlock}
 	 */
 	initial = null;
+
+	/** Whether this binding is declared with a destructuring pattern */
+	is_destructured = false;
 
 	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[] }>} */
 	references = [];
@@ -178,6 +182,8 @@ export class Binding {
 	 * @returns {this is Binding & { initial: ArrowFunctionExpression | FunctionDeclaration | FunctionExpression }}
 	 */
 	is_function() {
+		if (this.is_destructured) return false;
+
 		if (this.updated) {
 			// even if it's reassigned to another function,
 			// we can't use it directly as e.g. an event handler
@@ -274,6 +280,11 @@ class Evaluation {
 				const binding = scope.get(expression.name);
 
 				if (binding) {
+					if (binding.is_destructured) {
+						this.values.add(UNKNOWN);
+						break;
+					}
+
 					if (
 						binding.initial?.type === 'CallExpression' &&
 						get_rune(binding.initial, scope) === '$props.id'
@@ -1207,6 +1218,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 						node.kind,
 						declarator.init
 					);
+					binding.is_destructured = declarator.id.type !== 'Identifier';
 					binding.metadata = { is_template_declaration: true };
 					bindings.push(binding);
 				}
@@ -1501,6 +1513,7 @@ export function should_proxy(node, scope) {
 		if (
 			binding !== null &&
 			!binding.reassigned &&
+			!binding.is_destructured &&
 			binding.initial !== null &&
 			binding.initial.type !== 'FunctionDeclaration' &&
 			binding.initial.type !== 'ClassDeclaration' &&
