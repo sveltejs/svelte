@@ -71,11 +71,13 @@ export function mount(component, options) {
 	return _mount(component, options);
 }
 
+// Renderer is unused, a union of hydrate and mount is only callable when their type parameters match
 /**
  * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
+ * @template [Renderer=undefined]
  * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
  * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;

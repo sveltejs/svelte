@@ -389,3 +389,12 @@ import Foo from './doesntexist.svelte';
 
 Foo(null as unknown as ComponentInternals, { a: true });
 const f: Foo = new Foo({ target: document.body, props: { a: true } });
+
+const hydrate_or_mount = Math.random() > 0.5 ? hydrate : mount;
+hydrate_or_mount(functionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
