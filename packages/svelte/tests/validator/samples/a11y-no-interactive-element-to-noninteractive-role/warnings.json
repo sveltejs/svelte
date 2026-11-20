@@ -686,18 +686,6 @@
 	{
 		"code": "a11y_no_interactive_element_to_noninteractive_role",
 		"end": {
-			"column": 25,
-			"line": 147
-		},
-		"message": "`<tr>` cannot have role 'listitem'",
-		"start": {
-			"column": 0,
-			"line": 147
-		}
-	},
-	{
-		"code": "a11y_no_interactive_element_to_noninteractive_role",
-		"end": {
 			"column": 35,
 			"line": 148
 		},
