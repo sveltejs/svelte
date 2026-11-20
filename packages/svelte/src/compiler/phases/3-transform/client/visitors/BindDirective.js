@@ -75,7 +75,9 @@ export function BindDirective(node, context) {
 	/** @type {CallExpression} */
 	let call;
 
-	if (property?.event) {
+	if (node.name === 'open' && parent?.type === 'RegularElement' && parent.name === 'dialog') {
+		call = b.call('$.bind_dialog_open', context.state.node, get, set);
+	} else if (property?.event) {
 		call = b.call(
 			'$.bind_property',
 			b.literal(node.name),
