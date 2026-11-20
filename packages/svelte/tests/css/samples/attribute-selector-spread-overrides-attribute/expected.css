@@ -1,0 +1,11 @@
+	div[data-a='1'].svelte-xyz {
+		color: red;
+	}
+
+	p#b.svelte-xyz {
+		color: blue;
+	}
+
+	span[data-c='1'].svelte-xyz {
+		color: green;
+	}
