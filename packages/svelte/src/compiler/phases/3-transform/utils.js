@@ -4,6 +4,8 @@
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
+	regex_raw_ends_with_whitespaces,
+	regex_raw_starts_with_whitespaces,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
 import * as e from '../../errors.js';
@@ -184,7 +186,7 @@ export function clean_nodes(
 		}
 
 		if (first?.type === 'Text') {
-			first.raw = first.raw.replace(regex_starts_with_whitespaces, '');
+			first.raw = first.raw.replace(regex_raw_starts_with_whitespaces, '');
 			first.data = first.data.replace(regex_starts_with_whitespaces, '');
 		}
 
@@ -197,7 +199,7 @@ export function clean_nodes(
 		}
 
 		if (last?.type === 'Text') {
-			last.raw = last.raw.replace(regex_ends_with_whitespaces, '');
+			last.raw = last.raw.replace(regex_raw_ends_with_whitespaces, '');
 			last.data = last.data.replace(regex_ends_with_whitespaces, '');
 		}
 
@@ -234,13 +236,13 @@ export function clean_nodes(
 						prev_is_text_ending_with_whitespace ? '' : ' '
 					);
 					node.raw = node.raw.replace(
-						regex_starts_with_whitespaces,
+						regex_raw_starts_with_whitespaces,
 						prev_is_text_ending_with_whitespace ? '' : ' '
 					);
 				}
 				if (next?.type !== 'ExpressionTag') {
 					node.data = node.data.replace(regex_ends_with_whitespaces, ' ');
-					node.raw = node.raw.replace(regex_ends_with_whitespaces, ' ');
+					node.raw = node.raw.replace(regex_raw_ends_with_whitespaces, ' ');
 				}
 				if (node.data && (node.data !== ' ' || !can_remove_entirely)) {
 					trimmed.push(node);
