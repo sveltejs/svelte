@@ -388,7 +388,7 @@ function build_element_spread_attributes(
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
+ * @returns {[ObjectExpression, Literal | undefined, ObjectExpression | undefined, ArrayExpression | ObjectExpression | undefined, Literal | undefined]}
  */
 export function prepare_element_spread_object(element, context, transform) {
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
@@ -430,7 +430,7 @@ export function prepare_element_spread_object(element, context, transform) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
+ * @returns {[ObjectExpression, Literal | undefined, ObjectExpression | undefined, ArrayExpression | ObjectExpression | undefined, Literal | undefined]}
  */
 export function prepare_element_spread(
 	element,
@@ -442,7 +442,7 @@ export function prepare_element_spread(
 ) {
 	/** @type {ObjectExpression | undefined} */
 	let classes;
-	/** @type {ObjectExpression | undefined} */
+	/** @type {ArrayExpression | ObjectExpression | undefined} */
 	let styles;
 	let flags = 0;
 
@@ -463,15 +463,27 @@ export function prepare_element_spread(
 	}
 
 	if (style_directives.length > 0) {
-		const properties = style_directives.map((directive) =>
-			b.init(
+		let normal_properties = [];
+		let important_properties = [];
+
+		for (const directive of style_directives) {
+			const property = b.init(
 				directive.name,
 				directive.value === true
 					? b.id(directive.name)
 					: build_attribute_value(directive.value, context, transform, true)
-			)
-		);
-		styles = b.object(properties);
+			);
+
+			if (directive.modifiers.includes('important')) {
+				important_properties.push(property);
+			} else {
+				normal_properties.push(property);
+			}
+		}
+
+		styles = important_properties.length
+			? b.array([b.object(normal_properties), b.object(important_properties)])
+			: b.object(normal_properties);
 	}
 
 	if (element.metadata.svg || element.metadata.mathml) {
