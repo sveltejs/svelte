@@ -433,7 +433,8 @@ function read_block(parser) {
 
 		if (parser.match('}')) {
 			break;
-		} else {
+		} else if (!parser.eat(';')) {
+			// a stray `;` is an empty declaration, which is valid CSS
 			children.push(read_block_item(parser));
 		}
 	}
