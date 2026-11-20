@@ -2735,7 +2735,7 @@ declare module 'svelte/renderer' {
 	 * A custom renderer. `N` describes the types of the renderer's nodes, for example:
 	 *
 	 * ```ts
-	 * // @noErrors
+	 * //@noErrors
 	 * const renderer: Renderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }> = ...
 	 * ```
 	 */
@@ -2870,7 +2870,7 @@ declare module 'svelte/renderer' {
 	 * the others. Alternatively, pass them as the type argument:
 	 *
 	 * ```ts
-	 * // @noErrors
+	 * //@noErrors
 	 * const renderer = createRenderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>({
 	 * 	// ...
 	 * });
