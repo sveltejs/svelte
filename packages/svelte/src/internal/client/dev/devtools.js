@@ -58,7 +58,11 @@ export const hooks = {
 	warningEmitted: null
 };
 
-/** @type {DevtoolsHooks[]} */
+/**
+ * One entry per `listen` call, so that a stale unsubscribe can't remove a later subscription of
+ * the same plugin object
+ * @type {Array<{ plugin: DevtoolsHooks }>}
+ */
 let plugins = [];
 
 /**
@@ -93,7 +97,7 @@ function rebuild() {
 		/** @type {Listener[]} */
 		const listeners = [];
 
-		for (const plugin of plugins) {
+		for (const { plugin } of plugins) {
 			const fn = plugin[event];
 			if (typeof fn === 'function') {
 				listeners.push({ name: plugin.name, plugin, fn });
@@ -117,21 +121,22 @@ export function listen(plugin) {
 		throw new Error('A devtools plugin must have a non-empty `name`');
 	}
 
-	const index = plugins.findIndex((p) => p.name === plugin.name);
+	const entry = { plugin };
+	const index = plugins.findIndex((p) => p.plugin.name === plugin.name);
 
 	// copy, so that an emit in progress keeps iterating over the old list
 	plugins = plugins.slice();
 
 	if (index === -1) {
-		plugins.push(plugin);
+		plugins.push(entry);
 	} else {
-		plugins[index] = plugin;
+		plugins[index] = entry;
 	}
 
 	rebuild();
 
 	return () => {
-		const index = plugins.indexOf(plugin);
+		const index = plugins.indexOf(entry);
 		if (index === -1) return;
 
 		plugins = plugins.slice();

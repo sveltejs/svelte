@@ -96,6 +96,23 @@ describe('listen', () => {
 		assert.deepEqual(log, ['second']);
 	});
 
+	it('removes only its own subscription when the same plugin object is reused', () => {
+		const log: string[] = [];
+		const plugin = { name: 'a', componentCreated: () => log.push('created') };
+
+		const first = listen(plugin);
+		unlisteners.push(listen(plugin));
+
+		// the first subscription was replaced, so its unlisten must not remove the second
+		first();
+
+		const target = document.createElement('div');
+		const app = mount((() => {}) as any, { target });
+		unmount(app);
+
+		assert.deepEqual(log, ['created']);
+	});
+
 	it('rejects writes through proxy traps without changing state', () => {
 		const object = proxy<Record<string, any>>({ a: 1 });
 		const array = proxy([1, 2, 3]);
