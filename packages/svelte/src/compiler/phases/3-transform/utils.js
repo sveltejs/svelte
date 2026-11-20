@@ -135,6 +135,8 @@ export function clean_nodes(
 	preserve_whitespace,
 	preserve_comments
 ) {
+	const is_each_fallback = parent.type === 'EachBlock' && parent.fallback?.nodes === nodes;
+
 	if (!state.analysis.runes) {
 		nodes = sort_const_tags(nodes, state);
 	}
@@ -251,6 +253,12 @@ export function clean_nodes(
 		}
 	}
 
+	// Fallbacks with only hoisted work still need nodes to serve as an insertion point
+	// when each items are moved in front of them.
+	if (is_each_fallback && trimmed.length === 0 && hoisted.length > 0) {
+		trimmed.push({ type: 'Comment', data: '', start: -1, end: -1 });
+	}
+
 	var first = trimmed[0];
 
 	// if first text node inside a <pre> is a single newline, discard it, because otherwise
@@ -283,6 +291,8 @@ export function clean_nodes(
 		 * TODO extend this optimisation to other cases
 		 */
 		is_standalone:
+			// An each fallback must have its own nodes, even if the component/snippet renders nothing.
+			!is_each_fallback &&
 			trimmed.length === 1 &&
 			((first.type === 'RenderTag' && !first.metadata.dynamic) ||
 				(first.type === 'Component' &&

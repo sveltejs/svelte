@@ -1,0 +1,22 @@
+[
+	{
+		"code": "block_empty",
+		"message": "Empty block\nhttps://svelte.dev/e/block_empty",
+		"filename": "packages/svelte/tests/snapshot/samples/each-empty-fallback-preserved/index.svelte",
+		"start": {
+			"line": 5,
+			"column": 41,
+			"character": 88
+		},
+		"end": {
+			"line": 5,
+			"column": 42,
+			"character": 89
+		},
+		"position": [
+			88,
+			89
+		],
+		"frame": "3: </script>\n4: \n5: {#each items as item}<p>{item}</p>{:else} {/each}\n                                             ^\n6: \n7: {#each items as item (item)}<p>{item}</p>{:else}<!-- preserved -->{/each}"
+	}
+]
