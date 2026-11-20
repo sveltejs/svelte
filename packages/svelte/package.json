@@ -17,6 +17,10 @@
     "compiler",
     "README.md"
   ],
+  "sideEffects": [
+    "./src/internal/**",
+    "./src/index-client.js"
+  ],
   "module": "src/index-client.js",
   "main": "src/index-client.js",
   "exports": {
