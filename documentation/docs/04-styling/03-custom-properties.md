@@ -39,6 +39,29 @@ For an SVG element, it would use `<g>` instead:
 </g>
 ```
 
+Custom properties must be explicitly named on the component. The compiler finds them with static analysis, so passing them via `{...spread}` will not work:
+
+```svelte
+<script>
+	let props = { '--track-color': 'black' };
+	let rest = { min: 0, max: 100 };
+</script>
+
+<!-- won't work — `--track-color` inside `props` is not detected -->
+<Slider {...props} {...rest} />
+
+<!-- works — pass custom properties explicitly -->
+<Slider --track-color={props['--track-color']} {...rest} />
+```
+
+If the set of custom properties is dynamic, apply them as inline styles on a `display: contents` wrapper instead (this is what Svelte does automatically for explicit `--*` attributes):
+
+```svelte
+<div style="display: contents; --track-color: black">
+	<Slider {...rest} />
+</div>
+```
+
 Inside the component, we can read these custom properties (and provide fallback values) using [`var(...)`](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties):
 
 ```svelte
