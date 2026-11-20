@@ -9,10 +9,7 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+    - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
       with:
-        node-version: ${{ inputs.node-version }}
-        cache: pnpm
-    - run: pnpm install --frozen-lockfile
-      shell: bash
+        runtime: node@${{ inputs.node-version }}
+        cache: true
