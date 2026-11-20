@@ -26,6 +26,9 @@ import { current_renderer } from '../../custom-renderer/state.js';
  */
 export const event_symbol = Symbol('events');
 
+// The native listener boundary at which a delegated descendant stopped propagation.
+const propagation_stopped_at = Symbol('propagation stopped at');
+
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
 
@@ -84,7 +87,10 @@ export function create_event(event_name, dom, handler, options = {}) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation.call(dom, event);
 		}
-		if (!event.cancelBubble) {
+		// Native stopPropagation() does not stop other listeners on the same element.
+		// Only skip this callback if a delegated descendant stopped before reaching it.
+		// @ts-expect-error
+		if (options.capture || event[propagation_stopped_at] !== dom) {
 			return without_reactive_context(() => {
 				return handler?.call(this, event);
 			});
@@ -287,6 +293,19 @@ let last_propagated_event_clear_scheduled = false;
 export function handle_event_propagation(event) {
 	// this function is custom renderers safe since it's invoked in `mount`
 	var handler_element = this;
+	var was_stopped = event.cancelBubble;
+
+	// Another listener at this boundary may already have dispatched the delegated
+	// handler that stopped propagation. Do not dispatch it again.
+	// @ts-expect-error
+	if (was_stopped && event[propagation_stopped_at] === handler_element) return;
+
+	if (!was_stopped) {
+		// The same event object may be dispatched again.
+		// @ts-expect-error
+		delete event[propagation_stopped_at];
+	}
+
 	var owner_document = /** @type {Node} */ (handler_element).ownerDocument;
 	var event_name = event.type;
 	var path = event.composedPath?.() || [];
@@ -409,7 +428,13 @@ export function handle_event_propagation(event) {
 					throw_error = error;
 				}
 			}
-			if (event.cancelBubble) break;
+			if (event.cancelBubble) {
+				if (!was_stopped) {
+					// @ts-expect-error
+					event[propagation_stopped_at] = handler_element;
+				}
+				break;
+			}
 
 			path_idx++;
 			current_target = path_idx < path.length ? /** @type {Element} */ (path[path_idx]) : null;
