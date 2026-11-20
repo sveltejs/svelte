@@ -18,7 +18,7 @@ Given a case like this...
 </script>
 
 <button onclick={add}>add</button>
-<p>items: {JSON.stringify(object.items)}</p>
+<p>items: {JSON.stringify(object.array)}</p>
 ```
 
 ...the array being pushed to when the button is first clicked is the `[]` on the right-hand side of the assignment, but the resulting value of `object.array` is an empty state proxy. As a result, the pushed value will be discarded.
