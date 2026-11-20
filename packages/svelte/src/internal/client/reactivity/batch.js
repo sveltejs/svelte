@@ -1391,8 +1391,12 @@ export class Batch {
 				}
 
 				if (updated_during_traversal !== null) {
-					set_signal_status(effect, status);
-					updated_during_traversal.push(effect);
+					if (is_destroying_effect && (flags & BLOCK_EFFECT) !== 0) {
+						this.schedule(effect, status);
+					} else {
+						set_signal_status(effect, status);
+						updated_during_traversal.push(effect);
+					}
 				} else {
 					// the status is applied when the batch is processed
 					this.schedule(effect, status);
