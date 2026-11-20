@@ -2,17 +2,18 @@ import * as fs from 'node:fs';
 import MagicString from 'magic-string';
 import { test } from '../../test';
 
-// Simulates a bundler plugin (e.g. a Vite plugin using `magic-string`) that transforms
-// the Svelte source *before* it reaches `compile()` and calls `generateMap({ source: id })`
-// where `id` is an absolute/fully-qualified module id (as Vite does). The source entry in
-// the resulting map is a full path (e.g. `/project/src/App.svelte`) rather than a basename,
-// which previously failed to match during map chaining (see #18778) and caused the upstream
-// mappings to be silently dropped, producing wrong devtools/stack-trace positions.
+// A plugin passes `compileOptions.sourcemap` a map whose `sources[0]` is a full path
+// (`generateMap({ source: id })` with an absolute module id, as bundlers commonly do).
+//
+// The chain itself is not dropped without this fix: `compile` still composes the upstream
+// map and positions trace back to the component. What is wrong is the source *name* — the
+// full path is carried into the output map, so the map claims to point at a file that does
+// not exist (`/fake/project/path/src/input.svelte`) instead of the component. This sample
+// pins the corrected name (`js_map_sources` defaults to `../../input.svelte`).
 const input = fs.readFileSync(new URL('./input.svelte', import.meta.url), 'utf-8');
 const src = new MagicString(input);
-// Perform a no-op transform but generate the map with a full absolute path as `source`
-// (basename is still `input.svelte`), reproducing the scenario from the bug report where
-// the reporter tried `m.generateMap({source: id})`, `m.generateMap({file: id})`, etc.
+// A no-op transform: this sample is about how the incoming source is named, not about
+// shifting lines.
 const simulated_vite_id = '/fake/project/path/src/input.svelte';
 
 export default test({
