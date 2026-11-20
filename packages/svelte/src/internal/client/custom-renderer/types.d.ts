@@ -1,9 +1,6 @@
 /**
- * A custom renderer. `N` describes the types of the renderer's nodes, for example:
- *
- * ```ts
- * const renderer: Renderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }> = ...
- * ```
+ * A custom renderer. `N` describes the types of the renderer's nodes, for example
+ * `Renderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>`.
  */
 export type Renderer<N extends RendererNodes = RendererNodes> = {
 	/** Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of its children. */

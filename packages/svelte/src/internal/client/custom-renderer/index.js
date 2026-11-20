@@ -5,13 +5,8 @@
  *
  * The types of the renderer's nodes are inferred from the return types of `createFragment`,
  * `createElement`, `createTextNode` and `createComment`, as long as those methods come before
- * the others. Alternatively, pass them as the type argument:
- *
- * ```ts
- * const renderer = createRenderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>({
- * 	// ...
- * });
- * ```
+ * the others. Alternatively, pass them as the type argument, as in
+ * `createRenderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>(...)`.
  *
  * Only the first type parameter is meant to be passed; the others exist so that the node types can be
  * inferred from the methods (TypeScript can't infer the record itself from them).
