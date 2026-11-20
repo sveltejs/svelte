@@ -2,7 +2,7 @@
 import { afterEach, assert, describe, it } from 'vitest';
 import { compile, compileModule } from 'svelte/compiler';
 import { flushSync, mount, unmount } from 'svelte';
-import { listen } from 'svelte/internal/devtools';
+import { listen, snapshot } from 'svelte/internal/devtools';
 import { FILENAME, HMR } from '../../src/constants.js';
 import { hmr } from '../../src/internal/client/dev/hmr.js';
 import { proxy } from '../../src/internal/client/proxy.js';
@@ -188,4 +188,20 @@ describe('listen', () => {
 
 		unmount(app);
 	});
+});
+
+describe('snapshot', () => {
+	it('keeps the length of arrays with trailing holes', () => {
+		assert.equal(snapshot(proxy(new Array(3))).length, 3);
+
+		const array = proxy([1]);
+		array.length = 3;
+		const result = snapshot(array);
+
+		assert.equal(result.length, 3);
+		assert.equal(result[0], 1);
+		assert.notOk(1 in result);
+		assert.notOk(2 in result);
+	});
+
 });

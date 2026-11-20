@@ -302,12 +302,13 @@ function snapshot_value(value, seen) {
 	var target = value[STATE_SYMBOL];
 
 	if (Array.isArray(target)) {
-		/** @type {any[]} */
-		var array = [];
-		seen.set(value, array);
-
 		var length_source = sources.get('length');
 		var length = length_source !== undefined ? length_source.v : target.length;
+
+		// sized up front, so that trailing holes are kept
+		/** @type {any[]} */
+		var array = new Array(length);
+		seen.set(value, array);
 
 		for (var i = 0; i < length; i += 1) {
 			var s = sources.get(String(i));
