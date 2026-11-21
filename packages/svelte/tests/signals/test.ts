@@ -22,6 +22,7 @@ import {
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { capture, unset_context } from '../../src/internal/client/reactivity/async';
 import { source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
@@ -65,6 +66,37 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	for (const nested of [false, true]) {
+		test(`writes in a restored context do not leak${nested ? ' through a nested effect' : ''}`, () => {
+			const value = source(0);
+			const trigger = source(0);
+			let restore = () => {};
+
+			block(() => {
+				$.get(trigger);
+				restore = capture();
+			});
+
+			return () => {
+				restore();
+				try {
+					if (nested) {
+						render_effect(() => {
+							internal_set(value, 1);
+						});
+					} else {
+						internal_set(value, 1);
+					}
+					assert.equal($.untracked_writes, null);
+				} finally {
+					unset_context();
+					$.set_untracked_writes(null);
+					flushSync();
+				}
+			};
+		});
+	}
+
 	test('nested commit retains latest block dependencies', () => {
 		const trigger = state(0);
 		const mode = state(0);
