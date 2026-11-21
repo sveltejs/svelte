@@ -1192,6 +1192,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			next();
 		},
 
+		StaticBlock(node, { state, next }) {
+			const scope = state.scope.child();
+			scopes.set(node, scope);
+			next({ scope });
+		},
+
 		VariableDeclaration(node, { state, path, next }) {
 			const is_parent_const_tag = path.at(-1)?.type === 'ConstTag';
 			for (const declarator of node.declarations) {
