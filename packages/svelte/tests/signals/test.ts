@@ -65,6 +65,113 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	for (const objects of [false, true]) {
+		it(`caches disconnected derived chains in batch views (${objects ? 'objects' : 'numbers'})`, () => {
+			enable_async_mode_flag();
+			try {
+				const input = source(0);
+				let runs = 0;
+				let value: Value<number | { value: number }> = input;
+				const chain: Derived[] = [];
+				for (let i = 0; i < 12; i++) {
+					const previous = value;
+					const next_value = derived(() => {
+						runs++;
+						const v = $.get(previous);
+						const next = (typeof v === 'number' ? v : v.value) + 1;
+						return objects ? { value: next } : next;
+					});
+					value = next_value;
+					chain.push(next_value);
+				}
+				const read = () => {
+					const v = $.get(value);
+					return typeof v === 'number' ? v : v.value;
+				};
+
+				const f = fork(() => {
+					assert.equal(read(), 12);
+					assert.equal(read(), 12);
+					assert.equal(runs, 12);
+
+					// A write in the same view must invalidate unsubscribed cached values.
+					set(input, 1);
+					assert.equal(read(), 13);
+					assert.equal(read(), 13);
+					assert.equal(runs, 24);
+					assert.equal(input.reactions, null);
+					for (const d of chain) {
+						assert.equal(d.f & CONNECTED, 0);
+						assert.equal(d.reactions, null);
+					}
+				});
+				f.discard();
+				assert.equal(read(), 12);
+			} finally {
+				disable_async_mode_flag();
+			}
+		});
+	}
+
+	it('does not cache a disconnected run invalidated by a write during evaluation', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const inner = derived(() => $.get(input));
+			let runs = 0;
+			const outer = derived(() => {
+				runs++;
+				const value = $.get(inner);
+				if (value === 0) $.untrack(() => set(input, 1));
+				return value;
+			});
+
+			const f = fork(() => {
+				assert.equal($.get(outer), 0);
+				assert.equal($.get(outer), 1);
+				assert.equal($.get(outer), 1);
+				assert.equal(runs, 2);
+				assert.equal(input.reactions, null);
+			});
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
+	it('invalidates batch view entries after their derived disconnects', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const value = derived(() => $.get(input) + 1);
+			const f = fork(() => {
+				const destroy = effect_root(() => {
+					render_effect(() => {
+						$.get(value);
+					});
+				});
+				assert.equal($.get(value), 1);
+				destroy();
+				assert.equal(input.reactions, null);
+
+				// The old cache entry relied on subscriptions. Subsequent reads must not.
+				assert.equal($.get(value), 1);
+				set(input, 1);
+				assert.equal($.get(value), 2);
+				set(input, 2);
+				assert.equal($.get(value), 3);
+
+				set(value, 10);
+				assert.equal($.get(value), 10);
+				set(input, 3);
+				assert.equal($.get(value), 4);
+			});
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
 	test('nested commit retains latest block dependencies', () => {
 		const trigger = state(0);
 		const mode = state(0);

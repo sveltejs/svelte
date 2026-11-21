@@ -970,7 +970,7 @@ function keep_global_run(derived, flags) {
 
 /**
  * The version of `signal` that the current run saw. Recording it never evaluates anything: a derived that
- * isn't in the view's cache (anymore) was invalidated by a write during the run, or can't be cached —
+ * isn't in the view's cache anymore was invalidated by a write during the run —
  * the run then doesn't count as having seen its current version, just like in the real world, where
  * a derived that changes during the run gets a new version only once it is evaluated again
  * @param {Value} signal
@@ -1112,6 +1112,9 @@ function remove_reaction(signal, dependency) {
 
 		if ((derived.f & CONNECTED) !== 0) {
 			derived.f ^= CONNECTED;
+
+			// This cached entry relied on subscriptions, which are about to be removed.
+			view_cache?.delete(derived);
 		}
 
 		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is

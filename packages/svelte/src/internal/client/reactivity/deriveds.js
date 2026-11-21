@@ -9,7 +9,6 @@ import {
 	ASYNC,
 	DESTROYED,
 	INERT,
-	CONNECTED,
 	ASSIGNED,
 	ERROR_VALUE,
 	HAS_ABORT_CONTROLLER
@@ -42,7 +41,7 @@ import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
+import { batch_values, capture_version, current_batch, view_batch, view_cache } from './batch.js';
 import { current_runner, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
@@ -499,14 +498,15 @@ export function update_derived(signal) {
  * The value of `derived` as the view of the world of the active batch sees it, with its version: an
  * assigned value that holds, or a run of it whose versions are what the view holds — a record in the
  * batch, or the derived itself (i.e. its global state) — or else a new run. Results are cached for the
- * lifetime of the view (see `view_cache`), unless the derived is disconnected, in which case nothing
- * would remove them from the cache when they become stale.
+ * lifetime of the view (see `view_cache`). Disconnected deriveds are cached until the next write,
+ * since they have no subscriptions to invalidate their values.
  * @param {Derived} derived
  * @returns {Derived | DerivedRecord | BatchValue}
  */
 export function get_view(derived) {
-	var cache = /** @type {Map<Derived, Derived | DerivedRecord | BatchValue>} */ (view_cache);
+	var cache = /** @type {NonNullable<typeof view_cache>} */ (view_cache);
 	var entry = cache.get(derived);
+	var version = capture_version;
 
 	if (entry !== undefined) return entry;
 
@@ -541,9 +541,9 @@ export function get_view(derived) {
 		entry = /** @type {DerivedRecord | undefined} */ (batch.records?.get(derived)) ?? derived;
 	}
 
-	if ((derived.f & CONNECTED) !== 0) {
-		cache.set(derived, entry);
-	}
+	// A write during validation/evaluation may have invalidated a value this run read.
+	// Let the next read revalidate the run rather than caching a potentially stale result.
+	if (version === capture_version) cache.set(derived, entry);
 
 	return entry;
 }

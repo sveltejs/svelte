@@ -22,7 +22,8 @@ import {
 	ASSIGNED,
 	ASYNC,
 	REACTION_IS_UPDATING,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	CONNECTED
 } from '#client/constants';
 import { async_mode_flag, custom_renderers_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -140,9 +141,51 @@ export let batch_values = null;
  * The values of deriveds in the active view of the world, for as long as it is active (see `get_view`):
  * a record of a run (in which case `e` tells whether its value is an error), the derived itself if its
  * global state applies, or the write to it that holds (an assignment). Exists whenever `batch_values` does
- * @type {Map<Derived, Derived | DerivedRecord | BatchValue> | null}
+ * @type {ViewCache | null}
  */
 export let view_cache = null;
+
+// Unlike `write_version`, this only changes for explicit writes, not computed derived results.
+export let capture_version = 0;
+
+/** @extends {Map<Derived, Derived | DerivedRecord | BatchValue>} */
+class ViewCache extends Map {
+	#version = capture_version;
+
+	/** @type {Set<Derived> | null} */
+	#disconnected = null;
+
+	/** @param {Derived} derived */
+	get(derived) {
+		if (this.#version !== capture_version) {
+			// Disconnected deriveds have no subscriptions to invalidate their cached values.
+			// Check lazily, so writes made while this view is suspended invalidate them too.
+			for (const signal of this.#disconnected ?? []) super.delete(signal);
+			this.#disconnected = null;
+			this.#version = capture_version;
+		}
+
+		return super.get(derived);
+	}
+
+	/**
+	 * @param {Derived} derived
+	 * @param {Derived | DerivedRecord | BatchValue} entry
+	 */
+	set(derived, entry) {
+		if ((derived.f & CONNECTED) === 0) {
+			(this.#disconnected ??= new Set()).add(derived);
+		}
+
+		return super.set(derived, entry);
+	}
+
+	/** @param {Derived} derived */
+	delete(derived) {
+		this.#disconnected?.delete(derived);
+		return super.delete(derived);
+	}
+}
 
 /**
  * The batch whose view of the world is active (see `activate`). Block and async
@@ -956,6 +999,7 @@ export class Batch {
 	 * @param {Effect[] | null} [updated_during_traversal]
 	 */
 	capture(source, value, same, error = false, updated_during_traversal = null) {
+		capture_version++;
 		var previous = this.previous.get(source);
 		var later = later_writer(this, source);
 
@@ -1279,7 +1323,7 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
 		batch_values = new Map(this.current);
-		view_cache = new Map();
+		view_cache = new ViewCache();
 
 		// ...and undo changes belonging to other batches unless they intersect
 		for (let batch = first_batch; batch !== null; batch = batch.next) {
@@ -1955,7 +1999,7 @@ export function fork(fn) {
 		try {
 			in_real_world(() => {
 				batch_values = new Map();
-				view_cache = new Map();
+				view_cache = new ViewCache();
 				view_batch = batch;
 
 				fn();
