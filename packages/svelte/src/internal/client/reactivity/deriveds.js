@@ -12,7 +12,8 @@ import {
 	CONNECTED,
 	ASSIGNED,
 	ERROR_VALUE,
-	HAS_ABORT_CONTROLLER
+	HAS_ABORT_CONTROLLER,
+	CLEAN
 } from '#client/constants';
 import {
 	active_reaction,
@@ -31,7 +32,8 @@ import {
 	is_dirty,
 	abort_all,
 	abort_controller,
-	get
+	get,
+	is_outdated
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -508,7 +510,10 @@ export function get_view(derived) {
 	var cache = /** @type {Map<Derived, Derived | DerivedRecord | BatchValue>} */ (view_cache);
 	var entry = cache.get(derived);
 
-	if (entry !== undefined) return entry;
+	if (entry !== undefined) {
+		if (entry === derived) validate_global_status(derived);
+		return entry;
+	}
 
 	var batch = /** @type {Batch} */ (view_batch);
 
@@ -533,6 +538,7 @@ export function get_view(derived) {
 		derived.dv !== null &&
 		is_current(derived.deps, derived.dv)
 	) {
+		validate_global_status(derived);
 		entry = derived;
 	} else {
 		execute_derived(derived);
@@ -546,6 +552,23 @@ export function get_view(derived) {
 	}
 
 	return entry;
+}
+
+/**
+ * A reconnected derived whose global run is reused may still be MAYBE_DIRTY. Validate its
+ * status, too, so its parents can cache their results globally rather than in the batch.
+ * The dependencies must be current in the real world, not just in this view (which may
+ * undo writes that made the global run outdated). Clean and disconnected deriveds need no update.
+ * @param {Derived} derived
+ */
+function validate_global_status(derived) {
+	if (
+		(derived.f & (CONNECTED | CLEAN)) === CONNECTED &&
+		!is_outdated(derived) &&
+		!derived.deps?.some((dep) => (dep.f & (DERIVED | CLEAN)) === DERIVED)
+	) {
+		update_derived_status(derived);
+	}
 }
 
 /**
