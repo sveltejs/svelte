@@ -167,7 +167,25 @@ export function set_update_version(value) {
 	update_version = value;
 }
 
-export function increment_write_version() {
+/** Number of dependency checks in an outermost derived read, or 0 outside one. */
+let checked_deps = 0;
+
+/** @type {Set<Derived> | null} Successfully checked disconnected deriveds, valid only within that read. */
+let derived_checks = null;
+
+/** Explicit writes can invalidate checks even before the memo is allocated. */
+let derived_checks_version = 0;
+
+export function invalidate_derived_checks() {
+	if (checked_deps !== 0) {
+		derived_checks?.clear();
+		derived_checks_version++;
+	}
+}
+
+/** @param {boolean} [is_derived] A computed result, rather than an explicit write (including a derived assignment). */
+export function increment_write_version(is_derived = false) {
+	if (!is_derived) invalidate_derived_checks();
 	return ++write_version;
 }
 
@@ -309,12 +327,39 @@ export function is_dirty(reaction) {
 		if (dv === null) return true;
 
 		if (batch_values === null) {
+			var checking = checked_deps !== 0 && !current_batch?.is_fork;
+			var checks_version = derived_checks_version;
+
+			if (checking) {
+				checked_deps += dv.length;
+				// As in Batch#mark, only pay for a Set once repeated paths through the graph
+				// might be expensive. Small derived reads don't allocate a memo.
+				if (checked_deps > 100000) {
+					derived_checks ??= new Set();
+					if ((flags & CONNECTED) === 0 && derived_checks.has(/** @type {Derived} */ (reaction))) {
+						return false;
+					}
+				}
+			}
+
 			for (var i = 0, length = dv.length; i < length; i++) {
 				var dependency = /** @type {Value[]} */ (deps)[i];
 
 				update_derived(dependency);
 
 				if (dependency.wv !== dv[i]) return true;
+			}
+
+			// A write may have invalidated dependencies we already visited. Clearing the
+			// memo alone wouldn't stop this in-flight check from adding a stale result.
+			if (
+				checking &&
+				(flags & (CONNECTED | DERIVED)) === DERIVED &&
+				checks_version === derived_checks_version
+			) {
+				// The memo may have been allocated while checking a dependency. Disconnected
+				// deriveds must stay MAYBE_DIRTY, but need not be checked once per path.
+				derived_checks?.add(/** @type {Derived} */ (reaction));
 			}
 		} else if (!is_current(deps, dv)) {
 			return true;
@@ -751,7 +796,7 @@ function set_derived_value(derived, value, error) {
 
 	if (error || (flags & ERROR_VALUE) !== 0 || !derived.equals(value)) {
 		derived.v = value;
-		derived.wv = increment_write_version();
+		derived.wv = increment_write_version(true);
 		flags = error ? flags | ERROR_VALUE : flags & ~ERROR_VALUE;
 	}
 
@@ -1004,7 +1049,7 @@ function derived_version(derived, batch, value, error) {
 		if ((derived.f & ERROR_VALUE) === 0 && derived.equals(value)) return derived.wv;
 	}
 
-	return increment_write_version();
+	return increment_write_version(true);
 }
 
 /**
@@ -1126,6 +1171,8 @@ function remove_reaction(signal, dependency) {
 		// Call abort controller, noone's listening to this derived anymore: no live run of any reaction, in any batch,
 		// read it (the edges cover them all, see `Reaction#edges`). That includes the runs of it that batches hold
 		if (abort_all(derived)) {
+			// Disconnected ancestors may have been checked before this run was aborted.
+			invalidate_derived_checks();
 			// ensure it reruns right away next time instead of potentially returning a rejected promise as its value —
 			// in the real world, and in every batch's view (which would otherwise reuse its record of the derived)
 			set_signal_status(derived, DIRTY);
@@ -1398,6 +1445,16 @@ export function get(signal) {
 
 		if (batch_values !== null) {
 			view = get_view(derived);
+		} else if (!is_new && checked_deps === 0 && !current_batch?.is_fork) {
+			// Untracked reads need the same deduplication as reads that reconnect the graph.
+			checked_deps = 1;
+
+			try {
+				update_derived(derived);
+			} finally {
+				checked_deps = 0;
+				derived_checks = null;
+			}
 		} else {
 			update_derived(derived);
 		}
