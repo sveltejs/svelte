@@ -131,7 +131,16 @@ export interface ComponentAnalysis extends Analysis {
 	instance_body: {
 		hoisted: Array<Statement | ModuleDeclaration>;
 		sync: Array<Statement | ModuleDeclaration | VariableDeclaration>;
-		async: Array<{ nodes: Array<Statement | VariableDeclarator>; has_await: boolean }>;
+		async: Array<{
+			nodes: Array<Statement | VariableDeclarator>;
+			has_await: boolean;
+			/**
+			 * Set if `nodes` is a single `$derived(await ...)` declarator that is independent of the entries before it.
+			 * Its async derived is created at the start of the entry with this index, so that it runs in parallel with
+			 * the entries in between, but is still awaited (and assigned) as part of this entry
+			 */
+			hoisted_to?: number;
+		}>;
 		declarations: Array<Identifier>;
 	};
 }
