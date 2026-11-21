@@ -512,6 +512,18 @@ export class Batch {
 	}
 
 	#process() {
+		/** @type {Batch | null} */
+		var batch = this;
+
+		// Continue in a loop so that repeated updates don't grow the stack (and make
+		// capturing dev-mode update traces increasingly expensive).
+		while (batch !== null) {
+			batch = batch.#process_batch();
+		}
+	}
+
+	/** @returns {Batch | null} */
+	#process_batch() {
 		current_batch = processing_batch = this;
 
 		// A different batch view may apply, even when processing continues within the same flush.
@@ -631,8 +643,7 @@ export class Batch {
 				}
 
 				// Revalidate once all the writes and pending work belong to the same batch.
-				target.#process();
-				return;
+				return target;
 			}
 		}
 
@@ -645,11 +656,9 @@ export class Batch {
 				reset_branch(e);
 			}
 
-			if (updates.length > 0) {
-				/** @type {Batch} */ (/** @type {unknown} */ (current_batch)).#process();
-			}
-
-			return;
+			return updates.length > 0
+				? /** @type {Batch} */ (/** @type {unknown} */ (current_batch))
+				: null;
 		}
 
 		const earlier_batch = this.#find_earlier_batch();
@@ -660,9 +669,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
-			earlier_batch.#process();
-
-			return;
+			return earlier_batch;
 		}
 
 		for (const boundary of revealed_boundaries) {
@@ -715,9 +722,9 @@ export class Batch {
 					}
 				}
 			}
-
-			next_batch.#process();
 		}
+
+		return next_batch;
 	}
 
 	/**
