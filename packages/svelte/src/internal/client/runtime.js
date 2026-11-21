@@ -1112,6 +1112,9 @@ function remove_reaction(signal, dependency) {
 
 		if ((derived.f & CONNECTED) !== 0) {
 			derived.f ^= CONNECTED;
+
+			// `mark` no longer reaches the derived, so nothing would remove its view from the cache when it becomes stale
+			view_cache?.delete(derived);
 		}
 
 		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is
