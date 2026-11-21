@@ -247,9 +247,8 @@ export class Spring {
 		if (!this.#task) {
 			this.#last_time = raf.now();
 
-			var inv_mass_recovery_rate = 1000 / (this.#momentum * 60);
-
 			this.#task ??= loop((now) => {
+				var inv_mass_recovery_rate = 1000 / (this.#momentum * 60);
 				this.#inverse_mass = Math.min(this.#inverse_mass + inv_mass_recovery_rate, 1);
 
 				// clamp elapsed time to 1/30th of a second, so that longer pauses
