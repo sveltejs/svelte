@@ -138,6 +138,15 @@ export let new_deps = null;
 export let skipped_deps = 0;
 
 /**
+ * The versions of the disconnected deriveds that the current reaction's run read while a view of the world was
+ * active, as `get_view` returned them. The view's cache doesn't hold disconnected deriveds, so it can't tell
+ * afterwards which version the run saw (see `seen_version`), but the run itself knows. `-1` if it read different
+ * versions of the same derived
+ * @type {Map<Derived, number> | null}
+ */
+let view_read_versions = null;
+
+/**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
  * @type {null | Value[]}
@@ -523,6 +532,7 @@ export function update_reaction(reaction) {
 	const batch = current_batch;
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
+	var previous_view_read_versions = view_read_versions;
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_sources = current_sources;
@@ -534,6 +544,7 @@ export function update_reaction(reaction) {
 
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
+	view_read_versions = null;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
@@ -639,6 +650,7 @@ export function update_reaction(reaction) {
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
+		view_read_versions = previous_view_read_versions;
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		current_sources = previous_sources;
@@ -969,10 +981,11 @@ function keep_global_run(derived, flags) {
 }
 
 /**
- * The version of `signal` that the current run saw. Recording it never evaluates anything: a derived that
- * isn't in the view's cache (anymore) was invalidated by a write during the run, or can't be cached —
- * the run then doesn't count as having seen its current version, just like in the real world, where
- * a derived that changes during the run gets a new version only once it is evaluated again
+ * The version of `signal` that the current run saw. Recording it never evaluates anything. A derived that
+ * isn't in the view's cache anymore was invalidated by a write during the run — the run then doesn't count
+ * as having seen its current version, just like in the real world, where a derived that changes during the
+ * run gets a new version only once it is evaluated again. A derived that was disconnected when the run read
+ * it can't be cached: the run remembers the version it read instead (see `view_read_versions`)
  * @param {Value} signal
  */
 function seen_version(signal) {
@@ -980,7 +993,12 @@ function seen_version(signal) {
 
 	if ((signal.f & DERIVED) !== 0) {
 		var cache = /** @type {Map<Derived, Derived | DerivedRecord | BatchValue>} */ (view_cache);
-		return cache.get(/** @type {Derived} */ (signal))?.wv ?? -1;
+		var cached = cache.get(/** @type {Derived} */ (signal));
+		if (cached !== undefined) return cached.wv;
+
+		// the version the run read, if the derived was disconnected then: if a write invalidated it
+		// since, it gets a new version when it's evaluated again, and the run is stale
+		return view_read_versions?.get(/** @type {Derived} */ (signal)) ?? -1;
 	}
 
 	return (batch_values.get(signal) ?? signal).wv;
@@ -1398,6 +1416,18 @@ export function get(signal) {
 
 		if (batch_values !== null) {
 			view = get_view(derived);
+
+			// the view doesn't cache a disconnected derived, so the run that reads it
+			// remembers which version it saw (see `seen_version`)
+			if (
+				(derived.f & CONNECTED) === 0 &&
+				active_reaction !== null &&
+				!untracking &&
+				(active_reaction.f & REACTION_IS_UPDATING) !== 0
+			) {
+				var seen = (view_read_versions ??= new Map()).get(derived);
+				view_read_versions.set(derived, seen === undefined || seen === view.wv ? view.wv : -1);
+			}
 		} else {
 			update_derived(derived);
 		}
