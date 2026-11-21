@@ -6,11 +6,12 @@ export { invalid_default_snippet } from './errors.js';
 
 /**
  * @param {() => string} tag_fn
+ * @param {() => boolean} [has_content]
  * @returns {void}
  */
-export function validate_void_dynamic_element(tag_fn) {
+export function validate_void_dynamic_element(tag_fn, has_content) {
 	const tag = tag_fn();
-	if (tag && is_void(tag)) {
+	if (tag && is_void(tag) && (has_content?.() ?? true)) {
 		w.dynamic_void_element_content(tag);
 	}
 }

@@ -5,7 +5,7 @@ import { dev, locator } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { async_thunk } from '../utils.js';
-import { determine_namespace_for_children } from '../../utils.js';
+import { build_void_element_content_check, determine_namespace_for_children } from '../../utils.js';
 import {
 	build_attribute_value,
 	build_attribute_effect,
@@ -121,7 +121,18 @@ export function SvelteElement(node, context) {
 	if (dev) {
 		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
 		if (node.fragment.nodes.length > 0) {
-			statements.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
+			statements.push(
+				b.stmt(
+					b.call(
+						'$.validate_void_dynamic_element',
+						get_tag,
+						build_void_element_content_check(
+							node,
+							(n) => /** @type {Expression} */ (context.visit(n))
+						)
+					)
+				)
+			);
 		}
 	}
 
