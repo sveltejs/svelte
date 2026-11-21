@@ -47,6 +47,8 @@ import { current_runner, increment_pending, merge_target, unset_context } from '
 import { deferred, includes, noop } from '../../shared/utils.js';
 import { update_derived_status } from './status.js';
 import { stringify_derived } from '../dev/debug.js';
+import { emit, hooks } from '../dev/devtools.js';
+import { label_source } from '../dev/tracing.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -110,10 +112,11 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
  * @param {(error: unknown) => void} [onready] Called when the first result is captured; receives its error, if any
+ * @param {string} [dev_location] Dev only: `file:line:column` of the declaration, for devtools
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_expression(fn, label, location, onready) {
+export function async_expression(fn, label, location, onready, dev_location) {
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 	signal.f |= ASYNC;
 
@@ -307,6 +310,10 @@ export function async_expression(fn, label, location, onready) {
 		}
 	});
 
+	if (DEV) {
+		label_source(signal, /** @type {string} */ (signal.label), dev_location);
+	}
+
 	return signal;
 }
 
@@ -315,10 +322,11 @@ export function async_expression(fn, label, location, onready) {
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @param {string} [dev_location] Dev only: `file:line:column` of the declaration, for devtools
  * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, label, location) {
+export function async_derived(fn, label, location, dev_location) {
 	if (!current_runner) {
 		e.async_derived_orphan();
 	}
@@ -356,7 +364,8 @@ export function async_derived(fn, label, location) {
 			(error) => {
 				if (error === undefined) fulfil(/** @type {Source<V>} */ (source));
 				else reject(error);
-			}
+			},
+			dev_location
 		);
 
 		var index = runner.signals.push(source) - 1;
@@ -455,6 +464,10 @@ export function execute_derived(derived) {
 	if (DEV) {
 		set_eager_effects(new Set());
 		stack.push(derived);
+
+		if (hooks.reactionRunStart !== null) {
+			emit('reactionRunStart', derived);
+		}
 	}
 
 	try {
@@ -466,6 +479,10 @@ export function execute_derived(derived) {
 		if (DEV) {
 			set_eager_effects(prev_eager_effects);
 			stack.pop();
+
+			if (hooks.reactionRunEnd !== null) {
+				emit('reactionRunEnd', derived);
+			}
 		}
 	}
 }

@@ -50,6 +50,13 @@ import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
 import { push_renderer, current_renderer, pop_renderer } from '../custom-renderer/state.js';
 import { custom_renderers_flag } from '../../flags/index.js';
+import {
+	destroy_components,
+	elide_effect,
+	emit,
+	emit_effect_destroyed,
+	hooks
+} from '../dev/devtools.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -86,9 +93,10 @@ function push_effect(effect, parent_effect) {
 /**
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
+ * @param {string} [location] Dev only: where a `$effect` / `$effect.pre` was declared
  * @returns {Effect}
  */
-function create_effect(type, fn) {
+function create_effect(type, fn, location) {
 	var parent = active_effect;
 
 	if (DEV) {
@@ -125,6 +133,14 @@ function create_effect(type, fn) {
 
 	if (DEV) {
 		effect.component_function = dev_current_component_function;
+
+		if (location !== undefined) {
+			effect.location = location;
+		}
+
+		if (hooks.effectCreated !== null) {
+			emit('effectCreated', effect);
+		}
 	}
 
 	/** @type {Effect | null} */
@@ -159,6 +175,11 @@ function create_effect(type, fn) {
 			e = e.first;
 			if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
 				e.f |= EFFECT_TRANSPARENT;
+			}
+
+			if (DEV && (hooks.effectDestroyed !== null || hooks.componentDestroyed !== null)) {
+				// the effect is dropped from the tree and will never be destroyed, report it now
+				elide_effect(effect, e);
 			}
 		}
 	}
@@ -205,8 +226,9 @@ export function teardown(fn) {
 /**
  * Internal representation of `$effect(...)`
  * @param {() => void | (() => void)} fn
+ * @param {string} [location] Dev only: `file:line:column` of the `$effect`
  */
-export function user_effect(fn) {
+export function user_effect(fn, location) {
 	validate_effect('$effect');
 
 	if (DEV) {
@@ -227,33 +249,41 @@ export function user_effect(fn) {
 	if (defer) {
 		// Top-level `$effect(...)` in an unmounted component — defer until mount
 		var context = /** @type {ComponentContext} */ (component_context);
-		(context.e ??= []).push(fn);
+		var deferred = (context.e ??= []);
+		deferred.push(fn);
+
+		if (DEV) {
+			// each callback is followed by its location, see `pop`
+			deferred.push(location);
+		}
 	} else {
 		// Everything else — create immediately
-		return create_user_effect(fn);
+		return create_user_effect(fn, location);
 	}
 }
 
 /**
  * @param {() => void | (() => void)} fn
+ * @param {string} [location] Dev only
  */
-export function create_user_effect(fn) {
-	return create_effect(EFFECT | USER_EFFECT, fn);
+export function create_user_effect(fn, location) {
+	return create_effect(EFFECT | USER_EFFECT, fn, location);
 }
 
 /**
  * Internal representation of `$effect.pre(...)`
  * @param {() => void | (() => void)} fn
+ * @param {string} [location] Dev only: `file:line:column` of the `$effect.pre`
  * @returns {Effect}
  */
-export function user_pre_effect(fn) {
+export function user_pre_effect(fn, location) {
 	validate_effect('$effect.pre');
 	if (DEV) {
 		define_property(fn, 'name', {
 			value: '$effect.pre'
 		});
 	}
-	return create_effect(RENDER_EFFECT | USER_EFFECT, fn);
+	return create_effect(RENDER_EFFECT | USER_EFFECT, fn, location);
 }
 
 /** @param {() => void | (() => void)} fn */
@@ -561,6 +591,14 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	if (DEV) {
 		effect.component_function = null;
+
+		if (hooks.componentDestroyed !== null) {
+			destroy_components(effect);
+		}
+
+		if (hooks.effectDestroyed !== null) {
+			emit_effect_destroyed(effect);
+		}
 	}
 
 	// `first` and `child` are nulled out in destroy_effect_children

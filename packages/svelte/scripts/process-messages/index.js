@@ -340,6 +340,27 @@ function run() {
 							};
 						}
 					},
+					ArrayExpression(node, context) {
+						// `[PARAMETER]` becomes an array of all the message parameters
+						if (
+							!node.elements.some(
+								(element) => element?.type === 'Identifier' && element.name === 'PARAMETER'
+							)
+						) {
+							return;
+						}
+
+						return {
+							type: 'ArrayExpression',
+							elements: node.elements.flatMap((element) =>
+								element?.type === 'Identifier' && element.name === 'PARAMETER'
+									? vars.map(
+											(name) => /** @type {ESTree.Expression} */ ({ type: 'Identifier', name })
+										)
+									: [/** @type {ESTree.Expression} */ (context.visit(/** @type {any} */ (element)))]
+							)
+						};
+					},
 					Identifier(node) {
 						if (node.name !== 'MESSAGE') return;
 						return message;

@@ -1,4 +1,4 @@
-/** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Reaction, Value } from '#client' */
+/** @import { BatchRecord, BatchValue, ComponentContext, Derived, DerivedRecord, Reaction, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
@@ -6,6 +6,8 @@ import { effect_tracking } from '../reactivity/effects.js';
 import { batch_values, view_batch } from '../reactivity/batch.js';
 import { get_view } from '../reactivity/deriveds.js';
 import { active_reaction, run_of, untrack, version_of } from '../runtime.js';
+import { component_context } from '../context.js';
+import { announce_signal, hooks } from './devtools.js';
 
 /**
  * @typedef {{
@@ -190,11 +192,38 @@ export function trace(label, fn) {
  * @template {Value} T
  * @param {T} source
  * @param {string} label
+ * @param {string} [location] `file:line:column` of the declaration
  * @returns {T}
  */
-export function tag(source, label) {
+export function tag(source, label, location) {
+	label_source(source, label, location);
+	tag_proxy(source.v, label, location);
+
+	return source;
+}
+
+/**
+ * Like `tag`, but doesn't relabel the proxy stored in the source (if any)
+ * @template {Value} T
+ * @param {T} source
+ * @param {string} label
+ * @param {string} [location]
+ * @param {object} [proxy] the `$state` proxy owning this source, if any
+ * @param {PropertyKey} [key] the property of `proxy` this source stores (`undefined` for the version source)
+ * @param {ComponentContext | null} [ctx] the component the source was declared in
+ * @returns {T}
+ */
+export function label_source(source, label, location, proxy, key, ctx = component_context) {
 	source.label = label;
-	tag_proxy(source.v, label);
+
+	if (location !== undefined) {
+		source.location = location;
+		source.owner = ctx;
+	}
+
+	if (hooks.signalCreated !== null) {
+		announce_signal(source, label, source.location, proxy, key, ctx);
+	}
 
 	return source;
 }
@@ -202,10 +231,12 @@ export function tag(source, label) {
 /**
  * @param {unknown} value
  * @param {string} label
+ * @param {string} [location]
+ * @param {ComponentContext | null} [ctx] the component the proxy was declared in
  */
-export function tag_proxy(value, label) {
+export function tag_proxy(value, label, location, ctx = component_context) {
 	// @ts-expect-error
-	value?.[PROXY_PATH_SYMBOL]?.(label);
+	value?.[PROXY_PATH_SYMBOL]?.(label, location, ctx);
 	return value;
 }
 

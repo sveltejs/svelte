@@ -150,7 +150,8 @@ export function migrate(source, { filename, use_ts } = {}) {
 			runes: 'runes' in parsed_options ? () => parsed_options.runes : () => undefined,
 			experimental: {
 				async: true,
-				customRenderer: () => undefined
+				customRenderer: () => undefined,
+				devtools: []
 			}
 		};
 

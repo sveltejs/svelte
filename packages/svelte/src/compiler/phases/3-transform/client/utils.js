@@ -13,6 +13,22 @@ import {
 	PROPS_IS_UPDATED,
 	PROPS_IS_BINDABLE
 } from '../../../../constants.js';
+import { filename, locator } from '../../../state.js';
+
+/**
+ * Dev only: a `'file:line:column'` literal pointing at `node`, passed to the runtime so that
+ * devtools can tell where a signal or effect was declared
+ * @param {{ start?: number }} node
+ * @returns {Expression | undefined}
+ */
+export function dev_location(node) {
+	if (node.start === undefined) return undefined;
+
+	// unlike `locate_node`, don't sanitize the filename (which inserts zero-width spaces
+	// for console display) — devtools need the real path
+	const { line, column } = locator(node.start);
+	return b.literal(`${filename}:${line}:${column}`);
+}
 
 /**
  * @param {Binding} binding

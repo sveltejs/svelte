@@ -20,6 +20,7 @@
 			"svelte/compiler": ["./src/compiler/public.d.ts"],
 			"svelte/events": ["./src/events/public.d.ts"],
 			"svelte/internal/client": ["./src/internal/client/index.js"],
+			"svelte/internal/devtools": ["./src/internal/devtools/public.d.ts"],
 			"svelte/legacy": ["./src/legacy/legacy-client.js"],
 			"svelte/motion": ["./src/motion/public.d.ts"],
 			"svelte/renderer": ["./src/renderer/public.d.ts"],
