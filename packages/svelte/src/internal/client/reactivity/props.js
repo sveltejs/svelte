@@ -277,6 +277,13 @@ export function prop(props, key, flags, fallback) {
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
 
+	// a prop named as a member of `Object.prototype`, `__proto__` or `constructor`,
+	// is one the parent passed, never what `props` inherits
+	var inherited = key in Object.prototype;
+	var read = inherited
+		? () => /** @type {V} */ (has_own_property.call(props, key) ? props[key] : undefined)
+		: () => /** @type {V} */ (props[key]);
+
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
 	var fallback_signal = /** @type {Derived<V> | undefined} */ (undefined);
@@ -305,6 +312,8 @@ export function prop(props, key, flags, fallback) {
 		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
 		// or `createClassComponent(Component, props)`
 		var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+
+		var passed = inherited ? has_own_property.call(props, key) : key in props;
 
 		setter =
 			get_descriptor(props, key)?.set ??
