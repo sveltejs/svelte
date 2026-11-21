@@ -159,6 +159,9 @@ export function async_expression(fn, label, location, onready) {
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
 
+		/** Set when `fn()` throws synchronously — `unset_context` is deferred until the rejection is handled below */
+		var sync_threw = false;
+
 		try {
 			var result = fn();
 			if (result === UNINITIALIZED) return;
@@ -188,7 +191,13 @@ export function async_expression(fn, label, location, onready) {
 				)
 				.finally(unset_context);
 		} catch (error) {
+			sync_threw = true;
 			d.reject(error);
+			// Don't `unset_context()` here — the bookkeeping below still needs the active
+			// context, just like the non-throwing path where it runs before the promise
+			// settles. Unsetting eagerly nulls `active_effect`/`current_batch`, which turns
+			// the original error into `Cannot read properties of null (reading 'f')`.
+			// It is undone when the rejection is handled below instead.
 		}
 
 		if (DEV) {
@@ -298,7 +307,16 @@ export function async_expression(fn, label, location, onready) {
 			}
 		};
 
-		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
+		d.promise.then(handler, (e) => {
+			if (sync_threw) {
+				// `fn()` threw synchronously — undo any `save` calls that happened inside
+				// it, now that the bookkeeping above has run (mirrors `.finally(unset_context)`
+				// on the non-throwing path)
+				unset_context();
+			}
+
+			handler(null, e || 'unknown');
+		});
 	});
 
 	teardown(() => {
