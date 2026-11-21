@@ -13,6 +13,31 @@ describe('motion', () => {
 			size.set(100);
 			assert.equal(get(size), 100);
 		});
+
+		it.each([false, true])('reaches the target after a hard set with soft=%s', async (soft) => {
+			raf.reset();
+			const size = spring(0);
+
+			size.set(100);
+			raf.tick(16);
+			assert.isAbove(get(size), 0);
+			assert.isBelow(get(size), 100);
+
+			await size.set(10, { hard: true });
+			assert.equal(get(size), 10);
+
+			const completed_value = size.set(20, { soft }).then(() => get(size));
+
+			for (let time = 32; time <= 10000; time += 16) {
+				raf.tick(time);
+				await Promise.resolve();
+			}
+
+			assert.deepEqual(
+				{ value: get(size), completed_value: await completed_value },
+				{ value: 20, completed_value: 20 }
+			);
+		});
 	});
 
 	describe('tweened', () => {
