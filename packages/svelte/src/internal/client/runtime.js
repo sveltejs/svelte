@@ -366,9 +366,15 @@ export let abort_controller = null;
  * The signal of the run of `reaction` that is in progress. Its controller is stored with the run once it's done
  * (see `set_global_signal` and `update_record`) — `reaction.ac` is the previous global run's until then
  * @param {Reaction} reaction
+ * @param {boolean} [allow_late] whether an internal subscription may attach to a run after an `await`
  */
-export function get_abort_signal(reaction) {
+export function get_abort_signal(reaction, allow_late = false) {
 	if ((reaction.f & REACTION_IS_UPDATING) === 0) {
+		if (allow_late) {
+			reaction.f |= HAS_ABORT_CONTROLLER;
+			return (run_of(reaction).ac ??= new AbortController()).signal;
+		}
+
 		// for now, disallow calling `getAbortSignal()` after an `await`. we could
 		// potentially relax this restriction in future, but it adds complexity
 		e.get_abort_signal_after_await();
