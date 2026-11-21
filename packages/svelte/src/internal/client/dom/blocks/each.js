@@ -297,6 +297,15 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var previous_renderer = custom_renderers_flag ? push_renderer(renderer) : null;
 
 		try {
+			// A later eager block run may have deselected an ancestor after this commit was queued.
+			// Its collection can now contain items that this block never created.
+			if (batch?.is_skipped(state.effect)) {
+				// A revived block must re-run even if its collection hasn't changed since its last run.
+				state.effect.dv = null;
+				discard(batch);
+				return;
+			}
+
 			state.pending.delete(batch);
 
 			// The effect doesn't necessarily re-run in a batch right before that batch commits
