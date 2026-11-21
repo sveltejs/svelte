@@ -65,6 +65,39 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	it('invalidates batch view entries after their derived disconnects', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const value = derived(() => $.get(input) + 1);
+			const f = fork(() => {
+				const destroy = effect_root(() => {
+					render_effect(() => {
+						$.get(value);
+					});
+				});
+				assert.equal($.get(value), 1);
+				destroy();
+				assert.equal(input.reactions, null);
+
+				// The old cache entry relied on subscriptions. Subsequent reads must not.
+				assert.equal($.get(value), 1);
+				set(input, 1);
+				assert.equal($.get(value), 2);
+				set(input, 2);
+				assert.equal($.get(value), 3);
+
+				set(value, 10);
+				assert.equal($.get(value), 10);
+				set(input, 3);
+				assert.equal($.get(value), 4);
+			});
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
 	test('nested commit retains latest block dependencies', () => {
 		const trigger = state(0);
 		const mode = state(0);
