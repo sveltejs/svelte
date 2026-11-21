@@ -113,6 +113,18 @@ When using `ontouchstart` and `ontouchmove` event attributes, the handlers are [
 
 In the very rare cases that you need to prevent these event defaults, you should use [`on`](svelte-events#on) instead (for example inside an action).
 
+### Asynchronous event handlers
+
+After an `await`, `event.currentTarget` may refer to a different element or be `null`. Capture it before awaiting if you need to use it later:
+
+```svelte
+<button onclick={async (event) => {
+	const button = event.currentTarget;
+	await Promise.resolve();
+	console.log(button); // still the button
+}}>click me</button>
+```
+
 ### Event delegation
 
 To reduce memory footprint and increase performance, Svelte uses a technique called event delegation. This means that for certain events — see the list below — a single event listener at the application root takes responsibility for running any handlers on the event's path.
