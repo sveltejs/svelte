@@ -7,7 +7,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
-import { get_descriptor, is_function } from '../../shared/utils.js';
+import { get_descriptor, has_own_property, is_function } from '../../shared/utils.js';
 import { set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import {
@@ -277,6 +277,12 @@ export function prop(props, key, flags, fallback) {
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
 
+	// a prop named `__proto__` is one the parent passed, never the prototype of `props`
+	var read =
+		key === '__proto__'
+			? () => /** @type {V} */ (has_own_property.call(props, key) ? props[key] : undefined)
+			: () => /** @type {V} */ (props[key]);
+
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
 	var fallback_signal = /** @type {Derived<V> | undefined} */ (undefined);
@@ -306,9 +312,11 @@ export function prop(props, key, flags, fallback) {
 		// or `createClassComponent(Component, props)`
 		var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
 
+		var passed = key === '__proto__' ? has_own_property.call(props, key) : key in props;
+
 		setter =
 			get_descriptor(props, key)?.set ??
-			(is_entry_props && key in props ? (v) => (props[key] = v) : undefined);
+			(is_entry_props && passed ? (v) => (props[key] = v) : undefined);
 	}
 
 	/** @type {V} */
@@ -316,9 +324,9 @@ export function prop(props, key, flags, fallback) {
 	var is_store_sub = false;
 
 	if (bindable) {
-		[initial_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
+		[initial_value, is_store_sub] = capture_store_binding(read);
 	} else {
-		initial_value = /** @type {V} */ (props[key]);
+		initial_value = read();
 	}
 
 	if (initial_value === undefined && fallback !== undefined) {
@@ -335,14 +343,14 @@ export function prop(props, key, flags, fallback) {
 
 	if (runes) {
 		getter = () => {
-			var value = /** @type {V} */ (props[key]);
+			var value = read();
 			if (value === undefined) return get_fallback();
 			fallback_dirty = true;
 			return value;
 		};
 	} else {
 		getter = () => {
-			var value = /** @type {V} */ (props[key]);
+			var value = read();
 
 			if (value !== undefined) {
 				// in legacy mode, we don't revert to the fallback value

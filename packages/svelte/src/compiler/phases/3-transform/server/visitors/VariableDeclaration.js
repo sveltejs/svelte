@@ -75,8 +75,38 @@ export function VariableDeclaration(node, context) {
 						b.rest(b.id(id.name))
 					]);
 				}
+				// a prop named `__proto__` is the one the parent passed, never the
+				// prototype `$$props` inherits: the props are read from a copy with
+				// no prototype, `{ __proto__: null, ...$$props }`, which names no
+				// global the component could shadow
+				const proto =
+					id.type === 'ObjectPattern' &&
+					id.properties.some(
+						(property) =>
+							property.type === 'Property' &&
+							!property.computed &&
+							((property.key.type === 'Identifier' && property.key.name === '__proto__') ||
+								(property.key.type === 'Literal' && property.key.value === '__proto__'))
+					);
+
 				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(id)), b.id('$$props'))
+					b.declarator(
+						/** @type {Pattern} */ (context.visit(id)),
+						proto
+							? b.object([
+									{
+										type: 'Property',
+										kind: 'init',
+										key: b.id('__proto__'),
+										value: b.null,
+										method: false,
+										shorthand: false,
+										computed: false
+									},
+									b.spread(b.id('$$props'))
+								])
+							: b.id('$$props')
+					)
 				);
 				continue;
 			}

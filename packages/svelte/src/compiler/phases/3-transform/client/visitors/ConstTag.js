@@ -4,7 +4,7 @@
 import { dev } from '../../../../state.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_derived } from '../utils.js';
+import { copy_transform, create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 import { build_expression } from './shared/utils.js';
 import { add_async_declaration } from './DeclarationTag.js';
@@ -32,7 +32,7 @@ export function ConstTag(node, context) {
 		const identifiers = extract_identifiers(declaration.id);
 		const tmp = b.id(context.state.scope.generate('computed_const'));
 
-		const transform = { ...context.state.transform };
+		const transform = copy_transform(context.state.transform);
 
 		// Make all identifiers that are declared within the following computed regular
 		// variables, as they are not signals in that context yet

@@ -123,7 +123,9 @@ export function is_prop_source(binding, state) {
 			binding.initial ||
 			// Until legacy mode is gone, we also need to use the prop source when only mutated is true,
 			// because the parent could be a legacy component which needs coarse-grained reactivity
-			binding.updated)
+			binding.updated ||
+			// `$$props.__proto__` would read the prototype of `$$props` when the prop is not passed
+			(binding.prop_alias ?? binding.node.name) === '__proto__')
 	);
 }
 
@@ -170,11 +172,21 @@ export function create_derived(state, expression, metadata) {
 }
 
 /**
+ * A copy of a table of transformers, keyed by the names of the component, one
+ * of which may be `__proto__`: an ordinary object would take it for its prototype
+ * @param {ClientTransformState['transform']} [transform]
+ * @returns {ClientTransformState['transform']}
+ */
+export function copy_transform(transform = {}) {
+	return Object.assign(Object.create(null), transform);
+}
+
+/**
  * @param {Scope} scope
  * @param {ClientTransformState} state
  */
 export function get_transform(scope, state) {
-	const transform = { ...state.transform };
+	const transform = copy_transform(state.transform);
 
 	for (const [name, binding] of scope.declarations) {
 		if (
