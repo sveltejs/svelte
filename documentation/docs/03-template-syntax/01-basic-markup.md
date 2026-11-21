@@ -18,6 +18,22 @@ A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag
 </div>
 ```
 
+### Element nesting
+
+Browsers insert a `<tbody>` when parsing a `<tr>` directly inside a `<table>`. In a Svelte component, write the `<tbody>` explicitly so that the browser's DOM matches the component's structure:
+
+```svelte
+<table>
+	<tbody>
+		<tr>
+			<td>cell</td>
+		</tr>
+	</tbody>
+</table>
+```
+
+Svelte rejects other nesting that the browser would change, such as a `<div>` inside a `<p>`. See [`node_invalid_placement`](compiler-errors#node_invalid_placement) for more examples.
+
 ## Element attributes
 
 By default, attributes work exactly like their HTML counterparts.
