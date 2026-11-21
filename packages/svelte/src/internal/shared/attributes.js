@@ -169,6 +169,15 @@ export function to_style(value, styles) {
 			for (var i = 0; i < len; i++) {
 				var c = value[i];
 
+				if (c === '\\' && !in_comment && i < len - 1) {
+					// an escaped character (e.g. a quote inside a string, or a `;`) has no special meaning...
+					i++;
+					if (i < len - 1) continue;
+
+					// ...but if it's the last one, the declaration still ends here
+					c = '';
+				}
+
 				if (in_comment) {
 					if (c === '/' && value[i - 1] === '*') {
 						in_comment = false;
