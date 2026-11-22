@@ -88,6 +88,17 @@ export function create_text(value = '') {
 }
 
 /**
+ * Creates a node that only marks a position. In the DOM this is an empty text node; with a
+ * custom renderer it's an empty comment, so that renderers can treat every comment as
+ * plumbing and every text node as content
+ * @returns {Text}
+ */
+export function create_anchor() {
+	if (current_renderer) return /** @type {Text} */ (current_renderer.createComment(''));
+	return document.createTextNode('');
+}
+
+/**
  * @template {Node} N
  * @param {N} node
  */

@@ -24,6 +24,7 @@ import {
 	create_comment,
 	create_element,
 	create_fragment,
+	create_anchor,
 	create_text,
 	get_first_child,
 	get_last_child,
@@ -367,7 +368,7 @@ export function comment() {
 
 	var frag = create_fragment();
 	var start = create_comment('');
-	var anchor = create_text();
+	var anchor = create_anchor();
 	append_child(frag, start);
 	append_child(frag, anchor);
 
