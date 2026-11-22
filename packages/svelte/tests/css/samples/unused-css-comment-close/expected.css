@@ -1,0 +1,27 @@
+	/* (unused) .unused[title="*\/"] {
+		content: '*\/';
+	}*/
+
+	/* (unused) .unused[title="*\/"],*/ .used.svelte-xyz {
+		color: red;
+	}
+
+	.used.svelte-xyz /* (unused) .unused[title="*\/"]*/, .used.svelte-xyz {
+		color: green;
+	}
+
+	.used.svelte-xyz /* (unused) .unused[title="*\/"]*/ {
+		color: blue;
+	}
+
+	/* (unused) .unused /* a *\/,*/ .used.svelte-xyz {
+		color: purple;
+	}
+
+	.used.svelte-xyz /* (unused) .unused /* a *\/*/, .used.svelte-xyz {
+		color: pink;
+	}
+
+	.used[title="*/"].svelte-xyz /* (unused) .unused*/, .used.svelte-xyz {
+		color: orange;
+	}

@@ -209,6 +209,8 @@ const visitors = {
 			let prune_start = children[0].start;
 			let last = prune_start;
 			let has_previous_used = false;
+			// where the `/* (unused) ` comment starts, to escape any `*/` after it
+			let comment_start = prune_start;
 
 			for (let i = 0; i < children.length; i += 1) {
 				const selector = children[i];
@@ -221,9 +223,13 @@ const visitors = {
 						if (state.minify) {
 							state.code.remove(prune_start, has_previous_used ? i : i + 1);
 						} else {
-							state.code.appendRight(has_previous_used ? i : i + 1, '*/');
+							const end = has_previous_used ? i : i + 1;
+							escape_comment_close({ start: comment_start, end }, state.code);
+							state.code.appendRight(end, '*/');
 						}
 					} else {
+						comment_start = selector.start;
+
 						if (i === 0) {
 							if (state.minify) {
 								prune_start = selector.start;
@@ -253,6 +259,7 @@ const visitors = {
 				if (state.minify) {
 					state.code.remove(prune_start, last);
 				} else {
+					escape_comment_close({ start: comment_start, end: last }, state.code);
 					state.code.appendLeft(last, '*/');
 				}
 			}
@@ -459,28 +466,15 @@ function is_used(rule) {
 
 /**
  *
- * @param {AST.CSS.Rule} node
+ * @param {{ start: number, end: number }} node
  * @param {MagicString} code
  */
 function escape_comment_close(node, code) {
-	let escaped = false;
-	let in_comment = false;
-
-	for (let i = node.start; i < node.end; i++) {
-		if (escaped) {
-			escaped = false;
-		} else {
-			const char = code.original[i];
-			if (in_comment) {
-				if (char === '*' && code.original[i + 1] === '/') {
-					code.prependRight(++i, '\\');
-					in_comment = false;
-				}
-			} else if (char === '\\') {
-				escaped = true;
-			} else if (char === '/' && code.original[++i] === '*') {
-				in_comment = true;
-			}
+	// the whole node goes inside a comment, so any `*/` in it (in a comment,
+	// a string or anywhere else) would end that comment early
+	for (let i = node.start; i < node.end - 1; i++) {
+		if (code.original[i] === '*' && code.original[i + 1] === '/') {
+			code.prependRight(++i, '\\');
 		}
 	}
 }
