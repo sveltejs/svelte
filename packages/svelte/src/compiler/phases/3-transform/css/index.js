@@ -215,19 +215,30 @@ const visitors = {
 
 				if (selector.metadata.used === pruning) {
 					if (pruning) {
-						let i = selector.start;
-						while (state.code.original[i] !== ',') i--;
+						// Between selectors, only whitespace and comments can precede the comma.
+						// Scan forwards so commas (and opening delimiters) inside comments are ignored.
+						let end = last;
+						while (state.code.original[end] !== ',') {
+							if (state.code.original[end] === '/' && state.code.original[end + 1] === '*') {
+								end = state.code.original.indexOf('*/', end + 2) + 2;
+							} else {
+								end++;
+							}
+						}
+
+						if (!has_previous_used) end++;
 
 						if (state.minify) {
-							state.code.remove(prune_start, has_previous_used ? i : i + 1);
+							state.code.remove(prune_start, end);
 						} else {
-							state.code.appendRight(has_previous_used ? i : i + 1, '*/');
+							state.code.appendRight(end, '*/');
+							escape_comment_close({ start: prune_start, end }, state.code);
 						}
 					} else {
+						prune_start = selector.start;
+
 						if (i === 0) {
-							if (state.minify) {
-								prune_start = selector.start;
-							} else {
+							if (!state.minify) {
 								state.code.prependRight(selector.start, '/* (unused) ');
 							}
 						} else {
@@ -254,6 +265,7 @@ const visitors = {
 					state.code.remove(prune_start, last);
 				} else {
 					state.code.appendLeft(last, '*/');
+					escape_comment_close({ start: prune_start, end: last }, state.code);
 				}
 			}
 		}
@@ -459,7 +471,7 @@ function is_used(rule) {
 
 /**
  *
- * @param {AST.CSS.Rule} node
+ * @param {{ start: number, end: number }} node
  * @param {MagicString} code
  */
 function escape_comment_close(node, code) {

@@ -1,0 +1,19 @@
+	/* (unused) .unused,*/ /* a, b */ .used.svelte-xyz {
+		color: red;
+	}
+
+	.used.svelte-xyz /* (unused) .unused /* a, b *\/*/, /* c, /* d */ /* e, f */ .also-used.svelte-xyz {
+		color: red;
+	}
+
+	/* (unused) .unused, /* a, b *\/ .other-unused,*/ /* c, d */ .used.svelte-xyz {
+		color: red;
+	}
+
+	.used.svelte-xyz /* (unused) .unused, /* a, b *\/ .other-unused*/ {
+		color: red;
+	}
+
+	:is(/* (unused) .unused,*/ /* a, b */ .used.svelte-xyz) {
+		color: red;
+	}
