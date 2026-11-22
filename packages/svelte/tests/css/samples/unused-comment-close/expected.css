@@ -1,0 +1,10 @@
+	/* (unused) .unused[title="*\/"],*/ .used.svelte-xyz { color: red; }
+	.used.svelte-xyz /* (unused) .unused[title='*\/']*/, .other.svelte-xyz { color: red; }
+	.used.svelte-xyz /* (unused) .unused[title="*\/"], .unused[title="**\/"]*/ { color: red; }
+	/* (unused) .unused[title="*\/"] { content: "*\/ *\/"; /* comment *\/ }*/
+	/* (empty) .unused[title="*\/"] { /* empty *\/ }*/
+	/* (unused) .unused[title="\*\/"] { content: "*\/"; }*/
+	.used.svelte-xyz:is(/* (unused) .unused[title="*\/"],*/ .used:where(.svelte-xyz)) { color: red; }
+	/* (unused) .unused[title="*\/"] /* comment *\/ ,*/ .used.svelte-xyz { color: red; }
+	.used[title="*/"].svelte-xyz { content: "*/"; }
+	/* :global /* comment *\/ {*/ .global { color: red; } /*}*/
