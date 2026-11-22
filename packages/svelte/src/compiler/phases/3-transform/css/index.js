@@ -207,6 +207,7 @@ const visitors = {
 			const children = node.children;
 			let pruning = false;
 			let prune_start = children[0].start;
+			let comment_start = prune_start;
 			let last = prune_start;
 			let has_previous_used = false;
 
@@ -222,8 +223,11 @@ const visitors = {
 							state.code.remove(prune_start, has_previous_used ? i : i + 1);
 						} else {
 							state.code.appendRight(has_previous_used ? i : i + 1, '*/');
+							escape_comment_close({ start: comment_start, end: i }, state.code);
 						}
 					} else {
+						comment_start = selector.start;
+
 						if (i === 0) {
 							if (state.minify) {
 								prune_start = selector.start;
@@ -254,6 +258,7 @@ const visitors = {
 					state.code.remove(prune_start, last);
 				} else {
 					state.code.appendLeft(last, '*/');
+					escape_comment_close({ start: comment_start, end: last }, state.code);
 				}
 			}
 		}
@@ -398,11 +403,8 @@ function is_in_global_block(path) {
  */
 function remove_global_pseudo_class(selector, combinator, state) {
 	if (selector.args === null) {
-		let start = selector.start;
-		if (combinator?.name === ' ') {
-			// div :global.x becomes div.x
-			while (/\s/.test(state.code.original[start - 1])) start--;
-		}
+		// div :global.x becomes div.x, the combinator can contain comments
+		const start = combinator?.name === ' ' ? combinator.start : selector.start;
 
 		// update(...), not remove(...) because there could be a closing unused comment at the end
 		state.code.update(start, selector.start + ':global'.length, '');
@@ -459,7 +461,7 @@ function is_used(rule) {
 
 /**
  *
- * @param {AST.CSS.Rule} node
+ * @param {{ start: number, end: number }} node
  * @param {MagicString} code
  */
 function escape_comment_close(node, code) {
