@@ -48,7 +48,7 @@ function svelte_alias(force_server = false) {
 
 				return path.resolve(
 					'packages/svelte',
-					use_server ? exported.default : exported.browser ?? exported.default
+					use_server ? exported.default : (exported.browser ?? exported.default)
 				);
 			}
 		}

@@ -17,6 +17,6 @@ export function shared_connection<Node, Container>(
 
 export function marker_order(target: ObjFragment) {
 	return target.children
-		.map((node) => (node.type === 'element' ? node.attributes['data-key'] ?? '' : ''))
+		.map((node) => (node.type === 'element' ? (node.attributes['data-key'] ?? '') : ''))
 		.join('');
 }
