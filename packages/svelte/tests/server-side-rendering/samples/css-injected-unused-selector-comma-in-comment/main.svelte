@@ -12,7 +12,4 @@
 	.unused, /* a, b */ .foo {
 		color: green;
 	}
-	.unused <!-- a, b -->, .foo {
-		color: green;
-	}
 </style>

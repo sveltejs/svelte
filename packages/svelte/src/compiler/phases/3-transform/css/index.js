@@ -461,9 +461,8 @@ function is_used(rule) {
 }
 
 /**
- * Finds the comma between two selectors in a list. It skips comments and
- * CDO/CDC (`<!--`, `-->`) blocks like the parser does, because they can
- * contain commas too
+ * Finds the comma between two selectors in a list. It skips comments like
+ * the parser does, because they can contain commas too
  * @param {string} css
  * @param {number} start the end of the previous selector
  */
@@ -473,8 +472,6 @@ function find_comma(css, start) {
 	while (css[i] !== ',') {
 		if (css.startsWith('/*', i)) {
 			i = css.indexOf('*/', i + 2) + 2;
-		} else if (css.startsWith('<!--', i)) {
-			i = css.indexOf('-->', i + 4) + 3;
 		} else {
 			i++;
 		}
