@@ -996,6 +996,7 @@ export class Batch {
 		};
 
 		this.current.set(source, entry);
+		captured_writes?.add(source);
 
 		// The active view of the world sees writes made while it's active, even if they don't belong to the batch whose
 		// view it is — e.g. those of effects that run while a batch commits, which go to a new batch. (Async results
@@ -1631,6 +1632,13 @@ function infinite_loop_guard() {
 	}
 }
 
+/**
+ * Sources captured since the last effect in `flush_queued_effects` finished, including
+ * writes by its eager block reruns. Nested flushes use their own collector.
+ * @type {Set<Value> | null}
+ */
+var captured_writes = null;
+
 /** @type {Set<Effect> | null} */
 export let eager_block_effects = null;
 
@@ -1677,100 +1685,110 @@ function flush_queued_effects(effects, earlier_writes = null) {
 	var length = effects.length;
 	if (length === 0) return earlier_writes;
 
-	var i = 0;
+	var previous_captured_writes = captured_writes;
+	var writes = (captured_writes = new Set());
 
-	while (i < length) {
-		var effect = effects[i++];
+	try {
+		var i = 0;
 
-		if (
-			(effect.f & (DESTROYED | INERT)) === 0 &&
-			// don't run if already marked for destruction in the next batch
-			// (this can happen if an effect writes a value which e.g. makes an if block falsy)
-			!current_batch?.is_skipped(effect) &&
-			!defer_if_pending(effect) &&
-			is_dirty(effect)
-		) {
-			eager_block_effects = new Set();
+		while (i < length) {
+			var effect = effects[i++];
 
-			var version = write_version;
-			update_effect(effect);
-
-			// Effects with no dependencies or teardown do not get added to the effect tree.
-			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
-			// don't know if we need to keep them until they are executed. Doing the check
-			// here (rather than in `update_effect`) allows us to skip the work for
-			// immediate effects.
 			if (
-				effect.edges === null &&
-				effect.first === null &&
-				effect.nodes === null &&
-				effect.teardown === null &&
-				effect.ac === null
+				(effect.f & (DESTROYED | INERT)) === 0 &&
+				// don't run if already marked for destruction in the next batch
+				// (this can happen if an effect writes a value which e.g. makes an if block falsy)
+				!current_batch?.is_skipped(effect) &&
+				!defer_if_pending(effect) &&
+				is_dirty(effect)
 			) {
-				// remove this effect from the graph
-				unlink_effect(effect);
-			}
+				eager_block_effects = new Set();
 
-			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
-			// which already handled this logic and did set eager_block_effects to null.
-			if (eager_block_effects?.size > 0) {
-				// these run because of the writes of the effect, so their teardowns revert those
-				var previous_teardown_context = teardown_context;
+				var version = write_version;
+				update_effect(effect);
 
-				// if state was written by an effect before the one that caused the eager
-				// block rerun, its writes apply in this view. Deriveds must be evaluated
-				// afresh rather than reusing results cached before those writes.
-				if (earlier_writes !== null) push_teardown_context(earlier_writes);
+				// Effects with no dependencies or teardown do not get added to the effect tree.
+				// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+				// don't know if we need to keep them until they are executed. Doing the check
+				// here (rather than in `update_effect`) allows us to skip the work for
+				// immediate effects.
+				if (
+					effect.edges === null &&
+					effect.first === null &&
+					effect.nodes === null &&
+					effect.teardown === null &&
+					effect.ac === null
+				) {
+					// remove this effect from the graph
+					unlink_effect(effect);
+				}
 
-				// (a copy, as `earlier_writes` grows while the flush continues)
-				var previous_eager_block_writes = eager_block_writes;
-				eager_block_writes = new Map(earlier_writes);
+				// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
+				// which already handled this logic and did set eager_block_effects to null.
+				if (eager_block_effects?.size > 0) {
+					// these run because of the writes of the effect, so their teardowns revert those
+					var previous_teardown_context = teardown_context;
 
-				try {
-					for (const e of eager_block_effects) {
-						// Skip eager effects that have already been unmounted, or that are inside a
-						// branch that an earlier eager run (e.g. of an ancestor block) skips
-						if ((e.f & (DESTROYED | INERT)) !== 0 || current_batch?.is_skipped(e)) continue;
+					// if state was written by an effect before the one that caused the eager
+					// block rerun, its writes apply in this view. Deriveds must be evaluated
+					// afresh rather than reusing results cached before those writes.
+					if (earlier_writes !== null) push_teardown_context(earlier_writes);
 
-						// Run effects in order from ancestor to descendant, else we could run into nullpointers
-						/** @type {Effect[]} */
-						const ordered_effects = [e];
-						let ancestor = e.parent;
-						while (ancestor !== null) {
-							if (eager_block_effects.has(ancestor)) {
-								eager_block_effects.delete(ancestor);
-								ordered_effects.push(ancestor);
-							}
-							ancestor = ancestor.parent;
-						}
+					// (a copy, as `earlier_writes` grows while the flush continues)
+					var previous_eager_block_writes = eager_block_writes;
+					eager_block_writes = new Map(earlier_writes);
 
-						for (let j = ordered_effects.length - 1; j >= 0; j--) {
-							const e = ordered_effects[j];
-							// a block run may have skipped/destroyed the branch that a later one is in
+					try {
+						for (const e of eager_block_effects) {
+							// Skip eager effects that have already been unmounted, or that are inside a
+							// branch that an earlier eager run (e.g. of an ancestor block) skips
 							if ((e.f & (DESTROYED | INERT)) !== 0 || current_batch?.is_skipped(e)) continue;
-							update_effect(e);
+
+							// Run effects in order from ancestor to descendant, else we could run into nullpointers
+							/** @type {Effect[]} */
+							const ordered_effects = [e];
+							let ancestor = e.parent;
+							while (ancestor !== null) {
+								if (eager_block_effects.has(ancestor)) {
+									eager_block_effects.delete(ancestor);
+									ordered_effects.push(ancestor);
+								}
+								ancestor = ancestor.parent;
+							}
+
+							for (let j = ordered_effects.length - 1; j >= 0; j--) {
+								const e = ordered_effects[j];
+								// a block run may have skipped/destroyed the branch that a later one is in
+								if ((e.f & (DESTROYED | INERT)) !== 0 || current_batch?.is_skipped(e)) continue;
+								update_effect(e);
+							}
+						}
+					} finally {
+						eager_block_writes = previous_eager_block_writes;
+						eager_block_effects?.clear();
+						teardown_context = previous_teardown_context;
+					}
+				}
+
+				// Only visit sources captured by this effect or its eager block reruns.
+				// A nested flush may have drained their batch, so use the current entry.
+				if (write_version !== version && current_batch !== null) {
+					for (const value of writes) {
+						var write = current_batch.current.get(value);
+						if (write !== undefined && write.wv > version) {
+							(earlier_writes ??= new Map()).set(value, write);
 						}
 					}
-				} finally {
-					eager_block_writes = previous_eager_block_writes;
-					eager_block_effects?.clear();
-					teardown_context = previous_teardown_context;
 				}
 			}
-
-			// if the effect — or the block effects — wrote anything
-			if (write_version !== version && current_batch !== null) {
-				for (const [value, write] of current_batch.current) {
-					if (write.wv > version) {
-						(earlier_writes ??= new Map()).set(value, write);
-					}
-				}
-			}
+			writes.clear();
 		}
-	}
 
-	eager_block_effects = null;
-	return earlier_writes;
+		eager_block_effects = null;
+		return earlier_writes;
+	} finally {
+		captured_writes = previous_captured_writes;
+	}
 }
 
 /**

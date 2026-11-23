@@ -22,7 +22,7 @@ import {
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
-import { source_stacks } from '../../src/internal/client/reactivity/batch';
+import { Batch, source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
@@ -65,6 +65,84 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	for (const [async, render] of [
+		[false, false],
+		[true, false],
+		[true, true]
+	]) {
+		test(`flushing writing ${render ? 'render' : 'user'} effects does linear work (async: ${async})`, () => {
+			if (async) enable_async_mode_flag();
+			const count = 100;
+			const trigger = state(0);
+			const create = render ? render_effect : effect;
+			const values = Array.from({ length: count }, () => state(0));
+			let visited = 0;
+
+			for (const [i, value] of values.entries()) {
+				create(() => {
+					if ($.get(trigger) === 0) return;
+					set(value, 1);
+					if (i === 0) {
+						// Count visits to batch writes, rather than asserting wall-clock timings.
+						const writes = Batch.ensure().current;
+						const iterate = writes[Symbol.iterator].bind(writes);
+						Object.defineProperty(writes, Symbol.iterator, {
+							value: function* () {
+								for (const entry of iterate()) {
+									visited++;
+									yield entry;
+								}
+							}
+						});
+					}
+				});
+			}
+
+			return () => {
+				try {
+					flushSync();
+					flushSync(() => set(trigger, 1));
+					assert.deepEqual(
+						values.map((value) => $.get(value)),
+						Array(count).fill(1)
+					);
+					assert.isAtMost(visited, count * 4);
+				} finally {
+					if (async) disable_async_mode_flag();
+				}
+			};
+		});
+	}
+
+	test('eager block teardowns retain the last write of an earlier effect', () => {
+		const trigger = state(0);
+		const earlier = state(0);
+		const show = state(true);
+		const log: string[] = [];
+
+		block(() => {
+			$.get(show);
+			return () => log.push(`${$.get(earlier)}:${$.get(show)}`);
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) {
+				set(earlier, 1);
+				set(earlier, 2);
+			}
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) set(show, false);
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			assert.deepEqual(log, ['2:true']);
+		};
+	});
+
 	test('nested commit retains latest block dependencies', () => {
 		const trigger = state(0);
 		const mode = state(0);
