@@ -1259,6 +1259,7 @@ export function settled() {
 export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
+	var should_connect = false;
 
 	captured_signals?.add(signal);
 
@@ -1273,6 +1274,10 @@ export function get(signal) {
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
 		if (!destroyed && (current_sources === null || !current_sources.has(signal))) {
+			// Only connect deriveds when this read is recorded by a connected reaction.
+			should_connect =
+				is_derived && (signal.f & CONNECTED) === 0 && (active_reaction.f & CONNECTED) !== 0;
+
 			var deps = active_reaction.deps;
 
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
@@ -1380,13 +1385,6 @@ export function get(signal) {
 
 	if (is_derived) {
 		var derived = /** @type {Derived} */ (signal);
-
-		// connect disconnected deriveds when reading them inside a connected reaction
-		var should_connect =
-			(derived.f & CONNECTED) === 0 &&
-			!untracking &&
-			active_reaction !== null &&
-			(active_reaction.f & CONNECTED) !== 0;
 
 		var is_new = (derived.f & REACTION_RAN) === 0;
 
