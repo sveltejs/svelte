@@ -101,7 +101,7 @@ While most mobile apps are written without using JavaScript, if you'd like to le
 
 You can also write apps in Svelte that compiles to native components by using [Symbiote Native](https://docs.symbiote-native.dev/), which leverages the infrastructure provided by React Native.
 
-Work has been completed towards [custom renderer support in Svelte 5](https://github.com/sveltejs/svelte/issues/15470), but this feature is not yet merged. The custom rendering API will allow support in additional mobile frameworks like Lynx JS and Svelte Native. Symbiote Native will also adopt this API. Svelte Native was an option available for Svelte 4, but Svelte 5 does not currently support it. Svelte Native lets you write NativeScript apps using Svelte components that contain [NativeScript UI components](https://docs.nativescript.org/ui/) rather than DOM elements.
+Svelte 5 also has experimental support for [custom renderers](custom-renderers), which let Svelte components render to targets other than the DOM. This will allow support in additional mobile frameworks like Lynx JS and Svelte Native, and Symbiote Native will also adopt this API. Svelte Native was an option available for Svelte 4, but Svelte 5 does not currently support it. Svelte Native lets you write NativeScript apps using Svelte components that contain [NativeScript UI components](https://docs.nativescript.org/ui/) rather than DOM elements.
 
 ## Can I tell Svelte not to remove my unused styles?
 
