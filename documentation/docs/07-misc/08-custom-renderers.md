@@ -150,7 +150,7 @@ declare module 'terminal-renderer' {
 		comment: TerminalRendererComment;
 	}
 
-	declare const renderer: import('svelte/renderer').Renderer<TerminalNodes>;
+	const renderer: import('svelte/renderer').Renderer<TerminalNodes>;
 	export default renderer;
 
 	export function draw(fragment: TerminalRendererFragment): void;
@@ -213,7 +213,7 @@ declare module 'three-renderer' {
 		comment: ThreeRendererComment;
 	}
 
-	declare const renderer: import('svelte/renderer').Renderer<ThreeNodes>;
+	const renderer: import('svelte/renderer').Renderer<ThreeNodes>;
 	export default renderer;
 
 	export function draw(fragment: ThreeRendererFragment): void;
