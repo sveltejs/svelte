@@ -72,6 +72,20 @@ When the attribute name and value match (`name={name}`), they can be replaced wi
 -->
 ```
 
+### `defaultValue` and `defaultChecked`
+
+Form elements (`<input>`, `<textarea>`, and since 5.57.0 `<select>`) support `defaultValue` and `defaultChecked` (for checkboxes and radio buttons) as attributes, matching the corresponding DOM properties.
+
+When the enclosing `<form>` is reset, the element reverts to its `defaultValue` or `defaultChecked` instead of an empty string or `false`. If `value`/`checked` (or `bind:value`/`bind:checked`) is also provided, it takes precedence over the default on the initial render unless its value is `null` or `undefined`. During server-side rendering, `defaultValue` and `defaultChecked` fall back to `value` and `checked` HTML attributes when `value`/`checked` are not set.
+
+```svelte
+<form>
+	<input name="username" defaultValue="anonymous" />
+	<input type="checkbox" name="subscribe" defaultChecked />
+	<button type="reset">Reset</button>
+</form>
+```
+
 ## Component props
 
 By convention, values passed to components are referred to as _properties_ or _props_ rather than _attributes_, which are a feature of the DOM.
