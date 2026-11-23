@@ -723,15 +723,15 @@ function get_declarator_end(parser, init) {
 	let i = comments.length - 1;
 
 	while (end > init_end) {
-		if (/\s/.test(parser.template[end - 1])) {
-			end -= 1;
-			continue;
-		}
-
 		while (i >= 0 && comments[i].end > end) i -= 1;
-		if (i < 0 || comments[i].end !== end || comments[i].start < init_end) break;
 
-		end = comments[i].start;
+		if (i >= 0 && comments[i].end === end && comments[i].start >= init_end) {
+			end = comments[i].start;
+		} else if (/\s/.test(parser.template[end - 1])) {
+			end -= 1;
+		} else {
+			break;
+		}
 	}
 
 	return end;

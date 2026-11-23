@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 146,
+	"end": 182,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -10,7 +10,7 @@
 			{
 				"type": "EachBlock",
 				"start": 0,
-				"end": 146,
+				"end": 182,
 				"expression": {
 					"type": "Identifier",
 					"start": 7,
@@ -417,7 +417,135 @@
 						{
 							"type": "Text",
 							"start": 138,
-							"end": 139,
+							"end": 140,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "ConstTag",
+							"start": 140,
+							"end": 169,
+							"declaration": {
+								"type": "VariableDeclaration",
+								"kind": "const",
+								"declarations": [
+									{
+										"type": "VariableDeclarator",
+										"id": {
+											"type": "Identifier",
+											"name": "w",
+											"start": 148,
+											"end": 149,
+											"loc": {
+												"start": {
+													"line": 9,
+													"column": 9,
+													"character": 148
+												},
+												"end": {
+													"line": 9,
+													"column": 10,
+													"character": 149
+												}
+											}
+										},
+										"init": {
+											"type": "MemberExpression",
+											"start": 152,
+											"end": 158,
+											"loc": {
+												"start": {
+													"line": 9,
+													"column": 13
+												},
+												"end": {
+													"line": 9,
+													"column": 19
+												}
+											},
+											"object": {
+												"type": "Identifier",
+												"start": 152,
+												"end": 156,
+												"loc": {
+													"start": {
+														"line": 9,
+														"column": 13
+													},
+													"end": {
+														"line": 9,
+														"column": 17
+													}
+												},
+												"name": "item"
+											},
+											"property": {
+												"type": "Identifier",
+												"start": 157,
+												"end": 158,
+												"loc": {
+													"start": {
+														"line": 9,
+														"column": 18
+													},
+													"end": {
+														"line": 9,
+														"column": 19
+													}
+												},
+												"name": "w"
+											},
+											"computed": false,
+											"optional": false,
+											"trailingComments": [
+												{
+													"type": "Line",
+													"value": " e   ",
+													"start": 159,
+													"end": 166
+												}
+											]
+										},
+										"start": 148,
+										"end": 158
+									}
+								],
+								"start": 142,
+								"end": 168
+							}
+						},
+						{
+							"type": "Text",
+							"start": 169,
+							"end": 171,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "ExpressionTag",
+							"start": 171,
+							"end": 174,
+							"expression": {
+								"type": "Identifier",
+								"start": 172,
+								"end": 173,
+								"loc": {
+									"start": {
+										"line": 11,
+										"column": 2
+									},
+									"end": {
+										"line": 11,
+										"column": 3
+									}
+								},
+								"name": "w"
+							}
+						},
+						{
+							"type": "Text",
+							"start": 174,
+							"end": 175,
 							"raw": "\n",
 							"data": "\n"
 						}
@@ -507,6 +635,22 @@
 				"end": {
 					"line": 7,
 					"column": 37
+				}
+			}
+		},
+		{
+			"type": "Line",
+			"value": " e   ",
+			"start": 159,
+			"end": 166,
+			"loc": {
+				"start": {
+					"line": 9,
+					"column": 20
+				},
+				"end": {
+					"line": 9,
+					"column": 27
 				}
 			}
 		}

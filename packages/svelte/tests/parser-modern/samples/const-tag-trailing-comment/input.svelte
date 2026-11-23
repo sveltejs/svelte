@@ -6,4 +6,7 @@
 	{y}
 	{@const z = (item.a /* c */) /* d */}
 	{z}
+	{@const w = item.w // e   
+	}
+	{w}
 {/each}
