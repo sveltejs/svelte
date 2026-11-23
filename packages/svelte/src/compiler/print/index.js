@@ -97,7 +97,7 @@ export function print(ast, options = undefined) {
 		ast,
 		/** @type {Visitors<AST.SvelteNode>} */ ({
 			...javascript.visitors,
-			...svelte_visitors(javascript.comments, state),
+			...svelte_visitors(javascript.comments, state, javascript.snippet_comments),
 			...css_visitors(css_comments, javascript.comments)
 		}),
 		{
@@ -110,7 +110,7 @@ export function print(ast, options = undefined) {
  * @param {AST.SvelteNode} ast
  * @param {AST.JSComment[]} comments
  * @param {import('./types.js').Options | undefined} options
- * @returns {{ visitors: Visitors<AST.SvelteNode>, comments: AST.JSComment[] }}
+ * @returns {{ visitors: Visitors<AST.SvelteNode>, comments: AST.JSComment[], snippet_comments: Map<AST.SnippetBlock, AST.JSComment[]> }}
  */
 function javascript_visitors(ast, comments, options) {
 	// esrap still owns interior JS comments; trailing comments at Svelte boundaries
@@ -127,16 +127,21 @@ function javascript_visitors(ast, comments, options) {
 	/** @type {Set<number>} */
 	const owned_comments = new Set();
 	const parenthesized = new Set();
+	/** @type {Map<AST.SnippetBlock, AST.JSComment[]>} */
+	const snippet_comments = new Map();
 
 	/**
 	 * @param {ESTree.Node} node
 	 * @param {ESTree.Comment[] | undefined} trailing
 	 */
 	function own_comments(node, trailing) {
-		if (!trailing?.length) return;
-		boundary_comments.set(node, [...(boundary_comments.get(node) ?? []), ...trailing]);
-		for (const comment of trailing)
-			owned_comments.add(/** @type {AST.JSComment} */ (comment).start);
+		// a comment is printed only once
+		const fresh = trailing?.filter(
+			(comment) => !owned_comments.has(/** @type {AST.JSComment} */ (comment).start)
+		);
+		if (!fresh?.length) return;
+		boundary_comments.set(node, [...(boundary_comments.get(node) ?? []), ...fresh]);
+		for (const comment of fresh) owned_comments.add(/** @type {AST.JSComment} */ (comment).start);
 	}
 
 	/**
@@ -155,26 +160,87 @@ function javascript_visitors(ast, comments, options) {
 		);
 	}
 
-	/** @param {ESTree.Node} node */
-	function own_boundary_comments(node) {
-		own_comments(node, node.trailingComments);
+	/**
+	 * esrap prints a comment before the next node it visits, so a comment after the start
+	 * of the last node in a tag could end up in the next tag. Print those after `node` if
+	 * they are outside of it, or else after the outermost node that ends before them.
+	 * @param {ESTree.Node} node
+	 * @param {number} [tag_end] the end of the tag, if `node` ends it
+	 */
+	function own_boundary_comments(node, tag_end) {
+		let last_start = /** @type {AST.BaseNode} */ (node).start;
+		// a type annotation can end after its node
+		let end = /** @type {AST.BaseNode} */ (node).end;
+		/** @type {Array<[ESTree.Node, ESTree.Node[], AST.JSComment]>} */
+		const trailing = [];
+		/** @type {Array<ESTree.CallExpression | ESTree.NewExpression>} */
+		const calls = [];
+
 		walk(node, null, {
-			_(child, { next }) {
-				// Acorn can attach a comment after `foo(a)` to `a`, rather than
-				// to the call. Only take descendant comments outside this subtree.
-				if (child !== node) {
-					own_comments(
-						node,
-						child.trailingComments?.filter(
-							(comment) =>
-								/** @type {AST.JSComment} */ (comment).start >=
-								/** @type {AST.BaseNode} */ (node).end
-						)
-					);
+			_(child, { next, path }) {
+				// the walker also visits the comments attached to nodes
+				const type = /** @type {string} */ (child.type);
+				if (type === 'Line' || type === 'Block') return;
+				// esrap writes template strings as they are, so no comment is printed before them
+				if (child.type !== 'TemplateElement') {
+					last_start = Math.max(last_start, /** @type {AST.BaseNode} */ (child).start);
+				}
+				end = Math.max(end, /** @type {AST.BaseNode} */ (child).end);
+				for (const comment of child.trailingComments ?? []) {
+					trailing.push([child, [...path], /** @type {AST.JSComment} */ (comment)]);
+				}
+				if (
+					(child.type === 'CallExpression' || child.type === 'NewExpression') &&
+					child.arguments.length === 0
+				) {
+					if (!path.some((node) => LISTS.has(node.type))) calls.push(child);
 				}
 				next();
 			}
 		});
+
+		/**
+		 * Acorn attaches only the first of a line and a block comment, so take the rest too
+		 * @param {ESTree.Node} anchor
+		 * @param {number} start
+		 * @param {number | undefined} bound
+		 */
+		function own_following(anchor, start, bound) {
+			if (bound !== undefined) own_comments(anchor, comments_between(comments, start, bound));
+		}
+
+		for (const [child, path, comment] of trailing) {
+			if (comment.start >= end) {
+				own_comments(node, [comment]);
+				continue;
+			}
+
+			if (comment.start <= last_start) continue;
+
+			let anchor = child;
+			let i = path.length - 1;
+			while (i >= 0 && /** @type {AST.BaseNode} */ (path[i]).end <= comment.start) {
+				anchor = path[i--];
+			}
+			if (LISTS.has(path[i]?.type)) continue;
+
+			own_comments(anchor, [comment]);
+			own_following(anchor, comment.end, /** @type {AST.BaseNode | undefined} */ (path[i])?.end);
+		}
+
+		// Acorn does not attach a comment inside `foo( /* c */)` to any node
+		for (const call of calls) {
+			own_comments(
+				call,
+				comments_between(
+					comments,
+					/** @type {AST.BaseNode} */ (call.callee).end,
+					/** @type {AST.BaseNode} */ (call).end
+				).filter((comment) => comment.start > last_start)
+			);
+		}
+
+		own_following(node, end, tag_end);
 	}
 
 	walk(/** @type {AST.SvelteNode | ESTree.Node} */ (ast), null, {
@@ -190,7 +256,22 @@ function javascript_visitors(ast, comments, options) {
 				// Pattern parsing may leave comments after the last parameter unattached.
 				// Keep them in the header, rather than flushing them inside the body.
 				own_comments_in_range(parameter, node.body.nodes[0]?.start ?? node.end);
+			} else {
+				// Without parameters, the snippet visitor prints them between the parentheses
+				const inner = comments_between(
+					comments,
+					/** @type {AST.BaseNode} */ (node.expression).end,
+					node.body.nodes[0]?.start ?? node.end
+				);
+				for (const comment of inner) owned_comments.add(comment.start);
+				if (inner.length > 0) snippet_comments.set(node, inner);
 			}
+		},
+		DebugTag(node, { next }) {
+			next();
+			const identifier = node.identifiers.at(-1);
+			// Comments after the last identifier are not attached to it
+			if (identifier) own_comments_in_range(identifier, node.end);
 		},
 		_(node, { next, path }) {
 			if (node.type in js_visitors) {
@@ -199,7 +280,12 @@ function javascript_visitors(ast, comments, options) {
 					// The tag visitors print declarators without visiting their declaration.
 					for (const declaration of js.declarations) {
 						if (declaration.init) {
-							own_boundary_comments(declaration.init);
+							own_boundary_comments(
+								declaration.init,
+								path.at(-1)?.type === 'ConstTag'
+									? /** @type {AST.ConstTag} */ (path.at(-1)).end
+									: undefined
+							);
 							if (path.at(-1)?.type === 'DeclarationTag') {
 								// Statement parsing does not preserve parentheses, and may only
 								// attach the first comment after an initializer. Collect the rest
@@ -215,10 +301,24 @@ function javascript_visitors(ast, comments, options) {
 					}
 				} else if (js.type === 'SequenceExpression' && path.at(-1)?.type === 'BindDirective') {
 					// Function bindings likewise omit the SequenceExpression wrapper.
-					for (const expression of js.expressions) own_boundary_comments(expression);
-					own_comments(js.expressions[js.expressions.length - 1], js.trailingComments);
+					// Comments after the getter stay with the setter, as esrap prints them before it.
+					const set = js.expressions[1];
+					own_comments(set, js.trailingComments);
+					own_boundary_comments(set, /** @type {AST.BindDirective} */ (path.at(-1)).end);
 				} else if (js.type !== 'Program') {
-					own_boundary_comments(js);
+					const parent = path.at(-1);
+					const list =
+						parent?.type === 'SnippetBlock'
+							? parent.parameters
+							: parent?.type === 'DebugTag'
+								? parent.identifiers
+								: null;
+					// Likewise, comments after an item of a list stay with the next item.
+					if (list && js !== list.at(-1)) return;
+					own_boundary_comments(
+						js,
+						parent && TAGS.has(parent.type) ? /** @type {AST.BaseNode} */ (parent).end : undefined
+					);
 				}
 				return;
 			}
@@ -239,31 +339,85 @@ function javascript_visitors(ast, comments, options) {
 
 	return {
 		comments: js_comments,
+		snippet_comments,
 		visitors: {
 			...js_visitors,
 			_(node, context, visit) {
 				if (parenthesized.has(node)) context.write('(');
 				visit_js(node, context, visit);
 				// JavaScript cannot carry these comments across a Svelte syntax boundary.
-				for (const comment of boundary_comments.get(/** @type {ESTree.Node} */ (node)) ?? []) {
-					context.write(' ');
-					if (comment.type === 'Line') {
-						context.write('//' + comment.value);
-						context.newline();
-					} else {
-						const lines = comment.value.split('\n');
-						context.write('/*');
-						for (let i = 0; i < lines.length; i++) {
-							if (i > 0) context.newline();
-							context.write(lines[i]);
-						}
-						context.write('*/');
-					}
-				}
+				write_comments(context, boundary_comments.get(/** @type {ESTree.Node} */ (node)));
 				if (parenthesized.has(node)) context.write(')');
 			}
 		}
 	};
+}
+
+/** esrap prints the comments before the closing bracket of these itself */
+const LISTS = new Set(['ArrayExpression', 'BlockStatement', 'ObjectExpression']);
+
+/** Tags that end right after their expression */
+const TAGS = new Set([
+	'AnimateDirective',
+	'AttachTag',
+	'BindDirective',
+	'ClassDirective',
+	'ExpressionTag',
+	'HtmlTag',
+	'LetDirective',
+	'OnDirective',
+	'RenderTag',
+	'SpreadAttribute',
+	'TransitionDirective',
+	'UseDirective'
+]);
+
+/**
+ * The comments that start between `start` and `end`
+ * @param {AST.JSComment[]} comments
+ * @param {number} start
+ * @param {number} end
+ */
+function comments_between(comments, start, end) {
+	let low = 0;
+	let high = comments.length;
+
+	while (low < high) {
+		const middle = (low + high) >> 1;
+		if (comments[middle].start < start) low = middle + 1;
+		else high = middle;
+	}
+
+	let i = low;
+	while (i < comments.length && comments[i].start < end) i += 1;
+
+	return comments.slice(low, i);
+}
+
+/**
+ * @param {Context} context
+ * @param {ESTree.Comment[] | undefined} comments
+ */
+function write_comments(context, comments = []) {
+	for (let i = 0; i < comments.length; i += 1) {
+		const comment = comments[i];
+
+		// a line comment already ends with a newline
+		if (comments[i - 1]?.type !== 'Line') context.write(' ');
+
+		if (comment.type === 'Line') {
+			context.write('//' + comment.value);
+			context.newline();
+		} else {
+			const lines = comment.value.split('\n');
+			context.write('/*');
+			for (let j = 0; j < lines.length; j++) {
+				if (j > 0) context.newline();
+				context.write(lines[j]);
+			}
+			context.write('*/');
+		}
+	}
 }
 
 /**
@@ -712,9 +866,10 @@ function is_shorthand(node) {
 /**
  * @param {AST.JSComment[]} comments
  * @param {{ preserve_whitespace: number }} state
+ * @param {Map<AST.SnippetBlock, AST.JSComment[]>} snippet_comments
  * @returns {Visitors<AST.SvelteNode>}
  */
-const svelte_visitors = (comments, state) => ({
+const svelte_visitors = (comments, state, snippet_comments) => ({
 	Root(node, context) {
 		if (node.options) {
 			context.write('<svelte:options');
@@ -1180,6 +1335,7 @@ const svelte_visitors = (comments, state) => ({
 			context.visit(node.parameters[i]);
 		}
 
+		write_comments(context, snippet_comments.get(node));
 		context.write(')}');
 		block(context, node.body, state.preserve_whitespace > 0);
 		context.write('{/snippet}');

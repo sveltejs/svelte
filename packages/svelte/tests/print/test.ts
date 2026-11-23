@@ -62,6 +62,25 @@ it('preserves custom comment callbacks alongside boundary comments', () => {
 	parse(output, { modern: true });
 });
 
+it('keeps a comment inside the type annotation of an each block context', () => {
+	const input =
+		'<script lang="ts"></script>{#each items as row: { a: string /* c */ }[]}{row}{/each}';
+	const output = print(parse(input, { modern: true })).code;
+	assert.include(output, '{#each items as row: { a: string /* c */ }[]}');
+	parse(output, { modern: true });
+});
+
+it('prints a comment at the end of a bind getter the same way twice', () => {
+	const input = '<b bind:this={() => a[i /* block */ // line\n], (v) => (a[i] = v)} />';
+	const output = print(parse(input, { modern: true })).code;
+	assert.equal(print(parse(output, { modern: true })).code, output);
+});
+
+it('keeps the statement of an empty call with a comment inside a block', () => {
+	const input = '<button onclick={() => { a(); b( // line\n) }}></button>{b}';
+	assert.include(print(parse(input, { modern: true })).code, '\tb();\n');
+});
+
 it.each([
 	'{a /* c */}{b}',
 	'{a // c\n}{b}',

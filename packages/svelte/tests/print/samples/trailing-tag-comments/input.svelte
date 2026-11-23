@@ -46,3 +46,22 @@ line */}{b}
 
 {#snippet foo(a = foo(b) /* default one */ /* default two */)}{b}{/snippet}
 {#snippet foo(a /* parameter one */ /* parameter two */, b /* last one */ /* last two */)}{b}{/snippet}
+{#snippet foo(a, b = (1, 2 /* sequence */), c = 3)}{b}{/snippet}
+{#snippet foo( /* no parameters */)}{b}{/snippet}
+<Component>{#snippet children( /* children */)}{b}{/snippet}</Component>
+{@debug a /* debug one */, b /* debug two */}{b}
+{foo( /* empty call */)}{b}
+<button onclick={() => (a++ /* arrow */)}></button>{b}
+{a // line one
+// line two
+}{b}
+{(a // line then block
+/* block */)}{b}
+{#if x}{@const a = (1 // const line
+/* const block */)}{@const b = 2}{/if}
+{#each a.split("" // each line
+/* each block */) as item}{b}{/each}
+<button onclick={() => foo(a // handler line
+/* handler block */)}></button>{b}
+<button onclick={() => (a = true /* block then line */ // line
+)}></button>{b}
