@@ -386,3 +386,33 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 test('Map.instanceOf', () => {
 	assert.equal(new SvelteMap() instanceof Map, true);
 });
+
+test('setting an existing key does not invalidate keys() readers', () => {
+	const map = new SvelteMap([[1, 1]]);
+
+	let keys_runs = 0;
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			void [...map.keys()];
+			keys_runs += 1;
+		});
+	});
+
+	flushSync(() => {
+		map.set(1, 2);
+	});
+
+	// the key set is unchanged, so keys() readers must not re-run
+	assert.equal(keys_runs, 1);
+	assert.equal(map.get(1), 2);
+
+	flushSync(() => {
+		map.set(2, 2);
+	});
+
+	// a new key changes the key set
+	assert.equal(keys_runs, 2);
+
+	cleanup();
+});
