@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
-import { regex_is_valid_identifier } from '../../../../patterns.js';
+import { regex_directive_name_separator, regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { async_thunk, build_getter, is_state_source } from '../../utils.js';
@@ -221,16 +221,19 @@ export function build_render_statement(state) {
  * @param {string} name
  */
 export function parse_directive_name(name) {
-	// this allow for accessing members of an object
-	const parts = name.split('.');
-	let part = /** @type {string} */ (parts.shift());
+	// this allows accessing members of an object, with `.` or `?.`
+	const [first, ...rest] = name.split(regex_directive_name_separator);
 
 	/** @type {Identifier | MemberExpression} */
-	let expression = b.id(part);
+	let expression = b.id(first);
 
-	while ((part = /** @type {string} */ (parts.shift()))) {
+	for (let i = 0; i < rest.length; i += 2) {
+		const optional = rest[i] === '?.';
+		const part = rest[i + 1];
+		if (!part) break;
+
 		const computed = !regex_is_valid_identifier.test(part);
-		expression = b.member(expression, computed ? b.literal(part) : b.id(part), computed);
+		expression = b.member(expression, computed ? b.literal(part) : b.id(part), computed, optional);
 	}
 
 	return expression;
