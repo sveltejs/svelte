@@ -76,7 +76,7 @@ When the attribute name and value match (`name={name}`), they can be replaced wi
 
 Form elements (`<input>`, `<textarea>`, and since 5.57.0 `<select>`) support `defaultValue` and `defaultChecked` (for checkboxes and radio buttons) as attributes, matching the corresponding DOM properties.
 
-When the enclosing `<form>` is reset, the element reverts to its `defaultValue` or `defaultChecked` instead of an empty string or `false`. If `value`/`checked` (or `bind:value`/`bind:checked`) is also provided, it takes precedence over the default on the initial render unless its value is `null` or `undefined`. During server-side rendering, `defaultValue` and `defaultChecked` fall back to `value` and `checked` HTML attributes when `value`/`checked` are not set.
+When the enclosing `<form>` is reset, the element reverts to its `defaultValue` or `defaultChecked` instead of an empty string or `false`. If `value`/`checked` (or `bind:value`/`bind:checked`) is also provided, it takes precedence over the default on the initial render (on `<input>` and `<textarea>`, `null` or `undefined` falls back to the default). During server-side rendering, `defaultValue` and `defaultChecked` on `<input>` fall back to `value` and `checked` HTML attributes when `value`/`checked` are not set, while `<textarea>` omits `defaultValue` and `<select>` uses selected `<option>` elements.
 
 ```svelte
 <form>
