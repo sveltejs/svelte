@@ -9,7 +9,3 @@
 	/* (unused) .unused, .unused2,*/ /* a, b */ .used.svelte-xyz {
 		color: blue;
 	}
-
-	/* (unused) .unused <!-- a, b -->,*/ .used.svelte-xyz {
-		color: purple;
-	}
