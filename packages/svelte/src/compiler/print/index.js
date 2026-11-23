@@ -81,7 +81,7 @@ function escape_identifier(name) {
  * @param {import('./types.js').Options | undefined} options
  */
 export function print(ast, options = undefined) {
-	const comments = (ast.type === 'Root' && ast.comments) || [];
+	const comments = ast.type === 'Root' && ast.comments ? [...ast.comments] : [];
 	const state = {
 		preserve_whitespace: ast.type === 'Root' && ast.options?.preserveWhitespace ? 1 : 0
 	};
@@ -104,6 +104,97 @@ export function print(ast, options = undefined) {
 			indent: options?.indent
 		}
 	);
+}
+
+/**
+ * Flush JS comments that fall between `from` (inclusive) and `until` (exclusive),
+ * removing them from the shared `comments` list so esrap does not emit them before
+ * a subsequent JS node in another tag.
+ * @param {Context} context
+ * @param {AST.JSComment[]} comments
+ * @param {number | undefined} from
+ * @param {number | undefined} until
+ * @param {boolean} [leading_space]
+ */
+function flush_js_comments(context, comments, from, until, leading_space = true) {
+	if (from == null || until == null || comments.length === 0) return;
+
+	const start_index = comments.findIndex((comment) => comment.start >= from);
+	if (start_index === -1) return;
+
+	let count = 0;
+	let needs_space = leading_space;
+
+	while (start_index + count < comments.length && comments[start_index + count].start < until) {
+		const comment = comments[start_index + count];
+
+		if (needs_space) {
+			context.write(' ');
+		}
+
+		if (comment.type === 'Line') {
+			context.write('//' + comment.value);
+			context.newline();
+			needs_space = false;
+		} else {
+			const lines = comment.value.split('\n');
+
+			for (let i = 0; i < lines.length; i += 1) {
+				if (i > 0) context.newline();
+				const line = (i === 0 ? '/*' : '') + lines[i] + (i === lines.length - 1 ? '*/' : '');
+				context.write(line);
+			}
+
+			needs_space = true;
+		}
+
+		count += 1;
+	}
+
+	if (count > 0) {
+		comments.splice(start_index, count);
+	}
+}
+
+/**
+ * Find the end offset past any trailing comments attached to `node` (or its
+ * rightmost child), for expression wrappers that lack their own closing-brace
+ * offset (such as `this={...}` on `<svelte:component>` / `<svelte:element>`).
+ * @param {any} node
+ * @returns {number | undefined}
+ */
+function trailing_comments_end(node) {
+	if (node?.end == null) return undefined;
+
+	let end = node.end;
+	let current = node;
+
+	while (current && typeof current === 'object') {
+		const trailing = current.trailingComments;
+		if (trailing?.length) {
+			end = Math.max(end, trailing[trailing.length - 1].end);
+		}
+
+		let next = null;
+		for (const key in current) {
+			if (key === 'loc' || key === 'leadingComments' || key === 'trailingComments') continue;
+			const value = current[key];
+
+			if (Array.isArray(value)) {
+				const last = value[value.length - 1];
+				if (last && typeof last === 'object' && last.type && last.end >= current.end - 1) {
+					next = last;
+				}
+			} else if (value && typeof value === 'object' && value.type && value.end >= current.end - 1) {
+				next = value;
+			}
+		}
+
+		if (!next || next === current) break;
+		current = next;
+	}
+
+	return end;
 }
 
 /**
@@ -228,12 +319,16 @@ function base_element(node, context, comments, state) {
 
 	// Handle special Svelte components/elements that need 'this' attribute
 	if (node.type === 'SvelteComponent') {
+		const expression = /** @type {AST.SvelteComponent} */ (node).expression;
 		child_context.write(' this={');
-		child_context.visit(/** @type {AST.SvelteComponent} */ (node).expression);
+		child_context.visit(expression);
+		flush_js_comments(child_context, comments, expression.end, trailing_comments_end(expression));
 		child_context.write('}');
 	} else if (node.type === 'SvelteElement') {
+		const tag = /** @type {AST.SvelteElement} */ (node).tag;
 		child_context.write(' this={');
-		child_context.visit(/** @type {AST.SvelteElement} */ (node).tag);
+		child_context.visit(tag);
+		flush_js_comments(child_context, comments, tag.end, trailing_comments_end(tag));
 		child_context.write('}');
 	}
 
@@ -697,6 +792,7 @@ const svelte_visitors = (comments, state) => ({
 		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
+			flush_js_comments(context, comments, node.expression.end, node.end);
 			context.write('}');
 		}
 	},
@@ -704,6 +800,7 @@ const svelte_visitors = (comments, state) => ({
 	AttachTag(node, context) {
 		context.write('{@attach ');
 		context.visit(node.expression);
+		flush_js_comments(context, comments, node.expression.end, node.end);
 		context.write('}');
 	},
 
@@ -734,6 +831,17 @@ const svelte_visitors = (comments, state) => ({
 	AwaitBlock(node, context) {
 		context.write(`{#await `);
 		context.visit(node.expression);
+		flush_js_comments(
+			context,
+			comments,
+			node.expression.end,
+			node.pending?.nodes[0]?.start ??
+				node.value?.start ??
+				node.then?.nodes[0]?.start ??
+				node.error?.start ??
+				node.catch?.nodes[0]?.start ??
+				node.end
+		);
 
 		if (node.pending) {
 			context.write('}');
@@ -747,7 +855,15 @@ const svelte_visitors = (comments, state) => ({
 
 		if (node.then) {
 			context.write(node.value ? 'then ' : 'then');
-			if (node.value) context.visit(node.value);
+			if (node.value) {
+				context.visit(node.value);
+				flush_js_comments(
+					context,
+					comments,
+					node.value.end,
+					node.then.nodes[0]?.start ?? node.error?.start ?? node.catch?.nodes[0]?.start ?? node.end
+				);
+			}
 			context.write('}');
 
 			block(context, node.then, state.preserve_whitespace > 0);
@@ -759,7 +875,15 @@ const svelte_visitors = (comments, state) => ({
 
 		if (node.catch) {
 			context.write(node.error ? 'catch ' : 'catch');
-			if (node.error) context.visit(node.error);
+			if (node.error) {
+				context.visit(node.error);
+				flush_js_comments(
+					context,
+					comments,
+					node.error.end,
+					node.catch.nodes[0]?.start ?? node.end
+				);
+			}
 			context.write('}');
 
 			block(context, node.catch, state.preserve_whitespace > 0);
@@ -786,6 +910,7 @@ const svelte_visitors = (comments, state) => ({
 			context.visit(node.expression);
 		}
 
+		flush_js_comments(context, comments, node.expression.end, node.end);
 		context.write('}');
 	},
 
@@ -797,6 +922,7 @@ const svelte_visitors = (comments, state) => ({
 		) {
 			context.write('={');
 			context.visit(node.expression);
+			flush_js_comments(context, comments, node.expression.end, node.end);
 			context.write('}');
 		}
 	},
@@ -817,6 +943,8 @@ const svelte_visitors = (comments, state) => ({
 			context.visit(declarators[i]);
 		}
 
+		const last = declarators[declarators.length - 1];
+		flush_js_comments(context, comments, last?.init?.end ?? last?.id?.end, node.end);
 		context.write('}');
 	},
 
@@ -859,6 +987,8 @@ const svelte_visitors = (comments, state) => ({
 			join.write(', ');
 		}
 
+		const last = declarations[declarations.length - 1];
+		flush_js_comments(context, comments, last?.init?.end ?? last?.id?.end, node.end);
 		context.write('}');
 	},
 
@@ -872,10 +1002,18 @@ const svelte_visitors = (comments, state) => ({
 			context.visit(identifier);
 			started = true;
 		}
+		flush_js_comments(
+			context,
+			comments,
+			node.identifiers[node.identifiers.length - 1]?.end,
+			node.end
+		);
 		context.write('}');
 	},
 
 	EachBlock(node, context) {
+		const header_end = node.body.nodes[0]?.start ?? node.fallback?.nodes[0]?.start ?? node.end;
+
 		context.write('{#each ');
 		context.visit(node.expression);
 
@@ -891,7 +1029,10 @@ const svelte_visitors = (comments, state) => ({
 		if (node.key) {
 			context.write(' (');
 			context.visit(node.key);
+			flush_js_comments(context, comments, node.key.end, header_end);
 			context.write(')');
+		} else {
+			flush_js_comments(context, comments, (node.context ?? node.expression).end, header_end);
 		}
 
 		context.write('}');
@@ -909,25 +1050,31 @@ const svelte_visitors = (comments, state) => ({
 	ExpressionTag(node, context) {
 		context.write('{');
 		context.visit(node.expression);
+		flush_js_comments(context, comments, node.expression.end, node.end);
 		context.write('}');
 	},
 
 	HtmlTag(node, context) {
 		context.write('{@html ');
 		context.visit(node.expression);
+		flush_js_comments(context, comments, node.expression.end, node.end);
 		context.write('}');
 	},
 
 	IfBlock(node, context) {
+		const test_end = node.consequent.nodes[0]?.start ?? node.alternate?.nodes[0]?.start ?? node.end;
+
 		if (node.elseif) {
 			context.write('{:else if ');
 			context.visit(node.test);
+			flush_js_comments(context, comments, node.test.end, test_end);
 			context.write('}');
 
 			block(context, node.consequent, state.preserve_whitespace > 0);
 		} else {
 			context.write('{#if ');
 			context.visit(node.test);
+			flush_js_comments(context, comments, node.test.end, test_end);
 			context.write('}');
 
 			block(context, node.consequent, state.preserve_whitespace > 0);
@@ -956,6 +1103,12 @@ const svelte_visitors = (comments, state) => ({
 	KeyBlock(node, context) {
 		context.write('{#key ');
 		context.visit(node.expression);
+		flush_js_comments(
+			context,
+			comments,
+			node.expression.end,
+			node.fragment.nodes[0]?.start ?? node.end
+		);
 		context.write('}');
 		block(context, node.fragment, state.preserve_whitespace > 0);
 		context.write('{/key}');
@@ -969,6 +1122,7 @@ const svelte_visitors = (comments, state) => ({
 		) {
 			context.write('={');
 			context.visit(node.expression);
+			flush_js_comments(context, comments, node.expression.end, node.end);
 			context.write('}');
 		}
 	},
@@ -981,6 +1135,7 @@ const svelte_visitors = (comments, state) => ({
 		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
+			flush_js_comments(context, comments, node.expression.end, node.end);
 			context.write('}');
 		}
 	},
@@ -992,6 +1147,7 @@ const svelte_visitors = (comments, state) => ({
 	RenderTag(node, context) {
 		context.write('{@render ');
 		context.visit(node.expression);
+		flush_js_comments(context, comments, node.expression.end, node.end);
 		context.write('}');
 	},
 
@@ -1014,6 +1170,13 @@ const svelte_visitors = (comments, state) => ({
 			context.visit(node.parameters[i]);
 		}
 
+		flush_js_comments(
+			context,
+			comments,
+			node.parameters[node.parameters.length - 1]?.end ?? node.expression.end,
+			node.body.nodes[0]?.start ?? node.end,
+			node.parameters.length > 0
+		);
 		context.write(')}');
 		block(context, node.body, state.preserve_whitespace > 0);
 		context.write('{/snippet}');
@@ -1022,6 +1185,7 @@ const svelte_visitors = (comments, state) => ({
 	SpreadAttribute(node, context) {
 		context.write('{...');
 		context.visit(node.expression);
+		flush_js_comments(context, comments, node.expression.end, node.end);
 		context.write('}');
 	},
 
@@ -1063,6 +1227,12 @@ const svelte_visitors = (comments, state) => ({
 
 		context.write(' this={');
 		context.visit(node.expression);
+		flush_js_comments(
+			context,
+			comments,
+			node.expression.end,
+			trailing_comments_end(node.expression)
+		);
 		context.write('}');
 		attributes(node, node.attributes, context, comments);
 		if (node.fragment && node.fragment.nodes.length > 0) {
@@ -1083,6 +1253,7 @@ const svelte_visitors = (comments, state) => ({
 
 		context.write('this={');
 		context.visit(node.tag);
+		flush_js_comments(context, comments, node.tag.end, trailing_comments_end(node.tag));
 		context.write('}');
 		attributes(node, node.attributes, context, comments);
 
@@ -1129,6 +1300,7 @@ const svelte_visitors = (comments, state) => ({
 		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
+			flush_js_comments(context, comments, node.expression.end, node.end);
 			context.write('}');
 		}
 	},
@@ -1138,6 +1310,7 @@ const svelte_visitors = (comments, state) => ({
 		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
+			flush_js_comments(context, comments, node.expression.end, node.end);
 			context.write('}');
 		}
 	}
