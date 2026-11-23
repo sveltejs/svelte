@@ -53,6 +53,7 @@
 				"end": 82
 			}
 		],
+		"comments": [],
 		"content": {
 			"start": 61,
 			"end": 83,
@@ -77,6 +78,24 @@
 		]
 	},
 	"options": null,
+	"comments": [
+		{
+			"type": "Line",
+			"value": " script and style but no markup",
+			"start": 10,
+			"end": 43,
+			"loc": {
+				"start": {
+					"line": 2,
+					"column": 1
+				},
+				"end": {
+					"line": 2,
+					"column": 34
+				}
+			}
+		}
+	],
 	"instance": {
 		"type": "Script",
 		"start": 0,

@@ -25,7 +25,21 @@ interface HydrationTest extends BaseTest {
 	expect_hydration_error?: true;
 	snapshot?: (target: HTMLElement) => any;
 	test?: (
-		assert: typeof import('vitest').assert & {
+		// `_config.js` test callbacks rely on inferred parameter types, which
+		// TS treats as non-explicit and rejects for chai 5's assertion-function
+		// signatures (TS2775). Override the assertion methods we actually use
+		// with non-assertion equivalents.
+		assert: Omit<
+			typeof import('vitest').assert,
+			'ok' | 'isOk' | 'isTrue' | 'isFalse' | 'exists' | 'notExists' | 'instanceOf'
+		> & {
+			ok(value: unknown, message?: string): void;
+			isOk(value: unknown, message?: string): void;
+			isTrue(value: unknown, message?: string): void;
+			isFalse(value: unknown, message?: string): void;
+			exists(value: unknown, message?: string): void;
+			notExists(value: unknown, message?: string): void;
+			instanceOf(value: unknown, type: Function, message?: string): void;
 			htmlEqual(a: string, b: string, description?: string): void;
 		},
 		target: HTMLElement,
@@ -58,7 +72,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	const target = window.document.body;
 	const head = window.document.head;
 
-	const rendered = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
+	const rendered = await render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
 		props: config.server_props ?? config.props ?? {},
 		idPrefix: config?.id_prefix
 	});
@@ -66,8 +80,8 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	const override = read(`${cwd}/_override.html`);
 	const override_head = read(`${cwd}/_override_head.html`);
 
-	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.html + '\n');
-	target.innerHTML = override ?? rendered.html;
+	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.body + '\n');
+	target.innerHTML = override ?? rendered.body;
 
 	if (rendered.head) {
 		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
@@ -131,7 +145,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 
 		flushSync();
 
-		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
+		const expected = read(`${cwd}/_expected.html`) ?? rendered.body;
 		assert_html_equal(target.innerHTML, expected);
 
 		if (rendered.head) {
@@ -152,7 +166,6 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 
 		if (config.test) {
 			await config.test(
-				// @ts-expect-error TS doesn't get it
 				{
 					...assert,
 					htmlEqual: assert_html_equal

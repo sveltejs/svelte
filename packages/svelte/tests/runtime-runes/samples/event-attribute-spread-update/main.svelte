@@ -24,4 +24,7 @@
 >
 	change handlers
 </button>
+<button onclick={() => (attrs = { onclick: attrs.onclick, onclickcapture: undefined })}>
+	remove capture handler
+</button>
 <button {...attrs}>{delegated} / {non_delegated}</button>

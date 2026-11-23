@@ -1,4 +1,8 @@
+import { DEV } from 'esm-env';
+import { set_dev_metadata } from '../../dev/elements.js';
 import { hydrate_next, hydrating } from '../hydration.js';
+import { append_child, create_element, create_anchor, set_attribute } from '../operations.js';
+import { append } from '../template.js';
 
 /**
  * @param {Comment} anchor
@@ -6,10 +10,38 @@ import { hydrate_next, hydrating } from '../hydration.js';
  * @param {string} name
  * @param {Record<string, unknown>} slot_props
  * @param {null | ((anchor: Comment) => void)} fallback_fn
+ * @param {[string, number, number]} [location] the filename, line and column of the slot
  */
-export function slot(anchor, $$props, name, slot_props, fallback_fn) {
+export function slot(anchor, $$props, name, slot_props, fallback_fn, location) {
 	if (hydrating) {
 		hydrate_next();
+	}
+
+	// Custom element slots are native DOM slots.
+	// Use the stored reference because the shadow root may be closed.
+	if ($$props.$$host?.$$shadowRoot) {
+		const element = create_element('slot');
+		if (name !== 'default') set_attribute(element, 'name', name);
+
+		if (DEV && location) {
+			// Native slots are created outside the template, so mark their ownership
+			// before the surrounding template assigns its locations.
+			set_dev_metadata(element, {
+				file: location[0],
+				line: location[1],
+				column: location[2]
+			});
+		}
+
+		append(anchor, element);
+
+		if (fallback_fn !== null) {
+			const fallback_anchor = create_anchor();
+			append_child(element, fallback_anchor);
+			fallback_fn(fallback_anchor);
+		}
+
+		return;
 	}
 
 	var slot_fn = $$props.$$slots?.[name];

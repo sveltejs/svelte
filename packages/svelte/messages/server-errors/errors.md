@@ -44,7 +44,7 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 
 > Failed to serialize `hydratable` data for key `%key%`.
 >
-> `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
+> `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/devalue) can, plus Promises.
 >
 > Cause:
 > %stack%
@@ -52,6 +52,10 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 ## invalid_csp
 
 > `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
+
+## invalid_id_prefix
+
+> The `idPrefix` option cannot include `--`.
 
 ## lifecycle_function_unavailable
 

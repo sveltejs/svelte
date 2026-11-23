@@ -1,4 +1,4 @@
-import { type Environment, builtinEnvironments } from 'vitest/environments';
+import { type Environment, builtinEnvironments } from 'vitest/runtime';
 
 const xhtml_page = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.0//EN" "http://www.w3.org/TR/xhtml-basic/xhtml-basic10.dtd">
@@ -6,7 +6,7 @@ const xhtml_page = `<?xml version="1.0" encoding="UTF-8"?>
 
 export default <Environment>{
 	name: 'jsdom-xhtml',
-	transformMode: 'web',
+	viteEnvironment: 'client',
 	setup(global, { jsdom = {} }) {
 		return builtinEnvironments.jsdom.setup(global, {
 			jsdom: {

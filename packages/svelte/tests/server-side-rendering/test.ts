@@ -6,13 +6,12 @@
 
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { render } from 'svelte/server';
-import { compile_directory, should_update_expected, try_read_file } from '../helpers.js';
+import { render, type SyncRenderOutput } from 'svelte/server';
+import { compile_directory_cached, should_update_expected, try_read_file } from '../helpers.js';
 import { assert_html_equal_with_options } from '../html_equal.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
 import { seen } from '../../src/internal/server/dev.js';
-import type { SyncRenderOutput } from '#server';
 
 interface SSRTest extends BaseTest {
 	mode?: ('sync' | 'async')[];
@@ -64,7 +63,7 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 		};
 
 		if (!config.load_compiled) {
-			await compile_directory(test_dir, 'server', compile_options);
+			await compile_directory_cached(test_dir, 'server', compile_options);
 		}
 
 		return compile_options;

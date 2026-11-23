@@ -5,8 +5,8 @@ import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
-import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
-import { async_mode, compile_directory, fragments } from '../helpers.js';
+import { afterAll, assert, beforeAll, beforeEach, inject } from 'vitest';
+import { async_mode, compile_directory_cached, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
@@ -15,18 +15,34 @@ import { clear } from '../../src/internal/client/reactivity/batch.js';
 import { hydrating } from '../../src/internal/client/dom/hydration.js';
 import { ssr_context } from '../../src/internal/server/context.js';
 
-type Assert = typeof import('vitest').assert & {
-	htmlEqual(a: string, b: string, description?: string): void;
-	htmlEqualWithOptions(
-		a: string,
-		b: string,
-		opts: {
-			preserveComments: boolean;
-			withoutNormalizeHtml: boolean;
-		},
-		description?: string
-	): void;
+// `_config.js` files call `assert.ok` etc. with `assert` typed via parameter
+// inference, which TypeScript treats as non-explicit. chai 5 (pulled in by
+// vitest 4) declares these as assertion functions (`asserts value`), so TS2775
+// fires on every call. Override the affected methods with non-assertion
+// signatures — the runtime behavior is unchanged.
+type NonAssertingMethods = {
+	ok(value: unknown, message?: string): void;
+	isOk(value: unknown, message?: string): void;
+	isTrue(value: unknown, message?: string): void;
+	isFalse(value: unknown, message?: string): void;
+	exists(value: unknown, message?: string): void;
+	notExists(value: unknown, message?: string): void;
+	instanceOf(value: unknown, type: Function, message?: string): void;
 };
+
+type Assert = Omit<typeof import('vitest').assert, keyof NonAssertingMethods> &
+	NonAssertingMethods & {
+		htmlEqual(a: string, b: string, description?: string): void;
+		htmlEqualWithOptions(
+			a: string,
+			b: string,
+			opts: {
+				preserveComments: boolean;
+				withoutNormalizeHtml: boolean;
+			},
+			description?: string
+		): void;
+	};
 
 // TODO remove this shim when we can
 // @ts-expect-error
@@ -60,6 +76,8 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	id_prefix?: string;
 	before_test?: () => void;
 	after_test?: () => void;
+	/** If true, flushSync() will not be called before invoking test() */
+	skip_initial_flushSync?: boolean;
 	test?: (args: {
 		variant: 'dom' | 'hydrate';
 		assert: Assert;
@@ -73,6 +91,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		raf: {
 			tick: (ms: number) => void;
 		};
+		snapshot: any;
 		target: HTMLElement;
 		window: Window & {
 			Event: typeof Event;
@@ -124,6 +143,16 @@ const listeners = process.rawListeners('unhandledRejection');
 beforeAll(() => {
 	// @ts-expect-error TODO huh?
 	process.prependListener('unhandledRejection', unhandled_rejection_handler);
+
+	// Route inline-`<script>` console calls through `globalThis.console` at
+	// call time, so per-test `console.{log,warn,error}` overrides see them.
+	// (jsdom scripts run in a VM with their own `console` object, separate
+	// from Node's `globalThis.console` — vitest 4's jsdom env no longer
+	// bridges them per-test.)
+	const vc = (window as any)._virtualConsole;
+	for (const m of ['log', 'warn', 'error'] as const) {
+		vc?.on(m, (...args: any[]) => console[m](...args));
+	}
 });
 
 beforeEach(() => {
@@ -148,11 +177,11 @@ export function runtime_suite(runes: boolean) {
 		['dom', 'hydrate', 'ssr', 'async-ssr'],
 		(variant, config, test_name) => {
 			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
-				return true;
+				return 'no-test';
 			}
 
 			if (async_mode && config.skip_async) {
-				return true;
+				return 'no-test';
 			}
 
 			if (variant === 'hydrate') {
@@ -166,9 +195,9 @@ export function runtime_suite(runes: boolean) {
 			) {
 				return 'no-test';
 			}
-
 			if (variant === 'ssr') {
 				if (
+					(test_name.startsWith('async-') && !config.mode?.includes('server')) ||
 					(config.mode && !config.mode.includes('server')) ||
 					(!config.test_ssr &&
 						config.html === undefined &&
@@ -233,11 +262,28 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
 	// so you can manipulate the output manually to see what fixes it, adding console.logs etc.
 	if (!config.load_compiled) {
-		await compile_directory(cwd, 'client', compileOptions);
-		await compile_directory(cwd, 'server', compileOptions);
+		await compile_directory_cached(cwd, 'client', compileOptions);
+		await compile_directory_cached(cwd, 'server', compileOptions);
+	}
+
+	// Components using `$inspect.trace` turn on tracing mode for good, by importing `svelte/internal/flags/tracing`.
+	// All subsequent tests in the same worker would then also run in (much slower) tracing mode, so these samples
+	// get a shard of their own (see `vitest.config.js`). That only works if they follow the naming convention
+	if (inject('shard')?.include !== 'inspect-trace' && uses_tracing(`${cwd}/_output/client`)) {
+		throw new Error(
+			'Samples using `$inspect.trace` must be in runtime-runes and named `inspect-trace-*`, ' +
+				'so that they run in their own worker (see `vitest.config.js`). This is enforced to' +
+				'prevent the tracing flag being enabled for all tests in a suite, which slows them down.'
+		);
 	}
 
 	return compileOptions;
+}
+
+function uses_tracing(output_dir: string) {
+	return globSync('**/*.js', { cwd: output_dir }).some((file) =>
+		fs.readFileSync(`${output_dir}/${file}`, 'utf-8').includes('svelte/internal/flags/tracing')
+	);
 }
 
 async function run_test_variant(
@@ -253,6 +299,26 @@ async function run_test_variant(
 	let warnings: string[] = [];
 	let errors: string[] = [];
 	let manual_hydrate = false;
+	let intercept_errors = false;
+
+	// Capture phase so we still see the error if a test installs its own
+	// `stopImmediatePropagation` listener (e.g. event-handler-*). Named so we
+	// can remove it in `finally` — otherwise listeners from earlier tests leak
+	// and keep writing to module-level `unhandled_rejection`. When the test
+	// intercepts `errors`, mirror jsdom's `Uncaught [...]` format into the
+	// array — vitest 4's jsdom env no longer routes `jsdomError` to vitest's
+	// wrapped console reliably (works locally but not in CI's forks pool).
+	const window_error_listener = (e: ErrorEvent) => {
+		if (intercept_errors) {
+			const detail = e.error;
+			const is_error = detail && detail.name && detail.message !== undefined && detail.stack;
+			const error_string = is_error ? `[${detail.name}: ${detail.message}]` : String(detail);
+			errors.push(`Error: Uncaught ${error_string}\n${detail?.stack ?? ''}`, detail);
+		} else {
+			unhandled_rejection = e.error;
+		}
+		e.preventDefault();
+	};
 
 	{
 		// use some crude static analysis to determine if logs/warnings are intercepted.
@@ -315,6 +381,7 @@ async function run_test_variant(
 		}
 
 		if (str.slice(0, i).includes('errors') || config.errors) {
+			intercept_errors = true;
 			// eslint-disable-next-line no-console
 			console.error = (...args) => {
 				errors.push(...args);
@@ -346,10 +413,7 @@ async function run_test_variant(
 		window.document.head.innerHTML = styles ? `<style>${styles}</style>` : '';
 		window.document.body.innerHTML = '<main></main>';
 
-		window.addEventListener('error', (e) => {
-			unhandled_rejection = e.error;
-			e.preventDefault();
-		});
+		window.addEventListener('error', window_error_listener, true);
 
 		globalThis.requestAnimationFrame = globalThis.setTimeout;
 
@@ -421,7 +485,6 @@ async function run_test_variant(
 				await config.test_ssr({
 					logs,
 					warnings,
-					// @ts-expect-error
 					assert: {
 						...assert,
 						htmlEqual: assert_html_equal,
@@ -468,14 +531,16 @@ async function run_test_variant(
 					};
 				} else {
 					run_hydratables_init();
-					const render = variant === 'hydrate' ? hydrate : mount;
-					instance = render(mod.default, {
+					const options = {
 						target,
 						props,
 						intro: config.intro,
 						recover: config.recover ?? false,
 						transformError: config.transformError
-					});
+					};
+
+					instance =
+						variant === 'hydrate' ? hydrate(mod.default, options) : mount(mod.default, options);
 				}
 			} else {
 				run_hydratables_init();
@@ -505,7 +570,7 @@ async function run_test_variant(
 
 			try {
 				if (config.test) {
-					flushSync();
+					if (!config.skip_initial_flushSync) flushSync();
 
 					if (variant === 'hydrate' && cwd.includes('async-')) {
 						// wait for pending boundaries to render
@@ -513,7 +578,6 @@ async function run_test_variant(
 					}
 
 					await config.test({
-						// @ts-expect-error TS doesn't get it
 						assert: {
 							...assert,
 							htmlEqual: assert_html_equal,
@@ -523,6 +587,7 @@ async function run_test_variant(
 						component: runes ? props : instance,
 						instance,
 						mod,
+						ok,
 						target,
 						snapshot,
 						window,
@@ -543,7 +608,7 @@ async function run_test_variant(
 				}
 			} finally {
 				if (runes) {
-					unmount(instance);
+					await unmount(instance);
 				} else {
 					instance.$destroy();
 				}
@@ -590,6 +655,8 @@ async function run_test_variant(
 		if (hydrating) {
 			throw new Error('Hydration state was not cleared');
 		}
+
+		window.removeEventListener('error', window_error_listener, true);
 
 		config.after_test?.();
 

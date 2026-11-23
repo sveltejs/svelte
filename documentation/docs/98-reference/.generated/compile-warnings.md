@@ -62,7 +62,7 @@ Enforce that `autofocus` is not used on elements. Autofocusing elements can caus
 ### a11y_click_events_have_key_events
 
 ```
-Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+Visible, non-interactive element `<%element%>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
 ```
 
 Enforce that visible, non-interactive elements with an `onclick` event are accompanied by a keyboard event handler.
@@ -360,7 +360,7 @@ Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and th
 '%event%' event must be accompanied by '%accompanied_by%' event
 ```
 
-Enforce that `onmouseover` and `onmouseout` are accompanied by `onfocus` and `onblur`, respectively. This helps to ensure that any functionality triggered by these mouse events is also accessible to keyboard users.
+Enforce that `onmouseover` and `onmouseout` are accompanied by `onfocus` (or `onfocusin`) and `onblur` (or `onfocusout`), respectively. This helps to ensure that any functionality triggered by these mouse events is also accessible to keyboard users.
 
 ```svelte
 <!-- A11y: onmouseover must be accompanied by onfocus -->
@@ -842,7 +842,7 @@ Reassignments of module-level declarations will not cause reactive statements to
 ### script_unknown_attribute
 
 ```
-Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+Unrecognised attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
 ```
 
 ### slot_element_deprecated

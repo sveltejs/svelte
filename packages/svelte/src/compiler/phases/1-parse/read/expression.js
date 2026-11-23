@@ -1,9 +1,11 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Identifier } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import { parse_expression_at } from '../acorn.js';
-import { regex_whitespace } from '../../patterns.js';
-import * as e from '../../../errors.js';
+// @ts-expect-error acorn type definitions are borked in the release we use
+import { isIdentifierStart, isIdentifierChar } from 'acorn';
+import { parse_expression_at, remove_parens } from '../acorn.js';
 import { find_matching_bracket } from '../utils/bracket.js';
+import { is_reserved } from '../../../../utils.js';
+import { locator } from '../../../state.js';
 
 /**
  * @param {Parser} parser
@@ -33,51 +35,20 @@ export function get_loose_identifier(parser, opening_token) {
  * @returns {Expression}
  */
 export default function read_expression(parser, opening_token, disallow_loose) {
+	const simple = read_simple_expression(parser);
+	if (simple) return simple;
+
 	try {
-		let comment_index = parser.root.comments.length;
-
-		const node = parse_expression_at(
-			parser.template,
-			parser.root.comments,
-			parser.ts,
-			parser.index
-		);
-
-		let num_parens = 0;
-
-		let i = parser.root.comments.length;
-		while (i-- > comment_index) {
-			const comment = parser.root.comments[i];
-			if (comment.end < node.start) {
-				parser.index = comment.end;
-				break;
-			}
-		}
-
-		for (let i = parser.index; i < /** @type {number} */ (node.start); i += 1) {
-			if (parser.template[i] === '(') num_parens += 1;
-		}
+		const node = parse_expression_at(parser, parser.template, parser.index);
 
 		let index = /** @type {number} */ (node.end);
 
 		const last_comment = parser.root.comments.at(-1);
 		if (last_comment && last_comment.end > index) index = last_comment.end;
 
-		while (num_parens > 0) {
-			const char = parser.template[index];
-
-			if (char === ')') {
-				num_parens -= 1;
-			} else if (!regex_whitespace.test(char)) {
-				e.expected_token(index, ')');
-			}
-
-			index += 1;
-		}
-
 		parser.index = index;
 
-		return /** @type {Expression} */ (node);
+		return /** @type {Expression} */ (remove_parens(node));
 	} catch (err) {
 		// If we are in an each loop we need the error to be thrown in cases like
 		// `as { y = z }` so we still throw and handle the error there
@@ -88,6 +59,107 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 			}
 		}
 
-		parser.acorn_error(err);
+		throw err;
 	}
+}
+
+/**
+ * Most template expressions are an identifier or a `a.b.c` member chain followed by `}`.
+ * Those are built directly for better parse performance, with the same shape acorn would produce; anything else goes to acorn
+ * @param {Parser} parser
+ * @returns {Expression | null}
+ */
+function read_simple_expression(parser) {
+	if (!parser.lf_only) return null;
+
+	const template = parser.template;
+	const index = parser.index;
+
+	parser.allow_whitespace();
+	const start = parser.index;
+
+	let end = read_word(template, start);
+	if (end === -1 || is_reserved(template.slice(start, end))) {
+		parser.index = index;
+		return null;
+	}
+
+	/** @type {Expression} */
+	let node = identifier(template, start, end);
+
+	while (template[end] === '.') {
+		const property_end = read_word(template, end + 1);
+		if (property_end === -1) {
+			parser.index = index;
+			return null;
+		}
+
+		node = {
+			type: 'MemberExpression',
+			start,
+			end: property_end,
+			loc: { start: position(start), end: position(property_end) },
+			object: node,
+			property: identifier(template, end + 1, property_end),
+			computed: false,
+			optional: false
+		};
+
+		end = property_end;
+	}
+
+	parser.index = end;
+	parser.allow_whitespace();
+
+	if (!parser.match('}')) {
+		parser.index = index;
+		return null;
+	}
+
+	parser.index = end;
+	return node;
+}
+
+/**
+ * @param {string} template
+ * @param {number} start
+ * @returns {number} the end of the identifier starting at `start`, or -1
+ */
+function read_word(template, start) {
+	if (start >= template.length) return -1;
+
+	const code = /** @type {number} */ (template.codePointAt(start));
+	if (!isIdentifierStart(code, true)) return -1;
+
+	let end = start + (code <= 0xffff ? 1 : 2);
+
+	while (end < template.length) {
+		const code = /** @type {number} */ (template.codePointAt(end));
+		if (!isIdentifierChar(code, true)) break;
+		end += code <= 0xffff ? 1 : 2;
+	}
+
+	return end;
+}
+
+/**
+ * @param {string} template
+ * @param {number} start
+ * @param {number} end
+ * @returns {Identifier}
+ */
+function identifier(template, start, end) {
+	return {
+		type: 'Identifier',
+		start,
+		end,
+		loc: { start: position(start), end: position(end) },
+		name: template.slice(start, end)
+	};
+}
+
+/** @param {number} index */
+function position(index) {
+	const { line, column } = locator(index);
+	return { line, column };
 }
