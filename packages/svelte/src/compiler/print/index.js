@@ -1,7 +1,9 @@
+/** @import * as ESTree from 'estree'; */
 /** @import { AST } from '#compiler'; */
 /** @import { Context, Visitors } from 'esrap' */
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
+import { walk } from 'zimmerframe';
 import { is_void } from '../../utils.js';
 import { regex_ends_with_whitespaces, regex_starts_with_whitespaces } from '../phases/patterns.js';
 
@@ -89,21 +91,179 @@ export function print(ast, options = undefined) {
 		(ast.type === 'Root' ? ast.css?.comments : ast.type === 'StyleSheet' ? ast.comments : null) ||
 		[];
 
+	const javascript = javascript_visitors(ast, comments, options);
+
 	return esrap.print(
 		ast,
 		/** @type {Visitors<AST.SvelteNode>} */ ({
-			...ts({
-				comments,
-				getLeadingComments: options?.getLeadingComments,
-				getTrailingComments: options?.getTrailingComments
-			}),
-			...svelte_visitors(comments, state),
-			...css_visitors(css_comments, comments)
+			...javascript.visitors,
+			...svelte_visitors(javascript.comments, state),
+			...css_visitors(css_comments, javascript.comments)
 		}),
 		{
 			indent: options?.indent
 		}
 	);
+}
+
+/**
+ * @param {AST.SvelteNode} ast
+ * @param {AST.JSComment[]} comments
+ * @param {import('./types.js').Options | undefined} options
+ * @returns {{ visitors: Visitors<AST.SvelteNode>, comments: AST.JSComment[] }}
+ */
+function javascript_visitors(ast, comments, options) {
+	// esrap still owns interior JS comments; trailing comments at Svelte boundaries
+	// are printed separately so they cannot leak into the next tag.
+	/** @type {AST.JSComment[]} */
+	const js_comments = [];
+	const js_visitors = ts({
+		comments: js_comments,
+		getLeadingComments: options?.getLeadingComments,
+		getTrailingComments: options?.getTrailingComments
+	});
+	/** @type {Map<ESTree.Node, ESTree.Comment[]>} */
+	const boundary_comments = new Map();
+	/** @type {Set<number>} */
+	const owned_comments = new Set();
+	const parenthesized = new Set();
+
+	/**
+	 * @param {ESTree.Node} node
+	 * @param {ESTree.Comment[] | undefined} trailing
+	 */
+	function own_comments(node, trailing) {
+		if (!trailing?.length) return;
+		boundary_comments.set(node, [...(boundary_comments.get(node) ?? []), ...trailing]);
+		for (const comment of trailing)
+			owned_comments.add(/** @type {AST.JSComment} */ (comment).start);
+	}
+
+	/**
+	 * @param {ESTree.Node} node
+	 * @param {number} end
+	 */
+	function own_comments_in_range(node, end) {
+		own_comments(
+			node,
+			comments.filter(
+				(comment) =>
+					comment.start >= /** @type {AST.BaseNode} */ (node).end &&
+					comment.end <= end &&
+					!owned_comments.has(comment.start)
+			)
+		);
+	}
+
+	/** @param {ESTree.Node} node */
+	function own_boundary_comments(node) {
+		own_comments(node, node.trailingComments);
+		walk(node, null, {
+			_(child, { next }) {
+				// Acorn can attach a comment after `foo(a)` to `a`, rather than
+				// to the call. Only take descendant comments outside this subtree.
+				if (child !== node) {
+					own_comments(
+						node,
+						child.trailingComments?.filter(
+							(comment) =>
+								/** @type {AST.JSComment} */ (comment).start >=
+								/** @type {AST.BaseNode} */ (node).end
+						)
+					);
+				}
+				next();
+			}
+		});
+	}
+
+	walk(/** @type {AST.SvelteNode | ESTree.Node} */ (ast), null, {
+		Root(node, { next, visit }) {
+			// Options have no `type`, so the walker does not traverse them automatically.
+			for (const attribute of node.options?.attributes ?? []) visit(attribute);
+			next();
+		},
+		SnippetBlock(node, { next }) {
+			next();
+			const parameter = node.parameters.at(-1);
+			if (parameter) {
+				// Pattern parsing may leave comments after the last parameter unattached.
+				// Keep them in the header, rather than flushing them inside the body.
+				own_comments_in_range(parameter, node.body.nodes[0]?.start ?? node.end);
+			}
+		},
+		_(node, { next, path }) {
+			if (node.type in js_visitors) {
+				const js = /** @type {ESTree.Node} */ (node);
+				if (js.type === 'VariableDeclaration') {
+					// The tag visitors print declarators without visiting their declaration.
+					for (const declaration of js.declarations) {
+						if (declaration.init) {
+							own_boundary_comments(declaration.init);
+							if (path.at(-1)?.type === 'DeclarationTag') {
+								// Statement parsing does not preserve parentheses, and may only
+								// attach the first comment after an initializer. Collect the rest
+								// from its declarator's span, without taking comments between declarators.
+								own_comments_in_range(
+									declaration.init,
+									/** @type {AST.BaseNode} */ (declaration).end
+								);
+								// Declaration tags only accept initializer comments inside parentheses.
+								if (boundary_comments.has(declaration.init)) parenthesized.add(declaration.init);
+							}
+						}
+					}
+				} else if (js.type === 'SequenceExpression' && path.at(-1)?.type === 'BindDirective') {
+					// Function bindings likewise omit the SequenceExpression wrapper.
+					for (const expression of js.expressions) own_boundary_comments(expression);
+					own_comments(js.expressions[js.expressions.length - 1], js.trailingComments);
+				} else if (js.type !== 'Program') {
+					own_boundary_comments(js);
+				}
+				return;
+			}
+			next();
+		}
+	});
+
+	for (const trailing of boundary_comments.values()) {
+		trailing.sort(
+			(a, b) => /** @type {AST.JSComment} */ (a).start - /** @type {AST.JSComment} */ (b).start
+		);
+	}
+
+	for (const comment of comments) {
+		if (!owned_comments.has(comment.start)) js_comments.push(comment);
+	}
+	const visit_js = /** @type {NonNullable<Visitors<AST.SvelteNode>['_']>} */ (js_visitors._);
+
+	return {
+		comments: js_comments,
+		visitors: {
+			...js_visitors,
+			_(node, context, visit) {
+				if (parenthesized.has(node)) context.write('(');
+				visit_js(node, context, visit);
+				// JavaScript cannot carry these comments across a Svelte syntax boundary.
+				for (const comment of boundary_comments.get(/** @type {ESTree.Node} */ (node)) ?? []) {
+					context.write(' ');
+					if (comment.type === 'Line') {
+						context.write('//' + comment.value);
+						context.newline();
+					} else {
+						const lines = comment.value.split('\n');
+						context.write('/*');
+						for (let i = 0; i < lines.length; i++) {
+							if (i > 0) context.newline();
+							context.write(lines[i]);
+						}
+						context.write('*/');
+					}
+				}
+				if (parenthesized.has(node)) context.write(')');
+			}
+		}
+	};
 }
 
 /**
@@ -538,6 +698,18 @@ function css_visitors(comments, js_comments) {
 }
 
 /**
+ * @param {AST.BindDirective | AST.ClassDirective | AST.LetDirective} node
+ */
+function is_shorthand(node) {
+	return (
+		node.expression?.type === 'Identifier' &&
+		node.expression.name === node.name &&
+		!node.expression.leadingComments?.length &&
+		!node.expression.trailingComments?.length
+	);
+}
+
+/**
  * @param {AST.JSComment[]} comments
  * @param {{ preserve_whitespace: number }} state
  * @returns {Visitors<AST.SvelteNode>}
@@ -771,7 +943,7 @@ const svelte_visitors = (comments, state) => ({
 	BindDirective(node, context) {
 		context.write(`bind:${node.name}`);
 
-		if (node.expression.type === 'Identifier' && node.expression.name === node.name) {
+		if (is_shorthand(node)) {
 			// shorthand
 			return;
 		}
@@ -791,10 +963,7 @@ const svelte_visitors = (comments, state) => ({
 
 	ClassDirective(node, context) {
 		context.write(`class:${node.name}`);
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null && !is_shorthand(node)) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -963,10 +1132,7 @@ const svelte_visitors = (comments, state) => ({
 
 	LetDirective(node, context) {
 		context.write(`let:${node.name}`);
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null && !is_shorthand(node)) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
