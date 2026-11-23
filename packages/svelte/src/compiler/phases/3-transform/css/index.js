@@ -216,8 +216,7 @@ const visitors = {
 
 				if (selector.metadata.used === pruning) {
 					if (pruning) {
-						let i = selector.start;
-						while (state.code.original[i] !== ',') i--;
+						const i = find_comma(state.code.original, last);
 
 						if (state.minify) {
 							state.code.remove(prune_start, has_previous_used ? i : i + 1);
@@ -459,6 +458,29 @@ function is_empty(rule, is_in_global_block) {
 /** @param {AST.CSS.Rule} rule */
 function is_used(rule) {
 	return rule.prelude.children.some((selector) => selector.metadata.used);
+}
+
+/**
+ * Finds the comma between two selectors in a list. It skips comments and
+ * CDO/CDC (`<!--`, `-->`) blocks like the parser does, because they can
+ * contain commas too
+ * @param {string} css
+ * @param {number} start the end of the previous selector
+ */
+function find_comma(css, start) {
+	let i = start;
+
+	while (css[i] !== ',') {
+		if (css.startsWith('/*', i)) {
+			i = css.indexOf('*/', i + 2) + 2;
+		} else if (css.startsWith('<!--', i)) {
+			i = css.indexOf('-->', i + 4) + 3;
+		} else {
+			i++;
+		}
+	}
+
+	return i;
 }
 
 /**
