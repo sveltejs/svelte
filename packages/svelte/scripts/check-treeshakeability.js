@@ -29,6 +29,9 @@ async function bundle_code(entry) {
 			if (warning.code !== 'EMPTY_BUNDLE' && warning.code !== 'CIRCULAR_DEPENDENCY') {
 				handle(warning);
 			}
+		},
+		resolve: {
+			conditionNames: ['production', 'import', 'browser', 'default']
 		}
 	});
 
