@@ -93,8 +93,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       devalue:
-        specifier: ^5.9.2
-        version: 5.9.4
+        specifier: ^6.0.3
+        version: 6.0.3
       esm-env:
         specifier: ^1.2.1
         version: 1.2.1
@@ -1154,8 +1154,9 @@ packages:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
 
-  devalue@5.9.4:
-    resolution: {integrity: sha512-sPAT4pztbu6586/hrhOnMKS17IJrvg12mXiSPSS3W5qDeN2RGgvZ0diZCm31dBbnevfVmujNO3IM2wrS4Y2Rhg==}
+  devalue@6.0.3:
+    resolution: {integrity: sha512-3woMEITftG1wKeO/4d/QXH1DVKctTSZg3jNGPpjp9hNr5Hos8MCFF5McTML5ZtgKDObm2R591B0spRp2IVernA==}
+    engines: {node: '>=18'}
 
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -3238,7 +3239,7 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
-  devalue@5.9.4: {}
+  devalue@6.0.3: {}
 
   dir-glob@3.0.1:
     dependencies:
@@ -4045,7 +4046,7 @@ snapshots:
     dependencies:
       chokidar: 3.6.0
       immutable: 4.3.8
-      source-map-js: 1.2.1
+      source-map-js: 1.2.4
     optional: true
 
   saxes@6.0.0:
@@ -4178,7 +4179,7 @@ snapshots:
 
   ts-declaration-location@1.0.7(typescript@5.5.4):
     dependencies:
-      picomatch: 4.0.4
+      picomatch: 4.0.7
       typescript: 5.5.4
 
   tslib@2.9.1:
