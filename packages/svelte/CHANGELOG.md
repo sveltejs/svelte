@@ -1,5 +1,427 @@
 # svelte
 
+## 5.59.1
+
+### Patch Changes
+
+- fix: keep `hydrate` and `mount` type parameters in sync so a union of them is callable ([#19357](https://github.com/sveltejs/svelte/pull/19357))
+
+## 5.59.0
+
+### Minor Changes
+
+- feat: custom renderer api ([#18042](https://github.com/sveltejs/svelte/pull/18042))
+
+## 5.58.1
+
+### Patch Changes
+
+- fix: don't throw when committing a fork whose changes were all superseded by other updates ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: apply the branch changes of blocks that re-run while effects are flushed when the batch with the effects' writes commits ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: keep values computed in a batch's view of the world local to that batch, and don't needlessly re-run deriveds while several batches are pending ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: don't skip sibling listeners added with `on()` when an earlier one calls `stopPropagation()` ([#19317](https://github.com/sveltejs/svelte/pull/19317))
+
+- fix: update `bind:files` when the form is reset ([#19298](https://github.com/sveltejs/svelte/pull/19298))
+
+- fix: restore teardown context when destroying effects after outros ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: print raw input text unchanged, respect whitespace rules ([#19292](https://github.com/sveltejs/svelte/pull/19292))
+
+- breaking: in experimental async mode, `getAbortSignal()` must be called before an `await` ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: remove related comments when effects are removed from server rune modules. ([#19289](https://github.com/sveltejs/svelte/pull/19289))
+
+- fix: commit the state that hydration ran with, so that updates while hydration is pending don't undo it ([#19347](https://github.com/sveltejs/svelte/pull/19347))
+
+- fix: don't run `$inspect` and `$state.eager` with the values of a fork before it is committed ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: read a never-reassigned `$state.raw` declaration tag directly when it shadows reassigned state ([#19294](https://github.com/sveltejs/svelte/pull/19294))
+
+- fix: revert state changes in effect teardowns based on the currently committing batch ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+## 5.58.0
+
+### Minor Changes
+
+- feat: include `snippetName` in `render` entries of the dev `__svelte_meta` stack ([#19283](https://github.com/sveltejs/svelte/pull/19283))
+
+- feat: include the `component` instance an element was rendered in for Svelte devtools to track ([#19286](https://github.com/sveltejs/svelte/pull/19286))
+
+### Patch Changes
+
+- perf: let the garbage collector free each component's AST after it is compiled ([#19241](https://github.com/sveltejs/svelte/pull/19241))
+
+- fix: render the same `<title>` on the server as on the client and ignore titles inside failed boundaries ([#19176](https://github.com/sveltejs/svelte/pull/19176))
+
+- fix: allow `autocorrect` on all elements ([#19105](https://github.com/sveltejs/svelte/pull/19105))
+
+- fix: parse snippet type parameters containing arrow function types ([#19141](https://github.com/sveltejs/svelte/pull/19141))
+
+- fix: keep directive values that match the directive name in `print` ([#19229](https://github.com/sveltejs/svelte/pull/19229))
+
+- fix: correctly assign dev element locations after components during hydration ([#19287](https://github.com/sveltejs/svelte/pull/19287))
+
+- perf: don't compare the whole template on every expression when a source is parsed again ([#19215](https://github.com/sveltejs/svelte/pull/19215))
+
+- docs: avoid binding to read-only current values in Spring and Tween examples ([#19226](https://github.com/sveltejs/svelte/pull/19226))
+
+- fix: keep positions right after optional properties in template type annotations ([#19217](https://github.com/sveltejs/svelte/pull/19217))
+
+- perf: speed up server rendering of pages with many or deeply nested components ([#19177](https://github.com/sveltejs/svelte/pull/19177))
+
+- fix: remove all of the server-rendered content when hydrating a different branch that contains a failed boundary ([#19166](https://github.com/sveltejs/svelte/pull/19166))
+
+- fix: preserve effect tree order across batch traversal passes ([#19132](https://github.com/sveltejs/svelte/pull/19132))
+
+- fix: reset dev update counters for sources written during batch traversal ([#19092](https://github.com/sveltejs/svelte/pull/19092))
+
+- chore: bump esrap ([#19290](https://github.com/sveltejs/svelte/pull/19290))
+
+- fix: don't leak reactive context past nested awaits in production ([#19134](https://github.com/sveltejs/svelte/pull/19134))
+
+## 5.57.3
+
+### Patch Changes
+
+- fix: use the first valid fallback role in `role` for a11y checks ([#19045](https://github.com/sveltejs/svelte/pull/19045))
+
+- chore: remove obsolete code ([#19051](https://github.com/sveltejs/svelte/pull/19051))
+
+- fix: keep creating state sources for property checks during component init ([#18949](https://github.com/sveltejs/svelte/pull/18949))
+
+- fix: skip redundant attribute writes during hydration ([#18869](https://github.com/sveltejs/svelte/pull/18869))
+
+- fix: track missing state property checks in unowned deriveds ([#18944](https://github.com/sveltejs/svelte/pull/18944))
+
+- fix: `devalue` link in `hydratable_serialization_failed` error ([#18999](https://github.com/sveltejs/svelte/pull/18999))
+
+## 5.57.2
+
+### Patch Changes
+
+- fix: don't create async deriveds for a component destroyed while waiting for its top-level `await` ([#18931](https://github.com/sveltejs/svelte/pull/18931))
+
+- fix: prevent untracked derived reads from retaining disconnected dependencies ([#18829](https://github.com/sveltejs/svelte/pull/18829))
+
+- fix: error if `{:else}` is followed by another `{:else}` or `{:else if ...}` ([#18900](https://github.com/sveltejs/svelte/pull/18900))
+
+- fix: avoid tracking SvelteURLSearchParams during URL updates ([#18791](https://github.com/sveltejs/svelte/pull/18791))
+
+- fix: restore hydration state when custom element attribute updates throw ([#18467](https://github.com/sveltejs/svelte/pull/18467))
+
+- fix: attach event handlers that are assigned after a top-level `await` in production ([#18933](https://github.com/sveltejs/svelte/pull/18933))
+
+- fix: flush anything pending before invoking flushSync callback function ([#18878](https://github.com/sveltejs/svelte/pull/18878))
+
+- fix: preserve location information for `await` wrappers ([#18859](https://github.com/sveltejs/svelte/pull/18859))
+
+- fix: keep a reactive assignment with no dependencies when `migrate` cannot turn it into a declaration ([#18817](https://github.com/sveltejs/svelte/pull/18817))
+
+- fix: don't hang `migrate` on a declaration that shares a line with its script tag ([#18816](https://github.com/sveltejs/svelte/pull/18816))
+
+- fix: prevent duplicate subscriptions when reconnecting deriveds ([#18899](https://github.com/sveltejs/svelte/pull/18899))
+
+- fix: recover when an unexpected node replaces a nested boundary comment during hydration ([#18925](https://github.com/sveltejs/svelte/pull/18925))
+
+- fix: print `{#await}` blocks that only have a pending branch ([#18908](https://github.com/sveltejs/svelte/pull/18908))
+
+- fix: don't warn about a redundant `link` role on `<area>` elements without an `href` ([#18872](https://github.com/sveltejs/svelte/pull/18872))
+
+- fix: don't throw `state_unsafe_mutation` when the focused element is removed while `bind:activeElement` is used ([#18921](https://github.com/sveltejs/svelte/pull/18921))
+
+- fix: don't overwrite an unchanged spread `value`, preserving incomplete number input ([#18864](https://github.com/sveltejs/svelte/pull/18864))
+
+- fix: read batch-local array on each-block commit ([#18879](https://github.com/sveltejs/svelte/pull/18879))
+
+- fix: error at compile time when a declaration in a snippet redeclares one of its parameters ([#18842](https://github.com/sveltejs/svelte/pull/18842))
+
+- fix: error when using `let:` directives on a component with a `children` snippet ([#18873](https://github.com/sveltejs/svelte/pull/18873))
+
+- fix: ignore stale boundary reset callbacks ([#18886](https://github.com/sveltejs/svelte/pull/18886))
+
+- fix: handle deferred transitions aborted before initialization ([#18776](https://github.com/sveltejs/svelte/pull/18776))
+
+- fix: prevent hydration mismatch recovery from being intercepted by error boundaries ([#18841](https://github.com/sveltejs/svelte/pull/18841))
+
+- fix: preserve dynamic element connections during hydration ([#18855](https://github.com/sveltejs/svelte/pull/18855))
+
+## 5.57.1
+
+### Patch Changes
+
+- fix: cancel deferred event listeners during cleanup ([#18749](https://github.com/sveltejs/svelte/pull/18749))
+
+- fix: preserve global CSS in components without scopable elements ([#18793](https://github.com/sveltejs/svelte/pull/18793))
+
+- fix: reduce SSR render result garbage collection ([#18798](https://github.com/sveltejs/svelte/pull/18798))
+
+- fix: resolve the fallback of an each block in the enclosing scope ([#18803](https://github.com/sveltejs/svelte/pull/18803))
+
+- perf: speed up parser interactions with Acorn or avoid them where possible ([#18740](https://github.com/sveltejs/svelte/pull/18740))
+
+- fix: prevent effect tree of batches from interfering with each other ([#18508](https://github.com/sveltejs/svelte/pull/18508))
+
+- fix: serialize input default values during server rendering ([#18733](https://github.com/sveltejs/svelte/pull/18733))
+
+- fix: remove `WAS_MARKED` flag in favor of `Set` ([#18127](https://github.com/sveltejs/svelte/pull/18127))
+
+- fix: throw `set_context_after_init` when `setContext` is called after an `await` during SSR ([#18739](https://github.com/sveltejs/svelte/pull/18739))
+
+- fix: make Object.hasOwn reactive for state proxy ownership changes ([#18838](https://github.com/sveltejs/svelte/pull/18838))
+
+- fix: keep `$state.eager` when used as a variable initializer ([#18809](https://github.com/sveltejs/svelte/pull/18809))
+
+- perf: avoid regex matching in parser where possible ([#18736](https://github.com/sveltejs/svelte/pull/18736))
+
+- fix: in non-async mode, only push variable to current_sources when active_reaction is updating ([#18550](https://github.com/sveltejs/svelte/pull/18550))
+
+- fix: recognise `aria-braillelabel` and `aria-brailleroledescription` as known ARIA attributes ([#18765](https://github.com/sveltejs/svelte/pull/18765))
+
+## 5.57.0
+
+### Minor Changes
+
+- feat: export `RenderOutput`, `SyncRenderOutput`, `Csp` and `Sha256Source` from `svelte/server` ([#18648](https://github.com/sveltejs/svelte/pull/18648))
+
+- feat: add `has` function to `createContext` ([#18472](https://github.com/sveltejs/svelte/pull/18472))
+
+- feat: support `defaultValue` on `<select>` ([#18591](https://github.com/sveltejs/svelte/pull/18591))
+
+- feat: add getOrInsert/getOrInsertComputed to SvelteMap ([#18728](https://github.com/sveltejs/svelte/pull/18728))
+
+### Patch Changes
+
+- fix: block template store subscriptions on the promise that assigns the store ([#18582](https://github.com/sveltejs/svelte/pull/18582))
+
+- fix: route $derived teardown errors through invoke_error_boundary ([#18486](https://github.com/sveltejs/svelte/pull/18486))
+
+- fix: track SvelteDate snapshots in reactions ([#18700](https://github.com/sveltejs/svelte/pull/18700))
+
+- fix: remove `<svelte:head>` anchors on unmount ([#18697](https://github.com/sveltejs/svelte/pull/18697))
+
+- fix: warn on undeclared shorthand event handlers on `<svelte:window>`, `<svelte:document>` and `<svelte:body>` ([#18480](https://github.com/sveltejs/svelte/pull/18480))
+
+- perf: reuse the cached value in the `<option>`/`<select>` value guard ([#18713](https://github.com/sveltejs/svelte/pull/18713))
+
+- fix: prevent malformed AST output for `<select>` with static `value` attribute ([#18449](https://github.com/sveltejs/svelte/pull/18449))
+
+- fix: apply ownership mutation ignores to binding assignments ([#18718](https://github.com/sveltejs/svelte/pull/18718))
+
+- fix: prevent onoutroend from firing twice when compilerOptions.hmr is true ([#18655](https://github.com/sveltejs/svelte/pull/18655))
+
+- fix: preserve whitespace after inline elements when printing ([#18685](https://github.com/sveltejs/svelte/pull/18685))
+
+- perf: fold SSR block-open markers into the branch's first push ([#18712](https://github.com/sveltejs/svelte/pull/18712))
+
+- fix: run `onDestroy` callbacks when a server render throws ([#18585](https://github.com/sveltejs/svelte/pull/18585))
+
+- fix: report `derived_invalid_export` for `export let x = $derived(...)` in runes mode ([#18692](https://github.com/sveltejs/svelte/pull/18692))
+
+- fix: never apply class hash to elements inside `<svelte:head>` ([#18160](https://github.com/sveltejs/svelte/pull/18160))
+
+- fix: keep `defaultChecked` on hydrated radio inputs with spread attributes ([#18701](https://github.com/sveltejs/svelte/pull/18701))
+
+- fix: accept `onfocusin`/`onfocusout` in `a11y_mouse_events_have_key_events` ([#18689](https://github.com/sveltejs/svelte/pull/18689))
+
+- perf: O(n²)→O(n) Map lookups for legacy `$:` reactive statement ordering ([#18602](https://github.com/sveltejs/svelte/pull/18602))
+
+- fix: distinct memoizer on style/class directives ([#18466](https://github.com/sveltejs/svelte/pull/18466))
+
+- fix: measure nested transitions before applying their starting styles ([#18647](https://github.com/sveltejs/svelte/pull/18647))
+
+- fix: don't turn component instances stored in `$state` into state proxies ([#18646](https://github.com/sveltejs/svelte/pull/18646))
+
+- perf: emit `$.only_child` for elements with a single child ([#18717](https://github.com/sveltejs/svelte/pull/18717))
+
+- fix: omit `bind:focused` from SSR output (it has no HTML attribute) ([#18724](https://github.com/sveltejs/svelte/pull/18724))
+
+- fix: more robust rendering of Svelte custom element slots ([#18710](https://github.com/sveltejs/svelte/pull/18710))
+
+- perf: optimize simple object destructuring in `@const` tags ([#18390](https://github.com/sveltejs/svelte/pull/18390))
+
+- fix: properly apply static textarea value attribute during CSR ([#18727](https://github.com/sveltejs/svelte/pull/18727))
+
+- fix: end a restored reaction context at the end of its synchronous segment ([#18694](https://github.com/sveltejs/svelte/pull/18694))
+
+- fix: keep the dependencies of a reaction that throws, so deriveds it read are neither leaked nor stuck in their error ([#18703](https://github.com/sveltejs/svelte/pull/18703))
+
+- fix: don't resurrect outroing elements when an ancestor block is paused and resumed ([#18431](https://github.com/sveltejs/svelte/pull/18431))
+
+- perf: use `$.comment()` for single-comment templates ([#18714](https://github.com/sveltejs/svelte/pull/18714))
+
+- chore: move `@types/trusted-types` to devDependencies ([#18730](https://github.com/sveltejs/svelte/pull/18730))
+
+- perf: store setters cache as `Set` instead of `Array` ([#18251](https://github.com/sveltejs/svelte/pull/18251))
+
+- fix: transform derived assignments and select function bindings correctly during server-side rendering ([#18669](https://github.com/sveltejs/svelte/pull/18669))
+
+- fix: keep boolean attributes with an empty string value when rendering attribute objects on the server ([#18721](https://github.com/sveltejs/svelte/pull/18721))
+
+- fix: sync `SvelteURL` port signal when the protocol setter clears the port ([#18705](https://github.com/sveltejs/svelte/pull/18705))
+
+- fix: block declaration tags and `{@const}` on async values read inside closures ([#18533](https://github.com/sveltejs/svelte/pull/18533))
+
+- fix: avoid css tree-shaking for exported Snippet ([#18540](https://github.com/sveltejs/svelte/pull/18540))
+
+- perf: treat `<img loading>` as a static element again ([#18711](https://github.com/sveltejs/svelte/pull/18711))
+
+- fix: prevent `selectedcontent` mutation from changing the selected option ([#18495](https://github.com/sveltejs/svelte/pull/18495))
+
+- fix: avoid `NaN` keyframe values in `slide` transition for elements without a layout box ([#18430](https://github.com/sveltejs/svelte/pull/18430))
+
+- fix: preserve line feed character references in attribute values ([#18691](https://github.com/sveltejs/svelte/pull/18691))
+
+- fix: decode uppercase-`X` hex numeric character references (`&#X...;`) ([#18708](https://github.com/sveltejs/svelte/pull/18708))
+
+- chore: clarify when `$effect.pre` runs relative to DOM updates ([#18534](https://github.com/sveltejs/svelte/pull/18534))
+
+- fix: scope SSR boundary failed snippets to their boundary ([#18593](https://github.com/sveltejs/svelte/pull/18593))
+
+## 5.56.10
+
+### Patch Changes
+
+- fix: preserve CSS escape sequences when printing selectors ([#18667](https://github.com/sveltejs/svelte/pull/18667))
+
+- fix: parse `:nth-child(2n of.foo)` where `of` is not followed by whitespace ([#18611](https://github.com/sveltejs/svelte/pull/18611))
+
+- fix: transform expressions inside labeled statements during server compilation ([#18617](https://github.com/sveltejs/svelte/pull/18617))
+
+- docs: clarify that context lookup includes the current component and all ancestors ([#18581](https://github.com/sveltejs/svelte/pull/18581))
+
+- fix: apply CSS custom properties with falsy values on components ([#18634](https://github.com/sveltejs/svelte/pull/18634))
+
+- fix: correctly print `{#await ... catch x}` et al ([#18645](https://github.com/sveltejs/svelte/pull/18645))
+
+- fix: ignore comments of Program node during migration script ([#18656](https://github.com/sveltejs/svelte/pull/18656))
+
+- fix: reliably resolve append_style to its correct root ([#18614](https://github.com/sveltejs/svelte/pull/18614))
+
+- fix: clean up removed capture event handlers from spread attributes ([#18618](https://github.com/sveltejs/svelte/pull/18618))
+
+- fix: don't corrupt renderer type during SSR's legacy `bind:` retry loop ([#18616](https://github.com/sveltejs/svelte/pull/18616))
+
+- fix: treat concise arrow function bodies as implicit returns when calculating blockers ([#18613](https://github.com/sveltejs/svelte/pull/18613))
+
+- fix: give effect teardowns the value from before the first write in a flush ([#18620](https://github.com/sveltejs/svelte/pull/18620))
+
+- fix: avoid double-calling a derived reference when destructuring `$derived` of another `$derived` during server-side rendering ([#18668](https://github.com/sveltejs/svelte/pull/18668))
+
+- fix: preserve namespaces in CSS type selectors ([#18678](https://github.com/sveltejs/svelte/pull/18678))
+
+- fix: increment private state fields through a non-`this` receiver ([#18622](https://github.com/sveltejs/svelte/pull/18622))
+
+- chore: deduplicate client and server context helpers ([#18580](https://github.com/sveltejs/svelte/pull/18580))
+
+- fix: release `last_propagated_event` after event propagation settles so it no longer retains the last event's target subtree ([#18569](https://github.com/sveltejs/svelte/pull/18569))
+
+- fix: allow custom elements to receive async values as props ([#18661](https://github.com/sveltejs/svelte/pull/18661))
+
+- fix: strip comments from inline `style` values in linear time ([#18553](https://github.com/sveltejs/svelte/pull/18553))
+
+- fix: prevent declaration comments from breaking server derived references ([#18641](https://github.com/sveltejs/svelte/pull/18641))
+
+- perf: make async blocker analysis scale linearly with the number of top-level references ([#18549](https://github.com/sveltejs/svelte/pull/18549))
+
+- fix: preserve short-circuiting for logical assignments to private state fields ([#18594](https://github.com/sveltejs/svelte/pull/18594))
+
+## 5.56.9
+
+### Patch Changes
+
+- fix: skip controlled each fast path while another batch is pending ([#18625](https://github.com/sveltejs/svelte/pull/18625))
+
+- fix: better whitespace handling inside printer ([#18638](https://github.com/sveltejs/svelte/pull/18638))
+
+- fix: don't duplicate comments in attributes ([#18636](https://github.com/sveltejs/svelte/pull/18636))
+
+- fix: preserve CSS comments in the AST printer ([#18637](https://github.com/sveltejs/svelte/pull/18637))
+
+## 5.56.8
+
+### Patch Changes
+
+- fix: call `onerror` and provide a working `reset` when hydrating a failed boundary ([#18556](https://github.com/sveltejs/svelte/pull/18556))
+
+- fix: preserve select selection when spread attributes omit value ([#18561](https://github.com/sveltejs/svelte/pull/18561))
+
+## 5.56.7
+
+### Patch Changes
+
+- chore: provide `indent` option for `print` ([#18474](https://github.com/sveltejs/svelte/pull/18474))
+
+## 5.56.6
+
+### Patch Changes
+
+- perf: skip unnecessary blocker analysis when compiling components without top-level await ([#18548](https://github.com/sveltejs/svelte/pull/18548))
+
+- fix: rerun derived that had an abort controller on reconnection ([#18551](https://github.com/sveltejs/svelte/pull/18551))
+
+## 5.56.5
+
+### Patch Changes
+
+- chore: drop dead code that make TSGO fail ([#18496](https://github.com/sveltejs/svelte/pull/18496))
+
+- fix: don't (re)connect deriveds when read inside branch/root effects ([#18527](https://github.com/sveltejs/svelte/pull/18527))
+
+- fix: skip unnecessary derived effect in earlier batch ([#18525](https://github.com/sveltejs/svelte/pull/18525))
+
+- fix: avoid declaration tag warning in event handlers ([#18500](https://github.com/sveltejs/svelte/pull/18500))
+
+- fix: abort deriveds own AbortSignal when it disconnects ([#18400](https://github.com/sveltejs/svelte/pull/18400))
+
+- fix: ensure `$state.eager()` is correctly transormed for SSR output ([#18530](https://github.com/sveltejs/svelte/pull/18530))
+
+- fix: correctly transform declaration tags during SSR ([#18492](https://github.com/sveltejs/svelte/pull/18492))
+
+- fix: transform computed keys in keyed `{#each}` destructuring patterns ([#18521](https://github.com/sveltejs/svelte/pull/18521))
+
+- fix: chain preprocessor sourcemaps with an empty `sources[0]` instead of dropping them ([#18518](https://github.com/sveltejs/svelte/pull/18518))
+
+- fix: clear previous_task reference after abort in Tween to prevent memory leak on interrupted tweens ([#18541](https://github.com/sveltejs/svelte/pull/18541))
+
+- fix: don't treat declaration tags as parts inside each blocks ([#18507](https://github.com/sveltejs/svelte/pull/18507))
+
+## 5.56.4
+
+### Patch Changes
+
+- fix: include wrapping parentheses in `{@const}` declarator `end` position ([#18436](https://github.com/sveltejs/svelte/pull/18436))
+
+- fix: always unset reactivity context after restoring it ([#18453](https://github.com/sveltejs/svelte/pull/18453))
+
+- fix: don't notify `searchParams` subscribers when the URL changes without affecting the search string ([#18425](https://github.com/sveltejs/svelte/pull/18425))
+
+- fix: strip `?` from optional parameters in `<script lang="ts">` so generated JavaScript is valid ([#18448](https://github.com/sveltejs/svelte/pull/18448))
+
+## 5.56.3
+
+### Patch Changes
+
+- fix: ignore errors that occur in destroyed effects ([#18384](https://github.com/sveltejs/svelte/pull/18384))
+
+- fix: type BigInts in `$state.snapshot(...)` return values ([#18388](https://github.com/sveltejs/svelte/pull/18388))
+
+## 5.56.2
+
+### Patch Changes
+
+- fix: properly track effect end node for async sibling component ([#18371](https://github.com/sveltejs/svelte/pull/18371))
+
+- fix: prevent false-positive reactivity loss warning ([#18373](https://github.com/sveltejs/svelte/pull/18373))
+
+- chore: bump esrap dependency ([#18372](https://github.com/sveltejs/svelte/pull/18372))
+
+- fix: ignore declaration tags for animation directive ([#18366](https://github.com/sveltejs/svelte/pull/18366))
+
+- fix: reject pending async deriveds on discard ([#18308](https://github.com/sveltejs/svelte/pull/18308))
+
 ## 5.56.1
 
 ### Patch Changes

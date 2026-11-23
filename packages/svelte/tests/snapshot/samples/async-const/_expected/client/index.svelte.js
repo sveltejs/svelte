@@ -1,3 +1,4 @@
+import 'svelte/internal/init-operations';
 import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/client';
@@ -14,14 +15,25 @@ export default function Async_const($$anchor) {
 			let b;
 
 			var promises = $.run([
-				async () => a = (await $.save($.async_derived(async () => (await $.save(1))())))(),
+				async () => {
+					try {
+						return a = (await $.save($.async_derived(async () => {
+							try {
+								return (await $.save(1))();
+							} finally {
+								$.unsave();
+							}
+						})))();
+					} finally {
+						$.unsave();
+					}
+				},
 				() => b = $.derived(() => $.get(a) + 1)
 			]);
 
 			var p = root();
-			var text = $.child(p, true);
+			var text = $.only_child(p, true);
 
-			$.reset(p);
 			$.template_effect(() => $.set_text(text, $.get(b)), void 0, void 0, [promises[1]]);
 			$.append($$anchor, p);
 		};

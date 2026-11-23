@@ -5,14 +5,19 @@ export default test({
 		return { foo: 42 };
 	},
 
-	html: '<textarea></textarea>',
-	ssrHtml: '<textarea>42</textarea>',
+	ssrHtml: '<textarea>42</textarea> <textarea>static</textarea>',
 
-	test({ assert, component, target }) {
-		const textarea = /** @type {HTMLTextAreaElement} */ (target.querySelector('textarea'));
-		assert.strictEqual(textarea.value, '42');
+	test({ assert, component, target, variant }) {
+		assert.htmlEqual(
+			target.innerHTML,
+			`<textarea></textarea> <textarea>${variant === 'hydrate' ? 'static' : ''}</textarea>`
+		);
+
+		const [textarea1, textarea2] = target.querySelectorAll('textarea');
+		assert.strictEqual(textarea1.value, '42');
+		assert.strictEqual(textarea2.value, 'static');
 
 		component.foo = 43;
-		assert.strictEqual(textarea.value, '43');
+		assert.strictEqual(textarea1.value, '43');
 	}
 });

@@ -1,4 +1,4 @@
-/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, TemplateNode, TransitionManager } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -20,10 +20,16 @@ import {
 } from '../hydration.js';
 import {
 	clear_text_content,
-	create_text,
+	create_anchor,
 	get_first_child,
 	get_next_sibling,
-	should_defer_append
+	should_defer_append,
+	get_parent_node,
+	append_child,
+	create_fragment,
+	insert_before,
+	node_type,
+	get_node_value
 } from '../operations.js';
 import {
 	block,
@@ -43,6 +49,9 @@ import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import * as e from '../../errors.js';
 import { tag } from '../../dev/tracing.js';
+
+import { push_renderer, current_renderer, pop_renderer } from '../../custom-renderer/state.js';
+import { custom_renderers_flag } from '../../../flags/index.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -103,15 +112,19 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	if (remaining === 0) {
 		// If we're in a controlled each block (i.e. the block is the only child of an
 		// element), and we are removing all items, _and_ there are no out transitions,
-		// we can use the fast path — emptying the element and replacing the anchor
-		var fast_path = transitions.length === 0 && controlled_anchor !== null;
+		// we can use the fast path — emptying the element and replacing the anchor.
+		// Skip the fast path when another batch is still pending on this each block:
+		// that batch's keys still reference EachItems in `state.items`, which
+		// `destroy_effects` needs to preserve offscreen (see #18610).
+		var fast_path =
+			transitions.length === 0 && controlled_anchor !== null && state.pending.size === 0;
 
 		if (fast_path) {
 			var anchor = /** @type {Element} */ (controlled_anchor);
-			var parent_node = /** @type {Element} */ (anchor.parentNode);
+			var parent_node = /** @type {Element} */ (get_parent_node(anchor));
 
 			clear_text_content(parent_node);
-			parent_node.append(anchor);
+			append_child(parent_node, anchor);
 
 			state.items.clear();
 		}
@@ -129,23 +142,26 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 
 /**
  * @param {EachState} state
+ * @returns {Set<Effect>}
+ */
+function selected_effects(state) {
+	var selected = new Set();
+	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
+	for (const keys of state.pending.values()) {
+		for (const key of keys) {
+			selected.add(/** @type {EachItem} */ (state.items.get(key)).e);
+		}
+	}
+	return selected;
+}
+
+/**
+ * @param {EachState} state
  * @param {Effect[]} to_destroy
  * @param {boolean} remove_dom
  */
 function destroy_effects(state, to_destroy, remove_dom = true) {
-	/** @type {Set<Effect> | undefined} */
-	var preserved_effects;
-
-	// The loop-in-a-loop isn't ideal, but we should only hit this in relatively rare cases
-	if (state.pending.size > 0) {
-		preserved_effects = new Set();
-
-		for (const keys of state.pending.values()) {
-			for (const key of keys) {
-				preserved_effects.add(/** @type {EachItem} */ (state.items.get(key)).e);
-			}
-		}
-	}
+	var preserved_effects = state.pending.size > 0 ? selected_effects(state) : undefined;
 
 	for (var i = 0; i < to_destroy.length; i++) {
 		var e = to_destroy[i];
@@ -153,16 +169,64 @@ function destroy_effects(state, to_destroy, remove_dom = true) {
 		if (preserved_effects?.has(e)) {
 			e.f |= EFFECT_OFFSCREEN;
 
-			const fragment = document.createDocumentFragment();
+			const fragment = create_fragment();
 			move_effect(e, fragment);
+
+			// `reconcile` expects offscreen items to come after all onscreen items
+			if (e !== state.effect.last) {
+				link(state, e.prev, e.next);
+				link(state, state.effect.last, e);
+				link(state, e, null);
+			}
 		} else {
 			destroy_effect(to_destroy[i], remove_dom);
 		}
 	}
 }
 
-/** @type {TemplateNode} */
-var offscreen_anchor;
+/**
+ * Whether the item is outroing, i.e. `pause_effects` destroys it (or keeps it offscreen) once its outro is done
+ * @param {EachState} state
+ * @param {Effect} effect
+ */
+function is_outroing(state, effect) {
+	if (state.outrogroups !== null) {
+		for (const group of state.outrogroups) {
+			if (group.pending.has(effect) || group.done.has(effect)) return true;
+		}
+	}
+
+	return false;
+}
+
+// we need to handle the case of multiple renderers so we need to use a WeakMap of offscreen anchors rather than a single variable.
+// we also need the dom_weak_key since `null` is not a viable WeakKey
+/** @type {WeakMap<WeakKey, TemplateNode>} */
+var offscreen_anchors = new WeakMap();
+var dom_weak_key = {};
+
+/**
+ * Returns an anchor node suitable for offscreen rendering.
+ * When a custom renderer is active, the anchor must have a parent
+ * (so that `getParent()` works), so we place the text node inside
+ * a fragment. The result is cached just like the non-renderer path.
+ * @returns {TemplateNode}
+ */
+function get_offscreen_anchor() {
+	// not doing it inline to please typescript
+	var cached = offscreen_anchors.get(current_renderer ?? dom_weak_key);
+	if (cached) return cached;
+
+	var offscreen_anchor = create_anchor();
+
+	if (current_renderer) {
+		var fragment = create_fragment();
+		append_child(fragment, offscreen_anchor);
+	}
+
+	offscreen_anchors.set(current_renderer ?? dom_weak_key, offscreen_anchor);
+	return offscreen_anchor;
+}
 
 /**
  * @template V
@@ -182,12 +246,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
+	// Capture the renderer that was active when this each block was created.
+	// Needed so that the commit callback can push the correct renderer when doing
+	// DOM operations outside of an effect context (e.g. as a batch commit callback).
+	var renderer = current_renderer;
+
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
 			? set_hydrate_node(get_first_child(parent_node))
-			: parent_node.appendChild(create_text());
+			: /** @type {Text} */ (append_child(parent_node, create_anchor()));
 	}
 
 	if (hydrating) {
@@ -212,9 +281,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		tag(each_array, '{#each ...}');
 	}
 
-	/** @type {V[]} */
-	var array;
-
 	/** @type {Map<Batch, Set<any>>} */
 	var pending = new Map();
 
@@ -228,28 +294,41 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 
-		state.pending.delete(batch);
+		var previous_renderer = custom_renderers_flag ? push_renderer(renderer) : null;
 
-		state.fallback = fallback;
-		reconcile(state, array, anchor, flags, get_key);
+		try {
+			state.pending.delete(batch);
 
-		if (fallback !== null) {
-			if (array.length === 0) {
-				if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
-					resume_effect(fallback);
+			// The effect doesn't necessarily re-run in a batch right before that batch commits
+			// (its view of the collection may not have changed), so we read the collection
+			// as the committing batch sees it rather than using the most recent block run's result
+			var array = get(each_array);
+
+			state.fallback = fallback;
+			reconcile(state, array, anchor, flags, get_key);
+
+			if (fallback !== null) {
+				if (array.length === 0) {
+					if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
+						resume_effect(fallback);
+					} else {
+						fallback.f ^= EFFECT_OFFSCREEN;
+						move(fallback, null, anchor);
+					}
 				} else {
-					fallback.f ^= EFFECT_OFFSCREEN;
-					move(fallback, null, anchor);
+					pause_effect(fallback, () => {
+						// TODO only null out if no pending batch needs it,
+						// otherwise re-add `fallback.fragment` and move the
+						// effect into it
+						fallback = null;
+					});
 				}
-			} else {
-				pause_effect(fallback, () => {
-					// TODO only null out if no pending batch needs it,
-					// otherwise re-add `fallback.fragment` and move the
-					// effect into it
-					fallback = null;
-				});
 			}
+		} finally {
+			if (custom_renderers_flag) pop_renderer(previous_renderer);
 		}
+
+		destroy_unselected();
 	}
 
 	/**
@@ -257,10 +336,46 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	 */
 	function discard(batch) {
 		state.pending.delete(batch);
+
+		if ((state.effect.f & DESTROYED) === 0) {
+			destroy_unselected();
+		}
+	}
+
+	/**
+	 * Destroys the offscreen items that no pending batch selects anymore. Offscreen items only exist
+	 * for the batches that select them: they were created in their view, or kept for them when a
+	 * commit removed them (see `destroy_effects`). A batch stops selecting an item when it's discarded,
+	 * or when its block runs again without it. `reconcile` doesn't destroy such an item if it was kept,
+	 * as kept items are paused, and it leaves paused items alone (taking them to be outroing)
+	 */
+	function destroy_unselected() {
+		/** @type {Set<Effect> | undefined} */
+		var selected;
+		var effect = state.effect.last;
+
+		// offscreen items come after all onscreen items (see `destroy_effects`)
+		while (effect !== null) {
+			var prev = effect.prev;
+
+			// (an offscreen fallback isn't paused, so the next commit shows it or destroys it, see above)
+			if ((effect.f & BRANCH_EFFECT) !== 0 && effect !== fallback) {
+				if ((effect.f & EFFECT_OFFSCREEN) === 0) break;
+
+				// create lazily to save work in the common case
+				selected ??= selected_effects(state);
+
+				if (!selected.has(effect) && !is_outroing(state, effect)) {
+					destroy_effect(effect);
+				}
+			}
+
+			effect = prev;
+		}
 	}
 
 	var effect = block(() => {
-		array = /** @type {V[]} */ (get(each_array));
+		var array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -286,8 +401,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		for (var index = 0; index < length; index += 1) {
 			if (
 				hydrating &&
-				hydrate_node.nodeType === COMMENT_NODE &&
-				/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
+				node_type(hydrate_node) === COMMENT_NODE &&
+				get_node_value(hydrate_node) === HYDRATION_END
 			) {
 				// The server rendered fewer items than expected,
 				// so break out and continue appending non-hydrated items
@@ -320,7 +435,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			} else {
 				item = create_item(
 					items,
-					first_run ? anchor : (offscreen_anchor ??= create_text()),
+					first_run ? anchor : get_offscreen_anchor(),
 					value,
 					key,
 					index,
@@ -330,7 +445,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				);
 
 				if (!first_run) {
+					// until it is committed, the item only exists for the batches that select it
 					item.e.f |= EFFECT_OFFSCREEN;
+					if (defer) batch.unskip_new_effect(item.e);
 				}
 
 				items.set(key, item);
@@ -343,8 +460,18 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			if (first_run) {
 				fallback = branch(() => fallback_fn(anchor));
 			} else {
-				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
+				fallback = branch(() => fallback_fn(get_offscreen_anchor()));
+				// until it is committed, the fallback only exists for the batches that select it
 				fallback.f |= EFFECT_OFFSCREEN;
+				if (defer) batch.unskip_new_effect(fallback);
+			}
+		}
+
+		if (defer && fallback !== null) {
+			if (length === 0) {
+				batch.unskip_effect(fallback);
+			} else {
+				batch.skip_effect(fallback);
 			}
 		}
 
@@ -660,7 +787,7 @@ function reconcile(state, array, anchor, flags, get_key) {
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
+ * @param {(anchor: Node, item: MaybeSource<V>, index: MaybeSource<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @returns {EachItem}
@@ -715,7 +842,7 @@ function move(effect, next, anchor) {
 
 	while (node !== null) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
-		dest.before(node);
+		insert_before(dest, node);
 
 		if (node === end) {
 			return;

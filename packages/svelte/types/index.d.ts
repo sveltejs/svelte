@@ -315,15 +315,52 @@ declare module 'svelte' {
 	/**
 	 * Defines the options accepted by the `mount()` function.
 	 */
-	export type MountOptions<Props extends Record<string, any> = Record<string, any>> = {
-		/**
-		 * Target element where the component will be mounted.
-		 */
-		target: Document | Element | ShadowRoot;
-		/**
-		 * Optional node inside `target`. When specified, it is used to render the component immediately before it.
-		 */
-		anchor?: Node;
+	type MountRenderer = {
+		createFragment(): object;
+		createElement(name: string): object;
+		createText(data: string): object;
+		createComment(data: string): object;
+	};
+
+	type MountRendererTarget<Renderer> = Renderer extends {
+		createFragment(): infer TFragment;
+		createElement(name: string): infer TElement;
+	}
+		? TFragment | TElement
+		: never;
+
+	type MountRendererAnchor<Renderer> = Renderer extends {
+		createElement(name: string): infer TElement;
+		createText(data: string): infer TTextNode;
+		createComment(data: string): infer TComment;
+	}
+		? TElement | TTextNode | TComment
+		: never;
+
+	export type MountOptions<
+		Props extends Record<string, any> = Record<string, any>,
+		Renderer = undefined
+	> = (Renderer extends MountRenderer
+		? {
+				/** Custom renderer to use instead of the DOM. */
+				renderer: Renderer;
+				/** Target node where the component will be mounted. */
+				target: MountRendererTarget<Renderer>;
+				/** Optional node inside `target`. When specified, it is used to render the component immediately before it. */
+				anchor?: MountRendererAnchor<Renderer>;
+			}
+		: {
+				/**
+				 * Target element where the component will be mounted.
+				 */
+				target: Document | Element | ShadowRoot;
+				/**
+				 * Optional node inside `target`. When specified, it is used to render the component immediately before it.
+				 */
+				anchor?: Node;
+				/** Custom renderer to use instead of the DOM. */
+				renderer?: undefined;
+			}) & {
 		/**
 		 * Allows the specification of events.
 		 * @deprecated Use callback props instead.
@@ -344,18 +381,18 @@ declare module 'svelte' {
 		 */
 		transformError?: (error: unknown) => unknown | Promise<unknown>;
 	} & ({} extends Props
-		? {
-				/**
-				 * Component properties.
-				 */
-				props?: Props;
-			}
-		: {
-				/**
-				 * Component properties.
-				 */
-				props: Props;
-			});
+			? {
+					/**
+					 * Component properties.
+					 */
+					props?: Props;
+				}
+			: {
+					/**
+					 * Component properties.
+					 */
+					props: Props;
+				});
 
 	/**
 	 * Represents work that is happening off-screen, such as data being preloaded
@@ -375,7 +412,7 @@ declare module 'svelte' {
 	/**
 	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
 	 *
-	 * Must be called while a derived or effect is running.
+	 * Must be called while a derived or effect is running, before anything is awaited.
 	 *
 	 * ```svelte
 	 * <script>
@@ -492,15 +529,18 @@ declare module 'svelte' {
 	 */
 	export function fork(fn: () => void): Fork;
 	/**
-	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+	 * Returns a `[get, set, has]` triplet of functions for working with context in a type-safe way.
 	 *
-	 * `get` will throw an error if no parent component called `set`.
+	 * `get` will throw an error if `set` has not yet been called in the current component or any of
+	 * its ancestors.
 	 *
 	 * @since 5.40.0
 	 */
-	export function createContext<T>(): [() => T, (context: T) => T];
+	export function createContext<T>(): [() => T, (context: T) => T, () => boolean];
 	/**
-	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
+	 * Retrieves the context set with the specified `key` in the current component or any of its
+	 * ancestors. If multiple components set the same key, the value from the closest one is returned.
+	 * A `setContext` call in the current component is only visible to `getContext` calls that run after it.
 	 * Must be called during component initialisation.
 	 *
 	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
@@ -509,8 +549,8 @@ declare module 'svelte' {
 	export function getContext<T>(key: any): T;
 	/**
 	 * Associates an arbitrary `context` object with the current component and the specified `key`
-	 * and returns that object. The context is then available to children of the component
-	 * (including slotted content) with `getContext`.
+	 * and returns that object. The context is then available to the component itself and all of its
+	 * descendants (including slotted content) with `getContext`.
 	 *
 	 * Like lifecycle functions, this must be called during component initialisation.
 	 *
@@ -519,15 +559,15 @@ declare module 'svelte' {
 	 * */
 	export function setContext<T>(key: any, context: T): T;
 	/**
-	 * Checks whether a given `key` has been set in the context of a parent component.
-	 * Must be called during component initialisation.
+	 * Checks whether a given `key` has been set in the context of the current component or any of
+	 * its ancestors. Must be called during component initialisation.
 	 *
 	 * */
 	export function hasContext(key: any): boolean;
 	/**
-	 * Retrieves the whole context map that belongs to the closest parent component.
-	 * Must be called during component initialisation. Useful, for example, if you
-	 * programmatically create a component and want to pass the existing context to it.
+	 * Retrieves the whole context map that belongs to the current component, including entries
+	 * inherited from its ancestors. Must be called during component initialisation. Useful, for
+	 * example, if you programmatically create a component and want to pass the existing context to it.
 	 *
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
@@ -536,12 +576,12 @@ declare module 'svelte' {
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: MountOptions<Props>): Exports;
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Renderer = undefined>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: MountOptions<Props, Renderer>): Exports;
 	/**
 	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
+	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>, Renderer = undefined>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
 		props?: Props;
 		events?: Record<string, (e: any) => any>;
@@ -1105,7 +1145,7 @@ declare module 'svelte/compiler' {
 		 */
 		runes?: boolean | undefined | ((options: { filename: string }) => boolean | undefined);
 		/**
-		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
+		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `globalThis.__svelte.v`.
 		 *
 		 * @default true
 		 */
@@ -1195,6 +1235,16 @@ declare module 'svelte/compiler' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * Enables custom renderers to be specified with `<svelte:options customRenderer="path/to/renderer/module" />`. Can be:
+			 *
+			 * - `true`, allowing components to individually opt in
+			 * - a string that points to a default custom renderer module: a package name, an alias or an absolute path (not a relative path, since every component imports it). Individual components can override the default, or opt out with `<svelte:options customRenderer={null} />`
+			 * - a function that receives a `{ filename }` object and returns a custom renderer module path (resolved relative to that component, if relative), or `null` if the component should use the DOM
+			 *
+			 * A custom renderer module's default export must be an object created with `createRenderer`.
+			 */
+			customRenderer?: true | string | ((options: { filename: string }) => string | null);
 		};
 	}
 	/**
@@ -1244,6 +1294,7 @@ declare module 'svelte/compiler' {
 			preserveWhitespace?: boolean;
 			namespace?: Namespace;
 			css?: 'injected';
+			customRenderer?: string | null;
 			customElement?: {
 				tag?: string;
 				shadow?: 'open' | 'none' | ObjectExpression | undefined;
@@ -1694,6 +1745,15 @@ declare module 'svelte/compiler' {
 
 		export interface StyleSheetBase extends BaseNode {
 			children: Array<Atrule | Rule>;
+			/** CSS comments in source order */
+			comments: CSSComment[];
+		}
+
+		export interface CSSComment extends BaseNode {
+			type: 'CSSComment';
+			value: string;
+			/** Character offset in a containing declaration value or at-rule prelude */
+			position?: number;
 		}
 
 		export interface StyleSheetFile extends StyleSheetBase {
@@ -1765,6 +1825,7 @@ declare module 'svelte/compiler' {
 		export interface TypeSelector extends BaseNode {
 			type: 'TypeSelector';
 			name: string;
+			namespace?: string;
 		}
 
 		export interface IdSelector extends BaseNode {
@@ -1788,6 +1849,7 @@ declare module 'svelte/compiler' {
 		export interface PseudoElementSelector extends BaseNode {
 			type: 'PseudoElementSelector';
 			name: string;
+			args?: SelectorList;
 		}
 
 		export interface PseudoClassSelector extends BaseNode {
@@ -1854,72 +1916,167 @@ declare module 'svelte/compiler' {
 	type Options = {
 		getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
 		getTrailingComments?: NonNullable<Parameters<typeof ts>[0]>['getTrailingComments'] | undefined;
+		indent?: string; // default tab
 	};
 
 	export {};
 }
 
 declare module 'svelte/easing' {
+	/**
+	 * Returns value as is.
+	 *
+	 * */
 	export function linear(t: number): number;
-
+	/**
+	 * Rebound effect on start and end of value range.
+	 *
+	 * */
 	export function backInOut(t: number): number;
-
+	/**
+	 * Rebound effect on start.
+	 *
+	 * */
 	export function backIn(t: number): number;
-
+	/**
+	 * Rebound effect on end.
+	 *
+	 * */
 	export function backOut(t: number): number;
-
+	/**
+	 * Bounce effect on end.
+	 *
+	 * */
 	export function bounceOut(t: number): number;
-
+	/**
+	 * Bounce effect on start and end.
+	 *
+	 * */
 	export function bounceInOut(t: number): number;
-
+	/**
+	 * Bounce effect on start.
+	 *
+	 * */
 	export function bounceIn(t: number): number;
-
+	/**
+	 * Circular effect, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function circInOut(t: number): number;
-
+	/**
+	 * Circular effect, accelerate on start.
+	 *
+	 * */
 	export function circIn(t: number): number;
-
+	/**
+	 * Circular effect, decelerate towards end.
+	 *
+	 * */
 	export function circOut(t: number): number;
-
+	/**
+	 * Cubic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function cubicInOut(t: number): number;
-
+	/**
+	 * Cubic scaling, accelerate on start
+	 *
+	 * */
 	export function cubicIn(t: number): number;
-
+	/**
+	 * Cubic scaling, decelerate towards end.
+	 *
+	 * */
 	export function cubicOut(t: number): number;
-
+	/**
+	 * Elastic effect on start and end.
+	 *
+	 * */
 	export function elasticInOut(t: number): number;
-
+	/**
+	 * Elastic effect on start.
+	 *
+	 * */
 	export function elasticIn(t: number): number;
-
+	/**
+	 * Elastic effect on end.
+	 *
+	 * */
 	export function elasticOut(t: number): number;
-
+	/**
+	 * Exponential effect on start and end.
+	 *
+	 * */
 	export function expoInOut(t: number): number;
-
+	/**
+	 * Exponential effect on start.
+	 *
+	 * */
 	export function expoIn(t: number): number;
-
+	/**
+	 * Exponential effect on end.
+	 *
+	 * */
 	export function expoOut(t: number): number;
-
+	/**
+	 * Quadratic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quadInOut(t: number): number;
-
+	/**
+	 * Quadratic scaling, accelerate on start.
+	 *
+	 * */
 	export function quadIn(t: number): number;
-
+	/**
+	 * Quadratic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quadOut(t: number): number;
-
+	/**
+	 * Quartic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quartInOut(t: number): number;
-
+	/**
+	 * Quartic scaling, accelerate on start.
+	 *
+	 * */
 	export function quartIn(t: number): number;
-
+	/**
+	 * Quartic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quartOut(t: number): number;
-
+	/**
+	 * Quintic scaling, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function quintInOut(t: number): number;
-
+	/**
+	 * Quintic scaling, accelerate on start.
+	 *
+	 * */
 	export function quintIn(t: number): number;
-
+	/**
+	 * Quintic scaling, decelerate towards end.
+	 *
+	 * */
 	export function quintOut(t: number): number;
-
+	/**
+	 * Sinusoidal effect, accelerate on start, decelerate towards end.
+	 *
+	 * */
 	export function sineInOut(t: number): number;
-
+	/**
+	 * Sinusoidal effect, accelerate on start.
+	 *
+	 * */
 	export function sineIn(t: number): number;
-
+	/**
+	 * Sinusoidal effect, decelerate towards end.
+	 *
+	 * */
 	export function sineOut(t: number): number;
 
 	export {};
@@ -2077,7 +2234,7 @@ declare module 'svelte/motion' {
 	 * </script>
 	 *
 	 * <input type="range" bind:value={spring.target} />
-	 * <input type="range" bind:value={spring.current} disabled />
+	 * <input type="range" value={spring.current} disabled />
 	 * ```
 	 * @since 5.8.0
 	 */
@@ -2192,7 +2349,7 @@ declare module 'svelte/motion' {
 	 * </script>
 	 *
 	 * <input type="range" bind:value={tween.target} />
-	 * <input type="range" bind:value={tween.current} disabled />
+	 * <input type="range" value={tween.current} disabled />
 	 * ```
 	 * @since 5.8.0
 	 */
@@ -2356,6 +2513,10 @@ declare module 'svelte/reactivity' {
 	export class SvelteMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
+		
+		getOrInsert(key: K, value: V): V;
+		
+		getOrInsertComputed(key: K, callbackFn: (key: K) => V): V;
 		
 		set(key: K, value: V): this;
 		#private;
@@ -2569,6 +2730,168 @@ declare module 'svelte/reactivity/window' {
 	export {};
 }
 
+declare module 'svelte/renderer' {
+	/**
+	 * A custom renderer. `N` describes the types of the renderer's nodes, for example:
+	 *
+	 * ```ts
+	 * const renderer: Renderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }> = ...
+	 * ```
+	 */
+	export type Renderer<N extends RendererNodes = RendererNodes> = {
+		/** Creates a fragment, a container for multiple nodes. Inserting a fragment should insert all of its children. */
+		createFragment(): N['fragment'];
+
+		/** Creates an element with the given name. */
+		createElement(name: string): N['element'];
+
+		/** Creates a text node with the given text. */
+		createText(data: string): N['text'];
+
+		/**
+		 * Creates a comment node with the given data.
+		 * This is often used as an anchor for inserting elements; it doesn't necessarily need to be rendered.
+		 */
+		createComment(data: string): N['comment'];
+
+		/** Return the type of the node: `'fragment'`, `'element'`, `'text'` or `'comment'`. */
+		getNodeType(node: N[NodeType]): NodeType;
+
+		/** Return the text of a text node, or the data of a comment. */
+		getText(node: N['text'] | N['comment']): string | null;
+
+		/** Return the value of the attribute with the given name on the element, or null if it doesn't exist. */
+		getAttribute(element: N['element'], name: string): string | null;
+
+		/** Set the attribute with the given name and value on the element. */
+		setAttribute(element: N['element'], key: string, value: any): void;
+
+		/** Remove the attribute with the given name from the element. */
+		removeAttribute(element: N['element'], name: string): void;
+
+		/** Return true if the element has an attribute with the given name. */
+		hasAttribute(element: N['element'], name: string): boolean;
+
+		/** Set the text of a text node. */
+		setText(node: N['text'], text: string): void;
+
+		/** Return the first child of the element or fragment, or null if it has no children. */
+		getFirstChild(element: N['element'] | N['fragment']): N[NodeType] | null;
+
+		/** Return the last child of the element or fragment, or null if it has no children. */
+		getLastChild(element: N['element'] | N['fragment']): N[NodeType] | null;
+
+		/** Return the next sibling of the node, or null if it has no next sibling. */
+		getNextSibling(node: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
+
+		/**
+		 * Insert the node into the parent before the anchor, or at the end if the anchor is `null`.
+		 * Inserting a fragment should insert its children (and leave the fragment empty).
+		 */
+		insert(
+			parent: N['element'] | N['fragment'],
+			node: N[NodeType],
+			anchor: N['element'] | N['text'] | N['comment'] | null
+		): void;
+
+		/** Remove the node from the tree. */
+		remove(node: N['element'] | N['text'] | N['comment']): void;
+
+		/** Return the parent of the node, or null if it has no parent. */
+		getParent(node: N['element'] | N['text'] | N['comment']): N[NodeType] | null;
+
+		/** Add an event listener of the given type and handler to the target node. */
+		addEventListener(target: N['element'], type: string, handler: any, options?: any): void;
+
+		/** Remove an event listener of the given type and handler from the target node. */
+		removeEventListener(target: N['element'], type: string, handler: any, options?: any): void;
+
+		/**
+		 * Called when a component (or snippet) that uses this renderer is rendered inside
+		 * content that belongs to a different renderer (`host` is `null` for the DOM).
+		 *
+		 * Return a `container` owned by this renderer that the content will be rendered into
+		 * and, optionally, a `node` owned by the host that represents the content in the host
+		 * tree. If no `node` is returned, an empty text node is used.
+		 *
+		 * `parent` is the host-owned parent of the position being rendered into, which makes it
+		 * possible to render into an element the user wrote, for example a `<canvas>`.
+		 */
+		embed?(context: {
+			host: Renderer<any> | null;
+			parent: unknown;
+			anchor: unknown;
+		}): RendererConnection<unknown, N['element'] | N['fragment']>;
+
+		/**
+		 * Called when a component (or snippet) that uses a different renderer (`guest` is `null`
+		 * for the DOM) is rendered inside content that belongs to this renderer, and the guest
+		 * renderer doesn't define `embed`.
+		 *
+		 * Return a `container` owned by the guest renderer that the content will be rendered into
+		 * and, optionally, a `node` owned by this renderer that represents the content in this tree.
+		 */
+		host?(context: {
+			guest: Renderer<any> | null;
+			parent: N['element'] | N['fragment'] | null;
+			anchor: N['element'] | N['text'] | N['comment'];
+		}): RendererConnection<N['element'] | N['text'] | N['comment'], unknown>;
+	};
+
+	/**
+	 * Describes how content belonging to one renderer is attached to content belonging to another
+	 */
+	export type RendererConnection<THostNode, TContainer> = {
+		/** A node owned by the host renderer that represents the content in the host tree */
+		node?: THostNode;
+		/** A node owned by the guest renderer that the content is rendered into */
+		container: TContainer;
+		/** Called after the content has been removed */
+		destroy?(): void;
+	};
+
+	/**
+	 * The types of a custom renderer's nodes. Used as the type argument of `Renderer` and `createRenderer`
+	 */
+	export type RendererNodes = {
+		fragment: object;
+		element: object;
+		text: object;
+		comment: object;
+	};
+
+	export type NodeType = keyof RendererNodes;
+	/**
+	 * Creates a custom renderer.
+	 *
+	 * The types of the renderer's nodes are inferred from the return types of `createFragment`,
+	 * `createElement`, `createTextNode` and `createComment`, as long as those methods come before
+	 * the others. Alternatively, pass them as the type argument:
+	 *
+	 * ```ts
+	 * const renderer = createRenderer<{ fragment: MyFragment; element: MyElement; text: MyText; comment: MyComment }>({
+	 * 	// ...
+	 * });
+	 * ```
+	 *
+	 * Only the first type parameter is meant to be passed; the others exist so that the node types can be
+	 * inferred from the methods (TypeScript can't infer the record itself from them).
+	 * */
+	export function createRenderer<N extends RendererNodes = RendererNodes, TFragment extends object = N["fragment"], TElement extends object = N["element"], TText extends object = N["text"], TComment extends object = N["comment"]>(renderer: Renderer<{
+		fragment: TFragment;
+		element: TElement;
+		text: TText;
+		comment: TComment;
+	}>): Renderer<{
+		fragment: TFragment;
+		element: TElement;
+		text: TText;
+		comment: TComment;
+	}>;
+
+	export {};
+}
+
 declare module 'svelte/server' {
 	import type { ComponentProps, Component, SvelteComponent, ComponentType } from 'svelte';
 	/**
@@ -2601,11 +2924,11 @@ declare module 'svelte/server' {
 					}
 				]
 	): RenderOutput;
-	type Csp = { nonce?: string; hash?: boolean };
+	export type Csp = { nonce?: string; hash?: boolean };
 
-	type Sha256Source = `sha256-${string}`;
+	export type Sha256Source = `sha256-${string}`;
 
-	interface SyncRenderOutput {
+	export interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
 		/** @deprecated use `body` instead */
@@ -2617,7 +2940,7 @@ declare module 'svelte/server' {
 		};
 	}
 
-	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
+	export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
 
 	export {};
 }
@@ -3093,7 +3416,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		runes?: boolean | undefined | ((options: { filename: string }) => boolean | undefined);
 		/**
-		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
+		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `globalThis.__svelte.v`.
 		 *
 		 * @default true
 		 */
@@ -3183,6 +3506,16 @@ declare module 'svelte/types/compiler/interfaces' {
 			 * @since 5.36
 			 */
 			async?: boolean;
+			/**
+			 * Enables custom renderers to be specified with `<svelte:options customRenderer="path/to/renderer/module" />`. Can be:
+			 *
+			 * - `true`, allowing components to individually opt in
+			 * - a string that points to a default custom renderer module: a package name, an alias or an absolute path (not a relative path, since every component imports it). Individual components can override the default, or opt out with `<svelte:options customRenderer={null} />`
+			 * - a function that receives a `{ filename }` object and returns a custom renderer module path (resolved relative to that component, if relative), or `null` if the component should use the DOM
+			 *
+			 * A custom renderer module's default export must be an object created with `createRenderer`.
+			 */
+			customRenderer?: true | string | ((options: { filename: string }) => string | null);
 		};
 	}
 	/**
@@ -3229,7 +3562,7 @@ declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
 declare namespace $state {
-	type Primitive = string | number | boolean | null | undefined;
+	type Primitive = string | number | bigint | boolean | null | undefined;
 
 	type TypedArray =
 		| Int8Array
@@ -3466,7 +3799,7 @@ declare function $effect(fn: () => void | (() => void)): void;
 declare namespace $effect {
 	/**
 	 * Runs code right before a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.
-	 * The timing of the execution is right before the DOM is updated.
+	 * The timing of the execution is right before the DOM that comes after it is updated; parent DOM may already have been updated by the time it runs.
 	 *
 	 * Example:
 	 * ```ts

@@ -22,7 +22,6 @@ import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
-import { effect, render_effect } from './effects.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -91,10 +90,7 @@ const rest_props_handler = {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function rest_props(props, exclude, name) {
-	return new Proxy(
-		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },
-		rest_props_handler
-	);
+	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
 }
 
 /**

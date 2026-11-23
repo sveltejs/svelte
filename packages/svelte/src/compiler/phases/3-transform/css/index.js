@@ -182,6 +182,7 @@ const visitors = {
 				} else {
 					state.code.prependRight(node.start, '/* ');
 					state.code.appendLeft(node.block.start + 1, '*/');
+					escape_comment_close({ start: node.start, end: node.block.start + 1 }, state.code);
 
 					state.code.prependRight(node.block.end - 1, '/*');
 					state.code.appendLeft(node.block.end, '*/');
@@ -215,19 +216,20 @@ const visitors = {
 
 				if (selector.metadata.used === pruning) {
 					if (pruning) {
-						let i = selector.start;
-						while (state.code.original[i] !== ',') i--;
+						const i = find_comma(state.code.original, last);
 
 						if (state.minify) {
 							state.code.remove(prune_start, has_previous_used ? i : i + 1);
 						} else {
-							state.code.appendRight(has_previous_used ? i : i + 1, '*/');
+							const end = has_previous_used ? i : i + 1;
+							state.code.appendRight(end, '*/');
+							escape_comment_close({ start: prune_start, end }, state.code);
 						}
 					} else {
+						prune_start = selector.start;
+
 						if (i === 0) {
-							if (state.minify) {
-								prune_start = selector.start;
-							} else {
+							if (!state.minify) {
 								state.code.prependRight(selector.start, '/* (unused) ');
 							}
 						} else {
@@ -254,6 +256,7 @@ const visitors = {
 					state.code.remove(prune_start, last);
 				} else {
 					state.code.appendLeft(last, '*/');
+					escape_comment_close({ start: prune_start, end: last }, state.code);
 				}
 			}
 		}
@@ -355,7 +358,11 @@ const visitors = {
 						continue;
 					}
 
-					if (selector.type === 'TypeSelector' && selector.name === '*') {
+					if (
+						selector.type === 'TypeSelector' &&
+						selector.name === '*' &&
+						selector.namespace === undefined
+					) {
 						context.state.code.update(selector.start, selector.end, modifier);
 					} else {
 						context.state.code.appendLeft(selector.end, modifier);
@@ -374,6 +381,9 @@ const visitors = {
 		if (node.name === 'is' || node.name === 'where' || node.name === 'has' || node.name === 'not') {
 			context.next();
 		}
+	},
+	PseudoElementSelector() {
+		// Functional pseudo-element arguments are not scoped as selectors.
 	}
 };
 
@@ -451,29 +461,35 @@ function is_used(rule) {
 }
 
 /**
- *
- * @param {AST.CSS.Rule} node
+ * Finds the comma between two selectors in a list. It skips comments like
+ * the parser does, because they can contain commas too
+ * @param {string} css
+ * @param {number} start the end of the previous selector
+ */
+function find_comma(css, start) {
+	let i = start;
+
+	while (css[i] !== ',') {
+		if (css.startsWith('/*', i)) {
+			i = css.indexOf('*/', i + 2) + 2;
+		} else {
+			i++;
+		}
+	}
+
+	return i;
+}
+
+/**
+ * Escape all comment terminators in text that will be wrapped in a generated comment.
+ * CSS strings and escapes have no meaning inside that comment.
+ * @param {{ start: number; end: number }} node
  * @param {MagicString} code
  */
 function escape_comment_close(node, code) {
-	let escaped = false;
-	let in_comment = false;
-
-	for (let i = node.start; i < node.end; i++) {
-		if (escaped) {
-			escaped = false;
-		} else {
-			const char = code.original[i];
-			if (in_comment) {
-				if (char === '*' && code.original[i + 1] === '/') {
-					code.prependRight(++i, '\\');
-					in_comment = false;
-				}
-			} else if (char === '\\') {
-				escaped = true;
-			} else if (char === '/' && code.original[++i] === '*') {
-				in_comment = true;
-			}
+	for (let i = node.start; i < node.end - 1; i++) {
+		if (code.original[i] === '*' && code.original[i + 1] === '/') {
+			code.prependRight(++i, '\\');
 		}
 	}
 }

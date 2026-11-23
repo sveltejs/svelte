@@ -1,11 +1,11 @@
-/** @import { Derived, Effect } from '#client' */
+/** @import { Effect } from '#client' */
 /** @import { Boundary } from './dom/blocks/boundary.js' */
 import { DEV } from 'esm-env';
-import { FILENAME } from '../../constants.js';
+import { FILENAME, HYDRATION_ERROR } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
-import { ERROR_VALUE, BOUNDARY_EFFECT, REACTION_RAN, EFFECT } from './constants.js';
+import { BOUNDARY_EFFECT, REACTION_RAN, EFFECT, DESTROYED, DESTROYING } from './constants.js';
 import { define_property, get_descriptor } from '../shared/utils.js';
-import { active_effect, active_reaction } from './runtime.js';
+import { active_effect } from './runtime.js';
 
 const adjustments = new WeakMap();
 
@@ -15,9 +15,8 @@ const adjustments = new WeakMap();
 export function handle_error(error) {
 	var effect = active_effect;
 
-	// for unowned deriveds, don't throw until we read the value
+	// for unowned deriveds, don't throw until we read the value (the error becomes their value)
 	if (effect === null) {
-		/** @type {Derived} */ (active_reaction).f |= ERROR_VALUE;
 		return error;
 	}
 
@@ -45,8 +44,17 @@ export function handle_error(error) {
  * @param {Effect | null} effect
  */
 export function invoke_error_boundary(error, effect) {
+	if (error === HYDRATION_ERROR) {
+		throw error;
+	}
+
+	if (effect !== null && (effect.f & DESTROYED) !== 0) {
+		return;
+	}
+
 	while (effect !== null) {
-		if ((effect.f & BOUNDARY_EFFECT) !== 0) {
+		// Skip boundaries that are destroyed/destroying and cannot meaningfully handle the error.
+		if ((effect.f & BOUNDARY_EFFECT) !== 0 && (effect.f & (DESTROYED | DESTROYING)) === 0) {
 			if ((effect.f & REACTION_RAN) === 0) {
 				// we are still creating the boundary effect
 				throw error;

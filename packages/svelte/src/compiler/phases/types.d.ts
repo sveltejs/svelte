@@ -63,7 +63,7 @@ export interface Analysis {
 	accessors: boolean;
 
 	/** A set of deriveds that contain `await` expressions */
-	async_deriveds: Set<CallExpression>;
+	async_deriveds: Map<CallExpression, ExpressionMetadata>;
 	/** Awaits needing context preservation */
 	pickled_awaits: Set<AwaitExpression>;
 }

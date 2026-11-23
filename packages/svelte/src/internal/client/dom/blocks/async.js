@@ -1,4 +1,5 @@
-/** @import { Blocker, TemplateNode, Value } from '#client' */
+/** @import { TemplateNode, Value } from '#client' */
+/** @import { Blocker } from '../../reactivity/async.js' */
 import { flatten } from '../../reactivity/async.js';
 import { get } from '../../runtime.js';
 import {
@@ -9,6 +10,7 @@ import {
 	set_hydrating,
 	skip_nodes
 } from '../hydration.js';
+import { assign_nodes } from '../template.js';
 
 /**
  * @param {TemplateNode} node
@@ -23,6 +25,7 @@ export function async(node, blockers = [], expressions = [], fn) {
 	if (was_hydrating) {
 		hydrate_next();
 		end = skip_nodes(false);
+		assign_nodes(node, end); // Necessary if this wraps the sole child of a block, else end marker can be wrong
 	}
 
 	if (expressions.length === 0 && blockers.every((b) => b.settled)) {

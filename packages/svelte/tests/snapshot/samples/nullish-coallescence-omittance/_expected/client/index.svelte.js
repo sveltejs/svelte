@@ -1,3 +1,4 @@
+import 'svelte/internal/init-operations';
 import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
@@ -16,10 +17,7 @@ export default function Nullish_coallescence_omittance($$anchor, $$props) {
 	b.textContent = '123';
 
 	var button = $.sibling(b, 2);
-	var text = $.child(button);
-
-	$.reset(button);
-
+	var text = $.only_child(button);
 	var h1_1 = $.sibling(button, 2);
 
 	h1_1.textContent = 'Hello, world';

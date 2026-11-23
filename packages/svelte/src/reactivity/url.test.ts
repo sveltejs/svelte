@@ -115,6 +115,24 @@ test('url.searchParams', () => {
 	cleanup();
 });
 
+test('url.searchParams writes do not create a reactive dependency', () => {
+	const url = new SvelteURL('https://svelte.dev');
+	let runs = 0;
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			runs += 1;
+			url.searchParams.set('foo', 'bar');
+		});
+	});
+
+	flushSync();
+
+	assert.equal(runs, 1);
+
+	cleanup();
+});
+
 test('url.searchParams.set updates url when duplicate values collapse to the same joined string', () => {
 	const url = new SvelteURL('https://svelte.dev?a=ab&a=c');
 	const log: any = [];
@@ -165,4 +183,100 @@ test('url.search normalizes value', () => {
 
 test('SvelteURL instanceof URL', () => {
 	assert.ok(new SvelteURL('https://svelte.dev') instanceof URL);
+});
+
+test('url.searchParams subscribers are not notified by changes that leave the search string untouched', () => {
+	const url = new SvelteURL('https://svelte.dev/a?foo=bar');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.searchParams.toString());
+		});
+	});
+
+	flushSync(() => {
+		// does not affect the search string
+		url.pathname = '/b';
+	});
+
+	flushSync(() => {
+		// neither does this
+		url.href = 'https://svelte.dev/c?foo=bar#hash';
+	});
+
+	flushSync(() => {
+		// but this does
+		url.search = '?foo=baz';
+	});
+
+	assert.deepEqual(log, ['foo=bar', 'foo=baz']);
+
+	cleanup();
+});
+
+test('url.searchParams.size is not notified by unrelated href changes', () => {
+	const url = new SvelteURL('https://svelte.dev/?foo=bar');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.searchParams.size);
+		});
+	});
+
+	flushSync(() => {
+		url.href = 'https://svelte.dev/other?foo=bar';
+	});
+
+	flushSync(() => {
+		url.searchParams.append('baz', 'qux');
+	});
+
+	assert.deepEqual(log, [1, 2]);
+
+	cleanup();
+});
+
+test('url.searchParams.forEach re-runs when the search string changes via the URL', () => {
+	const url = new SvelteURL('https://svelte.dev/?foo=1');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			const entries: string[] = [];
+			url.searchParams.forEach((value, key) => entries.push(`${key}=${value}`));
+			log.push(entries.join('&'));
+		});
+	});
+
+	flushSync(() => {
+		url.href = 'https://svelte.dev/?bar=2';
+	});
+
+	assert.deepEqual(log, ['foo=1', 'bar=2']);
+
+	cleanup();
+});
+
+test('url.port is updated when the protocol change clears the port', () => {
+	const url = new SvelteURL('http://example.com:443/');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.port);
+		});
+	});
+
+	flushSync(() => {
+		// 443 is the default port for https, so it gets stripped
+		url.protocol = 'https:';
+	});
+
+	assert.equal(url.port, '');
+	assert.equal(url.href, 'https://example.com/');
+	assert.deepEqual(log, ['443', '']);
+
+	cleanup();
 });

@@ -18,7 +18,12 @@ export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
 export { sanitize_slots, slot } from './dom/blocks/slot.js';
-export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
+export {
+	snippet,
+	wrap_snippet,
+	renderer_snippet,
+	validate_snippet_renderer
+} from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
@@ -33,7 +38,6 @@ export {
 	set_xlink_attribute,
 	set_value,
 	set_checked,
-	set_selected,
 	set_default_checked,
 	set_default_value,
 	CLASS,
@@ -62,7 +66,13 @@ export {
 } from './dom/elements/bindings/media.js';
 export { bind_online } from './dom/elements/bindings/navigator.js';
 export { bind_prop } from './dom/elements/bindings/props.js';
-export { bind_select_value, init_select, select_option } from './dom/elements/bindings/select.js';
+export {
+	bind_select_value,
+	init_select,
+	select_option,
+	set_selected,
+	set_default_select_value
+} from './dom/elements/bindings/select.js';
 export { bind_element_size, bind_resize_observer } from './dom/elements/bindings/size.js';
 export { bind_this } from './dom/elements/bindings/this.js';
 export {
@@ -103,6 +113,7 @@ export {
 	run,
 	save,
 	track_reactivity_loss,
+	unsave,
 	run_after_blockers,
 	wait
 } from './reactivity/async.js';
@@ -113,7 +124,6 @@ export {
 	derived_safe_equal
 } from './reactivity/deriveds.js';
 export {
-	aborted,
 	effect_tracking,
 	effect_root,
 	legacy_pre_effect,
@@ -163,7 +173,9 @@ export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
+	only_child,
 	first_child,
+	get_last_child,
 	sibling,
 	$window as window,
 	$document as document
@@ -180,4 +192,5 @@ export {
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
-export { invoke_error_boundary } from './error-handling.js';
+export { push_renderer, pop_renderer } from './custom-renderer/state.js';
+export { cross, is_crossing } from './custom-renderer/cross.js';

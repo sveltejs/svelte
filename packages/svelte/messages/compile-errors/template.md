@@ -271,6 +271,10 @@ The same applies to components:
 
 > `<%name%>` does not support non-event attributes or spread attributes
 
+## incompatible_with_custom_renderer
+
+> %message% is not compatible with `customRenderer`
+
 ## js_parse_error
 
 > %message%
@@ -278,6 +282,10 @@ The same applies to components:
 ## let_directive_invalid_placement
 
 > `let:` directive at invalid position
+
+## let_directive_snippet_conflict
+
+> Cannot use `let:` directives on a component that has a `children` snippet. Use snippet parameters instead (e.g. `{#snippet children({ %name% })}`)
 
 ## mixed_event_handler_syntaxes
 
@@ -424,6 +432,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## svelte_meta_invalid_tag
 
 > Valid `<svelte:...>` tag names are %list%
+
+## svelte_options_customrenderer_disabled
+
+> `customRenderer` cannot be set in `<svelte:options>` unless the `experimental.customRenderer` compiler option is enabled
 
 ## svelte_options_deprecated_tag
 

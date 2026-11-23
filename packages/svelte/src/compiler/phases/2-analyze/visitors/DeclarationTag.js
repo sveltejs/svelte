@@ -43,7 +43,8 @@ export function DeclarationTag(node, context) {
  */
 export function mark_async_declaration(context, metadata, declarations) {
 	const has_await = metadata.expression.has_await;
-	const blockers = [...metadata.expression.dependencies]
+	// reads inside closures must block too, like they do in template expressions
+	const blockers = [...metadata.expression.references]
 		.map((dep) => dep.blocker)
 		.filter((b) => b !== null && b.object !== context.state.async_consts?.id);
 

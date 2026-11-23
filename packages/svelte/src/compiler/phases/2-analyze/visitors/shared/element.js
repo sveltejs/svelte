@@ -4,11 +4,13 @@ import { get_attribute_expression, is_expression_attribute } from '../../../../u
 import { regex_illegal_attribute_character } from '../../../patterns.js';
 import * as e from '../../../../errors.js';
 import * as w from '../../../../warnings.js';
+import { custom_renderer } from '../../../../state.js';
 import {
 	validate_attribute,
 	validate_attribute_name,
 	validate_slot_attribute
 } from './attribute.js';
+import { check_global_event_reference } from './utils.js';
 
 const EVENT_MODIFIERS = [
 	'preventDefault',
@@ -64,14 +66,7 @@ export function validate_element(node, context) {
 					e.attribute_invalid_event_handler(attribute);
 				}
 
-				const value = get_attribute_expression(attribute);
-				if (
-					value.type === 'Identifier' &&
-					value.name === attribute.name &&
-					!context.state.scope.get(value.name)
-				) {
-					w.attribute_global_event_reference(attribute, attribute.name);
-				}
+				check_global_event_reference(attribute, context);
 			}
 
 			if (attribute.name === 'slot') {
@@ -79,12 +74,12 @@ export function validate_element(node, context) {
 				validate_slot_attribute(context, attribute);
 			}
 
-			if (attribute.name === 'is') {
+			if (attribute.name === 'is' && !custom_renderer) {
 				w.attribute_avoid_is(attribute);
 			}
 
 			const correct_name = react_attributes.get(attribute.name);
-			if (correct_name) {
+			if (correct_name && !custom_renderer) {
 				w.attribute_invalid_property_name(attribute, attribute.name, correct_name);
 			}
 
@@ -100,6 +95,7 @@ export function validate_element(node, context) {
 					(n) =>
 						n.type !== 'Comment' &&
 						n.type !== 'ConstTag' &&
+						n.type !== 'DeclarationTag' &&
 						(n.type !== 'Text' || n.data.trim() !== '')
 				).length > 1
 			) {

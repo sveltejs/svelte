@@ -1,52 +1,52 @@
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { BatchRecord, BatchValue, Derived, DerivedRecord, Effect, Reaction, Source, Value } from '#client' */
 /** @import { Batch } from './batch.js'; */
-/** @import { Boundary } from '../dom/blocks/boundary.js'; */
 import { DEV } from 'esm-env';
 import {
-	ERROR_VALUE,
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	ASYNC,
-	WAS_MARKED,
 	DESTROYED,
-	CLEAN,
-	REACTION_RAN,
-	INERT
+	INERT,
+	CONNECTED,
+	ASSIGNED,
+	ERROR_VALUE,
+	HAS_ABORT_CONTROLLER
 } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
 	update_reaction,
-	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
 	is_destroying_effect,
 	update_effect,
 	remove_reactions,
 	skipped_deps,
-	new_deps
+	new_deps,
+	is_current,
+	promote_record,
+	changed_since,
+	is_dirty,
+	abort_all,
+	abort_controller,
+	get
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import {
-	async_effect,
-	destroy_effect,
-	destroy_effect_children,
-	effect_tracking,
-	teardown
-} from './effects.js';
-import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
-import { get_error } from '../../shared/dev.js';
+import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
+import { eager_effects, set_eager_effects, source } from './sources.js';
+import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch, previous_batch } from './batch.js';
-import { increment_pending, unset_context } from './async.js';
+import { batch_values, current_batch, view_batch, view_cache } from './batch.js';
+import { current_runner, increment_pending, merge_target, unset_context } from './async.js';
 import { deferred, includes, noop } from '../../shared/utils.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { update_derived_status } from './status.js';
+import { stringify_derived } from '../dev/debug.js';
 
 /**
  * This allows us to track 'reactivity loss' that occurs when signals
@@ -81,6 +81,8 @@ export function derived(fn) {
 	const signal = {
 		ctx: component_context,
 		deps: null,
+		dv: null,
+		edges: null,
 		effects: null,
 		equals,
 		f: flags,
@@ -107,26 +109,45 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
- * @returns {Promise<Source<V>>}
+ * @param {(error: unknown) => void} [onready] Called when the first result is captured; receives its error, if any
+ * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, label, location) {
-	let parent = /** @type {Effect | null} */ (active_effect);
-
-	if (parent === null) {
-		e.async_derived_orphan();
-	}
-
-	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
+export function async_expression(fn, label, location, onready) {
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
+	signal.f |= ASYNC;
 
-	if (DEV) signal.label = label ?? fn.toString();
-
-	// only suspend in async deriveds created on initialisation
-	var should_suspend = !active_reaction;
+	if (DEV) signal.label = label ?? stringify_derived(fn);
 
 	/** @type {Set<ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Set();
+
+	// `run` continues in the creating batch's view; other batches' results wait until then.
+	// A superseded or obsolete run lets another batch supply the first value.
+	var runner = current_runner;
+
+	/**
+	 * The batch whose run delivers the first value (`null`: whichever comes first)
+	 * @type {Batch | null}
+	 */
+	var resolver = runner && current_batch;
+
+	/**
+	 * Results buffered until the script continues; `null` disables buffering.
+	 * @type {Array<() => void> | null}
+	 */
+	var waiting = runner && [];
+
+	/**
+	 * Retry buffered results, or release them once the script has continued.
+	 * @param {boolean} [continued]
+	 */
+	function flush_waiting(continued = false) {
+		var fns = /** @type {Array<() => void>} */ (waiting);
+		waiting = continued ? null : [];
+		if (continued) resolver = null;
+		for (const fn of fns) fn();
+	}
 
 	async_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
@@ -137,22 +158,37 @@ export function async_derived(fn, label, location) {
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
-		promise = d.promise;
 
 		try {
+			var result = fn();
+			if (result === UNINITIALIZED) return;
+
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
+			var promise = Promise.resolve(result);
+			// The then getter may also call `getAbortSignal()`, so capture its signal afterwards.
+			var abort_signal = abort_controller?.signal;
+
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn())
-				.then(d.resolve, (e) => {
-					// if the promise was rejected by the user, via `getAbortSignal`, then
-					// wait for a subsequent resolution instead of flushing the batch
-					if (e !== STALE_REACTION) d.reject(e);
-				})
+			promise
+				.then(
+					(value) => {
+						if (!abort_signal?.aborted) d.resolve(value);
+					},
+					(e) => {
+						// An aborted run waits for its replacement, even if the user catches the abort.
+						// A script awaiting another reaction's aborted promise must release its resolver:
+						// the eager merge includes the signal's owner, but not necessarily this waiter.
+						if (abort_signal?.aborted || (e === STALE_REACTION && runner === null)) {
+							return;
+						}
+
+						d.reject(e === STALE_REACTION ? OBSOLETE : e);
+					}
+				)
 				.finally(unset_context);
 		} catch (error) {
 			d.reject(error);
-			unset_context();
 		}
 
 		if (DEV) {
@@ -178,31 +214,11 @@ export function async_derived(fn, label, location) {
 		}
 
 		var batch = /** @type {Batch} */ (current_batch);
+		var decrement_pending = increment_pending();
 
-		if (should_suspend) {
-			// we only increment the batch's pending state for updates, not creation, otherwise
-			// we will decrement to zero before the work that depends on this promise (e.g. a
-			// template effect) has initialized, causing the batch to resolve prematurely
-			if ((effect.f & REACTION_RAN) !== 0) {
-				var decrement_pending = increment_pending();
-			}
-
-			if (
-				// boundary can be null if the async derived is inside an $effect.root not connected to the component render tree
-				parent.b?.is_rendered()
-			) {
-				batch.async_deriveds.get(effect)?.reject(OBSOLETE);
-			} else {
-				// While the boundary is still showing pending, a new run supersedes all older in-flight runs
-				// for this async expression. Cancel eagerly so resolution cannot commit stale values.
-				for (const d of deferreds.values()) {
-					d.reject(OBSOLETE);
-				}
-			}
-
-			deferreds.add(d);
-			batch.async_deriveds.set(effect, d);
-		}
+		batch.async_deriveds.get(effect)?.reject(OBSOLETE);
+		deferreds.add(d);
+		batch.async_deriveds.set(effect, d);
 
 		/**
 		 * @param {any} value
@@ -210,41 +226,76 @@ export function async_derived(fn, label, location) {
 		 */
 		const handler = (value, error = undefined) => {
 			if (DEV) {
+				invariant(view_batch === null, 'Batch is currently active');
+
 				reactivity_loss_tracker = null;
 			}
 
-			decrement_pending?.();
-			deferreds.delete(d);
+			if (waiting !== null && error !== OBSOLETE) {
+				resolver ??= batch;
 
-			if (error === OBSOLETE) return;
+				if (merge_target(batch) !== merge_target(resolver)) {
+					// Recheck staleness after waiting: the batch may have rerun or been discarded.
+					// Merged batches remain valid while their merge target is linked.
+					waiting.push(() => {
+						var obsolete =
+							(effect.f & DESTROYED) !== 0 ||
+							(batch.linked ? batch.async_deriveds.get(effect) !== d : !merge_target(batch).linked);
 
-			batch.activate();
-
-			if (error) {
-				signal.f |= ERROR_VALUE;
-
-				// @ts-expect-error the error is the wrong type, but we don't care
-				internal_set(signal, error);
-			} else {
-				if ((signal.f & ERROR_VALUE) !== 0) {
-					signal.f ^= ERROR_VALUE;
-				}
-
-				if (DEV && location !== undefined && !signal.equals(value)) {
-					recent_async_deriveds.add(signal);
-
-					setTimeout(() => {
-						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
-							w.await_waterfall(/** @type {string} */ (signal.label), location);
-							recent_async_deriveds.delete(signal);
-						}
+						handler(value, obsolete ? OBSOLETE : error);
 					});
-				}
 
-				internal_set(signal, value);
+					return;
+				}
 			}
 
-			batch.deactivate();
+			decrement_pending();
+			deferreds.delete(d);
+
+			if (error) {
+				// If the resolver's run is obsolete, let the next result supply the first value.
+				// Do the same on failure if other results are pending. Try buffered results first.
+				// A rerun in the same batch keeps ownership.
+				if (
+					waiting !== null &&
+					resolver !== null &&
+					(deferreds.size > 0 || error === OBSOLETE) &&
+					merge_target(resolver) === merge_target(batch) &&
+					merge_target(batch).async_deriveds.get(effect) === d
+				) {
+					resolver = null;
+					flush_waiting();
+					return;
+				} else if (error === OBSOLETE) {
+					return;
+				}
+			}
+
+			var same = signal.equals(value) && !error && (signal.f & ERROR_VALUE) === 0;
+			merge_target(batch).capture(signal, error ?? value, same, !!error);
+
+			if (runner !== null) {
+				// Let the script consume the first value in this batch's view before releasing buffered results.
+				runner.switch(batch);
+
+				runner.continued.push(() => flush_waiting(true));
+
+				runner = null;
+			}
+
+			onready?.(error);
+			onready = undefined;
+
+			if (DEV && location !== undefined && !signal.equals(value)) {
+				recent_async_deriveds.add(signal);
+
+				setTimeout(() => {
+					if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
+						w.await_waterfall(/** @type {string} */ (signal.label), location);
+						recent_async_deriveds.delete(signal);
+					}
+				});
+			}
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -256,30 +307,68 @@ export function async_derived(fn, label, location) {
 		}
 	});
 
-	if (DEV) {
-		// add a flag that lets this be printed as a derived
-		// when using `$inspect.trace()`
-		signal.f |= ASYNC;
+	return signal;
+}
+
+/**
+ * @template V
+ * @param {() => V | Promise<V>} fn
+ * @param {string} [label]
+ * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @returns {Promise<Source<V>>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function async_derived(fn, label, location) {
+	if (!current_runner) {
+		e.async_derived_orphan();
 	}
 
-	return new Promise((fulfil) => {
-		/** @param {Promise<V>} p */
-		function next(p) {
-			function go() {
-				if (p === promise) {
-					fulfil(signal);
-				} else {
-					// if the effect re-runs before the initial promise
-					// resolves, delay resolution until we have a value
-					next(promise);
+	const runner = current_runner;
+	const batch = /** @type {Batch} */ (current_batch);
+
+	return new Promise((fulfil, reject) => {
+		var source = async_expression(
+			() => {
+				var effect = /** @type {Effect} */ (active_effect);
+				var target = merge_target(/** @type {Batch} */ (current_batch));
+
+				if (runner.running && target !== batch && is_uninitialized(source)) {
+					// Check all earlier expressions: assignments can initialize them out of order.
+					for (var i = index - 1; i >= 0; i--) {
+						var s = runner.signals[i];
+
+						if (is_uninitialized(s)) {
+							// re-run until we have a value
+							get(s);
+
+							var pending = /** @type {Batch} */ (current_batch).async_deriveds;
+							pending.get(effect)?.reject(OBSOLETE);
+							pending.delete(effect);
+							return UNINITIALIZED;
+						}
+					}
 				}
+
+				return fn();
+			},
+			label,
+			location,
+			(error) => {
+				if (error === undefined) fulfil(/** @type {Source<V>} */ (source));
+				else reject(error);
 			}
+		);
 
-			p.then(go, go);
-		}
-
-		next(promise);
+		var index = runner.signals.push(source) - 1;
 	});
+}
+
+/**
+ * Whether the signal of an async expression has no value yet in the active view of the world
+ * @param {Source} signal
+ */
+export function is_uninitialized(signal) {
+	return (batch_values?.get(signal) ?? signal).v === UNINITIALIZED;
 }
 
 /**
@@ -337,7 +426,6 @@ let stack = [];
  * @returns {T}
  */
 export function execute_derived(derived) {
-	var value;
 	var prev_active_effect = active_effect;
 	var parent = derived.parent;
 
@@ -349,95 +437,115 @@ export function execute_derived(derived) {
 	) {
 		w.derived_inert();
 
+		// (as if it ran — it can't change anymore)
+		update_derived_status(derived);
+
 		return derived.v;
+	}
+
+	// Check before pushing, so that a recursive call doesn't remove the outer evaluation from the stack.
+	if (DEV && includes.call(stack, derived)) {
+		e.derived_references_self();
 	}
 
 	set_active_effect(parent);
 
+	var prev_eager_effects = eager_effects;
+
 	if (DEV) {
-		let prev_eager_effects = eager_effects;
 		set_eager_effects(new Set());
-		try {
-			if (includes.call(stack, derived)) {
-				e.derived_references_self();
-			}
+		stack.push(derived);
+	}
 
-			stack.push(derived);
+	try {
+		destroy_derived_effects(derived);
+		return update_reaction(derived);
+	} finally {
+		set_active_effect(prev_active_effect);
 
-			derived.f &= ~WAS_MARKED;
-			destroy_derived_effects(derived);
-			value = update_reaction(derived);
-		} finally {
-			set_active_effect(prev_active_effect);
+		if (DEV) {
 			set_eager_effects(prev_eager_effects);
 			stack.pop();
 		}
-	} else {
-		try {
-			derived.f &= ~WAS_MARKED;
-			destroy_derived_effects(derived);
-			value = update_reaction(derived);
-		} finally {
-			set_active_effect(prev_active_effect);
-		}
 	}
-
-	return value;
 }
 
 /**
- * @param {Derived} derived
+ * Update the global state of a derived, adopting the active batch's run if its view has
+ * become the real world (e.g. because a fork was committed), or re-evaluating it otherwise.
+ * `signal` can be a source, too, which is cheaper than checking first (this is called for every dependency that
+ * is checked): only reactions ever get a dirty status, so `is_dirty` returns `false` for a source right away
+ * @param {Value} signal
  * @returns {void}
  */
-export function update_derived(derived) {
-	var value = execute_derived(derived);
+export function update_derived(signal) {
+	var derived = /** @type {Derived} */ (signal);
 
-	if (!derived.equals(value)) {
-		derived.wv = increment_write_version();
+	if (!is_dirty(derived)) return;
 
-		// in a fork, we don't update the underlying value, just `batch_values`.
-		// the underlying value will be updated when the fork is committed.
-		// otherwise, the next time we get here after a 'real world' state
-		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.deps === null) {
-			if (current_batch !== null) {
-				// We also write to previous_batch because if it exists, it is a sign that we're
-				// currently in the process of flushing effects. These updates to deriveds may belong
-				// to the previous batch, not the new one (which can already exist if an earlier
-				// effect wrote to a source). This can cause bugs when running batch.#commit() later,
-				// but not adding it to current_batch can, too, so we add it to both.
-				// See https://github.com/sveltejs/svelte/pull/18117 for more details.
-				current_batch.capture(derived, value, true);
-				previous_batch?.capture(derived, value, true);
-			} else {
-				derived.v = value;
-			}
+	var records = view_batch?.records;
+	var record = records?.get(derived);
 
-			// deriveds without dependencies should never be recomputed
-			if (derived.deps === null) {
-				set_signal_status(derived, CLEAN);
-				return;
-			}
-		}
-	}
-
-	// don't mark derived clean if we're reading it inside a
-	// cleanup function, or it will cache a stale value
-	if (is_destroying_effect) {
-		return;
-	}
-
-	// During time traveling we don't want to reset the status so that
-	// traversal of the graph in the other batches still happens
-	if (batch_values !== null) {
-		// only cache the value if we're in a tracking context, otherwise we won't
-		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking() || current_batch?.is_fork) {
-			batch_values.set(derived, value);
-		}
+	if (record !== undefined && is_current(record.deps, record.dv)) {
+		/** @type {Map<Reaction, BatchRecord>} */ (records).delete(derived);
+		promote_record(derived, record);
 	} else {
-		update_derived_status(derived);
+		// (the result is stored by `update_dependencies`)
+		execute_derived(derived);
 	}
+}
+
+/**
+ * The value of `derived` as the view of the world of the active batch sees it, with its version: an
+ * assigned value that holds, or a run of it whose versions are what the view holds — a record in the
+ * batch, or the derived itself (i.e. its global state) — or else a new run. Results are cached for the
+ * lifetime of the view (see `view_cache`), unless the derived is disconnected, in which case nothing
+ * would remove them from the cache when they become stale.
+ * @param {Derived} derived
+ * @returns {Derived | DerivedRecord | BatchValue}
+ */
+export function get_view(derived) {
+	var cache = /** @type {Map<Derived, Derived | DerivedRecord | BatchValue>} */ (view_cache);
+	var entry = cache.get(derived);
+
+	if (entry !== undefined) return entry;
+
+	var batch = /** @type {Batch} */ (view_batch);
+
+	// What the view holds for the derived is a write to it — an assignment (in this batch, or made while it commits),
+	// or the value from before another batch's assignment that this view undoes — or else its global state. An assigned value
+	// holds until one of the derived's dependencies — what its run in this view (its record in the batch, if
+	// any, else its global run) read — is written after it (see `changed_since`). The value from before an
+	// undone assignment is only used if it was assigned, too: a computed value was computed in some other
+	// view of the world, and may depend on writes that this view undoes
+	var written = /** @type {Map<Value, BatchValue>} */ (batch_values).get(derived);
+	var held = written ?? derived;
+	var assigned = written === undefined ? (derived.f & ASSIGNED) !== 0 : written.assigned;
+	var record = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
+
+	if (assigned && !changed_since((record ?? derived).deps, held.wv)) {
+		entry = held;
+	} else if (record !== undefined && is_current(record.deps, record.dv)) {
+		entry = record;
+	} else if (
+		written === undefined &&
+		!assigned &&
+		derived.dv !== null &&
+		is_current(derived.deps, derived.dv)
+	) {
+		entry = derived;
+	} else {
+		execute_derived(derived);
+
+		// the run is stored in the batch, unless it is the real-world value (see `update_record`)
+		entry = /** @type {DerivedRecord | undefined} */ (batch.records?.get(derived)) ?? derived;
+	}
+
+	if ((derived.f & CONNECTED) !== 0) {
+		cache.set(derived, entry);
+	}
+
+	return entry;
 }
 
 /**
@@ -448,18 +556,17 @@ export function freeze_derived_effects(derived) {
 
 	for (const e of derived.effects) {
 		// if the effect has a teardown function or abort signal, call it
-		if (e.teardown || e.ac) {
+		if (e.teardown || (e.f & HAS_ABORT_CONTROLLER) !== 0) {
 			e.teardown?.();
-			e.ac?.abort(STALE_REACTION);
+			abort_all(e);
 
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence
 			// of a teardown function is what determines whether the
 			// effect runs again during unfreezing (but not for teardown-only effects)
 			if (e.fn !== null) e.teardown = noop;
-			e.ac = null;
 
-			remove_reactions(e, 0);
+			remove_reactions(e);
 			destroy_effect_children(e);
 		}
 	}

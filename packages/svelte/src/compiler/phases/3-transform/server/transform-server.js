@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { component_name, dev, filename } from '../../../state.js';
+import { component_name, custom_renderer, dev, filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
@@ -92,6 +92,19 @@ const template_visitors = {
  * @returns {ESTree.Program}
  */
 export function server_component(analysis, options) {
+	// Components compiled with a custom renderer have no meaningful server
+	// representation — they only render on the client through the custom
+	// renderer — so we compile them down to a no-op.
+	if (custom_renderer) {
+		const component_function = b.function_declaration(b.id(analysis.name), [], b.block([]));
+
+		return {
+			type: 'Program',
+			sourceType: 'module',
+			body: [b.export_default(component_function)]
+		};
+	}
+
 	/** @type {ComponentServerTransformState} */
 	const state = {
 		analysis,
@@ -148,7 +161,7 @@ export function server_component(analysis, options) {
 	const legacy_reactive_declarations = [];
 
 	for (const [node] of analysis.reactive_statements) {
-		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
+		const statement = state.legacy_reactive_statements.get(node);
 		if (statement === undefined) {
 			throw new Error('Could not find reactive statement');
 		}
@@ -165,7 +178,7 @@ export function server_component(analysis, options) {
 			}
 		}
 
-		instance.body.push(statement[1]);
+		instance.body.push(statement);
 	}
 
 	if (legacy_reactive_declarations.length > 0) {
@@ -210,14 +223,25 @@ export function server_component(analysis, options) {
 		];
 	}
 
-	if (
-		[...analysis.instance.scope.declarations.values()].some(
-			(binding) => binding.kind === 'store_sub'
-		)
-	) {
+	const store_subs = [...analysis.instance.scope.declarations.values()].filter(
+		(binding) => binding.kind === 'store_sub'
+	);
+
+	// a blocked subscription is only created once its promise resolves, so its teardown must wait until the render is done
+	const defer_store_teardown = store_subs.some((binding) => binding.blocker);
+
+	if (store_subs.length > 0) {
 		instance.body.unshift(b.var('$$store_subs'));
+
+		const unsubscribe = b.if(
+			b.id('$$store_subs'),
+			b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs')))
+		);
+
 		template.body.push(
-			b.if(b.id('$$store_subs'), b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))))
+			defer_store_teardown
+				? b.stmt(b.call('$$renderer.on_destroy', b.arrow([], b.block([unsubscribe]))))
+				: unsubscribe
 		);
 	}
 
@@ -257,7 +281,7 @@ export function server_component(analysis, options) {
 		);
 	}
 
-	let should_inject_context = dev || analysis.needs_context;
+	let should_inject_context = dev || analysis.needs_context || defer_store_teardown;
 
 	if (should_inject_context) {
 		component_block = b.block([

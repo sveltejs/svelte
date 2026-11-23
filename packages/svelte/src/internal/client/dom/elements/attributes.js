@@ -1,8 +1,9 @@
-/** @import { Blocker, Effect } from '#client' */
+/** @import { Effect } from '#client' */
+/** @import { Blocker } from '../../reactivity/async.js' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { create_event, delegate, delegated, event, event_symbol } from './events.js';
+import { create_event, delegate, delegated } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import {
@@ -26,8 +27,26 @@ import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
 import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
-import { init_select, select_option } from './bindings/select.js';
+import {
+	init_select,
+	select_option,
+	set_default_select_value,
+	set_selected
+} from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
+import {
+	has_attribute,
+	get_attribute,
+	remove_attribute,
+	set_attribute as set_attribute_op,
+	remove_event_listener,
+	node_name,
+	set_element_value,
+	set_element_checked,
+	set_element_default_value,
+	set_element_default_checked
+} from '../operations.js';
+import { current_renderer } from '../../custom-renderer/state.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -50,6 +69,8 @@ const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
 export function remove_input_defaults(input) {
 	if (!hydrating) return;
 
+	// we should be safe here from custom renderers as this only run during hydration
+
 	var already_removed = false;
 
 	// We try and remove the default attributes later, rather than sync during hydration.
@@ -61,13 +82,13 @@ export function remove_input_defaults(input) {
 		already_removed = true;
 
 		// Remove the attributes but preserve the values
-		if (input.hasAttribute('value')) {
+		if (has_attribute(input, 'value')) {
 			var value = input.value;
 			set_attribute(input, 'value', null);
 			input.value = value;
 		}
 
-		if (input.hasAttribute('checked')) {
+		if (has_attribute(input, 'checked')) {
 			var checked = input.checked;
 			set_attribute(input, 'checked', null);
 			input.checked = checked;
@@ -91,15 +112,15 @@ export function set_value(element, value) {
 			(attributes.value =
 				// treat null and undefined the same for the initial value
 				value ?? undefined) ||
-		// @ts-expect-error
 		// `progress` elements always need their value set when it's `0`
-		(element.value === value && (value !== 0 || element.nodeName !== PROGRESS_TAG))
+		(current_renderer == null &&
+			/** @type {any} */ (element).value === value &&
+			(value !== 0 || node_name(element) !== PROGRESS_TAG))
 	) {
 		return;
 	}
 
-	// @ts-expect-error
-	element.value = value ?? '';
+	set_element_value(element, value);
 }
 
 /**
@@ -118,27 +139,7 @@ export function set_checked(element, checked) {
 		return;
 	}
 
-	// @ts-expect-error
-	element.checked = checked;
-}
-
-/**
- * Sets the `selected` attribute on an `option` element.
- * Not set through the property because that doesn't reflect to the DOM,
- * which means it wouldn't be taken into account when a form is reset.
- * @param {HTMLOptionElement} element
- * @param {boolean} selected
- */
-export function set_selected(element, selected) {
-	if (selected) {
-		// The selected option could've changed via user selection, and
-		// setting the value without this check would set it back.
-		if (!element.hasAttribute('selected')) {
-			element.setAttribute('selected', '');
-		}
-	} else {
-		element.removeAttribute('selected');
-	}
+	set_element_checked(element, checked);
 }
 
 /**
@@ -147,9 +148,7 @@ export function set_selected(element, selected) {
  * @param {boolean} checked
  */
 export function set_default_checked(element, checked) {
-	const existing_value = element.checked;
-	element.defaultChecked = checked;
-	element.checked = existing_value;
+	set_element_default_checked(element, checked);
 }
 
 /**
@@ -158,9 +157,7 @@ export function set_default_checked(element, checked) {
  * @param {string} value
  */
 export function set_default_value(element, value) {
-	const existing_value = element.value;
-	element.defaultValue = value;
-	element.value = existing_value;
+	set_element_default_value(element, value);
 }
 
 /**
@@ -173,12 +170,12 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	var attributes = get_attributes(element);
 
 	if (hydrating) {
-		attributes[attribute] = element.getAttribute(attribute);
+		attributes[attribute] = get_attribute(element, attribute);
 
 		if (
 			attribute === 'src' ||
 			attribute === 'srcset' ||
-			(attribute === 'href' && element.nodeName === LINK_TAG)
+			(attribute === 'href' && node_name(element) === LINK_TAG)
 		) {
 			if (!skip_warning) {
 				check_src_in_dev_hydration(element, attribute, value ?? '');
@@ -192,7 +189,8 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		}
 	}
 
-	if (attributes[attribute] === (attributes[attribute] = value)) return;
+	var previous = attributes[attribute];
+	if (previous === (attributes[attribute] = value)) return;
 
 	if (attribute === 'loading') {
 		// @ts-expect-error
@@ -200,12 +198,19 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	}
 
 	if (value == null) {
-		element.removeAttribute(attribute);
-	} else if (typeof value !== 'string' && get_setters(element).includes(attribute)) {
+		remove_attribute(element, attribute);
+	} else if (typeof value !== 'string' && get_setters(element).has(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
-	} else {
-		element.setAttribute(attribute, value);
+	} else if (
+		// while hydrating, skip a number or boolean whose string the server already rendered
+		!(
+			hydrating &&
+			(typeof value === 'number' || typeof value === 'boolean') &&
+			previous === String(value)
+		)
+	) {
+		set_attribute_op(element, attribute, value);
 	}
 }
 
@@ -215,6 +220,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
  * @param {string} value
  */
 export function set_xlink_attribute(dom, attribute, value) {
+	// custom renderer safe since we never emit this
 	dom.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
@@ -224,6 +230,7 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {
+	// custom renderer safe since we never emit this
 	// We need to ensure that setting custom element props, which can
 	// invoke lifecycle methods on other custom elements, does not also
 	// associate those lifecycle methods with the current active reaction
@@ -248,11 +255,11 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			(setters_cache.has(node.getAttribute('is') || node.nodeName) ||
+			(setters_cache.has(get_attribute(node, 'is') || node_name(node)) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
-			customElements.get(node.getAttribute('is') || node.nodeName.toLowerCase())
-				? get_setters(node).includes(prop)
+			customElements.get(get_attribute(node, 'is') || node_name(node).toLowerCase())
+				? get_setters(node).has(prop)
 				: value && typeof value === 'object')
 		) {
 			// @ts-expect-error
@@ -290,12 +297,9 @@ function set_attributes(
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	if (hydrating && should_remove_defaults && element.nodeName === INPUT_TAG) {
-		var input = /** @type {HTMLInputElement} */ (element);
-		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
-
-		if (!(attribute in next)) {
-			remove_input_defaults(input);
+	if (hydrating && should_remove_defaults && node_name(element) === INPUT_TAG) {
+		if (!('defaultValue' in next || 'defaultChecked' in next)) {
+			remove_input_defaults(/** @type {HTMLInputElement} */ (element));
 		}
 	}
 
@@ -312,180 +316,228 @@ function set_attributes(
 	}
 
 	var current = prev || {};
-	var is_option_element = element.nodeName === OPTION_TAG;
+	var is_option_element = node_name(element) === OPTION_TAG;
+	var is_select_element = node_name(element) === SELECT_TAG;
 
-	for (var key in prev) {
-		if (!(key in next)) {
-			next[key] = null;
-		}
-	}
-
-	if (next.class) {
-		next.class = clsx(next.class);
-	} else if (css_hash || next[CLASS]) {
-		next.class = null; /* force call to set_class() */
-	}
-
-	if (next[STYLE]) {
-		next.style ??= null; /* force call to set_style() */
-	}
-
-	var setters = get_setters(element);
-
-	if (element.nodeName === INPUT_TAG && 'type' in next && ('value' in next || '__value' in next)) {
-		var type = next.type;
-
-		if (type !== current.type || (type === undefined && element.hasAttribute('type'))) {
-			current.type = type;
-			set_attribute(element, 'type', type, skip_warning);
-		}
-	}
-
-	// since key is captured we use const
-	for (const key in next) {
-		// let instead of var because referenced in a closure
-		let value = next[key];
-
-		// Up here because we want to do this for the initial value, too, even if it's undefined,
-		// and this wouldn't be reached in case of undefined because of the equality check below
-		if (is_option_element && key === 'value' && value == null) {
-			// The <option> element is a special case because removing the value attribute means
-			// the value is set to the text content of the option element, and setting the value
-			// to null or undefined means the value is set to the string "null" or "undefined".
-			// To align with how we handle this case in non-spread-scenarios, this logic is needed.
-			// There's a super-edge-case bug here that is left in in favor of smaller code size:
-			// Because of the "set missing props to null" logic above, we can't differentiate
-			// between a missing value and an explicitly set value of null or undefined. That means
-			// that once set, the value attribute of an <option> element can't be removed. This is
-			// a very rare edge case, and removing the attribute altogether isn't possible either
-			// for the <option value={undefined}> case, so we're not losing any functionality here.
-			// @ts-ignore
-			element.value = element.__value = '';
-			current[key] = value;
-			continue;
-		}
-
-		if (key === 'class') {
-			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
-			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
-			current[key] = value;
-			current[CLASS] = next[CLASS];
-			continue;
-		}
-
-		if (key === 'style') {
-			set_style(element, value, prev?.[STYLE], next[STYLE]);
-			current[key] = value;
-			current[STYLE] = next[STYLE];
-			continue;
-		}
-
-		var prev_value = current[key];
-
-		// Skip if value is unchanged, unless it's `undefined` and the element still has the attribute
-		if (value === prev_value && !(value === undefined && element.hasAttribute(key))) {
-			continue;
-		}
-
-		current[key] = value;
-
-		var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
-		if (prefix === '$$') continue;
-
-		if (prefix === 'on') {
-			/** @type {{ capture?: true }} */
-			const opts = {};
-			const event_handle_key = '$$' + key;
-			let event_name = key.slice(2);
-			var is_delegated = can_delegate_event(event_name);
-
-			if (is_capture_event(event_name)) {
-				event_name = event_name.slice(0, -7);
-				opts.capture = true;
+	try {
+		for (var key in prev) {
+			// don't null our internal $$onX listeners
+			if (!(key in next) && key[0] + key[1] !== '$$') {
+				next[key] = null;
 			}
+		}
 
-			if (!is_delegated && prev_value) {
-				// Listening to same event but different handler -> our handle function below takes care of this
-				// If we were to remove and add listeners in this case, it could happen that the event is "swallowed"
-				// (the browser seems to not know yet that a new one exists now) and doesn't reach the handler
-				// https://github.com/sveltejs/svelte/issues/11903
-				if (value != null) continue;
+		if (next.class) {
+			next.class = clsx(next.class);
+		} else if (css_hash || next[CLASS]) {
+			next.class = null; /* force call to set_class() */
+		}
 
-				element.removeEventListener(event_name, current[event_handle_key], opts);
-				current[event_handle_key] = null;
+		if (next[STYLE]) {
+			next.style ??= null; /* force call to set_style() */
+		}
+
+		var setters = get_setters(element);
+
+		if (
+			// the following logic only makes sense in a DOM environment
+			current_renderer == null &&
+			node_name(element) === INPUT_TAG &&
+			'type' in next &&
+			('value' in next || '__value' in next)
+		) {
+			var type = next.type;
+
+			if (type !== current.type || (type === undefined && element.hasAttribute('type'))) {
+				current.type = type;
+				set_attribute(element, 'type', type, skip_warning);
 			}
+		}
 
-			if (is_delegated) {
-				delegated(event_name, element, value);
-				delegate([event_name]);
-			} else if (value != null) {
-				/**
-				 * @this {any}
-				 * @param {Event} evt
-				 */
-				function handle(evt) {
-					current[key].call(this, evt);
-				}
+		// since key is captured we use const
+		for (const key in next) {
+			// let instead of var because referenced in a closure
+			let value = next[key];
 
-				current[event_handle_key] = create_event(event_name, element, handle, opts);
-			}
-		} else if (key === 'style') {
-			// avoid using the setter
-			set_attribute(element, key, value);
-		} else if (key === 'autofocus') {
-			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
-			// @ts-ignore We're not running this for custom elements because __value is actually
-			// how Lit stores the current value on the element, and messing with that would break things.
-			element.value = element.__value = value;
-		} else if (key === 'selected' && is_option_element) {
-			set_selected(/** @type {HTMLOptionElement} */ (element), value);
-		} else {
-			var name = key;
-			if (!preserve_attribute_case) {
-				name = normalize_attribute(name);
-			}
-
-			var is_default = name === 'defaultValue' || name === 'defaultChecked';
-
-			if (value == null && !is_custom_element && !is_default) {
-				attributes[key] = null;
-
-				if (name === 'value' || name === 'checked') {
-					// removing value/checked also removes defaultValue/defaultChecked — preserve
-					let input = /** @type {HTMLInputElement} */ (element);
-					const use_default = prev === undefined;
-					if (name === 'value') {
-						let previous = input.defaultValue;
-						input.removeAttribute(name);
-						input.defaultValue = previous;
-						// @ts-ignore
-						input.value = input.__value = use_default ? previous : null;
-					} else {
-						let previous = input.defaultChecked;
-						input.removeAttribute(name);
-						input.defaultChecked = previous;
-						input.checked = use_default ? previous : false;
-					}
-				} else {
-					element.removeAttribute(key);
-				}
-			} else if (
-				is_default ||
-				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
-			) {
+			// Up here because we want to do this for the initial value, too, even if it's undefined,
+			// and this wouldn't be reached in case of undefined because of the equality check below
+			if (is_option_element && key === 'value' && value == null) {
+				// The <option> element is a special case because removing the value attribute means
+				// the value is set to the text content of the option element, and setting the value
+				// to null or undefined means the value is set to the string "null" or "undefined".
+				// To align with how we handle this case in non-spread-scenarios, this logic is needed.
+				// There's a super-edge-case bug here that is left in favor of smaller code size:
+				// Because of the "set missing props to null" logic above, we can't differentiate
+				// between a missing value and an explicitly set value of null or undefined. That means
+				// that once set, the value attribute of an <option> element can't be removed. This is
+				// a very rare edge case, and removing the attribute altogether isn't possible either
+				// for the <option value={undefined}> case, so we're not losing any functionality here.
 				// @ts-ignore
-				element[name] = value;
-				// remove it from attributes's cache
-				if (name in attributes) attributes[name] = UNINITIALIZED;
-			} else if (typeof value !== 'function') {
-				set_attribute(element, name, value, skip_warning);
+				element.value = element.__value = '';
+				current[key] = value;
+				continue;
+			}
+
+			if (key === 'class') {
+				var is_html = current_renderer == null && element.namespaceURI === NAMESPACE_HTML;
+				set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
+				current[key] = value;
+				current[CLASS] = next[CLASS];
+				continue;
+			}
+
+			if (key === 'style') {
+				set_style(element, value, prev?.[STYLE], next[STYLE]);
+				current[key] = value;
+				current[STYLE] = next[STYLE];
+				continue;
+			}
+
+			var prev_value = current[key];
+
+			// Skip if value is unchanged, unless it's `undefined` and the element still has the attribute
+			if (value === prev_value && !(value === undefined && has_attribute(element, key))) {
+				continue;
+			}
+
+			current[key] = value;
+
+			var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
+			if (prefix === '$$') continue;
+
+			if (prefix === 'on') {
+				/** @type {{ capture?: true }} */
+				const opts = {};
+				const event_handle_key = '$$' + key;
+				let event_name = key.slice(2);
+				var is_delegated = current_renderer == null && can_delegate_event(event_name);
+
+				if (is_capture_event(event_name)) {
+					event_name = event_name.slice(0, -7);
+					opts.capture = true;
+				}
+
+				if (!is_delegated && prev_value) {
+					// Listening to same event but different handler -> our handle function below takes care of this
+					// If we were to remove and add listeners in this case, it could happen that the event is "swallowed"
+					// (the browser seems to not know yet that a new one exists now) and doesn't reach the handler
+					// https://github.com/sveltejs/svelte/issues/11903
+					if (value != null) continue;
+
+					remove_event_listener(element, event_name, current[event_handle_key], opts);
+					current[event_handle_key] = null;
+				}
+
+				if (is_delegated) {
+					delegated(event_name, element, value);
+					delegate([event_name]);
+				} else if (value != null) {
+					/**
+					 * @this {any}
+					 * @param {...any} args
+					 */
+					function handle(...args) {
+						current[key].apply(this, args);
+					}
+
+					current[event_handle_key] = create_event(event_name, element, handle, opts);
+				}
+			} else if (key === 'style') {
+				// avoid using the setter
+				set_attribute(element, key, value);
+			} else if (key === 'autofocus') {
+				if (current_renderer == null) {
+					autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
+				} else {
+					// In custom renderer mode, just set autofocus as a regular attribute
+					if (value) {
+						set_attribute_op(element, key, value);
+					} else {
+						remove_attribute(element, key);
+					}
+				}
+			} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
+				// @ts-ignore We're not running this for custom elements because __value is actually
+				// how Lit stores the current value on the element, and messing with that would break things.
+				element.__value = value;
+				// we don't set the value if it hasn't changed. This supports invalid number inputs like `1e` because
+				// 1. user types 1e
+				// 2. the state is updated reading e.target.value which is ''
+				// 3. the spreaded value is ''
+				// 4. updating input.value would thus, clear the user value
+				if (
+					prev_value == null ||
+					// @ts-ignore
+					element.value !== value ||
+					(value === 0 && element.nodeName === PROGRESS_TAG)
+				) {
+					set_element_value(element, value);
+				}
+			} else if (key === 'selected' && is_option_element) {
+				set_selected(/** @type {HTMLOptionElement} */ (element), value);
+			} else {
+				var name = key;
+				if (!preserve_attribute_case) {
+					name = normalize_attribute(name);
+				}
+
+				var is_default = name === 'defaultValue' || name === 'defaultChecked';
+
+				// A select's default value is represented by selected options, not a property.
+				if (is_select_element && name === 'defaultValue') continue;
+
+				if (value == null && !is_custom_element && !is_default) {
+					attributes[key] = null;
+					if ((name === 'value' || name === 'checked') && current_renderer == null) {
+						// removing value/checked also removes defaultValue/defaultChecked — preserve
+						let input = /** @type {HTMLInputElement} */ (element);
+						const use_default = prev === undefined;
+						if (name === 'value') {
+							let previous = input.defaultValue;
+							remove_attribute(input, name);
+							set_element_default_value(input, previous);
+							// @ts-ignore
+							set_element_value(input, (input.__value = use_default ? previous : null));
+						} else {
+							let previous = input.defaultChecked;
+							remove_attribute(input, name);
+							set_element_default_checked(input, previous);
+							set_element_checked(input, use_default ? previous : false);
+						}
+					} else {
+						remove_attribute(element, key);
+						if (name === 'value') {
+							// @ts-ignore
+							element.__value = null;
+						}
+					}
+				} else if (is_default && current_renderer != null) {
+					// Route through the renderer-aware abstraction so custom renderers
+					// see defaultValue/defaultChecked as proper attributes
+					if (name === 'defaultValue') {
+						set_element_default_value(element, value);
+					} else {
+						set_element_default_checked(element, value);
+					}
+					// remove it from attributes's cache
+					if (name in attributes) attributes[name] = UNINITIALIZED;
+				} else if (
+					is_default ||
+					((is_custom_element || typeof value !== 'string') && setters.has(name))
+				) {
+					// @ts-ignore
+					element[name] = value;
+					// remove it from attributes's cache
+					if (name in attributes) attributes[name] = UNINITIALIZED;
+				} else if (typeof value !== 'function') {
+					set_attribute(element, name, value, skip_warning);
+				}
 			}
 		}
-	}
-
-	if (is_hydrating_custom_element) {
-		set_hydrating(true);
+	} finally {
+		if (is_hydrating_custom_element) {
+			set_hydrating(true);
+		}
 	}
 
 	return current;
@@ -518,7 +570,7 @@ export function attribute_effect(
 		/** @type {Record<symbol, Effect>} */
 		var effects = {};
 
-		var is_select = element.nodeName === SELECT_TAG;
+		var is_select = node_name(element) === SELECT_TAG;
 		var inited = false;
 
 		managed(() => {
@@ -533,8 +585,16 @@ export function attribute_effect(
 				skip_warning
 			);
 
-			if (inited && is_select && 'value' in next) {
-				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
+			if (inited && is_select) {
+				var select = /** @type {HTMLSelectElement} */ (element);
+
+				if ('defaultValue' in next) {
+					set_default_select_value(select, next.defaultValue);
+				}
+
+				if ('value' in next) {
+					select_option(select, next.value);
+				}
 			}
 
 			for (let symbol of Object.getOwnPropertySymbols(effects)) {
@@ -559,7 +619,13 @@ export function attribute_effect(
 			var select = /** @type {HTMLSelectElement} */ (element);
 
 			effect(() => {
-				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, true);
+				var attrs = /** @type {Record<string | symbol, any>} */ (prev);
+
+				if ('defaultValue' in attrs) {
+					set_default_select_value(select, attrs.defaultValue);
+				}
+
+				select_option(select, attrs.value, true);
 				init_select(select);
 			});
 		}
@@ -575,21 +641,24 @@ export function attribute_effect(
 function get_attributes(element) {
 	return /** @type {Record<string | symbol, unknown>} **/ (
 		/** @type {any} */ (element)[ATTRIBUTES_CACHE] ??= {
-			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-'),
-			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
+			[IS_CUSTOM_ELEMENT]: node_name(element).includes('-'),
+			[IS_HTML]: current_renderer == null && element.namespaceURI === NAMESPACE_HTML
 		}
 	);
 }
 
-/** @type {Map<string, string[]>} */
+/** @type {Map<string, Set<string>>} */
 var setters_cache = new Map();
+var empty_setters = new Set();
 
 /** @param {Element} element */
 function get_setters(element) {
-	var cache_key = element.getAttribute('is') || element.nodeName;
+	// if we have a custom renderer we just skip the check all together
+	if (current_renderer) return empty_setters;
+	var cache_key = get_attribute(element, 'is') || node_name(element);
 	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
-	setters_cache.set(cache_key, (setters = []));
+	setters_cache.set(cache_key, (setters = new Set()));
 
 	var descriptors;
 	var proto = element; // In the case of custom elements there might be setters on the instance
@@ -608,7 +677,7 @@ function get_setters(element) {
 				key !== 'textContent' &&
 				key !== 'innerText'
 			) {
-				setters.push(key);
+				setters.add(key);
 			}
 		}
 
@@ -624,9 +693,9 @@ function get_setters(element) {
  * @param {string} value
  */
 function check_src_in_dev_hydration(element, attribute, value) {
-	if (!DEV) return;
+	if (!DEV || current_renderer != null) return;
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
-	if (src_url_equal(element.getAttribute(attribute) ?? '', value)) return;
+	if (src_url_equal(get_attribute(element, attribute) ?? '', value)) return;
 
 	w.hydration_attribute_changed(
 		attribute,
@@ -641,7 +710,7 @@ function check_src_in_dev_hydration(element, attribute, value) {
  * @returns {boolean}
  */
 function src_url_equal(element_src, url) {
-	if (element_src === url) return true;
+	if (element_src === url || current_renderer != null) return true;
 	return new URL(element_src, document.baseURI).href === new URL(url, document.baseURI).href;
 }
 
@@ -656,6 +725,7 @@ function split_srcset(srcset) {
  * @returns {boolean}
  */
 function srcset_url_equal(element, srcset) {
+	if (current_renderer != null) return true;
 	var element_urls = split_srcset(element.srcset);
 	var urls = split_srcset(srcset);
 

@@ -29,6 +29,17 @@ function split_css_unit(value) {
 }
 
 /**
+ * Omits unresolved dimensions rather than passing invalid values to Web Animations.
+ *
+ * @param {string} property
+ * @param {number} value
+ * @param {number} t
+ */
+function css_dimension(property, value, t) {
+	return Number.isNaN(value) ? '' : `${property}: ${t * value}px;`;
+}
+
+/**
  * Animates a `blur` filter alongside an element's opacity.
  *
  * @param {Element} node
@@ -138,13 +149,13 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 		css: (t) =>
 			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`${primary_property}: ${t * primary_property_value}px;` +
-			`padding-${secondary_properties[0]}: ${t * padding_start_value}px;` +
-			`padding-${secondary_properties[1]}: ${t * padding_end_value}px;` +
-			`margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
-			`margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
-			`border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
-			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;` +
+			css_dimension(primary_property, primary_property_value, t) +
+			css_dimension(`padding-${secondary_properties[0]}`, padding_start_value, t) +
+			css_dimension(`padding-${secondary_properties[1]}`, padding_end_value, t) +
+			css_dimension(`margin-${secondary_properties[0]}`, margin_start_value, t) +
+			css_dimension(`margin-${secondary_properties[1]}`, margin_end_value, t) +
+			css_dimension(`border-${secondary_properties[0]}-width`, border_width_start_value, t) +
+			css_dimension(`border-${secondary_properties[1]}-width`, border_width_end_value, t) +
 			`min-${primary_property}: 0`
 	};
 }

@@ -1,3 +1,4 @@
+<!-- @component x -->
 <script lang="ts">
 	interface Props {
 		class?: string;
