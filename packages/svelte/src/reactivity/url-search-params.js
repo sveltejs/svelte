@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { state, increment } from '../internal/client/reactivity/sources.js';
+import { state, increment, check_mutation } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { get_current_url } from './url.js';
@@ -59,6 +59,9 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		// don't rebuild the params or notify readers if nothing changed
 		if (params.toString() === super.toString()) return;
 
+		// throw before the params change, if this write is not allowed here
+		check_mutation(this.#version);
+
 		this.#updating = true;
 
 		for (const key of [...super.keys()]) {
@@ -79,6 +82,8 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	append(name, value) {
+		// throw before the params change, if this write is not allowed here
+		check_mutation(this.#version);
 		super.append(name, value);
 		this.#update_url();
 		increment(this.#version);
@@ -91,8 +96,10 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 */
 	delete(name, value) {
 		var has_value = super.has(name, value);
-		super.delete(name, value);
 		if (has_value) {
+			// throw before the params change, if this write is not allowed here
+			check_mutation(this.#version);
+			super.delete(name, value);
 			this.#update_url();
 			increment(this.#version);
 		}
@@ -147,18 +154,23 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	set(name, value) {
+		value = String(value);
 		var previous = super.getAll(name);
-		super.set(name, value);
-		// can't use has(name, value), because for something like https://svelte.dev?foo=1&bar=2&foo=3
-		// if you set `foo` to 1, then foo=3 gets deleted whilst `has("foo", "1")` returns true
-		var current = super.getAll(name);
-		if (previous.length !== current.length || previous.some((value, i) => value !== current[i])) {
+		// afterwards, `name` has exactly one entry, `value`. Can't use has(name, value), because for something
+		// like https://svelte.dev?foo=1&bar=2&foo=3 if you set `foo` to 1, then foo=3 gets deleted whilst
+		// `has("foo", "1")` returns true
+		if (previous.length !== 1 || previous[0] !== value) {
+			// throw before the params change, if this write is not allowed here
+			check_mutation(this.#version);
+			super.set(name, value);
 			this.#update_url();
 			increment(this.#version);
 		}
 	}
 
 	sort() {
+		// throw before the params change, if this write is not allowed here
+		check_mutation(this.#version);
 		super.sort();
 		this.#update_url();
 		increment(this.#version);

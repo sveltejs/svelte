@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: leave `SvelteMap` and `SvelteSet` unchanged when a write is refused
+fix: leave reactive classes and `$state` proxies unchanged when a write is refused with `state_unsafe_mutation`

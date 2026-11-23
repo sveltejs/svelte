@@ -19,6 +19,7 @@ import {
 	state as source,
 	set,
 	increment,
+	check_mutation,
 	flush_eager_effects,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
@@ -131,6 +132,8 @@ export function proxy(value) {
 			}
 			var s = sources.get(prop);
 			if (s === undefined) {
+				// adding a property is a write, even though no existing source changes
+				check_mutation(version);
 				with_parent(() => {
 					var s = source(descriptor.value, stack);
 					sources.set(prop, s);
@@ -151,6 +154,8 @@ export function proxy(value) {
 
 			if (s === undefined) {
 				if (prop in target) {
+					// throw before the property is masked, if this write is not allowed here
+					check_mutation(version);
 					const s = with_parent(() => source(UNINITIALIZED, stack));
 					sources.set(prop, s);
 					increment(version);
@@ -274,6 +279,8 @@ export function proxy(value) {
 
 			// variable.length = value -> clear all signals with index >= value
 			if (is_proxied_array && prop === 'length') {
+				// throw before any items are masked, if this write is not allowed here
+				check_mutation(/** @type {Source<number>} */ (s));
 				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
 					var other_s = sources.get(i + '');
 					if (other_s !== undefined) {

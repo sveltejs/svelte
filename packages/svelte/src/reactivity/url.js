@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { set, state } from '../internal/client/reactivity/sources.js';
+import { set, state, check_mutation } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
@@ -79,6 +79,8 @@ export class SvelteURL extends URL {
 	}
 
 	set hash(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#hash);
 		super.hash = value;
 		set(this.#hash, super.hash);
 	}
@@ -90,6 +92,8 @@ export class SvelteURL extends URL {
 	}
 
 	set host(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#hostname);
 		super.host = value;
 		set(this.#hostname, super.hostname);
 		set(this.#port, super.port);
@@ -100,6 +104,8 @@ export class SvelteURL extends URL {
 	}
 
 	set hostname(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#hostname);
 		super.hostname = value;
 		set(this.#hostname, super.hostname);
 	}
@@ -117,6 +123,8 @@ export class SvelteURL extends URL {
 	}
 
 	set href(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#protocol);
 		super.href = value;
 		set(this.#protocol, super.protocol);
 		set(this.#username, super.username);
@@ -134,6 +142,8 @@ export class SvelteURL extends URL {
 	}
 
 	set password(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#password);
 		super.password = value;
 		set(this.#password, super.password);
 	}
@@ -143,6 +153,8 @@ export class SvelteURL extends URL {
 	}
 
 	set pathname(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#pathname);
 		super.pathname = value;
 		set(this.#pathname, super.pathname);
 	}
@@ -152,6 +164,8 @@ export class SvelteURL extends URL {
 	}
 
 	set port(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#port);
 		super.port = value;
 		set(this.#port, super.port);
 	}
@@ -161,6 +175,8 @@ export class SvelteURL extends URL {
 	}
 
 	set protocol(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#protocol);
 		super.protocol = value;
 		set(this.#protocol, super.protocol);
 		// changing the protocol can clear the port when it matches the new scheme's default
@@ -172,6 +188,8 @@ export class SvelteURL extends URL {
 	}
 
 	set search(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#search);
 		super.search = value;
 		set(this.#search, super.search);
 		this.#searchParams[REPLACE](super.searchParams);
@@ -182,6 +200,8 @@ export class SvelteURL extends URL {
 	}
 
 	set username(value) {
+		// throw before the URL changes, if this write is not allowed here
+		check_mutation(this.#username);
 		super.username = value;
 		set(this.#username, super.username);
 	}

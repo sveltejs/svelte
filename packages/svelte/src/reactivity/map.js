@@ -176,6 +176,8 @@ export class SvelteMap extends Map {
 	 */
 	getOrInsertComputed(key, callbackFn) {
 		if (!super.has(key)) {
+			// throw before running the callback, if this write is not allowed here
+			check_mutation(this.#size);
 			this.set(key, callbackFn(key));
 		}
 		return /** @type {V} */ (this.get(key));
