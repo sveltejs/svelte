@@ -753,7 +753,7 @@ describe('signals', () => {
 				console.error = error;
 			}
 		};
-	}, 60_000);
+	});
 
 	test('schedules rerun when updating deeply nested value', (runes) => {
 		if (!runes) return () => {};
