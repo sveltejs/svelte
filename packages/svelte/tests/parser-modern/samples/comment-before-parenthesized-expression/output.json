@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 82,
+	"end": 112,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -155,6 +155,65 @@
 					"nodes": []
 				},
 				"alternate": null
+			},
+			{
+				"type": "Text",
+				"start": 82,
+				"end": 83,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "ExpressionTag",
+				"start": 83,
+				"end": 112,
+				"expression": {
+					"type": "ArrayExpression",
+					"start": 84,
+					"end": 111,
+					"loc": {
+						"start": {
+							"line": 4,
+							"column": 1
+						},
+						"end": {
+							"line": 5,
+							"column": 8
+						}
+					},
+					"elements": [
+						{
+							"type": "Identifier",
+							"start": 87,
+							"end": 92,
+							"loc": {
+								"start": {
+									"line": 4,
+									"column": 4
+								},
+								"end": {
+									"line": 4,
+									"column": 9
+								}
+							},
+							"name": "value",
+							"trailingComments": [
+								{
+									"type": "Block",
+									"value": " d ",
+									"start": 94,
+									"end": 101
+								},
+								{
+									"type": "Block",
+									"value": " e ",
+									"start": 103,
+									"end": 110
+								}
+							]
+						}
+					]
+				}
 			}
 		]
 	},
@@ -205,6 +264,38 @@
 				"end": {
 					"line": 3,
 					"column": 12
+				}
+			}
+		},
+		{
+			"type": "Block",
+			"value": " d ",
+			"start": 94,
+			"end": 101,
+			"loc": {
+				"start": {
+					"line": 4,
+					"column": 11
+				},
+				"end": {
+					"line": 4,
+					"column": 18
+				}
+			}
+		},
+		{
+			"type": "Block",
+			"value": " e ",
+			"start": 103,
+			"end": 110,
+			"loc": {
+				"start": {
+					"line": 5,
+					"column": 0
+				},
+				"end": {
+					"line": 5,
+					"column": 7
 				}
 			}
 		}
