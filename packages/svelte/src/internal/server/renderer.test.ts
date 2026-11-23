@@ -2,6 +2,17 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { Renderer, SSRState } from './renderer.js';
 import type { Component } from 'svelte';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
+import { getAbortSignal } from './abort-signal.js';
+
+test('render result properties are inherited', () => {
+	const result = Renderer.render((() => {}) as unknown as Component);
+
+	expect(Object.hasOwn(result, 'head')).toBe(false);
+	expect(Object.hasOwn(result, 'body')).toBe(false);
+	expect(Object.hasOwn(result, 'html')).toBe(false);
+	expect(Object.hasOwn(result, 'hashes')).toBe(false);
+	expect(Object.hasOwn(result, 'then')).toBe(false);
+});
 
 test('collects synchronous body content by default', () => {
 	const component = (renderer: Renderer) => {
@@ -46,28 +57,54 @@ test('child inherits parent type when not specified', () => {
 	expect(head).toBe('<meta name="x"/><style>/* css */</style>');
 });
 
-test('get_path returns the path indexes to a renderer', () => {
-	const root = new Renderer(new SSRState('sync'));
-	let child_a: InstanceType<typeof Renderer> | undefined;
-	let child_b: InstanceType<typeof Renderer> | undefined;
-	let child_b_0: InstanceType<typeof Renderer> | undefined;
-
-	root.child(($$renderer) => {
-		child_a = $$renderer;
-		$$renderer.push('A');
-	});
-	root.child(($$renderer) => {
-		child_b = $$renderer;
-		$$renderer.child(($$inner) => {
-			child_b_0 = $$inner;
-			$$inner.push('B0');
+test('renders the title after the rest of the head', () => {
+	const component = (renderer: Renderer) => {
+		renderer.head(($$renderer) => {
+			$$renderer.title(($$renderer) => $$renderer.push('<title>T</title>'));
+			$$renderer.push('<meta name="x"/>');
 		});
-		$$renderer.push('B1');
-	});
+	};
 
-	expect(child_a!.get_path()).toEqual([0]);
-	expect(child_b!.get_path()).toEqual([1]);
-	expect(child_b_0!.get_path()).toEqual([1, 0]);
+	const { head } = Renderer.render(component as unknown as Component);
+	expect(head).toBe('<meta name="x"/><title>T</title>');
+});
+
+test('renders the last title in document order', () => {
+	const component = (renderer: Renderer) => {
+		renderer.head(($$renderer) => {
+			$$renderer.child(($$renderer) => {
+				$$renderer.title(($$renderer) => $$renderer.push('<title>A</title>'));
+			});
+			$$renderer.title(($$renderer) => $$renderer.push('<title>B</title>'));
+		});
+		renderer.head(($$renderer) => {
+			$$renderer.title(($$renderer) => $$renderer.push('<title>C</title>'));
+			$$renderer.title(($$renderer) => $$renderer.push('<title>D</title>'));
+		});
+	};
+
+	const { head } = Renderer.render(component as unknown as Component);
+	expect(head).toBe('<title>D</title>');
+});
+
+test('does not render a title from inside a failed boundary', () => {
+	const component = (renderer: Renderer) => {
+		renderer.head(($$renderer) => {
+			$$renderer.title(($$renderer) => $$renderer.push('<title>outside</title>'));
+		});
+		renderer.boundary({ failed: (renderer) => renderer.push('failed') }, (renderer) => {
+			renderer.head(($$renderer) => {
+				$$renderer.title(($$renderer) => $$renderer.push('<title>inside</title>'));
+			});
+			throw new Error('oops');
+		});
+	};
+
+	const { head } = Renderer.render(
+		component as unknown as Component,
+		{ transformError: () => 'transformed' } as any
+	);
+	expect(head).toBe('<title>outside</title>');
 });
 
 test('creating an async child in a sync context throws', () => {
@@ -110,7 +147,6 @@ test('subsume replaces tree content and state from other', () => {
 		$$renderer.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
-	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
 	b.promise = Promise.resolve();
 
@@ -134,7 +170,6 @@ test('subsume refuses to switch modes', () => {
 		$$renderer.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
-	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
 	b.promise = Promise.resolve();
 
@@ -146,33 +181,6 @@ test('subsume refuses to switch modes', () => {
 test('SSRState uid generator uses prefix', () => {
 	const state = new SSRState('sync', 'id-');
 	expect(state.uid()).toBe('id-s1');
-});
-
-test('SSRState title ordering favors later lexicographic paths', () => {
-	const state = new SSRState('sync');
-
-	state.set_title('A', [1]);
-	expect(state.get_title()).toBe('A');
-
-	// equal path -> unchanged
-	state.set_title('B', [1]);
-	expect(state.get_title()).toBe('A');
-
-	// earlier -> unchanged
-	state.set_title('C', [0, 9]);
-	expect(state.get_title()).toBe('A');
-
-	// later -> update
-	state.set_title('D', [2]);
-	expect(state.get_title()).toBe('D');
-
-	// longer but same prefix -> update
-	state.set_title('E', [2, 0]);
-	expect(state.get_title()).toBe('E');
-
-	// shorter (earlier) than current with same prefix -> unchanged
-	state.set_title('F', [2]);
-	expect(state.get_title()).toBe('E');
 });
 
 test('selects an option with an explicit value', () => {
@@ -362,6 +370,52 @@ describe('async', () => {
 		expect(() => result.html).toThrow('html_deprecated');
 	});
 
+	test('does not render a title from inside a boundary that fails asynchronously', async () => {
+		const component = (renderer: Renderer) => {
+			renderer.head(($$renderer) => {
+				$$renderer.title(($$renderer) => $$renderer.push('<title>outside</title>'));
+			});
+			renderer.boundary({ failed: (renderer) => renderer.push('failed') }, (renderer) => {
+				renderer.head(($$renderer) => {
+					$$renderer.title(($$renderer) => $$renderer.push('<title>inside</title>'));
+				});
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('oops');
+				});
+			});
+		};
+
+		const { head, body } = await Renderer.render(
+			component as unknown as Component,
+			{ transformError: () => 'transformed' } as any
+		);
+		expect(body).toContain('failed');
+		expect(head).toBe('<title>outside</title>');
+	});
+
+	test('renders the last title in document order, regardless of when it resolves', async () => {
+		const component = (renderer: Renderer) => {
+			renderer.head(($$renderer) => {
+				$$renderer.title(($$renderer) => {
+					$$renderer.push(async () => {
+						await new Promise((resolve) => setTimeout(resolve, 10));
+						return '<title>A</title>';
+					});
+				});
+				$$renderer.title(($$renderer) => {
+					$$renderer.push(async () => {
+						await Promise.resolve();
+						return '<title>B</title>';
+					});
+				});
+			});
+		};
+
+		const { head } = await Renderer.render(component as unknown as Component);
+		expect(head).toBe('<title>B</title>');
+	});
+
 	test('push accepts async functions in async context', async () => {
 		const component = (renderer: Renderer) => {
 			renderer.push('a');
@@ -465,5 +519,204 @@ describe('async', () => {
 
 		await Renderer.render(component as unknown as Component);
 		expect(destroyed).toEqual(['c', 'e', 'a', 'b', 'b*', 'd']);
+	});
+
+	test('on_destroy runs nested components first, wherever they are', async () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.child((renderer) => {
+					renderer.on_destroy(() => destroyed.push('a'));
+					renderer.component((renderer) => {
+						renderer.child((renderer) => {
+							renderer.component((renderer) => {
+								renderer.on_destroy(() => destroyed.push('b'));
+							});
+							renderer.on_destroy(() => destroyed.push('c'));
+						});
+						renderer.on_destroy(() => destroyed.push('d'));
+					});
+					renderer.child((renderer) => {
+						renderer.on_destroy(() => destroyed.push('e'));
+					});
+				});
+				renderer.on_destroy(() => destroyed.push('f'));
+			});
+		};
+
+		await Renderer.render(component as unknown as Component);
+		expect(destroyed).toEqual(['b', 'd', 'c', 'f', 'a', 'e']);
+	});
+
+	test('on_destroy callbacks run when a sync render throws', () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => destroyed.push('a'));
+				renderer.child(() => {
+					throw new Error('boom');
+				});
+			});
+		};
+
+		expect(() => Renderer.render(component as unknown as Component).body).toThrow('boom');
+		expect(destroyed).toEqual(['a']);
+	});
+
+	test('on_destroy callbacks run when an async render rejects', async () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => destroyed.push('a'));
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(destroyed).toEqual(['a']);
+	});
+
+	test('on_destroy waits for in-flight renderers when an async render rejects', async () => {
+		const events: string[] = [];
+		let initialised = false;
+
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				// rejects while the sibling component below is still in flight
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+
+				renderer.component((renderer) => {
+					renderer.on_destroy(() => events.push(`before-await (initialised: ${initialised})`));
+					renderer.child(async () => {
+						await new Promise((f) => setTimeout(f, 10));
+						initialised = true;
+						renderer.on_destroy(() => events.push('after-await'));
+					});
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(events).toEqual(['before-await (initialised: true)', 'after-await']);
+	});
+
+	test('aborts in-flight renderers before waiting for them', async () => {
+		const events: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+
+				renderer.component((renderer) => {
+					renderer.on_destroy(() => events.push('destroyed'));
+					renderer.child(async () => {
+						const signal = getAbortSignal();
+						await new Promise((_, reject) => {
+							signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+						});
+					});
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(events).toEqual(['destroyed']);
+	});
+
+	test('on_destroy waits for every run invocation when an async render rejects', async () => {
+		const events: string[] = [];
+		let initialised = false;
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => events.push(`destroyed (initialised: ${initialised})`));
+				renderer.run([
+					async () => {
+						await new Promise((resolve) => setTimeout(resolve, 10));
+						initialised = true;
+						renderer.on_destroy(() => events.push('destroyed after await'));
+					}
+				]);
+				renderer.run([
+					async () => {
+						await Promise.resolve();
+						throw new Error('boom');
+					}
+				]);
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(events).toEqual(['destroyed (initialised: true)', 'destroyed after await']);
+	});
+
+	test('abort signals are scoped to a render', async () => {
+		let signal: AbortSignal;
+		let start!: () => void;
+		let resume!: () => void;
+		const started = new Promise<void>((resolve) => (start = resolve));
+		const resumed = new Promise<void>((resolve) => (resume = resolve));
+		const component = (renderer: Renderer) => {
+			renderer.child(async () => {
+				signal = getAbortSignal();
+				start();
+				await resumed;
+			});
+		};
+
+		const first_render = Promise.resolve(Renderer.render(component as unknown as Component));
+		await started;
+		await Renderer.render((() => {}) as unknown as Component);
+		expect(signal!.aborted).toBe(false);
+
+		resume();
+		await first_render;
+		expect(signal!.aborted).toBe(true);
+	});
+
+	test('a throwing on_destroy callback does not mask a sync render error', () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => {
+					destroyed.push('a');
+					throw new Error('cleanup failed');
+				});
+				renderer.on_destroy(() => destroyed.push('b'));
+				renderer.child(() => {
+					throw new Error('boom');
+				});
+			});
+		};
+
+		expect(() => Renderer.render(component as unknown as Component).body).toThrow('boom');
+		expect(destroyed).toEqual(['a', 'b']);
+	});
+
+	test('a throwing on_destroy callback does not mask an async render error', async () => {
+		const destroyed: string[] = [];
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => {
+					destroyed.push('a');
+					throw new Error('cleanup failed');
+				});
+				renderer.on_destroy(() => destroyed.push('b'));
+				renderer.child(async () => {
+					await Promise.resolve();
+					throw new Error('boom');
+				});
+			});
+		};
+
+		await expect(Renderer.render(component as unknown as Component)).rejects.toThrow('boom');
+		expect(destroyed).toEqual(['a', 'b']);
 	});
 });

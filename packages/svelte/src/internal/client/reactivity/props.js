@@ -1,4 +1,4 @@
-/** @import { Effect, Source } from './types.js' */
+/** @import { Derived, Effect, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -22,7 +22,6 @@ import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
-import { effect, render_effect } from './effects.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -49,11 +48,11 @@ export function update_pre_prop(fn, d = 1) {
 /**
  * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
  * Is passed the full `$$props` object and excludes the named props.
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, name?: string }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Set<string | symbol>, name?: string }>}}
  */
 const rest_props_handler = {
 	get(target, key) {
-		if (target.exclude.includes(key)) return;
+		if (target.exclude.has(key)) return;
 		return target.props[key];
 	},
 	set(target, key) {
@@ -65,7 +64,7 @@ const rest_props_handler = {
 		return false;
 	},
 	getOwnPropertyDescriptor(target, key) {
-		if (target.exclude.includes(key)) return;
+		if (target.exclude.has(key)) return;
 		if (key in target.props) {
 			return {
 				enumerable: true,
@@ -75,26 +74,23 @@ const rest_props_handler = {
 		}
 	},
 	has(target, key) {
-		if (target.exclude.includes(key)) return false;
+		if (target.exclude.has(key)) return false;
 		return key in target.props;
 	},
 	ownKeys(target) {
-		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.includes(key));
+		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.has(key));
 	}
 };
 
 /**
  * @param {Record<string, unknown>} props
- * @param {string[]} exclude
+ * @param {Set<string>} exclude
  * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function rest_props(props, exclude, name) {
-	return new Proxy(
-		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },
-		rest_props_handler
-	);
+	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
 }
 
 /**
@@ -283,8 +279,14 @@ export function prop(props, key, flags, fallback) {
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
+	var fallback_signal = /** @type {Derived<V> | undefined} */ (undefined);
 
 	var get_fallback = () => {
+		if (lazy && runes) {
+			fallback_signal ??= derived(/** @type {() => V} */ (fallback));
+			return get(fallback_signal);
+		}
+
 		if (fallback_dirty) {
 			fallback_dirty = false;
 

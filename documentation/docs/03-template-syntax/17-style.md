@@ -42,3 +42,9 @@ even over `!important` properties:
 <div style:color="red" style="color: blue">This will be red</div>
 <div style:color="red" style="color: blue !important">This will still be red</div>
 ```
+
+You can set CSS custom properties:
+
+```svelte
+<div style:--columns={columns}>...</div>
+```

@@ -2,6 +2,7 @@ import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
 import type { AST, StateField, ValidatedCompileOptions } from '#compiler';
 import type { ExpressionMetadata } from '../nodes.js';
+import type { Identifier } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -15,6 +16,8 @@ export interface AnalysisState {
 	 * Parent doesn't necessarily mean direct path predecessor because there could be `#each`, `#if` etc in-between.
 	 */
 	parent_element: string | null;
+	/** True if inside DeclarationTag */
+	in_declaration_tag: boolean;
 	has_props_rune: boolean;
 	/** Which slots the current parent component has */
 	component_slots: Set<string>;
@@ -33,6 +36,13 @@ export interface AnalysisState {
 	 * Set when we're inside a `$derived(...)` expression (but not `$derived.by(...)`) or `@const`
 	 */
 	derived_function_depth: number;
+
+	/** Collected info about async `{@const }`/`{let/const ...}` declarations */
+	async_consts?: {
+		id: Identifier;
+		/** How many `$.run(...)` entries are already allocated in this scope */
+		declaration_count: number;
+	};
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

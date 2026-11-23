@@ -1,0 +1,14 @@
+[
+	{
+		"code": "declaration_duplicate",
+		"message": "`foo` has already been declared",
+		"start": {
+			"line": 5,
+			"column": 5
+		},
+		"end": {
+			"line": 5,
+			"column": 8
+		}
+	}
+]

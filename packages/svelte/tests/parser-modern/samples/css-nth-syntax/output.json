@@ -1071,6 +1071,14 @@
 				"end": 797
 			}
 		],
+		"comments": [
+			{
+				"type": "CSSComment",
+				"value": " test that all these are parsed correctly ",
+				"start": 12,
+				"end": 58
+			}
+		],
 		"content": {
 			"start": 7,
 			"end": 798,
@@ -1125,5 +1133,6 @@
 			}
 		]
 	},
-	"options": null
+	"options": null,
+	"comments": []
 }

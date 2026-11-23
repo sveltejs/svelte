@@ -1,0 +1,53 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 0,
+		"end": 32,
+		"children": [
+			{
+				"type": "Element",
+				"start": 0,
+				"end": 32,
+				"name": "p",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 3,
+						"end": 19,
+						"name": "title",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 3,
+								"character": 3
+							},
+							"end": {
+								"line": 1,
+								"column": 8,
+								"character": 8
+							}
+						},
+						"value": [
+							{
+								"start": 10,
+								"end": 18,
+								"type": "Text",
+								"raw": "A&#x0A;B",
+								"data": "A\nB"
+							}
+						]
+					}
+				],
+				"children": [
+					{
+						"type": "Text",
+						"start": 20,
+						"end": 28,
+						"raw": "A&#x0A;B",
+						"data": "A B"
+					}
+				]
+			}
+		]
+	}
+}
