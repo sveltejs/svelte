@@ -79,7 +79,7 @@ export const FORM_RESET_HANDLER = Symbol('form reset');
 export const HMR_ANCHOR = Symbol('hmr anchor');
 
 /** allow users to ignore aborted signal errors if `reason.name === 'StaleReactionError` */
-export const STALE_REACTION = new (class StaleReactionError extends Error {
+export const STALE_REACTION = /* @__PURE__ */ new (class StaleReactionError extends Error {
 	name = 'StaleReactionError';
 	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
 })();
