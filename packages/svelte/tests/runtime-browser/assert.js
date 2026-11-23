@@ -128,6 +128,7 @@ function normalize_children(node) {
  *	id_prefix?: string;
  *	props?: Props;
  *	compileOptions?: Partial<CompileOptions>;
+ *	before_test?: () => void;
  *	test?: (args: {
  *		assert: typeof assert & {
  *			htmlEqual(a: string, b: string, description?: string): void;

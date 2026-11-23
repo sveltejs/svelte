@@ -1,10 +1,10 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
+/** @import { ExpressionMetadata } from '../../../../nodes.js' */
 import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { dev, locator } from '../../../../../state.js';
 import * as b from '#compiler/builders';
-import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
  * @param {AST.Attribute} node
@@ -119,8 +119,9 @@ export function build_event_handler(node, metadata, context) {
 
 		// local variable can be assigned directly
 		// except in dev mode where when need $.apply()
-		// in order to handle warnings.
-		if (!dev && binding?.declaration_kind !== 'import') {
+		// in order to handle warnings, or when it is
+		// assigned after a top-level `await`
+		if (!dev && binding?.declaration_kind !== 'import' && !binding?.blocker) {
 			return handler;
 		}
 	}

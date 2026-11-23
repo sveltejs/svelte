@@ -59,6 +59,8 @@ for (const key in pkg.exports) {
 	if (key === './internal/disclose-version') continue;
 	if (key === './internal/flags/legacy') continue;
 	if (key === './internal/flags/tracing') continue;
+	if (key === './internal/flags/custom-renderer') continue;
+	if (key === './internal/init-operations') continue;
 
 	for (const type of ['browser', 'default']) {
 		if (!pkg.exports[key][type]) continue;
@@ -148,6 +150,12 @@ function check_bundle(case_name, ...strings) {
 check_bundle('Hydration code', 'hydrate_node', 'hydrate_next');
 check_bundle('Legacy code', 'component_context.l');
 check_bundle('$inspect.trace', `'CreatedAt'`);
+check_bundle(
+	'Custom renderer code',
+	'push_renderer',
+	'renderer_cannot_cross',
+	'sync_shared_containers'
+);
 
 if (failed) {
 	// eslint-disable-next-line no-console

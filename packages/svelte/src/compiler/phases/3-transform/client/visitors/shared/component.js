@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { dev, is_ignored } from '../../../../../state.js';
+import { custom_renderer, dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
@@ -391,13 +391,20 @@ export function build_component(node, component_name, loc, context) {
 						!node.attributes.some((attr) => attr.type === 'LetDirective')
 				)
 			) {
+				let children_fn = dev
+					? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
+					: slot_fn;
+
+				if (custom_renderer !== undefined) {
+					children_fn = b.call(
+						'$.renderer_snippet',
+						custom_renderer ? b.id('$renderer') : b.literal(null),
+						children_fn
+					);
+				}
+
 				// create `children` prop...
-				push_prop(
-					b.init(
-						'children',
-						dev ? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn) : slot_fn
-					)
-				);
+				push_prop(b.init('children', children_fn));
 
 				// and `$$slots.default: true` so that `<slot>` on the child works
 				serialized_slots.push(b.init(slot_name, b.true));
@@ -500,7 +507,9 @@ export function build_component(node, component_name, loc, context) {
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(anchor, 'lastChild'))),
+			b.stmt(
+				fn(custom_renderer ? b.call('$.get_last_child', anchor) : b.member(anchor, 'lastChild'))
+			),
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
