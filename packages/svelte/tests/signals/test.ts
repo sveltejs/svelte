@@ -729,6 +729,40 @@ describe('signals', () => {
 		}
 	});
 
+	it.each([false, true])(
+		'processes successive batches without growing the stack (async: %s)',
+		(async_mode) => {
+			if (async_mode) enable_async_mode_flag();
+			push({}, true);
+			const value = state(0);
+			const depths: number[] = [];
+			const limit = Error.stackTraceLimit;
+			const destroy = effect_root(() => {
+				user_effect(() => {
+					const n = $.get(value);
+					if (n === 0 || n === 20) {
+						depths.push(new Error().stack!.split('\n').length);
+					}
+					if (n < 20) set(value, n + 1);
+				});
+			});
+
+			try {
+				// The default limit hides the recursive batch-processing frames.
+				Error.stackTraceLimit = Infinity;
+				flushSync();
+				assert.equal($.get(value), 20);
+				assert.lengthOf(depths, 2);
+				assert.equal(depths[1], depths[0]);
+			} finally {
+				Error.stackTraceLimit = limit;
+				destroy();
+				pop();
+				if (async_mode) disable_async_mode_flag();
+			}
+		}
+	);
+
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
