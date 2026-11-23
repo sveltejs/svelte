@@ -2,7 +2,7 @@
 import { hydrate_node, hydrating, reset, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
-import { get_descriptor, is_extensible } from '../../shared/utils.js';
+import { define_property, get_descriptor, is_extensible } from '../../shared/utils.js';
 import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
 import {
@@ -71,8 +71,12 @@ export function init_operations() {
 	}
 
 	if (DEV) {
-		// @ts-expect-error
-		element_prototype.__svelte_meta = null;
+		define_property(element_prototype, '__svelte_meta', {
+			value: null,
+			enumerable: false,
+			writable: true,
+			configurable: true
+		});
 
 		init_array_prototype_warnings();
 	}

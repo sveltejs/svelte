@@ -10,6 +10,7 @@ export default test({
 		assert.htmlEqual(output.innerHTML, '<span>child</span><b>html</b>');
 
 		const [b] = output.querySelectorAll('b');
+		assert.notInclude(Object.keys(b), '__svelte_meta');
 		const component = /** @type {any} */ (output).__svelte_meta.component;
 		assert.ok(component);
 		assert.equal(/** @type {any} */ (b).__svelte_meta.component, component);

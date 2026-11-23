@@ -20,13 +20,14 @@ import {
 import { block, teardown } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { active_effect } from '../../runtime.js';
-import { component_context, dev_stack } from '../../context.js';
+import { component_context } from '../../context.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { assign_nodes } from '../template.js';
 import { is_raw_text_element } from '../../../../utils.js';
 import { BranchManager } from './branches.js';
 import { set_animation_effect_override } from '../elements/transitions.js';
+import { set_dev_metadata } from '../../dev/elements.js';
 
 /**
  * @param {Comment | Element} node
@@ -84,16 +85,11 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				element = hydrating ? /** @type {Element} */ (element) : create_element(next_tag, ns);
 
 				if (DEV && location) {
-					// @ts-expect-error
-					element.__svelte_meta = {
-						parent: dev_stack,
-						loc: {
-							file: filename,
-							line: location[0],
-							column: location[1]
-						},
-						component: component_context
-					};
+					set_dev_metadata(element, {
+						file: filename,
+						line: location[0],
+						column: location[1]
+					});
 				}
 
 				assign_nodes(element, element);

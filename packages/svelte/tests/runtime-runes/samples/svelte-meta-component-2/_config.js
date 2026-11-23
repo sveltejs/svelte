@@ -1,4 +1,5 @@
 import { flushSync } from 'svelte';
+import { expect } from 'vitest';
 import { test } from '../../test';
 
 export default test({
@@ -21,7 +22,10 @@ export default test({
 
 	test({ target, assert }) {
 		/** @param {Element} element */
-		const component = (element) => /** @type {any} */ (element).__svelte_meta.component;
+		const component = (element) => {
+			assert.notInclude(Object.keys(element), '__svelte_meta');
+			return /** @type {any} */ (element).__svelte_meta.component;
+		};
 
 		const check = () => {
 			const [
@@ -37,6 +41,8 @@ export default test({
 			] = target.querySelectorAll('p');
 
 			assert.ok(component(main));
+			assert.notInclude(Object.keys(Element.prototype), '__svelte_meta');
+			expect({ root: main }).toMatchObject({ root: main });
 			// the instance that rendered the element, also inside blocks
 			assert.equal(component(main_if), component(main));
 			assert.equal(component(dynamic), component(main));
