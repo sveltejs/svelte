@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { component_context, dev_stack } from '../../context.js';
 import { hydrate_next, hydrating } from '../hydration.js';
-import { append_child, create_element, create_text, set_attribute } from '../operations.js';
+import { append_child, create_element, create_anchor, set_attribute } from '../operations.js';
 import { append } from '../template.js';
 
 /**
@@ -41,7 +41,7 @@ export function slot(anchor, $$props, name, slot_props, fallback_fn, location) {
 		append(anchor, element);
 
 		if (fallback_fn !== null) {
-			const fallback_anchor = create_text();
+			const fallback_anchor = create_anchor();
 			append_child(element, fallback_anchor);
 			fallback_fn(fallback_anchor);
 		}

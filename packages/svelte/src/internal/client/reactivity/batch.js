@@ -512,18 +512,22 @@ export class Batch {
 	}
 
 	#process() {
+		// Processing a batch frequently hands over to another batch (the next one, an earlier one it
+		// merged into, etc). Do that iteratively rather than recursively, so that the call stack doesn't
+		// grow with each hand-over — deep stacks make DEV stack capture (see `get_stack`) quadratic
 		/** @type {Batch | null} */
 		var batch = this;
 
-		// Continue in a loop so that repeated updates don't grow the stack (and make
-		// capturing dev-mode update traces increasingly expensive).
 		while (batch !== null) {
-			batch = batch.#process_batch();
+			batch = batch.#process_step();
 		}
 	}
 
-	/** @returns {Batch | null} */
-	#process_batch() {
+	/**
+	 * Processes this batch and returns the batch that needs to be processed next, if any
+	 * @returns {Batch | null}
+	 */
+	#process_step() {
 		current_batch = processing_batch = this;
 
 		// A different batch view may apply, even when processing continues within the same flush.
@@ -656,9 +660,11 @@ export class Batch {
 				reset_branch(e);
 			}
 
-			return updates.length > 0
-				? /** @type {Batch} */ (/** @type {unknown} */ (current_batch))
-				: null;
+			if (updates.length > 0) {
+				return /** @type {Batch} */ (/** @type {unknown} */ (current_batch));
+			}
+
+			return null;
 		}
 
 		const earlier_batch = this.#find_earlier_batch();
@@ -669,6 +675,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
+
 			return earlier_batch;
 		}
 

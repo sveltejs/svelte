@@ -57,7 +57,7 @@ function read_body(parser, finished) {
 	/** @type {Array<AST.CSS.Rule | AST.CSS.Atrule>} */
 	const children = [];
 
-	while ((allow_comment_or_whitespace(parser), !finished(parser))) {
+	while ((allow_comment_or_whitespace(parser, true, true), !finished(parser))) {
 		if (parser.match('@')) {
 			children.push(read_at_rule(parser));
 		} else {
@@ -649,18 +649,19 @@ function read_identifier(parser) {
 /**
  * @param {Parser} parser
  * @param {boolean} [capture_comments]
+ * @param {boolean} [top_level]
  */
-function allow_comment_or_whitespace(parser, capture_comments = true) {
+function allow_comment_or_whitespace(parser, capture_comments = true, top_level = false) {
 	parser.allow_whitespace();
-	while (parser.match('/*') || parser.match('<!--')) {
+	while (true) {
 		if (parser.match('/*')) {
 			const comment = read_comment(parser);
 			if (capture_comments) parser.css_comments.push(comment);
-		}
-
-		if (parser.eat('<!--')) {
-			parser.read_until('-->');
-			parser.eat('-->', true);
+		} else if (top_level && (parser.eat('<!--') || parser.eat('-->'))) {
+			// `<!--` and `-->` are not comments in CSS. They are single tokens
+			// that are ignored at the top level of a stylesheet, and only there
+		} else {
+			break;
 		}
 
 		parser.allow_whitespace();

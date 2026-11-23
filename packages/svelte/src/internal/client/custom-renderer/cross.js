@@ -4,7 +4,7 @@ import { branch, teardown } from '../reactivity/effects.js';
 import { assign_nodes } from '../dom/template.js';
 import {
 	append_child,
-	create_text,
+	create_anchor,
 	get_next_sibling,
 	get_parent_node,
 	insert_before,
@@ -61,7 +61,7 @@ export function cross(renderer, anchor, render) {
 	}
 
 	// the host side of the crossing: a single node, inserted using the host renderer
-	var host_node = /** @type {TemplateNode} */ (connection.node ?? create_text());
+	var host_node = /** @type {TemplateNode} */ (connection.node ?? create_anchor());
 	insert_before(anchor, host_node);
 	assign_nodes(host_node, host_node);
 
@@ -86,8 +86,8 @@ export function cross(renderer, anchor, render) {
 
 	try {
 		// the guest side: markers inside the container, inserted using the guest renderer
-		var first = create_text();
-		var last = create_text();
+		var first = create_anchor();
+		var last = create_anchor();
 		var container = /** @type {Node} */ (connection.container);
 		append_child(container, first);
 		append_child(container, last);

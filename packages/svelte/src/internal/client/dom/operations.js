@@ -79,12 +79,36 @@ export function init_operations() {
 }
 
 /**
+ * Creates a text node with the given content. To mark a position, use `create_anchor` instead,
+ * and to create an empty text node while hydrating, use `create_hydration_text`
  * @param {string} value
  * @returns {Text}
  */
-export function create_text(value = '') {
+export function create_text(value) {
 	if (current_renderer) return /** @type {Text} */ (current_renderer.createText(value));
 	return document.createTextNode(value);
+}
+
+/**
+ * Creates the text node of an `{expression}` that was empty during SSR, so there was no text
+ * node to hydrate. Only use this while hydrating: elsewhere, an empty text node is an anchor,
+ * which should be created with `create_anchor`
+ * @returns {Text}
+ */
+export function create_hydration_text() {
+	if (current_renderer) return /** @type {Text} */ (current_renderer.createText(''));
+	return document.createTextNode('');
+}
+
+/**
+ * Creates a node that only marks a position. In the DOM this is an empty text node; with a
+ * custom renderer it's an empty comment, so that renderers can treat every comment as
+ * plumbing and every text node as content
+ * @returns {Text}
+ */
+export function create_anchor() {
+	if (current_renderer) return /** @type {Text} */ (current_renderer.createComment(''));
+	return document.createTextNode('');
 }
 
 /**
@@ -125,9 +149,9 @@ export function child(node, is_text) {
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
-		child = /** @type {TemplateNode} */ (append_child(hydrate_node, create_text()));
+		child = /** @type {TemplateNode} */ (append_child(hydrate_node, create_hydration_text()));
 	} else if (is_text && node_type(child) !== TEXT_NODE) {
-		var text = create_text();
+		var text = create_hydration_text();
 		insert_before(child, text);
 		set_hydrate_node(text);
 		return text;
@@ -161,7 +185,7 @@ export function first_child(node, is_text = false) {
 		// if an {expression} is empty during SSR, there might be no
 		// text node to hydrate — we must therefore create one
 		if (node_type(hydrate_node) !== TEXT_NODE) {
-			var text = create_text();
+			var text = create_hydration_text();
 
 			if (hydrate_node) insert_before(hydrate_node, text);
 			set_hydrate_node(text);
@@ -218,7 +242,7 @@ export function sibling(node, count = 1, is_text = false) {
 		// if a sibling {expression} is empty during SSR, there might be no
 		// text node to hydrate — we must therefore create one
 		if (node_type(next_sibling) !== TEXT_NODE) {
-			var text = create_text();
+			var text = create_hydration_text();
 			// If the next sibling is `null` and we're handling text then it's because
 			// the SSR content was empty for the text, so we need to generate a new text
 			// node and insert it after the last sibling

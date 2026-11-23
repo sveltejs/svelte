@@ -9,7 +9,7 @@ import {
 } from '../hydration.js';
 import {
 	create_element,
-	create_text,
+	create_anchor,
 	get_first_child,
 	append_child,
 	create_comment,
@@ -110,7 +110,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = hydrating
 						? get_first_child(element)
-						: /** @type {Text} */ (append_child(element, create_text()));
+						: /** @type {Text} */ (append_child(element, create_anchor()));
 
 					if (hydrating) {
 						if (child_anchor === null) {
