@@ -2,10 +2,10 @@
 import { DEV } from 'esm-env';
 import {
 	source,
-	set,
 	state,
-	increment,
-	check_mutation
+	check_mutation,
+	unchecked_set,
+	unchecked_increment
 } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get, update_version } from '../internal/client/runtime.js';
@@ -150,12 +150,12 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	add(value) {
+		check_mutation(this.#version);
+
 		if (!super.has(value)) {
-			// throw before the set changes, if this write is not allowed here
-			check_mutation(this.#size);
 			super.add(value);
-			set(this.#size, super.size);
-			increment(this.#version);
+			unchecked_set(this.#size, super.size);
+			unchecked_increment(this.#version);
 		}
 
 		return this;
@@ -166,45 +166,40 @@ export class SvelteSet extends Set {
 		var sources = this.#sources;
 		var s = sources.get(value);
 
-		// throw before the set changes, if this write is not allowed here
-		if (s !== undefined) {
-			check_mutation(s);
-		} else if (super.has(value)) {
-			check_mutation(this.#size);
-		}
+		check_mutation(this.#version);
 
 		var deleted = super.delete(value);
 
 		if (s !== undefined) {
 			sources.delete(value);
-			set(s, false);
+			unchecked_set(s, false);
 		}
 
 		if (deleted) {
-			set(this.#size, super.size);
-			increment(this.#version);
+			unchecked_set(this.#size, super.size);
+			unchecked_increment(this.#version);
 		}
 
 		return deleted;
 	}
 
 	clear() {
+		check_mutation(this.#version);
+
 		if (super.size === 0) {
 			return;
 		}
-		// throw before the set changes, if this write is not allowed here
-		check_mutation(this.#size);
 		// Clear first, so we get nice console.log outputs with $inspect
 		super.clear();
 		var sources = this.#sources;
 
 		for (var s of sources.values()) {
-			set(s, false);
+			unchecked_set(s, false);
 		}
 
 		sources.clear();
-		set(this.#size, 0);
-		increment(this.#version);
+		unchecked_set(this.#size, 0);
+		unchecked_increment(this.#version);
 	}
 
 	keys() {

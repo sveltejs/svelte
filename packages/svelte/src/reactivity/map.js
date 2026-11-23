@@ -1,11 +1,11 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import {
-	set,
 	source,
 	state,
-	increment,
-	check_mutation
+	check_mutation,
+	unchecked_set,
+	unchecked_increment
 } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get, update_version } from '../internal/client/runtime.js';
@@ -176,8 +176,7 @@ export class SvelteMap extends Map {
 	 */
 	getOrInsertComputed(key, callbackFn) {
 		if (!super.has(key)) {
-			// throw before running the callback, if this write is not allowed here
-			check_mutation(this.#size);
+			check_mutation(this.#version);
 			this.set(key, callbackFn(key));
 		}
 		return /** @type {V} */ (this.get(key));
@@ -192,12 +191,7 @@ export class SvelteMap extends Map {
 		var s = sources.get(key);
 		var prev_res = super.get(key);
 
-		// throw before the map changes, if this write is not allowed here
-		if (s === undefined) {
-			check_mutation(this.#size);
-		} else if (prev_res !== value) {
-			check_mutation(s);
-		}
+		check_mutation(this.#version);
 
 		var res = super.set(key, value);
 		var version = this.#version;
@@ -210,10 +204,10 @@ export class SvelteMap extends Map {
 			}
 
 			sources.set(key, s);
-			set(this.#size, super.size);
-			increment(version);
+			unchecked_set(this.#size, super.size);
+			unchecked_increment(version);
 		} else if (prev_res !== value) {
-			increment(s);
+			unchecked_increment(s);
 
 			// if not every reaction of s is a reaction of version we need to also include version
 			var v_reactions = version.reactions === null ? null : new Set(version.reactions);
@@ -223,7 +217,7 @@ export class SvelteMap extends Map {
 					/** @type {NonNullable<typeof v_reactions>} */ (v_reactions).has(r)
 				);
 			if (needs_version_increase) {
-				increment(version);
+				unchecked_increment(version);
 			}
 		}
 
@@ -235,42 +229,37 @@ export class SvelteMap extends Map {
 		var sources = this.#sources;
 		var s = sources.get(key);
 
-		// throw before the map changes, if this write is not allowed here
-		if (s !== undefined) {
-			check_mutation(s);
-		} else if (super.has(key)) {
-			check_mutation(this.#size);
-		}
+		check_mutation(this.#version);
 
 		var res = super.delete(key);
 
 		if (s !== undefined) {
 			sources.delete(key);
-			set(s, -1);
+			unchecked_set(s, -1);
 		}
 
 		if (res) {
-			set(this.#size, super.size);
-			increment(this.#version);
+			unchecked_set(this.#size, super.size);
+			unchecked_increment(this.#version);
 		}
 
 		return res;
 	}
 
 	clear() {
+		check_mutation(this.#version);
+
 		if (super.size === 0) {
 			return;
 		}
-		// throw before the map changes, if this write is not allowed here
-		check_mutation(this.#size);
 		// Clear first, so we get nice console.log outputs with $inspect
 		super.clear();
 		var sources = this.#sources;
-		set(this.#size, 0);
+		unchecked_set(this.#size, 0);
 		for (var s of sources.values()) {
-			set(s, -1);
+			unchecked_set(s, -1);
 		}
-		increment(this.#version);
+		unchecked_increment(this.#version);
 		sources.clear();
 	}
 

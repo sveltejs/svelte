@@ -1,6 +1,6 @@
 /** @import { Derived } from '#client' */
 import { derived } from '../internal/client/index.js';
-import { set, state, check_mutation } from '../internal/client/reactivity/sources.js';
+import { state, check_mutation, unchecked_set } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { active_reaction, get, set_active_reaction } from '../internal/client/runtime.js';
 import { DEV } from 'esm-env';
@@ -111,11 +111,10 @@ export class SvelteDate extends Date {
 			if (method.startsWith('set')) {
 				// @ts-ignore
 				proto[method] = function (...args) {
-					// throw before the date changes, if this write is not allowed here
 					check_mutation(this.#time);
 					// @ts-ignore
 					var result = date_proto[method].apply(this, args);
-					set(this.#time, date_proto.getTime.call(this));
+					unchecked_set(this.#time, date_proto.getTime.call(this));
 					return result;
 				};
 			}

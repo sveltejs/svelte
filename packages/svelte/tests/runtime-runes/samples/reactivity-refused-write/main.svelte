@@ -8,6 +8,8 @@
 	} from 'svelte/reactivity';
 
 	const map = new SvelteMap([[1, 'a']]);
+	const empty_map = new SvelteMap();
+	const empty_set = new SvelteSet();
 	const set = new SvelteSet([1]);
 	const date = new SvelteDate(0);
 	const url = new SvelteURL('https://a.com/x?q=1');
@@ -17,18 +19,24 @@
 
 	let callbacks = 0;
 
-	// every one of these changes something, so every one must be refused inside a derived,
+	// every one of these must be refused inside a derived, whether or not it would change anything,
 	// and leave the underlying data untouched
 	const writes: Record<string, () => unknown> = {
 		'map.set (existing)': () => map.set(1, 'z'),
 		'map.set (new)': () => map.set(2, 'b'),
 		'map.delete': () => map.delete(1),
 		'map.clear': () => map.clear(),
+		'map.set (unchanged)': () => map.set(1, 'a'),
+		'map.delete (missing)': () => map.delete(99),
+		'map.clear (empty)': () => empty_map.clear(),
 		'map.getOrInsert': () => map.getOrInsert(3, 'c'),
 		'map.getOrInsertComputed': () => map.getOrInsertComputed(4, () => (callbacks++, 'd')),
 		'set.add': () => set.add(2),
 		'set.delete': () => set.delete(1),
 		'set.clear': () => set.clear(),
+		'set.add (existing)': () => set.add(1),
+		'set.delete (missing)': () => set.delete(99),
+		'set.clear (empty)': () => empty_set.clear(),
 		'date.setTime': () => date.setTime(1000),
 		'date.setFullYear': () => date.setFullYear(2000),
 		'url.hash': () => (url.hash = '#h'),
@@ -49,9 +57,12 @@
 		'params.delete': () => params.delete('a'),
 		'params.set': () => params.set('a', '2'),
 		'params.sort': () => params.sort(),
+		'params.delete (missing)': () => params.delete('missing'),
+		'params.set (unchanged)': () => params.set('c', '3'),
 		'obj.a =': () => (obj.a = 2),
 		'obj.b =': () => (obj.b = 2),
 		'delete obj.a': () => delete obj.a,
+		'delete obj.missing': () => delete obj.missing,
 		'defineProperty obj.c': () =>
 			Object.defineProperty(obj, 'c', {
 				value: 3,
@@ -104,7 +115,18 @@
 		const u = new SvelteURL('https://a.com');
 		u.pathname = '/b';
 		u.searchParams.append('c', 'd');
-		return [m.size, s.size, d.getTime(), u.href].join(' ');
+
+		// sources created lazily by a nested reaction still belong to the object
+		const n = new SvelteMap([[1, 1]]);
+		const n1 = $derived(n.get(1));
+		n1;
+		n.set(1, 2);
+		const o = $state({ a: 1 });
+		const oa = $derived(o.a);
+		oa;
+		o.a = 2;
+
+		return [m.size, s.size, d.getTime(), u.href, n.get(1), o.a].join(' ');
 	});
 
 	let snapshot = $state('');

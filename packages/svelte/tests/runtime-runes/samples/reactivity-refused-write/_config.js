@@ -12,7 +12,7 @@ export default test({
 		assert.htmlEqual(written.innerHTML, '');
 
 		// ...but writes to state created inside the derived were not
-		assert.htmlEqual(local.innerHTML, '1 1 5 https://a.com/b?c=d');
+		assert.htmlEqual(local.innerHTML, '1 1 5 https://a.com/b?c=d 2 2');
 
 		// and the refused writes left the underlying data untouched
 		flushSync(() => button.click());
