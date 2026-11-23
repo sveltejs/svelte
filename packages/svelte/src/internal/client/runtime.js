@@ -596,7 +596,8 @@ export function update_reaction(reaction) {
 				}
 			}
 
-			if (untracked_writes !== null) {
+			// Only propagate to a reaction that will consume these writes before returning.
+			if (untracked_writes !== null && (previous_reaction.f & REACTION_IS_UPDATING) !== 0) {
 				if (previous_untracked_writes === null) {
 					previous_untracked_writes = untracked_writes;
 				} else {
