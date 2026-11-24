@@ -267,27 +267,27 @@ A renderer module's default export is an object created with `createRenderer` fr
 ```js
 // @noErrors
 /// file: renderer.js
-import { createRenderer } from 'svelte/renderer';
+import { createRenderer } from "svelte/renderer";
 
 export default createRenderer({
 	createFragment() {
-		return { type: 'fragment', children: [], parent: null };
+		return { type: "fragment", children: [], parent: null };
 	},
 	createElement(name) {
 		return {
-			type: 'element',
+			type: "element",
 			name,
 			attributes: {},
 			listeners: {},
 			children: [],
-			parent: null
+			parent: null,
 		};
 	},
 	createText(data) {
-		return { type: 'text', data, parent: null };
+		return { type: "text", data, parent: null };
 	},
 	createComment(data) {
-		return { type: 'comment', data, parent: null };
+		return { type: "comment", data, parent: null };
 	},
 
 	getNodeType(node) {
@@ -329,12 +329,14 @@ export default createRenderer({
 
 	insert(parent, node, anchor) {
 		// inserting a fragment inserts its children, and leaves it empty
-		const nodes = node.type === 'fragment' ? node.children.splice(0) : [node];
+		const nodes = node.type === "fragment" ? node.children.splice(0) : [node];
 
 		// if necessary, remove the child from its existing parent
 		for (const child of nodes) this.remove(child);
 
-		const index = anchor ? parent.children.indexOf(anchor) : parent.children.length;
+		const index = anchor
+			? parent.children.indexOf(anchor)
+			: parent.children.length;
 		parent.children.splice(index, 0, ...nodes);
 
 		for (const child of nodes) child.parent = parent;
@@ -351,7 +353,7 @@ export default createRenderer({
 	},
 	removeEventListener(element, type, handler) {
 		element.listeners[type]?.delete(handler);
-	}
+	},
 });
 ```
 
@@ -401,7 +403,7 @@ If you're writing a renderer in TypeScript, pass the types of your nodes to `cre
 
 ```ts
 // @noErrors
-import { createRenderer } from 'svelte/renderer';
+import { createRenderer } from "svelte/renderer";
 
 export default createRenderer<{
 	fragment: SceneFragment;
@@ -417,6 +419,73 @@ If you don't, the node types are inferred from the return types of `createFragme
 
 The `Renderer` type is exported from `svelte/renderer` too, for code that works with renderers, such as a function that wraps one. It takes the same record of node types: `Renderer<{ fragment: ...; element: ...; text: ...; comment: ... }>`.
 
+## Tree renderers
+
+For many platforms you might need to build a tree of objects first and then render/print them.
+
+With `createTreeRenderer` from `@sveltejs/tree-renderer` we keep track of the tree for you. You only implement the part that changes your platform, using your platform's own objects, and the tree renderer keep tracks of fragments, comments, moving etc.:
+
+```js
+// @noErrors
+/// file: renderer.js
+import { createTreeRenderer } from "@sveltejs/tree-renderer";
+
+export default createTreeRenderer({
+	createElement: (name) => new View(name),
+	createText: (text) => new Label(text),
+	insert: (parent, node, anchor, index) => parent.insertChild(node, index),
+	remove: (parent, node) => parent.removeChild(node),
+	setAttribute: (element, key, value) => element.setProp(key, value),
+	removeAttribute: (element, key) => element.clearProp(key),
+	setText: (node, text) => node.setText(text),
+	addEventListener: (element, type, handler) => element.on(type, handler),
+	removeEventListener: (element, type, handler) => element.off(type, handler),
+});
+```
+
+The methods have the same names as the ones of `createRenderer`, and they're all required, except `embed` and `host`. Each one is called after the tree renderer has updated its own tree, and receives your platform's objects:
+
+- only elements, text nodes and roots reach your platform. Fragments are handled by the tree renderer, as are comments, which Svelte only uses as invisible markers
+- `insert` receives both the node the new one was inserted before (`anchor`, or `null` if it's the last child) and its position among the children of `parent` (`index`), so you can use whichever your platform works with. Moving a node is passed as `remove` followed by `insert`
+- `remove` receives the `parent` the node was removed from
+
+If you're using TypeScript, the types of your objects are inferred from `createElement` and `createText`, and the root is assumed to be an element. As with `createRenderer`, you can pass them explicitly instead: `createTreeRenderer<{ element: View; text: Label; root: Screen }>({ ... })`.
+
+### Mounting
+
+To mount a component, pass `mount` a root created with `renderer.createRoot`, along with your platform's object for the root:
+
+```js
+// @noErrors
+import { mount } from "svelte";
+import renderer from "./renderer.js";
+import App from "./App.svelte";
+
+const screen = new Screen();
+
+mount(App, {
+	target: renderer.createRoot(screen),
+	renderer,
+});
+```
+
+> [!NOTE] Unlike the other examples on this page, don't mount into `renderer.createFragment()`. The tree renderer uses fragments for Svelte's internal templates, and never passes their content to your platform, so Svelte would render into it without errors but your platform wouldn't receive anything.
+
+### Tree nodes
+
+Svelte works with the tree renderer's own nodes, which each point to your platform's object through their `node` property. This is what you receive in an [attachment](@attach), for example:
+
+```svelte
+<!--- file: Input.svelte --->
+<svelte:options customRenderer="./renderer.js" />
+
+<input {@attach (input) => input.node.focus()} />
+```
+
+### Combining with other renderers
+
+`embed` and `host` work as they do with `createRenderer` (see [Mixing renderers](#Mixing-renderers)), except that they deal with your platform's objects: `embed` returns your platform's root as the `container`, and `host` returns your platform's element as the `node`.
+
 ## Mixing renderers
 
 Components that use different renderers can be nested, as long as the renderers involved anticipate it. A page can contain a 3D scene, and the scene can in turn contain DOM content, such as HTML labels positioned over the 3D objects. Context, props, snippets, [error boundaries](svelte-boundary) and reactivity all work across the boundary.
@@ -426,7 +495,7 @@ If you're using a renderer library, its documentation should tell you where its 
 The place where content from one renderer appears inside content from another is called a _crossing_. The outer renderer is the _host_, and the inner one is the _guest_. At each crossing, Svelte needs two things:
 
 - a `container`, owned by the guest, that the guest's content is rendered into
-- optionally, a `node` owned by the host, that represents the guest's content in the host's tree. If there isn't one, Svelte inserts an empty text node
+- optionally, a `node` owned by the host, that represents the guest's content in the host's tree. If there isn't one, Svelte inserts a marker instead: an empty text node in the DOM, or a comment in a custom renderer
 
 Renderers provide these through two optional methods, `embed` and `host`:
 
@@ -435,11 +504,11 @@ Renderers provide these through two optional methods, `embed` and `host`:
 
 Svelte first tries the guest's `embed`, then the host's `host`. If neither exists, it throws an error. The DOM doesn't have either method, so in a mixed app it's always the custom renderer that provides them:
 
-| Situation                              | Method that is called                   | Example                                  |
-| -------------------------------------- | --------------------------------------- | ---------------------------------------- |
-| Custom renderer content inside the DOM | the custom renderer's `embed`           | a WebGL scene in a regular page          |
-| DOM content inside a custom renderer   | the custom renderer's `host`            | HTML labels floating over a 3D scene     |
-| Renderer A's content inside renderer B | A's `embed`, or B's `host` if A has none | a chart renderer inside a native app     |
+| Situation                              | Method that is called                    | Example                              |
+| -------------------------------------- | ---------------------------------------- | ------------------------------------ |
+| Custom renderer content inside the DOM | the custom renderer's `embed`            | a WebGL scene in a regular page      |
+| DOM content inside a custom renderer   | the custom renderer's `host`             | HTML labels floating over a 3D scene |
+| Renderer A's content inside renderer B | A's `embed`, or B's `host` if A has none | a chart renderer inside a native app |
 
 In other words: implement `embed` if your renderer will be used inside DOM apps, which is the case for most renderers. Implement `host` if DOM content (or another renderer's content) should be able to appear inside your renderer's tree.
 
@@ -454,10 +523,13 @@ export default createRenderer({
 
 	embed({ host, parent }) {
 		if (host !== null) {
-			throw new Error('The canvas renderer can only be used inside the DOM');
+			throw new Error("The canvas renderer can only be used inside the DOM");
 		}
 
-		const canvas = parent instanceof HTMLCanvasElement ? parent : document.createElement('canvas');
+		const canvas =
+			parent instanceof HTMLCanvasElement
+				? parent
+				: document.createElement("canvas");
 		const scene = create_scene(canvas);
 
 		return {
@@ -466,9 +538,9 @@ export default createRenderer({
 			// the scene's root node, which the content is rendered into
 			container: scene.root,
 			// called once the content has been removed
-			destroy: () => scene.dispose()
+			destroy: () => scene.dispose(),
 		};
-	}
+	},
 });
 ```
 
@@ -485,7 +557,7 @@ export default createRenderer({
 
 	host({ guest }) {
 		if (guest !== null) {
-			throw new Error('Only DOM content can be rendered inside a scene');
+			throw new Error("Only DOM content can be rendered inside a scene");
 		}
 
 		// a scene object that displays a DOM element as an overlay
@@ -494,9 +566,9 @@ export default createRenderer({
 		return {
 			node: overlay,
 			container: overlay.element,
-			destroy: () => overlay.dispose()
+			destroy: () => overlay.dispose(),
 		};
-	}
+	},
 });
 ```
 
