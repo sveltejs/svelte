@@ -273,7 +273,7 @@ export function EachBlock(node, context) {
 			declarations.push(
 				b.let(
 					path.node,
-					needs_derived ? b.call(runes ? '$.derived' : '$.derived_safe_equal', fn) : fn
+					needs_derived ? b.call(runes && !uses_store ? '$.derived' : '$.derived_safe_equal', fn) : fn
 				)
 			);
 
