@@ -12,9 +12,9 @@ Elements such as `<input>` cannot have content, any children passed to these ele
 >
 > %properties%
 
-`$state.snapshot` tries to clone the given value in order to return a reference that no longer changes. Certain objects may not be cloneable, in which case the original value is returned. In the following example, `property` is cloned, but `window` is not, because DOM elements are uncloneable:
+`$state.snapshot` tries to clone the given value in order to return a reference that no longer changes. Certain objects may not be cloneable, in which case the original value is returned. In the following example, `property` is cloned, but `callback` is not, because functions are uncloneable:
 
 ```js
-const object = $state({ property: 'this is cloneable', window })
+const object = $state({ property: 'this is cloneable', callback: () => {} })
 const snapshot = $state.snapshot(object);
 ```

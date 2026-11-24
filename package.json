@@ -16,8 +16,8 @@
   "scripts": {
     "build": "pnpm -r --filter=./packages/* build",
     "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
-    "lint": "eslint && prettier --check .",
-    "format": "prettier --write .",
+    "lint": "eslint && rsvelte format --check",
+    "format": "rsvelte format",
     "test": "vitest run",
     "profile:compiler": "node ./benchmarking/profile-compiler.js",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
@@ -30,6 +30,7 @@
     "@changesets/changelog-github": "1.0.0-next.6",
     "@changesets/cli": "^2.29.8",
     "@eslint/js": "^10.0.0",
+    "@rsvelte/cli": "^0.5.2",
     "@sveltejs/eslint-config": "^9.0.0",
     "@types/node": "^20.11.5",
     "@types/picomatch": "^4.0.2",
@@ -39,12 +40,10 @@
     "eslint-plugin-svelte": "^3.15.0",
     "jsdom": "25.0.1",
     "playwright": "^1.62.0",
-    "prettier": "^3.2.4",
-    "prettier-plugin-svelte": "^3.4.0",
     "svelte": "workspace:^",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.56.0",
     "v8-natives": "^1.2.5",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.11"
   }
 }
