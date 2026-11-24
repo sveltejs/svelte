@@ -260,11 +260,22 @@ export function EachBlock(node, context) {
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
-			const needs_derived = path.has_default_value; // to ensure that default value is only called once
+			// in runes mode, each destructured binding gets its own derived, so that readers
+			// aren't invalidated when the item changes but this part of it doesn't (e.g. when
+			// iterating over a map, each `[key, value]` entry is a new array).
+			// outside runes mode, we only need a derived to ensure the default value is only
+			// called once
+			const runes = context.state.analysis.runes;
+			const needs_derived = runes || path.has_default_value;
 
 			const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression, child_state)));
 
-			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
+			declarations.push(
+				b.let(
+					path.node,
+					needs_derived ? b.call(runes && !uses_store ? '$.derived' : '$.derived_safe_equal', fn) : fn
+				)
+			);
 
 			const read = needs_derived ? get_value : b.call;
 
