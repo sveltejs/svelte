@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored, locate_node } from '../../../../state.js';
-import { extract_paths, save } from '../../../../utils/ast.js';
+import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune, should_proxy } from '../../../scope.js';

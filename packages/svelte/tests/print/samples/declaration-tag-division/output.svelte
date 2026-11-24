@@ -16,5 +16,8 @@
 	{const typed: number = total / 2}
 	{const { fallback = total / 2 } = options}
 	{const regex = /[}]/}
-	<p>{half} {derived} {member} {call} {string_then_division} {typed} {fallback} {regex}</p>
+
+	<p>
+		{half} {derived} {member} {call} {string_then_division} {typed} {fallback} {regex}
+	</p>
 {/if}

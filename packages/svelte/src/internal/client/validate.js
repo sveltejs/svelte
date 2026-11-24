@@ -1,4 +1,4 @@
-/** @import { Blocker } from '#client' */
+/** @import { Blocker } from './reactivity/async.js' */
 import { dev_current_component_function } from './context.js';
 import { FILENAME } from '../../constants.js';
 import { render_effect } from './reactivity/effects.js';
@@ -43,7 +43,7 @@ export function validate_binding(binding, blockers, get_object, get_property, li
 
 			ran = true;
 
-			if (effect.deps === null) {
+			if (effect.edges === null) {
 				var location = `${filename}:${line}:${column}`;
 				w.binding_property_non_reactive(binding, location);
 

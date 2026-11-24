@@ -19,3 +19,12 @@
 	<title>  hello
   world  </title>
 </svelte:head>
+
+<div>
+	<script>
+  // keep this newline
+  window.message = "  keep  spaces  ";
+</script><style>
+  .example::before { content: "  keep  spaces  "; }
+</style>
+</div>
