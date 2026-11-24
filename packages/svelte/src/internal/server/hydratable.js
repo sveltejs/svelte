@@ -90,7 +90,8 @@ function encode(key, value, unresolved) {
 
 			const fragment = js`"${id}"`;
 
-			// an app that resolves devalue 5 passes uneval as js, its string result would replace the promise value with garbage
+			// A user may still be using SvelteKit 2/3 which may resolve to devalue 5 rather than 6
+			// on the server because of npm's node_modules structure
 			return typeof fragment === 'string' ? /** @type {any} */ (placeholder) : fragment;
 		}
 	};
