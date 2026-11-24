@@ -405,6 +405,9 @@ function set_attributes(
 			var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
 			if (prefix === '$$') continue;
 
+			// omit event handler attributes regardless of casing, matching SSR
+			if (prefix !== 'on' && key.length > 2 && prefix.toLowerCase() === 'on') continue;
+
 			if (prefix === 'on') {
 				/** @type {{ capture?: true }} */
 				const opts = {};
