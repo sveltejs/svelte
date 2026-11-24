@@ -17,6 +17,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.0
         version: 10.0.1(eslint@10.0.0)
+      '@rsvelte/cli':
+        specifier: ^0.5.2
+        version: 0.5.2
       '@sveltejs/eslint-config':
         specifier: ^9.0.0
         version: 9.0.0(@eslint/js@10.0.1(eslint@10.0.0))(@stylistic/eslint-plugin-js@1.8.0(eslint@10.0.0))(eslint-config-prettier@9.1.0(eslint@10.0.0))(eslint-plugin-n@17.24.0(eslint@10.0.0)(typescript@5.5.4))(eslint-plugin-svelte@3.15.0(eslint@10.0.0)(svelte@packages+svelte))(eslint@10.0.0)(typescript-eslint@8.56.0(eslint@10.0.0)(typescript@5.5.4))(typescript@5.5.4)
@@ -44,12 +47,6 @@ importers:
       playwright:
         specifier: ^1.62.0
         version: 1.62.1
-      prettier:
-        specifier: ^3.2.4
-        version: 3.2.4
-      prettier-plugin-svelte:
-        specifier: ^3.4.0
-        version: 3.4.0(prettier@3.2.4)(svelte@packages+svelte)
       svelte:
         specifier: workspace:^
         version: link:packages/svelte
@@ -910,6 +907,43 @@ packages:
     resolution: {integrity: sha512-BfzEnDJOt9T8M989/lA37EcJgat01wLRnoi5dQf3QzOH7jzpqTAzdDbVfRljVr5r+jzKqpbHeyOfAaXxAd0PAA==}
     cpu: [x64]
     os: [win32]
+
+  '@rsvelte/cli-darwin-arm64@0.5.2':
+    resolution: {integrity: sha512-scGRYbE7irmRWRZpfotXhjDCD/NWM4nNzn2ybE/wZ2/3MhqqA5OmWq3duXIVA7eV6Kr417n57UahLeHoxBIY/Q==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@rsvelte/cli-darwin-x64@0.5.2':
+    resolution: {integrity: sha512-IO5o+ltq+Vg7K17de9zvDjDMmX6pOjbtj5qz2eCfwNDak+9SLJL68R+Bag8ZwlxZO3hBU7zvxLZW9sK7IHubXg==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@rsvelte/cli-linux-arm64-gnu@0.5.2':
+    resolution: {integrity: sha512-AMAhUjRFYJgad9x2IRwyshhnB1j+NCwe/nhWSLHYWR0FM1EIH5m1F0ivspMn8w+ix362C/NQyS2ZCOmidamAdg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@rsvelte/cli-linux-x64-gnu@0.5.2':
+    resolution: {integrity: sha512-PSY1weq7BLxP1u8P+aJzuf0ax8lsSrWIunYWgXGnSxfoH7weBGeAeHJOAjY/SlxXKmJ/fAlMBTC+diJNBm3skg==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@rsvelte/cli-win32-x64-msvc@0.5.2':
+    resolution: {integrity: sha512-mUknf5qykhVWmzrGeLEKFYdwyL/l5V/Ii73oSeoHUiivySiNODVfQkDcKDJczuGw/qzXKVmFS7zYqaIZayO2kA==}
+    cpu: [x64]
+    os: [win32]
+
+  '@rsvelte/cli@0.5.2':
+    resolution: {integrity: sha512-cZ8mZSX0rcx5oghEdjZCRvquSn1eoc1mJpmD5lEDeqrBy2KhrrxPnyBwQRQKy8jjwEc5dnLN76a10IY1DISCQQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      tsrs: '>=7.1.0-beta.tsrs2 <7.2.0'
+    peerDependenciesMeta:
+      tsrs:
+        optional: true
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -2001,20 +2035,9 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier-plugin-svelte@3.4.0:
-    resolution: {integrity: sha512-pn1ra/0mPObzqoIQn/vUTR3ZZI6UuZ0sHqMK5x2jMLGrs53h0sXhkVuDcrlssHwIMk7FYrMjHBPoUSyyEEDlBQ==}
-    peerDependencies:
-      prettier: ^3.0.0
-      svelte: ^3.2.0 || ^4.0.0-next.0 || ^5.0.0-next.0
-
   prettier@2.8.8:
     resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
     engines: {node: '>=10.13.0'}
-    hasBin: true
-
-  prettier@3.2.4:
-    resolution: {integrity: sha512-FWu1oLHKCrtpO1ypU6J0SbK2d9Ckwysq6bHj/uaCP26DxrPpppCLQRGVuqAxSTvhF00AcvDRyYrLNW7ocBhFFQ==}
-    engines: {node: '>=14'}
     hasBin: true
 
   punycode@2.3.1:
@@ -3045,6 +3068,29 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.62.2':
     optional: true
+
+  '@rsvelte/cli-darwin-arm64@0.5.2':
+    optional: true
+
+  '@rsvelte/cli-darwin-x64@0.5.2':
+    optional: true
+
+  '@rsvelte/cli-linux-arm64-gnu@0.5.2':
+    optional: true
+
+  '@rsvelte/cli-linux-x64-gnu@0.5.2':
+    optional: true
+
+  '@rsvelte/cli-win32-x64-msvc@0.5.2':
+    optional: true
+
+  '@rsvelte/cli@0.5.2':
+    optionalDependencies:
+      '@rsvelte/cli-darwin-arm64': 0.5.2
+      '@rsvelte/cli-darwin-x64': 0.5.2
+      '@rsvelte/cli-linux-arm64-gnu': 0.5.2
+      '@rsvelte/cli-linux-x64-gnu': 0.5.2
+      '@rsvelte/cli-win32-x64-msvc': 0.5.2
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -4176,14 +4222,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-svelte@3.4.0(prettier@3.2.4)(svelte@packages+svelte):
-    dependencies:
-      prettier: 3.2.4
-      svelte: link:packages/svelte
-
   prettier@2.8.8: {}
-
-  prettier@3.2.4: {}
 
   punycode@2.3.1: {}
 

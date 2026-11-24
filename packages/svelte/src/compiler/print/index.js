@@ -945,13 +945,11 @@ const svelte_visitors = (comments, state) => ({
 		}
 
 		if (node.alternate !== null) {
-			if (
-				!(
-					node.alternate.nodes.length === 1 &&
-					node.alternate.nodes[0].type === 'IfBlock' &&
-					node.alternate.nodes[0].elseif
-				)
-			) {
+			if (!(
+				node.alternate.nodes.length === 1 &&
+				node.alternate.nodes[0].type === 'IfBlock' &&
+				node.alternate.nodes[0].elseif
+			)) {
 				context.write('{:else}');
 				block(context, node.alternate, state.preserve_whitespace > 0);
 			} else {
