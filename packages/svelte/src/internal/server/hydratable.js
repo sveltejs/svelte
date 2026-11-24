@@ -91,7 +91,7 @@ function encode(key, value, unresolved) {
 			(entry.promises ??= []).push(p);
 
 			// the replacer must return a `js` fragment — interpolated values are serialized,
-			// so `"<{id}>` renders as e.g. `<1>`, matching `placeholder`
+			// so `<${id}>` renders as e.g. `<1>`, matching `placeholder`
 			const fragment = js`<${id>"`;
 
 			// A user may still be using SvelteKit 2/3 which may resolve to devalue v5
