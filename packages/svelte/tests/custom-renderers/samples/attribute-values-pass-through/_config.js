@@ -1,28 +1,34 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
+import { root } from './_renderer';
+
+const names = ['checked', 'selected', 'value', 'defaultValue', 'defaultChecked'];
 
 export default test({
-	test({ assert, target, dispatch_event }) {
-		const [toggle, toggle_spread, option, option_spread, field, field_spread, other, button] =
-			target.children.filter((/** @type {any} */ n) => n.type === 'element');
+	test({ assert, dispatch_event }) {
+		/** @type {any[]} */
+		const elements = root.children.filter((/** @type {any} */ n) => n.type === 'element');
+		const button = /** @type {any} */ (elements.pop());
 
-		const values = () => [
-			toggle.attributes.checked,
-			toggle_spread.attributes.checked,
-			option.attributes.selected,
-			option_spread.attributes.selected,
-			field.attributes.value,
-			field_spread.attributes.value,
-			other.attributes.enabled
-		];
+		for (const v of [true, false, 0, '', 'hello', null, true, undefined]) {
+			const own = v == null ? undefined : v;
 
-		// the test renderer stores `String(value)`, so `true` arrives as 'true' rather than ''
-		assert.deepEqual(values(), ['true', 'true', 'true', 'true', 'hello', 'hello', 'true']);
+			assert.deepEqual(
+				elements.slice(0, 5).map((el, i) => el.attributes[names[i]]),
+				[own, own, own, own, own],
+				`direct, ${JSON.stringify(v)}`
+			);
 
-		dispatch_event(button, 'click');
-		flushSync();
+			for (const el of elements.slice(5)) {
+				assert.deepEqual(
+					el.attributes,
+					v == null ? {} : Object.fromEntries(names.map((name) => [name, v])),
+					`<${el.name}>, ${JSON.stringify(v)}`
+				);
+			}
 
-		// `false` is passed through like any other value, `null` removes the attribute
-		assert.deepEqual(values(), ['false', 'false', 'false', 'false', undefined, undefined, 'false']);
+			dispatch_event(button, 'click');
+			flushSync();
+		}
 	}
 });

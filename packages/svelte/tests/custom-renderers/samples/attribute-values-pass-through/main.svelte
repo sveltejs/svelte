@@ -1,19 +1,17 @@
+<svelte:options customRenderer="../../_renderer.ts" />
+
 <script lang="ts">
-	let on = $state(true);
-	let text: string | null = $state('hello');
+	const steps = [true, false, 0, '', 'hello', null, true, undefined];
+	let step = $state(0);
+	let v = $derived(steps[step]);
 </script>
 
-<toggle checked={on} />
-<toggle {...{ checked: on }} />
-<option selected={on} />
-<option {...{ selected: on }} />
-<field value={text} />
-<field {...{ value: text }} />
-<other enabled={on} />
+<toggle checked={v} />
+<option selected={v} />
+<field value={v} />
+<field defaultValue={v} />
+<toggle defaultChecked={v} />
+<spread {...{ checked: v, selected: v, value: v, defaultValue: v, defaultChecked: v }} />
+<svelte:element this={'dynamic'} checked={v} selected={v} value={v} defaultValue={v} defaultChecked={v} />
 
-<button
-	onclick={() => {
-		on = false;
-		text = null;
-	}}>update</button
->
+<button onclick={() => step++}>next</button>
