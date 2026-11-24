@@ -1,12 +1,11 @@
 /** @import { Expression, Identifier } from 'estree' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
-import { should_proxy } from '../../3-transform/client/utils.js';
+import { should_proxy, get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
-import { get_rune } from '../../scope.js';
 import { is_component_node } from '../../nodes.js';
 
 /**
@@ -162,7 +161,7 @@ export function Identifier(node, context) {
 		if (binding.metadata?.is_template_declaration && context.state.options.experimental.async) {
 			let snippet_name;
 
-			// Find out if this references a {@const ...} declaration of an implicit children snippet
+			// Find out if this references a {@const ...}/{let/const ...} declaration of an implicit children snippet
 			// when it is itself inside a snippet block at the same level. If so, error.
 			for (let i = context.path.length - 1; i >= 0; i--) {
 				const parent = context.path[i];

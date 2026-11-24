@@ -16,6 +16,14 @@ export function ExpressionStatement(node, context) {
 		rune === '$effect.root' ||
 		rune === '$inspect.trace'
 	) {
+		// These statements are removed from server output. Remove their comments as well,
+		// otherwise annotations inside them can attach to the next statement.
+		if (node.start !== undefined && node.end !== undefined) {
+			const { start, end } = node;
+			context.state.analysis.comments = context.state.analysis.comments.filter(
+				(comment) => comment.start < start || comment.end > end
+			);
+		}
 		return b.empty;
 	}
 

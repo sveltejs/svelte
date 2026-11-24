@@ -22,7 +22,7 @@ const ALLOWED_ATTRIBUTES = ['context', 'generics', 'lang', 'module'];
  */
 export function read_script(parser, start, attributes) {
 	const script_start = parser.index;
-	const data = parser.read_until(regex_closing_script_tag);
+	const data = parser.read_until_regex(regex_closing_script_tag);
 	if (parser.index >= parser.template.length) {
 		e.element_unclosed(parser.template.length, 'script');
 	}

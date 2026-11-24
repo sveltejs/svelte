@@ -1,3 +1,4 @@
+import 'svelte/internal/init-operations';
 import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 import TextInput from './Child.svelte';

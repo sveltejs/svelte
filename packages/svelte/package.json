@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.55.1",
+  "version": "5.59.1",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -22,6 +22,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/index-client.js",
       "worker": "./src/index-server.js",
       "browser": "./src/index-client.js",
       "default": "./src/index-server.js"
@@ -59,6 +60,9 @@
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },
+    "./internal/init-operations": {
+      "default": "./src/internal/init-operations.js"
+    },
     "./internal/flags/async": {
       "default": "./src/internal/flags/async.js"
     },
@@ -68,11 +72,17 @@
     "./internal/flags/tracing": {
       "default": "./src/internal/flags/tracing.js"
     },
+    "./internal/flags/custom-renderer": {
+      "svelte-custom-renderer": "./src/internal/flags/custom-renderer.js",
+      "browser": "./src/internal/flags/custom-renderer.js",
+      "default": "./src/internal/flags/custom-renderer-server.js"
+    },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },
     "./legacy": {
       "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/legacy/legacy-client.js",
       "worker": "./src/legacy/legacy-server.js",
       "browser": "./src/legacy/legacy-client.js",
       "default": "./src/legacy/legacy-server.js"
@@ -83,6 +93,7 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/reactivity/index-client.js",
       "worker": "./src/reactivity/index-server.js",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
@@ -91,12 +102,19 @@
       "types": "./types/index.d.ts",
       "default": "./src/reactivity/window/index.js"
     },
+    "./renderer": {
+      "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/renderer/index.js",
+      "browser": "./src/renderer/index.js",
+      "default": "./src/renderer/index-server.js"
+    },
     "./server": {
       "types": "./types/index.d.ts",
       "default": "./src/server/index.js"
     },
     "./store": {
       "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/store/index-client.js",
       "worker": "./src/store/index-server.js",
       "browser": "./src/store/index-client.js",
       "default": "./src/store/index-server.js"
@@ -138,47 +156,50 @@
     "templating"
   ],
   "scripts": {
-    "build": "rollup -c && pnpm generate",
+    "build": "rollup -c && pnpm generate && node scripts/check-treeshakeability.js",
     "dev": "node scripts/process-messages -w & rollup -cw",
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:tsgo": "tsgo --project tsconfig.runtime.json --skipLibCheck && tsgo --skipLibCheck",
     "check:watch": "tsc --watch",
-    "generate": "node scripts/process-messages && node ./scripts/generate-types.js",
+    "generate": "node scripts/process-messages && node ./scripts/generate-types.js && pnpm generate:browser-support",
     "generate:version": "node ./scripts/generate-version.js",
     "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
-    "prepublishOnly": "pnpm build && node scripts/check-treeshakeability.js",
+    "generate:browser-support": "node ./scripts/generate-browser-support.ts",
+    "prepublishOnly": "pnpm build",
     "knip": "pnpm dlx knip"
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.25",
-    "@playwright/test": "^1.58.0",
+    "@playwright/test": "^1.62.0",
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
+    "@types/trusted-types": "^2.0.7",
+    "baseline-browser-mapping": "^2.10.32",
     "dts-buddy": "^0.5.5",
-    "esbuild": "^0.25.10",
+    "esbuild": "^0.28.1",
     "rollup": "^4.59.0",
     "source-map": "^0.7.4",
     "tinyglobby": "^0.2.12",
     "typescript": "^5.5.4",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.7",
+    "web-features": "^3.29.0"
   },
   "dependencies": {
-    "@jridgewell/remapping": "^2.3.4",
-    "@jridgewell/sourcemap-codec": "^1.5.0",
-    "@sveltejs/acorn-typescript": "^1.0.5",
-    "@types/estree": "^1.0.5",
-    "@types/trusted-types": "^2.0.7",
-    "acorn": "^8.12.1",
+    "@jridgewell/remapping": "^2.3.5",
+    "@jridgewell/sourcemap-codec": "^1.6.0",
+    "@sveltejs/acorn-typescript": "^1.0.13",
+    "@types/estree": "^1.0.9",
+    "acorn": "^8.18.0",
     "aria-query": "5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
-    "devalue": "^5.6.4",
+    "devalue": "^6.0.4",
     "esm-env": "^1.2.1",
-    "esrap": "^2.2.4",
+    "esrap": "^2.4.2",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",

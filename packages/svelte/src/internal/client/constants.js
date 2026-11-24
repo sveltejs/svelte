@@ -16,6 +16,13 @@ export const BRANCH_EFFECT = 1 << 5;
 export const ROOT_EFFECT = 1 << 6;
 export const BOUNDARY_EFFECT = 1 << 7;
 /**
+ * Set on the effect that `pause_effect` was called on, i.e. the root of a paused subtree,
+ * as opposed to its descendants which are merely `INERT`. This allows `resume_effect` on
+ * an ancestor to skip subtrees that were paused for their own reasons (such as a block
+ * whose condition is still false) rather than resurrecting them.
+ */
+export const PAUSED = 1 << 8;
+/**
  * Indicates that a reaction is connected to an effect root — either it is an effect,
  * or it is a derived that is depended on by at least one effect. If a derived has
  * no dependents, we can disconnect it from the graph, allowing it to either be
@@ -44,24 +51,32 @@ export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
 export const EFFECT_OFFSCREEN = 1 << 25;
 
-// Flags exclusive to deriveds
-/**
- * Tells that we marked this derived and its reactions as visited during the "mark as (maybe) dirty"-phase.
- * Will be lifted during execution of the derived and during checking its dirty state (both are necessary
- * because a derived might be checked but not executed).
- */
-export const WAS_MARKED = 1 << 16;
-
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;
 
 export const ERROR_VALUE = 1 << 23;
 
+/** A run of the reaction asked for an abort signal (see `getAbortSignal`) */
+export const HAS_ABORT_CONTROLLER = 1 << 27;
+
+// Flags exclusive to deriveds
+/** The global state of the derived is a value that was assigned to it, rather than a run of it */
+export const ASSIGNED = 1 << 26;
+
 export const STATE_SYMBOL = Symbol('$state');
+/** Marks component export objects, so that `proxy(...)` leaves them untouched */
+export const COMPONENT_SYMBOL = Symbol('component');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+export const ATTRIBUTES_CACHE = Symbol('attributes');
+export const CLASS_CACHE = Symbol('class');
+export const STYLE_CACHE = Symbol('style');
+export const TEXT_CACHE = Symbol('text');
+export const FORM_RESET_HANDLER = Symbol('form reset');
+/** An anchor might change, via this symbol on the original anchor we can tell HMR about the updated anchor */
+export const HMR_ANCHOR = Symbol('hmr anchor');
 
 /** allow users to ignore aborted signal errors if `reason.name === 'StaleReactionError` */
 export const STALE_REACTION = new (class StaleReactionError extends Error {
@@ -77,3 +92,10 @@ export const ELEMENT_NODE = 1;
 export const TEXT_NODE = 3;
 export const COMMENT_NODE = 8;
 export const DOCUMENT_FRAGMENT_NODE = 11;
+
+export const CUSTOM_RENDERER_NODE_TYPE_MAP = /** @type {const} */ ({
+	fragment: DOCUMENT_FRAGMENT_NODE,
+	element: ELEMENT_NODE,
+	text: TEXT_NODE,
+	comment: COMMENT_NODE
+});

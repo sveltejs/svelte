@@ -134,6 +134,14 @@ When logging a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/R
 
 The easiest way to log a value as it changes over time is to use the [`$inspect`](/docs/svelte/$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](/docs/svelte/$state#$state.snapshot) to take a snapshot of the current value.
 
+### derived_inert
+
+```
+Reading a derived belonging to a now-destroyed effect may result in stale values
+```
+
+A `$derived` value created inside an effect will stop updating when the effect is destroyed. You should create the `$derived` outside the effect, or inside an `$effect.root`.
+
 ### event_handler_invalid
 
 ```
@@ -330,27 +338,6 @@ Reactive `$state(...)` proxies and the values they proxy have different identiti
 ```
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
-
-### state_proxy_unmount
-
-```
-Tried to unmount a state proxy, rather than a component
-```
-
-`unmount` was called with a state proxy:
-
-```js
-import { mount, unmount } from 'svelte';
-import Component from './Component.svelte';
-let target = document.body;
-// ---cut---
-let component = $state(mount(Component, { target }));
-
-// later...
-unmount(component);
-```
-
-Avoid using `$state` here. If `component` _does_ need to be reactive for some reason, use `$state.raw` instead.
 
 ### svelte_boundary_reset_noop
 

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { execSync } from 'node:child_process';
+import readline from 'node:readline/promises';
 import { chromium } from 'playwright';
 
 const { values, positionals } = parseArgs({
@@ -546,9 +547,9 @@ function convert_vite_project(repo_dir) {
 /**
  * Process a local or cloned directory
  * @param {string} dir_path
- * @returns {Array<{name: string, contents: string}>}
+ * @returns {Promise<Array<{name: string, contents: string}> | null>}
  */
-function process_directory(dir_path) {
+async function process_directory(dir_path) {
 	const all_files = get_all_files(dir_path);
 	const project_info = detect_project_type(all_files);
 
@@ -558,7 +559,18 @@ function process_directory(dir_path) {
 	if (project_info.has_app_imports) {
 		console.error('Error: This SvelteKit project uses $app/* imports which cannot be converted.');
 		console.error('The playground does not support SvelteKit runtime features.');
-		process.exit(1);
+
+		const fallback_dir = path.resolve(base_dir, '..', '..', 'kit-sandbox-tmp');
+		const should_copy = await prompt_download_to_kit_sandbox_tmp(fallback_dir);
+
+		if (!should_copy) {
+			process.exit(1);
+		}
+
+		copy_project_to_directory(dir_path, fallback_dir);
+		console.log(`Project copied to ${fallback_dir}`);
+
+		return null;
 	}
 
 	// Convert based on project type
@@ -569,6 +581,66 @@ function process_directory(dir_path) {
 		console.log('Processing Vite+Svelte project...');
 		return convert_vite_project(dir_path);
 	}
+}
+
+/**
+ * Ask whether to copy the project to playgrounds/kit-sandbox-tmp
+ * @param {string} fallback_dir
+ * @returns {Promise<boolean>}
+ */
+async function prompt_download_to_kit_sandbox_tmp(fallback_dir) {
+	if (!process.stdin.isTTY || !process.stdout.isTTY) {
+		return false;
+	}
+
+	const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+	try {
+		const answer = await rl.question(
+			`Would you like to copy this project into ${fallback_dir} instead? [y/N] `
+		);
+		return /^(y|yes)$/i.test(answer.trim());
+	} finally {
+		rl.close();
+	}
+}
+
+/**
+ * Copy a project directory while skipping generated and dependency folders
+ * @param {string} source_dir
+ * @param {string} target_dir
+ */
+function copy_project_to_directory(source_dir, target_dir) {
+	const skip_dirs = new Set(['node_modules', '.git', '.svelte-kit', 'build', 'dist']);
+
+	if (fs.existsSync(target_dir)) {
+		fs.rmSync(target_dir, { recursive: true, force: true });
+	}
+
+	/** @param {string} from_dir */
+	function copy_recursive(from_dir) {
+		const relative_dir = path.relative(source_dir, from_dir);
+		const to_dir = relative_dir ? path.join(target_dir, relative_dir) : target_dir;
+
+		fs.mkdirSync(to_dir, { recursive: true });
+
+		for (const entry of fs.readdirSync(from_dir, { withFileTypes: true })) {
+			if (entry.isDirectory() && skip_dirs.has(entry.name)) {
+				continue;
+			}
+
+			const source_path = path.join(from_dir, entry.name);
+			const target_path = path.join(to_dir, entry.name);
+
+			if (entry.isDirectory()) {
+				copy_recursive(source_path);
+			} else if (entry.isFile()) {
+				fs.copyFileSync(source_path, target_path);
+			}
+		}
+	}
+
+	copy_recursive(source_dir);
 }
 
 /**
@@ -602,7 +674,7 @@ let files;
 // Check if it's a local directory first (before URL parsing)
 if (is_local) {
 	console.log(`Processing local directory: ${url_arg}`);
-	files = process_directory(url_arg);
+	files = await process_directory(url_arg);
 } else if (resolved_test_path) {
 	// Copy files from test
 	console.log(`Processing test ${url_arg}`);
@@ -616,21 +688,21 @@ if (is_local) {
 		});
 } else if (url && is_github_url(url)) {
 	// GitHub repository handling
-	await with_tmp_dir(base_dir, (tmp_dir) => {
+	await with_tmp_dir(base_dir, async (tmp_dir) => {
 		clone_github_repo(url, tmp_dir);
-		files = process_directory(tmp_dir);
+		files = await process_directory(tmp_dir);
 	});
 } else if (url && is_stackblitz_github_url(url)) {
 	// StackBlitz GitHub project handling (redirect to GitHub clone)
-	await with_tmp_dir(base_dir, (tmp_dir) => {
+	await with_tmp_dir(base_dir, async (tmp_dir) => {
 		clone_stackblitz_github_project(url, tmp_dir);
-		files = process_directory(tmp_dir);
+		files = await process_directory(tmp_dir);
 	});
 } else if (url && is_stackblitz_edit_url(url)) {
 	// StackBlitz edit URLs - use browser automation to download
 	await with_tmp_dir(base_dir, async (tmp_dir) => {
 		await download_stackblitz_project(url, tmp_dir);
-		files = process_directory(tmp_dir);
+		files = await process_directory(tmp_dir);
 	});
 } else if (url && url.origin === 'https://svelte.dev' && url.pathname.startsWith('/playground/')) {
 	// Svelte playground URL handling (existing logic)
@@ -678,6 +750,10 @@ if (is_local) {
 		`${url_arg} is not a supported URL (Svelte playground, GitHub repository, or StackBlitz project)`
 	);
 	process.exit(1);
+}
+
+if (files === null) {
+	process.exit(0);
 }
 
 // Output files

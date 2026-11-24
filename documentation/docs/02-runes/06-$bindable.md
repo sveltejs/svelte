@@ -52,3 +52,5 @@ In this case, you can specify a fallback value for when no prop is passed at all
 /// file: FancyInput.svelte
 let { value = $bindable('fallback'), ...props } = $props();
 ```
+
+When a bindable prop has a fallback value, the parent must pass a value other than `undefined` if it uses `bind:`. This avoids ambiguity about which value should apply, since the parent and child should share the same value for a binding.

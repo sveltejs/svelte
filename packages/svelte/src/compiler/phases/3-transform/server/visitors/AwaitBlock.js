@@ -9,12 +9,19 @@ import { block_close, create_child_block } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function AwaitBlock(node, context) {
+	let expression = /** @type {Expression} */ (context.visit(node.expression));
+	if (node.metadata.expression.has_await) {
+		// If this is an await expression, turn it into a IIFE so that the result is a promise.
+		// {#await await ...} is special insofar that the await should not be waited on.
+		expression = b.call(b.arrow([], expression, true));
+	}
+
 	/** @type {Statement} */
 	let statement = b.stmt(
 		b.call(
 			'$.await',
 			b.id('$$renderer'),
-			/** @type {Expression} */ (context.visit(node.expression)),
+			expression,
 			b.thunk(
 				node.pending ? /** @type {BlockStatement} */ (context.visit(node.pending)) : b.block([])
 			),

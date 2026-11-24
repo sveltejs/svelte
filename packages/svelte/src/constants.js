@@ -32,7 +32,7 @@ export const ELEMENT_IS_NAMESPACED = 1;
 export const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
 export const ELEMENT_IS_INPUT = 1 << 2;
 
-export const UNINITIALIZED = Symbol();
+export const UNINITIALIZED = Symbol('uninitialized');
 
 // Dev-time component properties
 export const FILENAME = Symbol('filename');
@@ -54,13 +54,5 @@ export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
 	'ownership_invalid_binding',
 	'ownership_invalid_mutation'
 ]);
-
-/**
- * Whitespace inside one of these elements will not result in
- * a whitespace node being created in any circumstances. (This
- * list is almost certainly very incomplete)
- * TODO this is currently unused
- */
-export const ELEMENTS_WITHOUT_TEXT = ['audio', 'datalist', 'dl', 'optgroup', 'select', 'video'];
 
 export const ATTACHMENT_KEY = '@attach';

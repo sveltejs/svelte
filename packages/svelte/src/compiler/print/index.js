@@ -3,9 +3,72 @@
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
 import { is_void } from '../../utils.js';
+import { regex_ends_with_whitespaces, regex_starts_with_whitespaces } from '../phases/patterns.js';
 
 /** Threshold for when content should be formatted on separate lines */
 const LINE_BREAK_THRESHOLD = 50;
+
+/** Characters that are valid in a CSS identifier without escaping */
+const REGEX_IDENTIFIER_CHAR = /^[a-zA-Z0-9_-]$/;
+
+/** Hex digits — a backslash followed by one of these is read as a hex escape */
+const REGEX_HEX_DIGIT = /[0-9a-fA-F]/;
+
+/**
+ * Re-escape a CSS identifier name so that it prints as valid CSS.
+ *
+ * `parse` decodes CSS escape sequences when building the AST — `\31` becomes `1`,
+ * `\a` becomes a newline — but keeps single-character escapes such as `\.` and
+ * escaped backslashes intact. When printing we therefore only need to escape the
+ * characters that would be illegal in a bare identifier: a leading digit, `-`
+ * followed by a digit, whitespace and control characters, and anything else that
+ * is not already escaped.
+ * @param {string} name
+ */
+function escape_identifier(name) {
+	let escaped = '';
+	let i = 0;
+
+	while (i < name.length) {
+		const char = name[i];
+
+		if (char === '\\') {
+			const next = name.charAt(i + 1);
+			if (next === '' || REGEX_HEX_DIGIT.test(next)) {
+				// A literal backslash in a name must itself be escaped: `\5c `
+				// re-parses to a backslash, whereas a backslash followed by a hex
+				// digit (or by nothing) would be read back as a hex escape.
+				escaped += '\\5c ';
+				i += 1;
+				continue;
+			}
+
+			// Already escaped — copy the backslash and the escaped character as-is.
+			escaped += '\\' + next;
+			i += 2;
+			continue;
+		}
+
+		const code = /** @type {number} */ (char.codePointAt(0));
+		const is_leading_digit = i === 0 && char >= '0' && char <= '9';
+		const is_leading_hyphen_digit =
+			i === 0 && char === '-' && name.charAt(i + 1) >= '0' && name.charAt(i + 1) <= '9';
+
+		if (
+			is_leading_digit ||
+			is_leading_hyphen_digit ||
+			!(REGEX_IDENTIFIER_CHAR.test(char) || code >= 160)
+		) {
+			escaped += `\\${code.toString(16)} `;
+		} else {
+			escaped += char;
+		}
+
+		i += 1;
+	}
+
+	return escaped;
+}
 
 /**
  * `print` converts a Svelte AST node back into Svelte source code.
@@ -19,6 +82,12 @@ const LINE_BREAK_THRESHOLD = 50;
  */
 export function print(ast, options = undefined) {
 	const comments = (ast.type === 'Root' && ast.comments) || [];
+	const state = {
+		preserve_whitespace: ast.type === 'Root' && ast.options?.preserveWhitespace ? 1 : 0
+	};
+	const css_comments =
+		(ast.type === 'Root' ? ast.css?.comments : ast.type === 'StyleSheet' ? ast.comments : null) ||
+		[];
 
 	return esrap.print(
 		ast,
@@ -28,18 +97,27 @@ export function print(ast, options = undefined) {
 				getLeadingComments: options?.getLeadingComments,
 				getTrailingComments: options?.getTrailingComments
 			}),
-			...svelte_visitors(comments),
-			...css_visitors
-		})
+			...svelte_visitors(comments, state),
+			...css_visitors(css_comments, comments)
+		}),
+		{
+			indent: options?.indent
+		}
 	);
 }
 
 /**
  * @param {Context} context
  * @param {AST.SvelteNode} node
+ * @param {boolean} preserve_whitespace
  * @param {boolean} allow_inline
  */
-function block(context, node, allow_inline = false) {
+function block(context, node, preserve_whitespace = false, allow_inline = false) {
+	if (preserve_whitespace) {
+		context.visit(node);
+		return;
+	}
+
 	const child_context = context.new();
 	child_context.visit(node);
 
@@ -47,7 +125,8 @@ function block(context, node, allow_inline = false) {
 		return;
 	}
 
-	if (allow_inline && !child_context.multiline) {
+	// Wrapping at fragment edges is safe even when adjacent children must stay together.
+	if (allow_inline && !child_context.multiline && child_context.measure() <= LINE_BREAK_THRESHOLD) {
 		context.append(child_context);
 	} else {
 		context.indent();
@@ -79,6 +158,7 @@ function attributes(node, attributes, context, comments) {
 	}
 
 	const separator = context.new();
+	let previous_attribute_end = node.start;
 
 	const children = attributes.map((attribute) => {
 		const child_context = context.new();
@@ -87,12 +167,16 @@ function attributes(node, attributes, context, comments) {
 			const comment = comments[comment_index];
 
 			if (comment.start < attribute.start) {
-				if (comment.type === 'Line') {
-					child_context.write('//' + comment.value);
-					child_context.newline();
-				} else {
-					child_context.write('/*' + comment.value + '*/'); // TODO match indentation?
-					child_context.append(separator);
+				// Inside a previous attribute's value can be comments which don't
+				// advance comment_index, therefore this additional check
+				if (comment.start >= previous_attribute_end) {
+					if (comment.type === 'Line') {
+						child_context.write('//' + comment.value);
+						child_context.newline();
+					} else {
+						child_context.write('/*' + comment.value + '*/'); // TODO match indentation?
+						child_context.append(separator);
+					}
 				}
 
 				comment_index += 1;
@@ -102,6 +186,7 @@ function attributes(node, attributes, context, comments) {
 		}
 
 		child_context.visit(attribute);
+		previous_attribute_end = attribute.end;
 
 		length += child_context.measure() + 1;
 
@@ -134,8 +219,9 @@ function attributes(node, attributes, context, comments) {
  * @param {AST.BaseElement} node
  * @param {Context} context
  * @param {AST.JSComment[]} comments
+ * @param {{ preserve_whitespace: number }} state
  */
-function base_element(node, context, comments) {
+function base_element(node, context, comments, state) {
 	const child_context = context.new();
 
 	child_context.write('<' + node.name);
@@ -161,174 +247,313 @@ function base_element(node, context, comments) {
 		child_context.write(`${multiline_attributes ? '' : ' '}/>`);
 	} else {
 		child_context.write('>');
-		block(child_context, node.fragment, true);
+		block(child_context, node.fragment, state.preserve_whitespace > 0, true);
 		child_context.write(`</${node.name}>`);
 	}
 
 	context.append(child_context);
 }
 
-/** @type {Visitors<AST.SvelteNode>} */
-const css_visitors = {
-	Atrule(node, context) {
-		context.write(`@${node.name}`);
-		if (node.prelude) context.write(` ${node.prelude}`);
+/**
+ * @param {AST.BaseElement} node
+ * @param {Context} context
+ * @param {AST.JSComment[]} comments
+ * @param {{ preserve_whitespace: number }} state
+ */
+function print_element(node, context, comments, state) {
+	const name = node.name.toLowerCase();
+	const preserve =
+		(node.type === 'RegularElement' || node.type === 'TitleElement') &&
+		(name === 'pre' ||
+			name === 'textarea' ||
+			name === 'title' ||
+			name === 'script' ||
+			name === 'style');
 
-		if (node.block) {
-			context.write(' ');
-			context.visit(node.block);
-		} else {
-			context.write(';');
-		}
-	},
+	if (preserve) state.preserve_whitespace += 1;
+	base_element(node, context, comments, state);
+	if (preserve) state.preserve_whitespace -= 1;
+}
 
-	AttributeSelector(node, context) {
-		context.write(`[${node.name}`);
-		if (node.matcher) {
-			context.write(node.matcher);
-			context.write(`"${node.value}"`);
-			if (node.flags) {
-				context.write(` ${node.flags}`);
-			}
-		}
-		context.write(']');
-	},
+/**
+ * @param {AST.CSS.CSSComment[]} comments
+ * @param {AST.JSComment[]} js_comments
+ * @returns {Visitors<AST.SvelteNode>}
+ */
+function css_visitors(comments, js_comments) {
+	let comment_index = 0;
 
-	Block(node, context) {
-		context.write('{');
+	/** @param {number} end */
+	const has_comment_before = (end) => comments[comment_index]?.start < end;
 
-		if (node.children.length > 0) {
-			context.indent();
-			context.newline();
+	/**
+	 * @param {Context} context
+	 * @param {AST.CSS.CSSComment} comment
+	 */
+	function write_comment(context, comment) {
+		context.write(`/*${comment.value}*/`);
+	}
 
-			let started = false;
+	/**
+	 * @param {Context} context
+	 * @param {number} end
+	 */
+	function write_inline_comments(context, end) {
+		let written = false;
 
-			for (const child of node.children) {
-				if (started) {
-					context.newline();
-				}
-
-				context.visit(child);
-
-				started = true;
-			}
-
-			context.dedent();
-			context.newline();
-		}
-
-		context.write('}');
-	},
-
-	ClassSelector(node, context) {
-		context.write(`.${node.name}`);
-	},
-
-	ComplexSelector(node, context) {
-		for (const selector of node.children) {
-			context.visit(selector);
-		}
-	},
-
-	Declaration(node, context) {
-		context.write(`${node.property}: ${node.value};`);
-	},
-
-	IdSelector(node, context) {
-		context.write(`#${node.name}`);
-	},
-
-	NestingSelector(node, context) {
-		context.write('&');
-	},
-
-	Nth(node, context) {
-		context.write(node.value);
-	},
-
-	Percentage(node, context) {
-		context.write(`${node.value}%`);
-	},
-
-	PseudoClassSelector(node, context) {
-		context.write(`:${node.name}`);
-
-		if (node.args) {
-			context.write('(');
-
-			let started = false;
-
-			for (const arg of node.args.children) {
-				if (started) {
-					context.write(', ');
-				}
-
-				context.visit(arg);
-
-				started = true;
-			}
-
-			context.write(')');
-		}
-	},
-
-	PseudoElementSelector(node, context) {
-		context.write(`::${node.name}`);
-	},
-
-	RelativeSelector(node, context) {
-		if (node.combinator) {
-			if (node.combinator.name === ' ') {
-				context.write(' ');
-			} else {
-				context.write(` ${node.combinator.name} `);
-			}
+		while (has_comment_before(end)) {
+			if (written) context.write(' ');
+			write_comment(context, comments[comment_index++]);
+			written = true;
 		}
 
-		for (const selector of node.selectors) {
-			context.visit(selector);
-		}
-	},
+		return written;
+	}
 
-	Rule(node, context) {
+	/**
+	 * @param {Context} context
+	 * @param {string} value
+	 * @param {number} end
+	 */
+	function write_value(context, value, end) {
+		let offset = 0;
+
+		while (has_comment_before(end)) {
+			const comment = comments[comment_index++];
+			const position = Math.max(offset, Math.min(comment.position ?? 0, value.length));
+			context.write(value.slice(offset, position));
+			write_comment(context, comment);
+			offset = position;
+		}
+
+		context.write(value.slice(offset));
+	}
+
+	/**
+	 * @param {Context} context
+	 * @param {Array<AST.CSS.Rule | AST.CSS.Atrule | AST.CSS.Declaration>} children
+	 * @param {number} end
+	 * @param {boolean} margins
+	 */
+	function print_children(context, children, end, margins) {
 		let started = false;
 
-		for (const selector of node.prelude.children) {
-			if (started) {
-				context.write(',');
+		const separate = () => {
+			if (!started) return;
+			if (margins) context.margin();
+			context.newline();
+		};
+
+		for (const child of children) {
+			while (has_comment_before(child.start)) {
+				separate();
+				write_comment(context, comments[comment_index++]);
+				started = true;
+			}
+
+			separate();
+			context.visit(child);
+			started = true;
+		}
+
+		while (has_comment_before(end)) {
+			separate();
+			write_comment(context, comments[comment_index++]);
+			started = true;
+		}
+	}
+
+	/**
+	 * @param {AST.CSS.SelectorList} node
+	 * @param {Context} context
+	 * @param {boolean} multiline
+	 */
+	function print_selector_list(node, context, multiline) {
+		let needs_separator = false;
+		let remaining_selectors = node.children.length;
+
+		for (const selector of node.children) {
+			while (has_comment_before(selector.start)) {
+				if (needs_separator) context.write(' ');
+				write_comment(context, comments[comment_index++]);
+				needs_separator = true;
+			}
+
+			if (needs_separator) {
+				if (multiline) context.newline();
+				else context.write(' ');
+			}
+
+			context.visit(selector);
+			needs_separator = true;
+			remaining_selectors -= 1;
+
+			if (remaining_selectors > 0) context.write(',');
+		}
+	}
+
+	return {
+		Atrule(node, context) {
+			context.write(`@${escape_identifier(node.name)}`);
+
+			const prelude_end = node.block?.start ?? node.end;
+			if (node.prelude || has_comment_before(prelude_end)) {
+				context.write(' ');
+				write_value(context, node.prelude, prelude_end);
+			}
+
+			if (node.block) {
+				context.write(' ');
+				context.visit(node.block);
+			} else {
+				context.write(';');
+			}
+		},
+
+		AttributeSelector(node, context) {
+			context.write(`[${escape_identifier(node.name)}`);
+			if (node.matcher) {
+				context.write(node.matcher);
+				context.write(`"${node.value}"`);
+				if (node.flags) context.write(` ${node.flags}`);
+			}
+			context.write(']');
+		},
+
+		Block(node, context) {
+			context.write('{');
+
+			if (node.children.length > 0 || has_comment_before(node.end)) {
+				context.indent();
+				context.newline();
+				print_children(context, node.children, node.end, false);
+				context.dedent();
 				context.newline();
 			}
 
-			context.visit(selector);
-			started = true;
-		}
+			context.write('}');
+		},
 
-		context.write(' ');
-		context.visit(node.block);
-	},
+		ClassSelector(node, context) {
+			context.write(`.${escape_identifier(node.name)}`);
+		},
 
-	SelectorList(node, context) {
-		let started = false;
-		for (const selector of node.children) {
-			if (started) {
-				context.write(', ');
+		ComplexSelector(node, context) {
+			for (const selector of node.children) context.visit(selector);
+		},
+
+		Declaration(node, context) {
+			context.write(`${node.property}: `);
+			write_value(context, node.value, node.end);
+			context.write(';');
+		},
+
+		IdSelector(node, context) {
+			context.write(`#${escape_identifier(node.name)}`);
+		},
+
+		NestingSelector(node, context) {
+			context.write('&');
+		},
+
+		Nth(node, context) {
+			context.write(node.value);
+		},
+
+		Percentage(node, context) {
+			context.write(node.value);
+		},
+
+		PseudoClassSelector(node, context) {
+			context.write(`:${escape_identifier(node.name)}`);
+
+			if (node.args) {
+				context.write('(');
+				context.visit(node.args);
+				if (has_comment_before(node.end)) {
+					context.write(' ');
+					write_inline_comments(context, node.end);
+				}
+				context.write(')');
+			}
+		},
+
+		PseudoElementSelector(node, context) {
+			context.write(`::${escape_identifier(node.name)}`);
+			if (node.args) {
+				context.write('(');
+				context.visit(node.args);
+				if (has_comment_before(node.end)) {
+					context.write(' ');
+					write_inline_comments(context, node.end);
+				}
+				context.write(')');
+			}
+		},
+
+		RelativeSelector(node, context) {
+			if (node.combinator) {
+				if (node.combinator.name === ' ') context.write(' ');
+				else context.write(` ${node.combinator.name} `);
 			}
 
-			context.visit(selector);
-			started = true;
-		}
-	},
+			for (const selector of node.selectors) context.visit(selector);
+		},
 
-	TypeSelector(node, context) {
-		context.write(node.name);
-	}
-};
+		Rule(node, context) {
+			print_selector_list(node.prelude, context, true);
+			context.write(' ');
+			if (write_inline_comments(context, node.block.start)) context.write(' ');
+			context.visit(node.block);
+		},
+
+		SelectorList(node, context) {
+			print_selector_list(node, context, false);
+		},
+
+		StyleSheet(node, context) {
+			context.write('<style');
+			attributes(node, node.attributes, context, js_comments);
+			context.write('>');
+
+			if (node.children.length > 0 || node.comments.length > 0) {
+				context.indent();
+				context.newline();
+				print_children(context, node.children, node.content.end, true);
+				context.dedent();
+				context.newline();
+			}
+
+			context.write('</style>');
+		},
+
+		TypeSelector(node, context) {
+			if (node.namespace !== undefined) {
+				context.write(node.namespace === '*' ? '*' : escape_identifier(node.namespace));
+				context.write('|');
+			}
+			context.write(node.name === '*' ? node.name : escape_identifier(node.name));
+		}
+	};
+}
+
+/**
+ * Attribute values are printed inside double quotes, but the raw text is
+ * preserved as written — and can contain `"` if the source used single quotes.
+ * @param {AST.Text} node
+ * @returns {AST.Text}
+ */
+function escape_attribute_text(node) {
+	if (!node.raw.includes('"')) return node;
+	return { ...node, raw: node.raw.replaceAll('"', '&quot;') };
+}
 
 /**
  * @param {AST.JSComment[]} comments
+ * @param {{ preserve_whitespace: number }} state
  * @returns {Visitors<AST.SvelteNode>}
  */
-const svelte_visitors = (comments) => ({
+const svelte_visitors = (comments, state) => ({
 	Root(node, context) {
 		if (node.options) {
 			context.write('<svelte:options');
@@ -346,12 +571,14 @@ const svelte_visitors = (comments) => ({
 		for (const item of [node.module, node.instance, node.fragment, node.css]) {
 			if (!item) continue;
 
-			if (started) {
+			if (started && state.preserve_whitespace === 0) {
 				context.margin();
 				context.newline();
 			}
 
-			context.visit(item);
+			const child_context = context.new();
+			child_context.visit(item);
+			context.append(child_context);
 			started = true;
 		}
 	},
@@ -365,72 +592,71 @@ const svelte_visitors = (comments) => ({
 	},
 
 	Fragment(node, context) {
-		/** @type {AST.SvelteNode[][]} */
+		if (state.preserve_whitespace > 0) {
+			for (const child of node.nodes) {
+				context.visit(child);
+			}
+			return;
+		}
+
+		const first = node.nodes[0];
+		const last = node.nodes.at(-1);
+		const has_surrounding_whitespace =
+			first?.type === 'Text' &&
+			regex_starts_with_whitespaces.test(first.raw) &&
+			last?.type === 'Text' &&
+			regex_ends_with_whitespaces.test(last.raw);
+
+		/** @type {{ nodes: AST.SvelteNode[]; leading_whitespace: boolean }[]} */
 		const items = [];
 
 		/** @type {AST.SvelteNode[]} */
 		let sequence = [];
+		let leading_whitespace = false;
 
 		const flush = () => {
-			items.push(sequence);
-			sequence = [];
+			if (sequence.length > 0) {
+				items.push({ nodes: sequence, leading_whitespace });
+				sequence = [];
+				leading_whitespace = false;
+			}
 		};
 
 		for (let i = 0; i < node.nodes.length; i += 1) {
-			let child_node = node.nodes[i];
-
+			const child_node = node.nodes[i];
 			const prev = node.nodes[i - 1];
 			const next = node.nodes[i + 1];
 
-			if (child_node.type === 'Text') {
-				child_node = { ...child_node }; // always clone, so we can safely mutate
-
-				child_node.data = child_node.data.replace(/[^\S]+/g, ' ');
-
-				// trim fragment
-				if (i === 0) {
-					child_node.data = child_node.data.trimStart();
-				}
-
-				if (i === node.nodes.length - 1) {
-					child_node.data = child_node.data.trimEnd();
-				}
-
-				if (child_node.data === '') {
-					continue;
-				}
-
-				if (child_node.data.startsWith(' ') && prev && prev.type !== 'ExpressionTag') {
-					flush();
-					child_node.data = child_node.data.trimStart();
-				}
-
-				if (child_node.data !== '') {
-					sequence.push({ ...child_node, data: child_node.data });
-
-					if (child_node.data.endsWith(' ') && next && next.type !== 'ExpressionTag') {
-						flush();
-						child_node.data = child_node.data.trimStart();
-					}
-				}
-			} else {
-				const is_block_element =
-					child_node.type === 'RegularElement' ||
-					child_node.type === 'Component' ||
-					child_node.type === 'SvelteHead' ||
-					child_node.type === 'SvelteFragment' ||
-					child_node.type === 'SvelteBoundary' ||
-					child_node.type === 'SvelteDocument' ||
-					child_node.type === 'SvelteSelf' ||
-					child_node.type === 'SvelteWindow' ||
-					child_node.type === 'SvelteComponent' ||
-					child_node.type === 'SvelteElement' ||
-					child_node.type === 'SlotElement' ||
-					child_node.type === 'TitleElement';
-
-				if (is_block_element && sequence.length > 0) flush();
+			if (child_node.type !== 'Text') {
 				sequence.push(child_node);
-				if (is_block_element) flush();
+				continue;
+			}
+
+			let raw = child_node.raw;
+
+			// Like the compiler, trim fragment edges, but preserve whitespace inside
+			// text and next to expressions. In particular, do not trim non-breaking spaces.
+			if (i === 0) raw = raw.replace(regex_starts_with_whitespaces, '');
+			if (i === node.nodes.length - 1) raw = raw.replace(regex_ends_with_whitespaces, '');
+			if (raw === '') continue;
+
+			// Only split sequences where there was collapsible whitespace already.
+			// Inserting a newline between adjacent elements would introduce a space.
+			if (prev?.type !== 'ExpressionTag' && regex_starts_with_whitespaces.test(raw)) {
+				flush();
+				leading_whitespace = true;
+				raw = raw.replace(regex_starts_with_whitespaces, '');
+			}
+
+			const trailing_whitespace =
+				next?.type !== 'ExpressionTag' && regex_ends_with_whitespaces.test(raw);
+
+			if (trailing_whitespace) raw = raw.replace(regex_ends_with_whitespaces, '');
+			if (raw !== '') sequence.push({ ...child_node, raw });
+
+			if (trailing_whitespace) {
+				flush();
+				leading_whitespace = true;
 			}
 		}
 
@@ -439,35 +665,39 @@ const svelte_visitors = (comments) => ({
 		let multiline = false;
 		let width = 0;
 
-		const child_contexts = items
-			.filter((x) => x.length > 0)
-			.map((sequence) => {
-				const child_context = context.new();
+		const child_contexts = items.map(({ nodes, leading_whitespace }) => {
+			const child_context = context.new();
 
-				for (const node of sequence) {
-					child_context.visit(node);
-					multiline ||= child_context.multiline;
-				}
+			for (const node of nodes) {
+				child_context.visit(node);
+				multiline ||= child_context.multiline;
+			}
 
-				width += child_context.measure();
+			width += child_context.measure() + (leading_whitespace ? 1 : 0);
 
-				return child_context;
-			});
+			return { context: child_context, leading_whitespace };
+		});
 
 		multiline ||= width > LINE_BREAK_THRESHOLD;
+		// Normally context.newline() also makes context.multiline true, but the below loop only
+		// does that if we have more than one child context. If there's one long text block inside
+		// with whitespace at the edges we wanna split that up, too.
+		context.multiline ||= has_surrounding_whitespace && width > LINE_BREAK_THRESHOLD * 2;
 
 		for (let i = 0; i < child_contexts.length; i += 1) {
 			const prev = child_contexts[i];
 			const next = child_contexts[i + 1];
 
-			context.append(prev);
+			context.append(prev.context);
 
 			if (next) {
-				if (prev.multiline || next.multiline) {
+				if (prev.context.multiline || next.context.multiline) {
 					context.margin();
 					context.newline();
 				} else if (multiline) {
 					context.newline();
+				} else if (next.leading_whitespace) {
+					context.write(' ');
 				}
 			}
 		}
@@ -475,10 +705,7 @@ const svelte_visitors = (comments) => ({
 
 	AnimateDirective(node, context) {
 		context.write(`animate:${node.name}`);
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -504,7 +731,7 @@ const svelte_visitors = (comments) => ({
 			}
 
 			for (const chunk of node.value) {
-				context.visit(chunk);
+				context.visit(chunk.type === 'Text' ? escape_attribute_text(chunk) : chunk);
 			}
 
 			if (node.value.length > 1 || node.value[0].type === 'Text') {
@@ -521,8 +748,10 @@ const svelte_visitors = (comments) => ({
 
 		if (node.pending) {
 			context.write('}');
-			block(context, node.pending);
-			context.write('{:');
+			block(context, node.pending, state.preserve_whitespace > 0);
+			if (node.then || node.catch) {
+				context.write('{:');
+			}
 		} else {
 			context.write(' ');
 		}
@@ -532,7 +761,7 @@ const svelte_visitors = (comments) => ({
 			if (node.value) context.visit(node.value);
 			context.write('}');
 
-			block(context, node.then);
+			block(context, node.then, state.preserve_whitespace > 0);
 
 			if (node.catch) {
 				context.write('{:');
@@ -540,11 +769,11 @@ const svelte_visitors = (comments) => ({
 		}
 
 		if (node.catch) {
-			context.write(node.value ? 'catch ' : 'catch');
+			context.write(node.error ? 'catch ' : 'catch');
 			if (node.error) context.visit(node.error);
 			context.write('}');
 
-			block(context, node.catch);
+			block(context, node.catch, state.preserve_whitespace > 0);
 		}
 
 		context.write('{/await}');
@@ -588,7 +817,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	Component(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	ConstTag(node, context) {
@@ -597,6 +826,48 @@ const svelte_visitors = (comments) => ({
 		for (let i = 0; i < declarators.length; i++) {
 			if (i > 0) context.write(', ');
 			context.visit(declarators[i]);
+		}
+
+		context.write('}');
+	},
+
+	DeclarationTag(node, context) {
+		context.write('{');
+
+		// This is duplicated from esrap's handling of VariableDeclaration,
+		// which we need to do in order to omit the trailing semicolon that esrap would add.
+		const open = context.new();
+		const join = context.new();
+		const child_context = context.new();
+
+		context.append(child_context);
+
+		child_context.write(`${node.declaration.kind} `);
+		child_context.append(open);
+
+		const declarations = node.declaration.declarations;
+		let first = true;
+
+		for (const d of declarations) {
+			if (!first) child_context.append(join);
+			first = false;
+
+			child_context.visit(d);
+		}
+
+		const length = child_context.measure() + 2 * (declarations.length - 1);
+
+		const multiline = child_context.multiline || (declarations.length > 1 && length > 50);
+
+		if (multiline) {
+			context.multiline = true;
+
+			if (declarations.length > 1) open.indent();
+			join.write(',');
+			join.newline();
+			if (declarations.length > 1) context.dedent();
+		} else {
+			join.write(', ');
 		}
 
 		context.write('}');
@@ -636,11 +907,11 @@ const svelte_visitors = (comments) => ({
 
 		context.write('}');
 
-		block(context, node.body);
+		block(context, node.body, state.preserve_whitespace > 0);
 
 		if (node.fallback) {
 			context.write('{:else}');
-			block(context, node.fallback);
+			block(context, node.fallback, state.preserve_whitespace > 0);
 		}
 
 		context.write('{/each}');
@@ -664,13 +935,13 @@ const svelte_visitors = (comments) => ({
 			context.visit(node.test);
 			context.write('}');
 
-			block(context, node.consequent);
+			block(context, node.consequent, state.preserve_whitespace > 0);
 		} else {
 			context.write('{#if ');
 			context.visit(node.test);
 			context.write('}');
 
-			block(context, node.consequent);
+			block(context, node.consequent, state.preserve_whitespace > 0);
 		}
 
 		if (node.alternate !== null) {
@@ -682,7 +953,7 @@ const svelte_visitors = (comments) => ({
 				)
 			) {
 				context.write('{:else}');
-				block(context, node.alternate);
+				block(context, node.alternate, state.preserve_whitespace > 0);
 			} else {
 				context.visit(node.alternate);
 			}
@@ -697,7 +968,7 @@ const svelte_visitors = (comments) => ({
 		context.write('{#key ');
 		context.visit(node.expression);
 		context.write('}');
-		block(context, node.fragment);
+		block(context, node.fragment, state.preserve_whitespace > 0);
 		context.write('{/key}');
 	},
 
@@ -718,10 +989,7 @@ const svelte_visitors = (comments) => ({
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -729,7 +997,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	RegularElement(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	RenderTag(node, context) {
@@ -739,7 +1007,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	SlotElement(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SnippetBlock(node, context) {
@@ -758,7 +1026,7 @@ const svelte_visitors = (comments) => ({
 		}
 
 		context.write(')}');
-		block(context, node.body);
+		block(context, node.body, state.preserve_whitespace > 0);
 		context.write('{/snippet}');
 	},
 
@@ -784,7 +1052,7 @@ const svelte_visitors = (comments) => ({
 			context.write('"');
 
 			for (const tag of node.value) {
-				context.visit(tag);
+				context.visit(tag.type === 'Text' ? escape_attribute_text(tag) : tag);
 			}
 
 			context.write('"');
@@ -793,36 +1061,12 @@ const svelte_visitors = (comments) => ({
 		}
 	},
 
-	StyleSheet(node, context) {
-		context.write('<style');
-		attributes(node, node.attributes, context, comments);
-		context.write('>');
-
-		if (node.children.length > 0) {
-			context.indent();
-			context.newline();
-
-			let started = false;
-
-			for (const child of node.children) {
-				if (started) {
-					context.margin();
-					context.newline();
-				}
-
-				context.visit(child);
-				started = true;
-			}
-
-			context.dedent();
-			context.newline();
-		}
-
-		context.write('</style>');
+	SvelteBody(node, context) {
+		print_element(node, context, comments, state);
 	},
 
 	SvelteBoundary(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteComponent(node, context) {
@@ -834,7 +1078,7 @@ const svelte_visitors = (comments) => ({
 		attributes(node, node.attributes, context, comments);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
-			block(context, node.fragment, true);
+			block(context, node.fragment, state.preserve_whitespace > 0, true);
 			context.write(`</svelte:component>`);
 		} else {
 			context.write(' />');
@@ -842,7 +1086,7 @@ const svelte_visitors = (comments) => ({
 	},
 
 	SvelteDocument(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteElement(node, context) {
@@ -855,7 +1099,7 @@ const svelte_visitors = (comments) => ({
 
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
-			block(context, node.fragment);
+			block(context, node.fragment, state.preserve_whitespace > 0);
 			context.write(`</svelte:element>`);
 		} else {
 			context.write(' />');
@@ -863,27 +1107,28 @@ const svelte_visitors = (comments) => ({
 	},
 
 	SvelteFragment(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteHead(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteSelf(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	SvelteWindow(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	Text(node, context) {
-		context.write(node.data);
+		context.write(node.raw);
+		context.multiline ||= /[\r\n]/.test(node.raw);
 	},
 
 	TitleElement(node, context) {
-		base_element(node, context, comments);
+		print_element(node, context, comments, state);
 	},
 
 	TransitionDirective(node, context) {
@@ -892,10 +1137,7 @@ const svelte_visitors = (comments) => ({
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -904,10 +1146,7 @@ const svelte_visitors = (comments) => ({
 
 	UseDirective(node, context) {
 		context.write(`use:${node.name}`);
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');

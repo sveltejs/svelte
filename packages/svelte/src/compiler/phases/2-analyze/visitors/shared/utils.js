@@ -4,7 +4,11 @@
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
-import { extract_identifiers, get_parent } from '../../../../utils/ast.js';
+import {
+	extract_identifiers,
+	get_attribute_expression,
+	get_parent
+} from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
@@ -243,44 +247,6 @@ export function is_pure(node, context) {
 }
 
 /**
- * Checks if the name is valid, which it is when it's not starting with (or is) a dollar sign or if it's a function parameter.
- * The second argument is the depth of the scope, which is there for backwards compatibility reasons: In Svelte 4, you
- * were allowed to define `$`-prefixed variables anywhere below the top level of components. Once legacy mode is gone, this
- * argument can be removed / the call sites adjusted accordingly.
- * @param {Binding | null} binding
- * @param {number | undefined} [function_depth]
- */
-export function validate_identifier_name(binding, function_depth) {
-	if (!binding) return;
-
-	const declaration_kind = binding.declaration_kind;
-
-	if (
-		declaration_kind !== 'synthetic' &&
-		declaration_kind !== 'param' &&
-		declaration_kind !== 'rest_param' &&
-		(!function_depth || function_depth <= 1)
-	) {
-		const node = binding.node;
-
-		if (node.name === '$') {
-			e.dollar_binding_invalid(node);
-		} else if (
-			node.name.startsWith('$') &&
-			// import type { $Type } from "" - these are normally already filtered out,
-			// but for the migration they aren't, and throwing here is preventing the migration to complete
-			// TODO -> once migration script is gone we can remove this check
-			!(
-				binding.initial?.type === 'ImportDeclaration' &&
-				/** @type {any} */ (binding.initial).importKind === 'type'
-			)
-		) {
-			e.dollar_prefix_invalid(node);
-		}
-	}
-}
-
-/**
  * Checks that the exported name is not a derived or reassigned state variable.
  * @param {Node} node
  * @param {Scope} scope
@@ -296,5 +262,23 @@ export function validate_export(node, scope, name) {
 
 	if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
 		e.state_invalid_export(node);
+	}
+}
+
+/**
+ * Warns when an event attribute uses the shorthand form (`{onclick}`) but the
+ * referenced name isn't declared, so it silently resolves to the global handler.
+ * @param {AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }} attribute
+ * @param {Context} context
+ */
+export function check_global_event_reference(attribute, context) {
+	const value = get_attribute_expression(attribute);
+
+	if (
+		value.type === 'Identifier' &&
+		value.name === attribute.name &&
+		!context.state.scope.get(value.name)
+	) {
+		w.attribute_global_event_reference(attribute, attribute.name);
 	}
 }

@@ -1,21 +1,31 @@
 import { describe, assert, it } from 'vitest';
-import { flushSync } from '../../src/index-client';
+import { flushSync, fork, tick } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
+	block,
+	branch,
 	effect,
 	effect_root,
 	render_effect,
 	user_effect,
 	user_pre_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
+import {
+	internal_set,
+	source,
+	state,
+	set,
+	update,
+	update_pre
+} from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { Batch, source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { DESTROYED } from '../../src/internal/client/constants';
+import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
@@ -39,9 +49,9 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 	};
 }
 
-function test(text: string, fn: (runes: boolean) => any) {
-	it(`${text} (legacy mode)`, run_test(false, fn));
-	it(`${text} (runes mode)`, run_test(true, fn));
+function test(text: string, fn: (runes: boolean) => any, timeout?: number) {
+	it(`${text} (legacy mode)`, run_test(false, fn), timeout);
+	it(`${text} (runes mode)`, run_test(true, fn), timeout);
 }
 
 test.only = (text: string, fn: (runes: boolean) => any) => {
@@ -55,6 +65,181 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	for (const [async, render] of [
+		[false, false],
+		[true, false],
+		[true, true]
+	]) {
+		test(`flushing writing ${render ? 'render' : 'user'} effects does linear work (async: ${async})`, () => {
+			if (async) enable_async_mode_flag();
+			const count = 100;
+			const trigger = state(0);
+			const create = render ? render_effect : effect;
+			const values = Array.from({ length: count }, () => state(0));
+			let visited = 0;
+
+			for (const [i, value] of values.entries()) {
+				create(() => {
+					if ($.get(trigger) === 0) return;
+					set(value, 1);
+					if (i === 0) {
+						// Count visits to batch writes, rather than asserting wall-clock timings.
+						const writes = Batch.ensure().current;
+						const iterate = writes[Symbol.iterator].bind(writes);
+						Object.defineProperty(writes, Symbol.iterator, {
+							value: function* () {
+								for (const entry of iterate()) {
+									visited++;
+									yield entry;
+								}
+							}
+						});
+					}
+				});
+			}
+
+			return () => {
+				try {
+					flushSync();
+					flushSync(() => set(trigger, 1));
+					assert.deepEqual(
+						values.map((value) => $.get(value)),
+						Array(count).fill(1)
+					);
+					assert.isAtMost(visited, count * 4);
+				} finally {
+					if (async) disable_async_mode_flag();
+				}
+			};
+		});
+	}
+
+	test('eager block teardowns retain the last write of an earlier effect', () => {
+		const trigger = state(0);
+		const earlier = state(0);
+		const show = state(true);
+		const log: string[] = [];
+
+		block(() => {
+			$.get(show);
+			return () => log.push(`${$.get(earlier)}:${$.get(show)}`);
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) {
+				set(earlier, 1);
+				set(earlier, 2);
+			}
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) set(show, false);
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			assert.deepEqual(log, ['2:true']);
+		};
+	});
+
+	it('invalidates batch view entries after their derived disconnects', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const value = derived(() => $.get(input) + 1);
+			const f = fork(() => {
+				const destroy = effect_root(() => {
+					render_effect(() => {
+						$.get(value);
+					});
+				});
+				assert.equal($.get(value), 1);
+				destroy();
+				assert.equal(input.reactions, null);
+
+				// The old cache entry relied on subscriptions. Subsequent reads must not.
+				assert.equal($.get(value), 1);
+				set(input, 1);
+				assert.equal($.get(value), 2);
+				set(input, 2);
+				assert.equal($.get(value), 3);
+
+				set(value, 10);
+				assert.equal($.get(value), 10);
+				set(input, 3);
+				assert.equal($.get(value), 4);
+			});
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
+	test('nested commit retains latest block dependencies', () => {
+		const trigger = state(0);
+		const mode = state(0);
+		const a = state(0);
+		const b = state(0);
+		const log: number[] = [];
+
+		block(() => {
+			$.get(trigger);
+			log.push($.get(mode) === 2 ? $.get(b) : $.get(a));
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) flushSync(() => set(mode, 2));
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			flushSync(() => set(b, 1));
+			assert.equal(log.at(-1), 1);
+		};
+	});
+
+	for (const render of [false, true]) {
+		test(`${render ? 'render' : 'user'} effects scheduled during traversal retain tree order`, () => {
+			if (render) enable_async_mode_flag();
+			const create = render ? render_effect : effect;
+			const value = state(0);
+			const item = source(0);
+			const log: string[] = [];
+			let first = true;
+
+			// Model an each block updating the source of an existing item.
+			block(() => {
+				internal_set(item, $.get(value));
+				if (first) {
+					first = false;
+					branch(() => {
+						create(() => {
+							log.push(`child:${$.get(item)}`);
+						});
+					});
+				}
+			});
+
+			create(() => {
+				log.push(`sibling:${$.get(value)}`);
+			});
+
+			return () => {
+				try {
+					flushSync();
+					assert.deepEqual(log, ['child:0', 'sibling:0']);
+					log.length = 0;
+					flushSync(() => set(value, 1));
+					assert.deepEqual(log, ['child:1', 'sibling:1']);
+				} finally {
+					if (render) disable_async_mode_flag();
+				}
+			};
+		});
+	}
+
 	test('effect with state and derived in it', () => {
 		const log: string[] = [];
 
@@ -150,6 +335,46 @@ describe('signals', () => {
 			// ensure we're not leaking reactions
 			assert.equal(obj.reactions, null);
 			assert.equal(d.reactions, null);
+		};
+	});
+
+	test('unowned deriveds track missing property checks on proxies', () => {
+		const value = proxy<Record<string, boolean>>({});
+
+		return () => {
+			const has_x = derived(() => 'x' in value);
+			const owns_y = derived(() => Object.hasOwn(value, 'y'));
+
+			assert.isFalse($.get(has_x));
+			assert.isFalse($.get(owns_y));
+
+			value.x = true;
+			value.y = true;
+
+			assert.isTrue($.get(has_x));
+			assert.isTrue($.get(owns_y));
+
+			delete value.x;
+			delete value.y;
+
+			assert.isFalse($.get(has_x));
+			assert.isFalse($.get(owns_y));
+		};
+	});
+
+	test('unowned deriveds track missing array indexes', () => {
+		const value = proxy<boolean[]>([]);
+
+		return () => {
+			const has_first = derived(() => 0 in value);
+
+			assert.isFalse($.get(has_first));
+
+			value.push(true);
+			assert.isTrue($.get(has_first));
+
+			value.length = 0;
+			assert.isFalse($.get(has_first));
 		};
 	});
 
@@ -507,6 +732,147 @@ describe('signals', () => {
 			assert(some_state.reactions === null);
 		};
 	});
+
+	it.each([false, true])(
+		'resets update counts for writes during traversal (tick: %s)',
+		async (use_tick) => {
+			const trigger = state(0);
+			const item = source(0);
+			const counts: number[] = [];
+
+			const destroy = effect_root(() => {
+				block(() => {
+					// Like each block item sources, this is first written during traversal,
+					// after the batch has already started processing.
+					internal_set(item, $.get(trigger));
+					counts.push(item.updated?.get('')?.count ?? 0);
+				});
+			});
+
+			try {
+				for (let i = 1; i <= 12; i++) {
+					set(trigger, i);
+					if (use_tick) {
+						await tick();
+					} else {
+						flushSync();
+					}
+
+					assert.equal(item.v, i);
+					assert.isNull(item.updated);
+				}
+				assert.deepEqual(counts, [0, ...Array(12).fill(1)]);
+			} finally {
+				destroy();
+			}
+		}
+	);
+
+	it('cleans up update stacks recorded before flushing', () => {
+		const value = source(0);
+		const destroy = effect_root(() => {
+			block(() => {
+				for (let i = 1; i <= 6; i++) {
+					internal_set(value, i);
+					assert.equal(value.updated?.get('')?.count, i);
+					assert.equal(value.updated?.size, i <= 5 ? 1 : 2);
+				}
+			});
+		});
+
+		try {
+			assert.equal(value.updated?.size, 2);
+			flushSync();
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+		}
+	});
+
+	it('retains update counts across batches within a flush', () => {
+		push({}, true);
+		const trigger = state(0);
+		const value = source(0);
+		const counts: number[] = [];
+		const stacks: number[] = [];
+		const destroy = effect_root(() => {
+			user_effect(() => {
+				const n = $.get(trigger) + 1;
+				internal_set(value, n);
+				counts.push(value.updated?.get('')?.count ?? 0);
+				stacks.push(value.updated?.size ?? 0);
+				if (n < 7) set(trigger, n);
+			});
+		});
+
+		try {
+			flushSync();
+			assert.deepEqual(counts, [1, 2, 3, 4, 5, 6, 7]);
+			assert.deepEqual(stacks, [1, 1, 1, 1, 1, 2, 2]);
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+			pop();
+		}
+	});
+
+	it('cleans up traversal update counts when an effect throws', () => {
+		const trigger = state(false);
+		const value = source(0);
+		const destroy = effect_root(() => {
+			block(() => {
+				if ($.get(trigger)) {
+					internal_set(value, 1);
+					throw new Error('boom');
+				}
+			});
+		});
+
+		try {
+			set(trigger, true);
+			assert.throws(() => flushSync(), 'boom');
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+		}
+	});
+
+	it.each([false, true])(
+		'processes successive batches without growing the stack (async: %s)',
+		(async_mode) => {
+			if (async_mode) enable_async_mode_flag();
+			push({}, true);
+			const value = state(0);
+			const depths: number[] = [];
+			const limit = Error.stackTraceLimit;
+			const destroy = effect_root(() => {
+				user_effect(() => {
+					const n = $.get(value);
+					if (n === 0 || n === 20) {
+						depths.push(new Error().stack!.split('\n').length);
+					}
+					if (n < 20) set(value, n + 1);
+				});
+			});
+
+			try {
+				// The default limit hides the recursive batch-processing frames.
+				Error.stackTraceLimit = Infinity;
+				flushSync();
+				assert.equal($.get(value), 20);
+				assert.lengthOf(depths, 2);
+				assert.equal(depths[1], depths[0]);
+			} finally {
+				Error.stackTraceLimit = limit;
+				destroy();
+				pop();
+				if (async_mode) disable_async_mode_flag();
+			}
+		}
+	);
 
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
@@ -1391,8 +1757,12 @@ describe('signals', () => {
 		};
 	});
 
-	test('derived whose original parent effect has been destroyed keeps updating', () => {
+	test('derived whose original parent effect has been destroyed no longer updates', () => {
 		return () => {
+			const warn = console.warn;
+			const warnings: string[] = [];
+			console.warn = (...args) => warnings.push(...args);
+
 			let count: Source<number>;
 			let double: Derived<number>;
 			const destroy = effect_root(() => {
@@ -1404,17 +1774,23 @@ describe('signals', () => {
 
 			flushSync();
 			assert.equal($.get(double!), 0);
-
-			destroy();
 			flushSync();
 
 			set(count!, 1);
 			flushSync();
 			assert.equal($.get(double!), 2);
 
+			destroy();
+
+			assert.equal($.get(double!), 2);
+			assert.equal(warnings.length, 0); // value is unchanged, no warning yet
+
 			set(count!, 2);
 			flushSync();
-			assert.equal($.get(double!), 4);
+			assert.equal($.get(double!), 2);
+			assert.ok(warnings.some((str) => str.includes('derived_inert')));
+
+			console.warn = warn;
 		};
 	});
 
@@ -1492,5 +1868,322 @@ describe('signals', () => {
 
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
 		};
+	});
+
+	test('derived read in an untracked context should not leak in deps reactions', () => {
+		return () => {
+			let s = state('hello');
+			let a = derived(() => $.get(s));
+			let b = derived(() => $.get(a));
+
+			let destroy = effect_root(() => {
+				$.get(b);
+			});
+
+			destroy();
+
+			// a was spuriously added to s.reactions
+			// even though the entire derived chain was read in an untracked context
+			assert.equal(s.reactions, null);
+		};
+	});
+
+	test('untracked derived reads inside effects do not reconnect disconnected dependencies', () => {
+		return () => {
+			const source = state({ n: 1, items: [1] });
+			const data = derived(() => $.get(source));
+			const items = derived(() => $.get(data).items);
+			const count = derived(() => Math.max(1, $.get(items).length));
+			const snapshot = derived(() => ({ n: $.get(data).n, count: $.get(count) }));
+			const show = state(true);
+			const trigger = state(0);
+			let rendered = -1;
+			let seen: { n: number; count: number } | undefined;
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					if ($.get(show)) {
+						render_effect(() => {
+							rendered = $.get(snapshot).count;
+						});
+					}
+				});
+
+				render_effect(() => {
+					$.get(trigger);
+					seen = $.untrack(() => $.get(snapshot));
+				});
+			});
+
+			flushSync();
+			assert.equal(rendered, 1);
+
+			flushSync(() => set(show, false));
+			assert.equal(source.reactions, null);
+
+			flushSync(() => set(source, { n: 2, items: [1, 2] }));
+			flushSync(() => set(trigger, 1));
+
+			assert.deepEqual(seen, { n: 2, count: 2 });
+			assert.equal(source.reactions, null);
+			assert.equal(items.reactions, null);
+			assert.equal(count.reactions, null);
+			assert.equal(items.f & CONNECTED, 0);
+			assert.equal(count.f & CONNECTED, 0);
+
+			flushSync(() => set(show, true));
+			assert.equal(rendered, 2);
+			assert.equal(source.reactions?.length, 1);
+
+			flushSync(() => set(source, { n: 3, items: [1] }));
+			assert.equal(rendered, 1);
+
+			destroy();
+			flushSync();
+			assert.equal(source.reactions, null);
+		};
+	});
+
+	test('reconnecting deriveds does not duplicate subscriptions', () => {
+		const enabled = state(false);
+		const shared = state(1);
+		let value!: Derived<number>;
+
+		const destroy_owner = effect_root(() => {
+			value = derived(() => ($.get(enabled) ? $.get(shared) : 0));
+			$.untrack(() => $.get(value));
+		});
+
+		const nested_enabled = state(false);
+		const nested_shared = state(1);
+		let inner!: Derived<number>;
+		let outer!: Derived<number>;
+
+		const destroy_nested_owner = effect_root(() => {
+			inner = derived(() => ($.get(nested_enabled) ? $.get(nested_shared) : 0));
+			outer = derived(() => $.get(inner));
+			$.untrack(() => $.get(outer));
+		});
+
+		return () => {
+			flushSync(() => set(enabled, true));
+			const destroy_reader = effect_root(() => {
+				render_effect(() => {
+					$.get(value);
+				});
+			});
+
+			const enabled_subscriptions = enabled.reactions?.length;
+			const shared_subscriptions = shared.reactions?.length;
+			const enabled_reaction = enabled.reactions?.[0];
+			const shared_reaction = shared.reactions?.[0];
+
+			destroy_reader();
+			destroy_owner();
+
+			assert.equal(enabled_subscriptions, 1);
+			assert.equal(shared_subscriptions, 1);
+			assert.equal(enabled_reaction, shared_reaction);
+			assert.equal(enabled.reactions, null);
+			assert.equal(shared.reactions, null);
+
+			flushSync(() => set(nested_enabled, true));
+			const destroy_nested_reader = effect_root(() => {
+				render_effect(() => {
+					$.get(outer);
+				});
+			});
+
+			const nested_enabled_subscriptions = nested_enabled.reactions?.length;
+			const nested_shared_subscriptions = nested_shared.reactions?.length;
+			const nested_enabled_reaction = nested_enabled.reactions?.[0] as Derived<number> | undefined;
+			const nested_shared_reaction = nested_shared.reactions?.[0];
+			const inner_subscriptions = nested_enabled_reaction?.reactions?.length;
+
+			destroy_nested_reader();
+			destroy_nested_owner();
+
+			assert.equal(nested_enabled_subscriptions, 1);
+			assert.equal(nested_shared_subscriptions, 1);
+			assert.equal(inner_subscriptions, 1);
+			assert.equal(nested_enabled_reaction, nested_shared_reaction);
+			assert.equal(nested_enabled.reactions, null);
+			assert.equal(nested_shared.reactions, null);
+			assert.equal(nested_enabled_reaction?.reactions, null);
+		};
+	});
+
+	// https://github.com/sveltejs/svelte/issues/18414
+	test('a reaction that throws after first-reading a fresh derived does not leak it', () => {
+		const src = state(0);
+		const pane = derived(() => $.get(src));
+		const base = derived(() => $.get(pane) + ':base');
+		const extra = derived(() => $.get(pane) + ':extra');
+		const flag = state(false);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				if ($.get(flag)) {
+					$.get(extra);
+					throw new Error('render boom');
+				} else {
+					$.get(base);
+				}
+			});
+		});
+
+		return () => {
+			try {
+				flushSync(() => set(flag, true));
+			} catch {}
+
+			destroy();
+
+			assert.equal(src.reactions, null);
+		};
+	});
+
+	test('a derived that throws on its first run re-runs when its dependencies change', () => {
+		const s = state(0);
+		const fn = () => {
+			if ($.get(s) === 0) throw new Error('boom');
+			return $.get(s);
+		};
+		const owned = derived(fn);
+		const previous_effect = $.active_effect;
+		$.set_active_effect(null);
+		const unowned = derived(fn);
+		$.set_active_effect(previous_effect);
+		const log: any[] = [];
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				for (const d of [owned, unowned]) {
+					try {
+						log.push($.get(d));
+					} catch {
+						log.push('error');
+					}
+				}
+			});
+		});
+
+		return () => {
+			assert.notEqual(owned.parent, null);
+			assert.equal(unowned.parent, null);
+
+			flushSync();
+			assert.deepEqual(log, ['error', 'error']);
+
+			flushSync(() => set(s, 1));
+			assert.deepEqual(log, ['error', 'error', 1, 1]);
+
+			destroy();
+			assert.equal(s.reactions, null);
+		};
+	});
+
+	// https://github.com/sveltejs/svelte/issues/16814
+	it('does not treat values created for inactive reactions as current', () => {
+		push({}, true);
+
+		const trigger = state(false);
+		const value = state(0);
+		const log: number[] = [];
+		let inactive_reaction: Effect;
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				$.get(trigger);
+				inactive_reaction = $.active_reaction as Effect;
+			});
+
+			render_effect(() => {
+				$.get(trigger);
+
+				const reaction = $.active_reaction;
+				$.set_active_reaction(inactive_reaction);
+				$.push_reaction_value(value);
+				$.set_active_reaction(reaction);
+
+				log.push($.get(value));
+			});
+		});
+
+		try {
+			flushSync();
+			flushSync(() => set(trigger, true));
+			flushSync(() => set(value, 1));
+
+			assert.deepEqual(log, [0, 0, 1]);
+		} finally {
+			destroy();
+			pop();
+		}
+	});
+
+	it('prunes the edges of a block effect once the batches that ran it commit', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1), state(2), state(3)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+			for (let i = 1; i < items.length; i++) flushSync(() => set(index, i));
+
+			assert.deepEqual(
+				items.map((item) => item.reactions !== null),
+				[false, false, false, true]
+			);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('prunes the edges of a block effect that only a discarded batch needed', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+		flushSync();
+
+		const pending = fork(() => set(index, 1));
+
+		try {
+			// the fork's run of the block read `items[1]`
+			assert.notEqual(items[1].reactions, null);
+
+			pending.discard();
+			assert.equal(items[1].reactions, null);
+			assert.notEqual(items[0].reactions, null);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			pending.discard();
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
+		}
 	});
 });
