@@ -137,11 +137,17 @@ export class Boundary {
 	 */
 	#effect_pending = null;
 
-	/**
-	 * Created on first use by `get_effect_pending` (which returns early without async mode)
-	 * @type {(() => void) | null}
-	 */
-	#effect_pending_subscriber = null;
+	#effect_pending_subscriber = createSubscriber(() => {
+		this.#effect_pending = source(this.#local_pending_count);
+
+		if (DEV) {
+			tag(this.#effect_pending, '$effect.pending()');
+		}
+
+		return () => {
+			this.#effect_pending = null;
+		};
+	});
 
 	/**
 	 * @param {TemplateNode} node
@@ -336,7 +342,6 @@ export class Boundary {
 				this.#children(this.#anchor);
 			});
 
-			// (without async mode, nothing is ever added to `#pending`)
 			if (!async_mode_flag || this.#pending.size === 0) {
 				this.is_pending = false;
 			} else {
@@ -396,7 +401,6 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	is_ready(batch) {
-		// without async mode there are no forks, and nothing is ever added to `#pending`
 		if (!async_mode_flag) return true;
 
 		if (batch.is_fork && this.#pending.size > 0) {
@@ -453,7 +457,6 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	increment(effect, batch) {
-		// only called via `increment_pending`, i.e. for async work
 		if (!async_mode_flag) return;
 
 		var pending = this.#pending.get(batch);
@@ -471,7 +474,6 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	decrement(effect, batch) {
-		// only called via `increment_pending`, i.e. for async work
 		if (!async_mode_flag) return;
 
 		var pending = /** @type {Map<Effect, number>} */ (this.#pending.get(batch));
@@ -503,7 +505,6 @@ export class Boundary {
 	 * @param {1 | -1} d
 	 */
 	update_effect_pending(d) {
-		// only called via `increment_pending`, i.e. for async work
 		if (!async_mode_flag) return;
 
 		this.#local_pending_count += d;
@@ -520,22 +521,6 @@ export class Boundary {
 	}
 
 	get_effect_pending() {
-		// Without async mode nothing is ever pending, so skip the subscriber and the code it pulls
-		// into the bundle. (This assumes async mode isn't turned on after a reader has run)
-		if (!async_mode_flag) return 0;
-
-		this.#effect_pending_subscriber ??= createSubscriber(() => {
-			this.#effect_pending = source(this.#local_pending_count);
-
-			if (DEV) {
-				tag(this.#effect_pending, '$effect.pending()');
-			}
-
-			return () => {
-				this.#effect_pending = null;
-			};
-		});
-
 		this.#effect_pending_subscriber();
 		return get(/** @type {Source<number>} */ (this.#effect_pending));
 	}
@@ -552,7 +537,6 @@ export class Boundary {
 			throw error;
 		}
 
-		// (`fork` requires async mode)
 		if (async_mode_flag && current_batch?.is_fork) {
 			if (this.#main_effect) current_batch.skip_effect(this.#main_effect);
 			if (this.#pending_effect) current_batch.skip_effect(this.#pending_effect);

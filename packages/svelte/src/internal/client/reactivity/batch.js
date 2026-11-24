@@ -348,9 +348,6 @@ export class Batch {
 	}
 
 	#is_deferred() {
-		// without async there are no forks, and no pending work (see `increment`).
-		// (Checks like this one sit inside the method because bundlers never remove class
-		// methods; they can only fold `async_mode_flag` and drop the code behind it)
 		if (!async_mode_flag) return false;
 
 		if (this.is_fork) return true;
@@ -397,7 +394,6 @@ export class Batch {
 	 * @param {Effect | null} [root]
 	 */
 	is_blocked_by(effect, root = null) {
-		// only asked about pending async work (see `#is_deferred` and `Boundary#is_ready`)
 		if (!async_mode_flag) return false;
 
 		for (var e = /** @type {Effect | null} */ (effect); e !== null && e !== root; e = e.parent) {
@@ -749,8 +745,6 @@ export class Batch {
 	 * @param {Iterable<Source>} sources
 	 */
 	#revalidate(sources) {
-		// only called in async mode (see `#process_step` and `#commit`).
-		// The check lets bundlers drop the body
 		if (!async_mode_flag) return;
 
 		// deriveds added during iteration are visited too, so this doubles as a worklist
@@ -1106,8 +1100,6 @@ export class Batch {
 	}
 
 	#commit() {
-		// only called in async mode (see `commit_writes`).
-		// The check lets bundlers drop the body
 		if (!async_mode_flag) return;
 
 		// If there are other pending batches, they now need to be 'rebased' —
@@ -1182,8 +1174,6 @@ export class Batch {
 	 * If it has pending work it stays linked, coming first from now on (see `#move_to_front`)
 	 */
 	commit_writes() {
-		// only called in async mode (see `#process_step` and `hydrate`).
-		// The check lets bundlers drop the body
 		if (!async_mode_flag) return;
 
 		this.#commit();
@@ -1194,7 +1184,6 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	increment(effect) {
-		// pending work only comes from code compiled with `experimental.async` (see `increment_pending`)
 		if (!async_mode_flag) return;
 
 		var count = this.#pending.get(effect) ?? 0;
@@ -1205,7 +1194,6 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	decrement(effect) {
-		// see `increment`
 		if (!async_mode_flag) return;
 
 		var count = this.#pending.get(effect) ?? 0;
@@ -1541,8 +1529,6 @@ export class Batch {
 	 * on: This ensures logic about who sees what values in intersects/merge/etc work correctly.
 	 */
 	#move_to_front() {
-		// only called in async mode (see `commit_writes`).
-		// The check lets bundlers drop the body
 		if (!async_mode_flag) return;
 
 		var prev = /** @type {Batch} */ (this.prev);

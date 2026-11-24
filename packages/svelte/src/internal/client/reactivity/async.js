@@ -52,7 +52,6 @@ export function flatten(blockers, sync, async, fn) {
 		});
 	}
 
-	// The compiler only creates blockers and async expressions for `await`, which requires async mode
 	if (!async_mode_flag) {
 		fn(deriveds);
 		return;
