@@ -10,6 +10,12 @@ import { sanitize_location } from '../utils.js';
 export let warnings = [];
 
 /**
+ * Whether the tree may carry TypeScript's fields, which the walker's table does not list. A compile's
+ * parse erases them.
+ */
+export let typed = true;
+
+/**
  * The filename relative to the rootDir (if specified).
  * This should not be used in the compiler output except in dev mode
  * @type {string}
@@ -138,9 +144,10 @@ export function is_ignored(node, code) {
 
 /**
  * Call this to reset the compiler state. Should be called before each compilation.
- * @param {{ warning?: (warning: Warning) => boolean; filename: string | undefined }} state
+ * @param {{ warning?: (warning: Warning) => boolean; filename: string | undefined; typed?: boolean }} state
  */
 export function reset(state) {
+	typed = state.typed ?? true;
 	dev = false;
 	runes = false;
 	component_name = UNKNOWN_FILENAME;

@@ -1,6 +1,7 @@
 /** @import { Context, Visitor, Visitors } from 'zimmerframe' */
 import { js } from '@teasel/parser';
 import { grammar } from '../phases/1-parse/grammar.js';
+import * as state from '../state.js';
 
 /**
  * The fields holding nodes, by type: the grammar's, with what phase 1 reshapes. The `tag` it
@@ -26,6 +27,7 @@ const EXTRAS = js.extras;
 function fields(node) {
 	const listed = CHILDREN[node.type];
 	if (listed !== undefined) {
+		if (!state.typed) return listed;
 		let plain = true;
 		for (let i = 0; i < EXTRAS.length; i++) {
 			if (node[EXTRAS[i]] != null) {

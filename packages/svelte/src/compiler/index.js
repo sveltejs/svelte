@@ -20,7 +20,7 @@ export { print } from './print/index.js';
  */
 export function compile(source, options) {
 	source = remove_bom(source);
-	state.reset({ warning: options.warningFilter, filename: options.filename });
+	state.reset({ warning: options.warningFilter, filename: options.filename, typed: false });
 
 	const validated = validate_component_options(options, '');
 
@@ -52,7 +52,7 @@ export function compile(source, options) {
  */
 export function compileModule(source, options) {
 	source = remove_bom(source);
-	state.reset({ warning: options.warningFilter, filename: options.filename });
+	state.reset({ warning: options.warningFilter, filename: options.filename, typed: false });
 	const validated = validate_module_options(options, '');
 
 	const analysis = analyze_module(source, validated);
