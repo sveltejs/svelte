@@ -88,9 +88,10 @@ function encode(key, value, unresolved) {
 
 			(entry.promises ??= []).push(p);
 
-			// the replacer must return a `js` fragment — interpolated values are serialized,
-			// so `"${id}"` renders as e.g. `"1"`, matching `placeholder`
-			return js`"${id}"`;
+			const fragment = js`"${id}"`;
+
+			// an app that resolves devalue 5 passes uneval as js, its string result would replace the promise value with garbage
+			return typeof fragment === 'string' ? /** @type {any} */ (placeholder) : fragment;
 		}
 	};
 
