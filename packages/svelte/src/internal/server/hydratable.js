@@ -58,13 +58,15 @@ function encode(key, value, unresolved) {
 	/** @type {UnevalReplacer} */
 	const replacer = (value, js) => {
 		if (is_promise(value)) {
-			// we serialize promises as `"${i}"`, because it's impossible for that string
-			// to occur 'naturally' (since the quote marks would have to be escaped)
+			// we serialize promises as `<${i}>`, because it's impossible for that string
+			// to occur 'naturally' — devalue escapes `<` as `\u003C` in every string, key,
+			// regex source and URL it outputs, and never emits it in generated code.
+			// (a quoted placeholder like `"1"` is not safe, since it's how the string '1' is serialized.)
 			// this placeholder is returned synchronously from `uneval`, which includes it in the
 			// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
 			// be replaced.
 			const id = uid++;
-			const placeholder = `"${id}"`;
+			const placeholder = `<${id}>`;
 			const p = value
 				.then((v) => {
 					entry.serialized = entry.serialized.replace(
@@ -89,8 +91,8 @@ function encode(key, value, unresolved) {
 			(entry.promises ??= []).push(p);
 
 			// the replacer must return a `js` fragment — interpolated values are serialized,
-			// so `"${id}"` renders as e.g. `"1"`, matching `placeholder`
-			const fragment = js`"${id}"`;
+			// so `"${id}"` renders as e.g. `<1>`, matching `placeholder`
+			const fragment = js`<${id>"`;
 
 			// A user may still be using SvelteKit 2/3 which may resolve to devalue v5
 			// rather than v6 on the server because of npm's node_modules structure

@@ -39,7 +39,9 @@ export default [
 	{
 		languageOptions: {
 			parserOptions: {
-				projectService: true,
+				projectService: {
+					allowDefaultProject: ['vitest-reporter.js']
+				},
 				tsconfigRootDir: import.meta.dirname
 			}
 		},
