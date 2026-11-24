@@ -78,12 +78,22 @@ export function bind_dialog_open(dialog, get, set = get) {
 	// browsers without the toggle event for dialogs still fire close
 	dialog.addEventListener('close', handler);
 
+	var initial = true;
+
 	render_effect(() => {
 		var value = !!get();
 
-		if (value === dialog.open) return;
+		if (value === dialog.open) {
+			initial = false;
+			return;
+		}
 
-		if (value) {
+		// The first value is applied like SSR's `open` attribute. `show()` would run before the
+		// dialog is in the document and fire a `toggle` event that hydration doesn't
+		if (initial) {
+			initial = false;
+			dialog.toggleAttribute('open', value);
+		} else if (value) {
 			dialog.show();
 		} else {
 			dialog.close();
