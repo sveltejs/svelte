@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { Renderer } from '../custom-renderer/types.js' */
 import { hydrate_node, hydrating, reset, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
@@ -550,13 +551,29 @@ export function get_node_value(node) {
 }
 
 /**
+ * Passes a value the DOM keeps as a property (`value`, `checked`, etc.) to a custom renderer as-is,
+ * or removes the attribute when it is `null` or `undefined`, like any other attribute
+ * @param {Renderer<any>} renderer
+ * @param {Element} element
+ * @param {string} name
+ * @param {any} value
+ */
+export function set_renderer_property(renderer, element, name, value) {
+	if (value == null) {
+		renderer.removeAttribute(element, name);
+	} else {
+		renderer.setAttribute(element, name, value);
+	}
+}
+
+/**
  * Sets the `value` property on an element. For custom renderers, uses `setAttribute`.
  * @param {Element} element
  * @param {any} value
  */
 export function set_element_value(element, value) {
 	if (current_renderer) {
-		current_renderer.setAttribute(element, 'value', value ?? '');
+		set_renderer_property(current_renderer, element, 'value', value);
 		return;
 	}
 	// @ts-expect-error
@@ -570,11 +587,7 @@ export function set_element_value(element, value) {
  */
 export function set_element_checked(element, checked) {
 	if (current_renderer) {
-		if (checked) {
-			current_renderer.setAttribute(element, 'checked', '');
-		} else {
-			current_renderer.removeAttribute(element, 'checked');
-		}
+		set_renderer_property(current_renderer, element, 'checked', checked);
 		return;
 	}
 	// @ts-expect-error
@@ -583,13 +596,13 @@ export function set_element_checked(element, checked) {
 
 /**
  * Sets the `defaultValue` property on an element without affecting the current `value`.
- * For custom renderers, uses `setAttribute` on `defaultvalue`.
+ * For custom renderers, uses `setAttribute` on `defaultValue`.
  * @param {Element} element
  * @param {string} value
  */
 export function set_element_default_value(element, value) {
 	if (current_renderer) {
-		current_renderer.setAttribute(element, 'defaultValue', value);
+		set_renderer_property(current_renderer, element, 'defaultValue', value);
 		return;
 	}
 	// @ts-expect-error
@@ -602,17 +615,13 @@ export function set_element_default_value(element, value) {
 
 /**
  * Sets the `defaultChecked` property on an element without affecting the current `checked` state.
- * For custom renderers, uses `setAttribute` on `defaultchecked`.
+ * For custom renderers, uses `setAttribute` on `defaultChecked`.
  * @param {Element} element
  * @param {boolean} checked
  */
 export function set_element_default_checked(element, checked) {
 	if (current_renderer) {
-		if (checked) {
-			current_renderer.setAttribute(element, 'defaultChecked', '');
-		} else {
-			current_renderer.removeAttribute(element, 'defaultChecked');
-		}
+		set_renderer_property(current_renderer, element, 'defaultChecked', checked);
 		return;
 	}
 	// @ts-expect-error
