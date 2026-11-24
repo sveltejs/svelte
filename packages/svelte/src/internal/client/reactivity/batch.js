@@ -1791,6 +1791,7 @@ function flush_queued_effects(effects, earlier_writes = null) {
 				}
 			}
 		}
+
 		captured_writes?.clear();
 	}
 
