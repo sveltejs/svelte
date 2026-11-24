@@ -5,10 +5,12 @@ import { label, tag } from '../internal/client/dev/tracing.js';
 import {
 	active_reaction,
 	get,
+	increment_write_version,
 	untrack,
 	untracking,
 	update_version
 } from '../internal/client/runtime.js';
+import { first_batch } from '../internal/client/reactivity/batch.js';
 import { async_mode_flag } from '../internal/flags/index.js';
 
 const MISSING = Symbol('missing');
@@ -70,6 +72,13 @@ export class SvelteMap extends Map {
 	 * (and retain) a source for every key that is ever looked up
 	 */
 	#missing = state(0);
+	/**
+	 * In async mode, we create per-key sources for missing keys that are read
+	 * inside reactions. Once `#sources` reaches this size, we schedule a sweep
+	 * to remove the ones that are no longer needed (see `#prune`)
+	 */
+	#prune_at = 16;
+	#prune_scheduled = false;
 	#update_version = update_version || -1;
 
 	/**
@@ -142,9 +151,45 @@ export class SvelteMap extends Map {
 			}
 
 			sources.set(key, s);
+
+			if (sources.size >= this.#prune_at && !this.#prune_scheduled) {
+				this.#prune_scheduled = true;
+				// Sweep in a microtask rather than now — the dependencies of a reaction
+				// are only linked once it has finished running, so sources that were
+				// read by a reaction that is currently running would look unused
+				queueMicrotask(() => this.#prune());
+			}
 		}
 
 		return get(s);
+	}
+
+	/**
+	 * Remove sources for missing keys that nothing depends on any more,
+	 * so that looking up lots of different keys doesn't leak memory
+	 */
+	#prune() {
+		this.#prune_scheduled = false;
+
+		// Batches hold onto the sources they wrote (and their views of them),
+		// so only prune when there are none. If there are, we'll try again
+		// the next time a source is created for a missing key
+		if (first_batch !== null) return;
+
+		var sources = this.#sources;
+
+		for (var [key, s] of sources) {
+			if (s.reactions === null && s.v === MISSING) {
+				sources.delete(key);
+
+				// A disconnected derived may still have `s` as a dependency. If the key is later
+				// added, it will be written to a new source, so bump the write version of this one
+				// to ensure such deriveds re-evaluate (and pick up the new source) when next read
+				s.wv = increment_write_version();
+			}
+		}
+
+		this.#prune_at = Math.max(16, sources.size * 2);
 	}
 
 	/** @param {K} key */
