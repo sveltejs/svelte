@@ -40,7 +40,8 @@ import {
 	regex_not_whitespace,
 	regex_redundant_img_alt,
 	regex_starts_with_vowel,
-	regex_whitespaces
+	regex_whitespaces,
+	regex_whitespaces_strict
 } from '../../../../patterns.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import { list } from '../../../../../utils/string.js';
@@ -158,9 +159,7 @@ export function check_element(node, context) {
 				if (typeof value !== 'string') {
 					break;
 				}
-				for (const c_r of value.split(regex_whitespaces)) {
-					const current_role = /** @type {ARIARoleDefinitionKey} current_role */ (c_r);
-
+				for (const current_role of get_role_tokens(value)) {
 					if (current_role && is_abstract_role(current_role)) {
 						w.a11y_no_abstract_role(attribute, current_role);
 					} else if (current_role && !aria_roles.includes(current_role)) {
@@ -173,8 +172,8 @@ export function check_element(node, context) {
 						current_role === get_implicit_role(node.name, attribute_map) &&
 						// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
 						!['ul', 'ol', 'li', 'menu'].includes(node.name) &&
-						// <a role="link" /> is ok because without href the a tag doesn't have a role of link
-						!(node.name === 'a' && !attribute_map.has('href'))
+						// <a role="link" /> and <area role="link" /> are ok because without href they don't have a role of link
+						!((node.name === 'a' || node.name === 'area') && !attribute_map.has('href'))
 					) {
 						w.a11y_no_redundant_roles(attribute, current_role);
 					}
@@ -286,7 +285,9 @@ export function check_element(node, context) {
 	}
 
 	const role = attribute_map.get('role');
-	const role_static_value = /** @type {ARIARoleDefinitionKey} */ (get_static_text_value(role));
+	const role_static_value = /** @type {ARIARoleDefinitionKey} */ (
+		get_effective_role(get_static_text_value(role))
+	);
 
 	// click-events-have-key-events
 	if (handlers.has('click')) {
@@ -776,6 +777,30 @@ function is_interactive_roles(role) {
  */
 function is_abstract_role(role) {
 	return abstract_roles.includes(role);
+}
+
+/**
+ * Role tokens use ASCII whitespace and ASCII case-insensitive matching.
+ * @param {string} value
+ */
+function get_role_tokens(value) {
+	return /** @type {ARIARoleDefinitionKey[]} */ (
+		// we use this instead of value.toLowerCase() to avoid lowercasing non-ASCII characters
+		value.replace(/[A-Z]/g, (char) => char.toLowerCase()).split(regex_whitespaces_strict)
+	);
+}
+
+/**
+ * The `role` attribute can list fallback roles, in which case the element
+ * gets the first one that is a known, non-abstract role. Preserve the original
+ * value if none match, so invalid roles retain their existing diagnostics.
+ * @param {string | null} value
+ */
+function get_effective_role(value) {
+	if (value === null) return null;
+	const roles = get_role_tokens(value);
+	// we return the whole value here in case there's no known, non-abstract role in the list
+	return roles.find((role) => aria_roles.includes(role) && !is_abstract_role(role)) ?? value;
 }
 
 /**

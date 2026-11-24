@@ -73,7 +73,7 @@ export type ComponentContextLegacy = ComponentContext & {
 	l: NonNullable<ComponentContext['l']>;
 };
 
-export type Equals = (this: Value, value: unknown) => boolean;
+export type Equals = (this: Pick<Value, 'v'>, value: unknown) => boolean;
 
 export type TemplateNode = Text | Element | Comment;
 
@@ -207,6 +207,8 @@ export interface DevStackEntry {
 	column: number;
 	parent: DevStackEntry | null;
 	componentTag?: string;
+	/** The source text of the `{@render}` callee, e.g. `children` or `props.row` */
+	snippetName?: string;
 }
 
 export * from './reactivity/types';
