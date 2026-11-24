@@ -46,7 +46,7 @@ import { Batch, current_batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
-import { create_text, create_fragment, append_child, insert_before } from '../operations.js';
+import { create_anchor, create_fragment, append_child, insert_before } from '../operations.js';
 import { set_signal_status } from '../../reactivity/status.js';
 import { push_renderer, pop_renderer } from '../../custom-renderer/state.js';
 import { custom_renderers_flag } from '../../../flags/index.js';
@@ -300,7 +300,7 @@ export class Boundary {
 
 			try {
 				var fragment = (this.#offscreen_fragment = create_fragment());
-				var anchor = create_text();
+				var anchor = create_anchor();
 
 				append_child(fragment, anchor);
 

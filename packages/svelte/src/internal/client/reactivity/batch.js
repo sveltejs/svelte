@@ -512,6 +512,22 @@ export class Batch {
 	}
 
 	#process() {
+		// Processing a batch frequently hands over to another batch (the next one, an earlier one it
+		// merged into, etc). Do that iteratively rather than recursively, so that the call stack doesn't
+		// grow with each hand-over — deep stacks make DEV stack capture (see `get_stack`) quadratic
+		/** @type {Batch | null} */
+		var batch = this;
+
+		while (batch !== null) {
+			batch = batch.#process_step();
+		}
+	}
+
+	/**
+	 * Processes this batch and returns the batch that needs to be processed next, if any
+	 * @returns {Batch | null}
+	 */
+	#process_step() {
 		current_batch = processing_batch = this;
 
 		// A different batch view may apply, even when processing continues within the same flush.
@@ -631,8 +647,7 @@ export class Batch {
 				}
 
 				// Revalidate once all the writes and pending work belong to the same batch.
-				target.#process();
-				return;
+				return target;
 			}
 		}
 
@@ -646,10 +661,10 @@ export class Batch {
 			}
 
 			if (updates.length > 0) {
-				/** @type {Batch} */ (/** @type {unknown} */ (current_batch)).#process();
+				return /** @type {Batch} */ (/** @type {unknown} */ (current_batch));
 			}
 
-			return;
+			return null;
 		}
 
 		const earlier_batch = this.#find_earlier_batch();
@@ -660,9 +675,8 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
-			earlier_batch.#process();
 
-			return;
+			return earlier_batch;
 		}
 
 		for (const boundary of revealed_boundaries) {
@@ -678,14 +692,23 @@ export class Batch {
 		// append/remove branches
 		this.#run_callbacks(this.#commit_callbacks);
 
-		var earlier_writes = flush_queued_effects(render_effects);
+		var was_flushing_effects = is_flushing_effects;
+		var previous_captured_writes = captured_writes;
 
-		// the content has been updated, and user effects are about to see it
-		if (custom_renderers_flag && before_effects !== null) {
-			before_effects();
+		try {
+			is_flushing_effects = true;
+			var earlier_writes = flush_queued_effects(render_effects);
+
+			// the content has been updated, and user effects are about to see it
+			if (custom_renderers_flag && before_effects !== null) {
+				before_effects();
+			}
+
+			flush_queued_effects(effects, earlier_writes);
+		} finally {
+			is_flushing_effects = was_flushing_effects;
+			captured_writes = previous_captured_writes;
 		}
-
-		flush_queued_effects(effects, earlier_writes);
 
 		this.#deferred?.resolve();
 
@@ -715,9 +738,9 @@ export class Batch {
 					}
 				}
 			}
-
-			next_batch.#process();
 		}
+
+		return next_batch;
 	}
 
 	/**
@@ -996,6 +1019,10 @@ export class Batch {
 		};
 
 		this.current.set(source, entry);
+
+		if (is_flushing_effects) {
+			(captured_writes ??= new Set()).add(source);
+		}
 
 		// The active view of the world sees writes made while it's active, even if they don't belong to the batch whose
 		// view it is — e.g. those of effects that run while a batch commits, which go to a new batch. (Async results
@@ -1631,6 +1658,15 @@ function infinite_loop_guard() {
 	}
 }
 
+var is_flushing_effects = false;
+
+/**
+ * Sources captured since the last effect in `flush_queued_effects` finished, including
+ * writes by its eager block reruns. Nested flushes use their own collector.
+ * @type {Set<Value> | null}
+ */
+var captured_writes = null;
+
 /** @type {Set<Effect> | null} */
 export let eager_block_effects = null;
 
@@ -1758,15 +1794,19 @@ function flush_queued_effects(effects, earlier_writes = null) {
 				}
 			}
 
-			// if the effect — or the block effects — wrote anything
-			if (write_version !== version && current_batch !== null) {
-				for (const [value, write] of current_batch.current) {
-					if (write.wv > version) {
+			// Only visit sources captured by this effect or its eager block reruns.
+			// A nested flush may have drained their batch, so use the current entry.
+			if (write_version !== version && current_batch !== null && captured_writes !== null) {
+				for (const value of captured_writes) {
+					var write = current_batch.current.get(value);
+					if (write !== undefined && write.wv > version) {
 						(earlier_writes ??= new Map()).set(value, write);
 					}
 				}
 			}
 		}
+
+		captured_writes?.clear();
 	}
 
 	eager_block_effects = null;

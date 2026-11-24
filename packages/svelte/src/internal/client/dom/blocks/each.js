@@ -20,7 +20,7 @@ import {
 } from '../hydration.js';
 import {
 	clear_text_content,
-	create_text,
+	create_anchor,
 	get_first_child,
 	get_next_sibling,
 	should_defer_append,
@@ -217,7 +217,7 @@ function get_offscreen_anchor() {
 	var cached = offscreen_anchors.get(current_renderer ?? dom_weak_key);
 	if (cached) return cached;
 
-	var offscreen_anchor = create_text();
+	var offscreen_anchor = create_anchor();
 
 	if (current_renderer) {
 		var fragment = create_fragment();
@@ -256,7 +256,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		anchor = hydrating
 			? set_hydrate_node(get_first_child(parent_node))
-			: /** @type {Text} */ (append_child(parent_node, create_text()));
+			: /** @type {Text} */ (append_child(parent_node, create_anchor()));
 	}
 
 	if (hydrating) {

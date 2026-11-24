@@ -4,7 +4,7 @@
 import { DEV } from 'esm-env';
 import {
 	clear_text_content,
-	create_text,
+	create_anchor,
 	get_first_child,
 	get_next_sibling,
 	append_child,
@@ -199,7 +199,7 @@ function _mount_inner(
 
 	var unmount = component_root(() => {
 		var anchor_node =
-			anchor ?? /** @type {Text} */ (append_child(/** @type {Node} */ (target), create_text()));
+			anchor ?? /** @type {Text} */ (append_child(/** @type {Node} */ (target), create_anchor()));
 
 		boundary(
 			/** @type {TemplateNode} */ (anchor_node),
