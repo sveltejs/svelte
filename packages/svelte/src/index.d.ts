@@ -120,22 +120,26 @@ export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
 /**
  * Can be used to create strongly typed Svelte components.
  *
- * #### Example:
+ * ### Example:
  *
  * You have component library on npm called `component-library`, from which
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
  * you want to provide typings. Therefore you create a `index.d.ts`:
+ *
  * ```ts
  * import type { Component } from 'svelte';
  * export declare const MyComponent: Component<{ foo: string }> {}
  * ```
+ *
  * Typing this makes it possible for IDEs like VS Code with the Svelte extension
  * to provide intellisense and to use the component like this in a Svelte file
  * with TypeScript:
+ *
  * ```svelte
  * <script lang="ts">
  * 	import { MyComponent } from "component-library";
  * </script>
+ *
  * <MyComponent foo={'bar'} />
  * ```
  */
