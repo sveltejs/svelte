@@ -386,12 +386,12 @@ Svelte works with four kinds of node: fragments, elements, text nodes and commen
 
 `class` and `style` are always passed as strings. Svelte combines the `class` attribute with any `class:` directives and scoping class, and the `style` attribute with any `style:` directives, and sets the result in one go.
 
-When `checked`, `selected` or `value` is written directly on an element, Svelte passes it the way HTML represents it, rather than as it is in the component:
+When `checked`, `selected` or `value` is written directly on an element without a spread, Svelte passes it the way HTML represents it, rather than as it is in the component:
 
 - `checked` and `selected` are set to an empty string when the value is truthy, and removed otherwise
 - `value` is set to an empty string when the value is `null` or `undefined`, rather than removed
 
-In a spread (`{...attributes}`), these three are passed as they are in the component. `defaultChecked` is handled like `checked`, including in a spread.
+On an element with a spread (`{...attributes}`), these three are passed as they are in the component, including when they're written directly. `defaultChecked` is converted like `checked` when it's in a spread or when the element also has a valueless `checked` attribute, and passed as it is otherwise. When the element has a static `value`, `defaultValue` is passed to `setAttribute` even when it's `null` or `undefined`.
 
 ### Events
 
