@@ -2,7 +2,7 @@
   "name": "@sveltejs/tree-renderer",
   "description": "A Svelte custom renderer that maintains the node tree for you",
   "license": "MIT",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "repository": {
     "type": "git",
