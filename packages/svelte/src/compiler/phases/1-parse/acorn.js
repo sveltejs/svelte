@@ -172,7 +172,19 @@ function handle_parse_error(err) {
 export function remove_parens(node) {
 	return walk(node, null, {
 		ParenthesizedExpression(node, context) {
-			return context.visit(node.expression);
+			const expression = /** @type {any} */ (context.visit(node.expression));
+			const { leadingComments, trailingComments } = /** @type {any} */ (node);
+
+			// keep the comments attached to the parentheses, like `/* a */` in `{/* a */ (value)}`
+			if (leadingComments) {
+				expression.leadingComments = [...leadingComments, ...(expression.leadingComments ?? [])];
+			}
+
+			if (trailingComments) {
+				expression.trailingComments = [...(expression.trailingComments ?? []), ...trailingComments];
+			}
+
+			return expression;
 		}
 	});
 }

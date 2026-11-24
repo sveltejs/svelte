@@ -13,7 +13,7 @@ import { HMR_ANCHOR } from '../../constants.js';
 import { EFFECT_OFFSCREEN } from '#client/constants';
 import { hydrate_node, hydrating } from '../hydration.js';
 import {
-	create_text,
+	create_anchor,
 	should_defer_append,
 	create_fragment,
 	append_child,
@@ -153,7 +153,7 @@ export class BranchManager {
 						var fragment = create_fragment();
 						move_effect(effect, fragment);
 
-						append_child(fragment, create_text()); // TODO can we avoid this?
+						append_child(fragment, create_anchor()); // TODO can we avoid this?
 
 						this.#offscreen.set(k, { effect, fragment });
 					} else {
@@ -207,7 +207,7 @@ export class BranchManager {
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			if (defer) {
 				var fragment = create_fragment();
-				var target = create_text();
+				var target = create_anchor();
 
 				append_child(fragment, target);
 

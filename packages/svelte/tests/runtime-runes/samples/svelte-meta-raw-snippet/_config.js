@@ -23,6 +23,7 @@ export default test({
 		const component = /** @type {any} */ (output).__svelte_meta.component;
 		assert.ok(component);
 		for (const section of sections) {
+			assert.notInclude(Object.keys(section), '__svelte_meta');
 			assert.equal(/** @type {any} */ (section).__svelte_meta.component, component);
 		}
 

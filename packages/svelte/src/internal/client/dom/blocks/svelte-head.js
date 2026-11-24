@@ -2,7 +2,7 @@
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 
 import {
-	create_text,
+	create_anchor,
 	get_first_child,
 	get_next_sibling,
 	remove_node,
@@ -54,7 +54,7 @@ export function head(hash, render_fn) {
 	}
 
 	if (!hydrating) {
-		anchor = /** @type {Comment | Text} */ (append_child(document.head, create_text()));
+		anchor = /** @type {Comment | Text} */ (append_child(document.head, create_anchor()));
 	}
 
 	try {
