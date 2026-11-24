@@ -162,6 +162,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 					try {
 						fn((source, v) => /** @type {Batch} */ (target).capture(source, v, source.equals(v)));
+					} catch (error) {
+						invoke_error_boundary(error, effect);
 					} finally {
 						unset_context(false);
 						target.flush();
