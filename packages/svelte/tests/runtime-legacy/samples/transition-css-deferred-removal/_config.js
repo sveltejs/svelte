@@ -13,6 +13,6 @@ export default test({
 		const outer = /** @type {HTMLSpanElement} */ (target.querySelector('.outer'));
 		const inner = /** @type {HTMLSpanElement} */ (target.querySelector('.inner'));
 
-		assert.deepEqual([outer.style.cssText, inner.style.cssText], ['opacity: 0.25;', '']);
+		assert.deepEqual([outer.style.cssText, inner.style.cssText], ['opacity: 0.25;', 'left: 0px;']);
 	}
 });

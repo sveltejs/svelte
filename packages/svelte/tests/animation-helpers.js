@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte';
 import { raf as svelte_raf } from 'svelte/internal/client';
-import { queue_micro_task } from '../src/internal/client/dom/task.js';
+import { flush_tasks, queue_micro_task } from '../src/internal/client/dom/task.js';
 
 export const raf = {
 	/** @type {Set<Animation>} */
@@ -31,6 +31,7 @@ function tick(time) {
 	for (const animation of raf.animations) {
 		animation._update();
 	}
+	flush_tasks();
 	for (const tick of raf.ticks) {
 		tick(raf.time);
 	}
@@ -40,8 +41,12 @@ class Animation {
 	#keyframes;
 	#duration;
 	#delay;
+	#fill;
 
 	#offset = raf.time;
+
+	/** @type {Set<string>} */
+	#applied_props = new Set();
 
 	/** @type {Function} */
 	#onfinish = () => {};
@@ -65,29 +70,38 @@ class Animation {
 		if (typeof options === 'number') {
 			this.#duration = options;
 			this.#delay = 0;
+			this.#fill = 'none';
 		} else {
-			const { duration = 0, delay = 0 } = options ?? {};
+			const { duration = 0, delay = 0, fill = 'none' } = options ?? {};
 			if (typeof duration === 'object') {
 				this.#duration = 0;
 			} else {
 				this.#duration = Math.round(+duration);
 			}
 			this.#delay = delay;
+			this.#fill = fill;
 		}
-
-		this._update();
 	}
 
 	_update() {
+		if (this.playState !== 'running') return;
+
 		this.currentTime = raf.time - this.#offset - this.#delay;
 		if (this.currentTime < 0) return;
 
-		const target_frame = this.currentTime / this.#duration;
+		const target_frame = this.#duration === 0 ? 1 : this.currentTime / this.#duration;
 		this.#apply_keyframe(target_frame);
 
 		if (this.currentTime >= this.#duration) {
+			this.currentTime = this.#duration;
+			this.playState = 'finished';
+
+			if (this.#fill !== 'forwards' && this.#fill !== 'both') {
+				this.#clear_styles();
+				raf.animations.delete(this);
+			}
+
 			this.#onfinish();
-			raf.animations.delete(this);
 		}
 	}
 
@@ -95,6 +109,8 @@ class Animation {
 	 * @param {number} t
 	 */
 	#apply_keyframe(t) {
+		if (this.#keyframes.length === 0) return;
+
 		const n = Math.min(1, Math.max(0, t)) * (this.#keyframes.length - 1);
 
 		const lower = this.#keyframes[Math.floor(n)];
@@ -114,23 +130,22 @@ class Animation {
 		}
 
 		for (let prop in frame) {
+			this.#applied_props.add(prop);
 			// @ts-ignore
 			this.target.style[prop] = frame[prop];
 		}
+	}
 
-		if (this.currentTime >= this.#duration) {
-			this.currentTime = this.#duration;
-			for (let prop in frame) {
-				// @ts-ignore
-				this.target.style[prop] = null;
-			}
+	#clear_styles() {
+		for (const prop of this.#applied_props) {
+			// @ts-ignore
+			this.target.style[prop] = null;
 		}
+		this.#applied_props.clear();
 	}
 
 	cancel() {
-		if (this.currentTime > 0 && this.currentTime < this.#duration) {
-			this.#apply_keyframe(0);
-		}
+		this.#clear_styles();
 		// @ts-ignore
 		this.currentTime = null;
 		// @ts-ignore
@@ -141,19 +156,23 @@ class Animation {
 		raf.animations.delete(this);
 	}
 
-	/** @param {() => {}} fn */
+	/** @param {() => void} fn */
 	set onfinish(fn) {
-		if (this.#duration === 0) {
-			queue_micro_task(fn);
-		} else {
-			this.#onfinish = () => {
-				fn();
-				this.#onfinish = () => {};
-			};
+		this.#onfinish = () => {
+			fn();
+			this.#onfinish = () => {};
+		};
+
+		if (this.playState === 'finished') {
+			queue_micro_task(() => {
+				if (this.playState === 'finished') {
+					this.#onfinish();
+				}
+			});
 		}
 	}
 
-	/** @param {() => {}} fn */
+	/** @param {() => void} fn */
 	set oncancel(fn) {
 		this.#oncancel = () => {
 			fn();
@@ -205,6 +224,7 @@ function interpolate(a, b, p) {
 HTMLElement.prototype.animate = function (keyframes, options) {
 	const animation = new Animation(this, keyframes, options);
 	raf.animations.add(animation);
+	animation._update();
 	// @ts-ignore
 	return animation;
 };

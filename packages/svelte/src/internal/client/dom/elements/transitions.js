@@ -370,21 +370,34 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 	const { delay = 0, css, tick, easing = linear } = options ?? {};
 
 	if (!options?.duration && !options?.delay) {
+		counterpart?.abort();
 		on_begin();
 
 		tick?.(t2, 1 - t2);
 
-		if (css) {
+		/** @type {globalThis.Animation | undefined} */
+		let animation;
+
+		if (css && !is_intro) {
 			const keyframe = css_to_keyframe(css(t2, 1 - t2));
-			element.animate([keyframe], { duration: 0, fill: 'forwards' });
+			animation = element.animate([keyframe], { duration: 0, fill: 'forwards' });
 		}
 
 		on_finish();
 
 		return {
-			abort: noop,
+			abort: () => {
+				if (animation) {
+					animation.cancel();
+					animation.effect = null;
+				}
+			},
 			deactivate: noop,
-			reset: noop,
+			reset: () => {
+				if (t2 === 0) {
+					tick?.(1, 0);
+				}
+			},
 			t: () => t2
 		};
 	}
@@ -434,7 +447,7 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 			counterpart?.abort();
 
 			var delta = t2 - t1;
-			var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
+			var duration = (options.duration ?? 0) * Math.abs(delta);
 			var keyframes = [];
 
 			/**
@@ -460,23 +473,27 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 				/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
 			}
 
-			get_t = () => {
-				var time = /** @type {number} */ (
-					/** @type {globalThis.Animation} */ (animation).currentTime
-				);
+			if (duration > 0) {
+				get_t = () => {
+					var time = /** @type {number} */ (
+						/** @type {globalThis.Animation} */ (animation).currentTime
+					);
 
-				return t1 + delta * easing(time / duration);
-			};
+					return t1 + delta * easing(time / duration);
+				};
 
-			if (tick) {
-				loop(() => {
-					if (animation.playState !== 'running') return false;
+				if (tick) {
+					loop(() => {
+						if (animation.playState !== 'running') return false;
 
-					var t = get_t();
-					tick(t, 1 - t);
+						var t = get_t();
+						tick(t, 1 - t);
 
-					return true;
-				});
+						return true;
+					});
+				}
+			} else {
+				get_t = () => t2;
 			}
 
 			animation = element.animate(keyframes, { duration, fill: 'forwards' });
