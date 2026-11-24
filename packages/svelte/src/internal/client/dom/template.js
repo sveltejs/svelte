@@ -24,7 +24,9 @@ import {
 	create_comment,
 	create_element,
 	create_fragment,
+	create_anchor,
 	create_text,
+	create_hydration_text,
 	get_first_child,
 	get_last_child,
 	get_node_value,
@@ -345,7 +347,7 @@ export function text(value = '') {
 
 	if (node_type(node) !== TEXT_NODE) {
 		// if an {expression} is empty during SSR, we need to insert an empty text node
-		insert_before(node, (node = create_text()));
+		insert_before(node, (node = create_hydration_text()));
 		set_hydrate_node(node);
 	} else {
 		merge_text_nodes(/** @type {Text} */ (node));
@@ -367,7 +369,7 @@ export function comment() {
 
 	var frag = create_fragment();
 	var start = create_comment('');
-	var anchor = create_text();
+	var anchor = create_anchor();
 	append_child(frag, start);
 	append_child(frag, anchor);
 
