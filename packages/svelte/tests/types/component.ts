@@ -9,6 +9,7 @@ import {
 	type Component,
 	type ComponentInternals
 } from 'svelte';
+import { createRenderer } from 'svelte/renderer';
 import { render } from 'svelte/server';
 
 SvelteComponent.element === HTMLElement;
@@ -291,6 +292,48 @@ mount(
 // if component receives no args, props can be omitted
 mount(null as any as Component<{}>, { target: null as any });
 
+type CustomFragment = { kind: 'fragment' };
+type CustomElement = { kind: 'element' };
+type CustomText = { kind: 'text' };
+type CustomComment = { kind: 'comment' };
+const custom_renderer = createRenderer<{
+	fragment: CustomFragment;
+	element: CustomElement;
+	text: CustomText;
+	comment: CustomComment;
+}>(null as any);
+
+mount(functionComponent, {
+	renderer: custom_renderer,
+	target: null as any as CustomFragment,
+	anchor: null as any as CustomComment,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
+
+mount(functionComponent, {
+	renderer: custom_renderer,
+	// @ts-expect-error target must match the renderer
+	target: null as any as HTMLElement,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
+
+mount(functionComponent, {
+	renderer: custom_renderer,
+	target: null as any as CustomElement,
+	// @ts-expect-error anchor must match the renderer
+	anchor: null as any as CustomFragment,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
+
 hydrate(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
@@ -314,6 +357,16 @@ hydrate(
 );
 // if component receives no args, props can be omitted
 hydrate(null as any as Component<{}>, { target: null as any });
+
+// a union of `hydrate` and `mount` is callable
+const mount_or_hydrate = Math.random() > 0.5 ? hydrate : mount;
+mount_or_hydrate(functionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
 
 render(functionComponent, {
 	props: {

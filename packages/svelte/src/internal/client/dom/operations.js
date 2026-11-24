@@ -2,7 +2,7 @@
 import { hydrate_node, hydrating, reset, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
-import { get_descriptor, is_extensible } from '../../shared/utils.js';
+import { define_property, get_descriptor, is_extensible } from '../../shared/utils.js';
 import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
 import {
@@ -11,10 +11,14 @@ import {
 	REACTION_RAN,
 	STYLE_CACHE,
 	TEXT_CACHE,
-	TEXT_NODE
+	TEXT_NODE,
+	COMMENT_NODE,
+	CUSTOM_RENDERER_NODE_TYPE_MAP
 } from '#client/constants';
-import { eager_block_effects } from '../reactivity/batch.js';
+import { eager_block_writes } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
+import { current_renderer } from '../custom-renderer/state.js';
+import * as e from '../errors.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -67,19 +71,48 @@ export function init_operations() {
 	}
 
 	if (DEV) {
-		// @ts-expect-error
-		element_prototype.__svelte_meta = null;
+		define_property(element_prototype, '__svelte_meta', {
+			value: null,
+			enumerable: false,
+			writable: true,
+			configurable: true
+		});
 
 		init_array_prototype_warnings();
 	}
 }
 
 /**
+ * Creates a text node with the given content. To mark a position, use `create_anchor` instead,
+ * and to create an empty text node while hydrating, use `create_hydration_text`
  * @param {string} value
  * @returns {Text}
  */
-export function create_text(value = '') {
+export function create_text(value) {
+	if (current_renderer) return /** @type {Text} */ (current_renderer.createText(value));
 	return document.createTextNode(value);
+}
+
+/**
+ * Creates the text node of an `{expression}` that was empty during SSR, so there was no text
+ * node to hydrate. Only use this while hydrating: elsewhere, an empty text node is an anchor,
+ * which should be created with `create_anchor`
+ * @returns {Text}
+ */
+export function create_hydration_text() {
+	if (current_renderer) return /** @type {Text} */ (current_renderer.createText(''));
+	return document.createTextNode('');
+}
+
+/**
+ * Creates a node that only marks a position. In the DOM this is an empty text node; with a
+ * custom renderer it's an empty comment, so that renderers can treat every comment as
+ * plumbing and every text node as content
+ * @returns {Text}
+ */
+export function create_anchor() {
+	if (current_renderer) return /** @type {Text} */ (current_renderer.createComment(''));
+	return document.createTextNode('');
 }
 
 /**
@@ -88,6 +121,8 @@ export function create_text(value = '') {
  */
 /*@__NO_SIDE_EFFECTS__*/
 export function get_first_child(node) {
+	if (current_renderer)
+		return /** @type {TemplateNode | null} */ (current_renderer.getFirstChild(node));
 	return /** @type {TemplateNode | null} */ (first_child_getter.call(node));
 }
 
@@ -97,6 +132,8 @@ export function get_first_child(node) {
  */
 /*@__NO_SIDE_EFFECTS__*/
 export function get_next_sibling(node) {
+	if (current_renderer)
+		return /** @type {TemplateNode | null} */ (current_renderer.getNextSibling(node));
 	return /** @type {TemplateNode | null} */ (next_sibling_getter.call(node));
 }
 
@@ -116,10 +153,10 @@ export function child(node, is_text) {
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
-		child = hydrate_node.appendChild(create_text());
-	} else if (is_text && child.nodeType !== TEXT_NODE) {
-		var text = create_text();
-		child?.before(text);
+		child = /** @type {TemplateNode} */ (append_child(hydrate_node, create_hydration_text()));
+	} else if (is_text && node_type(child) !== TEXT_NODE) {
+		var text = create_hydration_text();
+		insert_before(child, text);
 		set_hydrate_node(text);
 		return text;
 	}
@@ -143,7 +180,7 @@ export function first_child(node, is_text = false) {
 		var first = get_first_child(node);
 
 		// TODO prevent user comments with the empty string when preserveComments is true
-		if (first instanceof Comment && first.data === '') return get_next_sibling(first);
+		if (is_comment(first) && get_node_value(first) === '') return get_next_sibling(first);
 
 		return first;
 	}
@@ -151,10 +188,10 @@ export function first_child(node, is_text = false) {
 	if (is_text) {
 		// if an {expression} is empty during SSR, there might be no
 		// text node to hydrate — we must therefore create one
-		if (hydrate_node?.nodeType !== TEXT_NODE) {
-			var text = create_text();
+		if (node_type(hydrate_node) !== TEXT_NODE) {
+			var text = create_hydration_text();
 
-			hydrate_node?.before(text);
+			if (hydrate_node) insert_before(hydrate_node, text);
 			set_hydrate_node(text);
 			return text;
 		}
@@ -208,15 +245,15 @@ export function sibling(node, count = 1, is_text = false) {
 	if (is_text) {
 		// if a sibling {expression} is empty during SSR, there might be no
 		// text node to hydrate — we must therefore create one
-		if (next_sibling?.nodeType !== TEXT_NODE) {
-			var text = create_text();
+		if (node_type(next_sibling) !== TEXT_NODE) {
+			var text = create_hydration_text();
 			// If the next sibling is `null` and we're handling text then it's because
 			// the SSR content was empty for the text, so we need to generate a new text
 			// node and insert it after the last sibling
 			if (next_sibling === null) {
-				last_sibling?.after(text);
+				if (last_sibling) insert_after(last_sibling, text);
 			} else {
-				next_sibling.before(text);
+				insert_before(next_sibling, text);
 			}
 			set_hydrate_node(text);
 			return text;
@@ -235,6 +272,15 @@ export function sibling(node, count = 1, is_text = false) {
  * @returns {void}
  */
 export function clear_text_content(node) {
+	if (current_renderer) {
+		var child = current_renderer.getFirstChild(node);
+		while (child !== null) {
+			var next = current_renderer.getNextSibling(child);
+			current_renderer.remove(child);
+			child = next;
+		}
+		return;
+	}
 	node.textContent = '';
 }
 
@@ -245,8 +291,7 @@ export function clear_text_content(node) {
  * current `<svelte:boundary>`
  */
 export function should_defer_append() {
-	if (!async_mode_flag) return false;
-	if (eager_block_effects !== null) return false;
+	if (!async_mode_flag && eager_block_writes === null) return false;
 
 	var flags = /** @type {Effect} */ (active_effect).f;
 	return (flags & REACTION_RAN) !== 0;
@@ -266,17 +311,23 @@ export function should_defer_append() {
  * @returns {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element}
  */
 export function create_element(tag, namespace, is) {
+	if (current_renderer) {
+		return current_renderer.createElement(tag);
+	}
+
 	if (namespace == null || namespace === NAMESPACE_HTML) {
 		return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
 			is ? document.createElement(tag, { is }) : document.createElement(tag)
 		);
 	}
+
 	return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
 		is ? document.createElementNS(namespace, tag, { is }) : document.createElementNS(namespace, tag)
 	);
 }
 
 export function create_fragment() {
+	if (current_renderer) return /** @type {DocumentFragment} */ (current_renderer.createFragment());
 	return document.createDocumentFragment();
 }
 
@@ -285,6 +336,7 @@ export function create_fragment() {
  * @returns
  */
 export function create_comment(data = '') {
+	if (current_renderer) return /** @type {Comment} */ (current_renderer.createComment(data));
 	return document.createComment(data);
 }
 
@@ -295,6 +347,10 @@ export function create_comment(data = '') {
  * @returns
  */
 export function set_attribute(element, key, value = '') {
+	if (current_renderer) {
+		current_renderer.setAttribute(element, key, value);
+		return;
+	}
 	if (key.startsWith('xlink:')) {
 		element.setAttributeNS('http://www.w3.org/1999/xlink', key, value);
 		return;
@@ -308,17 +364,410 @@ export function set_attribute(element, key, value = '') {
  * @param {Text} text
  */
 export function merge_text_nodes(text) {
+	// if we have a renderer we will not hydrate so we can skip this
+	if (current_renderer) return;
+
 	if (/** @type {string} */ (text.nodeValue).length < 65536) {
 		return;
 	}
 
 	let next = text.nextSibling;
 
-	while (next !== null && next.nodeType === TEXT_NODE) {
+	while (next !== null && node_type(next) === TEXT_NODE) {
 		next.remove();
 
 		/** @type {string} */ (text.nodeValue) += /** @type {string} */ (next.nodeValue);
 
 		next = text.nextSibling;
 	}
+}
+
+/**
+ * @param {TemplateNode | null} node
+ * @returns {node is Comment}
+ */
+function is_comment(node) {
+	if (current_renderer) return !!node && node_type(node) === COMMENT_NODE;
+	return node instanceof Comment;
+}
+
+/**
+ * @param {Node | null | undefined} node
+ */
+export function node_type(node) {
+	if (node == null) return undefined;
+	if (current_renderer) {
+		const type = current_renderer.getNodeType(node);
+		return CUSTOM_RENDERER_NODE_TYPE_MAP[type];
+	}
+	return node.nodeType;
+}
+
+/**
+ * @param {Node} node
+ * @returns {string}
+ */
+export function node_name(node) {
+	if (current_renderer) {
+		// for custom renderers we don't need to return the node name since all the
+		// checks that we do on specific node names are meant to be for the HTML
+		return '';
+	}
+	return node.nodeName;
+}
+
+/**
+ * @param {Node} node
+ * @returns {TemplateNode | null}
+ */
+export function get_last_child(node) {
+	if (current_renderer)
+		return /** @type {TemplateNode | null} */ (current_renderer.getLastChild(node));
+	return /** @type {TemplateNode | null} */ (node.lastChild);
+}
+
+/**
+ * @param {Node} node
+ * @returns {TemplateNode | null}
+ */
+export function get_parent_node(node) {
+	if (current_renderer)
+		return /** @type {TemplateNode | null} */ (current_renderer.getParent(node));
+	return /** @type {TemplateNode | null} */ (node.parentNode);
+}
+
+/**
+ * @param {Node} parent
+ * @param {Node} child
+ * @returns {Node}
+ */
+export function append_child(parent, child) {
+	if (current_renderer) {
+		current_renderer.insert(parent, child, null);
+		return child;
+	}
+	return parent.appendChild(child);
+}
+
+/**
+ * Insert `new_node` before `ref_node` (equivalent to `ref_node.before(new_node)`)
+ * @param {ChildNode} ref_node
+ * @param {Node} new_node
+ */
+export function insert_before(ref_node, new_node) {
+	if (current_renderer) {
+		var parent = current_renderer.getParent(ref_node);
+		current_renderer.insert(parent, new_node, ref_node);
+		return;
+	}
+	ref_node.before(new_node);
+}
+
+/**
+ * Insert `new_node` after `ref_node` (equivalent to `ref_node.after(new_node)`)
+ * @param {ChildNode} ref_node
+ * @param {Node} new_node
+ */
+export function insert_after(ref_node, new_node) {
+	if (current_renderer) {
+		var parent = current_renderer.getParent(ref_node);
+		var next = current_renderer.getNextSibling(ref_node);
+		current_renderer.insert(parent, new_node, next);
+		return;
+	}
+	ref_node.after(new_node);
+}
+
+/**
+ * @param {ChildNode} node
+ */
+export function remove_node(node) {
+	if (current_renderer) {
+		current_renderer.remove(node);
+		return;
+	}
+	node.remove();
+}
+
+/**
+ * @param {Node} parent
+ * @param {ChildNode} child
+ * @returns {ChildNode}
+ */
+export function remove_child(parent, child) {
+	if (current_renderer) {
+		current_renderer.remove(child);
+		return child;
+	}
+	return /** @type {ChildNode} */ (parent.removeChild(child));
+}
+
+/**
+ * @param {ChildNode} old_node
+ * @param {Node} new_node
+ */
+export function replace_with(old_node, new_node) {
+	if (current_renderer) {
+		var parent = current_renderer.getParent(old_node);
+		current_renderer.insert(parent, new_node, old_node);
+		current_renderer.remove(old_node);
+		return;
+	}
+	old_node.replaceWith(new_node);
+}
+
+/**
+ * @param {Node} node
+ * @param {string} value
+ */
+export function set_text_content(node, value) {
+	if (current_renderer) {
+		// only used for DOM-only features (injected styles and `<script>` tags in `{@html ...}`)
+		e.custom_renderer_unsupported_operation('textContent');
+	}
+	node.textContent = value;
+}
+
+/**
+ * @param {Node} node
+ * @param {string} value
+ */
+export function set_node_value(node, value) {
+	if (current_renderer) {
+		current_renderer.setText(node, value);
+		return;
+	}
+	node.nodeValue = value;
+}
+
+/**
+ * @param {Node} node
+ * @returns {string | null}
+ */
+export function get_node_value(node) {
+	if (current_renderer) return current_renderer.getText(node);
+	return node.nodeValue;
+}
+
+/**
+ * Sets the `value` property on an element. For custom renderers, uses `setAttribute`.
+ * @param {Element} element
+ * @param {any} value
+ */
+export function set_element_value(element, value) {
+	if (current_renderer) {
+		current_renderer.setAttribute(element, 'value', value ?? '');
+		return;
+	}
+	// @ts-expect-error
+	element.value = value ?? '';
+}
+
+/**
+ * Sets the `checked` property on an element. For custom renderers, uses `setAttribute`.
+ * @param {Element} element
+ * @param {boolean} checked
+ */
+export function set_element_checked(element, checked) {
+	if (current_renderer) {
+		if (checked) {
+			current_renderer.setAttribute(element, 'checked', '');
+		} else {
+			current_renderer.removeAttribute(element, 'checked');
+		}
+		return;
+	}
+	// @ts-expect-error
+	element.checked = checked;
+}
+
+/**
+ * Sets the `defaultValue` property on an element without affecting the current `value`.
+ * For custom renderers, uses `setAttribute` on `defaultvalue`.
+ * @param {Element} element
+ * @param {string} value
+ */
+export function set_element_default_value(element, value) {
+	if (current_renderer) {
+		current_renderer.setAttribute(element, 'defaultValue', value);
+		return;
+	}
+	// @ts-expect-error
+	const existing_value = element.value;
+	// @ts-expect-error
+	element.defaultValue = value;
+	// @ts-expect-error
+	element.value = existing_value;
+}
+
+/**
+ * Sets the `defaultChecked` property on an element without affecting the current `checked` state.
+ * For custom renderers, uses `setAttribute` on `defaultchecked`.
+ * @param {Element} element
+ * @param {boolean} checked
+ */
+export function set_element_default_checked(element, checked) {
+	if (current_renderer) {
+		if (checked) {
+			current_renderer.setAttribute(element, 'defaultChecked', '');
+		} else {
+			current_renderer.removeAttribute(element, 'defaultChecked');
+		}
+		return;
+	}
+	// @ts-expect-error
+	const existing_value = element.checked;
+	// @ts-expect-error
+	element.defaultChecked = checked;
+	// @ts-expect-error
+	element.checked = existing_value;
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @returns {string | null}
+ */
+export function get_attribute(element, name) {
+	if (current_renderer) return current_renderer.getAttribute(element, name);
+	return element.getAttribute(name);
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ */
+export function remove_attribute(element, name) {
+	if (current_renderer) {
+		current_renderer.removeAttribute(element, name);
+		return;
+	}
+	element.removeAttribute(name);
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @returns {boolean}
+ */
+export function has_attribute(element, name) {
+	if (current_renderer) return current_renderer.hasAttribute(element, name);
+	return element.hasAttribute(name);
+}
+
+/**
+ * @param {Element} element
+ * @param {string} value
+ */
+export function set_inner_html(element, value) {
+	if (current_renderer) {
+		e.custom_renderer_unsupported_operation('innerHTML');
+	}
+	element.innerHTML = value;
+}
+
+/**
+ * @param {Node} node
+ * @param {boolean} deep
+ * @returns {Node}
+ */
+export function clone_node(node, deep) {
+	if (current_renderer) {
+		e.custom_renderer_unsupported_operation('cloneNode');
+	}
+	return node.cloneNode(deep);
+}
+
+/**
+ * @param {Node} node
+ * @param {boolean} deep
+ * @returns {Node}
+ */
+export function import_node(node, deep) {
+	if (current_renderer) {
+		e.custom_renderer_unsupported_operation('importNode');
+	}
+	return document.importNode(node, deep);
+}
+
+/**
+ * @param {EventTarget} target
+ * @param {string} type
+ * @param {EventListenerOrEventListenerObject} handler
+ * @param {boolean | AddEventListenerOptions} [options]
+ */
+export function add_event_listener(target, type, handler, options) {
+	if (current_renderer) {
+		current_renderer.addEventListener(target, type, handler, options);
+		return;
+	}
+	target.addEventListener(type, handler, options);
+}
+
+/**
+ * @param {EventTarget} target
+ * @param {string} type
+ * @param {EventListenerOrEventListenerObject} handler
+ * @param {boolean | EventListenerOptions} [options]
+ */
+export function remove_event_listener(target, type, handler, options) {
+	if (current_renderer) {
+		current_renderer.removeEventListener(target, type, handler, options);
+		return;
+	}
+	target.removeEventListener(type, handler, options);
+}
+
+/**
+ * @param {EventTarget} target
+ * @param {Event} event
+ * @returns {boolean}
+ */
+export function dispatch_event(target, event) {
+	if (current_renderer) {
+		e.custom_renderer_unsupported_operation('dispatchEvent');
+	}
+	return target.dispatchEvent(event);
+}
+
+/**
+ * @param {HTMLElement} element
+ * @param {string} property
+ * @param {string} value
+ * @param {string} [priority]
+ */
+export function style_set_property(element, property, value, priority) {
+	// custom renderers never get here: `set_style` and `css_props` set the whole attribute instead
+	element.style.setProperty(property, value, priority);
+}
+
+/**
+ * @param {HTMLElement} element
+ * @param {string} property
+ */
+export function style_remove_property(element, property) {
+	// custom renderers never get here: `set_style` and `css_props` set the whole attribute instead
+	element.style.removeProperty(property);
+}
+
+/**
+ * @param {HTMLElement} element
+ * @param {string} value
+ */
+export function set_css_text(element, value) {
+	if (current_renderer) {
+		current_renderer.setAttribute(element, 'style', value);
+		return;
+	}
+	element.style.cssText = value;
+}
+
+/**
+ * @param {Element} element
+ * @param {string} name
+ * @param {boolean} force
+ */
+export function class_list_toggle(element, name, force) {
+	// custom renderers never get here: `set_class` sets the whole attribute instead
+	element.classList.toggle(name, force);
 }

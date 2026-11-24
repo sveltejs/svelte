@@ -1,6 +1,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { is_ignored } from '../../../../state.js';
+import { dev, is_ignored, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { async_thunk } from '../utils.js';
 import { build_expression } from './shared/utils.js';
@@ -27,6 +27,8 @@ export function HtmlTag(node, context) {
 	const is_svg = !is_controlled && context.state.metadata.namespace === 'svg';
 	const is_mathml = !is_controlled && context.state.metadata.namespace === 'mathml';
 
+	const location = dev && locator(node.start);
+
 	const statement = b.stmt(
 		b.call(
 			'$.html',
@@ -35,7 +37,13 @@ export function HtmlTag(node, context) {
 			is_controlled && b.true,
 			is_svg && b.true,
 			is_mathml && b.true,
-			is_ignored(node, 'hydration_html_changed') && b.true
+			is_ignored(node, 'hydration_html_changed') && b.true,
+			location &&
+				b.array([
+					b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
+					b.literal(location.line),
+					b.literal(location.column)
+				])
 		)
 	);
 

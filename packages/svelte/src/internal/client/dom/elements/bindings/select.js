@@ -4,8 +4,12 @@ import { listen_to_event_and_reset_event } from './shared.js';
 import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
-import { current_batch, previous_batch } from '../../../reactivity/batch.js';
-import { async_mode_flag } from '../../../../flags/index.js';
+import { current_batch, view_batch } from '../../../reactivity/batch.js';
+import {
+	has_attribute,
+	remove_attribute,
+	set_attribute as set_attribute_op
+} from '../../operations.js';
 
 /**
  * Sets the `selected` attribute on an option so form reset can restore it.
@@ -14,9 +18,13 @@ import { async_mode_flag } from '../../../../flags/index.js';
  */
 export function set_selected(option, selected) {
 	if (selected) {
-		if (!option.hasAttribute('selected')) option.setAttribute('selected', '');
+		// The selected option could've changed via user selection, and
+		// setting the value without this check would set it back.
+		if (!has_attribute(option, 'selected')) {
+			set_attribute_op(option, 'selected', '');
+		}
 	} else {
-		option.removeAttribute('selected');
+		remove_attribute(option, 'selected');
 	}
 }
 
@@ -195,16 +203,12 @@ export function bind_select_value(select, get, set = get) {
 		var value = get();
 
 		if (select === document.activeElement) {
-			// In sync mode render effects are executed during tree traversal -> needs current_batch
-			// In async mode render effects are flushed once batch resolved, at which point current_batch is null -> needs previous_batch
-			var batch = /** @type {Batch} */ (async_mode_flag ? previous_batch : current_batch);
-
 			// Don't update the <select> if it is focused. We can get here if, for example,
 			// an update is deferred because of async work depending on the select:
 			//
 			// <select bind:value={selected}>...</select>
 			// <p>{await find(selected)}</p>
-			if (batches.has(batch)) {
+			if (batches.has(/** @type {Batch} */ (view_batch))) {
 				return;
 			}
 		}

@@ -48,3 +48,9 @@
 {/if}
 
 <x.y />
+
+{#snippet local()}
+	<p>local</p>
+{/snippet}
+
+{@render local()}
