@@ -137,17 +137,11 @@ export class Boundary {
 	 */
 	#effect_pending = null;
 
-	#effect_pending_subscriber = createSubscriber(() => {
-		this.#effect_pending = source(this.#local_pending_count);
-
-		if (DEV) {
-			tag(this.#effect_pending, '$effect.pending()');
-		}
-
-		return () => {
-			this.#effect_pending = null;
-		};
-	});
+	/**
+	 * Created on first use by `get_effect_pending` (which returns early without async mode)
+	 * @type {(() => void) | null}
+	 */
+	#effect_pending_subscriber = null;
 
 	/**
 	 * @param {TemplateNode} node
@@ -526,6 +520,22 @@ export class Boundary {
 	}
 
 	get_effect_pending() {
+		// Without async mode nothing is ever pending, so skip the subscriber and the code it pulls
+		// into the bundle. (This assumes async mode isn't turned on after a reader has run)
+		if (!async_mode_flag) return 0;
+
+		this.#effect_pending_subscriber ??= createSubscriber(() => {
+			this.#effect_pending = source(this.#local_pending_count);
+
+			if (DEV) {
+				tag(this.#effect_pending, '$effect.pending()');
+			}
+
+			return () => {
+				this.#effect_pending = null;
+			};
+		});
+
 		this.#effect_pending_subscriber();
 		return get(/** @type {Source<number>} */ (this.#effect_pending));
 	}
