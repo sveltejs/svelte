@@ -1,6 +1,7 @@
 /** @import { AST, Binding } from '#compiler' */
 /** @import { Scope } from '../../scope' */
 /** @import { Context } from '../types' */
+import { walk } from 'zimmerframe';
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
 
@@ -34,8 +35,7 @@ export function SnippetBlock(node, context) {
 			e.declaration_duplicate(node.expression, name);
 		}
 
-		node.metadata.can_hoist =
-			is_top_level && can_hoist_snippet(context.state.scope, context.state.scopes);
+		node.metadata.can_hoist = can_hoist_snippet(node, context.state.scope, context.state.scopes);
 
 		if (node.metadata.can_hoist) {
 			const name = node.expression.name;
@@ -80,10 +80,11 @@ export function SnippetBlock(node, context) {
 }
 
 /**
- * @param {Map<AST.SvelteNode, Scope>} scopes
+ * @param {AST.SnippetBlock} node
  * @param {Scope} scope
+ * @param {Map<AST.SvelteNode, Scope>} scopes
  */
-function can_hoist_snippet(scope, scopes, visited = new Set()) {
+function can_hoist_snippet(node, scope, scopes, visited = new Set()) {
 	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
 		if (!binding) continue;
@@ -106,7 +107,7 @@ function can_hoist_snippet(scope, scopes, visited = new Set()) {
 			visited.add(binding);
 			const snippet_scope = /** @type {Scope} */ (scopes.get(binding.initial));
 
-			if (can_hoist_snippet(snippet_scope, scopes, visited)) {
+			if (can_hoist_snippet(binding.initial, snippet_scope, scopes, visited)) {
 				continue;
 			}
 		}
@@ -114,5 +115,15 @@ function can_hoist_snippet(scope, scopes, visited = new Set()) {
 		return false;
 	}
 
-	return true;
+	// Slots implicitly reference the component's $$props, even without explicit bindings.
+	let can_hoist = true;
+
+	walk(/** @type {AST.SvelteNode} */ (node.body), null, {
+		SlotElement(_, { stop }) {
+			can_hoist = false;
+			stop();
+		}
+	});
+
+	return can_hoist;
 }
