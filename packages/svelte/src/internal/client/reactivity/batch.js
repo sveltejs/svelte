@@ -348,7 +348,9 @@ export class Batch {
 	}
 
 	#is_deferred() {
-		// without async there are no forks, and no pending work (see `increment`)
+		// without async there are no forks, and no pending work (see `increment`).
+		// (Checks like this one sit inside the method because bundlers never remove class
+		// methods; they can only fold `async_mode_flag` and drop the code behind it)
 		if (!async_mode_flag) return false;
 
 		if (this.is_fork) return true;
@@ -747,7 +749,8 @@ export class Batch {
 	 * @param {Iterable<Source>} sources
 	 */
 	#revalidate(sources) {
-		// only called in async mode (see `#process_step` and `#commit`)
+		// only called in async mode (see `#process_step` and `#commit`).
+		// The check lets bundlers drop the body
 		if (!async_mode_flag) return;
 
 		// deriveds added during iteration are visited too, so this doubles as a worklist
@@ -1103,7 +1106,8 @@ export class Batch {
 	}
 
 	#commit() {
-		// only called in async mode (see `commit_writes`)
+		// only called in async mode (see `commit_writes`).
+		// The check lets bundlers drop the body
 		if (!async_mode_flag) return;
 
 		// If there are other pending batches, they now need to be 'rebased' —
@@ -1178,7 +1182,8 @@ export class Batch {
 	 * If it has pending work it stays linked, coming first from now on (see `#move_to_front`)
 	 */
 	commit_writes() {
-		// only called in async mode (see `#process_step` and `hydrate`)
+		// only called in async mode (see `#process_step` and `hydrate`).
+		// The check lets bundlers drop the body
 		if (!async_mode_flag) return;
 
 		this.#commit();
@@ -1536,7 +1541,8 @@ export class Batch {
 	 * on: This ensures logic about who sees what values in intersects/merge/etc work correctly.
 	 */
 	#move_to_front() {
-		// only called in async mode (see `commit_writes`)
+		// only called in async mode (see `commit_writes`).
+		// The check lets bundlers drop the body
 		if (!async_mode_flag) return;
 
 		var prev = /** @type {Batch} */ (this.prev);

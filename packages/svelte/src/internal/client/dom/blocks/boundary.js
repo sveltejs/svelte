@@ -137,11 +137,17 @@ export class Boundary {
 	 */
 	#effect_pending = null;
 
-	/**
-	 * Created on first use by `get_effect_pending` (which returns early without async mode)
-	 * @type {(() => void) | null}
-	 */
-	#effect_pending_subscriber = null;
+	#effect_pending_subscriber = createSubscriber(() => {
+		this.#effect_pending = source(this.#local_pending_count);
+
+		if (DEV) {
+			tag(this.#effect_pending, '$effect.pending()');
+		}
+
+		return () => {
+			this.#effect_pending = null;
+		};
+	});
 
 	/**
 	 * @param {TemplateNode} node
@@ -520,21 +526,6 @@ export class Boundary {
 	}
 
 	get_effect_pending() {
-		// without async mode the count never leaves 0 (see `update_effect_pending`)
-		if (!async_mode_flag) return 0;
-
-		this.#effect_pending_subscriber ??= createSubscriber(() => {
-			this.#effect_pending = source(this.#local_pending_count);
-
-			if (DEV) {
-				tag(this.#effect_pending, '$effect.pending()');
-			}
-
-			return () => {
-				this.#effect_pending = null;
-			};
-		});
-
 		this.#effect_pending_subscriber();
 		return get(/** @type {Source<number>} */ (this.#effect_pending));
 	}
