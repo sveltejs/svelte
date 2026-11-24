@@ -505,6 +505,8 @@ export function update_derived(signal) {
  * @returns {Derived | DerivedRecord | BatchValue}
  */
 export function get_view(derived) {
+	if (!async_mode_flag) return derived;
+
 	var cache = /** @type {Map<Derived, Derived | DerivedRecord | BatchValue>} */ (view_cache);
 	var entry = cache.get(derived);
 

@@ -995,6 +995,8 @@ function seen_version(signal) {
  * @param {boolean} error
  */
 function derived_version(derived, batch, value, error) {
+	if (!async_mode_flag) return derived.wv;
+
 	if (!error) {
 		var previous = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
 		if (previous !== undefined && !previous.e && derived.equals.call(previous, value)) {
