@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createBundle } from 'dts-buddy';
+import ts from 'typescript';
 
 const dir = fileURLToPath(new URL('..', import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(`${dir}/package.json`, 'utf-8'));
@@ -34,6 +35,8 @@ await createBundle({
 	compilerOptions: {
 		// so that types/properties with `@internal` (and its dependencies) are removed from the output
 		stripInternal: true,
+		// https://github.com/sveltejs/svelte/pull/18843#issuecomment-5742411963
+		target: ts.ScriptTarget.ES2021,
 		paths: Object.fromEntries(
 			Object.entries(pkg.imports).map(
 				/** @param {[string,any]} import */ ([key, value]) => {
