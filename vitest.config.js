@@ -58,7 +58,7 @@ function svelte_alias(force_server = false) {
 export default defineConfig({
 	test: {
 		dir: '.',
-		reporters: process.env.GITHUB_ACTIONS === 'true' ? ['minimal'] : ['dot'],
+		reporters: './vitest-reporter.js',
 		// A handful of dev-mode tests trigger Svelte's `effect_update_depth_exceeded`
 		// guard, which involves ~1000 Error objects per flush for stack tracking —
 		// slow enough under vitest 4's deeper async stacks (and CI's slower workers)
