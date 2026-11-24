@@ -72,7 +72,7 @@ ${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
 /**
  * Failed to serialize `hydratable` data for key `%key%`.
  * 
- * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
+ * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/devalue) can, plus Promises.
  * 
  * Cause:
  * %stack%
@@ -83,7 +83,7 @@ ${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
 export function hydratable_serialization_failed(key, stack) {
 	const error = new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data for key \`${key}\`.
 
-\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises.
+\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/devalue) can, plus Promises.
 
 Cause:
 ${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);

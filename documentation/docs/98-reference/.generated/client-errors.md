@@ -3,14 +3,14 @@
 ### async_derived_orphan
 
 ```
-Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+Can only create a `$derived(...)` with an `await` expression during component initialization or in a declaration tag
 ```
 
-In Svelte there are two types of reaction — [`$derived`](/docs/svelte/$derived) and [`$effect`](/docs/svelte/$effect). Deriveds can be created anywhere, because they run _lazily_ and can be [garbage collected](https://developer.mozilla.org/en-US/docs/Glossary/Garbage_collection) if nothing references them. Effects, by contrast, keep running eagerly whenever their dependencies change, until they are destroyed.
+In Svelte there are two types of reaction — [`$derived`](/docs/svelte/$derived) and [`$effect`](/docs/svelte/$effect). Deriveds can normally be created anywhere, because they run _lazily_ and can be [garbage collected](https://developer.mozilla.org/en-US/docs/Glossary/Garbage_collection) if nothing references them. Effects, by contrast, keep running eagerly whenever their dependencies change, until they are destroyed.
 
 Because of this, effects can only be created inside other effects (or [effect roots](/docs/svelte/$effect#$effect.root), such as the one that is created when you first mount a component) so that Svelte knows when to destroy them.
 
-Some sleight of hand occurs when a derived contains an `await` expression: Since waiting until we read `{await getPromise()}` to call `getPromise` would be too late, we use an effect to instead call it proactively, notifying Svelte when the value is available. But since we're using an effect, we can only create asynchronous deriveds inside another effect.
+Some sleight of hand occurs when a derived contains an `await` expression: Since waiting until we read `$derived(await getPromise())` to call `getPromise` would be too late, we use an effect to instead call it proactively, notifying Svelte when the value is available. But since we're using an effect, this can only happen during component initialization or in a [declaration tag](/docs/svelte/declaration-tags).
 
 ### bind_invalid_checkbox_value
 
@@ -45,6 +45,14 @@ Attempted to instantiate %component% with `new %name%`, which is no longer valid
 ```
 
 See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
+
+### custom_renderer_unsupported_operation
+
+```
+`%operation%` is not supported when rendering with a custom renderer
+```
+
+Some of Svelte's internals only work with the DOM, and are never expected to run while a custom renderer is active — for example, `{@html ...}` and hydration are not available with custom renderers. Reaching one of these code paths indicates a bug in Svelte rather than in your app or renderer, so please [open an issue](https://github.com/sveltejs/svelte/issues) with a reproduction.
 
 ### derived_references_self
 
@@ -164,6 +172,14 @@ Cannot commit a fork that was already discarded
 Cannot create a fork inside an effect or when state changes are pending
 ```
 
+### get_abort_signal_after_await
+
+```
+`getAbortSignal()` cannot be called after an `await`
+```
+
+Abort signals must be associated with their deriveds/effects as soon as they run — if it happens after an `await`, it's too late. Create the abort signal first, before awaiting anything.
+
 ### get_abort_signal_outside_reaction
 
 ```
@@ -201,6 +217,12 @@ Failed to hydrate the application
 Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
 ```
 
+### invalid_snippet_in_custom_renderer
+
+```
+`createRawSnippet` cannot be used with a custom renderer
+```
+
 ### lifecycle_legacy_only
 
 ```
@@ -219,10 +241,22 @@ Cannot do `bind:%key%={undefined}` when `%key%` has a fallback value
 Rest element properties of `$props()` such as `%property%` are readonly
 ```
 
+### renderer_cannot_cross
+
+```
+Cannot render content belonging to %guest% inside %host%. A custom renderer must define `embed` or `host` to be combined with another renderer
+```
+
 ### rune_outside_svelte
 
 ```
 The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
+```
+
+### snippet_renderer_mismatch
+
+```
+A snippet created in a component that was compiled without `experimental.customRenderer` cannot be rendered by a custom renderer
 ```
 
 ### state_descriptors_fixed

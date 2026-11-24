@@ -11,21 +11,15 @@ import * as e from '../../../errors.js';
 export function AwaitExpression(node, context) {
 	const tla = context.state.ast_type === 'instance' && context.state.function_depth === 1;
 
-	if (
-		is_reactive_expression(
-			context.path,
-			context.state.derived_function_depth === context.state.function_depth
-		)
-	) {
-		const expression = /** @type {ExpressionMetadata} */ (context.state.expression);
+	/** @type {ExpressionMetadata | null} */
+	var reactive = is_reactive_expression(
+		context.path,
+		context.state.derived_function_depth === context.state.function_depth
+	)
+		? /** @type {ExpressionMetadata} */ (context.state.expression)
+		: null;
 
-		// preserve context for awaits that precede other expressions in template or `$derived(...)`,
-		// and for any await that follows one, so the restored context ends at the next suspension
-		if (expression.has_pickled_await || !is_last_evaluated_expression(context.path, node)) {
-			context.state.analysis.pickled_awaits.add(node);
-			expression.has_pickled_await = true;
-		}
-	}
+	var last = reactive !== null && is_last_evaluated_expression(context.path, node);
 
 	let suspend = tla;
 
@@ -48,6 +42,14 @@ export function AwaitExpression(node, context) {
 	}
 
 	context.next();
+
+	// Preserve context for awaits that precede other expressions in template or `$derived(...)`, and for any await
+	// that follows one, so the restored context ends at the next suspension. (Decided after visiting the argument:
+	// an await inside it, as in `await f(await g())`, suspends before this one does)
+	if (reactive !== null && (reactive.has_pickled_await || !last)) {
+		context.state.analysis.pickled_awaits.add(node);
+		reactive.has_pickled_await = true;
+	}
 }
 
 /**

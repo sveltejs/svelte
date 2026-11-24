@@ -14,6 +14,7 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
+import { regex_directive_name_separator } from './patterns.js';
 
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
@@ -1019,7 +1020,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, AST.SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
-		state.scope.reference(b.id(node.name.split('.')[0]), path);
+		state.scope.reference(b.id(node.name.split(regex_directive_name_separator)[0]), path);
 
 		if (node.expression) {
 			visit(node.expression);
@@ -1192,6 +1193,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			next();
 		},
 
+		StaticBlock(node, { state, next }) {
+			const scope = state.scope.child();
+			scopes.set(node, scope);
+			next({ scope });
+		},
+
 		VariableDeclaration(node, { state, path, next }) {
 			const is_parent_const_tag = path.at(-1)?.type === 'ConstTag';
 			for (const declarator of node.declarations) {
@@ -1343,6 +1350,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			context.next({ scope: child_scope });
+
+			// the parameters and what the body declares end up in the same function
+			const body_scope = /** @type {Scope} */ (scopes.get(node.body));
+			for (const [name, binding] of body_scope.declarations) {
+				if (child_scope.declarations.has(name)) {
+					e.declaration_duplicate(binding.node, name);
+				}
+			}
 		},
 
 		Fragment: (node, context) => {
