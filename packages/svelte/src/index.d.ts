@@ -122,7 +122,7 @@ export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
  *
  * ### Example:
  *
- * You have component library on npm called `component-library`, from which
+ * You have a component library on npm called `component-library`, from which
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
  * you want to provide typings. Therefore you create a `index.d.ts`:
  *
