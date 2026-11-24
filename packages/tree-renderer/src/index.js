@@ -225,7 +225,7 @@ export function createTreeRenderer(config) {
 		renderer.host = ({ guest, parent }) => {
 			const connection = host({
 				guest,
-				parent: parent === null ? null : platform_parent(parent) ?? null
+				parent: parent === null ? null : (platform_parent(parent) ?? null)
 			});
 			const node = connection.node === undefined ? undefined : create_element('', connection.node);
 			return { ...connection, node };

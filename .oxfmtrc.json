@@ -38,6 +38,8 @@
 		"packages/svelte/tests/**/_actual*",
 		"packages/svelte/tests/**/expected*",
 		"packages/svelte/tests/**/_output",
+		"packages/tree-renderer/tests/**/*.svelte",
+		"packages/tree-renderer/tests/**/_output",
 		"packages/svelte/tests/**/shards/*.test.js",
 		"packages/svelte/tests/hydration/samples/*/_expected.html",
 		"packages/svelte/tests/hydration/samples/*/_override.html",

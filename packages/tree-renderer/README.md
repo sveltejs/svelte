@@ -5,20 +5,20 @@ A helper for writing [Svelte custom renderers](https://svelte.dev/docs/svelte/sv
 `createRenderer` needs you to answer Svelte's questions about your tree: what's the first child of this node, what's its next sibling, what's its parent, and so on. With this helper, you create your platform's objects and apply each change to them, and the tree renderer keeps track of the tree for you.
 
 ```js
-import { mount } from "svelte";
-import { createTreeRenderer } from "@sveltejs/tree-renderer";
-import App from "./App.svelte";
+import { mount } from 'svelte';
+import { createTreeRenderer } from '@sveltejs/tree-renderer';
+import App from './App.svelte';
 
 const renderer = createTreeRenderer({
-	createElement: (name) => new View(name),
-	createText: (text) => new Label(text),
-	insert: (parent, node, anchor, index) => parent.insertChild(node, index),
-	remove: (parent, node) => parent.removeChild(node),
-	setAttribute: (element, key, value) => element.setProp(key, value),
-	removeAttribute: (element, key) => element.clearProp(key),
-	setText: (node, text) => node.setText(text),
-	addEventListener: (element, type, handler) => element.on(type, handler),
-	removeEventListener: (element, type, handler) => element.off(type, handler),
+  createElement: (name) => new View(name),
+  createText: (text) => new Label(text),
+  insert: (parent, node, anchor, index) => parent.insertChild(node, index),
+  remove: (parent, node) => parent.removeChild(node),
+  setAttribute: (element, key, value) => element.setProp(key, value),
+  removeAttribute: (element, key) => element.clearProp(key),
+  setText: (node, text) => node.setText(text),
+  addEventListener: (element, type, handler) => element.on(type, handler),
+  removeEventListener: (element, type, handler) => element.off(type, handler)
 });
 
 mount(App, { renderer, target: renderer.createRoot(platform_root) });
@@ -60,20 +60,20 @@ Svelte works with the tree renderer's nodes, so they're what you get in attachme
 
 ```js
 createTreeRenderer({
-	// ...
+  // ...
 
-	// this renderer's content inside the DOM (`host` is `null`) or another renderer
-	embed({ host }) {
-		const container = new View("root");
-		const node = host === null ? mount_view_into_dom(container) : undefined;
-		return { node, container, destroy() {} };
-	},
+  // this renderer's content inside the DOM (`host` is `null`) or another renderer
+  embed({ host }) {
+    const container = new View('root');
+    const node = host === null ? mount_view_into_dom(container) : undefined;
+    return { node, container, destroy() {} };
+  },
 
-	// DOM content (`guest` is `null`), or another renderer's, inside this one
-	host({ guest }) {
-		const container = document.createElement("div");
-		return { node: new DomView(container), container, destroy() {} };
-	},
+  // DOM content (`guest` is `null`), or another renderer's, inside this one
+  host({ guest }) {
+    const container = document.createElement('div');
+    return { node: new DomView(container), container, destroy() {} };
+  }
 });
 ```
 
