@@ -423,7 +423,7 @@ export class Renderer {
 	 * @param {(renderer: Renderer) => void} fn
 	 * @param {string | undefined} [css_hash]
 	 * @param {Record<string, boolean> | undefined} [classes]
-	 * @param {Record<string, string> | undefined} [styles]
+	 * @param {Record<string, string> | [Record<string, string>, Record<string, string>] | undefined} [styles]
 	 * @param {number | undefined} [flags]
 	 * @param {boolean | undefined} [is_rich]
 	 * @returns {void}
@@ -446,7 +446,7 @@ export class Renderer {
 	 * @param {string | number | boolean | ((renderer: Renderer) => void)} body
 	 * @param {string | undefined} [css_hash]
 	 * @param {Record<string, boolean> | undefined} [classes]
-	 * @param {Record<string, string> | undefined} [styles]
+	 * @param {Record<string, string> | [Record<string, string>, Record<string, string>] | undefined} [styles]
 	 * @param {number | undefined} [flags]
 	 * @param {boolean | undefined} [is_rich]
 	 */
