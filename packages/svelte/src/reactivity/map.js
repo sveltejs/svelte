@@ -216,7 +216,9 @@ export class SvelteMap extends Map {
 
 			set(s, value);
 		} else {
-			sources.set(key, this.#source(value));
+			s = this.#source(async_mode_flag ? /** @type {V} */ (MISSING) : value);
+			sources.set(key, s);
+			if (async_mode_flag) set(s, value);
 		}
 
 		var items = this.#peek();
@@ -243,7 +245,7 @@ export class SvelteMap extends Map {
 		var s = sources.get(key);
 
 		if (s !== undefined) {
-			sources.delete(key);
+			if (!async_mode_flag) sources.delete(key);
 			set(s, /** @type {V} */ (MISSING));
 		}
 
@@ -271,7 +273,7 @@ export class SvelteMap extends Map {
 			set(s, /** @type {V} */ (MISSING));
 		}
 
-		sources.clear();
+		if (!async_mode_flag) sources.clear();
 	}
 
 	/**
