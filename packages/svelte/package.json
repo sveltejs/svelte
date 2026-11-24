@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.58.0",
+  "version": "5.59.1",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -22,6 +22,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/index-client.js",
       "worker": "./src/index-server.js",
       "browser": "./src/index-client.js",
       "default": "./src/index-server.js"
@@ -59,6 +60,9 @@
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },
+    "./internal/init-operations": {
+      "default": "./src/internal/init-operations.js"
+    },
     "./internal/flags/async": {
       "default": "./src/internal/flags/async.js"
     },
@@ -68,11 +72,17 @@
     "./internal/flags/tracing": {
       "default": "./src/internal/flags/tracing.js"
     },
+    "./internal/flags/custom-renderer": {
+      "svelte-custom-renderer": "./src/internal/flags/custom-renderer.js",
+      "browser": "./src/internal/flags/custom-renderer.js",
+      "default": "./src/internal/flags/custom-renderer-server.js"
+    },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },
     "./legacy": {
       "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/legacy/legacy-client.js",
       "worker": "./src/legacy/legacy-server.js",
       "browser": "./src/legacy/legacy-client.js",
       "default": "./src/legacy/legacy-server.js"
@@ -83,6 +93,7 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/reactivity/index-client.js",
       "worker": "./src/reactivity/index-server.js",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
@@ -91,12 +102,19 @@
       "types": "./types/index.d.ts",
       "default": "./src/reactivity/window/index.js"
     },
+    "./renderer": {
+      "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/renderer/index.js",
+      "browser": "./src/renderer/index.js",
+      "default": "./src/renderer/index-server.js"
+    },
     "./server": {
       "types": "./types/index.d.ts",
       "default": "./src/server/index.js"
     },
     "./store": {
       "types": "./types/index.d.ts",
+      "svelte-custom-renderer": "./src/store/index-client.js",
       "worker": "./src/store/index-server.js",
       "browser": "./src/store/index-client.js",
       "default": "./src/store/index-server.js"
@@ -179,7 +197,7 @@
     "aria-query": "5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
-    "devalue": "^5.9.2",
+    "devalue": "^6.0.4",
     "esm-env": "^1.2.1",
     "esrap": "^2.4.2",
     "is-reference": "^3.0.3",

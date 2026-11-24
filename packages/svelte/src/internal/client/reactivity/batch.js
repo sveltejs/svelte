@@ -24,7 +24,7 @@ import {
 	REACTION_IS_UPDATING,
 	BOUNDARY_EFFECT
 } from '#client/constants';
-import { async_mode_flag } from '../../flags/index.js';
+import { async_mode_flag, custom_renderers_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
@@ -512,6 +512,22 @@ export class Batch {
 	}
 
 	#process() {
+		// Processing a batch frequently hands over to another batch (the next one, an earlier one it
+		// merged into, etc). Do that iteratively rather than recursively, so that the call stack doesn't
+		// grow with each hand-over — deep stacks make DEV stack capture (see `get_stack`) quadratic
+		/** @type {Batch | null} */
+		var batch = this;
+
+		while (batch !== null) {
+			batch = batch.#process_step();
+		}
+	}
+
+	/**
+	 * Processes this batch and returns the batch that needs to be processed next, if any
+	 * @returns {Batch | null}
+	 */
+	#process_step() {
 		current_batch = processing_batch = this;
 
 		// A different batch view may apply, even when processing continues within the same flush.
@@ -631,8 +647,7 @@ export class Batch {
 				}
 
 				// Revalidate once all the writes and pending work belong to the same batch.
-				target.#process();
-				return;
+				return target;
 			}
 		}
 
@@ -646,10 +661,10 @@ export class Batch {
 			}
 
 			if (updates.length > 0) {
-				/** @type {Batch} */ (/** @type {unknown} */ (current_batch)).#process();
+				return /** @type {Batch} */ (/** @type {unknown} */ (current_batch));
 			}
 
-			return;
+			return null;
 		}
 
 		const earlier_batch = this.#find_earlier_batch();
@@ -660,9 +675,8 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 			earlier_batch.#merge(this);
-			earlier_batch.#process();
 
-			return;
+			return earlier_batch;
 		}
 
 		for (const boundary of revealed_boundaries) {
@@ -679,6 +693,12 @@ export class Batch {
 		this.#run_callbacks(this.#commit_callbacks);
 
 		var earlier_writes = flush_queued_effects(render_effects);
+
+		// the content has been updated, and user effects are about to see it
+		if (custom_renderers_flag && before_effects !== null) {
+			before_effects();
+		}
+
 		flush_queued_effects(effects, earlier_writes);
 
 		this.#deferred?.resolve();
@@ -694,8 +714,7 @@ export class Batch {
 		// In sync mode flushSync can cause #commit to wrongfully think that there needs to be a rebase, so we only do it in async mode
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
-			this.#commit();
-			if (this.linked && this.prev !== null) this.#move_to_front();
+			this.commit_writes();
 		}
 
 		if (next_batch !== null) {
@@ -710,9 +729,9 @@ export class Batch {
 					}
 				}
 			}
-
-			next_batch.#process();
 		}
+
+		return next_batch;
 	}
 
 	/**
@@ -1143,6 +1162,15 @@ export class Batch {
 	}
 
 	/**
+	 * Make this batch's writes the real world, part of every other batch's view (see `#commit`).
+	 * If it has pending work it stays linked, coming first from now on (see `#move_to_front`)
+	 */
+	commit_writes() {
+		this.#commit();
+		if (this.linked && this.prev !== null) this.#move_to_front();
+	}
+
+	/**
 	 * @param {Effect} effect
 	 */
 	increment(effect) {
@@ -1526,6 +1554,21 @@ export class Batch {
 }
 
 // TODO Svelte@6 think about removing the callback argument.
+/**
+ * Called each time a batch has updated the content, before its user effects run, if set. Custom renderers
+ * use this to keep the content of crossings that share a container in the order of their host nodes
+ * (see `custom-renderer/containers.js`), so that effects never see them in a stale order
+ * @type {(() => void) | null}
+ */
+let before_effects = null;
+
+/**
+ * @param {(() => void) | null} fn
+ */
+export function set_before_effects(fn) {
+	before_effects = fn;
+}
+
 /**
  * Synchronously flush any pending updates.
  * Returns void if no callback is provided, otherwise returns the result of calling the callback.

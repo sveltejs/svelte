@@ -7,17 +7,27 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { create_element, create_text, get_first_child } from '../operations.js';
+import {
+	create_element,
+	create_anchor,
+	get_first_child,
+	append_child,
+	create_comment,
+	insert_before,
+	node_type,
+	remove_child
+} from '../operations.js';
 import { block, teardown } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { active_effect } from '../../runtime.js';
-import { component_context, dev_stack } from '../../context.js';
+import { component_context } from '../../context.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { assign_nodes } from '../template.js';
 import { is_raw_text_element } from '../../../../utils.js';
 import { BranchManager } from './branches.js';
 import { set_animation_effect_override } from '../elements/transitions.js';
+import { set_dev_metadata } from '../../dev/elements.js';
 
 /**
  * @param {Comment | Element} node
@@ -40,7 +50,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	/** @type {null | Element} */
 	var element = null;
 
-	if (hydrating && hydrate_node.nodeType === ELEMENT_NODE) {
+	if (hydrating && node_type(hydrate_node) === ELEMENT_NODE) {
 		element = /** @type {Element} */ (hydrate_node);
 		hydrate_next();
 	}
@@ -75,16 +85,11 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				element = hydrating ? /** @type {Element} */ (element) : create_element(next_tag, ns);
 
 				if (DEV && location) {
-					// @ts-expect-error
-					element.__svelte_meta = {
-						parent: dev_stack,
-						loc: {
-							file: filename,
-							line: location[0],
-							column: location[1]
-						},
-						component: component_context
-					};
+					set_dev_metadata(element, {
+						file: filename,
+						line: location[0],
+						column: location[1]
+					});
 				}
 
 				assign_nodes(element, element);
@@ -94,14 +99,14 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 					if (hydrating && is_raw_text_element(next_tag)) {
 						// prevent hydration glitches (code just below expects an anchor)
-						element.append((tmp_comment = document.createComment('')));
+						append_child(element, (tmp_comment = create_comment('')));
 					}
 
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = hydrating
 						? get_first_child(element)
-						: element.appendChild(create_text());
+						: /** @type {Text} */ (append_child(element, create_anchor()));
 
 					if (hydrating) {
 						if (child_anchor === null) {
@@ -118,7 +123,9 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// contains children, it's a user error (which is warned on elsewhere)
 					// and the DOM will be silently discarded
 					render_fn(element, child_anchor);
-					tmp_comment?.remove();
+					if (tmp_comment) {
+						remove_child(element, tmp_comment);
+					}
 					set_animation_effect_override(null);
 				}
 
@@ -126,7 +133,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = element;
 
 				// we only move the node if we are not hydrating since a claimed element is already in place
-				if (!is_hydrating) anchor.before(element);
+				if (!is_hydrating) insert_before(anchor, element);
 			}
 
 			if (hydrating) {

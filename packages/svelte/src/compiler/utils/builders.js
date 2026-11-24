@@ -636,7 +636,7 @@ export function import_all(as, source) {
 }
 
 /**
- * @param {Array<[string, string]>} parts
+ * @param {Array<[string, string] | [string, string, boolean]>} parts
  * @param {string} source
  * @returns {ESTree.ImportDeclaration}
  */
@@ -646,7 +646,7 @@ export function imports(parts, source) {
 		attributes: [],
 		source: literal(source),
 		specifiers: parts.map((p) => ({
-			type: 'ImportSpecifier',
+			type: p[2] ? 'ImportDefaultSpecifier' : 'ImportSpecifier',
 			imported: id(p[0]),
 			local: id(p[1])
 		}))

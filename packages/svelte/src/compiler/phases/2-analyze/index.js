@@ -471,6 +471,24 @@ export function analyze_component(root, source, options) {
 
 	const custom_element_from_option = options.customElement({ filename: options.filename });
 	const css = options.css({ filename: options.filename });
+	const custom_renderer = options.experimental.customRenderer({ filename: options.filename });
+
+	// Injected styles are added to the document, which doesn't apply to components that use a
+	// custom renderer (an actual renderer module, i.e. a string — `null` means the DOM): they are
+	// never server-rendered and their nodes aren't in the document. An inherited `css: 'injected'`
+	// (from the compiler options, which tools like vite-plugin-svelte set) is therefore ignored and
+	// the CSS is returned as with `css: 'external'`; only an explicit `<svelte:options css="injected" />`
+	// in such a component is an error
+	const has_custom_renderer = typeof custom_renderer === 'string';
+
+	if (has_custom_renderer) {
+		const css_attribute = root.options?.attributes.find((attribute) => attribute.name === 'css');
+
+		if (css_attribute) {
+			e.incompatible_with_custom_renderer(css_attribute, "`css: 'injected'`");
+		}
+	}
+
 	const custom_element = options.customElementOptions ?? custom_element_from_option;
 	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
 
@@ -480,7 +498,8 @@ export function analyze_component(root, source, options) {
 		component_name: name,
 		dev: options.dev,
 		rootDir: options.rootDir,
-		runes
+		runes,
+		custom_renderer: custom_renderer
 	});
 
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
@@ -533,7 +552,7 @@ export function analyze_component(root, source, options) {
 		event_directive_node: null,
 		uses_event_attributes: false,
 		custom_element,
-		inject_styles: css === 'injected' || is_custom_element,
+		inject_styles: (css === 'injected' && !has_custom_renderer) || is_custom_element,
 		accessors:
 			is_custom_element ||
 			(runes ? false : !!options.accessors) ||

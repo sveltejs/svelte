@@ -32,6 +32,12 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
 
+## custom_renderer_unsupported_operation
+
+> `%operation%` is not supported when rendering with a custom renderer
+
+Some of Svelte's internals only work with the DOM, and are never expected to run while a custom renderer is active — for example, `{@html ...}` and hydration are not available with custom renderers. Reaching one of these code paths indicates a bug in Svelte rather than in your app or renderer, so please [open an issue](https://github.com/sveltejs/svelte/issues) with a reproduction.
+
 ## derived_references_self
 
 > A derived value cannot reference itself recursively
@@ -161,6 +167,10 @@ This can happen if you render a hydratable on the client that was not rendered o
 
 > Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
 
+## invalid_snippet_in_custom_renderer
+
+> `createRawSnippet` cannot be used with a custom renderer
+
 ## lifecycle_legacy_only
 
 > `%name%(...)` cannot be used in runes mode
@@ -173,9 +183,17 @@ This can happen if you render a hydratable on the client that was not rendered o
 
 > Rest element properties of `$props()` such as `%property%` are readonly
 
+## renderer_cannot_cross
+
+> Cannot render content belonging to %guest% inside %host%. A custom renderer must define `embed` or `host` to be combined with another renderer
+
 ## rune_outside_svelte
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
+
+## snippet_renderer_mismatch
+
+> A snippet created in a component that was compiled without `experimental.customRenderer` cannot be rendered by a custom renderer
 
 ## state_descriptors_fixed
 
