@@ -23,7 +23,13 @@ import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { ignore_map, get_ignore_snapshot, pop_ignore, push_ignore } from '../../state.js';
+import {
+	ignore_map,
+	ignore_stack,
+	get_ignore_snapshot,
+	pop_ignore,
+	push_ignore
+} from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -136,7 +142,9 @@ const visitors = {
 			push_ignore(ignores);
 		}
 
-		ignore_map.set(node, get_ignore_snapshot());
+		// a node outside every ignore needs no entry while its warnings are raised outside every ignore
+		// too: `w` then reads the empty stack
+		if (ignore_stack.length > 0) ignore_map.set(node, get_ignore_snapshot());
 
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
