@@ -1,6 +1,7 @@
 import { hydrating } from '../hydration.js';
-import { clear_text_content, get_first_child } from '../operations.js';
+import { clear_text_content, get_first_child, add_event_listener } from '../operations.js';
 import { queue_micro_task } from '../task.js';
+import { FORM_RESET_HANDLER } from '../../constants.js';
 
 /**
  * @param {HTMLElement} dom
@@ -37,7 +38,8 @@ let listening_to_form_reset = false;
 export function add_form_reset_listener() {
 	if (!listening_to_form_reset) {
 		listening_to_form_reset = true;
-		document.addEventListener(
+		add_event_listener(
+			document,
 			'reset',
 			(evt) => {
 				// Needs to happen one tick later or else the dom properties of the form
@@ -45,8 +47,7 @@ export function add_form_reset_listener() {
 				Promise.resolve().then(() => {
 					if (!evt.defaultPrevented) {
 						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
-							// @ts-expect-error
-							e.__on_r?.();
+							/** @type {any} */ (e)[FORM_RESET_HANDLER]?.();
 						}
 					}
 				});

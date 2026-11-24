@@ -1,8 +1,17 @@
 /** @import { TemplateNode } from '#client' */
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
-import { create_text, get_first_child, get_next_sibling } from '../operations.js';
-import { block } from '../../reactivity/effects.js';
-import { COMMENT_NODE, EFFECT_PRESERVED, HEAD_EFFECT } from '#client/constants';
+
+import {
+	create_anchor,
+	get_first_child,
+	get_next_sibling,
+	remove_node,
+	append_child,
+	node_type,
+	get_node_value
+} from '../operations.js';
+import { block, branch } from '../../reactivity/effects.js';
+import { COMMENT_NODE, HEAD_EFFECT } from '#client/constants';
 
 /**
  * @param {string} hash
@@ -27,7 +36,7 @@ export function head(hash, render_fn) {
 		// rendered in an arbitrary order — find one corresponding to this component
 		while (
 			head_anchor !== null &&
-			(head_anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (head_anchor).data !== hash)
+			(node_type(head_anchor) !== COMMENT_NODE || get_node_value(head_anchor) !== hash)
 		) {
 			head_anchor = get_next_sibling(head_anchor);
 		}
@@ -38,20 +47,29 @@ export function head(hash, render_fn) {
 			set_hydrating(false);
 		} else {
 			var start = /** @type {TemplateNode} */ (get_next_sibling(head_anchor));
-			head_anchor.remove(); // in case this component is repeated
+			remove_node(/** @type {ChildNode} */ (head_anchor)); // in case this component is repeated
 
 			set_hydrate_node(start);
 		}
 	}
 
 	if (!hydrating) {
-		anchor = document.head.appendChild(create_text());
+		anchor = /** @type {Comment | Text} */ (append_child(document.head, create_anchor()));
 	}
 
 	try {
-		// normally a branch is the child of a block and would have the EFFECT_PRESERVED flag,
-		// but since head blocks don't necessarily only have direct branch children we add it on the block itself
-		block(() => render_fn(anchor), HEAD_EFFECT | EFFECT_PRESERVED);
+		block(() => {
+			var e = branch(() => render_fn(anchor));
+			e.f |= HEAD_EFFECT;
+
+			if (!hydrating) {
+				if (e.nodes === null) {
+					e.nodes = { start: anchor, end: anchor, a: null, t: null };
+				} else {
+					e.nodes.end = anchor;
+				}
+			}
+		});
 	} finally {
 		if (was_hydrating) {
 			set_hydrating(true);

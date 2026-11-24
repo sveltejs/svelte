@@ -9,7 +9,7 @@ import {
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';
-import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
+import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
 
@@ -152,6 +152,7 @@ export function clean_nodes(
 
 		if (
 			node.type === 'ConstTag' ||
+			node.type === 'DeclarationTag' ||
 			node.type === 'DebugTag' ||
 			node.type === 'SvelteBody' ||
 			node.type === 'SvelteWindow' ||

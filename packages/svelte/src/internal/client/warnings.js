@@ -75,6 +75,17 @@ export function console_log_state(method) {
 }
 
 /**
+ * Reading a derived belonging to a now-destroyed effect may result in stale values
+ */
+export function derived_inert() {
+	if (DEV) {
+		console.warn(`%c[svelte] derived_inert\n%cReading a derived belonging to a now-destroyed effect may result in stale values\nhttps://svelte.dev/e/derived_inert`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/derived_inert`);
+	}
+}
+
+/**
  * %handler% should be a function. Did you mean to %suggestion%?
  * @param {string} handler
  * @param {string} suggestion
@@ -233,17 +244,6 @@ export function state_proxy_equality_mismatch(operator) {
 		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results\nhttps://svelte.dev/e/state_proxy_equality_mismatch`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/state_proxy_equality_mismatch`);
-	}
-}
-
-/**
- * Tried to unmount a state proxy, rather than a component
- */
-export function state_proxy_unmount() {
-	if (DEV) {
-		console.warn(`%c[svelte] state_proxy_unmount\n%cTried to unmount a state proxy, rather than a component\nhttps://svelte.dev/e/state_proxy_unmount`, bold, normal);
-	} else {
-		console.warn(`https://svelte.dev/e/state_proxy_unmount`);
 	}
 }
 

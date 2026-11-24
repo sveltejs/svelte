@@ -5,12 +5,12 @@ import { DEV } from 'esm-env';
 export *  from '../shared/errors.js';
 
 /**
- * Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+ * Can only create a `$derived(...)` with an `await` expression during component initialization or in a declaration tag
  * @returns {never}
  */
 export function async_derived_orphan() {
 	if (DEV) {
-		const error = new Error(`async_derived_orphan\nCannot create a \`$derived(...)\` with an \`await\` expression outside of an effect tree\nhttps://svelte.dev/e/async_derived_orphan`);
+		const error = new Error(`async_derived_orphan\nCan only create a \`$derived(...)\` with an \`await\` expression during component initialization or in a declaration tag\nhttps://svelte.dev/e/async_derived_orphan`);
 
 		error.name = 'Svelte error';
 
@@ -107,6 +107,23 @@ export function component_api_invalid_new(component, name) {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/component_api_invalid_new`);
+	}
+}
+
+/**
+ * `%operation%` is not supported when rendering with a custom renderer
+ * @param {string} operation
+ * @returns {never}
+ */
+export function custom_renderer_unsupported_operation(operation) {
+	if (DEV) {
+		const error = new Error(`custom_renderer_unsupported_operation\n\`${operation}\` is not supported when rendering with a custom renderer\nhttps://svelte.dev/e/custom_renderer_unsupported_operation`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/custom_renderer_unsupported_operation`);
 	}
 }
 
@@ -297,6 +314,22 @@ export function fork_timing() {
 }
 
 /**
+ * `getAbortSignal()` cannot be called after an `await`
+ * @returns {never}
+ */
+export function get_abort_signal_after_await() {
+	if (DEV) {
+		const error = new Error(`get_abort_signal_after_await\n\`getAbortSignal()\` cannot be called after an \`await\`\nhttps://svelte.dev/e/get_abort_signal_after_await`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/get_abort_signal_after_await`);
+	}
+}
+
+/**
  * `getAbortSignal()` can only be called inside an effect or derived
  * @returns {never}
  */
@@ -362,6 +395,22 @@ export function invalid_snippet() {
 }
 
 /**
+ * `createRawSnippet` cannot be used with a custom renderer
+ * @returns {never}
+ */
+export function invalid_snippet_in_custom_renderer() {
+	if (DEV) {
+		const error = new Error(`invalid_snippet_in_custom_renderer\n\`createRawSnippet\` cannot be used with a custom renderer\nhttps://svelte.dev/e/invalid_snippet_in_custom_renderer`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/invalid_snippet_in_custom_renderer`);
+	}
+}
+
+/**
  * `%name%(...)` cannot be used in runes mode
  * @param {string} name
  * @returns {never}
@@ -413,6 +462,24 @@ export function props_rest_readonly(property) {
 }
 
 /**
+ * Cannot render content belonging to %guest% inside %host%. A custom renderer must define `embed` or `host` to be combined with another renderer
+ * @param {string} guest
+ * @param {string} host
+ * @returns {never}
+ */
+export function renderer_cannot_cross(guest, host) {
+	if (DEV) {
+		const error = new Error(`renderer_cannot_cross\nCannot render content belonging to ${guest} inside ${host}. A custom renderer must define \`embed\` or \`host\` to be combined with another renderer\nhttps://svelte.dev/e/renderer_cannot_cross`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/renderer_cannot_cross`);
+	}
+}
+
+/**
  * The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
  * @param {string} rune
  * @returns {never}
@@ -430,18 +497,18 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
- * `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+ * A snippet created in a component that was compiled without `experimental.customRenderer` cannot be rendered by a custom renderer
  * @returns {never}
  */
-export function set_context_after_init() {
+export function snippet_renderer_mismatch() {
 	if (DEV) {
-		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
+		const error = new Error(`snippet_renderer_mismatch\nA snippet created in a component that was compiled without \`experimental.customRenderer\` cannot be rendered by a custom renderer\nhttps://svelte.dev/e/snippet_renderer_mismatch`);
 
 		error.name = 'Svelte error';
 
 		throw error;
 	} else {
-		throw new Error(`https://svelte.dev/e/set_context_after_init`);
+		throw new Error(`https://svelte.dev/e/snippet_renderer_mismatch`);
 	}
 }
 

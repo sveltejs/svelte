@@ -399,6 +399,18 @@ Invalid selector
 Cannot declare a variable with the same name as an import from `<script module>`
 ```
 
+### declaration_tag_invalid_type
+
+```
+Declaration tags must be `let` or `const` declarations
+```
+
+### declaration_tag_no_legacy_mode
+
+```
+Declaration tags cannot be used in legacy mode
+```
+
 ### derived_invalid_export
 
 ```
@@ -605,6 +617,12 @@ Cannot use `await` in deriveds and template expressions, or at the top level of 
 Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
 ```
 
+### incompatible_with_custom_renderer
+
+```
+%message% is not compatible with `customRenderer`
+```
+
 ### inspect_trace_generator
 
 ```
@@ -663,6 +681,12 @@ Cannot use `$$restProps` in runes mode
 
 ```
 `let:` directive at invalid position
+```
+
+### let_directive_snippet_conflict
+
+```
+Cannot use `let:` directives on a component that has a `children` snippet. Use snippet parameters instead (e.g. `{#snippet children({ %name% })}`)
 ```
 
 ### mixed_event_handler_syntaxes
@@ -807,6 +831,18 @@ Cannot use `%rune%` rune in non-runes mode
 
 ```
 Cannot use rune without parentheses
+```
+
+Runes are keywords rather than values — they can't be assigned to a variable or passed to a function, only called. Referencing one without parentheses is therefore an error...
+
+```js
+let count = $state;
+```
+
+...whether it's a rune like `$state` or one reached through a property, like `$derived.by`. Add the parentheses, along with any arguments the rune expects:
+
+```js
+let count = $state(0);
 ```
 
 ### rune_removed
@@ -1099,6 +1135,12 @@ A component can only have one `<%name%>` element
 
 ```
 Valid `<svelte:...>` tag names are %list%
+```
+
+### svelte_options_customrenderer_disabled
+
+```
+`customRenderer` cannot be set in `<svelte:options>` unless the `experimental.customRenderer` compiler option is enabled
 ```
 
 ### svelte_options_deprecated_tag

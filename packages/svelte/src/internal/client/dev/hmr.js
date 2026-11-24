@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, HMR } from '../../../constants.js';
-import { EFFECT_TRANSPARENT } from '#client/constants';
+import { EFFECT_TRANSPARENT, HMR_ANCHOR } from '#client/constants';
 import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set, source } from '../reactivity/sources.js';
@@ -15,10 +15,10 @@ export function hmr(fn) {
 	const current = source(fn);
 
 	/**
-	 * @param {TemplateNode} anchor
+	 * @param {TemplateNode} initial_anchor
 	 * @param {any} props
 	 */
-	function wrapper(anchor, props) {
+	function wrapper(initial_anchor, props) {
 		let component = {};
 		let instance = {};
 
@@ -26,6 +26,7 @@ export function hmr(fn) {
 		let effect;
 
 		let ran = false;
+		let anchor = initial_anchor;
 
 		block(() => {
 			if (component === (component = get(current))) {
@@ -39,6 +40,8 @@ export function hmr(fn) {
 			}
 
 			effect = branch(() => {
+				anchor = /** @type {any} */ (anchor)[HMR_ANCHOR] ?? anchor;
+
 				// when the component is invalidated, replace it without transitions
 				if (ran) set_should_intro(false);
 
@@ -54,10 +57,21 @@ export function hmr(fn) {
 				if (ran) set_should_intro(true);
 			});
 
-			// Forward the nodes from the inner effect to the outer active effect which would
-			// get them if the HMR wrapper wasn't there. Do this inside the block not outside
-			// so that HMR updates to the component will also update the nodes on the active effect.
-			/** @type {Effect} */ (active_effect).nodes = effect.nodes;
+			// Forward the start/end DOM nodes from the inner effect to the outer active effect
+			// which would get them if the HMR wrapper wasn't there. Do this inside the block not
+			// outside so that HMR updates to the component will also update the nodes on the
+			// active effect. We copy only start/end, not the full nodes object, so that
+			// pause_children does not collect transitions from both effects and fire outroend twice.
+			var inner_nodes = effect.nodes;
+			if (inner_nodes) {
+				var ae = /** @type {Effect} */ (active_effect);
+				if (ae.nodes) {
+					ae.nodes.start = inner_nodes.start;
+					ae.nodes.end = inner_nodes.end;
+				} else {
+					ae.nodes = { start: inner_nodes.start, end: inner_nodes.end, a: null, t: null };
+				}
+			}
 		}, EFFECT_TRANSPARENT);
 
 		ran = true;

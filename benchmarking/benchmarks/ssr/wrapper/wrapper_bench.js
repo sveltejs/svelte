@@ -25,12 +25,12 @@ export const wrapper_bench = {
 
 		// Do 3 loops to warm up JIT
 		for (let i = 0; i < 3; i++) {
-			render(App);
+			render(App).body;
 		}
 
 		return await fastest_test(10, () => {
 			for (let i = 0; i < 100; i++) {
-				render(App);
+				render(App).body;
 			}
 		});
 	}

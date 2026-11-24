@@ -1,4 +1,4 @@
-/** @import { BlockStatement } from 'estree' */
+/** @import { BlockStatement, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
@@ -84,6 +84,9 @@ export function SvelteBoundary(node, context) {
 	}
 
 	const props = b.object([]);
+	/** @type {Statement[]} */
+	const init = [];
+
 	if (failed_attribute && !failed_snippet) {
 		const failed_callee = build_attribute_value(
 			failed_attribute.value,
@@ -95,13 +98,15 @@ export function SvelteBoundary(node, context) {
 
 		props.properties.push(b.init('failed', failed_callee));
 	} else if (failed_snippet) {
-		context.visit(failed_snippet, context.state);
+		context.visit(failed_snippet, { ...context.state, init });
 		props.properties.push(b.init('failed', failed_snippet.expression));
 	}
 
-	context.state.template.push(
-		b.stmt(b.call('$$renderer.boundary', props, b.arrow([b.id('$$renderer')], children_body)))
+	const boundary = b.stmt(
+		b.call('$$renderer.boundary', props, b.arrow([b.id('$$renderer')], children_body))
 	);
+
+	context.state.template.push(init.length > 0 ? b.block([...init, boundary]) : boundary);
 }
 
 /**

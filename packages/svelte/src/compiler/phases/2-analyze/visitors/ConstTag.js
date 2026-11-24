@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { validate_opening_tag } from './shared/utils.js';
+import { mark_async_declaration } from './DeclarationTag.js';
 
 /**
  * @param {AST.ConstTag} node
@@ -42,4 +43,6 @@ export function ConstTag(node, context) {
 		function_depth: context.state.function_depth + 1,
 		derived_function_depth: context.state.function_depth + 1
 	});
+
+	mark_async_declaration(context, node.metadata, [declaration]);
 }

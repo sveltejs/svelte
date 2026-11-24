@@ -43,7 +43,7 @@ The maintainers meet on the final Saturday of each month. While these meetings a
 
 ### Prioritization
 
-We do our best to review PRs and RFCs as they are sent, but it is difficult to keep up. We welcome help in reviewing PRs, RFCs, and issues. If an item aligns with the current priority on our [roadmap](https://svelte.dev/roadmap), it is more likely to be reviewed quickly. PRs to the most important and active ones repositories get reviewed more quickly while PRs to smaller inactive repos may sit for a bit before we periodically come by and review the pending PRs in a batch.
+We do our best to review PRs and RFCs as they are sent, but it is difficult to keep up. We welcome help in reviewing PRs, RFCs, and issues. If an item aligns with the current priority on our [roadmap](https://svelte.dev/roadmap), it is more likely to be reviewed quickly. PRs to the most important and active repositories get reviewed more quickly while PRs to smaller inactive repos may sit for a bit before we periodically come by and review the pending PRs in a batch.
 
 ## Bugs
 
@@ -112,6 +112,10 @@ Test samples are kept in `/tests/xxx/samples` folders.
    ```
 
    (You can also do `FILTER=<test-name> pnpm test <suite-name>` which removes other tests rather than simply skipping them — this will result in faster and more compact test results, but it's non-idiomatic. Choose your fighter.)
+
+The `runtime-*` and `server-side-rendering` suites only recompile a test's components if the test's files, its compile options or the compiler itself changed since it was last compiled (see `_output/{client,server}/info.json`). To always recompile, run `NO_COMPILE_CACHE=true pnpm test`.
+
+1. The `runtime-runes` and `runtime-legacy` suites are split into several shards that run in parallel (see `vitest.config.js`), which is why their results are labelled like `|runtime-runes (2/4)|`. To run a single shard, use e.g. `pnpm test --project "runtime-runes (2/4)"`. Samples using `$inspect.trace` must be named `inspect-trace-*`, so that they run in a shard of their own (`$inspect.trace` turns on tracing mode for all subsequent tests).
 
 ##### Updating `.expected` files
 
